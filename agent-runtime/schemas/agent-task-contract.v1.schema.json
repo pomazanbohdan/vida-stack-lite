@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentTaskContract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "routing_id", "work_id", "task_id", "source_revision", "scope_id", "role", "mode", "profile_id", "model", "reasoning", "assurance_stage", "context_mode", "context_budget", "allowed_paths", "protected_paths", "required_context", "forbidden_context", "output_schema", "stop_condition", "next_action"],
+  "properties": {
+    "schema": {"const": "AgentTaskContract/v1"},
+    "routing_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "work_id": {"type": ["string", "null"]},
+    "task_id": {"type": ["string", "null"]},
+    "source_revision": {"type": "string", "minLength": 1},
+    "scope_id": {"type": ["string", "null"]},
+    "role": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["reuse", "specialist", "independent"]},
+    "profile_id": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "reasoning": {"enum": ["high", "xhigh", "max"]},
+    "assurance_stage": {"type": "integer", "minimum": 1, "maximum": 4},
+    "context_mode": {"enum": ["task_contract", "parent_summary", "sealed_packet", "none"]},
+    "context_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_input_tokens", "max_output_tokens", "max_evidence_lines"],
+      "properties": {
+        "max_input_tokens": {"type": "integer", "minimum": 256, "maximum": 200000},
+        "max_output_tokens": {"type": "integer", "minimum": 128, "maximum": 50000},
+        "max_evidence_lines": {"type": "integer", "minimum": 1, "maximum": 1000}
+      }
+    },
+    "allowed_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "protected_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "required_context": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "forbidden_context": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "output_schema": {"type": "string", "minLength": 1},
+    "stop_condition": {"type": "string", "minLength": 1, "maxLength": 512},
+    "next_action": {"type": "string", "minLength": 1, "maxLength": 512}
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "agent-development-runtime-tooling",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Isolated development-quality tooling for the portable agent runtime.",
+  "type": "commonjs",
+  "scripts": {
+    "contracts": "node ../../tests/agent-runtime/agent-allocation-contract.test.cjs && node ../../tests/agent-runtime/request-clarification-contract.test.cjs && node ../../tests/agent-runtime/runtime-clarification-contract.test.cjs && node ../../tests/agent-runtime/backlog-adapter-contract.test.cjs && node ../../tests/agent-runtime/legacy-import-contract.test.cjs && node ../../tests/agent-runtime/gsd-capability-contract.test.cjs && node ../../tests/agent-runtime/schema-contract.test.cjs && node ../../tests/agent-runtime/runtime-contract.test.cjs && node ../../tests/agent-runtime/runtime-adversarial-contract.test.cjs && pwsh -NoProfile -File ../../tests/agent-runtime/policy-contract.test.ps1",
+    "smoke": "npm run contracts",
+    "test": "vitest run --config vitest.config.mjs",
+    "scenarios": "vitest run --config vitest.config.mjs tests/runtime-scenario-matrix.test.cjs tests/runtime-blind-architect-cycle.test.cjs",
+    "schema": "vitest run --config vitest.config.mjs tests/schema-parity.test.cjs",
+    "property": "vitest run --config vitest.config.mjs tests/runtime-properties.test.cjs",
+    "coverage": "vitest run --config vitest.config.mjs --coverage",
+    "crap": "node crap-gate.cjs",
+    "mutation": "node mutation-orchestrator.cjs",
+    "mutation:manifest": "node mutation-orchestrator.cjs --generate",
+    "mutation:partition": "node mutation-orchestrator.cjs --partition",
+    "mutation:group": "node mutation-orchestrator.cjs --group",
+    "mutation:profile": "node mutation-orchestrator.cjs --groups",
+    "install:ensure": "node install-fingerprint.cjs",
+    "lint": "cd ../.. && eslint --config agent-runtime/tooling/eslint.config.mjs agent-runtime/lib agent-runtime/capability tests/agent-runtime agent-runtime/tooling/tests",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "audit:runtime": "npm audit --omit=dev --audit-level=high",
+    "audit:tooling": "npm audit --audit-level=high",
+    "quality": "npm run smoke && npm run test && npm run coverage && npm run crap && npm run lint && npm run typecheck",
+    "verify:installed": "npm run contracts && npm run test && npm run coverage && npm run crap && npm run lint && npm run typecheck && npm run audit:runtime && npm run audit:tooling && npm run mutation",
+    "verify": "npm ci && npm run verify:installed",
+    "verify:cached": "npm run install:ensure && npm run verify:installed",
+    "deep": "node run-profile.cjs 100000"
+  },
+  "overrides": {
+    "qs": "6.15.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.2.0",
+    "@vitest/coverage-v8": "4.1.10",
+    "ajv": "8.20.0",
+    "eslint": "10.8.1",
+    "espree": "11.2.0",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/vitest-runner": "10.0.0",
+    "fast-check": "4.9.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

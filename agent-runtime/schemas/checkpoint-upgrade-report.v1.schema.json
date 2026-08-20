@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CheckpointUpgradeReport/v1",
+  "title": "CheckpointUpgradeReport/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "mode", "root", "items", "counts"],
+  "properties": {
+    "schema": { "const": "CheckpointUpgradeReport/v1" },
+    "mode": { "enum": ["audit", "dry_run", "apply_safe", "apply_approved", "apply"] },
+    "root": { "type": "string", "minLength": 1 },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["work_id", "path", "status"],
+        "properties": {
+          "work_id": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "lifecycle_state": { "type": ["string", "null"] },
+          "revision": { "type": ["integer", "null"], "minimum": 1 },
+          "status": { "enum": ["upgrade", "applied", "already_current", "immutable", "legacy_unbound", "knowledge_context_required", "knowledge_context_recovery_available", "correction_authorization_required", "feedback_receipt_reconciliation_required", "scope_audit_required", "scope_contract_required", "scope_recovery_required", "scope_follow_up_required", "blocked"] },
+          "code": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 },
+          "next_action": { "type": ["string", "null"] },
+          "next_operation": { "type": ["string", "null"] },
+          "health": { "type": ["string", "null"] },
+          "from_protocol": { "type": "string", "minLength": 1 },
+          "to_protocol": { "type": "string", "minLength": 1 },
+          "normalizations": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    }
+  }
+}

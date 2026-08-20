@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals"],
+    "skipLibCheck": true
+  },
+  "include": [
+    "../../agent-runtime/lib/**/*.cjs",
+    "../../agent-runtime/capability/**/*.cjs",
+    "../../tests/agent-runtime/**/*.cjs",
+    "tests/**/*.cjs"
+  ]
+}

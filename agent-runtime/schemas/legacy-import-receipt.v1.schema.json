@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LegacyImportReceipt/v1",
+  "type": "object",
+  "required": ["schema", "mode", "source_root", "records", "inventory", "assertions"],
+  "properties": {
+    "schema": {"const": "LegacyImportReceipt/v1"},
+    "mode": {"const": "read_only"},
+    "source_root": {"type": "string", "minLength": 1},
+    "records": {"type": "array"},
+    "inventory": {
+      "type": "object",
+      "required": ["complete", "truncated", "visited_entries", "imported_files", "max_files", "max_entries", "time_budget_ms", "max_file_bytes", "elapsed_ms", "bound_reason", "gap"],
+      "properties": {
+        "complete": {"type": "boolean"},
+        "truncated": {"type": "boolean"},
+        "visited_entries": {"type": "integer", "minimum": 0},
+        "imported_files": {"type": "integer", "minimum": 0},
+        "max_files": {"type": "integer", "minimum": 1, "maximum": 5000},
+        "max_entries": {"type": "integer", "minimum": 1, "maximum": 50000},
+        "time_budget_ms": {"type": "integer", "minimum": 1, "maximum": 2000},
+        "max_file_bytes": {"type": "integer", "minimum": 1, "maximum": 5242880},
+        "elapsed_ms": {"type": "number", "minimum": 0},
+        "bound_reason": {"enum": [null, "time_budget", "max_files", "max_entries"]},
+        "gap": {"enum": [null, "GAP-LEGACY-IMPORT-BOUNDS-001"]}
+      },
+      "additionalProperties": false
+    },
+    "cache": {
+      "type": "object",
+      "required": ["policy", "hit"],
+      "properties": {
+        "policy": {"const": "derived_non_authoritative"},
+        "hit": {"type": "boolean"},
+        "stored": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "assertions": {"type": "object", "required": ["historical_non_authoritative", "does_not_consume_approvals", "does_not_consume_leases", "ready_for_decision_is_not_human_approval", "static_is_not_runtime"]}
+  },
+  "additionalProperties": true
+}

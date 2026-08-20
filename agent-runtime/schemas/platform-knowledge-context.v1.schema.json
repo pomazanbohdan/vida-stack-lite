@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlatformKnowledgeContext v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "context_id", "work_id", "cycle_id", "source_revision", "scope_id", "change_kind", "br_sr_ac", "official_sources", "local_sources", "skills", "cache", "warnings", "conflicts", "created_at", "digest", "next_action"],
+  "properties": {
+    "schema": {"const": "PlatformKnowledgeContext/v1"},
+    "context_id": {"type": "string", "minLength": 1},
+    "work_id": {"type": "string", "minLength": 1},
+    "cycle_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "change_kind": {"enum": ["documentation", "feature", "defect", "refactor", "incident", "migration", "destructive"]},
+    "br_sr_ac": {"type": "object", "additionalProperties": false, "required": ["br", "sr", "ac"], "properties": {"br": {"type": "array", "items": {"type": "string", "minLength": 1}}, "sr": {"type": "array", "items": {"type": "string", "minLength": 1}}, "ac": {"type": "array", "items": {"type": "string", "minLength": 1}}}},
+    "official_sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "local_sources": {"type": "array", "items": {"$ref": "#/$defs/localSource"}},
+    "skills": {"type": "array", "items": {"$ref": "#/$defs/skill"}},
+    "cache": {"type": "object", "additionalProperties": false, "required": ["capability_epoch", "hit", "snapshot_digest"], "properties": {"capability_epoch": {"type": "string", "minLength": 1}, "hit": {"type": "boolean"}, "snapshot_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "conflicts": {"type": "array", "items": {"$ref": "#/$defs/conflict"}},
+    "created_at": {"type": "string", "format": "date-time"},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "next_action": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "source": {"type": "object", "additionalProperties": false, "required": ["url", "title", "platform_version", "source_hash", "applicability"], "properties": {"url": {"type": "string", "format": "uri"}, "title": {"type": "string", "minLength": 1}, "platform_version": {"type": "string", "minLength": 1}, "last_verified": {"type": "string", "format": "date-time"}, "lastmod": {"type": "string", "format": "date-time"}, "source_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "applicability": {"type": "string", "minLength": 1}, "pointer": {"type": "string", "minLength": 1}}},
+    "localSource": {"type": "object", "additionalProperties": false, "required": ["path", "source_hash", "applicability"], "properties": {"path": {"type": "string", "minLength": 1}, "source_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "applicability": {"type": "string", "minLength": 1}, "pointer": {"type": "string", "minLength": 1}}},
+    "skill": {"type": "object", "additionalProperties": false, "required": ["skill_id", "path", "skill_sha256", "role", "phase", "status", "evidence_pointer"], "properties": {"skill_id": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "skill_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "role": {"type": "string", "minLength": 1}, "phase": {"type": "string", "minLength": 1}, "status": {"enum": ["applied", "reviewed_not_applied", "not_applicable"]}, "evidence_pointer": {"type": "string", "minLength": 1}}},
+    "conflict": {"type": "object", "additionalProperties": false, "required": ["id", "kind", "summary", "pointers"], "properties": {"id": {"type": "string", "minLength": 1}, "kind": {"enum": ["platform_vs_implementation", "platform_vs_business", "skill_vs_platform", "source_unavailable"]}, "summary": {"type": "string", "minLength": 1}, "pointers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}}}
+  }
+}

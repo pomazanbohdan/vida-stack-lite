@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AcceptanceManifestRepair v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "work_id", "source_revision", "manifest", "reason", "pointer", "actor", "timestamp"],
+  "properties": {
+    "schema": {"const": "AcceptanceManifestRepair/v1"},
+    "work_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "id", "version", "ac_ids", "source", "scope", "source_revision", "contracts"],
+      "properties": {
+        "schema": {"const": "AcceptanceManifest/v1"},
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "integer", "minimum": 1},
+        "ac_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "source": {"type": "string", "minLength": 1},
+        "scope": {"type": "string", "minLength": 1},
+        "source_revision": {"type": "string", "minLength": 1},
+        "contracts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "definition", "sr", "evidence"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "definition": {"type": "string", "minLength": 1},
+              "sr": {"type": "string", "minLength": 1},
+              "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+            }
+          }
+        }
+      }
+    },
+    "reason": {"type": "string", "minLength": 1},
+    "pointer": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"}
+  }
+}

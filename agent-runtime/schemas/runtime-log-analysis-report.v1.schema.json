@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "RuntimeLogAnalysisReport/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "analysis_window",
+    "snapshot",
+    "source_counts",
+    "recurrence_clusters",
+    "optimization_findings",
+    "documentation_research",
+    "skill_assessment",
+    "known_gaps",
+    "next_actions",
+    "duration_ms",
+    "watermark",
+    "artifacts"
+  ],
+  "properties": {
+    "schema": { "const": "RuntimeLogAnalysisReport/v1" },
+    "status": { "enum": ["no_new_signal", "findings", "blocked"] },
+    "analysis_window": { "type": "object", "additionalProperties": false, "required": ["days", "from", "to"], "properties": { "days": { "type": "integer", "minimum": 1 }, "from": { "type": "string" }, "to": { "type": "string" } } },
+    "snapshot": { "type": "object", "additionalProperties": false, "required": ["source_revision", "runtime_version", "host_capability_epoch", "snapshot_id", "files"], "properties": { "source_revision": { "type": "string" }, "runtime_version": { "type": "string" }, "host_capability_epoch": { "type": "string" }, "snapshot_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "files": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["path", "size", "modified_at", "sha256"], "properties": { "path": { "type": "string" }, "size": { "type": "integer", "minimum": 0 }, "modified_at": { "type": "string" }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } } } } },
+    "source_counts": { "type": "object", "additionalProperties": false, "required": ["files", "events", "recurrence_clusters"], "properties": { "files": { "type": "integer", "minimum": 0 }, "events": { "type": "integer", "minimum": 0 }, "recurrence_clusters": { "type": "integer", "minimum": 0 } } },
+    "recurrence_clusters": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["fingerprint", "count", "distinct_runs", "operations", "source_revisions", "evidence_pointers", "severity", "confidence", "failure_class", "known_gap", "next_action"], "properties": { "fingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "count": { "type": "integer", "minimum": 1 }, "distinct_runs": { "type": "integer", "minimum": 1 }, "operations": { "type": "array", "items": { "type": "string" } }, "source_revisions": { "type": "array", "items": { "type": "string" } }, "evidence_pointers": { "type": "array", "items": { "type": "string" } }, "severity": { "enum": ["low", "medium", "high"] }, "confidence": { "enum": ["low", "medium", "high"] }, "failure_class": { "type": "string" }, "first_seen": { "type": ["string", "null"] }, "last_seen": { "type": ["string", "null"] }, "known_gap": { "type": "boolean" }, "regression_test": { "type": ["string", "null"] }, "next_action": { "type": "string" } } } },
+    "optimization_findings": { "type": "array", "items": { "type": "object", "additionalProperties": true, "required": ["id", "kind", "evidence", "count", "estimated_saved_calls", "cache_opportunity", "fail_closed_risk", "recommendation", "regression_test"], "properties": { "id": { "type": "string" }, "kind": { "type": "string" }, "evidence": {}, "count": { "type": "integer", "minimum": 1 }, "estimated_saved_calls": { "type": "integer", "minimum": 0 }, "duration_impact_ms": { "type": ["integer", "null"] }, "cache_opportunity": { "type": "boolean" }, "fail_closed_risk": { "type": "string" }, "recommendation": { "type": "string" }, "regression_test": { "type": "string" } } } },
+    "documentation_research": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "skill_assessment": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "known_gaps": { "type": "array", "items": { "type": "string" } },
+    "next_actions": { "type": "array", "items": { "type": "string" } },
+    "duration_ms": { "type": "integer", "minimum": 0 },
+    "watermark": { "type": "object", "additionalProperties": false, "required": ["path", "snapshot_id", "reused", "updated_at"], "properties": { "path": { "type": "string" }, "snapshot_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "reused": { "type": "boolean" }, "updated_at": { "type": "string" } } },
+    "artifacts": { "type": "array", "items": { "type": "string" } }
+  }
+}

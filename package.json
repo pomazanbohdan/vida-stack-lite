@@ -1,0 +1,27 @@
+{
+  "name": "vida-stack-lite",
+  "version": "0.1.0",
+  "description": "Portable, host-neutral development-agent runtime and lifecycle contracts.",
+  "private": false,
+  "type": "commonjs",
+  "scripts": {
+    "agent-runtime:install": "pwsh -NoProfile -File ./script/Install-AgentDevelopmentRuntime.ps1",
+    "agent-runtime:test": "npm --prefix agent-runtime/tooling test",
+    "agent-runtime:verify": "npm --prefix agent-runtime/tooling run verify",
+    "agent-runtime:verify:cached": "npm --prefix agent-runtime/tooling run verify:cached",
+    "agent-runtime:scenarios": "npm --prefix agent-runtime/tooling run scenarios",
+    "agent-runtime:deep": "npm --prefix agent-runtime/tooling run deep",
+    "agent-runtime:coverage": "npm --prefix agent-runtime/tooling run coverage",
+    "agent-runtime:crap": "npm --prefix agent-runtime/tooling run crap",
+    "agent-runtime:mutation": "npm --prefix agent-runtime/tooling run mutation",
+    "agent-runtime:upgrade:checkpoints": "node ./agent-runtime/bin/upgrade-active-checkpoints.cjs",
+    "agent-runtime:graph:status": "pwsh -NoProfile -File ./script/Invoke-AgentDevelopmentRuntime.ps1 -GraphAction status",
+    "agent-runtime:graph:build": "pwsh -NoProfile -File ./script/Invoke-AgentDevelopmentRuntime.ps1 -GraphAction build",
+    "agent-runtime:graph:diff": "pwsh -NoProfile -File ./script/Invoke-AgentDevelopmentRuntime.ps1 -GraphAction diff"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pomazanbohdan/vida-stack-lite"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime Assurance Context v1",
+  "type": "object",
+  "required": ["schema", "context_id", "work_id", "revision", "source_revision", "lifecycle_state", "sealed_revision", "implementation_fingerprint", "packet_id", "packet_version", "wave", "generation", "review_mode", "requested_reviewers", "capability_epoch", "lease_expires_at", "next_action", "authority"],
+  "properties": {
+    "schema": {"const": "RuntimeAssuranceContext/v1"},
+    "context_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "work_id": {"type": "string", "minLength": 1},
+    "revision": {"type": ["integer", "null"], "minimum": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "lifecycle_state": {"type": "string", "minLength": 1},
+    "sealed_revision": {"type": ["integer", "null"], "minimum": 1},
+    "implementation_fingerprint": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "packet_id": {"type": ["string", "null"], "minLength": 1},
+    "packet_version": {"type": ["integer", "null"], "minimum": 1},
+    "wave": {"type": ["integer", "null"], "minimum": 1},
+    "generation": {"type": ["integer", "null"], "minimum": 1},
+    "review_mode": {"type": ["string", "null"]},
+    "requested_reviewers": {"type": ["integer", "null"], "minimum": 1},
+    "capability_epoch": {"type": ["string", "null"], "minLength": 1},
+    "lease_expires_at": {"type": ["string", "null"], "minLength": 1},
+    "next_action": {"type": "string", "minLength": 1},
+    "platform_knowledge_context_id": {"type": ["string", "null"], "minLength": 1},
+    "platform_knowledge_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "documentation_skill_validation_status": {"enum": ["pass", "warning", "changes_required", null]},
+    "authority": {"const": "derived_non_authoritative"}
+  },
+  "additionalProperties": false
+}

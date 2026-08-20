@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkillUpdateResult v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "update_id", "proposal_id", "skill_id", "status", "source_hash", "generated_hash", "checks", "evidence_pointers", "updated_at", "next_action"],
+  "properties": {"schema": {"const": "SkillUpdateResult/v1"}, "update_id": {"type": "string", "minLength": 1}, "proposal_id": {"type": "string", "minLength": 1}, "skill_id": {"type": "string", "minLength": 1}, "status": {"enum": ["applied", "rejected", "blocked"]}, "source_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "generated_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "checks": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "status"], "properties": {"id": {"type": "string", "minLength": 1}, "status": {"enum": ["pass", "fail", "skipped"]}, "pointer": {"type": "string"}}}}, "evidence_pointers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "updated_at": {"type": "string", "format": "date-time"}, "next_action": {"type": "string", "minLength": 1}}
+}

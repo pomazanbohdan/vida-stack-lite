@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QuestionCandidate/v1",
+  "type": "object",
+  "required": ["schema", "question_id", "work_id", "source_revision", "targets", "gap_class", "action", "type", "criticality", "blocking", "decision_owner", "dependencies", "context", "why_asked", "impact_if_unanswered", "text", "options", "allow_other", "allow_cannot_answer", "status"],
+  "properties": {
+    "schema": {"const": "QuestionCandidate/v1"},
+    "question_id": {"type": "string", "minLength": 1},
+    "work_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "targets": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "gap_class": {"enum": ["missing", "ambiguous", "conflicting", "inferred_unconfirmed", "retrievable", "blocked", "ready"]},
+    "action": {"const": "ask"},
+    "type": {"enum": ["single_choice", "multi_choice", "yes_no_confirm", "numeric_range", "date_or_deadline", "rank_priorities", "select_artifact", "select_scope", "constrained_free_text", "confirm_inference", "resolve_conflict", "provide_source_or_file", "permission_request"]},
+    "criticality": {"enum": ["blocking", "high", "medium", "low"]},
+    "blocking": {"type": "boolean"},
+    "decision_owner": {"enum": ["user", "project_source", "policy", "external_authority"]},
+    "dependencies": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "context": {"type": "string", "minLength": 1},
+    "evidence_pointers": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "why_asked": {"type": "string", "minLength": 1},
+    "impact_if_unanswered": {"type": "string", "minLength": 1},
+    "text": {"type": "string", "minLength": 1},
+    "options": {
+      "type": "array",
+      "contains": {
+        "type": "object",
+        "required": ["recommended"],
+        "properties": {"recommended": {"const": true}}
+      },
+      "minContains": 0,
+      "maxContains": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "consequence", "recommended"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "consequence": {"type": "string", "minLength": 1},
+          "recommended": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "recommendation_rationale": {"type": ["string", "null"]},
+    "allow_other": {"type": "boolean"},
+    "allow_cannot_answer": {"type": "boolean"},
+    "status": {"enum": ["open", "answered", "waived", "expired"]},
+    "answer": {
+      "type": ["object", "null"],
+      "required": ["outcome", "selected", "quote", "pointer", "answered_at"],
+      "properties": {
+        "outcome": {"enum": ["decision", "cannot_answer", "defer"]},
+        "selected": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "quote": {"type": "string"},
+        "pointer": {"type": "string"},
+        "answered_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {"enum": ["single_choice", "multi_choice", "yes_no_confirm", "rank_priorities", "select_artifact", "select_scope", "confirm_inference", "resolve_conflict", "permission_request"]}
+        },
+        "required": ["type"]
+      },
+      "then": {"properties": {"options": {"minItems": 2}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "answered"}}, "required": ["status"]},
+      "then": {"required": ["answer"], "properties": {"answer": {"type": "object", "properties": {"outcome": {"const": "decision"}}}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "open"}, "answer": {"type": "object"}}, "required": ["status", "answer"]},
+      "then": {"properties": {"answer": {"properties": {"outcome": {"enum": ["cannot_answer", "defer"]}, "selected": {"maxItems": 0}}}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "options": {"contains": {"properties": {"recommended": {"const": true}}, "required": ["recommended"]}}
+        },
+        "required": ["options"]
+      },
+      "then": {"required": ["recommendation_rationale"], "properties": {"recommendation_rationale": {"type": "string", "minLength": 1}}}
+    }
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CheckpointProtocolMigration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "migration_id", "work_id", "from_protocol", "to_protocol", "from_checkpoint_schema", "to_checkpoint_schema", "from_revision", "to_revision", "source_revision", "normalizations", "reason", "pointer", "actor", "timestamp", "status"],
+  "properties": {
+    "schema": {"const": "CheckpointProtocolMigration/v1"},
+    "migration_id": {"type": "string", "minLength": 1},
+    "work_id": {"type": "string", "minLength": 1},
+    "from_protocol": {"type": "string", "minLength": 1},
+    "to_protocol": {"enum": ["agent-development-runtime/v2", "agent-development-runtime/v3", "agent-development-runtime/v4"]},
+    "from_checkpoint_schema": {"const": "WorkCheckpoint/v2"},
+    "to_checkpoint_schema": {"const": "WorkCheckpoint/v2"},
+    "from_revision": {"type": "integer", "minimum": 1},
+    "to_revision": {"type": "integer", "minimum": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "normalizations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "reason": {"type": "string", "minLength": 1},
+    "pointer": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "status": {"const": "applied"}
+  }
+}

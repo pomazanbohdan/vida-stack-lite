@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CheckpointConvergencePlan v1",
+  "type": "object",
+  "required": ["schema", "plan_id", "reason", "pointer", "actor", "timestamp", "disposition", "scope_contract"],
+  "properties": {
+    "schema": {"const": "CheckpointConvergencePlan/v1"}, "plan_id": {"type": "string", "minLength": 1}, "reason": {"type": "string", "minLength": 1}, "pointer": {"type": "string", "minLength": 1}, "actor": {"type": "string", "minLength": 1}, "timestamp": {"type": "string", "format": "date-time"}, "disposition": {"enum": ["narrow_current_scope", "split_follow_up", "new_task"]},
+    "scope_contract": {"$ref": "implementation-scope.v1.schema.json"}
+  },
+  "additionalProperties": false
+}

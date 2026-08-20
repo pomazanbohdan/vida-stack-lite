@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScopeIntegrityReport v1",
+  "type": "object",
+  "required": ["schema", "status", "changed_paths", "unchanged_paths", "old_hashes", "new_hashes", "owner_thread_ids", "claim_status", "source_revision", "repository_head", "next_action"],
+  "properties": {
+    "schema": {"const": "ScopeIntegrityReport/v1"},
+    "status": {"enum": ["unchanged", "metadata_only", "documentation_only", "changed", "unstable", "ownership_conflict", "evidence_gap"]},
+    "gap_code": {"type": ["string", "null"]},
+    "changed_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "unchanged_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "old_hashes": {"type": "array", "items": {"type": "object", "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}}, "additionalProperties": false}},
+    "new_hashes": {"type": "array", "items": {"type": "object", "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}}, "additionalProperties": false}},
+    "owner_thread_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "claim_status": {"type": "array", "items": {"type": "object", "required": ["path", "resource", "status"], "properties": {"path": {"type": "string", "minLength": 1}, "resource": {"type": "string", "minLength": 1}, "status": {"type": "string", "minLength": 1}}, "additionalProperties": false}},
+    "source_revision": {"type": ["string", "null"]},
+    "repository_head": {"type": ["string", "null"]},
+    "change_impact_assessment_id": {"type": ["string", "null"], "minLength": 1},
+    "change_impact_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "change_impact_profile": {"enum": ["focused", "expanded", "full", null]},
+    "change_impact_status": {"enum": ["pass", "warning", "full_profile_required", "blocked", null]},
+    "unverified_edges": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "unknown_edges": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "next_action": {"type": "string", "minLength": 1},
+    "evidence_pointer": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

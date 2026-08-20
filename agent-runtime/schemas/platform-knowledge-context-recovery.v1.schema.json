@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlatformKnowledgeContextRecovery v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "recovery_id", "work_id", "context_id", "cycle_id", "source_revision", "scope_id", "digest", "sealed_revision", "from_revision", "to_revision", "reason", "pointer", "actor", "timestamp"],
+  "properties": {
+    "schema": {"const": "PlatformKnowledgeContextRecovery/v1"},
+    "recovery_id": {"type": "string", "minLength": 1},
+    "work_id": {"type": "string", "minLength": 1},
+    "context_id": {"type": "string", "minLength": 1},
+    "cycle_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sealed_revision": {"type": "integer", "minimum": 1},
+    "from_revision": {"type": "integer", "minimum": 1},
+    "to_revision": {"type": "integer", "minimum": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "pointer": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"}
+  }
+}

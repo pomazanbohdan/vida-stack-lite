@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScopeSnapshot v1",
+  "type": "object",
+  "required": ["schema", "snapshot_id", "source_revision", "implementation_fingerprint", "scope_paths", "documentation_paths", "files", "absence_assertions", "repository_head", "captured_at"],
+  "properties": {
+    "schema": {"const": "ScopeSnapshot/v1"},
+    "snapshot_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_revision": {"type": "string", "minLength": 1},
+    "implementation_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "scope_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "documentation_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "files": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "object", "required": ["path", "sha256", "size", "mode", "mtime_ms", "kind"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "size": {"type": "integer", "minimum": 0}, "mode": {"type": "integer", "minimum": 0}, "mtime_ms": {"type": "number", "minimum": 0}, "kind": {"enum": ["implementation", "documentation"]}}, "additionalProperties": false}},
+    "absence_assertions": {"type": "array", "items": {"type": "object", "required": ["path", "required", "present"], "properties": {"path": {"type": "string", "minLength": 1}, "required": {"type": "boolean"}, "present": {"type": "boolean"}}, "additionalProperties": false}},
+    "repository_head": {"type": ["string", "null"]},
+    "coordination": {"type": ["object", "null"]},
+    "change_impact_assessment_id": {"type": ["string", "null"], "minLength": 1},
+    "change_impact_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "change_impact_profile": {"enum": ["focused", "expanded", "full", null]},
+    "change_impact_status": {"enum": ["pass", "warning", "full_profile_required", "blocked", null]},
+    "captured_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

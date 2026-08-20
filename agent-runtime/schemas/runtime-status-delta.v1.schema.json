@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime Status Delta v1",
+  "type": "object",
+  "required": ["schema", "status", "work_id", "from_revision", "to_revision", "context_id", "changed", "next_action", "watermark"],
+  "properties": {
+    "schema": {"const": "RuntimeStatusDelta/v1"},
+    "status": {"enum": ["changed", "unchanged"]},
+    "work_id": {"type": "string", "minLength": 1},
+    "from_revision": {"type": ["integer", "null"], "minimum": 1},
+    "to_revision": {"type": ["integer", "null"], "minimum": 1},
+    "context_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "changed": {"type": "array", "items": {"type": "object", "required": ["field", "value"], "properties": {"field": {"type": "string", "minLength": 1}, "value": {}} , "additionalProperties": false}},
+    "next_action": {"type": "string", "minLength": 1},
+    "watermark": {"type": "object", "required": ["context_id", "revision"], "properties": {"context_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "revision": {"type": ["integer", "null"], "minimum": 1}}, "additionalProperties": false}
+  },
+  "additionalProperties": false
+}

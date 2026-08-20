@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Architect dispatch disqualification v1",
+  "type": "object",
+  "required": ["schema", "work_id", "source_revision", "sealed_revision", "implementation_fingerprint", "acceptance_manifest_id", "acceptance_manifest_version", "disqualification_id", "dispatch_id", "task_id", "handle_id", "architect_id", "reason", "evidence_pointer", "disqualified_by", "timestamp"],
+  "properties": {
+    "schema": {"const": "ArchitectDispatchDisqualification/v1"},
+    "work_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "sealed_revision": {"type": "integer", "minimum": 1},
+    "implementation_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "acceptance_manifest_id": {"type": "string", "minLength": 1},
+    "acceptance_manifest_version": {"type": "integer", "minimum": 1},
+    "disqualification_id": {"type": "string", "minLength": 1},
+    "dispatch_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "handle_id": {"type": "string", "minLength": 1},
+    "architect_id": {"type": "string", "minLength": 1},
+    "reason": {"enum": ["history_isolation_failed", "forbidden_context_exposed", "profile_mismatch", "dispatch_failed", "cancelled"]},
+    "evidence_pointer": {"type": "string", "minLength": 1},
+    "disqualified_by": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DispatchProfileAttestationSet v1",
+  "type": "object",
+  "required": ["schema", "packet_id", "packet_version", "wave", "orchestrator", "selector_source", "requested_model", "requested_reasoning_effort", "runtime_metadata_observed", "issued_at", "entries"],
+  "properties": {
+    "schema": {"const": "DispatchProfileAttestationSet/v1"},
+    "packet_version": {"type": "integer", "minimum": 1},
+    "wave": {"type": "integer", "minimum": 1},
+    "runtime_metadata_observed": {"const": false},
+    "entries": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["task_id", "dispatch_id", "reviewer_id", "lens", "profile_verified", "profile_verification"],
+        "properties": {
+          "task_id": {"type": "string", "minLength": 1},
+          "dispatch_id": {"type": "string", "minLength": 1},
+          "reviewer_id": {"type": "string", "minLength": 1},
+          "lens": {"enum": ["correctness_regression", "edge_security_data", "requirements_evidence"]},
+          "profile_verified": {"const": true},
+          "profile_verification": {
+            "type": "object",
+            "required": ["verified_model", "verified_reasoning_effort", "verification_source", "verification_pointer", "verified_at"],
+            "properties": {
+              "verified_model": {"type": "string", "minLength": 1},
+              "verified_reasoning_effort": {"type": "string", "minLength": 1},
+              "verification_source": {"type": "string", "minLength": 1, "maxLength": 512},
+              "verification_pointer": {"type": "string", "minLength": 1, "maxLength": 512},
+              "verified_at": {"type": "string", "format": "date-time"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,16 @@
+# Keep Graphify scoped to neutral runtime contracts and documentation.
+*
+!AGENTS.md
+!AGENT.sidecar.md
+!README.md
+!.graphifyignore
+!agent-runtime/instructions/
+!agent-runtime/instructions/**
+!agent-runtime/schemas/
+!agent-runtime/schemas/**
+!agent-runtime/lib/
+!agent-runtime/lib/**
+!agent-runtime/capability/
+!agent-runtime/capability/**
+!tests/agent-runtime/
+!tests/agent-runtime/**

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ImplementationScope v1",
+  "type": "object",
+  "required": ["schema", "scope_id", "work_id", "source_revision", "ac_ids", "allowed_paths", "changed_symbols", "non_goals", "acceptance_trace", "behavior_trace", "test_trace", "diagnostic_trace", "attribution", "owner", "created_at"],
+  "properties": {
+    "schema": {"const": "ImplementationScope/v1"},
+    "scope_id": {"type": "string", "minLength": 1},
+    "work_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "ac_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "allowed_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "implementation_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "documentation_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "changed_symbols": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "non_goals": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "acceptance_trace": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "behavior_trace": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "test_trace": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "diagnostic_trace": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "attribution": {"type": "object", "required": ["thread_id", "pointer"], "properties": {"thread_id": {"type": "string", "minLength": 1}, "pointer": {"type": "string", "minLength": 1}}, "additionalProperties": false},
+    "owner": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

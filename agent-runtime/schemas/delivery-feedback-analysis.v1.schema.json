@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Delivery feedback analysis v1",
+  "type": "object",
+  "required": ["schema", "analysis_id", "work_id", "source_revision", "delivery_cycle_id", "source_receipt_id", "origin", "status", "decision", "summary", "affected_ac_ids", "affected_files", "evidence_pointers", "proposed_correction", "analyzed_by", "analyzed_at"],
+  "properties": {
+    "schema": { "const": "DeliveryFeedbackAnalysis/v1" },
+    "analysis_id": { "type": "string", "minLength": 1 },
+    "work_id": { "type": "string", "minLength": 1 },
+    "source_revision": { "type": "string", "minLength": 1 },
+    "delivery_cycle_id": { "type": "string", "minLength": 1 },
+    "source_receipt_id": { "type": "string", "minLength": 1 },
+    "origin": { "enum": ["delivery", "testing"] },
+    "status": { "enum": ["open", "accepted"] },
+    "decision": { "enum": ["defect", "clarification", "rework", null] },
+    "summary": { "type": "string", "minLength": 1 },
+    "affected_ac_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "affected_files": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "evidence_pointers": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "proposed_correction": { "type": "string", "minLength": 1 },
+    "analyzed_by": { "type": "string", "minLength": 1 },
+    "analyzed_at": { "type": "string", "format": "date-time" },
+    "scope": { "enum": ["local", "cross_scope", "persistent"] }
+  },
+  "additionalProperties": false
+}

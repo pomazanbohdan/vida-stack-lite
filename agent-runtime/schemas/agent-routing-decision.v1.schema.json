@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentRoutingDecision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "routing_id", "registry_id", "registry_version", "registry_digest", "capability_epoch", "work_id", "task_id", "scope_id", "source_revision", "phase", "role", "mode", "profile_id", "model", "reasoning", "assurance_stage", "blind", "history_isolation", "reused_agent_id", "context_mode", "context_budget", "required_context", "forbidden_context", "output_schema", "cache_hit", "next_action", "decision_digest"],
+  "properties": {
+    "schema": {"const": "AgentRoutingDecision/v1"},
+    "routing_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "registry_id": {"type": "string", "minLength": 1},
+    "registry_version": {"type": "integer", "minimum": 1},
+    "registry_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "capability_epoch": {"type": "string", "minLength": 1},
+    "work_id": {"type": ["string", "null"]},
+    "task_id": {"type": ["string", "null"]},
+    "scope_id": {"type": ["string", "null"]},
+    "source_revision": {"type": "string", "minLength": 1},
+    "phase": {"type": "string", "minLength": 1},
+    "role": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["reuse", "specialist", "independent"]},
+    "profile_id": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "reasoning": {"enum": ["high", "xhigh", "max"]},
+    "assurance_stage": {"type": "integer", "minimum": 1, "maximum": 4},
+    "blind": {"type": "boolean"},
+    "history_isolation": {"type": "boolean"},
+    "reused_agent_id": {"type": ["string", "null"]},
+    "context_mode": {"enum": ["task_contract", "parent_summary", "sealed_packet", "none"]},
+    "context_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_input_tokens", "max_output_tokens", "max_evidence_lines"],
+      "properties": {
+        "max_input_tokens": {"type": "integer", "minimum": 256, "maximum": 200000},
+        "max_output_tokens": {"type": "integer", "minimum": 128, "maximum": 50000},
+        "max_evidence_lines": {"type": "integer", "minimum": 1, "maximum": 1000}
+      }
+    },
+    "required_context": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "forbidden_context": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "output_schema": {"type": "string", "minLength": 1},
+    "cache_hit": {"type": "boolean"},
+    "next_action": {"type": "string", "minLength": 1, "maxLength": 512},
+    "decision_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

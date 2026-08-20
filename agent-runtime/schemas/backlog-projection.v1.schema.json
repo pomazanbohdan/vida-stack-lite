@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BacklogProjection v1",
+  "type": "object",
+  "required": ["schema", "ledger_id", "task_id", "desired_status", "observed_status", "provider_revision", "sync_status", "gap_pointer", "error", "updated_at"],
+  "properties": {
+    "schema": { "const": "BacklogProjection/v1" },
+    "ledger_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "desired_status": { "enum": ["To Do", "In Development", "In Review", "Ready for Delivery", "Awaiting Testing", "Testing", "Returned for Rework", "Done", "Blocked"] },
+    "observed_status": { "type": ["string", "null"], "enum": [null, "To Do", "In Development", "In Review", "Ready for Delivery", "Awaiting Testing", "Testing", "Returned for Rework", "Done", "Blocked"] },
+    "provider_revision": { "type": "string", "minLength": 1 },
+    "sync_status": { "enum": ["pending", "synced", "failed"] },
+    "gap_pointer": { "type": ["string", "null"] },
+    "error": { "type": ["string", "null"] },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

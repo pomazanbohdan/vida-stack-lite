@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PonytailPolicyDecision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "role", "phase", "mode", "stack_release", "gsd_version", "ponytail_version", "skill_path", "skill_sha256", "capability_epoch", "degraded", "cache_hit", "mutation_allowed", "evidence_pointer", "reason", "policy_fragment", "next_action", "decision_digest"],
+  "properties": {
+    "schema": {"const": "PonytailPolicyDecision/v1"},
+    "work_id": {"type": ["string", "null"]},
+    "source_revision": {"type": ["string", "null"]},
+    "role": {"enum": ["requirements", "business-research", "system-research", "codebase-mapping", "implementation-planner", "executor", "debugger", "code-producing-specialist", "final-complexity-reviewer", "correctness-reviewer", "security-data-migration-reviewer", "verifier", "documentation-reconciler", "blind-architect"]},
+    "phase": {"enum": ["bootstrap", "intake", "trace", "plan", "execute", "verify", "review", "architect", "reconcile", "dispatch"]},
+    "mode": {"enum": ["off", "lite", "full", "review"]},
+    "stack_release": {"type": ["string", "null"]},
+    "gsd_version": {"type": ["string", "null"]},
+    "ponytail_version": {"type": ["string", "null"]},
+    "skill_path": {"type": "string", "minLength": 1},
+    "skill_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "capability_epoch": {"type": "string", "minLength": 1},
+    "degraded": {"type": "boolean"},
+    "cache_hit": {"type": "boolean"},
+    "mutation_allowed": {"type": "boolean"},
+    "evidence_pointer": {"type": "string", "minLength": 1, "pattern": "^[^\\\\:]+$"},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 512},
+    "policy_fragment": {"type": "string", "maxLength": 1000},
+    "next_action": {"type": "string", "minLength": 1, "maxLength": 512},
+    "decision_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

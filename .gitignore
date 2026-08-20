@@ -1,0 +1,14 @@
+node_modules/
+**/node_modules/
+.agent/
+.planning/
+coverage/
+**/coverage/
+agent-runtime/reports/
+agent-runtime/.stryker-tmp*/
+**/.stryker-tmp*/
+.vitest/
+graphify-out/
+*.log
+*.tmp
+*.local

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentRoleProfileRegistry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "registry_id", "version", "capability_epoch", "role_profiles"],
+  "properties": {
+    "$schema": {"type": "string", "minLength": 1},
+    "schema": {"const": "AgentRoleProfileRegistry/v1"},
+    "registry_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "version": {"type": "integer", "minimum": 1},
+    "capability_epoch": {"type": "string", "minLength": 1},
+    "role_profiles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "profile_id", "enabled", "model", "reasoning", "assurance_stage", "blind", "required_independence", "preferred_mode", "reuse_if_same_scope", "context_mode", "context_budget", "output_schema"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1, "pattern": "^[a-z][a-z0-9-]*$"},
+          "profile_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+          "enabled": {"type": "boolean"},
+          "model": {"type": "string", "minLength": 1},
+          "reasoning": {"enum": ["high", "xhigh", "max"]},
+          "assurance_stage": {"type": "integer", "minimum": 1, "maximum": 4},
+          "blind": {"type": "boolean"},
+          "required_independence": {"type": "boolean"},
+          "preferred_mode": {"enum": ["reuse", "specialist", "independent"]},
+          "reuse_if_same_scope": {"type": "boolean"},
+          "context_mode": {"enum": ["task_contract", "parent_summary", "sealed_packet", "none"]},
+          "context_budget": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["max_input_tokens", "max_output_tokens", "max_evidence_lines"],
+            "properties": {
+              "max_input_tokens": {"type": "integer", "minimum": 256, "maximum": 200000},
+              "max_output_tokens": {"type": "integer", "minimum": 128, "maximum": 50000},
+              "max_evidence_lines": {"type": "integer", "minimum": 1, "maximum": 1000}
+            }
+          },
+          "output_schema": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z][A-Za-z0-9./_-]*$"},
+          "ponytail_role": {"type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$"}
+        }
+      }
+    }
+  }
+}

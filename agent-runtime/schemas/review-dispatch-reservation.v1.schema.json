@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewDispatchReservation v1",
+  "type": "object",
+  "required": ["schema", "status", "work_id", "source_revision", "sealed_revision", "implementation_fingerprint", "acceptance_manifest_id", "acceptance_manifest_version", "packet_id", "packet_version", "wave", "generation", "requested_model", "requested_reasoning_effort", "reserved_at", "entries"],
+  "properties": {
+    "schema": {"const": "ReviewDispatchReservation/v1"},
+    "status": {"const": "complete"},
+    "work_id": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "minLength": 1},
+    "sealed_revision": {"type": "integer", "minimum": 1},
+    "implementation_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "acceptance_manifest_id": {"type": "string", "minLength": 1},
+    "acceptance_manifest_version": {"type": "integer", "minimum": 1},
+    "packet_id": {"type": "string", "minLength": 1},
+    "packet_version": {"type": "integer", "minimum": 1},
+    "wave": {"type": "integer", "minimum": 1},
+    "generation": {"type": "integer", "minimum": 1},
+    "requested_model": {"type": "string", "minLength": 1},
+    "requested_reasoning_effort": {"type": "string", "minLength": 1},
+    "reserved_at": {"type": "string", "format": "date-time"},
+    "entries": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["handle_id", "task_id", "dispatch_id", "reviewer_id", "lens"],
+        "properties": {
+          "handle_id": {"type": "string", "minLength": 1},
+          "task_id": {"type": "string", "minLength": 1},
+          "dispatch_id": {"type": "string", "minLength": 1},
+          "reviewer_id": {"type": "string", "minLength": 1},
+          "lens": {"enum": ["correctness_regression", "edge_security_data", "requirements_evidence"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

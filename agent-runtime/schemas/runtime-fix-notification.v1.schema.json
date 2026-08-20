@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime fix notification v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "notification_id",
+    "created_at",
+    "fix_id",
+    "source_revision",
+    "severity",
+    "title",
+    "defect",
+    "changed_paths",
+    "affected_work_ids",
+    "recipients",
+    "validation",
+    "evidence_pointers",
+    "next_action",
+    "delivery",
+    "user_approval_required",
+    "authority"
+  ],
+  "properties": {
+    "schema": { "const": "RuntimeFixNotification/v1" },
+    "notification_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "fix_id": { "type": "string", "minLength": 1 },
+    "source_revision": { "type": "string", "minLength": 1 },
+    "severity": { "enum": ["low", "medium", "high", "critical"] },
+    "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+    "defect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "old_behavior", "expected_behavior", "fix_summary"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "old_behavior": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "expected_behavior": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "fix_summary": { "type": "string", "minLength": 1, "maxLength": 500 }
+      }
+    },
+    "changed_paths": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "affected_work_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "recipients": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["work_id", "thread_id"],
+        "properties": {
+          "work_id": { "type": "string", "minLength": 1 },
+          "thread_id": { "type": ["string", "null"], "minLength": 1 }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "summary", "checks"],
+      "properties": {
+        "status": { "enum": ["pass", "partial", "blocked"] },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "status"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "status": { "enum": ["pass", "fail", "not_run"] }
+            }
+          }
+        }
+      }
+    },
+    "evidence_pointers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "next_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "summary"],
+      "properties": {
+        "operation": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 500 }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "host_operation", "gap_code", "message_compact"],
+      "properties": {
+        "status": { "enum": ["pending_host_dispatch", "blocked", "sent"] },
+        "host_operation": { "const": "collaboration.send_message_to_thread" },
+        "gap_code": { "type": ["string", "null"] },
+        "message_compact": { "type": "string", "minLength": 1, "maxLength": 1400 }
+      }
+    },
+    "user_approval_required": { "type": "boolean" },
+    "authority": { "const": "derived_non_authoritative" }
+  }
+}

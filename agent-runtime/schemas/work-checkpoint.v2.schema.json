@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkCheckpoint v2",
+  "type": "object",
+  "required": ["schema", "work_id", "revision", "lifecycle_state", "protocol_version", "source_revision", "route", "risk", "change_kind", "allowed_paths", "source_plan", "acceptance", "test_plan", "acceptance_manifest", "next_action", "reviews", "verification", "evidence", "leases", "imports", "review_generation_ledger", "question_candidates"],
+  "properties": {
+    "schema": {"const": "WorkCheckpoint/v2"},
+    "work_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "lifecycle_state": {"enum": ["INTAKE", "TRACE", "PLAN", "EXECUTE", "VERIFY", "DELIVERY", "COMPLETE"]},
+    "route": {"enum": ["R0", "R1", "R2", "R3", "R4"]},
+    "risk": {"enum": ["low", "medium", "high"]},
+    "change_kind": {"enum": ["documentation", "feature", "defect", "refactor", "incident", "migration", "destructive"]},
+    "source_revision": {"type": "string", "minLength": 1},
+    "protocol_version": {"enum": ["agent-development-runtime/v2", "agent-development-runtime/v3", "agent-development-runtime/v4"]},
+    "implementation_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "implementation_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "documentation_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "scope_snapshot": {
+      "type": ["object", "null"],
+      "required": ["schema", "snapshot_id", "source_revision", "implementation_fingerprint", "scope_paths", "documentation_paths", "files", "absence_assertions", "repository_head", "captured_at"],
+      "properties": {
+        "schema": {"const": "ScopeSnapshot/v1"}, "snapshot_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "source_revision": {"type": "string", "minLength": 1}, "implementation_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "scope_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "documentation_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "files": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "object", "required": ["path", "sha256", "size", "mode", "mtime_ms", "kind"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "size": {"type": "integer", "minimum": 0}, "mode": {"type": "integer", "minimum": 0}, "mtime_ms": {"type": "number", "minimum": 0}, "kind": {"enum": ["implementation", "documentation"]}}, "additionalProperties": false}},
+        "absence_assertions": {"type": "array", "items": {"type": "object", "required": ["path", "required", "present"], "properties": {"path": {"type": "string", "minLength": 1}, "required": {"type": "boolean"}, "present": {"type": "boolean"}}, "additionalProperties": false}},
+        "repository_head": {"type": ["string", "null"]}, "coordination": {"type": ["object", "null"]},
+        "change_impact_assessment_id": {"type": ["string", "null"], "minLength": 1}, "change_impact_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "change_impact_profile": {"enum": ["focused", "expanded", "full", null]}, "change_impact_status": {"enum": ["pass", "warning", "full_profile_required", "blocked", null]},
+        "captured_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "scope_snapshot_history": {"type": "array", "items": {"type": "object"}},
+    "change_impact_required": {"type": "boolean"},
+    "change_impact_assessment": {
+      "type": ["object", "null"],
+      "properties": {
+        "schema": {"const": "ChangeImpactAssessment/v1"}, "assessment_id": {"type": "string", "minLength": 1}, "work_id": {"type": "string", "minLength": 1}, "cycle_id": {"type": "string", "minLength": 1}, "source_revision": {"type": "string", "minLength": 1}, "scope_id": {"type": "string", "minLength": 1}, "phase": {"enum": ["pre", "post"]}, "snapshot_id": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "implementation_fingerprint": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "predicted_test_profile": {"enum": ["focused", "expanded", "full"]}, "status": {"enum": ["pass", "warning", "full_profile_required", "blocked"]}, "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": true
+    },
+    "change_impact_history": {"type": "array", "items": {"type": "object"}},
+    "source_plan": {"type": "object", "required": ["br", "sr", "ac", "gaps", "scope", "verification", "rollback_cleanup"]},
+    "acceptance_manifest": {
+      "type": "object",
+      "required": ["schema", "id", "version", "ac_ids", "source", "scope", "source_revision", "contracts"],
+      "properties": {
+        "schema": {"const": "AcceptanceManifest/v1"},
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "integer", "minimum": 1},
+        "ac_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "source": {"type": "string", "minLength": 1},
+        "scope": {"type": "string", "minLength": 1},
+        "source_revision": {"type": "string", "minLength": 1},
+        "contracts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "definition", "sr", "evidence"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "definition": {"type": "string", "minLength": 1},
+              "sr": {"type": "string", "minLength": 1},
+              "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+            }
+          }
+        }
+      }
+    },
+    "coordination": {
+      "type": "object",
+      "required": ["schema", "work_id", "thread_id", "ticket_id", "generation", "exclusive_resources", "active_resources", "blocked_resources"],
+      "properties": {
+        "schema": {"const": "CoordinationBinding/v1"}, "work_id": {"type": "string", "minLength": 1}, "thread_id": {"type": "string", "minLength": 1}, "ticket_id": {"type": "string", "minLength": 1}, "generation": {"type": "integer", "minimum": 1},
+        "exclusive_resources": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}, "active_resources": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}, "blocked_resources": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "project_context": {
+      "type": "object",
+      "required": ["schema", "tenant_id", "primary_project_id", "affected_project_ids", "ledger_id", "task_id", "wiki_roots", "provider_revision"],
+      "properties": {
+        "schema": {"const": "ProjectContext/v1"}, "tenant_id": {"type": "string", "minLength": 1}, "primary_project_id": {"type": ["string", "null"], "minLength": 1},
+        "affected_project_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "ledger_id": {"type": "string", "minLength": 1}, "task_id": {"type": "string", "minLength": 1},
+        "wiki_roots": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "provider_revision": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "implementation_policy": {
+      "type": "object",
+      "required": ["schema", "work_id", "role", "phase", "mode", "stack_release", "gsd_version", "ponytail_version", "skill_path", "skill_sha256", "capability_epoch", "degraded", "cache_hit", "mutation_allowed", "evidence_pointer", "reason", "policy_fragment", "next_action", "decision_digest"],
+      "properties": {
+        "schema": {"const": "PonytailPolicyDecision/v1"},
+        "work_id": {"type": ["string", "null"]}, "source_revision": {"type": ["string", "null"]},
+        "role": {"enum": ["requirements", "business-research", "system-research", "codebase-mapping", "implementation-planner", "executor", "debugger", "code-producing-specialist", "final-complexity-reviewer", "correctness-reviewer", "security-data-migration-reviewer", "verifier", "documentation-reconciler", "blind-architect"]},
+        "phase": {"enum": ["bootstrap", "intake", "trace", "plan", "execute", "verify", "review", "architect", "reconcile", "dispatch"]}, "mode": {"enum": ["off", "lite", "full", "review"]},
+        "stack_release": {"type": ["string", "null"]}, "gsd_version": {"type": ["string", "null"]}, "ponytail_version": {"type": ["string", "null"]},
+        "skill_path": {"type": "string", "minLength": 1}, "skill_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "capability_epoch": {"type": "string", "minLength": 1},
+        "degraded": {"type": "boolean"}, "cache_hit": {"type": "boolean"}, "mutation_allowed": {"type": "boolean"}, "evidence_pointer": {"type": "string", "minLength": 1}, "reason": {"type": "string", "minLength": 1}, "policy_fragment": {"type": "string"}, "next_action": {"type": "string", "minLength": 1}, "decision_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "backlog_projection": {
+      "type": "object",
+      "required": ["schema", "ledger_id", "task_id", "desired_status", "observed_status", "provider_revision", "sync_status", "gap_pointer", "error", "updated_at"],
+      "properties": {
+        "schema": {"const": "BacklogProjection/v1"}, "ledger_id": {"type": "string", "minLength": 1}, "task_id": {"type": "string", "minLength": 1},
+        "desired_status": {"enum": ["To Do", "In Development", "In Review", "Ready for Delivery", "Awaiting Testing", "Testing", "Returned for Rework", "Done", "Blocked"]},
+        "observed_status": {"type": ["string", "null"]}, "provider_revision": {"type": "string", "minLength": 1}, "sync_status": {"enum": ["pending", "synced", "failed"]},
+        "gap_pointer": {"type": ["string", "null"]}, "error": {"type": ["string", "null"]}, "updated_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "user_testing_receipts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["schema", "work_id", "source_revision", "sealed_revision", "implementation_fingerprint", "acceptance_manifest_id", "acceptance_manifest_version", "delivery_cycle_id", "decision", "actor", "source", "timestamp", "sanitized_pointers"],
+        "properties": {
+          "schema": {"const": "UserTestingReceipt/v1"}, "work_id": {"type": "string", "minLength": 1}, "source_revision": {"type": "string", "minLength": 1}, "sealed_revision": {"type": "integer", "minimum": 1},
+          "implementation_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "acceptance_manifest_id": {"type": "string", "minLength": 1}, "acceptance_manifest_version": {"type": "integer", "minimum": 1},
+          "delivery_cycle_id": {"type": "string", "minLength": 1}, "decision": {"enum": ["started", "accepted", "feedback", "rejected"]}, "actor": {"type": "string", "minLength": 1}, "source": {"type": "string", "minLength": 1},
+          "timestamp": {"type": "string", "format": "date-time"}, "sanitized_pointers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "delivery_history": { "type": "array", "items": { "type": "object" } },
+    "testing_history": { "type": "array", "items": { "type": "object" } },
+    "correction_history": { "type": "array", "items": { "type": "object" } },
+    "review_refreeze_history": { "type": "array", "items": { "type": "object", "required": ["schema", "work_id", "from_revision", "to_revision", "from_source_revision", "to_source_revision", "from_sealed_revision", "from_fingerprint", "to_fingerprint", "from_packet_id", "from_generation", "reason", "pointer", "actor", "timestamp"], "properties": { "schema": { "const": "ReviewRefreeze/v1" }, "work_id": { "type": "string", "minLength": 1 }, "from_revision": { "type": "integer", "minimum": 1 }, "to_revision": { "type": "integer", "minimum": 1 }, "from_source_revision": { "type": "string", "minLength": 1 }, "to_source_revision": { "type": "string", "minLength": 1 }, "from_sealed_revision": { "type": "integer", "minimum": 1 }, "from_fingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "to_fingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "from_packet_id": { "type": "string", "minLength": 1 }, "from_generation": { "type": "integer", "minimum": 1 }, "reason": { "type": "string", "minLength": 1 }, "pointer": { "type": "string", "minLength": 1 }, "actor": { "type": "string", "minLength": 1 }, "timestamp": { "type": "string", "format": "date-time" } }, "additionalProperties": false } },
+    "protocol_migration_history": { "type": "array", "items": { "type": "object", "required": ["schema", "migration_id", "work_id", "from_protocol", "to_protocol", "from_checkpoint_schema", "to_checkpoint_schema", "from_revision", "to_revision", "source_revision", "normalizations", "reason", "pointer", "actor", "timestamp", "status"], "properties": { "schema": { "const": "CheckpointProtocolMigration/v1" }, "migration_id": { "type": "string", "minLength": 1 }, "work_id": { "type": "string", "minLength": 1 }, "from_protocol": { "type": "string", "minLength": 1 }, "to_protocol": { "enum": ["agent-development-runtime/v2", "agent-development-runtime/v3", "agent-development-runtime/v4"] }, "from_checkpoint_schema": { "const": "WorkCheckpoint/v2" }, "to_checkpoint_schema": { "const": "WorkCheckpoint/v2" }, "from_revision": { "type": "integer", "minimum": 1 }, "to_revision": { "type": "integer", "minimum": 1 }, "source_revision": { "type": "string", "minLength": 1 }, "normalizations": { "type": "array", "items": { "type": "string", "minLength": 1 } }, "reason": { "type": "string", "minLength": 1 }, "pointer": { "type": "string", "minLength": 1 }, "actor": { "type": "string", "minLength": 1 }, "timestamp": { "type": "string", "format": "date-time" }, "status": { "const": "applied" } }, "additionalProperties": false } },
+    "acceptance_manifest_repair_history": { "type": "array", "items": { "type": "object" } },
+    "assurance_policy": {
+      "type": "object",
+      "required": ["schema", "scope_triage", "release", "max_corrections_per_epoch", "activated_by", "activated_at"],
+      "properties": {
+        "schema": {"const": "AssurancePolicy/v1"}, "scope_triage": {"const": true}, "release": {"const": "scope-triage/v1"},
+        "max_corrections_per_epoch": {"type": "integer", "minimum": 1, "maximum": 3}, "activated_by": {"type": "string", "minLength": 1}, "activated_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": true
+    },
+    "scope_contract": {
+      "type": "object",
+      "required": ["schema", "scope_id", "work_id", "source_revision", "ac_ids", "allowed_paths", "changed_symbols", "non_goals", "acceptance_trace", "owner", "created_at"],
+      "properties": {
+        "schema": {"const": "ImplementationScope/v1"}, "scope_id": {"type": "string", "minLength": 1}, "work_id": {"type": "string", "minLength": 1}, "source_revision": {"type": "string", "minLength": 1},
+        "ac_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "allowed_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "implementation_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "documentation_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "changed_symbols": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "non_goals": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "acceptance_trace": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "behavior_trace": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "test_trace": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "diagnostic_trace": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "attribution": {"type": "object", "required": ["thread_id", "pointer"], "properties": {"thread_id": {"type": "string", "minLength": 1}, "pointer": {"type": "string", "minLength": 1}}, "additionalProperties": false}, "owner": {"type": "string", "minLength": 1}, "created_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": true
+    },
+    "scope_contract_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "scope_recovery": {"type": ["object", "null"]}, "scope_recovery_history": {"type": "array", "items": {"type": "object"}},
+    "coordination_rebind_history": {"type": "array", "items": {"type": "object", "required": ["schema", "rebind_id", "work_id", "ticket_id", "thread_id", "source_revision", "resources", "retired_claim_ids", "reason", "decided_by", "decision_pointer", "from_ledger_revision", "to_ledger_revision", "created_at"], "properties": {"schema": {"const": "CoordinationScopeRebind/v1"}, "rebind_id": {"type": "string", "minLength": 1}, "work_id": {"type": "string", "minLength": 1}, "previous_ticket_id": {"type": ["string", "null"]}, "ticket_id": {"type": "string", "minLength": 1}, "thread_id": {"type": "string", "minLength": 1}, "source_revision": {"type": "string", "minLength": 1}, "resources": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "retired_claim_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "reason": {"type": "string", "minLength": 1}, "decided_by": {"type": "string", "minLength": 1}, "decision_pointer": {"type": "string", "minLength": 1}, "from_ledger_revision": {"type": "integer", "minimum": 1}, "to_ledger_revision": {"type": "integer", "minimum": 1}, "created_at": {"type": "string", "format": "date-time"}}, "additionalProperties": false}},
+    "review_triage": {"type": ["object", "null"]}, "review_triage_history": {"type": "array", "items": {"type": "object"}},
+    "assurance_epoch": {"type": "integer", "minimum": 0}, "epoch_correction_count": {"type": "integer", "minimum": 0}, "epoch_review_failure_count": {"type": "integer", "minimum": 0},
+    "correction_count": { "type": "integer", "minimum": 0 },
+    "review_failure_count": { "type": "integer", "minimum": 0 },
+    "review_failure_streak": { "type": "integer", "minimum": 0 },
+    "architect_diagnosis_count": { "type": "integer", "minimum": 0 },
+    "architect_dispatch_ledger": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["dispatch_id", "task_id", "handle_id", "architect_id"],
+        "properties": {
+          "dispatch_id": { "type": "string", "minLength": 1 },
+          "task_id": { "type": "string", "minLength": 1 },
+          "handle_id": { "type": "string", "minLength": 1 },
+          "architect_id": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "architect_diagnostic_dispatch": { "type": ["object", "null"] },
+    "architect_dispatch_disqualification_history": { "type": "array", "items": { "type": "object" } },
+    "architecture_diagnosis": { "type": ["object", "null"] },
+    "architecture_diagnosis_history": { "type": "array", "items": { "type": "object" } },
+    "feedback_analysis": {
+      "type": ["object", "null"],
+      "required": ["schema", "analysis_id", "work_id", "source_revision", "delivery_cycle_id", "source_receipt_id", "origin", "status", "decision", "summary", "affected_ac_ids", "affected_files", "evidence_pointers", "proposed_correction", "analyzed_by", "analyzed_at"],
+      "properties": {
+        "schema": { "const": "DeliveryFeedbackAnalysis/v1" }, "analysis_id": { "type": "string", "minLength": 1 }, "work_id": { "type": "string", "minLength": 1 }, "source_revision": { "type": "string", "minLength": 1 }, "delivery_cycle_id": { "type": "string", "minLength": 1 }, "source_receipt_id": { "type": "string", "minLength": 1 }, "origin": { "enum": ["delivery", "testing"] }, "status": { "enum": ["open", "accepted"] }, "decision": { "enum": ["defect", "clarification", "rework", null] }, "summary": { "type": "string", "minLength": 1 }, "affected_ac_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "affected_files": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "evidence_pointers": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "proposed_correction": { "type": "string", "minLength": 1 }, "analyzed_by": { "type": "string", "minLength": 1 }, "analyzed_at": { "type": "string", "format": "date-time" }, "scope": { "enum": ["local", "cross_scope", "persistent"] }
+      },
+      "additionalProperties": false
+    },
+    "feedback_analysis_history": { "type": "array", "items": { "type": "object" } },
+    "correction_authorization": { "type": ["object", "null"] },
+    "correction_authorization_history": { "type": "array", "items": { "type": "object" } },
+    "cross_scope_correction_history": { "type": "array", "items": { "type": "object", "required": ["schema", "authorization_id", "work_id", "source_revision", "delivery_cycle_id", "origin", "source_receipt_id", "feedback_analysis_id", "decision", "scope", "affected_ac_ids", "affected_files", "prior_scope_id", "scope_id", "scope_contract_digest", "platform_knowledge_context_id", "platform_knowledge_digest", "disposition", "reason", "actor", "pointer", "from_revision", "to_revision", "created_at"], "properties": { "schema": { "const": "CrossScopeCorrectionAuthorization/v1" }, "authorization_id": { "type": "string", "minLength": 1 }, "work_id": { "type": "string", "minLength": 1 }, "source_revision": { "type": "string", "minLength": 1 }, "delivery_cycle_id": { "type": "string", "minLength": 1 }, "origin": { "enum": ["delivery", "testing"] }, "source_receipt_id": { "type": "string", "minLength": 1 }, "feedback_analysis_id": { "type": "string", "minLength": 1 }, "decision": { "enum": ["defect", "rework"] }, "scope": { "const": "cross_scope" }, "affected_ac_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "affected_files": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "prior_scope_id": { "type": "string", "minLength": 1 }, "scope_id": { "type": "string", "minLength": 1 }, "scope_contract_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "platform_knowledge_context_id": { "type": "string", "minLength": 1 }, "platform_knowledge_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "disposition": { "const": "scope_expansion_correction" }, "reason": { "type": "string", "minLength": 1 }, "actor": { "type": "string", "minLength": 1 }, "pointer": { "type": "string", "minLength": 1 }, "from_revision": { "type": "integer", "minimum": 1 }, "to_revision": { "type": "integer", "minimum": 1 }, "created_at": { "type": "string", "format": "date-time" } }, "additionalProperties": false } },
+    "feedback_consumption_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["schema", "consumption_id", "work_id", "source_revision", "delivery_cycle_id", "origin", "source_receipt_id", "feedback_analysis_id", "authorization_id", "correction_id", "pointer", "consumed_by", "consumed_at"],
+        "properties": {
+          "schema": { "const": "FeedbackReceiptConsumption/v1" },
+          "consumption_id": { "type": "string", "minLength": 1 },
+          "work_id": { "type": "string", "minLength": 1 },
+          "source_revision": { "type": "string", "minLength": 1 },
+          "delivery_cycle_id": { "type": "string", "minLength": 1 },
+          "origin": { "enum": ["delivery", "testing"] },
+          "source_receipt_id": { "type": "string", "minLength": 1 },
+          "feedback_analysis_id": { "type": "string", "minLength": 1 },
+          "authorization_id": { "type": ["string", "null"] },
+          "correction_id": { "type": "string", "minLength": 1 },
+          "pointer": { "type": "string", "minLength": 1 },
+          "consumed_by": { "type": "string", "minLength": 1 },
+          "consumed_at": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "scope_follow_up_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["schema", "follow_up_id", "work_id", "source_revision", "prior_scope_id", "scope_id", "ac_ids", "affected_files", "disposition", "reason", "pointer", "actor", "from_revision", "to_revision", "timestamp"],
+        "properties": {
+          "schema": { "const": "ScopeFollowUpAuthorization/v1" },
+          "follow_up_id": { "type": "string", "minLength": 1 },
+          "work_id": { "type": "string", "minLength": 1 },
+          "source_revision": { "type": "string", "minLength": 1 },
+          "prior_scope_id": { "type": "string", "minLength": 1 },
+          "scope_id": { "type": "string", "minLength": 1 },
+          "ac_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "affected_files": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "disposition": { "const": "bounded_same_scope" },
+          "reason": { "type": "string", "minLength": 1 },
+          "pointer": { "type": "string", "minLength": 1 },
+          "actor": { "type": "string", "minLength": 1 },
+          "from_revision": { "type": "integer", "minimum": 1 },
+          "to_revision": { "type": "integer", "minimum": 1 },
+          "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "verification_scope_amendment_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["schema", "amendment_id", "work_id", "source_revision", "prior_scope_id", "scope_id", "ac_ids", "added_files", "scope_contract_digest", "platform_knowledge_context_id", "platform_knowledge_digest", "evidence", "reason", "actor", "pointer", "from_revision", "to_revision", "timestamp"],
+        "properties": {
+          "schema": { "const": "VerificationScopeAmendment/v1" },
+          "amendment_id": { "type": "string", "minLength": 1 },
+          "work_id": { "type": "string", "minLength": 1 },
+          "source_revision": { "type": "string", "minLength": 1 },
+          "prior_scope_id": { "type": "string", "minLength": 1 },
+          "scope_id": { "type": "string", "minLength": 1 },
+          "ac_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "added_files": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+          "scope_contract_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "platform_knowledge_context_id": { "type": "string", "minLength": 1 },
+          "platform_knowledge_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "evidence": { "type": "object", "required": ["status", "command", "path", "expected", "actual", "pointer"], "properties": { "status": { "const": "failed" }, "command": { "type": "string", "minLength": 1 }, "path": { "type": "string", "minLength": 1 }, "expected": { "type": "string", "minLength": 1 }, "actual": { "type": "string", "minLength": 1 }, "pointer": { "type": "string", "minLength": 1 } }, "additionalProperties": false },
+          "reason": { "type": "string", "minLength": 1 },
+          "actor": { "type": "string", "minLength": 1 },
+          "pointer": { "type": "string", "minLength": 1 },
+          "from_revision": { "type": "integer", "minimum": 1 },
+          "to_revision": { "type": "integer", "minimum": 1 },
+          "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "recovery_evidence": {"type": "array"},
+    "review_generation_ledger": {
+      "type": "array",
+      "items": {"type": "object", "required": ["generation", "packet_id", "packet_version", "wave"], "properties": {"generation": {"type": "integer", "minimum": 1}, "packet_id": {"type": "string", "minLength": 1, "pattern": "\\S"}, "packet_version": {"type": "integer", "minimum": 1}, "wave": {"type": "integer", "minimum": 1}}, "additionalProperties": false}
+    },
+    "review_dispatch_reservation_ledger": {
+      "type": "array",
+      "items": {"type": "object", "required": ["generation", "packet_id", "handle_ids"], "properties": {"generation": {"type": "integer", "minimum": 1}, "packet_id": {"type": "string", "minLength": 1}, "handle_ids": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}}, "additionalProperties": false}
+    },
+    "review_dispatch_reservation": {"type": "object"},
+    "platform_knowledge_required": {"type": "boolean"},
+    "platform_knowledge_cycle_id": {"type": ["string", "null"]},
+    "platform_knowledge_invalidated_by_revision": {"type": "integer", "minimum": 1},
+    "platform_knowledge_context": {"type": ["object", "null"]},
+    "platform_knowledge_context_history": {"type": "array", "items": {"type": "object"}},
+    "platform_knowledge_recovery_history": {"type": "array", "items": {"type": "object", "required": ["schema", "recovery_id", "work_id", "context_id", "cycle_id", "source_revision", "scope_id", "digest", "sealed_revision", "from_revision", "to_revision", "reason", "pointer", "actor", "timestamp"], "properties": {"schema": {"const": "PlatformKnowledgeContextRecovery/v1"}, "recovery_id": {"type": "string", "minLength": 1}, "work_id": {"type": "string", "minLength": 1}, "context_id": {"type": "string", "minLength": 1}, "cycle_id": {"type": "string", "minLength": 1}, "source_revision": {"type": "string", "minLength": 1}, "scope_id": {"type": "string", "minLength": 1}, "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "sealed_revision": {"type": "integer", "minimum": 1}, "from_revision": {"type": "integer", "minimum": 1}, "to_revision": {"type": "integer", "minimum": 1}, "reason": {"type": "string", "minLength": 1}, "pointer": {"type": "string", "minLength": 1}, "actor": {"type": "string", "minLength": 1}, "timestamp": {"type": "string", "format": "date-time"}}, "additionalProperties": false}},
+    "documentation_skill_validation": {"type": ["object", "null"]},
+    "question_candidates": {"type": "array"}, "leases": {"type": "array"}, "imports": {"type": "array"}
+  },
+  "allOf": [
+    {"if": {"properties": {"assurance_policy": {"type": "object", "properties": {"scope_triage": {"const": true}}}}, "required": ["assurance_policy"]}, "then": {"required": ["scope_contract", "scope_contract_digest"]}},
+    {"if": {"properties": {"protocol_version": {"const": "agent-development-runtime/v3"}}, "required": ["protocol_version"]}, "then": {"required": ["coordination", "review_dispatch_reservation_ledger"]}},
+    {"if": {"properties": {"protocol_version": {"const": "agent-development-runtime/v4"}}, "required": ["protocol_version"]}, "then": {"required": ["coordination", "review_dispatch_reservation_ledger", "project_context", "backlog_projection", "user_testing_receipts", "implementation_policy"]}}
+  ],
+  "additionalProperties": true
+}

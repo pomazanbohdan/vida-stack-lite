@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProjectContext v1",
+  "type": "object",
+  "required": ["schema", "tenant_id", "primary_project_id", "affected_project_ids", "ledger_id", "task_id", "wiki_roots", "provider_revision"],
+  "properties": {
+    "schema": { "const": "ProjectContext/v1" },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "primary_project_id": { "type": ["string", "null"], "minLength": 1 },
+    "affected_project_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "ledger_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "pattern": "^(?:AGENT|[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*)-[1-9][0-9]*$" },
+    "wiki_roots": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "provider_revision": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Blind review packet v2",
+  "type": "object",
+  "required": ["schema", "packet_id", "packet_version", "wave", "work_id", "implementation_fingerprint", "status", "source_revision", "sealed_revision", "acceptance_manifest_id", "acceptance_manifest_version", "review_scope", "required_profile"],
+  "properties": {
+    "schema": {"const": "BlindReviewPacket/v2"},
+    "packet_version": {"type": "integer", "minimum": 1},
+    "wave": {"type": "integer", "minimum": 1},
+    "implementation_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sealed_revision": {"type": "integer", "minimum": 1},
+    "status": {"const": "frozen"},
+    "change_impact_assessment_id": {"type": ["string", "null"], "minLength": 1},
+    "change_impact_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "change_impact_status": {"enum": ["pass", "warning", "full_profile_required", "blocked", null]},
+    "change_impact_test_profile": {"enum": ["focused", "expanded", "full", null]}
+  },
+  "additionalProperties": true
+}
