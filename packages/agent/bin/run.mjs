@@ -1232,6 +1232,11 @@ function parseArgs(args) {
     '--continuation',
     '--inspect',
     '--issue-wave',
+    '--recover-expired-lease',
+    '--renew-lease',
+    '--rebind-current-bundle',
+    '--native-session-handle',
+    '--lease-generation',
     '--report',
     '--reconcile',
     '--export-staged-witness',
@@ -1250,7 +1255,7 @@ function parseArgs(args) {
     )
       fail(
         'GAP-VIDA-RUN-CLI-001',
-        'Usage: run.mjs --project-root ABSOLUTE_PATH --repository ID --project ID --work-path RELATIVE_PATH --work-id ID --attempt NUMBER --scope-digest SHA256 --team ID --kind KIND --intent INTENT --workflow WORKFLOW_ID',
+        'Usage: run.mjs --project-root ABSOLUTE_PATH --repository ID --project ID --work-path RELATIVE_PATH --work-id ID --attempt NUMBER --scope-digest SHA256 --team ID --kind KIND --intent INTENT --workflow WORKFLOW_ID [--recover-expired-lease true --native-session-handle HANDLE --lease-generation NUMBER --expected-revision NUMBER --expected-digest SHA256]',
       );
     if (key === '--project') values.projects.push(value);
     else if (key === '--scope-path') values.scope_paths.push(value);
@@ -1271,6 +1276,8 @@ function parseArgs(args) {
   ];
   const deriveScope =
     values.scope_paths.length > 0 &&
+    !values.recover_expired_lease &&
+    !values.renew_lease &&
     !values.issue_wave &&
     !values.report &&
     !values.reconcile &&
@@ -1279,11 +1286,34 @@ function parseArgs(args) {
     !values.export_staged_witness;
   if (required.some((key) => !values[key]) || values.projects.length < 1 || (!values.scope_digest && !deriveScope))
     fail('GAP-VIDA-RUN-CLI-001', 'All launcher arguments are required.');
-  const changing = Boolean(values.issue_wave || values.report || values.reconcile);
+  const changing = Boolean(
+    values.issue_wave || values.report || values.reconcile || values.recover_expired_lease || values.renew_lease,
+  );
   const exporting = Boolean(values.export_staged_witness || values.payload_manifest_sha256);
   if (
-    [values.issue_wave, values.report, values.reconcile].filter(Boolean).length > 1 ||
+    [values.issue_wave, values.report, values.reconcile, values.recover_expired_lease, values.renew_lease].filter(
+      Boolean,
+    ).length > 1 ||
     (values.issue_wave && values.issue_wave !== 'true') ||
+    (values.recover_expired_lease &&
+      (values.recover_expired_lease !== 'true' ||
+        values.rebind_current_bundle !== 'true' ||
+        !values.native_session_handle ||
+        !/^[1-9][0-9]*$/.test(values.lease_generation ?? '') ||
+        !Number.isSafeInteger(Number(values.lease_generation)) ||
+        values.native_session_handle.length > 256 ||
+        /\p{Cc}/u.test(values.native_session_handle))) ||
+    (!values.recover_expired_lease &&
+      !values.renew_lease &&
+      (values.native_session_handle || values.lease_generation)) ||
+    (!values.recover_expired_lease && values.rebind_current_bundle) ||
+    (values.renew_lease &&
+      (values.renew_lease !== 'true' ||
+        !values.native_session_handle ||
+        !/^[1-9][0-9]*$/.test(values.lease_generation ?? '') ||
+        !Number.isSafeInteger(Number(values.lease_generation)) ||
+        values.native_session_handle.length > 256 ||
+        /\p{Cc}/u.test(values.native_session_handle))) ||
     changing !== Boolean(values.expected_revision && values.expected_digest) ||
     (!changing && (values.expected_revision || values.expected_digest)) ||
     (changing &&
@@ -1313,7 +1343,10 @@ function parseArgs(args) {
         exporting ||
         values.scope_paths.length > 0))
   )
-    fail('GAP-VIDA-RUN-CLI-001', 'Issue-wave or report requires one mode and an exact expected state version.');
+    fail(
+      'GAP-VIDA-RUN-CLI-001',
+      'Mutation modes require one mode and an exact expected state version; renewal also requires the current owner and lease generation.',
+    );
   if (!path.isAbsolute(values.project_root) || path.resolve(values.project_root) !== values.project_root)
     fail('GAP-VIDA-RUN-CLI-002', 'The project root must be one canonical absolute path.');
   let identity;
@@ -1545,6 +1578,309 @@ export async function run(args = process.argv.slice(2)) {
       workflow_id: witness.workflow_id,
       run_id: witness.run_id,
     };
+  }
+  if (values.recover_expired_lease) {
+    const { readLocalSourceWriteAuthorization } = await import('../src/orchestration/local-source-authorization.ts');
+    const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+    const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
+    const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
+    const { snapshotDeclaredSources, snapshotRuntimePackageSources } =
+      await import('../src/orchestration/scoped-source-snapshot.ts');
+    const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+    const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
+    const project = loadProjectSetContext(values.project_root, config, values.repository, values.projects);
+    const identity = {
+      repository_id: project.repository_id,
+      project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest,
+      work_id: values.work_id,
+    };
+    const ledger = openConfiguredMastraSessionLedger(values.project_root);
+    try {
+      const journal = ledger.resume(values.work_id, Number(values.attempt));
+      const host = ledger.hostState.readHostStateSnapshot(identity);
+      if (
+        !journal ||
+        !host.work ||
+        !host.workVersion ||
+        !host.ledgerVersion ||
+        host.work.binding.team_id !== values.team ||
+        host.work.binding.workflow_id !== values.workflow
+      )
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery admitted work or selection differs.');
+
+      const access = requireSafeRepositoryAccess(values.project_root);
+      ledger.hostState.recoverExpiredLocalLease({
+        identity,
+        attempt: Number(values.attempt),
+        nativeSessionHandle: values.native_session_handle,
+        generation: Number(values.lease_generation),
+        expectedWork: host.workVersion,
+        expectedLedger: host.ledgerVersion,
+        expectedJournal: { revision: Number(values.expected_revision), digest: values.expected_digest },
+        expectedMaintenanceGeneration: host.maintenanceGeneration,
+        verifyCurrent: (work, state) => {
+          const currentConfig = loadRuntimeConfig(values.project_root);
+          const approval = work.lifecycle.references.find(
+            (reference) =>
+              reference.kind === 'execution_approval' &&
+              reference.disposition === 'current' &&
+              reference.decision === 'approved',
+          );
+          if (!approval || approval.artifact_schema !== 'LocalSourceWriteAuthorization/v1')
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery requires the existing attributable source authority.');
+          const existingAuthority = readLocalSourceWriteAuthorization(values.project_root, approval.path);
+          const authority = existingAuthority.authorization;
+          if (
+            existingAuthority.sha256 !== approval.sha256 ||
+            authority.schema !== 'LocalSourceWriteAuthorization/v1' ||
+            authority.action !== 'source.write' ||
+            approval.scope_id !== work.binding.scope_id ||
+            approval.source_revision !== work.binding.work_source_revision ||
+            authority.user_instruction_ref !== approval.record_id ||
+            approval.principal !== 'local-session:' + canonicalJsonDigest(values.native_session_handle) ||
+            authority.native_session_handle !== values.native_session_handle ||
+            authority.work_id !== values.work_id ||
+            authority.attempt !== Number(values.attempt) ||
+            authority.scope_digest !== work.binding.work_source_revision ||
+            authority.config_digest !== work.binding.config_digest ||
+            authority.workflow_id !== work.binding.workflow_id ||
+            canonicalJsonDigest([...authority.implementation_paths].sort()) !==
+              canonicalJsonDigest([...work.binding.implementation_paths].sort()) ||
+            authority.stage_ids.some(
+              (id) =>
+                !currentConfig.workflows[work.binding.workflow_id].stages.some(
+                  (stage) => stage.id === id && stage.kind === 'develop',
+                ),
+            )
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery existing source authority changed.');
+          if (values.rebind_current_bundle !== 'true')
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery requires explicit current bundle rebind.');
+          for (const wave of state.completed)
+            for (const item of wave.items) {
+              const stage = currentConfig.workflows[work.binding.workflow_id]?.stages.find(
+                (entry) => entry.id === item.request.stage_id,
+              );
+              const assignment = stage?.assignments[item.request.assignment_index];
+              const profile = assignment && currentConfig.agents.profiles[assignment.profile];
+              if (
+                !assignment ||
+                !profile ||
+                profile.mutation_scope === 'repository_source' ||
+                item.request.role !== assignment.role ||
+                item.request.config_digest !== work.binding.config_digest ||
+                item.request.scope_digest !== state.source_scope.digest ||
+                !item.observation ||
+                item.observation.status !== 'reported_complete' ||
+                item.observation.output_digest !== canonicalJsonDigest(item.observation.summary)
+              )
+                fail(
+                  'GAP-VIDA-RUN-CONTEXT-001',
+                  'Expired recovery predecessor evidence is not accepted readonly current-source evidence.',
+                );
+              if (item.research_normalization) {
+                const plan = item.research_normalization;
+                const artifact = work.artifacts.find(
+                  (entry) =>
+                    entry.path === plan.record_path &&
+                    entry.sha256 === plan.record_sha256 &&
+                    entry.stage_id === item.request.stage_id,
+                );
+                if (
+                  !artifact ||
+                  digest(access.readBytes(artifact.path, 'expired recovery accepted research')) !== artifact.sha256 ||
+                  plan.observation_digest !== canonicalJsonDigest(item.observation)
+                )
+                  fail(
+                    'GAP-VIDA-RUN-CONTEXT-001',
+                    'Expired recovery requires an already admitted unchanged canonical research artifact.',
+                  );
+              } else if (stage.kind === 'research' || stage.kind === 'synthesize') {
+                fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery cannot import unnormalized research.');
+              }
+            }
+          if (
+            work.lifecycle.references.some(
+              (reference) =>
+                reference.kind === 'execution_approval' &&
+                reference.disposition === 'current' &&
+                reference.artifact_schema !== 'LocalSourceWriteAuthorization/v1',
+            )
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery cannot retain bundle-bound execution approval.');
+          for (const item of state.items) {
+            const stage = currentConfig.workflows[work.binding.workflow_id]?.stages.find(
+              (entry) => entry.id === item.request.stage_id,
+            );
+            const assignment = stage?.assignments[item.request.assignment_index];
+            const profile = assignment && currentConfig.agents.profiles[assignment.profile];
+            if (
+              !assignment ||
+              !profile ||
+              item.request.role !== assignment.role ||
+              item.request.config_digest !== work.binding.config_digest ||
+              (profile.mutation_scope === 'repository_source' && item.issue_id !== null)
+            )
+              fail(
+                'GAP-VIDA-RUN-CONTEXT-001',
+                'Expired lease recovery current request or issued writer binding is unsafe.',
+              );
+          }
+          if (
+            runtimeConfigDigest(currentConfig) !== work.binding.config_digest ||
+            work.binding.repository_id !== values.repository ||
+            JSON.stringify(work.binding.project_ids) !== JSON.stringify(values.projects) ||
+            state.source_scope?.digest !== values.scope_digest
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery configuration, projects or scope differs.');
+          const source = snapshotDeclaredSources(
+            access,
+            state.source_scope.entries.map((entry) => entry.path),
+          );
+          if (source.digest !== state.source_scope.digest)
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery declared source changed.');
+          const intakeRef = work.artifacts.find((entry) => entry.artifact_id === 'local-session-intake');
+          if (!intakeRef) fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery intake is unavailable.');
+          const intakeBytes = access.readBytes(intakeRef.path, 'expired lease recovery intake');
+          if (digest(intakeBytes) !== intakeRef.sha256)
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery intake changed.');
+          const intake = JSON.parse(intakeBytes.toString('utf8'));
+          const runtime = snapshotRuntimePackageSources(
+            runtimePackageAccess(),
+            currentConfig.runtime.bundle,
+            intake.runtime_code_paths,
+          );
+          const schema = digest(
+            runtimePackageAccess().readBytes(
+              'schemas/agent-runtime-config.v1.schema.json',
+              'expired lease recovery schema',
+            ),
+          );
+          if (
+            schema !== work.binding.schema_digest ||
+            intake.native_session_handle !== values.native_session_handle ||
+            canonicalJsonDigest(intake.work_item) !== work.binding.work_item_digest
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery schema, intake or owner changed.');
+          return { runtimeCodeDigest: runtime.digest, authorityPointer: approval.record_id };
+        },
+      });
+      return inspectLocalSession({
+        repositoryRoot: values.project_root,
+        config,
+        projectIds: project.project_ids,
+        integrationsDigest: project.integrations_digest,
+        workId: values.work_id,
+        attempt: Number(values.attempt),
+      });
+    } finally {
+      ledger.close();
+    }
+  }
+  if (values.renew_lease) {
+    const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+    const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
+    const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
+    const { snapshotDeclaredSources, snapshotRuntimePackageSources } =
+      await import('../src/orchestration/scoped-source-snapshot.ts');
+    const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+    const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
+    const project = loadProjectSetContext(values.project_root, config, values.repository, values.projects);
+    const identity = {
+      repository_id: project.repository_id,
+      project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest,
+      work_id: values.work_id,
+    };
+    const ledger = openConfiguredMastraSessionLedger(values.project_root);
+    try {
+      const journal = ledger.resume(values.work_id, Number(values.attempt));
+      const host = ledger.hostState.readHostStateSnapshot(identity);
+      if (
+        !journal ||
+        !host.work ||
+        !host.workVersion ||
+        !host.ledgerVersion ||
+        host.work.binding.team_id !== values.team ||
+        host.work.binding.workflow_id !== values.workflow
+      )
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal admitted work or selection differs.');
+      assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, identity);
+      const access = requireSafeRepositoryAccess(values.project_root);
+      ledger.hostState.renewActiveLocalLease({
+        identity,
+        attempt: Number(values.attempt),
+        nativeSessionHandle: values.native_session_handle,
+        generation: Number(values.lease_generation),
+        expectedWork: host.workVersion,
+        expectedLedger: host.ledgerVersion,
+        expectedJournal: { revision: Number(values.expected_revision), digest: values.expected_digest },
+        expectedMaintenanceGeneration: host.maintenanceGeneration,
+        verifyCurrent: (work, state) => {
+          const currentConfig = loadRuntimeConfig(values.project_root);
+          for (const item of state.items) {
+            const stage = currentConfig.workflows[work.binding.workflow_id]?.stages.find(
+              (entry) => entry.id === item.request.stage_id,
+            );
+            const assignment = stage?.assignments[item.request.assignment_index];
+            const profile = assignment && currentConfig.agents.profiles[assignment.profile];
+            if (
+              !assignment ||
+              !profile ||
+              item.request.role !== assignment.role ||
+              item.request.config_digest !== work.binding.config_digest ||
+              (profile.mutation_scope === 'repository_source' && item.issue_id !== null)
+            )
+              fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal current request or issued writer binding is unsafe.');
+          }
+          if (
+            runtimeConfigDigest(currentConfig) !== work.binding.config_digest ||
+            work.binding.repository_id !== values.repository ||
+            JSON.stringify(work.binding.project_ids) !== JSON.stringify(values.projects) ||
+            state.source_scope?.digest !== values.scope_digest
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal configuration, projects or scope differs.');
+          const source = snapshotDeclaredSources(
+            access,
+            state.source_scope.entries.map((entry) => entry.path),
+          );
+          if (source.digest !== state.source_scope.digest)
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal declared source changed.');
+          const intakeRef = work.artifacts.find((entry) => entry.artifact_id === 'local-session-intake');
+          if (!intakeRef) fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal intake is unavailable.');
+          const intakeBytes = access.readBytes(intakeRef.path, 'lease renewal intake');
+          if (digest(intakeBytes) !== intakeRef.sha256)
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal intake changed.');
+          const intake = JSON.parse(intakeBytes.toString('utf8'));
+          const runtime = snapshotRuntimePackageSources(
+            runtimePackageAccess(),
+            currentConfig.runtime.bundle,
+            intake.runtime_code_paths,
+          );
+          const schema = digest(
+            runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'lease renewal schema'),
+          );
+          if (
+            runtime.digest !== work.binding.runtime_code_digest ||
+            schema !== work.binding.schema_digest ||
+            intake.native_session_handle !== values.native_session_handle ||
+            canonicalJsonDigest(intake.work_item) !== work.binding.work_item_digest
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal bundle, intake or owner changed.');
+        },
+      });
+      return inspectLocalSession({
+        repositoryRoot: values.project_root,
+        config,
+        projectIds: project.project_ids,
+        integrationsDigest: project.integrations_digest,
+        workId: values.work_id,
+        attempt: Number(values.attempt),
+      });
+    } finally {
+      ledger.close();
+    }
   }
   if (values.inspect) {
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
@@ -2284,6 +2620,7 @@ export async function run(args = process.argv.slice(2)) {
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Predecessor project or runtime configuration changed.');
           const { suspendLocalWork } = await import('../src/orchestration/suspend-local-work.ts');
           suspendLocalWork({
+            config,
             store: ledger.hostState,
             identity,
             journal: predecessor,
@@ -2461,6 +2798,35 @@ export async function run(args = process.argv.slice(2)) {
           if (writers.length > 0) {
             if (writers.length !== 1 || !sourceSnapshot)
               fail('GAP-VIDA-RUN-EXECUTION-001', 'Source-writing wave needs one admitted exact-path scope.');
+            const writerAction = writers[0];
+            const writerRequest = journal.state.items.find(
+              (item) => item.request.action_id === writerAction.action_id,
+            )?.request;
+            if (!writerRequest) fail('GAP-VIDA-RUN-EXECUTION-001', 'Mastra source action is missing.');
+            const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+            const projectContext = loadProjectSetContext(values.project_root, config, config.repository.repository_id, [
+              pathProject.project_id,
+            ]);
+            const writerIdentity = {
+              repository_id: projectContext.repository_id,
+              project_ids: projectContext.project_ids,
+              integrations_digest: projectContext.integrations_digest,
+              work_id: context.work_id,
+            };
+            const beforeWriter = ledger.hostState.readHostStateSnapshot(writerIdentity);
+            const { acquireLocalSourceWriterLease } = await import('../src/orchestration/local-work-admission.ts');
+            acquireLocalSourceWriterLease({
+              repositoryRoot: values.project_root,
+              config,
+              store: ledger.hostState,
+              identity: writerIdentity,
+              nativeSessionHandle: beforeWriter.work?.lease?.thread_id,
+              stageId: writerRequest.stage_id,
+              assignmentIndex: writerRequest.assignment_index,
+              expectedWork: beforeWriter.workVersion,
+              expectedLedger: beforeWriter.ledgerVersion,
+              expectedSessionJournal: { attempt: context.attempt, version: journal.version },
+            });
             const { openAdmittedSessionExecution } = await import('../src/orchestration/admitted-session-execution.ts');
             const { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } =
               await import('../src/runtime-kernel.ts');

@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,8 @@ const write = (root, relative, content) => {
   writeFileSync(file, content);
 };
 const run = (root, mode) => {
+  if (!bundle || !path.isAbsolute(bundle))
+    throw new Error('VIDA_CLEAR_BUNDLE must name an absolute isolated built bundle');
   const result = spawnSync(
     process.execPath,
     [
@@ -36,7 +38,7 @@ const run = (root, mode) => {
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 };
 const sha = (value) => createHash('sha256').update(value).digest('hex');
-const initializeFixture = (root) => {
+const initializeFixture = (root, { localSchemas = true } = {}) => {
   mkdirSync(path.join(root, '.git'));
   for (const [destination, template] of [
     ['AGENTS.md', 'AGENTS.template.md'],
@@ -52,14 +54,70 @@ const initializeFixture = (root) => {
         .replaceAll('{{PROJECT}}', 'refactoring')
         .replaceAll('{{BUNDLE}}', 'vida-agent'),
     );
-  mkdirSync(path.join(root, 'vida-agent/schemas'), { recursive: true });
-  for (const name of ['documentation-policy', 'documentation-change-event'])
-    cpSync(
-      path.join(packageRoot, `schemas/${name}.v1.schema.json`),
-      path.join(root, `vida-agent/schemas/${name}.v1.schema.json`),
-    );
-  write(root, 'vida-agent/TESTING.md', 'fixture testing\n');
+  if (localSchemas) {
+    mkdirSync(path.join(root, 'vida-agent/schemas'), { recursive: true });
+    for (const name of ['documentation-policy', 'documentation-change-event'])
+      cpSync(
+        path.join(packageRoot, `schemas/${name}.v1.schema.json`),
+        path.join(root, `vida-agent/schemas/${name}.v1.schema.json`),
+      );
+    write(root, 'vida-agent/TESTING.md', 'fixture testing\n');
+  }
 };
+
+test('public CLEAR uses package policy schema without local assets and rejects consumer schema overrides', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-package-schema-'));
+  try {
+    initializeFixture(root, { localSchemas: false });
+    expect(existsSync(path.join(root, 'vida-agent'))).toBe(false);
+    const policy = {
+      schema: 'DocumentationPolicy/v1',
+      policy_id: 'clear-package-schema',
+      project_id: 'refactoring',
+      source_path: 'docs/agent-instructions/documentation-policy.v1.json',
+      owner: 'project:refactoring',
+      required: true,
+      canonical_roots: ['docs/agent-instructions'],
+      map_paths: ['docs/agent-instructions/index.md'],
+      excluded_roots: ['.agent', '.planning'],
+      changelog_required: false,
+      changelog_path: null,
+      relations: ['owns'],
+      updated_at: new Date().toISOString(),
+    };
+    write(root, policy.source_path, JSON.stringify(policy) + '\n');
+    write(root, policy.map_paths[0], 'Current map\n');
+    write(root, 'docs/agent-instructions/current.md', 'Current policy-governed document\n');
+    write(
+      root,
+      '.agent/work/doc-clear-test/scope.json',
+      JSON.stringify({
+        schema: 'ImplementationScope/v1',
+        work_id: 'doc-clear-test',
+        source_revision: 'revision-one',
+        allowed_paths: ['docs/agent-instructions/current.md'],
+      }) + '\n',
+    );
+    const accepted = run(root, 'baseline');
+    expect(accepted.status, accepted.stderr).toBe(0);
+    expect(existsSync(path.join(root, 'vida-agent'))).toBe(false);
+    const invalidPolicy = { ...policy, unexpected_contract_override: true };
+    write(root, policy.source_path, JSON.stringify(invalidPolicy) + '\n');
+    const rejected = run(root, 'baseline');
+    expect(rejected.status).toBe(1);
+    expect(rejected.stderr).toContain('documentation policy schema invalid');
+    write(root, 'vida-agent/schemas/documentation-policy.v1.schema.json', '{}\n');
+    const acceptanceShadow = run(root, 'baseline');
+    expect(acceptanceShadow.status).toBe(1);
+    expect(acceptanceShadow.stderr).toContain('documentation policy schema invalid');
+    write(root, policy.source_path, JSON.stringify(policy) + '\n');
+    write(root, 'vida-agent/schemas/documentation-policy.v1.schema.json', 'false\n');
+    const denialShadow = run(root, 'baseline');
+    expect(denialShadow.status, denialShadow.stderr).toBe(0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 60_000);
 
 test('authorized new document passes baseline but closeout requires existence and typed init lineage', () => {
   if (!bundle) throw new Error('VIDA_CLEAR_BUNDLE must name an isolated built bundle');

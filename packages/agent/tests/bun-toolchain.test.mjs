@@ -101,7 +101,7 @@ test('verified absolute Bun replaces a conflicting global PATH and preserves arg
   assert.ok(calls.every((call) => !call.options.shell));
 });
 
-test('local/global executable collision, malformed probe and install failure fail closed', () => {
+test('npm-resolved version mismatch, malformed probe and install failure fail closed', () => {
   const { root } = fixture();
   const executable = path.join(root, 'collision-bun');
   for (const [responses, message] of [
@@ -116,6 +116,7 @@ test('local/global executable collision, malformed probe and install failure fai
       () =>
         runPinnedBun(['test'], {
           root,
+          env: { PATH: path.join(root, 'no-PATH-bun') },
           npmCli: '/npm-cli.js',
           spawn: () => {
             assert.ok(index < responses.length, 'must not run command after failure');
@@ -125,6 +126,86 @@ test('local/global executable collision, malformed probe and install failure fai
       message,
     );
   }
+});
+
+test('matching PATH Bun avoids npm resolution and preserves arguments and status', () => {
+  const { root, pin } = fixture();
+  const directory = path.join(root, 'PATH Bun with spaces');
+  mkdirSync(directory);
+  const executable = path.join(directory, process.platform === 'win32' ? 'bun.exe' : 'bun');
+  writeFileSync(executable, 'fixture executable identity');
+  const calls = [];
+  const args = ['run', 'test', '--', 'argument with spaces', '$(not a shell)'];
+  assert.equal(
+    runPinnedBun(args, {
+      root,
+      env: { PATH: directory, PATHEXT: '.exe' },
+      node: path.join(root, 'missing-node'),
+      spawn(command, argv, options) {
+        calls.push({ command, argv, options });
+        return calls.length === 1 ? success(pin) : { status: 17, signal: null };
+      },
+    }),
+    17,
+  );
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].command, executable);
+  assert.deepEqual(calls[0].argv, ['--version']);
+  assert.equal(calls[1].command, executable);
+  assert.deepEqual(calls[1].argv, args);
+  assert.ok(calls.every((call) => !call.options.shell));
+});
+
+test('wrong-version PATH Bun falls back to npm exact pin and npm mismatch remains fatal', () => {
+  const { root, pin } = fixture();
+  const directory = path.join(root, 'wrong-global');
+  mkdirSync(directory);
+  const global = path.join(directory, process.platform === 'win32' ? 'bun.exe' : 'bun');
+  writeFileSync(global, 'fixture global binary');
+  const pinned = path.join(root, 'npm-pinned-bun');
+  for (const npmVersion of [pin, '99.0.0']) {
+    const calls = [];
+    const run = () =>
+      runPinnedBun(['test'], {
+        root,
+        env: { PATH: directory, PATHEXT: '.exe' },
+        node: '/fixture-node',
+        npmCli: '/npm-cli.js',
+        spawn(command, argv, options) {
+          calls.push({ command, argv, options });
+          return [success('99.0.0'), success(pinned), success(npmVersion), { status: 0, signal: null }][
+            calls.length - 1
+          ];
+        },
+      });
+    if (npmVersion === pin) assert.equal(run(), 0);
+    else assert.throws(run, /requires/);
+    assert.equal(calls[0].command, global);
+    assert.equal(calls[1].command, '/fixture-node');
+    assert.ok(calls[1].argv.includes(`bun@${pin}`));
+    assert.equal(calls[2].command, pinned);
+    assert.equal(calls.length, npmVersion === pin ? 4 : 3, 'never run command with an npm version mismatch');
+  }
+});
+
+test('manifest mismatch fails before matching PATH Bun can be probed', () => {
+  const { root, pin } = fixture();
+  const directory = path.join(root, 'PATH Bun');
+  mkdirSync(directory);
+  writeFileSync(path.join(directory, process.platform === 'win32' ? 'bun.exe' : 'bun'), 'fixture binary');
+  const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  manifest.engines.bun = '99.0.0';
+  writeFileSync(path.join(root, 'package.json'), JSON.stringify(manifest));
+  assert.throws(
+    () =>
+      runPinnedBun([], {
+        root,
+        env: { PATH: directory, PATHEXT: '.exe' },
+        spawn: () => assert.fail('pin metadata must fail before spawn'),
+      }),
+    /manifest mirrors differ/,
+  );
+  assert.notEqual(manifest.engines.bun, pin);
 });
 
 test('reuses a supplied pinned executable, still verifies its version, and cleans up on command timeout', () => {

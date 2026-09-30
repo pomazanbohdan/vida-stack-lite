@@ -1,3 +1,5 @@
+import { spawnSync } from 'node:child_process';
+import { findNpmCli } from '../bin/bun.mjs';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { cp, lstat, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -43,11 +45,32 @@ import {
 import { createRuntimeKernelHost } from '../src/runtime-kernel.ts';
 import { runBoundedSubprocess, subprocessFailure } from './helpers/bounded-subprocess.mjs';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
-const authorityPath = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
-const authorityText = await readFile(authorityPath, 'utf8');
-const fixtureBundle = parseRuntimeConfigYaml(authorityText).runtime.bundle;
 const temporaryRoots = [];
+const configuredRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT || undefined;
+const templateText = (await readFile(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
+  .replaceAll('{{REPOSITORY}}', 'creatio-sample')
+  .replaceAll('{{PROJECT}}', '3mob')
+  .replaceAll('{{BUNDLE}}', 'vida-agent');
+const fixtureBundle = configuredRoot
+  ? parseRuntimeConfigYaml(await readFile(path.join(configuredRoot, 'agent-runtime.config.v1.yaml'), 'utf8')).runtime
+      .bundle
+  : 'vida-agent';
+const authorityText = configuredRoot
+  ? await readFile(path.join(configuredRoot, 'agent-runtime.config.v1.yaml'), 'utf8')
+  : portableRuntimeConfigText(templateText);
+// TEST SETUP: the template is fixture data, never a runtime configuration fallback.
+const repositoryRoot = configuredRoot ?? (await fixtureRoot(authorityText));
+if (!configuredRoot) {
+  for (const file of [
+    'docs/agent-instructions/documentation-policy.v1.json',
+    'docs/tenants/crmbx/internal/projects/3mob/documentation-policy.v1.json',
+    'docs/tenants/crmbx/wiki/Projects/3Mob/Operations.md',
+    'docs/tenants/crmbx/wiki/Projects/3Mob/Requirements/Topics.md',
+  ]) {
+    await mkdir(path.dirname(path.join(repositoryRoot, file)), { recursive: true });
+    await writeFile(path.join(repositoryRoot, file), file.endsWith('.json') ? '{}\n' : 'TEST SETUP fixture\n');
+  }
+}
 const obsoletePackSurface =
   /runtime-compat|candidate-v2|(?:^|[\\/])(?:legacy|compatibility|upgraders?|backfill|fallback)(?:[\\/]|\.)|\b(?:create|load|open|migrate|upgrade|restore|backfill)(?:Legacy|Compatibility|Upgrader|Backfill|Fallback)[A-Z]\w*\b|\bexport\s+(?:declare\s+)?(?:class|function|const|type|interface)\s+(?:Legacy|Compatibility|Upgrader|Backfill|Fallback)[A-Z]\w*\b/i;
 
@@ -102,6 +125,7 @@ function portableRuntimeConfigText(yaml) {
   config.repository.title = 'creatio-sample repository';
   config.paths.processing_scope = 'whole_repository';
   config.projects[0].task_prefix = 'CRMBX-3MOB';
+  if (!configuredRoot) config.projects[0].project_root = 'project/3mob';
   if (!config.projects.some((project) => project.project_id === 'refactoring')) {
     const project = structuredClone(config.projects[0]);
     project.project_id = 'refactoring';
@@ -1744,8 +1768,9 @@ test.skipIf(runningUnderVitest && process.env.AGENT_RUNTIME_SKIP_PACKAGE_TEST ==
     expect(isolatedDistDigestAfterTests).toBe(isolatedDistDigestBefore);
     const isolatedFingerprintAfter = await readIsolatedFingerprint('isolated fingerprint after package tests');
     expect(isolatedFingerprintAfter).toBe(isolatedFingerprintBefore);
+    const node = spawnSync('node', ['-p', 'process.execPath'], { encoding: 'utf8', windowsHide: true }).stdout.trim();
     const processResult = await runProcess({
-      cmd: ['bun', 'pm', 'pack', '--destination', archiveRoot],
+      cmd: [node, findNpmCli(node), 'pack', '--ignore-scripts', '--pack-destination', archiveRoot],
       cwd: isolatedPackageRoot,
       stdout: 'pipe',
       stderr: 'pipe',
@@ -1861,11 +1886,10 @@ test.skipIf(runningUnderVitest && process.env.AGENT_RUNTIME_SKIP_PACKAGE_TEST ==
     for (const repositoryOnly of ['src/reconciliation/current-v1-engine.ts', 'src/reconciliation/manifest.ts'])
       expect(packedFiles, repositoryOnly).not.toContain(repositoryOnly);
     const packedAgentTemplate = await readFile(path.join(packedRoot, 'templates/AGENTS.template.md'), 'utf8');
-    const instructionReferences = new Set(
-      [...packedAgentTemplate.matchAll(/instructions\/(?:\{([a-z,-]+)\}|([a-z-]+))\.md/g)].flatMap((match) =>
-        match[1] ? match[1].split(',') : [match[2]],
-      ),
-    );
+    expect(packedAgentTemplate).toContain('vida-agent instructions --path NAME');
+    const declaredInstructions = packedAgentTemplate.match(/where NAME is ([\s\S]*?); read the returned file/);
+    expect(declaredInstructions).not.toBeNull();
+    const instructionReferences = new Set(declaredInstructions[1].split(/[,\s]+/).filter((name) => name !== 'or'));
     for (const name of [
       'development-lifecycle',
       'agent-allocation',
@@ -1937,8 +1961,8 @@ test.skipIf(runningUnderVitest && process.env.AGENT_RUNTIME_SKIP_PACKAGE_TEST ==
       expect(text, file).not.toMatch(obsoletePackSurface);
     }
     const packedLockfile = await readFile(path.join(packedRoot, 'dist/portable/bun.lock'));
-    expect(packedFiles).not.toContain('bun.lock');
-    await writeFile(path.join(packedRoot, 'bun.lock'), packedLockfile);
+    expect(packedFiles).toContain('bun.lock');
+    expect(await readFile(path.join(packedRoot, 'bun.lock'))).toEqual(packedLockfile);
     const install = await runProcess({
       cmd: ['bun', 'install', '--frozen-lockfile', '--production', '--ignore-scripts'],
       cwd: packedRoot,
@@ -2106,28 +2130,47 @@ try {
         declaredDistPatterns.some((pattern) => pattern.match(entry)),
       ),
     );
-    const packedModule = await import(pathToFileURL(path.join(packedRoot, 'dist', 'src', 'index.js')).href);
-    const config = packedModule.loadRuntimeConfig(isolatedRepositoryRoot);
-    expect(config.schema).toBe('AgentRuntimeConfig/v1');
-    expect(
-      packedModule.selectWorkflow(config, {
-        team: 'default-development',
-        kind: 'research',
-        intent: 'information_research',
-        project: '3mob',
-        risk_flags: [],
-        labels: [],
-      }).workflow_id,
-    ).toBe('information_research_light');
-
-    const freshProjectRoot = path.join(archiveRoot, 'fresh-project');
-    const freshBundleRoot = path.join(freshProjectRoot, 'vida-agent');
-    await mkdir(path.join(freshProjectRoot, '.git'), { recursive: true });
-    await cp(packedRoot, freshBundleRoot, {
-      recursive: true,
-      filter: (source) => !['node_modules', 'bun.lock'].includes(path.relative(packedRoot, source).split(path.sep)[0]),
+    const packedConfiguration = await runProcess({
+      cmd: [
+        'bun',
+        '--input-type=module',
+        '-e',
+        `
+const runtime = await import(${JSON.stringify(pathToFileURL(path.join(packedRoot, 'dist/src/index.js')).href)});
+const config = runtime.loadRuntimeConfig(${JSON.stringify(isolatedRepositoryRoot)});
+console.log(JSON.stringify({ schema: config.schema, workflow_id: runtime.selectWorkflow(config, {
+  team: 'default-development', kind: 'research', intent: 'information_research', project: '3mob', risk_flags: [], labels: [],
+}).workflow_id }));`,
+      ],
+      cwd: packedRoot,
+      env: isolatedEnvironment,
     });
-    await expect(readFile(path.join(freshBundleRoot, 'bun.lock'))).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(packedConfiguration.exitCode, subprocessFailure('packed configuration graph', packedConfiguration)).toBe(0);
+    const packedConfigurationResult = JSON.parse(packedConfiguration.stdout.toString());
+    expect(packedConfigurationResult.schema).toBe('AgentRuntimeConfig/v1');
+    expect(packedConfigurationResult.workflow_id).toBe('information_research_light');
+    const freshProjectRoot = path.join(archiveRoot, 'fresh-project');
+    const freshBundleRoot = path.join(freshProjectRoot, 'node_modules', 'vida-agent');
+    await mkdir(path.join(freshProjectRoot, '.git'), { recursive: true });
+    const npmInstall = await runProcess({
+      cmd: [
+        node,
+        findNpmCli(node),
+        'install',
+        '--prefix',
+        freshProjectRoot,
+        '--ignore-scripts',
+        '--no-audit',
+        '--no-fund',
+        archivePath,
+      ],
+      cwd: archiveRoot,
+      env: isolatedEnvironment,
+    });
+    expect(npmInstall.exitCode, subprocessFailure('fresh npm archive acquisition', npmInstall)).toBe(0);
+    await expect(readFile(path.join(freshProjectRoot, 'bun.lock'))).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(await readFile(path.join(freshBundleRoot, 'bun.lock'))).toEqual(packedLockfile);
+    expect(await readFile(path.join(freshBundleRoot, 'dist/portable/bun.lock'))).toEqual(packedLockfile);
     const freshInstall = await runProcess({
       cmd: [
         'node',
@@ -2144,7 +2187,7 @@ try {
       stderr: 'pipe',
       env: isolatedEnvironment,
     });
-    expect(freshInstall.exitCode, subprocessFailure('fresh copied-bundle install', freshInstall)).toBe(0);
+    expect(freshInstall.exitCode, subprocessFailure('fresh npm-owned initialization', freshInstall)).toBe(0);
     expect(freshInstall.stdout.toString()).toContain('"initialization":"delegated_successfully"');
     for (const repairModule of [
       'bin/reconcile-artifacts.mjs',
@@ -2154,34 +2197,43 @@ try {
       'bin/repair-research-records.mjs',
     ])
       expect((await readFile(path.join(freshBundleRoot, repairModule))).byteLength).toBeGreaterThan(0);
+    await expect(readFile(path.join(freshProjectRoot, 'bun.lock'))).rejects.toMatchObject({ code: 'ENOENT' });
     expect(await readFile(path.join(freshBundleRoot, 'bun.lock'))).toEqual(packedLockfile);
-    const freshRuntime = await import(pathToFileURL(path.join(freshBundleRoot, 'dist/src/index.js')).href);
-    for (const internal of [
-      'applyArtifactReconciliation',
-      'inspectArtifactReconciliation',
-      'planArtifactReconciliation',
-    ])
-      expect(freshRuntime[internal], internal).toBeUndefined();
-    const freshConfig = freshRuntime.loadRuntimeConfig(freshProjectRoot);
-    expect(freshConfig.runtime.bundle).toBe('vida-agent');
-    expect(freshConfig.projects[0].project_id).toBe('portable-project');
+    expect(await readFile(path.join(freshBundleRoot, 'dist/portable/bun.lock'))).toEqual(packedLockfile);
     const initialization = JSON.parse(
       await readFile(path.join(freshProjectRoot, '.agent/runtime-initialization.v1.json'), 'utf8'),
     );
     expect(initialization.schema).toBe('RuntimeInitialization/v1');
     for (const entry of initialization.templates)
       expect(sha256Bytes(await readFile(path.join(freshProjectRoot, entry.output)))).toBe(entry.output_sha256);
-    const freshGraph = freshRuntime.createConfiguredMastra(freshProjectRoot, {
-      work_item: {
-        kind: 'research',
-        intent: 'information_research',
-        project: 'portable-project',
-        risk_flags: [],
-        labels: [],
-      },
+    const freshActivation = await runProcess({
+      cmd: [
+        'bun',
+        '--input-type=module',
+        '-e',
+        `
+import assert from 'node:assert/strict';
+const runtime = await import(${JSON.stringify(pathToFileURL(path.join(freshBundleRoot, 'dist/src/index.js')).href)});
+for (const internal of ['applyArtifactReconciliation', 'inspectArtifactReconciliation', 'planArtifactReconciliation'])
+  assert.equal(runtime[internal], undefined, internal);
+const config = runtime.loadRuntimeConfig(${JSON.stringify(freshProjectRoot)});
+assert.equal(config.runtime.bundle, ${JSON.stringify(path.relative(freshProjectRoot, freshBundleRoot).split(path.sep).join('/'))});
+assert.equal(config.projects[0].project_id, 'portable-project');
+const graph = runtime.createConfiguredMastra(${JSON.stringify(freshProjectRoot)}, {
+  work_item: { kind: 'research', intent: 'information_research', project: 'portable-project', risk_flags: [], labels: [] },
+});
+assert.equal(graph.workflowId, 'information_research_light');
+await assert.rejects(graph.dispatch('forged-work-item'), /opaque host capability/);
+console.log(JSON.stringify({ schema: 'FreshNpmActivationTest/v1', assertions: 7 }));`,
+      ],
+      cwd: freshProjectRoot,
+      env: isolatedEnvironment,
     });
-    expect(freshGraph.workflowId).toBe('information_research_light');
-    await expect(freshGraph.dispatch('forged-work-item')).rejects.toThrow(/opaque host capability/);
+    expect(freshActivation.exitCode, subprocessFailure('fresh npm package graph', freshActivation)).toBe(0);
+    expect(JSON.parse(freshActivation.stdout.toString())).toEqual({
+      schema: 'FreshNpmActivationTest/v1',
+      assertions: 7,
+    });
   },
   420_000,
 );

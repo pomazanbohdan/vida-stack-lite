@@ -394,61 +394,68 @@ describe('project context path boundary', () => {
       expect(error.code).toBe(pathProfileGap);
     }
   });
-  test('resolves standalone repository contours', async () => {
-    const standaloneConfig = structuredClone(config);
-    standaloneConfig.paths.repository_mode = 'standalone';
-    standaloneConfig.paths.processing_scope = 'whole_repository';
-    standaloneConfig.paths.standalone_identity = { repository_id: 'standalone', project_id: 'standalone' };
-    standaloneConfig.paths.defaults.work_root = '.';
-    let activeConfig = standaloneConfig;
+  test('binds current-v1 repository and project contours', async () => {
+    expect.assertions(13);
+    const repositoryConfig = structuredClone(config);
+    repositoryConfig.paths.processing_scope = 'whole_repository';
+    repositoryConfig.paths.defaults.work_root = '.';
+    let activeConfig = repositoryConfig;
     vi.doMock('../src/config/runtime-config.ts', async () => ({
       ...(await vi.importActual('../src/config/runtime-config.ts')),
       loadRuntimeConfig: () => activeConfig,
     }));
-    const isolated = await import('../src/config/project-context.ts?standalone-boundary');
-    const resolved = isolated.resolvePathProfile(repositoryRoot, standaloneConfig);
-    expect(resolved.scope_id).toBe('repository:creatio-sample');
-    expect(resolved.registry_hash).toBeNull();
-    return;
-    const standaloneRoot = isolated.resolvePathProfile(repositoryRoot, standaloneConfig, {
+    const isolated = await import('../src/config/project-context.ts?current-v1-boundary');
+    const resolved = isolated.resolvePathProfile(repositoryRoot, repositoryConfig);
+    expect(resolved.scope_id).toBe('repository:' + config.config_id);
+    expect(resolved.registry_hash).toMatch(/^[a-f0-9]{64}$/);
+    const repositoryProfile = isolated.resolvePathProfile(repositoryRoot, repositoryConfig, {
       trusted_override: isolated.issueTestTrustedPathProfileOverride({
         schema: 'TrustedPathProfileOverride/v1',
-        scope_id: 'standalone:standalone/standalone',
+        scope_id: 'repository:' + config.config_id,
         paths: { work_root: '.' },
       }),
     });
-    expect(standaloneRoot.paths.work_root).toBe('.');
-    expect(isolated.validateResolvedPathProfile(standaloneRoot, repositoryRoot)).toBe(standaloneRoot);
-    expect(() => isolated.loadProjectContext(repositoryRoot, standaloneConfig, 'crmbx', '3mob')).toThrow(
-      'project context requires monorepo mode',
-    );
+    expect(repositoryProfile.paths.work_root).toBe('.');
+    expect(isolated.validateResolvedPathProfile(repositoryProfile, repositoryRoot)).toBe(repositoryProfile);
     expect(() =>
-      isolated.resolvePathProfile(repositoryRoot, standaloneConfig, {
+      isolated.loadProjectContext(repositoryRoot, repositoryConfig, 'unconfigured-repository', '3mob'),
+    ).toThrow('project context repository identity is invalid');
+    expect(() =>
+      isolated.resolvePathProfile(repositoryRoot, repositoryConfig, {
         processing_scope: 'selected_project',
         repository_id: config.repository.repository_id,
         project_id: '3mob',
+        trusted_override: isolated.issueTestTrustedPathProfileOverride({
+          schema: 'TrustedPathProfileOverride/v1',
+          scope_id: 'repository:' + config.config_id,
+          paths: { work_root: '.' },
+        }),
       }),
-    ).toThrow('standalone repositories support whole_repository only');
+    ).toThrow();
     const partialConfig = structuredClone(config);
-    delete partialConfig.projects.projects.find((entry) => entry.project_id === '3mob' && entry.project_id === '3mob')
-      .path_overrides;
+    delete partialConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides;
     activeConfig = partialConfig;
     const partialProfile = isolated.resolvePathProfile(repositoryRoot, partialConfig, {
       processing_scope: 'selected_project',
       repository_id: config.repository.repository_id,
       project_id: '3mob',
     });
-    expect(partialProfile.paths.project_root).toBe('.');
+    expect(partialProfile.paths.project_root).toBe(partialConfig.paths.defaults.project_root);
     activeConfig = structuredClone(config);
-    const context = isolated.loadProjectContext(repositoryRoot, activeConfig, 'crmbx', '3mob');
+    const context = isolated.loadProjectContext(repositoryRoot, activeConfig, config.repository.repository_id, '3mob');
     const overrideRoot = tempRoot();
-    activeConfig.projects.projects.find(
-      (entry) => entry.project_id === '3mob' && entry.project_id === '3mob',
-    ).path_overrides = { work_root: relative(overrideRoot) };
-    const overriddenContext = isolated.loadProjectContext(repositoryRoot, activeConfig, 'crmbx', '3mob');
-    expect(overriddenContext.path_profile.paths.work_root).toBe(relative(overrideRoot));
-    expect(overriddenContext.path_profile.resolved_paths.work_root).toBe(overrideRoot);
-    expect(overriddenContext.path_profile.provenance.work_root.layer).toBe('project-config');
+    activeConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides = {
+      work_root: relative(overrideRoot),
+    };
+    const overriddenContext = isolated.loadProjectContext(
+      repositoryRoot,
+      activeConfig,
+      config.repository.repository_id,
+      '3mob',
+    );
+    expect(binding(overriddenContext, '3mob').path_profile.paths.work_root).toBe(relative(overrideRoot));
+    expect(binding(overriddenContext, '3mob').path_profile.resolved_paths.work_root).toBe(overrideRoot);
+    expect(binding(overriddenContext, '3mob').path_profile.provenance.work_root.layer).toBe('project-config');
     activeConfig.paths.defaults.work_root += '/changed';
     expect(() => isolated.validateProjectContextBinding(context, repositoryRoot)).toThrow(
       'resolved path profile config is stale',
@@ -460,9 +467,9 @@ describe('project context path boundary', () => {
     );
     const profileRoot = tempRoot();
     activeConfig = structuredClone(config);
-    activeConfig.projects.projects.find(
-      (entry) => entry.project_id === '3mob' && entry.project_id === '3mob',
-    ).path_overrides = { work_root: relative(profileRoot) };
+    activeConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides = {
+      work_root: relative(profileRoot),
+    };
     const profile = isolated.resolvePathProfile(repositoryRoot, activeConfig, {
       processing_scope: 'selected_project',
       repository_id: config.repository.repository_id,

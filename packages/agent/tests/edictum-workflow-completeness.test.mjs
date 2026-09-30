@@ -106,11 +106,15 @@ describe('configured Edictum workflow completeness', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'edictum-required-stages-'));
     try {
       mkdirSync(path.join(root, '.git'), { recursive: true });
-      mkdirSync(path.join(root, 'agent-runtime-new'), { recursive: true });
+      mkdirSync(path.join(root, 'docs'), { recursive: true });
+      mkdirSync(path.join(root, 'vida-agent'), { recursive: true });
+      copyFileSync(
+        path.join(packageRoot, 'docs/system-specification.md'),
+        path.join(root, 'docs/system-specification.md'),
+      );
+      copyFileSync(path.join(packageRoot, 'TESTING.md'), path.join(root, 'vida-agent/TESTING.md'));
       for (const name of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'])
         copyFileSync(path.join(repositoryRoot, name), path.join(root, name));
-      for (const name of ['PLAN.md', 'TESTING.md'])
-        copyFileSync(path.join(repositoryRoot, 'agent-runtime-new', name), path.join(root, 'agent-runtime-new', name));
       const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
       writeFileSync(
         configPath,
@@ -185,20 +189,18 @@ describe('configured Edictum workflow completeness', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'edictum-config-drift-'));
     try {
       mkdirSync(path.join(root, '.git'), { recursive: true });
-      mkdirSync(path.join(root, 'agent-runtime-new'), { recursive: true });
+      mkdirSync(path.join(root, 'docs'), { recursive: true });
+      mkdirSync(path.join(root, 'vida-agent'), { recursive: true });
+      copyFileSync(
+        path.join(packageRoot, 'docs/system-specification.md'),
+        path.join(root, 'docs/system-specification.md'),
+      );
+      copyFileSync(path.join(packageRoot, 'TESTING.md'), path.join(root, 'vida-agent/TESTING.md'));
       copyFileSync(path.join(repositoryRoot, 'AGENTS.md'), path.join(root, 'AGENTS.md'));
       copyFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'), path.join(root, 'AGENT.sidecar.md'));
       copyFileSync(
         path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'),
         path.join(root, 'agent-runtime.config.v1.yaml'),
-      );
-      copyFileSync(
-        path.join(repositoryRoot, 'agent-runtime-new', 'PLAN.md'),
-        path.join(root, 'agent-runtime-new', 'PLAN.md'),
-      );
-      copyFileSync(
-        path.join(repositoryRoot, 'agent-runtime-new', 'TESTING.md'),
-        path.join(root, 'agent-runtime-new', 'TESTING.md'),
       );
 
       const host = createTestWorkflowHostCapability(root);
@@ -226,20 +228,18 @@ describe('configured Edictum workflow completeness', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'edictum-async-drift-'));
     try {
       mkdirSync(path.join(root, '.git'), { recursive: true });
-      mkdirSync(path.join(root, 'agent-runtime-new'), { recursive: true });
+      mkdirSync(path.join(root, 'docs'), { recursive: true });
+      mkdirSync(path.join(root, 'vida-agent'), { recursive: true });
+      copyFileSync(
+        path.join(packageRoot, 'docs/system-specification.md'),
+        path.join(root, 'docs/system-specification.md'),
+      );
+      copyFileSync(path.join(packageRoot, 'TESTING.md'), path.join(root, 'vida-agent/TESTING.md'));
       copyFileSync(path.join(repositoryRoot, 'AGENTS.md'), path.join(root, 'AGENTS.md'));
       copyFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'), path.join(root, 'AGENT.sidecar.md'));
       copyFileSync(
         path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'),
         path.join(root, 'agent-runtime.config.v1.yaml'),
-      );
-      copyFileSync(
-        path.join(repositoryRoot, 'agent-runtime-new', 'PLAN.md'),
-        path.join(root, 'agent-runtime-new', 'PLAN.md'),
-      );
-      copyFileSync(
-        path.join(repositoryRoot, 'agent-runtime-new', 'TESTING.md'),
-        path.join(root, 'agent-runtime-new', 'TESTING.md'),
       );
 
       const configPath = path.join(root, 'agent-runtime.config.v1.yaml');

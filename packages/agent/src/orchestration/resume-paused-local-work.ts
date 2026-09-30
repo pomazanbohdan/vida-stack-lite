@@ -82,7 +82,9 @@ export function resumePausedLocalWork(input: {
       oldClaim &&
       prior.source_revision === input.sourceDigest &&
       prior.exclusive_resources.every((resource) => work.binding.allowed_resources.includes(resource)) &&
-      prior.exclusive_resources.every((resource) => resource.startsWith('file:')),
+      prior.exclusive_resources.every(
+        (resource) => resource.startsWith('file:') || resource === 'execution:' + input.identity.work_id,
+      ),
     'no exact owner-attributed released ticket is available',
   );
   const contenders = host.ledger.tickets.filter(
@@ -155,6 +157,7 @@ export function resumePausedLocalWork(input: {
     expectedWork: input.expectedWork,
     expectedLedger: input.expectedLedger,
     expectedMaintenanceGeneration: host.maintenanceGeneration,
+    expectedSessionJournal: { attempt: input.attempt, version: input.expectedJournal },
     nextWork,
     nextLedger,
   });

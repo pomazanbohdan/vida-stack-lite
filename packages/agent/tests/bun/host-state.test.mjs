@@ -21,6 +21,10 @@ import { loadProjectSetContext } from '../../src/config/project-context.ts';
 import { createTestTrustedHostLauncherCapability, createTrustedHostComposition } from '../../src/runtime-kernel.ts';
 import { createConfiguredMastra } from '../../src/orchestration/mastra-boundary.ts';
 import { suspendLocalWork, suspendCompletedReadOnlyWork } from '../../src/orchestration/suspend-local-work.ts';
+import { acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.ts';
+import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
+import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
+import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
 import {
   computeEdictumWorkflowApprovalEvidenceDigest,
   createHostOperationReservationStore,
@@ -302,6 +306,265 @@ function quiescentJournal(workId = 'work', runId = 'run-work') {
     },
   };
 }
+function ownerRecoveryPreviewJournal() {
+  const journal = quiescentJournal();
+  journal.resume_status = 'ready';
+  journal.state.step_id = 'wave-0';
+  journal.state.source_scope = { schema: 'ScopedSourceSnapshot/v1', entries: [], digest: 'source' };
+  journal.state.items = [
+    {
+      issue_id: null,
+      observation: null,
+      request: {
+        schema: 'VidaSessionRequest/v1',
+        action_id: 'preview-action',
+        assignment_index: 0,
+        bindings_manifest_ref: '8'.repeat(64),
+        config_digest: 'e'.repeat(64),
+        role: 'diagnostics-researcher',
+        run_id: 'run-work',
+        scope_digest: 'source',
+        stage_id: 'research_bug',
+        wave_index: 0,
+        workflow_id: 'bug_fix',
+      },
+    },
+  ];
+  return journal;
+}
+function ownerRecoveryPreviewRequest(initial, journal = ownerRecoveryPreviewJournal()) {
+  return {
+    store,
+    identity: { ...identity },
+    journal,
+    expectedWork: initial.workVersion,
+    expectedLedger: initial.ledgerVersion,
+    nativeSessionHandle: 'thread',
+    userRequestPointer: 'user:nonapplied-owner-recovery-preview',
+    requestIntent: 'next_work',
+    documentationContext: {
+      repository_root: root,
+      repository_id: identity.repository_id,
+      project_id: 'project',
+      work_id: 'work',
+    },
+  };
+}
+function ownerRecoveryPreviewExpired(callback) {
+  const originalNow = Date.now;
+  Date.now = () => originalNow() + 7200_000;
+  try {
+    callback();
+  } finally {
+    Date.now = originalNow;
+  }
+}
+
+test('owner recovery preview: expired unissued owner releases once and admits a distinct fresh successor', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  const request = ownerRecoveryPreviewRequest(initial);
+  ownerRecoveryPreviewExpired(() => {
+    const released = suspendLocalWork(request);
+    expect(released.work.lease).toBeNull();
+    expect(released.work.execution.status).toBe('suspended');
+    expect(released.work.lifecycle).toEqual({
+      ...initial.work.lifecycle,
+      revision: 2,
+      next_action: released.work.lifecycle.next_action,
+    });
+    expect(released.work.binding).toEqual(initial.work.binding);
+    expect(released.ledger.tickets[0].status).toBe('released');
+    expect(released.ledger.claims[0].status).toBe('released');
+    expect(released.ledger.claims[0].generation).toBe(1);
+    expect(released.ledger.operations).toHaveLength(1);
+    expect(suspendLocalWork(request)).toEqual(released);
+    const successor = includeExistingLedger(fixture('fresh-successor'), released.ledger);
+    successor.expectedLedger = released.ledgerVersion;
+    const admitted = store.compareAndSwapHostState(successor);
+    expect(admitted.work.binding.lifecycle_work_id).toBe('fresh-successor');
+    expect(admitted.work.execution.run_id).toBe('run-fresh-successor');
+    expect(store.readHostStateSnapshot(identity).work.execution.status).toBe('suspended');
+    expect(admitted.ledger.claims.filter((claim) => claim.status === 'active')).toHaveLength(1);
+  });
+});
+
+test('owner recovery preview: expired issued, observed, reserved, activation and unknown journals stay unchanged', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  for (const mutate of [
+    (journal) => {
+      journal.state.items[0].issue_id = 'original-unknown-issue';
+      journal.resume_status = 'issued_outcome_uncertain';
+    },
+    (journal) => {
+      journal.state.items[0].issue_id = 'completed-issue';
+      journal.state.items[0].observation = { status: 'reported_complete' };
+    },
+    (journal) => {
+      journal.state.items[0].observation = { status: 'reported_complete' };
+    },
+    (journal) => {
+      journal.state.items[0].host_reservation = {};
+    },
+    (journal) => {
+      journal.state.items[0].research_activation = {};
+    },
+    (journal) => {
+      journal.state.items[0].research_normalization = {};
+    },
+    (journal) => {
+      journal.resume_status = 'blocked';
+    },
+    (journal) => {
+      journal.state.completed = [{ step_id: 'prior-wave', items: [] }];
+    },
+    (journal) => {
+      journal.state.source_scope.digest = 'drift';
+    },
+    (journal) => {
+      journal.state.items[0].request.config_digest = 'drift';
+    },
+    (journal) => {
+      journal.state.items[0].request.run_id = 'foreign-run';
+    },
+  ]) {
+    const journal = ownerRecoveryPreviewJournal();
+    mutate(journal);
+    ownerRecoveryPreviewExpired(() =>
+      expect(() => suspendLocalWork(ownerRecoveryPreviewRequest(initial, journal))).toThrow(),
+    );
+    expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+  }
+});
+
+test('owner recovery preview: current terminal actor does not turn original readonly UNKNOWN into completion', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  const journal = ownerRecoveryPreviewJournal();
+  journal.resume_status = 'issued_outcome_uncertain';
+  journal.state.items[0].issue_id = 'original-unknown-readonly';
+  // SuspensionInput has no configured-rights/terminal-actor verifier. A role name cannot authorize release.
+  const original = clone(journal);
+  ownerRecoveryPreviewExpired(() =>
+    expect(() => suspendLocalWork(ownerRecoveryPreviewRequest(initial, journal))).toThrow('uncertain'),
+  );
+  expect(journal).toEqual(original);
+  expect(journal.state.items[0].observation).toBeNull();
+  expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+});
+
+test('owner recovery preview: expired owner rejects foreign identity and stale versions', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  const request = ownerRecoveryPreviewRequest(initial);
+  for (const changes of [
+    { nativeSessionHandle: 'foreign' },
+    { expectedWork: { ...initial.workVersion, revision: 0 } },
+    { expectedLedger: { ...initial.ledgerVersion, revision: 0 } },
+    { identity: { ...identity, project_ids: ['other'] } },
+  ]) {
+    ownerRecoveryPreviewExpired(() => expect(() => suspendLocalWork({ ...request, ...changes })).toThrow());
+    expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+  }
+});
+
+test('owner recovery preview: release preserves a newer queued waiter and is idempotent', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  const queued = fixture('other');
+  queued.nextWork.lease = null;
+  Object.assign(queued.nextLedger.tickets[0], {
+    status: 'queued',
+    active_resources: [],
+    blocked_resources: ['file:src/task.ts'],
+    expires_at: null,
+  });
+  queued.nextLedger.claims[0].status = 'recovered';
+  queued.expectedLedger = initial.ledgerVersion;
+  includeExistingLedger(queued, initial.ledger);
+  store.compareAndSwapHostState(queued);
+  const before = store.readHostStateSnapshot(identity);
+  const request = ownerRecoveryPreviewRequest(before);
+  ownerRecoveryPreviewExpired(() => {
+    const released = suspendLocalWork(request);
+    expect(released.work.lease).toBeNull();
+    expect(released.work.execution.status).toBe('suspended');
+    expect(released.ledger.tickets[0].status).toBe('released');
+    expect(released.ledger.claims[0].status).toBe('released');
+    expect(released.ledger.tickets[1]).toEqual(before.ledger.tickets[1]);
+    expect(released.ledger.tickets[1].status).toBe('queued');
+    expect(released.ledger.claims[1]).toEqual(before.ledger.claims[1]);
+    expect(released.ledger.operations).toHaveLength(1);
+    expect(suspendLocalWork(request)).toEqual(released);
+  });
+});
+
+test('owner recovery preview: earlier FIFO blocker and foreign active claim still deny release', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  const older = fixture('older');
+  Object.assign(older.nextLedger.tickets[0], {
+    sequence: 1,
+    status: 'queued',
+    active_resources: [],
+    blocked_resources: ['file:src/task.ts'],
+    expires_at: null,
+  });
+  older.nextLedger.claims[0].status = 'recovered';
+  const foreign = fixture('foreign');
+  foreign.nextLedger.tickets[0].sequence = 3;
+  for (const contender of [older, foreign]) {
+    // Exercise read-side guards without manufacturing a competing claim in a live store.
+    const host = clone(initial);
+    host.ledger.tickets[0].sequence = 2;
+    host.ledger.tickets.push(contender.nextLedger.tickets[0]);
+    host.ledger.claims.push(contender.nextLedger.claims[0]);
+    const request = {
+      ...ownerRecoveryPreviewRequest(initial),
+      store: {
+        workspaceId: workspace,
+        readHostStateSnapshot: () => host,
+        compareAndSwapHostState: () => {
+          throw new Error('unexpected write');
+        },
+      },
+    };
+    ownerRecoveryPreviewExpired(() => expect(() => suspendLocalWork(request)).toThrow('same-thread lease'));
+    expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+  }
+});
+
+test('owner recovery preview: non-INTAKE and completed host assignment are not unissued preparation', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  // Read-only test double varies persisted evidence without mutating the scratch database.
+  for (const alter of [
+    (work) => {
+      work.lifecycle.phase = 'TRACE';
+    },
+    (work) => {
+      work.lifecycle.seal = {};
+    },
+    (work) => {
+      work.execution.assignment_attempts = [{ status: 'completed' }];
+    },
+    (work) => {
+      work.lifecycle.assurance.review_generation = 1;
+    },
+    (work) => {
+      work.lifecycle.assurance.delivery_cycle_id = 'prior-delivery';
+    },
+  ]) {
+    const host = clone(initial);
+    alter(host.work);
+    const request = {
+      ...ownerRecoveryPreviewRequest(initial),
+      store: {
+        workspaceId: workspace,
+        readHostStateSnapshot: () => host,
+        compareAndSwapHostState: () => {
+          throw new Error('unexpected write');
+        },
+      },
+    };
+    ownerRecoveryPreviewExpired(() => expect(() => suspendLocalWork(request)).toThrow('expired'));
+    expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+  }
+});
 function activeClaimFor(ledger, ticket = ledger.tickets[0]) {
   return ledger.claims.find((claim) => claim.ticket_id === ticket.ticket_id && claim.status === 'active');
 }
@@ -4580,4 +4843,401 @@ test('completed readonly owner release denies stale CAS and a newer queued confl
   ).toThrow('same-thread lease');
   expect(store.readHostStateSnapshot(identity)).toEqual(before);
   expect(before.ledger.tickets[1].sequence).toBeGreaterThan(before.ledger.tickets[0].sequence);
+});
+
+function resourceFreeFixture(id = 'work', resource = 'file:src/task.ts') {
+  const seed = fixture(id, resource);
+  const ticket = seed.nextLedger.tickets[0];
+  const resources = ['execution:' + id];
+  ticket.exclusive_resources = resources;
+  ticket.active_resources = resources;
+  seed.nextLedger.claims[0].resources = resources;
+  seed.nextWork.binding.allowed_resources.push(...resources);
+  return seed;
+}
+const sourceLeaseConfig = {
+  workflows: {
+    bug_fix: {
+      stages: [
+        { id: 'develop_fix', assignments: [{ role: 'developer', profile: 'writer' }] },
+        { id: 'research_bug', assignments: [{ role: 'diagnostics-researcher', profile: 'readonly' }] },
+      ],
+    },
+  },
+  agents: {
+    profiles: {
+      writer: { mutation_scope: 'repository_source', tools_policy: 'write', egress_policy: 'none' },
+      readonly: { mutation_scope: 'none', tools_policy: 'read_only', egress_policy: 'none' },
+    },
+    tool_policies: { write: { source_write: true }, read_only: { source_write: false } },
+    egress_policies: { none: { allowed_hosts: [] } },
+  },
+};
+async function writerFixture(id = 'work', resource = 'file:src/task.ts', config = sourceLeaseConfig) {
+  await mkdir(path.join(root, 'src'), { recursive: true });
+  await writeFile(path.join(root, resource.slice(5)), 'original source');
+  const seed = resourceFreeFixture(id, resource);
+  const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), [resource.slice(5)]);
+  seed.nextWork.binding.work_source_revision = source.digest;
+  seed.nextWork.binding.workflow_id = 'bug_fix';
+  seed.nextWork.binding.config_digest = runtimeConfigDigest(config);
+  seed.nextWork.lifecycle.source_revision = source.digest;
+  seed.nextWork.lifecycle.config_binding.config_digest = seed.nextWork.binding.config_digest;
+  seed.nextLedger.tickets[0].source_revision = source.digest;
+  return { seed, source };
+}
+function writerAcquire(host) {
+  return acquireLocalSourceWriterLease({
+    repositoryRoot: root,
+    config: sourceLeaseConfig,
+    store,
+    identity: { ...identity, work_id: host.work.binding.lifecycle_work_id },
+    nativeSessionHandle: 'thread',
+    stageId: 'develop_fix',
+    assignmentIndex: 0,
+    expectedWork: host.workVersion,
+    expectedLedger: host.ledgerVersion,
+  });
+}
+test('lazy ownership: execution-only intake admits and configured writer acquires exact claims', async () => {
+  const { seed } = await writerFixture();
+  const initial = store.compareAndSwapHostState(seed);
+  expect(initial.ledger.claims[0].resources).toEqual(['execution:work']);
+  expect(Date.parse(initial.ledger.tickets[0].expires_at)).toBeGreaterThan(Date.now());
+  const active = writerAcquire(initial);
+  expect(active.work.lease.ticket_id).not.toBe(initial.work.lease.ticket_id);
+  expect(active.ledger.tickets[0].status).toBe('released');
+  expect(active.ledger.tickets[0].exclusive_resources).toEqual(['execution:work']);
+  expect(active.ledger.claims.find((claim) => claim.status === 'active').resources).toEqual([
+    'execution:work',
+    'file:src/task.ts',
+  ]);
+  expect(writerAcquire(active).workVersion).toEqual(active.workVersion);
+});
+test('lazy ownership: source drift and readonly assignment cannot acquire a writer claim', async () => {
+  const { seed } = await writerFixture();
+  const initial = store.compareAndSwapHostState(seed);
+  expect(() =>
+    acquireLocalSourceWriterLease({
+      repositoryRoot: root,
+      config: sourceLeaseConfig,
+      store,
+      identity,
+      nativeSessionHandle: 'thread',
+      stageId: 'research_bug',
+      assignmentIndex: 0,
+      expectedWork: initial.workVersion,
+      expectedLedger: initial.ledgerVersion,
+    }),
+  ).toThrow('not a source writer');
+  await writeFile(path.join(root, 'src/task.ts'), 'changed');
+  expect(() => writerAcquire(initial)).toThrow('declared source changed');
+  expect(store.readHostStateSnapshot(identity).workVersion).toEqual(initial.workVersion);
+});
+test('lazy ownership: same-file writers queue FIFO while disjoint project writer proceeds', async () => {
+  const first = writerAcquire(store.compareAndSwapHostState((await writerFixture()).seed));
+  const secondSeed = (await writerFixture('second')).seed;
+  includeExistingLedger(secondSeed, first.ledger);
+  secondSeed.expectedLedger = first.ledgerVersion;
+  const second = store.compareAndSwapHostState(secondSeed);
+  expect(() => writerAcquire(second)).toThrow('queued');
+  const queued = store.readHostStateSnapshot({ ...identity, work_id: 'second' });
+  expect(
+    queued.ledger.tickets.find((ticket) => ticket.work_id === 'second' && ticket.status === 'queued').blocked_resources,
+  ).toEqual(['execution:second', 'file:src/task.ts']);
+  expect(queued.work.lease.ticket_id).toBe(second.work.lease.ticket_id);
+  const disjointSeed = (await writerFixture('disjoint', 'file:src/disjoint.ts')).seed;
+  includeExistingLedger(disjointSeed, queued.ledger);
+  disjointSeed.expectedLedger = queued.ledgerVersion;
+  const disjoint = writerAcquire(store.compareAndSwapHostState(disjointSeed));
+  expect(
+    disjoint.ledger.claims.find((claim) => claim.work_id === 'disjoint' && claim.status === 'active').resources,
+  ).toEqual(['execution:disjoint', 'file:src/disjoint.ts']);
+});
+test('contour resources: disjoint same-project handoff freezes independently', () => {
+  const first = store.compareAndSwapHostState(fixture());
+  const secondSeed = includeExistingLedger(fixture('other', 'file:src/other.ts'), first.ledger);
+  secondSeed.expectedLedger = first.ledgerVersion;
+  store.compareAndSwapHostState(secondSeed);
+  const ready = next(store.readHostStateSnapshot(identity));
+  ready.nextWork.lease = null;
+  ready.nextLedger.tickets[0].status = 'ready_for_handoff';
+  const saved = store.compareAndSwapHostState(ready);
+  const freeze = next(saved);
+  freeze.nextLedger.contours.push(frozenContour(freeze.nextLedger));
+  freeze.nextLedger.open_generation++;
+  const frozen = store.compareAndSwapHostState(freeze);
+  expect(frozen.ledger.contours[0].work_ids).toEqual(['work']);
+  expect(frozen.ledger.tickets[1].status).toBe('active');
+});
+test('contour resources: explicit shared resource and three queued file aliases preserve FIFO component', () => {
+  const first = store.compareAndSwapHostState(fixture());
+  let current = first;
+  for (const id of ['second', 'third']) {
+    const seed = fixture(id, 'file:src/task.ts');
+    seed.nextWork.lease = null;
+    const ticket = seed.nextLedger.tickets[0];
+    ticket.status = 'queued';
+    ticket.active_resources = [];
+    ticket.blocked_resources = ['file:src/task.ts'];
+    ticket.claim_ids = [];
+    ticket.expires_at = null;
+    seed.nextLedger.claims = [];
+    includeExistingLedger(seed, current.ledger);
+    seed.expectedLedger = current.ledgerVersion;
+    current = store.compareAndSwapHostState(seed);
+  }
+  const ready = next(store.readHostStateSnapshot(identity));
+  ready.nextWork.lease = null;
+  ready.nextLedger.tickets[0].status = 'ready_for_handoff';
+  const saved = store.compareAndSwapHostState(ready);
+  const freeze = next(saved);
+  freeze.nextLedger.contours.push(frozenContour(freeze.nextLedger));
+  freeze.nextLedger.open_generation++;
+  expect(() => store.compareAndSwapHostState(freeze)).toThrow('frozen prior-generation contour');
+});
+
+async function unknownReadonlyFixture(resourceFree = false, config = sourceLeaseConfig) {
+  const prepared = await writerFixture('work', 'file:src/task.ts', config);
+  const seed = resourceFree ? prepared.seed : fixture();
+  if (!resourceFree) {
+    seed.nextWork.binding = prepared.seed.nextWork.binding;
+    seed.nextWork.lifecycle = prepared.seed.nextWork.lifecycle;
+    seed.nextLedger.tickets[0].source_revision = prepared.source.digest;
+  }
+  const initial = store.compareAndSwapHostState(seed);
+  const journal = ownerRecoveryPreviewJournal();
+  journal.resume_status = 'issued_outcome_uncertain';
+  journal.state.source_scope = prepared.source;
+  journal.state.items[0].issue_id = 'old-issued-unknown';
+  journal.state.items[0].request.config_digest = initial.work.binding.config_digest;
+  journal.state.items[0].request.scope_digest = prepared.source.digest;
+  journal.version = { revision: 1, digest: canonicalJsonDigest(journal.state) };
+  database.exec(
+    'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt))',
+  );
+  database
+    .query('INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?)')
+    .run(workspace, 'work', 1, 1, canonicalJson(journal.state), journal.version.digest);
+  return { initial, journal, request: { ...ownerRecoveryPreviewRequest(initial, journal), config } };
+}
+test('issued readonly release: expired exact owner retires claims and preserves unknown journal bytes', async () => {
+  const { initial, journal, request } = await unknownReadonlyFixture();
+  const row = database.query('SELECT * FROM agent_host_mastra_session_ledger').get();
+  ownerRecoveryPreviewExpired(() => {
+    const released = suspendLocalWork(request);
+    expect(released.work.lease).toBeNull();
+    expect(released.work.execution.status).toBe('suspended');
+    expect(released.work.lifecycle.phase).toBe(initial.work.lifecycle.phase);
+    expect(released.work.binding).toEqual(initial.work.binding);
+    expect(released.ledger.tickets[0].status).toBe('released');
+    expect(released.ledger.claims[0].status).toBe('released');
+    expect(journal.state.items[0].issue_id).toBe('old-issued-unknown');
+    expect(journal.state.items[0].observation).toBeNull();
+    expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').get()).toEqual(row);
+    expect(suspendLocalWork(request).workVersion).toEqual(released.workVersion);
+  });
+});
+test('issued readonly release: execution-only owner releases without file ownership', async () => {
+  const { request } = await unknownReadonlyFixture(true);
+  const released = suspendLocalWork(request);
+  expect(released.ledger.claims.every((claim) => claim.status === 'released')).toBe(true);
+  expect(released.work.lease).toBeNull();
+  expect(released.ledger.operations[0].resources).toEqual(['execution:work']);
+});
+test('issued readonly release: stale journal CAS, reservation, second unknown and foreign thread deny without writes', async () => {
+  const { initial, journal, request } = await unknownReadonlyFixture();
+  for (const modify of [
+    (value) => {
+      value.journal.version.digest = 'f'.repeat(64);
+    },
+    (value) => {
+      value.journal.state.items[0].host_reservation = {};
+    },
+    (value) => {
+      value.journal.state.items.push(clone(value.journal.state.items[0]));
+    },
+    (value) => {
+      value.nativeSessionHandle = 'foreign';
+    },
+    (value) => {
+      value.journal.state.items[0].research_normalization = {};
+    },
+  ]) {
+    const candidate = { ...request, journal: clone(journal) };
+    modify(candidate);
+    ownerRecoveryPreviewExpired(() => expect(() => suspendLocalWork(candidate)).toThrow());
+    expect(store.readHostStateSnapshot(identity).workVersion).toEqual(initial.workVersion);
+  }
+});
+test('issued readonly release: configured source-writing or egress rights remain blocked', async () => {
+  const { initial, journal, request } = await unknownReadonlyFixture();
+  const writingJournal = clone(journal);
+  writingJournal.state.items[0].request.stage_id = 'develop_fix';
+  writingJournal.state.items[0].request.role = 'developer';
+  ownerRecoveryPreviewExpired(() =>
+    expect(() => suspendLocalWork({ ...request, journal: writingJournal })).toThrow('uncertain'),
+  );
+  const wrongConfig = clone(sourceLeaseConfig);
+  wrongConfig.agents.profiles.readonly.egress_policy = 'official_docs';
+  ownerRecoveryPreviewExpired(() =>
+    expect(() => suspendLocalWork({ ...request, config: wrongConfig })).toThrow('uncertain'),
+  );
+  expect(store.readHostStateSnapshot(identity).workVersion).toEqual(initial.workVersion);
+});
+test('issued readonly release: source drift does not block relinquishment or accept stale evidence', async () => {
+  const { initial, request } = await unknownReadonlyFixture();
+  await writeFile(path.join(root, 'src/task.ts'), 'changed accepted source');
+  const released = suspendLocalWork(request);
+  expect(released.work.lease).toBeNull();
+  expect(released.work.binding).toEqual(initial.work.binding);
+  expect(request.journal.state.items[0].observation).toBeNull();
+  expect(request.journal.state.source_scope.digest).toBe(initial.work.binding.work_source_revision);
+});
+
+test('issued readonly release: later queued waiter survives owner relinquishment', async () => {
+  const { initial, request } = await unknownReadonlyFixture();
+  const seed = fixture('later');
+  seed.nextWork.lease = null;
+  const ticket = seed.nextLedger.tickets[0];
+  ticket.status = 'queued';
+  ticket.active_resources = [];
+  ticket.blocked_resources = ['file:src/task.ts'];
+  ticket.claim_ids = [];
+  ticket.expires_at = null;
+  seed.nextLedger.claims = [];
+  includeExistingLedger(seed, initial.ledger);
+  seed.expectedLedger = initial.ledgerVersion;
+  const queued = store.compareAndSwapHostState(seed);
+  const before = store.readHostStateSnapshot(identity);
+  const released = suspendLocalWork({
+    ...request,
+    expectedWork: before.workVersion,
+    expectedLedger: before.ledgerVersion,
+  });
+  expect(released.ledger.tickets.find((item) => item.work_id === 'later')).toEqual(
+    queued.ledger.tickets.find((item) => item.work_id === 'later'),
+  );
+  expect(released.work.lease).toBeNull();
+});
+test('contour resources: explicitly claimed shared nonfile resource keeps joined handoff', () => {
+  const firstSeed = fixture();
+  firstSeed.nextWork.binding.allowed_resources.push('service:exclusive-report');
+  for (const field of ['exclusive_resources', 'active_resources', 'contour_keys'])
+    firstSeed.nextLedger.tickets[0][field].push('service:exclusive-report');
+  firstSeed.nextLedger.claims[0].resources.push('service:exclusive-report');
+  const first = store.compareAndSwapHostState(firstSeed);
+  const seed = fixture('later', 'file:src/later.ts');
+  seed.nextWork.lease = null;
+  seed.nextWork.binding.allowed_resources.push('service:exclusive-report');
+  const ticket = seed.nextLedger.tickets[0];
+  ticket.status = 'queued';
+  ticket.exclusive_resources.push('service:exclusive-report');
+  ticket.active_resources = [];
+  ticket.blocked_resources = [...ticket.exclusive_resources];
+  ticket.contour_keys.push('service:exclusive-report');
+  ticket.claim_ids = [];
+  ticket.expires_at = null;
+  seed.nextLedger.claims = [];
+  includeExistingLedger(seed, first.ledger);
+  seed.expectedLedger = first.ledgerVersion;
+  store.compareAndSwapHostState(seed);
+  const ready = next(store.readHostStateSnapshot(identity));
+  ready.nextWork.lease = null;
+  ready.nextLedger.tickets[0].status = 'ready_for_handoff';
+  const saved = store.compareAndSwapHostState(ready);
+  const freeze = next(saved);
+  freeze.nextLedger.contours.push(frozenContour(freeze.nextLedger));
+  freeze.nextLedger.open_generation++;
+  expect(() => store.compareAndSwapHostState(freeze)).toThrow('frozen prior-generation contour');
+});
+
+test('lazy ownership: queued writer activates after owner release without changing FIFO history', async () => {
+  const first = writerAcquire(store.compareAndSwapHostState((await writerFixture()).seed));
+  const seed = (await writerFixture('second')).seed;
+  includeExistingLedger(seed, first.ledger);
+  seed.expectedLedger = first.ledgerVersion;
+  const second = store.compareAndSwapHostState(seed);
+  expect(() => writerAcquire(second)).toThrow('queued');
+  const queued = store.readHostStateSnapshot({ ...identity, work_id: 'second' });
+  const queuedTicket = queued.ledger.tickets.find(
+    (ticket) => ticket.work_id === 'second' && ticket.status === 'queued',
+  );
+  const firstCurrent = store.readHostStateSnapshot(identity);
+  suspendLocalWork(ownerRecoveryPreviewRequest(firstCurrent, quiescentJournal()));
+  const current = store.readHostStateSnapshot({ ...identity, work_id: 'second' });
+  const active = writerAcquire(current);
+  const activated = active.ledger.tickets.find((ticket) => ticket.ticket_id === queuedTicket.ticket_id);
+  expect(activated.sequence).toBe(queuedTicket.sequence);
+  expect(activated.status).toBe('active');
+  expect(activated.exclusive_resources).toEqual(queuedTicket.exclusive_resources);
+});
+test('lazy ownership: paused execution-only work resumes with execution rights and no file rights', async () => {
+  const { initial, journal, request } = await unknownReadonlyFixture(true);
+  const suspended = suspendLocalWork(request);
+  const fakeLedger = { resume: () => journal };
+  const resumed = resumePausedLocalWork({
+    store,
+    ledger: fakeLedger,
+    identity,
+    attempt: 1,
+    expectedWork: suspended.workVersion,
+    expectedLedger: suspended.ledgerVersion,
+    expectedJournal: journal.version,
+    nativeSessionHandle: 'thread',
+    configDigest: initial.work.binding.config_digest,
+    sourceDigest: initial.work.binding.work_source_revision,
+  });
+  const host = store.readHostStateSnapshot(identity);
+  expect(resumed.status).toBe('resumed');
+  expect(host.ledger.claims.filter((claim) => claim.status === 'active')[0].resources).toEqual(['execution:work']);
+  expect(
+    Date.parse(host.ledger.tickets.find((ticket) => ticket.ticket_id === host.work.lease.ticket_id).expires_at),
+  ).toBeGreaterThan(Date.now());
+  expect(journal.state.items[0].observation).toBeNull();
+});
+
+test('issued readonly release: completed official-docs predecessor does not block pending no-egress owner', async () => {
+  const config = clone(sourceLeaseConfig);
+  config.agents.profiles.web = { mutation_scope: 'none', tools_policy: 'read_only', egress_policy: 'official_docs' };
+  config.agents.egress_policies.official_docs = { allowed_hosts: ['learn.microsoft.com'] };
+  config.workflows.bug_fix.stages.push({
+    id: 'research_docs',
+    assignments: [{ role: 'documentation-researcher', profile: 'web' }],
+  });
+  const { initial, journal, request } = await unknownReadonlyFixture(false, config);
+  const prior = clone(journal.state.items[0]);
+  prior.issue_id = 'actual-completed-docs-issue';
+  prior.request.action_id = 'completed-docs-action';
+  prior.request.stage_id = 'research_docs';
+  prior.request.role = 'documentation-researcher';
+  prior.observation = {
+    schema: 'VidaSessionObservation/v1',
+    action_id: prior.request.action_id,
+    issue_id: prior.issue_id,
+    agent_id: 'fixture-docs-researcher',
+    tool_call_ref: 'fixture-docs-completion',
+    status: 'reported_complete',
+    summary: 'Observed docs research completion.',
+    output_digest: 'a'.repeat(64),
+    evidence_refs: ['fixture:completed-docs'],
+  };
+  journal.state.completed.push({ step_id: 'completed-docs', items: [prior] });
+  journal.version = { revision: 2, digest: canonicalJsonDigest(journal.state) };
+  database
+    .query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=?')
+    .run(2, canonicalJson(journal.state), journal.version.digest);
+  const beforeRow = database.query('SELECT * FROM agent_host_mastra_session_ledger').get();
+  const failed = clone(journal);
+  failed.state.completed[0].items[0].observation.status = 'reported_failed';
+  failed.version.digest = canonicalJsonDigest(failed.state);
+  expect(() => suspendLocalWork({ ...request, journal: failed })).toThrow('uncertain');
+  expect(store.readHostStateSnapshot(identity).workVersion).toEqual(initial.workVersion);
+  ownerRecoveryPreviewExpired(() => {
+    const released = suspendLocalWork({ ...request, journal });
+    expect(released.work.lease).toBeNull();
+    expect(journal.state.items[0].observation).toBeNull();
+    expect(journal.state.completed[0].items[0]).toEqual(prior);
+    expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').get()).toEqual(beforeRow);
+  });
 });

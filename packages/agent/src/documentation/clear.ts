@@ -4,6 +4,7 @@ import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
 import eventSchema from '../../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
+import policySchema from '../../schemas/documentation-policy.v1.schema.json' with { type: 'json' };
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { loadProjectContext, projectBindingFor } from '../config/project-context.js';
@@ -105,16 +106,12 @@ function loadBoundPolicy(
   repositoryId: string,
   projectId: string,
   configId: string,
-  bundle: string,
 ): { policy: Policy; digest: string } {
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const policyPath = relative(configuredPath);
   const raw = access.readBytes(policyPath, 'project documentation policy');
-  const schema = JSON.parse(
-    access.readText(`${relative(bundle)}/schemas/documentation-policy.v1.schema.json`, 'documentation policy schema'),
-  ) as object;
   const validator = new Ajv2020Constructor({ strict: true, allErrors: true, formats: { 'date-time': true } }).compile(
-    schema,
+    policySchema as object,
   );
   const policy = asRecord(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)));
   if (!validator(policy)) throw new Error('documentation policy schema invalid');
@@ -170,7 +167,6 @@ export function produceDocumentationClearCheckpoint(input: DocumentationClearInp
     input.repository_id,
     input.project_id,
     config.config_id,
-    config.runtime.bundle,
   );
   const scoped = [...new Set(input.scope_paths.map(relative))].sort();
   const governed = scoped.filter((file) =>

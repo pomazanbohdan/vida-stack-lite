@@ -1,5 +1,15 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import Ajv2020 from 'ajv/dist/2020.js';
+import observedEventSchema from '../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
+const ObservedEventAjv = Ajv2020 as unknown as new (options?: Record<string, unknown>) => {
+  compile(schema: object): (value: unknown) => boolean;
+};
+const validObservedResearchChangeEvent = new ObservedEventAjv({
+  strict: true,
+  allErrors: true,
+  formats: { 'date-time': true },
+}).compile(observedEventSchema);
 import {
   loadRuntimeConfig,
   resolveConfigPath,
@@ -3912,7 +3922,64 @@ export async function prepareObservedResearchRecord(
   return validateObservedResearchRecordPlan(freezeJsonValue({ ...body, digest: canonicalJsonDigest(body) }));
 }
 
-/** Apply only a previously committed journal plan; partial pairs and foreign edits remain blocked. */
+function observedResearchChangelogExtension(
+  bytes: string | null,
+  plan: ObservedResearchRecordPlan,
+  value: JsonRecord,
+): { eventLine: string; present: boolean } {
+  const current = bytes ?? '';
+  if (Buffer.byteLength(current, 'utf8') > MAX_JSON_BYTES || (current !== '' && !current.endsWith('\n')))
+    fail('research changelog framing or bound changed', 'GAP-RESEARCH-DECISION-CAS-001');
+  const event = researchChangeEvent(
+    value,
+    plan.record_pre_sha256 === null ? 'init' : 'finalize',
+    plan.record_pre_sha256,
+    plan.record_sha256,
+    plan.record_path,
+  );
+  const eventLine = canonicalJson(event) + '\n';
+  const lines = current.split('\n');
+  if (lines.length - 1 > MAX_CHANGELOG_EVENTS)
+    fail('research changelog exceeds bound', 'GAP-RESEARCH-DECISION-CHANGELOG-BOUND-001');
+  let offset = 0;
+  let present = false;
+  let eventOffset = -1;
+  const prefixHash = createHash('sha256');
+  let anchor = -1;
+  const matchPrefix = () => {
+    const beforeMatches =
+      plan.changelog_pre_sha256 === null ? offset === 0 : prefixHash.copy().digest('hex') === plan.changelog_pre_sha256;
+    if (beforeMatches && prefixHash.copy().update(eventLine).digest('hex') === plan.changelog_sha256) anchor = offset;
+  };
+  matchPrefix();
+  for (const line of lines.slice(0, -1)) {
+    if (line !== '') {
+      let entry: unknown;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        fail('research changelog event is invalid', 'GAP-RESEARCH-DECISION-CAS-001');
+      }
+      if (!validObservedResearchChangeEvent(entry))
+        fail('research changelog event is invalid', 'GAP-RESEARCH-DECISION-CAS-001');
+      const item = entry as Record<string, unknown>;
+      if (item.event_id === event.event_id) {
+        if (present || canonicalJson(item) !== canonicalJson(event))
+          fail('research changelog reserved event differs or is duplicated', 'GAP-RESEARCH-DECISION-CAS-001');
+        present = true;
+        eventOffset = offset;
+      }
+    }
+    offset += line.length + 1;
+    prefixHash.update(line + '\n');
+    matchPrefix();
+  }
+  // Authenticate the immutable reservation's original prefix and event, while preserving unrelated suffix events.
+  if (anchor < 0 || (present && eventOffset < anchor))
+    fail('research changelog does not extend its reserved preimage', 'GAP-RESEARCH-DECISION-CAS-001');
+  return { eventLine, present };
+}
+/** Apply a committed plan against its exact target and append-only changelog extension. */
 export async function recordObservedResearchResultAsync(
   input: ObservedResearchRecordInput & {
     readonly plan: ObservedResearchRecordPlan;
@@ -3951,41 +4018,39 @@ export async function recordObservedResearchResultAsync(
         : null;
       const recordHash = recordBefore === null ? null : rawSha256(recordBefore);
       const changelogHash = changelogBefore === null ? null : rawSha256(changelogBefore);
-      const replay = recordHash === plan.record_sha256 && changelogHash === plan.changelog_sha256;
+      const extension = observedResearchChangelogExtension(changelogBefore, plan, context.value);
+      const replay = recordHash === plan.record_sha256 && extension.present;
       if (!replay) {
-        if (recordHash !== plan.record_pre_sha256 || changelogHash !== plan.changelog_pre_sha256)
-          fail('research record pair is partial or externally changed', 'GAP-RESEARCH-DECISION-CAS-001');
-        const bytes = observedResearchBytes(input, context);
-        if (
-          rawSha256(bytes.recordAfter) !== plan.record_sha256 ||
-          rawSha256(bytes.changelogAfter) !== plan.changelog_sha256 ||
-          (bytes.recordBefore === null ? null : rawSha256(bytes.recordBefore)) !== plan.record_pre_sha256 ||
-          (bytes.changelogBefore === null ? null : rawSha256(bytes.changelogBefore)) !== plan.changelog_pre_sha256
-        )
-          fail('research record plan no longer describes current files', 'GAP-RESEARCH-DECISION-CAS-001');
-        if (recordBefore === null) await access.writeExclusiveAsync(relative, bytes.recordAfter, 'research record');
-        else await access.replaceAtomicAsync(relative, plan.record_pre_sha256!, bytes.recordAfter, 'research record');
+        if (recordHash !== plan.record_pre_sha256 && recordHash !== plan.record_sha256)
+          fail('research target changed after reservation', 'GAP-RESEARCH-DECISION-CAS-001');
+        if (extension.present)
+          fail('research changelog event exists without its reserved target', 'GAP-RESEARCH-DECISION-CAS-001');
+        const recordAfter = JSON.stringify(JSON.parse(canonicalJson(context.value)), null, 2) + '\n';
+        if (rawSha256(recordAfter) !== plan.record_sha256 || Buffer.byteLength(recordAfter, 'utf8') > MAX_JSON_BYTES)
+          fail('research record plan differs from observed result', 'GAP-RESEARCH-DECISION-CAS-001');
+        const next = (changelogBefore ?? '') + extension.eventLine;
+        if (Buffer.byteLength(next, 'utf8') > MAX_JSON_BYTES || next.split('\n').length - 1 > MAX_CHANGELOG_EVENTS)
+          fail('research changelog exceeds bound', 'GAP-RESEARCH-DECISION-CHANGELOG-BOUND-001');
+        if (recordHash !== plan.record_sha256) {
+          if (recordBefore === null) await access.writeExclusiveAsync(relative, recordAfter, 'research record');
+          else await access.replaceAtomicAsync(relative, plan.record_pre_sha256!, recordAfter, 'research record');
+        }
         if (changelogBefore === null)
-          await access.writeExclusiveAsync(feature.paths.changelog, bytes.changelogAfter, 'research changelog');
-        else
-          await access.replaceAtomicAsync(
-            feature.paths.changelog,
-            plan.changelog_pre_sha256!,
-            bytes.changelogAfter,
-            'research changelog',
-          );
+          await access.writeExclusiveAsync(feature.paths.changelog, next, 'research changelog');
+        else await access.replaceAtomicAsync(feature.paths.changelog, changelogHash!, next, 'research changelog');
       }
       observedResearchContext(input);
+      const persistedLog = access.readText(feature.paths.changelog, 'research changelog');
       if (
         rawSha256(access.readText(relative, 'research record')) !== plan.record_sha256 ||
-        rawSha256(access.readText(feature.paths.changelog, 'research changelog')) !== plan.changelog_sha256
+        !observedResearchChangelogExtension(persistedLog, plan, context.value).present
       )
         fail('research record pair changed after persistence', 'GAP-RESEARCH-DECISION-CAS-001');
       return {
         recordPath: relative,
         recordSha256: plan.record_sha256,
         changelogPath: feature.paths.changelog,
-        changelogSha256: plan.changelog_sha256,
+        changelogSha256: rawSha256(persistedLog),
         replay,
       };
     });
@@ -4048,8 +4113,9 @@ export async function readObservedResearchResult(
         const currentHistorySha256 = rawSha256(historyBytes);
         if (rawSha256(recordBytes) !== plan.record_sha256)
           fail('observed research record changed after persistence', 'GAP-RESEARCH-DECISION-CAS-001');
-        if (rawSha256(changelogBytes) !== plan.changelog_sha256)
-          fail('observed research changelog changed after persistence', 'GAP-RESEARCH-DECISION-CAS-001');
+        if (!observedResearchChangelogExtension(changelogBytes, plan, context.value).present)
+          fail('observed research changelog reserved event is missing', 'GAP-RESEARCH-DECISION-CAS-001');
+        const currentChangelogSha256 = rawSha256(changelogBytes);
         const recordValue = asRecord(JSON.parse(recordBytes), 'observed research record');
         const validation = {
           root: context.root,
@@ -4066,7 +4132,7 @@ export async function readObservedResearchResult(
           record.digest !== input.result.digest ||
           rawSha256(access.readText(activationPlan.history_path, 'activation history')) !== currentHistorySha256 ||
           rawSha256(access.readText(plan.record_path, 'research record')) !== plan.record_sha256 ||
-          rawSha256(access.readText(plan.changelog_path, 'research changelog')) !== plan.changelog_sha256
+          rawSha256(access.readText(plan.changelog_path, 'research changelog')) !== currentChangelogSha256
         )
           fail('observed research record pair changed during validation', 'GAP-RESEARCH-DECISION-CAS-001');
         return record;

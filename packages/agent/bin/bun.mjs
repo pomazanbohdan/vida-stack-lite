@@ -187,8 +187,59 @@ export function resolvePinnedBun(options = {}) {
   const spawn = options.spawn ?? spawnSync;
   const env = options.env ?? process.env;
   const node = options.node ?? process.execPath;
-  const npm = options.npmCli ?? (options.executable ? null : findNpmCli(node));
   const cleanup = options.cleanup ?? defaultTimeoutCleanup;
+  if (!options.executable) {
+    const keys = Object.keys(env).filter((key) =>
+      process.platform === 'win32' ? key.toUpperCase() === 'PATH' : key === 'PATH',
+    );
+    const pathKey = keys.includes('PATH') ? 'PATH' : keys[0];
+    const extensionKeys = Object.keys(env).filter((key) => key.toUpperCase() === 'PATHEXT');
+    const extensionKey = extensionKeys.includes('PATHEXT') ? 'PATHEXT' : extensionKeys[0];
+    const extensions =
+      process.platform === 'win32'
+        ? String(env[extensionKey] ?? '.COM;.EXE')
+            .split(';')
+            .filter((extension) => /^\.(exe|com)$/i.test(extension))
+        : [''];
+    let discovered;
+    for (const directory of String(env[pathKey] ?? '')
+      .split(path.delimiter)
+      .filter(Boolean)) {
+      for (const extension of extensions) {
+        const candidate = path.resolve(
+          root,
+          process.platform === 'win32' ? directory.replace(/^"(.*)"$/, '$1') : directory,
+          `bun${extension}`,
+        );
+        try {
+          if (statSync(candidate).isFile()) discovered = realpathSync(candidate);
+        } catch {
+          /* Missing PATH entries fall through to the exact npm resolver. */
+        }
+        if (discovered) break;
+      }
+      if (discovered) break;
+    }
+    if (discovered && path.isAbsolute(discovered) && !/[\r\n\0]/.test(discovered)) {
+      try {
+        const version = succeeded(
+          boundedSpawnSync(
+            spawn,
+            discovered,
+            ['--version'],
+            { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true },
+            'PATH Bun version check',
+            cleanup,
+          ),
+          'PATH Bun version check',
+        );
+        if (version === pin) return discovered;
+      } catch {
+        /* A failed PATH probe cannot bypass pinned npm resolution. */
+      }
+    }
+  }
+  const npm = options.npmCli ?? (options.executable ? null : findNpmCli(node));
   const executable = options.executable
     ? String(options.executable).trim()
     : succeeded(

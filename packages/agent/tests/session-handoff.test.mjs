@@ -16,7 +16,7 @@ async function createFixture() {
   const fixtureRoot = mkdtempSync(path.join(tmpdir(), 'vida-session-handoff-'));
   const bundleRoot = path.join(fixtureRoot, 'vida-agent');
   mkdirSync(bundleRoot);
-  for (const entry of ['templates', 'instructions', 'schemas', 'TESTING.md'])
+  for (const entry of ['templates', 'instructions', 'schemas', 'TESTING.md', 'package.json'])
     cpSync(path.join(packageRoot, entry), path.join(bundleRoot, entry), { recursive: true, dereference: false });
   expect(
     await initializeProjectFromBundle(

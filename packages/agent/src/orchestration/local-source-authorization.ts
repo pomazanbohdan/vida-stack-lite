@@ -37,7 +37,10 @@ export function readLocalSourceWriteAuthorization(
   return { authorization, sha256: createHash('sha256').update(bytes).digest('hex') };
 }
 
-/** The active trusted session may bind an attributable user directive to one admitted work item. */
+/** Check a trusted local controller's scoped cooperative declaration.
+ * The controller establishes user authorization in the current conversation;
+ * this verifier checks binding consistency, not human-directive authenticity.
+ */
 export function createLocalSourceWriteApprovalVerifier(
   repositoryRoot: string,
   getStore: () => HostStateStore,

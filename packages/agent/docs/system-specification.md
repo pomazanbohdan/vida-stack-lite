@@ -13,6 +13,17 @@ lifecycle authority. Human business intent constrains system behavior; code,
 tests and local receipts provide separate evidence. Caller JSON and tool
 reports do not authenticate approval, native execution or user acceptance.
 
+Local execution assumes a trusted orchestrating session and its observed
+built-in tool results. Before authoring `LocalSourceWriteAuthorization/v1`,
+the controller establishes actual user authorization from the current
+conversation. That artifact is a scoped cooperative declaration and reference:
+the CLI checks its consistency with the work, configured writer, source scope,
+live lease and policy/CAS bindings. It does not authenticate the human directive.
+The declaration cannot establish independent review, delivery authorization or
+user Runtime acceptance. Local coordination does not promise physical exclusion
+of a malicious local caller with full filesystem access; containment, exact file
+ownership, policy checks and freshness remain technically enforced.
+
 Mastra owns the configured stage graph, suspension and session snapshot. The
 runtime owns work identity, exact repository/project/thread binding, ownership,
 leases, coordination, artifact integrity and CAS through HostState. Existing
@@ -90,6 +101,96 @@ and verifies version, instruction discovery and pinned prerequisites in an
 unrelated cwd. Interrupted or failed verification inspects the exact installed
 artifact before repeating effects. Registry publication, consumer initialization,
 configuration overwrite, commits, tags and push are outside this command.
+
+## Scoped source and lease continuity
+
+The public scope command accepts repeated `--repository-path` values for exact
+repository-shared files outside every configured project root. Project files,
+including unselected products, use the existing `--path` coverage rules. Both
+sets enter the same current-v1 bounded, stable, no-follow source snapshot;
+duplicates, collisions, traversal and unsafe paths fail. A snapshot grants no
+source write or delivery authority.
+
+Admission creates an active coordination ticket bound to the exact work,
+repository, projects, thread and source snapshot, with one real same-work
+execution claim and its normal lease expiry. Read-only stages retain those
+identity and freshness bindings
+without reserving future implementation files. Only an actual configured
+assignment with `mutation_scope: repository_source` and `source_write: true`
+may acquire writer ownership, immediately before issue and before effects.
+The boundary rereads the declared source and binds current work, ledger and
+journal versions. It allocates an ordinary current-v1 ticket and exact file
+claim; the preceding execution-only ticket and claim are released without
+changing immutable authority fields. Earlier overlapping writers queue by FIFO. Disjoint
+writers in the same project can proceed independently.
+
+Contention and handoff blocking derive from normalized actual exclusive
+resources, including file case aliases and explicitly claimed shared resources.
+The execution resource is derived internally from the exact work ID; users
+do not choose or maintain keys. Repository, tenant, project, BR, SR and AC
+navigation keys retain their identity and trace meaning but do not create a mutex. Released or read-only historical
+tickets do not enlarge a current handoff component. Explicit shared resources
+preserve coherent ownership and FIFO; metadata equality alone cannot force
+unrelated work to wait for another work item's delivery or Runtime acceptance.
+
+An attributable same-owner continuation may cooperatively suspend one issued
+unknown read-only action through the existing public route. The exact pending
+assignment must be bound to unchanged configured read-only rights, no source
+write or egress, with no reservation, pending normalization or host assignment
+effect. The operation checks exact work, ledger and journal CAS, thread,
+ticket, claim, generation and FIFO, and releases only that owner's ownership,
+including an expired claim. Later queued contenders remain unchanged.
+Completed predecessors retain their actual terminal observations; their
+configured official-docs access does not block release of the pending action.
+Source drift alone does not block relinquishing rights: release grants no new rights,
+acceptance or continuation. Preserve the original journal, issue, handle,
+observations and unknown outcome. Replacement, admission and writer acquisition
+still require fresh source bindings. Unknown writer effects remain blocked;
+late original replies cannot satisfy a replacement generation.
+
+The public session launcher offers `--renew-lease true` for the current live
+same-owner work, attempt, ticket, claim and generation. It checks the latest
+work/ledger/journal CAS, exact source, scope, configuration, schema and current
+bundle before extending the existing sixty-minute lease. It preserves accepted
+observations and pending readonly issues, and rejects issued writer bindings,
+started or uncertain assignments, foreign ownership and expired leases.
+
+Expired accepted readonly work may use `--recover-expired-lease true` together
+with explicit `--rebind-current-bundle true`. Recovery requires an unsealed
+INTAKE work with a completely unissued current wave, no pending unknown native
+outcome or writer assignment history, unchanged source/configuration/schema/
+scope/acceptance, and verified retained source authorization and research
+lineage. Expiry alone never proves quiescence or absence of effects.
+
+One shared HostState/coordination/journal SQLite transaction checks exact current
+versions, active claims and FIFO waiters, terminalizes the expired claim, makes
+the old ticket read-only with no rights, and allocates a fresh ticket and claim
+at the current delivery generation. It explicitly binds the executing package's
+current runtime digest and records the existing attributable authority reference
+in CoordinationScopeRebind/v1. It does not advance the global delivery generation,
+rewrite prior approvals or observations, replay native calls, or grant delivery.
+The separate Mastra workflow store is preserved; no cross-database atomicity is
+claimed. Old ticket capabilities and stale caller versions fail. Overlapping
+active owners and earlier queued overlapping writers block recovery.
+
+The unissued-empty preparation release remains distinct: an exact expired owner
+may release only bound unsealed INTAKE preparation with no completed wave,
+observation, issue, reservation, host assignment or effect. Preserve that attempt;
+admit successor work separately. Unknown issued readonly work is not this case.
+
+Research normalization preserves its immutable current-v1 reserved plan, exact
+target-record CAS and unique lineage event. Under the existing changelog lock,
+valid unrelated append-only events remain intact during apply, guarded read and
+admission. Changed original prefix, target record or own event, duplicate own
+event and uncertain partial effects remain conflicts. Recovery of a known
+record-first partial write uses the same persisted observation and plan.
+
+The pinned Bun launcher validates package metadata and the exact pin before
+checking an absolute realpath executable from PATH. Only an exact version is
+used; absent, malformed or mismatched PATH candidates fall back to the existing
+npm pinned resolver. Explicit executable overrides retain strict checks. This
+local tool discovery does not attest toolchain provenance or guarantee offline
+operation.
 
 ## Host integration direction
 

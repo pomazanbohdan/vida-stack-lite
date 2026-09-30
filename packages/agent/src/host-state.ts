@@ -878,7 +878,8 @@ function validatePair(work: WorkState | null, ledger: CoordinationLedger | null)
     );
     requireState(
       ticket.blocked_resources.length === 0 &&
-        work.binding.implementation_paths.every((path) => ticket.active_resources.includes('file:' + path)),
+        (!ticket.exclusive_resources.some((resource) => resource.startsWith('file:')) ||
+          work.binding.implementation_paths.every((path) => ticket.active_resources.includes('file:' + path))),
       'work lease is blocked or incomplete',
     );
   }
@@ -902,13 +903,13 @@ function contourComponent(ledger: CoordinationLedger, seed: CoordinationTicket):
   while (queue.length > 0) {
     const ticket = queue.shift();
     requireState(ticket, 'contour traversal failed');
-    const keys = new Set(ticket.contour_keys.map(coordinationResourceKey));
+    const keys = new Set(ticket.exclusive_resources.map(coordinationResourceKey));
     for (const candidate of ledger.tickets) {
       if (
         selected.has(candidate.ticket_id) ||
         candidate.generation !== seed.generation ||
-        candidate.status === 'read_only' ||
-        !candidate.contour_keys.some((key) => keys.has(coordinationResourceKey(key)))
+        ['read_only', 'released'].includes(candidate.status) ||
+        !candidate.exclusive_resources.some((key) => keys.has(coordinationResourceKey(key)))
       )
         continue;
       selected.add(candidate.ticket_id);
@@ -1173,9 +1174,9 @@ function validateProgress(
           resources.length > 0 &&
           resources.every(
             (resource) =>
-              resource.startsWith('file:') &&
-              safeWorkflowOwnedPath(resource.slice(5)) &&
-              ticket.exclusive_resources.includes(resource),
+              (resource.startsWith('file:')
+                ? safeWorkflowOwnedPath(resource.slice(5))
+                : resourceKey(resource) === resource) && ticket.exclusive_resources.includes(resource),
           ),
         );
       }),
@@ -3446,6 +3447,442 @@ export class HostStateStore {
       })
       .immediate();
   }
+  /** Extend one live owner's expiry without changing its fencing identity or issued journal payload. */
+  renewActiveLocalLease(input: {
+    identity: WorkIdentity;
+    attempt: number;
+    nativeSessionHandle: string;
+    generation: number;
+    expectedWork: StateVersion;
+    expectedLedger: StateVersion;
+    expectedJournal: StateVersion;
+    expectedMaintenanceGeneration: number;
+    verifyCurrent: (work: WorkState, journal: Record<string, unknown>) => void;
+  }): HostStateSnapshot {
+    requireState(
+      Number.isSafeInteger(input.attempt) &&
+        input.attempt > 0 &&
+        Number.isSafeInteger(input.generation) &&
+        input.generation > 0 &&
+        typeof input.verifyCurrent === 'function',
+      'lease renewal input invalid',
+    );
+    requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
+    return this.#database
+      .transaction(() => {
+        const before = this.#read(input.identity);
+        this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+        matchesExpected(before.workVersion, input.expectedWork);
+        matchesExpected(before.ledgerVersion, input.expectedLedger);
+        const work = before.work,
+          ledger = before.ledger,
+          lease = work?.lease;
+        const ticket = ledger?.tickets.find((entry) => entry.ticket_id === lease?.ticket_id);
+        const claims =
+          ledger?.claims.filter((entry) => entry.ticket_id === lease?.ticket_id && entry.status === 'active') ?? [];
+        const now = Date.now();
+        requireState(
+          work &&
+            ledger &&
+            lease &&
+            ticket &&
+            claims.length === 1 &&
+            work.execution.status === 'active' &&
+            lease.thread_id === input.nativeSessionHandle &&
+            lease.generation === input.generation &&
+            ticket.thread_id === lease.thread_id &&
+            ticket.generation === lease.generation &&
+            ticket.status === 'active' &&
+            ticket.expires_at !== null &&
+            timestamp(ticket.expires_at) > now &&
+            timestamp(claims[0]!.lease_expires_at) > now &&
+            claims[0]!.thread_id === lease.thread_id &&
+            claims[0]!.generation === lease.generation,
+          'lease renewal owner, fencing identity or live expiry differs',
+        );
+        requireState(
+          !work.execution.assignment_attempts.some(
+            (entry) => entry.status === 'started' || entry.status === 'uncertain',
+          ),
+          'issued writer outcome must settle before lease renewal',
+        );
+        requireState(
+          !ledger.claims.some(
+            (entry) =>
+              entry.status === 'active' &&
+              entry.ticket_id !== ticket.ticket_id &&
+              entry.resources.some((resource) => ticket.active_resources.includes(resource)),
+          ),
+          'lease renewal conflicts with another active claim',
+        );
+        requireState(
+          !ledger.tickets.some(
+            (entry) =>
+              entry.status === 'queued' &&
+              entry.sequence < ticket.sequence &&
+              entry.exclusive_resources.some((resource) => ticket.active_resources.includes(resource)),
+          ),
+          'lease renewal conflicts with earlier FIFO ticket',
+        );
+        const row = this.#database
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
+        requireState(
+          row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
+          'lease renewal journal CAS changed',
+        );
+        const journal = JSON.parse(row.payload) as Record<string, unknown>;
+        requireState(
+          canonicalJsonDigest(journal) === row.digest &&
+            journal.schema === 'MastraSessionLedger/v1' &&
+            journal.workspace_id === this.#workspaceId &&
+            journal.work_id === input.identity.work_id &&
+            journal.attempt === input.attempt &&
+            journal.run_id === work.execution.run_id &&
+            Array.isArray(journal.items),
+          'lease renewal journal identity changed',
+        );
+        requireState(
+          !(journal.items as { host_reservation?: unknown }[]).some((entry) => entry.host_reservation),
+          'issued writer-bound wave must advance before lease renewal',
+        );
+        input.verifyCurrent(snapshot(work), snapshot(journal));
+        const expiry = new Date(
+          Math.max(now + 60 * 60 * 1000, timestamp(ticket.expires_at), timestamp(claims[0]!.lease_expires_at)),
+        ).toISOString();
+        const nextWork = checkedWork({
+          ...work,
+          revision: work.revision + 1,
+          lifecycle: { ...work.lifecycle, revision: work.revision + 1 },
+        });
+        const nextLedger = checkedLedger({
+          ...ledger,
+          revision: ledger.revision + 1,
+          tickets: ledger.tickets.map((entry) =>
+            entry.ticket_id === ticket.ticket_id ? { ...entry, expires_at: expiry } : entry,
+          ),
+          claims: ledger.claims.map((entry) =>
+            entry.claim_id === claims[0]!.claim_id
+              ? { ...entry, lease_expires_at: expiry, renewed_at: new Date(now).toISOString() }
+              : entry,
+          ),
+        });
+        validatePair(nextWork, nextLedger);
+        validateProgress(before, nextWork, nextLedger);
+        for (const [kind, id, value, expected] of [
+          ['work', identityKey(input.identity), nextWork, before.workVersion!],
+          ['ledger', 'shared', nextLedger, before.ledgerVersion!],
+        ] as const) {
+          const changed = this.#database
+            .query(
+              'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+            )
+            .run(
+              value.revision,
+              canonicalJson(value),
+              canonicalJsonDigest(value),
+              this.#workspaceId,
+              kind,
+              id,
+              expected.revision,
+              expected.digest,
+            );
+          requireState(changed.changes === 1, 'lease renewal host CAS conflict');
+        }
+        // Revision advances to reject stale renewal/issue callers; all requests, issue IDs and accepted observations remain byte-identical.
+        const bumped = this.#database
+          .query(
+            'UPDATE agent_host_mastra_session_ledger SET revision=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+          )
+          .run(row.revision + 1, this.#workspaceId, input.identity.work_id, input.attempt, row.revision, row.digest);
+        requireState(bumped.changes === 1, 'lease renewal journal CAS conflict');
+        this.#onReconciledWorkWrite(input.identity, before.workVersion, version(nextWork)!);
+        return this.#read(input.identity);
+      })
+      .immediate();
+  }
+
+  /** Forward one quiescent expired owner onto a fresh ticket without replaying accepted evidence. */
+  recoverExpiredLocalLease(input: {
+    identity: WorkIdentity;
+    attempt: number;
+    nativeSessionHandle: string;
+    generation: number;
+    expectedWork: StateVersion;
+    expectedLedger: StateVersion;
+    expectedJournal: StateVersion;
+    expectedMaintenanceGeneration: number;
+    verifyCurrent: (
+      work: WorkState,
+      journal: Record<string, unknown>,
+    ) => { runtimeCodeDigest: string; authorityPointer: string };
+  }): HostStateSnapshot {
+    requireState(
+      Number.isSafeInteger(input.attempt) &&
+        input.attempt > 0 &&
+        Number.isSafeInteger(input.generation) &&
+        input.generation > 0 &&
+        typeof input.verifyCurrent === 'function',
+      'expired lease recovery input invalid',
+    );
+    requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
+    return this.#database
+      .transaction(() => {
+        const before = this.#read(input.identity);
+        this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+        matchesExpected(before.workVersion, input.expectedWork);
+        matchesExpected(before.ledgerVersion, input.expectedLedger);
+        const work = before.work,
+          ledger = before.ledger,
+          lease = work?.lease;
+        const ticket = ledger?.tickets.find((entry) => entry.ticket_id === lease?.ticket_id);
+        const claims =
+          ledger?.claims.filter((entry) => entry.ticket_id === lease?.ticket_id && entry.status === 'active') ?? [];
+        const now = Date.now();
+        requireState(
+          work &&
+            ledger &&
+            lease &&
+            ticket &&
+            claims.length === 1 &&
+            work.execution.status === 'active' &&
+            lease.thread_id === input.nativeSessionHandle &&
+            lease.generation === input.generation &&
+            ticket.thread_id === lease.thread_id &&
+            ticket.generation === lease.generation &&
+            ticket.status === 'active' &&
+            ticket.expires_at !== null &&
+            timestamp(ticket.expires_at) <= now &&
+            timestamp(claims[0]!.lease_expires_at) <= now &&
+            claims[0]!.thread_id === lease.thread_id &&
+            claims[0]!.generation === lease.generation,
+          'expired lease recovery owner, fencing identity or live expiry differs',
+        );
+        requireState(
+          work.lifecycle.phase === 'INTAKE' &&
+            work.lifecycle.seal === null &&
+            work.lifecycle.assurance.review_generation === 0 &&
+            work.lifecycle.assurance.delivery_cycle_id === null &&
+            work.execution.assignment_attempts.length === 0,
+          'issued writer outcome must settle before expired lease recovery',
+        );
+        requireState(
+          !ledger.claims.some(
+            (entry) =>
+              entry.status === 'active' &&
+              entry.ticket_id !== ticket.ticket_id &&
+              entry.resources.some((resource) => ticket.active_resources.includes(resource)),
+          ),
+          'expired lease recovery conflicts with another active claim',
+        );
+        requireState(
+          !ledger.tickets.some(
+            (entry) =>
+              entry.status === 'queued' &&
+              entry.sequence < ledger.next_sequence &&
+              entry.exclusive_resources.some((resource) => ticket.active_resources.includes(resource)),
+          ),
+          'expired lease recovery conflicts with earlier FIFO ticket',
+        );
+        const row = this.#database
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
+        requireState(
+          row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
+          'expired lease recovery journal CAS changed',
+        );
+        const journal = JSON.parse(row.payload) as Record<string, unknown>;
+        requireState(
+          canonicalJsonDigest(journal) === row.digest &&
+            journal.schema === 'MastraSessionLedger/v1' &&
+            journal.workspace_id === this.#workspaceId &&
+            journal.work_id === input.identity.work_id &&
+            journal.attempt === input.attempt &&
+            journal.run_id === work.execution.run_id &&
+            Array.isArray(journal.items),
+          'expired lease recovery journal identity changed',
+        );
+        requireState(
+          !(journal.items as { host_reservation?: unknown }[]).some((entry) => entry.host_reservation),
+          'issued writer-bound wave must advance before expired lease recovery',
+        );
+        const completed = journal.completed as {
+          items: { issue_id: unknown; observation: { status: string } | null; host_reservation?: unknown }[];
+        }[];
+        requireState(
+          Array.isArray(completed) &&
+            completed.length > 0 &&
+            completed.every(
+              (wave) =>
+                Array.isArray(wave.items) &&
+                wave.items.length > 0 &&
+                wave.items.every(
+                  (item) =>
+                    item.issue_id !== null &&
+                    item.observation?.status === 'reported_complete' &&
+                    !item.host_reservation,
+                ),
+            ),
+          'expired recovery historical outcomes must already be accepted',
+        );
+        requireState(
+          (journal.items as { issue_id: unknown; observation: unknown }[]).length > 0 &&
+            (journal.items as { issue_id: unknown; observation: unknown }[]).every(
+              (item) => item.issue_id === null && item.observation === null,
+            ),
+          'expired recovery requires an entirely unissued current wave',
+        );
+        const verified = input.verifyCurrent(snapshot(work), snapshot(journal));
+        const newRuntimeDigest = verified.runtimeCodeDigest;
+        requireState(
+          typeof verified.authorityPointer === 'string' &&
+            verified.authorityPointer.length > 0 &&
+            verified.authorityPointer.length <= 512 &&
+            !/\p{Cc}/u.test(verified.authorityPointer),
+          'expired recovery authority reference invalid',
+        );
+        requireState(hashPattern.test(newRuntimeDigest), 'expired recovery current bundle binding invalid');
+        const timestampNow = new Date(now).toISOString(),
+          expiry = new Date(now + 60 * 60 * 1000).toISOString();
+        const ticketId = 'ticket-' + randomUUID(),
+          claimId = 'claim-' + randomUUID();
+        const successorTicket = {
+          ...ticket,
+          ticket_id: ticketId,
+          generation: ledger.open_generation,
+          sequence: ledger.next_sequence,
+          claim_ids: [claimId],
+          expires_at: expiry,
+          created_at: timestampNow,
+        };
+        const successorClaim = {
+          ...claims[0]!,
+          claim_id: claimId,
+          ticket_id: ticketId,
+          generation: ledger.open_generation,
+          lease_expires_at: expiry,
+          created_at: timestampNow,
+          renewed_at: timestampNow,
+        };
+        const nextWork = checkedWork({
+          ...work,
+          revision: work.revision + 1,
+          lease: { ticket_id: ticketId, thread_id: input.nativeSessionHandle, generation: ledger.open_generation },
+          binding: { ...work.binding, runtime_code_digest: newRuntimeDigest },
+          lifecycle: {
+            ...work.lifecycle,
+            revision: work.revision + 1,
+            config_binding: { ...work.lifecycle.config_binding, runtime_code_digest: newRuntimeDigest },
+          },
+        });
+        const nextLedger = checkedLedger({
+          ...ledger,
+          revision: ledger.revision + 1,
+          next_sequence: ledger.next_sequence + 1,
+          tickets: [
+            ...ledger.tickets.map((entry) =>
+              entry.ticket_id === ticket.ticket_id
+                ? { ...entry, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null }
+                : entry,
+            ),
+            successorTicket,
+          ],
+          claims: [
+            ...ledger.claims.map((entry) =>
+              entry.claim_id === claims[0]!.claim_id ? { ...entry, status: 'recovered' } : entry,
+            ),
+            successorClaim,
+          ],
+          rebinds: [
+            ...ledger.rebinds,
+            {
+              schema: 'CoordinationScopeRebind/v1',
+              rebind_id: 'rebind-' + randomUUID(),
+              work_id: work.binding.lifecycle_work_id,
+              previous_ticket_id: ticket.ticket_id,
+              previous_source_revision: ticket.source_revision,
+              ticket_id: ticketId,
+              thread_id: input.nativeSessionHandle,
+              source_revision: ticket.source_revision,
+              resources: [...claims[0]!.resources],
+              claimed_resources: [...claims[0]!.resources],
+              retired_claim_ids: [claims[0]!.claim_id],
+              reason: 'expired same-owner quiescent lease recovery',
+              decided_by: input.nativeSessionHandle,
+              decision_pointer: verified.authorityPointer,
+              from_ledger_revision: ledger.revision,
+              to_ledger_revision: ledger.revision + 1,
+              created_at: timestampNow,
+            },
+          ],
+        });
+        validatePair(nextWork, nextLedger);
+        // This dedicated transition explicitly rebinds only the freshly verified bundle digest.
+        // All remaining lifecycle, authority, resource and history deltas use the ordinary validator.
+        requireState(
+          sameJson(nextWork.binding, { ...work.binding, runtime_code_digest: newRuntimeDigest }) &&
+            sameJson(nextWork.lifecycle.config_binding, {
+              ...work.lifecycle.config_binding,
+              runtime_code_digest: newRuntimeDigest,
+            }),
+          'expired recovery may rebind only the verified bundle digest',
+        );
+        // Keep the actual preimage intact. Project only the separately validated bundle delta
+        // out of the successor while checking every ordinary lifecycle/history transition.
+        validateProgress(
+          before,
+          {
+            ...nextWork,
+            binding: work.binding,
+            lifecycle: { ...nextWork.lifecycle, config_binding: work.lifecycle.config_binding },
+          },
+          nextLedger,
+        );
+        for (const [kind, id, value, expected] of [
+          ['work', identityKey(input.identity), nextWork, before.workVersion!],
+          ['ledger', 'shared', nextLedger, before.ledgerVersion!],
+        ] as const) {
+          const changed = this.#database
+            .query(
+              'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+            )
+            .run(
+              value.revision,
+              canonicalJson(value),
+              canonicalJsonDigest(value),
+              this.#workspaceId,
+              kind,
+              id,
+              expected.revision,
+              expected.digest,
+            );
+          requireState(changed.changes === 1, 'expired lease recovery host CAS conflict');
+        }
+        // Revision advances to reject stale renewal/issue callers; all requests, issue IDs and accepted observations remain byte-identical.
+        const bumped = this.#database
+          .query(
+            'UPDATE agent_host_mastra_session_ledger SET revision=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+          )
+          .run(row.revision + 1, this.#workspaceId, input.identity.work_id, input.attempt, row.revision, row.digest);
+        requireState(bumped.changes === 1, 'expired lease recovery journal CAS conflict');
+        this.#onReconciledWorkWrite(input.identity, before.workVersion, version(nextWork)!);
+        return this.#read(input.identity);
+      })
+      .immediate();
+  }
+
   compareAndSwapHostState(input: {
     expectedWork: StateVersion | null;
     expectedLedger: StateVersion | null;
@@ -3453,8 +3890,9 @@ export class HostStateStore {
     documentationContext?: DocumentationVerificationContext;
     nextWork: WorkState;
     nextLedger: CoordinationLedger;
+    expectedSessionJournal?: { readonly attempt: number; readonly version: StateVersion };
   }): HostStateSnapshot {
-    const { documentationContext, ...stateInput } = input;
+    const { documentationContext, expectedSessionJournal, ...stateInput } = input;
     const data = snapshot(stateInput);
     requireState(
       Object.keys(data).length === (data.expectedMaintenanceGeneration === undefined ? 4 : 5),
@@ -3474,6 +3912,24 @@ export class HostStateStore {
         this.#assertMaintenanceGeneration(data.expectedMaintenanceGeneration);
         matchesExpected(before.workVersion, data.expectedWork);
         matchesExpected(before.ledgerVersion, data.expectedLedger);
+        if (expectedSessionJournal) {
+          const journal = this.#database
+            .query(
+              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+            )
+            .get(this.#workspaceId, work.binding.lifecycle_work_id, expectedSessionJournal.attempt) as {
+            revision: number;
+            payload: string;
+            digest: string;
+          } | null;
+          requireState(
+            journal &&
+              journal.revision === expectedSessionJournal.version.revision &&
+              journal.digest === expectedSessionJournal.version.digest &&
+              canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+            'session journal CAS changed',
+          );
+        }
         validateProgress(before, work, ledger, documentationContext);
         if (work.lease) {
           const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id)!;

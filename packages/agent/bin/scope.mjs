@@ -3,16 +3,17 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export async function inspectScope(args) {
-  const values = { projects: [], paths: [] };
+  const values = { projects: [], paths: [], repositoryPaths: [] };
   for (let index = 0; index < args.length; index += 2) {
     const key = args[index],
       value = args[index + 1];
-    if (!value || !['--project-root', '--repository', '--project', '--path'].includes(key))
+    if (!value || !['--project-root', '--repository', '--project', '--path', '--repository-path'].includes(key))
       throw new Error(
-        'scope requires --project-root ABSOLUTE --repository ID --project ID --path RELATIVE [--path RELATIVE]',
+        'scope requires --project-root ABSOLUTE --repository ID --project ID --path RELATIVE [--path RELATIVE] [--repository-path SHARED_RELATIVE]',
       );
     if (key === '--project') values.projects.push(value);
     else if (key === '--path') values.paths.push(value);
+    else if (key === '--repository-path') values.repositoryPaths.push(value);
     else if (Object.hasOwn(values, key)) throw new Error('duplicate scope option');
     else values[key] = value;
   }
@@ -29,7 +30,21 @@ export async function inspectScope(args) {
     const selected = resolveProjectForRepositoryPath(config.projects, relative);
     if (!context.project_ids.includes(selected.project_id)) throw new Error('scope path is outside selected products');
   }
-  return snapshotDeclaredSources(requireSafeRepositoryAccess(root), values.paths);
+  // Repository paths are read-only evidence, never source-write authorization.
+  const fold = (value) => (process.platform === 'win32' ? value.toLowerCase() : value);
+  for (const relative of values.repositoryPaths) {
+    if (
+      config.projects.some((project) => {
+        const projectRoot = fold(project.project_root ?? '.');
+        const target = fold(relative);
+        return projectRoot === '.' || target === projectRoot || target.startsWith(projectRoot + '/');
+      })
+    )
+      throw new Error('repository scope path is covered by a configured project; use --path');
+  }
+  const paths = [...values.paths, ...values.repositoryPaths];
+  if (new Set(paths.map(fold)).size !== paths.length) throw new Error('duplicate scope path');
+  return snapshotDeclaredSources(requireSafeRepositoryAccess(root), paths);
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {

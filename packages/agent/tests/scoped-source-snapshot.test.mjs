@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 import { initializeProject } from '../bin/init.mjs';
 import { inspectScope } from '../bin/scope.mjs';
-import { run } from '../bin/run.mjs';
 import {
   compareScopedSourceSnapshots,
   snapshotDeclaredSources,
@@ -19,8 +21,47 @@ function reader(files) {
 }
 
 describe('cooperative scoped source evidence', () => {
+  test('public scope snapshots explicit shared files and rejects unsafe or project-covered shared paths', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'scope-shared-fixture-'));
+    mkdirSync(path.join(root, '.git'), { recursive: true });
+    for (const project of ['selected', 'foreign']) {
+      mkdirSync(path.join(root, 'products', project, 'src'), { recursive: true });
+      writeFileSync(path.join(root, 'products', project, 'src/probe.txt'), project);
+    }
+    await initializeProject({
+      projectRoot: root,
+      repository: 'scope-fixture',
+      projectMappings: ['selected=products/selected', 'foreign=products/foreign'],
+    });
+    writeFileSync(path.join(root, 'shared.txt'), 'shared');
+    const base = ['--project-root', root, '--repository', 'scope-fixture', '--project', 'selected'];
+    const invoke = (args) =>
+      spawnSync(process.execPath, [path.join(packageRoot, 'bin/scope.mjs'), ...base, ...args], {
+        encoding: 'utf8',
+        windowsHide: true,
+      });
+    const shared = invoke(['--path', 'products/selected/src/probe.txt', '--repository-path', 'shared.txt']);
+    expect(shared.status).toBe(0);
+    expect(JSON.parse(shared.stdout).entries.map((entry) => entry.path)).toEqual([
+      'products/selected/src/probe.txt',
+      'shared.txt',
+    ]);
+    for (const args of [
+      ['--repository-path', 'products/selected/src/probe.txt'],
+      ['--repository-path', 'products/foreign/src/probe.txt'],
+      ['--path', 'products/foreign/src/probe.txt'],
+      ['--repository-path', 'shared.txt', '--repository-path', 'shared.txt'],
+      ['--repository-path', '../escape.txt'],
+    ])
+      expect(invoke(args).status).not.toBe(0);
+    mkdirSync(path.join(root, 'shared-dir'));
+    writeFileSync(path.join(root, 'shared-dir/probe.txt'), 'shared');
+    symlinkSync(path.join(root, 'shared-dir'), path.join(root, 'linked-dir'), 'junction');
+    expect(invoke(['--repository-path', 'linked-dir/probe.txt']).status).not.toBe(0);
+  }, 60_000);
+
   test('derives prepare scope in an external consumer and normalizes public absolute roots without admitting unsafe paths', async () => {
-    const scratch = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../.tmp/scope-input-fixtures');
+    const scratch = path.join(tmpdir(), 'scope-input-fixtures');
     mkdirSync(scratch, { recursive: true });
     const root = mkdtempSync(path.join(scratch, 'consumer-'));
     const alias = root + '-alias';
@@ -68,17 +109,32 @@ describe('cooperative scoped source evidence', () => {
         '--scope-path',
         'products/plugin/docs/spec.md',
       ];
-      const prepared = await run(args);
+      const invoke = (values) =>
+        spawnSync(process.execPath, [path.join(packageRoot, 'bin/run.mjs'), ...values], {
+          encoding: 'utf8',
+          windowsHide: true,
+        });
+      const preparedResult = invoke(args);
+      expect(preparedResult.status, preparedResult.stderr).toBe(0);
+      const prepared = JSON.parse(preparedResult.stdout);
       expect(prepared.status).toBe('prepared');
       expect(prepared.action_statuses.every((action) => action.status === 'unissued')).toBe(true);
-      await expect(
-        run([...args, '--issue-wave', 'true', '--expected-revision', '1', '--expected-digest', expected.digest]),
-      ).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' });
+      const denied = invoke([
+        ...args,
+        '--issue-wave',
+        'true',
+        '--expected-revision',
+        '1',
+        '--expected-digest',
+        expected.digest,
+      ]);
+      expect(denied.status).not.toBe(0);
+      expect(JSON.parse(denied.stderr)).toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' });
     } finally {
       rmSync(alias, { recursive: true, force: true });
       // Preserve the isolated consumer evidence until this process exits; the session backend may retain SQLite handles.
     }
-  });
+  }, 30_000);
   test('reads installed package bytes with retained logical runtime paths and rejects consumer paths', () => {
     const files = new Map([['bin/run.mjs', 'actual package entry']]);
     const declared = ['vida-agent/bin/run.mjs'];

@@ -16,6 +16,15 @@ not the business or system source of truth.
 
 Lifecycle and acceptance authority stays with the runtime and attributable
 session evidence; configured agents do not grant themselves that authority.
+The local controller must establish actual user authorization in the current
+conversation before authoring `LocalSourceWriteAuthorization/v1`. The CLI
+assumes trusted local orchestration and observed built-in session tool results;
+it checks the declaration's scope, work, configured writer, live lease, policy
+and CAS consistency rather than authenticating the human directive. The
+declaration grants no independent-review, delivery or user Runtime acceptance
+authority. This cooperative boundary does not physically exclude a malicious
+local caller with full filesystem access. Keep the existing containment,
+permission, ownership and freshness checks.
 The candidate CLI uses Mastra with LibSQL for one configured stage graph and
 snapshot, and the existing HostState work, ticket, lease, source-write policy
 and attempt ledger for fresh admitted work. Persist the governed attempt,
@@ -41,8 +50,52 @@ and the documentation CLEAR context when the phase requires it. Release only
 that work item's source claim; preserve its lifecycle phase, seal, review
 history, and pending Runtime acceptance. Admit unrelated next work under a new
 work ID. Feedback on the predecessor needs a fresh fenced claim. Active or
-uncertain native child effects, an expired lease, drift, or a stale version deny
+uncertain source-writing native child effects or a stale version deny
 ordinary suspension. An interruption request alone is not quiescence.
+
+Read-only intake owns no future implementation files. Its ordinary active
+ticket owns one real same-work execution resource, claim and lease expiry;
+this serializes the same attempt without blocking unrelated work. Identity,
+context and source bindings remain current. Acquire exact exclusive file
+ownership under fresh source and
+work/ledger/journal CAS immediately before the first configured source writer
+is issued. Validate the assignment's configured source-write rights rather
+than inferring read-only permission from an empty attempt history. Retire the
+execution-only ticket and claim through an ordinary release and allocate a new
+current-v1 writer ticket; never rewrite immutable ticket authority. Actual exclusive
+resources determine contention and handoff blocking. Tenant, project and
+BR/SR/AC navigation metadata do not create project-wide exclusion.
+
+The existing public continuation route may release an exact owner with one
+issued unknown configured read-only action, including an expired claim. Bind
+the original read-only rights, same thread/work/ticket/claim/generation and
+current work, ledger and journal CAS. Require no reservation, pending
+normalization, writer assignment or uncertain writing effect. Keep earlier
+FIFO ownership intact and later queued contenders unchanged.
+Completed predecessors need actual terminal observations; their prior permitted
+official-docs access does not make the pending no-egress action uncertain.
+Preserve the old journal, issue, handle and unknown observation; release is neither completion
+nor no-effect proof. Current source drift alone does not prevent relinquishing
+the old rights. A replacement or new writer needs fresh source and authority
+bindings, and a late old reply cannot advance the replacement generation.
+
+Ordinary suspension requires a current exact-owner lease. An expired ticket and
+claim may be released only for active unsealed INTAKE preparation with a current
+bound unissued journal, no completed waves, observations, reservations, host
+assignments or effects, and no competing owner or earlier FIFO blocker. Preserve
+the suspended attempt and admit a successor separately. Issued or uncertain work
+requires its supported recovery operation; interruption and expiry alone prove
+neither quiescence nor no effect.
+
+Live same-owner lease extension uses the public `--renew-lease true` mode with
+the latest inspected state version and current fence. Expired accepted readonly
+work instead uses `--recover-expired-lease true --rebind-current-bundle true`
+only under the exact unchanged source/scope/config/schema and verified original
+attributable authority. Recovery replaces the old ticket/claim at the existing
+delivery generation through shared HostState/coordination/journal CAS, preserves
+accepted evidence, and permits no unknown pending outcome or writer assignment.
+The executing package is explicitly rebound; no prior approval or observation is
+rewritten as new evidence. The system specification owns the detailed contract.
 
 An authorized forward correction may use the fixed admitted completed-readonly
 capture operation while the parent maintenance overlay blocks ordinary work.

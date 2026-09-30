@@ -2,6 +2,7 @@ import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity } fr
 import type { DocumentationVerificationContext } from '../lifecycle/lifecycle-state.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
+import { type AgentRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 
 function requireSuspension(value: unknown, message: string): asserts value {
   if (!value) throw new Error(`local work suspension: ${message}`);
@@ -18,6 +19,7 @@ type SuspensionInput = {
   readonly userRequestPointer: string;
   readonly requestIntent: 'linked_correction' | 'next_work';
   readonly documentationContext: DocumentationVerificationContext;
+  readonly config?: AgentRuntimeConfig;
 };
 
 export function suspendLocalWork(input: SuspensionInput): HostStateSnapshot {
@@ -84,8 +86,45 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
     'work identity or journal differs',
   );
   const issues = [...journal.state.completed.flatMap((step) => step.items), ...journal.state.items];
+  const pending = issues.filter((item) => item.issue_id !== null && item.observation === null);
+  const unknownReadonly =
+    pending.length === 1 &&
+    input.config !== undefined &&
+    canonicalJsonDigest(journal.state) === journal.version.digest &&
+    runtimeConfigDigest(input.config) === work.binding.config_digest &&
+    journal.resume_status === 'issued_outcome_uncertain' &&
+    journal.state.source_scope?.digest === work.binding.work_source_revision &&
+    work.lifecycle.source_revision === work.binding.work_source_revision &&
+    issues.every((item) => {
+      const request = item.request;
+      const assignment = input.config!.workflows[work.binding.workflow_id]?.stages.find(
+        (stage) => stage.id === request.stage_id,
+      )?.assignments[request.assignment_index];
+      const profile = assignment && input.config!.agents.profiles[assignment.profile];
+      return (
+        !item.host_reservation &&
+        !item.research_normalization &&
+        request.run_id === work.execution.run_id &&
+        request.workflow_id === work.binding.workflow_id &&
+        request.config_digest === work.binding.config_digest &&
+        request.scope_digest === work.binding.work_source_revision &&
+        assignment?.role === request.role &&
+        (item === pending[0]
+          ? profile?.mutation_scope === 'none' &&
+            input.config!.agents.tool_policies[profile.tools_policy]?.source_write === false &&
+            profile.egress_policy === 'none' &&
+            input.config!.agents.egress_policies[profile.egress_policy]?.allowed_hosts.length === 0
+          : item.issue_id !== null && item.observation?.status === 'reported_complete')
+      );
+    });
+  if (unknownReadonly) {
+    requireSuspension(
+      work.execution.assignment_attempts.length === 0,
+      'issued readonly release cannot retire an earlier host writer assignment',
+    );
+  }
   requireSuspension(
-    !issues.some((item) => item.issue_id !== null && item.observation === null) &&
+    (unknownReadonly || pending.length === 0) &&
       !work.execution.assignment_attempts.some(
         (attempt) => attempt.status === 'started' || attempt.status === 'uncertain',
       ),
@@ -119,7 +158,50 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
   const lease = work.lease;
   const ticket = host.ledger.tickets.find((item) => item.ticket_id === lease.ticket_id);
   const claims = host.ledger.claims.filter((item) => item.ticket_id === lease.ticket_id && item.status === 'active');
-  const expectedResources = work.binding.implementation_paths.map((item) => `file:${item}`).sort();
+  const expectedResources = [...(ticket?.exclusive_resources ?? [])].sort();
+  // An expired preparation may be released, never renewed or treated as an issued no-effect action.
+  const expiredUnissued =
+    !completedReadonly &&
+    work.lifecycle.phase === 'INTAKE' &&
+    work.lifecycle.seal === null &&
+    work.lifecycle.assurance.review_generation === 0 &&
+    work.lifecycle.assurance.delivery_cycle_id === null &&
+    work.execution.assignment_attempts.length === 0 &&
+    journal.resume_status === 'ready' &&
+    journal.state.step_id !== null &&
+    journal.state.completed.length === 0 &&
+    journal.state.items.length > 0 &&
+    journal.state.source_scope?.digest === work.binding.work_source_revision &&
+    work.lifecycle.source_revision === work.binding.work_source_revision &&
+    issues.every(
+      (item) =>
+        item.issue_id === null &&
+        item.observation === null &&
+        !item.host_reservation &&
+        !item.research_activation &&
+        !item.research_normalization &&
+        item.request.run_id === work.execution.run_id &&
+        item.request.workflow_id === work.binding.workflow_id &&
+        item.request.config_digest === work.binding.config_digest &&
+        item.request.scope_digest === work.binding.work_source_revision,
+    ) &&
+    ticket?.source_revision === work.binding.work_source_revision &&
+    ticket.repository_id === identity.repository_id &&
+    canonicalJsonDigest(ticket.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+    ticket.integrations_digest === identity.integrations_digest &&
+    ticket.expires_at !== null &&
+    Date.parse(ticket.expires_at) <= Date.now() &&
+    claims.length === 1 &&
+    claims[0]!.thread_id === nativeSessionHandle &&
+    claims[0]!.work_id === identity.work_id &&
+    claims[0]!.lease_expires_at === ticket.expires_at &&
+    Date.parse(claims[0]!.lease_expires_at) <= Date.now() &&
+    !host.ledger.claims.some(
+      (other) =>
+        other.ticket_id !== lease.ticket_id &&
+        other.status === 'active' &&
+        other.resources.some((resource) => expectedResources.includes(resource)),
+    );
   requireSuspension(
     work.execution.status === 'active' &&
       work.lifecycle.phase !== 'COMPLETE' &&
@@ -130,13 +212,19 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
       ticket.work_id === identity.work_id &&
       ticket.generation === lease.generation &&
       ticket.expires_at !== null &&
-      (completedReadonly || Date.parse(ticket.expires_at) > Date.now()) &&
+      (completedReadonly || expiredUnissued || unknownReadonly || Date.parse(ticket.expires_at) > Date.now()) &&
       claims.length === 1 &&
+      claims[0]!.thread_id === nativeSessionHandle &&
+      claims[0]!.work_id === identity.work_id &&
       claims[0]!.generation === lease.generation &&
-      (completedReadonly || Date.parse(claims[0]!.lease_expires_at) > Date.now()) &&
+      (completedReadonly ||
+        expiredUnissued ||
+        unknownReadonly ||
+        Date.parse(claims[0]!.lease_expires_at) > Date.now()) &&
+      claims[0]!.lease_expires_at === ticket.expires_at &&
+      canonicalJsonDigest([...claims[0]!.resources].sort()) === canonicalJsonDigest(expectedResources) &&
       canonicalJsonDigest([...ticket.exclusive_resources].sort()) === canonicalJsonDigest(expectedResources) &&
       canonicalJsonDigest([...ticket.active_resources].sort()) === canonicalJsonDigest(expectedResources) &&
-      canonicalJsonDigest([...claims[0]!.resources].sort()) === canonicalJsonDigest(expectedResources) &&
       !host.ledger.tickets.some(
         (other) =>
           other.ticket_id !== ticket.ticket_id &&
@@ -174,7 +262,9 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
         : item,
     ),
     claims: host.ledger.claims.map((item) =>
-      item.claim_id === claims[0]!.claim_id ? { ...item, status: 'released' as const, renewed_at: now } : item,
+      item.ticket_id === ticket.ticket_id && item.status === 'active'
+        ? { ...item, status: 'released' as const, renewed_at: now }
+        : item,
     ),
     operations: [
       ...host.ledger.operations,
@@ -200,6 +290,9 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
     expectedLedger,
     expectedMaintenanceGeneration: host.maintenanceGeneration,
     documentationContext,
+    ...(unknownReadonly
+      ? { expectedSessionJournal: { attempt: journal.state.attempt, version: journal.version } }
+      : {}),
     nextWork,
     nextLedger,
   });

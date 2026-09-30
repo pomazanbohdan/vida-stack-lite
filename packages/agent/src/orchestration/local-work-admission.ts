@@ -12,7 +12,7 @@ import {
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { loadProjectSetContext } from '../config/project-context.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import { HostStateStore, type HostStateSnapshot } from '../host-state.js';
+import { HostStateStore, type HostStateSnapshot, type WorkIdentity, type StateVersion } from '../host-state.js';
 import {
   type ScopedSourceSnapshot,
   snapshotDeclaredSources,
@@ -64,7 +64,7 @@ function requireAdmission(condition: unknown, message: string): asserts conditio
   if (!condition) throw new Error(message);
 }
 
-/** Admit only a fresh accepted task; CAS creates its WorkState and shared exact-path lease atomically. */
+/** Admit a fresh task with same-work execution fencing, without reserving future files. */
 export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   readonly host: HostStateSnapshot;
   readonly source: ScopedSourceSnapshot;
@@ -188,11 +188,11 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   const before = store.readHostStateSnapshot(identity);
   requireAdmission(before.work === null, 'local work was already admitted');
   const ticketId = 'ticket-' + canonicalJsonDigest({ identity, nativeSessionHandle }).slice(0, 40);
-  const claimId = 'claim-' + canonicalJsonDigest({ ticketId, source: source.digest }).slice(0, 40);
-  const resources = scope.implementation_paths.map((item) => 'file:' + item).sort();
-  const allowedResources = scope.allowed_paths.map((item) => 'file:' + item).sort();
+  const resources = ['execution:' + context.work_id];
+  const allowedResources = [...scope.allowed_paths.map((item) => 'file:' + item), ...resources].sort();
   const now = new Date().toISOString();
   const expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  const claimId = 'claim-' + canonicalJsonDigest({ ticketId, source: source.digest }).slice(0, 40);
   const generation = before.ledger?.open_generation ?? 1;
   const sequence = before.ledger?.next_sequence ?? 1;
   const sourceRevision = source.digest;
@@ -217,19 +217,6 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     schema_digest: schemaDigest,
     runtime_code_digest: codeDigest,
   };
-  const claim = {
-    schema: 'WorkstreamClaim/v1' as const,
-    claim_id: claimId,
-    ticket_id: ticketId,
-    work_id: context.work_id,
-    thread_id: nativeSessionHandle,
-    generation,
-    resources,
-    lease_expires_at: expiry,
-    status: 'active' as const,
-    created_at: now,
-    renewed_at: now,
-  };
   const ticket = {
     schema: 'CoordinationTicket/v1' as const,
     ticket_id: ticketId,
@@ -253,6 +240,19 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     active_resources: resources,
     blocked_resources: [],
     created_at: now,
+  };
+  const claim = {
+    schema: 'WorkstreamClaim/v1' as const,
+    claim_id: claimId,
+    ticket_id: ticketId,
+    work_id: context.work_id,
+    thread_id: nativeSessionHandle,
+    generation,
+    resources,
+    lease_expires_at: expiry,
+    status: 'active' as const,
+    created_at: now,
+    renewed_at: now,
   };
   const nextWork = {
     schema: 'WorkState/v1' as const,
@@ -382,4 +382,194 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     nextLedger,
   });
   return { host, source };
+}
+
+/** Queue or acquire exact ownership immediately before the configured source writer is issued. */
+export function acquireLocalSourceWriterLease(input: {
+  readonly repositoryRoot: string;
+  readonly config: AgentRuntimeConfig;
+  readonly store: HostStateStore;
+  readonly identity: WorkIdentity;
+  readonly nativeSessionHandle: string;
+  readonly stageId: string;
+  readonly assignmentIndex: number;
+  readonly expectedWork: StateVersion;
+  readonly expectedLedger: StateVersion;
+  readonly expectedSessionJournal?: { readonly attempt: number; readonly version: StateVersion };
+}): HostStateSnapshot {
+  const before = input.store.readHostStateSnapshot(input.identity);
+  const work = before.work;
+  const ledger = before.ledger;
+  requireAdmission(
+    work && ledger && work.lease && work.execution.status === 'active',
+    'source writer admission is unavailable',
+  );
+  requireAdmission(
+    canonicalJsonDigest(before.workVersion) === canonicalJsonDigest(input.expectedWork) &&
+      canonicalJsonDigest(before.ledgerVersion) === canonicalJsonDigest(input.expectedLedger),
+    'source writer admission CAS changed',
+  );
+  const assignment = input.config.workflows[work.binding.workflow_id]?.stages.find(
+    (stage) => stage.id === input.stageId,
+  )?.assignments[input.assignmentIndex];
+  const profile = assignment && input.config.agents.profiles[assignment.profile];
+  requireAdmission(
+    profile?.mutation_scope === 'repository_source' &&
+      input.config.agents.tool_policies[profile.tools_policy]?.source_write,
+    'configured assignment is not a source writer',
+  );
+  requireAdmission(
+    work.binding.config_digest === runtimeConfigDigest(input.config) &&
+      work.lease.thread_id === input.nativeSessionHandle,
+    'source writer configuration or owner changed',
+  );
+  const source = snapshotDeclaredSources(
+    requireSafeRepositoryAccess(input.repositoryRoot),
+    work.lifecycle.scope.allowed_paths,
+  );
+  requireAdmission(
+    source.digest === work.binding.work_source_revision,
+    'declared source changed before source writer acquisition',
+  );
+  const prior = ledger.tickets.find((ticket) => ticket.ticket_id === work.lease!.ticket_id);
+  requireAdmission(
+    prior?.status === 'active' &&
+      prior.thread_id === input.nativeSessionHandle &&
+      prior.generation === work.lease.generation &&
+      prior.source_revision === work.binding.work_source_revision,
+    'source writer lease ticket changed',
+  );
+  const resources = [
+    ...work.binding.implementation_paths.map((item) => 'file:' + item),
+    ...prior.exclusive_resources.filter((resource) => !resource.startsWith('file:')),
+  ].sort();
+  if (prior.exclusive_resources.some((resource) => resource.startsWith('file:'))) {
+    requireAdmission(
+      prior.blocked_resources.length === 0 &&
+        resources.every((resource) => prior.active_resources.includes(resource)) &&
+        Date.parse(prior.expires_at ?? '') > Date.now(),
+      'source writer exact ownership is stale',
+    );
+    return before;
+  }
+  const queued = ledger.tickets.find(
+    (ticket) =>
+      ticket.work_id === input.identity.work_id &&
+      ticket.status === 'queued' &&
+      ticket.thread_id === input.nativeSessionHandle &&
+      canonicalJsonDigest(ticket.exclusive_resources) === canonicalJsonDigest(resources),
+  );
+  const ticketId =
+    queued?.ticket_id ??
+    'writer-ticket-' + canonicalJsonDigest({ prior: prior.ticket_id, sequence: ledger.next_sequence }).slice(0, 40);
+  const sequence = queued?.sequence ?? ledger.next_sequence;
+  const conflicts = ledger.tickets.some(
+    (ticket) =>
+      ticket.ticket_id !== ticketId &&
+      ticket.ticket_id !== prior.ticket_id &&
+      ticket.sequence < sequence &&
+      ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(ticket.status) &&
+      ticket.exclusive_resources.some((resource) =>
+        resources.some((item) => item.toLowerCase() === resource.toLowerCase()),
+      ),
+  );
+  if (conflicts && queued) throw new Error('source writer ownership is queued behind an earlier exclusive resource');
+  const now = new Date().toISOString();
+  const expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  const claimId = 'writer-claim-' + canonicalJsonDigest({ ticketId, source: source.digest }).slice(0, 40);
+  const ticket = {
+    ...prior,
+    ticket_id: ticketId,
+    sequence,
+    generation: queued?.generation ?? ledger.open_generation,
+    contour_keys: [...new Set([...prior.contour_keys, ...resources])],
+    exclusive_resources: resources,
+    status: conflicts ? ('queued' as const) : ('active' as const),
+    claim_ids: conflicts ? [] : [claimId],
+    expires_at: conflicts ? null : expiry,
+    active_resources: conflicts ? [] : resources,
+    blocked_resources: conflicts ? resources : [],
+    created_at: queued?.created_at ?? now,
+  };
+  const releasedPrior = {
+    ...prior,
+    status: 'released' as const,
+    active_resources: [],
+    blocked_resources: [],
+    expires_at: null,
+  };
+  const nextLedger = {
+    ...ledger,
+    revision: ledger.revision + 1,
+    next_sequence: ledger.next_sequence + (queued ? 0 : 1),
+    tickets: [
+      ...ledger.tickets.map((item) =>
+        item.ticket_id === ticketId ? ticket : !conflicts && item.ticket_id === prior.ticket_id ? releasedPrior : item,
+      ),
+      ...(queued ? [] : [ticket]),
+    ],
+    claims: [
+      ...ledger.claims.map((claim) =>
+        !conflicts && claim.ticket_id === prior.ticket_id && claim.status === 'active'
+          ? { ...claim, status: 'released' as const, renewed_at: now }
+          : claim,
+      ),
+      ...(conflicts
+        ? []
+        : [
+            {
+              schema: 'WorkstreamClaim/v1' as const,
+              claim_id: claimId,
+              ticket_id: ticketId,
+              work_id: ticket.work_id,
+              thread_id: ticket.thread_id,
+              generation: ticket.generation,
+              resources,
+              lease_expires_at: expiry,
+              status: 'active' as const,
+              created_at: now,
+              renewed_at: now,
+            },
+          ]),
+    ],
+    operations: [
+      ...ledger.operations,
+      ...(conflicts
+        ? []
+        : [
+            {
+              schema: 'CoordinationOperation/v1' as const,
+              operation_id: 'writer-admission-release-' + ticketId,
+              kind: 'release' as const,
+              ticket_id: prior.ticket_id,
+              work_id: prior.work_id,
+              thread_id: prior.thread_id,
+              source_revision: prior.source_revision,
+              resources: [...prior.exclusive_resources],
+              from_ledger_revision: ledger.revision,
+              to_ledger_revision: ledger.revision + 1,
+              decided_by: input.nativeSessionHandle,
+              decision_pointer: work.contracts.scope.path,
+              created_at: now,
+            },
+          ]),
+    ],
+  };
+  const host = input.store.compareAndSwapHostState({
+    expectedWork: input.expectedWork,
+    expectedLedger: input.expectedLedger,
+    expectedMaintenanceGeneration: before.maintenanceGeneration,
+    ...(input.expectedSessionJournal ? { expectedSessionJournal: input.expectedSessionJournal } : {}),
+    nextWork: {
+      ...work,
+      revision: work.revision + 1,
+      lifecycle: { ...work.lifecycle, revision: work.revision + 1 },
+      lease: conflicts
+        ? work.lease
+        : { ticket_id: ticketId, thread_id: ticket.thread_id, generation: ticket.generation },
+    },
+    nextLedger,
+  });
+  if (conflicts) throw new Error('source writer ownership is queued behind an earlier exclusive resource');
+  return host;
 }

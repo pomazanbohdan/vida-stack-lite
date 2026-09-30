@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 function clearFixture() {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-lifecycle-'));
   const write = (relative, content) => {
@@ -20,11 +20,22 @@ function clearFixture() {
     writeFileSync(file, content);
   };
   mkdirSync(path.join(root, '.git'));
-  for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'])
-    write(file, readFileSync(path.join(repository, file)));
+  for (const [destination, template] of [
+    ['AGENTS.md', 'AGENTS.template.md'],
+    ['AGENT.sidecar.md', 'AGENT.sidecar.template.md'],
+    ['agent-runtime.config.v1.yaml', 'agent-runtime.config.template.v1.yaml'],
+  ])
+    write(
+      destination,
+      readFileSync(path.join(packageRoot, 'templates', template), 'utf8')
+        .replaceAll('{{REPOSITORY}}', 'creatio-sample-repository')
+        .replaceAll('{{PROJECTS}}', 'refactoring')
+        .replaceAll('{{PROJECT}}', 'refactoring')
+        .replaceAll('{{BUNDLE}}', 'vida-agent'),
+    );
   write(
     'vida-agent/schemas/documentation-policy.v1.schema.json',
-    readFileSync(path.join(repository, 'vida-agent/schemas/documentation-policy.v1.schema.json')),
+    readFileSync(path.join(packageRoot, 'schemas/documentation-policy.v1.schema.json')),
   );
   write('vida-agent/TESTING.md', 'fixture testing\n');
   write('docs/creatio/map.md', 'map\n');
@@ -35,7 +46,7 @@ function clearFixture() {
     JSON.stringify({
       schema: 'DocumentationPolicy/v1',
       policy_id: 'lifecycle-clear',
-      project_id: 'creatio-sample',
+      project_id: 'refactoring',
       source_path: 'docs/agent-instructions/documentation-policy.v1.json',
       owner: 'project:refactoring',
       required: true,

@@ -10,7 +10,7 @@ function requireArtifact(condition: unknown, message: string): asserts condition
   if (!condition) throw new Error(`observed research artifact: ${message}`);
 }
 
-/** Admit only the exact already-written canonical pair, with a current live work lease. */
+/** Admit the exact target and reserved lineage event through the guarded reader, with a current live work lease. */
 export async function commitObservedResearchArtifact(input: {
   readonly repositoryRoot: string;
   readonly ledger: MastraSessionLedger;
@@ -38,12 +38,8 @@ export async function commitObservedResearchArtifact(input: {
   );
   const access = requireSafeRepositoryAccess(input.repositoryRoot);
   const recordBytes = access.readBytes(plan.record_path, 'observed canonical research record');
-  const changelogBytes = access.readBytes(plan.changelog_path, 'observed research changelog');
   const sha = (value: Buffer) => createHash('sha256').update(value).digest('hex');
-  requireArtifact(
-    sha(recordBytes) === plan.record_sha256 && sha(changelogBytes) === plan.changelog_sha256,
-    'canonical record pair differs from committed plan',
-  );
+  requireArtifact(sha(recordBytes) === plan.record_sha256, 'canonical record pair differs from committed plan');
   const readCurrent = () => currentObservedResearchBinding(input);
   const recorded = await readObservedResearchResult({
     root: input.repositoryRoot,

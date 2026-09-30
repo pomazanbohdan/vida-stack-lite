@@ -227,6 +227,7 @@ test('failed or interrupted initialization propagates without package installati
     () => install(initArgs(project), options(root, { runBun: () => (++count, 23) })),
     (error) => error.exitCode === 23,
   );
+  assert.equal(count, 1);
   assert.deepEqual(readdirSync(project), ['tools']);
 });
 

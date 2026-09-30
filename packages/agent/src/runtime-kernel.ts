@@ -995,7 +995,12 @@ export async function createTrustedLocalSessionComposition(input: {
         ticket.work_id === identity.work_id &&
         claim.work_id === identity.work_id &&
         ticket.blocked_resources.length === 0 &&
-        resources.every((item) => ticket.active_resources.includes(item) && claim.resources.includes(item)) &&
+        (ticket.exclusive_resources.some((resource) => resource.startsWith('file:'))
+          ? resources.every((item) => ticket.active_resources.includes(item) && claim.resources.includes(item))
+          : ticket.exclusive_resources.length === 1 &&
+            ticket.exclusive_resources[0] === 'execution:' + identity.work_id &&
+            claim.resources.includes(ticket.exclusive_resources[0]) &&
+            ticket.active_resources.includes(ticket.exclusive_resources[0])) &&
         Date.parse(ticket.expires_at ?? '') > Date.now() &&
         Date.parse(claim.lease_expires_at) > Date.now(),
       ),
@@ -1292,6 +1297,7 @@ function validateWorkExecutionContext(
   runtimeRevision: RuntimeEnvelopeRevisionBinding,
   stageId: string | null,
   assignmentIndex: number | null,
+  sourceWriter: boolean,
 ): void {
   const { binding, permit } = context;
   if (binding.repository_id !== undefined || binding.project_ids !== undefined) {
@@ -1344,7 +1350,8 @@ function validateWorkExecutionContext(
       Date.parse(lease.expires_at) > Date.now() &&
       new Set(lease.active_resources).size === lease.active_resources.length &&
       lease.active_resources.every((resource) => binding.allowed_resources.includes(resource)) &&
-      binding.implementation_paths.every((value) => lease.active_resources.includes('file:' + value)),
+      (!sourceWriter ||
+        binding.implementation_paths.every((value) => lease.active_resources.includes('file:' + value))),
     'workflow live ownership lease is blocked, expired or incomplete',
   );
 }
@@ -1652,6 +1659,17 @@ function issueWorkflowExecutionCapability(
       await services.runtimeRevision(),
       stageId,
       assignmentIndex,
+      stageId !== null &&
+        assignmentIndex !== null &&
+        (() => {
+          const assignment = current.workflows[selected.workflow_id]?.stages.find((stage) => stage.id === stageId)
+            ?.assignments[assignmentIndex];
+          const profile = assignment && current.agents.profiles[assignment.profile];
+          return Boolean(
+            profile?.mutation_scope === 'repository_source' &&
+            current.agents.tool_policies[profile.tools_policy]?.source_write,
+          );
+        })(),
     );
     readStableRuntimeConfig(root, configDigest);
     return {

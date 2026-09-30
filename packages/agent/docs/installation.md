@@ -56,7 +56,7 @@ Use native absolute paths on Windows. npm creates the PATH shims in its configur
 
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
-Node and npm versions come from package engines. Bun comes only from the exact package pin and matching declarations. Its pinned launcher may fetch Bun through npm's cache and namespaces the transpiler cache outside the installed package. Explicit custom and disabled-cache settings remain supported. These operations are not an offline guarantee. The package installer checks npm-managed dependencies without running Bun installation in the global tree; embedded lock evidence is read without modifying that tree.
+Node and npm versions come from package engines. Bun comes only from the exact package pin and matching declarations. The pinned launcher first checks an absolute realpath PATH executable for the exact version and otherwise may fetch Bun through npm's cache and namespaces the transpiler cache outside the installed package. Explicit custom and disabled-cache settings remain supported. These operations are not an offline guarantee. The package installer checks npm-managed dependencies without running Bun installation in the global tree; embedded lock evidence is read without modifying that tree.
 
 Neutral configuration uses local integration metadata for the explicit product set. Real provider, tenant, namespace, credentials and paths remain project-owned data. They do not select identity or grant authority.
 
@@ -73,6 +73,31 @@ workspace identity, not a caller-provided workspace value.
 A failed prerequisite or dependency installation never delegates initialization. Installation is not a transaction: downloads or node_modules changes can remain after failure, and a later initialization failure does not undo installed dependencies. Filesystem checks reject linked bundle ancestors and input files, but do not provide atomic containment against a concurrently hostile filesystem. Run only a trusted bundle in a workspace controlled by its owner, using a trusted Node/npm installation. The bundle does not attest system-toolchain integrity; Node-adjacent npm installation links are resolved by the existing bootstrap.
 
 Dependency installation alone does not switch the active runtime selector, launch a lifecycle, transfer unfinished tasks, grant write authority, replace project policy, or establish user Runtime acceptance. When a selector is present, the public run entrypoint verifies that it selects this installed bundle and has a complete cutover journal and cutoff witness before admitting new work. The orchestrating agent session invokes built-in collaboration tools and observes their results; the CLI does not invoke those tools or authenticate a caller-supplied report.
+
+## Scoped files and lease continuity
+
+Use repeated `--path` for files covered by selected products and repeated
+`--repository-path` only for exact shared files outside all configured products.
+For example, append `--repository-path docs.changelog.jsonl` to a project scope
+command when that file is repository-shared. The snapshot is read-only and grants
+no source-writing rights.
+
+Run `vida-agent run --inspect true` with the existing exact identity and selection
+arguments before a lease operation. Pass its returned current state version and
+fence through the same public launcher. Add `--renew-lease true` only while the
+same owner's lease is live. For expired accepted readonly work whose next wave
+is unissued, use `--recover-expired-lease true --rebind-current-bundle true` under
+the original verified authority. Keep the exact work and attempt; use the newly
+returned ticket/current version for subsequent issue. Do not repeat historical
+native actions or manufacture a no-effect report. Unknown outcomes, writer
+assignments, binding drift and overlapping FIFO owners require their supported
+reconciliation and deny these operations. Installed versions lacking these
+modes cannot perform them.
+
+The [system specification](system-specification.md#scoped-source-and-lease-continuity)
+and [lifecycle](../instructions/development-lifecycle.md#execution-and-evidence)
+own the contract. Local consistency evidence does not authenticate a native
+call, grant physical isolation, or establish user Runtime acceptance.
 
 ## Session-driven workflow handoff
 
