@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-agent.invalid/schemas/runtime-envelope.v1.schema.json",
+  "title": "Candidate runtime envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "operation", "sourceRevision", "expectedRevision", "payload"],
+  "properties": {
+    "schema": { "const": "RuntimeEnvelope/v1" },
+    "kind": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z][A-Za-z0-9._/-]*$" },
+    "operation": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z][A-Za-z0-9._:/-]*$" },
+    "sourceRevision": { "type": "string", "minLength": 1 },
+    "expectedRevision": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "payload": {}
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-agent.invalid/schemas/authorization-request.v1.schema.json",
+  "title": "Role tenant project authorization request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["principal", "role", "action", "tenant", "project", "resourceTenant", "resourceProject", "registryHash"],
+  "properties": {
+    "principal": { "type": "string", "minLength": 1 },
+    "role": { "type": "string", "minLength": 1 },
+    "action": { "enum": ["read", "invoke", "write", "approve"] },
+    "tenant": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "project": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "resourceTenant": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "resourceProject": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "registryHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "operationHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

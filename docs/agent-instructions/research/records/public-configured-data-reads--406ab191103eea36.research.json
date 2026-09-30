@@ -1,0 +1,176 @@
+{
+  "ac_ids": [
+    "BOOTSTRAP-PACKAGE",
+    "BOOTSTRAP-MCP",
+    "BOOTSTRAP-INIT",
+    "BOOTSTRAP-UI",
+    "BOOTSTRAP-ISOLATION"
+  ],
+  "actor": "/root/bootstrap_research",
+  "br_ids": [
+    "BR: vida-plugin-codex-package-20260930/intake.json#work_item.description"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "What public read APIs exist?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [
+      "GAP-GENERIC-YAML-WRITER",
+      "GAP-CODEX-PROJECT-BRIDGE"
+    ],
+    "missing_questions": [],
+    "required_questions": [
+      "What public read APIs exist?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "contour": "vida-plugin-codex-package-20260930-scope",
+  "created_at": "2026-09-30T13:01:21.505Z",
+  "digest": "5eb672e182095c7931ba89212ff3f2e0ffc6323e05f49e8b3c18bd434046d4bb",
+  "evidence_classes": [
+    "Code",
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "public-sdk",
+      "source_ids": [
+        "sdk",
+        "scope"
+      ],
+      "statement": "Public exports include loadRuntimeConfig/loadProjectSetContext/resolvePathProfile/projectBindingFor; profiles expose resolved_paths and provenance. Use SDK reads, not private YAML.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "GAP",
+      "finding_id": "future-gaps",
+      "source_ids": [
+        "future",
+        "acceptance"
+      ],
+      "statement": "GAP-GENERIC-YAML-WRITER and GAP-CODEX-PROJECT-BRIDGE remain future; init uses BOOTSTRAP-INIT.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [
+    "GAP-GENERIC-YAML-WRITER",
+    "GAP-CODEX-PROJECT-BRIDGE"
+  ],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-320210b93fb4d3aeb7aeb000051feedf9e6a33a3c746e2cc1db7350fd2bdeb17"
+  },
+  "objective": "Inspect public SDK declarations.",
+  "options": [
+    {
+      "description": "Read paths through exports; delegate init.",
+      "evidence_refs": [
+        "sdk",
+        "acceptance",
+        "future"
+      ],
+      "label": "Use public SDK",
+      "option_id": "public-read"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "What public read APIs exist?",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "sdk",
+      "scope",
+      "future"
+    ],
+    "option_id": "public-read",
+    "rationale": "Use public reads; leave generic saving out of scope."
+  },
+  "result_id": "research-320210b93fb4d3aeb7aeb000051feedf9e6a33a3",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-plugin-codex-package-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "BOOTSTRAP-PACKAGE=local MCP config; BOOTSTRAP-MCP=configured data/status/errors; BOOTSTRAP-INIT=public CLI; BOOTSTRAP-UI=local preview/host GAP; BOOTSTRAP-ISOLATION=identity/path checks.",
+      "locator": ".agent/work/vida-plugin-codex-package-20260930/acceptance.json#contracts",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "acceptance",
+      "source_kind": "internal",
+      "title": "Five accepted ACs"
+    },
+    {
+      "claim": "BR: vida-plugin-codex-package-20260930/intake.json#work_item.description; linked user authorization preserves the five ACs and generic-agent boundary.",
+      "locator": "vida-plugin-codex-package-20260930/intake.json#work_item.description",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "intake",
+      "source_kind": "internal",
+      "title": "Attributable intake"
+    },
+    {
+      "claim": "SR (derived): vida-plugin-codex-package-20260930/scope.json#behavior_trace; configured reads, public init, local preview, identity/path boundary; paths include .codex-plugin/plugin.json and .mcp.json.",
+      "locator": "vida-plugin-codex-package-20260930/scope.json#behavior_trace",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "scope",
+      "source_kind": "internal",
+      "title": "Derived scope"
+    },
+    {
+      "claim": "Public exports: loadRuntimeConfig, loadProjectSetContext, resolvePathProfile, projectBindingFor. Profiles expose paths/resolved_paths/provenance; pinned bin/bun.mjs exists.",
+      "locator": "vida-agent/dist/src/index.d.ts#exports; config/project-context.d.ts#ResolvedPathProfile",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "sdk",
+      "source_kind": "internal",
+      "title": "Installed public SDK"
+    },
+    {
+      "claim": "Current WORK defers generic config save and host catalogue proof; predecessor names GAP-GENERIC-YAML-WRITER and GAP-CODEX-PROJECT-BRIDGE.",
+      "locator": "vida-plugin-codex-package-20260930/WORK.md#Evidence; predecessor research #code findings",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "future",
+      "source_kind": "internal",
+      "title": "Future scope gaps"
+    }
+  ],
+  "source_revision": "3f274dca3fe76b3b27be71c697797d5cf24483410b49618be81086b84b3b9d9b",
+  "sr_ids": [
+    "SR (derived): vida-plugin-codex-package-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "Public configured-data reads",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "Generic configuration save remains future scope.",
+      "uncertainty_id": "config-save"
+    }
+  ],
+  "updated_at": "2026-09-30T13:01:21.505Z",
+  "work_item_id": "vida-plugin-codex-package-20260930"
+}

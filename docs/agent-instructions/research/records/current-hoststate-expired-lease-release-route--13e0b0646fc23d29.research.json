@@ -1,0 +1,171 @@
+{
+  "ac_ids": [
+    "AC-EXPIRED-UNISSUED-1"
+  ],
+  "actor": "/root/release_version_plan_luna",
+  "br_ids": [
+    ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "What is the caller?",
+      "What release exists?",
+      "Where are regressions tested?",
+      "Can typed continuation use normal CAS release without a lease-renewal protocol?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "What is the caller?",
+      "What release exists?",
+      "Where are regressions tested?",
+      "Can typed continuation use normal CAS release without a lease-renewal protocol?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [],
+  "contour": "vida-agent-expired-unissued-fix-20260930-scope",
+  "created_at": "2026-09-30T11:55:14.872Z",
+  "digest": "555547f9255eaa1a8e055266fea2c29638737b7cbb01c2c558c66d0d78e771f1",
+  "evidence_classes": [
+    "Code"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "reuse-cas",
+      "source_ids": [
+        "run",
+        "suspend"
+      ],
+      "statement": "Only the expired-unissued eligibility predicate needs extension; the continuation caller and normal release transaction already provide successor admission.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "fresh-owner",
+      "source_ids": [
+        "resume"
+      ],
+      "statement": "Do not renew or reuse the expired pair; new successor has its own WorkItem and admission. Same-work resume is a separate post-release route.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "regression-home",
+      "source_ids": [
+        "suspend"
+      ],
+      "statement": "Regression belongs beside the current HostState suspension cases in packages/agent/tests/bun/host-state.test.mjs; report only as source-code evidence, not an executed test.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-7217f943e6dc27da5562e133cc8929d1c6ae0ebf668dd0214f365383e079f924"
+  },
+  "objective": "Map implementation and tests for expired-unissued successor release.",
+  "options": [
+    {
+      "description": "Extend only strict unissued-expiry eligibility, then run existing release and new-work admission.",
+      "evidence_refs": [
+        "run",
+        "suspend"
+      ],
+      "label": "Reuse CAS release",
+      "option_id": "reuse-cas-release"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "Can typed continuation use normal CAS release without a lease-renewal protocol?",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "run",
+      "suspend",
+      "resume"
+    ],
+    "option_id": "reuse-cas-release",
+    "rationale": "This preserves existing ownership/CAS behavior and avoids a renewal protocol or schema change."
+  },
+  "result_id": "research-7217f943e6dc27da5562e133cc8929d1c6ae0ebf",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-agent-expired-unissued-fix-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "Continuation suspends predecessor by CAS before admitting a distinct successor.",
+      "locator": "packages/agent/bin/run.mjs#values.continuation",
+      "retrieved_at": "2026-09-30T11:58:23Z",
+      "source_id": "run",
+      "source_kind": "internal",
+      "title": "Caller"
+    },
+    {
+      "claim": "AC-EXPIRED-UNISSUED-1: existing suspension preserves provenance and CAS-releases the exact owner pair.",
+      "locator": "packages/agent/src/orchestration/suspend-local-work.ts#suspendLocalWorkCore",
+      "retrieved_at": "2026-09-30T11:58:23Z",
+      "source_id": "suspend",
+      "source_kind": "internal",
+      "title": "Suspension"
+    },
+    {
+      "claim": "Same-work resume follows owner-attributed release; it does not renew an expired lease.",
+      "locator": "packages/agent/src/orchestration/resume-paused-local-work.ts#resumePausedLocalWork",
+      "retrieved_at": "2026-09-30T11:58:23Z",
+      "source_id": "resume",
+      "source_kind": "internal",
+      "title": "Resume"
+    },
+    {
+      "claim": "BR reference .agent/work/npm-agent-migration-20260930/WORK.md#Request and authority prioritizes unblocking developers.",
+      "locator": ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority",
+      "retrieved_at": "2026-09-30T12:05:00Z",
+      "source_id": "br",
+      "source_kind": "internal",
+      "title": "BR"
+    },
+    {
+      "claim": "SR reference packages/agent/instructions/development-lifecycle.md#Execution and evidence denies expired suspension; accepted scope narrows it.",
+      "locator": "packages/agent/instructions/development-lifecycle.md#Execution and evidence",
+      "retrieved_at": "2026-09-30T12:05:00Z",
+      "source_id": "sr",
+      "source_kind": "internal",
+      "title": "SR"
+    }
+  ],
+  "source_revision": "18a748704904ff415c5a8787ce3fad187eab9feac736fa5470969fc56fc5bc04",
+  "sr_ids": [
+    "packages/agent/instructions/development-lifecycle.md#Execution and evidence"
+  ],
+  "topic": "Current HostState expired lease release route",
+  "uncertainties": [],
+  "updated_at": "2026-09-30T11:55:14.872Z",
+  "work_item_id": "vida-agent-expired-unissued-fix-20260930"
+}

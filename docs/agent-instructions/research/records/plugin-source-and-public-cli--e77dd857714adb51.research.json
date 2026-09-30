@@ -1,0 +1,157 @@
+{
+  "ac_ids": [
+    "BOOTSTRAP-PACKAGE",
+    "BOOTSTRAP-MCP",
+    "BOOTSTRAP-INIT",
+    "BOOTSTRAP-UI",
+    "BOOTSTRAP-ISOLATION"
+  ],
+  "actor": "/root/bootstrap_research",
+  "br_ids": [],
+  "completeness": {
+    "answered_questions": [
+      "What plugin code and public init/config commands exist?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [
+      "GAP-GENERIC-YAML-WRITER",
+      "GAP-CODEX-PROJECT-BRIDGE"
+    ],
+    "missing_questions": [],
+    "required_questions": [
+      "What plugin code and public init/config commands exist?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "contour": "vida-plugin-mcp-bootstrap-20260930-scope",
+  "created_at": "2026-09-30T12:12:31.910Z",
+  "digest": "f8f591556d14fce040bf30065755c5684ec741f85297ea2fb53906e4724adbf4",
+  "evidence_classes": [
+    "Code",
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "plugin-empty",
+      "source_ids": [
+        "plugin"
+      ],
+      "statement": "Plugin package currently contains metadata only.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Static",
+      "finding_id": "public-init",
+      "source_ids": [
+        "cli"
+      ],
+      "statement": "Public init accepts explicit project root, repository and project IDs; inspected command help lists no generic YAML/config writer.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [
+    "GAP-GENERIC-YAML-WRITER",
+    "GAP-CODEX-PROJECT-BRIDGE"
+  ],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-df7c85fb6167215d016817a677486197431cc521beaf21c1c622842225877cae"
+  },
+  "objective": "Inspect plugin implementation and installed init support.",
+  "options": [
+    {
+      "description": "If authorized, use public init with bounded explicit identities.",
+      "evidence_refs": [
+        "cli",
+        "acceptance"
+      ],
+      "label": "Delegate init",
+      "option_id": "delegate-init"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "What plugin code and public init/config commands exist?",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "cli",
+      "acceptance"
+    ],
+    "option_id": "delegate-init",
+    "rationale": "Use the actual public init contract when authorized; do not invent a YAML-writing command."
+  },
+  "result_id": "research-df7c85fb6167215d016817a677486197431cc521",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-plugin-mcp-bootstrap-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "Accepted AC IDs are BOOTSTRAP-PACKAGE, BOOTSTRAP-MCP, BOOTSTRAP-INIT, BOOTSTRAP-UI and BOOTSTRAP-ISOLATION.",
+      "locator": ".agent/work/vida-plugin-mcp-bootstrap-20260930/acceptance.json#contracts",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "acceptance",
+      "source_kind": "internal",
+      "title": "Accepted ACs"
+    },
+    {
+      "claim": "Only package.json is present; no server, manifest, MCP config, UI, tests, scripts or dependencies. Supports BOOTSTRAP-PACKAGE, BOOTSTRAP-MCP and BOOTSTRAP-UI; GAP-CODEX-PROJECT-BRIDGE is unverified.",
+      "locator": "packages/plugin/package.json; rg --files packages/plugin",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "plugin",
+      "source_kind": "internal",
+      "title": "Plugin workspace inventory"
+    },
+    {
+      "claim": "Lists run, init, install, reconcile-artifacts, documentation-clear, scope, instructions and version. init takes project-root, repository and project ID=relative-root. No generic YAML writer is listed: GAP-GENERIC-YAML-WRITER. Supports BOOTSTRAP-INIT and BOOTSTRAP-ISOLATION.",
+      "locator": "vida-agent --help; vida-agent init --help",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "cli",
+      "source_kind": "internal",
+      "title": "Installed public CLI help"
+    }
+  ],
+  "source_revision": "8c8712858902b1cd07b65af8a761b5dd2ab743231de46af7a340f7d93aa97eb3",
+  "sr_ids": [],
+  "topic": "Plugin source and public CLI",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "init was not run; effects on existing configuration are unverified.",
+      "uncertainty_id": "init-effects"
+    },
+    {
+      "material": true,
+      "statement": "Local package inspection does not establish a Codex catalogue/host bridge; GAP-CODEX-PROJECT-BRIDGE remains open.",
+      "uncertainty_id": "host-bridge"
+    }
+  ],
+  "updated_at": "2026-09-30T12:12:31.910Z",
+  "work_item_id": "vida-plugin-mcp-bootstrap-20260930"
+}

@@ -1,0 +1,172 @@
+{
+  "ac_ids": [
+    "AC-EXPIRED-UNISSUED-1"
+  ],
+  "actor": "/root/release_version_plan_luna",
+  "br_ids": [
+    ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "What blocks release?",
+      "What boundary is safe?",
+      "What conflicts?",
+      "What must be true to release an expired active owner without replay?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "What blocks release?",
+      "What boundary is safe?",
+      "What conflicts?",
+      "What must be true to release an expired active owner without replay?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [
+    {
+      "conflict_id": "expiry-rule",
+      "source_ids": [
+        "lifecycle",
+        "ac"
+      ],
+      "statement": "The accepted AC-EXPIRED-UNISSUED-1 resolves the derived lifecycle blanket rule narrowly: only the strict no-effect exact-owner case is allowed.",
+      "status": "reconciled"
+    }
+  ],
+  "contour": "vida-agent-expired-unissued-fix-20260930-scope",
+  "created_at": "2026-09-30T11:55:14.363Z",
+  "digest": "4af616363a47960da2d9f823bf9c73846ac34112c1b214516a4ae7c1918463d7",
+  "evidence_classes": [
+    "Code"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "expiry-guard",
+      "source_ids": [
+        "suspend",
+        "ac"
+      ],
+      "statement": "The ticket and claim expiry predicate blocks the authorized unissued case; completed-readonly release does not cover it.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "safe-exception",
+      "source_ids": [
+        "suspend",
+        "ac"
+      ],
+      "statement": "Require INTAKE/unsealed, exact active same-owner ticket/claim and CAS, source/resource/FIFO binding, no issued ID, observation, reservation, effect marker or HostState assignment attempt; release and suspend without renewal or replay.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-62e29ca4bfc0ec82e4ac77cad00959cde119b48d491eeb529c5a167b3a662a4c"
+  },
+  "objective": "Identify the expired lease rejection and safe exception boundary.",
+  "options": [
+    {
+      "description": "Permit only the accepted no-effect exact-owner expired case; retain all ownership and CAS guards.",
+      "evidence_refs": [
+        "suspend",
+        "ac"
+      ],
+      "label": "Strict unissued release",
+      "option_id": "strict-release"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "What must be true to release an expired active owner without replay?",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "suspend",
+      "ac"
+    ],
+    "option_id": "strict-release",
+    "rationale": "It satisfies the accepted unblock AC without restoring a lease or repeating native work."
+  },
+  "result_id": "research-62e29ca4bfc0ec82e4ac77cad00959cde119b48d",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-agent-expired-unissued-fix-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "Current guard rejects expired ticket/claim; release uses exact-owner CAS.",
+      "locator": "packages/agent/src/orchestration/suspend-local-work.ts#suspendLocalWorkCore",
+      "retrieved_at": "2026-09-30T11:58:23Z",
+      "source_id": "suspend",
+      "source_kind": "internal",
+      "title": "Suspension"
+    },
+    {
+      "claim": "Lifecycle denies expired ordinary suspension; accepted AC adds a narrow no-effect exception.",
+      "locator": "packages/agent/instructions/development-lifecycle.md#Execution and evidence",
+      "retrieved_at": "2026-09-30T11:58:23Z",
+      "source_id": "lifecycle",
+      "source_kind": "internal",
+      "title": "Lifecycle"
+    },
+    {
+      "claim": "AC-EXPIRED-UNISSUED-1 allows exact-owner expired unissued INTAKE only; preserve provenance.",
+      "locator": ".agent/work/vida-agent-expired-unissued-fix-20260930/acceptance.json#contracts/0",
+      "retrieved_at": "2026-09-30T11:58:23Z",
+      "source_id": "ac",
+      "source_kind": "internal",
+      "title": "Accepted AC"
+    },
+    {
+      "claim": "BR reference .agent/work/npm-agent-migration-20260930/WORK.md#Request and authority prioritizes unblocking developers.",
+      "locator": ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority",
+      "retrieved_at": "2026-09-30T12:05:00Z",
+      "source_id": "br",
+      "source_kind": "internal",
+      "title": "BR"
+    },
+    {
+      "claim": "SR reference packages/agent/instructions/development-lifecycle.md#Execution and evidence denies expired suspension; accepted scope narrows it.",
+      "locator": "packages/agent/instructions/development-lifecycle.md#Execution and evidence",
+      "retrieved_at": "2026-09-30T12:05:00Z",
+      "source_id": "sr",
+      "source_kind": "internal",
+      "title": "SR"
+    }
+  ],
+  "source_revision": "18a748704904ff415c5a8787ce3fad187eab9feac736fa5470969fc56fc5bc04",
+  "sr_ids": [
+    "packages/agent/instructions/development-lifecycle.md#Execution and evidence"
+  ],
+  "topic": "Expired unissued INTAKE suspension",
+  "uncertainties": [],
+  "updated_at": "2026-09-30T11:55:14.363Z",
+  "work_item_id": "vida-agent-expired-unissued-fix-20260930"
+}

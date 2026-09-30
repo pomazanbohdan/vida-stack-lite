@@ -1,0 +1,40 @@
+{
+  "schema": "DocumentationPolicy/v1",
+  "policy_id": "vida-products-documentation",
+  "project_id": "vida-agent",
+  "source_path": "docs/agent-instructions/documentation-policy.v1.json",
+  "owner": "repository:vida-agent",
+  "required": true,
+  "canonical_roots": [
+    "packages/agent/instructions",
+    "packages/agent/docs",
+    "packages/plugin/docs"
+  ],
+  "map_paths": [
+    "AGENT.sidecar.md",
+    "packages/agent/TESTING.md",
+    "docs/products.map.md",
+    "packages/agent/docs/installation.md"
+  ],
+  "excluded_roots": [
+    ".agent",
+    ".planning",
+    ".tmp",
+    "packages/agent/dist",
+    "packages/agent/tests",
+    "packages/agent/tooling"
+  ],
+  "changelog_required": true,
+  "changelog_path": "docs/agent-instructions/documentation.changelog.jsonl",
+  "relations": [
+    "owns",
+    "depends_on",
+    "affects",
+    "implements",
+    "verifies",
+    "documents",
+    "supersedes",
+    "migrates_from"
+  ],
+  "updated_at": "2026-09-30T05:29:01.481Z"
+}

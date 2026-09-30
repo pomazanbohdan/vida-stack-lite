@@ -1,0 +1,168 @@
+{
+  "ac_ids": [
+    "BOOTSTRAP-PACKAGE",
+    "BOOTSTRAP-MCP",
+    "BOOTSTRAP-INIT",
+    "BOOTSTRAP-UI",
+    "BOOTSTRAP-ISOLATION"
+  ],
+  "actor": "/root/bootstrap_research",
+  "br_ids": [
+    "BR: vida-plugin-codex-package-20260930/intake.json#work_item.description"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "What host behavior remains unproven?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [
+      "GAP-CODEX-UI-RENDERER",
+      "GAP-CODEX-PROJECT-BRIDGE"
+    ],
+    "missing_questions": [],
+    "required_questions": [
+      "What host behavior remains unproven?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "contour": "vida-plugin-codex-package-20260930-scope",
+  "created_at": "2026-09-30T13:01:22.335Z",
+  "digest": "a513fceaef5469c6bd5bb0bb5e809efa9eb1362de5b0398a5d492b8e2550b079",
+  "evidence_classes": [
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "GAP",
+      "finding_id": "ui-gap",
+      "source_ids": [
+        "acceptance",
+        "scope",
+        "prior"
+      ],
+      "statement": "BOOTSTRAP-UI uses local workspace preview; Codex rendering remains GAP-CODEX-UI-RENDERER.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "GAP",
+      "finding_id": "bridge-gap",
+      "source_ids": [
+        "scope",
+        "prior"
+      ],
+      "statement": "No project-catalogue API is evidenced; GAP-CODEX-PROJECT-BRIDGE remains open.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [
+    "GAP-CODEX-UI-RENDERER",
+    "GAP-CODEX-PROJECT-BRIDGE"
+  ],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-60770d64171e911b6d35504c1110ea46c1013bcf8b3c88910a7de59bcea65e50"
+  },
+  "objective": "Carry forward only unproven host behavior.",
+  "options": [
+    {
+      "description": "Expose local preview and label host limits as GAPs.",
+      "evidence_refs": [
+        "acceptance",
+        "scope",
+        "prior"
+      ],
+      "label": "Keep local preview",
+      "option_id": "local-preview"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "What host behavior remains unproven?",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "acceptance",
+      "scope",
+      "prior"
+    ],
+    "option_id": "local-preview",
+    "rationale": "Keep local preview; make no host-rendering or catalogue claim."
+  },
+  "result_id": "research-60770d64171e911b6d35504c1110ea46c1013bcf",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-plugin-codex-package-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "BOOTSTRAP-PACKAGE=local MCP config; BOOTSTRAP-MCP=configured data/status/errors; BOOTSTRAP-INIT=public CLI; BOOTSTRAP-UI=local preview/host GAP; BOOTSTRAP-ISOLATION=identity/path checks.",
+      "locator": ".agent/work/vida-plugin-codex-package-20260930/acceptance.json#contracts",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "acceptance",
+      "source_kind": "internal",
+      "title": "Five accepted ACs"
+    },
+    {
+      "claim": "BR: vida-plugin-codex-package-20260930/intake.json#work_item.description; linked user authorization preserves the five ACs and generic-agent boundary.",
+      "locator": "vida-plugin-codex-package-20260930/intake.json#work_item.description",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "intake",
+      "source_kind": "internal",
+      "title": "Attributable intake"
+    },
+    {
+      "claim": "SR (derived): vida-plugin-codex-package-20260930/scope.json#behavior_trace; configured reads, public init, local preview, identity/path boundary; paths include .codex-plugin/plugin.json and .mcp.json.",
+      "locator": "vida-plugin-codex-package-20260930/scope.json#behavior_trace",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "scope",
+      "source_kind": "internal",
+      "title": "Derived scope"
+    },
+    {
+      "claim": "GAP-PLUGIN-CANONICAL-SPECS; GAP-GENERIC-YAML-WRITER; GAP-CODEX-PROJECT-BRIDGE; GAP-CODEX-UI-RENDERER. Prior GAP-BOOTSTRAP-MANIFEST-PATHS predates the corrected scope.",
+      "locator": ".agent/work/vida-plugin-mcp-bootstrap-20260930/research-outputs.json#results",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "prior",
+      "source_kind": "internal",
+      "title": "Prior research provenance"
+    }
+  ],
+  "source_revision": "3f274dca3fe76b3b27be71c697797d5cf24483410b49618be81086b84b3b9d9b",
+  "sr_ids": [
+    "SR (derived): vida-plugin-codex-package-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "Codex host boundaries",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "Both host gaps require direct observation; no Runtime acceptance is present.",
+      "uncertainty_id": "host-proof"
+    }
+  ],
+  "updated_at": "2026-09-30T13:01:22.335Z",
+  "work_item_id": "vida-plugin-codex-package-20260930"
+}

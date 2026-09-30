@@ -1,0 +1,472 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:agent-runtime:coordination-ledger:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "workspace_id",
+    "revision",
+    "open_generation",
+    "next_sequence",
+    "tickets",
+    "claims",
+    "notices",
+    "dispositions",
+    "contours",
+    "batches",
+    "rebinds",
+    "operations",
+    "retirements"
+  ],
+  "properties": {
+    "schema": { "const": "CoordinationLedger/v1" },
+    "workspace_id": { "$ref": "#/$defs/digest" },
+    "revision": { "$ref": "#/$defs/positiveInteger" },
+    "open_generation": { "$ref": "#/$defs/positiveInteger" },
+    "next_sequence": { "$ref": "#/$defs/positiveInteger" },
+    "tickets": { "type": "array", "maxItems": 16384, "items": { "$ref": "#/$defs/ticket" } },
+    "claims": { "type": "array", "maxItems": 65536, "items": { "$ref": "#/$defs/claim" } },
+    "notices": { "type": "array", "maxItems": 65536, "items": { "$ref": "#/$defs/notice" } },
+    "dispositions": { "type": "array", "maxItems": 65536, "items": { "$ref": "#/$defs/disposition" } },
+    "contours": { "type": "array", "maxItems": 16384, "items": { "$ref": "#/$defs/contour" } },
+    "batches": { "type": "array", "maxItems": 16384, "items": { "$ref": "#/$defs/batch" } },
+    "rebinds": { "type": "array", "maxItems": 65536, "items": { "$ref": "#/$defs/rebind" } },
+    "operations": { "type": "array", "maxItems": 65536, "items": { "$ref": "#/$defs/operation" } },
+    "retirements": { "type": "array", "maxItems": 65536, "items": { "$ref": "#/$defs/retirement" } }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "positiveInteger": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "text": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\\.[0-9]{1,9})?(?:Z|[+-][0-9]{2}:[0-9]{2})$",
+      "maxLength": 64
+    },
+    "stringList": {
+      "type": "array",
+      "maxItems": 16384,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "ticket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "ticket_id",
+        "repository_id",
+        "project_ids",
+        "integrations_digest",
+        "work_id",
+        "thread_id",
+        "source_revision",
+        "generation",
+        "sequence",
+        "contour_keys",
+        "exclusive_resources",
+        "status",
+        "claim_ids",
+        "expires_at",
+        "active_resources",
+        "blocked_resources",
+        "created_at"
+      ],
+      "properties": {
+        "schema": { "const": "CoordinationTicket/v1" },
+        "ticket_id": { "$ref": "#/$defs/text" },
+        "repository_id": { "$ref": "#/$defs/text" },
+        "project_ids": { "$ref": "#/$defs/stringList" },
+        "integrations_digest": { "$ref": "#/$defs/digest" },
+        "work_id": { "$ref": "#/$defs/text" },
+        "thread_id": { "$ref": "#/$defs/text" },
+        "source_revision": { "$ref": "#/$defs/text" },
+        "generation": { "$ref": "#/$defs/positiveInteger" },
+        "sequence": { "$ref": "#/$defs/positiveInteger" },
+        "contour_keys": { "$ref": "#/$defs/stringList" },
+        "exclusive_resources": { "$ref": "#/$defs/stringList" },
+        "status": { "enum": ["queued", "active", "ready_for_handoff", "released", "read_only", "blocked"] },
+        "claim_ids": { "$ref": "#/$defs/stringList" },
+        "expires_at": { "anyOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+        "active_resources": { "$ref": "#/$defs/stringList" },
+        "blocked_resources": { "$ref": "#/$defs/stringList" },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "claim_id",
+        "ticket_id",
+        "work_id",
+        "thread_id",
+        "generation",
+        "resources",
+        "lease_expires_at",
+        "status",
+        "created_at",
+        "renewed_at"
+      ],
+      "properties": {
+        "schema": { "const": "WorkstreamClaim/v1" },
+        "claim_id": { "$ref": "#/$defs/text" },
+        "ticket_id": { "$ref": "#/$defs/text" },
+        "work_id": { "$ref": "#/$defs/text" },
+        "thread_id": { "$ref": "#/$defs/text" },
+        "generation": { "$ref": "#/$defs/positiveInteger" },
+        "resources": { "$ref": "#/$defs/stringList" },
+        "lease_expires_at": { "$ref": "#/$defs/timestamp" },
+        "status": { "enum": ["active", "released", "recovered"] },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "renewed_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "active" } }, "required": ["status"] },
+          "then": { "properties": { "resources": { "type": "array", "minItems": 1 } } }
+        }
+      ]
+    },
+    "notice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "notice_id",
+        "generation",
+        "contender_ticket_id",
+        "contender_work_id",
+        "owner_ticket_id",
+        "owner_work_id",
+        "owner_thread_id",
+        "resources",
+        "status",
+        "acknowledgements",
+        "created_at"
+      ],
+      "properties": {
+        "schema": { "const": "ConflictNotice/v1" },
+        "notice_id": { "$ref": "#/$defs/text" },
+        "generation": { "$ref": "#/$defs/positiveInteger" },
+        "contender_ticket_id": { "$ref": "#/$defs/text" },
+        "contender_work_id": { "$ref": "#/$defs/text" },
+        "owner_ticket_id": { "$ref": "#/$defs/text" },
+        "owner_work_id": { "$ref": "#/$defs/text" },
+        "owner_thread_id": { "$ref": "#/$defs/text" },
+        "resources": { "$ref": "#/$defs/stringList" },
+        "status": { "enum": ["open", "acknowledged", "resolved"] },
+        "acknowledgements": {
+          "type": "array",
+          "maxItems": 16384,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["actor", "at"],
+            "properties": { "actor": { "$ref": "#/$defs/text" }, "at": { "$ref": "#/$defs/timestamp" } }
+          }
+        },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "disposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "disposition_id",
+        "subject_kind",
+        "subject_id",
+        "kind",
+        "decided_by",
+        "decision_pointer",
+        "created_at"
+      ],
+      "properties": {
+        "schema": { "const": "ConflictDisposition/v1" },
+        "disposition_id": { "$ref": "#/$defs/text" },
+        "subject_kind": { "enum": ["notice", "claim"] },
+        "subject_id": { "$ref": "#/$defs/text" },
+        "kind": { "enum": ["serialize", "handoff", "adopt", "read_only", "recover_expired"] },
+        "decided_by": { "$ref": "#/$defs/text" },
+        "decision_pointer": { "$ref": "#/$defs/text" },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "recover_expired" } }, "required": ["kind"] },
+          "then": { "properties": { "subject_kind": { "const": "claim" } } },
+          "else": { "properties": { "subject_kind": { "const": "notice" } } }
+        }
+      ]
+    },
+    "contour": {
+      "type": "object",
+      "required": [
+        "schema",
+        "contour_id",
+        "generation",
+        "work_ids",
+        "ticket_ids",
+        "frozen",
+        "created_at",
+        "contour_digest"
+      ],
+      "properties": {
+        "schema": { "const": "ReleaseContour/v1" },
+        "contour_id": { "$ref": "#/$defs/text" },
+        "generation": { "$ref": "#/$defs/positiveInteger" },
+        "work_ids": { "$ref": "#/$defs/stringList" },
+        "ticket_ids": { "$ref": "#/$defs/stringList" },
+        "frozen": { "const": true },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "contour_digest": { "$ref": "#/$defs/digest" }
+      },
+      "additionalProperties": false
+    },
+    "batch": {
+      "type": "object",
+      "required": [
+        "schema",
+        "batch_id",
+        "contour_id",
+        "generation",
+        "work_ids",
+        "operations",
+        "do_not_deploy",
+        "post_deployment_checks",
+        "status",
+        "created_at"
+      ],
+      "properties": {
+        "schema": { "const": "ReleaseBatch/v1" },
+        "batch_id": { "$ref": "#/$defs/text" },
+        "contour_id": { "$ref": "#/$defs/text" },
+        "generation": { "$ref": "#/$defs/positiveInteger" },
+        "work_ids": { "$ref": "#/$defs/stringList" },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16384,
+          "items": { "$ref": "#/$defs/deploymentOperation" }
+        },
+        "do_not_deploy": { "$ref": "#/$defs/stringList" },
+        "post_deployment_checks": {
+          "type": "array",
+          "maxItems": 16384,
+          "items": { "$ref": "#/$defs/postDeploymentCheck" }
+        },
+        "status": { "enum": ["ready_for_user_testing", "accepted", "feedback", "rejected"] },
+        "decision_pointer": { "$ref": "#/$defs/text" },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "ready_for_user_testing" } }, "required": ["status"] },
+          "then": { "properties": { "decision_pointer": false } },
+          "else": {
+            "properties": { "decision_pointer": { "$ref": "#/$defs/text" } },
+            "required": ["decision_pointer"]
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "deploymentOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "source", "destination", "operation"],
+      "properties": {
+        "order": { "$ref": "#/$defs/positiveInteger" },
+        "source": { "$ref": "#/$defs/text" },
+        "destination": { "$ref": "#/$defs/text" },
+        "operation": { "enum": ["copy", "import", "deploy"] }
+      }
+    },
+    "postDeploymentCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "step", "expected", "ac_refs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/text" },
+        "step": { "$ref": "#/$defs/text" },
+        "expected": { "$ref": "#/$defs/text" },
+        "ac_refs": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "rebind": {
+      "type": "object",
+      "required": [
+        "schema",
+        "rebind_id",
+        "work_id",
+        "previous_ticket_id",
+        "previous_source_revision",
+        "ticket_id",
+        "thread_id",
+        "source_revision",
+        "resources",
+        "retired_claim_ids",
+        "reason",
+        "decided_by",
+        "decision_pointer",
+        "from_ledger_revision",
+        "to_ledger_revision",
+        "created_at"
+      ],
+      "properties": {
+        "schema": { "const": "CoordinationScopeRebind/v1" },
+        "rebind_id": { "$ref": "#/$defs/text" },
+        "work_id": { "$ref": "#/$defs/text" },
+        "previous_ticket_id": { "anyOf": [{ "$ref": "#/$defs/text" }, { "type": "null" }] },
+        "previous_source_revision": { "anyOf": [{ "$ref": "#/$defs/text" }, { "type": "null" }] },
+        "ticket_id": { "$ref": "#/$defs/text" },
+        "thread_id": { "$ref": "#/$defs/text" },
+        "source_revision": { "$ref": "#/$defs/text" },
+        "resources": { "$ref": "#/$defs/stringList" },
+        "claimed_resources": { "$ref": "#/$defs/stringList" },
+        "retired_claim_ids": { "$ref": "#/$defs/stringList" },
+        "reason": { "$ref": "#/$defs/text" },
+        "decided_by": { "$ref": "#/$defs/text" },
+        "decision_pointer": { "$ref": "#/$defs/text" },
+        "from_ledger_revision": { "$ref": "#/$defs/positiveInteger" },
+        "to_ledger_revision": { "$ref": "#/$defs/positiveInteger" },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "operation": {
+      "oneOf": [{ "$ref": "#/$defs/releaseOperation" }, { "$ref": "#/$defs/assuranceOperation" }]
+    },
+    "releaseOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "operation_id",
+        "kind",
+        "ticket_id",
+        "work_id",
+        "thread_id",
+        "source_revision",
+        "resources",
+        "from_ledger_revision",
+        "to_ledger_revision",
+        "decided_by",
+        "decision_pointer",
+        "created_at"
+      ],
+      "properties": {
+        "schema": { "const": "CoordinationOperation/v1" },
+        "operation_id": { "$ref": "#/$defs/text" },
+        "kind": { "const": "release" },
+        "ticket_id": { "$ref": "#/$defs/text" },
+        "work_id": { "$ref": "#/$defs/text" },
+        "thread_id": { "$ref": "#/$defs/text" },
+        "source_revision": { "$ref": "#/$defs/text" },
+        "resources": { "$ref": "#/$defs/stringList" },
+        "from_ledger_revision": { "$ref": "#/$defs/positiveInteger" },
+        "to_ledger_revision": { "$ref": "#/$defs/positiveInteger" },
+        "decided_by": { "$ref": "#/$defs/text" },
+        "decision_pointer": { "$ref": "#/$defs/text" },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "assuranceOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "operation_id",
+        "kind",
+        "contour_id",
+        "contour_digest",
+        "integration_work_id",
+        "test_receipts",
+        "review_receipt_ids",
+        "reverse_receipt_ids",
+        "from_ledger_revision",
+        "to_ledger_revision",
+        "created_at"
+      ],
+      "properties": {
+        "schema": { "const": "CoordinationOperation/v1" },
+        "operation_id": { "$ref": "#/$defs/text" },
+        "kind": { "const": "contour_assurance" },
+        "contour_id": { "$ref": "#/$defs/text" },
+        "contour_digest": { "$ref": "#/$defs/digest" },
+        "integration_work_id": { "$ref": "#/$defs/text" },
+        "test_receipts": { "$ref": "#/$defs/stringList" },
+        "review_receipt_ids": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "reverse_receipt_ids": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "from_ledger_revision": { "$ref": "#/$defs/positiveInteger" },
+        "to_ledger_revision": { "$ref": "#/$defs/positiveInteger" },
+        "created_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "retirement": {
+      "type": "object",
+      "required": [
+        "schema",
+        "retirement_id",
+        "work_id",
+        "thread_id",
+        "ticket_id",
+        "generation",
+        "source_revision",
+        "ticket_source_revision",
+        "superseding_ticket_id",
+        "superseding_source_revision",
+        "from_status",
+        "to_status",
+        "resources",
+        "reason",
+        "pointer",
+        "actor",
+        "from_revision",
+        "to_revision",
+        "from_ledger_revision",
+        "to_ledger_revision",
+        "timestamp"
+      ],
+      "properties": {
+        "schema": { "const": "CoordinationTicketRetirement/v1" },
+        "retirement_id": { "$ref": "#/$defs/text" },
+        "work_id": { "$ref": "#/$defs/text" },
+        "thread_id": { "$ref": "#/$defs/text" },
+        "ticket_id": { "$ref": "#/$defs/text" },
+        "generation": { "$ref": "#/$defs/positiveInteger" },
+        "source_revision": { "$ref": "#/$defs/text" },
+        "ticket_source_revision": { "$ref": "#/$defs/text" },
+        "superseding_ticket_id": { "$ref": "#/$defs/text" },
+        "superseding_source_revision": { "$ref": "#/$defs/text" },
+        "from_status": { "enum": ["queued", "active", "ready_for_handoff"] },
+        "to_status": { "const": "read_only" },
+        "resources": { "$ref": "#/$defs/stringList" },
+        "reason": { "$ref": "#/$defs/text" },
+        "pointer": { "$ref": "#/$defs/text" },
+        "actor": { "$ref": "#/$defs/text" },
+        "from_revision": { "$ref": "#/$defs/positiveInteger" },
+        "to_revision": { "$ref": "#/$defs/positiveInteger" },
+        "from_ledger_revision": { "$ref": "#/$defs/positiveInteger" },
+        "to_ledger_revision": { "$ref": "#/$defs/positiveInteger" },
+        "timestamp": { "$ref": "#/$defs/timestamp" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

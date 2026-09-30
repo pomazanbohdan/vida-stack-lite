@@ -1,4 +1,6 @@
 node_modules/
+.tmp/
+packages/*/dist/
 **/node_modules/
 .agent/
 .planning/

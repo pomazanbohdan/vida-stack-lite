@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.invalid/schemas/documentation-policy-transition.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "revision",
+    "phase",
+    "maintenance_released",
+    "plan",
+    "plan_digest",
+    "operation_digest",
+    "events",
+    "closeout"
+  ],
+  "properties": {
+    "schema": {
+      "const": "DocumentationPolicyTransition/v1"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "phase": {
+      "enum": [
+        "planned",
+        "fenced",
+        "applied",
+        "abandoned_no_effect"
+      ]
+    },
+    "maintenance_released": {
+      "type": "boolean"
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_id",
+        "repository_root",
+        "repository_id",
+        "project_ids",
+        "project_id",
+        "work_id",
+        "source_revision",
+        "scope_digest",
+        "scope_file_digest",
+        "project_context_digest",
+        "config_digest",
+        "baseline_path",
+        "baseline_digest",
+        "baseline_file_digest",
+        "policy_path",
+        "old_policy_bytes",
+        "target_policy_bytes",
+        "added_maps",
+        "changelog_path",
+        "changelog_preimage",
+        "actor",
+        "instruction_ref",
+        "created_at",
+        "workspace_id",
+        "state_digest",
+        "selector_digest",
+        "bundle_digest",
+        "source_admission",
+        "token",
+        "fence_binding"
+      ],
+      "properties": {
+        "operation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "repository_root": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "repository_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "project_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4194304
+          }
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "work_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "source_revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "scope_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "scope_file_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "project_context_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "config_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "baseline_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "baseline_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "baseline_file_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "policy_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "old_policy_bytes": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "target_policy_bytes": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "added_maps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "bytes",
+              "sha256",
+              "size"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4194304
+              },
+              "bytes": {
+                "type": "string",
+                "maxLength": 4194304
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "changelog_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "changelog_preimage": {
+          "type": "string",
+          "maxLength": 4194304
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "instruction_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "created_at": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4194304
+        },
+        "workspace_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "state_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "selector_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bundle_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_admission": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "operation_id",
+                "payload_root",
+                "parent_selector_sha256",
+                "parent_manifest_sha256",
+                "successor_manifest_sha256",
+                "intent_sha256",
+                "authorization_sha256",
+                "target_path",
+                "target_sha256"
+              ],
+              "properties": {
+                "operation_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4194304
+                },
+                "payload_root": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4194304
+                },
+                "parent_selector_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "parent_manifest_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "successor_manifest_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "intent_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "authorization_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "target_path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4194304
+                },
+                "target_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          ]
+        },
+        "token": {
+          "type": "string",
+          "pattern": "^[a-f0-9-]{36}$"
+        },
+        "fence_binding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema",
+            "project_ids",
+            "operation_id",
+            "manifest_digest",
+            "request_digest",
+            "bindings_digest",
+            "closure_digest",
+            "bundle_digest"
+          ],
+          "properties": {
+            "schema": {
+              "const": "MaintenanceFenceBinding/v1"
+            },
+            "project_ids": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4194304
+              }
+            },
+            "operation_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4194304
+            },
+            "manifest_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "request_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "bindings_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "closure_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "bundle_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "plan_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "operation_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "bytes"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4194304
+          },
+          "bytes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4194304
+          }
+        }
+      }
+    },
+    "closeout": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "sha256",
+            "checkpoint_digest"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4194304
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "checkpoint_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

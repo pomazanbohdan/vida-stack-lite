@@ -1,0 +1,12 @@
+telemetry = false
+env = false
+
+[test]
+root = "./tests"
+randomize = true
+seed = 20260817
+coverage = true
+coverageReporter = ["text", "lcov"]
+coverageDir = "./coverage/bun"
+coverageThreshold = { lines = 0.0, functions = 0.0, statements = 0.0 }
+coverageSkipTestFiles = true

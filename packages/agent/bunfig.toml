@@ -1,0 +1,19 @@
+# Candidate-only Bun 1.4 policy. Legacy agent-runtime keeps its Node/npm policy.
+# Authority/config files remain strict JSON/YAML and are never parsed as JSON5.
+telemetry = false
+env = false
+
+[install]
+saveTextLockfile = true
+linker = "hoisted"
+auto = "disable"
+
+[test]
+root = "./tests"
+randomize = true
+seed = 20260817
+coverage = false
+coverageReporter = ["text", "lcov"]
+coverageDir = "./coverage"
+coverageThreshold = { lines = 1.0, functions = 1.0, statements = 1.0 }
+coverageSkipTestFiles = true

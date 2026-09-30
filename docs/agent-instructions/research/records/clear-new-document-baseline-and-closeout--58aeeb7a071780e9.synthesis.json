@@ -1,0 +1,132 @@
+{
+  "ac_ids": [
+    "AC-CLEAR-CREATE-1"
+  ],
+  "actor": "/root/clear_create_issued_research_luna",
+  "br_ids": [
+    ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority"
+  ],
+  "bundle_id": "synthesis-3718146a17b25b511ef2728b730ab5911432aa4f",
+  "completeness": {
+    "answered_questions": [
+      "What minimal scoped change lets an authorized new document pass baseline while preserving closeout existence and init lineage?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "What minimal scoped change lets an authorized new document pass baseline while preserving closeout existence and init lineage?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [],
+  "created_at": "2026-09-30T11:06:38.063Z",
+  "digest": "17cd8ced664d35d6ff502a8ece9838fdc2a93016db5c8b79b31a2766922c22c5",
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "baseline-only-presence-guard",
+      "source_refs": [
+        "r1:clear-code",
+        "r0:work-trace"
+      ],
+      "statement": "The missing scoped-document check runs before the phase branch, so it rejects an authorized absent document at baseline. Gate this presence failure on closeout; keep closeout existence and init-event lineage checks.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "public-create-regression",
+      "source_refs": [
+        "r1:clear-tests",
+        "r0:work-trace",
+        "r1:clear-code"
+      ],
+      "statement": "The public tests cover existing-file baseline/closeout and deletion, not creation. Add baseline success while absent, closeout failure while absent, failure after creation without init, then init-event closeout and verify success.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol",
+      "synthesis-protocol"
+    ],
+    "lane": "synthesizer",
+    "phase": "plan",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      },
+      {
+        "instruction_id": "synthesis-protocol",
+        "source_sha256": "b4b3000beca312dc6fca27bac08f7ec5f06c869f8ce2f4c8da61c8304c4f5ae8"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "synthesis-3718146a17b25b511ef2728b730ab5911432aa4f8d8f942824e24d88b50fa5fb"
+  },
+  "options": [
+    {
+      "description": "Change only clear.ts and documentation-clear.test.mjs: allow scoped absence at baseline; test absent baseline success, absent/present-without-init closeout failure, then valid init closeout and verify. No schema, config, repack or install change.",
+      "evidence_refs": [
+        "r0:work-trace",
+        "r1:clear-code",
+        "r1:clear-tests"
+      ],
+      "label": "Apply baseline-only guard",
+      "option_id": "two-file-baseline-guard"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "r0:work-trace",
+      "r1:clear-code",
+      "r1:clear-tests"
+    ],
+    "option_id": "two-file-baseline-guard",
+    "rationale": "This matches AC-CLEAR-CREATE-1 while retaining closeout existence and lineage controls within the exact two-file scope."
+  },
+  "result_refs": [
+    {
+      "digest": "67a4e2aef6a78ce5b5365afbd7a64078ab5710c3c2c8f9a27d0c6145b5e8eedd",
+      "result_id": "research-8245a242ed3b9eda84d6677383e333f6c18b987c"
+    },
+    {
+      "digest": "a8ab5b3aaeeb1360ec047643d1c9006e3465975c4a27ae80688c3d37827ebf33",
+      "result_id": "research-9c20e4198e42c253f85026ace2bad7b3fe4abcfa"
+    }
+  ],
+  "schema": "ResearchSynthesis/v1",
+  "scope_id": "vida-agent-clear-create-fix-20260930-scope",
+  "source_revision": "d6105a6a66d13ad5d9db598c4a1b7e6bfd22175d82e77c5bc8b0109c093ccf6d",
+  "sr_ids": [
+    ".agent/work/vida-agent-clear-create-fix-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "CLEAR new-document baseline and closeout",
+  "uncertainties": [
+    {
+      "material": false,
+      "statement": "No tests were run in this synthesis action; public regression and Runtime/user acceptance remain future evidence.",
+      "uncertainty_id": "future-qa-runtime"
+    }
+  ],
+  "updated_at": "2026-09-30T11:06:38.063Z",
+  "work_item_id": "vida-agent-clear-create-fix-20260930"
+}

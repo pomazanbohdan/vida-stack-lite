@@ -1,0 +1,148 @@
+{
+  "ac_ids": [
+    "AC-CLEAR-CREATE-1"
+  ],
+  "actor": "/root/clear_create_issued_research_luna",
+  "br_ids": [
+    ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "Why does an authorized absent governed document fail at baseline, and does closeout retain its init-lineage check?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "Why does an authorized absent governed document fail at baseline, and does closeout retain its init-lineage check?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [],
+  "contour": "vida-agent-clear-create-fix-authorized-20260930-scope",
+  "created_at": "2026-09-30T11:22:43.040Z",
+  "digest": "d8ca0408514adf4983fa2462a4982b65f97c805485c2fa7543590ba5edb1c0c7",
+  "evidence_classes": [
+    "Code"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "baseline-check-order",
+      "source_ids": [
+        "scope-ac-auth",
+        "clear-producer"
+      ],
+      "statement": "The governed scoped-path inventory check is phase-independent and adds GAP-DOCUMENTATION-SCOPE-001 when a new path is absent, including at baseline.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "closeout-init-retained",
+      "source_ids": [
+        "scope-ac-auth",
+        "clear-producer"
+      ],
+      "statement": "Closeout compares baseline and current inventory and requires an init event for a newly present path.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-8ee9378e1be59aea703cc0d3fb0468151a5bf8939544b6a8c1eea7030775cd00"
+  },
+  "objective": "Confirm the baseline rejection and closeout lineage behavior.",
+  "options": [
+    {
+      "description": "Skip only the missing-path presence gap at baseline; preserve closeout existence and init-lineage checks.",
+      "evidence_refs": [
+        "br-authority",
+        "scope-ac-auth",
+        "clear-producer"
+      ],
+      "label": "Gate presence by phase",
+      "option_id": "phase-gated-presence"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "Why does an authorized absent governed document fail at baseline, and does closeout retain its init-lineage check?",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "br-authority",
+      "scope-ac-auth",
+      "clear-producer"
+    ],
+    "option_id": "phase-gated-presence",
+    "rationale": "This corrects the phase-insensitive rejection while keeping the accepted closeout controls."
+  },
+  "result_id": "research-8ee9378e1be59aea703cc0d3fb0468151a5bf893",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-agent-clear-create-fix-authorized-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "BR .agent/work/npm-agent-migration-20260930/WORK.md#Request and authority records current user-directed package source authority.",
+      "locator": ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority",
+      "retrieved_at": "2026-09-30T11:21:20.838Z",
+      "source_id": "br-authority",
+      "source_kind": "internal",
+      "title": "BR authority"
+    },
+    {
+      "claim": "SR .agent/work/vida-agent-clear-create-fix-authorized-20260930/scope.json#behavior_trace permits absence at baseline and requires existence/init lineage at closeout; AC-CLEAR-CREATE-1 states that behavior. SourceAuth confines implementation to clear.ts and its public test.",
+      "locator": ".agent/work/vida-agent-clear-create-fix-authorized-20260930/scope.json#behavior_trace; acceptance.json#contracts.AC-CLEAR-CREATE-1; source-authorization.json#implementation_paths",
+      "retrieved_at": "2026-09-30T11:21:20.838Z",
+      "source_id": "scope-ac-auth",
+      "source_kind": "internal",
+      "title": "Frozen SR, AC and authorization"
+    },
+    {
+      "claim": "The missing governed-path check runs before phase branching, so baseline rejects absence; closeout accepts a new path only with a matching init event.",
+      "locator": "packages/agent/src/documentation/clear.ts#produceDocumentationClearCheckpoint",
+      "retrieved_at": "2026-09-30T11:21:20.838Z",
+      "source_id": "clear-producer",
+      "source_kind": "internal",
+      "title": "Current CLEAR code"
+    }
+  ],
+  "source_revision": "d6105a6a66d13ad5d9db598c4a1b7e6bfd22175d82e77c5bc8b0109c093ccf6d",
+  "sr_ids": [
+    ".agent/work/vida-agent-clear-create-fix-authorized-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "CLEAR authorized new-document baseline",
+  "uncertainties": [
+    {
+      "material": false,
+      "statement": "This source-research action ran no tests and observed no Runtime or user acceptance; those remain downstream evidence.",
+      "uncertainty_id": "future-qa-runtime"
+    }
+  ],
+  "updated_at": "2026-09-30T11:22:43.040Z",
+  "work_item_id": "vida-agent-clear-create-fix-authorized-20260930"
+}

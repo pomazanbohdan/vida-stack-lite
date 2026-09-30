@@ -1,0 +1,198 @@
+{
+  "ac_ids": [
+    "BOOTSTRAP-PACKAGE",
+    "BOOTSTRAP-MCP",
+    "BOOTSTRAP-INIT",
+    "BOOTSTRAP-UI",
+    "BOOTSTRAP-ISOLATION"
+  ],
+  "actor": "/root/plugin_synthesis_current",
+  "br_ids": [
+    "BR: vida-plugin-codex-package-20260930/intake.json#work_item.description"
+  ],
+  "bundle_id": "synthesis-b2588cd9d2733948a61491f14f678dac00bb7848",
+  "completeness": {
+    "answered_questions": [
+      "What intent and contracts constrain the correction?",
+      "What exact Codex manifest/config pair is documented?",
+      "What public read APIs exist?",
+      "What host behavior remains unproven?"
+    ],
+    "external_validation": {
+      "live_check": true,
+      "minimum_sources": 2,
+      "required": true,
+      "source_count": 1,
+      "status": "blocked"
+    },
+    "material_gaps": [
+      "GAP-PLUGIN-CANONICAL-SPECS",
+      "GAP-GENERIC-YAML-WRITER",
+      "GAP-CODEX-PROJECT-BRIDGE",
+      "GAP-CODEX-UI-RENDERER"
+    ],
+    "missing_questions": [],
+    "required_questions": [
+      "What intent and contracts constrain the correction?",
+      "What exact Codex manifest/config pair is documented?",
+      "What public read APIs exist?",
+      "What host behavior remains unproven?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "created_at": "2026-09-30T13:33:46.122Z",
+  "digest": "daf26c978a59be6aec9cba65c4dcb7251c74a74e552477ee37e2bc24216ad183",
+  "findings": [
+    {
+      "evidence_class": "Static",
+      "finding_id": "codex-pair",
+      "source_refs": [
+        "r2:guide",
+        "r2:cache",
+        "r2:scope",
+        "r2:acceptance"
+      ],
+      "statement": "Codex uses .codex-plugin/plugin.json linked to ./.mcp.json; root plugin.json is optional for this slice.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "public-sdk",
+      "source_refs": [
+        "r1:sdk",
+        "r1:scope"
+      ],
+      "statement": "Public exports are loadRuntimeConfig, loadProjectSetContext, resolvePathProfile and projectBindingFor; profiles include resolved paths/provenance and the package has pinned Bun.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "GAP",
+      "finding_id": "init-scope",
+      "source_refs": [
+        "r1:acceptance",
+        "r1:future"
+      ],
+      "statement": "BOOTSTRAP-INIT delegates to the public CLI; generic YAML/config saving is future scope.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "GAP",
+      "finding_id": "host-gaps",
+      "source_refs": [
+        "r3:acceptance",
+        "r3:scope",
+        "r3:prior"
+      ],
+      "statement": "Target UI is a local workspace preview; Codex rendering and project-catalogue integration lack proof or Runtime acceptance.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [
+    "GAP-PLUGIN-CANONICAL-SPECS",
+    "GAP-GENERIC-YAML-WRITER",
+    "GAP-CODEX-PROJECT-BRIDGE",
+    "GAP-CODEX-UI-RENDERER"
+  ],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol",
+      "synthesis-protocol"
+    ],
+    "lane": "synthesizer",
+    "phase": "plan",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      },
+      {
+        "instruction_id": "synthesis-protocol",
+        "source_sha256": "b4b3000beca312dc6fca27bac08f7ec5f06c869f8ce2f4c8da61c8304c4f5ae8"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "synthesis-b2588cd9d2733948a61491f14f678dac00bb78486f14082a78c598860a8990fe"
+  },
+  "options": [
+    {
+      "description": "Order: BOOTSTRAP-PACKAGE adds .codex-plugin/plugin.json -> ./.mcp.json and .mcp.json; BOOTSTRAP-MCP adds package.json and src/server.mjs with MCP SDK stdio, public VIDA reads via pinned Bun, and configured data/status/error tools/resources; BOOTSTRAP-INIT calls public CLI for fresh roots; BOOTSTRAP-ISOLATION binds allowlisted roots to explicit repo/product IDs and rejects traversal, symlinks and stale context; BOOTSTRAP-UI renders actual data/provenance/capabilities in ui/workspace.html. Add tests/server.test.mjs for real stdio initialize/list/call/resource, errors, and negative isolation/path/symlink/stale/init checks. Keep optional root plugin.json absent; portable packaging later. No generic YAML writer or private Codex DB bridge.",
+      "evidence_refs": [
+        "r0:acceptance",
+        "r0:scope",
+        "r1:sdk",
+        "r1:future",
+        "r2:guide",
+        "r3:prior"
+      ],
+      "label": "Build bounded Codex bootstrap",
+      "option_id": "codex-bootstrap"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "r0:acceptance",
+      "r0:scope",
+      "r1:acceptance",
+      "r1:sdk",
+      "r2:guide",
+      "r3:prior"
+    ],
+    "option_id": "codex-bootstrap",
+    "rationale": "Proceed with this reversible order against all five ACs; retain the four GAPs and make no host-readiness or portable-package claim."
+  },
+  "result_refs": [
+    {
+      "digest": "a81ce459430a1812bc8c1343f8a5d6a3c0835203916b83ffd25b56e12814e1bc",
+      "result_id": "research-140fc5c68d190070feba25254bf80778b1756ab6"
+    },
+    {
+      "digest": "5eb672e182095c7931ba89212ff3f2e0ffc6323e05f49e8b3c18bd434046d4bb",
+      "result_id": "research-320210b93fb4d3aeb7aeb000051feedf9e6a33a3"
+    },
+    {
+      "digest": "ec781cdb4c2dac7b13d486dba89d1e9120b26582dfcd976ce21dfabe5f689ffb",
+      "result_id": "research-546395e84f35e4fd5a13ca6b237ed580a8c06ea7"
+    },
+    {
+      "digest": "a513fceaef5469c6bd5bb0bb5e809efa9eb1362de5b0398a5d492b8e2550b079",
+      "result_id": "research-60770d64171e911b6d35504c1110ea46c1013bcf"
+    }
+  ],
+  "schema": "ResearchSynthesis/v1",
+  "scope_id": "vida-plugin-codex-package-20260930-scope",
+  "source_revision": "3f274dca3fe76b3b27be71c697797d5cf24483410b49618be81086b84b3b9d9b",
+  "sr_ids": [
+    "SR (derived): vida-plugin-codex-package-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "Codex plugin bootstrap",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "Plugin canon is absent.",
+      "uncertainty_id": "canonical-docs"
+    },
+    {
+      "material": true,
+      "statement": "Generic YAML/config save is out of scope.",
+      "uncertainty_id": "config-writer"
+    },
+    {
+      "material": true,
+      "statement": "Project bridge and native renderer need direct host observation.",
+      "uncertainty_id": "host-proof"
+    }
+  ],
+  "updated_at": "2026-09-30T13:33:46.122Z",
+  "work_item_id": "vida-plugin-codex-package-20260930"
+}

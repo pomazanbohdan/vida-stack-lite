@@ -1,0 +1,171 @@
+{
+  "ac_ids": [
+    "BOOTSTRAP-PACKAGE",
+    "BOOTSTRAP-MCP",
+    "BOOTSTRAP-INIT",
+    "BOOTSTRAP-UI",
+    "BOOTSTRAP-ISOLATION"
+  ],
+  "actor": "/root/bootstrap_research",
+  "br_ids": [
+    "BR: vida-plugin-codex-package-20260930/intake.json#work_item.description"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "What exact Codex manifest/config pair is documented?"
+    ],
+    "external_validation": {
+      "live_check": true,
+      "minimum_sources": 2,
+      "required": true,
+      "source_count": 1,
+      "status": "blocked"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "What exact Codex manifest/config pair is documented?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "contour": "vida-plugin-codex-package-20260930-scope",
+  "created_at": "2026-09-30T13:01:20.558Z",
+  "digest": "ec781cdb4c2dac7b13d486dba89d1e9120b26582dfcd976ce21dfabe5f689ffb",
+  "evidence_classes": [
+    "Static"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Static",
+      "finding_id": "compat-pair",
+      "source_ids": [
+        "guide",
+        "cache",
+        "scope",
+        "acceptance"
+      ],
+      "statement": "The documented Codex pair is .codex-plugin/plugin.json plus .mcp.json; the manifest points mcpServers to ./.mcp.json and MCP config wraps a local command.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Static",
+      "finding_id": "root-optional",
+      "source_ids": [
+        "scope",
+        "guide"
+      ],
+      "statement": "Root plugin.json is allowed but optional here; full portable ChatGPT packaging is future work.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-546395e84f35e4fd5a13ca6b237ed580a8c06ea7b96df7459e4b2983a2cb4e7d"
+  },
+  "objective": "Check the corrected path against docs and installed files.",
+  "options": [
+    {
+      "description": "Create only .codex-plugin/plugin.json and .mcp.json.",
+      "evidence_refs": [
+        "scope",
+        "guide",
+        "cache"
+      ],
+      "label": "Use Codex pair",
+      "option_id": "compat-only"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "What exact Codex manifest/config pair is documented?",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "scope",
+      "guide",
+      "cache"
+    ],
+    "option_id": "compat-only",
+    "rationale": "Use the documented Codex creator layout; make no portable-package claim."
+  },
+  "result_id": "research-546395e84f35e4fd5a13ca6b237ed580a8c06ea7",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-plugin-codex-package-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "BOOTSTRAP-PACKAGE=local MCP config; BOOTSTRAP-MCP=configured data/status/errors; BOOTSTRAP-INIT=public CLI; BOOTSTRAP-UI=local preview/host GAP; BOOTSTRAP-ISOLATION=identity/path checks.",
+      "locator": ".agent/work/vida-plugin-codex-package-20260930/acceptance.json#contracts",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "acceptance",
+      "source_kind": "internal",
+      "title": "Five accepted ACs"
+    },
+    {
+      "claim": "BR: vida-plugin-codex-package-20260930/intake.json#work_item.description; linked user authorization preserves the five ACs and generic-agent boundary.",
+      "locator": "vida-plugin-codex-package-20260930/intake.json#work_item.description",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "intake",
+      "source_kind": "internal",
+      "title": "Attributable intake"
+    },
+    {
+      "claim": "SR (derived): vida-plugin-codex-package-20260930/scope.json#behavior_trace; configured reads, public init, local preview, identity/path boundary; paths include .codex-plugin/plugin.json and .mcp.json.",
+      "locator": "vida-plugin-codex-package-20260930/scope.json#behavior_trace",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "scope",
+      "source_kind": "internal",
+      "title": "Derived scope"
+    },
+    {
+      "claim": "Guide distinguishes portable root plugin.json+mcp.json from Codex .codex-plugin/plugin.json+.mcp.json.",
+      "independence_group": "openai-plugin-docs",
+      "locator": "https://developers.openai.com/plugins/build/plugins",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "guide",
+      "source_kind": "external",
+      "title": "Official package guide"
+    },
+    {
+      "claim": "Installed static Codex example links .codex-plugin/plugin.json to ./.mcp.json and has a local command entry; not Runtime proof.",
+      "locator": "C:/Users/bpomazan/.codex/plugins/cache/openai-bundled/code-review/26.928.21956/.codex-plugin/plugin.json and .mcp.json",
+      "retrieved_at": "2026-09-30T13:12:37Z",
+      "source_id": "cache",
+      "source_kind": "internal",
+      "title": "Installed Codex package files"
+    }
+  ],
+  "source_revision": "3f274dca3fe76b3b27be71c697797d5cf24483410b49618be81086b84b3b9d9b",
+  "sr_ids": [
+    "SR (derived): vida-plugin-codex-package-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "Codex compatibility pair",
+  "uncertainties": [
+    {
+      "material": false,
+      "statement": "Reversible assumption: leave optional root plugin.json absent for this Codex-only slice.",
+      "uncertainty_id": "bounded-assumption"
+    }
+  ],
+  "updated_at": "2026-09-30T13:01:20.558Z",
+  "work_item_id": "vida-plugin-codex-package-20260930"
+}

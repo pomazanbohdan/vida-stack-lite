@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-agent.invalid/schemas/documentation-change-event.v1.schema.json",
+  "title": "DocumentationChangeEvent v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "event_id", "logical_edit_id", "work_id", "source_revision", "operation", "document_id", "path_before", "path_after", "before_sha256", "after_sha256", "actor", "pointer", "timestamp"],
+  "properties": {
+    "schema": {"const": "DocumentationChangeEvent/v1"}, "event_id": {"type": "string", "minLength": 1}, "logical_edit_id": {"type": "string", "minLength": 1}, "work_id": {"type": "string", "minLength": 1}, "source_revision": {"type": "string", "minLength": 1},
+    "operation": {"enum": ["init", "finalize", "delete", "move", "rename", "migrate-links"]}, "document_id": {"type": "string", "minLength": 1},
+    "path_before": {"type": ["string", "null"], "minLength": 1}, "path_after": {"type": ["string", "null"], "minLength": 1},
+    "before_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "after_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "actor": {"type": "string", "minLength": 1}, "pointer": {"type": "string", "minLength": 1}, "timestamp": {"type": "string", "format": "date-time"}
+  }
+}

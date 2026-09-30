@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-agent.invalid/schemas/documentation-clear-checkpoint.v1.schema.json",
+  "title": "DocumentationClearCheckpoint v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "clear_id", "work_id", "source_revision", "repository_id", "project_id",
+    "project_context_digest", "config_digest", "scope_digest", "policy_id", "policy_path",
+    "policy_digest", "inventory_digest", "documents", "baseline_path", "baseline_digest",
+    "phase", "status", "required", "gaps", "created_at", "digest"
+  ],
+  "properties": {
+    "schema": { "const": "DocumentationClearCheckpoint/v1" },
+    "clear_id": { "type": "string", "minLength": 1 },
+    "work_id": { "type": "string", "minLength": 1 },
+    "source_revision": { "type": "string", "minLength": 1 },
+    "repository_id": { "type": "string", "minLength": 1 },
+    "project_id": { "type": "string", "minLength": 1 },
+    "project_context_digest": { "$ref": "#/$defs/digest" },
+    "config_digest": { "$ref": "#/$defs/digest" },
+    "scope_digest": { "$ref": "#/$defs/digest" },
+    "policy_id": { "type": "string", "minLength": 1 },
+    "policy_path": { "type": "string", "minLength": 1 },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "inventory_digest": { "$ref": "#/$defs/digest" },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "size"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "$ref": "#/$defs/digest" },
+          "size": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "baseline_path": { "type": ["string", "null"] },
+    "baseline_digest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "phase": { "enum": ["baseline", "closeout"] },
+    "status": { "enum": ["pass", "blocked", "not_required"] },
+    "required": { "type": "boolean" },
+    "gaps": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "created_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T" },
+    "digest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

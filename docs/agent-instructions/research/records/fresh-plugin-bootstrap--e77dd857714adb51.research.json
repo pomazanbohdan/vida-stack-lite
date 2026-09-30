@@ -1,0 +1,151 @@
+{
+  "ac_ids": [
+    "BOOTSTRAP-PACKAGE",
+    "BOOTSTRAP-MCP",
+    "BOOTSTRAP-INIT",
+    "BOOTSTRAP-UI",
+    "BOOTSTRAP-ISOLATION"
+  ],
+  "actor": "/root/bootstrap_research",
+  "br_ids": [],
+  "completeness": {
+    "answered_questions": [
+      "What intent and acceptance constrain the bootstrap?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [
+      "GAP-PLUGIN-CANONICAL-SPECS"
+    ],
+    "missing_questions": [],
+    "required_questions": [
+      "What intent and acceptance constrain the bootstrap?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "contour": "vida-plugin-mcp-bootstrap-20260930-scope",
+  "created_at": "2026-09-30T12:12:30.159Z",
+  "digest": "22d780acf12c91d9d40738c2d9b9999974e1a611ceee7ed4f3458c3a308986da",
+  "evidence_classes": [
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Static",
+      "finding_id": "accepted-intent",
+      "source_ids": [
+        "acceptance",
+        "intake"
+      ],
+      "statement": "Fresh work is authorized with a generic core/connector boundary and no invented Codex catalogue or host UI.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Static",
+      "finding_id": "accepted-contracts",
+      "source_ids": [
+        "acceptance"
+      ],
+      "statement": "Acceptance requires configured data/status, public init delegation, a workspace preview and identity/path boundaries; host rendering remains unproven.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [
+    "GAP-PLUGIN-CANONICAL-SPECS"
+  ],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-4a645c04e4509688ac47e40a4350b3eb1456198f1dec264134b6b5b226a0a995"
+  },
+  "objective": "Trace accepted intent and boundaries.",
+  "options": [
+    {
+      "description": "Implement accepted outcomes and report open host/spec gaps.",
+      "evidence_refs": [
+        "acceptance",
+        "intake"
+      ],
+      "label": "Follow fresh scope",
+      "option_id": "bounded"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "What intent and acceptance constrain the bootstrap?",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "acceptance",
+      "intake",
+      "sidecar"
+    ],
+    "option_id": "bounded",
+    "rationale": "Follow the five accepted contracts; report canonical-spec and host gaps."
+  },
+  "result_id": "research-4a645c04e4509688ac47e40a4350b3eb1456198f",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-plugin-mcp-bootstrap-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "Accepted AC IDs are BOOTSTRAP-PACKAGE, BOOTSTRAP-MCP, BOOTSTRAP-INIT, BOOTSTRAP-UI and BOOTSTRAP-ISOLATION.",
+      "locator": ".agent/work/vida-plugin-mcp-bootstrap-20260930/acceptance.json#contracts",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "acceptance",
+      "source_kind": "internal",
+      "title": "AcceptanceManifest/v1"
+    },
+    {
+      "claim": "Authorizes fresh work, selects «Робоча область» preview and prohibits fabricated host APIs; supports BOOTSTRAP-PACKAGE, BOOTSTRAP-MCP, BOOTSTRAP-UI and BOOTSTRAP-ISOLATION. Records GAP-CODEX-PROJECT-BRIDGE.",
+      "locator": ".agent/work/vida-plugin-mcp-bootstrap-20260930/intake.json",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "intake",
+      "source_kind": "internal",
+      "title": "Fresh work intake"
+    },
+    {
+      "claim": "Assigns canonical plugin requirements/specification to plugin-owned docs and identifies absent canonical docs as setup GAP-PLUGIN-CANONICAL-SPECS.",
+      "locator": "AGENT.sidecar.md#Source and ownership map",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "sidecar",
+      "source_kind": "internal",
+      "title": "Project source map"
+    }
+  ],
+  "source_revision": "8c8712858902b1cd07b65af8a761b5dd2ab743231de46af7a340f7d93aa97eb3",
+  "sr_ids": [],
+  "topic": "Fresh plugin bootstrap",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "Canonical plugin requirements and system specification remain plugin-owner sources; their absence is an explicit setup gap.",
+      "uncertainty_id": "canonical-specs"
+    }
+  ],
+  "updated_at": "2026-09-30T12:12:30.159Z",
+  "work_item_id": "vida-plugin-mcp-bootstrap-20260930"
+}

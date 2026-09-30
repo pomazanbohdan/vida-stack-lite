@@ -1,0 +1,158 @@
+{
+  "ac_ids": [
+    "AC-CLEAR-CREATE-1"
+  ],
+  "actor": "/root/clear_create_issued_research_luna",
+  "br_ids": [
+    ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "Which check rejects the absent new document, and what regression covers baseline through verified closeout?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "Which check rejects the absent new document, and what regression covers baseline through verified closeout?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [],
+  "contour": "vida-agent-clear-create-fix-20260930-scope",
+  "created_at": "2026-09-30T10:38:52.999Z",
+  "digest": "a8ab5b3aaeeb1360ec047643d1c9006e3465975c4a27ae80688c3d37827ebf33",
+  "evidence_classes": [
+    "Code"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "phase-insensitive-check",
+      "source_ids": [
+        "clear-code"
+      ],
+      "statement": "The scoped-path absence check precedes the closeout branch; that branch already recognizes a new path through an init event.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "public-test-shape",
+      "source_ids": [
+        "work-trace",
+        "clear-code",
+        "clear-tests"
+      ],
+      "statement": "Test public baseline success while the authorized path is absent, closeout failure while absent, then create it with an init event and require closeout and verify success.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "creation-test-absent",
+      "source_ids": [
+        "clear-tests",
+        "work-trace"
+      ],
+      "statement": "The current public suite has no creation/init-event case.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-9c20e4198e42c253f85026ace2bad7b3fe4abcfae63700081f249239d4dee5f4"
+  },
+  "objective": "Identify the phase-sensitive cause and smallest public regression.",
+  "options": [
+    {
+      "description": "Cover absent baseline, failure while absent at closeout, then init-event creation followed by successful closeout and verify.",
+      "evidence_refs": [
+        "work-trace",
+        "clear-code",
+        "clear-tests"
+      ],
+      "label": "Test public creation flow",
+      "option_id": "public-create-regression"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "Which check rejects the absent new document, and what regression covers baseline through verified closeout?",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "work-trace",
+      "clear-code",
+      "clear-tests"
+    ],
+    "option_id": "public-create-regression",
+    "rationale": "This is the smallest public test for the accepted phase distinction and existing init-lineage guard."
+  },
+  "result_id": "research-9c20e4198e42c253f85026ace2bad7b3fe4abcfa",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-agent-clear-create-fix-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "BR .agent/work/npm-agent-migration-20260930/WORK.md#Request and authority records current user-directed product/source authority; SR .agent/work/vida-agent-clear-create-fix-20260930/scope.json#behavior_trace allows absent new documents at baseline and requires existence/init lineage at closeout; AC-CLEAR-CREATE-1 requires that behavior and public regression.",
+      "locator": ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority; .agent/work/vida-agent-clear-create-fix-20260930/scope.json#behavior_trace,test_trace; .agent/work/vida-agent-clear-create-fix-20260930/acceptance.json#AC-CLEAR-CREATE-1",
+      "retrieved_at": "2026-09-30T10:46:31.888Z",
+      "source_id": "work-trace",
+      "source_kind": "internal",
+      "title": "B/S/AC trace"
+    },
+    {
+      "claim": "The missing-scope inventory check runs before phase branching, so baseline flags an absent governed path. Closeout separately requires an init event for a path absent in baseline and present now.",
+      "locator": "packages/agent/src/documentation/clear.ts#produceDocumentationClearCheckpoint",
+      "retrieved_at": "2026-09-30T10:46:31.888Z",
+      "source_id": "clear-code",
+      "source_kind": "internal",
+      "title": "CLEAR producer"
+    },
+    {
+      "claim": "Tests cover existing-file baseline/closeout and deletion lineage, but no absent-at-baseline creation/init-event flow.",
+      "locator": "packages/agent/tests/documentation-clear.test.mjs",
+      "retrieved_at": "2026-09-30T10:46:31.888Z",
+      "source_id": "clear-tests",
+      "source_kind": "internal",
+      "title": "CLEAR public tests"
+    }
+  ],
+  "source_revision": "d6105a6a66d13ad5d9db598c4a1b7e6bfd22175d82e77c5bc8b0109c093ccf6d",
+  "sr_ids": [
+    ".agent/work/vida-agent-clear-create-fix-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "CLEAR create regression",
+  "uncertainties": [
+    {
+      "material": false,
+      "statement": "This read-only research invocation ran no tests and observed no Runtime or user acceptance; those checks remain downstream.",
+      "uncertainty_id": "checks-not-observed"
+    }
+  ],
+  "updated_at": "2026-09-30T10:38:52.999Z",
+  "work_item_id": "vida-agent-clear-create-fix-20260930"
+}

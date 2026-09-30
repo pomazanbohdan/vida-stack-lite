@@ -1,0 +1,6 @@
+{
+  "name": "vida-stack-lite",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Codex plugin product workspace; implementation is owned by the plugin specification."
+}

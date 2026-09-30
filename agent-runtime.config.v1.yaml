@@ -1,0 +1,1675 @@
+schema: AgentRuntimeConfig/v1
+config_id: vida-agent
+version: 1
+config_revision: 1
+repository:
+  sidecar: AGENT.sidecar.md
+  policy: AGENTS.md
+  root_markers:
+    - AGENTS.md
+    - AGENT.sidecar.md
+    - agent-runtime.config.v1.yaml
+  repository_id: vida-agent
+  title: vida-agent repository
+  project_root: .
+  code_selectors:
+    - packages/agent/**
+    - packages/plugin/**
+integrations:
+  providers:
+    - id: local-agent
+      provider: local
+      project_id: agent
+      tenant_id: local
+      namespace: agent
+    - id: local-plugin
+      provider: local
+      project_id: plugin
+      tenant_id: local
+      namespace: plugin
+runtime:
+  bundle: packages/agent
+  schema_root: packages/agent/schemas
+  instruction_root: packages/agent/instructions
+  tooling_root: packages/agent/tooling
+control:
+  work_root: .agent/work
+  coordination_ledger: .agent/coordination/ownership.v1.json
+  checkpoint_name: resume.json
+paths:
+  schema: PathProfileConfig/v1
+  repository_mode: monorepo
+  processing_scope: selected_project
+  defaults:
+    repository_root: .
+    project_root: .
+    code_root: src
+    documentation_root: docs
+    wiki_root: docs
+    wiki_path: AGENT.sidecar.md
+    wiki_output_root: .planning/agent-flow/wiki-output
+    documentation_policy_path: docs/agent-instructions/documentation-policy.v1.json
+    documentation_map_path: AGENT.sidecar.md
+    documentation_index_path: AGENT.sidecar.md
+    documentation_changelog_root: docs
+    documentation_evidence_root: .agent/work
+    internal_root: docs
+    internal_requirements_root: docs
+    tests_root: tests
+    derived_output_root: .planning/agent-flow
+    coordination_root: .agent/coordination
+    work_root: .agent/work
+    delivery_root: .agent/work
+    import_root: .agent/work
+    ledger_root: backlogs
+projects:
+  - project_id: agent
+    title: agent
+    project_root: packages/agent
+    wiki_root: packages/agent/docs
+    wiki_path: AGENT.sidecar.md
+    wiki_output_root: .planning/agent-flow/agent/wiki-output
+    internal_root: packages/agent/docs
+    ledger_root: .agent/work
+    task_prefix: TASK
+    code_selectors:
+      - packages/agent/**
+    delivery_group: agent
+  - project_id: plugin
+    title: plugin
+    project_root: packages/plugin
+    wiki_root: packages/plugin/docs
+    wiki_path: AGENT.sidecar.md
+    wiki_output_root: .planning/agent-flow/plugin/wiki-output
+    internal_root: packages/plugin/docs
+    ledger_root: .agent/work
+    task_prefix: TASK
+    code_selectors:
+      - packages/plugin/**
+    delivery_group: plugin
+agents:
+  profiles:
+    executor:
+      model: gpt-6.1-sol
+      reasoning: medium
+      execution_mode: standard
+      mutation_scope: repository_source
+      tools_policy: developer
+      egress_policy: none
+    architect:
+      model: gpt-6-luna
+      reasoning: max
+      execution_mode: standard
+      mutation_scope: none
+      tools_policy: read_only
+      egress_policy: official_docs
+    researcher:
+      model: gpt-6-luna
+      reasoning: xhigh
+      execution_mode: fast
+      mutation_scope: none
+      tools_policy: read_only
+      egress_policy: official_docs
+    web-researcher:
+      model: gpt-6-luna
+      reasoning: xhigh
+      execution_mode: fast
+      mutation_scope: none
+      tools_policy: read_only
+      egress_policy: official_docs
+    codebase-mapper:
+      model: gpt-6-luna
+      reasoning: xhigh
+      execution_mode: fast
+      mutation_scope: none
+      tools_policy: read_only
+      egress_policy: none
+    reviewer-correctness:
+      model: gpt-6-luna
+      reasoning: high
+      execution_mode: fast
+      mutation_scope: none
+      tools_policy: validator
+      egress_policy: none
+    reviewer-security:
+      model: gpt-6-luna
+      reasoning: high
+      execution_mode: fast
+      mutation_scope: none
+      tools_policy: validator
+      egress_policy: official_docs
+    reviewer-requirements:
+      model: gpt-6-luna
+      reasoning: high
+      execution_mode: fast
+      mutation_scope: none
+      tools_policy: validator
+      egress_policy: none
+    tester:
+      model: gpt-6-luna
+      reasoning: high
+      execution_mode: fast
+      mutation_scope: none
+      tools_policy: tester
+      egress_policy: none
+    delivery:
+      model: gpt-6-luna
+      reasoning: high
+      execution_mode: fast
+      mutation_scope: none
+      tools_policy: delivery
+      egress_policy: none
+  tool_policies:
+    read_only:
+      source_write: false
+      allowed_tools:
+        - runtime.read
+        - source.read
+        - docs.read
+        - web.search
+    developer:
+      source_write: true
+      allowed_tools:
+        - runtime.read
+        - runtime.write
+        - source.read
+        - source.write
+        - test.execute
+    validator:
+      source_write: false
+      allowed_tools:
+        - runtime.read
+        - source.read
+        - test.read
+    tester:
+      source_write: false
+      allowed_tools:
+        - runtime.read
+        - source.read
+        - test.execute
+    delivery:
+      source_write: false
+      allowed_tools:
+        - runtime.read
+        - delivery.prepare
+        - delivery.execute
+  egress_policies:
+    none:
+      allowed_hosts: []
+    official_docs:
+      allowed_hosts:
+        - a2a-protocol.org
+        - modelcontextprotocol.io
+        - openai.github.io
+        - google.github.io
+        - learn.microsoft.com
+        - mastra.ai
+        - support.atlassian.com
+        - github.com
+  role_instructions:
+    code-researcher:
+      description: Configured research role.
+      consumes:
+        - WorkItem/v1
+      produces:
+        - ResearchResult/v1
+      rules:
+        - Inspect existing code patterns and affected symbols without changing
+          source.
+        - Return exact paths, symbols, callers, tests, and failed-pattern
+          evidence.
+    correctness-validator:
+      description: Configured validate role.
+      consumes:
+        - DevelopmentTaskPacket/v1
+        - ImplementationResult/v1
+        - TestReceipt/v1
+      produces:
+        - ValidationReceipt/v1
+      rules:
+        - Review observable behavior and root-cause correctness without changing
+          source.
+        - Return a fingerprint-bound pass or actionable findings.
+    delivery-agent:
+      description: Configured deliver role.
+      consumes:
+        - DevelopmentTaskPacket/v1
+        - ImplementationResult/v1
+        - TestReceipt/v1
+        - ValidationReceipt/v1
+      produces:
+        - DeliveryInstruction/v1
+      rules:
+        - Prepare deploy and do-not-deploy instructions only after required
+          receipts pass.
+        - Never change repository source and bind instructions to the
+          implementation fingerprint.
+    developer-orchestrator:
+      description: Configured develop role.
+      consumes:
+        - DevelopmentTaskPacket/v1
+      produces:
+        - ImplementationResult/v1
+      rules:
+        - Implement only the immutable packet within owned paths and source
+          revision.
+        - Do not research, validate, test independently, deliver, or repeat
+          prohibited failed patterns.
+    diagnostics-researcher:
+      description: Configured research role.
+      consumes:
+        - WorkItem/v1
+      produces:
+        - ResearchResult/v1
+      rules:
+        - Analyze supplied failures and sanitized logs without changing source.
+        - Return root-cause hypotheses, reproduced facts, and failed approach
+          fingerprints.
+    documentation-researcher:
+      description: Configured research role.
+      consumes:
+        - WorkItem/v1
+      produces:
+        - ResearchResult/v1
+      rules:
+        - Use official or configured local documentation sources.
+        - Return exact document references, version uncertainty, and conflicts.
+    platform-researcher:
+      description: Configured research role.
+      consumes:
+        - WorkItem/v1
+      produces:
+        - ResearchResult/v1
+      rules:
+        - Research platform contracts and framework constraints without changing
+          source.
+        - Prefer official sources and record version-sensitive uncertainty.
+    regression-validator:
+      description: Configured validate role.
+      consumes:
+        - DevelopmentTaskPacket/v1
+        - ImplementationResult/v1
+      produces:
+        - ValidationReceipt/v1
+      rules:
+        - Review affected callers and regression risk without changing source.
+        - Return a fingerprint-bound pass or actionable findings.
+    requirements-researcher:
+      description: Configured research role.
+      consumes:
+        - WorkItem/v1
+      produces:
+        - ResearchResult/v1
+      rules:
+        - Trace business intent and acceptance without changing source.
+        - Return attributable requirement references and unresolved conflicts.
+    requirements-validator:
+      description: Configured validate role.
+      consumes:
+        - DevelopmentTaskPacket/v1
+        - ImplementationResult/v1
+        - TestReceipt/v1
+      produces:
+        - ValidationReceipt/v1
+      rules:
+        - Compare implementation evidence to acceptance and scope without
+          changing source.
+        - Return a fingerprint-bound pass or actionable findings.
+    research-synthesizer:
+      description: Configured synthesize role.
+      consumes:
+        - ResearchResult/v1
+        - WorkItem/v1
+      produces:
+        - DevelopmentTaskPacket/v1
+        - ResearchSynthesis/v1
+      rules:
+        - Merge contour artifacts without inventing facts.
+        - Issue one immutable developer packet or one research bundle with
+          conflicts explicit.
+    security-data-validator:
+      description: Configured validate role.
+      consumes:
+        - DevelopmentTaskPacket/v1
+        - ImplementationResult/v1
+        - TestReceipt/v1
+      produces:
+        - ValidationReceipt/v1
+      rules:
+        - Review security and data constraints without changing source.
+        - Return a fingerprint-bound pass or actionable findings.
+    tester:
+      description: Configured test role.
+      consumes:
+        - DevelopmentTaskPacket/v1
+        - ImplementationResult/v1
+        - ValidationReceipt/v1
+      produces:
+        - TestReceipt/v1
+        - TesterInstruction/v1
+      rules:
+        - Execute only packet-specified and configured verification commands
+          without changing source.
+        - Return sanitized evidence bound to the implementation fingerprint.
+    security-data-researcher:
+      description: Configured conditional security and data research role.
+      consumes:
+        - WorkItem/v1
+      produces:
+        - ResearchResult/v1
+      rules:
+        - Identify security, authorization, privacy, and data-integrity
+          constraints.
+        - Return threat and data-boundary evidence without changing source.
+teams:
+  default-development:
+    enabled: true
+    default_workflow: task_execution
+    allowed_projects:
+      - agent
+      - plugin
+    allowed_work_item_kinds:
+      - epic
+      - feature
+      - pbi
+      - story
+      - bug
+      - task
+      - research
+    roles:
+      requirements-researcher: researcher
+      documentation-researcher: web-researcher
+      code-researcher: codebase-mapper
+      platform-researcher: web-researcher
+      diagnostics-researcher: codebase-mapper
+      security-data-researcher: researcher
+      research-synthesizer: researcher
+      developer-orchestrator: executor
+      correctness-validator: reviewer-correctness
+      regression-validator: reviewer-correctness
+      requirements-validator: reviewer-requirements
+      security-data-validator: reviewer-security
+      tester: tester
+      delivery-agent: delivery
+    stage_overrides: {}
+work_items:
+  types:
+    epic: true
+    feature: true
+    pbi: true
+    story: true
+    bug: true
+    task: true
+    research: true
+  provider_mappings:
+    - provider: azure
+      provider_type: Epic
+      canonical_kind: epic
+    - provider: azure
+      provider_type: Feature
+      canonical_kind: feature
+    - provider: azure
+      provider_type: Product Backlog Item
+      canonical_kind: pbi
+    - provider: azure
+      provider_type: User Story
+      canonical_kind: story
+    - provider: azure
+      provider_type: Bug
+      canonical_kind: bug
+    - provider: azure
+      provider_type: Task
+      canonical_kind: task
+    - provider: jira
+      provider_type: Epic
+      canonical_kind: epic
+    - provider: jira
+      provider_type: Feature
+      canonical_kind: feature
+    - provider: jira
+      provider_type: Story
+      canonical_kind: story
+    - provider: jira
+      provider_type: Bug
+      canonical_kind: bug
+    - provider: jira
+      provider_type: Task
+      canonical_kind: task
+    - provider: internal
+      provider_type: Research
+      canonical_kind: research
+    - provider: internal
+      provider_type: Migration
+      canonical_kind: task
+    - provider: local
+      provider_type: Feature
+      canonical_kind: feature
+    - provider: local
+      provider_type: Bug
+      canonical_kind: bug
+    - provider: local
+      provider_type: Task
+      canonical_kind: task
+    - provider: local
+      provider_type: Research
+      canonical_kind: research
+workflows:
+  information_research_light:
+    assurance_profile: research_light
+    max_attempts: 1
+    entry_stage: research_parallel
+    terminal_stages:
+      - synthesize_research
+    stages:
+      - id: research_parallel
+        kind: research
+        mode: parallel
+        assignments:
+          - role: documentation-researcher
+            profile: web-researcher
+            contour: documentation
+          - role: code-researcher
+            profile: codebase-mapper
+            contour: code
+          - role: platform-researcher
+            profile: web-researcher
+            contour: platform
+        consumes:
+          - WorkItem/v1
+        produces:
+          - ResearchResult/v1
+        required_after: []
+      - id: synthesize_research
+        kind: synthesize
+        mode: single
+        assignments:
+          - role: research-synthesizer
+            profile: researcher
+        consumes:
+          - ResearchResult/v1
+        produces:
+          - ResearchSynthesis/v1
+        required_after:
+          - research_parallel
+    edges:
+      - - research_parallel
+        - synthesize_research
+  implementation_new:
+    assurance_profile: code_full
+    max_attempts: 3
+    entry_stage: research_parallel
+    terminal_stages:
+      - prepare_delivery
+    stages:
+      - id: research_parallel
+        kind: research
+        mode: parallel
+        assignments:
+          - role: requirements-researcher
+            profile: researcher
+            contour: requirements
+          - role: documentation-researcher
+            profile: web-researcher
+            contour: documentation
+          - role: code-researcher
+            profile: codebase-mapper
+            contour: code
+          - role: platform-researcher
+            profile: web-researcher
+            contour: platform
+          - role: security-data-researcher
+            profile: researcher
+            contour: security_data
+            risk_flags:
+              - security
+              - data_loss
+        consumes:
+          - WorkItem/v1
+        produces:
+          - ResearchResult/v1
+        required_after: []
+      - id: synthesize_task
+        kind: synthesize
+        mode: single
+        assignments:
+          - role: research-synthesizer
+            profile: researcher
+        consumes:
+          - ResearchResult/v1
+        produces:
+          - ResearchSynthesis/v1
+          - DevelopmentTaskPacket/v1
+        required_after:
+          - research_parallel
+      - id: develop_change
+        kind: develop
+        mode: single
+        context_source_ids:
+          - runtime-development-lifecycle
+        assignments:
+          - role: developer-orchestrator
+            profile: executor
+        consumes:
+          - DevelopmentTaskPacket/v1
+        produces:
+          - ImplementationResult/v1
+        required_after:
+          - synthesize_task
+      - id: validate_parallel
+        kind: validate
+        mode: parallel
+        assignments:
+          - role: correctness-validator
+            profile: reviewer-correctness
+          - role: requirements-validator
+            profile: reviewer-requirements
+          - role: security-data-validator
+            profile: reviewer-security
+            risk_flags:
+              - security
+              - data_loss
+              - migration
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+        produces:
+          - ValidationReceipt/v1
+        required_after:
+          - develop_change
+      - id: test_repository
+        kind: test
+        mode: single
+        assignments:
+          - role: tester
+            profile: tester
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+          - ValidationReceipt/v1
+        produces:
+          - TesterInstruction/v1
+          - TestReceipt/v1
+        required_after:
+          - validate_parallel
+      - id: prepare_delivery
+        kind: deliver
+        mode: single
+        assignments:
+          - role: delivery-agent
+            profile: delivery
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+          - ValidationReceipt/v1
+          - TestReceipt/v1
+        produces:
+          - DeliveryInstruction/v1
+        required_after:
+          - test_repository
+    edges:
+      - - research_parallel
+        - synthesize_task
+      - - synthesize_task
+        - develop_change
+      - - develop_change
+        - validate_parallel
+      - - validate_parallel
+        - test_repository
+      - - test_repository
+        - prepare_delivery
+  implementation_change:
+    assurance_profile: code_full
+    max_attempts: 3
+    entry_stage: research_parallel
+    terminal_stages:
+      - prepare_delivery
+    stages:
+      - id: research_parallel
+        kind: research
+        mode: parallel
+        assignments:
+          - role: documentation-researcher
+            profile: web-researcher
+            contour: documentation
+          - role: code-researcher
+            profile: codebase-mapper
+            contour: code
+          - role: platform-researcher
+            profile: web-researcher
+            contour: platform
+          - role: security-data-researcher
+            profile: researcher
+            contour: security_data
+            risk_flags:
+              - security
+              - data_loss
+        consumes:
+          - WorkItem/v1
+        produces:
+          - ResearchResult/v1
+        required_after: []
+      - id: synthesize_task
+        kind: synthesize
+        mode: single
+        assignments:
+          - role: research-synthesizer
+            profile: researcher
+        consumes:
+          - ResearchResult/v1
+        produces:
+          - ResearchSynthesis/v1
+          - DevelopmentTaskPacket/v1
+        required_after:
+          - research_parallel
+      - id: develop_change
+        kind: develop
+        mode: single
+        context_source_ids:
+          - runtime-development-lifecycle
+        assignments:
+          - role: developer-orchestrator
+            profile: executor
+        consumes:
+          - DevelopmentTaskPacket/v1
+        produces:
+          - ImplementationResult/v1
+        required_after:
+          - synthesize_task
+      - id: validate_parallel
+        kind: validate
+        mode: parallel
+        assignments:
+          - role: correctness-validator
+            profile: reviewer-correctness
+          - role: regression-validator
+            profile: reviewer-correctness
+          - role: requirements-validator
+            profile: reviewer-requirements
+          - role: security-data-validator
+            profile: reviewer-security
+            risk_flags:
+              - security
+              - data_loss
+              - migration
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+        produces:
+          - ValidationReceipt/v1
+        required_after:
+          - develop_change
+      - id: test_repository
+        kind: test
+        mode: single
+        assignments:
+          - role: tester
+            profile: tester
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+          - ValidationReceipt/v1
+        produces:
+          - TesterInstruction/v1
+          - TestReceipt/v1
+        required_after:
+          - validate_parallel
+      - id: prepare_delivery
+        kind: deliver
+        mode: single
+        assignments:
+          - role: delivery-agent
+            profile: delivery
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+          - ValidationReceipt/v1
+          - TestReceipt/v1
+        produces:
+          - DeliveryInstruction/v1
+        required_after:
+          - test_repository
+    edges:
+      - - research_parallel
+        - synthesize_task
+      - - synthesize_task
+        - develop_change
+      - - develop_change
+        - validate_parallel
+      - - validate_parallel
+        - test_repository
+      - - test_repository
+        - prepare_delivery
+  bug_fix:
+    assurance_profile: bug_focused
+    max_attempts: 3
+    entry_stage: research_bug
+    terminal_stages:
+      - prepare_delivery
+    stages:
+      - id: research_bug
+        kind: research
+        mode: parallel
+        assignments:
+          - role: diagnostics-researcher
+            profile: codebase-mapper
+            contour: diagnostics
+          - role: code-researcher
+            profile: codebase-mapper
+            contour: code
+          - role: security-data-researcher
+            profile: researcher
+            contour: security_data
+            risk_flags:
+              - security
+              - data_loss
+        consumes:
+          - WorkItem/v1
+        produces:
+          - ResearchResult/v1
+        required_after: []
+      - id: synthesize_task
+        kind: synthesize
+        mode: single
+        assignments:
+          - role: research-synthesizer
+            profile: researcher
+        consumes:
+          - ResearchResult/v1
+        produces:
+          - ResearchSynthesis/v1
+          - DevelopmentTaskPacket/v1
+        required_after:
+          - research_bug
+      - id: develop_fix
+        kind: develop
+        mode: single
+        assignments:
+          - role: developer-orchestrator
+            profile: executor
+        consumes:
+          - DevelopmentTaskPacket/v1
+        produces:
+          - ImplementationResult/v1
+        required_after:
+          - synthesize_task
+      - id: test_regression
+        kind: test
+        mode: single
+        assignments:
+          - role: tester
+            profile: tester
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+        produces:
+          - TesterInstruction/v1
+          - TestReceipt/v1
+        required_after:
+          - develop_fix
+      - id: validate_parallel
+        kind: validate
+        mode: parallel
+        assignments:
+          - role: correctness-validator
+            profile: reviewer-correctness
+          - role: requirements-validator
+            profile: reviewer-requirements
+          - role: security-data-validator
+            profile: reviewer-security
+            risk_flags:
+              - security
+              - data_loss
+              - migration
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+          - TestReceipt/v1
+        produces:
+          - ValidationReceipt/v1
+        required_after:
+          - test_regression
+      - id: prepare_delivery
+        kind: deliver
+        mode: single
+        assignments:
+          - role: delivery-agent
+            profile: delivery
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+          - ValidationReceipt/v1
+          - TestReceipt/v1
+        produces:
+          - DeliveryInstruction/v1
+        required_after:
+          - validate_parallel
+    edges:
+      - - research_bug
+        - synthesize_task
+      - - synthesize_task
+        - develop_fix
+      - - develop_fix
+        - test_regression
+      - - test_regression
+        - validate_parallel
+      - - validate_parallel
+        - prepare_delivery
+  task_execution:
+    assurance_profile: task_focused
+    max_attempts: 2
+    entry_stage: synthesize_task
+    terminal_stages:
+      - prepare_delivery
+    stages:
+      - id: synthesize_task
+        kind: synthesize
+        mode: single
+        assignments:
+          - role: research-synthesizer
+            profile: researcher
+        consumes:
+          - WorkItem/v1
+        produces:
+          - DevelopmentTaskPacket/v1
+        required_after: []
+      - id: develop_task
+        kind: develop
+        mode: single
+        assignments:
+          - role: developer-orchestrator
+            profile: executor
+        consumes:
+          - DevelopmentTaskPacket/v1
+        produces:
+          - ImplementationResult/v1
+        required_after:
+          - synthesize_task
+      - id: validate_focused
+        kind: validate
+        mode: parallel
+        assignments:
+          - role: correctness-validator
+            profile: reviewer-correctness
+          - role: requirements-validator
+            profile: reviewer-requirements
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+        produces:
+          - ValidationReceipt/v1
+        required_after:
+          - develop_task
+      - id: test_task
+        kind: test
+        mode: single
+        assignments:
+          - role: tester
+            profile: tester
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+          - ValidationReceipt/v1
+        produces:
+          - TesterInstruction/v1
+          - TestReceipt/v1
+        required_after:
+          - validate_focused
+      - id: prepare_delivery
+        kind: deliver
+        mode: single
+        assignments:
+          - role: delivery-agent
+            profile: delivery
+        consumes:
+          - DevelopmentTaskPacket/v1
+          - ImplementationResult/v1
+          - ValidationReceipt/v1
+          - TestReceipt/v1
+        produces:
+          - DeliveryInstruction/v1
+        required_after:
+          - test_task
+    edges:
+      - - synthesize_task
+        - develop_task
+      - - develop_task
+        - validate_focused
+      - - validate_focused
+        - test_task
+      - - test_task
+        - prepare_delivery
+workflow_bindings:
+  - id: research-default
+    priority: 10
+    team: default-development
+    work_item_kinds:
+      - research
+    intents:
+      - information_research
+    projects:
+      - "*"
+    risks:
+      - "*"
+    labels: []
+    workflow: information_research_light
+  - id: bug-default
+    priority: 20
+    team: default-development
+    work_item_kinds:
+      - bug
+    intents:
+      - bug_fix
+    projects:
+      - "*"
+    risks:
+      - "*"
+    labels: []
+    workflow: bug_fix
+  - id: new-default
+    priority: 30
+    team: default-development
+    work_item_kinds:
+      - feature
+      - pbi
+      - story
+    intents:
+      - implementation_new
+    projects:
+      - "*"
+    risks:
+      - "*"
+    labels: []
+    workflow: implementation_new
+  - id: change-default
+    priority: 40
+    team: default-development
+    work_item_kinds:
+      - feature
+      - pbi
+      - story
+      - task
+    intents:
+      - implementation_change
+    projects:
+      - "*"
+    risks:
+      - "*"
+    labels: []
+    workflow: implementation_change
+  - id: task-default
+    priority: 50
+    team: default-development
+    work_item_kinds:
+      - task
+    intents:
+      - task_execution
+    projects:
+      - "*"
+    risks:
+      - "*"
+    labels: []
+    workflow: task_execution
+artifact_contracts:
+  WorkItem/v1:
+    schema: WorkItem/v1
+    required_fields:
+      - schema
+      - id
+      - provider
+      - provider_type
+      - canonical_kind
+      - intent
+      - project_id
+      - title
+      - description
+      - labels
+      - risk_flags
+  DevelopmentTaskPacket/v1:
+    schema: DevelopmentTaskPacket/v1
+    required_fields:
+      - schema
+      - packet_id
+      - work_item_id
+      - team_id
+      - workflow_id
+      - work_item
+      - attempt
+      - risk_flags
+      - objective
+      - acceptance
+      - in_scope
+      - out_of_scope
+      - owned_paths
+      - affected_symbols
+      - skill_refs
+      - documentation_refs
+      - code_evidence_refs
+      - research_artifact_refs
+      - diagnostics
+      - failed_approaches
+      - prohibited_patterns
+      - implementation_constraints
+      - security_constraints
+      - expected_tests
+      - delivery_conditions
+      - source_revision
+      - lease_expires_at
+      - digest
+  ImplementationResult/v1:
+    schema: ImplementationResult/v1
+    required_fields:
+      - schema
+      - result_id
+      - packet_id
+      - source_revision
+      - implementation_fingerprint
+      - changed_paths
+      - test_refs
+      - digest
+  FailureArtifact/v1:
+    schema: FailureArtifact/v1
+    required_fields:
+      - schema
+      - failure_id
+      - packet_id
+      - stage_id
+      - agent_role
+      - attempt
+      - error_class
+      - log_refs
+      - broken_acceptance
+      - failed_approach_fingerprint
+      - retryable
+      - next_route
+      - sanitized_message
+  ValidationReceipt/v1:
+    schema: ValidationReceipt/v1
+    required_fields:
+      - schema
+      - receipt_id
+      - packet_id
+      - packet_digest
+      - implementation_fingerprint
+      - validator_role
+      - verdict
+      - findings
+      - evidence_refs
+  TesterInstruction/v1:
+    schema: TesterInstruction/v1
+    required_fields:
+      - schema
+      - instruction_id
+      - packet_id
+      - packet_digest
+      - implementation_fingerprint
+      - expected_tests
+      - digest
+  TestReceipt/v1:
+    schema: TestReceipt/v1
+    required_fields:
+      - schema
+      - receipt_id
+      - instruction_id
+      - packet_id
+      - packet_digest
+      - implementation_fingerprint
+      - status
+      - evidence_refs
+  DeliveryInstruction/v1:
+    schema: DeliveryInstruction/v1
+    required_fields:
+      - schema
+      - instruction_id
+      - packet_id
+      - packet_digest
+      - implementation_fingerprint
+      - created
+      - modified
+      - deploy
+      - do_not_deploy
+      - destination
+      - order
+      - post_deployment_checks
+      - digest
+  DeliveryReceipt/v1:
+    schema: DeliveryReceipt/v1
+    required_fields:
+      - schema
+      - receipt_id
+      - instruction_id
+      - implementation_fingerprint
+      - status
+      - evidence_refs
+      - instruction_digest
+      - digest
+  ResearchResult/v1:
+    schema: ResearchResult/v1
+    required_fields:
+      - schema
+      - result_id
+      - work_item_id
+      - source_revision
+      - scope_id
+      - contour
+      - topic
+      - objective
+      - question
+      - source_refs
+      - findings
+      - uncertainties
+      - conflicts
+      - evidence_classes
+      - br_ids
+      - sr_ids
+      - ac_ids
+      - gap_ids
+      - options
+      - recommendation
+      - completeness
+      - readiness
+      - instruction_activation
+      - actor
+      - pointer
+      - created_at
+      - updated_at
+      - digest
+  ResearchSynthesis/v1:
+    schema: ResearchSynthesis/v1
+    required_fields:
+      - schema
+      - bundle_id
+      - work_item_id
+      - source_revision
+      - scope_id
+      - topic
+      - result_refs
+      - findings
+      - uncertainties
+      - conflicts
+      - br_ids
+      - sr_ids
+      - ac_ids
+      - gap_ids
+      - options
+      - recommendation
+      - completeness
+      - readiness
+      - instruction_activation
+      - actor
+      - pointer
+      - created_at
+      - updated_at
+      - digest
+  DecisionRecord/v1:
+    schema: DecisionRecord/v1
+    required_fields:
+      - schema
+      - decision_id
+      - work_item_id
+      - decision_type
+      - statement
+      - options
+      - authority
+      - status
+      - digest
+  InstructionActivationUse/v1:
+    schema: InstructionActivationUse/v1
+    required_fields:
+      - schema
+      - use_id
+      - work_item_id
+      - instruction_ids
+      - registry_digest
+      - source_digests
+      - digest
+research_decision:
+  schema: ResearchDecisionConfig/v1
+  limits:
+    max_instruction_bytes: 16384
+    max_context_bytes: 16384
+    max_projection_bytes: 12288
+  paths:
+    research_records: docs/agent-instructions/research/records
+    decision_records: docs/agent-instructions/decisions/records
+    changelog: docs/agent-instructions/agent-instructions.changelog.jsonl
+    cache: .planning/agent-flow/cache/instruction-activation.v1.json
+    activation_history: .agent/work
+  registry:
+    schema: InstructionRegistry/v1
+    registry_id: agent-runtime-research-decision
+    revision: 1
+    source_revision: agent-runtime-research-decision-v1
+    instructions:
+      - instruction_id: dynamic-instruction-activation
+        owner: agent-runtime
+        revision: 1
+        source_path: agent-runtime.config.v1.yaml#research_decision.registry.instructions.0
+        source_sha256: 4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e
+        summary_sha256: 4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e
+        activation_class: always_on
+        triggers: []
+        phases: []
+        lanes: []
+        output_schema: InstructionActivationUse/v1
+        max_bytes: 16384
+        privacy: internal
+        status: active
+        content: Typed task context selects current instructions; command aliases and
+          keyword parsing are never activation inputs. Bindings are
+          deterministic, digest-pinned, bounded and privacy-redacted.
+      - instruction_id: research-protocol
+        owner: agent-runtime
+        revision: 1
+        source_path: agent-runtime.config.v1.yaml#research_decision.registry.instructions.1
+        source_sha256: 9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19
+        summary_sha256: 9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19
+        activation_class: lane_entry
+        triggers:
+          - research_intent
+          - domain_question
+        phases:
+          - trace
+          - plan
+          - execute
+          - verify
+        lanes:
+          - researcher
+          - web-researcher
+          - synthesizer
+        output_schema: ResearchResult/v1
+        max_bytes: 16384
+        privacy: internal
+        status: active
+        content: Research is a bounded evidence exercise. Record source claims,
+          findings, uncertainty, conflicts, BR/SR/AC/GAP bindings, completeness
+          and readiness without hidden chain-of-thought.
+      - instruction_id: web-validation-protocol
+        owner: agent-runtime
+        revision: 1
+        source_path: agent-runtime.config.v1.yaml#research_decision.registry.instructions.2
+        source_sha256: d816092108da6cfa8409874a4ebf3330799369e0c74730f53e6cf424f290adc7
+        summary_sha256: d816092108da6cfa8409874a4ebf3330799369e0c74730f53e6cf424f290adc7
+        activation_class: triggered_domain
+        triggers:
+          - external_fact
+          - api_assumption
+          - provider_change
+        phases:
+          - trace
+          - plan
+          - execute
+          - verify
+        lanes:
+          - researcher
+          - web-researcher
+          - synthesizer
+        output_schema: ResearchResult/v1
+        max_bytes: 16384
+        privacy: internal
+        status: active
+        content: External facts require independent sources; security, architecture and
+          compliance topics require three. API, server and provider assumptions
+          require a live check; conflicts and gaps remain blocked.
+      - instruction_id: decision-recording-protocol
+        owner: agent-runtime
+        revision: 1
+        source_path: agent-runtime.config.v1.yaml#research_decision.registry.instructions.3
+        source_sha256: 3a7943ed3b1af0dc42445a1f94d4e3aa25e7bcaceea26007f41b1198522a0e35
+        summary_sha256: 3a7943ed3b1af0dc42445a1f94d4e3aa25e7bcaceea26007f41b1198522a0e35
+        activation_class: lane_entry
+        triggers:
+          - option_selection
+          - decision_needed
+        phases:
+          - trace
+          - plan
+          - execute
+          - verify
+          - delivery
+        lanes:
+          - synthesizer
+          - implementation-planner
+          - executor
+        output_schema: DecisionRecord/v1
+        max_bytes: 16384
+        privacy: internal
+        status: active
+        content: Record statement, context, options, selection, rationale, evidence and
+          revisit conditions. An agent may propose but never accept a business
+          or technical decision.
+      - instruction_id: decision-closure-reflection
+        owner: agent-runtime
+        revision: 1
+        source_path: agent-runtime.config.v1.yaml#research_decision.registry.instructions.4
+        source_sha256: e8601793cb7041128b9f10226ad7124c554df236bd5dc625695e0f3da9908810
+        summary_sha256: e8601793cb7041128b9f10226ad7124c554df236bd5dc625695e0f3da9908810
+        activation_class: closure_reflection
+        triggers:
+          - conflict
+          - material_gap
+          - supersession
+          - correction
+          - closeout
+        phases:
+          - verify
+          - delivery
+          - closeout
+        lanes:
+          - synthesizer
+          - implementation-planner
+          - executor
+        output_schema: DecisionRecord/v1
+        max_bytes: 16384
+        privacy: internal
+        status: active
+        content: Recheck completeness, source freshness, conflicts and supersession at
+          correction, conflict and closeout boundaries; keep accepted records
+          immutable.
+      - instruction_id: synthesis-protocol
+        owner: agent-runtime
+        revision: 1
+        source_path: agent-runtime.config.v1.yaml#research_decision.registry.instructions.5
+        source_sha256: b4b3000beca312dc6fca27bac08f7ec5f06c869f8ce2f4c8da61c8304c4f5ae8
+        summary_sha256: b4b3000beca312dc6fca27bac08f7ec5f06c869f8ce2f4c8da61c8304c4f5ae8
+        activation_class: lane_entry
+        triggers:
+          - research_intent
+        phases:
+          - plan
+        lanes:
+          - synthesizer
+        output_schema: ResearchSynthesis/v1
+        max_bytes: 16384
+        privacy: internal
+        status: active
+        content: Aggregate the exact admitted ResearchResult references into one
+          ResearchSynthesis record. Preserve source claims, conflicts,
+          uncertainty, BR/SR/AC/GAP bindings, completeness and readiness; do not
+          invent missing predecessor evidence.
+    updated_at: 2026-09-02T09:50:00.000Z
+    digest: e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b
+knowledge:
+  sources:
+    - id: a2a-1
+      kind: official
+      location: https://a2a-protocol.org/latest/specification/
+      title: A2A Protocol 1.0
+    - id: mcp-2025-11-25
+      kind: official
+      location: https://modelcontextprotocol.io/specification/2025-11-25
+      title: Model Context Protocol
+    - id: openai-agents
+      kind: official
+      location: https://openai.github.io/openai-agents-python/multi_agent/
+      title: OpenAI Agents orchestration
+    - id: google-adk-workflows
+      kind: official
+      location: https://google.github.io/adk-docs/agents/workflow-agents/
+      title: Google ADK workflow agents
+    - id: microsoft-agent-workflows
+      kind: official
+      location: https://learn.microsoft.com/en-us/agent-framework/workflows/orchestrations/
+      title: Microsoft Agent Framework workflows
+    - id: mastra-workflows
+      kind: official
+      location: https://mastra.ai/ai-workflows
+      title: Mastra workflows
+    - id: azure-work-items
+      kind: official
+      location: https://learn.microsoft.com/en-us/azure/devops/boards/work-items/about-work-items
+      title: Azure Boards work items
+    - id: jira-work-types
+      kind: official
+      location: https://support.atlassian.com/jira-cloud-administration/docs/what-are-issue-types/
+      title: Jira work types
+    - id: project-context
+      kind: local
+      location: AGENT.sidecar.md
+      title: Project-owned requirements and source map
+    - id: runtime-development-lifecycle
+      kind: local
+      location: packages/agent/TESTING.md
+      title: Current portable verification contract
+authorization:
+  cedar:
+    policy: >-
+      permit (principal, action, resource) when { principal.tenant ==
+      resource.tenant && principal.project == resource.project && action in
+      [Action::"read", Action::"invoke"] };
+
+      permit (principal, action, resource) when { principal.role ==
+      "developer-orchestrator" && principal.tenant == resource.tenant &&
+      principal.project == resource.project && action == Action::"write" };
+
+      permit (principal, action, resource) when { principal.role == "operator"
+      && principal.tenant == resource.tenant && principal.project ==
+      resource.project && action == Action::"approve" };
+    schema_text: >-
+      entity User { role: String, tenant: String, project: String };
+
+      entity Project { tenant: String, project: String };
+
+      action read, invoke, write, approve appliesTo { principal: User, resource:
+      Project, context: { registry_hash: String } };
+governance:
+  edictum:
+    policy_version: candidate-edictum-v1
+    workflow_id: candidate-runtime-governance
+    tool_allowlist:
+      - runtime.read
+      - runtime.write
+      - delivery.execute
+    limits:
+      max_attempts: 3
+      max_tool_calls: 128
+      max_calls_per_tool:
+        runtime.read: 256
+        runtime.write: 64
+        delivery.execute: 16
+    approval:
+      clock_skew_ms: 60000
+      max_age_ms: 300000
+    evidence:
+      required_stages:
+        - read-evidence
+        - governed-write-approval
+        - governed-write
+    sandbox:
+      allowlist: []
+    workflow:
+      stages:
+        - id: read-evidence
+          tools:
+            - runtime.read
+          approval_required: false
+          require_result: false
+        - id: governed-write-approval
+          tools: []
+          approval_required: true
+          require_result: false
+        - id: governed-write
+          tools:
+            - runtime.write
+          approval_required: false
+          require_result: true
+        - id: delivery-approval
+          tools: []
+          approval_required: true
+          require_result: false
+        - id: delivery
+          tools:
+            - delivery.execute
+          approval_required: false
+          require_result: true
+orchestration:
+  mastra:
+    default_profile: executor
+    workflow_allowlist:
+      - information_research_light
+      - implementation_new
+      - implementation_change
+      - bug_fix
+      - task_execution
+    tool_allowlist:
+      - runtime.read
+      - runtime.write
+      - source.read
+      - source.write
+      - docs.read
+      - web.search
+      - test.read
+      - test.execute
+      - delivery.prepare
+      - delivery.execute
+    egress_allowlist:
+      - a2a-protocol.org
+      - modelcontextprotocol.io
+      - openai.github.io
+      - google.github.io
+      - learn.microsoft.com
+      - mastra.ai
+      - support.atlassian.com
+      - github.com
+    hitl:
+      enabled: true
+      approval_required_for:
+        - source.write
+        - delivery.execute
+operations:
+  registry:
+    - id: readConfig
+      profile: executor
+      tool: runtime.read
+      governance_stage: read-evidence
+      evidence_class: Code
+    - id: readProjectContext
+      profile: executor
+      tool: runtime.read
+      governance_stage: read-evidence
+      evidence_class: Code
+    - id: selectWorkflow
+      profile: executor
+      tool: runtime.read
+      governance_stage: read-evidence
+      evidence_class: Decision
+    - id: buildDevelopmentTaskPacket
+      profile: researcher
+      tool: runtime.read
+      governance_stage: read-evidence
+      evidence_class: Decision
+    - id: executeConfiguredWorkflow
+      profile: executor
+      tool: runtime.write
+      governance_stage: source-write
+      evidence_class: Runtime
+    - id: evaluateGovernance
+      profile: executor
+      tool: runtime.read
+      governance_stage: read-evidence
+      evidence_class: Decision
+    - id: runGovernedWrite
+      profile: executor
+      tool: runtime.write
+      governance_stage: source-write
+      evidence_class: Runtime
+verification:
+  differential:
+    enabled: false
+    required_oracle_digests: 2
+    execution:
+      executor: bun
+      operation_timeout_ms: 30000
+      worker_output_bytes: 8388608
+    oracle:
+      module: verification/reference-runtime.cjs
+      authority: non_executor_reference
+    candidate:
+      module: packages/agent/dist/src/index.js
+      allowed_exports:
+        - canonicalJson
+    cases:
+      - case_id: assurance-context-build
+        operation: assuranceContext.build
+        candidate_export: buildRuntimeAssuranceContext
+        oracle_export: assuranceContext.build
+      - case_id: assurance-context-validation
+        operation: assuranceContext.validate
+        candidate_export: validateRuntimeAssuranceContext
+        oracle_export: assuranceContext.validate
+      - case_id: stable-canonical-object-order
+        operation: canonicalJson
+        candidate_export: canonicalJson
+        oracle_export: stable
+      - case_id: status-delta-changed
+        operation: statusDelta
+        candidate_export: statusDelta
+        oracle_export: statusDelta
+      - case_id: status-delta-unchanged
+        operation: statusDelta
+        candidate_export: statusDelta
+        oracle_export: statusDelta
+      - case_id: status-delta-work-mismatch
+        operation: statusDelta
+        candidate_export: statusDelta
+        oracle_export: statusDelta
+      - case_id: status-delta-invalid-context
+        operation: statusDelta
+        candidate_export: statusDelta
+        oracle_export: statusDelta
+      - case_id: config-project-resolution
+        operation: config.projectResolution
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: ingress-rejection
+        operation: ingress.rejection
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: role-crosswalk
+        operation: role.crosswalk
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: authorization
+        operation: authorization
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: approval-replay
+        operation: approval.replay
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: reservation-fencing-recovery
+        operation: reservation.fencingRecovery
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: lifecycle-transitions
+        operation: lifecycle.transitions
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: review-evidence
+        operation: review.evidence
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: docflow
+        operation: docflow
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: decomposition
+        operation: decomposition
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+      - case_id: no-write-failures
+        operation: noWrite.failures
+        candidate_export: notImplemented
+        oracle_export: notImplemented
+observability:
+  max_error_log_bytes: 65536
+  redact_fields:
+    - authorization
+    - password
+    - secret
+    - token
+    - apiKey
+    - request_body
+    - response_body
+timing:
+  threshold_ms: 2000
+  optimization_reason: runtime call requires optimization

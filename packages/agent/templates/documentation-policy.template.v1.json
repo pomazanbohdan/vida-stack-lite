@@ -1,0 +1,15 @@
+{
+  "schema": "DocumentationPolicy/v1",
+  "policy_id": "{{REPOSITORY}}-documentation",
+  "project_id": "{{REPOSITORY}}",
+  "source_path": "docs/agent-instructions/documentation-policy.v1.json",
+  "owner": "project:{{REPOSITORY}}",
+  "required": false,
+  "canonical_roots": [],
+  "map_paths": [],
+  "excluded_roots": [".agent", ".planning"],
+  "changelog_required": false,
+  "changelog_path": null,
+  "relations": ["owns", "depends_on", "affects", "implements", "verifies", "documents", "supersedes", "migrates_from"],
+  "updated_at": "{{CREATED_AT}}"
+}

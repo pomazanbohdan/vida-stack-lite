@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-agent.local/schemas/persistent-session-handoff-state.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "workspace_id", "work_id", "attempt", "handoff", "issuances"],
+  "properties": {
+    "schema": { "const": "PersistentSessionHandoffState/v1" },
+    "workspace_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "work_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,127}$" },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "handoff": {
+      "type": "object",
+      "required": ["schema", "digest"],
+      "properties": {
+        "schema": { "const": "SessionWorkflowHandoff/v1" },
+        "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "issuances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_id", "issue_id", "operator_run_id", "report"],
+        "properties": {
+          "action_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "issue_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "operator_run_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "report": { "type": ["object", "null"] }
+        }
+      }
+    }
+  }
+}

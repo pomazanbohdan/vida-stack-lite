@@ -1,0 +1,145 @@
+{
+  "ac_ids": [
+    "BOOTSTRAP-PACKAGE",
+    "BOOTSTRAP-MCP",
+    "BOOTSTRAP-INIT",
+    "BOOTSTRAP-UI",
+    "BOOTSTRAP-ISOLATION"
+  ],
+  "actor": "/root/bootstrap_research",
+  "br_ids": [],
+  "completeness": {
+    "answered_questions": [
+      "What UI does MCP provide and what host behavior is unproven?"
+    ],
+    "external_validation": {
+      "live_check": true,
+      "minimum_sources": 2,
+      "required": true,
+      "source_count": 1,
+      "status": "blocked"
+    },
+    "material_gaps": [
+      "GAP-CODEX-UI-RENDERER",
+      "GAP-CODEX-PROJECT-BRIDGE"
+    ],
+    "missing_questions": [],
+    "required_questions": [
+      "What UI does MCP provide and what host behavior is unproven?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "contour": "vida-plugin-mcp-bootstrap-20260930-scope",
+  "created_at": "2026-09-30T12:12:33.046Z",
+  "digest": "304a3d8967ce9ade30a892acaa175af70f8a3688fa37e97ef25179e7928c6a4f",
+  "evidence_classes": [
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "GAP",
+      "finding_id": "optional-ui",
+      "source_ids": [
+        "ui",
+        "intake"
+      ],
+      "statement": "MCP Apps UI is optional and ChatGPT iframe behavior is documented; this does not prove rendering by this Codex host.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [
+    "GAP-CODEX-UI-RENDERER",
+    "GAP-CODEX-PROJECT-BRIDGE"
+  ],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-19c07bb0d2eb5d3d4e915f8f05fc38db7f2e93e8f9d4c1c114439a10bfc5c8b3"
+  },
+  "objective": "Set evidenced UI and transport expectations.",
+  "options": [
+    {
+      "description": "Offer workspace HTML and useful tool output when host UI is absent.",
+      "evidence_refs": [
+        "ui",
+        "acceptance"
+      ],
+      "label": "Keep local preview",
+      "option_id": "local-preview"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "What UI does MCP provide and what host behavior is unproven?",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "ui",
+      "intake",
+      "acceptance"
+    ],
+    "option_id": "local-preview",
+    "rationale": "Use the selected local preview and report host UI/bridge as unverified."
+  },
+  "result_id": "research-19c07bb0d2eb5d3d4e915f8f05fc38db7f2e93e8",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-plugin-mcp-bootstrap-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "Accepted AC IDs are BOOTSTRAP-PACKAGE, BOOTSTRAP-MCP, BOOTSTRAP-INIT, BOOTSTRAP-UI and BOOTSTRAP-ISOLATION.",
+      "locator": ".agent/work/vida-plugin-mcp-bootstrap-20260930/acceptance.json#contracts",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "acceptance",
+      "source_kind": "internal",
+      "title": "Accepted ACs"
+    },
+    {
+      "claim": "Requires host bridge and UI availability to remain explicit until observed; records GAP-CODEX-PROJECT-BRIDGE and GAP-CODEX-UI-RENDERER. Supports BOOTSTRAP-UI and BOOTSTRAP-ISOLATION.",
+      "locator": ".agent/work/vida-plugin-mcp-bootstrap-20260930/intake.json",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "intake",
+      "source_kind": "internal",
+      "title": "Fresh work intake"
+    },
+    {
+      "claim": "Custom UI is optional; ChatGPT renders MCP Apps resources in an iframe and other hosts need MCP Apps compatibility. Keep tools useful without UI. Supports BOOTSTRAP-MCP and BOOTSTRAP-UI; leaves GAP-CODEX-UI-RENDERER open.",
+      "independence_group": "openai-chatgpt-ui-docs",
+      "locator": "https://developers.openai.com/plugins/build/chatgpt-ui",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "ui",
+      "source_kind": "external",
+      "title": "Add UI to your MCP server – OpenAI Developers"
+    }
+  ],
+  "source_revision": "8c8712858902b1cd07b65af8a761b5dd2ab743231de46af7a340f7d93aa97eb3",
+  "sr_ids": [],
+  "topic": "MCP UI and host behavior",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "Direct Codex rendering and project-catalogue bridge availability require host observation; gaps remain GAP-CODEX-UI-RENDERER and GAP-CODEX-PROJECT-BRIDGE.",
+      "uncertainty_id": "codex-ui"
+    }
+  ],
+  "updated_at": "2026-09-30T12:12:33.046Z",
+  "work_item_id": "vida-plugin-mcp-bootstrap-20260930"
+}

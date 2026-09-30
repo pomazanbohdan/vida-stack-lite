@@ -1,7 +1,0 @@
-{
-  "schema": "PlatformKnowledgeSourceMap/v1",
-  "official_base": "",
-  "local_sitemap": "",
-  "skills": [],
-  "notes": "Populate only in a consuming project. This template intentionally contains no product, tenant, customer, or platform source references."
-}

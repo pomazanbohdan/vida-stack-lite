@@ -1,0 +1,157 @@
+{
+  "ac_ids": [
+    "AC-CLEAR-CREATE-1"
+  ],
+  "actor": "/root/local_release_workflow_sol61/clear_authorized_code_luna",
+  "br_ids": [
+    ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "Why does absent scope fail baseline, what init lineage does closeout enforce, and what regression covers AC-CLEAR-CREATE-1?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "Why does absent scope fail baseline, what init lineage does closeout enforce, and what regression covers AC-CLEAR-CREATE-1?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [],
+  "contour": "vida-agent-clear-create-fix-authorized-20260930-scope",
+  "created_at": "2026-09-30T11:22:43.563Z",
+  "digest": "fd32a8976b8d341c732664b83ed8e04c2ec43f7e4a00bf99c36ed7a14a345581",
+  "evidence_classes": [
+    "Code"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "baseline-rejection",
+      "source_ids": [
+        "clear-implementation",
+        "successor-scope"
+      ],
+      "statement": "The unconditional governed-path presence loop adds GAP-DOCUMENTATION-SCOPE-001 before phase handling; an absent baseline path fails.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "init-lineage",
+      "source_ids": [
+        "clear-implementation",
+        "successor-scope"
+      ],
+      "statement": "At closeout, a path absent in baseline and present now requires a valid typed init event matching work/revision, paths, hashes, attribution, and baseline time.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "public-test-gap",
+      "source_ids": [
+        "clear-implementation"
+      ],
+      "statement": "Existing-file baseline/closeout/verify and deletion are covered; creation from absence is not.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-fbac25306da610db7332a913b8785890ac48a82bfc30704a0fd77b284eb8ec12"
+  },
+  "objective": "Locate the baseline rejection and closeout init guard; identify the public test gap.",
+  "options": [
+    {
+      "description": "Expect baseline pass while absent; closeout fail while absent and after creation without init; valid typed init then permits closeout and verify.",
+      "evidence_refs": [
+        "work-request",
+        "successor-scope",
+        "clear-implementation"
+      ],
+      "label": "Exercise public creation flow",
+      "option_id": "public-create-init-regression"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "Why does absent scope fail baseline, what init lineage does closeout enforce, and what regression covers AC-CLEAR-CREATE-1?",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "work-request",
+      "successor-scope",
+      "clear-implementation"
+    ],
+    "option_id": "public-create-init-regression",
+    "rationale": "Covers the baseline exception and existing closeout lineage guard."
+  },
+  "result_id": "research-fbac25306da610db7332a913b8785890ac48a82b",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-agent-clear-create-fix-authorized-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "BR .agent/work/npm-agent-migration-20260930/WORK.md#Request and authority records current user direction for the repository and agent source.",
+      "locator": ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority",
+      "retrieved_at": "2026-09-30T11:32:10Z",
+      "source_id": "work-request",
+      "source_kind": "internal",
+      "title": "BR authority"
+    },
+    {
+      "claim": "SR .agent/work/vida-agent-clear-create-fix-authorized-20260930/scope.json#behavior_trace allows absence at baseline but requires closeout existence/init lineage; AC-CLEAR-CREATE-1 requires the public regression.",
+      "locator": ".agent/work/vida-agent-clear-create-fix-authorized-20260930/scope.json#behavior_trace",
+      "retrieved_at": "2026-09-30T11:32:10Z",
+      "source_id": "successor-scope",
+      "source_kind": "internal",
+      "title": "Behavior and AC"
+    },
+    {
+      "claim": "Code adds GAP-DOCUMENTATION-SCOPE-001 before phase handling, while closeout requires a matching init event for new paths. Public tests cover existing-file baseline/closeout/verify and deletion, not creation from absence.",
+      "locator": "packages/agent/src/documentation/clear.ts#produceDocumentationClearCheckpoint; packages/agent/tests/documentation-clear.test.mjs",
+      "retrieved_at": "2026-09-30T11:32:10Z",
+      "source_id": "clear-implementation",
+      "source_kind": "internal",
+      "title": "CLEAR code and public tests"
+    }
+  ],
+  "source_revision": "d6105a6a66d13ad5d9db598c4a1b7e6bfd22175d82e77c5bc8b0109c093ccf6d",
+  "sr_ids": [
+    ".agent/work/vida-agent-clear-create-fix-authorized-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "CLEAR creation baseline",
+  "uncertainties": [
+    {
+      "material": false,
+      "statement": "No tests were run and Runtime behavior/user acceptance were not observed; those checks remain downstream.",
+      "uncertainty_id": "runtime-pending"
+    }
+  ],
+  "updated_at": "2026-09-30T11:22:43.563Z",
+  "work_item_id": "vida-agent-clear-create-fix-authorized-20260930"
+}

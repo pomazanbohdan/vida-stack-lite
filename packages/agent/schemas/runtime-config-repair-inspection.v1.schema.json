@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "RuntimeConfigRepairInspection/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "status",
+    "source",
+    "candidate",
+    "authorization",
+    "normal_manifest_ready",
+    "blockers"
+  ],
+  "properties": {
+    "schema": { "const": "RuntimeConfigRepairInspection/v1" },
+    "operation": { "enum": ["inspect", "plan"] },
+    "status": { "enum": ["valid", "blocked"] },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "const": "agent-runtime.config.v1.yaml" },
+        "missing": { "const": true },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "bytes": { "type": "integer", "minimum": 0 }
+      },
+      "oneOf": [
+        { "required": ["missing"], "not": { "anyOf": [{ "required": ["sha256"] }, { "required": ["bytes"] }] } },
+        { "required": ["sha256", "bytes"], "not": { "required": ["missing"] } }
+      ]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "missing": { "const": true },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "config_schema": { "const": "AgentRuntimeConfig/v1" },
+        "config_version": { "const": 1 }
+      },
+      "oneOf": [
+        {
+          "required": ["missing"],
+          "not": {
+            "anyOf": [
+              { "required": ["sha256"] },
+              { "required": ["bytes"] },
+              { "required": ["config_schema"] },
+              { "required": ["config_version"] }
+            ]
+          }
+        },
+        { "required": ["sha256", "bytes"], "not": { "required": ["missing"] } }
+      ]
+    },
+    "authorization": { "const": "not_authorized" },
+    "normal_manifest_ready": { "const": false },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "detail"],
+        "properties": {
+          "code": { "const": "GAP-RUNTIME-CONFIG-REPAIR-001" },
+          "detail": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "valid" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "candidate": { "required": ["config_schema", "config_version"], "not": { "required": ["missing"] } },
+          "blockers": { "maxItems": 0 }
+        }
+      },
+      "else": { "properties": { "blockers": { "minItems": 1 } } }
+    }
+  ]
+}

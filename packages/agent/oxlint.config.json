@@ -1,0 +1,12 @@
+{
+  "$schema": "https://oxc.rs/schema/oxlint.json",
+  "plugins": ["eslint", "typescript"],
+  "env": { "node": true, "es2024": true },
+  "globals": { "Bun": "readonly" },
+  "rules": {
+    "eslint/no-constant-condition": "error",
+    "eslint/no-undef": "error",
+    "eslint/no-unused-vars": "error",
+    "typescript/no-explicit-any": "error"
+  }
+}

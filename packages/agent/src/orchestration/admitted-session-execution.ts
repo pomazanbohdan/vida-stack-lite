@@ -1,0 +1,162 @@
+import { createHash } from 'node:crypto';
+import { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess } from '../config/runtime-config.js';
+import { loadProjectSetContext } from '../config/project-context.js';
+import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
+import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import type { HostStateStore, WorkIdentity } from '../host-state.js';
+import { createTrustedLocalSessionComposition } from '../runtime-kernel.js';
+import { snapshotRuntimePackageSources } from './scoped-source-snapshot.js';
+
+function requireExecution(condition: unknown, message: string): asserts condition {
+  if (!condition) throw new Error(message);
+}
+
+/** Check the intake-pinned runtime bytes before issuing any native action. */
+export function assertAdmittedRuntimeCodeCurrent(
+  repositoryRoot: string,
+  store: HostStateStore,
+  identity: WorkIdentity,
+): { work_item: unknown; native_session_handle: string } {
+  const access = requireSafeRepositoryAccess(repositoryRoot);
+  const work = store.readHostStateSnapshot(identity).work;
+  requireExecution(work, 'admitted local session work is unavailable');
+  const intakeRef = work.artifacts.find(
+    (item) => item.artifact_id === 'local-session-intake' && item.schema === 'VidaLocalSessionIntake/v1',
+  );
+  requireExecution(intakeRef, 'admitted local session intake reference is missing');
+  const intakeBytes = access.readBytes(intakeRef.path, 'local session intake');
+  requireExecution(
+    intakeBytes.length <= 32768 && createHash('sha256').update(intakeBytes).digest('hex') === intakeRef.sha256,
+    'admitted local session intake changed',
+  );
+  const intake = JSON.parse(intakeBytes.toString('utf8')) as {
+    work_item: unknown;
+    runtime_code_paths: string[];
+    native_session_handle: string;
+  };
+  const config = loadRuntimeConfig(repositoryRoot);
+  const current = snapshotRuntimePackageSources(
+    runtimePackageAccess(),
+    config.runtime.bundle,
+    intake.runtime_code_paths,
+  );
+  requireExecution(current.digest === work.binding.runtime_code_digest, 'admitted runtime code changed');
+  return { work_item: intake.work_item, native_session_handle: intake.native_session_handle };
+}
+
+/** Reconstruct a fresh opaque kernel capability from one admitted work item on each CLI call. */
+export async function openAdmittedSessionExecution(
+  repositoryRoot: string,
+  store: HostStateStore,
+  projectId: string,
+  workId: string,
+) {
+  const config = loadRuntimeConfig(repositoryRoot);
+  const project = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [projectId]);
+  const identity: WorkIdentity = {
+    repository_id: project.repository_id,
+    project_ids: project.project_ids,
+    integrations_digest: project.integrations_digest,
+    work_id: workId,
+  };
+  const state = store.readHostStateSnapshot(identity);
+  const work = state.work;
+  requireExecution(
+    work?.lease && work.execution.status === 'active',
+    'admitted local session work or lease is unavailable',
+  );
+  requireExecution(
+    work.binding.config_digest === runtimeConfigDigest(config) &&
+      work.binding.repository_id === config.repository.repository_id &&
+      work.binding.project_ids.length === 1 &&
+      work.binding.integrations_digest ===
+        loadProjectSetContext(repositoryRoot, config, work.binding.repository_id, work.binding.project_ids)
+          .integrations_digest,
+    'admitted local session configuration or project differs',
+  );
+  const intake = assertAdmittedRuntimeCodeCurrent(repositoryRoot, store, identity);
+  const successorBound = work.execution.assignment_attempts.some(
+    (attempt) =>
+      attempt.status === 'no_effect' &&
+      attempt.lease.thread_id === intake.native_session_handle &&
+      canonicalJsonDigest(attempt.reconciliation?.retry_lease) === canonicalJsonDigest(work.lease),
+  );
+  requireExecution(
+    canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest &&
+      (intake.native_session_handle === work.lease.thread_id || successorBound),
+    'admitted local session work item or thread differs',
+  );
+  const runtimeSource = () => {
+    assertAdmittedRuntimeCodeCurrent(repositoryRoot, store, identity);
+    return { sourceRevision: work.binding.runtime_code_digest, currentRevision: 1 };
+  };
+  runtimeSource();
+  const composition = await createTrustedLocalSessionComposition({
+    repositoryRoot,
+    repositoryId: work.binding.repository_id,
+    projectIds: work.binding.project_ids,
+    nativeSessionHandle: work.lease.thread_id,
+    admittedWork: { workId, store },
+    services: {
+      governanceCapability: store.governanceCapability,
+      resolveWorkflowWorkItem: (requestedId) => {
+        requireExecution(requestedId === workId, 'local session requested foreign work');
+        return intake.work_item;
+      },
+      resolveWorkExecutionContext: (request) => {
+        requireExecution(request.workItem.id === workId, 'local session requested foreign work');
+        const current = store.readHostStateSnapshot(identity);
+        const leased = current.work?.lease;
+        const ticket = current.ledger?.tickets.find((item) => item.ticket_id === leased?.ticket_id);
+        requireExecution(
+          current.work && leased && ticket && ticket.expires_at,
+          'local session lease or ticket is unavailable',
+        );
+        return {
+          schema: 'WorkExecutionContext/v1' as const,
+          binding: current.work.binding,
+          permit: {
+            context_digest: canonicalJsonDigest(current.work.binding),
+            checkpoint_revision: current.workVersion!.revision,
+            checkpoint_digest: current.workVersion!.digest,
+            runtime_current_revision: 1,
+            stage_id: request.stageId,
+            assignment_index: request.assignmentIndex,
+            dispatch_authorized: true,
+            lease: {
+              thread_id: leased.thread_id,
+              ticket_id: leased.ticket_id,
+              generation: leased.generation,
+              ledger_revision: current.ledgerVersion!.revision,
+              expires_at: ticket.expires_at,
+              active_resources: ticket.active_resources,
+              blocked_resources: ticket.blocked_resources,
+            },
+          },
+        };
+      },
+      resolveIdentity: () => null,
+      verifyApproval: () => null,
+      runtimeRevision: runtimeSource,
+      casWriter: () => {
+        throw new Error('native session writes require observed assignment results');
+      },
+      dispatchWorkflowAssignment: () => {
+        throw new Error('native session tools are only available in the active caller session');
+      },
+      validateWorkflowAssignmentResult: (_invocation, result) => {
+        requireExecution(
+          result !== null &&
+            typeof result === 'object' &&
+            (result as { status?: unknown }).status === 'reported_complete',
+          'native session result is not a successful observation',
+        );
+      },
+    },
+  });
+  requireExecution(
+    composition.workflowExecutionCapability !== null,
+    'admitted local session workflow capability is unavailable',
+  );
+  return { composition, workItem: intake.work_item, identity };
+}

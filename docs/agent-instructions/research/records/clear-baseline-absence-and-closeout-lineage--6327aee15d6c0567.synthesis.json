@@ -1,0 +1,148 @@
+{
+  "ac_ids": [
+    "AC-CLEAR-CREATE-1"
+  ],
+  "actor": "/root/clear_create_issued_research_luna",
+  "br_ids": [
+    ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority"
+  ],
+  "bundle_id": "synthesis-a070751e80a2c2fa16ea7f6af854ddb81587a78c",
+  "completeness": {
+    "answered_questions": [
+      "Why does authorized absence fail at baseline, and how can it be allowed while retaining closeout lineage?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "Why does authorized absence fail at baseline, and how can it be allowed while retaining closeout lineage?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [],
+  "created_at": "2026-09-30T11:37:00.706Z",
+  "digest": "7e9e12ba01d874e761350b4ee445adc907722708d1ca0ee1d3d84555b031850b",
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "baseline-gap",
+      "source_refs": [
+        "r0:scope-ac-auth",
+        "r0:clear-producer",
+        "r1:successor-scope",
+        "r1:clear-implementation"
+      ],
+      "statement": "The producer adds GAP-DOCUMENTATION-SCOPE-001 for absent governed paths before phase handling, so authorized absence fails at baseline. Gate only this presence gap by phase; keep closeout absence failure.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "closeout-init",
+      "source_refs": [
+        "r0:scope-ac-auth",
+        "r0:clear-producer",
+        "r1:successor-scope",
+        "r1:clear-implementation"
+      ],
+      "statement": "Preserve closeout integrity: a newly present governed path requires a matching init event.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "public-regression",
+      "source_refs": [
+        "r0:scope-ac-auth",
+        "r1:successor-scope",
+        "r1:clear-implementation"
+      ],
+      "statement": "Public tests lack creation from an absent baseline. One regression should assert: absence passes baseline; absence and creation without init fail closeout; valid typed init permits closeout and verify.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol",
+      "synthesis-protocol"
+    ],
+    "lane": "synthesizer",
+    "phase": "plan",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      },
+      {
+        "instruction_id": "synthesis-protocol",
+        "source_sha256": "b4b3000beca312dc6fca27bac08f7ec5f06c869f8ce2f4c8da61c8304c4f5ae8"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "synthesis-a070751e80a2c2fa16ea7f6af854ddb81587a78c2b23d284274580d9b12e2664"
+  },
+  "options": [
+    {
+      "description": "Change one baseline-only presence guard in clear.ts and add one public regression in its test file; exactly the two authorized paths.",
+      "evidence_refs": [
+        "r0:br-authority",
+        "r0:scope-ac-auth",
+        "r0:clear-producer",
+        "r1:clear-implementation"
+      ],
+      "label": "Allow baseline absence",
+      "option_id": "baseline-gate-plus-public-regression"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "r0:br-authority",
+      "r0:scope-ac-auth",
+      "r0:clear-producer",
+      "r1:clear-implementation"
+    ],
+    "option_id": "baseline-gate-plus-public-regression",
+    "rationale": "Matches BR/SR/AC, retains closeout existence/init checks, and limits work to one guard plus one public regression."
+  },
+  "result_refs": [
+    {
+      "digest": "d8ca0408514adf4983fa2462a4982b65f97c805485c2fa7543590ba5edb1c0c7",
+      "result_id": "research-8ee9378e1be59aea703cc0d3fb0468151a5bf893"
+    },
+    {
+      "digest": "fd32a8976b8d341c732664b83ed8e04c2ec43f7e4a00bf99c36ed7a14a345581",
+      "result_id": "research-fbac25306da610db7332a913b8785890ac48a82b"
+    }
+  ],
+  "schema": "ResearchSynthesis/v1",
+  "scope_id": "vida-agent-clear-create-fix-authorized-20260930-scope",
+  "source_revision": "d6105a6a66d13ad5d9db598c4a1b7e6bfd22175d82e77c5bc8b0109c093ccf6d",
+  "sr_ids": [
+    ".agent/work/vida-agent-clear-create-fix-authorized-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "CLEAR baseline absence and closeout lineage",
+  "uncertainties": [
+    {
+      "material": false,
+      "statement": "No tests, Runtime behavior, or user acceptance were observed; they remain downstream evidence.",
+      "uncertainty_id": "downstream-checks"
+    }
+  ],
+  "updated_at": "2026-09-30T11:37:00.706Z",
+  "work_item_id": "vida-agent-clear-create-fix-authorized-20260930"
+}

@@ -1,0 +1,163 @@
+{
+  "ac_ids": [
+    "BOOTSTRAP-PACKAGE",
+    "BOOTSTRAP-MCP",
+    "BOOTSTRAP-INIT",
+    "BOOTSTRAP-UI",
+    "BOOTSTRAP-ISOLATION"
+  ],
+  "actor": "/root/bootstrap_research",
+  "br_ids": [],
+  "completeness": {
+    "answered_questions": [
+      "Which package paths and transports are documented?"
+    ],
+    "external_validation": {
+      "live_check": true,
+      "minimum_sources": 2,
+      "required": true,
+      "source_count": 1,
+      "status": "blocked"
+    },
+    "material_gaps": [
+      "GAP-BOOTSTRAP-MANIFEST-PATHS",
+      "GAP-BOOTSTRAP-PORTABLE-STDIO"
+    ],
+    "missing_questions": [],
+    "required_questions": [
+      "Which package paths and transports are documented?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [
+    {
+      "conflict_id": "package-path-scope",
+      "source_ids": [
+        "portable",
+        "scope"
+      ],
+      "statement": "The allowed paths omit mcp.json and .codex-plugin/plugin.json, so they cannot express either documented pairing.",
+      "status": "open"
+    }
+  ],
+  "contour": "vida-plugin-mcp-bootstrap-20260930-scope",
+  "created_at": "2026-09-30T12:12:30.780Z",
+  "digest": "bfedfcf82e034bf3948371ca2346a8979f7e3e5d0467ac36d700290f6f6e48be",
+  "evidence_classes": [
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "GAP",
+      "finding_id": "manifest-path-gap",
+      "source_ids": [
+        "portable",
+        "scope"
+      ],
+      "statement": "Frozen paths allow root plugin.json and .mcp.json but omit both documented pairings: portable root plugin.json plus mcp.json, and compatibility .codex-plugin/plugin.json plus .mcp.json. BOOTSTRAP-PACKAGE and BOOTSTRAP-MCP therefore have a manifest-path GAP.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Static",
+      "finding_id": "transport-evidence",
+      "source_ids": [
+        "portable"
+      ],
+      "statement": "The package page distinguishes portable mcp.json from compatibility .mcp.json and requires a transport type for portable MCP entries; it does not establish stdio support for the portable layout.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [
+    "GAP-BOOTSTRAP-MANIFEST-PATHS",
+    "GAP-BOOTSTRAP-PORTABLE-STDIO"
+  ],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-e1fc809d3048c8223a1f29531e76564249f63ce22c744114e78763d0021923d3"
+  },
+  "objective": "Compare official layouts with frozen paths.",
+  "options": [
+    {
+      "description": "Preserve useful server behavior while reporting the manifest-path and portable-stdio gaps.",
+      "evidence_refs": [
+        "portable",
+        "scope"
+      ],
+      "label": "Keep the MCP server standalone",
+      "option_id": "standalone"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "Which package paths and transports are documented?",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "portable",
+      "scope"
+    ],
+    "option_id": "standalone",
+    "rationale": "Do not invent extensions.com.openai.mcpServers or claim root portable .mcp.json wiring. Keep server usable and reconcile paths before install wiring."
+  },
+  "result_id": "research-e1fc809d3048c8223a1f29531e76564249f63ce2",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-plugin-mcp-bootstrap-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "Accepted AC IDs are BOOTSTRAP-PACKAGE, BOOTSTRAP-MCP, BOOTSTRAP-INIT, BOOTSTRAP-UI and BOOTSTRAP-ISOLATION.",
+      "locator": ".agent/work/vida-plugin-mcp-bootstrap-20260930/acceptance.json#contracts",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "acceptance",
+      "source_kind": "internal",
+      "title": "Accepted ACs"
+    },
+    {
+      "claim": "The official package page documents portable root plugin.json plus mcp.json, and the supported compatibility layout .codex-plugin/plugin.json plus .mcp.json; the compatibility manifest references requested files. It warns not to merely rename .mcp.json because portable MCP entries declare a transport type. Supports BOOTSTRAP-PACKAGE and BOOTSTRAP-MCP; portable stdio remains GAP-BOOTSTRAP-PORTABLE-STDIO.",
+      "independence_group": "openai-plugin-docs",
+      "locator": "https://developers.openai.com/plugins/build/plugins",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "portable",
+      "source_kind": "external",
+      "title": "Package your plugin – OpenAI Developers"
+    },
+    {
+      "claim": "Allows root plugin.json and .mcp.json but omits root mcp.json and .codex-plugin/plugin.json, establishing GAP-BOOTSTRAP-MANIFEST-PATHS.",
+      "locator": ".agent/work/vida-plugin-mcp-bootstrap-20260930/scope.json#allowed_paths",
+      "retrieved_at": "2026-09-30T12:21:25Z",
+      "source_id": "scope",
+      "source_kind": "internal",
+      "title": "Frozen scope"
+    }
+  ],
+  "source_revision": "8c8712858902b1cd07b65af8a761b5dd2ab743231de46af7a340f7d93aa97eb3",
+  "sr_ids": [],
+  "topic": "Plugin manifests and MCP transport",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "Inspected sources do not establish stdio support in portable root mcp.json.",
+      "uncertainty_id": "portable-stdio"
+    }
+  ],
+  "updated_at": "2026-09-30T12:12:30.780Z",
+  "work_item_id": "vida-plugin-mcp-bootstrap-20260930"
+}

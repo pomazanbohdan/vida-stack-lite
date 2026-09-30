@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-agent.invalid/schemas/workflow-attempt-recovery-decision.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "work_id", "work_item_id", "source_revision", "scope_id", "ac_ids", "action_id", "host_attempt_id", "provider_evidence", "outcome", "retry_lease", "decided_by", "decided_at", "reason"],
+  "properties": {
+    "schema": { "const": "WorkflowAttemptRecoveryDecision/v1" },
+    "work_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "work_item_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "source_revision": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "scope_id": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "ac_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "action_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "host_attempt_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "provider_evidence": {
+      "type": "object", "additionalProperties": false, "required": ["schema", "path", "sha256"],
+      "properties": {
+        "schema": { "const": "LocalSessionNoEffectEvidence/v1" },
+        "path": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "outcome": { "const": "no_effect" },
+    "retry_lease": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ticket_id", "thread_id", "generation"],
+      "properties": {
+        "ticket_id": { "type": "string", "minLength": 1 },
+        "thread_id": { "type": "string", "minLength": 1 },
+        "generation": { "type": "integer", "minimum": 2 }
+      }
+    },
+    "decided_by": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "decided_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T" },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 1024 }
+  }
+}
