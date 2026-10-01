@@ -25,8 +25,9 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { standaloneRuntime } from './bun.mjs';
 
-const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const bundleRoot = standaloneRuntime()?.root ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const isBunRuntime = typeof Bun !== 'undefined';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const controllerJson = (value) => `${JSON.stringify(value, null, 2)}\n`;
@@ -1153,7 +1154,7 @@ export function assertNoActiveCutoverMaintenance(selector) {
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover maintenance release proof is invalid.');
 }
 
-function writeDurable(file, value) {
+export function writeDurable(file, value) {
   const bytes = Buffer.from(controllerJson(value));
   const target = `${file}.pending-${randomUUID()}`;
   const fd = openSync(target, 'wx', 0o600);
@@ -1166,8 +1167,11 @@ function writeDurable(file, value) {
     }
     renameSync(target, file);
   } catch (error) {
-    try { unlinkSync(target); } catch (cleanupError) {
-      if (cleanupError.code !== 'ENOENT') throw new AggregateError([error, cleanupError], 'Cutoff publication and temporary cleanup failed.');
+    try {
+      unlinkSync(target);
+    } catch (cleanupError) {
+      if (cleanupError.code !== 'ENOENT')
+        throw new AggregateError([error, cleanupError], 'Cutoff publication and temporary cleanup failed.');
     }
     throw error;
   }
@@ -1178,25 +1182,27 @@ export async function advanceCutoff(selector, values) {
   if (!selector) return;
   const file = path.join(selector.generationRoot, 'cutoff-witness.json');
   const lock = path.join(selector.generationRoot, 'cutoff-witness.lock');
-  if (pathExists(lock))
-    fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
+  if (pathExists(lock)) fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
   const { withHostStateExclusiveTransaction } = await import('../src/host-state.ts');
-  const config=loadRuntimeConfig(values.project_root);
-  const access=requireSafeRepositoryAccess(values.project_root);
-  access.ensureDirectory(config.control.work_root,'cutoff transaction root');
-  const databasePath=sessionHandoffDatabasePath(values.project_root,config);
+  const config = loadRuntimeConfig(values.project_root);
+  const access = requireSafeRepositoryAccess(values.project_root);
+  access.ensureDirectory(config.control.work_root, 'cutoff transaction root');
+  const databasePath = sessionHandoffDatabasePath(values.project_root, config);
   try {
-    withHostStateExclusiveTransaction(databasePath,()=>{
-      if (pathExists(lock) ||
-        digest(access.readBytes('.agent/active-runtime-selector.v1.json','cutoff current selector'))!==selector.selectorSha)
-        fail('GAP-VIDA-RUN-CUTOFF-001','Cutoff selector changed while acquiring exclusion.');
+    withHostStateExclusiveTransaction(databasePath, () => {
+      if (
+        pathExists(lock) ||
+        digest(access.readBytes('.agent/active-runtime-selector.v1.json', 'cutoff current selector')) !==
+          selector.selectorSha
+      )
+        fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff selector changed while acquiring exclusion.');
       advanceLockedCutoff(file, selector, values);
     });
-  } catch(error) {
-    if(error.code==='SQLITE_BUSY') fail('GAP-VIDA-RUN-CUTOFF-001','Cutoff witness is held or unsafe.');
+  } catch (error) {
+    if (error.code === 'SQLITE_BUSY') fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
     throw error;
   }
 }
@@ -1254,6 +1260,8 @@ function parseArgs(args) {
     '--native-session-handle',
     '--lease-generation',
     '--report',
+    '--correct',
+    '--prepare-assurance',
     '--reconcile',
     '--export-staged-witness',
     '--payload-manifest-sha256',
@@ -1303,11 +1311,11 @@ function parseArgs(args) {
   if (required.some((key) => !values[key]) || values.projects.length < 1 || (!values.scope_digest && !deriveScope))
     fail('GAP-VIDA-RUN-CLI-001', 'All launcher arguments are required.');
   const changing = Boolean(
-    values.issue_wave || values.report || values.reconcile || values.recover_expired_lease || values.renew_lease,
+    values.issue_wave || values.report || values.correct || values.prepare_assurance || values.reconcile || values.recover_expired_lease || values.renew_lease,
   );
   const exporting = Boolean(values.export_staged_witness || values.payload_manifest_sha256);
   if (
-    [values.issue_wave, values.report, values.reconcile, values.recover_expired_lease, values.renew_lease].filter(
+    [values.issue_wave, values.report, values.correct, values.prepare_assurance, values.reconcile, values.recover_expired_lease, values.renew_lease].filter(
       Boolean,
     ).length > 1 ||
     (values.issue_wave && values.issue_wave !== 'true') ||
@@ -1336,7 +1344,7 @@ function parseArgs(args) {
       (!/^[1-9][0-9]*$/.test(values.expected_revision ?? '') ||
         !Number.isSafeInteger(Number(values.expected_revision)) ||
         !/^[a-f0-9]{64}$/.test(values.expected_digest ?? ''))) ||
-    [values.report, values.reconcile]
+    [values.report, values.correct, values.prepare_assurance, values.reconcile]
       .filter(Boolean)
       .some((entry) => !path.isAbsolute(entry) || path.resolve(entry) !== entry) ||
     (exporting &&
@@ -1461,14 +1469,40 @@ function publicFailure(error) {
 }
 
 async function readLocalSessionIntake(file) {
-  const {z}=await import('zod');
-  const schema=z.object({schema:z.literal('VidaLocalSessionIntake/v1'),native_session_handle:z.string().min(1).max(256),
-    work_item:z.object({schema:z.literal('WorkItem/v1'),id:z.string().min(1),provider:z.string().min(1),provider_type:z.string().min(1),
-      canonical_kind:z.string().min(1),intent:z.string().min(1),project_id:z.string().min(1),title:z.string().min(1),description:z.string(),
-      labels:z.array(z.string()),risk_flags:z.array(z.string())}).strict(),scope_path:z.string().min(1),acceptance_path:z.string().min(1),
-    source_authorization_path:z.string().min(1).optional(),runtime_code_paths:z.array(z.string().min(1)).min(1).max(512),
-    route:z.enum(['R1','R2','R3','R4']),risk:z.enum(['low','medium','high']),change_kind:z.enum(['feature','fix','refactor','migration','documentation','incident'])}).strict();
-  try {return schema.parse(readBoundedReport(file));} catch {fail('GAP-VIDA-RUN-CONTEXT-001','The local session intake is invalid.');}
+  const { z } = await import('zod');
+  const schema = z
+    .object({
+      schema: z.literal('VidaLocalSessionIntake/v1'),
+      native_session_handle: z.string().min(1).max(256),
+      work_item: z
+        .object({
+          schema: z.literal('WorkItem/v1'),
+          id: z.string().min(1),
+          provider: z.string().min(1),
+          provider_type: z.string().min(1),
+          canonical_kind: z.string().min(1),
+          intent: z.string().min(1),
+          project_id: z.string().min(1),
+          title: z.string().min(1),
+          description: z.string(),
+          labels: z.array(z.string()),
+          risk_flags: z.array(z.string()),
+        })
+        .strict(),
+      scope_path: z.string().min(1),
+      acceptance_path: z.string().min(1),
+      source_authorization_path: z.string().min(1).optional(),
+      runtime_code_paths: z.array(z.string().min(1)).min(1).max(512),
+      route: z.enum(['R1', 'R2', 'R3', 'R4']),
+      risk: z.enum(['low', 'medium', 'high']),
+      change_kind: z.enum(['feature', 'fix', 'refactor', 'migration', 'documentation', 'incident']),
+    })
+    .strict();
+  try {
+    return schema.parse(readBoundedReport(file));
+  } catch {
+    fail('GAP-VIDA-RUN-CONTEXT-001', 'The local session intake is invalid.');
+  }
 }
 
 function readBoundedReport(file) {
@@ -1575,7 +1609,7 @@ export async function run(args = process.argv.slice(2)) {
     .digest('hex');
   if (initialization.schema_sha256 !== schemaSha)
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization schema is stale.');
-  const {assertRuntimePackageExports}=await import('../tooling/maintained-source-inventory.mjs');
+  const { assertRuntimePackageExports } = await import('../tooling/maintained-source-inventory.mjs');
   assertRuntimePackageExports(runtimePackageAccess().repository_root);
   if (values.projects.some((id) => !config.projects.some((project) => project.project_id === id)))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The project context is not bound to the requested identity.');
@@ -1800,7 +1834,10 @@ export async function run(args = process.argv.slice(2)) {
                     'GAP-VIDA-RUN-CONTEXT-001',
                     'Expired recovery requires an already admitted unchanged canonical research artifact.',
                   );
-              } else if (stage.produces.includes('ResearchResult/v1') || stage.produces.includes('ResearchSynthesis/v1')) {
+              } else if (
+                stage.produces.includes('ResearchResult/v1') ||
+                stage.produces.includes('ResearchSynthesis/v1')
+              ) {
                 fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery cannot import unnormalized research.');
               }
             }
@@ -1823,7 +1860,7 @@ export async function run(args = process.argv.slice(2)) {
               !assignment ||
               !profile ||
               item.request.role !== assignment.role ||
-                item.request.config_digest !== work.binding.config_digest ||
+              item.request.config_digest !== work.binding.config_digest ||
               (profile.mutation_scope === 'repository_source' && item.issue_id !== null)
             )
               fail(
@@ -1850,10 +1887,16 @@ export async function run(args = process.argv.slice(2)) {
           if (digest(intakeBytes) !== intakeRef.sha256)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery intake changed.');
           const intake = JSON.parse(intakeBytes.toString('utf8'));
+          const inventory = runtimePackageCodePaths(currentConfig.runtime.bundle);
+          if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory))
+            fail(
+              'GAP-VIDA-RUN-CONTEXT-001',
+              'Expired recovery intake requires qualified canonical runtime inventory repair.',
+            );
           const runtime = snapshotRuntimePackageSources(
             runtimePackageAccess(),
             currentConfig.runtime.bundle,
-            intake.runtime_code_paths,
+            inventory,
           );
           const schema = digest(
             runtimePackageAccess().readBytes(
@@ -1935,7 +1978,8 @@ export async function run(args = process.argv.slice(2)) {
               !profile ||
               item.request.role !== assignment.role ||
               item.request.config_digest !== work.binding.config_digest ||
-              (profile.mutation_scope === 'repository_source' && item.issue_id !== null &&
+              (profile.mutation_scope === 'repository_source' &&
+                item.issue_id !== null &&
                 (!item.host_reservation ||
                   item.host_reservation.receipt.identity.work_id !== work.binding.lifecycle_work_id ||
                   item.host_reservation.receipt.attempt.lease.ticket_id !== work.lease.ticket_id ||
@@ -1943,17 +1987,28 @@ export async function run(args = process.argv.slice(2)) {
             )
               fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal current request or issued writer binding is unsafe.');
             if (profile.mutation_scope === 'repository_source' && item.issue_id !== null) {
-              const reference = work.lifecycle.references.find((entry) => entry.kind === 'execution_approval' &&
-                entry.artifact_schema === 'LocalSourceWriteAuthorization/v1' && entry.disposition === 'current' &&
-                entry.decision === 'approved');
+              const reference = work.lifecycle.references.find(
+                (entry) =>
+                  entry.kind === 'execution_approval' &&
+                  entry.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+                  entry.disposition === 'current' &&
+                  entry.decision === 'approved',
+              );
               if (!reference) fail('GAP-VIDA-RUN-CONTEXT-001', 'Writer heartbeat source authority was revoked.');
               const bound = readLocalSourceWriteAuthorization(values.project_root, reference.path);
               const authority = bound.authorization;
-              if (bound.sha256 !== reference.sha256 || authority.work_id !== work.binding.lifecycle_work_id ||
-                authority.attempt !== Number(values.attempt) || authority.native_session_handle !== values.native_session_handle ||
-                authority.scope_digest !== work.binding.work_source_revision || authority.config_digest !== work.binding.config_digest ||
-                authority.workflow_id !== work.binding.workflow_id || !authority.stage_ids.includes(item.request.stage_id) ||
-                canonicalJsonDigest([...authority.implementation_paths].sort()) !== canonicalJsonDigest([...work.binding.implementation_paths].sort()))
+              if (
+                bound.sha256 !== reference.sha256 ||
+                authority.work_id !== work.binding.lifecycle_work_id ||
+                authority.attempt !== Number(values.attempt) ||
+                authority.native_session_handle !== values.native_session_handle ||
+                authority.scope_digest !== work.binding.work_source_revision ||
+                authority.config_digest !== work.binding.config_digest ||
+                authority.workflow_id !== work.binding.workflow_id ||
+                !authority.stage_ids.includes(item.request.stage_id) ||
+                canonicalJsonDigest([...authority.implementation_paths].sort()) !==
+                  canonicalJsonDigest([...work.binding.implementation_paths].sort())
+              )
                 fail('GAP-VIDA-RUN-CONTEXT-001', 'Writer heartbeat source authority changed.');
             }
           }
@@ -1976,10 +2031,16 @@ export async function run(args = process.argv.slice(2)) {
           if (digest(intakeBytes) !== intakeRef.sha256)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal intake changed.');
           const intake = JSON.parse(intakeBytes.toString('utf8'));
+          const inventory = runtimePackageCodePaths(currentConfig.runtime.bundle);
+          if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory))
+            fail(
+              'GAP-VIDA-RUN-CONTEXT-001',
+              'Lease renewal intake requires qualified canonical runtime inventory repair.',
+            );
           const runtime = snapshotRuntimePackageSources(
             runtimePackageAccess(),
             currentConfig.runtime.bundle,
-            intake.runtime_code_paths,
+            inventory,
           );
           const schema = digest(
             runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'lease renewal schema'),
@@ -2020,14 +2081,15 @@ export async function run(args = process.argv.slice(2)) {
       attempt: Number(values.attempt),
     });
   }
-  if (!values.issue_wave && !values.report && !values.reconcile) await advanceCutoff(selector, values);
+  if (!values.issue_wave && !values.report && !values.correct && !values.prepare_assurance && !values.reconcile) await advanceCutoff(selector, values);
   {
     const { MastraSessionBridge, configuredContextForStage, parseSessionBridgeObservation, sessionBridgeRunId } =
       await import('../src/orchestration/mastra-session-bridge.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-    const { snapshotDeclaredSources, snapshotRuntimePackageSources } = await import('../src/orchestration/scoped-source-snapshot.ts');
+    const { snapshotDeclaredSources, snapshotRuntimePackageSources } =
+      await import('../src/orchestration/scoped-source-snapshot.ts');
     const context = {
       work_id: values.work_id,
       attempt: Number(values.attempt),
@@ -2041,67 +2103,227 @@ export async function run(args = process.argv.slice(2)) {
       ...selectionMetadata,
     };
     const ledger = openConfiguredMastraSessionLedger(values.project_root);
-    if (values.report) {
+    if (values.report && readBoundedReport(values.report).schema === 'VidaSessionObservation/v1') {
       try {
-        const observation=parseSessionBridgeObservation(readBoundedReport(values.report));
-        const recorded=ledger.retrieveReportedObservation(context.work_id,context.attempt,observation);
+        const observation = parseSessionBridgeObservation(readBoundedReport(values.report));
+        const recorded = ledger.retrieveReportedObservation(context.work_id, context.attempt, observation);
         if (recorded) {
-          const {loadProjectSetContext}=await import('../src/config/project-context.ts');
-          const project=loadProjectSetContext(values.project_root,config,config.repository.repository_id,values.projects);
-          const host=ledger.hostState.readHostStateSnapshot({repository_id:project.repository_id,project_ids:project.project_ids,integrations_digest:project.integrations_digest,work_id:context.work_id});
-          const item=[...recorded.state.items,...recorded.state.completed.flatMap(wave=>wave.items)].find(item=>item.request.action_id === observation.action_id);
-          if(!host.work || host.work.binding.workflow_id !== values.workflow || host.work.binding.config_digest !== configDigest ||
-            host.work.binding.work_source_revision !== context.scope_digest || host.work.execution.run_id !== recorded.state.run_id ||
-            item.request.workflow_id !== values.workflow || item.request.scope_digest !== context.scope_digest || item.request.config_digest !== configDigest)
-            fail('GAP-VIDA-RUN-CONTEXT-001','Recorded observation belongs to another current work binding.');
-          const response={schema:'VidaAgentRunResult/v1',status:'report_retrieved',workflow:values.workflow,mastra_run_id:recorded.state.run_id,
-            mastra_step_id:recorded.state.step_id,resume_status:recorded.resume_status,state_version:recorded.version,
-            issued_actions:[],completed_observations:recorded.state.completed.flatMap(wave=>wave.items.map(item=>item.observation)),
-            recorded_observation:observation,initialization_status:initialization.workspace_binding_status};
-          ledger.close();return response;
+          const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+          const project = loadProjectSetContext(
+            values.project_root,
+            config,
+            config.repository.repository_id,
+            values.projects,
+          );
+          const host = ledger.hostState.readHostStateSnapshot({
+            repository_id: project.repository_id,
+            project_ids: project.project_ids,
+            integrations_digest: project.integrations_digest,
+            work_id: context.work_id,
+          });
+          const item = [...recorded.state.items, ...recorded.state.completed.flatMap((wave) => wave.items)].find(
+            (item) => item.request.action_id === observation.action_id,
+          ) ?? ledger.hostState.findArchivedReportedObservation(context.work_id, context.attempt, observation);
+          if (
+            !host.work ||
+            host.work.binding.workflow_id !== values.workflow ||
+            host.work.binding.config_digest !== configDigest ||
+            host.work.binding.work_source_revision !== context.scope_digest ||
+            host.work.execution.run_id !== (recorded.state.corrective_execution?.base_run_id ?? recorded.state.run_id) ||
+            !item ||
+            item.request.workflow_id !== values.workflow ||
+            item.request.scope_digest !== context.scope_digest ||
+            item.request.config_digest !== configDigest
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Recorded observation belongs to another current work binding.');
+          const response = {
+            schema: 'VidaAgentRunResult/v1',
+            status: 'report_retrieved',
+            workflow: values.workflow,
+            mastra_run_id: recorded.state.run_id,
+            mastra_step_id: recorded.state.step_id,
+            resume_status: recorded.resume_status,
+            state_version: recorded.version,
+            issued_actions: [],
+            completed_observations: recorded.state.completed.flatMap((wave) =>
+              wave.items.map((item) => item.observation),
+            ),
+            recorded_observation: observation,
+            initialization_status: initialization.workspace_binding_status,
+          };
+          ledger.close();
+          return response;
         }
-      } catch(error) {ledger.close();throw error;}
+      } catch (error) {
+        ledger.close();
+        throw error;
+      }
     }
-    const {loadProjectSetContext:loadAdmissionProjectContext}=await import('../src/config/project-context.ts');
+    const { loadProjectSetContext: loadAdmissionProjectContext } = await import('../src/config/project-context.ts');
     let admissionProject;
-    try {admissionProject=loadAdmissionProjectContext(values.project_root,config,config.repository.repository_id,values.projects);}
-    catch(error) {ledger.close();throw error;}
-    let admissionHost;
-    const admissionIdentity={repository_id:admissionProject.repository_id,project_ids:admissionProject.project_ids,
-      integrations_digest:admissionProject.integrations_digest,work_id:context.work_id};
-    try {admissionHost=ledger.hostState.readHostStateSnapshot(admissionIdentity);} catch(error) {ledger.close();throw error;}
-    let admissionIntake;
-    try {admissionIntake=values.intake ? await readLocalSessionIntake(values.intake) : null;}
-    catch(error) {ledger.close();throw error;}
-    if(admissionIntake) {
-      if (admissionIntake.work_item.id !== context.work_id || admissionIntake.work_item.canonical_kind !== selection.kind ||
-        admissionIntake.work_item.intent !== selection.intent || admissionIntake.work_item.project_id !== selection.project ||
-        /\p{Cc}/u.test(admissionIntake.native_session_handle)) {ledger.close();fail('GAP-VIDA-RUN-CONTEXT-001','Intake identity differs from current configured work.');}
-      try {ledger.hostState.recordAdmissionAttempt(context.work_id,context.attempt,{workItem:admissionIntake.work_item,
-        nativeSessionHandle:admissionIntake.native_session_handle,context,scopePath:admissionIntake.scope_path,acceptancePath:admissionIntake.acceptance_path});}
-      catch(error) {ledger.close();throw error;}
+    try {
+      admissionProject = loadAdmissionProjectContext(
+        values.project_root,
+        config,
+        config.repository.repository_id,
+        values.projects,
+      );
+    } catch (error) {
+      ledger.close();
+      throw error;
     }
-    if(admissionHost.work?.lease) {
+    let admissionHost;
+    const admissionIdentity = {
+      repository_id: admissionProject.repository_id,
+      project_ids: admissionProject.project_ids,
+      integrations_digest: admissionProject.integrations_digest,
+      work_id: context.work_id,
+    };
+    try {
+      admissionHost = ledger.hostState.readHostStateSnapshot(admissionIdentity);
+    } catch (error) {
+      ledger.close();
+      throw error;
+    }
+    let finalJournal=ledger.hostState.readFinalAssurance(admissionIdentity,context.attempt);
+    if (values.prepare_assurance || (finalJournal && !values.correct)) {
       try {
-        const {readAdmittedSessionIntake}=await import('../src/orchestration/admitted-session-execution.ts');
-        const canonicalIntake=readAdmittedSessionIntake(values.project_root,ledger.hostState,admissionIdentity);
-        const canonicalRef=admissionHost.work.artifacts.find(artifact=>artifact.artifact_id==='local-session-intake');
-        ledger.hostState.reconcileCompletedSourceOwnership({identity:admissionIdentity,nativeSessionHandle:canonicalIntake.native_session_handle,
-          verifyCurrent:()=>{
-            if(!canonicalRef || createHash('sha256').update(requireSafeRepositoryAccess(values.project_root).readBytes(canonicalRef.path,'historical terminal ownership intake')).digest('hex')!==canonicalRef.sha256)
-              fail('GAP-VIDA-RUN-CONTEXT-001','Completed source ownership intake binding changed.');
-          }});
-      } catch(error) {ledger.close();throw error;}
+        const {prepareFinalAssurance,issueFinalAssuranceWave,reportFinalAssurance,finalAssuranceStatus,finalAssuranceReceiptReferences}=await import('../src/orchestration/final-assurance.ts');
+        const {assertAdmittedRuntimeCodeCurrent}=await import('../src/orchestration/admitted-session-execution.ts');
+        const expected={revision:Number(values.expected_revision),digest:values.expected_digest};
+        if(values.prepare_assurance&&finalJournal&&path.relative(values.project_root,values.prepare_assurance).split(path.sep).join('/')!==finalJournal.state.packet.preparation_path)
+          fail('GAP-VIDA-RUN-CONTEXT-001','Assurance preparation retry differs from the current packet.');
+        if(values.prepare_assurance&&!finalJournal){
+          assertAdmittedRuntimeCodeCurrent(values.project_root,ledger.hostState,admissionIdentity);
+          const journal=ledger.resume(context.work_id,context.attempt);
+          if(!journal||journal.version.revision!==expected.revision||journal.version.digest!==expected.digest)
+            fail('GAP-VIDA-RUN-CONTEXT-001','Assurance preparation journal version is stale.');
+          finalJournal=prepareFinalAssurance({root:values.project_root,config,store:ledger.hostState,identity:admissionIdentity,journal,preparationPath:path.relative(values.project_root,values.prepare_assurance).split(path.sep).join('/')});
+        }
+        let status='assurance_resumed',issued=[];
+        if(values.issue_wave||values.report){
+          assertAdmittedRuntimeCodeCurrent(values.project_root,ledger.hostState,admissionIdentity);
+          const next=values.issue_wave?issueFinalAssuranceWave(finalJournal.state):reportFinalAssurance(finalJournal.state,readBoundedReport(values.report));
+          const duplicate=canonicalJsonDigest(next)===canonicalJsonDigest(finalJournal.state);
+          if(!duplicate){
+            if(finalJournal.version.revision!==expected.revision||finalJournal.version.digest!==expected.digest)
+              fail('GAP-VIDA-RUN-CONTEXT-001','Final assurance journal version is stale.');
+            const host=ledger.hostState.readHostStateSnapshot(admissionIdentity);
+            finalJournal=ledger.hostState.compareAndSwapFinalAssurance({identity:admissionIdentity,attempt:context.attempt,expected:finalJournal.version,expectedWork:host.workVersion,expectedLedger:host.ledgerVersion,next});
+          }
+          status=values.issue_wave?'assurance_wave_issued':duplicate?'assurance_report_retrieved':'assurance_reported';
+          if(values.issue_wave)issued=finalJournal.state.actions.filter(action=>action.issue_id&&!action.observation);
+        }
+        let host=ledger.hostState.readHostStateSnapshot(admissionIdentity),deliveryGap=null;
+        if((values.report||values.prepare_assurance)&&finalAssuranceStatus(finalJournal.state)==='reviewed'&&host.work.lifecycle.phase==='VERIFY'){
+          try{
+            const references=finalAssuranceReceiptReferences(values.project_root,host.work,finalJournal.state);
+            host=ledger.hostState.commitFinalAssuranceDelivery({identity:admissionIdentity,attempt:context.attempt,expected:finalJournal.version,expectedWork:host.workVersion,expectedLedger:host.ledgerVersion,references,documentationContext:{repository_root:values.project_root,repository_id:admissionIdentity.repository_id,project_id:pathProject.project_id,work_id:context.work_id}});
+          }catch(error){deliveryGap=error.message;}
+        }
+        const action=(entry)=>({...entry,role:finalJournal.state.packet.role,model:finalJournal.state.packet.model,reasoning:finalJournal.state.packet.reasoning,packet:finalJournal.state.packet,review:entry.kind==='reverse'?finalJournal.state.actions.find(review=>review.kind==='review'&&review.perspective===entry.perspective)?.observation:null,tool:entry.kind==='review'?'spawn_agent':'followup_task',instruction:entry.kind==='review'?'Fresh isolated blind review. Observe correctness, security and assurance checks explicitly; report only actual findings.':'Same reviewer performs a separate reverse validation of its accepted review, scope/trace, tests/security/rollback and evidence/invalidation/bindings.'});
+        const nextKind=finalJournal.state.actions.filter(entry=>entry.kind==='review').every(entry=>entry.observation?.verdict==='pass')?'reverse':'review';
+        return {schema:'VidaAgentRunResult/v1',status:host.work.lifecycle.phase==='DELIVERY'?'delivery':status,assurance_status:finalAssuranceStatus(finalJournal.state),workflow:values.workflow,state_version:finalJournal.version,issued_actions:issued.map(action),next_actions:finalAssuranceStatus(finalJournal.state)==='ready'?finalJournal.state.actions.filter(entry=>!entry.issue_id&&entry.kind===nextKind).map(action):[],delivery_gap:deliveryGap,delivery_manifest:host.work.lifecycle.references.find(ref=>ref.kind==='delivery_manifest'&&ref.disposition==='current')??null,runtime_acceptance:'pending_attributable_user_testing',initialization_status:initialization.workspace_binding_status};
+      } finally {ledger.close();}
+    }
+    let admissionIntake;
+    try {
+      admissionIntake = values.intake ? await readLocalSessionIntake(values.intake) : null;
+    } catch (error) {
+      ledger.close();
+      throw error;
+    }
+    if (admissionIntake) {
+      if (
+        admissionIntake.work_item.id !== context.work_id ||
+        admissionIntake.work_item.canonical_kind !== selection.kind ||
+        admissionIntake.work_item.intent !== selection.intent ||
+        admissionIntake.work_item.project_id !== selection.project ||
+        /\p{Cc}/u.test(admissionIntake.native_session_handle)
+      ) {
+        ledger.close();
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'Intake identity differs from current configured work.');
+      }
+      try {
+        ledger.hostState.recordAdmissionAttempt(context.work_id, context.attempt, {
+          workItem: admissionIntake.work_item,
+          nativeSessionHandle: admissionIntake.native_session_handle,
+          context,
+          scopePath: admissionIntake.scope_path,
+          acceptancePath: admissionIntake.acceptance_path,
+        });
+      } catch (error) {
+        ledger.close();
+        throw error;
+      }
+    }
+    if (values.correct) {
+      try {
+        const { correctiveExecutionPlanSchema, prepareLifecycleForCorrection } =
+          await import('../src/orchestration/final-assurance.ts');
+        const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
+        const plan = correctiveExecutionPlanSchema.parse(readBoundedReport(values.correct));
+        if (plan.work_id !== context.work_id || plan.attempt !== context.attempt)
+          fail('GAP-VIDA-RUN-CONTEXT-001', 'Correction plan belongs to another work or attempt.');
+        assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
+        const expected = { revision: Number(values.expected_revision), digest: values.expected_digest };
+        let corrective = ledger.hostState.retrieveCorrectiveAuthorization({identity:admissionIdentity,attempt:context.attempt,journal:expected,stageIds:plan.stage_ids,userInstructionRef:plan.user_instruction_ref});
+        if (!corrective) {
+          const current = ledger.resume(context.work_id, context.attempt);
+          if (!current || current.version.revision !== expected.revision || current.version.digest !== expected.digest)
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Correction journal version is stale.');
+          const host = prepareLifecycleForCorrection({root:values.project_root,config,store:ledger.hostState,identity:admissionIdentity,journal:current,preparationPath:plan.preparation_path});
+          corrective = ledger.hostState.authorizeCorrectiveExecution({identity:admissionIdentity,attempt:context.attempt,expectedWork:host.workVersion,expectedLedger:host.ledgerVersion,expectedJournal:expected,stageIds:plan.stage_ids,userInstructionRef:plan.user_instruction_ref,config});
+        }
+        const current = ledger.resume(context.work_id, context.attempt);
+        return {schema:'VidaAgentRunResult/v1',status:'correction_authorized',workflow:values.workflow,corrective_execution:corrective,state_version:current.version,issued_actions:[],next_actions:[],next_operation:'resume_same_work_attempt',initialization_status:initialization.workspace_binding_status};
+      } finally { ledger.close(); }
+    }
+    if (admissionHost.work?.lease && !ledger.resume(context.work_id, context.attempt)?.state.corrective_execution) {
+      try {
+        const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
+        const canonicalIntake = readAdmittedSessionIntake(values.project_root, ledger.hostState, admissionIdentity);
+        const canonicalRef = admissionHost.work.artifacts.find(
+          (artifact) => artifact.artifact_id === 'local-session-intake',
+        );
+        ledger.hostState.reconcileCompletedSourceOwnership({
+          identity: admissionIdentity,
+          nativeSessionHandle: canonicalIntake.native_session_handle,
+          verifyCurrent: () => {
+            if (
+              !canonicalRef ||
+              createHash('sha256')
+                .update(
+                  requireSafeRepositoryAccess(values.project_root).readBytes(
+                    canonicalRef.path,
+                    'historical terminal ownership intake',
+                  ),
+                )
+                .digest('hex') !== canonicalRef.sha256
+            )
+              fail('GAP-VIDA-RUN-CONTEXT-001', 'Completed source ownership intake binding changed.');
+          },
+        });
+      } catch (error) {
+        ledger.close();
+        throw error;
+      }
     }
     let bridge;
-    try {bridge = await MastraSessionBridge.open({
-      repositoryRoot: values.project_root,
-      config,
-      selection,
-      context,
-      workflowId: values.workflow,
-      workspaceId: initialization.workspace_id,
-    });} catch(error) {ledger.close();throw error;}
+    try {
+      bridge = await MastraSessionBridge.open({
+        repositoryRoot: values.project_root,
+        config,
+        selection,
+        context,
+        workflowId: values.workflow,
+        workspaceId: initialization.workspace_id,
+        correctiveExecution: ledger.resume(context.work_id, context.attempt)?.state.corrective_execution,
+      });
+    } catch (error) {
+      ledger.close();
+      throw error;
+    }
     const requireConfiguredContext = (request, allowedChangedPaths = []) => {
       const current = configuredContextForStage(
         values.project_root,
@@ -2176,6 +2398,7 @@ export async function run(args = process.argv.slice(2)) {
         packet,
         implementationResult,
         authority: execution.composition.deliveryEvidenceAuthority,
+        host,
       };
     };
     const completedValidationReceipts = async (currentJournal, evidence) => {
@@ -2185,7 +2408,7 @@ export async function run(args = process.argv.slice(2)) {
       const compiled = compileDevelopmentWorkflow(config, values.team, values.workflow, selection.risk_flags);
       const expected = compiled.waves.flatMap((wave, index) =>
         wave.some((stage) => stage.kind === 'validate')
-          ? sessionActionsForWave(config, selection, context, values.workflow, index, []).filter(
+          ? sessionActionsForWave(config, selection, context, values.workflow, index, [], currentJournal.state.corrective_execution).filter(
               (action) => action.stage_kind === 'validate',
             )
           : [],
@@ -2199,6 +2422,7 @@ export async function run(args = process.argv.slice(2)) {
           journal: currentJournal,
           actionId: action.action_id,
           authority: evidence.authority,
+          host: evidence.host,
         }),
       );
       if (
@@ -2219,6 +2443,7 @@ export async function run(args = process.argv.slice(2)) {
         implementationResult: evidence.implementationResult,
         journal: evidenceJournal,
         authority: evidence.authority,
+        host: evidence.host,
       });
       const { prepareObservedDeliveryInstruction } = await import('../src/orchestration/observed-delivery.ts');
       return prepareObservedDeliveryInstruction({
@@ -2449,7 +2674,8 @@ export async function run(args = process.argv.slice(2)) {
       for (const item of writers) {
         const previous = host.work?.execution.assignment_attempts.findLast(
           (attempt) =>
-            attempt.stage_id === item.request.stage_id && attempt.assignment_index === item.request.assignment_index,
+            attempt.stage_id === item.request.stage_id && attempt.assignment_index === item.request.assignment_index &&
+            attempt.correction_generation === (currentJournal.state.corrective_execution?.correction_generation ?? 0),
         );
         if (
           previous &&
@@ -2708,7 +2934,7 @@ export async function run(args = process.argv.slice(2)) {
       let admittedSource = null;
       if (values.intake) {
         const { z } = await import('zod');
-        const intake=admissionIntake;
+        const intake = admissionIntake;
         if (values.continuation) {
           const stateVersion = z
             .object({
@@ -2937,6 +3163,7 @@ export async function run(args = process.argv.slice(2)) {
                 implementationResult: issuedEvidence.implementationResult,
                 journal,
                 authority: issuedEvidence.authority,
+                host: issuedEvidence.host,
               }));
               if (testReceipt.status !== 'pass')
                 fail('GAP-VIDA-RUN-EXECUTION-001', 'Configured tester receipt is not passing.');
@@ -2946,7 +3173,7 @@ export async function run(args = process.argv.slice(2)) {
           const waveActions =
             waveIndex === undefined
               ? []
-              : sessionActionsForWave(config, selection, context, values.workflow, waveIndex, []);
+              : sessionActionsForWave(config, selection, context, values.workflow, waveIndex, [], journal.state.corrective_execution);
           const writers = waveActions.filter((action) => action.mutation_scope === 'repository_source');
           let reservations = {};
           const researchBindings = new Map();
@@ -3089,7 +3316,8 @@ export async function run(args = process.argv.slice(2)) {
             parseObservedTesterVerdict(observation);
           }
           if (
-            issued && observation.status === 'reported_complete' &&
+            issued &&
+            observation.status === 'reported_complete' &&
             config.workflows[values.workflow].stages.find((stage) => stage.id === issued.request.stage_id)?.kind ===
               'research'
           ) {
@@ -3119,7 +3347,8 @@ export async function run(args = process.argv.slice(2)) {
             });
           }
           if (
-            issued && observation.status === 'reported_complete' &&
+            issued &&
+            observation.status === 'reported_complete' &&
             config.workflows[values.workflow].stages
               .find((stage) => stage.id === issued.request.stage_id)
               ?.produces.includes('ResearchSynthesis/v1')
@@ -3261,9 +3490,12 @@ export async function run(args = process.argv.slice(2)) {
       )
         deliveryInstruction = await preparedDelivery(journal);
       let researchSynthesis = null;
-      const terminalSynthesisStages = config.workflows[values.workflow].stages.filter((stage) =>
-        config.workflows[values.workflow].terminal_stages.includes(stage.id) &&
-        stage.kind === 'synthesize' && stage.produces.includes('ResearchSynthesis/v1'));
+      const terminalSynthesisStages = config.workflows[values.workflow].stages.filter(
+        (stage) =>
+          config.workflows[values.workflow].terminal_stages.includes(stage.id) &&
+          stage.kind === 'synthesize' &&
+          stage.produces.includes('ResearchSynthesis/v1'),
+      );
       if (terminalSynthesisStages.length > 1)
         fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal research synthesis must have one declared output stage.');
       const terminalStage = terminalSynthesisStages[0];
@@ -3317,7 +3549,7 @@ export async function run(args = process.argv.slice(2)) {
       const actions =
         actionWave === undefined
           ? []
-          : sessionActionsForWave(config, selection, context, values.workflow, actionWave, []);
+          : sessionActionsForWave(config, selection, context, values.workflow, actionWave, [], journal.state.corrective_execution);
       const actionById = new Map(actions.map((action) => [action.action_id, action]));
       const { researchObservationOutputContract } = await import('../src/orchestration/observed-research-result.ts');
       const { synthesisObservationOutputContract, admittedResearchResultsForSynthesis, synthesisSourceCatalog } =

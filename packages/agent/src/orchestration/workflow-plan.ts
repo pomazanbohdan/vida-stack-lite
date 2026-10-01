@@ -81,12 +81,22 @@ export function compileDevelopmentWorkflow(
     })),
   );
   const effectiveStages = waves.flat();
-  for (const [artifact, role] of [['TestReceipt/v1', 'tester'], ['DeliveryInstruction/v1', 'delivery-agent']] as const) {
-    if (!workflow!.stages.some((stage) => stage.produces.includes(artifact) || stage.consumes.includes(artifact))) continue;
+  for (const [artifact, role] of [
+    ['TestReceipt/v1', 'tester'],
+    ['DeliveryInstruction/v1', 'delivery-agent'],
+  ] as const) {
+    if (!workflow!.stages.some((stage) => stage.produces.includes(artifact) || stage.consumes.includes(artifact)))
+      continue;
     const producers = effectiveStages.filter((stage) => stage.produces.includes(artifact));
     assert(
       producers.length === 1 && producers[0]!.assignments.filter((assignment) => assignment.role === role).length === 1,
-      'workflow ' + workflowId + ' requires exactly one effective ' + role + ' producing ' + artifact + '; check risk filters and producer cardinality',
+      'workflow ' +
+        workflowId +
+        ' requires exactly one effective ' +
+        role +
+        ' producing ' +
+        artifact +
+        '; check risk filters and producer cardinality',
     );
   }
   return Object.freeze({
@@ -100,9 +110,7 @@ export function compileDevelopmentWorkflow(
           wave.map((stage) =>
             Object.freeze({
               ...stage,
-              assignments: Object.freeze(
-                [...stage.assignments],
-              ),
+              assignments: Object.freeze([...stage.assignments]),
             }),
           ),
         ),

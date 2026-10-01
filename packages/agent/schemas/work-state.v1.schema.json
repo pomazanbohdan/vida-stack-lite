@@ -15,17 +15,50 @@
   "properties": {
     "request_transition": {
       "oneOf": [
-        { "type": "null" },
+        {
+          "type": "null"
+        },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "request_pointer", "native_session_handle", "predecessor_work_ids", "successor_work_id"],
+          "required": [
+            "schema",
+            "request_pointer",
+            "native_session_handle",
+            "predecessor_work_ids",
+            "successor_work_id"
+          ],
           "properties": {
-            "schema": { "const": "WorkRequestTransition/v1" },
-            "request_pointer": { "type": "string", "minLength": 1, "maxLength": 2048 },
-            "native_session_handle": { "type": "string", "minLength": 1, "maxLength": 256 },
-            "predecessor_work_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 256 } },
-            "successor_work_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 256 }
+            "schema": {
+              "const": "WorkRequestTransition/v1"
+            },
+            "request_pointer": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "native_session_handle": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "predecessor_work_ids": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "successor_work_id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 256
+            }
           }
         }
       ]
@@ -42,7 +75,9 @@
       "minimum": 1,
       "maximum": 9007199254740991
     },
-    "lifecycle": { "$ref": "#/$defs/lifecycleState" },
+    "lifecycle": {
+      "$ref": "#/$defs/lifecycleState"
+    },
     "binding": {
       "type": "object",
       "additionalProperties": false,
@@ -182,12 +217,20 @@
     "contracts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["scope", "acceptance", "decisions"],
+      "required": [
+        "scope",
+        "acceptance",
+        "decisions"
+      ],
       "properties": {
         "scope": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "path", "sha256"],
+          "required": [
+            "schema",
+            "path",
+            "sha256"
+          ],
           "properties": {
             "schema": {
               "const": "ImplementationScope/v1"
@@ -206,7 +249,11 @@
         "acceptance": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["schema", "path", "sha256"],
+          "required": [
+            "schema",
+            "path",
+            "sha256"
+          ],
           "properties": {
             "schema": {
               "const": "AcceptanceManifest/v1"
@@ -227,10 +274,17 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["schema", "path", "sha256"],
+            "required": [
+              "schema",
+              "path",
+              "sha256"
+            ],
             "properties": {
               "schema": {
-                "enum": ["DecisionRecord/v1", "WorkflowAttemptRecoveryDecision/v1"]
+                "enum": [
+                  "DecisionRecord/v1",
+                  "WorkflowAttemptRecoveryDecision/v1"
+                ]
               },
               "path": {
                 "type": "string",
@@ -254,7 +308,11 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["ticket_id", "thread_id", "generation"],
+          "required": [
+            "ticket_id",
+            "thread_id",
+            "generation"
+          ],
           "properties": {
             "ticket_id": {
               "type": "string",
@@ -281,10 +339,25 @@
     "execution": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["run_id", "input_digest", "phase", "status", "assignment_attempts"],
+      "required": [
+        "run_id",
+        "input_digest",
+        "phase",
+        "status",
+        "assignment_attempts"
+      ],
       "properties": {
         "run_id": {
-          "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 2048 }, { "type": "null" }]
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "input_digest": {
           "type": "string",
@@ -296,7 +369,12 @@
           "maxLength": 2048
         },
         "status": {
-          "enum": ["active", "suspended", "failed", "complete"]
+          "enum": [
+            "active",
+            "suspended",
+            "failed",
+            "complete"
+          ]
         },
         "assignment_attempts": {
           "type": "array",
@@ -315,7 +393,9 @@
               "result",
               "result_digest",
               "previous_attempt_id",
-              "reconciliation"
+              "reconciliation",
+              "correction_generation",
+              "correction_authorization"
             ],
             "properties": {
               "assignment_id": {
@@ -343,7 +423,11 @@
               "lease": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["ticket_id", "thread_id", "generation"],
+                "required": [
+                  "ticket_id",
+                  "thread_id",
+                  "generation"
+                ],
                 "properties": {
                   "ticket_id": {
                     "type": "string",
@@ -363,7 +447,12 @@
                 }
               },
               "status": {
-                "enum": ["started", "completed", "uncertain", "no_effect"]
+                "enum": [
+                  "started",
+                  "completed",
+                  "uncertain",
+                  "no_effect"
+                ]
               },
               "result": {},
               "result_digest": {
@@ -423,7 +512,10 @@
                       "work_version": {
                         "type": "object",
                         "additionalProperties": false,
-                        "required": ["revision", "digest"],
+                        "required": [
+                          "revision",
+                          "digest"
+                        ],
                         "properties": {
                           "revision": {
                             "type": "integer",
@@ -439,7 +531,10 @@
                       "ledger_version": {
                         "type": "object",
                         "additionalProperties": false,
-                        "required": ["revision", "digest"],
+                        "required": [
+                          "revision",
+                          "digest"
+                        ],
                         "properties": {
                           "revision": {
                             "type": "integer",
@@ -461,7 +556,10 @@
                         "pattern": "^[a-f0-9]{64}$"
                       },
                       "outcome": {
-                        "enum": ["completed", "no_effect"]
+                        "enum": [
+                          "completed",
+                          "no_effect"
+                        ]
                       },
                       "result_digest": {
                         "anyOf": [
@@ -477,7 +575,11 @@
                       "provider_evidence": {
                         "type": "object",
                         "additionalProperties": false,
-                        "required": ["schema", "path", "sha256"],
+                        "required": [
+                          "schema",
+                          "path",
+                          "sha256"
+                        ],
                         "properties": {
                           "schema": {
                             "type": "string",
@@ -499,10 +601,17 @@
                           {
                             "type": "object",
                             "additionalProperties": false,
-                            "required": ["schema", "path", "sha256"],
+                            "required": [
+                              "schema",
+                              "path",
+                              "sha256"
+                            ],
                             "properties": {
                               "schema": {
-                                "enum": ["DecisionRecord/v1", "WorkflowAttemptRecoveryDecision/v1"]
+                                "enum": [
+                                  "DecisionRecord/v1",
+                                  "WorkflowAttemptRecoveryDecision/v1"
+                                ]
                               },
                               "path": {
                                 "type": "string",
@@ -525,7 +634,11 @@
                           {
                             "type": "object",
                             "additionalProperties": false,
-                            "required": ["ticket_id", "thread_id", "generation"],
+                            "required": [
+                              "ticket_id",
+                              "thread_id",
+                              "generation"
+                            ],
                             "properties": {
                               "ticket_id": {
                                 "type": "string",
@@ -555,19 +668,65 @@
                     "type": "null"
                   }
                 ]
+              },
+              "correction_generation": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "correction_authorization": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "schema",
+                      "path",
+                      "sha256"
+                    ],
+                    "properties": {
+                      "schema": {
+                        "const": "CorrectiveAssignmentAuthorization/v1"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      }
+                    }
+                  }
+                ]
               }
             }
           }
         }
       }
     },
-    "migration": { "$ref": "#/$defs/migrationLineage" },
+    "migration": {
+      "$ref": "#/$defs/migrationLineage"
+    },
     "artifacts": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["artifact_id", "schema", "path", "sha256", "stage_id", "source_revision", "scope_id", "ac_ids"],
+        "required": [
+          "artifact_id",
+          "schema",
+          "path",
+          "sha256",
+          "stage_id",
+          "source_revision",
+          "scope_id",
+          "ac_ids"
+        ],
         "properties": {
           "artifact_id": {
             "type": "string",
@@ -623,33 +782,95 @@
   "allOf": [
     {
       "if": {
-        "required": ["migration"],
-        "properties": { "migration": { "type": "object", "properties": { "rebind_status": { "const": "pending" } } } }
+        "required": [
+          "migration"
+        ],
+        "properties": {
+          "migration": {
+            "type": "object",
+            "properties": {
+              "rebind_status": {
+                "const": "pending"
+              }
+            }
+          }
+        }
       },
       "then": {
         "properties": {
-          "lease": { "type": "null" },
+          "lease": {
+            "type": "null"
+          },
           "execution": {
             "type": "object",
-            "properties": { "run_id": { "type": "null" }, "status": { "const": "suspended" } }
+            "properties": {
+              "run_id": {
+                "type": "null"
+              },
+              "status": {
+                "const": "suspended"
+              }
+            }
           }
         }
       }
     },
     {
       "if": {
-        "required": ["migration"],
-        "properties": { "migration": { "type": "object", "properties": { "rebind_status": { "const": "accepted" } } } }
+        "required": [
+          "migration"
+        ],
+        "properties": {
+          "migration": {
+            "type": "object",
+            "properties": {
+              "rebind_status": {
+                "const": "accepted"
+              }
+            }
+          }
+        }
       },
-      "then": { "properties": { "execution": { "type": "object", "properties": { "run_id": { "type": "string" } } } } }
+      "then": {
+        "properties": {
+          "execution": {
+            "type": "object",
+            "properties": {
+              "run_id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     },
     {
-      "if": { "not": { "required": ["migration"] } },
-      "then": { "properties": { "execution": { "type": "object", "properties": { "run_id": { "type": "string" } } } } }
+      "if": {
+        "not": {
+          "required": [
+            "migration"
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "type": "object",
+            "properties": {
+              "run_id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
-    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "migrationLineage": {
       "type": "object",
       "additionalProperties": false,
@@ -666,19 +887,61 @@
         "rebind_receipt"
       ],
       "properties": {
-        "schema": { "const": "WorkMigrationLineage/v1" },
-        "source_schema": { "enum": ["WorkCheckpoint/v2", "CoordinationTicket/v1"] },
-        "source_sha256": { "$ref": "#/$defs/digest" },
-        "source_work_id": { "type": "string", "minLength": 1, "maxLength": 2048 },
-        "source_revision": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "schema": {
+          "const": "WorkMigrationLineage/v1"
+        },
+        "source_schema": {
+          "enum": [
+            "WorkCheckpoint/v2",
+            "CoordinationTicket/v1"
+          ]
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "source_work_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "source_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
         "original_run_id": {
-          "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 2048 }, { "type": "null" }]
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "continuation_run_id": {
-          "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 2048 }, { "type": "null" }]
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
-        "migration_id": { "$ref": "#/$defs/digest" },
-        "rebind_status": { "enum": ["pending", "accepted"] },
+        "migration_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "rebind_status": {
+          "enum": [
+            "pending",
+            "accepted"
+          ]
+        },
         "rebind_receipt": {
           "anyOf": [
             {
@@ -696,78 +959,200 @@
                 "source_work_digest"
               ],
               "properties": {
-                "schema": { "const": "MigrationRebind/v1" },
-                "rebind_id": { "$ref": "#/$defs/digest" },
+                "schema": {
+                  "const": "MigrationRebind/v1"
+                },
+                "rebind_id": {
+                  "$ref": "#/$defs/digest"
+                },
                 "identity": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["repository_id", "project_ids", "integrations_digest", "work_id"],
+                  "required": [
+                    "repository_id",
+                    "project_ids",
+                    "integrations_digest",
+                    "work_id"
+                  ],
                   "properties": {
-                    "repository_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+                    "repository_id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                    },
                     "project_ids": {
                       "type": "array",
-                      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      },
                       "minItems": 1,
                       "uniqueItems": true
                     },
-                    "integrations_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-                    "work_id": { "type": "string", "minLength": 1, "maxLength": 2048 }
+                    "integrations_digest": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "work_id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    }
                   }
                 },
-                "principal": { "type": "string", "minLength": 1, "maxLength": 2048 },
-                "decision_pointer": { "type": "string", "minLength": 1, "maxLength": 2048 },
-                "source_sha256": { "$ref": "#/$defs/digest" },
-                "migration_id": { "$ref": "#/$defs/digest" },
-                "issued_run_id": { "type": "string", "minLength": 1, "maxLength": 2048 },
-                "source_work_digest": { "$ref": "#/$defs/digest" }
+                "principal": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "decision_pointer": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "source_sha256": {
+                  "$ref": "#/$defs/digest"
+                },
+                "migration_id": {
+                  "$ref": "#/$defs/digest"
+                },
+                "issued_run_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "source_work_digest": {
+                  "$ref": "#/$defs/digest"
+                }
               }
             },
-            { "type": "null" }
+            {
+              "type": "null"
+            }
           ]
         },
         "source_ticket": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["pointer", "ticket_id", "thread_id", "generation", "contour_keys", "exclusive_resources"],
+          "required": [
+            "pointer",
+            "ticket_id",
+            "thread_id",
+            "generation",
+            "contour_keys",
+            "exclusive_resources"
+          ],
           "properties": {
-            "pointer": { "type": "string", "pattern": "^/tickets/[0-9]+$" },
-            "ticket_id": { "type": "string", "minLength": 1, "maxLength": 2048 },
-            "thread_id": { "type": "string", "minLength": 1, "maxLength": 2048 },
-            "generation": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+            "pointer": {
+              "type": "string",
+              "pattern": "^/tickets/[0-9]+$"
+            },
+            "ticket_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "thread_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
             "contour_keys": {
-              "type": "array", "minItems": 1, "uniqueItems": true,
-              "items": { "type": "string", "minLength": 1, "maxLength": 2048 }
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              }
             },
             "exclusive_resources": {
-              "type": "array", "minItems": 1, "uniqueItems": true,
-              "items": { "type": "string", "minLength": 1, "maxLength": 2048 }
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              }
             }
           }
         }
       },
       "allOf": [
         {
-          "if": { "properties": { "source_schema": { "const": "CoordinationTicket/v1" } }, "required": ["source_schema"] },
-          "then": { "properties": { "source_ticket": {} }, "required": ["source_ticket"] }
+          "if": {
+            "properties": {
+              "source_schema": {
+                "const": "CoordinationTicket/v1"
+              }
+            },
+            "required": [
+              "source_schema"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_ticket": {}
+            },
+            "required": [
+              "source_ticket"
+            ]
+          }
         },
         {
-          "if": { "properties": { "source_schema": { "const": "WorkCheckpoint/v2" } }, "required": ["source_schema"] },
-          "then": { "not": { "properties": { "source_ticket": {} }, "required": ["source_ticket"] } }
+          "if": {
+            "properties": {
+              "source_schema": {
+                "const": "WorkCheckpoint/v2"
+              }
+            },
+            "required": [
+              "source_schema"
+            ]
+          },
+          "then": {
+            "not": {
+              "properties": {
+                "source_ticket": {}
+              },
+              "required": [
+                "source_ticket"
+              ]
+            }
+          }
         }
       ],
       "oneOf": [
         {
           "properties": {
-            "rebind_status": { "const": "pending" },
-            "continuation_run_id": { "type": "null" },
-            "rebind_receipt": { "type": "null" }
+            "rebind_status": {
+              "const": "pending"
+            },
+            "continuation_run_id": {
+              "type": "null"
+            },
+            "rebind_receipt": {
+              "type": "null"
+            }
           }
         },
         {
           "properties": {
-            "rebind_status": { "const": "accepted" },
-            "continuation_run_id": { "type": "string" },
-            "rebind_receipt": { "type": "object" }
+            "rebind_status": {
+              "const": "accepted"
+            },
+            "continuation_run_id": {
+              "type": "string"
+            },
+            "rebind_receipt": {
+              "type": "object"
+            }
           }
         }
       ]
@@ -776,7 +1161,11 @@
       "type": "array",
       "maxItems": 16384,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1, "maxLength": 2048 }
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+      }
     },
     "lifecycleReference": {
       "type": "object",
@@ -799,7 +1188,9 @@
         "disposition"
       ],
       "properties": {
-        "schema": { "const": "LifecycleArtifactReference/v1" },
+        "schema": {
+          "const": "LifecycleArtifactReference/v1"
+        },
         "kind": {
           "enum": [
             "source_plan",
@@ -833,25 +1224,97 @@
             "recovery"
           ]
         },
-        "artifact_schema": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*/v1$" },
-        "record_id": { "type": "string", "minLength": 1, "maxLength": 2048 },
-        "path": { "type": "string", "minLength": 1, "maxLength": 2048 },
-        "sha256": { "$ref": "#/$defs/digest" },
-        "source_revision": { "type": "string", "minLength": 1, "maxLength": 2048 },
-        "scope_id": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "artifact_schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9]*/v1$"
+        },
+        "record_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "source_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "scope_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
         "ac_ids": {
           "type": "array",
           "minItems": 1,
           "maxItems": 16384,
           "uniqueItems": true,
-          "items": { "type": "string", "minLength": 1, "maxLength": 2048 }
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
         },
-        "generation": { "type": ["integer", "null"], "minimum": 1, "maximum": 9007199254740991 },
-        "implementation_fingerprint": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
-        "delivery_cycle_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 2048 },
-        "principal": { "type": ["string", "null"], "minLength": 1, "maxLength": 2048 },
-        "decision": { "enum": ["pass", "fail", "approved", "accepted", "feedback", "rejected", "unknown", null] },
-        "disposition": { "enum": ["current", "consumed", "retired"] }
+        "generation": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "implementation_fingerprint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "delivery_cycle_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "principal": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "decision": {
+          "enum": [
+            "pass",
+            "fail",
+            "approved",
+            "accepted",
+            "feedback",
+            "rejected",
+            "unknown",
+            null
+          ]
+        },
+        "disposition": {
+          "enum": [
+            "current",
+            "consumed",
+            "retired"
+          ]
+        }
       }
     },
     "lifecycleState": {
@@ -873,47 +1336,137 @@
         "references"
       ],
       "properties": {
-        "schema": { "const": "LifecycleState/v1" },
-        "revision": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
-        "phase": { "enum": ["INTAKE", "TRACE", "PLAN", "EXECUTE", "VERIFY", "DELIVERY", "COMPLETE"] },
-        "source_revision": { "type": "string", "minLength": 1, "maxLength": 2048 },
-        "next_action": { "type": "string", "minLength": 1, "maxLength": 4096 },
-        "route": { "enum": ["R1", "R2", "R3", "R4"] },
-        "risk": { "enum": ["low", "medium", "high"] },
-        "change_kind": { "enum": ["feature", "fix", "refactor", "migration", "documentation", "incident"] },
+        "schema": {
+          "const": "LifecycleState/v1"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "phase": {
+          "enum": [
+            "INTAKE",
+            "TRACE",
+            "PLAN",
+            "EXECUTE",
+            "VERIFY",
+            "DELIVERY",
+            "COMPLETE"
+          ]
+        },
+        "source_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "route": {
+          "enum": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        "risk": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "change_kind": {
+          "enum": [
+            "feature",
+            "fix",
+            "refactor",
+            "migration",
+            "documentation",
+            "incident"
+          ]
+        },
         "config_binding": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["config_digest", "schema_digest", "runtime_code_digest"],
+          "required": [
+            "config_digest",
+            "schema_digest",
+            "runtime_code_digest"
+          ],
           "properties": {
-            "config_digest": { "$ref": "#/$defs/digest" },
-            "schema_digest": { "$ref": "#/$defs/digest" },
-            "runtime_code_digest": { "$ref": "#/$defs/digest" }
+            "config_digest": {
+              "$ref": "#/$defs/digest"
+            },
+            "schema_digest": {
+              "$ref": "#/$defs/digest"
+            },
+            "runtime_code_digest": {
+              "$ref": "#/$defs/digest"
+            }
           }
         },
         "scope": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["scope_id", "allowed_paths", "fingerprint_paths", "implementation_paths", "documentation_paths"],
+          "required": [
+            "scope_id",
+            "allowed_paths",
+            "fingerprint_paths",
+            "implementation_paths",
+            "documentation_paths"
+          ],
           "properties": {
-            "scope_id": { "type": "string", "minLength": 1, "maxLength": 2048 },
-            "allowed_paths": { "$ref": "#/$defs/pathList" },
-            "fingerprint_paths": { "$ref": "#/$defs/pathList" },
-            "implementation_paths": { "$ref": "#/$defs/pathList" },
-            "documentation_paths": { "$ref": "#/$defs/pathList" }
+            "scope_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "allowed_paths": {
+              "$ref": "#/$defs/pathList"
+            },
+            "fingerprint_paths": {
+              "$ref": "#/$defs/pathList"
+            },
+            "implementation_paths": {
+              "$ref": "#/$defs/pathList"
+            },
+            "documentation_paths": {
+              "$ref": "#/$defs/pathList"
+            }
           }
         },
         "seal": {
           "anyOf": [
-            { "type": "null" },
+            {
+              "type": "null"
+            },
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["sealed_revision", "sealed_at", "implementation_fingerprint"],
+              "required": [
+                "sealed_revision",
+                "sealed_at",
+                "implementation_fingerprint"
+              ],
               "properties": {
-                "sealed_revision": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
-                "sealed_at": { "type": "string", "minLength": 20, "maxLength": 64 },
-                "implementation_fingerprint": { "$ref": "#/$defs/digest" }
+                "sealed_revision": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "sealed_at": {
+                  "type": "string",
+                  "minLength": 20,
+                  "maxLength": 64
+                },
+                "implementation_fingerprint": {
+                  "$ref": "#/$defs/digest"
+                }
               }
             }
           ]
@@ -921,19 +1474,50 @@
         "assurance": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["epoch", "review_generation", "correction_count", "review_failure_count", "delivery_cycle_id"],
+          "required": [
+            "epoch",
+            "review_generation",
+            "correction_count",
+            "review_failure_count",
+            "delivery_cycle_id"
+          ],
           "properties": {
-            "epoch": { "type": "string", "minLength": 1, "maxLength": 2048 },
-            "review_generation": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
-            "correction_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
-            "review_failure_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
-            "delivery_cycle_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 2048 }
+            "epoch": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "review_generation": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "correction_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "review_failure_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "delivery_cycle_id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 2048
+            }
           }
         },
         "references": {
           "type": "array",
           "maxItems": 16384,
-          "items": { "$ref": "#/$defs/lifecycleReference" }
+          "items": {
+            "$ref": "#/$defs/lifecycleReference"
+          }
         }
       }
     }

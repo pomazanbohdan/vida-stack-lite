@@ -1,9 +1,10 @@
-import { test, expect } from 'bun:test';
+import { afterEach, test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync, cpSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync, cpSync, rmSync } from 'node:fs';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
 import { cooperativeReadonlyAssignments } from '../bin/runtime-config-rebind.mjs';
@@ -19,13 +20,17 @@ import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snap
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 const source = process.env.VIDA_CONFIG_REBIND_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '..');
-const stage = path.resolve(import.meta.dirname, '../..');
+const fixtureRoots = [];
+afterEach(() => {
+  for (const root of fixtureRoots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const json = (v) => JSON.stringify(v, null, 2) + '\n';
 
 function fixture() {
-  const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? stage;
+  const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? tmpdir();
   const root = mkdtempSync(path.join(fixtureRoot, 'fixture-'));
+  fixtureRoots.push(root);
   const put = (relative, bytes) => {
     const file = path.join(root, relative);
     mkdirSync(path.dirname(file), { recursive: true });

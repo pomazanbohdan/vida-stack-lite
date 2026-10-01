@@ -384,6 +384,33 @@ test('readonly canonical workspace inspection preserves populated governance and
   expect(() => inspectHostWorkspaceDatabase(path.join(root, 'missing.sqlite'), workspace)).toThrow();
 });
 
+test('fresh terminal ownership inspection does not create a journal or infer missing issued evidence is settled', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  const reconcile = () =>
+    store.reconcileCompletedSourceOwnership({
+      identity,
+      nativeSessionHandle: initial.work.lease.thread_id,
+      verifyCurrent() {},
+    });
+  expect(store.readWorkSessionJournal(identity)).toBeNull();
+  expect(reconcile()).toEqual(initial);
+  expect(
+    database.query("SELECT name FROM sqlite_master WHERE name='agent_host_mastra_session_ledger'").get(),
+  ).toBeNull();
+  const claimed = store.claimWorkflowAttempt(attemptRequest(initial));
+  const inflight = store.readHostStateSnapshot(identity);
+  expect(reconcile).toThrow(/journal missing for retained host effects/);
+  expect(store.readHostStateSnapshot(identity)).toEqual(inflight);
+  database.exec(
+    'CREATE TABLE agent_host_mastra_session_ledger(workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)',
+  );
+  expect(reconcile).toThrow(/journal missing for retained host effects/);
+  store.markWorkflowAttemptUncertain(claimed);
+  const unknown = store.readHostStateSnapshot(identity);
+  expect(reconcile).toThrow(/journal missing for retained host effects/);
+  expect(store.readHostStateSnapshot(identity)).toEqual(unknown);
+});
+
 test('same live writer heartbeat preserves its fence and unknown outcome while revocation and expiry deny renewal', () => {
   let state = store.compareAndSwapHostState(fixture());
   const started = store.claimWorkflowAttempt({
@@ -1101,25 +1128,41 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
 });
 
 test('consumer migration archives individually bounded governance rows beyond the aggregate ingress node budget', async () => {
-  const operation=store.reserveOperation('archive','1'.repeat(64),'2'.repeat(64));
-  store.transitionOperation(operation,'commit_unknown');
-  store.transitionOperation(operation,'applied','3'.repeat(64));
-  const template=database.query("SELECT * FROM agent_host_governance WHERE kind='operation'").get();
-  database.transaction(()=>{
-    for(let index=0;index<1400;index++) {
-      const key=createHash('sha256').update('archive-operation-'+index).digest('hex');
-      const payload={...JSON.parse(template.payload),operation_key:key};
-      const digest=canonicalJsonDigest({workspace_id:workspace,store_id:template.store_id,kind:template.kind,record_key:key,revision:template.revision,payload});
-      database.query('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)').run(workspace,template.store_id,template.kind,key,template.revision,canonicalJson(payload),digest);
-    }
-  }).immediate();
-  const rows=database.query('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid').all(workspace);
-  expect(()=>canonicalJsonDigest(rows)).toThrow(/node budget/);
-  const migration=maintenanceStore(),fence=migration.acquireMaintenanceFence(maintenanceBinding());
-  expect(migration.consumerMigrationState(fence,'baseline',()=>undefined).status).toBe('baseline');
+  const operation = store.reserveOperation('archive', '1'.repeat(64), '2'.repeat(64));
+  store.transitionOperation(operation, 'commit_unknown');
+  store.transitionOperation(operation, 'applied', '3'.repeat(64));
+  const template = database.query("SELECT * FROM agent_host_governance WHERE kind='operation'").get();
+  database
+    .transaction(() => {
+      for (let index = 0; index < 1400; index++) {
+        const key = createHash('sha256')
+          .update('archive-operation-' + index)
+          .digest('hex');
+        const payload = { ...JSON.parse(template.payload), operation_key: key };
+        const digest = canonicalJsonDigest({
+          workspace_id: workspace,
+          store_id: template.store_id,
+          kind: template.kind,
+          record_key: key,
+          revision: template.revision,
+          payload,
+        });
+        database
+          .query('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)')
+          .run(workspace, template.store_id, template.kind, key, template.revision, canonicalJson(payload), digest);
+      }
+    })
+    .immediate();
+  const rows = database.query('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid').all(workspace);
+  expect(() => canonicalJsonDigest(rows)).toThrow(/node budget/);
+  const migration = maintenanceStore(),
+    fence = migration.acquireMaintenanceFence(maintenanceBinding());
+  expect(migration.consumerMigrationState(fence, 'baseline', () => undefined).status).toBe('baseline');
   expect(database.query('SELECT count(*) AS count FROM agent_host_governance').get().count).toBe(0);
-  expect(migration.consumerMigrationState(fence,'restore',()=>undefined).status).toBe('restored');
-  expect(database.query('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid').all(workspace)).toEqual(rows);
+  expect(migration.consumerMigrationState(fence, 'restore', () => undefined).status).toBe('restored');
+  expect(
+    database.query('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid').all(workspace),
+  ).toEqual(rows);
   await migration.releaseMaintenanceFence(fence);
 });
 
@@ -5530,28 +5573,41 @@ test('lazy ownership: queued writer activates after owner release without changi
   expect(activated.exclusive_resources).toEqual(queuedTicket.exclusive_resources);
 });
 test('lazy ownership: suspending queued B releases its writer intent so C acquires after A releases', async () => {
-  const first=writerAcquire(store.compareAndSwapHostState((await writerFixture()).seed));
-  const seed=(await writerFixture('second')).seed;
-  includeExistingLedger(seed,first.ledger);seed.expectedLedger=first.ledgerVersion;
-  const second=store.compareAndSwapHostState(seed);
-  expect(()=>writerAcquire(second)).toThrow(/queued/);
-  const queued=store.readHostStateSnapshot({...identity,work_id:'second'});
-  const intent=queued.ledger.tickets.find(ticket=>ticket.work_id === 'second' && ticket.status === 'queued');
-  const request=ownerRecoveryPreviewRequest(queued,quiescentJournal('second','run-second'));
-  request.identity.work_id='second';request.documentationContext.work_id='second';
-  const released=suspendLocalWork(request);
-  expect(released.ledger.tickets.find(ticket=>ticket.ticket_id === intent.ticket_id).status).toBe('released');
-  expect(released.ledger.operations.some(operation=>operation.ticket_id === intent.ticket_id && operation.kind === 'release')).toBe(true);
-  expect(released.ledger.tickets.find(ticket=>ticket.work_id === 'work' && ticket.status === 'active')).toEqual(queued.ledger.tickets.find(ticket=>ticket.work_id === 'work' && ticket.status === 'active'));
-  const thirdSeed=(await writerFixture('third')).seed;
-  includeExistingLedger(thirdSeed,released.ledger);thirdSeed.expectedLedger=released.ledgerVersion;
-  const third=store.compareAndSwapHostState(thirdSeed);
-  expect(()=>writerAcquire(third)).toThrow(/queued/);
-  suspendLocalWork(ownerRecoveryPreviewRequest(store.readHostStateSnapshot(identity),quiescentJournal()));
-  const current=store.readHostStateSnapshot({...identity,work_id:'third'});
-  const active=writerAcquire(current);
-  expect(active.ledger.tickets.filter(ticket=>ticket.work_id === 'third' && ticket.status === 'active')).toHaveLength(1);
-  expect(active.ledger.tickets.find(ticket=>ticket.ticket_id === intent.ticket_id)).toEqual(released.ledger.tickets.find(ticket=>ticket.ticket_id === intent.ticket_id));
+  const first = writerAcquire(store.compareAndSwapHostState((await writerFixture()).seed));
+  const seed = (await writerFixture('second')).seed;
+  includeExistingLedger(seed, first.ledger);
+  seed.expectedLedger = first.ledgerVersion;
+  const second = store.compareAndSwapHostState(seed);
+  expect(() => writerAcquire(second)).toThrow(/queued/);
+  const queued = store.readHostStateSnapshot({ ...identity, work_id: 'second' });
+  const intent = queued.ledger.tickets.find((ticket) => ticket.work_id === 'second' && ticket.status === 'queued');
+  const request = ownerRecoveryPreviewRequest(queued, quiescentJournal('second', 'run-second'));
+  request.identity.work_id = 'second';
+  request.documentationContext.work_id = 'second';
+  const released = suspendLocalWork(request);
+  expect(released.ledger.tickets.find((ticket) => ticket.ticket_id === intent.ticket_id).status).toBe('released');
+  expect(
+    released.ledger.operations.some(
+      (operation) => operation.ticket_id === intent.ticket_id && operation.kind === 'release',
+    ),
+  ).toBe(true);
+  expect(released.ledger.tickets.find((ticket) => ticket.work_id === 'work' && ticket.status === 'active')).toEqual(
+    queued.ledger.tickets.find((ticket) => ticket.work_id === 'work' && ticket.status === 'active'),
+  );
+  const thirdSeed = (await writerFixture('third')).seed;
+  includeExistingLedger(thirdSeed, released.ledger);
+  thirdSeed.expectedLedger = released.ledgerVersion;
+  const third = store.compareAndSwapHostState(thirdSeed);
+  expect(() => writerAcquire(third)).toThrow(/queued/);
+  suspendLocalWork(ownerRecoveryPreviewRequest(store.readHostStateSnapshot(identity), quiescentJournal()));
+  const current = store.readHostStateSnapshot({ ...identity, work_id: 'third' });
+  const active = writerAcquire(current);
+  expect(
+    active.ledger.tickets.filter((ticket) => ticket.work_id === 'third' && ticket.status === 'active'),
+  ).toHaveLength(1);
+  expect(active.ledger.tickets.find((ticket) => ticket.ticket_id === intent.ticket_id)).toEqual(
+    released.ledger.tickets.find((ticket) => ticket.ticket_id === intent.ticket_id),
+  );
 });
 
 test('lazy ownership: paused execution-only work resumes with execution rights and no file rights', async () => {
@@ -5626,6 +5682,11 @@ test('issued readonly release: completed official-docs predecessor does not bloc
 
 test('expired recovery keeps runtime identity coupled across verified bundle changes without replaying research', () => {
   const seed = fixture();
+  seed.nextWork.binding.allowed_resources.push('execution:work');
+  seed.nextLedger.tickets[0].contour_keys.push('execution:work');
+  seed.nextLedger.tickets[0].exclusive_resources = ['execution:work'];
+  seed.nextLedger.tickets[0].active_resources = ['execution:work'];
+  seed.nextLedger.claims[0].resources = ['execution:work'];
   const digestA = 'a'.repeat(64),
     digestB = 'b'.repeat(64);
   seed.nextWork.binding.runtime_source_revision = digestA;

@@ -143,13 +143,17 @@ test('installed-bundle verification has only shipped generic test inputs and pre
     assert.equal(Object.hasOwn(manifest.scripts, retiredDiagnostic), false);
     assert.equal(manifest.scripts['ci:candidate:pinned'].includes(retiredDiagnostic), false);
   }
-  for (const repositoryOnlyGate of ['test:coverage:pinned', 'crap:pinned', 'test:mutation:pinned']) {
+  for (const repositoryOnlyGate of ['test:coverage:pinned', 'crap:pinned']) {
     assert.equal(manifest.scripts['ci:pinned'].includes(repositoryOnlyGate), false);
     assert.ok(
       manifest.scripts['ci:candidate:pinned'].includes(repositoryOnlyGate),
       `candidate-repository ci retains ${repositoryOnlyGate}`,
     );
   }
+  assert.equal(manifest.scripts['test:mutation'], 'node bin/bun.mjs run test:mutation:pinned');
+  assert.match(manifest.scripts['test:mutation:pinned'], /\bbun tooling\/mutation-gate\.mjs\b/u);
+  for (const aggregate of ['ci:pinned', 'ci:candidate:pinned', 'verify:portable:pinned'])
+    assert.ok(!manifest.scripts[aggregate].includes('test:mutation'), `${aggregate} must keep mutation manual`);
 });
 
 const roots = [];

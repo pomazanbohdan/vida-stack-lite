@@ -1,3 +1,4 @@
+import { configuredTestContext } from './configured-context.mjs';
 import { describe, expect, test } from 'vitest';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,9 +7,7 @@ import { tmpdir } from 'node:os';
 import * as runtime from '../src/index.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
-const config = runtime.loadRuntimeConfig(repositoryRoot);
-const context = runtime.loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const { repositoryRoot, config, context } = configuredTestContext();
 const categories = Object.freeze(['Zero', 'One', 'Many', 'Boundary', 'Interface', 'Exception', 'Simple']);
 const publicExports = Object.freeze([
   'LifecycleStateError',
@@ -121,7 +120,7 @@ const configuredHandoffEvidence = categoryEvidence('tests/run-entrypoint.test.mj
   Boundary: 'does not use process environment as project or thread authority',
   Interface: 'requires every explicit argument and rejects raw authority inputs',
   Exception: 'blocks before workflow selection when the trusted initialization binding is absent',
-  Simple: 'keeps terminal advisory reports distinct from a blocked resume',
+  Simple: 'keeps CLI validation, workflow selection, CAS and report handling bound to one attempt',
 });
 const persistentHandoffEvidence = categoryEvidence('tests/bun/persistent-session-handoff.test.mjs', {
   Zero: 'only current v1 session rows are readable',
@@ -233,10 +232,18 @@ function documentationClearFixture() {
   write('docs/creatio/map.md', 'map\n');
   write('docs/agent-instructions/index.md', 'index\n');
   write('docs/agent-instructions/current.md', 'current\n');
+  const input = {
+    repository_root: root,
+    repository_id: runtime.loadRuntimeConfig(root).repository.repository_id,
+    project_id: context.project_ids[0],
+    work_id: 'clear-zombies',
+    source_revision: 'source-1',
+    scope_paths: ['docs/agent-instructions/current.md'],
+  };
   const policy = {
     schema: 'DocumentationPolicy/v1',
     policy_id: 'clear-zombies',
-    project_id: 'creatio-sample',
+    project_id: input.project_id,
     source_path: 'docs/agent-instructions/documentation-policy.v1.json',
     owner: 'project:refactoring',
     required: true,
@@ -249,14 +256,7 @@ function documentationClearFixture() {
     updated_at: new Date().toISOString(),
   };
   write(policy.source_path, JSON.stringify(policy) + '\n');
-  const input = {
-    repository_root: root,
-    repository_id: 'creatio-sample-repository',
-    project_id: 'refactoring',
-    work_id: 'clear-zombies',
-    source_revision: 'source-1',
-    scope_paths: ['docs/agent-instructions/current.md'],
-  };
+
   write(
     `.agent/work/${input.work_id}/scope.json`,
     JSON.stringify({
@@ -266,7 +266,12 @@ function documentationClearFixture() {
       allowed_paths: input.scope_paths,
     }) + '\n',
   );
-  return { root, input, write, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+  return {
+    root,
+    input,
+    write,
+    cleanup: () => rmSync(root, { recursive: true, force: true }),
+  };
 }
 
 async function documentationCloseout(fixture) {
@@ -405,7 +410,10 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
   test('Simple: CLEAR creates a valid baseline for an ordinary scope', () => {
     const fixture = documentationClearFixture();
     try {
-      const checkpoint = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+      const checkpoint = runtime.produceDocumentationClearCheckpoint({
+        ...fixture.input,
+        phase: 'baseline',
+      });
       expect(checkpoint.status).toBe('pass');
       expect(checkpoint.baseline_path).toBeNull();
       expect(checkpoint.documents.some((document) => document.path === fixture.input.scope_paths[0])).toBe(true);
@@ -446,7 +454,7 @@ describe('machine-checked public export ZOMBIES matrix', () => {
         team: 'default-development',
         kind: 'research',
         intent: 'information_research',
-        project: '3mob',
+        project: context.project_ids[0],
         risk_flags: [],
         labels: [],
       }).workflow_id,

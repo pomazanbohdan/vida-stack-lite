@@ -12,6 +12,7 @@ import { buildConfiguredContext, type ConfiguredContext } from './configured-con
 import { parseObservedValidatorVerdict } from './observed-validation.js';
 import { parseObservedTesterVerdict } from './observed-testing.js';
 import { sessionActionsForWave, type SessionHandoffContext } from './session-handoff.js';
+import {correctiveExecutionSchema,type CorrectiveExecution} from './final-assurance.js';
 
 const observationSchema = z
   .object({
@@ -61,6 +62,7 @@ const requestSchema = z
     config_digest: z.string().regex(/^[a-f0-9]{64}$/),
     scope_digest: z.string().regex(/^[a-f0-9]{64}$/),
     bindings_manifest_ref: z.string().regex(/^[a-f0-9]{64}$/),
+    corrective_execution:correctiveExecutionSchema.optional(),
     configured_context_digest: z
       .string()
       .regex(/^[a-f0-9]{64}$/)
@@ -166,10 +168,14 @@ export class MastraSessionBridge {
     context: SessionHandoffContext;
     workflowId: string;
     workspaceId: string;
+    correctiveExecution?:CorrectiveExecution;
   }): Promise<MastraSessionBridge> {
     const { repositoryRoot, config, selection, context, workflowId, workspaceId } = args;
     const plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags);
-    const runId = sessionBridgeRunId(workspaceId, context, workflowId);
+    const correctiveExecution=args.correctiveExecution?correctiveExecutionSchema.parse(args.correctiveExecution):undefined;
+    const baseRunId=sessionBridgeRunId(workspaceId, context, workflowId);
+    requireBridge(!correctiveExecution||correctiveExecution.base_run_id===baseRunId,'corrective base run differs');
+    const runId = correctiveExecution?.engine_run_id??baseRunId;
     const configDigest = runtimeConfigDigest(config);
     const workflow = createWorkflow({
       id: workflowId,
@@ -178,6 +184,7 @@ export class MastraSessionBridge {
       description: 'Configured VIDA session workflow with durable agent handoff.',
     });
     for (const [waveIndex, wave] of plan.waves.entries()) {
+      if(correctiveExecution&&!wave.some(stage=>correctiveExecution.stage_ids.includes(stage.id)))continue;
       if (wave.every((stage) => stage.assignments.length === 0)) continue;
       workflow.then(
         createStep({
@@ -188,7 +195,7 @@ export class MastraSessionBridge {
           resumeSchema,
           execute: async ({ inputData, resumeData, suspend }) => {
             requireBridge(inputData.config_digest === configDigest, 'Mastra configuration changed during attempt');
-            const actions = sessionActionsForWave(config, selection, context, workflowId, waveIndex, []);
+            const actions = sessionActionsForWave(config, selection, context, workflowId, waveIndex, [],correctiveExecution);
             requireBridge(actions.length > 0, 'Mastra wave has no executable assignments');
             const requests = actions.map((action) => {
               const configuredContext = configuredContextForStage(
@@ -208,6 +215,7 @@ export class MastraSessionBridge {
                     }
                   : {}),
                 schema: 'VidaSessionRequest/v1' as const,
+                ...(correctiveExecution?{corrective_execution:correctiveExecution}:{}),
                 run_id: runId,
                 workflow_id: workflowId,
                 wave_index: waveIndex,

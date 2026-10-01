@@ -13,7 +13,13 @@ import {
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { loadProjectSetContext } from '../config/project-context.js';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
-import { HostStateStore, completedSourceJournalObservationMatches, type HostStateSnapshot, type WorkIdentity, type StateVersion } from '../host-state.js';
+import {
+  HostStateStore,
+  completedSourceJournalObservationMatches,
+  type HostStateSnapshot,
+  type WorkIdentity,
+  type StateVersion,
+} from '../host-state.js';
 import {
   type ScopedSourceSnapshot,
   snapshotDeclaredSources,
@@ -21,6 +27,7 @@ import {
 } from './scoped-source-snapshot.js';
 import { type SessionHandoffContext } from './session-handoff.js';
 import { sessionBridgeRunId } from './mastra-session-bridge.js';
+import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { readLocalSourceWriteAuthorization } from './local-source-authorization.js';
 import {
   validateObservedResearchRecordPlan,
@@ -104,8 +111,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const scopeBytes = access.readBytes(input.scopePath, 'accepted implementation scope');
   const acceptanceBytes = access.readBytes(input.acceptancePath, 'accepted acceptance manifest');
-  let intakeBytes =
-    input.intakePath === undefined ? null : access.readBytes(input.intakePath, 'local session intake');
+  let intakeBytes = input.intakePath === undefined ? null : access.readBytes(input.intakePath, 'local session intake');
   if (intakeBytes !== null) {
     requireAdmission(intakeBytes.length <= 32768, 'local session intake exceeds the bounded artifact size');
     const intake = JSON.parse(intakeBytes.toString('utf8')) as { work_item?: unknown };
@@ -164,10 +170,13 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   );
   const schemaDigest = digest(schemaBytes);
   const codeDigest = runtimeCode.digest;
-  const canonicalIntakePath = input.intakePath === undefined ? null : `.agent/work/${context.work_id}/local-session-intake.v1.json`;
-  if(intakeBytes !== null) {
-    const raw=JSON.parse(intakeBytes.toString('utf8'));
-    intakeBytes=Buffer.from(canonicalJson({...raw,runtime_code_paths:runtimeCode.entries.map(entry=>entry.path)}));
+  const canonicalIntakePath =
+    input.intakePath === undefined ? null : `.agent/work/${context.work_id}/local-session-intake.v1.json`;
+  if (intakeBytes !== null) {
+    const raw = JSON.parse(intakeBytes.toString('utf8'));
+    intakeBytes = Buffer.from(
+      canonicalJson({ ...raw, runtime_code_paths: runtimeCode.entries.map((entry) => entry.path) }),
+    );
   }
   const configDigest = runtimeConfigDigest(config);
   const sourceAuthorization =
@@ -206,10 +215,15 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   };
   const before = store.readHostStateSnapshot(identity);
   if (before.work) {
-    const admittedIntake=before.work.artifacts.find(artifact=>artifact.artifact_id==='local-session-intake');
-    requireAdmission(intakeBytes===null ? !admittedIntake : admittedIntake?.path===canonicalIntakePath &&
-      admittedIntake.sha256===digest(intakeBytes) && digest(access.readBytes(admittedIntake.path,'canonical admitted intake'))===admittedIntake.sha256,
-      'canonical local work intake retry differs');
+    const admittedIntake = before.work.artifacts.find((artifact) => artifact.artifact_id === 'local-session-intake');
+    requireAdmission(
+      intakeBytes === null
+        ? !admittedIntake
+        : admittedIntake?.path === canonicalIntakePath &&
+            admittedIntake.sha256 === digest(intakeBytes) &&
+            digest(access.readBytes(admittedIntake.path, 'canonical admitted intake')) === admittedIntake.sha256,
+      'canonical local work intake retry differs',
+    );
     requireAdmission(
       before.work.request_transition?.request_pointer === scope.attribution.pointer &&
         before.work.request_transition.native_session_handle === nativeSessionHandle &&
@@ -225,11 +239,14 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     );
     return { host: before, source };
   }
-  if(canonicalIntakePath !== null && intakeBytes !== null) {
-    access.ensureDirectory(`.agent/work/${context.work_id}`,'canonical intake directory');
-    if(access.fileExists(canonicalIntakePath,'canonical intake existence'))
-      requireAdmission(access.readBytes(canonicalIntakePath,'canonical intake existing bytes').equals(intakeBytes),'canonical intake publication differs');
-    else access.writeExclusive(canonicalIntakePath,intakeBytes.toString('utf8'),'canonical local session intake');
+  if (canonicalIntakePath !== null && intakeBytes !== null) {
+    access.ensureDirectory(`.agent/work/${context.work_id}`, 'canonical intake directory');
+    if (access.fileExists(canonicalIntakePath, 'canonical intake existence'))
+      requireAdmission(
+        access.readBytes(canonicalIntakePath, 'canonical intake existing bytes').equals(intakeBytes),
+        'canonical intake publication differs',
+      );
+    else access.writeExclusive(canonicalIntakePath, intakeBytes.toString('utf8'), 'canonical local session intake');
   }
   const ticketId = 'ticket-' + canonicalJsonDigest({ identity, nativeSessionHandle }).slice(0, 40);
   const resources = ['execution:' + context.work_id];
@@ -437,15 +454,10 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         !/\p{Cc}/u.test(priorScope.attribution.pointer),
       'predecessor request attribution invalid',
     );
-    const items = [
-      ...(journal.items as {
-        request: { stage_id: string; assignment_index: number; role: string };
-        issue_id: string | null;
-        host_reservation?: unknown;
-        research_normalization?: unknown;
-        observation?: { status: string; action_id: string; issue_id: string };
-      }[]),
-      ...(journal.completed as { items: typeof items }[]).flatMap((wave) => wave.items),
+    type PredecessorItem = MastraSessionLedgerState['items'][number];
+    const items: PredecessorItem[] = [
+      ...(journal.items as PredecessorItem[]),
+      ...(journal.completed as { items: PredecessorItem[] }[]).flatMap((wave) => wave.items),
     ];
     requireAdmission(
       items.every((item) => {
@@ -491,8 +503,9 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         return (
           assignment?.role === item.request.role &&
           profile &&
-          (item.host_reservation ? completedSourceJournalObservationMatches(work,item as never) :
-            !(item.issue_id !== null && profile.mutation_scope === 'repository_source'))
+          (item.host_reservation
+            ? completedSourceJournalObservationMatches(work, item)
+            : !(item.issue_id !== null && profile.mutation_scope === 'repository_source'))
         );
       }),
       'predecessor active or reserved source effect prevents absorption',
@@ -641,16 +654,33 @@ export function acquireLocalSourceWriterLease(input: {
     requireSafeRepositoryAccess(input.repositoryRoot),
     work.lifecycle.scope.allowed_paths,
   );
+  const correctiveJournal=work.lifecycle.assurance.correction_count>0?input.store.readWorkSessionJournal(input.identity):null;
+  const correctiveState=correctiveJournal?.state as unknown as MastraSessionLedgerState|undefined;
   requireAdmission(
-    source.digest === work.binding.work_source_revision,
+    correctiveState
+      ? correctiveState.corrective_execution?.correction_generation===work.lifecycle.assurance.correction_count&&
+        correctiveState.source_scope?.digest===source.digest&&
+        Boolean(input.expectedSessionJournal&&canonicalJsonDigest(correctiveJournal!.version)===canonicalJsonDigest(input.expectedSessionJournal.version))
+      : source.digest === work.binding.work_source_revision,
     'declared source changed before source writer acquisition',
   );
-  const reconciled=input.store.reconcileCompletedSourceOwnership({identity:input.identity,nativeSessionHandle:input.nativeSessionHandle,
-    verifyCurrent:()=>requireAdmission(runtimeConfigDigest(input.config)===work.binding.config_digest &&
-      snapshotDeclaredSources(requireSafeRepositoryAccess(input.repositoryRoot),work.lifecycle.scope.allowed_paths).digest===source.digest,
-      'completed source ownership changed before reconciliation')});
-  if(reconciled.workVersion?.digest!==before.workVersion?.digest)
-    return acquireLocalSourceWriterLease({...input,expectedWork:reconciled.workVersion!,expectedLedger:reconciled.ledgerVersion!});
+  const reconciled = input.store.reconcileCompletedSourceOwnership({
+    identity: input.identity,
+    nativeSessionHandle: input.nativeSessionHandle,
+    verifyCurrent: () =>
+      requireAdmission(
+        runtimeConfigDigest(input.config) === work.binding.config_digest &&
+          snapshotDeclaredSources(requireSafeRepositoryAccess(input.repositoryRoot), work.lifecycle.scope.allowed_paths)
+            .digest === source.digest,
+        'completed source ownership changed before reconciliation',
+      ),
+  });
+  if (reconciled.workVersion?.digest !== before.workVersion?.digest)
+    return acquireLocalSourceWriterLease({
+      ...input,
+      expectedWork: reconciled.workVersion!,
+      expectedLedger: reconciled.ledgerVersion!,
+    });
   const prior = ledger.tickets.find((ticket) => ticket.ticket_id === work.lease!.ticket_id);
   requireAdmission(
     prior?.status === 'active' &&

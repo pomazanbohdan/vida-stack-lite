@@ -2,19 +2,26 @@ import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   closeSync,
+  constants,
+  copyFileSync,
+  fsyncSync,
   existsSync,
   lstatSync,
   mkdirSync,
   openSync,
   readFileSync,
+  readdirSync,
   realpathSync,
   renameSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { findNpmCli } from '../../packages/agent/bin/bun.mjs';
+import { homedir } from 'node:os';
+import { sdkCompatibilityManifest } from '../../packages/agent/tooling/pack-sdk.mjs';
+import { findNpmCli, resolvePinnedBun } from '../../packages/agent/bin/bun.mjs';
 
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 const idPattern = /^[a-z0-9][a-z0-9-]{0,95}$/;
@@ -179,12 +186,22 @@ function prepareCandidate(root) {
           path.join(root, '.tmp/releases', pending.operation_id),
           pending.version,
         );
+        const installedManifestBytes =
+          packedDistribution(completed.pack_metadata) === 'npm' &&
+          completed.pack_metadata[0].files.some((file) => file.path === 'tooling/pack-sdk.mjs')
+            ? sdkCompatibilityManifest({ root: path.join(root, 'packages/agent') }).bytes
+            : undefined;
         const exact =
           sha(readFileSync(archive)) === completed.tarball_sha256 &&
           completed.pack_metadata[0].files.every(({ path: relative }) => {
             const source = path.join(root, 'packages/agent', relative),
               target = path.join(completed.installed_root, relative);
-            return existsSync(target) && sha(readFileSync(source)) === sha(readFileSync(target));
+            return (
+              existsSync(target) &&
+              sha(
+                relative === 'package.json' && installedManifestBytes ? installedManifestBytes : readFileSync(source),
+              ) === sha(readFileSync(target))
+            );
           });
         if (!exact) throw new Error('Completed publication must be reconciled against installed bytes.');
         save(successFile, completed);
@@ -204,7 +221,12 @@ function prepareCandidate(root) {
   const operation_id = `local-${randomUUID()}`;
   directory(root, `.tmp/releases/${operation_id}`);
   directory(root, `.agent/work/agent-local-release/${operation_id}`);
-  const prepared = { schema: 'VidaLocalReleaseState/v1', operation_id, version, status: 'awaiting_assurance' };
+  const prepared = {
+    schema: 'VidaLocalReleaseState/v1',
+    operation_id,
+    version,
+    status: 'awaiting_assurance',
+  };
   save(pendingFile, prepared);
   save(journalFile(root, operation_id), prepared);
   return prepared;
@@ -229,7 +251,15 @@ export function runCommand(command, args, { cwd, env = process.env, log } = {}) 
     });
     child.on('error', reject);
     child.on('close', (code, signal) => {
-      const result = { command, args, code, signal, elapsed_ms: Date.now() - started, stdout, stderr };
+      const result = {
+        command,
+        args,
+        code,
+        signal,
+        elapsed_ms: Date.now() - started,
+        stdout,
+        stderr,
+      };
       if (log) writeFileSync(log, json(result));
       if (code !== 0 || signal)
         reject(new Error(`Command failed: ${args.join(' ')} (${code ?? signal})\n${stderr.slice(-2048)}`));
@@ -282,7 +312,26 @@ export function parsePackOutput(output) {
     throw new Error('Unknown npm prepack event.');
   return JSON.parse(text.slice(boundary + 1));
 }
-export async function verifyPackedSources(root, metadata, tarball, npmCli) {
+export function packedDistribution(metadata) {
+  if (!Array.isArray(metadata) || metadata.length !== 1 || !Array.isArray(metadata[0].files))
+    throw new Error('Exact package distribution metadata missing.');
+  const paths = metadata[0].files.map((file) => file.path);
+  if (
+    new Set(paths).size !== paths.length ||
+    paths.some(
+      (relative) =>
+        typeof relative !== 'string' ||
+        relative.startsWith('/') ||
+        relative.split('/').some((part) => !part || part === '.' || part === '..' || part.includes(':')),
+    )
+  )
+    throw new Error('Package distribution file set is ambiguous.');
+  return paths.some((relative) => relative.startsWith('dist/standalone/')) ? 'native' : 'npm';
+}
+function sdkManifest(root) {
+  return sdkCompatibilityManifest({ root: path.join(root, 'packages/agent') }).bytes;
+}
+export async function verifyPackedSources(root, metadata, tarball, npmCli, expectedManifest) {
   const tar = createRequire(npmCli)('tar');
   const expected = new Set(metadata[0].files.map((entry) => 'package/' + entry.path));
   const seen = new Set(),
@@ -304,7 +353,9 @@ export async function verifyPackedSources(root, metadata, tarball, npmCli) {
         if (
           !existsSync(source) ||
           lstatSync(source).isSymbolicLink() ||
-          !Buffer.concat(chunks).equals(readFileSync(source))
+          !Buffer.concat(chunks).equals(
+            entry.path === 'package/package.json' && expectedManifest ? expectedManifest : readFileSync(source),
+          )
         )
           errors.push('Current packaged bytes differ: ' + entry.path);
       });
@@ -322,16 +373,401 @@ function pathCli(env) {
   }
   throw new Error('vida-agent is absent from system PATH.');
 }
+
+function nativePath(file, create = false) {
+  if (!path.isAbsolute(file)) throw new Error('Native installation path must be absolute.');
+  let current = path.parse(file).root;
+  for (const part of file.slice(current.length).split(path.sep).filter(Boolean)) {
+    current = path.join(current, part);
+    if (create && !existsSync(current)) mkdirSync(current);
+    const info = lstatSync(current);
+    if (!info.isDirectory() || info.isSymbolicLink())
+      throw new Error('Native installation directory must not be linked.');
+  }
+}
+
+export function nativeInstallationPaths({ version, operation, target, env = process.env }) {
+  if (
+    !/^0\.1\.(0|[1-9]\d*)$/.test(version) ||
+    !idPattern.test(operation) ||
+    typeof target !== 'string' ||
+    !target.startsWith('bun-' + process.platform.replace('win32', 'windows') + '-' + process.arch)
+  )
+    throw new Error('Native installation identity or target differs.');
+  const base =
+    process.platform === 'win32'
+      ? env.LOCALAPPDATA
+      : (env.XDG_DATA_HOME ?? path.join(env.HOME ?? homedir(), '.local', 'share'));
+  if (typeof base !== 'string' || !path.isAbsolute(base) || /[\r\n\0]/.test(base))
+    throw new Error('Native user installation root unavailable.');
+  const product =
+    process.platform === 'win32' ? path.join(base, 'Programs', 'vida-agent') : path.join(base, 'vida-agent');
+  const prefix = path.join(product, 'bin');
+  return {
+    installed_root: path.join(product, 'releases', version + '-' + operation, 'package'),
+    prefix,
+    path_command: path.join(prefix, process.platform === 'win32' ? 'vida-agent.exe' : 'vida-agent'),
+  };
+}
+
+/** First publication is exclusive; replacement is allowed only against an exact prior successful asset. */
+export function publishNativeExecutable(asset, destination, prior = null) {
+  nativePath(path.dirname(asset.path));
+  const source = lstatSync(asset.path),
+    bytes = readFileSync(asset.path);
+  if (
+    !source.isFile() ||
+    source.isSymbolicLink() ||
+    source.nlink !== 1 ||
+    bytes.length !== asset.bytes ||
+    sha(bytes) !== asset.sha256
+  )
+    throw new Error('Native source asset differs.');
+  nativePath(path.dirname(destination), true);
+  const before = existsSync(destination) ? lstatSync(destination) : null;
+  let priorBytes;
+  if (before) {
+    if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1 || !prior || prior.path !== destination)
+      throw new Error('Native destination has an unowned or linked prior artifact.');
+    priorBytes = readFileSync(destination);
+    if (priorBytes.length !== prior.bytes || sha(priorBytes) !== prior.sha256)
+      throw new Error('Prior native artifact differs.');
+  } else if (prior) throw new Error('Prior native artifact disappeared.');
+  const pending = destination + '.' + randomUUID() + '.pending';
+  let descriptor;
+  try {
+    descriptor = openSync(pending, 'wx', 0o755);
+    writeFileSync(descriptor, bytes);
+    fsyncSync(descriptor);
+    closeSync(descriptor);
+    descriptor = undefined;
+    if (priorBytes) {
+      const current = lstatSync(destination);
+      if (
+        !current.isFile() ||
+        current.isSymbolicLink() ||
+        current.nlink !== 1 ||
+        current.ino !== before.ino ||
+        !readFileSync(destination).equals(priorBytes)
+      )
+        throw new Error('Prior native artifact changed before publication.');
+      renameSync(pending, destination);
+    } else {
+      copyFileSync(pending, destination, constants.COPYFILE_EXCL);
+      unlinkSync(pending);
+    }
+  } finally {
+    if (descriptor !== undefined) closeSync(descriptor);
+    if (existsSync(pending)) unlinkSync(pending);
+  }
+}
+
+async function nativeAsset(root, metadata, command, env, log) {
+  const packageRoot = path.join(root, 'packages/agent');
+  const helper = path.join(packageRoot, 'tooling/build-standalone.mjs');
+  if (!existsSync(helper))
+    throw new Error('Standalone verifier is unavailable; wait for the agreed helper implementation.');
+  const executable = resolvePinnedBun({ root: packageRoot, env });
+  const script =
+    'const {verifyStandalone}=await import(' +
+    JSON.stringify(pathToFileURL(helper).href) +
+    '); console.log(JSON.stringify(await verifyStandalone({root:' +
+    JSON.stringify(packageRoot) +
+    '})));';
+  const cleanEnv = { ...env };
+  for (const key of Object.keys(cleanEnv))
+    if (['NODE_OPTIONS', 'BUN_OPTIONS'].includes(key.toUpperCase())) delete cleanEnv[key];
+  const result = JSON.parse(
+    await command(
+      executable,
+      ['--no-env-file', '--no-install', '--config=' + path.join(packageRoot, 'bunfig.toml'), '-e', script],
+      { cwd: packageRoot, env: cleanEnv, log },
+    ),
+  );
+  if (!Array.isArray(result.assets) || result.assets.length !== 1)
+    throw new Error('Local native release requires one actual native asset.');
+  const asset = result.assets[0];
+  const relative = path.relative(packageRoot, asset.path).split(path.sep).join('/');
+  const manifestRelative = path.relative(packageRoot, result.manifestPath).split(path.sep).join('/');
+  if (
+    !relative.startsWith('dist/standalone/') ||
+    relative.includes('..') ||
+    !manifestRelative.startsWith('dist/standalone/') ||
+    manifestRelative.includes('..') ||
+    !metadata[0].files.some((file) => file.path === relative) ||
+    !metadata[0].files.some((file) => file.path === manifestRelative)
+  )
+    throw new Error('Native asset and manifest must belong to the exact archive.');
+  return { ...asset, relative };
+}
+
+async function extractNativeTree(root, metadata, tarball, npmCli, destination) {
+  nativePath(path.dirname(destination), true);
+  if (existsSync(destination)) throw new Error('Native release tree already exists; inspect uncertain installation.');
+  mkdirSync(destination);
+  const tar = createRequire(npmCli)('tar');
+  const expected = new Set(nativeArchiveFiles(metadata).map((file) => 'package/' + file.path));
+  await tar.x({
+    file: tarball,
+    cwd: destination,
+    strip: 1,
+    strict: true,
+    filter(entry, info) {
+      if (info.type === 'Directory') {
+        if (
+          !entry.startsWith('package/') ||
+          entry.split('/').some((part) => part === '..' || part === '.' || part.includes(':') || part.includes('\\'))
+        )
+          throw new Error('Native extraction directory differs.');
+        return true;
+      }
+      if (info.type !== 'File' || !expected.has(entry)) throw new Error('Native extraction entry differs.');
+      return true;
+    },
+  });
+  verifyInstalledTree(root, metadata, destination);
+}
+
+function verifyInstalledTree(root, metadata, destination) {
+  nativePath(destination);
+  const files = nativeArchiveFiles(metadata),
+    expected = new Set(files.map((file) => file.path));
+  const visit = (directory, relative = '') => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const name = relative + entry.name,
+        absolute = path.join(directory, entry.name);
+      if (entry.isSymbolicLink()) throw new Error('Installed native tree contains a linked entry.');
+      if (entry.isDirectory()) visit(absolute, name + '/');
+      else if (!entry.isFile() || !expected.has(name))
+        throw new Error('Installed native tree contains an unknown entry.');
+    }
+  };
+  visit(destination);
+  for (const file of files) {
+    const target = path.join(destination, file.path);
+    nativePath(path.dirname(target));
+    const info = lstatSync(target);
+    if (
+      !info.isFile() ||
+      info.isSymbolicLink() ||
+      info.nlink !== 1 ||
+      !readFileSync(target).equals(readFileSync(path.join(root, 'packages/agent', file.path)))
+    )
+      throw new Error('Installed native release tree differs.');
+  }
+}
+
+function nativeArchiveFiles(metadata) {
+  const files = metadata[0]?.files;
+  if (
+    !Array.isArray(files) ||
+    new Set(files.map((file) => file.path)).size !== files.length ||
+    files.some(
+      (file) =>
+        typeof file.path !== 'string' ||
+        file.path.includes('\\') ||
+        file.path.startsWith('/') ||
+        file.path.split('/').some((part) => !part || part === '.' || part === '..' || part.includes(':')),
+    )
+  )
+    throw new Error('Native archive paths differ.');
+  return files;
+}
+
+function nativePathCommand(pathValue) {
+  for (const folder of pathValue.split(path.delimiter).filter(Boolean)) {
+    for (const filename of process.platform === 'win32'
+      ? ['vida-agent.com', 'vida-agent.exe', 'vida-agent.bat', 'vida-agent.cmd']
+      : ['vida-agent']) {
+      const file = path.join(folder, filename);
+      if (existsSync(file)) return file;
+    }
+  }
+  throw new Error('Native command is absent from PATH.');
+}
+
+async function priorNativeAsset(root, prior, relative, destination, npmCli) {
+  if (
+    !prior ||
+    prior.path_command !== destination ||
+    !prior.installed_root ||
+    !prior.pack_metadata?.[0]?.files.some((file) => file.path === relative)
+  )
+    return null;
+  const archive = selectedTarball(
+    prior.pack_metadata,
+    path.join(root, '.tmp/releases', prior.operation_id),
+    prior.version,
+  );
+  if (sha(readFileSync(archive)) !== prior.tarball_sha256) throw new Error('Prior native archive differs.');
+  let bytes;
+  await createRequire(npmCli)('tar').t({
+    file: archive,
+    strict: true,
+    onReadEntry(entry) {
+      if (entry.path !== 'package/' + relative) return;
+      if (entry.type !== 'File' || bytes) throw new Error('Prior native archive asset differs.');
+      const chunks = [];
+      entry.on('data', (chunk) => chunks.push(chunk));
+      entry.on('end', () => {
+        bytes = Buffer.concat(chunks);
+      });
+    },
+  });
+  if (!bytes) throw new Error('Prior native asset is absent from its archive.');
+  return { path: destination, bytes: bytes.length, sha256: sha(bytes) };
+}
+
+async function installNativeRelease({ root, state, value, metadata, tarball, npmCli, env, command, folder, update }) {
+  const asset = await nativeAsset(root, metadata, command, env, path.join(folder, 'native-manifest-verify.json'));
+  const locations = nativeInstallationPaths({
+    version: value.version,
+    operation: state.operation_id,
+    target: asset.target,
+    env,
+  });
+  if (
+    state.install_started &&
+    ['installed_root', 'prefix', 'path_command'].some((key) => state[key] !== locations[key])
+  )
+    throw new Error('Recorded native installation targets differ; inspect before retry.');
+  if (state.install_started) {
+    verifyInstalledTree(root, metadata, locations.installed_root);
+    nativePath(locations.prefix);
+    const info = lstatSync(locations.path_command);
+    if (
+      !info.isFile() ||
+      info.isSymbolicLink() ||
+      info.nlink !== 1 ||
+      sha(readFileSync(locations.path_command)) !== asset.sha256
+    )
+      throw new Error(
+        'Prior native install outcome differs or remains uncertain; inspect before retrying installation.',
+      );
+  } else {
+    const successfulFile = path.join(root, '.agent/work/agent-local-release/successful.json');
+    const prior = existsSync(successfulFile) ? releaseState(successfulFile) : null;
+    const priorAsset = await priorNativeAsset(root, prior, asset.relative, locations.path_command, npmCli);
+    update('installing', { ...locations, install_started: true });
+    await extractNativeTree(root, metadata, tarball, npmCli, locations.installed_root);
+    publishNativeExecutable(
+      { ...asset, path: path.join(locations.installed_root, asset.relative) },
+      locations.path_command,
+      priorAsset,
+    );
+  }
+  const unrelated = directory(root, `.tmp/releases/${state.operation_id}/unrelated-cwd`);
+  const nativeEnv = { ...env };
+  for (const key of Object.keys(nativeEnv))
+    if (
+      ['NODE_OPTIONS', 'BUN_OPTIONS', 'VIDA_STANDALONE_ROOT', 'VIDA_STANDALONE_EXECUTABLE', 'BUN_BE_BUN'].includes(
+        key.toUpperCase(),
+      )
+    )
+      delete nativeEnv[key];
+  const invoke = (args, label) =>
+    command(locations.path_command, args, {
+      cwd: unrelated,
+      env: nativeEnv,
+      log: path.join(folder, label + '.json'),
+    });
+  const version = JSON.parse(await invoke(['version'], 'native-version'));
+  if (version.name !== 'vida-agent' || version.version !== value.version)
+    throw new Error('Installed native version differs.');
+  const instruction = JSON.parse(
+    await invoke(['instructions', '--path', 'development-lifecycle'], 'native-instructions'),
+  );
+  if (instruction.version !== value.version || !path.isAbsolute(instruction.path))
+    throw new Error('Installed native instruction identity differs.');
+  nativePath(path.dirname(instruction.path));
+  const instructionInfo = lstatSync(instruction.path);
+  if (
+    !instructionInfo.isFile() ||
+    instructionInfo.isSymbolicLink() ||
+    instructionInfo.nlink !== 1 ||
+    !readFileSync(instruction.path).equals(
+      readFileSync(path.join(locations.installed_root, 'instructions/development-lifecycle.md')),
+    )
+  )
+    throw new Error('Installed native instruction discovery differs.');
+  const check = JSON.parse(await invoke(['install', '--check'], 'native-check'));
+  if (check.status !== 'prerequisites_valid' || check.bun_pin !== '1.4.2' || check.runtime !== 'embedded')
+    throw new Error('Installed native prerequisite check differs.');
+  if (process.platform === 'win32') {
+    const powershell = path.join(
+      process.env.SystemRoot ?? 'C:\\Windows',
+      'System32',
+      'WindowsPowerShell',
+      'v1.0',
+      'powershell.exe',
+    );
+    const runPathScript = (script, label) =>
+      command(
+        powershell,
+        ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
+        { cwd: unrelated, env, log: path.join(folder, label + '.json') },
+      );
+    const current = String(
+      await runPathScript(
+        "[Console]::Write([Environment]::GetEnvironmentVariable('Path','User'))",
+        'native-path-observe',
+      ),
+    );
+    const entries = current.split(';').filter(Boolean);
+    if (!entries.some((entry) => entry.toLowerCase() === locations.prefix.toLowerCase())) {
+      const literal = (text) => "'" + text.replaceAll("'", "''") + "'";
+      const next = [locations.prefix, ...entries].join(';');
+      await runPathScript(
+        "if([string][Environment]::GetEnvironmentVariable('Path','User') -cne " +
+          literal(current) +
+          ") { throw 'User PATH changed; inspect before retry' }; [Environment]::SetEnvironmentVariable('Path'," +
+          literal(next) +
+          ",'User')",
+        'native-path-publish',
+      );
+    }
+    const observed = String(
+      await runPathScript(
+        "[Console]::Write([Environment]::GetEnvironmentVariable('Path','User'))",
+        'native-path-verify',
+      ),
+    );
+    if (!observed.split(';').some((entry) => entry.toLowerCase() === locations.prefix.toLowerCase()))
+      throw new Error('Native user PATH publication remains uncertain.');
+    const machine = String(
+      await runPathScript(
+        "[Console]::Write([Environment]::GetEnvironmentVariable('Path','Machine'))",
+        'native-machine-path-observe',
+      ),
+    );
+    if (
+      path.resolve(nativePathCommand(machine + ';' + observed)).toLowerCase() !== locations.path_command.toLowerCase()
+    )
+      throw new Error(
+        'An earlier system PATH command shadows the native user command; preserve it and reconcile PATH.',
+      );
+  } else {
+    const pathValue = Object.entries(env).find(([key]) => key === 'PATH')?.[1] ?? '';
+    if (!pathValue.split(path.delimiter).includes(locations.prefix))
+      throw new Error('Native prefix must be present in the user PATH before Unix installation can complete.');
+    if (path.resolve(nativePathCommand(pathValue)) !== locations.path_command)
+      throw new Error('An earlier PATH command shadows the native user command.');
+  }
+  return locations;
+}
 export async function executeRelease({
   root = repositoryRoot,
   operation,
   qualify,
   packOnly = false,
+  distribution,
   command = runCommand,
   npmCli = findNpmCli(),
   env = process.env,
 }) {
   if (!idPattern.test(operation)) throw new Error('Release operation ID invalid.');
+  if (distribution !== undefined && !['npm', 'native'].includes(distribution))
+    throw new Error('Release distribution invalid.');
   const folder = directory(root, `.tmp/releases/${operation}`);
   const stateFile = journalFile(root, operation);
   let state = releaseState(stateFile);
@@ -341,7 +777,11 @@ export async function executeRelease({
     throw new Error('Release candidate is not current.');
   const started = Date.now();
   const npm = (args, label, cwd = path.join(root, 'packages/agent')) =>
-    command(process.execPath, [npmCli, ...args], { cwd, env, log: path.join(folder, `${label}.json`) });
+    command(process.execPath, [npmCli, ...args], {
+      cwd,
+      env,
+      log: path.join(folder, `${label}.json`),
+    });
   const update = (status, extra = {}) => {
     state = { ...state, ...extra, status, elapsed_ms: Date.now() - started };
     save(stateFile, state);
@@ -353,11 +793,21 @@ export async function executeRelease({
     const changed = state.source_binding && state.source_binding !== qualification.source_binding;
     if (changed && (!packOnly || state.install_started))
       throw new Error('Release source changed; explicit pre-install requalification required.');
+    const expectedManifest = distribution === 'npm' ? await sdkManifest(root) : undefined;
+    const sdkArgs = [
+      path.join(root, 'packages/agent/tooling/pack-sdk.mjs'),
+      '--pack',
+      '--root',
+      path.join(root, 'packages/agent'),
+      '--destination',
+      folder,
+    ];
+    const packArgs = distribution === 'npm' ? sdkArgs : [npmCli, 'pack', '--json', '--pack-destination', folder];
     let tarball;
     if (state.pack_metadata) {
       tarball = selectedTarball(state.pack_metadata, folder, value.version);
       if (sha(readFileSync(tarball)) !== state.tarball_sha256) throw new Error('Pending tarball changed.');
-      if (changed) await verifyPackedSources(root, state.pack_metadata, tarball, npmCli);
+      if (changed) await verifyPackedSources(root, state.pack_metadata, tarball, npmCli, expectedManifest);
     } else {
       if (!packOnly) throw new Error('Candidate must be packed after tests and before independent assurance.');
       const priorLog = path.join(folder, 'pack.json');
@@ -367,26 +817,60 @@ export async function executeRelease({
         if (
           prior.command !== process.execPath ||
           prior.signal ||
-          JSON.stringify(prior.args) !== JSON.stringify([npmCli, 'pack', '--json', '--pack-destination', folder])
+          JSON.stringify(prior.args) !== JSON.stringify(packArgs)
         )
           throw new Error('Saved pack observation differs from this operation.');
         output = prior.stdout;
       } else {
         if (changed) throw new Error('Changed source lacks an exact prior package to requalify.');
         update('packing', { source_binding: qualification.source_binding });
-        output = await npm(['pack', '--json', '--pack-destination', folder], 'pack');
+        output = await command(process.execPath, packArgs, {
+          cwd: path.join(root, 'packages/agent'),
+          env,
+          log: priorLog,
+        });
       }
       const metadata = parsePackOutput(output);
       tarball = selectedTarball(metadata, folder, value.version);
-      if (existsSync(priorLog)) await verifyPackedSources(root, metadata, tarball, npmCli);
+      if (existsSync(priorLog)) await verifyPackedSources(root, metadata, tarball, npmCli, expectedManifest);
       const current = await qualify({ root, operation, version: value.version });
       if (current.source_binding !== qualification.source_binding)
         throw new Error('Source changed during npm prepack.');
       update('packed', { pack_metadata: metadata, tarball_sha256: sha(readFileSync(tarball)) });
     }
     update('qualified', { source_binding: qualification.source_binding, error: undefined });
+    const actualDistribution = packedDistribution(state.pack_metadata);
+    if (distribution !== undefined && actualDistribution !== distribution)
+      throw new Error('Packed distribution differs from the explicit request.');
+    const nativeChannel = actualDistribution === 'native';
+    const installedManifestBytes =
+      expectedManifest ??
+      (actualDistribution === 'npm' && state.pack_metadata[0].files.some((file) => file.path === 'tooling/pack-sdk.mjs')
+        ? await sdkManifest(root)
+        : undefined);
+    if (installedManifestBytes)
+      await verifyPackedSources(root, state.pack_metadata, tarball, npmCli, installedManifestBytes);
+    if (nativeChannel)
+      await nativeAsset(root, state.pack_metadata, command, env, path.join(folder, 'native-pack-verify.json'));
     if (packOnly) {
       update('awaiting_assurance');
+      return state;
+    }
+    if (nativeChannel) {
+      const locations = await installNativeRelease({
+        root,
+        state,
+        value,
+        metadata: state.pack_metadata,
+        tarball,
+        npmCli,
+        env,
+        command,
+        folder,
+        update,
+      });
+      update('successful', { ...locations, completed_at: new Date().toISOString() });
+      save(path.join(root, '.agent/work/agent-local-release/successful.json'), state);
       return state;
     }
     const prefix = await npm(['prefix', '--global'], 'prefix');
@@ -400,7 +884,12 @@ export async function executeRelease({
       matches = state.pack_metadata[0].files.every(({ path: relative }) => {
         const source = path.join(root, 'packages/agent', relative),
           target = path.join(installed, relative);
-        return existsSync(source) && existsSync(target) && sha(readFileSync(source)) === sha(readFileSync(target));
+        return (
+          existsSync(source) &&
+          existsSync(target) &&
+          sha(relative === 'package.json' && installedManifestBytes ? installedManifestBytes : readFileSync(source)) ===
+            sha(readFileSync(target))
+        );
       });
     }
     if (!matches) {
@@ -451,7 +940,9 @@ export async function executeRelease({
     save(path.join(root, '.agent/work/agent-local-release/successful.json'), state);
     return state;
   } catch (error) {
-    update(error.message.startsWith('awaiting_assurance:') ? 'awaiting_assurance' : 'failed', { error: error.message });
+    update(error.message.startsWith('awaiting_assurance:') ? 'awaiting_assurance' : 'failed', {
+      error: error.message,
+    });
     throw error;
   }
 }
@@ -459,21 +950,24 @@ async function main(args) {
   if (args.length === 1 && args[0] === '--prepare') return prepareRelease();
   if (
     args.length !== 2 ||
-    !['--operation', '--pack', '--status', '--worker', '--pack-worker'].includes(args[0]) ||
+    !['--operation', '--pack', '--pack-npm', '--status', '--worker', '--pack-worker', '--pack-npm-worker'].includes(
+      args[0],
+    ) ||
     !idPattern.test(args[1])
   )
-    throw new Error('Usage: release:local -- --prepare | --pack ID | --operation ID | --status ID');
+    throw new Error('Usage: release:local -- --prepare | --pack ID | --pack-npm ID | --operation ID | --status ID');
   const operation = args[1];
   const folder = directory(repositoryRoot, `.tmp/releases/${operation}`);
   if (args[0] === '--status') return read(journalFile(repositoryRoot, operation));
-  if (['--worker', '--pack-worker'].includes(args[0])) {
+  if (['--worker', '--pack-worker', '--pack-npm-worker'].includes(args[0])) {
     const { verifyLocalReleaseAssurance, verifyLocalReleaseTests } = await import('./release-assurance.mjs');
     const mutex = await claimReleaseWorker(repositoryRoot, operation, process.pid);
     try {
-      const packOnly = args[0] === '--pack-worker';
+      const packOnly = args[0] !== '--worker';
       return await executeRelease({
         operation,
         packOnly,
+        distribution: args[0] === '--pack-npm-worker' ? 'npm' : args[0] === '--pack-worker' ? 'native' : undefined,
         qualify: packOnly ? verifyLocalReleaseTests : verifyLocalReleaseAssurance,
       });
     } finally {
@@ -484,8 +978,18 @@ async function main(args) {
     const output = openSync(path.join(folder, 'worker.log'), 'a');
     const worker = spawn(
       process.execPath,
-      [fileURLToPath(import.meta.url), args[0] === '--pack' ? '--pack-worker' : '--worker', operation],
-      { cwd: repositoryRoot, env: process.env, detached: true, windowsHide: true, stdio: ['ignore', output, output] },
+      [
+        fileURLToPath(import.meta.url),
+        args[0] === '--pack-npm' ? '--pack-npm-worker' : args[0] === '--pack' ? '--pack-worker' : '--worker',
+        operation,
+      ],
+      {
+        cwd: repositoryRoot,
+        env: process.env,
+        detached: true,
+        windowsHide: true,
+        stdio: ['ignore', output, output],
+      },
     );
     closeSync(output);
     if (!worker.pid) {

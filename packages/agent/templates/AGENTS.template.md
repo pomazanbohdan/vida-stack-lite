@@ -35,9 +35,10 @@ A missing secondary source is not automatically blocking. Continue when the inte
 For work on the agent framework, resolve its installed instruction with
 `vida-agent instructions --path development-lifecycle`, then read the returned
 file's `self-development-protocol` section after the sidecar and before planning
-or mutation. Minimize agent execution
-steps without losing required quality; keep new authorized directives in their
-current instruction owner and maintained templates.
+or mutation. Apply that section's architectural defect, relevant official
+framework-reference research and execution-step reduction policy; it is the
+single instruction owner. Keep new authorized directives in their current
+instruction owner and maintained templates.
 
 ## 1. Operating contract
 

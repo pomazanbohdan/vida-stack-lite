@@ -1,7 +1,15 @@
 import { test, expect } from 'bun:test';
 import { createHash } from 'node:crypto';
-import { createRequire } from 'node:module';
-import { cpSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync, unlinkSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  symlinkSync,
+  writeFileSync,
+  unlinkSync,
+} from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { preparedFixture } from './documentation-policy-transition.test.mjs';
@@ -15,14 +23,25 @@ test('sealed public admin denies altered authority, root, closure and target bef
   cpSync(f.bundle, bundle, { recursive: true, filter: (file) => path.basename(file) !== 'node_modules' });
   // This private test payload uses current source; its synthetic review tuple is setup only.
   for (const file of ['bin/forward-candidate-admission.mjs', 'bin/documentation-policy-transition.mjs'])
-    writeFileSync(path.join(bundle, file), readFileSync(path.resolve(import.meta.dirname, '..', file)));
-  const installedDeps = path.dirname(
-    path.dirname(createRequire(path.join(f.bundle, 'package.json')).resolve('ajv/package.json')),
-  );
-  symlinkSync(installedDeps, path.join(f.root, 'node_modules'), 'junction');
+    writeFileSync(path.join(bundle, file), readFileSync(path.join(f.bundle, file)));
+  const installedDeps = path.join(f.bundle, 'node_modules');
+  const payloadDeps = path.join(f.root, 'node_modules');
+  mkdirSync(payloadDeps);
+  for (const entry of readdirSync(installedDeps, { withFileTypes: true })) {
+    if (entry.isDirectory() || entry.isSymbolicLink())
+      symlinkSync(path.join(installedDeps, entry.name), path.join(payloadDeps, entry.name), 'junction');
+    else cpSync(path.join(installedDeps, entry.name), path.join(payloadDeps, entry.name));
+  }
   symlinkSync(installedDeps, path.join(f.root, 'vida-agent/node_modules'), 'junction');
-  for (const file of ['bun.lock', '.bun-version'])
-    f.put('vida-agent/' + file, readFileSync(path.resolve(import.meta.dirname, '..', file)));
+  // The selected bundle owns both Source and extracted-package metadata.
+  // Extracted Bun archives keep the frozen lock in the declared portable resource.
+  const lock = existsSync(path.join(f.bundle, 'bun.lock')) ? 'bun.lock' : 'dist/portable/bun.lock';
+  const lockBytes = readFileSync(path.join(f.bundle, lock)),
+    pinBytes = readFileSync(path.join(f.bundle, '.bun-version'));
+  f.put('vida-agent/bun.lock', lockBytes);
+  f.put('vida-agent/.bun-version', pinBytes);
+  writeFileSync(path.join(bundle, 'bun.lock'), lockBytes);
+  writeFileSync(path.join(bundle, '.bun-version'), pinBytes);
   const target = path.join(payload, f.policyPath);
   mkdirSync(path.dirname(target), { recursive: true });
   writeFileSync(target, targetPolicy);

@@ -6,6 +6,7 @@ import { buildImplementationResult, type DevelopmentTaskPacket, type Implementat
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
 import { sessionActionsForWave } from './session-handoff.js';
+import { validateWorkSessionBinding } from './final-assurance.js';
 
 function requireResult(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error('admitted implementation result: ' + message);
@@ -26,12 +27,12 @@ export function buildAdmittedImplementationResult(input: {
       work.binding.lifecycle_work_id === packet.work_item_id &&
       work.binding.work_source_revision === packet.source_revision &&
       work.binding.config_digest === runtimeConfigDigest(config) &&
-      work.execution.run_id === ledger.state.run_id &&
       ledger.state.work_id === packet.work_item_id &&
       ledger.state.attempt === packet.attempt &&
       ledger.version.digest === canonicalJsonDigest(ledger.state),
     'admitted work or persisted run differs from packet',
   );
+  validateWorkSessionBinding(work,ledger.state,repositoryRoot);
   const source = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireResult(
     ledger.state.source_scope?.digest === source.digest,
@@ -55,6 +56,7 @@ export function buildAdmittedImplementationResult(input: {
     packet.workflow_id,
     item.request.wave_index,
     [],
+    ledger.state.corrective_execution ?? undefined,
   );
   requireResult(
     actions.some(

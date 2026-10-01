@@ -4,9 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { run } from '../bin/run.mjs';
-import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../src/index.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -25,6 +23,7 @@ const createFixture = (root, bundleName = 'agent-runtime-new', multiProject = fa
       'src',
       'dist',
       'bin',
+      'tooling',
       'schemas',
       'instructions',
       'templates',
@@ -136,7 +135,7 @@ const createImplementationTask = (root, previousArgs = null) => {
       )
     : fixture.args;
   const workId = base[base.indexOf('--work-id') + 1];
-  mkdirSync(path.join(root, 'src'), { recursive: true });
+  mkdirSync(path.join(root, 'src', 'dist'), { recursive: true });
   if (!existsSync(path.join(root, 'src', 'dist', 'task.ts')))
     writeFileSync(path.join(root, 'src', 'dist', 'task.ts'), 'export const task = true;\n');
   const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md', 'src/task.ts']);
@@ -314,6 +313,11 @@ test.each([false, true])(
     let ledger;
     try {
       const fixture = createImplementationTask(root);
+      const privatePackage = path.join(root, 'vida-agent');
+      const { run } = await import(pathToFileURL(path.join(privatePackage, 'bin/run.mjs')).href);
+      const { runReconcileArtifacts } = await import(
+        pathToFileURL(path.join(privatePackage, 'bin/reconcile-artifacts.mjs')).href
+      );
       const args = fixture.args.map((value, index) =>
         fixture.args[index - 1] === '--workflow'
           ? workflow
@@ -486,18 +490,25 @@ test.each([false, true])(
           sourceDigest: switched.snapshot.state.source_scope.digest,
         });
         expect(resumed.status).toBe('resumed');
-        const runtimePath = 'vida-agent/bin/run.mjs';
+        // The raw intake listed only bin/run; omitted engine files still bind freshness.
+        const runtimePath = simulateCrashAfterResume
+          ? 'vida-agent/dist/src/runtime.js'
+          : 'vida-agent/src/runtime-kernel.ts';
         const runtimeFile = path.join(root, runtimePath);
+        const canonicalIntake = ledger.hostState
+          .readHostStateSnapshot(identity)
+          .work.artifacts.find((ref) => ref.artifact_id === 'local-session-intake');
+        const runtimePaths = JSON.parse(readFileSync(path.join(root, canonicalIntake.path), 'utf8')).runtime_code_paths;
+        const manifestFiles = () =>
+          runtimePaths.map((relative) => {
+            const bytes = readFileSync(path.join(root, relative));
+            return { path: relative, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+          });
+        const parentManifest = { schema: 'VidaAgentPreparedPayload/v1', files: manifestFiles() };
         const oldBytes = readFileSync(runtimeFile);
         writeFileSync(runtimeFile, Buffer.concat([oldBytes, Buffer.from('\n// fixture forward runtime update\n')]));
         const newBytes = readFileSync(runtimeFile);
-        const fileEntry = (bytes) => ({
-          path: runtimePath,
-          size: bytes.length,
-          sha256: createHash('sha256').update(bytes).digest('hex'),
-        });
-        const parentManifest = { schema: 'VidaAgentPreparedPayload/v1', files: [fileEntry(oldBytes)] };
-        const successorManifest = { schema: 'VidaAgentPreparedPayload/v1', files: [fileEntry(newBytes)] };
+        const successorManifest = { schema: 'VidaAgentPreparedPayload/v1', files: manifestFiles() };
         const forwardId = 'fixture-runtime-code-forward';
         const forwardDir = path.join(root, '.agent', 'cutover', forwardId);
         const manifestSha = (value) => createHash('sha256').update(record(value)).digest('hex');

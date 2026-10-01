@@ -4,6 +4,8 @@ import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
 import { sessionActionsForWave } from './session-handoff.js';
+import { validateWorkSessionBinding } from './final-assurance.js';
+import type { HostStateSnapshot } from '../host-state.js';
 import {
   validateImplementationResult,
   type DeliveryEvidenceAuthority,
@@ -59,8 +61,10 @@ export function issueObservedValidationReceipt(input: {
   journal: MastraSessionLedgerSnapshot;
   actionId: string;
   authority: DeliveryEvidenceAuthority;
+  host?: HostStateSnapshot;
 }): ValidationReceipt {
   const { repositoryRoot, config, packet, implementationResult, journal, actionId, authority } = input;
+  if(journal.state.corrective_execution){requireValidation(input.host?.work,'corrective receipt requires current Host binding');validateWorkSessionBinding(input.host.work,journal.state,repositoryRoot);}
   const matches = journal.state.completed
     .flatMap((entry) => entry.items)
     .filter((item) => item.request.action_id === actionId && item.issue_id && item.observation);
@@ -94,6 +98,7 @@ export function issueObservedValidationReceipt(input: {
     packet.workflow_id,
     request.wave_index,
     [],
+    journal.state.corrective_execution ?? undefined,
   );
   const action = actions.find((item) => item.action_id === request.action_id);
   requireValidation(

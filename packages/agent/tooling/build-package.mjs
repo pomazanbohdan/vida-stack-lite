@@ -1,6 +1,6 @@
 import { readdir, readFile, stat, writeFile, copyFile, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
-import {expectedJavascriptFiles} from './maintained-source-inventory.mjs';
+import { expectedJavascriptFiles } from './maintained-source-inventory.mjs';
 
 const candidateRoot = path.resolve(import.meta.dirname, '..');
 const distRoot = path.join(candidateRoot, 'dist');
@@ -28,6 +28,10 @@ const schemaNames = [
   'runtime-envelope.v1.schema.json',
   'runtime-initialization.v1.schema.json',
   'work-state.v1.schema.json',
+  'final-assurance-packet.v1.schema.json',
+  'final-assurance-review.v1.schema.json',
+  'final-assurance-reverse.v1.schema.json',
+  'final-assurance-state.v1.schema.json',
   'workflow-attempt-recovery-decision.v1.schema.json',
 ];
 const forbiddenTestIssuers = [

@@ -1,21 +1,10 @@
+import { configuredTestContext } from './configured-context.mjs';
 import { test } from 'bun:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import {
-  compileDevelopmentWorkflow,
-  loadProjectContext,
-  loadRuntimeConfig,
-  resolveConfigPath,
-  selectWorkflow,
-} from '../src/index.ts';
+import { compileDevelopmentWorkflow, resolveConfigPath, selectWorkflow } from '../src/index.ts';
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 
-const repositoryRoot =
-  process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const config = loadRuntimeConfig(repositoryRoot);
-const projectContext = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const { repositoryRoot, config, context: projectContext } = configuredTestContext();
 const authorize = createConfiguredProjectAuthorizer(repositoryRoot, config);
 const repositoryId = projectContext.repository_id;
 const projectId = projectContext.project_ids[0];
@@ -75,9 +64,21 @@ test('configured Cedar remains default-deny for deterministic role and scope com
 test('workflow selection and compiled graph are deterministic (cases=256)', () => {
   const random = seeded(20260818);
   const cases = [
-    { kind: 'research', intent: 'information_research', workflow: 'information_research_light' },
-    { kind: 'feature', intent: 'implementation_new', workflow: 'implementation_new' },
-    { kind: 'story', intent: 'implementation_change', workflow: 'implementation_change' },
+    {
+      kind: 'research',
+      intent: 'information_research',
+      workflow: 'information_research_light',
+    },
+    {
+      kind: 'feature',
+      intent: 'implementation_new',
+      workflow: 'implementation_new',
+    },
+    {
+      kind: 'story',
+      intent: 'implementation_change',
+      workflow: 'implementation_change',
+    },
     { kind: 'bug', intent: 'bug_fix', workflow: 'bug_fix' },
     { kind: 'task', intent: 'task_execution', workflow: 'task_execution' },
   ];
@@ -87,7 +88,7 @@ test('workflow selection and compiled graph are deterministic (cases=256)', () =
       team: 'default-development',
       kind: item.kind,
       intent: item.intent,
-      project: random() > 0.5 ? '3mob' : 'refactoring',
+      project: config.projects[Math.floor(random() * config.projects.length)].project_id,
       risk_flags: [],
       labels: [],
     });
@@ -95,7 +96,7 @@ test('workflow selection and compiled graph are deterministic (cases=256)', () =
       team: 'default-development',
       kind: item.kind,
       intent: item.intent,
-      project: '3mob',
+      project: projectId,
       risk_flags: [],
       labels: [],
     });

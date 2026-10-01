@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import path from 'node:path';
 
 afterEach(() => {
   vi.resetModules();
@@ -19,14 +18,22 @@ describe('runtime envelope canonicalization boundary', () => {
       payload: { checks: ['static'] },
     };
 
-    expect(consumeRuntimeEnvelope(envelope, { sourceRevision: 'source-1', currentRevision: 3 })).toBe(envelope);
+    expect(
+      consumeRuntimeEnvelope(envelope, {
+        sourceRevision: 'source-1',
+        currentRevision: 3,
+      }),
+    ).toBe(envelope);
     for (const [binding, message] of [
       [{ sourceRevision: 'source-2', currentRevision: 3 }, /source revision is stale/],
       [{ sourceRevision: 'source-1', currentRevision: 4 }, /expected revision is stale/],
       [{ sourceRevision: '', currentRevision: 3 }, /source revision binding is required/],
       [{ sourceRevision: 'source-1', currentRevision: 0 }, /current revision binding is invalid/],
       [
-        { sourceRevision: 'source-1', currentRevision: Number.MAX_SAFE_INTEGER + 1 },
+        {
+          sourceRevision: 'source-1',
+          currentRevision: Number.MAX_SAFE_INTEGER + 1,
+        },
         /current revision binding is invalid/,
       ],
     ])
@@ -181,15 +188,15 @@ describe('runtime envelope canonicalization boundary', () => {
     vi.doMock('@cedar-policy/cedar-wasm/nodejs', () => ({
       isAuthorized: (value) => {
         if (value.validateRequest !== true) throw new Error('validateRequest flag missing');
-        return { type: 'failure', errors: [{ message: 'cedar execution failure' }] };
+        return {
+          type: 'failure',
+          errors: [{ message: 'cedar execution failure' }],
+        };
       },
     }));
     const cedar = await import('../src/authorization/cedar-boundary.ts?execution-failure');
-    const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
-    const { loadProjectContext } = await import('../src/config/project-context.ts');
-    const root = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(process.cwd(), '..');
-    const config = loadRuntimeConfig(root);
-    const project = loadProjectContext(root, config, config.repository.repository_id, '3mob');
+    const { configuredTestContext } = await import('./configured-context.mjs');
+    const { repositoryRoot: root, config, context: project } = configuredTestContext();
     const request = {
       principal: 'principal-1',
       role: 'developer-orchestrator',

@@ -118,6 +118,24 @@ const partitions = [
     report: 'mutation-bun-runtime-initialization.json',
   },
   {
+    name: 'bun-development-controller',
+    environment: 'bun',
+    sources: ['bin/development-controller.mjs'],
+    tests: ['tests/development-controller.test.mjs'],
+    report: 'mutation-bun-development-controller.json',
+  },
+  {
+    name: 'bun-cli-public-entrypoints',
+    environment: 'bun',
+    sources: ['bin/repair-work-state.mjs', 'bin/scope.mjs', 'bin/vida-agent.mjs'],
+    tests: [
+      'tests/run-entrypoint.test.mjs',
+      'tests/automatic-work-absorption.test.mjs',
+      'tests/package-boundary.test.mjs',
+    ],
+    report: 'mutation-bun-cli-public-entrypoints.json',
+  },
+  {
     name: 'bun-cli-toolchain',
     environment: 'bun',
     sources: ['bin/bun.mjs'],

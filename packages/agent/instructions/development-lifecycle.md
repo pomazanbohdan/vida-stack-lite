@@ -43,9 +43,12 @@ request set. An issued action with an uncertain outcome stays blocked from
 automatic reissue. The CLI cannot call session tools or maintain background
 agents after the session exits.
 
-An attributable new request reuses the validated scope's exact
-`attribution.thread_id` and opaque `attribution.pointer`; equal pointers preserve
-parallel contours of the same request. A different pointer may absorb eligible
+All child or disjoint contours of one attributable human request reuse the same
+original scope `attribution.thread_id` and `attribution.pointer`. Generated
+intake filenames identify operational artifacts, not new human requests. A
+genuinely changed human request supplies its own attributable reference; do not
+introduce a WorkGroup key or derive request identity from an intake pathname.
+Equal pointers preserve parallel contours of the same request. A different pointer may absorb eligible
 predecessors only under the same stable native session, repository and exact
 sorted project set. Prevalidate the successor intake and current predecessor
 contracts, then admit it, supersede selected works and release only their rights
@@ -91,12 +94,21 @@ stay fenced pending existing explicit terminal/quiescence reconciliation; agent
 done, expiry and old Code packets cannot substitute.
 
 Use one reconciliation at report/intake/recovery/suspend/successor with exact
-retry/restart idempotency. The atomic report seam has initial Source test evidence;
-historical cleanup and expired/drift/sequential/FIFO/stale verification remain
-pending. Avoid nested ordinary CAS, new caller keys or schema fields. Native child
+retry/restart idempotency. The Source atomic report seam and historical cleanup
+now use `commitCompletedSourceReport` and `reconcileCompletedSourceOwnership`;
+qualification covers expiry/drift, fault, peer FIFO/retry and sequential writers.
+Actual outcomes belong to the current release operation's evidence. Avoid nested ordinary CAS, new caller keys or schema fields. Native child
 grouping retains stable orchestrating Root and exact repository/projects/pointer
 boundaries; foreign sessions/projects stay outside absorption. Cooperative key
 equality is not physical isolation; consumer changes remain its owner's scope.
+
+Fresh Source admission, renewal, expired recovery and runtime-code-rebind share
+canonical package-root runtime inventory through CLI/SDK. Public run requires
+complete expected exports. First clean cutover archives or lawfully supersedes
+old subset-engine intakes; no fallback or new-engine artifact conversion is
+supported. Failed-before-admission requests use fresh canonical work in the same
+chat. Preserve unknown effects; supersession grants no completion or Runtime
+acceptance. Writer evidence does not substitute for independent qualification.
 
 The existing public continuation route may release an exact owner with one
 issued unknown configured read-only action, including an expired claim. Bind
@@ -206,9 +218,21 @@ binds
 repository root/operation/actor/mode and supplies configured database paths plus
 initial backup bytes, null on retry. Its filesystem callback is synchronous and
 idempotent; unknown/inflight state denies effects. Interrupted restore keeps its
-fence/restoring state for exact-operation resume. Independent helper and
-repository-only deployment adapter qualification remain pending; no migration
-CLI is implied. SQL/filesystem effects are not claimed atomic and old tasks are not migrated.
+fence/restoring state for exact-operation resume. Current helper and
+repository-only deployment adapter evidence is required before deployment; no
+migration CLI is implied. SQL/filesystem effects are not claimed atomic and old tasks are not migrated.
+Use the existing executing package root for research-repair validators,
+dependencies and schemas; consumer artifacts stay rooted in the explicit project.
+Do not use a copied consumer package or alias fallback. Optional missing journal
+inspection is read-only only for fresh contexts without retained Host assignments;
+retained started/uncertain effects with missing journal fail closed, never infer
+quiescence. Standalone fixtures use supported OS temporary directories or explicit isolated
+roots with owned cleanup; Source-workspace scratch is ignored outside package
+Source.
+Read dynamic version/readiness, qualification, installation and Runtime status
+from public release state and current work/operation evidence, not living
+instruction snapshots.
+
 An authorized in-scope source edit continues the same work attempt and
 invalidates only evidence bound to its prior bytes. Configuration, schema or
 installed-bundle authority drift, and out-of-scope source drift, stop
@@ -246,7 +270,8 @@ template replacement or an arbitrary mutable-output exception.
 For a code-producing route, establish the smallest correct B/S/C trace, freeze
 scope, implement, run the applicable focused checks, then reconcile affected
 documentation. On one final sealed payload, run the required complete tests,
-coverage, complexity/CRAP and mutation gates, three fresh independent reviews,
+local coverage and complexity/CRAP gates, explicitly manually launched mutation
+evidence when requested, three fresh independent reviews,
 reverse validation and CLEAR. A changed payload invalidates its bound
 assurance. Static checks and delivery cannot close Runtime acceptance; only
 attributable testing of the installed fingerprint can do that. Cutover rollback
@@ -320,12 +345,41 @@ against its own issue ID and receipt gate. Do not pre-run a later stage before
 Mastra issues it. The final three blind reviews are fresh and independent;
 batching logical role views never substitutes for those reviews.
 
-Consult current official specifications only for unresolved framework or
-platform mechanics; repository-specific authority comes from current local
-contracts. A user directive updates its existing instruction owner and
+Before research, resolve the canonical target from the current ProjectContext
+and sidecar. Anchor every search, file operation and shell command to that
+absolute target or its explicit working directory. An inherited working
+directory or mirror is not target authority. Negative findings name the actual
+target and bounded searched scope; inactive copies are labelled provenance.
+
+For every reported defect, perform a bounded web search of current official
+specifications relevant to the failure, including external agent frameworks in
+`docs/research/agent-framework-reference-registry.md`; do not limit research to
+installed dependencies or require every listed framework for every defect.
+Record verified sources, applicability and the chosen invariant in current
+product research and decision documents. Repair the shared root cause and its
+single state or contract owner, reconcile affected callers, and retain one
+behavioral regression. Reuse existing framework primitives; an architectural
+fix does not require new abstractions. Reduce agent execution steps, commands
+and handoffs, streamline existing commands and keep outputs compact and
+actionable while preserving authorization, recovery and evidence semantics.
+Report measured execution latency separately from estimates; fewer steps or
+larger timeouts alone prove no speed improvement. References inform mechanics;
+current approved local contracts retain authority. An inaccessible relevant
+source is an explicit research GAP, never fabricated support.
+A user directive updates its existing instruction owner and
 maintained template in the same authorized work, with attribution in the work
 record. Do not create a competing agent memory document or an additional
 schema version to avoid repairing current artifacts.
+
+Tests, coverage and CRAP execute locally only. CI/CD may automate builds and
+package/release preparation, but contains no test, coverage, CRAP or mutation
+steps. Mutation runs only on an explicit manual launch and is absent from
+aggregate automation. Preserve required local assurance and numeric quality
+criteria; missing or deferred evidence stays a GAP, never a pass. Tests and
+comments describe the current architecture and supported behavior, without
+narratives about absent legacy implementations. Formatter/TypeScript 7 hooks and
+pre-push coverage/CRAP remain proposals for discussion; do not install or activate
+hooks from this policy.
 
 Production functions target CRAP 1 for pure transforms, 2 for one meaningful
 decision and 3 for compact coordination. CRAP 4 is reserved for a cohesive
@@ -343,6 +397,54 @@ current source-file and exact archive bytes; ordinary commits with unchanged
 included bytes do not invalidate it. Changed included inputs invalidate their
 affected proof, without manual integrity replay. This changes no generic
 assurance or Runtime acceptance gate.
+
+For standalone primary delivery, preserve the generic runtime and all public
+commands/SDK compatibility while forming one native executable per qualified
+target with embedded pinned Bun. Direct installation/first run must require no
+external Node/npm/Bun or first-run download. Package-owned immutable resources
+use safe private version/payload-bound materialization when physical paths are
+needed; consumer configuration and DB/WAL/SHM stay external. Reject unsafe,
+partial or tampered resources without weakening native attestation, Cedar,
+fs-safe, ProjectContext, CAS, maintenance or Mastra/LibSQL. Use actual full-product
+native target checks, not a thin probe or assumed loader ABI.
+
+Keep one pending version/operation while packaging changes are qualified. An
+explicit human request may authorize manual npm compatibility delivery before
+native-primary/CI completion. Qualify the exact npm/SDK archive and CLI with
+applicable checks/prepack, three fresh blind reviews, reverse validation and
+CLEAR; use the Source standing successful-formation commit/push order. Install
+only the exact qualified archive without publication or bypass flags. Preserve
+unfinished native/CI goals and separate evidence; npm delivery proves no native
+readiness. Afterwards unblock waiting developers through the qualified installed
+runtime and normal work admission.
+Use the approved native user-bin defaults declared by the system specification
+and installation guide, with sibling version/operation release trees. Preserve
+prior npm shims, use exclusive creation for a new entry and exact observed-prior
+CAS for upgrades. Observe/reconcile unknown outcomes before repeating effects.
+The final native manifest specifies target, destination, PATH, prior-install and
+rollback effects; npm global installation is compatibility evidence only.
+Maintain every public SDK export. Pinned deterministic compile/minify/bytecode,
+retained names and disabled ambient configuration need measured evidence for
+optimization claims. Prepared CI/release notes/publication scripts create no
+registry/GitHub publication authority or Runtime acceptance. Fresh final three
+reviews, reverse validation and CLEAR bind the changed final source and assets.
+
+For Source self-development, use only the bundle-owned prepare/inspect/verify and
+controlled-execution seam with a qualified immutable current-candidate controller
+outside the editable target. Preserve logical `runtime.bundle=packages/agent`,
+actual target repository/project/request attribution and existing scope/lease/CAS
+controls; controller code remains independent of target source revisions. Reject
+construction for a target with an active selector and retain selected-root
+containment. No predecessor fallback, worktree/FIFO escape, global PATH change,
+production selector activation or general consumer controller mode is authorized.
+Require actual pinned SDK/dependency/native/resource and isolated init/scope/
+admission/own-target bin-addition report evidence before readiness. Revalidate
+immutable controller identity and integrity before controlled execution. Target
+edits continue the existing attempt through that controller while invalidating
+affected byte-bound proof. Operational qualification metadata grants no approval,
+lease or Runtime acceptance; authorization controls do not promise physical
+isolation or global unrelated-edit detection. A copied controller alone is not
+qualified, and manual integrity-value handling is unnecessary.
 
 ## Delivery and cutover
 

@@ -1,12 +1,10 @@
+import { configuredTestContext } from './configured-context.mjs';
 import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   assertCanonicalJsonValue,
   consumeRuntimeEnvelope,
-  loadProjectContext,
-  loadRuntimeConfig,
   resolveConfigPath,
   validateAuthorizationRequest,
   validateGovernedWriteIntent,
@@ -18,10 +16,7 @@ import {
 } from '../src/index.ts';
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 
-const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
-const config = loadRuntimeConfig(repositoryRoot);
-const context = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const { repositoryRoot, config, context } = configuredTestContext();
 const authorizer = createConfiguredProjectAuthorizer(repositoryRoot, config);
 const seed = Number.parseInt(process.env.FAST_CHECK_SEED ?? '20260830', 10);
 const numRuns = Number.parseInt(process.env.FAST_CHECK_NUM_RUNS ?? '1000', 10);
@@ -112,13 +107,50 @@ describe('deterministic shrinking fuzz boundaries', () => {
     );
   });
 
-  test('configured authorization converts every malformed public request to default deny', () => {
+  test('configured authorization denies requests without trusted identity', () => {
     assertProperty(
       fc.property(unknownValue, (value) => {
         const result = authorizer(value, undefined, context);
         expect(result.decision).toBe('deny');
         expect(result.diagnostics.length).toBeGreaterThan(0);
       }),
+    );
+  });
+
+  test('configured authorization rejects malformed requests with matched trusted identity', () => {
+    const request = {
+      principal: 'fuzz-principal',
+      role: 'developer-orchestrator',
+      action: 'write',
+      tenant: context.repository_id,
+      project: context.project_ids[0],
+      resourceTenant: context.repository_id,
+      resourceProject: context.project_ids[0],
+      registryHash: context.registry_hash,
+      operationHash: 'a'.repeat(64),
+    };
+    const identity = {
+      schema: 'TrustedProjectIdentity/v1',
+      source: 'authenticated-context',
+      principal: request.principal,
+      role: request.role,
+      tenant: request.tenant,
+      project: request.project,
+      registry_hash: context.registry_hash,
+    };
+    expect(authorizer(request, identity, context).decision).toBe('allow');
+    assertProperty(
+      fc.property(
+        fc.constantFrom('principal', 'role', 'action', 'tenant', 'project', 'registryHash', 'operationHash'),
+        fc.constantFrom(null, undefined, 0, false, [], {}),
+        (field, value) => {
+          const malformed = { ...request, [field]: value };
+          expect(() => validateAuthorizationRequest(malformed)).toThrow();
+          const result = authorizer(malformed, identity, context);
+          expect(result.decision).toBe('deny');
+          expect(result.diagnostics.length).toBeGreaterThan(0);
+        },
+      ),
     );
   });
 });

@@ -36,7 +36,7 @@ function fixture() {
     'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT)',
   );
   const workspaceId = 'a'.repeat(64);
-  const projectIds = ['refactoring'];
+  const projectIds = ['agent'];
   const project = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds);
   const workId = 'repair-fixture';
   const attempt = 2;

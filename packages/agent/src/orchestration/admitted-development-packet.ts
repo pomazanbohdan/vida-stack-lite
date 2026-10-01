@@ -18,6 +18,7 @@ import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.j
 import { buildConfiguredContext, type ConfiguredContext } from './configured-context.js';
 import { buildDevelopmentTaskPacket, type DevelopmentTaskPacket } from './mastra-boundary.js';
 import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { validateWorkSessionBinding, readCorrectivePlanningJournal } from './final-assurance.js';
 
 const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: boolean }) => {
   compile(schema: object): (value: unknown) => boolean;
@@ -175,7 +176,6 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       ledger.version.digest === canonicalJsonDigest(ledger.state) &&
       ledger.state.workspace_id === work.workspace_id &&
       ledger.state.work_id === workItem.id &&
-      ledger.state.run_id === work.execution.run_id &&
       ledger.state.attempt >= 1,
     'persisted Mastra ledger differs from admitted work',
   );
@@ -189,7 +189,9 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       (stage) => stage.kind === 'research' || stage.kind === 'synthesize',
     ).map((stage) => stage.id),
   );
-  const observed = ledger.state.completed
+  validateWorkSessionBinding(work,ledger.state,root);
+  const planning=ledger.state.corrective_execution?readCorrectivePlanningJournal(root,work,ledger):ledger.state;
+  const observed = planning.completed
     .flatMap((wave) => wave.items)
     .filter((item) => prerequisiteStages.has(item.request.stage_id));
   requirePacket(

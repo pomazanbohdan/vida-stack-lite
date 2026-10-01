@@ -13,6 +13,7 @@ import {
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import { HostStateStore, openHostStateDatabase, type StateVersion, type WorkState } from '../host-state.js';
+import {correctiveExecutionSchema,type CorrectiveExecution} from './final-assurance.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
 import {
   advanceSessionWorkflowHandoffFromConfig,
@@ -28,7 +29,11 @@ import {
   type SessionBridgeObservation,
   type SessionBridgeRequest,
 } from './mastra-session-bridge.js';
-import { compareScopedSourceSnapshots, snapshotDeclaredSources, type ScopedSourceSnapshot } from './scoped-source-snapshot.js';
+import {
+  compareScopedSourceSnapshots,
+  snapshotDeclaredSources,
+  type ScopedSourceSnapshot,
+} from './scoped-source-snapshot.js';
 import type { WorkflowSessionReservation } from '../runtime-kernel.js';
 import { createLocalSourceWriteApprovalVerifier } from './local-source-authorization.js';
 import { createLocalSessionReconciliationVerifier } from './local-session-reconciliation.js';
@@ -432,6 +437,7 @@ export interface MastraSessionLedgerState {
   readonly work_id: string;
   readonly attempt: number;
   readonly run_id: string;
+  readonly corrective_execution?:CorrectiveExecution|null;
   readonly source_scope?: ScopedSourceSnapshot | null;
   readonly step_id: string | null;
   readonly items: readonly MastraLedgerItem[];
@@ -650,15 +656,23 @@ export class MastraSessionLedger {
             }),
         'Mastra session source scope digest is invalid',
       );
+    if(state.corrective_execution){
+      const execution=correctiveExecutionSchema.parse(state.corrective_execution);
+      requireState(state.run_id===execution.engine_run_id,'corrective engine run differs');
+      this.hostState.assertCorrectiveExecutionForWork(workId,execution);
+    }
     requireState(
       [...state.items, ...state.completed.flatMap((wave) => wave.items)].every(
         (item) =>
           item.request?.run_id === state.run_id &&
+          sameJson(item.request.corrective_execution??null,state.corrective_execution??null) &&
           item.request?.scope_digest &&
           (item.issue_id === null || typeof item.issue_id === 'string') &&
           (item.host_reservation === undefined ||
             (item.host_reservation.schema === 'WorkflowSessionReservation/v1' &&
               item.host_reservation.receipt.attempt.attempt_id &&
+              item.host_reservation.receipt.attempt.correction_generation===(state.corrective_execution?.correction_generation??0) &&
+              sameJson(item.host_reservation.receipt.attempt.correction_authorization??null,state.corrective_execution?.authorization??null) &&
               item.host_reservation.request.workItemId === state.work_id &&
               item.host_reservation.request.stageId === item.request.stage_id &&
               item.host_reservation.request.assignmentIndex === item.request.assignment_index)) &&
@@ -1217,6 +1231,7 @@ export class MastraSessionLedger {
       return this.#read(workId, attempt)!;
     }
     requireState(current.state.run_id === runId, 'Mastra session run id differs from ledger');
+    requireState(requests.every(request=>sameJson(request.corrective_execution??null,current.state.corrective_execution??null)),'Mastra corrective request authority differs');
     if (current.state.source_scope)
       requireState(
         sourceScope?.digest === current.state.source_scope.digest,
@@ -1231,6 +1246,10 @@ export class MastraSessionLedger {
         'Mastra suspended request set differs from ledger',
       );
       return project(current);
+    }
+    if(current.state.corrective_execution&&current.state.step_id===null&&current.state.items.length===0&&current.state.completed.length===0){
+      requireState(stepId!==null,'corrective engine has not reached its first configured suspension');
+      return this.#change(workId,attempt,current.version,state=>({...state,step_id:stepId,items:requests.map(request=>({request,issue_id:null,observation:null}))}));
     }
     requireState(
       current.state.step_id !== null &&
@@ -1335,13 +1354,23 @@ export class MastraSessionLedger {
     });
   }
 
-  retrieveReportedObservation(workId:string,attempt:number,observation:SessionBridgeObservation):MastraSessionLedgerSnapshot|null {
-    const current=this.#read(workId,attempt);
-    const recorded=current && [...current.state.items,...current.state.completed.flatMap(wave=>wave.items)]
-      .find(item=>item.request.action_id === observation.action_id && item.observation !== null);
-    if (!recorded) return null;
-    requireState(recorded.issue_id === observation.issue_id && canonicalJsonDigest(recorded.observation) === canonicalJsonDigest(observation),
-      'Mastra session observation retry differs from recorded terminal observation');
+  retrieveReportedObservation(
+    workId: string,
+    attempt: number,
+    observation: SessionBridgeObservation,
+  ): MastraSessionLedgerSnapshot | null {
+    const current = this.#read(workId, attempt);
+    const recorded =
+      current &&
+      [...current.state.items, ...current.state.completed.flatMap((wave) => wave.items)].find(
+        (item) => item.request.action_id === observation.action_id && item.observation !== null,
+      );
+    if (!recorded) return current&&this.hostState.findArchivedReportedObservation(workId,attempt,observation)?current:null;
+    requireState(
+      recorded.issue_id === observation.issue_id &&
+        canonicalJsonDigest(recorded.observation) === canonicalJsonDigest(observation),
+      'Mastra session observation retry differs from recorded terminal observation',
+    );
     return current!;
   }
 
@@ -1425,17 +1454,33 @@ export class MastraSessionLedger {
       };
     };
     if (issued?.host_reservation && observation.status === 'reported_complete') {
-      requireState(current?.version.revision === expected.revision && current.version.digest === expected.digest,
-        'Mastra session ledger compare-and-swap conflict');
-      const next=update(current.state);
-      this.hostState.commitCompletedSourceReport({identity:issued.host_reservation.receipt.identity,attempt,
-        expectedJournal:expected,actionId:observation.action_id,nextJournal:next,
-        verifyCurrent:()=>{this.#assertWorkingGeneration();this.#assertFreshConfig();
-          requireState(sourceScope && snapshotDeclaredSources(requireSafeRepositoryAccess(this.#repositoryRoot),sourceScope.entries.map(entry=>entry.path)).digest===sourceScope.digest,
-            'new source report snapshot changed before atomic acceptance');}});
-      return this.#read(workId,attempt)!;
+      requireState(
+        current?.version.revision === expected.revision && current.version.digest === expected.digest,
+        'Mastra session ledger compare-and-swap conflict',
+      );
+      const next = update(current.state);
+      this.hostState.commitCompletedSourceReport({
+        identity: issued.host_reservation.receipt.identity,
+        attempt,
+        expectedJournal: expected,
+        actionId: observation.action_id,
+        nextJournal: next,
+        verifyCurrent: () => {
+          this.#assertWorkingGeneration();
+          this.#assertFreshConfig();
+          requireState(
+            sourceScope &&
+              snapshotDeclaredSources(
+                requireSafeRepositoryAccess(this.#repositoryRoot),
+                sourceScope.entries.map((entry) => entry.path),
+              ).digest === sourceScope.digest,
+            'new source report snapshot changed before atomic acceptance',
+          );
+        },
+      });
+      return this.#read(workId, attempt)!;
     }
-    return this.#change(workId,attempt,expected,update);
+    return this.#change(workId, attempt, expected, update);
   }
 }
 
@@ -1474,3 +1519,4 @@ export function openConfiguredMastraSessionLedger(repositoryRoot: string): Mastr
     throw error;
   }
 }
+

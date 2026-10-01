@@ -1,5 +1,5 @@
 import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity } from '../host-state.js';
-import {completedSourceJournalObservationMatches} from '../host-state.js';
+import { completedSourceJournalObservationMatches } from '../host-state.js';
 import type { DocumentationVerificationContext } from '../lifecycle/lifecycle-state.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
@@ -76,9 +76,12 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
     'admitted work or ledger is missing',
   );
   const work = host.work;
-  requireSuspension([...journal.state.items,...journal.state.completed.flatMap(wave=>wave.items)].every(item=>
-    !item.host_reservation || completedSourceJournalObservationMatches(work,item)),
-    'source observation is not an authoritative completed host result');
+  requireSuspension(
+    [...journal.state.items, ...journal.state.completed.flatMap((wave) => wave.items)].every(
+      (item) => !item.host_reservation || completedSourceJournalObservationMatches(work, item),
+    ),
+    'source observation is not an authoritative completed host result',
+  );
   requireSuspension(
     work.binding.repository_id === identity.repository_id &&
       canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
@@ -239,12 +242,22 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
     'exact active same-thread lease is missing, expired or incomplete',
   );
   const now = new Date().toISOString();
-  const ownedQueued = host.ledger.tickets.filter(item=>item.status === 'queued' &&
-    item.work_id === identity.work_id && item.thread_id === nativeSessionHandle && item.generation === lease.generation &&
-    item.repository_id === identity.repository_id && canonicalJsonDigest(item.project_ids) === canonicalJsonDigest(identity.project_ids) &&
-    item.integrations_digest === identity.integrations_digest && item.source_revision === work.binding.work_source_revision);
-  requireSuspension(ownedQueued.every(item=>item.active_resources.length === 0 && item.claim_ids.length === 0), 'queued owner has ambiguous active effects');
-  const releasedIds = new Set([ticket.ticket_id,...ownedQueued.map(item=>item.ticket_id)]);
+  const ownedQueued = host.ledger.tickets.filter(
+    (item) =>
+      item.status === 'queued' &&
+      item.work_id === identity.work_id &&
+      item.thread_id === nativeSessionHandle &&
+      item.generation === lease.generation &&
+      item.repository_id === identity.repository_id &&
+      canonicalJsonDigest(item.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+      item.integrations_digest === identity.integrations_digest &&
+      item.source_revision === work.binding.work_source_revision,
+  );
+  requireSuspension(
+    ownedQueued.every((item) => item.active_resources.length === 0 && item.claim_ids.length === 0),
+    'queued owner has ambiguous active effects',
+  );
+  const releasedIds = new Set([ticket.ticket_id, ...ownedQueued.map((item) => item.ticket_id)]);
   const nextWork = {
     ...work,
     revision: work.revision + 1,
@@ -293,10 +306,21 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
         decision_pointer: userRequestPointer,
         created_at: now,
       },
-      ...ownedQueued.map(item=>({schema:'CoordinationOperation/v1' as const,operation_id:operationId+'-'+item.ticket_id,
-        kind:'release' as const,ticket_id:item.ticket_id,work_id:item.work_id,thread_id:item.thread_id,
-        source_revision:item.source_revision,resources:item.exclusive_resources,from_ledger_revision:host.ledger!.revision,
-        to_ledger_revision:host.ledger!.revision+1,decided_by:nativeSessionHandle,decision_pointer:userRequestPointer,created_at:now})),
+      ...ownedQueued.map((item) => ({
+        schema: 'CoordinationOperation/v1' as const,
+        operation_id: operationId + '-' + item.ticket_id,
+        kind: 'release' as const,
+        ticket_id: item.ticket_id,
+        work_id: item.work_id,
+        thread_id: item.thread_id,
+        source_revision: item.source_revision,
+        resources: item.exclusive_resources,
+        from_ledger_revision: host.ledger!.revision,
+        to_ledger_revision: host.ledger!.revision + 1,
+        decided_by: nativeSessionHandle,
+        decision_pointer: userRequestPointer,
+        created_at: now,
+      })),
     ],
   };
   return store.compareAndSwapHostState({

@@ -1,3 +1,4 @@
+import { configuredTestContext } from './configured-context.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -6,8 +7,6 @@ import { test } from 'bun:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
-import { loadProjectContext } from '../src/config/project-context.ts';
-import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 import { invokeTimed } from '../src/runtime-timing.ts';
 import { checkManifest, readPin } from '../bin/bun.mjs';
@@ -44,18 +43,19 @@ function stampFixtureCoverage(directory, { nativeReport = true } = {}) {
     mkdirSync(nativeDirectory, { recursive: true });
     writeFileSync(
       path.join(nativeDirectory, 'coverage-final.json'),
-      JSON.stringify({ schema: 'BunNativeCoverageReport/v1', run_id: start.run_id, sources: [], coverage: {} }),
+      JSON.stringify({
+        schema: 'BunNativeCoverageReport/v1',
+        run_id: start.run_id,
+        sources: [],
+        coverage: {},
+      }),
     );
     runFixtureCoverageGate(directory, '--stamp-native');
   }
 }
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(candidateRoot, '..');
-const runtimeConfig = loadRuntimeConfig(repositoryRoot);
-const projectContext = Object.freeze(
-  loadProjectContext(repositoryRoot, runtimeConfig, runtimeConfig.repository.repository_id, '3mob'),
-);
+const { repositoryRoot, config: runtimeConfig, context: projectContext } = configuredTestContext();
 const projectBinding = projectContext.project_bindings[0];
-if (!projectBinding) throw new Error('Expected the configured 3mob project binding');
+if (!projectBinding) throw new Error('Expected a configured project binding');
 const registryHash = projectContext.registry_hash;
 const contextTenant = projectContext.repository_id;
 const contextProject = projectBinding.project_id;
@@ -157,7 +157,12 @@ test('V8 coverage marker bypasses only live frozen-install cases while keeping a
   ])
     assert.ok(readFileSync(path.join(candidateRoot, file), 'utf8').includes(marker));
   await assert.rejects(
-    () => initializeProject({ projectRoot: 'relative', repository: 'candidate', projectMappings: ['candidate'] }),
+    () =>
+      initializeProject({
+        projectRoot: 'relative',
+        repository: 'candidate',
+        projectMappings: ['candidate'],
+      }),
     /canonical absolute project root/,
   );
 });
@@ -318,7 +323,8 @@ test('mutation inventory assigns every maintained source, including production C
     'src/reconciliation/historical-disposition.ts',
     'src/reconciliation/orphan-coordination-disposition.ts',
   ]) {
-    assert.ok(sourceInventory.repositoryOnlySources.includes(source), source);
+    assert.ok(!existsSync(path.join(candidateRoot, source)), `retired reconciliation source remains active: ${source}`);
+    assert.ok(!sourceInventory.repositoryOnlySources.includes(source), source);
     assert.ok(!sourceInventory.mutationSources.includes(source), source);
   }
   assert.deepEqual([...inventory.expected_sources].sort(), maintained);
@@ -429,7 +435,12 @@ test('Bun native instrumentation gate rejects a one-sided branch and accepts com
   writeFileSync(
     path.join(coverageDirectory, 'coverage-summary.json'),
     JSON.stringify({
-      total: { lines: completeMetric, statements: completeMetric, functions: completeMetric, branches: completeMetric },
+      total: {
+        lines: completeMetric,
+        statements: completeMetric,
+        functions: completeMetric,
+        branches: completeMetric,
+      },
     }),
   );
   stampFixtureCoverage(directory, { nativeReport: false });
@@ -533,7 +544,10 @@ test('CRAP gate maps covered functions by source range and treats absent coverag
       1: {
         name: 'measured',
         decl: { start: { line: 3, column: 0 }, end: { line: 3, column: 17 } },
-        loc: { start: { line: 3, column: measuredHeader.indexOf('{') }, end: { line: 7, column: 1 } },
+        loc: {
+          start: { line: 3, column: measuredHeader.indexOf('{') },
+          end: { line: 7, column: 1 },
+        },
         line: 3,
       },
     },
@@ -667,7 +681,10 @@ test('CRAP gate assigns nested statements to their own function and handles entr
   const location = (line, column) => ({ line, column });
   const entry = (line, column, endLine = line) => ({
     decl: { start: location(line, 0) },
-    loc: { start: location(line, column), end: location(endLine, lines[endLine - 1].length) },
+    loc: {
+      start: location(line, column),
+      end: location(endLine, lines[endLine - 1].length),
+    },
   });
   const fileCoverage = {
     fnMap: {
@@ -734,7 +751,10 @@ test('CRAP gate treats missing file and statement counters as uncovered', () => 
           0: {
             name: 'known',
             decl: { start: { line: 1, column: 0 } },
-            loc: { start: { line: 1, column: 17 }, end: { line: 1, column: 30 } },
+            loc: {
+              start: { line: 1, column: 17 },
+              end: { line: 1, column: 30 },
+            },
           },
         },
         f: { 0: 1 },

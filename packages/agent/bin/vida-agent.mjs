@@ -3,11 +3,21 @@ import { readFileSync, lstatSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { runPinnedBun, standaloneRuntime } from './bun.mjs';
 
-const packageRoot = realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));
+const embedded = standaloneRuntime();
+const packageRoot = embedded?.root ?? realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));
 const manifest = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
 const [command, ...args] = process.argv.slice(2);
-const commands = new Set(['run', 'init', 'install', 'reconcile-artifacts', 'documentation-clear', 'scope']);
+const commands = new Set([
+  'run',
+  'init',
+  'install',
+  'reconcile-artifacts',
+  'documentation-clear',
+  'scope',
+  'development-controller',
+]);
 const output = (value) => process.stdout.write(`${JSON.stringify(value)}\n`);
 try {
   if (command === '--help' || command === 'help') {
@@ -38,17 +48,25 @@ try {
         args[index + 1] = path.resolve(args[index + 1]);
     }
     const entrypoint = path.join(packageRoot, 'bin', command + '.mjs');
-    const childArgs = ['reconcile-artifacts', 'documentation-clear'].includes(command)
-      ? [path.join(packageRoot, 'bin', 'bun.mjs'), entrypoint, ...args]
-      : [entrypoint, ...args];
-    const result = spawnSync(process.execPath, childArgs, {
-      cwd: process.cwd(),
-      env: process.env,
-      stdio: 'inherit',
-      windowsHide: true,
-    });
-    if (result.error) throw result.error;
-    process.exitCode = result.status ?? 1;
+    if (embedded) {
+      process.exitCode = runPinnedBun([entrypoint, ...args], {
+        root: packageRoot,
+        cwd: process.cwd(),
+        executable: embedded.executable,
+      });
+    } else {
+      const childArgs = ['reconcile-artifacts', 'documentation-clear', 'development-controller'].includes(command)
+        ? [path.join(packageRoot, 'bin', 'bun.mjs'), entrypoint, ...args]
+        : [entrypoint, ...args];
+      const result = spawnSync(process.execPath, childArgs, {
+        cwd: process.cwd(),
+        env: process.env,
+        stdio: 'inherit',
+        windowsHide: true,
+      });
+      if (result.error) throw result.error;
+      process.exitCode = result.status ?? 1;
+    }
   } else {
     throw new Error(
       'Usage: vida-agent run|init|install|reconcile-artifacts|documentation-clear|scope ...; vida-agent instructions --path NAME; vida-agent version; vida-agent --help',

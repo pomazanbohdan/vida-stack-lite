@@ -1,0 +1,481 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "FinalAssuranceState/v1"
+    },
+    "packet": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "FinalAssurancePacket/v1"
+        },
+        "packet_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "work_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "attempt": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "source_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "scope_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "config_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "implementation_fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generation": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "ac_ids": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "excluded_actor_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "preparation_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      },
+      "required": [
+        "schema",
+        "packet_id",
+        "work_id",
+        "attempt",
+        "source_revision",
+        "scope_id",
+        "config_digest",
+        "implementation_fingerprint",
+        "generation",
+        "ac_ids",
+        "excluded_actor_ids",
+        "preparation_path",
+        "role",
+        "model",
+        "reasoning"
+      ],
+      "additionalProperties": false
+    },
+    "actions": {
+      "minItems": 6,
+      "maxItems": 6,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "review",
+              "reverse"
+            ]
+          },
+          "perspective": {
+            "type": "string",
+            "enum": [
+              "correctness",
+              "security",
+              "assurance"
+            ]
+          },
+          "issue_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target_agent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observation": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schema": {
+                        "type": "string",
+                        "const": "FinalAssuranceReview/v1"
+                      },
+                      "work_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "attempt": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "packet_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "action_id": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "issue_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "generation": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "implementation_fingerprint": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "scope_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "agent_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "history_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "tool_call_ref": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "verdict": {
+                        "type": "string",
+                        "enum": [
+                          "pass",
+                          "fail"
+                        ]
+                      },
+                      "evidence_refs": {
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      },
+                      "perspective": {
+                        "type": "string",
+                        "enum": [
+                          "correctness",
+                          "security",
+                          "assurance"
+                        ]
+                      },
+                      "findings": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      },
+                      "checks": {
+                        "type": "object",
+                        "properties": {
+                          "scope_and_trace": {
+                            "type": "string",
+                            "enum": [
+                              "pass",
+                              "fail"
+                            ]
+                          },
+                          "tests_security_rollback": {
+                            "type": "string",
+                            "enum": [
+                              "pass",
+                              "fail"
+                            ]
+                          },
+                          "evidence_invalidation_binding": {
+                            "type": "string",
+                            "enum": [
+                              "pass",
+                              "fail"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "scope_and_trace",
+                          "tests_security_rollback",
+                          "evidence_invalidation_binding"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schema",
+                      "work_id",
+                      "attempt",
+                      "packet_id",
+                      "action_id",
+                      "issue_id",
+                      "generation",
+                      "implementation_fingerprint",
+                      "scope_id",
+                      "agent_id",
+                      "history_id",
+                      "tool_call_ref",
+                      "verdict",
+                      "evidence_refs",
+                      "perspective",
+                      "findings",
+                      "checks"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schema": {
+                        "type": "string",
+                        "const": "FinalAssuranceReverse/v1"
+                      },
+                      "work_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "attempt": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "packet_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "action_id": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "issue_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "generation": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "implementation_fingerprint": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "scope_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "agent_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "history_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "tool_call_ref": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "verdict": {
+                        "type": "string",
+                        "enum": [
+                          "pass",
+                          "fail"
+                        ]
+                      },
+                      "evidence_refs": {
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      },
+                      "review_action_id": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "review_issue_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "checks": {
+                        "type": "object",
+                        "properties": {
+                          "scope_and_trace": {
+                            "type": "string",
+                            "enum": [
+                              "pass",
+                              "fail"
+                            ]
+                          },
+                          "tests_security_rollback": {
+                            "type": "string",
+                            "enum": [
+                              "pass",
+                              "fail"
+                            ]
+                          },
+                          "evidence_invalidation_binding": {
+                            "type": "string",
+                            "enum": [
+                              "pass",
+                              "fail"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "scope_and_trace",
+                          "tests_security_rollback",
+                          "evidence_invalidation_binding"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schema",
+                      "work_id",
+                      "attempt",
+                      "packet_id",
+                      "action_id",
+                      "issue_id",
+                      "generation",
+                      "implementation_fingerprint",
+                      "scope_id",
+                      "agent_id",
+                      "history_id",
+                      "tool_call_ref",
+                      "verdict",
+                      "evidence_refs",
+                      "review_action_id",
+                      "review_issue_id",
+                      "checks"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "action_id",
+          "kind",
+          "perspective",
+          "issue_id",
+          "target_agent_id",
+          "observation"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "packet",
+    "actions"
+  ],
+  "additionalProperties": false,
+  "$id": "https://vida-agent.invalid/schemas/final-assurance-state.v1.schema.json",
+  "title": "Final assurance state v1"
+}

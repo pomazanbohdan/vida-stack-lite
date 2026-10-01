@@ -1401,6 +1401,8 @@ const workflowAttemptReceiptSchema = z
         request_digest: workContextDigestSchema,
         stage_id: workContextTextSchema,
         assignment_index: z.number().int().nonnegative(),
+        correction_generation: z.number().int().nonnegative(),
+        correction_authorization: z.object({schema:workContextTextSchema.regex(/^[A-Za-z][A-Za-z0-9]*\/v1$/),path:workContextTextSchema,sha256:workContextDigestSchema}).strict().nullable(),
         lease: z
           .object({
             ticket_id: workContextTextSchema,

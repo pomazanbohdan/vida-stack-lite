@@ -1,24 +1,35 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-export const expectedJavascriptFiles = ['documentation/transition-proof.js', 'index.js', 'runtime.js', 'trusted-host.js'];
+export const expectedJavascriptFiles = [
+  'documentation/transition-proof.js',
+  'index.js',
+  'runtime.js',
+  'trusted-host.js',
+];
 
 export function assertRuntimePackageExports(root) {
-  if(expectedJavascriptFiles.some(file=>!existsSync(path.join(root,'dist','src',file))))
+  if (expectedJavascriptFiles.some((file) => !existsSync(path.join(root, 'dist', 'src', file))))
     throw new Error('Runtime package public exports are incomplete; build the package before production execution.');
 }
 
 /** Executable package closure, rooted in the executing package rather than its consumer. */
 export function runtimeExecutableInventory(root, shape = 'source') {
-  const maintained=maintainedSourceInventory(root);
-  if(shape !== 'source' && shape !== 'dist') throw new Error('Runtime package execution shape is invalid.');
-  const hasDist=expectedJavascriptFiles.some(file=>existsSync(path.join(root,'dist','src',file)));
-  if(shape==='dist' || hasDist) assertRuntimePackageExports(root);
-  const schemas=sourceFiles(path.join(root,'schemas'),'.json',root);
-  const paths=['package.json','tooling/maintained-source-inventory.mjs',...maintained.binSources,...maintained.typescriptSources,...schemas,
-    ...(hasDist ? expectedJavascriptFiles.map(file=>'dist/src/'+file) : []),
-    ...(hasDist ? sourceFiles(path.join(root,'dist','schemas'),'.json',root) : [])].sort();
-  if(!paths.length || paths.some(file=>!existsSync(path.join(root,file))))
+  const maintained = maintainedSourceInventory(root);
+  if (shape !== 'source' && shape !== 'dist') throw new Error('Runtime package execution shape is invalid.');
+  const hasDist = expectedJavascriptFiles.some((file) => existsSync(path.join(root, 'dist', 'src', file)));
+  if (shape === 'dist' || hasDist) assertRuntimePackageExports(root);
+  const schemas = sourceFiles(path.join(root, 'schemas'), '.json', root);
+  const paths = [
+    'package.json',
+    'tooling/maintained-source-inventory.mjs',
+    ...maintained.binSources,
+    ...maintained.typescriptSources,
+    ...schemas,
+    ...(hasDist ? expectedJavascriptFiles.map((file) => 'dist/src/' + file) : []),
+    ...(hasDist ? sourceFiles(path.join(root, 'dist', 'schemas'), '.json', root) : []),
+  ].sort();
+  if (!paths.length || paths.some((file) => !existsSync(path.join(root, file))))
     throw new Error('Runtime package executable inventory is incomplete.');
   return paths;
 }

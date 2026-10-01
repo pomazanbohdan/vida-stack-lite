@@ -7,6 +7,70 @@ lifecycle, review, delivery or Runtime acceptance. Work attribution:
 Source batch is direct delegation, not a public runtime-issued attempt. It
 creates no host attempt, native issue or accepted Code receipt by declaration.
 
+## Accepted Source development-controller seam
+
+Decision: after independent plan approval, the Source self-development seam uses
+bundle-owned prepare/inspect/verify and controlled execution with a qualified
+immutable current-candidate package root outside editable Source. Existing v1
+separates target source revision from controller code digest/paths; no new schema
+field, repair format or WorkGroup identity is required. Logical bundle stays
+packages/agent; target identity, original request reference, scopes and CAS/leases
+remain unchanged. Active-selector targets are rejected; consumer-general mode,
+old-release fallback, worktree/FIFO escape and installation/selector activation
+are outside this decision.
+
+Code/Static/GAP: architecture is accepted; controller construction and qualification
+are not yet established. Ready requires actual pinned SDK/dependency/native/
+resource checks plus isolated init/scope/admission/own-target bin-addition report
+regression. Copying alone is insufficient. Operational metadata grants no approval,
+lease or Runtime acceptance; authorization denial is not physical isolation or
+global external-edit detection. Expected target edits continue the same attempt
+and invalidate normal byte-bound evidence through the unchanged controller.
+
+## Request attribution and native installation decisions
+
+Decision: child/disjoint contours of the same actual human request reuse its
+original attributable scope reference; generated intake filenames are artifact
+locations, not new request identities. No WorkGroup key is added. Verified case:
+TeamLead main and CI used different pointer filenames for the same human message;
+CI preparation correctly absorbed main (ledger 44 to 45). This is intake
+attribution misuse, not a production lease defect. Existing equal-pointer grouping
+and contextual successor boundaries remain the current contract; preserve history.
+
+Decision: primary native installation uses the approved Windows LOCALAPPDATA
+Programs/vida-agent/bin or Unix XDG_DATA_HOME/default .local/share/vida-agent/bin
+user-bin, sibling version/operation release trees, preserved npm shims, exclusive
+first creation and observed-prior upgrade CAS. Unknown outcomes require inspection
+before replay. Code/native installation qualification and actual delivery effects
+remain separate evidence; this decision creates no install or Runtime receipt.
+
+## Accepted standalone primary release decision
+
+Decision: the attributable human approval in TeamLead message
+`01a0f66c-9646-74c2-b043-74f50cc33cef` accepts one native executable per supported
+OS/CPU with embedded Bun 1.4.2 as primary direct installation/run, without
+external Node/npm/Bun or first-run network. npm and all existing public SDK
+exports remain maintained compatibility. The existing system specification,
+installation, TESTING and lifecycle own the current contract; SA-CLI through
+SA-ASSURANCE in `.agent/work/teamlead-standalone-release-20261001/WORK.md` preserve
+the acceptance trace, not a parallel specification.
+
+The pending local release retains its operation/version. Old-format finalization
+is held pending full standalone implementation and native qualification. Preserve
+runtime/security/state semantics and external consumer YAML/DB/WAL/SHM; immutable
+embedded resources require safe private version/payload-bound materialization.
+No registry/GitHub publication effect is approved merely by preparing CI, notes
+or scripts. Native install/PATH/rollback effects require an explicit manifest.
+
+Code/Static: current implementation boundaries and proposal in ignored
+`.tmp/teamlead-public-package-20261001/bun-standalone-design.md` were inspected.
+A prior minimal Windows probe demonstrates compilation/runtime/resource mechanics
+only; it does not qualify VIDA, native dependencies or Linux. Loader/ABI details
+remain implementation proposals until actual full-target evidence. Runtime/GAP:
+full product standalone behavior, supported-target native proofs, installation,
+final assurance/CLEAR and attributable acceptance remain open. No performance,
+all-platform, publication or installed-readiness claim is inferred.
+
 ## Accepted decisions and current Source
 
 Use the existing scope `attribution.thread_id` and opaque `attribution.pointer`
@@ -87,7 +151,7 @@ not override the current system/lifecycle contract.
   F11 issue-before-activation is static sequencing evidence; evaluate supported
   dispatch repair before claiming an unrecoverable public case.
 
-## Current D01–D18 disposition
+## Current D01â€“D18 disposition
 
 The supplied `vida-agent-static-audit.md` evaluates only commit `641710f`;
 its finding labels do not certify the current checkout. Two independent Luna
@@ -95,46 +159,53 @@ cohorts inspected current Source and established the dispositions below.
 Confirmed open items are in the same authorized architectural batch; an assigned
 fix is not a PASS. Code/Static results never grant installed Runtime acceptance.
 
-| ID | Current disposition | Required evidence or retained GAP |
-|---|---|---|
-| D01 | Confirmed open public lost-ACK ordering defect; Mastra journal retry itself is fixed. | Exact public action/issue/payload retry must reach its durable observation before stale caller CAS rejection, including after wave advance; changed payload remains conflict. |
-| D02 | Fixed in Source by declared produced-contract guard. | Packet-only synthesis is not blanket ResearchSynthesis recovery; final public recovery evidence still binds current inputs. |
-| D03 | Partial: known failed read-only research/synthesis observations fixed; source-writer failure still blocked. | Durable writer failure must preserve original issue/effect identity without success artifacts, replay or invented no-effect proof. |
-| D04 | Current route offers `linked_correction` successor; bounded correction in the SAME attempt remains an unspecified limitation. | Preserve the full correction requirement. Its budget/exhaustion policy is an open SR decision; no invented retry budget or completed acceptance. |
-| D05 | Current Source SQLite cutoff/process-kill repair fixed. | Legacy orphan guard stays conservative; retire the old selector through existing migration, with no age/PID cleanup. Installed qualification remains separate. |
-| D06 | Fixed in Source: original configured assignment indexes survive filtering. | Current configuration/public permutations remain part of final qualification. |
-| D07 | Fixed in Source: graph-declared terminal outputs replace declaration position. | Verify terminal artifacts against the effective DAG on final inputs. |
-| D08 | Confirmed open package-owned executable inventory boundary. | Core writer must bind the actual package runtime inventory before first new admission; caller-selected subsets are insufficient. |
-| D09 | Source recovery fixed with independent focused Code/Static evidence. | Tests cover preserved project values, partial intent, refusals and idempotency; installed consumer/public-run acceptance remains pending. |
-| D10 | Own publication-temp cleanup remains open. | EIO/ENOSPC failures clean only their own bounded temp. Directory fsync is an attributable nonblocking limitation; no general power-loss claim. |
-| D11 | Source surrogate-boundary fix has independent focused Code/Static evidence. | Unicode boundary tests preserve supplementary characters; full candidate/installed qualification remains pending. |
-| D12 | Repeat-build performance debt, follow-up. | Measure comparable complete candidate duration with unchanged checks; no claimed optimization or weaker assurance. |
-| D13 | Confirmed open execution-resource recovery validator mismatch. | Accept only exact owned `execution:<work_id>` alongside validated file resources; reject foreign execution keys. |
-| D14 | Conditional required-surface GAP: answer/save selectors are unsupported by strict scope schema. | Preserve the requested surface; qualify functional repair before schema/artifact mutation. This is not normal mode-null workflow failure. |
-| D15 | Confirmed open effective producer/cardinality validation. | Validate required producer survival after filtering and the cardinality accepted by tester/delivery consumers before issue. |
-| D16 | Confirmed open queued-owner ticket release. | Same-transaction suspension releases only that work's unissued queued intents, preserves history/FIFO and leaves foreign rights untouched. |
-| D17 | Eventual append-only JSON budget limit remains open P1. | Prove actual clean-ledger headroom before first admission. After first clean migration, closure-safe historical rollover/read lookup is required before sustained use; no unsafe current-v1 compaction or invented jobs cap. |
-| D18 | Live same-owner heartbeat fixed in Source. | Expired late completion remains reconciliation-only; expiry cannot grant takeover, automatic replay or acceptance. |
+| ID  | Current disposition                                                                                                           | Required evidence or retained GAP                                                                                                                                                                                            |
+| --- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D01 | Public exact-ACK ordering fixed in Source with writer one-test/seven-assertion evidence.                                      | Independent current public qualification remains pending; changed payload remains conflict.                                                                                                                                  |
+| D02 | Fixed in Source by declared produced-contract guard.                                                                          | Packet-only synthesis is not blanket ResearchSynthesis recovery; final public recovery evidence still binds current inputs.                                                                                                  |
+| D03 | Partial: known failed read-only research/synthesis observations fixed; source-writer failure still blocked.                   | Durable writer failure must preserve original issue/effect identity without success artifacts, replay or invented no-effect proof.                                                                                           |
+| D04 | Current route offers `linked_correction` successor; bounded correction in the SAME attempt remains an unspecified limitation. | Preserve the full correction requirement. Its budget/exhaustion policy is an open SR decision; no invented retry budget or completed acceptance.                                                                             |
+| D05 | Current Source SQLite cutoff/process-kill repair fixed.                                                                       | Legacy orphan guard stays conservative; retire the old selector through existing migration, with no age/PID cleanup. Installed qualification remains separate.                                                               |
+| D06 | Fixed in Source: original configured assignment indexes survive filtering.                                                    | Current configuration/public permutations remain part of final qualification.                                                                                                                                                |
+| D07 | Fixed in Source: graph-declared terminal outputs replace declaration position.                                                | Verify terminal artifacts against the effective DAG on final inputs.                                                                                                                                                         |
+| D08 | Source canonical inventory now shared by CLI/SDK, renewal, expired recovery and runtime-code-rebind.                          | Public run requires expected exports; copied-package source/generated-engine omission checks passed two cases/89 assertions by the writer. Independent final QA remains pending.                                             |
+| D09 | Source recovery fixed with independent focused Code/Static evidence.                                                          | Tests cover preserved project values, partial intent, refusals and idempotency; installed consumer/public-run acceptance remains pending.                                                                                    |
+| D10 | Own publication-temp cleanup remains open.                                                                                    | EIO/ENOSPC failures clean only their own bounded temp. Directory fsync is an attributable nonblocking limitation; no general power-loss claim.                                                                               |
+| D11 | Source surrogate-boundary fix has independent focused Code/Static evidence.                                                   | Unicode boundary tests preserve supplementary characters; full candidate/installed qualification remains pending.                                                                                                            |
+| D12 | Repeat-build performance debt, follow-up.                                                                                     | Measure comparable complete candidate duration with unchanged checks; no claimed optimization or weaker assurance.                                                                                                           |
+| D13 | Confirmed open execution-resource recovery validator mismatch.                                                                | Accept only exact owned `execution:<work_id>` alongside validated file resources; reject foreign execution keys.                                                                                                             |
+| D14 | Conditional required-surface GAP: answer/save selectors are unsupported by strict scope schema.                               | Preserve the requested surface; qualify functional repair before schema/artifact mutation. This is not normal mode-null workflow failure.                                                                                    |
+| D15 | Confirmed open effective producer/cardinality validation.                                                                     | Validate required producer survival after filtering and the cardinality accepted by tester/delivery consumers before issue.                                                                                                  |
+| D16 | Confirmed open queued-owner ticket release.                                                                                   | Same-transaction suspension releases only that work's unissued queued intents, preserves history/FIFO and leaves foreign rights untouched.                                                                                   |
+| D17 | Eventual append-only JSON budget limit remains open P1.                                                                       | Prove actual clean-ledger headroom before first admission. After first clean migration, closure-safe historical rollover/read lookup is required before sustained use; no unsafe current-v1 compaction or invented jobs cap. |
+| D18 | Live same-owner heartbeat fixed in Source.                                                                                    | Expired late completion remains reconciliation-only; expiry cannot grant takeover, automatic replay or acceptance.                                                                                                           |
 
-D01/D03/D13/D15/D16 corrective Source work and D08 inventory work are assigned
-but not reported repaired by this table. Deferred functionality remains a GAP,
+D03 writer failure and D13/D15/D16 retain open current qualification/fix
+items. D01/D08 now have writer-level Source repair evidence; independent final
+qualification remains pending. Deferred functionality remains a GAP,
 not discarded scope.
 
-## Unconfirmed R02–R09 risks
+First clean cutover decision: old accepted subset-engine intakes remain archival
+or lawfully superseded only, with no old-subset fallback or new-engine artifact
+conversion. Failed-before-admission developer requests use fresh canonical work
+in the same chat. Unknown native effects remain protected; quiescent supersession
+is not COMPLETE or Runtime acceptance.
+
+## Unconfirmed R02â€“R09 risks
 
 These are mechanism/risk descriptions, not confirmed defects or runtime
 counterexamples. The audit supplies no R01 finding.
 
-| Risk | Current boundary and next evidence |
-|---|---|
-| R02 engine outcome | Persisted Mastra outcome projection exists; null step alone is blocked. Do not infer complete native success from journal collection. |
-| R03 whole-set snapshot | Scoped freshness is cooperative; no atomic whole-filesystem snapshot is promised. Preserve final scoped rereads. |
-| R04 issue before activation | Durable issue precedes effects; test supported preparation/dispatch recovery before claiming an unrecoverable case. |
-| R05 cross-store crash/resume | Mastra and HostState stores are separate; exact pinned concurrency/interruption recovery evidence remains open. |
-| R06 transaction lock duration | Filesystem validation can hold SQLite immediate exclusion; measure hold/wait before performance changes, retain CAS/freshness. |
-| R07 native profile/attestation | Native driver controls are a cooperative execution contract; JSON is not native attestation or physical sandboxing. |
-| R08 developer context | Further synthesis/diagnostic/prohibition/security propagation needs provenance-bound evidence; never fabricate missing classifications. |
-| R09 model/profile portability | Current approved profile limits are explicit; no demonstrated host unavailability or general runtime failure. |
+| Risk                           | Current boundary and next evidence                                                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| R02 engine outcome             | Persisted Mastra outcome projection exists; null step alone is blocked. Do not infer complete native success from journal collection.   |
+| R03 whole-set snapshot         | Scoped freshness is cooperative; no atomic whole-filesystem snapshot is promised. Preserve final scoped rereads.                        |
+| R04 issue before activation    | Durable issue precedes effects; test supported preparation/dispatch recovery before claiming an unrecoverable case.                     |
+| R05 cross-store crash/resume   | Mastra and HostState stores are separate; exact pinned concurrency/interruption recovery evidence remains open.                         |
+| R06 transaction lock duration  | Filesystem validation can hold SQLite immediate exclusion; measure hold/wait before performance changes, retain CAS/freshness.          |
+| R07 native profile/attestation | Native driver controls are a cooperative execution contract; JSON is not native attestation or physical sandboxing.                     |
+| R08 developer context          | Further synthesis/diagnostic/prohibition/security propagation needs provenance-bound evidence; never fabricate missing classifications. |
+| R09 model/profile portability  | Current approved profile limits are explicit; no demonstrated host unavailability or general runtime failure.                           |
 
 ## Terminal writer ownership disposition
 
@@ -147,9 +218,48 @@ source drift. Expiry/drift are not completion proof. Work/history remain incompl
 and Runtime unaccepted; drift stales byte-bound proof, fresh correction needs
 scope/FIFO, and execution-only coordination grants no Source-write authority.
 Unknown/unobserved/started/uncertain/foreign/mismatched effects remain fenced.
-The atomic report seam has initial Source test evidence; historical reconciliation
-and expired/drift/sequential/FIFO/stale counterexamples remain pending. This is
-not an implementation-complete or final-assurance result.
+Source implements the atomic `commitCompletedSourceReport` seam and
+`reconcileCompletedSourceOwnership` historical cleanup without journal rewrite.
+Writer terminal tests passed three/47 for expiry/drift, fault, foreign/started
+negatives and peer FIFO/correction/retry; ten sequential writers passed one/31.
+Public ACK passed one/seven; paused copied-package omission/recovery checks
+passed two/89 in 48.95 seconds. Exact 20 Core/inventory files passed formatting;
+pinned typecheck passed in 1.32 seconds. Independent limited Core qualification is recorded below; full candidate QA,
+final assurance and Runtime acceptance remain separate.
+
+## Current qualification repair receipts
+
+Core writer evidence: fresh optional-journal check one test/eight assertions,
+expired execution-only recovery one/nine, copied CLI wave/exact-ACK one/28 in
+62.96 seconds; redaction, typecheck and four-file formatting passed. Source
+research-repair plan/apply now resolve Ajv/YAML/schemas from the existing
+executing package root, without copied-consumer or alias fallback. Fresh optional
+journal absence is read-only only without retained Host assignments; started/
+uncertain retained effects fail closed and release never infers quiescence.
+
+Independent Luna Bun 1.4.2 affected Core lane passed four tests, zero failures,
+49 assertions, 217 filtered in 67.72 seconds; copied exact-ACK took 65.78 seconds.
+No build or Source edits occurred. Control return was 10.2 seconds, distinct from
+test duration and above the target. This is bounded current evidence, not full
+qualification.
+
+Helper writer final four-fixture suite passed 50 tests, zero failures, 317
+assertions in 117.13 seconds; seven owned files passed formatting. Separate
+research-root ten, audit three and readonly-plan two checks passed. Independent
+Luna seven-fixture intent review is READY, with no defect or weakened assertion.
+The exact 27 leaked fixture roots were absent from HEAD and had no active process;
+the cleanup owner moved them byte-exact into ignored `.tmp`, verified preserved
+bytes and removed only their 810 new cached entries (zero remaining), preserving
+unrelated staged paths. Actual operational receipt:
+`.tmp/audit-36-qualification-20261001/runtime-config-rebind-cleanup.json`.
+Standalone runtime-config fixtures now default to OS temporary directories with
+owned afterEach cleanup, retaining explicit fixture-root overrides. No commit,
+consumer mutation or canonical-policy waiver follows. Core/fixture/runner inputs
+are frozen; the one full-suite rerun remains pending.
+
+Canonical contracts now refer dynamic candidate/test/install/CLEAR/Runtime status
+to public release state and current operational evidence. Later suite outcomes
+belong there without rewriting the same qualified living-document bytes.
 
 ## Static evidence and remaining qualification
 
@@ -169,11 +279,57 @@ or real consumer effect; no global PASS or current installed acceptance follows.
 
 Independent Luna finite Source QA passed automatic absorption ten tests/53
 assertions and focused host/run nine tests/82 assertions. These are bounded
-lanes, not full candidate qualification. The later actual Source migration helper
-lane passed 14 tests/75 assertions in 18.02 seconds by the Code writer only;
-independent Luna helper qualification remains pending. The inspector's native
-copy/SQLite reader avoids SHM mutation in the original store; positive helper and
-typecheck results do not promise whole-filesystem atomicity or deployed readiness.
+lanes, not full candidate qualification. Independent Bun 1.4.2 affected migration
+helper QA passed 14 tests/75 assertions in 17.73 seconds. It covers restore
+cutoff, unknown/init denial, blocked side effects, baseline/restore faults, CAS
+and idempotency.
+
+The verified production maintenance defect was an internal persisted-encoding
+mismatch: the migration writer hashed exact `JSON.stringify` row payload while
+the release verifier canonicalized parsed state. Its failure evidence was three
+passing/11 failing helper checks. The current Source fix verifies stored raw
+bytes while retaining semantic binding/status/fence checks. This introduces no
+schema, old-version reader or consumer change. The affected independent helper
+pass is current bounded evidence, not full qualification or Runtime acceptance.
+The inspector's native copy/SQLite reader avoids original-store SHM mutation;
+these checks establish no whole-filesystem atomicity.
+
+The prepared `0.1.2` operation
+`local-f9f5eddf-fe16-461c-ae46-7c4b46a59036` remains awaiting assurance. Its main
+qualification is FAIL: 455 passing, 28 failing, two filtered. Two Source fixture
+paths are being repaired separately; the complete failure classification follows
+below, with correction and rerun evidence pending. No archive, installation or Git release effect is recorded for this
+operation. Keep the same candidate identity; do not relabel the helper pass as
+global PASS or the failed sweep as a successful package formation.
+
+## Main qualification failure classification
+
+Luna classified all 28 failures in the current main sweep. The counts below
+are verified failure categories, not 28 production Code defects or repaired
+results. Core and helper writers are correcting them in the same `.2` operation;
+rerun evidence is pending.
+
+| Count | Verified category                                                                                         | Disposition and proof still needed                                                                                                                                                         |
+| ----: | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|    10 | Repair CLI fixtures select the wrong repository root.                                                     | Fix fixture root bindings, then exercise the actual package-owned CLI.                                                                                                                     |
+|     3 | Copied fixtures omit required tooling.                                                                    | Complete only the declared fixture payload; rerun retained boundary checks.                                                                                                                |
+|     1 | Forward-payload dependency-symlink fixture uses wrong copy root.                                          | Correct fixture containment and retain the symlink denial invariant.                                                                                                                       |
+|     5 | Runtime-config cases inherit runner-global `AGENT_RUNTIME_TEST_REPOSITORY_ROOT` pointing at `3mob`.       | Isolate test context; this runner pollution does not justify production identity relaxation.                                                                                               |
+|     2 | Read-only dispatch assertions describe an old refactoring.                                                | Reconcile current fixture expectations without weakening effect/ownership gates.                                                                                                           |
+|     1 | Property fixture uses old project identity.                                                               | Use the current configured identity, retaining foreign-project rejection.                                                                                                                  |
+|     2 | Read-only reconciliation fixtures reference retired docs/Creatio maps.                                    | Update fixture source maps; no consumer or retired-reader fallback is authorized.                                                                                                          |
+|     1 | Run-message assertion expects an old exact string.                                                        | Preserve the helpful current next action and absence of root leakage; adjust only the stale assertion.                                                                                     |
+|     1 | Production migration release verifier used canonicalized parsed JSON instead of stored raw payload bytes. | Source fixed; independent affected helper pass is 14/75. Full sweep remains to be rerun.                                                                                                   |
+|     1 | Production fresh Host lazy acquisition queries a missing Mastra journal table.                            | Core fix is pending verification; Source writer fix has one-test/eight-assertion evidence; bounded independent Core QA is recorded separately. Mere table absence cannot prove quiescence. |
+|     1 | Expired-recovery fixture seeds a file claim but expects execution-only semantics.                         | Ownership guard is correct; align the fixture with its actual resource class.                                                                                                              |
+
+After repair fixture paths were corrected, the Source fallback research-repair
+route exposed another actual production defect. Core is fixing it; acceptance
+and regression results remain pending. This is a newly surfaced finding, not an
+invented extra count in the original 28 or a claim that all classified failures
+are resolved. No archive, release, install, consumer effect or Runtime acceptance
+follows from the classification.
+
 These are bounded Code/Static results, not installed/native Runtime proof.
 Installed `0.1.1` is immutable and final coordinated `0.1.2` is pending. Full
 numeric quality/native matrix, three fresh blind reviews, reverse validation,

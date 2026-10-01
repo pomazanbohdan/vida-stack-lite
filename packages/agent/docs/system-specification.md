@@ -39,21 +39,33 @@ The source repository contains exactly `agent=packages/agent` and
 `plugin=packages/plugin`. Existing Git history and origin are preserved.
 Predecessor framework code is inactive provenance, never an active fallback.
 
-The agent distributes as `vida-agent`, initially from a local npm
-tarball installed globally. The `vida-agent` PATH command forwards supported
-public commands and returns instruction locations through
-`vida-agent instructions --path NAME`. Existing command aliases remain.
-The executing package root is derived from its module location and validated
-package identity. Its schemas, templates, instructions and executable code
-remain package-owned. The explicit consumer `--project-root` owns YAML,
-product paths, project documents and operational state. Generated consumer
-instructions contain a public discovery command, not an installation-home
-path or a copied agent implementation. npm owns installed dependencies;
-initialization does not run a dependency installation in the global package.
-The installation dependency check resolves declared entrypoints with ESM import
-conditions from that package's directory and verifies their files without
-loading dependency code. Import-only exports are valid; an absent entrypoint
-blocks initialization. The check does not use consumer source or `NODE_PATH`.
+The primary distribution is one native `vida-agent` executable per qualified
+OS/CPU target, embedding Bun 1.4.2. Direct installation, public commands and first
+run require no external Node, npm or Bun executable and no first-run network
+bootstrap. npm `vida-agent` and every existing public SDK export remain separately
+maintained compatibility surfaces; an executable does not replace in-process
+imports or declarations. Source development/publication tools may have their own
+prerequisites. Native target support follows actual full-product verification,
+not cross-compilation success or a minimal runtime probe.
+
+The PATH command preserves supported public commands, aliases, arguments, exit
+behavior and `vida-agent instructions --path NAME`. Immutable embedded schemas,
+templates, instructions and native/WASM resources materialize when physical paths
+are required into a private cache bound to the product version and exact payload.
+Unsafe paths, partial publication, tampering and conflicting materialization fail
+closed; original guarded-filesystem native attestation is preserved. Consumer
+YAML, project documents and database/WAL/SHM remain external under the explicit
+`--project-root`. Generated instructions use public discovery, not a copied
+implementation or machine-specific installation path. Generic runtime behavior,
+ProjectContext, ownership/CAS, maintenance, Cedar, fs-safe and Mastra/LibSQL
+semantics remain unchanged. A convenience ABI or loader flag is not established
+as a supported mechanism without actual target qualification.
+
+The npm compatibility package derives its root from module location and validated
+identity, owns dependencies and resources, and checks declared ESM entrypoints
+without loading dependency code. Import-only exports remain valid; absent
+entrypoints block initialization. It does not use consumer source or `NODE_PATH`,
+and initialization does not install dependencies in the global package.
 
 Package changes cannot silently reinterpret active consumer artifacts. A
 functional bundle-owned current-v1 repair must bind exact preimages, source,
@@ -63,11 +75,43 @@ pointers before retiring the former consumer bundle. Existing consumer v10
 and unrelated files remain until the replacement is verified. Prior tasks
 are preserved as inactive provenance; new work does not inherit their rights.
 
+## Source development controller
+
+The bundle-owned development-controller seam provides prepare, inspect, verify
+and controlled execution for this Source repository, whose target has no active
+runtime selector. Construction rejects a target with an active selector; existing
+selected-root containment remains unchanged. General consumer controller mode is
+outside this contract. An immutable qualified current-candidate package root
+outside the editable target supplies actual runtime modules, while the target's
+logical `runtime.bundle` remains `packages/agent`. This is explicit execution-
+package selection, not a target worktree, alias, installed predecessor fallback,
+FIFO bypass, global PATH change or production selector activation.
+
+Existing current-v1 bindings already separate target `source_revision` from
+controller `runtime_code_digest` and code paths. Preserve repository/project
+identity, original human-request attribution, exact target scopes, Host/Work
+state, authorization, leases and CAS without adding schema fields or WorkGroup
+identity. Expected authorized target edits continue the same attempt through the
+unchanged controller and invalidate only proof bound to changed target bytes.
+
+Prepare constructs a candidate controller and operational qualification metadata;
+inspect reports actual construction/readiness without granting authority. Verify
+requires pinned current SDK exports, dependencies, native/resource integrity and
+actual isolated initialization, scope, admission and an own-target bin-addition
+report regression before readiness. Controlled execution revalidates those
+bindings and rejects controller drift, wrong package identity, pin or dependencies.
+A copied tree alone is not qualification. Internally computed bindings travel
+through supported operations; callers do not manually compute/replay hashes.
+Qualification metadata cannot grant human approval, a lease, delivery or Runtime
+acceptance. Outside-scope authorization denies undeclared writes; this does not
+promise physical filesystem isolation or detection of arbitrary unrelated edits.
+No current controller or successful qualification is inferred from this contract.
+
 ## Local release workflow
 
-After authorized source corrections, the orchestrating session forms a new
-local npm package and installs it on the system through the repository-owned
-`release:local` command. This is an authorized delivery effect, not user Runtime
+After authorized source corrections, the orchestrating session forms exact
+local native target assets and separately maintained npm/SDK artifacts through
+the repository-owned release workflow. This is an authorized delivery effect, not user Runtime
 acceptance. The initial package version is `0.1.0`; only a fully verified
 successful local publication advances the next candidate patch. Failed checks,
 packing or installation and recovery of the same pending operation do not
@@ -83,8 +127,10 @@ per-operation journal and cannot authorize replay.
 
 Candidate preparation settles version and ownership before assurance. Applicable
 actual test outcomes bind their relevant executable inputs, allowing reuse when
-those inputs remain current. npm pack builds once through prepack and supplies
-structured exact archive metadata. Three actual fresh history-isolated blind
+those inputs remain current. Each final target payload is formed once and
+identified by structured exact artifact metadata; npm compatibility formation
+uses prepack. A pending operation retains its candidate identity while its
+distribution implementation and qualification are reconciled. Three actual fresh history-isolated blind
 reviews, reverse validation and current public documentation CLEAR bind the
 sealed source and archive before installation. The local maintainer adapter
 verifies consistency and currentness; the orchestrating session verifies native
@@ -104,13 +150,60 @@ not change that binding. Consumer Git authority is separate.
 
 One admitted maintainer process owns candidate allocation and worker launch.
 Packing and installation return control asynchronously and expose actual
-operation/PID status and stage duration. Installation uses exactly the immutable
-qualified archive with npm-managed production dependencies. It resolves npm's
-global prefix independently, binds the system PATH command to that package,
-and verifies version, instruction discovery and pinned prerequisites in an
-unrelated cwd. Interrupted or failed verification inspects the exact installed
+operation/PID status and stage duration. Native installation uses the exact
+qualified target asset. Its delivery manifest declares the destination, PATH
+change, ordering, prior-install preservation and supported rollback effects; npm
+global installation is not proof of native primary installation. Verify version,
+all public command routes, physical instruction discovery, native/WASM behavior
+and offline runtime independence from an unrelated cwd. npm compatibility
+installation resolves its global prefix independently and uses npm-managed
+production dependencies. Interrupted or failed verification inspects the exact installed
 artifact before repeating effects. Registry publication, consumer initialization,
 configuration overwrite, commits, tags and push are outside this command.
+
+The native default user-bin is `%LOCALAPPDATA%/Programs/vida-agent/bin` on
+Windows. On Unix it is `XDG_DATA_HOME/vida-agent/bin` when `XDG_DATA_HOME` is set,
+otherwise `~/.local/share/vida-agent/bin`. Version- and operation-bound release
+trees are siblings of `bin`. Preserve existing npm shims and explicitly declare
+PATH changes in the delivery manifest. First publication uses exclusive creation;
+an upgrade binds CAS to the exact observed prior entry. An unknown installation
+outcome requires observation and reconciliation before another effect, not blind
+replay. The manifest declares prior-install preservation and supported rollback;
+consumer configuration and DB/WAL/SHM remain external.
+
+Compilation uses deterministic pinned tools and explicit build inputs, retaining
+useful function/class names and disabling ambient dotenv/bunfig/build-environment
+configuration. Minification and bytecode require actual command/native-resource
+checks; performance or size improvement is claimed only from comparable measured
+evidence. Short commands and control return target under two seconds, separately
+from elapsed long-operation time. Native CI build/artifact verification and English product-
+version release notes/scripts are prepared and qualified without executing
+registry or GitHub publication merely as a test.
+
+Standalone acceptance traces SA-CLI to public command/runtime independence,
+SA-RESOURCES to immutable resource/native provenance, SA-STATE to external
+consumer state and existing governance, SA-OPT to measured pinned compilation,
+SA-RELEASE to one operation and separate native/npm/SDK assets, SA-NOTES to
+current English product/version notes, SA-CI to native-runner build/artifact preparation with locally qualified tests
+and prepared publication tooling, and SA-ASSURANCE to fresh final reviews, reverse
+validation, CLEAR and attributable delivery observation. The accepted trace is
+retained in `.agent/work/teamlead-standalone-release-20261001/WORK.md`.
+
+CI/CD owns build and package/release preparation, with no test, coverage, CRAP or
+mutation steps. Runtime qualification remains local under TESTING and the lifecycle
+self-development policy; mutation requires explicit manual launch. Missing local
+assurance or deferred numeric evidence remains a GAP, not release proof.
+
+An explicit human request may authorize manual npm compatibility formation and
+system update while native-primary delivery and CI are unfinished. Reuse the
+current pending candidate and release operation under one authority. Qualify the
+exact npm/SDK archive and public CLI through applicable checks and prepack, three
+fresh blind reviews, reverse validation and current CLEAR; no validation bypass
+is introduced. Apply the Source standing commit/push rule after successful
+formation and install the exact qualified archive. This local delivery performs
+no registry publication and proves no native-primary readiness. Preserve native
+and CI acceptance goals with their actual gaps, then use the qualified installed
+compatibility runtime to unblock waiting developers through normal admission.
 
 ## Scoped source and lease continuity
 
@@ -168,12 +261,15 @@ reconciliation. Agent done, expiry or prior Code packets cannot establish releas
 safety. Read-only tests, reviews and Runtime waiting retain no file-write rights.
 
 Use common ownership reconciliation at report, intake, recovery, suspension and
-successor boundaries; exact retry/restart is idempotent. The dedicated HostState
-transaction at the Mastra report seam has initial Source test evidence, but
-historical reconciliation, expired/drift, sequential/FIFO/stale cases and final
-qualification remain pending. Avoid nested ordinary CAS, additional caller keys
-or artifact-schema fields. No implementation-complete claim follows from the
-initial atomic seam test.
+successor boundaries; exact retry/restart is idempotent. Source now implements
+`HostStateStore.commitCompletedSourceReport` to commit journal, work and shared
+ledger together, and `reconcileCompletedSourceOwnership` to reuse the exact
+durable predicate for historical expiry/drift cleanup without journal rewrite.
+Qualification covers expiry/drift, transaction fault, foreign/started negatives,
+peer FIFO, correction, retry and sequential writers; current outcomes belong to
+the release operation's actual evidence. No nested ordinary CAS, new caller keys or
+artifact-schema fields are introduced; Source implementation does not establish
+qualified delivery or Runtime acceptance.
 
 Request-pointer equality groups native children under their stable orchestrating
 Root identity, preserving the exact repository/project set and same-request
@@ -242,17 +338,48 @@ a changed payload conflicts. This does not deduplicate external effects.
 
 Known source-writer failure must remain distinct from unknown effects: preserve
 the durable original issue and effect identity, create no successful artifact,
-and grant no replay or no-effect proof. Public report ordering and durable writer
-failure remain current implementation GAPs despite read-only failure/journal
-retry fixes. Current correction uses a linked successor; SAME-attempt bounded
-correction remains required with its budget/exhaustion policy unspecified.
+and grant no replay or no-effect proof. Public exact-ACK ordering preserves the durable exact retry; known writer-failure
+handling remains a separately tracked behavior GAP. General same-work/attempt
+correction after accepted negative validation is required; its current
+implementation GAP is explicit corrective assignment authority and artifact
+repair. The configured assignment index remains its original parallel slot.
+An explicit correction generation, distinct from ownership lease generation,
+must bind the new Host-issued corrective assignment to immutable completed
+history, actual negative findings, attributable `correction_authorization`,
+preserved `recovery` evidence, current scope/acceptance and a live exact-path
+lease. All issued actions must have attributable terminal outcomes before this
+transition; an unknown outcome grants no replay. HostState owns the atomic
+authorization and journal transition. A functional bundle-owned artifact
+repair command with fenced atomic application and resume/recovery must be
+qualified and shipped before changing active current-v1 artifacts. Runtime
+readers do not fall back to prior shapes. Correction does not forge a new
+predecessor identity, reuse a lease generation as its ordinal, imply physical
+isolation or confer delivery/Runtime acceptance. One owner-authorized correction
+permits one bounded configured corrective execution. A further FAIL stops
+again until another explicit owner authorization; there is no automatic retry
+loop. The workflow's `max_attempts` keeps its existing work-attempt meaning and
+does not limit correction generation. Repair restore preserves semantic prior
+authority in strict current-v1 shape, including explicit generation zero for
+base attempts; raw preimages remain provenance. New assignment or work writes
+after the frozen repair postimage block restore through dependency CAS.
 
-Before fresh admission, package-owned executable inventory must establish runtime
-identity; a caller-selected subset cannot define that authority. Recovery accepts
-only exact owned execution resources or validated file resources. Effective graph
-validation must retain required producers and consumer cardinality. Suspension
-must retire only the same work's unissued queued ticket intents. These current
-corrective items remain open until final behavioral evidence exists.
+Before fresh admission, package-owned executable inventory establishes runtime
+identity; caller-selected subsets cannot define that authority. Source CLI and
+SDK use the same canonical package-root inventory, including live renewal,
+expired recovery and runtime-code-rebind; public run requires the complete
+expected exports. Copied-package source or generated-engine omissions fail
+before engine construction. Qualification must bind those boundaries to the actual executing package and
+current release operation.
+
+For first clean cutover, old accepted subset-engine intakes are archival or
+lawfully superseded only. No old-subset reader fallback or conversion to new
+engine artifacts is supported. A developer request that failed before admission
+starts fresh canonical work in the same chat. Unknown native effects remain
+protected; typed quiescent supersession is neither COMPLETE nor Runtime
+acceptance. Recovery accepts only exact owned execution or validated file
+resources. Effective graph validation must retain required producers/consumer
+cardinality; suspension retires only own unissued queued intents. Their precise
+current defect/evidence dispositions remain in the existing audit research.
 
 Append-only coordination history has a finite canonical JSON budget. Prove actual
 clean-ledger headroom before first admission. After first clean migration,
@@ -271,6 +398,11 @@ infer success from the absence of a suspended step.
 Automatic successor admission groups attributable requests by the existing
 validated implementation scope's exact `attribution.thread_id` and opaque
 `attribution.pointer`. Equal pointers preserve parallel contours of one request.
+All child or disjoint contours of one attributable human request reuse the same
+original scope `attribution.thread_id` and `attribution.pointer`. Generated
+intake filenames identify operational artifacts, not new human requests. A
+genuinely changed human request supplies its own attributable reference; do not
+introduce a WorkGroup key or derive request identity from an intake pathname.
 A distinct pointer may supersede eligible predecessors only for the exact same
 orchestrating session, repository and sorted project set. The successor and
 every predecessor's current contracts, journal, work and coordination versions
@@ -318,6 +450,11 @@ files)` supports `baseline` and `restore` under current maintenance. Baseline
 retains historical canonical rows as same-store beforeimages and clears active
 rows; restore recovers exact old row semantics while maintenance metadata remains
 monotonic. Its synchronous filesystem callback executes inside the transaction.
+The internal migration writer and maintenance-release verifier share one persisted
+encoding: SHA256 of the exact `JSON.stringify` payload bytes stored in the
+operation row. The verifier separately checks parsed semantic binding, status
+and fence; it does not substitute canonicalized parsed JSON for that byte check.
+This changes no active schema or public digest contract.
 SQL and filesystem effects are not one atomic persistence system. The
 async package-owned SDK entry `runConsumerMigrationState(input, files)` is
 exported through `trusted-host`; input binds `repositoryRoot`, `operationId`,
@@ -328,8 +465,9 @@ Unknown/inflight native or Mastra state is denied before callback effects. An
 interrupted restore retains its durable restoring state and maintenance fence;
 the exact operation resumes. Baseline retry reuses its beforeimages, and restored
 retry calls the idempotent callback only when restored rows/admissions remain
-exact. Source helper qualification and repository-only deployment adapter work
-remain pending; no migration CLI or installed readiness is established.
+exact. The SDK helper and repository-only deployment adapter require actual current
+qualification before consumer deployment. No migration CLI is implied; current
+installed readiness comes from public release state and delivery evidence.
 
 Retain the canonical database and its WAL/SHM at the configured path, partition
 archived work children around that authority, and obtain a consistent database
@@ -347,6 +485,17 @@ termination releases SQLite exclusion. A historical orphan marker still fails
 closed pending explicit maintenance/terminal repair or retirement of the old
 selector. PID/age heuristics do not authorize deletion. This establishes no
 power-loss guarantee or SQL/filesystem atomicity claim.
+
+Research artifact repair plan/apply resolves Ajv, YAML and schemas through the
+existing executing `runtimePackageAccess` package root. The explicit consumer
+root anchors repaired artifacts; it is not a validator/dependency source and
+needs no copied `vida-agent` tree or alias fallback.
+
+A fresh Host context with no retained assignments may inspect an absent optional
+Mastra journal table/row read-only without creating it. Retained started or
+uncertain Host assignments require their journal and fail closed when it is
+missing. Table absence proves neither terminal completion nor quiescence for
+retained effects; it cannot bypass terminal ownership reconciliation.
 
 Research normalization preserves its immutable current-v1 reserved plan, exact
 target-record CAS and unique lineage event. Under the existing changelog lock,
@@ -377,8 +526,8 @@ work covers Codex SDK, App Server, Agents SDK and Agents API adapters; those
 adapters normalize only issued effects and events. Plugin UI/MCP uses public
 interfaces and owns no duplicate lifecycle ledger. These domains remain inside
 the two products `agent` and `plugin`. Optional future providers neither delay
-the coordinated `0.1.2` release nor activate provider execution or API billing.
-Its default remains built-in session tools. The connector public seam is not
+local package qualification nor activate provider execution or API billing.
+The local package default remains built-in session tools. The connector public seam is not
 yet implemented or verified and remains a GAP.
 
 The target adapter sequence is OpenAI Agents API, TypeScript Agents SDK, then
@@ -449,7 +598,8 @@ Prioritize verified developer unblocking, project migration to the actual
 runtime, optimization, then new functionality. Detailed execution-speed law
 has one owner: the development-lifecycle self-development protocol.
 
-Acceptance requires actual global npm/PATH discovery from an unrelated cwd,
+Acceptance requires actual native primary PATH discovery from an unrelated cwd
+with external runtimes absent and first-run network unavailable,
 package-owned resource reads, fresh initialization with exact project maps,
 preserved owner settings on repeat initialization, and a genuine typed fresh
 work intake without manual integrity values. Consumer migration requires
@@ -458,10 +608,11 @@ product data preserved. Static tests never close attributable Runtime acceptance
 
 Current Code evidence includes the full transferred source, public umbrella
 discovery, package/consumer initialization access split and new-repository
-reconciliation. The installed `0.1.1` package is immutable; the coordinated
-`0.1.2` candidate remains pending. Selected external-package run, qualified
-consumer artifact repair/rollback, final assurance and current installed Runtime
-acceptance remain GAPs. Focused Source checks do not qualify a complete release.
+reconciliation. Read candidate/installed versions and readiness from public
+local-release state and current operation receipts, not a specification snapshot.
+Selected external-package runs, consumer repair/rollback, final assurance and
+installed Runtime acceptance require their own current evidence. Focused Source
+checks do not qualify a complete release.
 The future OpenAI/SDK/Codex adapters and per-product directory extensions are
 separate planned work. The old executor-only repair does not prove general
 configuration or storage relocation.

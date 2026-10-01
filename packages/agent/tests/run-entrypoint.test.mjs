@@ -8,6 +8,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   symlinkSync,
   unlinkSync,
@@ -16,7 +17,7 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { advanceCutoff, assertNoActiveCutoverMaintenance, run } from '../bin/run.mjs';
+import { advanceCutoff, assertNoActiveCutoverMaintenance, run, writeDurable } from '../bin/run.mjs';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../src/index.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -39,6 +40,19 @@ const mutationMode = process.env.AGENT_RUNTIME_MUTATION_PART === 'bun';
 const v8CoverageMode = process.env.AGENT_RUNTIME_V8_COVERAGE === '1';
 const ordinaryDescribe = mutationMode ? describe.skip : describe;
 const liveInstallTest = v8CoverageMode ? test.skip : test;
+
+test('durable controller publication cleans only its own pending file when publication fails', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-durable-fault-'));
+  try {
+    const target = path.join(root, 'occupied');
+    mkdirSync(target);
+    expect(() => writeDurable(target, { schema: 'FixtureController/v1' })).toThrow();
+    expect(readdirSync(root)).toEqual(['occupied']);
+    expect(readdirSync(target)).toEqual([]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test('cutoff SQLite exclusion rejects a live owner and recovers after process termination without an orphan marker', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-cutoff-process-'));
@@ -328,7 +342,9 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
       schema: 'VidaAgentRunResult/v1',
       status: 'blocked',
       code: 'GAP-VIDA-RUN-CLI-004',
-      message: 'The project root is unavailable or is not a canonical directory.',
+      message: expect.stringMatching(
+        /^The project root is unavailable or is not a canonical directory\. Next action: /,
+      ),
     });
     expect(result.stderr).not.toContain(invalidRoot);
     expect(result.stderr.length).toBeLessThan(512);
@@ -345,6 +361,7 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
           'src',
           'dist',
           'bin',
+          'tooling',
           'schemas',
           'instructions',
           'templates',
@@ -626,7 +643,10 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
         expect(final.payload.next_actions.length).toBeGreaterThan(0);
         expect(final.payload.next_actions[0].request.wave_index).toBe(1);
         const replay = call([...expected(version), '--report', path.join(root, 'report.json')]);
-        expect(replay.status).toBe(1);
+        expect(replay.status).toBe(0);
+        expect(replay.payload.status).toBe('report_retrieved');
+        expect(replay.payload.state_version).toEqual(final.payload.state_version);
+        expect(replay.payload.issued_actions).toEqual([]);
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -645,6 +665,7 @@ if (mutationMode || v8CoverageMode) {
         'src',
         'dist',
         'bin',
+        'tooling',
         'schemas',
         'instructions',
         'templates',

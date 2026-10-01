@@ -14,6 +14,8 @@ import {
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
 import { sessionActionsForWave } from './session-handoff.js';
+import { validateWorkSessionBinding } from './final-assurance.js';
+import type { HostStateSnapshot } from '../host-state.js';
 import type { SessionBridgeObservation } from './mastra-session-bridge.js';
 import { observedReceiptEvidenceReference, validateObservedEvidenceReferences } from './observed-receipt-evidence.js';
 
@@ -73,8 +75,10 @@ export function issueObservedTestReceipt(input: {
   implementationResult: ImplementationResult;
   journal: MastraSessionLedgerSnapshot;
   authority: DeliveryEvidenceAuthority;
+  host?: HostStateSnapshot;
 }): { instruction: TesterInstruction; receipt: TestReceipt } {
   const { repositoryRoot, config, packet, implementationResult, journal, authority } = input;
+  if(journal.state.corrective_execution){requireTest(input.host?.work,'corrective test receipt requires current Host binding');validateWorkSessionBinding(input.host.work,journal.state,repositoryRoot);}
   validateImplementationResult(packet, implementationResult);
   const source = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireTest(
@@ -99,6 +103,7 @@ export function issueObservedTestReceipt(input: {
     packet.workflow_id,
     item.request.wave_index,
     [],
+    journal.state.corrective_execution ?? undefined,
   );
   const action = actions.find((candidate) => candidate.action_id === item.request.action_id);
   requireTest(

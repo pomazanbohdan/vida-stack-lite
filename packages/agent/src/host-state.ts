@@ -1,10 +1,13 @@
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
-import { lstatSync, realpathSync, statSync, mkdtempSync,writeFileSync,rmSync } from 'node:fs';
-import {tmpdir} from 'node:os';
+import { lstatSync, realpathSync, statSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { deriveWorkspaceId } from './workspace-identity.js';
-import type { SynthesisObservationCorrectionPlan, MastraSessionLedgerState } from './orchestration/persistent-session-handoff.js';
+import type {
+  SynthesisObservationCorrectionPlan,
+  MastraSessionLedgerState,
+} from './orchestration/persistent-session-handoff.js';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
@@ -39,9 +42,19 @@ import {
 import {
   validateLifecycleAggregate,
   validateLifecycleProgress,
+  transitionLifecycleState,
+  type LifecycleArtifactReference,
   type DocumentationVerificationContext,
   type LifecycleState,
 } from './lifecycle/lifecycle-state.js';
+import {
+  validateFinalAssuranceState, validateFinalAssuranceProgress, finalAssuranceStatus,
+  correctiveAssignmentAuthorizationSchema,
+  correctiveExecutionSchema,type CorrectiveExecution,validateWorkSessionBinding,
+  type FinalAssuranceState, type FinalAssuranceSnapshot,
+} from './orchestration/final-assurance.js';
+import { requireSafeRepositoryAccess } from './config/safe-repository-access.js';
+import { snapshotDeclaredSources } from './orchestration/scoped-source-snapshot.js';
 
 export interface ContractReference {
   readonly schema: string;
@@ -62,6 +75,8 @@ export interface AssignmentAttempt {
   readonly request_digest: string;
   readonly stage_id: string;
   readonly assignment_index: number;
+  readonly correction_generation: number;
+  readonly correction_authorization: ContractReference | null;
   readonly lease: { readonly ticket_id: string; readonly thread_id: string; readonly generation: number };
   readonly status: 'started' | 'completed' | 'uncertain' | 'no_effect';
   readonly result: unknown;
@@ -301,15 +316,29 @@ export interface HostStateSnapshot {
 }
 
 /** Historical Source success is settled only when the authoritative host retained this exact result. */
-export function completedSourceJournalObservationMatches(work: WorkState, item: MastraSessionLedgerState['items'][number]): boolean {
-  const reservation=item.host_reservation,observation=item.observation;
-  const completed=work.execution.assignment_attempts.find(attempt=>attempt.attempt_id===reservation?.receipt.attempt.attempt_id);
-  return Boolean(reservation && observation?.status==='reported_complete' && observation.issue_id===item.issue_id &&
-    observation.host_attempt_id===completed?.attempt_id && completed?.status==='completed' &&
-    completed.result_digest===canonicalJsonDigest(observation) && sameJson(completed.result,observation) &&
-    completed.stage_id===item.request.stage_id && completed.assignment_index===item.request.assignment_index &&
-    sameJson(completed.lease,reservation.receipt.attempt.lease) && sameJson(reservation.receipt.identity,workIdentity(work)) &&
-    completed.request_digest===reservation.receipt.attempt.request_digest);
+export function completedSourceJournalObservationMatches(
+  work: WorkState,
+  item: MastraSessionLedgerState['items'][number],
+): boolean {
+  const reservation = item.host_reservation,
+    observation = item.observation;
+  const completed = work.execution.assignment_attempts.find(
+    (attempt) => attempt.attempt_id === reservation?.receipt.attempt.attempt_id,
+  );
+  return Boolean(
+    reservation &&
+    observation?.status === 'reported_complete' &&
+    observation.issue_id === item.issue_id &&
+    observation.host_attempt_id === completed?.attempt_id &&
+    completed?.status === 'completed' &&
+    completed.result_digest === canonicalJsonDigest(observation) &&
+    sameJson(completed.result, observation) &&
+    completed.stage_id === item.request.stage_id &&
+    completed.assignment_index === item.request.assignment_index &&
+    sameJson(completed.lease, reservation.receipt.attempt.lease) &&
+    sameJson(reservation.receipt.identity, workIdentity(work)) &&
+    completed.request_digest === reservation.receipt.attempt.request_digest,
+  );
 }
 
 /**
@@ -749,18 +778,23 @@ function checkedWork(value: unknown): WorkState {
   );
   const latest = new Map<string, AssignmentAttempt>();
   for (const attempt of work.execution.assignment_attempts) {
-    const previous = latest.get(attempt.assignment_id);
+    const slot = canonicalJson({stage_id:attempt.stage_id,assignment_index:attempt.assignment_index});
+    const previous = latest.get(slot);
     requireState(attempt.previous_attempt_id === (previous?.attempt_id ?? null), 'attempt chain invalid');
     if (previous)
       requireState(
-        previous.status === 'no_effect' &&
+        (previous.correction_generation===attempt.correction_generation && previous.status === 'no_effect' &&
           previous.request_digest === attempt.request_digest &&
-          canonicalJsonDigest(previous.reconciliation!.retry_lease) === canonicalJsonDigest(attempt.lease),
+          canonicalJsonDigest(previous.reconciliation!.retry_lease) === canonicalJsonDigest(attempt.lease)) ||
+        (previous.status==='completed' && attempt.correction_generation>previous.correction_generation && attempt.correction_authorization!==null),
         'retry lacks exact predecessor authorization',
       );
-    latest.set(attempt.assignment_id, attempt);
+    latest.set(slot, attempt);
+    requireState(attempt.correction_generation<=work.lifecycle.assurance.correction_count &&
+      (attempt.correction_generation===0 ? attempt.correction_authorization===null :
+        attempt.correction_authorization!==null && work.lifecycle.references.some(ref=>ref.kind==='correction_authorization'&&ref.decision==='approved'&&ref.artifact_schema===attempt.correction_authorization!.schema&&ref.path===attempt.correction_authorization!.path&&ref.sha256===attempt.correction_authorization!.sha256)), 'corrective assignment authority missing');
     requireState(
-      attempt.assignment_id === assignmentIdentity(work, attempt.stage_id, attempt.assignment_index),
+      attempt.assignment_id === assignmentIdentity(work, attempt.stage_id, attempt.assignment_index,attempt.correction_generation,attempt.correction_authorization),
       'attempt assignment binding invalid',
     );
     requireState(
@@ -815,15 +849,16 @@ function checkedWork(value: unknown): WorkState {
   }
   return work;
 }
-function assignmentIdentity(work: WorkState, stageId: string, assignmentIndex: number): string {
+function assignmentIdentity(work: WorkState, stageId: string, assignmentIndex: number,correctionGeneration=0,authority:ContractReference|null=null): string {
   requireState(typeof work.execution.run_id === 'string' && work.execution.run_id.length > 0, 'run identity required');
-  return canonicalJsonDigest({
+  const base=canonicalJsonDigest({
     binding: work.binding,
     run_id: work.execution.run_id,
     input_digest: work.execution.input_digest,
     stage_id: stageId,
     assignment_index: assignmentIndex,
   });
+  return correctionGeneration===0?base:canonicalJsonDigest({base_assignment_id:base,correction_generation:correctionGeneration,correction_authorization:authority});
 }
 export function workMigrationId(
   value: Pick<
@@ -1766,7 +1801,7 @@ export async function runConsumerMigrationState<T>(
       if (!row) return null;
       const state = JSON.parse(row.payload) as { status: string; binding: unknown };
       if (
-        canonicalJsonDigest(state) !== row.digest ||
+        createHash('sha256').update(row.payload).digest('hex') !== row.digest ||
         !sameJson(state.binding, binding) ||
         !['baseline', 'restored'].includes(state.status)
       )
@@ -1800,23 +1835,50 @@ export async function runConsumerMigrationState<T>(
     const verifyWorkflowStore = (): void => {
       const relative = path.relative(input.repositoryRoot, workflowDatabasePath).split(path.sep).join('/');
       if (!access.fileExists(relative, 'consumer migration workflow store')) return;
-      const sourceFiles = ['', '-wal', '-shm'].map(suffix=>({suffix,relative:relative+suffix}));
-      const before=sourceFiles.map(file=>({ ...file,bytes:access.fileExists(file.relative,'consumer workflow triplet') ? access.readBytes(file.relative,'consumer workflow triplet') : null}));
-      const inspectionRoot=mkdtempSync(path.join(tmpdir(),'vida-consumer-workflow-inspection-'));
-      const inspectionPath=path.join(inspectionRoot,path.basename(workflowDatabasePath));
+      const sourceFiles = ['', '-wal', '-shm'].map((suffix) => ({ suffix, relative: relative + suffix }));
+      const before = sourceFiles.map((file) => ({
+        ...file,
+        bytes: access.fileExists(file.relative, 'consumer workflow triplet')
+          ? access.readBytes(file.relative, 'consumer workflow triplet')
+          : null,
+      }));
+      const inspectionRoot = mkdtempSync(path.join(tmpdir(), 'vida-consumer-workflow-inspection-'));
+      const inspectionPath = path.join(inspectionRoot, path.basename(workflowDatabasePath));
       try {
-        for (const file of before) if(file.bytes) writeFileSync(inspectionPath+file.suffix,file.bytes,{flag:'wx'});
+        for (const file of before)
+          if (file.bytes) writeFileSync(inspectionPath + file.suffix, file.bytes, { flag: 'wx' });
         const workflow = new Database(inspectionPath, { readonly: true, strict: true });
         try {
-          requireState((workflow.query('PRAGMA quick_check').get() as { quick_check: string })?.quick_check === 'ok','consumer workflow database corrupt');
-          const runs = workflow.query('SELECT json(snapshot) AS snapshot FROM mastra_workflow_snapshot').all() as {snapshot:string}[];
-          requireState(runs.every(row=> ['suspended','success','failed','canceled'].includes((JSON.parse(row.snapshot) as {status:string}).status)), 'consumer workflow run remains unknown or inflight');
-        } finally {workflow.close();}
-        for(const file of before) {
-          const present=access.fileExists(file.relative,'consumer workflow triplet stability');
-          requireState(file.bytes ? present && access.readBytes(file.relative,'consumer workflow triplet stability').equals(file.bytes) : !present,'consumer workflow triplet changed during inspection');
+          requireState(
+            (workflow.query('PRAGMA quick_check').get() as { quick_check: string })?.quick_check === 'ok',
+            'consumer workflow database corrupt',
+          );
+          const runs = workflow.query('SELECT json(snapshot) AS snapshot FROM mastra_workflow_snapshot').all() as {
+            snapshot: string;
+          }[];
+          requireState(
+            runs.every((row) =>
+              ['suspended', 'success', 'failed', 'canceled'].includes(
+                (JSON.parse(row.snapshot) as { status: string }).status,
+              ),
+            ),
+            'consumer workflow run remains unknown or inflight',
+          );
+        } finally {
+          workflow.close();
         }
-      } finally {rmSync(inspectionRoot,{recursive:true,force:true});}
+        for (const file of before) {
+          const present = access.fileExists(file.relative, 'consumer workflow triplet stability');
+          requireState(
+            file.bytes
+              ? present && access.readBytes(file.relative, 'consumer workflow triplet stability').equals(file.bytes)
+              : !present,
+            'consumer workflow triplet changed during inspection',
+          );
+        }
+      } finally {
+        rmSync(inspectionRoot, { recursive: true, force: true });
+      }
     };
     const result = store.consumerMigrationState(receipt, input.mode, () => {
       verifyWorkflowStore();
@@ -1984,6 +2046,7 @@ export class HostStateStore {
     database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_admission_attempt (workspace_id TEXT NOT NULL,generation INTEGER NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_digest TEXT NOT NULL,PRIMARY KEY(workspace_id,generation,work_id,attempt))',
     );
+    database.exec('CREATE TABLE IF NOT EXISTS agent_host_final_assurance (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,generation INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,generation))');
     this.governanceCapability = issueHostGovernanceCapability({
       workspaceId,
       reserveOperation: this.reserveOperation.bind(this),
@@ -2046,12 +2109,16 @@ export class HostStateStore {
     const encodePlan = (plan: unknown): string => JSON.stringify(plan);
     const digestPlan = (payload: string): string => createHash('sha256').update(payload).digest('hex');
     const sameRecords = (actual: readonly unknown[], expected: unknown): boolean =>
-      Array.isArray(expected) && actual.length === expected.length &&
+      Array.isArray(expected) &&
+      actual.length === expected.length &&
       actual.every((row, index) => sameJson(row, expected[index]));
     const sameRows = (actual: Record<string, Record<string, unknown>[]>, expected: unknown): boolean =>
-      Boolean(expected && typeof expected === 'object' &&
+      Boolean(
+        expected &&
+        typeof expected === 'object' &&
         sameJson(Object.keys(actual).sort(), Object.keys(expected).sort()) &&
-        tables.every(table => sameRecords(actual[table] ?? [], (expected as Record<string, unknown>)[table])));
+        tables.every((table) => sameRecords(actual[table] ?? [], (expected as Record<string, unknown>)[table])),
+      );
 
     const readRows = (): Record<string, Record<string, unknown>[]> =>
       Object.fromEntries(
@@ -2107,10 +2174,7 @@ export class HostStateStore {
           const row = this.#database
             .query('SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?')
             .get(this.#workspaceId, operationId) as { payload: string; digest: string } | null;
-          requireState(
-            row && digestPlan(row.payload) === row.digest,
-            'consumer migration baseline missing or corrupt',
-          );
+          requireState(row && digestPlan(row.payload) === row.digest, 'consumer migration baseline missing or corrupt');
           const plan = JSON.parse(row.payload) as Record<string, unknown>;
           requireState(sameJson(plan.binding, receipt.fence.binding), 'consumer migration maintenance binding differs');
           requireState(
@@ -2204,10 +2268,7 @@ export class HostStateStore {
             result,
           };
         }
-        requireState(
-          prior && digestPlan(prior.payload) === prior.digest,
-          'consumer migration baseline corrupt',
-        );
+        requireState(prior && digestPlan(prior.payload) === prior.digest, 'consumer migration baseline corrupt');
         const plan = JSON.parse(prior.payload) as {
           status: string;
           before: Record<string, Record<string, unknown>[]>;
@@ -3199,7 +3260,11 @@ export class HostStateStore {
           .all(this.#workspaceId) as { id: string }[];
         const work = rows.map((row) => {
           const current = this.#read(workIdentity(this.#load('work', row.id) as WorkState));
-          return { work: current.work, workVersion: current.workVersion, maintenanceGeneration: current.maintenanceGeneration };
+          return {
+            work: current.work,
+            workVersion: current.workVersion,
+            maintenanceGeneration: current.maintenanceGeneration,
+          };
         });
         const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
         // Each authoritative row has already passed its own current-v1 ingress budget.
@@ -3224,6 +3289,14 @@ export class HostStateStore {
       .transaction(() => {
         const work = this.#read(identity).work;
         requireState(work, 'journal work is unavailable');
+        if (
+          !this.#database
+            .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
+            .get()
+        ) {
+          requireState(work.execution.assignment_attempts.length === 0, 'journal missing for retained host effects');
+          return null;
+        }
         const row = this.#database
           .query(
             'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
@@ -3234,14 +3307,17 @@ export class HostStateStore {
           payload: string;
           digest: string;
         } | null;
-        if (!row) return null;
+        if (!row) {
+          requireState(work.execution.assignment_attempts.length === 0, 'journal missing for retained host effects');
+          return null;
+        }
         const state = JSON.parse(row.payload) as Record<string, unknown>;
+        validateWorkSessionBinding(work,state as unknown as MastraSessionLedgerState,this.#repositoryRoot);
         requireState(
           state.schema === 'MastraSessionLedger/v1' &&
             state.workspace_id === this.#workspaceId &&
             state.work_id === identity.work_id &&
             state.attempt === row.attempt &&
-            state.run_id === work.execution.run_id &&
             canonicalJsonDigest(state) === row.digest,
           'journal inspection identity differs',
         );
@@ -3251,224 +3327,105 @@ export class HostStateStore {
   }
 
   /** Bundle-owned current-v1 normalization with one atomic operation record and exact recovery preimages. */
-  repairRequestTransitionFields(input: {
-    readonly mode: 'inspect' | 'plan' | 'apply' | 'resume' | 'restore';
-    readonly operationId: string;
-    readonly actor?: string;
-  }): Readonly<Record<string, unknown>> {
-    requireState(/^[a-z0-9][a-z0-9._-]{0,79}$/.test(input.operationId), 'work repair operation identity invalid');
-    requireState(
-      ['inspect', 'plan', 'apply', 'resume', 'restore'].includes(input.mode) &&
-        (input.mode === 'plan'
-          ? Boolean(input.actor?.trim() && !/\p{Cc}/u.test(input.actor))
-          : input.actor === undefined),
-      'work repair mode or attribution invalid',
-    );
-    requireState(!this.#database.inTransaction, 'nested work repair forbidden');
-    return this.#database
-      .transaction(() => {
-        this.#assertMaintenanceAvailable();
-        this.#assertGovernanceQuiescent();
-        const journalTable = Boolean(
-          this.#database
-            .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
-            .get(),
-        );
-        const journals = journalTable
-          ? (this.#database
-              .query(
-                'SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
-              )
-              .all(this.#workspaceId) as {
-              work_id: string;
-              attempt: number;
-              revision: number;
-              payload: string;
-              digest: string;
-            }[])
-          : [];
-        for (const row of journals) {
-          const state = JSON.parse(row.payload) as {
-            schema: string;
-            items: { issue_id: string | null; observation: unknown; host_reservation?: unknown }[];
-            completed: { items: { issue_id: string | null; observation: unknown; host_reservation?: unknown }[] }[];
-          };
-          requireState(
-            canonicalJsonDigest(state) === row.digest &&
-              state.schema === 'MastraSessionLedger/v1' &&
-              [...state.items, ...state.completed.flatMap((wave) => wave.items)].every(
-                (item) => !item.host_reservation && (item.issue_id === null || item.observation !== null),
-              ),
-            'work repair requires settled native effects',
-          );
-        }
-        const rows = this.#database
-          .query("SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id")
-          .all(this.#workspaceId) as { id: string }[];
-        const states = rows.map((row) => this.#load('work', row.id) as WorkState);
-        const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
-        const bindings = {
-          ledger_version: version(ledger),
-          journals: journals.map(({ work_id, attempt, revision, digest }) => ({
-            work_id,
-            attempt,
-            version: { revision, digest },
-          })),
+  repairRequestTransitionFields(input: {readonly mode:'inspect'|'plan'|'apply'|'resume'|'restore';readonly operationId:string;readonly actor?:string;}):Readonly<Record<string,unknown>> {return this.#repairWorkAuthority(input,'request-transition');}
+  repairCorrectionGeneration(input: {readonly mode:'inspect'|'plan'|'apply'|'resume'|'restore';readonly operationId:string;readonly actor?:string;}):Readonly<Record<string,unknown>> {return this.#repairWorkAuthority(input,'correction-generation');}
+
+  /** Explicit repair input is the sole reader of missing assignment authority fields.
+   * Preimages remain in this Host-owned operation; ordinary readers stay strict. */
+  #repairWorkAuthority(input: {
+    readonly mode: 'inspect'|'plan'|'apply'|'resume'|'restore';
+    readonly operationId: string; readonly actor?: string;
+  }, kind:'request-transition'|'correction-generation'): Readonly<Record<string,unknown>> {
+    requireState(/^[a-z0-9][a-z0-9._-]{0,79}$/.test(input.operationId), 'correction repair identity invalid');
+    requireState(['inspect','plan','apply','resume','restore'].includes(input.mode) &&
+      (input.mode==='plan' ? Boolean(input.actor?.trim()&&!/\p{Cc}/u.test(input.actor)) : input.actor===undefined), 'correction repair mode/attribution invalid');
+    requireState(!this.#database.inTransaction,'nested correction repair forbidden');
+    return this.#database.transaction(()=>{
+      this.#assertMaintenanceAvailable();
+      type Row={id:string;revision:number;payload:string;digest:string};
+      const works=this.#database.query("SELECT id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id").all(this.#workspaceId) as Row[];
+      const normalizeAttempt=(value:AssignmentAttempt):AssignmentAttempt=>{
+        const hasGeneration=Object.hasOwn(value,'correction_generation'),hasAuthority=Object.hasOwn(value,'correction_authorization');
+        requireState(hasGeneration===hasAuthority,'partial assignment authority is ambiguous');
+        return hasGeneration?value:{...value,correction_generation:0,correction_authorization:null};
+      };
+      const states=works.map(row=>{
+        const before=JSON.parse(row.payload) as WorkState;
+        requireState(canonicalJsonDigest(before)===row.digest&&before.revision===row.revision&&before.workspace_id===this.#workspaceId&&identityKey(workIdentity(before))===row.id,'repair work preimage integrity differs');
+        const missing=before.execution.assignment_attempts.some(attempt=>!Object.hasOwn(attempt,'correction_generation'));
+        requireState(!missing || before.lifecycle.assurance.correction_count===0,'old corrective history cannot be inferred as base generation');
+        const current=checkedWork(kind==='correction-generation'?{...before,execution:{...before.execution,assignment_attempts:before.execution.assignment_attempts.map(normalizeAttempt)}}:Object.hasOwn(before,'request_transition')?before:{...before,request_transition:null});
+        requireState(current.execution.assignment_attempts.every(attempt=>attempt.status==='completed'||attempt.status==='no_effect'),'repair requires terminal Host attempts');
+        return {row,before,current};
+      });
+      const ledger=this.#load('ledger','shared') as CoordinationLedger|null;
+      requireState(kind==='request-transition'||!ledger?.claims.some(claim=>claim.status==='active'),'repair requires released ownership claims');
+      const governance=this.#database.query('SELECT store_id,kind,record_key FROM agent_host_governance WHERE workspace_id=?').all(this.#workspaceId) as {store_id:string;kind:string;record_key:string}[];
+      for(const record of governance){
+        requireState(record.kind==='operation'||record.kind==='approval','repair governance kind invalid');
+        const status=this.#governanceRead(record.store_id,record.kind,record.record_key)?.record.status;
+        requireState(status!=='reserved'&&status!=='commit_unknown','repair requires settled governance');
+      }
+      const hasJournals=this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'").get();
+      type JournalRow={work_id:string;attempt:number;revision:number;payload:string;digest:string};
+      const journals=hasJournals?this.#database.query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt').all(this.#workspaceId) as JournalRow[]:[];
+      const normalizeJournal=(before:MastraSessionLedgerState)=>{
+        const host=states.find(state=>state.current.binding.lifecycle_work_id===before.work_id)?.current;
+        requireState(host&&host.execution.run_id===before.run_id,'repair journal/Host identity differs');
+        const normalizeItem=(item:MastraSessionLedgerState['items'][number])=>{
+          requireState(item.issue_id===null||item.observation!==null,'repair requires terminal issued observations');
+          if(!item.host_reservation)return item;
+          const reservation=item.host_reservation,attempt=normalizeAttempt(reservation.receipt.attempt);
+          const actual=host.execution.assignment_attempts.find(candidate=>candidate.attempt_id===attempt.attempt_id);
+          requireState(actual&&canonicalJson(actual)===canonicalJson(attempt)&&actual.status==='completed'&&item.observation?.host_attempt_id===attempt.attempt_id&&actual.result_digest===canonicalJsonDigest(item.observation),'repair reservation is not an exact terminal Host attempt');
+          return {...item,host_reservation:{...reservation,receipt:{...reservation.receipt,attempt}}};
         };
-        const changes = states
-          .filter((state) => !Object.hasOwn(state, 'request_transition'))
-          .map((before) => ({
-            identity: workIdentity(before),
-            before,
-            after: checkedWork({
-              ...before,
-              request_transition: null,
-              revision: before.revision + 1,
-              lifecycle: { ...before.lifecycle, revision: before.lifecycle.revision + 1 },
-            }),
-          }));
-        if (input.mode === 'inspect')
-          return snapshot({
-            schema: 'WorkStateRepairInspection/v1',
-            operation_id: input.operationId,
-            status: 'repairable_current_v1',
-            workspace_id: this.#workspaceId,
-            bindings,
-            changed_work: changes.map((change) => ({ identity: change.identity, version: version(change.before) })),
-          });
-        this.#database.exec(
-          'CREATE TABLE IF NOT EXISTS agent_host_work_state_repair (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id))',
-        );
-        const row = this.#database
-          .query('SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?')
-          .get(this.#workspaceId, input.operationId) as { payload: string; digest: string } | null;
-        type Operation = {
-          schema: 'WorkStateRepairOperation/v1';
-          operation_id: string;
-          workspace_id: string;
-          actor: string;
-          status: 'planned' | 'applied' | 'restored';
-          bindings: typeof bindings;
-          changes: typeof changes;
-          restored?: readonly WorkState[];
-        };
-        let operation: Operation | null = row ? (JSON.parse(row.payload) as Operation) : null;
-        if (operation)
-          requireState(
-            canonicalJsonDigest(operation) === row!.digest &&
-              operation.schema === 'WorkStateRepairOperation/v1' &&
-              operation.workspace_id === this.#workspaceId &&
-              operation.operation_id === input.operationId,
-            'work repair operation integrity differs',
-          );
-        if (operation)
-          for (const change of operation.changes) {
-            const before = checkedWork(change.before),
-              after = checkedWork(change.after);
-            requireState(
-              sameJson(workIdentity(before), change.identity) &&
-                !Object.hasOwn(before, 'request_transition') &&
-                sameJson(after, {
-                  ...before,
-                  request_transition: null,
-                  revision: before.revision + 1,
-                  lifecycle: { ...before.lifecycle, revision: before.lifecycle.revision + 1 },
-                }),
-              'work repair transformation differs from the bundled current-v1 contract',
-            );
-          }
-        if (input.mode === 'plan') {
-          requireState(input.actor?.trim() && !/\p{Cc}/u.test(input.actor), 'work repair attribution missing');
-          if (operation) {
-            requireState(operation.actor === input.actor, 'work repair attribution differs');
-            return snapshot(operation!);
-          }
-          operation = {
-            schema: 'WorkStateRepairOperation/v1',
-            operation_id: input.operationId,
-            workspace_id: this.#workspaceId,
-            actor: input.actor!,
-            status: 'planned',
-            bindings,
-            changes,
-          };
-          this.#database
-            .query('INSERT INTO agent_host_work_state_repair VALUES(?,?,?,?)')
-            .run(this.#workspaceId, input.operationId, canonicalJson(operation), canonicalJsonDigest(operation));
-          return snapshot(operation!);
-        }
-        requireState(operation, 'work repair frozen plan unavailable');
-        requireState(sameJson(bindings, operation.bindings), 'work repair dependent coordination or journal changed');
-        const current = operation.changes.map(
-          (change) => this.#load('work', identityKey(change.identity)) as WorkState | null,
-        );
-        if (operation.status === 'restored') {
-          requireState(
-            input.mode === 'restore' && sameJson(current, operation.restored),
-            'restored work repair postimage changed',
-          );
-          return snapshot(operation);
-        }
-        if (operation.status === 'applied' && input.mode !== 'restore') {
-          requireState(
-            sameJson(
-              current,
-              operation.changes.map((change) => change.after),
-            ),
-            'applied work repair postimage changed',
-          );
-          return snapshot(operation);
-        }
-        const restoring = input.mode === 'restore';
-        requireState(restoring || operation.status === 'planned', 'work repair operation status invalid');
-        const expected = operation.changes.map((change) =>
-          operation!.status === 'applied' ? change.after : change.before,
-        );
-        requireState(sameJson(current, expected), 'work repair exact preimage changed');
-        const targets = restoring
-          ? operation.changes.map((change, index) =>
-              operation!.status === 'planned'
-                ? change.before
-                : checkedWork({
-                    ...change.before,
-                    revision: current[index]!.revision + 1,
-                    lifecycle: { ...change.before.lifecycle, revision: current[index]!.lifecycle.revision + 1 },
-                  }),
-            )
-          : operation.changes.map((change) => change.after);
-        if (!restoring || operation.status === 'applied')
-          for (const [index, target] of targets.entries()) {
-            const old = current[index]!;
-            if (ledger) validatePair(target, ledger);
-            const changed = this.#database
-              .query(
-                "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
-              )
-              .run(
-                target.revision,
-                canonicalJson(target),
-                canonicalJsonDigest(target),
-                this.#workspaceId,
-                identityKey(workIdentity(target)),
-                old.revision,
-                canonicalJsonDigest(old),
-              );
-            requireState(changed.changes === 1, 'work repair CAS conflict');
-          }
-        const next: Operation = {
-          ...operation,
-          status: restoring ? 'restored' : 'applied',
-          ...(restoring ? { restored: targets } : {}),
-        };
-        const changed = this.#database
-          .query(
-            'UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?',
-          )
-          .run(canonicalJson(next), canonicalJsonDigest(next), this.#workspaceId, input.operationId, row!.digest);
-        requireState(changed.changes === 1, 'work repair operation CAS conflict');
-        return snapshot(next);
-      })
-      .immediate();
+        return {...before,items:before.items.map(normalizeItem),completed:before.completed.map(wave=>({...wave,items:wave.items.map(normalizeItem)}))};
+      };
+      const journalChanges=kind==='request-transition'?[]:journals.flatMap(row=>{
+        const before=JSON.parse(row.payload) as MastraSessionLedgerState;
+        requireState(before.schema==='MastraSessionLedger/v1'&&before.work_id===row.work_id&&before.attempt===row.attempt&&canonicalJsonDigest(before)===row.digest,'repair journal preimage integrity differs');
+        const normalized=normalizeJournal(before);
+        return canonicalJson(normalized)===canonicalJson(before)?[]:[{row,before,after:normalized}];
+      });
+      const workChanges=states.flatMap(({row,before,current})=>canonicalJson(before)===canonicalJson(current)?[]:[{row,before,after:checkedWork({...current,revision:current.revision+1,lifecycle:{...current.lifecycle,revision:current.lifecycle.revision+1}})}]);
+      const bindings={ledger:version(ledger),works:works.map(row=>({id:row.id,revision:row.revision,digest:row.digest})),journals:journals.map(row=>({work_id:row.work_id,attempt:row.attempt,revision:row.revision,digest:row.digest})),governance:governance.map(row=>({...row,digest:canonicalJsonDigest(this.#governanceRead(row.store_id,row.kind as 'operation'|'approval',row.record_key))}))};
+      if(input.mode==='inspect')return snapshot({schema:'CorrectionGenerationRepairInspection/v1',operation_id:input.operationId,status:'repairable_current_v1',bindings,changed_work:workChanges.map(change=>({identity:workIdentity(change.before),version:version(change.before)})),changed_journals:journalChanges.length});
+      this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_work_state_repair (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id))');
+      const stored=this.#database.query('SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?').get(this.#workspaceId,input.operationId) as {payload:string;digest:string}|null;
+      type Operation={schema:'CorrectionGenerationRepairOperation/v1'|'WorkStateRepairOperation/v1';operation_id:string;workspace_id:string;actor:string;status:'planned'|'applied'|'restored';bindings:typeof bindings;work_changes:typeof workChanges;journal_changes:typeof journalChanges;post_bindings?:typeof bindings};
+      const rawOperation=stored?JSON.parse(stored.payload):null;
+      if(rawOperation)requireState(canonicalJsonDigest(rawOperation)===stored!.digest,'repair operation checksum differs');
+      const serialize=(value:Operation):unknown=>kind==='correction-generation'?value:{schema:'WorkStateRepairOperation/v1',operation_id:value.operation_id,workspace_id:value.workspace_id,actor:value.actor,status:value.status,bindings:{ledger_version:value.bindings.ledger,journals:value.bindings.journals.map(row=>({work_id:row.work_id,attempt:row.attempt,version:{revision:row.revision,digest:row.digest}}))},changes:value.work_changes.map(change=>({identity:workIdentity(change.before),before:change.before,after:change.after})),...(value.status==='restored'?{restored:value.work_changes.map(change=>({...change.before,revision:change.after.revision+1,lifecycle:{...change.before.lifecycle,revision:change.after.lifecycle.revision+1}}))}:{})};
+      let operation:Operation|null=rawOperation?(kind==='correction-generation'?rawOperation:{...rawOperation,bindings,work_changes:rawOperation.changes.map((change:{before:WorkState;after:WorkState})=>({row:{id:identityKey(workIdentity(change.before)),revision:change.before.revision,payload:canonicalJson(change.before),digest:canonicalJsonDigest(change.before)},before:change.before,after:change.after})),journal_changes:[]}):null;
+      if(operation)requireState(operation.schema===(kind==='correction-generation'?'CorrectionGenerationRepairOperation/v1':'WorkStateRepairOperation/v1')&&operation.operation_id===input.operationId&&operation.workspace_id===this.#workspaceId,'repair operation integrity differs');
+      if(input.mode==='plan'){
+        if(operation){requireState(operation.actor===input.actor,'repair attribution differs');return snapshot(serialize(operation) as Record<string,unknown>);}
+        operation={schema:kind==='correction-generation'?'CorrectionGenerationRepairOperation/v1':'WorkStateRepairOperation/v1',operation_id:input.operationId,workspace_id:this.#workspaceId,actor:input.actor!,status:'planned',bindings,work_changes:workChanges,journal_changes:journalChanges};
+        this.#database.query('INSERT INTO agent_host_work_state_repair VALUES(?,?,?,?)').run(this.#workspaceId,input.operationId,canonicalJson(serialize(operation)),canonicalJsonDigest(serialize(operation)));return snapshot(serialize(operation) as Record<string,unknown>);
+      }
+      requireState(operation,'correction repair frozen plan unavailable');
+      const restoring=input.mode==='restore';
+      if(operation.status==='restored'){requireState(restoring&&(kind==='request-transition'?sameJson(states.filter(state=>operation!.work_changes.some(change=>change.row.id===state.row.id)).map(state=>state.before),rawOperation.restored):canonicalJson(bindings)===canonicalJson(operation.post_bindings)),'restored repair changed');return snapshot(serialize(operation) as Record<string,unknown>);}
+      if(operation.status==='applied'&&!restoring){requireState(kind==='request-transition'?operation.work_changes.every(change=>sameJson(states.find(state=>state.row.id===change.row.id)?.before,change.after)):canonicalJson(bindings)===canonicalJson(operation.post_bindings),'applied repair changed');return snapshot(serialize(operation) as Record<string,unknown>);}
+      requireState(kind==='request-transition'?sameJson(rawOperation.bindings,{ledger_version:bindings.ledger,journals:bindings.journals.map(row=>({work_id:row.work_id,attempt:row.attempt,version:{revision:row.revision,digest:row.digest}}))}):canonicalJson(bindings)===canonicalJson(operation.status==='applied'?operation.post_bindings:operation.bindings),'repair dependency CAS conflict');
+      for(const change of operation.work_changes){
+        const expected=operation.status==='applied'?change.after:change.before,target=restoring?(kind==='correction-generation'?checkedWork({...change.after,revision:(operation.status==='applied'?change.after.revision:change.before.revision)+1,lifecycle:{...change.after.lifecycle,revision:(operation.status==='applied'?change.after.lifecycle.revision:change.before.lifecycle.revision)+1}}):operation.status==='applied'?{...change.before,revision:change.after.revision+1,lifecycle:{...change.before.lifecycle,revision:change.after.lifecycle.revision+1}}:change.before):change.after;
+        requireState(canonicalJsonDigest(change.before)===change.row.digest,'repair frozen work preimage differs');
+        const normalized={...change.before,...(kind==='correction-generation'?{execution:{...change.before.execution,assignment_attempts:change.before.execution.assignment_attempts.map(normalizeAttempt)}}:{request_transition:null}),revision:change.before.revision+1,lifecycle:{...change.before.lifecycle,revision:change.before.lifecycle.revision+1}};
+        requireState(canonicalJson(normalized)===canonicalJson(change.after),'repair frozen transformation differs');
+        const result=this.#database.query("UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?").run(target.revision,canonicalJson(target),canonicalJsonDigest(target),this.#workspaceId,change.row.id,expected.revision,canonicalJsonDigest(expected));requireState(result.changes===1,'repair work CAS conflict');
+      }
+      for(const change of operation.journal_changes){
+        const expected=operation.status==='applied'?change.after:change.before,target=change.after;
+        requireState(canonicalJsonDigest(change.before)===change.row.digest,'repair frozen journal preimage differs');
+        requireState(sameJson(normalizeJournal(change.before),change.after),'repair frozen journal transformation differs');
+        const result=this.#database.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?').run(restoring&&operation.status==='applied'?change.row.revision+2:change.row.revision+1,canonicalJson(target),canonicalJsonDigest(target),this.#workspaceId,change.row.work_id,change.row.attempt,operation.status==='applied'?change.row.revision+1:change.row.revision,canonicalJsonDigest(expected));requireState(result.changes===1,'repair journal CAS conflict');
+      }
+      const post={...bindings,works:bindings.works.map(row=>{const change=operation!.work_changes.find(change=>change.row.id===row.id);const target=change?(restoring?(kind==='correction-generation'?{...change.after,revision:(operation.status==='applied'?change.after.revision:change.before.revision)+1,lifecycle:{...change.after.lifecycle,revision:(operation.status==='applied'?change.after.lifecycle.revision:change.before.lifecycle.revision)+1}}:change.before):change.after):null;return target?{id:row.id,revision:target.revision,digest:canonicalJsonDigest(target)}:row;}),journals:bindings.journals.map(row=>{const change=operation!.journal_changes.find(change=>change.row.work_id===row.work_id&&change.row.attempt===row.attempt);const target=change?change.after:null;return target?{work_id:row.work_id,attempt:row.attempt,revision:restoring&&operation.status==='applied'?change!.row.revision+2:change!.row.revision+1,digest:canonicalJsonDigest(target)}:row;})};
+      const next={...operation,status:restoring?'restored' as const:'applied' as const,post_bindings:post};
+      const saved=this.#database.query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?').run(canonicalJson(serialize(next)),canonicalJsonDigest(serialize(next)),this.#workspaceId,input.operationId,stored!.digest);requireState(saved.changes===1,'repair operation CAS conflict');return snapshot(serialize(next) as Record<string,unknown>);
+    }).immediate();
   }
 
   /** Admit and supersede as one HostState/coordination transaction, without rewriting native journals. */
@@ -3602,7 +3559,14 @@ export class HostStateStore {
             ...(journal.completed as { items: Record<string, unknown>[] }[]).flatMap((wave) => wave.items),
           ];
           requireState(
-            journalItems.every((item) => !item.host_reservation || completedSourceJournalObservationMatches(work,item as unknown as MastraSessionLedgerState['items'][number])),
+            journalItems.every(
+              (item) =>
+                !item.host_reservation ||
+                completedSourceJournalObservationMatches(
+                  work,
+                  item as unknown as MastraSessionLedgerState['items'][number],
+                ),
+            ),
             'reserved source action prevents absorption',
           );
           input.verifyCurrent(snapshot(work), snapshot(journal), candidate.requestPointer);
@@ -4084,7 +4048,11 @@ export class HostStateStore {
         const next = checkedWork({
           ...work,
           revision: work.revision + 1,
-          binding: { ...work.binding, runtime_code_digest: input.newRuntimeCodeDigest },
+          binding: {
+            ...work.binding,
+            runtime_code_digest: input.newRuntimeCodeDigest,
+            runtime_source_revision: input.newRuntimeCodeDigest,
+          },
           lifecycle: {
             ...work.lifecycle,
             revision: work.revision + 1,
@@ -4158,6 +4126,116 @@ export class HostStateStore {
     requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
     return this.#database.transaction(() => this.#claimWorkflowAttemptInTransaction(input).receipt).immediate();
   }
+  findArchivedReportedObservation(workId:string,attempt:number,observation:{action_id:string;issue_id:string}):MastraSessionLedgerState['items'][number]|null {
+    if(!this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_corrective_recovery'").get())return null;
+    const rows=this.#database.query('SELECT generation,payload,digest FROM agent_host_corrective_recovery WHERE workspace_id=? AND work_id=? AND attempt=? ORDER BY generation').all(this.#workspaceId,workId,attempt) as {generation:number;payload:string;digest:string}[];
+    for(const row of rows){
+      const recovery=JSON.parse(row.payload) as {schema:string;work_id:string;attempt:number;generation:number;original_journal:{state:MastraSessionLedgerState}};
+      requireState(recovery.schema==='CorrectiveExecutionRecovery/v1'&&recovery.work_id===workId&&recovery.attempt===attempt&&recovery.generation===row.generation&&canonicalJsonDigest(recovery)===row.digest,'corrective recovery integrity differs');
+      const state=recovery.original_journal.state,item=[...state.items,...state.completed.flatMap(wave=>wave.items)].find(item=>item.request.action_id===observation.action_id);
+      if(!item)continue;
+      requireState(item.issue_id===observation.issue_id&&item.observation&&canonicalJson(item.observation)===canonicalJson(observation),'archived terminal report retry differs');
+      return snapshot(item);
+    }
+    return null;
+  }
+
+  retrieveCorrectiveAuthorization(input:{identity:WorkIdentity;attempt:number;journal:StateVersion;stageIds:readonly string[];userInstructionRef:string;}):CorrectiveExecution|null {
+    const host=this.#read(input.identity),work=host.work;
+    if(!work||work.lifecycle.assurance.correction_count===0)return null;
+    const row=this.#database.query('SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(this.#workspaceId,input.identity.work_id,input.attempt) as {payload:string;digest:string}|null;
+    if(!row)return null;const journal=JSON.parse(row.payload) as MastraSessionLedgerState,execution=journal.corrective_execution;
+    if(!execution)return null;
+    this.assertCorrectiveExecution(input.identity,execution);
+    requireState(canonicalJsonDigest(journal)===row.digest&&this.#repositoryRoot,'current corrective journal integrity differs');
+    const authority=correctiveAssignmentAuthorizationSchema.parse(JSON.parse(requireSafeRepositoryAccess(this.#repositoryRoot).readText(execution.authorization.path,'corrective authorization delivery retry')));
+    if(!sameJson(authority.journal_version,input.journal))return null;
+    requireState(sameJson(authority.stage_ids,input.stageIds)&&authority.user_instruction_ref===input.userInstructionRef,'corrective authorization retry differs');
+    return snapshot(execution);
+  }
+
+  authorizeCorrectiveExecution(input:{identity:WorkIdentity;attempt:number;expectedWork:StateVersion;expectedLedger:StateVersion;expectedJournal:StateVersion;stageIds:readonly string[];userInstructionRef:string;config:import('./config/runtime-config.js').AgentRuntimeConfig;}):CorrectiveExecution {
+    requireState(this.#repositoryRoot&&input.userInstructionRef.trim()&&input.userInstructionRef.length<=512,'attributable corrective authorization missing');
+    requireState(!this.#database.inTransaction,'nested corrective authorization forbidden');
+    return this.#database.transaction(()=>{
+      const host=this.#read(input.identity),work=host.work;
+      matchesExpected(host.workVersion,input.expectedWork);matchesExpected(host.ledgerVersion,input.expectedLedger);
+      requireState(work&&host.ledger&&work.lease&&work.execution.status==='active'&&work.lifecycle.phase==='VERIFY','corrective authorization requires truthfully prepared verification');
+      const ticket=host.ledger.tickets.find(ticket=>ticket.ticket_id===work.lease!.ticket_id);
+      requireState(ticket?.status==='active'&&ticket.expires_at&&timestamp(ticket.expires_at)>Date.now(),'corrective lease is not live');
+      requireState(work.execution.assignment_attempts.every(attempt=>attempt.status==='completed'||attempt.status==='no_effect'),'corrective authorization has unknown Host effects');
+      const row=this.#database.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(this.#workspaceId,input.identity.work_id,input.attempt) as {revision:number;payload:string;digest:string}|null;
+      requireState(row&&row.revision===input.expectedJournal.revision&&row.digest===input.expectedJournal.digest,'corrective journal CAS conflict');
+      const original=JSON.parse(row.payload) as MastraSessionLedgerState;
+      requireState(canonicalJsonDigest(original)===row.digest&&original.run_id===(original.corrective_execution?.engine_run_id??work.execution.run_id)&&[...original.items,...original.completed.flatMap(wave=>wave.items)].every(item=>item.issue_id&&item.observation),'corrective journal has unfinished issued effects');
+      const workflow=input.config.workflows[work.binding.workflow_id];
+      requireState(workflow&&work.binding.config_digest===canonicalJsonDigest(input.config),'corrective workflow configuration differs');
+      const failed=original.items.filter(item=>item.observation!.status==='reported_failed');
+      requireState(failed.length>0&&failed.every(item=>['validate','test'].includes(workflow.stages.find(stage=>stage.id===item.request.stage_id)?.kind??'')),'corrective operation requires accepted focused negative findings');
+      const ancestors=new Set<string>(),pending=failed.map(item=>item.request.stage_id);
+      while(pending.length){const id=pending.pop()!;if(ancestors.has(id))continue;ancestors.add(id);pending.push(...(workflow.stages.find(stage=>stage.id===id)?.required_after??[]));}
+      const writers=workflow.stages.filter(stage=>stage.kind==='develop'&&ancestors.has(stage.id));
+      requireState(writers.length>0&&writers.every(stage=>work.execution.assignment_attempts.some(attempt=>attempt.stage_id===stage.id&&attempt.status==='completed')),'corrective operation requires completed original writer');
+      const invalidated=new Set(writers.map(stage=>stage.id));
+      for(let iteration=0;iteration<workflow.stages.length;iteration++)for(const stage of workflow.stages)if(['validate','test'].includes(stage.kind)&&stage.required_after.some(id=>invalidated.has(id)))invalidated.add(stage.id);
+      requireState(input.stageIds.length===invalidated.size&&new Set(input.stageIds).size===input.stageIds.length&&input.stageIds.every(id=>invalidated.has(id)),'corrective stage selection differs from invalidated configured closure');
+      const access=requireSafeRepositoryAccess(this.#repositoryRoot!),source=snapshotDeclaredSources(access,work.lifecycle.scope.allowed_paths);
+      requireState(source.digest===original.source_scope?.digest&&source.digest===work.lifecycle.seal?.implementation_fingerprint,'corrective source/seal changed');
+      const generation=work.lifecycle.assurance.correction_count+1;
+      const base=`.agent/work/${input.identity.work_id}/correction-${generation}`;
+      const proposed=access.fileExists(base+'-authorization.json','uncommitted correction proposal')?correctiveAssignmentAuthorizationSchema.parse(JSON.parse(access.readText(base+'-authorization.json','uncommitted correction proposal'))):null;
+      const engineRunId=proposed?.engine_run_id??randomUUID();
+      const authorization=correctiveAssignmentAuthorizationSchema.parse({schema:'CorrectiveAssignmentAuthorization/v1',work_id:input.identity.work_id,attempt:input.attempt,run_id:work.execution.run_id,base_run_id:work.execution.run_id,engine_run_id:engineRunId,correction_generation:generation,source_revision:work.binding.work_source_revision,scope_id:work.binding.scope_id,config_digest:work.binding.config_digest,implementation_fingerprint:source.digest,ac_ids:work.binding.ac_ids,allowed_paths:work.lifecycle.scope.allowed_paths,stage_ids:input.stageIds,predecessor_attempt_ids:work.execution.assignment_attempts.filter(attempt=>attempt.status==='completed').map(attempt=>attempt.attempt_id),failed_action_ids:failed.map(item=>item.request.action_id),user_instruction_ref:input.userInstructionRef,issued_at:proposed?.issued_at??new Date().toISOString(),work_version:host.workVersion,ledger_version:host.ledgerVersion,journal_version:input.expectedJournal});
+      const write=(file:string,value:unknown)=>{const bytes=Buffer.from(canonicalJson(value)+'\n');if(access.fileExists(file,'corrective artifact'))requireState(access.readBytes(file,'corrective artifact').equals(bytes),'corrective artifact retry differs');else access.writeExclusive(file,bytes.toString('utf8'),'corrective artifact');return {file,bytes};};
+      const authorityFile=write(base+'-authorization.json',authorization),recovery={schema:'CorrectiveExecutionRecovery/v1',work_id:input.identity.work_id,attempt:input.attempt,generation,original_work:work,original_journal:{version:input.expectedJournal,state:original}},recoveryFile=write(base+'-recovery.json',recovery),feedbackFile=write(base+'-feedback.json',{schema:'CorrectiveFeedbackConsumption/v1',work_id:input.identity.work_id,attempt:input.attempt,generation,failed_observations:failed.map(item=>item.observation)});
+      const ref=(kind:LifecycleArtifactReference['kind'],artifact:typeof authorityFile,schema:string,decision:LifecycleArtifactReference['decision']):LifecycleArtifactReference=>({schema:'LifecycleArtifactReference/v1',kind,artifact_schema:schema,record_id:kind+'-'+generation,path:artifact.file,sha256:createHash('sha256').update(artifact.bytes).digest('hex'),source_revision:work.binding.work_source_revision,scope_id:work.binding.scope_id,ac_ids:[...work.binding.ac_ids],generation:null,implementation_fingerprint:null,delivery_cycle_id:null,principal:null,decision,disposition:'current'});
+      const authorityRef=ref('correction_authorization',authorityFile,authorization.schema,'approved');
+      const execution=correctiveExecutionSchema.parse({schema:'CorrectiveExecution/v1',base_run_id:work.execution.run_id,engine_run_id:engineRunId,correction_generation:generation,stage_ids:input.stageIds,authorization:{schema:authorization.schema,path:authorityRef.path,sha256:authorityRef.sha256}});
+      const middle={...work,revision:work.revision+1,lifecycle:{...work.lifecycle,revision:work.revision+1,references:[...work.lifecycle.references,authorityRef,ref('recovery',recoveryFile,recovery.schema,'fail'),ref('feedback_consumption',feedbackFile,'CorrectiveFeedbackConsumption/v1','accepted')]}};
+      const middleLedger={...host.ledger,revision:host.ledger.revision+1};validateProgress(host,middle,middleLedger);
+      const next=transitionLifecycleState(middle,'EXECUTE','Issue only the Host-authorized corrective configured stages; preserve original terminal evidence.'),nextLedger={...middleLedger,revision:middleLedger.revision+1};validateProgress({...host,work:middle,ledger:middleLedger,workVersion:version(middle),ledgerVersion:version(middleLedger)},next,nextLedger);
+      this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_corrective_recovery (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,generation INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,generation))');
+      this.#database.query('INSERT INTO agent_host_corrective_recovery VALUES(?,?,?,?,?,?)').run(this.#workspaceId,input.identity.work_id,input.attempt,generation,canonicalJson(recovery),canonicalJsonDigest(recovery));
+      const journal:MastraSessionLedgerState={schema:'MastraSessionLedger/v1',workspace_id:this.#workspaceId,work_id:input.identity.work_id,attempt:input.attempt,run_id:engineRunId,corrective_execution:execution,source_scope:source,step_id:null,items:[],completed:[]};
+      const changed=this.#database.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?').run(row.revision+1,canonicalJson(journal),canonicalJsonDigest(journal),this.#workspaceId,input.identity.work_id,input.attempt,row.revision,row.digest);requireState(changed.changes===1,'corrective journal CAS conflict');
+      for(const [kind,id,target,expected] of [['work',identityKey(input.identity),next,host.workVersion],['ledger','shared',nextLedger,host.ledgerVersion]] as const){const changed=this.#database.query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?').run(target.revision,canonicalJson(target),canonicalJsonDigest(target),this.#workspaceId,kind,id,expected!.revision,expected!.digest);requireState(changed.changes===1,'corrective Host CAS conflict');}
+      return snapshot(execution);
+    }).immediate();
+  }
+
+  assertCorrectiveExecution(identity:WorkIdentity,value:CorrectiveExecution):void {
+    const execution=correctiveExecutionSchema.parse(value),host=this.#read(identity),work=host.work;
+    requireState(work,'corrective execution work unavailable');
+    validateWorkSessionBinding(work,{run_id:execution.engine_run_id,corrective_execution:execution},this.#repositoryRoot);
+    const authority=this.#correctiveAuthority(work,execution.stage_ids[0]!);
+    requireState(sameJson(authority.reference,execution.authorization)&&this.#repositoryRoot,'corrective execution authority differs');
+    const payload=correctiveAssignmentAuthorizationSchema.parse(JSON.parse(requireSafeRepositoryAccess(this.#repositoryRoot).readText(execution.authorization.path,'corrective engine selection')));
+    requireState(payload.engine_run_id===execution.engine_run_id&&payload.base_run_id===execution.base_run_id&&sameJson(payload.stage_ids,execution.stage_ids),'corrective execution engine/stages differ');
+  }
+  /** Resolve the sole authoritative work without opening a nested projection transaction. */
+  assertCorrectiveExecutionForWork(workId:string,value:CorrectiveExecution):void {
+    const rows=this.#database.query("SELECT payload FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?").all(this.#workspaceId,workId) as {payload:string}[];
+    requireState(rows.length===1,'corrective journal Host owner missing');
+    this.assertCorrectiveExecution(workIdentity(checkedWork(JSON.parse(rows[0]!.payload))),value);
+  }
+
+  #correctiveAuthority(work:WorkState,stageId:string):{generation:number;reference:ContractReference|null} {
+    const generation=work.lifecycle.assurance.correction_count;
+    if(generation===0)return {generation,reference:null};
+    requireState(this.#repositoryRoot,'corrective assignment requires bound repository');
+    const access=requireSafeRepositoryAccess(this.#repositoryRoot);
+    const candidates=work.lifecycle.references.filter(ref=>ref.kind==='correction_authorization'&&ref.decision==='approved'&&ref.artifact_schema==='CorrectiveAssignmentAuthorization/v1');
+    for(const ref of [...candidates].reverse()){
+      const bytes=access.readBytes(ref.path,'Host corrective authority');
+      requireState(bytes.length<=64*1024&&createHash('sha256').update(bytes).digest('hex')===ref.sha256,'corrective authority bytes differ');
+      const authority=correctiveAssignmentAuthorizationSchema.parse(JSON.parse(bytes.toString('utf8')));
+      if(authority.correction_generation!==generation)continue;
+      requireState(authority.work_id===work.binding.lifecycle_work_id&&authority.run_id===work.execution.run_id&&authority.source_revision===work.binding.work_source_revision&&authority.scope_id===work.binding.scope_id&&authority.config_digest===work.binding.config_digest&&sameJson(authority.ac_ids,work.binding.ac_ids)&&sameJson(authority.allowed_paths,work.lifecycle.scope.allowed_paths)&&authority.stage_ids.includes(stageId)&&authority.predecessor_attempt_ids.every(id=>work.execution.assignment_attempts.some(attempt=>attempt.attempt_id===id&&attempt.status==='completed')),'corrective assignment authority binding differs');
+      return {generation,reference:{schema:ref.artifact_schema,path:ref.path,sha256:ref.sha256}};
+    }
+    throw new HostStateError('current corrective assignment authority unavailable');
+  }
+
   #claimWorkflowAttemptInTransaction(
     input: WorkflowAttemptRequest,
     reserve?: (before: HostStateSnapshot, attempt: AssignmentAttempt) => WorkflowApprovalConsumptionRecord,
@@ -4169,9 +4247,11 @@ export class HostStateStore {
     requireState(before.work, 'active leased work required');
     const work = before.work!;
     requireState(!work.migration || work.migration.rebind_status === 'accepted', 'migration rebind required');
-    const assignmentId = assignmentIdentity(work, input.stageId, input.assignmentIndex);
-    const existing = work.execution.assignment_attempts.findLast((entry) => entry.assignment_id === assignmentId);
-    if (existing) {
+    const authority=this.#correctiveAuthority(work,input.stageId);
+    const assignmentId = assignmentIdentity(work, input.stageId, input.assignmentIndex,authority.generation,authority.reference);
+    const existing = work.execution.assignment_attempts.findLast((entry) => entry.stage_id===input.stageId&&entry.assignment_index===input.assignmentIndex);
+    const sameGeneration=existing?.correction_generation===authority.generation;
+    if (existing && sameGeneration) {
       requireState(existing.request_digest === input.requestDigest, 'attempt request changed');
       if (existing.status === 'completed') {
         requireState(
@@ -4196,13 +4276,14 @@ export class HostStateStore {
       ticket.expires_at !== null && timestamp(ticket.expires_at) > Date.now(),
       'attempt lease expired before start',
     );
-    if (existing) {
+    if (existing && sameGeneration) {
       requireState(existing.status === 'no_effect', 'attempt outcome requires reconciliation before replay');
       requireState(
         canonicalJsonDigest(existing.reconciliation!.retry_lease) === canonicalJsonDigest(input.lease),
         'retry fence differs from authorization',
       );
     }
+    if(existing&&!sameGeneration)requireState(existing.status==='completed'&&existing.correction_generation<authority.generation&&authority.reference!==null,'corrective predecessor is not terminal');
     const attempt: AssignmentAttempt = {
       assignment_id: assignmentId,
       attempt_id: canonicalJsonDigest({
@@ -4215,6 +4296,8 @@ export class HostStateStore {
       request_digest: input.requestDigest,
       stage_id: input.stageId,
       assignment_index: input.assignmentIndex,
+      correction_generation: authority.generation,
+      correction_authorization: authority.reference,
       lease: input.lease,
       status: 'started',
       result: null,
@@ -4256,7 +4339,8 @@ export class HostStateStore {
     );
     const { ticket_id, thread_id, generation } = context.permit.lease;
     const lease = { ticket_id, thread_id, generation };
-    const assignmentId = assignmentIdentity(before.work!, invocation.stage.id, invocation.assignmentIndex);
+    const authority=this.#correctiveAuthority(before.work!,invocation.stage.id);
+    const assignmentId = assignmentIdentity(before.work!, invocation.stage.id, invocation.assignmentIndex,authority.generation,authority.reference);
     const completed = before.work!.execution.assignment_attempts.findLast(
       (entry) => entry.assignment_id === assignmentId,
     );
@@ -4311,12 +4395,13 @@ export class HostStateStore {
     requireState(before.work, 'active leased work required');
     matchesExpected(before.workVersion, input.expectedWork);
     matchesExpected(before.ledgerVersion, input.expectedLedger);
-    const assignmentId = assignmentIdentity(before.work!, input.stageId, input.assignmentIndex);
+    const authority=this.#correctiveAuthority(before.work!,input.stageId);
+    const assignmentId = assignmentIdentity(before.work!, input.stageId, input.assignmentIndex,authority.generation,authority.reference);
     const previous = before.work!.execution.assignment_attempts.findLast(
-      (entry) => entry.assignment_id === assignmentId,
+      (entry) => entry.stage_id===input.stageId&&entry.assignment_index===input.assignmentIndex,
     );
-    if (previous?.status === 'completed') return { receipt: this.claimWorkflowAttempt(input), approval: null };
-    if (previous) {
+    if (previous?.status === 'completed'&&previous.correction_generation===authority.generation) return { receipt: this.claimWorkflowAttempt(input), approval: null };
+    if (previous&&previous.correction_generation===authority.generation) {
       requireState(previous.request_digest === requestDigest, 'attempt request changed');
       requireState(previous.status === 'no_effect', 'attempt outcome requires reconciliation before replay');
       requireState(
@@ -4377,7 +4462,7 @@ export class HostStateStore {
         this.#claimWorkflowAttemptInTransaction(input, (current, attempt) => {
           requireState(
             attempt.attempt_id === approvalRequest.attempt_id &&
-              assignmentIdentity(current.work!, input.stageId, input.assignmentIndex) ===
+              assignmentIdentity(current.work!, input.stageId, input.assignmentIndex,authority.generation,authority.reference) ===
                 approvalRequest.assignment_id &&
               current.work!.binding.config_digest === approvalRequest.config_digest &&
               current.work!.binding.workflow_id === approvalRequest.workflow_id &&
@@ -4796,13 +4881,13 @@ export class HostStateStore {
           'lease renewal journal CAS changed',
         );
         const journal = JSON.parse(row.payload) as Record<string, unknown>;
+        validateWorkSessionBinding(work,journal as unknown as MastraSessionLedgerState,this.#repositoryRoot);
         requireState(
           canonicalJsonDigest(journal) === row.digest &&
             journal.schema === 'MastraSessionLedger/v1' &&
             journal.workspace_id === this.#workspaceId &&
             journal.work_id === input.identity.work_id &&
             journal.attempt === input.attempt &&
-            journal.run_id === work.execution.run_id &&
             Array.isArray(journal.items),
           'lease renewal journal identity changed',
         );
@@ -4929,8 +5014,8 @@ export class HostStateStore {
             work.lifecycle.seal === null &&
             work.lifecycle.assurance.review_generation === 0 &&
             work.lifecycle.assurance.delivery_cycle_id === null &&
-            work.execution.assignment_attempts.every(attempt=>attempt.status==='completed') &&
-            ticket.exclusive_resources.every(resource=>resource==='execution:'+input.identity.work_id),
+            work.execution.assignment_attempts.every((attempt) => attempt.status === 'completed') &&
+            ticket.exclusive_resources.every((resource) => resource === 'execution:' + input.identity.work_id),
           'issued writer outcome must settle before expired lease recovery',
         );
         requireState(
@@ -4993,15 +5078,31 @@ export class HostStateStore {
                   (item) =>
                     item.issue_id !== null &&
                     item.observation?.status === 'reported_complete' &&
-                    (!item.host_reservation || completedSourceJournalObservationMatches(work,item as unknown as MastraSessionLedgerState['items'][number])),
+                    (!item.host_reservation ||
+                      completedSourceJournalObservationMatches(
+                        work,
+                        item as unknown as MastraSessionLedgerState['items'][number],
+                      )),
                 ),
             ),
           'expired recovery historical outcomes must already be accepted',
         );
-        requireState(work.execution.assignment_attempts.every(attempt=>completed.flatMap(wave=>wave.items).some(item=>
-          (item as unknown as MastraSessionLedgerState['items'][number]).host_reservation?.receipt.attempt.attempt_id===attempt.attempt_id &&
-          completedSourceJournalObservationMatches(work,item as unknown as MastraSessionLedgerState['items'][number]))),
-          'expired execution recovery requires every writer result durably accepted');
+        requireState(
+          work.execution.assignment_attempts.every((attempt) =>
+            completed
+              .flatMap((wave) => wave.items)
+              .some(
+                (item) =>
+                  (item as unknown as MastraSessionLedgerState['items'][number]).host_reservation?.receipt.attempt
+                    .attempt_id === attempt.attempt_id &&
+                  completedSourceJournalObservationMatches(
+                    work,
+                    item as unknown as MastraSessionLedgerState['items'][number],
+                  ),
+              ),
+          ),
+          'expired execution recovery requires every writer result durably accepted',
+        );
         requireState(
           (journal.items as { issue_id: unknown; observation: unknown }[]).length > 0 &&
             (journal.items as { issue_id: unknown; observation: unknown }[]).every(
@@ -5162,18 +5263,31 @@ export class HostStateStore {
     readonly nativeSessionHandle: string;
     readonly verifyCurrent: () => void;
   }): HostStateSnapshot {
-    const before=this.readHostStateSnapshot(input.identity),work=before.work;
-    requireState(work?.lease?.thread_id===input.nativeSessionHandle,'terminal ownership reconciliation owner differs');
-    const ticket=before.ledger?.tickets.find(ticket=>ticket.ticket_id===work.lease!.ticket_id);
-    if(!ticket?.exclusive_resources.some(resource=>resource.startsWith('file:'))) return before;
-    const journal=this.readWorkSessionJournal(input.identity);
-    requireState(journal,'terminal ownership reconciliation journal unavailable');
-    const state=journal.state as unknown as MastraSessionLedgerState;
-    const item=[...state.items,...state.completed.flatMap(wave=>wave.items)].find(item=>
-      completedSourceJournalObservationMatches(work,item) && sameJson(item.host_reservation?.receipt.attempt.lease,work.lease));
-    if(!item) return before;
-    return this.commitCompletedSourceReport({identity:input.identity,attempt:journal.attempt,expectedJournal:journal.version,
-      actionId:item.request.action_id,nextJournal:state,verifyCurrent:input.verifyCurrent});
+    const before = this.readHostStateSnapshot(input.identity),
+      work = before.work;
+    requireState(
+      work?.lease?.thread_id === input.nativeSessionHandle,
+      'terminal ownership reconciliation owner differs',
+    );
+    const ticket = before.ledger?.tickets.find((ticket) => ticket.ticket_id === work.lease!.ticket_id);
+    if (!ticket?.exclusive_resources.some((resource) => resource.startsWith('file:'))) return before;
+    const journal = this.readWorkSessionJournal(input.identity);
+    if (!journal) return before;
+    const state = journal.state as unknown as MastraSessionLedgerState;
+    const item = [...state.items, ...state.completed.flatMap((wave) => wave.items)].find(
+      (item) =>
+        completedSourceJournalObservationMatches(work, item) &&
+        sameJson(item.host_reservation?.receipt.attempt.lease, work.lease),
+    );
+    if (!item) return before;
+    return this.commitCompletedSourceReport({
+      identity: input.identity,
+      attempt: journal.attempt,
+      expectedJournal: journal.version,
+      actionId: item.request.action_id,
+      nextJournal: state,
+      verifyCurrent: input.verifyCurrent,
+    });
   }
   commitCompletedSourceReport(input: {
     readonly identity: WorkIdentity;
@@ -5183,52 +5297,154 @@ export class HostStateStore {
     readonly nextJournal: MastraSessionLedgerState;
     readonly verifyCurrent: () => void;
   }): HostStateSnapshot {
-    const before=this.readHostStateSnapshot(input.identity),work=before.work,ledger=before.ledger;
-    requireState(work && ledger && work.lease && work.execution.status==='active','completed writer work ownership unavailable');
-    const item=[...input.nextJournal.items,...input.nextJournal.completed.flatMap(wave=>wave.items)].find(item=>item.request.action_id===input.actionId);
-    const reservation=item?.host_reservation;
-    const completed=work.execution.assignment_attempts.find(attempt=>attempt.attempt_id===reservation?.receipt.attempt.attempt_id);
-    requireState(item && completedSourceJournalObservationMatches(work,item) && reservation && completed?.status==='completed' &&
-      completed.result_digest===canonicalJsonDigest(item.observation) &&
-      sameJson(reservation.receipt.identity,input.identity) && input.nextJournal.work_id===input.identity.work_id &&
-      input.nextJournal.workspace_id===this.#workspaceId && input.nextJournal.attempt===input.attempt && input.nextJournal.run_id===work.execution.run_id,
-      'completed writer report identity or host outcome differs');
-    const prior=ledger.tickets.find(ticket=>ticket.ticket_id===work.lease!.ticket_id);
-    const durableJournal=this.readWorkSessionJournal(input.identity);
-    const durableState=durableJournal?.state as unknown as MastraSessionLedgerState | undefined;
-    const alreadyDurable=durableState && [...durableState.items,...durableState.completed.flatMap(wave=>wave.items)].some(recorded=>
-      recorded.request.action_id===input.actionId && completedSourceJournalObservationMatches(work,recorded));
-    requireState(prior && sameJson(completed.lease,work.lease) && prior.status==='active' && prior.generation===ledger.open_generation &&
-      prior.thread_id===work.lease.thread_id && prior.generation===work.lease.generation &&
-      prior.expires_at!==null && (timestamp(prior.expires_at)>Date.now() || alreadyDurable) &&
-      !work.execution.assignment_attempts.some(attempt=>['started','uncertain'].includes(attempt.status)),
-      'completed writer lease is stale or an effect remains uncertain');
-    requireState(prior.exclusive_resources.some(resource=>resource.startsWith('file:')),'completed writer file ownership already reconciled');
-    const releaseTickets=ledger.tickets.filter(ticket=>ticket.ticket_id===prior.ticket_id ||
-      (identityKey(ticketIdentity(ticket))===identityKey(input.identity) && ticket.thread_id===prior.thread_id && ticket.generation===prior.generation &&
-        ticket.status==='queued' && ticket.claim_ids.length===0 && ticket.active_resources.length===0));
-    const releaseIds=new Set(releaseTickets.map(ticket=>ticket.ticket_id));
-    const now=new Date().toISOString(),expiry=new Date(Date.now()+60*60*1000).toISOString();
-    const ticketId='execution-ticket-'+canonicalJsonDigest({prior:prior.ticket_id,action:input.actionId}).slice(0,40);
-    const claimId='execution-claim-'+canonicalJsonDigest({ticketId}).slice(0,40),resources=['execution:'+input.identity.work_id];
-    const ticket={...prior,ticket_id:ticketId,sequence:ledger.next_sequence,
-      contour_keys:[...new Set([...prior.contour_keys.filter(key=>!key.startsWith('file:')),...resources])],
-      exclusive_resources:resources,active_resources:resources,blocked_resources:[],claim_ids:[claimId],expires_at:expiry,created_at:now};
-    const nextLedger: CoordinationLedger={...ledger,revision:ledger.revision+1,next_sequence:ledger.next_sequence+1,
-      tickets:[...ledger.tickets.map(ticket=>releaseIds.has(ticket.ticket_id) ? {...ticket,status:'released' as const,active_resources:[],blocked_resources:[],expires_at:null} : ticket),ticket],
-      claims:[...ledger.claims.map(claim=>releaseIds.has(claim.ticket_id) && claim.status==='active' ? {...claim,status:'released' as const,renewed_at:now} : claim),
-        {schema:'WorkstreamClaim/v1',claim_id:claimId,ticket_id:ticketId,work_id:prior.work_id,thread_id:prior.thread_id,generation:prior.generation,
-          resources,lease_expires_at:expiry,status:'active',created_at:now,renewed_at:now}],
-      operations:[...ledger.operations,...releaseTickets.map(ticket=>({schema:'CoordinationOperation/v1' as const,
-        operation_id:'source-terminal-release-'+ticketId+'-'+ticket.ticket_id,kind:'release' as const,ticket_id:ticket.ticket_id,
-        work_id:ticket.work_id,thread_id:ticket.thread_id,source_revision:ticket.source_revision,resources:[...ticket.exclusive_resources],
-        from_ledger_revision:ledger.revision,to_ledger_revision:ledger.revision+1,decided_by:prior.thread_id,
-        decision_pointer:work.contracts.scope.path,created_at:now}))]};
-    return this.#commitHostState({expectedWork:before.workVersion,expectedLedger:before.ledgerVersion,
-      expectedMaintenanceGeneration:before.maintenanceGeneration,expectedSessionJournal:{attempt:input.attempt,version:input.expectedJournal},
-      nextWork:{...work,revision:work.revision+1,lifecycle:{...work.lifecycle,revision:work.revision+1},
-        lease:{ticket_id:ticketId,thread_id:prior.thread_id,generation:prior.generation}},nextLedger},
-      {actionId:input.actionId,next:input.nextJournal,verifyCurrent:input.verifyCurrent});
+    const before = this.readHostStateSnapshot(input.identity),
+      work = before.work,
+      ledger = before.ledger;
+    requireState(
+      work && ledger && work.lease && work.execution.status === 'active',
+      'completed writer work ownership unavailable',
+    );
+    const item = [...input.nextJournal.items, ...input.nextJournal.completed.flatMap((wave) => wave.items)].find(
+      (item) => item.request.action_id === input.actionId,
+    );
+    const reservation = item?.host_reservation;
+    validateWorkSessionBinding(work,input.nextJournal,this.#repositoryRoot);
+    const completed = work.execution.assignment_attempts.find(
+      (attempt) => attempt.attempt_id === reservation?.receipt.attempt.attempt_id,
+    );
+    requireState(
+      item &&
+        completedSourceJournalObservationMatches(work, item) &&
+        reservation &&
+        completed?.status === 'completed' &&
+        completed.result_digest === canonicalJsonDigest(item.observation) &&
+        sameJson(reservation.receipt.identity, input.identity) &&
+        input.nextJournal.work_id === input.identity.work_id &&
+        input.nextJournal.workspace_id === this.#workspaceId &&
+        input.nextJournal.attempt === input.attempt,
+      'completed writer report identity or host outcome differs',
+    );
+    const prior = ledger.tickets.find((ticket) => ticket.ticket_id === work.lease!.ticket_id);
+    const durableJournal = this.readWorkSessionJournal(input.identity);
+    const durableState = durableJournal?.state as unknown as MastraSessionLedgerState | undefined;
+    const alreadyDurable =
+      durableState &&
+      [...durableState.items, ...durableState.completed.flatMap((wave) => wave.items)].some(
+        (recorded) =>
+          recorded.request.action_id === input.actionId && completedSourceJournalObservationMatches(work, recorded),
+      );
+    requireState(
+      prior &&
+        sameJson(completed.lease, work.lease) &&
+        prior.status === 'active' &&
+        prior.generation === ledger.open_generation &&
+        prior.thread_id === work.lease.thread_id &&
+        prior.generation === work.lease.generation &&
+        prior.expires_at !== null &&
+        (timestamp(prior.expires_at) > Date.now() || alreadyDurable) &&
+        !work.execution.assignment_attempts.some((attempt) => ['started', 'uncertain'].includes(attempt.status)),
+      'completed writer lease is stale or an effect remains uncertain',
+    );
+    requireState(
+      prior.exclusive_resources.some((resource) => resource.startsWith('file:')),
+      'completed writer file ownership already reconciled',
+    );
+    const releaseTickets = ledger.tickets.filter(
+      (ticket) =>
+        ticket.ticket_id === prior.ticket_id ||
+        (identityKey(ticketIdentity(ticket)) === identityKey(input.identity) &&
+          ticket.thread_id === prior.thread_id &&
+          ticket.generation === prior.generation &&
+          ticket.status === 'queued' &&
+          ticket.claim_ids.length === 0 &&
+          ticket.active_resources.length === 0),
+    );
+    const releaseIds = new Set(releaseTickets.map((ticket) => ticket.ticket_id));
+    const now = new Date().toISOString(),
+      expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const ticketId =
+      'execution-ticket-' + canonicalJsonDigest({ prior: prior.ticket_id, action: input.actionId }).slice(0, 40);
+    const claimId = 'execution-claim-' + canonicalJsonDigest({ ticketId }).slice(0, 40),
+      resources = ['execution:' + input.identity.work_id];
+    const ticket = {
+      ...prior,
+      ticket_id: ticketId,
+      sequence: ledger.next_sequence,
+      contour_keys: [...new Set([...prior.contour_keys.filter((key) => !key.startsWith('file:')), ...resources])],
+      exclusive_resources: resources,
+      active_resources: resources,
+      blocked_resources: [],
+      claim_ids: [claimId],
+      expires_at: expiry,
+      created_at: now,
+    };
+    const nextLedger: CoordinationLedger = {
+      ...ledger,
+      revision: ledger.revision + 1,
+      next_sequence: ledger.next_sequence + 1,
+      tickets: [
+        ...ledger.tickets.map((ticket) =>
+          releaseIds.has(ticket.ticket_id)
+            ? { ...ticket, status: 'released' as const, active_resources: [], blocked_resources: [], expires_at: null }
+            : ticket,
+        ),
+        ticket,
+      ],
+      claims: [
+        ...ledger.claims.map((claim) =>
+          releaseIds.has(claim.ticket_id) && claim.status === 'active'
+            ? { ...claim, status: 'released' as const, renewed_at: now }
+            : claim,
+        ),
+        {
+          schema: 'WorkstreamClaim/v1',
+          claim_id: claimId,
+          ticket_id: ticketId,
+          work_id: prior.work_id,
+          thread_id: prior.thread_id,
+          generation: prior.generation,
+          resources,
+          lease_expires_at: expiry,
+          status: 'active',
+          created_at: now,
+          renewed_at: now,
+        },
+      ],
+      operations: [
+        ...ledger.operations,
+        ...releaseTickets.map((ticket) => ({
+          schema: 'CoordinationOperation/v1' as const,
+          operation_id: 'source-terminal-release-' + ticketId + '-' + ticket.ticket_id,
+          kind: 'release' as const,
+          ticket_id: ticket.ticket_id,
+          work_id: ticket.work_id,
+          thread_id: ticket.thread_id,
+          source_revision: ticket.source_revision,
+          resources: [...ticket.exclusive_resources],
+          from_ledger_revision: ledger.revision,
+          to_ledger_revision: ledger.revision + 1,
+          decided_by: prior.thread_id,
+          decision_pointer: work.contracts.scope.path,
+          created_at: now,
+        })),
+      ],
+    };
+    return this.#commitHostState(
+      {
+        expectedWork: before.workVersion,
+        expectedLedger: before.ledgerVersion,
+        expectedMaintenanceGeneration: before.maintenanceGeneration,
+        expectedSessionJournal: { attempt: input.attempt, version: input.expectedJournal },
+        nextWork: {
+          ...work,
+          revision: work.revision + 1,
+          lifecycle: { ...work.lifecycle, revision: work.revision + 1 },
+          lease: { ticket_id: ticketId, thread_id: prior.thread_id, generation: prior.generation },
+        },
+        nextLedger,
+      },
+      { actionId: input.actionId, next: input.nextJournal, verifyCurrent: input.verifyCurrent },
+    );
   }
 
   compareAndSwapHostState(input: {
@@ -5242,11 +5458,98 @@ export class HostStateStore {
   }): HostStateSnapshot {
     return this.#commitHostState(input);
   }
-  #commitHostState(input: Parameters<HostStateStore['compareAndSwapHostState']>[0], terminalJournal?: {
-    readonly actionId: string;
-    readonly next: MastraSessionLedgerState;
-    readonly verifyCurrent: () => void;
-  }): HostStateSnapshot {
+  /** The Host owns the new assurance journal; references in WorkState remain the lifecycle authority. */
+  readFinalAssurance(identity: WorkIdentity, attempt: number): FinalAssuranceSnapshot | null {
+    const work=this.#read(identity).work;
+    if (!work || !work.lifecycle.references.some(ref=>ref.kind==='review_packet' && ref.disposition==='current')) return null;
+    const row=this.#database.query('SELECT revision,payload,digest FROM agent_host_final_assurance WHERE workspace_id=? AND work_id=? AND attempt=? AND generation=?').get(this.#workspaceId,identity.work_id,attempt,work.lifecycle.assurance.review_generation) as {revision:number;payload:string;digest:string}|null;
+    if(!row)return null;
+    const state=validateFinalAssuranceState(JSON.parse(row.payload));
+    requireState(row.digest===canonicalJsonDigest(state) && Number.isSafeInteger(row.revision) && row.revision>0,'final assurance row binding invalid');
+    this.#assertFinalAssuranceBinding(work,state,false);
+    return snapshot({version:{revision:row.revision,digest:row.digest},state});
+  }
+  #assertFinalAssuranceBinding(work:WorkState,state:FinalAssuranceState,currentSource:boolean):void {
+    const packet=state.packet;
+    requireState(packet.work_id===work.binding.lifecycle_work_id && packet.source_revision===work.binding.work_source_revision && packet.scope_id===work.binding.scope_id && packet.config_digest===work.binding.config_digest && packet.generation===work.lifecycle.assurance.review_generation && packet.implementation_fingerprint===work.lifecycle.seal?.implementation_fingerprint && ['VERIFY','DELIVERY'].includes(work.lifecycle.phase),'final assurance has stale or foreign lifecycle binding');
+    const ref=work.lifecycle.references.find(ref=>ref.kind==='review_packet' && ref.disposition==='current' && ref.record_id===packet.packet_id);
+    requireState(ref,'current review packet reference missing');
+    if(currentSource) {
+      requireState(this.#repositoryRoot,'current assurance requires repository binding');
+      const access=requireSafeRepositoryAccess(this.#repositoryRoot);
+      requireState(snapshotDeclaredSources(access,work.lifecycle.scope.allowed_paths).digest===packet.implementation_fingerprint,'source changed; normal correction and new assurance required');
+      const bytes=access.readBytes(ref.path,'current review packet');
+      requireState(createHash('sha256').update(bytes).digest('hex')===ref.sha256 && sameJson(JSON.parse(bytes.toString('utf8')),packet),'current review packet bytes changed');
+    }
+  }
+  compareAndSwapFinalAssurance(input:{identity:WorkIdentity;attempt:number;expected:StateVersion|null;expectedWork:StateVersion;expectedLedger:StateVersion;next:FinalAssuranceState;}):FinalAssuranceSnapshot {
+    const state=validateFinalAssuranceState(input.next);
+    requireState(state.packet.attempt===input.attempt,'final assurance attempt differs');
+    requireState(!this.#database.inTransaction,'nested final assurance transaction forbidden');
+    return this.#database.transaction(()=>{
+      this.#assertMaintenanceAvailable();
+      const host=this.#read(input.identity);
+      matchesExpected(host.workVersion,input.expectedWork);matchesExpected(host.ledgerVersion,input.expectedLedger);
+      requireState(host.work?.lease && host.ledger,'current final assurance lease missing');
+      const ticket=host.ledger.tickets.find(ticket=>ticket.ticket_id===host.work!.lease!.ticket_id);
+      requireState(ticket?.expires_at && timestamp(ticket.expires_at)>Date.now(),'final assurance lease expired');
+      this.#assertFinalAssuranceBinding(host.work,state,true);
+      requireState(host.work.lifecycle.phase==='VERIFY','final assurance cannot progress after delivery');
+      const before=this.readFinalAssurance(input.identity,input.attempt);
+      matchesExpected(before?.version??null,input.expected);
+      validateFinalAssuranceProgress(before?.state??null,state);
+      const revision=(before?.version.revision??0)+1,digest=canonicalJsonDigest(state);
+      const saved=before ? this.#database.query('UPDATE agent_host_final_assurance SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND generation=? AND revision=? AND digest=?').run(revision,canonicalJson(state),digest,this.#workspaceId,input.identity.work_id,input.attempt,state.packet.generation,before.version.revision,before.version.digest) : this.#database.query('INSERT INTO agent_host_final_assurance VALUES(?,?,?,?,?,?,?)').run(this.#workspaceId,input.identity.work_id,input.attempt,state.packet.generation,revision,canonicalJson(state),digest);
+      requireState(saved.changes===1,'final assurance journal CAS conflict');
+      return snapshot({version:{revision,digest},state});
+    }).immediate();
+  }
+  /** Validate the append and phase transition separately, publish both in one Host transaction. */
+  commitFinalAssuranceDelivery(input:{identity:WorkIdentity;attempt:number;expected:StateVersion;expectedWork:StateVersion;expectedLedger:StateVersion;references:readonly LifecycleArtifactReference[];documentationContext:DocumentationVerificationContext;}):HostStateSnapshot {
+    requireState(!this.#database.inTransaction,'nested assurance delivery transaction forbidden');
+    return this.#database.transaction(()=>{
+      this.#assertMaintenanceAvailable();
+      const before=this.#read(input.identity),assurance=this.readFinalAssurance(input.identity,input.attempt);
+      matchesExpected(before.workVersion,input.expectedWork);matchesExpected(before.ledgerVersion,input.expectedLedger);matchesExpected(assurance?.version??null,input.expected);
+      requireState(before.work?.lease && before.ledger && assurance && finalAssuranceStatus(assurance.state)==='reviewed','three matching review/reverse pairs required');
+      const work=before.work,ledger=before.ledger;
+      this.#assertFinalAssuranceBinding(work,assurance.state,true);
+      const ticket=ledger.tickets.find(ticket=>ticket.ticket_id===work.lease!.ticket_id);
+      requireState(ticket?.expires_at && timestamp(ticket.expires_at)>Date.now(),'assurance delivery lease expired');
+      requireState(this.#repositoryRoot,'assurance delivery repository missing');
+      const access=requireSafeRepositoryAccess(this.#repositoryRoot);
+      const reports=assurance.state.actions;
+      requireState(input.references.length===8,'six reports, CLEAR and delivery manifest required');
+      for(const action of reports) {
+        const report=action.observation!,ref=input.references.find(ref=>ref.record_id===action.action_id);
+        requireState(ref && ref.kind===(action.kind==='review'?'review_receipt':'reverse_validation') && ref.principal===report.agent_id && ref.decision==='pass','review reference differs from issued report');
+        const bytes=access.readBytes(ref.path,'assurance report');
+        requireState(createHash('sha256').update(bytes).digest('hex')===ref.sha256 && sameJson(JSON.parse(bytes.toString('utf8')),report),'report bytes differ from accepted observation');
+      }
+      for(const ref of input.references)requireState(createHash('sha256').update(access.readBytes(ref.path,'assurance evidence')).digest('hex')===ref.sha256,'assurance reference bytes changed');
+      const verified:WorkState={...work,revision:work.revision+1,lifecycle:{...work.lifecycle,revision:work.revision+1,references:[...work.lifecycle.references,...input.references]}};
+      const verificationLedger={...ledger,revision:ledger.revision+1};
+      validateProgress(before,checkedWork(verified),checkedLedger(verificationLedger),input.documentationContext);
+      const delivered=transitionLifecycleState(verified,'DELIVERY','Present the current manifest; wait for attributable current-version testing.',input.documentationContext);
+      const deliveryLedger={...verificationLedger,revision:verificationLedger.revision+1};
+      validateProgress({...before,work:verified,ledger:verificationLedger,workVersion:version(verified),ledgerVersion:version(verificationLedger)},checkedWork(delivered),checkedLedger(deliveryLedger),input.documentationContext);
+      this.#assertFinalAssuranceBinding(delivered,assurance.state,true);
+      for(const [kind,id,value,expected] of [['work',identityKey(input.identity),delivered,before.workVersion!],['ledger','shared',deliveryLedger,before.ledgerVersion!]] as const) {
+        const changed=this.#database.query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?').run(value.revision,canonicalJson(value),canonicalJsonDigest(value),this.#workspaceId,kind,id,expected.revision,expected.digest);
+        requireState(changed.changes===1,'atomic assurance delivery CAS conflict');
+      }
+      this.#onReconciledWorkWrite(input.identity,before.workVersion,version(delivered)!);
+      return this.#read(input.identity);
+    }).immediate();
+  }
+  #commitHostState(
+    input: Parameters<HostStateStore['compareAndSwapHostState']>[0],
+    terminalJournal?: {
+      readonly actionId: string;
+      readonly next: MastraSessionLedgerState;
+      readonly verifyCurrent: () => void;
+    },
+  ): HostStateSnapshot {
     const { documentationContext, expectedSessionJournal, ...stateInput } = input;
     const data = snapshot(stateInput);
     requireState(
@@ -5284,18 +5587,45 @@ export class HostStateStore {
               canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
             'session journal CAS changed',
           );
-          if(terminalJournal) {
-            const state=JSON.parse(journal.payload) as MastraSessionLedgerState;
-            const oldItem=[...state.items,...state.completed.flatMap(wave=>wave.items)].find(item=>item.request.action_id===terminalJournal.actionId);
-            const nextItem=[...terminalJournal.next.items,...terminalJournal.next.completed.flatMap(wave=>wave.items)].find(item=>item.request.action_id===terminalJournal.actionId);
-            const completed=before.work?.execution.assignment_attempts.find(attempt=>attempt.attempt_id===oldItem?.host_reservation?.receipt.attempt.attempt_id);
-            requireState(oldItem && nextItem?.observation?.status==='reported_complete' && oldItem.host_reservation &&
-              oldItem.issue_id===nextItem.observation.issue_id && nextItem.observation.host_attempt_id===completed?.attempt_id &&
-              completed?.status==='completed' && completed.result_digest===canonicalJsonDigest(nextItem.observation) &&
-              sameJson(terminalJournal.next,{...state,source_scope:terminalJournal.next.source_scope,
-                items:state.items.map(item=>item.request.action_id===terminalJournal.actionId ? {...item,observation:nextItem.observation} : item),
-                completed:state.completed.map(wave=>({...wave,items:wave.items.map(item=>item.request.action_id===terminalJournal.actionId ? {...item,observation:nextItem.observation} : item)}))}),
-              'terminal writer journal transition differs from completed host outcome');
+          if (terminalJournal) {
+            const state = JSON.parse(journal.payload) as MastraSessionLedgerState;
+            const oldItem = [...state.items, ...state.completed.flatMap((wave) => wave.items)].find(
+              (item) => item.request.action_id === terminalJournal.actionId,
+            );
+            const nextItem = [
+              ...terminalJournal.next.items,
+              ...terminalJournal.next.completed.flatMap((wave) => wave.items),
+            ].find((item) => item.request.action_id === terminalJournal.actionId);
+            const completed = before.work?.execution.assignment_attempts.find(
+              (attempt) => attempt.attempt_id === oldItem?.host_reservation?.receipt.attempt.attempt_id,
+            );
+            requireState(
+              oldItem &&
+                nextItem?.observation?.status === 'reported_complete' &&
+                oldItem.host_reservation &&
+                oldItem.issue_id === nextItem.observation.issue_id &&
+                nextItem.observation.host_attempt_id === completed?.attempt_id &&
+                completed?.status === 'completed' &&
+                completed.result_digest === canonicalJsonDigest(nextItem.observation) &&
+                sameJson(terminalJournal.next, {
+                  ...state,
+                  source_scope: terminalJournal.next.source_scope,
+                  items: state.items.map((item) =>
+                    item.request.action_id === terminalJournal.actionId
+                      ? { ...item, observation: nextItem.observation }
+                      : item,
+                  ),
+                  completed: state.completed.map((wave) => ({
+                    ...wave,
+                    items: wave.items.map((item) =>
+                      item.request.action_id === terminalJournal.actionId
+                        ? { ...item, observation: nextItem.observation }
+                        : item,
+                    ),
+                  })),
+                }),
+              'terminal writer journal transition differs from completed host outcome',
+            );
             terminalJournal.verifyCurrent();
           }
         }
@@ -5334,14 +5664,28 @@ export class HostStateStore {
           requireState(result.changes === 1, 'state write did not change exactly one row');
         }
         this.#onReconciledWorkWrite(workIdentity(work), before.workVersion, version(work)!);
-        if(terminalJournal && canonicalJsonDigest(terminalJournal.next)!==expectedSessionJournal?.version.digest) {
-          requireState(expectedSessionJournal,'terminal writer journal CAS is required');
-          const changed=this.#database.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?')
-            .run(expectedSessionJournal.version.revision+1,canonicalJson(terminalJournal.next),canonicalJsonDigest(terminalJournal.next),this.#workspaceId,work.binding.lifecycle_work_id,expectedSessionJournal.attempt,expectedSessionJournal.version.revision,expectedSessionJournal.version.digest);
-          requireState(changed.changes===1,'terminal writer journal compare-and-swap conflict');
+        if (terminalJournal && canonicalJsonDigest(terminalJournal.next) !== expectedSessionJournal?.version.digest) {
+          requireState(expectedSessionJournal, 'terminal writer journal CAS is required');
+          const changed = this.#database
+            .query(
+              'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+            )
+            .run(
+              expectedSessionJournal.version.revision + 1,
+              canonicalJson(terminalJournal.next),
+              canonicalJsonDigest(terminalJournal.next),
+              this.#workspaceId,
+              work.binding.lifecycle_work_id,
+              expectedSessionJournal.attempt,
+              expectedSessionJournal.version.revision,
+              expectedSessionJournal.version.digest,
+            );
+          requireState(changed.changes === 1, 'terminal writer journal compare-and-swap conflict');
         }
         return this.#read(workIdentity(work));
       })
       .immediate();
   }
 }
+
+

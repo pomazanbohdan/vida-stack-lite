@@ -41,19 +41,18 @@ function fixture() {
     'AGENTS.md',
     'AGENT.sidecar.md',
     'agent-runtime.config.v1.yaml',
-    'docs/creatio/map.md',
-    'docs/agent-instructions/index.md',
+    'docs/products.map.md',
     'docs/agent-instructions/documentation-policy.v1.json',
-    'docs/tenants/crmbx/internal/projects/3mob/documentation-policy.v1.json',
   ])
     put(relative, readFileSync(path.join(source, relative)));
-  mkdirSync(path.join(root, 'project/crmbx'), { recursive: true });
-  cpSync(path.join(bundle, 'schemas'), path.join(root, 'vida-agent/schemas'), { recursive: true });
-  put('vida-agent/package.json', readFileSync(path.join(bundle, 'package.json')));
-  put('vida-agent/TESTING.md', readFileSync(path.join(bundle, 'TESTING.md')));
+  cpSync(bundle, path.join(root, 'packages/agent'), {
+    recursive: true,
+    filter: (entry) => !['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'].includes(path.basename(entry)),
+  });
+  cpSync(path.join(source, 'packages/plugin'), path.join(root, 'packages/plugin'), { recursive: true });
   const config = loadRuntimeConfig(root);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
-  const projectIds = ['refactoring'];
+  const projectIds = ['agent'];
   const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds);
   const workId = 'readonly-repair-fixture';
   const attempt = 2;
@@ -92,8 +91,8 @@ function fixture() {
     scope_contract_digest: 'c'.repeat(64),
     acceptance_manifest_digest: 'd'.repeat(64),
     ac_ids: ['AC-1'],
-    implementation_paths: ['vida-agent/TESTING.md'],
-    allowed_resources: ['file:vida-agent/TESTING.md'],
+    implementation_paths: ['packages/agent/TESTING.md'],
+    allowed_resources: ['file:packages/agent/TESTING.md'],
     config_digest: runtimeConfigDigest(config),
     runtime_source_revision: 'runtime-source',
     schema_digest: 'f'.repeat(64),
@@ -137,9 +136,9 @@ function fixture() {
       },
       scope: {
         scope_id: binding.scope_id,
-        allowed_paths: ['vida-agent/TESTING.md'],
-        fingerprint_paths: ['vida-agent/TESTING.md'],
-        implementation_paths: ['vida-agent/TESTING.md'],
+        allowed_paths: ['packages/agent/TESTING.md'],
+        fingerprint_paths: ['packages/agent/TESTING.md'],
+        implementation_paths: ['packages/agent/TESTING.md'],
         documentation_paths: [],
       },
       seal: null,
@@ -218,7 +217,7 @@ function fixture() {
           '--timestamp',
           '2026-09-28T10:00:00.000Z',
           '--projects',
-          'refactoring',
+          'agent',
           '--work-id',
           workId,
           '--attempt',
