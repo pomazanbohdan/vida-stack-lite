@@ -50,7 +50,7 @@ import {
 import {
   validateFinalAssuranceState, validateFinalAssuranceProgress, finalAssuranceStatus,
   correctiveAssignmentAuthorizationSchema,
-  correctiveExecutionSchema,type CorrectiveExecution,validateWorkSessionBinding,
+  correctiveExecutionSchema,type CorrectiveExecution,validateWorkSessionBinding,selectCorrectiveEvidence,
   type FinalAssuranceState, type FinalAssuranceSnapshot,
 } from './orchestration/final-assurance.js';
 import { requireSafeRepositoryAccess } from './config/safe-repository-access.js';
@@ -4146,7 +4146,7 @@ export class HostStateStore {
     const row=this.#database.query('SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(this.#workspaceId,input.identity.work_id,input.attempt) as {payload:string;digest:string}|null;
     if(!row)return null;const journal=JSON.parse(row.payload) as MastraSessionLedgerState,execution=journal.corrective_execution;
     if(!execution)return null;
-    this.assertCorrectiveExecution(input.identity,execution);
+    this.assertCorrectiveExecution(input.identity,input.attempt,execution);
     requireState(canonicalJsonDigest(journal)===row.digest&&this.#repositoryRoot,'current corrective journal integrity differs');
     const authority=correctiveAssignmentAuthorizationSchema.parse(JSON.parse(requireSafeRepositoryAccess(this.#repositoryRoot).readText(execution.authorization.path,'corrective authorization delivery retry')));
     if(!sameJson(authority.journal_version,input.journal))return null;
@@ -4167,10 +4167,10 @@ export class HostStateStore {
       const row=this.#database.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(this.#workspaceId,input.identity.work_id,input.attempt) as {revision:number;payload:string;digest:string}|null;
       requireState(row&&row.revision===input.expectedJournal.revision&&row.digest===input.expectedJournal.digest,'corrective journal CAS conflict');
       const original=JSON.parse(row.payload) as MastraSessionLedgerState;
-      requireState(canonicalJsonDigest(original)===row.digest&&original.run_id===(original.corrective_execution?.engine_run_id??work.execution.run_id)&&[...original.items,...original.completed.flatMap(wave=>wave.items)].every(item=>item.issue_id&&item.observation),'corrective journal has unfinished issued effects');
+      requireState(canonicalJsonDigest(original)===row.digest&&original.work_id===input.identity.work_id&&original.attempt===input.attempt&&original.workspace_id===this.#workspaceId&&original.run_id===(original.corrective_execution?.engine_run_id??work.execution.run_id),'corrective journal has unfinished issued effects');
       const workflow=input.config.workflows[work.binding.workflow_id];
       requireState(workflow&&work.binding.config_digest===canonicalJsonDigest(input.config),'corrective workflow configuration differs');
-      const failed=original.items.filter(item=>item.observation!.status==='reported_failed');
+      const {failed}=selectCorrectiveEvidence(original,workflow);
       requireState(failed.length>0&&failed.every(item=>['validate','test'].includes(workflow.stages.find(stage=>stage.id===item.request.stage_id)?.kind??'')),'corrective operation requires accepted focused negative findings');
       const ancestors=new Set<string>(),pending=failed.map(item=>item.request.stage_id);
       while(pending.length){const id=pending.pop()!;if(ancestors.has(id))continue;ancestors.add(id);pending.push(...(workflow.stages.find(stage=>stage.id===id)?.required_after??[]));}
@@ -4203,20 +4203,20 @@ export class HostStateStore {
     }).immediate();
   }
 
-  assertCorrectiveExecution(identity:WorkIdentity,value:CorrectiveExecution):void {
+  assertCorrectiveExecution(identity:WorkIdentity,attempt:number,value:CorrectiveExecution):void {
     const execution=correctiveExecutionSchema.parse(value),host=this.#read(identity),work=host.work;
     requireState(work,'corrective execution work unavailable');
-    validateWorkSessionBinding(work,{run_id:execution.engine_run_id,corrective_execution:execution},this.#repositoryRoot);
+    validateWorkSessionBinding(work,{attempt,run_id:execution.engine_run_id,corrective_execution:execution},this.#repositoryRoot);
     const authority=this.#correctiveAuthority(work,execution.stage_ids[0]!);
     requireState(sameJson(authority.reference,execution.authorization)&&this.#repositoryRoot,'corrective execution authority differs');
     const payload=correctiveAssignmentAuthorizationSchema.parse(JSON.parse(requireSafeRepositoryAccess(this.#repositoryRoot).readText(execution.authorization.path,'corrective engine selection')));
     requireState(payload.engine_run_id===execution.engine_run_id&&payload.base_run_id===execution.base_run_id&&sameJson(payload.stage_ids,execution.stage_ids),'corrective execution engine/stages differ');
   }
   /** Resolve the sole authoritative work without opening a nested projection transaction. */
-  assertCorrectiveExecutionForWork(workId:string,value:CorrectiveExecution):void {
+  assertCorrectiveExecutionForWork(workId:string,attempt:number,value:CorrectiveExecution):void {
     const rows=this.#database.query("SELECT payload FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?").all(this.#workspaceId,workId) as {payload:string}[];
     requireState(rows.length===1,'corrective journal Host owner missing');
-    this.assertCorrectiveExecution(workIdentity(checkedWork(JSON.parse(rows[0]!.payload))),value);
+    this.assertCorrectiveExecution(workIdentity(checkedWork(JSON.parse(rows[0]!.payload))),attempt,value);
   }
 
   #correctiveAuthority(work:WorkState,stageId:string):{generation:number;reference:ContractReference|null} {

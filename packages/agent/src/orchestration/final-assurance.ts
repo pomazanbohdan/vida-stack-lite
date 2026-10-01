@@ -31,7 +31,7 @@ export const correctiveAssignmentAuthorizationSchema=z.object({
 export const correctiveExecutionSchema=z.object({schema:z.literal('CorrectiveExecution/v1'),base_run_id:text,engine_run_id:z.string().uuid(),correction_generation:z.number().int().positive(),stage_ids:z.array(text).min(1),authorization:z.object({schema:z.literal('CorrectiveAssignmentAuthorization/v1'),path:text,sha256:digest}).strict()}).strict();
 export type CorrectiveExecution=z.infer<typeof correctiveExecutionSchema>;
 /** One current Host binding for the base run and explicitly authorized engine subrun. */
-export function validateWorkSessionBinding(work:WorkState,state:{run_id:string;corrective_execution?:CorrectiveExecution|null},root?:string):void {
+export function validateWorkSessionBinding(work:WorkState,state:{attempt:number;run_id:string;corrective_execution?:CorrectiveExecution|null},root?:string):void {
   const execution=state.corrective_execution;
   if(!execution){requireAssurance(state.run_id===work.execution.run_id&&work.lifecycle.assurance.correction_count===0,'base session binding differs');return;}
   correctiveExecutionSchema.parse(execution);
@@ -40,7 +40,24 @@ export function validateWorkSessionBinding(work:WorkState,state:{run_id:string;c
   const bytes=requireSafeRepositoryAccess(root).readBytes(execution.authorization.path,'current corrective binding');
   requireAssurance(bytes.length<=64*1024&&sha256(bytes)===execution.authorization.sha256,'corrective authority bytes differ');
   const authority=correctiveAssignmentAuthorizationSchema.parse(JSON.parse(bytes.toString('utf8')));
-  requireAssurance(authority.work_id===work.binding.lifecycle_work_id&&authority.run_id===work.execution.run_id&&authority.base_run_id===execution.base_run_id&&authority.engine_run_id===execution.engine_run_id&&authority.correction_generation===execution.correction_generation&&authority.source_revision===work.binding.work_source_revision&&authority.scope_id===work.binding.scope_id&&authority.config_digest===work.binding.config_digest&&canonicalJson(authority.ac_ids)===canonicalJson(work.binding.ac_ids)&&canonicalJson(authority.allowed_paths)===canonicalJson(work.lifecycle.scope.allowed_paths)&&canonicalJson(authority.stage_ids)===canonicalJson(execution.stage_ids),'corrective authority contract differs');
+  requireAssurance(authority.attempt===state.attempt&&authority.work_id===work.binding.lifecycle_work_id&&authority.run_id===work.execution.run_id&&authority.base_run_id===execution.base_run_id&&authority.engine_run_id===execution.engine_run_id&&authority.correction_generation===execution.correction_generation&&authority.source_revision===work.binding.work_source_revision&&authority.scope_id===work.binding.scope_id&&authority.config_digest===work.binding.config_digest&&canonicalJson(authority.ac_ids)===canonicalJson(work.binding.ac_ids)&&canonicalJson(authority.allowed_paths)===canonicalJson(work.lifecycle.scope.allowed_paths)&&canonicalJson(authority.stage_ids)===canonicalJson(execution.stage_ids),'corrective authority contract differs');
+}
+/** Completed waves retain terminal failures; a downstream wave may remain wholly unissued. */
+export function selectCorrectiveEvidence(journal:MastraSessionLedgerState,workflow:AgentRuntimeConfig['workflows'][string]) {
+  const terminal=(item:MastraSessionLedgerState['items'][number])=>Boolean(item.issue_id&&item.observation&&item.observation.action_id===item.request.action_id&&item.observation.issue_id===item.issue_id&&['reported_complete','reported_failed'].includes(item.observation.status));
+  const unissued=(item:MastraSessionLedgerState['items'][number])=>item.issue_id===null&&item.observation===null&&!item.host_reservation&&!item.research_activation&&!item.research_normalization;
+  const completed=journal.completed.flatMap(wave=>wave.items);
+  requireAssurance(completed.every(terminal)&&(journal.items.every(terminal)||journal.items.every(unissued)),'corrective journal has unfinished issued effects');
+  const observed=[...completed,...journal.items.filter(terminal)];
+  const failed=observed.filter(item=>item.observation!.status==='reported_failed');
+  requireAssurance(failed.length>0,'corrective operation requires accepted focused negative findings');
+  for(const item of failed){
+    const kind=workflow.stages.find(stage=>stage.id===item.request.stage_id)?.kind;
+    requireAssurance(kind==='validate'||kind==='test','corrective failure is not a focused verdict');
+    if(kind==='validate')requireAssurance(parseObservedValidatorVerdict(item.observation!).verdict==='fail','corrective validator verdict differs');
+    else requireAssurance(parseObservedTesterVerdict(item.observation!).status==='fail','corrective tester verdict differs');
+  }
+  return {observed,failed};
 }
 export const correctiveExecutionPlanSchema=z.object({schema:z.literal('CorrectiveExecutionPlan/v1'),work_id:text,attempt:z.number().int().positive(),stage_ids:z.array(text).min(1),user_instruction_ref:text,preparation_path:text}).strict();
 /** Read immutable original planning as evidence, without projecting it into the current engine state. */
@@ -218,8 +235,11 @@ function prepareLifecycleAssurance(input:AssurancePreparationInput,goal:'final'|
   const preparation=finalAssurancePreparationSchema.parse(JSON.parse(raw.toString('utf8')));
   let host=store.readHostStateSnapshot(identity),work=host.work;
   requireAssurance(work && host.ledger && preparation.work_id===identity.work_id && preparation.attempt===journal.state.attempt,'preparation work/attempt differs');
+  validateWorkSessionBinding(work,journal.state,root);
   requireAssurance(journal.state.work_id===identity.work_id && (goal==='correction'||journal.state.step_id===null&&journal.state.items.length===0),'configured workflow has unfinished actions');
-  const completed=[...journal.state.completed.flatMap(wave=>wave.items),...(goal==='correction'?journal.state.items:[])],workflow=config.workflows[work.binding.workflow_id];
+  const workflow=config.workflows[work.binding.workflow_id];
+  requireAssurance(workflow,'configured workflow missing');
+  const completed=goal==='correction'?selectCorrectiveEvidence(journal.state,workflow).observed:journal.state.completed.flatMap(wave=>wave.items);
   requireAssurance(workflow && completed.length>0 && completed.every(item=>item.issue_id&&item.observation&&(goal==='correction'||item.observation.status==='reported_complete')),'focused workflow has failed or unknown outcomes');
   const kinds=completed.map(item=>workflow.stages.find(stage=>stage.id===item.request.stage_id)?.kind);
   requireAssurance(kinds.includes('develop')&&kinds.includes('validate')&&(goal==='correction'||kinds.includes('test')),'accepted writer and required focused stages are missing');

@@ -18,6 +18,7 @@ import {
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
 import { runWorkStateRepair } from '../bin/repair-work-state.mjs';
+import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
 import { MastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
@@ -407,7 +408,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
       scope_digest: work.binding.work_source_revision,
       bindings_manifest_ref: '3'.repeat(64),
     };
-    let journal = ledger.sync('ack', 1, work.execution.run_id, 'research_parallel', [request], initial.source);
+    let journal = ledger.sync('ack', 1, work.execution.run_id, 'research_parallel', [request], fixtureSource);
     journal = ledger.issueWave('ack', 1, journal.version);
     const summary = 'Observed readonly fixture result',
       observation = {
@@ -421,7 +422,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
         output_digest: canonicalJsonDigest(summary),
         evidence_refs: ['fixture:observed-result'],
       };
-    const recorded = ledger.report('ack', 1, journal.version, observation, initial.source),
+    const recorded = ledger.report('ack', 1, journal.version, observation, fixtureSource),
       report = path.join(f.root, 'report.json');
     writeFileSync(report, JSON.stringify(observation));
     writeFileSync(path.join(f.root, 'AGENT.sidecar.md'), 'changed source after accepted report');
@@ -439,7 +440,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
       '--attempt',
       '1',
       '--scope-digest',
-      initial.source.digest,
+      fixtureSource.digest,
       '--team',
       'default-development',
       '--kind',
@@ -530,10 +531,10 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
         role: 'developer-orchestrator',
         bindings_manifest_ref: '3'.repeat(64),
         stage_id: 'develop_change',
-        scope_digest: initial.source.digest,
+        scope_digest: fixtureSource.digest,
         config_digest: active.work.binding.config_digest,
       };
-      let journal = ledger.sync('writer', 1, request.run_id, request.step_id, [request], initial.source);
+      let journal = ledger.sync('writer', 1, request.run_id, request.step_id, [request], fixtureSource);
       journal = ledger.issueWave('writer', 1, journal.version, {
         [request.action_id]: {
           schema: 'WorkflowSessionReservation/v1',
@@ -605,7 +606,7 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
       }
       const publish = () =>
         scenario === 'new-report'
-          ? ledger.report('writer', 1, journal.version, observation, initial.source)
+          ? ledger.report('writer', 1, journal.version, observation, fixtureSource)
           : (f.store.reconcileCompletedSourceOwnership({
               identity,
               nativeSessionHandle: 'session',
@@ -634,16 +635,16 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
         expect(after.work.lifecycle.phase).toBe(before.work.lifecycle.phase);
         expect(after.work.lifecycle.assurance).toEqual(before.work.lifecycle.assurance);
         expect(after.work.artifacts).toEqual(before.work.artifacts);
-        expect(ledger.report('writer', 1, journal.version, observation, initial.source)).toEqual(recorded);
+        expect(ledger.report('writer', 1, journal.version, observation, fixtureSource)).toEqual(recorded);
         expect(f.store.readHostStateSnapshot(identity)).toEqual(after);
         if (scenario !== 'new-report') expect(recorded).toEqual(journal);
         if (scenario === 'durable-drift')
           expect(
             snapshotDeclaredSources(
               requireSafeRepositoryAccess(f.root),
-              initial.source.entries.map((entry) => entry.path),
+              fixtureSource.entries.map((entry) => entry.path),
             ).digest,
-          ).not.toBe(initial.source.digest);
+          ).not.toBe(fixtureSource.digest);
         else if (scenario === 'new-report') {
           expect(after.ledger.tickets.find((ticket) => ticket.ticket_id === peerQueued.ticket_id)).toEqual(peerQueued);
           const peer = f.store.readHostStateSnapshot(peerIdentity);
@@ -677,7 +678,7 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
             correction.ledger.tickets.find((ticket) => ticket.work_id === 'writer' && ticket.status === 'queued')
               .sequence,
           ).toBeGreaterThan(peerQueued.sequence);
-          expect(ledger.report('writer', 1, journal.version, observation, initial.source)).toEqual(recorded);
+          expect(ledger.report('writer', 1, journal.version, observation, fixtureSource)).toEqual(recorded);
           expect(
             f.store.reconcileCompletedSourceOwnership({ identity, nativeSessionHandle: 'session', verifyCurrent() {} }),
           ).toEqual(correction);
@@ -762,7 +763,7 @@ test('ten successive source writers release file rights while their work and Run
         scope_digest: work.binding.work_source_revision,
         bindings_manifest_ref: '3'.repeat(64),
       };
-      let journal = ledger.sync(id, 1, work.execution.run_id, 'develop_change', [request], initial.source);
+      let journal = ledger.sync(id, 1, work.execution.run_id, 'develop_change', [request], fixtureSource);
       journal = ledger.issueWave(id, 1, journal.version, {
         [action]: {
           schema: 'WorkflowSessionReservation/v1',
@@ -785,7 +786,7 @@ test('ten successive source writers release file rights while their work and Run
           changed_paths: [],
         };
       f.store.completeWorkflowAttempt(claimed, observation);
-      ledger.report(id, 1, journal.version, observation, initial.source);
+      ledger.report(id, 1, journal.version, observation, fixtureSource);
       const current = f.store.readHostStateSnapshot(identity);
       expect(
         current.ledger.claims.filter((claim) => claim.status === 'active').flatMap((claim) => claim.resources),
@@ -845,7 +846,7 @@ test('known failed source report persists while its host effect remains uncertai
       receipt: claimed,
       request: { workItemId: 'old', stageId: request.stage_id, assignmentIndex: 0 },
     };
-    let journal = ledger.sync('old', 1, work.execution.run_id, 'fixture-writer-wave', [request], initial.source);
+    let journal = ledger.sync('old', 1, work.execution.run_id, 'fixture-writer-wave', [request], fixtureSource);
     journal = ledger.issueWave('old', 1, journal.version, { [request.action_id]: reservation });
     f.store.markWorkflowAttemptUncertain(claimed);
     const before = f.store.readHostStateSnapshot(identity);
@@ -865,7 +866,7 @@ test('known failed source report persists while its host effect remains uncertai
     const recorded = ledger.report('old', 1, journal.version, failed, null);
     expect(recorded.state.items[0].observation).toEqual(failed);
     expect(recorded.resume_status).toBe('blocked');
-    expect(recorded.state.source_scope).toEqual(initial.source);
+    expect(recorded.state.source_scope).toEqual(fixtureSource);
     expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
     expect(before.work.execution.assignment_attempts[0].status).toBe('uncertain');
     expect(before.work.lease).toEqual(work.lease);
@@ -1396,7 +1397,7 @@ test('explicit correction-generation repair preserves base identities, restores 
   }finally{f.close();}
 });
 
-test('public same-work correction consumes exact authority and resumes configured writer without replaying original history', async () => {
+for (const failureStage of ['validate','test']) test('public same-work correction after real report resume sync '+failureStage, async () => {
   const f=fixture(true,true);
   let failure;
   const publicRun=args=>{const result=spawnSync(process.execPath,['--no-env-file','--no-install','--config='+path.join(bundle,'bunfig.toml'),path.join(bundle,'bin/run.mjs'),...args],{cwd:bundle,encoding:'utf8',windowsHide:true,timeout:30000});if(result.status!==0)throw new Error(JSON.stringify({status:result.status,signal:result.signal,error:result.error?.message,stderr:result.stderr?.slice(-4096),stdout:result.stdout?.slice(-4096)}));return JSON.parse(result.stdout);};
@@ -1408,18 +1409,60 @@ test('public same-work correction consumes exact authority and resumes configure
     writeFileSync(path.join(f.root,input.sourceAuthorizationPath),JSON.stringify({schema:'LocalSourceWriteAuthorization/v1',action:'source.write',user_instruction_ref:'fixture:actual-owner-directive',work_id:id,attempt:1,scope_digest:input.context.scope_digest,config_digest:runtimeConfigDigest(f.config),workflow_id:'task_execution',stage_ids:['develop_task'],implementation_paths:['AGENT.sidecar.md'],native_session_handle:'session'}));
     input.intakePath=`.agent/work/${id}/raw-intake.json`;
     writeFileSync(path.join(f.root,input.intakePath),JSON.stringify({schema:'VidaLocalSessionIntake/v1',work_item:input.workItem,native_session_handle:input.nativeSessionHandle,scope_path:input.scopePath,acceptance_path:input.acceptancePath,source_authorization_path:input.sourceAuthorizationPath,runtime_code_paths:input.runtimeCodePaths,route:input.route,risk:input.risk,change_kind:input.changeKind}));
-    const initial=f.admit(input),work=initial.host.work,identity={repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:id};
+    const initial=admitLocalSessionWork(input),work=initial.host.work,identity={repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:id};
     writeFileSync(path.join(f.root,'.agent/runtime-initialization.v1.json'),JSON.stringify({schema:'RuntimeInitialization/v1',version:1,repository_id:f.config.repository.repository_id,project_ids:['sample'],integrations_digest:canonicalJsonDigest(f.config.integrations),workspace_id:f.store.workspaceId,workspace_binding_status:'pending',bundle:f.config.runtime.bundle,config_digest:runtimeConfigDigest(f.config),schema_sha256:createHash('sha256').update(readFileSync(path.join(bundle,'schemas/runtime-initialization.v1.schema.json'))).digest('hex'),templates:[],created_at:new Date().toISOString()}));
     const sourceLease=acquireLocalSourceWriterLease({repositoryRoot:f.root,config:f.config,store:f.store,identity,nativeSessionHandle:'session',stageId:'develop_task',assignmentIndex:0,expectedWork:initial.host.workVersion,expectedLedger:initial.host.ledgerVersion});
     const claimed=f.store.claimWorkflowAttempt({identity,expectedWork:sourceLease.workVersion,expectedLedger:sourceLease.ledgerVersion,stageId:'develop_task',assignmentIndex:0,requestDigest:'1'.repeat(64),lease:sourceLease.work.lease});
-    const request=(stage,wave,index=0)=>{const action=sessionActionsForWave(f.config,input.selection,input.context,'task_execution',wave,[]).find(action=>action.stage_id===stage&&action.assignment_index===index);return {schema:'VidaSessionRequest/v1',run_id:work.execution.run_id,workflow_id:'task_execution',wave_index:wave,action_id:action.action_id,assignment_index:index,stage_id:stage,role:action.role,config_digest:work.binding.config_digest,scope_digest:work.binding.work_source_revision,bindings_manifest_ref:'3'.repeat(64)};};
-    const observed=(req,summary,status='reported_complete')=>({schema:'VidaSessionObservation/v1',action_id:req.action_id,issue_id:randomUUID(),agent_id:req.stage_id+'-'+req.assignment_index,tool_call_ref:'local:original-'+req.action_id,status,summary,output_digest:canonicalJsonDigest(summary),evidence_refs:['local://fixture/terminal']});
-    const developer=request('develop_task',1),writer={...observed(developer,'Actual isolated fixture writer terminal'),host_attempt_id:claimed.attempt.attempt_id,changed_paths:[]};
+    const args=['--project-root',f.root,'--repository',f.config.repository.repository_id,'--project','sample','--work-path','AGENT.sidecar.md','--work-id',id,'--attempt','1','--scope-digest',work.binding.work_source_revision,'--team','default-development','--kind','task','--intent','task_execution','--workflow','task_execution'];
+    const fixtureSource=snapshotDeclaredSources(requireSafeRepositoryAccess(f.root),work.lifecycle.scope.allowed_paths);
+    const bridge=await MastraSessionBridge.open({repositoryRoot:f.root,config:f.config,selection:input.selection,context:input.context,workflowId:'task_execution',workspaceId:f.store.workspaceId});
+    const fixtureHost=new HostStateStore(f.database,f.store.workspaceId,undefined,undefined,undefined,undefined,f.root);
+    const ledger=new MastraSessionLedger(f.database,f.store.workspaceId,f.config,f.root,fixtureHost);
+    let snapshot=await bridge.start();
+    const sync=()=>ledger.sync(id,1,snapshot.run_id,snapshot.step_id,snapshot.requests,fixtureSource,snapshot.status);
+    let journal=sync();
+    const observed=(item,summary,status='reported_complete')=>({schema:'VidaSessionObservation/v1',action_id:item.request.action_id,issue_id:item.issue_id,agent_id:item.request.stage_id+'-'+item.request.assignment_index,tool_call_ref:'local:original-'+item.request.action_id,status,summary,output_digest:canonicalJsonDigest(summary),evidence_refs:['local://fixture/terminal']});
+    journal=ledger.issueWave(id,1,journal.version);
+    for(const item of journal.state.items)journal=ledger.report(id,1,journal.version,observed(item,'Observed fixture synthesis'),fixtureSource);
+    snapshot=await bridge.resume(journal.state.step_id,journal.state.items.map(item=>item.observation));journal=sync();
+    const developer=journal.state.items[0].request;
+    const reservation={schema:'WorkflowSessionReservation/v1',receipt:claimed,request:{workItemId:id,stageId:'develop_task',assignmentIndex:0}};
+    journal=ledger.issueWave(id,1,journal.version,{[developer.action_id]:reservation});
+    const writer={...observed(journal.state.items[0],'Actual isolated fixture writer terminal'),host_attempt_id:claimed.attempt.attempt_id,changed_paths:[]};
     f.store.completeWorkflowAttempt(claimed,writer);
-    const validatorItems=[0,1].map(index=>{const req=request('validate_focused',2,index),summary=JSON.stringify({schema:'VidaValidatorVerdict/v1',verdict:'fail',findings:['Actual fixture correctness defect'],evidence_refs:['local://fixture/terminal']}),observation=observed(req,summary,'reported_failed');return {request:req,issue_id:observation.issue_id,observation};});
-    const original={schema:'MastraSessionLedger/v1',workspace_id:f.store.workspaceId,work_id:id,attempt:1,run_id:work.execution.run_id,source_scope:initial.source,step_id:'validate_focused',items:validatorItems,completed:[{step_id:'develop_task',items:[{request:developer,issue_id:writer.issue_id,observation:writer,host_reservation:{schema:'WorkflowSessionReservation/v1',receipt:{...claimed,attempt:f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts[0]},request:{workItemId:id,stageId:'develop_task',assignmentIndex:0}}}]}]};
-    f.database.query('UPDATE agent_host_mastra_session_ledger SET revision=8,payload=?,digest=? WHERE work_id=?').run(canonicalJson(original),canonicalJsonDigest(original),id);
-    f.store.reconcileCompletedSourceOwnership({identity,nativeSessionHandle:'session',verifyCurrent(){}});
+    journal=ledger.report(id,1,journal.version,writer,fixtureSource);
+    snapshot=await bridge.resume(journal.state.step_id,journal.state.items.map(item=>item.observation));journal=sync();
+    journal=ledger.issueWave(id,1,journal.version);
+    const report=(item,summary,status)=>{const observation=observed(item,summary,status),file=path.join(f.root,'.agent/work/'+id+'/report-'+item.request.stage_id+'-'+item.request.assignment_index+'.json');writeFileSync(file,JSON.stringify(observation));return publicRun([...args,'--report',file,'--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest]);};
+    const validatorItems=[...journal.state.items];
+    for(const item of validatorItems){
+      const verdict=failureStage==='validate'?'fail':'pass';
+      report(item,JSON.stringify({schema:'VidaValidatorVerdict/v1',verdict,findings:verdict==='fail'?['Actual fixture correctness defect']:[],evidence_refs:['local://fixture/terminal']}),verdict==='fail'?'reported_failed':'reported_complete');
+      journal=ledger.resume(id,1);
+    }
+    if(failureStage==='test'){
+      journal=ledger.issueWave(id,1,journal.version);
+      report(journal.state.items[0],JSON.stringify({schema:'VidaTesterVerdict/v1',status:'fail',evidence_refs:['local://fixture/terminal']}),'reported_failed');
+      journal=ledger.resume(id,1);
+    }
+    const original=journal.state;
+    expect(original.items.filter(item=>item.observation?.status==='reported_failed')).toHaveLength(failureStage==='validate'?2:1);
+    expect(ledger.resume(id,1).resume_status).toBe('blocked'); expect((await bridge.snapshot()).status).toBe('suspended');
+    expect(original.run_id).toBe(work.execution.run_id);
+    if(failureStage==='validate'){
+      const beforeHost=f.store.readHostStateSnapshot(identity),beforeJournal=ledger.resume(id,1);
+      const denied=spawnSync(process.execPath,['--no-env-file','--no-install','--config='+path.join(bundle,'bunfig.toml'),path.join(bundle,'bin/run.mjs'),...args,'--issue-wave','true','--expected-revision',String(beforeJournal.version.revision),'--expected-digest',beforeJournal.version.digest],{cwd:bundle,encoding:'utf8',windowsHide:true,timeout:30000});
+      expect(denied.status).toBe(1);expect(denied.signal).toBeNull();expect(denied.error).toBeUndefined();
+      const denialLines=denied.stderr.trim().split(/\r?\n/u).filter(line=>line.startsWith('{"schema":"VidaAgentRunResult/v1"'));expect(denialLines).toHaveLength(1);
+      const denial=JSON.parse(denialLines[0]);
+      expect(denial).toMatchObject({schema:'VidaAgentRunResult/v1',status:'blocked',code:'GAP-VIDA-RUN-EXECUTION-001'});
+      expect(denied.stdout.trim()).toBe('');expect(denial.issued_actions??[]).toEqual([]);expect(denial.next_actions??[]).toEqual([]);
+      expect(ledger.resume(id,1)).toEqual(beforeJournal);
+      expect(f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts).toEqual(beforeHost.work.execution.assignment_attempts);
+      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root),work.lifecycle.scope.allowed_paths)).toEqual(fixtureSource);
+      expect((await bridge.snapshot()).status).toBe('suspended');
+    }
+    await bridge.close();
     const originalVersion=f.store.readWorkSessionJournal(identity).version;
     const policyPath='docs/agent-instructions/documentation-policy.v1.json';
     writeFileSync(path.join(f.root,policyPath),JSON.stringify({schema:'DocumentationPolicy/v1',policy_id:'corrective-public-fixture',project_id:'sample',source_path:policyPath,owner:'fixture',required:false,canonical_roots:['docs'],map_paths:['AGENT.sidecar.md'],excluded_roots:[],changelog_required:false,changelog_path:null,relations:['documents'],updated_at:new Date().toISOString()}));
@@ -1429,17 +1472,38 @@ test('public same-work correction consumes exact authority and resumes configure
     const prerequisites=Object.entries(mechanics).map(([kind,labels])=>{const file=`.agent/work/${id}/${kind}.json`;writeFileSync(path.join(f.root,file),JSON.stringify({schema:'LifecyclePreparationObservation/v1',record_id:kind,kind,work_id:id,attempt:1,source_revision:work.binding.work_source_revision,scope_id:work.binding.scope_id,config_digest:work.binding.config_digest,ac_ids:work.binding.ac_ids,observed_at:new Date().toISOString(),observer_id:'fixture-observer',status:'pass',evidence_refs:['local://fixture/current-source'],observations:labels.map(mechanic=>({mechanic,actual:'Explicit isolated current contract fixture observation',evidence_ref:'local://fixture/current-source'})),gaps:[]}));return {kind,path:file};});
     const preparationPath=`.agent/work/${id}/preparation.json`;writeFileSync(path.join(f.root,preparationPath),JSON.stringify({schema:'FinalAssurancePreparation/v1',work_id:id,attempt:1,prerequisites,documentation_precheck_path:clear.path,clear_path:clear.path,delivery_manifest_path:`.agent/work/${id}/delivery.json`}));
     const planPath=path.join(f.root,`.agent/work/${id}/correction-plan.json`);writeFileSync(planPath,JSON.stringify({schema:'CorrectiveExecutionPlan/v1',work_id:id,attempt:1,stage_ids:['develop_task','validate_focused','test_task'],user_instruction_ref:'fixture:actual-correction-owner',preparation_path:preparationPath}));
-    const args=['--project-root',f.root,'--repository',f.config.repository.repository_id,'--project','sample','--work-path','AGENT.sidecar.md','--work-id',id,'--attempt','1','--scope-digest',work.binding.work_source_revision,'--team','default-development','--kind','task','--intent','task_execution','--workflow','task_execution'];
+
     const authorized=publicRun([...args,'--correct',planPath,'--expected-revision',String(originalVersion.revision),'--expected-digest',originalVersion.digest]);
+    expect(publicRun([...args,'--correct',planPath,'--expected-revision',String(originalVersion.revision),'--expected-digest',originalVersion.digest]).corrective_execution).toEqual(authorized.corrective_execution);
+    expect(f.store.readHostStateSnapshot(identity).work.lifecycle.assurance.correction_count).toBe(1);
+    const originalPlan=readFileSync(planPath);const changedPlan=JSON.parse(originalPlan);changedPlan.user_instruction_ref='fixture:changed-owner';writeFileSync(planPath,JSON.stringify(changedPlan));expect(()=>publicRun([...args,'--correct',planPath,'--expected-revision',String(originalVersion.revision),'--expected-digest',originalVersion.digest])).toThrow('blocked');writeFileSync(planPath,originalPlan);
     expect(authorized.status).toBe('correction_authorized');expect(authorized.corrective_execution.base_run_id).toBe(work.execution.run_id);expect(authorized.corrective_execution.engine_run_id).not.toBe(work.execution.run_id);
     expect(f.store.readHostStateSnapshot(identity).work.lifecycle.references.find(ref=>ref.kind==='correction_authorization').disposition).toBe('retired');
     const resumed=publicRun(args);expect(resumed.mastra_run_id).toBe(authorized.corrective_execution.engine_run_id);expect(resumed.next_actions.map(action=>action.request.stage_id)).toEqual(['develop_task']);
     const issued=publicRun([...args,'--issue-wave','true','--expected-revision',String(resumed.state_version.revision),'--expected-digest',resumed.state_version.digest]);
     expect(issued.issued_actions).toHaveLength(1);expect(issued.issued_actions[0].request.corrective_execution).toEqual(authorized.corrective_execution);
     const currentAttempts=f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts;
+    const boundHost=new HostStateStore(f.database,f.store.workspaceId,undefined,undefined,undefined,undefined,f.root);
+    expect(()=>boundHost.assertCorrectiveExecutionForWork(id,2,authorized.corrective_execution)).toThrow('corrective authority contract differs');
     expect(currentAttempts).toHaveLength(2);expect(currentAttempts[1].correction_generation).toBe(1);expect(currentAttempts[1].previous_attempt_id).toBe(claimed.attempt.attempt_id);
     expect(f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts[0].attempt_id).toBe(claimed.attempt.attempt_id);
     expect(JSON.parse(f.database.query('SELECT payload FROM agent_host_corrective_recovery WHERE work_id=?').get(id).payload).original_journal.state).toEqual(original);
+    if(failureStage==='validate'){
+      journal=ledger.resume(id,1);
+      const correctionWriter=journal.state.items[0];
+      const corrected={...observed(correctionWriter,'Observed corrective writer terminal'),host_attempt_id:issued.issued_actions[0].host_attempt_id,changed_paths:[]};
+      const correctionReport=path.join(f.root,'.agent/work/'+id+'/correction-writer-report.json');writeFileSync(correctionReport,JSON.stringify(corrected));
+      publicRun([...args,'--report',correctionReport,'--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest]);
+      journal=ledger.resume(id,1);expect(journal.state.items.map(item=>item.request.stage_id)).toEqual(['validate_focused','validate_focused']);
+      publicRun([...args,'--issue-wave','true','--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest]);
+      journal=ledger.resume(id,1);
+      for(const item of [...journal.state.items]){report(item,JSON.stringify({schema:'VidaValidatorVerdict/v1',verdict:'pass',findings:[],evidence_refs:['local://fixture/terminal']}),'reported_complete');journal=ledger.resume(id,1);}
+      expect(journal.state.items.map(item=>item.request.stage_id)).toEqual(['test_task']);
+      publicRun([...args,'--issue-wave','true','--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest]);journal=ledger.resume(id,1);
+      report(journal.state.items[0],JSON.stringify({schema:'VidaTesterVerdict/v1',status:'fail',evidence_refs:['local://fixture/terminal']}),'reported_failed');journal=ledger.resume(id,1);
+      expect(journal.resume_status).toBe('blocked');expect(journal.state.attempt).toBe(1);expect(journal.state.work_id).toBe(id);
+      expect(journal.state.completed.flatMap(wave=>wave.items).find(item=>item.request.stage_id==='develop_task').observation.host_attempt_id).toBe(issued.issued_actions[0].host_attempt_id);
+    }
   }catch(error){failure=error;throw error;}finally{try{f.close();}catch(cleanup){if(failure)throw new AggregateError([failure,cleanup],'Public correction failed; owned fixture cleanup also failed');throw cleanup;}}
 },60000);
 

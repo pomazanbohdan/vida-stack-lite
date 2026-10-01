@@ -659,7 +659,7 @@ export class MastraSessionLedger {
     if(state.corrective_execution){
       const execution=correctiveExecutionSchema.parse(state.corrective_execution);
       requireState(state.run_id===execution.engine_run_id,'corrective engine run differs');
-      this.hostState.assertCorrectiveExecutionForWork(workId,execution);
+      this.hostState.assertCorrectiveExecutionForWork(workId,state.attempt,execution);
     }
     requireState(
       [...state.items, ...state.completed.flatMap((wave) => wave.items)].every(
