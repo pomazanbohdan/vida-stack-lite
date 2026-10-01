@@ -184,10 +184,13 @@ v8CoverageTest(
     expect(body.templates[1].output_sha256).toBe(hash(preservedSidecar));
     expect(await readFile(sidecar)).toEqual(preservedSidecar);
     expect(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(originalConfig);
+    const receiptBytes = await readFile(receipt);
     const repeat = await init(['--reconcile-existing']);
-    expect(repeat.exitCode).toBe(1);
-    expect(repeat.stderr).toContain('cannot replace it');
-    expect(JSON.parse(await readFile(receipt, 'utf8'))).toEqual(body);
+    expect(repeat.exitCode, repeat.stderr).toBe(0);
+    expect(JSON.parse(repeat.stdout).status).toBe('existing');
+    expect(await readFile(receipt)).toEqual(receiptBytes);
+    expect(await readFile(sidecar)).toEqual(preservedSidecar);
+    expect(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(originalConfig);
   },
   30_000,
 );
@@ -320,11 +323,10 @@ v8CoverageTest(
           ...access,
           prepareExclusiveCreation: async () => {
             const creator = await access.prepareExclusiveCreation();
-            let writes = 0;
             return {
               ...creator,
               writeExclusive: async (...args) => {
-                if (++writes === 2) throw new Error('injected exclusive creation failure');
+                if (args[0] === 'AGENT.sidecar.md') throw new Error('injected exclusive creation failure');
                 return creator.writeExclusive(...args);
               },
             };
@@ -349,7 +351,10 @@ v8CoverageTest(
     const firstBytes = await readFile(path.join(root, 'AGENTS.md'));
     const template = await readFile(path.join(bundle, 'templates/AGENTS.template.md'), 'utf8');
     expect(firstBytes.toString()).toBe(template.replaceAll('{{BUNDLE}}', 'tools/agents'));
-    expect((await readdir(root)).sort()).toEqual(['AGENTS.md', 'tools']);
+    expect((await readdir(root)).sort()).toEqual(['.agent', 'AGENTS.md', 'tools']);
+    const pending = path.join(root, '.agent/runtime-initialization.pending.v1.json');
+    const pendingBytes = await readFile(pending);
+    const pendingNames = await readdir(path.join(root, '.agent'));
     const repeated = await init();
     expect(repeated.exitCode, repeated.stderr).toBe(1);
     expect(repeated.stdout).toBe('');
@@ -359,7 +364,9 @@ v8CoverageTest(
       existing: ['AGENTS.md'],
     });
     expect(await readFile(path.join(root, 'AGENTS.md'))).toEqual(firstBytes);
-    expect((await readdir(root)).sort()).toEqual(['AGENTS.md', 'tools']);
+    expect(await readFile(pending)).toEqual(pendingBytes);
+    expect(await readdir(path.join(root, '.agent'))).toEqual(pendingNames);
+    expect((await readdir(root)).sort()).toEqual(['.agent', 'AGENTS.md', 'tools']);
   },
   30_000,
 );

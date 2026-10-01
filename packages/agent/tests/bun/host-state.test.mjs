@@ -5506,6 +5506,44 @@ test('lazy ownership: queued writer activates after owner release without changi
   expect(activated.status).toBe('active');
   expect(activated.exclusive_resources).toEqual(queuedTicket.exclusive_resources);
 });
+test('lazy ownership: suspending queued B releases its writer intent so C acquires after A releases', async () => {
+  const first = writerAcquire(store.compareAndSwapHostState((await writerFixture()).seed));
+  const seed = (await writerFixture('second')).seed;
+  includeExistingLedger(seed, first.ledger);
+  seed.expectedLedger = first.ledgerVersion;
+  const second = store.compareAndSwapHostState(seed);
+  expect(() => writerAcquire(second)).toThrow(/queued/);
+  const queued = store.readHostStateSnapshot({ ...identity, work_id: 'second' });
+  const intent = queued.ledger.tickets.find((ticket) => ticket.work_id === 'second' && ticket.status === 'queued');
+  const request = ownerRecoveryPreviewRequest(queued, quiescentJournal('second', 'run-second'));
+  request.identity.work_id = 'second';
+  request.documentationContext.work_id = 'second';
+  const released = suspendLocalWork(request);
+  expect(released.ledger.tickets.find((ticket) => ticket.ticket_id === intent.ticket_id).status).toBe('released');
+  expect(
+    released.ledger.operations.some(
+      (operation) => operation.ticket_id === intent.ticket_id && operation.kind === 'release',
+    ),
+  ).toBe(true);
+  expect(released.ledger.tickets.find((ticket) => ticket.work_id === 'work' && ticket.status === 'active')).toEqual(
+    queued.ledger.tickets.find((ticket) => ticket.work_id === 'work' && ticket.status === 'active'),
+  );
+  const thirdSeed = (await writerFixture('third')).seed;
+  includeExistingLedger(thirdSeed, released.ledger);
+  thirdSeed.expectedLedger = released.ledgerVersion;
+  const third = store.compareAndSwapHostState(thirdSeed);
+  expect(() => writerAcquire(third)).toThrow(/queued/);
+  suspendLocalWork(ownerRecoveryPreviewRequest(store.readHostStateSnapshot(identity), quiescentJournal()));
+  const current = store.readHostStateSnapshot({ ...identity, work_id: 'third' });
+  const active = writerAcquire(current);
+  expect(
+    active.ledger.tickets.filter((ticket) => ticket.work_id === 'third' && ticket.status === 'active'),
+  ).toHaveLength(1);
+  expect(active.ledger.tickets.find((ticket) => ticket.ticket_id === intent.ticket_id)).toEqual(
+    released.ledger.tickets.find((ticket) => ticket.ticket_id === intent.ticket_id),
+  );
+});
+
 test('lazy ownership: paused execution-only work resumes with execution rights and no file rights', async () => {
   const { initial, journal, request } = await unknownReadonlyFixture(true);
   const suspended = suspendLocalWork(request);

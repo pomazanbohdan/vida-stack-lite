@@ -8,9 +8,16 @@ import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingr
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
-import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
+import {
+  HostStateStore,
+  openHostStateDatabase,
+  runConsumerMigrationState,
+  inspectHostWorkspaceDatabase,
+} from '../src/host-state.ts';
+import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork } from '../src/orchestration/local-work-admission.ts';
 import { runWorkStateRepair } from '../bin/repair-work-state.mjs';
+import { MastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function fixture() {
@@ -135,6 +142,25 @@ function fixture() {
   };
 }
 
+test('workspace projection bounds individual rows and includes its shared ledger only once', () => {
+  const f = fixture();
+  try {
+    for (let index = 0; index < 12; index++) f.admit(f.prepare('parallel-' + index, 'user:parallel'));
+    const current = f.store.readWorkspaceSnapshot();
+    expect(current.work).toHaveLength(12);
+    expect(current.work.every((row) => !Object.hasOwn(row, 'ledger') && !Object.hasOwn(row, 'ledgerVersion'))).toBe(
+      true,
+    );
+    for (const row of current.work) expect(row.workVersion.digest).toBe(canonicalJsonDigest(row.work));
+    expect(current.ledger_version.digest).toBe(canonicalJsonDigest(current.ledger));
+    const inspected = inspectHostWorkspaceDatabase(path.join(f.root, 'fixture.sqlite'), f.store.workspaceId);
+    expect(inspected.work).toHaveLength(12);
+    expect(inspected.ledger_version).toEqual(current.ledger_version);
+  } finally {
+    f.close();
+  }
+});
+
 test('public admission preserves same-request parallel contours and atomically absorbs old same-session requests', () => {
   const f = fixture();
   try {
@@ -153,6 +179,136 @@ test('public admission preserves same-request parallel contours and atomically a
     expect(admitLocalSessionWork(successor).host).toEqual(admitted.host);
     successor.workItem = { ...successor.workItem, title: 'Changed retry' };
     expect(() => admitLocalSessionWork(successor)).toThrow(/retry differs/);
+  } finally {
+    f.close();
+  }
+});
+
+test('expired real execution-only admission rebinds only its owned execution resource', () => {
+  const f = fixture();
+  try {
+    const initial = f.admit(f.prepare('old', 'user:old'));
+    const historical = JSON.parse(
+      f.database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('old').payload,
+    );
+    historical.completed = [
+      {
+        step_id: 'fixture-accepted-readonly',
+        items: [{ issue_id: randomUUID(), observation: { status: 'reported_complete' } }],
+      },
+    ];
+    historical.items = [{ issue_id: null, observation: null }];
+    f.database
+      .query('UPDATE agent_host_mastra_session_ledger SET revision=2,payload=?,digest=? WHERE work_id=?')
+      .run(canonicalJson(historical), canonicalJsonDigest(historical), 'old');
+    const work = initial.host.work,
+      journal = f.store.readWorkSessionJournal({
+        repository_id: work.binding.repository_id,
+        project_ids: work.binding.project_ids,
+        integrations_digest: work.binding.integrations_digest,
+        work_id: 'old',
+      });
+    const originalClock = Date.now;
+    try {
+      Date.now = () =>
+        Date.parse(initial.host.ledger.tickets.find((ticket) => ticket.ticket_id === work.lease.ticket_id).expires_at) +
+        1;
+      const recovered = f.store.recoverExpiredLocalLease({
+        identity: {
+          repository_id: work.binding.repository_id,
+          project_ids: work.binding.project_ids,
+          integrations_digest: work.binding.integrations_digest,
+          work_id: 'old',
+        },
+        attempt: 1,
+        nativeSessionHandle: 'session',
+        generation: work.lease.generation,
+        expectedWork: initial.host.workVersion,
+        expectedLedger: initial.host.ledgerVersion,
+        expectedJournal: journal.version,
+        expectedMaintenanceGeneration: initial.host.maintenanceGeneration,
+        verifyCurrent() {
+          return { runtimeCodeDigest: work.binding.runtime_code_digest, authorityPointer: 'fixture:current-package' };
+        },
+      });
+      expect(recovered.ledger.rebinds.at(-1).resources).toEqual(['execution:old']);
+      expect(recovered.ledger.claims.filter((claim) => claim.status === 'active')[0].resources).toEqual([
+        'execution:old',
+      ]);
+      expect(recovered.work.binding.allowed_resources).toEqual(work.binding.allowed_resources);
+    } finally {
+      Date.now = originalClock;
+    }
+  } finally {
+    f.close();
+  }
+});
+
+test('known failed source report persists while its host effect remains uncertain and fenced', () => {
+  const f = fixture();
+  try {
+    const initial = f.admit(f.prepare('old', 'user:old')),
+      work = initial.host.work;
+    const identity = {
+      repository_id: work.binding.repository_id,
+      project_ids: work.binding.project_ids,
+      integrations_digest: work.binding.integrations_digest,
+      work_id: 'old',
+    };
+    const claimed = f.store.claimWorkflowAttempt({
+      identity,
+      expectedWork: initial.host.workVersion,
+      expectedLedger: initial.host.ledgerVersion,
+      stageId: 'fixture-source-action',
+      assignmentIndex: 0,
+      requestDigest: '1'.repeat(64),
+      lease: work.lease,
+    });
+    f.database.query('DELETE FROM agent_host_mastra_session_ledger WHERE work_id=?').run('old');
+    const ledger = new MastraSessionLedger(f.database, f.store.workspaceId, f.config, f.root, f.store);
+    const request = {
+      schema: 'VidaSessionRequest/v1',
+      run_id: work.execution.run_id,
+      workflow_id: work.binding.workflow_id,
+      wave_index: 0,
+      action_id: '2'.repeat(64),
+      assignment_index: 0,
+      stage_id: 'fixture-source-action',
+      role: 'fixture-writer',
+      config_digest: work.binding.config_digest,
+      scope_digest: work.binding.work_source_revision,
+      bindings_manifest_ref: '3'.repeat(64),
+    };
+    const reservation = {
+      schema: 'WorkflowSessionReservation/v1',
+      receipt: claimed,
+      request: { workItemId: 'old', stageId: request.stage_id, assignmentIndex: 0 },
+    };
+    let journal = ledger.sync('old', 1, work.execution.run_id, 'fixture-writer-wave', [request], initial.source);
+    journal = ledger.issueWave('old', 1, journal.version, { [request.action_id]: reservation });
+    f.store.markWorkflowAttemptUncertain(claimed);
+    const before = f.store.readHostStateSnapshot(identity);
+    const summary = 'Observed writer failure; filesystem outcome remains uncertain';
+    const failed = {
+      schema: 'VidaSessionObservation/v1',
+      action_id: request.action_id,
+      issue_id: journal.state.items[0].issue_id,
+      host_attempt_id: claimed.attempt.attempt_id,
+      agent_id: 'fixture-writer',
+      tool_call_ref: 'fixture-failed-source-call',
+      status: 'reported_failed',
+      summary,
+      output_digest: canonicalJsonDigest(summary),
+      evidence_refs: ['fixture:observed-failure'],
+    };
+    const recorded = ledger.report('old', 1, journal.version, failed, null);
+    expect(recorded.state.items[0].observation).toEqual(failed);
+    expect(recorded.resume_status).toBe('blocked');
+    expect(recorded.state.source_scope).toEqual(initial.source);
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+    expect(before.work.execution.assignment_attempts[0].status).toBe('uncertain');
+    expect(before.work.lease).toEqual(work.lease);
+    expect(ledger.report('old', 1, journal.version, failed, null)).toEqual(recorded);
   } finally {
     f.close();
   }
@@ -239,6 +395,82 @@ test('valid public intake records the admission cutoff before failed scope prepa
       }),
     ).toThrow(/new admission/);
     expect(called).toBe(false);
+  } finally {
+    f.close();
+  }
+});
+
+test('public consumer wrapper checks the separate Mastra store and recovers the same fenced operation', async () => {
+  const f = fixture();
+  try {
+    const workflowPath = path.join(f.root, f.config.control.work_root, 'mastra-workflows.v1.sqlite');
+    mkdirSync(path.dirname(workflowPath), { recursive: true });
+    const workflow = openHostStateDatabase(workflowPath);
+    workflow.exec('CREATE TABLE mastra_workflow_snapshot(snapshot TEXT)');
+    workflow.query('INSERT INTO mastra_workflow_snapshot VALUES(?)').run(JSON.stringify({ status: 'running' }));
+    workflow.close();
+    const input = {
+      repositoryRoot: f.root,
+      operationId: 'public-consumer-fixture',
+      actor: 'fixture:consumer',
+      mode: 'baseline',
+    };
+    let called = false;
+    await expect(
+      runConsumerMigrationState(input, () => {
+        called = true;
+      }),
+    ).rejects.toThrow(/unknown or inflight/);
+    expect(called).toBe(false);
+    const settled = openHostStateDatabase(workflowPath);
+    settled.query('UPDATE mastra_workflow_snapshot SET snapshot=?').run(JSON.stringify({ status: 'suspended' }));
+    settled.close();
+    let databasePath, backup;
+    const result = await runConsumerMigrationState(input, (bindings) => {
+      databasePath = bindings.database_path;
+      backup = bindings.backup;
+      expect(bindings.workflow_database_path).toBe(workflowPath);
+      return 'baseline-files';
+    });
+    expect(result.status).toBe('baseline');
+    expect(Buffer.from(backup).subarray(0, 16).toString()).toBe('SQLite format 3\u0000');
+    expect(databasePath).toBe(path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite'));
+    await runConsumerMigrationState(input, (bindings) => {
+      expect(bindings.backup).toBeNull();
+      return 'retry-files';
+    });
+    const consumerFile = path.join(f.root, 'consumer-init-output.txt');
+    writeFileSync(consumerFile, 'known init failure');
+    await expect(
+      runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
+        writeFileSync(consumerFile, 'original consumer bytes');
+        throw Error('fixture interruption after file restore');
+      }),
+    ).rejects.toThrow(/fixture interruption/);
+    const restored = await runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
+      expect(readFileSync(consumerFile, 'utf8')).toBe('original consumer bytes');
+      return 'recovered-files';
+    });
+    expect(restored.status).toBe('restored');
+    const corrupt = openHostStateDatabase(databasePath);
+    corrupt.exec('DROP TABLE agent_host_admission_attempt');
+    const schemaBefore = corrupt.query('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+    corrupt.close();
+    const bytesBefore = readFileSync(databasePath);
+    let unexpectedCallback = false;
+    await expect(
+      runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
+        unexpectedCallback = true;
+      }),
+    ).rejects.toThrow(/admission metadata missing/);
+    expect(unexpectedCallback).toBe(false);
+    expect(() =>
+      inspectHostWorkspaceDatabase(databasePath, deriveWorkspaceId(f.config.repository.repository_id, f.root)),
+    ).toThrow(/admission metadata missing/);
+    expect(readFileSync(databasePath)).toEqual(bytesBefore);
+    const unchanged = openHostStateDatabase(databasePath);
+    expect(unchanged.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(schemaBefore);
+    unchanged.close();
   } finally {
     f.close();
   }

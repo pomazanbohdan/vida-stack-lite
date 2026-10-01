@@ -1,6 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
-import { lstatSync, realpathSync, statSync } from 'node:fs';
+import { lstatSync, realpathSync, statSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { deriveWorkspaceId } from './workspace-identity.js';
 import type { SynthesisObservationCorrectionPlan } from './orchestration/persistent-session-handoff.js';
@@ -1259,8 +1260,8 @@ function validateProgress(
           ticket.source_revision === rebind.source_revision &&
           resources.every(
             (resource) =>
-              resource.startsWith('file:') &&
-              safeWorkflowOwnedPath(resource.slice(5)) &&
+              ((resource.startsWith('file:') && safeWorkflowOwnedPath(resource.slice(5))) ||
+                resource === `execution:${rebind.work_id}`) &&
               ticket.exclusive_resources.includes(resource),
           ) &&
           claimedResources.every(
@@ -1496,6 +1497,7 @@ export function inspectHostWorkspaceDatabase(
           (database.query('PRAGMA quick_check').get() as { quick_check: string })?.quick_check === 'ok',
           'workspace inspection database integrity failed',
         );
+        assertConsumerAdmissionMetadata(database, workspaceId);
         const rows = database
           .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
           .all(workspaceId) as { kind: string; id: string; revision: number; payload: string; digest: string }[];
@@ -1601,7 +1603,7 @@ export function inspectHostWorkspaceDatabase(
               state,
             };
           });
-        return snapshot({
+        return freezeJsonValue({
           schema: 'HostWorkspaceInspection/v1' as const,
           workspace_id: workspaceId,
           work,
@@ -1641,6 +1643,21 @@ export function openHostStateDatabase(databasePath: string): Database {
     database.close();
     throw error;
   }
+}
+
+function assertConsumerAdmissionMetadata(database: Database, workspaceId: string): void {
+  if (
+    !database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_consumer_migration'").get()
+  )
+    return;
+  const baseline = database
+    .query('SELECT operation_id FROM agent_host_consumer_migration WHERE workspace_id=? LIMIT 1')
+    .get(workspaceId);
+  requireState(
+    !baseline ||
+      database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_admission_attempt'").get(),
+    'consumer baseline admission metadata missing',
+  );
 }
 
 /** SQLite's process-owned writer lock is released on termination; no persistent liveness marker is created. */
@@ -1692,8 +1709,16 @@ export async function runConsumerMigrationState<T>(
   const relativeDatabase = path.relative(input.repositoryRoot, databasePath).split(path.sep).join('/');
   if (input.mode === 'restore') access.readBytes(relativeDatabase, 'existing consumer migration canonical database');
   else access.ensureDirectory(config.control.work_root, 'consumer migration canonical state root');
-  const database = openHostStateDatabase(databasePath);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, input.repositoryRoot);
+  if (access.fileExists(relativeDatabase, 'consumer migration canonical database')) {
+    const probe = new Database(databasePath, { readonly: true, strict: true });
+    try {
+      assertConsumerAdmissionMetadata(probe, workspaceId);
+    } finally {
+      probe.close();
+    }
+  }
+  const database = openHostStateDatabase(databasePath);
   const packageSource = snapshotRuntimePackageSources(
     runtimePackageAccess(),
     config.runtime.bundle,
@@ -1763,24 +1788,49 @@ export async function runConsumerMigrationState<T>(
     const verifyWorkflowStore = (): void => {
       const relative = path.relative(input.repositoryRoot, workflowDatabasePath).split(path.sep).join('/');
       if (!access.fileExists(relative, 'consumer migration workflow store')) return;
-      const workflow = new Database(workflowDatabasePath, { readonly: true, strict: true });
+      const sourceFiles = ['', '-wal', '-shm'].map((suffix) => ({ suffix, relative: relative + suffix }));
+      const before = sourceFiles.map((file) => ({
+        ...file,
+        bytes: access.fileExists(file.relative, 'consumer workflow triplet')
+          ? access.readBytes(file.relative, 'consumer workflow triplet')
+          : null,
+      }));
+      const inspectionRoot = mkdtempSync(path.join(tmpdir(), 'vida-consumer-workflow-inspection-'));
+      const inspectionPath = path.join(inspectionRoot, path.basename(workflowDatabasePath));
       try {
-        requireState(
-          (workflow.query('PRAGMA quick_check').get() as { quick_check: string })?.quick_check === 'ok',
-          'consumer workflow database corrupt',
-        );
-        const runs = workflow.query('SELECT json(snapshot) AS snapshot FROM mastra_workflow_snapshot').all() as {
-          snapshot: string;
-        }[];
-        requireState(
-          runs.every((row) => {
-            const run = JSON.parse(row.snapshot) as { status?: unknown };
-            return ['suspended', 'success', 'failed', 'canceled'].includes(run.status as string);
-          }),
-          'consumer workflow run remains unknown or inflight',
-        );
+        for (const file of before)
+          if (file.bytes) writeFileSync(inspectionPath + file.suffix, file.bytes, { flag: 'wx' });
+        const workflow = new Database(inspectionPath, { readonly: true, strict: true });
+        try {
+          requireState(
+            (workflow.query('PRAGMA quick_check').get() as { quick_check: string })?.quick_check === 'ok',
+            'consumer workflow database corrupt',
+          );
+          const runs = workflow.query('SELECT json(snapshot) AS snapshot FROM mastra_workflow_snapshot').all() as {
+            snapshot: string;
+          }[];
+          requireState(
+            runs.every((row) =>
+              ['suspended', 'success', 'failed', 'canceled'].includes(
+                (JSON.parse(row.snapshot) as { status: string }).status,
+              ),
+            ),
+            'consumer workflow run remains unknown or inflight',
+          );
+        } finally {
+          workflow.close();
+        }
+        for (const file of before) {
+          const present = access.fileExists(file.relative, 'consumer workflow triplet stability');
+          requireState(
+            file.bytes
+              ? present && access.readBytes(file.relative, 'consumer workflow triplet stability').equals(file.bytes)
+              : !present,
+            'consumer workflow triplet changed during inspection',
+          );
+        }
       } finally {
-        workflow.close();
+        rmSync(inspectionRoot, { recursive: true, force: true });
       }
     };
     const result = store.consumerMigrationState(receipt, input.mode, () => {
@@ -3140,7 +3190,7 @@ export class HostStateStore {
   readWorkspaceSnapshot(): {
     readonly schema: 'HostWorkspaceSnapshot/v1';
     readonly workspace_id: string;
-    readonly work: readonly HostStateSnapshot[];
+    readonly work: readonly Pick<HostStateSnapshot, 'work' | 'workVersion' | 'maintenanceGeneration'>[];
     readonly ledger: CoordinationLedger | null;
     readonly ledger_version: StateVersion | null;
   } {
@@ -3150,9 +3200,18 @@ export class HostStateStore {
         const rows = this.#database
           .query("SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id")
           .all(this.#workspaceId) as { id: string }[];
-        const work = rows.map((row) => this.#read(workIdentity(this.#load('work', row.id) as WorkState)));
+        const work = rows.map((row) => {
+          const current = this.#read(workIdentity(this.#load('work', row.id) as WorkState));
+          return {
+            work: current.work,
+            workVersion: current.workVersion,
+            maintenanceGeneration: current.maintenanceGeneration,
+          };
+        });
         const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
-        return snapshot({
+        // Each authoritative row has already passed its own current-v1 ingress budget.
+        // The trusted relational projection contains the shared ledger only once.
+        return freezeJsonValue({
           schema: 'HostWorkspaceSnapshot/v1' as const,
           workspace_id: this.#workspaceId,
           work,
