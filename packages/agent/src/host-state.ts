@@ -1645,6 +1645,7 @@ export function openHostStateDatabase(databasePath: string): Database {
     typeof databasePath === 'string' && path.isAbsolute(databasePath),
     'host state requires an absolute file-backed database path',
   );
+  assertHostStateDatabasePathSafe(databasePath);
   const database = new Database(databasePath, { create: true, strict: true });
   try {
     database.exec('PRAGMA journal_mode=WAL');
@@ -1655,6 +1656,14 @@ export function openHostStateDatabase(databasePath: string): Database {
     database.close();
     throw error;
   }
+}
+
+function assertHostStateDatabasePathSafe(databasePath: string): void {
+  const stats = lstatSync(databasePath, { throwIfNoEntry: false });
+  requireState(
+    !stats || (stats.isFile() && !stats.isSymbolicLink() && stats.nlink === 1),
+    'host state database path is unsafe',
+  );
 }
 
 function assertConsumerAdmissionMetadata(database: Database, workspaceId: string): void {
@@ -1721,6 +1730,7 @@ export async function runConsumerMigrationState<T>(
   const relativeDatabase = path.relative(input.repositoryRoot, databasePath).split(path.sep).join('/');
   if (input.mode === 'restore') access.readBytes(relativeDatabase, 'existing consumer migration canonical database');
   else access.ensureDirectory(config.control.work_root, 'consumer migration canonical state root');
+  assertHostStateDatabasePathSafe(databasePath);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, input.repositoryRoot);
   if (access.fileExists(relativeDatabase, 'consumer migration canonical database')) {
     const probe = new Database(databasePath, { readonly: true, strict: true });
