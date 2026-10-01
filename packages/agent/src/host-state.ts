@@ -270,6 +270,13 @@ export interface WorkState {
     readonly assignment_attempts: readonly AssignmentAttempt[];
   };
   readonly migration?: WorkMigrationLineage;
+  readonly request_transition?: {
+    readonly schema: 'WorkRequestTransition/v1';
+    readonly request_pointer: string;
+    readonly native_session_handle: string;
+    readonly predecessor_work_ids: readonly string[];
+    readonly successor_work_id: string | null;
+  } | null;
   readonly lifecycle: LifecycleState;
   readonly artifacts: readonly WorkArtifactReference[];
 }
@@ -1045,6 +1052,8 @@ function validateProgress(
       sameJson(old.migration ?? null, work.migration ?? null),
       'migration lineage requires a dedicated rebind transaction',
     );
+    requireState(sameJson(old.request_transition ?? null, work.request_transition ?? null),
+      'request transition requires its dedicated admission transaction');
     appendOnly(old.contracts.decisions, work.contracts.decisions, (ref) => ref.path, 'decision references');
     appendOnly(old.artifacts, work.artifacts, (ref) => ref.artifact_id, 'artifact references');
   }

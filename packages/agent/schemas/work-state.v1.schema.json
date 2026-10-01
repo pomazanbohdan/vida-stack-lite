@@ -13,6 +13,23 @@
     "artifacts"
   ],
   "properties": {
+    "request_transition": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "request_pointer", "native_session_handle", "predecessor_work_ids", "successor_work_id"],
+          "properties": {
+            "schema": { "const": "WorkRequestTransition/v1" },
+            "request_pointer": { "type": "string", "minLength": 1, "maxLength": 2048 },
+            "native_session_handle": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "predecessor_work_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 256 } },
+            "successor_work_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 256 }
+          }
+        }
+      ]
+    },
     "schema": {
       "const": "WorkState/v1"
     },

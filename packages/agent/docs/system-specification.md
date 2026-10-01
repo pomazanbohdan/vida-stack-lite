@@ -152,8 +152,11 @@ The public session launcher offers `--renew-lease true` for the current live
 same-owner work, attempt, ticket, claim and generation. It checks the latest
 work/ledger/journal CAS, exact source, scope, configuration, schema and current
 bundle before extending the existing sixty-minute lease. It preserves accepted
-observations and pending readonly issues, and rejects issued writer bindings,
-started or uncertain assignments, foreign ownership and expired leases.
+observations and issued actions. A started or uncertain writer may retain the
+same live ticket and generation only while its assignment and reservation
+remain bound to that owner, current scoped source and unrevoked source-write
+authority. Renewal cannot acquire an expired or foreign fence or resolve an
+unknown effect.
 
 Expired accepted readonly work may use `--recover-expired-lease true` together
 with explicit `--rebind-current-bundle true`. Recovery requires an unsealed
@@ -169,6 +172,10 @@ at the current delivery generation. It explicitly binds the executing package's
 current runtime digest and records the existing attributable authority reference
 in CoordinationScopeRebind/v1. It does not advance the global delivery generation,
 rewrite prior approvals or observations, replay native calls, or grant delivery.
+Recovery validates each completed stage's declared produced contracts. Canonical
+research outputs require their bound normalization and artifact provenance;
+task-only synthesis is checked as a task-packet prerequisite rather than
+requiring an unrelated research result.
 The separate Mastra workflow store is preserved; no cross-database atomicity is
 claimed. Old ticket capabilities and stale caller versions fail. Overlapping
 active owners and earlier queued overlapping writers block recovery.
@@ -177,6 +184,42 @@ The unissued-empty preparation release remains distinct: an exact expired owner
 may release only bound unsealed INTAKE preparation with no completed wave,
 observation, issue, reservation, host assignment or effect. Preserve that attempt;
 admit successor work separately. Unknown issued readonly work is not this case.
+
+Reports of failed native research or synthesis remain durable terminal
+observations. They create no successful research artifact and cannot satisfy a
+success gate. An exact action, issue and observation retry returns the current
+persisted snapshot after a lost acknowledgement, including after wave advance;
+a changed payload conflicts. This does not deduplicate external effects.
+
+Risk filtering preserves each action's original configured assignment index.
+The configured DAG's declared terminal stages identify terminal synthesis
+outputs independently of stage declaration order. Only the persisted Mastra
+workflow outcome `success` projects completion. A null suspended step with a
+failed, canceled or unknown outcome remains blocked; a ledger-only read cannot
+infer success from the absence of a suspended step.
+
+Automatic successor admission groups attributable requests by the existing
+validated implementation scope's exact `attribution.thread_id` and opaque
+`attribution.pointer`. Equal pointers preserve parallel contours of one request.
+A distinct pointer may supersede eligible predecessors only for the exact same
+orchestrating session, repository and sorted project set. The successor and
+every predecessor's current contracts, journal, work and coordination versions
+are validated before one host-owned SQLite transaction admits the successor,
+records typed predecessor/successor relations and releases only the eligible
+old owner's unissued resources. Historical phase, evidence, observations and
+pending Runtime acceptance remain intact. A superseded predecessor cannot
+resume; active, reserved or unknown source-writing effects remain guarded.
+Debug corrections carry unfinished predecessor intent and acceptance into the
+successor contract. Status and continuation requests do not create a new request
+group. Functional bundled current-v1 repair, atomic application and recovery
+must be qualified before active artifacts or installed readers are upgraded.
+
+Consumer rollback binds an authoritative read-only HostState baseline and the
+existing maintenance fence through restore. Initialization alone does not close
+rollback; the cutoff is the first admitted new-work attempt, including an
+attempt whose preparation later fails. Current rows, attempts and pending native
+effects are compared with the bound baseline. Unknown or changed state blocks
+restore. The projection creates no database or independent lifecycle authority.
 
 Research normalization preserves its immutable current-v1 reserved plan, exact
 target-record CAS and unique lineage event. Under the existing changelog lock,

@@ -41,6 +41,8 @@ export function resumePausedLocalWork(input: {
     'exact paused owner CAS tuple changed',
   );
   const work = host.work;
+  requireResume(work.request_transition?.successor_work_id == null,
+    'superseded predecessor must continue through its admitted successor');
   requireResume(
     work.lease === null &&
       work.execution.status === 'suspended' &&
