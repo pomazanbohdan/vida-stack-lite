@@ -9,11 +9,11 @@ import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
-import { developmentControllerBinding } from '../bin/development-controller.mjs';
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const parent = path.dirname(packageRoot),
-  before = developmentControllerBinding(packageRoot);
+  before = process.env.VIDA_CONTROLLER_QUALIFICATION_BINDING;
+if (!/^[a-f0-9]{64}$/.test(before ?? '')) throw new Error('Parent qualification binding is missing.');
 const scratch = mkdtempSync(path.join(parent, 'qualification-'));
 const save = (file, value) => {
   mkdirSync(path.dirname(file), { recursive: true });
@@ -249,7 +249,7 @@ try {
       .every((c) => c.resources.every((r) => r === 'execution:' + work)),
   );
   assert.equal(loadRuntimeConfig(root).runtime.bundle, 'packages/agent');
-  assert.equal(developmentControllerBinding(packageRoot), before);
+  // Parent verifies the complete installed package before and after this child returns.
   assert.ok(existsSync(path.join(root, newPath)));
   console.log(
     JSON.stringify({

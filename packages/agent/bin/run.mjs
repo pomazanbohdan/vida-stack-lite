@@ -1538,6 +1538,118 @@ function readBoundedReport(file) {
   }
 }
 
+async function captureStoppedSource(args) {
+ const {readFileSync,writeFileSync,realpathSync}=await import('node:fs');const {createHash}=await import('node:crypto');
+ const {HostStateStore,openHostStateDatabase,inspectHostWorkspaceDatabase}=await import('../src/host-state.ts');
+ const {canonicalJsonDigest}=await import('../src/contracts/public-ingress.ts');const {loadRuntimeConfig}=await import('../src/config/runtime-config.ts');
+ const {sessionHandoffDatabasePath}=await import('../src/orchestration/persistent-session-handoff.ts');const {deriveWorkspaceId}=await import('../src/workspace-identity.ts');
+const base=path.resolve(import.meta.dirname,'../../..');
+if(args.length!==6||args[0]!=='--mode'||args[2]!=='--project-root'||args[4]!=='--request')throw Error('Usage: run.mjs --capture-stopped-source true --mode inspect|plan|apply|resume --project-root ABS --request REL');
+const mode=args[1],root=realpathSync(args[3]);if(!['inspect','plan','apply','resume'].includes(mode))throw Error('Capture operation mode invalid');
+const fixture=path.dirname(root)===base&&path.basename(root).startsWith('fixture-');
+const config=loadRuntimeConfig(root);
+const databasePath=fixture?path.join(root,'fixture.sqlite'):sessionHandoffDatabasePath(root,config);
+const expectedWorkspace=deriveWorkspaceId(config.repository.repository_id,root);
+const file=path.resolve(root,args[5]),requestRelative=path.relative(root,file);if(requestRelative.startsWith('..')||path.isAbsolute(requestRelative)||realpathSync(file)!==file)throw Error('Bounded capture request path differs');const bytes=readFileSync(file);if(bytes.length>1048576)throw Error('Capture request exceeds bound');const input=JSON.parse(bytes);if(input.workspace_id!==expectedWorkspace)throw Error('Capture workspace/root binding differs');
+let approvedFiles=[];
+function verifyCurrent(){
+ for(const [absolute,approved] of approvedFiles)if(!readFileSync(absolute).equals(approved))throw Error("Capture approved evidence changed");
+ const terminalPath=path.resolve(root,input.terminalEvidence.observation_ref),terminalRelative=path.relative(root,terminalPath);if(terminalRelative.startsWith('..')||path.isAbsolute(terminalRelative)||realpathSync(terminalPath)!==terminalPath)throw Error('Terminal observation path differs');const terminalBytes=readFileSync(terminalPath);if(terminalBytes.length>65536)throw Error('Terminal evidence exceeds bound');const terminal=JSON.parse(terminalBytes);if(!fixture&&(terminal.native_status!=='completed'||!terminal.source_turn_id||!terminal.final_message_id||terminal.current_tmp_only_turn_id===terminal.source_turn_id||terminal.owner_thread_id!==input.nativeSessionHandle))throw Error('Actual stopped SOURCE turn provenance incomplete');
+ if(terminal.schema!==(fixture?'FixtureObservedStoppedSource/v1':'RootObservedStoppedSource/v1')||terminal.status!=='partial_stopped'||terminal.actor!==input.terminalEvidence.native_actor||terminal.action_id!==input.observation.action_id||terminal.issue_id!==input.observation.issue_id||terminal.host_attempt_id!==input.observation.host_attempt_id||terminal.observation_ref!==input.terminalEvidence.observation_ref)throw Error('actual terminal fixture evidence differs');
+ for(const entry of input.candidateSnapshot.entries){const absolute=path.resolve(root,entry.path),relative=path.relative(root,absolute);if(relative.startsWith('..')||path.isAbsolute(relative)||realpathSync(absolute)!==absolute)throw Error('candidate source path differs');const data=readFileSync(absolute);if(data.length!==entry.size||createHash('sha256').update(data).digest('hex')!==entry.sha256)throw Error('candidate source changed after frozen request');}
+}
+verifyCurrent();
+const workspace=inspectHostWorkspaceDatabase(databasePath,input.workspace_id);const selected=workspace.work.find(row=>row.identity.work_id===input.identity.work_id);if(!selected)throw Error('fixture exact work missing');
+const {workspace_id,...operation}=input;
+const planPath=fixture?path.join(root,'capture-plan.json'):path.join(path.dirname(file),'capture-plan-'+operation.identity.work_id+'.json');
+async function verifyAuthorization(){
+ if(fixture)return;
+ const authorizationPath=path.resolve(root,operation.terminalEvidence.owner_decision_ref),relative=path.relative(root,authorizationPath);if(relative.startsWith('..')||path.isAbsolute(relative)||realpathSync(authorizationPath)!==authorizationPath)throw Error('Capture authorization path differs');
+ const bytes=readFileSync(authorizationPath);if(bytes.length>65536)throw Error('Capture authorization exceeds bound');const authorization=JSON.parse(bytes);
+ const {developmentControllerBinding}=await import('./development-controller.mjs');const candidateBinding=developmentControllerBinding(bundleRoot);
+ if(authorization.schema!=='StoppedSourceCaptureAuthorization/v1'||authorization.action!=='source.capture-failed-and-release'||authorization.owner_thread_id!==operation.nativeSessionHandle||authorization.request_digest!==canonicalJsonDigest(operation)||authorization.candidate_binding!==candidateBinding||authorization.source_turn_id!==JSON.parse(readFileSync(path.resolve(root,operation.terminalEvidence.observation_ref),'utf8')).source_turn_id||authorization.status!=='approved_exact_manifest')throw Error('Capture exact manifest/owner authorization differs');
+ const reviews=authorization.reviews;if(!Array.isArray(reviews)||reviews.length!==3||new Set(reviews.map(r=>r.actor_id)).size!==3||new Set(reviews.map(r=>r.history_ref)).size!==3||new Set(reviews.map(r=>r.tool_call_ref)).size!==3||reviews.some(r=>r.verdict!=='pass'||r.candidate_binding!==candidateBinding||r.actor_id===operation.terminalEvidence.native_actor||!r.receipt_ref))throw Error('Three fresh candidate review references required');
+ approvedFiles=[[authorizationPath,bytes]];
+ for(const review of reviews){
+   const receiptPath=path.resolve(root,review.receipt_ref),receiptRelative=path.relative(root,receiptPath);
+   if(receiptRelative.startsWith('..')||path.isAbsolute(receiptRelative)||realpathSync(receiptPath)!==receiptPath)throw Error('Capture review receipt path differs');
+   const receiptBytes=readFileSync(receiptPath);if(receiptBytes.length>65536)throw Error('Capture review receipt exceeds bound');
+   const receipt=JSON.parse(receiptBytes);
+   if(receipt.schema!=='StoppedSourceCandidateReview/v1'||receipt.verdict!=='pass'||receipt.candidate_binding!==candidateBinding||receipt.actor_id!==review.actor_id||receipt.history_ref!==review.history_ref||receipt.tool_call_ref!==review.tool_call_ref||receipt.request_digest!==authorization.request_digest)throw Error('Capture frozen review receipt differs');
+   approvedFiles.push([receiptPath,receiptBytes]);
+ }
+ verifyCurrent();
+
+}
+
+if(['inspect','plan'].includes(mode)){
+ if(canonicalJsonDigest(selected.version)!==canonicalJsonDigest(operation.expectedWork)||canonicalJsonDigest(workspace.ledger_version)!==canonicalJsonDigest(operation.expectedLedger))throw Error('capture plan CAS differs');
+ const plan={schema:'StoppedSourceCapturePlan/v1',request_digest:canonicalJsonDigest(operation),request:operation,rights_granted:false,canonical_acceptance:false,requires_exact_manifest_authorization:!fixture};if(mode==='plan')writeFileSync(planPath,JSON.stringify(plan,null,2)+'\n',{flag:'wx'});return {status:mode==='plan'?'planned':'inspect_current',plan_ref:path.relative(root,planPath).replaceAll(path.sep,'/'),request_digest:plan.request_digest};
+}else{
+ const plan=JSON.parse(readFileSync(planPath,'utf8'));await verifyAuthorization();if(plan.schema!=='StoppedSourceCapturePlan/v1'||plan.request_digest!==canonicalJsonDigest(operation))throw Error('frozen capture plan differs');const database=openHostStateDatabase(databasePath);try{const store=new HostStateStore(database,workspace_id);const result=store.captureStoppedSourceObservation({...operation,verifyCurrent});return {status:'captured_partial_source_released',work_version:result.workVersion,ledger_version:result.ledgerVersion,rights_granted:false,canonical_acceptance:false};}finally{database.close();}
+}
+
+}
+
+
+async function releaseCompletedReadonly(args) {
+  if(args.length!==6||args[0]!=='--mode'||args[2]!=='--project-root'||args[4]!=='--request')throw Error('Readonly release requires mode, exact root and request');
+  const mode=args[1],root=realpathSync(args[3]);
+  if(!['inspect','plan','apply','resume'].includes(mode))throw Error('Readonly release mode invalid');
+  const {canonicalJsonDigest}=await import('../src/contracts/public-ingress.ts');
+  const {loadRuntimeConfig,runtimeConfigDigest}=await import('../src/config/runtime-config.ts');
+  const {requireSafeRepositoryAccess}=await import('../src/config/safe-repository-access.ts');
+  const {snapshotDeclaredSources}=await import('../src/orchestration/scoped-source-snapshot.ts');
+  const {sessionHandoffDatabasePath}=await import('../src/orchestration/persistent-session-handoff.ts');
+  const {deriveWorkspaceId}=await import('../src/workspace-identity.ts');
+  const {HostStateStore,openHostStateDatabase,inspectHostWorkspaceDatabase}=await import('../src/host-state.ts');
+  const {suspendCompletedReadOnlyWork}=await import('../src/orchestration/suspend-local-work.ts');
+  const {readAdmittedSessionIntake}=await import('../src/orchestration/admitted-session-execution.ts');
+  const {Database}=await import('bun:sqlite');
+  const {sessionBridgeDatabasePath,parseSessionBridgeRequest,sessionBridgeRunId}=await import('../src/orchestration/mastra-session-bridge.ts');
+  const config=loadRuntimeConfig(root),access=requireSafeRepositoryAccess(root);
+  const requestBytes=access.readBytes(args[5],'completed readonly release request');
+  if(requestBytes.length>65536)throw Error('Readonly release request exceeds bound');
+  const request=JSON.parse(requestBytes),equal=(a,b)=>canonicalJsonDigest(a)===canonicalJsonDigest(b);
+  if(request.schema!=='CompletedReadonlyReleaseRequest/v1'||request.workspace_id!==deriveWorkspaceId(config.repository.repository_id,root)||request.identity.project_ids.length!==1||!['linked_correction','next_work'].includes(request.requestIntent))throw Error('Readonly release identity differs');
+  const databasePath=sessionHandoffDatabasePath(root,config),workspace=inspectHostWorkspaceDatabase(databasePath,request.workspace_id);
+  const selected=workspace.work.find(row=>equal(row.identity,request.identity)),row=workspace.journals.find(j=>j.work_id===request.identity.work_id&&j.attempt===request.attempt);
+  if(!selected||!row||!equal(row.version,request.expectedJournal))throw Error('Readonly release journal identity/CAS differs');
+  const {settledSessionItems,configuredReadonlyAssignment}=await import('../src/orchestration/final-assurance.ts');
+  const work=selected.state,state=row.state,items=settledSessionItems(state).observed;
+  if(work.binding.config_digest!==runtimeConfigDigest(config)||state.run_id!==work.execution.run_id||state.source_scope?.digest!==work.binding.work_source_revision||state.attempt!==request.attempt||work.execution.assignment_attempts.length!==0||!items.length)throw Error('Readonly release current binding or host effects differ');
+  if(!equal(snapshotDeclaredSources(access,state.source_scope.entries.map(e=>e.path)),state.source_scope))throw Error('Readonly release source changed');
+  const engine=new Database(sessionBridgeDatabasePath(root,config),{readonly:true,strict:true});
+  try {
+    const snapshots=engine.query('SELECT workflow_name,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?').all(state.run_id);
+    if(snapshots.length!==1)throw Error('Readonly release original engine missing/ambiguous');
+    const snapshot=JSON.parse(snapshots[0].snapshot),input=snapshot.context?.input;
+    if(snapshot.status!=='suspended'||snapshot.runId!==state.run_id||input?.work_id!==request.identity.work_id||input.attempt!==request.attempt||input.config_digest!==work.binding.config_digest||input.scope_digest!==state.source_scope.digest||snapshots[0].workflow_name!==input.workflow_id||sessionBridgeRunId(request.workspace_id,{work_id:input.work_id,attempt:input.attempt,scope_digest:input.scope_digest},input.workflow_id)!==state.run_id)throw Error('Readonly release original engine binding differs');
+    for(const item of items){
+      const issued=parseSessionBridgeRequest(item.request),stage=config.workflows[issued.workflow_id]?.stages.find(s=>s.id===issued.stage_id),assignment=stage?.assignments[issued.assignment_index],profile=config.agents.profiles[assignment?.profile],tools=config.agents.tool_policies[profile?.tools_policy];
+      if(item.issue_id===null||item.observation?.status!=='reported_complete'||item.observation.action_id!==issued.action_id||item.observation.issue_id!==item.issue_id||item.observation.output_digest!==canonicalJsonDigest(item.observation.summary)||item.host_reservation||item.research_activation||item.research_normalization||!configuredReadonlyAssignment(config,issued)||issued.run_id!==state.run_id||issued.config_digest!==input.config_digest||issued.scope_digest!==input.scope_digest||issued.workflow_id!==input.workflow_id||issued.action_id!==canonicalJsonDigest({context:{work_id:input.work_id,attempt:input.attempt,scope_digest:input.scope_digest},workflow_id:issued.workflow_id,wave_index:issued.wave_index,stage_id:issued.stage_id,assignment_index:issued.assignment_index})||!equal(snapshot.context?.['wave-'+issued.wave_index]?.suspendPayload?.requests?.find(r=>r.action_id===issued.action_id),issued))throw Error('Readonly release actual accepted readonly action differs');
+    }
+  } finally {engine.close();}
+  const planPath=path.join(path.dirname(path.resolve(root,args[5])),'readonly-release-plan-'+request.identity.work_id+'.json');
+  const database=openHostStateDatabase(databasePath);
+  try {
+    const store=new HostStateStore(database,request.workspace_id),intake=readAdmittedSessionIntake(root,store,request.identity);
+    if(intake.native_session_handle!==request.nativeSessionHandle||work.binding.thread_id!==request.identity.thread_id&&request.identity.thread_id!==undefined)throw Error('Readonly release original owner differs');
+    // Observe the consumer's original installed closure, not this maintenance candidate's changed bytes.
+    if(snapshotDeclaredSources(access,intake.runtime_code_paths).digest!==work.binding.runtime_code_digest)throw Error('Readonly release original installed context changed');
+    if(['inspect','plan'].includes(mode)){
+      if(!equal(selected.version,request.expectedWork)||!equal(workspace.ledger_version,request.expectedLedger))throw Error('Readonly release work/ledger CAS differs');
+      const plan={schema:'CompletedReadonlyReleasePlan/v1',request_digest:canonicalJsonDigest(request),request,rights_granted:false,canonical_acceptance:false};
+      if(mode==='plan')writeFileSync(planPath,controllerJson(plan),{flag:'wx'});
+      return {status:mode==='plan'?'readonly_release_planned':'readonly_release_inspected',plan_ref:path.relative(root,planPath).replaceAll(path.sep,'/'),rights_granted:false};
+    }
+    const plan=JSON.parse(readFileSync(planPath,'utf8'));
+    if(plan.schema!=='CompletedReadonlyReleasePlan/v1'||plan.request_digest!==canonicalJsonDigest(request)||!access.readBytes(args[5],'readonly release replay').equals(requestBytes)||runtimeConfigDigest(loadRuntimeConfig(root))!==work.binding.config_digest||!equal(snapshotDeclaredSources(access,state.source_scope.entries.map(e=>e.path)),state.source_scope))throw Error('Readonly release frozen context changed');
+    const result=suspendCompletedReadOnlyWork({store,identity:request.identity,journal:{version:row.version,state,resume_status:'ready_to_resume'},expectedWork:request.expectedWork,expectedLedger:request.expectedLedger,nativeSessionHandle:request.nativeSessionHandle,userRequestPointer:request.userRequestPointer,requestIntent:request.requestIntent,documentationContext:{repository_root:root,repository_id:request.identity.repository_id,project_id:request.identity.project_ids[0],work_id:request.identity.work_id},config});
+    return {status:'completed_readonly_owner_released',work_version:result.workVersion,ledger_version:result.ledgerVersion,rights_granted:false,canonical_acceptance:false,runtime_acceptance:false};
+  } finally {database.close();}
+}
+
 export async function run(args = process.argv.slice(2)) {
   if (!isBunRuntime) {
     const { runPinnedBun } = await import('./bun.mjs');
@@ -1545,6 +1657,14 @@ export async function run(args = process.argv.slice(2)) {
       root: bundleRoot,
       cwd: bundleRoot,
     });
+  }
+  if(args.includes('--release-completed-readonly')){
+    if(args[0]!=='--release-completed-readonly'||args[1]!=='true'||args.includes('--report')||args.includes('--issue-wave')||args.includes('--capture-stopped-source'))throw Error('Readonly release requires separate exact signal');
+    return releaseCompletedReadonly(args.slice(2));
+  }
+  if (args.includes('--capture-stopped-source')) {
+    if(args[0]!=='--capture-stopped-source'||args[1]!=='true'||args.includes('--report')||args.includes('--issue-wave'))throw Error('Stopped-source capture requires exact separate capture signal');
+    return captureStoppedSource(args.slice(2));
   }
   const { checkManifest, readPin } = await import('./bun.mjs');
   let values = parseArgs(args);

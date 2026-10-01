@@ -6,6 +6,37 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse, stringify } from 'yaml';
+import { randomUUID } from 'node:crypto';
+import { selectCorrectiveEvidence } from '../src/orchestration/final-assurance.ts';
+
+const correctiveEvidenceWorkflow = { stages: [{ id: 'validator', kind: 'validate' }, { id: 'tester', kind: 'test' }] };
+function correctiveFailure(stage = 'validator') {
+  const action = stage === 'validator' ? 'a'.repeat(64) : 'b'.repeat(64);
+  const issue = randomUUID(), evidence = ['local://fixture/negative'];
+  return { request: { action_id: action, stage_id: stage }, issue_id: issue,
+    observation: { action_id: action, issue_id: issue, status: 'reported_failed',
+      summary: JSON.stringify(stage === 'validator'
+        ? { schema: 'VidaValidatorVerdict/v1', verdict: 'fail', findings: ['defect'], evidence_refs: evidence }
+        : { schema: 'VidaTesterVerdict/v1', status: 'fail', evidence_refs: evidence }), evidence_refs: evidence } };
+}
+
+test('corrective evidence accepts archived negative verdict and preserves wholly unissued downstream wave', () => {
+  const failed = correctiveFailure(), unissued = { request: { stage_id: 'tester', action_id: 'c'.repeat(64) }, issue_id: null, observation: null };
+  const journal = { completed: [{ step_id: 'validator-wave', items: [failed] }], items: [unissued] }, before = JSON.stringify(journal);
+  expect(selectCorrectiveEvidence(journal, correctiveEvidenceWorkflow)).toEqual({ observed: [failed], failed: [failed] });
+  expect(JSON.stringify(journal)).toBe(before);
+  expect(selectCorrectiveEvidence({ completed: [{ items: [correctiveFailure('tester')] }], items: [] }, correctiveEvidenceWorkflow).failed).toHaveLength(1);
+});
+
+test('corrective evidence rejects unknown mixed waves, reservations, malformed and foreign negative reports', () => {
+  const failed = correctiveFailure(), ready = { request: { stage_id: 'tester', action_id: 'c'.repeat(64) }, issue_id: null, observation: null };
+  for (const unsafe of [{ ...ready, issue_id: randomUUID() }, { ...ready, host_reservation: {} }, { ...ready, research_activation: {} }, { ...ready, research_normalization: {} }])
+    expect(() => selectCorrectiveEvidence({ completed: [{ items: [failed] }], items: [ready, unsafe] }, correctiveEvidenceWorkflow)).toThrow('unfinished issued effects');
+  for (const observation of [{ ...failed.observation, action_id: 'd'.repeat(64) }, { ...failed.observation, issue_id: randomUUID() }])
+    expect(() => selectCorrectiveEvidence({ completed: [], items: [{ ...failed, observation }] }, correctiveEvidenceWorkflow)).toThrow('unfinished issued effects');
+  expect(() => selectCorrectiveEvidence({ completed: [], items: [{ ...failed, observation: { ...failed.observation, summary: 'unstructured failure' } }] }, correctiveEvidenceWorkflow)).toThrow('structured JSON');
+  expect(() => selectCorrectiveEvidence({ completed: [], items: [{ ...failed, request: { ...failed.request, stage_id: 'writer' } }] }, correctiveEvidenceWorkflow)).toThrow('not a focused verdict');
+});
 
 const engineFault = vi.hoisted(() => ({
   rejection: /** @type {Promise<never> | null} */ (null),

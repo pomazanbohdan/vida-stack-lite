@@ -144,6 +144,15 @@ accepted evidence, and permits no unknown pending outcome or writer assignment.
 The executing package is explicitly rebound; no prior approval or observation is
 rewritten as new evidence. The system specification owns the detailed contract.
 
+Known terminal partial Source work uses the public stopped-source capture route:
+record the exact failed observation and unverified candidate, settle the matching
+effect and release only its old rights in one Host transaction. Never infer a
+terminal result from lease expiry, return a newer grant as an old capture result,
+or replay the old writer. Completed readonly release uses configured bounded
+egress and exact accepted observations; a wholly unissued downstream wave stays
+inert. It requires no retroactive Source authorization and grants no new rights.
+The system specification owns capture, retry and release guards.
+
 An authorized forward correction may use the fixed admitted completed-readonly
 capture operation while the parent maintenance overlay blocks ordinary work.
 Verify the exact original issue/run/configuration/source and readonly rights,

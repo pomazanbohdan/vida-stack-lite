@@ -43,12 +43,25 @@ export function validateWorkSessionBinding(work:WorkState,state:{attempt:number;
   requireAssurance(authority.attempt===state.attempt&&authority.work_id===work.binding.lifecycle_work_id&&authority.run_id===work.execution.run_id&&authority.base_run_id===execution.base_run_id&&authority.engine_run_id===execution.engine_run_id&&authority.correction_generation===execution.correction_generation&&authority.source_revision===work.binding.work_source_revision&&authority.scope_id===work.binding.scope_id&&authority.config_digest===work.binding.config_digest&&canonicalJson(authority.ac_ids)===canonicalJson(work.binding.ac_ids)&&canonicalJson(authority.allowed_paths)===canonicalJson(work.lifecycle.scope.allowed_paths)&&canonicalJson(authority.stage_ids)===canonicalJson(execution.stage_ids),'corrective authority contract differs');
 }
 /** Completed waves retain terminal failures; a downstream wave may remain wholly unissued. */
-export function selectCorrectiveEvidence(journal:MastraSessionLedgerState,workflow:AgentRuntimeConfig['workflows'][string]) {
+export function settledSessionItems(journal:MastraSessionLedgerState) {
   const terminal=(item:MastraSessionLedgerState['items'][number])=>Boolean(item.issue_id&&item.observation&&item.observation.action_id===item.request.action_id&&item.observation.issue_id===item.issue_id&&['reported_complete','reported_failed'].includes(item.observation.status));
-  const unissued=(item:MastraSessionLedgerState['items'][number])=>item.issue_id===null&&item.observation===null&&!item.host_reservation&&!item.research_activation&&!item.research_normalization;
+  const inert=(item:MastraSessionLedgerState['items'][number])=>item.issue_id===null&&item.observation===null&&!item.host_reservation&&!item.research_activation&&!item.research_normalization;
   const completed=journal.completed.flatMap(wave=>wave.items);
-  requireAssurance(completed.every(terminal)&&(journal.items.every(terminal)||journal.items.every(unissued)),'corrective journal has unfinished issued effects');
-  const observed=[...completed,...journal.items.filter(terminal)];
+  requireAssurance(completed.every(terminal)&&(journal.items.every(terminal)||journal.items.every(inert)),'session journal has unfinished issued effects');
+  return {observed:[...completed,...journal.items.filter(terminal)],inert:journal.items.filter(inert)};
+}
+
+/** Read-only capability is configured, not inferred from an egress-policy name. */
+export function configuredReadonlyAssignment(config:AgentRuntimeConfig,request:MastraSessionLedgerState['items'][number]['request']):boolean {
+  const assignment=config.workflows[request.workflow_id]?.stages.find(stage=>stage.id===request.stage_id)?.assignments[request.assignment_index];
+  const profile=assignment&&config.agents.profiles[assignment.profile];
+  const tools=profile&&config.agents.tool_policies[profile.tools_policy];
+  const egress=profile&&config.agents.egress_policies[profile.egress_policy];
+  return Boolean(assignment?.role===request.role&&profile?.mutation_scope==='none'&&tools?.source_write===false&&tools.allowed_tools.every(tool=>['runtime.read','source.read','docs.read','web.search'].includes(tool))&&egress&&egress.allowed_hosts.every(host=>/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/i.test(host)));
+}
+
+export function selectCorrectiveEvidence(journal:MastraSessionLedgerState,workflow:AgentRuntimeConfig['workflows'][string]) {
+  const {observed}=settledSessionItems(journal);
   const failed=observed.filter(item=>item.observation!.status==='reported_failed');
   requireAssurance(failed.length>0,'corrective operation requires accepted focused negative findings');
   for(const item of failed){

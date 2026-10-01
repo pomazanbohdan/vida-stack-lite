@@ -11,6 +11,7 @@ import {
   runtimePackageCodePaths,
 } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { selectCorrectiveEvidence,validateWorkSessionBinding } from '../src/orchestration/final-assurance.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
@@ -43,6 +44,7 @@ const planningKeys = [
 const synthesisPlanningKeys = planningKeys
   .filter((key) => key !== '--owner-no-call-ref')
   .concat(['--basis', '--correction-id', '--owner-correction-ref']);
+const focusedPlanningKeys=planningKeys.filter(key=>key!=='--owner-no-call-ref').concat(['--basis','--owner-correction-ref']);
 const applyingKeys = ['--kind', '--mode', '--project-root', '--repair-id'];
 const planPath = (id) => `.agent/work/${id}/runtime-code-rebind-plan.v1.json`;
 
@@ -65,7 +67,7 @@ function parse(args) {
     'kind, mode, root or repair ID invalid',
   );
   const expected = ['inspect', 'plan'].includes(values['--mode'])
-    ? values['--basis'] === 'synthesis-correction'
+    ? values['--basis'] === 'known-terminal-verify' ? focusedPlanningKeys : values['--basis'] === 'synthesis-correction'
       ? synthesisPlanningKeys
       : planningKeys
     : applyingKeys;
@@ -180,6 +182,7 @@ export function planRuntimeCodeRebind({
   ownerNoCallPointer,
   correctionId,
   ownerCorrectionPointer,
+  focusedFailureCorrection,
 }) {
   requireRebind(
     identifier.test(repairId) &&
@@ -193,7 +196,7 @@ export function planRuntimeCodeRebind({
       typeof nativeHandle === 'string' &&
       nativeHandle.length > 0 &&
       nativeHandle.length <= 256 &&
-      (correctionId
+      (focusedFailureCorrection ? typeof ownerCorrectionPointer==='string' && ownerCorrectionPointer.trim().length>0 && ownerCorrectionPointer.length<=2048 && ownerNoCallPointer===undefined && correctionId===undefined : correctionId
         ? identifier.test(correctionId) &&
           typeof ownerCorrectionPointer === 'string' &&
           ownerCorrectionPointer.length > 0 &&
@@ -238,7 +241,7 @@ export function planRuntimeCodeRebind({
   );
   const owner = work.value;
   const state = journal.value;
-  const item = state.items?.find((entry) => entry.request?.action_id === actionId);
+  const item = [...state.items,...state.completed.flatMap(wave=>wave.items)].find((entry) => entry.request?.action_id === actionId);
   const stage = config.workflows[item?.request.workflow_id]?.stages.find(
     (entry) => entry.id === item?.request.stage_id,
   );
@@ -307,6 +310,8 @@ export function planRuntimeCodeRebind({
     ) &&
     !owner.execution.assignment_attempts.some((entry) => entry.status === 'started' || entry.status === 'uncertain');
   requireRebind(
+    focusedFailureCorrection ?
+      owner.schema==='WorkState/v1' && owner.workspace_id===workspaceId && owner.binding.lifecycle_work_id===workId && owner.binding.config_digest===runtimeConfigDigest(config) && owner.binding.integrations_digest===identity.integrations_digest && canonicalJsonDigest(owner.binding.project_ids)===canonicalJsonDigest(projectIds) && owner.lifecycle.phase==='VERIFY' && owner.execution.status==='active' && owner.lease?.thread_id===nativeHandle && owner.execution.assignment_attempts.every(entry=>['completed','no_effect'].includes(entry.status)) && state.work_id===workId && state.attempt===attempt && state.workspace_id===workspaceId && state.source_scope?.digest===owner.binding.work_source_revision && selectCorrectiveEvidence(state,config.workflows[owner.binding.workflow_id]).failed.some(entry=>entry.request.action_id===actionId&&entry.issue_id===issueId) : (
     owner.schema === 'WorkState/v1' &&
       owner.workspace_id === workspaceId &&
       owner.binding.lifecycle_work_id === workId &&
@@ -380,9 +385,10 @@ export function planRuntimeCodeRebind({
           repair.request_digest === canonicalJsonDigest(item.request) &&
           repair.scope_digest === item.request.scope_digest &&
           repair.config_digest === item.request.config_digest &&
-          repair.source_digest === state.source_scope.digest),
+          repair.source_digest === state.source_scope.digest)),
     'current owner, journal or issued replacement differs',
   );
+  validateWorkSessionBinding(owner,state,root);
   const access = requireSafeRepositoryAccess(root);
   requireRebind(
     snapshotDeclaredSources(
@@ -434,7 +440,7 @@ export function planRuntimeCodeRebind({
     forwardOperationId,
     parentManifestDigest: lineage.parentManifestDigest,
     successorManifestDigest: lineage.successorManifestDigest,
-    ...(correctionId
+    ...(focusedFailureCorrection ? {focusedFailureCorrection:{ownerCorrectionPointer}} : correctionId
       ? { synthesisCorrection: { correctionId, correctionDigest: correction.digest, ownerCorrectionPointer } }
       : { ownerNoCallPointer }),
   };
@@ -511,7 +517,8 @@ function currentPlan(database, root, config, workspaceId, plan) {
     forwardOperationId: request.forwardOperationId,
     ownerNoCallPointer: request.ownerNoCallPointer,
     correctionId: request.synthesisCorrection?.correctionId,
-    ownerCorrectionPointer: request.synthesisCorrection?.ownerCorrectionPointer,
+    ownerCorrectionPointer: request.focusedFailureCorrection?.ownerCorrectionPointer ?? request.synthesisCorrection?.ownerCorrectionPointer,
+    focusedFailureCorrection:Boolean(request.focusedFailureCorrection),
   });
 }
 
@@ -542,6 +549,7 @@ export async function runRuntimeCodeRebind(args) {
         ownerNoCallPointer: values['--owner-no-call-ref'],
         correctionId: values['--correction-id'],
         ownerCorrectionPointer: values['--owner-correction-ref'],
+        focusedFailureCorrection:values['--basis']==='known-terminal-verify',
       });
       if (values['--mode'] === 'plan') writePlan(root, plan.repair_id, plan);
       return {
@@ -628,7 +636,7 @@ export async function runRuntimeCodeRebind(args) {
           snapshot.work?.lease?.thread_id === plan.request.nativeSessionHandle &&
           canonicalJsonDigest(journal.version) === canonicalJsonDigest(plan.request.expectedJournal) &&
           (plan.request.synthesisCorrection ? item?.issue_id === null : item?.issue_id === plan.request.issueId) &&
-          item?.observation === null &&
+          (plan.request.focusedFailureCorrection ? item?.observation?.status==='reported_failed' : item?.observation === null) &&
           current.digest === plan.request.newRuntimeCodeDigest,
         'runtime-code rebind replay needs current-state inspection',
       );
@@ -701,7 +709,8 @@ export async function runRuntimeCodeRebind(args) {
           forwardOperationId: request.forwardOperationId,
           ownerNoCallPointer: request.ownerNoCallPointer,
           correctionId: request.synthesisCorrection?.correctionId,
-          ownerCorrectionPointer: request.synthesisCorrection?.ownerCorrectionPointer,
+          ownerCorrectionPointer: request.focusedFailureCorrection?.ownerCorrectionPointer ?? request.synthesisCorrection?.ownerCorrectionPointer,
+    focusedFailureCorrection:Boolean(request.focusedFailureCorrection),
         });
         requireRebind(
           current.digest === effective.digest && canonicalJsonDigest(current.request) === canonicalJsonDigest(request),
@@ -714,7 +723,7 @@ export async function runRuntimeCodeRebind(args) {
           forward_operation_id: request.forwardOperationId,
           parent_manifest_digest: request.parentManifestDigest,
           successor_manifest_digest: request.successorManifestDigest,
-          ...(request.synthesisCorrection
+          ...(request.focusedFailureCorrection ? {owner_correction_pointer:request.focusedFailureCorrection.ownerCorrectionPointer} : request.synthesisCorrection
             ? {
                 owner_correction_pointer: request.synthesisCorrection.ownerCorrectionPointer,
                 synthesis_correction_digest: request.synthesisCorrection.correctionDigest,

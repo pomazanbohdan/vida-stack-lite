@@ -105,7 +105,53 @@ through supported operations; callers do not manually compute/replay hashes.
 Qualification metadata cannot grant human approval, a lease, delivery or Runtime
 acceptance. Outside-scope authorization denies undeclared writes; this does not
 promise physical filesystem isolation or detection of arbitrary unrelated edits.
+Public controller output presents compact status, typed identity and next action.
+The complete inventory remains in the private manifest and exported API. Parent
+verification checks the complete package before and after the child qualification;
+the child returns the supplied exact binding without duplicate inventory walks.
+Opt-in bounded stage markers expose install and snapshot elapsed time. These
+changes do not claim a speed improvement without comparable measurement.
 No current controller or successful qualification is inferred from this contract.
+
+## Terminal observations and exact owner release
+
+Task outcome, effect certainty and lease ownership are independent. A known
+terminal partial Source invocation may be captured as `reported_failed` and its
+Host invocation completed with that same failed observation. One Host transaction
+settles the exact matching local source approval, records the unchanged issued
+journal and an unverified candidate inventory, then releases only the old owner's
+ticket, claim and lease. It preserves lifecycle phase, assurance, original issue,
+configured stage/index, generation and immutable history. This is neither task
+success, no-effect proof, acceptance nor a new grant. Unknown or still running
+writer effects require reconciliation; expiry alone never proves a terminal
+outcome. Cooperative local native evidence is consistency evidence, not a
+cryptographic authentication or physical isolation claim.
+
+The public `run --capture-stopped-source true` surface has explicit inspect,
+plan, apply and resume modes. An exact approved manifest binds the original
+owner/work/attempt/issue/reservation, terminal observation and candidate bytes.
+Commit rechecks these bindings and current CAS atomically. Exact retry tolerates
+unrelated disjoint coordination, but denies dependent work/journal changes or a
+new overlapping grant even if that later grant has been released. Original
+expiry remains in recovery evidence; ordinary released-ticket normalization does
+not extend the old lease. Capture allocates no successor rights.
+
+`run --release-completed-readonly true` releases an exact completed readonly
+owner without retroactive Source authorization. Accepted observations must match
+the original engine, issue, configured read-only tools and bounded configured
+egress hosts. A wholly unissued downstream wave is inert only with no issue,
+observation, reservation, activation or normalization. Release never executes
+that wave. Unknown/unbounded egress and issued writer effects deny this route.
+Fresh writer execution requires ordinary FIFO ownership and current authority.
+
+A known-terminal VERIFY failure may use the existing forward runtime-code rebind
+under an explicit owner correction basis, exact attempt/live lease/CAS and verified
+installed-package lineage. Preserve the original failed journal and Mastra snapshot;
+then issue an explicit corrective generation through the existing Host operation.
+The original INTAKE rebind and unknown-effect guards remain separate. Only current
+runtime-bound evidence can support delivery; correction retires stale proof through
+the lifecycle's existing invalidation rules. No automatic retry, acceptance or
+configured assignment-index reinterpretation follows a runtime rebind.
 
 ## Local release workflow
 

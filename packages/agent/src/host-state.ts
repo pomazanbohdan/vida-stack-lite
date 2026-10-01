@@ -205,6 +205,7 @@ export interface RuntimeCodeRebindRequest {
   readonly parentManifestDigest: string;
   readonly successorManifestDigest: string;
   readonly ownerNoCallPointer?: string;
+  readonly focusedFailureCorrection?: { readonly ownerCorrectionPointer: string };
   readonly synthesisCorrection?: {
     readonly correctionId: string;
     readonly correctionDigest: string;
@@ -3867,7 +3868,9 @@ export class HostStateStore {
             value.trim() === value &&
             !/\p{Cc}/u.test(value),
         ) &&
-        (input.synthesisCorrection === undefined
+        (input.focusedFailureCorrection
+          ? Object.keys(input.focusedFailureCorrection).length===1 && typeof input.focusedFailureCorrection.ownerCorrectionPointer==='string' && input.focusedFailureCorrection.ownerCorrectionPointer.trim().length>0 && input.focusedFailureCorrection.ownerCorrectionPointer.length<=2048 && input.synthesisCorrection===undefined && input.ownerNoCallPointer===undefined
+          : input.synthesisCorrection === undefined
           ? typeof input.ownerNoCallPointer === 'string' &&
             input.ownerNoCallPointer.length > 0 &&
             input.ownerNoCallPointer.length <= 2048 &&
@@ -3887,15 +3890,15 @@ export class HostStateStore {
       'runtime-code rebind request invalid',
     );
     const before = this.readHostStateSnapshot(input.identity);
+    const focused = Boolean(input.focusedFailureCorrection);
+    const {loadRuntimeConfig} = await import('./config/runtime-config.js');
+    const focusedConfig = focused && this.#repositoryRoot ? loadRuntimeConfig(this.#repositoryRoot) : null;
     this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
     matchesExpected(before.workVersion, input.expectedWork);
     matchesExpected(before.ledgerVersion, input.expectedLedger);
     requireState(
       before.work?.binding.runtime_code_digest === input.oldRuntimeCodeDigest &&
-        before.work.lifecycle.phase === 'INTAKE' &&
-        before.work.lifecycle.seal === null &&
-        before.work.lifecycle.assurance.review_generation === 0 &&
-        before.work.lifecycle.assurance.delivery_cycle_id === null &&
+        (focused ? before.work.lifecycle.phase==='VERIFY' && focusedConfig!==null : before.work.lifecycle.phase === 'INTAKE' && before.work.lifecycle.seal === null && before.work.lifecycle.assurance.review_generation === 0 && before.work.lifecycle.assurance.delivery_cycle_id === null) &&
         before.work.execution.status === 'active' &&
         before.work.lease?.thread_id === input.nativeSessionHandle &&
         !before.work.execution.assignment_attempts.some(
@@ -3910,7 +3913,7 @@ export class HostStateStore {
       forward_operation_id: input.forwardOperationId,
       parent_manifest_digest: input.parentManifestDigest,
       successor_manifest_digest: input.successorManifestDigest,
-      ...(input.synthesisCorrection
+      ...(input.focusedFailureCorrection ? {owner_correction_pointer:input.focusedFailureCorrection.ownerCorrectionPointer} : input.synthesisCorrection
         ? {
             owner_correction_pointer: input.synthesisCorrection.ownerCorrectionPointer,
             synthesis_correction_digest: input.synthesisCorrection.correctionDigest,
@@ -3969,7 +3972,7 @@ export class HostStateStore {
             canonicalJsonDigest(JSON.parse(journalRow.payload)) === journalRow.digest,
           'runtime-code rebind journal CAS changed',
         );
-        const journal = JSON.parse(journalRow!.payload) as {
+        const journal = JSON.parse(journalRow!.payload) as MastraSessionLedgerState & {
           run_id: string;
           items: readonly {
             request: { action_id: string; config_digest: string; scope_digest: string };
@@ -3980,7 +3983,13 @@ export class HostStateStore {
             host_reservation?: unknown;
           }[];
         };
-        const item = journal.items.find((entry) => entry.request.action_id === input.actionId);
+        const item = [...journal.items,...journal.completed.flatMap(wave=>wave.items)].find((entry) => entry.request.action_id === input.actionId);
+        if(focused){
+          requireState(focusedConfig && work.lifecycle.phase==='VERIFY' && work.execution.assignment_attempts.every(attempt=>['completed','no_effect'].includes(attempt.status)),'VERIFY rebind has unresolved Host effects');
+          const findings=selectCorrectiveEvidence(journal,focusedConfig.workflows[work.binding.workflow_id]!);
+          requireState(findings.failed.some(entry=>entry.request.action_id===input.actionId&&entry.issue_id===input.issueId),'VERIFY rebind requires exact accepted negative report');
+          validateWorkSessionBinding(work,journal,this.#repositoryRoot);
+        }
         const dispatch = input.synthesisCorrection
           ? null
           : (this.#database
@@ -4029,16 +4038,13 @@ export class HostStateStore {
         requireState(
           journal.run_id === work.execution.run_id &&
             item !== undefined &&
-            (input.synthesisCorrection
+            (focused ? item?.issue_id===input.issueId && item.observation?.status==='reported_failed' : input.synthesisCorrection
               ? item?.issue_id === null && correctionValid
               : item?.issue_id === input.issueId) &&
-            item.observation === null &&
-            !item.research_activation &&
-            !item.research_normalization &&
-            !item.host_reservation &&
+            (focused || (item.observation === null && !item.research_activation && !item.research_normalization && !item.host_reservation)) &&
             item.request.config_digest === work.binding.config_digest &&
             item.request.scope_digest === work.binding.work_source_revision &&
-            (input.synthesisCorrection ||
+            (focused || input.synthesisCorrection ||
               (dispatch &&
                 canonicalJsonDigest(dispatchValue) === dispatch.digest &&
                 dispatchValue &&
@@ -4790,6 +4796,82 @@ export class HostStateStore {
       })
       .immediate();
   }
+  /** Capture a stopped SOURCE invocation; failed work is terminal, never accepted. Releases no other owner and grants no rights. */
+  captureStoppedSourceObservation(input: {
+    identity: WorkIdentity; attempt: number; expectedWork: StateVersion; expectedLedger: StateVersion;
+    expectedJournal: StateVersion; nativeSessionHandle: string;
+    observation: MastraSessionLedgerState['items'][number]['observation'];
+    terminalEvidence: { schema: 'StoppedSourceTerminalEvidence/v1'; native_actor: string; observation_ref: string; owner_decision_ref: string; terminal: 'partial_stopped'; };
+    candidateSnapshot: { schema: 'UnverifiedSourceSnapshot/v1'; entries: {path:string;sha256:string;size:number}[]; };
+    verifyCurrent: () => void; fault?: () => void;
+  }): HostStateSnapshot {
+    requireState(!this.#database.inTransaction,'nested stopped-source capture forbidden');
+    const {verifyCurrent: _verify, fault: _fault, ...boundedRequest} = input; const request = snapshot(boundedRequest);
+    requireState(input.attempt>0 && Number.isSafeInteger(input.attempt) && typeof input.verifyCurrent==='function','stopped-source capture input invalid');
+    requireState(input.terminalEvidence?.schema==='StoppedSourceTerminalEvidence/v1' && input.terminalEvidence.terminal==='partial_stopped' &&
+      [input.terminalEvidence.native_actor,input.terminalEvidence.observation_ref,input.terminalEvidence.owner_decision_ref].every(value=>typeof value==='string'&&value.trim().length>0), 'actual attributable stopped-source terminal evidence required');
+    const observation=input.observation;
+    requireState(observation?.schema==='VidaSessionObservation/v1' && observation.status==='reported_failed' && observation.host_attempt_id &&
+      observation.output_digest===canonicalJsonDigest(observation.summary) && Array.isArray(observation.changed_paths) &&
+      observation.evidence_refs.includes(input.terminalEvidence.observation_ref),'stopped-source partial observation required');
+    requireState(input.candidateSnapshot?.schema==='UnverifiedSourceSnapshot/v1' && Array.isArray(input.candidateSnapshot.entries),'unverified candidate inventory required');
+    const requestDigest=canonicalJsonDigest(request);
+    return this.#database.transaction(()=>{
+    this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_stopped_source_capture (workspace_id TEXT,work_id TEXT,attempt INTEGER,action_id TEXT,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt,action_id))');
+      this.#assertReconciliationWritesAllowed();
+      const existing=this.#database.query('SELECT payload,digest FROM agent_host_stopped_source_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?').get(this.#workspaceId,input.identity.work_id,input.attempt,observation.action_id) as {payload:string;digest:string}|null;
+      if(existing){
+        const record=JSON.parse(existing.payload);requireState(canonicalJsonDigest(record)===existing.digest && record.request_digest===requestDigest,'stopped-source capture retry differs');
+        input.verifyCurrent();const current=this.#read(input.identity);
+        requireState(current.work?.lease===null && current.work.execution.status==='suspended' && sameJson(current.workVersion,record.work_version),'stopped-source capture retry follows dependent work write');
+        const journal=this.#database.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(this.#workspaceId,input.identity.work_id,input.attempt) as {revision:number;payload:string;digest:string}|null;
+        requireState(journal && sameJson({revision:journal.revision,digest:journal.digest},record.captured_journal_version) && canonicalJsonDigest(JSON.parse(journal.payload))===journal.digest,'stopped-source capture retry follows journal change');
+        requireState(current.ledger && sameJson(current.ledger.tickets.find(entry=>entry.ticket_id===record.released_ticket.ticket_id),record.released_ticket) && sameJson(current.ledger.claims.filter(entry=>entry.ticket_id===record.released_ticket.ticket_id),record.released_claims) && sameJson(current.ledger.operations.find(entry=>entry.operation_id===record.release_operation.operation_id),record.release_operation),'stopped-source capture retry released lineage changed');
+        const resources=record.released_ticket.exclusive_resources as readonly string[];
+        const oldClaims = new Set((record.original_ledger.claims as typeof current.ledger.claims).map(entry=>entry.claim_id));
+        requireState(!current.ledger.claims.some(entry=>entry.resources.some(resource=>resources.includes(resource)) && (entry.status==='active' || !oldClaims.has(entry.claim_id))),'stopped-source capture retry follows newer scope grant');
+        // Other disjoint work may advance shared coordination without reviving this old invocation.
+        return current;
+      }
+      const before=this.#read(input.identity),work=before.work,ledger=before.ledger;
+      matchesExpected(before.workVersion,input.expectedWork);matchesExpected(before.ledgerVersion,input.expectedLedger);
+      requireState(work&&ledger&&work.execution.status==='active'&&work.lease?.thread_id===input.nativeSessionHandle,'stopped-source original owner differs');
+      const lease=work.lease,ticket=ledger.tickets.find(entry=>entry.ticket_id===lease.ticket_id),claims=ledger.claims.filter(entry=>entry.ticket_id===lease.ticket_id&&entry.status==='active');
+      requireState(ticket?.status==='active'&&ticket.thread_id===lease.thread_id&&ticket.generation===lease.generation&&claims.length===1&&claims[0]!.generation===lease.generation&&claims[0]!.thread_id===lease.thread_id&&ticket.exclusive_resources.some(resource=>resource.startsWith('file:')),'stopped-source original rights differ');
+      const row=this.#database.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(this.#workspaceId,input.identity.work_id,input.attempt) as {revision:number;payload:string;digest:string}|null;
+      requireState(row&&row.revision===input.expectedJournal.revision&&row.digest===input.expectedJournal.digest,'stopped-source journal CAS differs');
+      const state=JSON.parse(row.payload) as MastraSessionLedgerState;
+      requireState(canonicalJsonDigest(state)===row.digest&&state.work_id===input.identity.work_id&&state.attempt===input.attempt&&state.run_id===work.execution.run_id,'stopped-source journal identity differs');
+      const item=state.items.find(entry=>entry.request.action_id===observation.action_id),reservation=item?.host_reservation;
+      requireState(item&&item.issue_id===observation.issue_id&&item.observation===null&&reservation&&sameJson(reservation.receipt.identity,input.identity)&&sameJson(reservation.receipt.attempt.lease,lease)&&reservation.receipt.attempt.attempt_id===observation.host_attempt_id,'stopped-source exact issued reservation required');
+      requireState(reservation.approvalAction==='source.write' && reservation.invocation.profile.mutation_scope==='repository_source' && reservation.invocation.profile.egress_policy==='none' &&
+        sameJson(reservation.invocation.workContext.binding,work.binding) && reservation.request.workItemId===work.binding.lifecycle_work_id && reservation.request.configDigest===work.binding.config_digest && reservation.request.workflowId===work.binding.workflow_id && reservation.request.teamId===work.binding.team_id && reservation.request.stageId===item.request.stage_id && reservation.request.assignmentIndex===item.request.assignment_index &&
+        reservation.receipt.attempt.request_digest===reservation.requestDigest && reservation.receipt.attempt.stage_id===item.request.stage_id && reservation.receipt.attempt.assignment_index===item.request.assignment_index &&
+        item.request.config_digest===work.binding.config_digest && item.request.scope_digest===state.source_scope?.digest && state.source_scope?.digest===work.binding.work_source_revision && input.terminalEvidence.native_actor===observation.agent_id,
+        'stopped-source protected original invocation binding differs');
+      requireState(state.items.every(entry=>entry===item||(entry.issue_id===null&&entry.observation===null&&!entry.host_reservation&&!entry.research_activation&&!entry.research_normalization)),'other issued outcome remains pending');
+      requireState(work.execution.assignment_attempts.every(entry=>entry.attempt_id===observation.host_attempt_id||['completed','no_effect'].includes(entry.status)),'another Host effect remains unresolved');
+      const original=state.source_scope!;
+      requireState(input.candidateSnapshot.entries.length===original.entries.length&&new Set(input.candidateSnapshot.entries.map(entry=>entry.path)).size===original.entries.length,'candidate inventory incomplete or duplicated');
+      const changes=input.candidateSnapshot.entries.filter(entry=>{const old=original.entries.find(source=>source.path===entry.path);requireState(old&&hashPattern.test(entry.sha256)&&Number.isSafeInteger(entry.size)&&entry.size>=0,'candidate inventory invalid');return old.sha256!==entry.sha256;}).map(entry=>entry.path).sort();
+      requireState(changes.every(value=>work.binding.implementation_paths.includes(value))&&sameJson(changes,[...observation.changed_paths!].sort()),'candidate change outside original scope or observation differs');
+      input.verifyCurrent();
+      const authorization=reservation.authorization;
+      requireState(authorization,'bound local source approval required');
+      const {stored,approval}=this.#storedWorkflowApproval(authorization,'commit_unknown');
+      requireState(approval.attempt_id===observation.host_attempt_id,'stopped-source approval attempt differs');
+      const receipt=this.#finishAttemptInTransaction(authorization.receipt,'completed',observation);
+      this.#governanceWrite('approval',canonicalJsonDigest(approval.binding),{...approval,status:'applied',terminal_at:new Date().toISOString()},stored);
+      const settled=this.#read(input.identity),now=new Date().toISOString();
+      const nextJournal={...state,items:state.items.map(entry=>entry===item?{...entry,observation}:entry)};
+      const nextLedger={...ledger,revision:ledger.revision+1,tickets:ledger.tickets.map(entry=>entry.ticket_id===ticket.ticket_id?{...entry,status:'released' as const,active_resources:[],blocked_resources:[],expires_at:null}:entry),claims:ledger.claims.map(entry=>entry.ticket_id===ticket.ticket_id&&entry.status==='active'?{...entry,status:'released' as const,renewed_at:now}:entry),operations:[...ledger.operations,{schema:'CoordinationOperation/v1' as const,operation_id:'stopped-source-release-'+observation.action_id,kind:'release' as const,ticket_id:ticket.ticket_id,work_id:ticket.work_id,thread_id:ticket.thread_id,source_revision:ticket.source_revision,resources:[...ticket.exclusive_resources],from_ledger_revision:ledger.revision,to_ledger_revision:ledger.revision+1,decided_by:input.nativeSessionHandle,decision_pointer:input.terminalEvidence.owner_decision_ref,created_at:now}]};
+      const after=this.#commitHostState({expectedWork:settled.workVersion,expectedLedger:before.ledgerVersion,expectedMaintenanceGeneration:before.maintenanceGeneration,expectedSessionJournal:{attempt:input.attempt,version:input.expectedJournal},nextWork:{...settled.work!,revision:settled.work!.revision+1,lifecycle:{...settled.work!.lifecycle,revision:settled.work!.revision+1},lease:null,execution:{...settled.work!.execution,status:'suspended'}},nextLedger},{actionId:observation.action_id,next:nextJournal,verifyCurrent:input.verifyCurrent,stoppedSource:true},true);
+      const record={schema:'StoppedSourceCaptureReceipt/v1',request_digest:requestDigest,request,original_work:before.work,original_journal:{version:input.expectedJournal,state},original_ledger:ledger,original_approval:approval,candidate_snapshot:input.candidateSnapshot,terminal_receipt:receipt,captured_journal_version:{revision:input.expectedJournal.revision+1,digest:canonicalJsonDigest(nextJournal)},released_ticket:after.ledger!.tickets.find(entry=>entry.ticket_id===ticket.ticket_id),released_claims:after.ledger!.claims.filter(entry=>entry.ticket_id===ticket.ticket_id),release_operation:after.ledger!.operations.find(entry=>entry.operation_id==='stopped-source-release-'+observation.action_id),work_version:after.workVersion,ledger_version:after.ledgerVersion,canonical_acceptance:false,runtime_acceptance:false,rights_granted:false};
+      this.#database.query('INSERT INTO agent_host_stopped_source_capture VALUES(?,?,?,?,?,?)').run(this.#workspaceId,input.identity.work_id,input.attempt,observation.action_id,canonicalJson(record),canonicalJsonDigest(record));
+      input.fault?.();return after;
+    }).immediate();
+  }
+
   /** Extend one live owner's expiry without changing its fencing identity or issued journal payload. */
   renewActiveLocalLease(input: {
     identity: WorkIdentity;
@@ -5548,7 +5630,9 @@ export class HostStateStore {
       readonly actionId: string;
       readonly next: MastraSessionLedgerState;
       readonly verifyCurrent: () => void;
+      readonly stoppedSource?: boolean;
     },
+    internalTransaction = false,
   ): HostStateSnapshot {
     const { documentationContext, expectedSessionJournal, ...stateInput } = input;
     const data = snapshot(stateInput);
@@ -5563,9 +5647,8 @@ export class HostStateStore {
       'foreign workspace state',
     );
     validatePair(work, ledger);
-    requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
-    return this.#database
-      .transaction(() => {
+    requireState(!this.#database.inTransaction || internalTransaction, 'nested host state transaction forbidden');
+    const commit = () => {
         const before = this.#read(workIdentity(work));
         this.#assertMaintenanceGeneration(data.expectedMaintenanceGeneration);
         matchesExpected(before.workVersion, data.expectedWork);
@@ -5601,7 +5684,7 @@ export class HostStateStore {
             );
             requireState(
               oldItem &&
-                nextItem?.observation?.status === 'reported_complete' &&
+                nextItem?.observation?.status === (terminalJournal.stoppedSource ? 'reported_failed' : 'reported_complete') &&
                 oldItem.host_reservation &&
                 oldItem.issue_id === nextItem.observation.issue_id &&
                 nextItem.observation.host_attempt_id === completed?.attempt_id &&
@@ -5609,7 +5692,7 @@ export class HostStateStore {
                 completed.result_digest === canonicalJsonDigest(nextItem.observation) &&
                 sameJson(terminalJournal.next, {
                   ...state,
-                  source_scope: terminalJournal.next.source_scope,
+                  source_scope: terminalJournal.stoppedSource ? state.source_scope : terminalJournal.next.source_scope,
                   items: state.items.map((item) =>
                     item.request.action_id === terminalJournal.actionId
                       ? { ...item, observation: nextItem.observation }
@@ -5683,8 +5766,8 @@ export class HostStateStore {
           requireState(changed.changes === 1, 'terminal writer journal compare-and-swap conflict');
         }
         return this.#read(workIdentity(work));
-      })
-      .immediate();
+      };
+    return internalTransaction ? commit() : this.#database.transaction(commit).immediate();
   }
 }
 

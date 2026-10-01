@@ -27,6 +27,10 @@ const entryArguments = (root) => [
   path.join(root, 'bin/development-controller.mjs'),
 ];
 const record = (value) => JSON.stringify(value) + '\n';
+function stageMarker(stage,event,started) {
+  if(process.env.VIDA_CONTROLLER_DIAGNOSTICS==='true') process.stderr.write(record({schema:'DevelopmentControllerStage/v1',stage,event,elapsed_ms:Date.now()-started}));
+}
+
 const commands = new Set(['run', 'scope', 'init', 'documentation-clear', 'reconcile-artifacts']);
 function canonicalDirectory(value) {
   if (!path.isAbsolute(value ?? '') || path.resolve(value) !== value || realpathSync(value) !== value)
@@ -219,8 +223,12 @@ export async function prepareDevelopmentController({ target, controllerRoot }) {
   writeFileSync(path.join(root, 'bun.lock'), lockBytes);
   const engine = path.join(controllerRoot, process.platform === 'win32' ? 'bun.exe' : 'bun');
   copyFileSync(executable, engine);
+  const installStarted=Date.now();stageMarker('install','start',installStarted);
   invoke(engine, root, ['install', '--frozen-lockfile', '--ignore-scripts', '--production', '--backend=copy']);
+  stageMarker('install','end',installStarted);
   if (!readPortableLock(root).equals(lockBytes)) throw new Error('Frozen controller lock changed during installation.');
+  const snapshotStarted=Date.now();stageMarker('snapshot','start',snapshotStarted);
+  const packageBinding=snapshot(root);stageMarker('snapshot','end',snapshotStarted);
   const state = {
     schema: 'VidaDevelopmentController/v1',
     controller_root: controllerRoot,
@@ -232,7 +240,7 @@ export async function prepareDevelopmentController({ target, controllerRoot }) {
     package_root: root,
     engine,
     engine_sha256: hash(readFileSync(engine)),
-    package_binding: snapshot(root),
+    package_binding: packageBinding,
     elapsed_ms: Date.now() - started,
   };
   save(path.join(controllerRoot, 'controller.json'), state);
@@ -288,7 +296,7 @@ export async function verifyDevelopmentController({ controllerRoot }) {
     state.package_root,
     [path.join(state.package_root, 'tooling/development-controller-qualification.mjs')],
     controllerRoot,
-    { VIDA_CONTROLLER_QUALIFICATION_TARGET: state.target },
+    { VIDA_CONTROLLER_QUALIFICATION_TARGET: state.target, VIDA_CONTROLLER_QUALIFICATION_BINDING: state.package_binding.digest },
   );
   const qualification = JSON.parse(output.trim().split(/\r?\n/).at(-1));
   if (
@@ -358,7 +366,7 @@ async function main(args) {
     inspect: inspectDevelopmentController,
     verify: verifyDevelopmentController,
   }[action](input);
-  process.stdout.write(record(result));
+  process.stdout.write(record({schema:result.schema,status:result.status,controller_root:result.controller_root,target:result.target,next_action:result.status==='prepared'?'verify':'exec',qualification:result.qualification?{status:result.qualification.status,checks:result.qualification.checks}:undefined}));
 }
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   if (typeof Bun === 'undefined')

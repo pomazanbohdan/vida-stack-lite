@@ -56,10 +56,20 @@ slot; correction generation is explicit authority, separate from ownership
 lease generation. Preserve completed attempts and failed observations. Require
 actual negative findings, attributable correction authorization, current scope
 and acceptance, a live exact-path lease, and terminal outcomes for every issued
-action. Framework resume mechanics cannot grant this authority. The current
-assignment contract lacks this generation; its implementation GAP requires the
-bundle-owned atomic artifact repair and recovery route before active artifacts
-change. Runtime readers use only the repaired strict current-v1 contract.
+action. Framework resume mechanics cannot grant this authority. The strict current assignment contract binds this generation; active older
+artifacts require the bundle-owned atomic artifact repair and recovery route
+before reader adoption. Runtime readers use only the repaired strict current-v1 contract.
+
+Relevant settlement references: [OpenAI Sessions](https://openai.github.io/openai-agents-python/sessions/)
+separates retained conversation state from new execution; [Anthropic tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
+describes explicit tool request/result boundaries; [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence)
+and [Microsoft checkpoints](https://learn.microsoft.com/en-us/agent-framework/workflows/checkpoints)
+support resumable persisted execution; [Temporal activities](https://docs.temporal.io/activities)
+separates activity attempts and durable workflow outcome. These are mechanics
+analogies, not authority to settle local effects or grant permissions. The local
+Host owns exact settlement, resource release and history. The chosen .2 repair
+reuses existing operations; a public batch-settlement command is a subsequent
+optimization, outside this release.
 
 Child/disjoint contours retain the original human request thread and pointer.
 Generated intake or WORK filenames are operational identities; changing them
