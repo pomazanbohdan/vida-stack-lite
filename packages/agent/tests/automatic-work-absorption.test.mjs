@@ -15,12 +15,18 @@ import {
   inspectHostWorkspaceDatabase,
 } from '../src/host-state.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { admitLocalSessionWork } from '../src/orchestration/local-work-admission.ts';
+import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
 import { runWorkStateRepair } from '../bin/repair-work-state.mjs';
 import {MastraSessionLedger} from '../src/orchestration/persistent-session-handoff.ts';
+import {parse as parseYaml, stringify as stringifyYaml} from 'yaml';
+import {compileDevelopmentWorkflow} from '../src/orchestration/workflow-plan.ts';
+import {assertAdmittedRuntimeCodeCurrent} from '../src/orchestration/admitted-session-execution.ts';
+import {runtimePackageCodePaths} from '../src/config/runtime-config.ts';
+import {runtimeConfigDigest} from '../src/config/runtime-config.ts';
+import {run} from '../bin/run.mjs';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-function fixture() {
+function fixture(sourceWriter=false,publicStore=false) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-absorption-'));
   writeFileSync(
     path.join(root, 'agent-runtime.config.v1.yaml'),
@@ -33,17 +39,18 @@ function fixture() {
   writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Test fixture source map');
   mkdirSync(path.join(root, 'docs', 'agent-instructions'), { recursive: true });
   writeFileSync(path.join(root, 'docs', 'agent-instructions', 'documentation-policy.v1.json'), '{}');
-  const config = loadRuntimeConfig(root),
-    database = openHostStateDatabase(path.join(root, 'fixture.sqlite')),
-    store = new HostStateStore(database, 'a'.repeat(64)),
+  const config = loadRuntimeConfig(root);
+  if(publicStore) mkdirSync(path.join(root,config.control.work_root),{recursive:true});
+  const database = openHostStateDatabase(publicStore ? path.join(root,config.control.work_root,'session-handoff.v1.sqlite') : path.join(root, 'fixture.sqlite')),
+    store = new HostStateStore(database, publicStore ? deriveWorkspaceId(config.repository.repository_id,root) : 'a'.repeat(64)),
     source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
   database.exec(
     'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
   );
   const selection = {
     team: 'default-development',
-    kind: 'research',
-    intent: 'information_research',
+    kind: sourceWriter ? 'feature' : 'research',
+    intent: sourceWriter ? 'implementation_change' : 'information_research',
     project: 'sample',
     risk_flags: [],
     labels: [],
@@ -93,8 +100,8 @@ function fixture() {
       workItem: {
         schema: 'WorkItem/v1',
         id,
-        canonical_kind: 'research',
-        intent: 'information_research',
+        canonical_kind: selection.kind,
+        intent: selection.intent,
         project_id: 'sample',
         title: 'Fixture ' + id,
         description: 'Unfinished acceptance',
@@ -141,6 +148,50 @@ function fixture() {
     },
   };
 }
+
+test('admission normalizes a caller runtime subset into one immutable canonical intake without changing raw input', () => {
+  const f=fixture();
+  try {
+    const input=f.prepare('canonical','user:canonical');
+    input.intakePath='.agent/work/canonical/raw-intake.json';
+    const raw=JSON.stringify({schema:'VidaLocalSessionIntake/v1',work_item:input.workItem,native_session_handle:input.nativeSessionHandle,
+      scope_path:input.scopePath,acceptance_path:input.acceptancePath,runtime_code_paths:input.runtimeCodePaths,
+      route:input.route,risk:input.risk,change_kind:input.changeKind});
+    writeFileSync(path.join(f.root,input.intakePath),raw);
+    const result=f.admit(input),reference=result.host.work.artifacts.find(artifact=>artifact.artifact_id==='local-session-intake');
+    expect(reference.path).not.toBe(input.intakePath);
+    const normalized=JSON.parse(readFileSync(path.join(f.root,reference.path),'utf8'));
+    expect(normalized.runtime_code_paths).toEqual(runtimePackageCodePaths(f.config.runtime.bundle));
+    expect(normalized.runtime_code_paths).toContain('vida-agent/src/runtime-kernel.ts');
+    expect(readFileSync(path.join(f.root,input.intakePath),'utf8')).toBe(raw);
+    const work=result.host.work,identity={repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:'canonical'};
+    expect(assertAdmittedRuntimeCodeCurrent(f.root,f.store,identity).native_session_handle).toBe(input.nativeSessionHandle);
+    writeFileSync(path.join(f.root,input.intakePath),JSON.stringify({...JSON.parse(raw),runtime_code_paths:['vida-agent/bin/scope.mjs']}));
+    expect(assertAdmittedRuntimeCodeCurrent(f.root,f.store,identity).native_session_handle).toBe(input.nativeSessionHandle);
+    writeFileSync(path.join(f.root,reference.path),raw);
+    expect(()=>assertAdmittedRuntimeCodeCurrent(f.root,f.store,identity)).toThrow(/intake changed/);
+  } finally {f.close();}
+});
+
+test('effective artifact producers reject risk omission and unsupported tester or delivery cardinality', () => {
+  const f=fixture(),file=path.join(f.root,'agent-runtime.config.v1.yaml'),original=readFileSync(file,'utf8');
+  try {
+    for(const scenario of ['filtered-tester','multiple-testers','multiple-deliveries']) {
+      const yaml=parseYaml(original),stages=yaml.workflows.implementation_change.stages;
+      const stage=stages.find(stage=>stage.kind===(scenario==='multiple-deliveries'?'deliver':'test'));
+      if(scenario==='filtered-tester') stage.assignments[0].risk_flags=['security'];
+      else stage.assignments.push({...stage.assignments[0]});
+      writeFileSync(file,stringifyYaml(yaml));
+      expect(()=>compileDevelopmentWorkflow(loadRuntimeConfig(f.root),'default-development','implementation_change',[])).toThrow();
+    }
+    const yaml=parseYaml(original),research=yaml.workflows.implementation_change.stages[0];
+    research.assignments.unshift({...research.assignments[0],risk_flags:['security']});
+    writeFileSync(file,stringifyYaml(yaml));
+    const valid=compileDevelopmentWorkflow(loadRuntimeConfig(f.root),'default-development','implementation_change',[]);
+    expect(valid.waves.flat().find(stage=>stage.kind==='test').assignments.filter(item=>item.role==='tester')).toHaveLength(1);
+    expect(valid.waves.flat().find(stage=>stage.kind==='deliver').assignments.filter(item=>item.role==='delivery-agent')).toHaveLength(1);
+  } finally {f.close();}
+});
 
 test('workspace projection bounds individual rows and includes its shared ledger only once', () => {
   const f=fixture();
@@ -199,6 +250,128 @@ test('expired real execution-only admission rebinds only its owned execution res
     } finally {Date.now=originalClock;}
   } finally {f.close();}
 });
+
+test('public report retrieves an exact durable observation before stale CAS and source-delta checks', async () => {
+  const f=fixture(false,true);
+  try {
+    const input=f.prepare('ack','user:ack');input.intakePath='.agent/work/ack/raw-intake.json';
+    writeFileSync(path.join(f.root,input.intakePath),JSON.stringify({schema:'VidaLocalSessionIntake/v1',work_item:input.workItem,native_session_handle:input.nativeSessionHandle,
+      scope_path:input.scopePath,acceptance_path:input.acceptancePath,runtime_code_paths:input.runtimeCodePaths,route:input.route,risk:input.risk,change_kind:input.changeKind}));
+    const initial=f.admit(input),work=initial.host.work;
+    writeFileSync(path.join(f.root,'.agent','runtime-initialization.v1.json'),JSON.stringify({schema:'RuntimeInitialization/v1',version:1,
+      repository_id:f.config.repository.repository_id,project_ids:['sample'],integrations_digest:canonicalJsonDigest(f.config.integrations),workspace_id:f.store.workspaceId,
+      workspace_binding_status:'pending',bundle:f.config.runtime.bundle,config_digest:runtimeConfigDigest(f.config),
+      schema_sha256:createHash('sha256').update(readFileSync(path.join(bundle,'schemas/runtime-initialization.v1.schema.json'))).digest('hex'),templates:[],created_at:new Date().toISOString()}));
+    f.database.query('DELETE FROM agent_host_mastra_session_ledger WHERE work_id=?').run('ack');
+    const ledger=new MastraSessionLedger(f.database,f.store.workspaceId,f.config,f.root,f.store);
+    const request={schema:'VidaSessionRequest/v1',run_id:work.execution.run_id,workflow_id:work.binding.workflow_id,wave_index:0,action_id:'2'.repeat(64),assignment_index:0,
+      stage_id:'research_parallel',role:'facts-researcher',config_digest:work.binding.config_digest,scope_digest:work.binding.work_source_revision,bindings_manifest_ref:'3'.repeat(64)};
+    let journal=ledger.sync('ack',1,work.execution.run_id,'research_parallel',[request],initial.source);
+    journal=ledger.issueWave('ack',1,journal.version);
+    const summary='Observed readonly fixture result',observation={schema:'VidaSessionObservation/v1',action_id:request.action_id,issue_id:journal.state.items[0].issue_id,
+      agent_id:'fixture-reader',tool_call_ref:'fixture-ack',status:'reported_complete',summary,output_digest:canonicalJsonDigest(summary),evidence_refs:['fixture:observed-result']};
+    const recorded=ledger.report('ack',1,journal.version,observation,initial.source),report=path.join(f.root,'report.json');
+    writeFileSync(report,JSON.stringify(observation));writeFileSync(path.join(f.root,'AGENT.sidecar.md'),'changed source after accepted report');
+    const args=['--project-root',f.root,'--repository',f.config.repository.repository_id,'--project','sample','--work-path','AGENT.sidecar.md','--work-id','ack','--attempt','1',
+      '--scope-digest',initial.source.digest,'--team','default-development','--kind','research','--intent','information_research','--workflow','information_research_light',
+      '--report',report,'--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest];
+    const before=f.store.readHostStateSnapshot({repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:'ack'});
+    const result=await run(args);
+    expect(result.status).toBe('report_retrieved');expect(result.state_version).toEqual(recorded.version);
+    expect(result.issued_actions).toEqual([]);expect(ledger.resume('ack',1)).toEqual(recorded);
+    expect(f.store.readHostStateSnapshot({repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:'ack'})).toEqual(before);
+    expect(f.database.query("SELECT name FROM sqlite_master WHERE name='mastra_workflow_snapshot'").get()).toBeNull();
+    writeFileSync(report,JSON.stringify({...observation,summary:'changed retry',output_digest:canonicalJsonDigest('changed retry')}));
+    await expect(run(args)).rejects.toThrow(/retry differs/);
+  } finally {f.close();}
+});
+
+test.each(['new-report','durable-expired','durable-drift'])('accepted completed source report atomically releases file ownership for readonly assurance and exact retry: %s', (scenario) => {
+  const f=fixture(true);
+  try {
+    const initial=f.admit(f.prepare('writer','user:writer')),identity={repository_id:initial.host.work.binding.repository_id,project_ids:initial.host.work.binding.project_ids,
+      integrations_digest:initial.host.work.binding.integrations_digest,work_id:'writer'};
+    const active=acquireLocalSourceWriterLease({repositoryRoot:f.root,config:f.config,store:f.store,identity,nativeSessionHandle:'session',
+      expectedWork:initial.host.workVersion,expectedLedger:initial.host.ledgerVersion,stageId:'develop_change',assignmentIndex:0});
+    const claimed=f.store.claimWorkflowAttempt({identity,expectedWork:active.workVersion,expectedLedger:active.ledgerVersion,
+      stageId:'develop_change',assignmentIndex:0,requestDigest:'1'.repeat(64),lease:active.work.lease});
+    f.database.query('DELETE FROM agent_host_mastra_session_ledger WHERE work_id=?').run('writer');
+    const ledger=new MastraSessionLedger(f.database,f.store.workspaceId,f.config,f.root,f.store);
+    const request={schema:'VidaSessionRequest/v1',run_id:initial.host.work.execution.run_id,step_id:'develop_change',action_id:'2'.repeat(64),
+      workflow_id:'implementation_change',wave_index:0,assignment_index:0,role:'developer-orchestrator',bindings_manifest_ref:'3'.repeat(64),
+      stage_id:'develop_change',scope_digest:initial.source.digest,config_digest:active.work.binding.config_digest};
+    let journal=ledger.sync('writer',1,request.run_id,request.step_id,[request],initial.source);
+    journal=ledger.issueWave('writer',1,journal.version,{[request.action_id]:{schema:'WorkflowSessionReservation/v1',receipt:claimed,
+      request:{workItemId:'writer',stageId:request.stage_id,assignmentIndex:0}}});
+    const summary='Observed completed fixture writer';
+    const observation={schema:'VidaSessionObservation/v1',action_id:request.action_id,issue_id:journal.state.items[0].issue_id,
+      host_attempt_id:claimed.attempt.attempt_id,agent_id:'fixture-writer',tool_call_ref:'fixture-completed-source-call',status:'reported_complete',
+      summary,output_digest:canonicalJsonDigest(summary),evidence_refs:['fixture:observed-source-completion'],changed_paths:[]};
+    const inflight=f.store.readHostStateSnapshot(identity);
+    expect(f.store.reconcileCompletedSourceOwnership({identity,nativeSessionHandle:'session',verifyCurrent(){}})).toEqual(inflight);
+    expect(()=>f.store.reconcileCompletedSourceOwnership({identity,nativeSessionHandle:'foreign-session',verifyCurrent(){}})).toThrow(/owner differs/);
+    f.store.completeWorkflowAttempt(claimed,observation);
+    const originalClock=Date.now;
+    if(scenario!=='new-report') {
+      const durable={...journal.state,items:journal.state.items.map(item=>({...item,observation}))};
+      f.database.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE work_id=?').run(journal.version.revision+1,canonicalJson(durable),canonicalJsonDigest(durable),'writer');
+      journal=ledger.resume('writer',1);
+      if(scenario==='durable-expired') Date.now=()=>Date.parse(active.ledger.tickets.find(ticket=>ticket.ticket_id===active.work.lease.ticket_id).expires_at)+1;
+      if(scenario==='durable-drift') writeFileSync(path.join(f.root,'AGENT.sidecar.md'),'external source edit after durable success');
+    }
+    const publish=()=>scenario==='new-report' ? ledger.report('writer',1,journal.version,observation,initial.source) :
+      (f.store.reconcileCompletedSourceOwnership({identity,nativeSessionHandle:'session',verifyCurrent(){}}),ledger.resume('writer',1));
+    try {
+    const before=f.store.readHostStateSnapshot(identity);
+    f.database.exec(`CREATE TRIGGER source_report_fault BEFORE UPDATE ON ${scenario==='new-report'?'agent_host_mastra_session_ledger':'agent_host_state'} BEGIN SELECT RAISE(ABORT,'source journal commit fault'); END`);
+    expect(publish).toThrow(/source journal commit fault/);
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+    expect(ledger.resume('writer',1)).toEqual(journal);
+    f.database.exec('DROP TRIGGER source_report_fault');
+    const recorded=publish(),after=f.store.readHostStateSnapshot(identity);
+    expect(after.ledger.claims.filter(claim=>claim.status==='active').flatMap(claim=>claim.resources)).toEqual(['execution:writer']);
+    expect(after.ledger.tickets.find(ticket=>ticket.ticket_id===active.work.lease.ticket_id).status).toBe('released');
+    expect(after.work.lifecycle.phase).toBe(before.work.lifecycle.phase);
+    expect(after.work.lifecycle.assurance).toEqual(before.work.lifecycle.assurance);
+    expect(after.work.artifacts).toEqual(before.work.artifacts);
+    expect(ledger.report('writer',1,journal.version,observation,initial.source)).toEqual(recorded);
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(after);
+    if(scenario!=='new-report') expect(recorded).toEqual(journal);
+    if(scenario==='durable-drift') expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root),initial.source.entries.map(entry=>entry.path)).digest).not.toBe(initial.source.digest);
+    else expect(acquireLocalSourceWriterLease({repositoryRoot:f.root,config:f.config,store:f.store,identity,nativeSessionHandle:'session',
+      expectedWork:after.workVersion,expectedLedger:after.ledgerVersion,stageId:'develop_change',assignmentIndex:0}).ledger.claims.filter(claim=>claim.status==='active').flatMap(claim=>claim.resources))
+      .toEqual(['execution:writer','file:AGENT.sidecar.md']);
+    } finally {Date.now=originalClock;}
+  } finally {f.close();}
+});
+
+test('ten successive source writers release file rights while their work and Runtime acceptance remain incomplete', () => {
+  const f=fixture(true);
+  try {
+    for(let index=0;index<10;index++) {
+      const id='writer-'+index,initial=f.admit(f.prepare(id,'user:request-'+index)),work=initial.host.work;
+      const identity={repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:id};
+      const active=acquireLocalSourceWriterLease({repositoryRoot:f.root,config:f.config,store:f.store,identity,nativeSessionHandle:'session',
+        expectedWork:initial.host.workVersion,expectedLedger:initial.host.ledgerVersion,stageId:'develop_change',assignmentIndex:0});
+      const claimed=f.store.claimWorkflowAttempt({identity,expectedWork:active.workVersion,expectedLedger:active.ledgerVersion,
+        stageId:'develop_change',assignmentIndex:0,requestDigest:'1'.repeat(64),lease:active.work.lease});
+      f.database.query('DELETE FROM agent_host_mastra_session_ledger WHERE work_id=?').run(id);
+      const ledger=new MastraSessionLedger(f.database,f.store.workspaceId,f.config,f.root,f.store),action=createHash('sha256').update(id).digest('hex');
+      const request={schema:'VidaSessionRequest/v1',run_id:work.execution.run_id,workflow_id:work.binding.workflow_id,wave_index:0,action_id:action,assignment_index:0,
+        stage_id:'develop_change',role:'developer-orchestrator',config_digest:work.binding.config_digest,scope_digest:work.binding.work_source_revision,bindings_manifest_ref:'3'.repeat(64)};
+      let journal=ledger.sync(id,1,work.execution.run_id,'develop_change',[request],initial.source);
+      journal=ledger.issueWave(id,1,journal.version,{[action]:{schema:'WorkflowSessionReservation/v1',receipt:claimed,request:{workItemId:id,stageId:request.stage_id,assignmentIndex:0}}});
+      const summary='Observed completed writer '+index,observation={schema:'VidaSessionObservation/v1',action_id:action,issue_id:journal.state.items[0].issue_id,
+        host_attempt_id:claimed.attempt.attempt_id,agent_id:'fixture-writer-'+index,tool_call_ref:'fixture-completed-source-'+index,status:'reported_complete',
+        summary,output_digest:canonicalJsonDigest(summary),evidence_refs:['fixture:observed-source-completion'],changed_paths:[]};
+      f.store.completeWorkflowAttempt(claimed,observation);ledger.report(id,1,journal.version,observation,initial.source);
+      const current=f.store.readHostStateSnapshot(identity);
+      expect(current.ledger.claims.filter(claim=>claim.status==='active').flatMap(claim=>claim.resources)).toEqual(['execution:'+id]);
+      expect(current.work.lifecycle.phase).toBe('INTAKE');expect(current.work.lifecycle.references.filter(reference=>['runtime_receipt','user_testing_receipt'].includes(reference.kind))).toEqual([]);
+    }
+    expect(f.store.readWorkspaceSnapshot().work.filter(row=>row.work.execution.status==='suspended')).toHaveLength(9);
+  } finally {f.close();}
+},20000);
 
 test('known failed source report persists while its host effect remains uncertain and fenced', () => {
   const f=fixture();

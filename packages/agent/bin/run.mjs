@@ -1520,7 +1520,7 @@ export async function run(args = process.argv.slice(2)) {
   assertNoActiveCutoverMaintenance(selector);
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
-  const { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess, selectWorkflow } =
+  const { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess, runtimePackageCodePaths, selectWorkflow } =
     await import('../src/config/runtime-config.ts');
   const { resolveProjectForRepositoryPath } = await import('../src/config/project-context.ts');
   const pin = readPin(bundleRoot);
@@ -1575,6 +1575,8 @@ export async function run(args = process.argv.slice(2)) {
     .digest('hex');
   if (initialization.schema_sha256 !== schemaSha)
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization schema is stale.');
+  const {assertRuntimePackageExports}=await import('../tooling/maintained-source-inventory.mjs');
+  assertRuntimePackageExports(runtimePackageAccess().repository_root);
   if (values.projects.some((id) => !config.projects.some((project) => project.project_id === id)))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The project context is not bound to the requested identity.');
   let pathProject;
@@ -2025,7 +2027,7 @@ export async function run(args = process.argv.slice(2)) {
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-    const { snapshotDeclaredSources } = await import('../src/orchestration/scoped-source-snapshot.ts');
+    const { snapshotDeclaredSources, snapshotRuntimePackageSources } = await import('../src/orchestration/scoped-source-snapshot.ts');
     const context = {
       work_id: values.work_id,
       attempt: Number(values.attempt),
@@ -2061,10 +2063,16 @@ export async function run(args = process.argv.slice(2)) {
       } catch(error) {ledger.close();throw error;}
     }
     const {loadProjectSetContext:loadAdmissionProjectContext}=await import('../src/config/project-context.ts');
-    const admissionProject=loadAdmissionProjectContext(values.project_root,config,config.repository.repository_id,values.projects);
-    try {ledger.hostState.readHostStateSnapshot({repository_id:admissionProject.repository_id,project_ids:admissionProject.project_ids,
-      integrations_digest:admissionProject.integrations_digest,work_id:context.work_id});} catch(error) {ledger.close();throw error;}
-    const admissionIntake=values.intake ? await readLocalSessionIntake(values.intake) : null;
+    let admissionProject;
+    try {admissionProject=loadAdmissionProjectContext(values.project_root,config,config.repository.repository_id,values.projects);}
+    catch(error) {ledger.close();throw error;}
+    let admissionHost;
+    const admissionIdentity={repository_id:admissionProject.repository_id,project_ids:admissionProject.project_ids,
+      integrations_digest:admissionProject.integrations_digest,work_id:context.work_id};
+    try {admissionHost=ledger.hostState.readHostStateSnapshot(admissionIdentity);} catch(error) {ledger.close();throw error;}
+    let admissionIntake;
+    try {admissionIntake=values.intake ? await readLocalSessionIntake(values.intake) : null;}
+    catch(error) {ledger.close();throw error;}
     if(admissionIntake) {
       if (admissionIntake.work_item.id !== context.work_id || admissionIntake.work_item.canonical_kind !== selection.kind ||
         admissionIntake.work_item.intent !== selection.intent || admissionIntake.work_item.project_id !== selection.project ||
@@ -2073,14 +2081,27 @@ export async function run(args = process.argv.slice(2)) {
         nativeSessionHandle:admissionIntake.native_session_handle,context,scopePath:admissionIntake.scope_path,acceptancePath:admissionIntake.acceptance_path});}
       catch(error) {ledger.close();throw error;}
     }
-    const bridge = await MastraSessionBridge.open({
+    if(admissionHost.work?.lease) {
+      try {
+        const {readAdmittedSessionIntake}=await import('../src/orchestration/admitted-session-execution.ts');
+        const canonicalIntake=readAdmittedSessionIntake(values.project_root,ledger.hostState,admissionIdentity);
+        const canonicalRef=admissionHost.work.artifacts.find(artifact=>artifact.artifact_id==='local-session-intake');
+        ledger.hostState.reconcileCompletedSourceOwnership({identity:admissionIdentity,nativeSessionHandle:canonicalIntake.native_session_handle,
+          verifyCurrent:()=>{
+            if(!canonicalRef || createHash('sha256').update(requireSafeRepositoryAccess(values.project_root).readBytes(canonicalRef.path,'historical terminal ownership intake')).digest('hex')!==canonicalRef.sha256)
+              fail('GAP-VIDA-RUN-CONTEXT-001','Completed source ownership intake binding changed.');
+          }});
+      } catch(error) {ledger.close();throw error;}
+    }
+    let bridge;
+    try {bridge = await MastraSessionBridge.open({
       repositoryRoot: values.project_root,
       config,
       selection,
       context,
       workflowId: values.workflow,
       workspaceId: initialization.workspace_id,
-    });
+    });} catch(error) {ledger.close();throw error;}
     const requireConfiguredContext = (request, allowedChangedPaths = []) => {
       const current = configuredContextForStage(
         values.project_root,

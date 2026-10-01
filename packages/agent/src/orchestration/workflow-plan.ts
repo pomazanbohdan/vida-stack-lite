@@ -72,22 +72,36 @@ export function compileDevelopmentWorkflow(
   workflow!.stages.forEach((stage) =>
     stage.assignments.forEach((assignment) => configuredProfileMatches(team!, teamId, workflowId, stage, assignment)),
   );
+  const waves = workflowWaves(workflow!).map((wave) =>
+    wave.map((stage) => ({
+      ...stage,
+      assignments: stage.assignments.filter(
+        (assignment) => assignmentMatchesRisk(stage, riskFlags) && assignmentMatchesRisk(assignment, riskFlags),
+      ),
+    })),
+  );
+  const effectiveStages = waves.flat();
+  for (const [artifact, role] of [['TestReceipt/v1', 'tester'], ['DeliveryInstruction/v1', 'delivery-agent']] as const) {
+    if (!workflow!.stages.some((stage) => stage.produces.includes(artifact) || stage.consumes.includes(artifact))) continue;
+    const producers = effectiveStages.filter((stage) => stage.produces.includes(artifact));
+    assert(
+      producers.length === 1 && producers[0]!.assignments.filter((assignment) => assignment.role === role).length === 1,
+      'workflow ' + workflowId + ' requires exactly one effective ' + role + ' producing ' + artifact + '; check risk filters and producer cardinality',
+    );
+  }
   return Object.freeze({
     schema: 'CompiledDevelopmentWorkflow/v1',
     team_id: teamId,
     workflow_id: workflowId,
     assurance_profile: workflow!.assurance_profile,
     waves: Object.freeze(
-      workflowWaves(workflow!).map((wave) =>
+      waves.map((wave) =>
         Object.freeze(
           wave.map((stage) =>
             Object.freeze({
               ...stage,
               assignments: Object.freeze(
-                stage.assignments.filter(
-                  (assignment) =>
-                    assignmentMatchesRisk(stage, riskFlags) && assignmentMatchesRisk(assignment, riskFlags),
-                ),
+                [...stage.assignments],
               ),
             }),
           ),

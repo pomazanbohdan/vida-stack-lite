@@ -71,6 +71,33 @@ current-v1 writer ticket; never rewrite immutable ticket authority. Actual exclu
 resources determine contention and handoff blocking. Tenant, project and
 BR/SR/AC navigation metadata do not create project-wide exclusion.
 
+Release source-file ownership after accepted terminal writer completion; hold no
+implementation files during read-only tests, reviews or user Runtime wait.
+A NEW terminal report validates current observed project-source snapshot before
+binding `source_scope`. Cleanup of ALREADY durable exact success instead binds
+its journal `reported_complete`, matching Host completed result and current
+issue/reservation/generation/CAS. That durable match permits own-file release
+even after prior lease expiry or permitted external-source drift. Neither expiry
+nor drift alone proves completion. Preserve history, results, phase and
+execution-only coordination; work remains incomplete and Runtime unaccepted.
+A new execution-only lease grants no Source-write authority.
+
+Perform release of own file rights and safe queued intents in one co-located
+journal/work/shared-ledger CAS transaction. Drift stales byte-bound proof under
+existing fresh-read/invalidation; do not keep a stale file lock solely for proof
+currentness. Corrections acquire fresh scope/FIFO and invalidate changed-byte
+proof only. Live/unobserved/started/uncertain/unknown/foreign/mismatched effects
+stay fenced pending existing explicit terminal/quiescence reconciliation; agent
+done, expiry and old Code packets cannot substitute.
+
+Use one reconciliation at report/intake/recovery/suspend/successor with exact
+retry/restart idempotency. The atomic report seam has initial Source test evidence;
+historical cleanup and expired/drift/sequential/FIFO/stale verification remain
+pending. Avoid nested ordinary CAS, new caller keys or schema fields. Native child
+grouping retains stable orchestrating Root and exact repository/projects/pointer
+boundaries; foreign sessions/projects stay outside absorption. Cooperative key
+equality is not physical isolation; consumer changes remain its owner's scope.
+
 The existing public continuation route may release an exact owner with one
 issued unknown configured read-only action, including an expired claim. Bind
 the original read-only rights, same thread/work/ticket/claim/generation and
@@ -305,6 +332,15 @@ decision and 3 for compact coordination. CRAP 4 is reserved for a cohesive
 critical invariant whose branch order matters, with negative and mutation
 evidence. The release gate is `CRAP < 5` for every maintained function; low
 CRAP never substitutes for security, migration or persistence counterexamples.
+
+An explicit human standing instruction scoped to a Source repository may satisfy
+its Git commit/push permission requirement. Apply that repository's Sidecar
+exception and release order; do not transfer it to a consumer project or infer
+Git authorization from Runtime acceptance. A failed package is no successful
+formation trigger. The orchestrating session performs authorized Git operations;
+the package release command remains outside Git. A changed HEAD binding needs
+current qualification from committed payload before seal, never manual integrity
+replay. This changes no generic assurance or Runtime acceptance gate.
 
 ## Delivery and cutover
 

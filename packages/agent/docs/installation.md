@@ -12,6 +12,19 @@ and installation. It records actual observations through the local assurance
 adapter; caller JSON establishes local consistency and does not authenticate
 review origin or user Runtime acceptance.
 
+For this Source repository, the standing instruction in
+[`AGENT.sidecar.md#source-package-git-policy`](../../../AGENT.sidecar.md#source-package-git-policy)
+authorizes the orchestrating session to commit and push after EACH successful
+package formation. Finish Source changes and candidate preparation/checks,
+pack ONE archive, commit the qualified Source payload and perform an ordinary
+non-force push, then obtain fresh blind reviews/reverse/CLEAR and install the
+exact sealed archive. A Git HEAD binding change requires qualification derived
+from the committed payload before sealing, not manual integrity-value replay.
+Failed packing retains its pending operation and is not this Git trigger.
+Exact retries preserve the same archive/operation and avoid duplicate effects.
+This Source-only instruction does not authorize consumer Git operations or
+replace Runtime acceptance. The package CLI itself still performs no commit/push.
+
 The first candidate is `0.1.0`. Each successful local publication advances the
 next candidate patch to `0.1.1`, `0.1.2`, and so on. Preparation settles the version
 before assurance. Failed checks, failed packing and retries retain the pending
@@ -28,7 +41,8 @@ npm run release:local -- --prepare
 # Run applicable current checks and join actual test evidence for the operation.
 npm run release:local -- --pack OPERATION
 npm run release:local -- --status OPERATION
-# Seal the returned archive, join three real reviews, reverse validation and CLEAR.
+# Source only: after successful pack, the session commits/pushes its qualified payload.
+# Join fresh real reviews, reverse validation and CLEAR; seal this exact archive.
 npm run release:local -- --operation OPERATION
 npm run release:local -- --status OPERATION
 ```

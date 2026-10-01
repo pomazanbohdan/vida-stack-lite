@@ -41,6 +41,8 @@
     "bin/repair-research-records.mjs",
     "bin/repair-work-state.mjs",
     "bin/documentation-clear.mjs",
+    "tooling/maintained-source-inventory.mjs",
+    "tooling/maintained-source-inventory.d.mts",
     "dist/src/index.d.ts",
     "dist/src/**/*.d.ts",
     "dist/src/documentation/clear.d.ts",

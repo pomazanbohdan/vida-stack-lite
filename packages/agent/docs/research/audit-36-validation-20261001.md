@@ -105,9 +105,9 @@ fix is not a PASS. Code/Static results never grant installed Runtime acceptance.
 | D06 | Fixed in Source: original configured assignment indexes survive filtering. | Current configuration/public permutations remain part of final qualification. |
 | D07 | Fixed in Source: graph-declared terminal outputs replace declaration position. | Verify terminal artifacts against the effective DAG on final inputs. |
 | D08 | Confirmed open package-owned executable inventory boundary. | Core writer must bind the actual package runtime inventory before first new admission; caller-selected subsets are insufficient. |
-| D09 | Partial initialization is safely diagnosed; missing integration-file recovery remains open. | Recover only owned missing outputs without overwriting existing owner files or declaring partial state ready. |
+| D09 | Source recovery fixed with independent focused Code/Static evidence. | Tests cover preserved project values, partial intent, refusals and idempotency; installed consumer/public-run acceptance remains pending. |
 | D10 | Own publication-temp cleanup remains open. | EIO/ENOSPC failures clean only their own bounded temp. Directory fsync is an attributable nonblocking limitation; no general power-loss claim. |
-| D11 | Confirmed open Unicode surrogate boundary. | Bounded head/tail context must retain complete supplementary characters at both boundaries. |
+| D11 | Source surrogate-boundary fix has independent focused Code/Static evidence. | Unicode boundary tests preserve supplementary characters; full candidate/installed qualification remains pending. |
 | D12 | Repeat-build performance debt, follow-up. | Measure comparable complete candidate duration with unchanged checks; no claimed optimization or weaker assurance. |
 | D13 | Confirmed open execution-resource recovery validator mismatch. | Accept only exact owned `execution:<work_id>` alongside validated file resources; reject foreign execution keys. |
 | D14 | Conditional required-surface GAP: answer/save selectors are unsupported by strict scope schema. | Preserve the requested surface; qualify functional repair before schema/artifact mutation. This is not normal mode-null workflow failure. |
@@ -136,6 +136,21 @@ counterexamples. The audit supplies no R01 finding.
 | R08 developer context | Further synthesis/diagnostic/prohibition/security propagation needs provenance-bound evidence; never fabricate missing classifications. |
 | R09 model/profile portability | Current approved profile limits are explicit; no demonstrated host unavailability or general runtime failure. |
 
+## Terminal writer ownership disposition
+
+Accepted architecture separates NEW report acceptance from ALREADY durable
+success cleanup. The new report validates current observed project source before
+binding `source_scope`. Cleanup matches existing durable `reported_complete`
+with Host completed result and exact current issue/reservation/generation/CAS;
+it releases only own file rights even after prior lease expiry or permitted
+source drift. Expiry/drift are not completion proof. Work/history remain incomplete
+and Runtime unaccepted; drift stales byte-bound proof, fresh correction needs
+scope/FIFO, and execution-only coordination grants no Source-write authority.
+Unknown/unobserved/started/uncertain/foreign/mismatched effects remain fenced.
+The atomic report seam has initial Source test evidence; historical reconciliation
+and expired/drift/sequential/FIFO/stale counterexamples remain pending. This is
+not an implementation-complete or final-assurance result.
+
 ## Static evidence and remaining qualification
 
 Bun 1.4.2 frozen focused lane: 20 tests, 269 assertions, 0 failures, 15.24 seconds.
@@ -144,6 +159,13 @@ mid-run and is diagnostic only. Identity-specific serial CLEAR test 10 took
 59.55 seconds; optimization is not done. Control-return target is under two
 seconds, separate from test duration; observed Windows command-tool minimum
 10.9 seconds remains an explicit exception/GAP.
+
+Independent Bun 1.4.2 package/partial-init QA: 14 tests/110 assertions in
+47.24 seconds; initialization 16 tests/132 assertions in 89.20 seconds, total
+30 tests/242 assertions and no failures. This validates D09/D11 Source changes
+and preserves project values, partial intent/refusals, idempotency and Unicode.
+It performed no build, public run, migration-helper execution, installation, Git
+or real consumer effect; no global PASS or current installed acceptance follows.
 
 Independent Luna finite Source QA passed automatic absorption ten tests/53
 assertions and focused host/run nine tests/82 assertions. These are bounded

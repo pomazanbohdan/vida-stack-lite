@@ -1,4 +1,5 @@
 import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity } from '../host-state.js';
+import {completedSourceJournalObservationMatches} from '../host-state.js';
 import type { DocumentationVerificationContext } from '../lifecycle/lifecycle-state.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
@@ -75,6 +76,9 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
     'admitted work or ledger is missing',
   );
   const work = host.work;
+  requireSuspension([...journal.state.items,...journal.state.completed.flatMap(wave=>wave.items)].every(item=>
+    !item.host_reservation || completedSourceJournalObservationMatches(work,item)),
+    'source observation is not an authoritative completed host result');
   requireSuspension(
     work.binding.repository_id === identity.repository_id &&
       canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&

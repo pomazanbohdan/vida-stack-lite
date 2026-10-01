@@ -14,6 +14,7 @@ duplicated here.
   `system-specification.md`, `acceptance.md`; absent files remain an explicit
   owner setup gap.
 - Repository identity, owners and commands: `AGENT.sidecar.md`.
+- Source-only standing package/Git authorization: `AGENT.sidecar.md#source-package-git-policy`.
 
 Relations: the agent specification documents the implementation and is verified
 by its package tests; the product map depends on the Sidecar source bindings.

@@ -77,7 +77,12 @@ test('bounded excerpts cut inward at both supplementary-character boundaries', a
   const tail = Math.floor((8192 - omission.length) / 2);
   const content = 'H'.repeat(head - 1) + '😀' + 'middle'.repeat(300) + '𝄞' + 'T'.repeat(tail - 1);
   await writeFile(path.join(root, 'long.md'), content);
-  const entry = buildConfiguredContext(root, config, { work_id: 'unicode-context', attempt: 1, source_ids: ['long-local'], skill_refs: [] }).entries[0];
+  const entry = buildConfiguredContext(root, config, {
+    work_id: 'unicode-context',
+    attempt: 1,
+    source_ids: ['long-local'],
+    skill_refs: [],
+  }).entries[0];
   expect(entry.content).toBe('H'.repeat(head - 1) + omission + 'T'.repeat(tail - 1));
   expect(entry.content.length).toBeLessThanOrEqual(8192);
   expect(entry.content.isWellFormed()).toBe(true);

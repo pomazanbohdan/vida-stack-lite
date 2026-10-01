@@ -92,6 +92,14 @@ review provenance. Local JSON grants neither cryptographic tool-origin proof
 nor physical filesystem isolation. No caller skip or approval boolean bypasses
 the required joins.
 
+A project owner's explicit scoped standing Git instruction may authorize the
+orchestrating session's commit/push between successful pack and final assurance;
+this does not make the package CLI a Git caller or grant Runtime acceptance.
+For this Source repository, `AGENT.sidecar.md#source-package-git-policy` owns the
+required ordinary commit/push order. Failed formation does not trigger it. A
+changed HEAD binding requires current qualification from the committed payload
+before sealing the exact archive. Consumer Git authority is separate.
+
 One admitted maintainer process owns candidate allocation and worker launch.
 Packing and installation return control asynchronously and expose actual
 operation/PID status and stage duration. Installation uses exactly the immutable
@@ -132,6 +140,45 @@ navigation keys retain their identity and trace meaning but do not create a mute
 tickets do not enlarge a current handoff component. Explicit shared resources
 preserve coherent ownership and FIFO; metadata equality alone cannot force
 unrelated work to wait for another work item's delivery or Runtime acceptance.
+
+Accepted terminal source completion must release file ownership before read-only
+verification, reviews or user Runtime waiting. Two boundaries remain distinct.
+A NEW terminal report validates the observed current project-source snapshot
+before binding its `source_scope` and accepting the observation. Cleanup of an
+ALREADY durable exact `reported_complete` journal success uses its matching Host
+attempt `completed` result and exact current issue/reservation/generation/CAS.
+That matched durable terminal success permits release of only its own file claim,
+even if its prior lease expired or a permitted external edit later changed bytes.
+Expiry and drift are not completion proof; the matched durable success is.
+
+One co-located journal/work/shared-ledger CAS transaction releases that work's
+file ticket/claim and safe unissued queued intents, retaining same-work
+execution-only coordination, phase, results and assurance history. Work remains
+incomplete and release grants no Runtime acceptance. New execution-only lease
+coordination grants no Source-write authority. Permitted drift stales byte-bound
+proof through existing fresh-read/invalidation boundaries; it must not retain a
+stale file lock solely to make prior proof appear current. A correction uses
+fresh scope and FIFO file ownership and invalidates only changed-byte evidence.
+
+Live, unobserved, issued/unknown, Host started/uncertain, foreign or mismatched
+outcomes remain fenced pending existing explicit terminal/quiescence
+reconciliation. Agent done, expiry or prior Code packets cannot establish release
+safety. Read-only tests, reviews and Runtime waiting retain no file-write rights.
+
+Use common ownership reconciliation at report, intake, recovery, suspension and
+successor boundaries; exact retry/restart is idempotent. The dedicated HostState
+transaction at the Mastra report seam has initial Source test evidence, but
+historical reconciliation, expired/drift, sequential/FIFO/stale cases and final
+qualification remain pending. Avoid nested ordinary CAS, additional caller keys
+or artifact-schema fields. No implementation-complete claim follows from the
+initial atomic seam test.
+
+Request-pointer equality groups native children under their stable orchestrating
+Root identity, preserving the exact repository/project set and same-request
+parallel contours. It cannot absorb a foreign session or project. Logical file
+resource equality and cooperative ownership do not provide physical filesystem
+isolation. Source work here does not mutate a consumer repository; its owner
+handles consumer deployment and testing.
 
 An attributable same-owner continuation may cooperatively suspend one issued
 unknown read-only action through the existing public route. The exact pending

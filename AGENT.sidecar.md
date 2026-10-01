@@ -39,6 +39,31 @@ One writer owns overlapping shared root configuration and workspace files.
   live under `.tmp/`, outside sealed package payloads. Measure control latency
   separately from actual elapsed execution time.
 
+## Source package Git policy
+
+The repository owner's standing explicit instruction authorizes and requires
+this Source repository's orchestrating release session to commit the qualified
+Source payload and perform an ordinary, non-force push after EACH successful
+package formation. Failed package formation is not a release; preserve its
+pending operation and do not use it as this Git trigger. This exception applies
+only to this Source repository, not Crea or other consumer repositories.
+
+Finish Source changes, prepare the candidate version and run qualifying checks;
+pack ONE archive; then commit that Source payload and push; then obtain fresh
+blind reviews, reverse validation and CLEAR, seal and globally install the exact
+qualified archive. If Git HEAD changes a qualification binding, derive current
+qualification from the committed payload before sealing. Use public returned
+identities and operation state; do not manually replay integrity values. Exact
+operation retries retain the pending archive and avoid duplicate effects.
+
+The release CLI itself performs no Git operation. The orchestrating session is
+the authorized Git caller. This scoped standing instruction satisfies the Git
+permission requirement independently of user Runtime acceptance; it does not
+waive assurance or grant Runtime acceptance. Generic consumer lifecycle and Git
+approval rules are unchanged. Attribution is retained in the current
+`.agent/work/audit-36-absorption-release-20261001/WORK.md`; this section is the
+Source-specific instruction owner.
+
 ## Validation and safety
 
 Agent checks are owned by `packages/agent/TESTING.md` and its package scripts.

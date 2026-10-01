@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -1098,6 +1098,29 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
   expect(after.work[0].maintenanceGeneration).toBeGreaterThan(before.work[0].maintenanceGeneration);
   expect(callbacks).toBe(2);
   expect(readFileSync(consumerFile)).toEqual(originalBytes);
+});
+
+test('consumer migration archives individually bounded governance rows beyond the aggregate ingress node budget', async () => {
+  const operation=store.reserveOperation('archive','1'.repeat(64),'2'.repeat(64));
+  store.transitionOperation(operation,'commit_unknown');
+  store.transitionOperation(operation,'applied','3'.repeat(64));
+  const template=database.query("SELECT * FROM agent_host_governance WHERE kind='operation'").get();
+  database.transaction(()=>{
+    for(let index=0;index<1400;index++) {
+      const key=createHash('sha256').update('archive-operation-'+index).digest('hex');
+      const payload={...JSON.parse(template.payload),operation_key:key};
+      const digest=canonicalJsonDigest({workspace_id:workspace,store_id:template.store_id,kind:template.kind,record_key:key,revision:template.revision,payload});
+      database.query('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)').run(workspace,template.store_id,template.kind,key,template.revision,canonicalJson(payload),digest);
+    }
+  }).immediate();
+  const rows=database.query('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid').all(workspace);
+  expect(()=>canonicalJsonDigest(rows)).toThrow(/node budget/);
+  const migration=maintenanceStore(),fence=migration.acquireMaintenanceFence(maintenanceBinding());
+  expect(migration.consumerMigrationState(fence,'baseline',()=>undefined).status).toBe('baseline');
+  expect(database.query('SELECT count(*) AS count FROM agent_host_governance').get().count).toBe(0);
+  expect(migration.consumerMigrationState(fence,'restore',()=>undefined).status).toBe('restored');
+  expect(database.query('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid').all(workspace)).toEqual(rows);
+  await migration.releaseMaintenanceFence(fence);
 });
 
 test('consumer migration restore refuses a prepared admission even when no WorkState was created', async () => {

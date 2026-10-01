@@ -28,7 +28,7 @@ import {
   type SessionBridgeObservation,
   type SessionBridgeRequest,
 } from './mastra-session-bridge.js';
-import { compareScopedSourceSnapshots, type ScopedSourceSnapshot } from './scoped-source-snapshot.js';
+import { compareScopedSourceSnapshots, snapshotDeclaredSources, type ScopedSourceSnapshot } from './scoped-source-snapshot.js';
 import type { WorkflowSessionReservation } from '../runtime-kernel.js';
 import { createLocalSourceWriteApprovalVerifier } from './local-source-authorization.js';
 import { createLocalSessionReconciliationVerifier } from './local-session-reconciliation.js';
@@ -1380,7 +1380,7 @@ export class MastraSessionLedger {
         'Mastra source observation has no matching current host outcome',
       );
     }
-    return this.#change(workId, attempt, expected, (state) => {
+    const update = (state: MastraSessionLedgerState): MastraSessionLedgerState => {
       requireState(state.step_id !== null, 'Mastra session is terminal');
       const item = state.items.find((entry) => entry.request.action_id === observation.action_id);
       requireState(
@@ -1423,7 +1423,19 @@ export class MastraSessionLedger {
           entry.request.action_id === observation.action_id ? { ...entry, observation } : entry,
         ),
       };
-    });
+    };
+    if (issued?.host_reservation && observation.status === 'reported_complete') {
+      requireState(current?.version.revision === expected.revision && current.version.digest === expected.digest,
+        'Mastra session ledger compare-and-swap conflict');
+      const next=update(current.state);
+      this.hostState.commitCompletedSourceReport({identity:issued.host_reservation.receipt.identity,attempt,
+        expectedJournal:expected,actionId:observation.action_id,nextJournal:next,
+        verifyCurrent:()=>{this.#assertWorkingGeneration();this.#assertFreshConfig();
+          requireState(sourceScope && snapshotDeclaredSources(requireSafeRepositoryAccess(this.#repositoryRoot),sourceScope.entries.map(entry=>entry.path)).digest===sourceScope.digest,
+            'new source report snapshot changed before atomic acceptance');}});
+      return this.#read(workId,attempt)!;
+    }
+    return this.#change(workId,attempt,expected,update);
   }
 }
 

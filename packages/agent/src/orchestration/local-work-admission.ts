@@ -7,12 +7,13 @@ import {
   type WorkItemSelection,
   runtimeConfigDigest,
   runtimePackageAccess,
+  runtimePackageCodePaths,
   selectWorkflow,
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { loadProjectSetContext } from '../config/project-context.js';
-import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import { HostStateStore, type HostStateSnapshot, type WorkIdentity, type StateVersion } from '../host-state.js';
+import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { HostStateStore, completedSourceJournalObservationMatches, type HostStateSnapshot, type WorkIdentity, type StateVersion } from '../host-state.js';
 import {
   type ScopedSourceSnapshot,
   snapshotDeclaredSources,
@@ -103,7 +104,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const scopeBytes = access.readBytes(input.scopePath, 'accepted implementation scope');
   const acceptanceBytes = access.readBytes(input.acceptancePath, 'accepted acceptance manifest');
-  const intakeBytes =
+  let intakeBytes =
     input.intakePath === undefined ? null : access.readBytes(input.intakePath, 'local session intake');
   if (intakeBytes !== null) {
     requireAdmission(intakeBytes.length <= 32768, 'local session intake exceeds the bounded artifact size');
@@ -151,7 +152,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   const runtimeCode = snapshotRuntimePackageSources(
     runtimePackageAccess(),
     config.runtime.bundle,
-    input.runtimeCodePaths,
+    runtimePackageCodePaths(config.runtime.bundle),
   );
   requireAdmission(
     runtimeCode.entries.every((entry) => entry.exists),
@@ -163,6 +164,11 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   );
   const schemaDigest = digest(schemaBytes);
   const codeDigest = runtimeCode.digest;
+  const canonicalIntakePath = input.intakePath === undefined ? null : `.agent/work/${context.work_id}/local-session-intake.v1.json`;
+  if(intakeBytes !== null) {
+    const raw=JSON.parse(intakeBytes.toString('utf8'));
+    intakeBytes=Buffer.from(canonicalJson({...raw,runtime_code_paths:runtimeCode.entries.map(entry=>entry.path)}));
+  }
   const configDigest = runtimeConfigDigest(config);
   const sourceAuthorization =
     input.sourceAuthorizationPath === undefined
@@ -200,6 +206,10 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   };
   const before = store.readHostStateSnapshot(identity);
   if (before.work) {
+    const admittedIntake=before.work.artifacts.find(artifact=>artifact.artifact_id==='local-session-intake');
+    requireAdmission(intakeBytes===null ? !admittedIntake : admittedIntake?.path===canonicalIntakePath &&
+      admittedIntake.sha256===digest(intakeBytes) && digest(access.readBytes(admittedIntake.path,'canonical admitted intake'))===admittedIntake.sha256,
+      'canonical local work intake retry differs');
     requireAdmission(
       before.work.request_transition?.request_pointer === scope.attribution.pointer &&
         before.work.request_transition.native_session_handle === nativeSessionHandle &&
@@ -214,6 +224,12 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       'local work retry differs from the admitted successor',
     );
     return { host: before, source };
+  }
+  if(canonicalIntakePath !== null && intakeBytes !== null) {
+    access.ensureDirectory(`.agent/work/${context.work_id}`,'canonical intake directory');
+    if(access.fileExists(canonicalIntakePath,'canonical intake existence'))
+      requireAdmission(access.readBytes(canonicalIntakePath,'canonical intake existing bytes').equals(intakeBytes),'canonical intake publication differs');
+    else access.writeExclusive(canonicalIntakePath,intakeBytes.toString('utf8'),'canonical local session intake');
   }
   const ticketId = 'ticket-' + canonicalJsonDigest({ identity, nativeSessionHandle }).slice(0, 40);
   const resources = ['execution:' + context.work_id];
@@ -368,7 +384,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
             {
               artifact_id: 'local-session-intake',
               schema: 'VidaLocalSessionIntake/v1',
-              path: input.intakePath!,
+              path: canonicalIntakePath!,
               sha256: digest(intakeBytes),
               stage_id: 'intake',
               source_revision: sourceRevision,
@@ -475,8 +491,8 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         return (
           assignment?.role === item.request.role &&
           profile &&
-          !item.host_reservation &&
-          !(item.issue_id !== null && profile.mutation_scope === 'repository_source')
+          (item.host_reservation ? completedSourceJournalObservationMatches(work,item as never) :
+            !(item.issue_id !== null && profile.mutation_scope === 'repository_source'))
         );
       }),
       'predecessor active or reserved source effect prevents absorption',
@@ -629,6 +645,12 @@ export function acquireLocalSourceWriterLease(input: {
     source.digest === work.binding.work_source_revision,
     'declared source changed before source writer acquisition',
   );
+  const reconciled=input.store.reconcileCompletedSourceOwnership({identity:input.identity,nativeSessionHandle:input.nativeSessionHandle,
+    verifyCurrent:()=>requireAdmission(runtimeConfigDigest(input.config)===work.binding.config_digest &&
+      snapshotDeclaredSources(requireSafeRepositoryAccess(input.repositoryRoot),work.lifecycle.scope.allowed_paths).digest===source.digest,
+      'completed source ownership changed before reconciliation')});
+  if(reconciled.workVersion?.digest!==before.workVersion?.digest)
+    return acquireLocalSourceWriterLease({...input,expectedWork:reconciled.workVersion!,expectedLedger:reconciled.ledgerVersion!});
   const prior = ledger.tickets.find((ticket) => ticket.ticket_id === work.lease!.ticket_id);
   requireAdmission(
     prior?.status === 'active' &&

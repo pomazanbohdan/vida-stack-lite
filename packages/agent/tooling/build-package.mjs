@@ -1,5 +1,6 @@
 import { readdir, readFile, stat, writeFile, copyFile, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
+import {expectedJavascriptFiles} from './maintained-source-inventory.mjs';
 
 const candidateRoot = path.resolve(import.meta.dirname, '..');
 const distRoot = path.join(candidateRoot, 'dist');
@@ -169,7 +170,6 @@ const javascriptFiles = (await filesUnder(distSourceRoot))
   .filter((file) => file.endsWith('.js'))
   .map((file) => path.relative(distSourceRoot, file).replaceAll('\\', '/'))
   .sort();
-const expectedJavascriptFiles = ['documentation/transition-proof.js', 'index.js', 'runtime.js', 'trusted-host.js'];
 if (javascriptFiles.join(',') !== expectedJavascriptFiles.join(',')) {
   throw new Error(`package build emitted unpublished JavaScript: ${javascriptFiles.join(', ')}`);
 }

@@ -114,13 +114,35 @@ monotonic maintenance metadata. These are not full candidate or deployed PASS.
 Current D01/D03/D08/D13/D15/D16 fixes need final public ordering, writer-failure,
 package-inventory, exact execution-resource, producer/cardinality and queued-owner
 release regressions. SAME-attempt bounded correction has no approved budget yet;
-linked successor does not close that GAP. Partial-init recovery, temp cleanup,
-Unicode boundaries and conditional answer/save surfaces remain open. Prove actual
+linked successor does not close that GAP. Temp cleanup and conditional
+answer/save surfaces remain open; D09 partial-init and D11 Unicode Source fixes
+have independent focused evidence, with full installed qualification pending. Prove actual
 clean-ledger headroom before first admission; after clean migration require
 closure-safe historical rollover/read lookup before sustained use. Do not invent
 a jobs cap or compact active current-v1 history unsafely. Repeat-build optimization
 is follow-up debt; directory fsync is an accepted nonblocking limitation, not a
 power-loss guarantee. The current D/R table is owned by the existing audit research.
+
+Independent pinned Bun 1.4.2 D09/D11 Source QA passed package-context/partial-init
+14 tests/110 assertions in 47.24 seconds and initialization 16 tests/132
+assertions in 89.20 seconds (30/242, zero failures). It covers preserved project
+values, partial intent/refusals, idempotency and Unicode. No build, public run,
+migration-helper execution, installation, Git or real consumer effect was run.
+
+Completed-writer release is accepted SR with initial atomic seam evidence,
+not complete implementation qualification. Test the boundaries separately: NEW
+terminal reports require current observed source validation before `source_scope`;
+ALREADY durable success cleanup requires exact journal/Host completed result,
+issue/reservation/generation and journal/work/ledger CAS, but own-file release
+survives prior lease expiry or permitted later source drift. Prove those positive
+cases plus sequential writers, FIFO, restart, exact retry and stale-version races.
+Keep live/unobserved/started/uncertain/unknown/foreign/mismatched effects fenced.
+Own file rights/queued intents release, execution-only coordination remains,
+and work/phase/results/history stay incomplete and Runtime unaccepted. Drift
+invalidates byte-bound proof; fresh correction reacquires scope/FIFO. Execution-
+only lease never grants Source-write authority. No expiry/done/old Code shortcut,
+nested ordinary CAS, new caller keys or schema fields is accepted. Expired/drift
+and historical reconciliation verification remain pending.
 
 Exactly three fresh blind reviews, reverse validation, CLEAR closeout, installed
 `0.1.2` observations and attributable user Runtime acceptance remain unperformed
@@ -163,6 +185,6 @@ These scenarios are required acceptance criteria, not claims that the candidate 
 
 ## Assurance and delivery
 
-The final layout is reviewed before installation. Run exactly three fresh history-isolated blind reviews, reverse validation, and documentation CLEAR against the same sealed bytes after quality checks. A relevant mutation, including detected external drift in the scoped source, invalidates affected checks and the bound review set. Before `execute`, validate the approved `VidaCutoverActivationDecision/v1` at `.agent/cutover/<cutover-id>/activation-decision.v1.json`: the plan, payload manifest, projected selector intent, and six separate parity/security/assurance/rollback/DEV/UAT evidence files must match their current hashes. Exercise missing, rejected, stale and changed-decision or evidence cases, including `--resume`; no direct selector publication path may bypass the decision. These byte checks establish integrity, not authenticated DEV/UAT observation, current-attempt Cedar/Edictum enforcement, or general external-edit detection. The delivery manifest identifies created and modified files, exact installation destination and order, archived/repository-only items, and post-install checks. Static tests, file copying and hashes do not close Runtime acceptance; obtain attributable user testing of the installed version. Commit follows acceptance; push requires a separate instruction.
+The final layout is reviewed before installation. Run exactly three fresh history-isolated blind reviews, reverse validation, and documentation CLEAR against the same sealed bytes after quality checks. A relevant mutation, including detected external drift in the scoped source, invalidates affected checks and the bound review set. Before `execute`, validate the approved `VidaCutoverActivationDecision/v1` at `.agent/cutover/<cutover-id>/activation-decision.v1.json`: the plan, payload manifest, projected selector intent, and six separate parity/security/assurance/rollback/DEV/UAT evidence files must match their current hashes. Exercise missing, rejected, stale and changed-decision or evidence cases, including `--resume`; no direct selector publication path may bypass the decision. These byte checks establish integrity, not authenticated DEV/UAT observation, current-attempt Cedar/Edictum enforcement, or general external-edit detection. The delivery manifest identifies created and modified files, exact installation destination and order, archived/repository-only items, and post-install checks. Static tests, file copying and hashes do not close Runtime acceptance; obtain attributable user testing of the installed version. Apply the project's attributable Git authorization and Sidecar exception. This Source repository's standing pack-success commit/push order is owned by `AGENT.sidecar.md#source-package-git-policy`; qualify from the committed payload before sealing when HEAD changes a binding. No consumer Git authority or Runtime acceptance is inferred.
 
 Focused preparation, archive, stage, and entrypoint tests provide Code/Static evidence for the staged registry and exact old-test archive only; the live registry and `tests/agent-runtime/` remain unchanged before cutover. Source and tests provide Code/Static evidence only. Require separate observation of built-in session tool calls, installed bundle behavior, selector-bound cutover and user Runtime acceptance. Do not report a Desktop attestation, migrated ticket, or Windows-specific proof as a substitute.
