@@ -8,6 +8,7 @@ duplicated here.
 - Supporting execution-backend research: `packages/agent/docs/research/openai-execution-backends.md`.
 - Agent lifecycle and speed protocol: `packages/agent/instructions/development-lifecycle.md`.
 - Agent verification: `packages/agent/TESTING.md`.
+- Derived package installation/repair guide: `packages/agent/docs/installation.md`.
 - Agent implementation: `packages/agent/src/`, public commands in `packages/agent/bin/`.
 - Plugin owner sources: `packages/plugin/docs/business-requirements.md`,
   `system-specification.md`, `acceptance.md`; absent files remain an explicit

@@ -39,6 +39,7 @@
     "bin/forward-candidate-admission.mjs",
     "bin/capture-completed-readonly.mjs",
     "bin/repair-research-records.mjs",
+    "bin/repair-work-state.mjs",
     "bin/documentation-clear.mjs",
     "dist/src/index.d.ts",
     "dist/src/**/*.d.ts",

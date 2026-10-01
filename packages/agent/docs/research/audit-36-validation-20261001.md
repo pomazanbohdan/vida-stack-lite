@@ -41,9 +41,14 @@ yet qualify public CLI repair or authorize live artifact/reader migration.
 Consumer rollback requires a canonical baseline and full snapshot restore with
 maintenance/CAS held throughout. Initialization, timestamps and maintenance
 generation do not establish first NEW admission. Rollback is allowed before
-that admission and closed afterward even if preparation fails. Only the
-read-only projection is implemented; public comparison/fenced restore remains
-an implementation GAP. This bounded work-state repair is not general consumer
+that admission and closed afterward even if preparation fails. Source now implements canonical admission-attempt persistence before fresh
+preparation and maintenance-bound migration primitives with same-store historic
+row beforeimages, synchronous filesystem callback/transaction and semantic
+restore. The SDK helper exists in Source; consumer deployment wrapper integration
+and broader negative qualification remain pending. Canonical DB/WAL/SHM stay at
+the configured path while work children are partitioned; use consistent backup,
+not root rename or physical database-byte equality. Maintenance metadata stays
+monotonic. This is not SQL/filesystem atomicity or task migration. This bounded work-state repair is not general consumer
 configuration or storage migration.
 
 ## Audit dispositions
@@ -71,11 +76,16 @@ not override the current system/lifecycle contract.
   bounded excerpts and correction/recovery findings remain qualification items
   where complete public regression evidence is absent. Proposed performance and
   complexity changes have no measured improvement claim.
-- F05 is an actual Linux SIGKILL probe of extracted cutoff functions: the
-  finally-only wx lock cleanup can leave a blocking orphan. It is an open
-  process-interruption release blocker, not full CLI/native Windows/power-loss
-  proof. F11 issue-before-activation is static sequencing evidence; evaluate the
-  supported dispatch-repair route before claiming a concrete unrecoverable case.
+- F05 current retained-selector cutoff uses canonical SQLite immediate exclusion
+  through selector/witness recheck and atomic witness publication. It creates no
+  wx marker and process termination releases exclusion. One current public
+  advanceCutoff/primitive test passed four assertions, including concurrent-owner
+  denial, observed SIGKILL terminal result, next success and no orphan. Historical
+  orphan markers remain conservative guards pending supported maintenance repair
+  or old-selector retirement; no PID/age deletion, power-loss or SQL/filesystem
+  atomicity claim. The initial extracted Linux probe remains limited provenance.
+  F11 issue-before-activation is static sequencing evidence; evaluate supported
+  dispatch repair before claiming an unrecoverable public case.
 
 ## Static evidence and remaining qualification
 
@@ -86,11 +96,15 @@ mid-run and is diagnostic only. Identity-specific serial CLEAR test 10 took
 seconds, separate from test duration; observed Windows command-tool minimum
 10.9 seconds remains an explicit exception/GAP.
 
-Source owner reports three public automatic-absorption checks with 11 assertions
-covering same-pointer grouping, two-predecessor absorption, retry/conflict,
-scope drift, foreign session preservation and missing-database refusal. Three
-host repair/projection/atomic checks passed with 36 assertions; typecheck passed.
-Broader fault injection and public CLI repair boundary evidence remain pending.
+Independent Luna Source QA reports eight automatic-absorption tests with 38
+assertions in 3.86 seconds, covering request grouping, predecessor absorption,
+retry/conflict, scope drift, foreign session preservation, missing-database
+refusal, callback failure/no writes and competing successor CAS. Its focused
+host/cutoff lane passed five tests/48 assertions in 4.29 seconds. The Source
+writer's later true heartbeat-expiry check passed one test/ten assertions in
+1.332 seconds; admission-cutoff/migration primitives passed two tests/twelve
+assertions. Those later results still need independent qualification. Typecheck
+passed; public wrapper deployment and broader negative evidence remain pending.
 These are bounded Code/Static results, not installed/native Runtime proof.
 Installed `0.1.1` is immutable and final coordinated `0.1.2` is pending. Full
 numeric quality/native matrix, three fresh blind reviews, reverse validation,

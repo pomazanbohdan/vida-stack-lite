@@ -168,8 +168,14 @@ restore behavior before live repair or a reader upgrade; it is not general
 consumer migration proof. Read workspace baseline through the constructor-free
 read-only public projection. Consumer full-snapshot rollback is allowed only
 before first new admitted work and must retain maintenance/CAS through restore;
-initialization or timestamps alone do not classify that boundary. Public fenced
-consumer restore remains an implementation/qualification GAP.
+initialization or timestamps alone do not classify that boundary. Canonical admission-attempt persistence now precedes fresh preparation. Source
+consumer migration primitives preserve same-store historical row beforeimages,
+use a synchronous filesystem callback under maintenance/transaction, and restore
+old row semantics while maintenance metadata stays monotonic. Retain canonical
+DB/WAL/SHM paths and partition work children; use a consistent backup, not live
+root rename or physical database-byte equality. Consumer deployment wrapper
+integration and negative qualification remain pending. SQL/filesystem effects
+are not claimed atomic and old tasks are not migrated.
 An authorized in-scope source edit continues the same work attempt and
 invalidates only evidence bound to its prior bytes. Configuration, schema or
 installed-bundle authority drift, and out-of-scope source drift, stop
@@ -213,7 +219,11 @@ assurance. Static checks and delivery cannot close Runtime acceptance; only
 attributable testing of the installed fingerprint can do that. Cutover rollback
 closes when the durable cutoff witness records the first admitted new-work
 attempt before state writes. A later preparation failure does not reopen
-rollback; recover forward.
+rollback; recover forward. The retained selector path now uses canonical SQLite
+immediate exclusion for witness publication rather than creating a persistent
+wx marker. A terminated process releases that exclusion; historical orphan
+markers still fail closed until supported repair or old-selector retirement.
+No PID/age deletion, power-loss or SQL/filesystem atomicity claim is implied.
 
 ## Self-development protocol
 

@@ -237,15 +237,36 @@ repair does not establish general consumer configuration/storage migration.
 Consumer rollback binds an authoritative read-only HostState baseline and the
 existing maintenance fence through restore. Initialization alone does not close
 rollback; the cutoff is the first admitted new-work attempt, including an
-attempt whose preparation later fails. Current rows, attempts and pending native
-effects are compared with the bound baseline. Unknown or changed state blocks
-restore. The projection creates no database or independent lifecycle authority.
-The required restore retains the maintenance fence and exact baseline/current
-CAS through its complete snapshot effect. It is allowed before the first new
-admitted work; timestamps, initialization and maintenance generation alone
-cannot classify that cutoff. The read-only projection is implemented in Source;
-public baseline comparison and fenced consumer snapshot restore remain an
-implementation and qualification GAP.
+attempt whose preparation later fails. `HostStateStore.recordAdmissionAttempt`
+persists that canonical cutoff before fresh preparation, with exact request
+retry/conflict checks. Current rows, admissions and pending native effects are
+compared with the bound baseline; unknown or changed state blocks restore.
+
+The Source primitive `HostStateStore.consumerMigrationState(receipt, mode,
+files)` supports `baseline` and `restore` under current maintenance. Baseline
+retains historical canonical rows as same-store beforeimages and clears active
+rows; restore recovers exact old row semantics while maintenance metadata remains
+monotonic. Its synchronous filesystem callback executes inside the transaction.
+SQL and filesystem effects are not one atomic persistence system. The
+package-owned `runConsumerMigrationState` SDK helper is Source implementation;
+consumer deployment wrapper integration and negative qualification remain pending.
+
+Retain the canonical database and its WAL/SHM at the configured path, partition
+archived work children around that authority, and obtain a consistent database
+backup. Do not rename the live database root or substitute physical database-byte
+equality, timestamps or maintenance generation for semantic state comparison.
+Existing tasks remain inactive provenance, not migrated work. Required full
+consumer snapshot restore is allowed only before the first new admitted attempt
+and retains maintenance/CAS across the filesystem effect. Source primitives and
+focused tests do not prove deployed consumer readiness or Runtime acceptance.
+
+The retained selector cutoff path uses `withHostStateExclusiveTransaction` for
+canonical SQLite immediate exclusion through selector/witness recheck and atomic
+filesystem witness publication. It creates no persistent wx lock; process
+termination releases SQLite exclusion. A historical orphan marker still fails
+closed pending explicit maintenance/terminal repair or retirement of the old
+selector. PID/age heuristics do not authorize deletion. This establishes no
+power-loss guarantee or SQL/filesystem atomicity claim.
 
 Research normalization preserves its immutable current-v1 reserved plan, exact
 target-record CAS and unique lineage event. Under the existing changelog lock,

@@ -157,4 +157,28 @@ issue. That correction preserves the original observation and does not prove
 no native effect. Inspect the frozen plan and current owner/selector state
 before applying either repair. These commands do not grant Runtime acceptance.
 
-The proposed source-write contract uses cooperative exact-path ownership, leases, and handoff between runtime sessions. A lease does not prevent the user or another process from editing a file. Before accepting validation or delivery evidence, the future coordinator must re-read scoped source identities and invalidate affected proof when an external edit changes them; expected authorized writes must be distinguished from drift. The current CLI does not implement this general detection or connect Cedar/Edictum to source writes. Installation and a successful advisory handoff are not evidence that these first-cutover requirements pass.
+The current source-write route uses cooperative exact-path ownership and scoped
+source authorization, with source rereads at issue/report and validation/delivery
+boundaries. External edits invalidate affected proof; a lease does not physically
+prevent another local process from editing files. Local declarations establish
+consistency, not human or tool-origin authentication. Installation and advisory
+handoff do not close Runtime acceptance; the specification owns the precise
+source/policy/evidence contract.
+
+Public `vida-agent reconcile-artifacts --kind work-state --mode inspect
+--project-root /absolute/consumer` reads existing canonical state without creating
+a missing database, mutating pragmas or advancing lifecycle. The bounded
+work-state repair supports `plan`, `apply`, `resume` and `restore` with
+`--repair-id ID`; only plan requires `--actor STRING`. It normalizes its declared
+optional transition field and freezes dependency bindings. It is not general
+copied-bundle relocation or consumer migration proof. Qualified repair precedes
+live current-v1 artifact changes or upgraded readers.
+
+Consumer migration Source primitives retain canonical DB/WAL/SHM paths, save
+historical row beforeimages under maintenance, and use synchronous filesystem
+callbacks within the state transaction. The first admitted NEW work attempt
+closes rollback even if preparation fails; initialization alone does not.
+Consumer deployment wrapper integration and broader negative qualification remain
+pending, so this guide supplies no executable migration command yet. Preserve
+existing consumers and unrelated files until that route and the installed package
+are qualified. SQL/filesystem atomicity and old-task migration are not promised.

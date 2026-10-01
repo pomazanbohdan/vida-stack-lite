@@ -196,6 +196,53 @@ test('work-state inspection CLI refuses missing canonical SQLite without creatin
   }
 });
 
+test('second predecessor verification failure leaves every canonical row and raw journal unchanged', () => {
+  const f = fixture();
+  try {
+    f.admit(f.prepare('one', 'user:old'));
+    f.admit(f.prepare('two', 'user:old'));
+    const before = f.store.readWorkspaceSnapshot();
+    const journals = f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all();
+    const admit = f.store.admitSuccessorWork.bind(f.store);
+    let verified = 0;
+    f.store.admitSuccessorWork = (input) => admit({
+      ...input,
+      verifyCurrent(work, journal, pointer) {
+        input.verifyCurrent(work, journal, pointer);
+        if (++verified === 2) throw new Error('injected second predecessor verification fault');
+      },
+    });
+    expect(() => admitLocalSessionWork(f.prepare('next', 'user:next'))).toThrow(/second predecessor/);
+    expect(verified).toBe(2);
+    expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+    expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journals);
+  } finally { f.close(); }
+});
+
+test('competing successor requests prepared against identical versions permit only one commit', () => {
+  const f = fixture();
+  try {
+    f.admit(f.prepare('one', 'user:old'));
+    f.admit(f.prepare('two', 'user:old'));
+    const admit = f.store.admitSuccessorWork.bind(f.store);
+    const proposals = [];
+    f.store.admitSuccessorWork = (input) => {
+      proposals.push(input);
+      throw new Error('freeze proposal before transaction');
+    };
+    expect(() => admitLocalSessionWork(f.prepare('winner', 'user:new-one'))).toThrow(/freeze proposal/);
+    expect(() => admitLocalSessionWork(f.prepare('loser', 'user:new-two'))).toThrow(/freeze proposal/);
+    expect(proposals[0].expectedLedger).toEqual(proposals[1].expectedLedger);
+    expect(proposals[0].predecessors).toEqual(proposals[1].predecessors);
+    const result = admit(proposals[0]);
+    const committed = f.store.readWorkspaceSnapshot();
+    expect(() => admit(proposals[1])).toThrow(/compare-and-swap conflict/);
+    expect(f.store.readWorkspaceSnapshot()).toEqual(committed);
+    expect(admit(proposals[0])).toEqual(result);
+    expect(committed.work.filter((row) => row.work.execution.status === 'active')).toHaveLength(1);
+  } finally { f.close(); }
+});
+
 test('two-predecessor SQL commit fault rolls back all work and coordination rows and preserves raw journals', () => {
   const f = fixture();
   try {

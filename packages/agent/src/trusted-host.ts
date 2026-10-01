@@ -7,6 +7,9 @@ export {
 export {
   HostStateStore,
   openHostStateDatabase,
+  inspectHostWorkspaceDatabase,
+  withHostStateExclusiveTransaction,
+  runConsumerMigrationState,
   HostStateError,
   type ContractReference,
   type WorkArtifactReference,

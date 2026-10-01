@@ -92,6 +92,10 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       Array.isArray(workItem.labels),
     'accepted work item differs from selected task',
   );
+  loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [selection.project]);
+  store.recordAdmissionAttempt(context.work_id, context.attempt, {
+    workItem, nativeSessionHandle, context, scopePath: input.scopePath, acceptancePath: input.acceptancePath,
+  });
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const scopeBytes = access.readBytes(input.scopePath, 'accepted implementation scope');
   const acceptanceBytes = access.readBytes(input.acceptancePath, 'accepted acceptance manifest');

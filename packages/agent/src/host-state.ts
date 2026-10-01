@@ -1483,6 +1483,7 @@ export function inspectHostWorkspaceDatabase(
     readonly version: StateVersion;
     readonly state: Readonly<Record<string, unknown>>;
   }[];
+  readonly admission_attempts: readonly Readonly<Record<string, unknown>>[];
 } {
   requireState(path.isAbsolute(databasePath) && hashPattern.test(workspaceId), 'workspace inspection identity invalid');
   const stat = lstatSync(databasePath);
@@ -1582,7 +1583,14 @@ export function inspectHostWorkspaceDatabase(
             };
             const state = JSON.parse(row.payload) as Record<string, unknown>;
             requireState(
-              canonicalJsonDigest(state) === row.digest && ['operation', 'approval'].includes(row.kind),
+              canonicalJsonDigest({
+                workspace_id: workspaceId,
+                store_id: row.store_id,
+                kind: row.kind,
+                record_key: row.record_key,
+                revision: row.revision,
+                payload: state,
+              }) === row.digest && ['operation', 'approval'].includes(row.kind),
               'workspace inspection governance integrity differs',
             );
             return {
@@ -1601,6 +1609,9 @@ export function inspectHostWorkspaceDatabase(
           ledger_version: version(ledger),
           journals,
           governance,
+          admission_attempts: database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_admission_attempt'").get()
+            ? database.query('SELECT generation,work_id,attempt,request_digest FROM agent_host_admission_attempt WHERE workspace_id=? ORDER BY generation,work_id,attempt').all(workspaceId) as Record<string, unknown>[]
+            : [],
         });
       })
       .deferred();
@@ -1634,6 +1645,68 @@ export function withHostStateExclusiveTransaction<T>(databasePath: string, opera
   } finally {
     database.close();
   }
+}
+
+/** Package-owned consumer migration permission: local state consistency, never lifecycle acceptance. */
+export async function runConsumerMigrationState<T>(input: {
+  readonly repositoryRoot: string; readonly operationId: string; readonly actor: string;
+  readonly mode: 'baseline'|'restore';
+}, files: (bindings: {readonly database_path:string;readonly workflow_database_path:string;readonly backup:Uint8Array|null}) => T): Promise<{
+  readonly schema:'ConsumerMigrationState/v1';readonly operation_id:string;readonly status:'baseline'|'restored';readonly result:T;
+}> {
+  requireState(/^[a-z0-9][a-z0-9-]{0,79}$/.test(input.operationId) && input.actor.trim().length > 0 && !/\p{Cc}/u.test(input.actor), 'consumer migration attribution invalid');
+  const {loadRuntimeConfig,runtimeConfigDigest,runtimePackageAccess} = await import('./config/runtime-config.js');
+  const {requireSafeRepositoryAccess} = await import('./config/safe-repository-access.js');
+  const {loadProjectSetContext} = await import('./config/project-context.js');
+  const {snapshotRuntimePackageSources} = await import('./orchestration/scoped-source-snapshot.js');
+  const {sessionHandoffDatabasePath} = await import('./orchestration/persistent-session-handoff.js');
+  const {sessionBridgeDatabasePath} = await import('./orchestration/mastra-session-bridge.js');
+  const config = loadRuntimeConfig(input.repositoryRoot), access = requireSafeRepositoryAccess(input.repositoryRoot);
+  const projectIds = config.projects.map(project=>project.project_id).sort();
+  loadProjectSetContext(input.repositoryRoot,config,config.repository.repository_id,projectIds);
+  const databasePath = sessionHandoffDatabasePath(input.repositoryRoot,config);
+  const relativeDatabase = path.relative(input.repositoryRoot,databasePath).split(path.sep).join('/');
+  if (input.mode === 'restore') access.readBytes(relativeDatabase,'existing consumer migration canonical database');
+  else access.ensureDirectory(config.control.work_root,'consumer migration canonical state root');
+  const database = openHostStateDatabase(databasePath);
+  const workspaceId = deriveWorkspaceId(config.repository.repository_id,input.repositoryRoot);
+  const packageSource = snapshotRuntimePackageSources(runtimePackageAccess(),config.runtime.bundle,
+    ['src/host-state.ts','src/orchestration/local-work-admission.ts','bin/run.mjs'].map(item=>config.runtime.bundle+'/'+item));
+  const context = {repository_id:config.repository.repository_id,project_ids:projectIds,repository_root:input.repositoryRoot,operation_id:input.operationId,actor:input.actor,config_digest:runtimeConfigDigest(config)};
+  const binding:MaintenanceFenceBinding = {schema:'MaintenanceFenceBinding/v1',project_ids:projectIds,operation_id:input.operationId,
+    manifest_digest:canonicalJsonDigest({kind:'consumer-migration',context}),request_digest:canonicalJsonDigest(context),
+    bindings_digest:canonicalJsonDigest(context),closure_digest:canonicalJsonDigest({operation_id:input.operationId,closure:'settled-consumer-state'}),bundle_digest:packageSource.digest};
+  const verifier:MaintenanceReleaseVerifier = {principal:'vida:consumer-migration',projectIds,verify(fence) {
+    const row = database.query('SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?').get(workspaceId,input.operationId) as {payload:string;digest:string}|null;
+    if (!row) return null;
+    const state = JSON.parse(row.payload) as {status:string;binding:unknown};
+    if (canonicalJsonDigest(state) !== row.digest || !sameJson(state.binding,binding) || !['baseline','restored'].includes(state.status)) return null;
+    return {schema:'MaintenanceReleaseAuthorization/v1',principal:'vida:consumer-migration',fence_digest:canonicalJsonDigest(fence),closure_digest:binding.closure_digest,bundle_digest:binding.bundle_digest};
+  }};
+  try {
+    const store = new HostStateStore(database,workspaceId,undefined,undefined,undefined,verifier,input.repositoryRoot);
+    const token = canonicalJsonDigest(context).slice(0,32);
+    // Persisted operation identity deterministically recovers the same held fence after interruption.
+    const receipt = store.acquireMaintenanceFenceWithRecordedToken(binding,`${token.slice(0,8)}-${token.slice(8,12)}-4${token.slice(13,16)}-8${token.slice(17,20)}-${token.slice(20,32)}`);
+    const workflowDatabasePath = sessionBridgeDatabasePath(input.repositoryRoot,config);
+    const verifyWorkflowStore = (): void => {
+      const relative = path.relative(input.repositoryRoot,workflowDatabasePath).split(path.sep).join('/');
+      if (!access.fileExists(relative,'consumer migration workflow store')) return;
+      const workflow = new Database(workflowDatabasePath,{readonly:true,strict:true});
+      try {
+        requireState((workflow.query('PRAGMA quick_check').get() as {quick_check:string})?.quick_check === 'ok','consumer workflow database corrupt');
+        const runs = workflow.query('SELECT json(snapshot) AS snapshot FROM mastra_workflow_snapshot').all() as {snapshot:string}[];
+        requireState(runs.every(row=> {
+          const run = JSON.parse(row.snapshot) as {status?:unknown};
+          return ['suspended','success','failed','canceled'].includes(run.status as string);
+        }), 'consumer workflow run remains unknown or inflight');
+      } finally { workflow.close(); }
+    };
+    const result = store.consumerMigrationState(receipt,input.mode,()=>{verifyWorkflowStore();return files({database_path:databasePath,
+      workflow_database_path:sessionBridgeDatabasePath(input.repositoryRoot,config),backup:input.mode === 'baseline' && !database.query('SELECT operation_id FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?').get(workspaceId,input.operationId) ? database.serialize() : null});});
+    await store.releaseMaintenanceFence(receipt);
+    return result;
+  } finally { database.close(); }
 }
 
 export class HostStateStore {
@@ -1778,6 +1851,7 @@ export class HostStateStore {
     database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_maintenance (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
     );
+    database.exec('CREATE TABLE IF NOT EXISTS agent_host_admission_attempt (workspace_id TEXT NOT NULL,generation INTEGER NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_digest TEXT NOT NULL,PRIMARY KEY(workspace_id,generation,work_id,attempt))');
     this.governanceCapability = issueHostGovernanceCapability({
       workspaceId,
       reserveOperation: this.reserveOperation.bind(this),
@@ -1786,6 +1860,125 @@ export class HostStateStore {
       consumeApproval: this.consumeApproval.bind(this),
     });
     Object.defineProperty(this, 'governanceCapability', { writable: false, configurable: false });
+  }
+  /** A valid fresh intake crosses the rollback cutoff before preparation, even if preparation later fails. */
+  recordAdmissionAttempt(workId: string, attempt: number, request: unknown): void {
+    requireState(typeof workId === 'string' && workId.length > 0 && workId.length <= 128 && !/\p{Cc}/u.test(workId) &&
+      Number.isSafeInteger(attempt) && attempt > 0, 'admission attempt identity invalid');
+    requireState(!this.#database.inTransaction, 'nested admission attempt transaction forbidden');
+    this.#database.transaction(() => {
+      this.#assertMaintenanceAvailable();
+      const generation = this.#maintenanceGeneration(), requestDigest = canonicalJsonDigest(request);
+      const prior = this.#database.query('SELECT request_digest FROM agent_host_admission_attempt WHERE workspace_id=? AND generation=? AND work_id=? AND attempt=?')
+        .get(this.#workspaceId,generation,workId,attempt) as {request_digest:string}|null;
+      requireState(!prior || prior.request_digest === requestDigest, 'admission attempt retry differs');
+      if (!prior) this.#database.query('INSERT INTO agent_host_admission_attempt VALUES(?,?,?,?,?)').run(this.#workspaceId,generation,workId,attempt,requestDigest);
+    }).immediate();
+  }
+  /** Consumer-only state reset/restore; the canonical database remains at its configured path. */
+  consumerMigrationState<T>(receipt: MaintenanceFenceReceipt, mode: 'baseline'|'restore', files: () => T): {
+    readonly schema: 'ConsumerMigrationState/v1'; readonly operation_id: string;
+    readonly status: 'baseline'|'restored'; readonly result: T;
+  } {
+    requireState(['baseline','restore'].includes(mode) && typeof files === 'function', 'consumer migration operation invalid');
+    requireState(!this.#database.inTransaction, 'nested consumer migration transaction forbidden');
+    const operationId = receipt.fence.binding.operation_id;
+    const tables = ['agent_host_state','agent_host_mastra_session_ledger','agent_host_governance'] as const;
+    const readRows = (): Record<string, Record<string, unknown>[]> => Object.fromEntries(tables.map(table => [table,
+      this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)
+        ? this.#database.query(`SELECT * FROM ${table} WHERE workspace_id=? ORDER BY rowid`).all(this.#workspaceId) as Record<string,unknown>[] : []]));
+    const admissions = (): unknown[] => this.#database.query('SELECT generation,work_id,attempt,request_digest FROM agent_host_admission_attempt WHERE workspace_id=? ORDER BY generation,work_id,attempt').all(this.#workspaceId);
+    const checkSettled = (): void => {
+      this.#assertMaintenanceQuiescent();
+      for (const row of readRows().agent_host_mastra_session_ledger ?? []) {
+        const journal = JSON.parse(row.payload as string) as Record<string,unknown>;
+        requireState(journal.schema === 'MastraSessionLedger/v1' && canonicalJsonDigest(journal) === row.digest && Array.isArray(journal.items) && Array.isArray(journal.completed), 'consumer migration journal integrity differs');
+        const items = [...journal.items, ...journal.completed.flatMap(value => {
+          requireState(value && typeof value === 'object' && Array.isArray((value as {items?:unknown}).items), 'consumer migration journal shape differs');
+          return (value as {items:unknown[]}).items;
+        })] as Record<string,unknown>[];
+        requireState(items.every(item => item && !item.host_reservation && (!item.issue_id || item.observation)), 'consumer migration native outcome remains unknown');
+      }
+    };
+    this.#database.transaction(() => {
+      this.#assertMaintenanceReceipt(receipt);
+      this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_consumer_migration (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id))');
+      if (mode === 'restore') {
+        const row = this.#database.query('SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?').get(this.#workspaceId,operationId) as {payload:string;digest:string}|null;
+        requireState(row && canonicalJsonDigest(JSON.parse(row.payload)) === row.digest, 'consumer migration baseline missing or corrupt');
+        const plan = JSON.parse(row.payload) as Record<string,unknown>;
+        requireState(sameJson(plan.binding,receipt.fence.binding), 'consumer migration maintenance binding differs');
+        requireState(plan.status === 'baseline' || plan.status === 'restoring' || plan.status === 'restored', 'consumer migration state invalid');
+        if (plan.status !== 'restored') {
+          requireState(sameJson(readRows(),plan.after) && sameJson(admissions(),plan.admissions), 'new admission or changed canonical state blocks restore');
+          checkSettled();
+          plan.status = 'restoring';
+          this.#database.query('UPDATE agent_host_consumer_migration SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?').run(canonicalJson(plan),canonicalJsonDigest(plan),this.#workspaceId,operationId);
+        }
+      }
+    }).immediate();
+    return this.#database.transaction(() => {
+      this.#assertMaintenanceReceipt(receipt);
+      const prior = this.#database.query('SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?').get(this.#workspaceId,operationId) as {payload:string;digest:string}|null;
+      if (mode === 'baseline') {
+        if (prior) {
+          const plan = JSON.parse(prior.payload) as {status:string;binding:unknown;after:unknown;admissions:unknown};
+          requireState(canonicalJsonDigest(plan) === prior.digest && plan.status === 'baseline' && sameJson(plan.binding,receipt.fence.binding) && sameJson(readRows(),plan.after) && sameJson(admissions(),plan.admissions), 'consumer migration baseline retry differs');
+          const result = files();
+          requireState(!result || typeof (result as {then?:unknown}).then !== 'function', 'consumer migration callback must be synchronous');
+          return {schema:'ConsumerMigrationState/v1' as const,operation_id:operationId,status:'baseline' as const,result};
+        }
+        checkSettled();
+        const before = readRows(), attemptBaseline = admissions();
+        // Validate every current-v1 pair before hiding old tasks; retired readers are never selected.
+        for (const row of before.agent_host_state ?? []) if (row.kind === 'work') {
+          const work = checkedWork(JSON.parse(row.payload as string));
+          requireState(canonicalJsonDigest(work) === row.digest, 'consumer migration work integrity differs');
+          validatePair(work, this.#load('ledger','shared') as CoordinationLedger|null);
+        }
+        const result = files();
+        requireState(!result || typeof (result as {then?:unknown}).then !== 'function', 'consumer migration callback must be synchronous');
+        for (const table of tables) if (before[table]?.length) this.#database.query(`DELETE FROM ${table} WHERE workspace_id=?`).run(this.#workspaceId);
+        const plan = {schema:'ConsumerMigrationState/v1',operation_id:operationId,binding:receipt.fence.binding,status:'baseline',before,after:readRows(),admissions:attemptBaseline};
+        this.#database.query('INSERT INTO agent_host_consumer_migration VALUES(?,?,?,?)').run(this.#workspaceId,operationId,canonicalJson(plan),canonicalJsonDigest(plan));
+        return {schema:'ConsumerMigrationState/v1' as const,operation_id:operationId,status:'baseline' as const,result};
+      }
+      requireState(prior && canonicalJsonDigest(JSON.parse(prior.payload)) === prior.digest, 'consumer migration baseline corrupt');
+      const plan = JSON.parse(prior.payload) as {status:string;before:Record<string,Record<string,unknown>[]>;after:unknown;admissions:unknown};
+      if (plan.status === 'restored') {
+        requireState(sameJson(readRows(),plan.before) && sameJson(admissions(),plan.admissions), 'restored consumer state changed');
+        const result = files();
+        requireState(!result || typeof (result as {then?:unknown}).then !== 'function', 'consumer migration callback must be synchronous');
+        return {schema:'ConsumerMigrationState/v1' as const,operation_id:operationId,status:'restored' as const,result};
+      }
+      requireState(plan.status === 'restoring' && sameJson(readRows(),plan.after) && sameJson(admissions(),plan.admissions), 'consumer migration restore postimage differs');
+      checkSettled();
+      // Schema validation precedes filesystem effects; exact historic payloads and revisions are retained.
+      for (const row of plan.before.agent_host_state ?? []) {
+        if (row.kind === 'work') checkedWork(JSON.parse(row.payload as string));
+        else { requireState(row.kind === 'ledger', 'consumer migration state kind invalid'); checkedLedger(JSON.parse(row.payload as string)); }
+        requireState(canonicalJsonDigest(JSON.parse(row.payload as string)) === row.digest, 'consumer migration beforeimage integrity differs');
+      }
+      const ledgerRow = plan.before.agent_host_state?.find(row=>row.kind === 'ledger');
+      const priorLedger = ledgerRow ? checkedLedger(JSON.parse(ledgerRow.payload as string)) : null;
+      for (const row of plan.before.agent_host_state ?? []) if (row.kind === 'work') validatePair(checkedWork(JSON.parse(row.payload as string)),priorLedger);
+      const tableColumns = new Map<string,string[]>();
+      for (const table of tables) {
+        const columns = this.#database.query(`PRAGMA table_info(${table})`).all() as {name:string}[];
+        tableColumns.set(table,columns.map(column=>column.name));
+        for (const row of plan.before[table] ?? []) requireState(sameJson(columns.map(column=>column.name).sort(),Object.keys(row).sort()), 'consumer migration row columns differ');
+      }
+      const result = files();
+      requireState(!result || typeof (result as {then?:unknown}).then !== 'function', 'consumer migration callback must be synchronous');
+      for (const table of tables) for (const row of plan.before[table] ?? []) {
+        const columns = tableColumns.get(table)!;
+        this.#database.query(`INSERT INTO ${table} (${columns.join(',')}) VALUES (${columns.map(()=>'?').join(',')})`).run(...columns.map(column=>row[column]) as (string|number|null)[]);
+      }
+      requireState(sameJson(readRows(),plan.before), 'consumer migration restored rows differ');
+      plan.status = 'restored';
+      this.#database.query('UPDATE agent_host_consumer_migration SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?').run(canonicalJson(plan),canonicalJsonDigest(plan),this.#workspaceId,operationId);
+      return {schema:'ConsumerMigrationState/v1' as const,operation_id:operationId,status:'restored' as const,result};
+    }).immediate();
   }
   #governanceDigest(storeId: string, kind: string, key: string, revision: number, payload: unknown): string {
     return canonicalJsonDigest({
