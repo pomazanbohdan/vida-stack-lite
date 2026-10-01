@@ -366,6 +366,7 @@ test('bundled work-state repair plans atomically, resumes exact postimages and r
 test('readonly canonical workspace inspection preserves populated governance and database bytes', async () => {
   const original = store.compareAndSwapHostState(fixture());
   const operation = store.reserveOperation('inspection','1'.repeat(64),'2'.repeat(64));
+  store.transitionOperation(operation,'commit_unknown');
   store.transitionOperation(operation,'applied','3'.repeat(64));
   const bytes = await readFile(databasePath);
   const schema = database.query("SELECT name,sql FROM sqlite_master ORDER BY name").all();
@@ -1096,6 +1097,34 @@ test('consumer migration restore refuses a prepared admission even when no WorkS
   expect(()=>migration.consumerMigrationState(second,'restore',()=>{called=true;})).toThrow(/new admission/);
   expect(called).toBe(false);
   expect(migration.readWorkspaceSnapshot().work).toHaveLength(0);
+});
+
+test('consumer migration rejects issued unknown journals before baseline filesystem effects', () => {
+  const initial = fixture();
+  quiesceImportedState([initial.nextWork],initial.nextLedger);
+  store.compareAndSwapHostState(initial);
+  const journal = {schema:'MastraSessionLedger/v1',workspace_id:workspace,work_id:'work',attempt:1,run_id:'run-work',items:[{issue_id:'fixture-issued',observation:null}],completed:[]};
+  database.exec('CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))');
+  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(workspace,'work',1,1,canonicalJson(journal),canonicalJsonDigest(journal));
+  const before = database.query('SELECT * FROM agent_host_state ORDER BY kind,id').all();
+  const migration = maintenanceStore(),fence=migration.acquireMaintenanceFence(maintenanceBinding());
+  let called=false;
+  expect(()=>migration.consumerMigrationState(fence,'baseline',()=>{called=true;})).toThrow(/outcome remains unknown/);
+  expect(called).toBe(false);
+  expect(database.query('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(before);
+  expect(JSON.parse(database.query('SELECT payload FROM agent_host_mastra_session_ledger').get().payload)).toEqual(journal);
+});
+
+test('consumer migration rejects foreign canonical rows appearing after its baseline', () => {
+  const migration=maintenanceStore(),fence=migration.acquireMaintenanceFence(maintenanceBinding());
+  migration.consumerMigrationState(fence,'baseline',()=>undefined);
+  const foreign=fixture('foreign').nextWork;
+  const key=JSON.stringify([foreign.binding.repository_id,foreign.binding.project_ids,foreign.binding.integrations_digest,foreign.binding.lifecycle_work_id]);
+  database.query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)').run(workspace,'work',key,foreign.revision,canonicalJson(foreign),canonicalJsonDigest(foreign));
+  let called=false;
+  expect(()=>migration.consumerMigrationState(fence,'restore',()=>{called=true;})).toThrow(/new admission|changed canonical state/);
+  expect(called).toBe(false);
+  expect(database.query('SELECT payload FROM agent_host_state WHERE id=?').get(key).payload).toBe(canonicalJson(foreign));
 });
 
 describe('host-owned durable maintenance fence', () => {

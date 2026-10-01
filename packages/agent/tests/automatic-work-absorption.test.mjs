@@ -196,6 +196,25 @@ test('work-state inspection CLI refuses missing canonical SQLite without creatin
   }
 });
 
+test('valid public intake records the admission cutoff before failed scope preparation', async () => {
+  const f=fixture();
+  try {
+    const verifier={principal:'fixture:consumer-maintenance',projectIds:['sample'],verify(fence){return {schema:'MaintenanceReleaseAuthorization/v1',principal:this.principal,fence_digest:canonicalJsonDigest(fence),closure_digest:fence.binding.closure_digest,bundle_digest:fence.binding.bundle_digest};}};
+    const migration=new HostStateStore(f.database,f.store.workspaceId,undefined,undefined,undefined,verifier);
+    const binding={schema:'MaintenanceFenceBinding/v1',project_ids:['sample'],operation_id:'fixture-migration',manifest_digest:'1'.repeat(64),request_digest:'2'.repeat(64),bindings_digest:'3'.repeat(64),closure_digest:'4'.repeat(64),bundle_digest:'5'.repeat(64)};
+    const baseline=migration.acquireMaintenanceFence(binding);
+    migration.consumerMigrationState(baseline,'baseline',()=>undefined);
+    await migration.releaseMaintenanceFence(baseline);
+    expect(()=>admitLocalSessionWork(f.prepare('failed-preparation',''))).toThrow(/schema is invalid/);
+    expect(f.store.readWorkspaceSnapshot().work).toHaveLength(0);
+    expect(f.database.query('SELECT work_id,attempt FROM agent_host_admission_attempt').all()).toEqual([{work_id:'failed-preparation',attempt:1}]);
+    const restore=migration.acquireMaintenanceFence(binding);
+    let called=false;
+    expect(()=>migration.consumerMigrationState(restore,'restore',()=>{called=true;})).toThrow(/new admission/);
+    expect(called).toBe(false);
+  } finally {f.close();}
+});
+
 test('second predecessor verification failure leaves every canonical row and raw journal unchanged', () => {
   const f = fixture();
   try {
