@@ -1,0 +1,169 @@
+{
+  "ac_ids": [
+    "AC-AUDIT36-9",
+    "AC-AUDIT36-13",
+    "AC-AUDIT36-14",
+    "AC-AUDIT36-25"
+  ],
+  "actor": "/root/audit_core_diagnostics_luna",
+  "br_ids": [],
+  "completeness": {
+    "answered_questions": [
+      "Do current source meet AC-AUDIT36-9/13/14/25?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [
+      "Constraint mapping is underspecified.",
+      "No tests or reproduction."
+    ],
+    "missing_questions": [
+      "Focused regressions and runtime proof after correction"
+    ],
+    "required_questions": [
+      "Do current source meet AC-AUDIT36-9/13/14/25?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "contour": "audit-36-core-20261001-scope",
+  "created_at": "2026-09-30T21:18:02.199Z",
+  "digest": "a58dc360cdb11ecc8fb2462a0720dbfca8351dbf56371b82aafa6f6c8611e07a",
+  "evidence_classes": [
+    "Code",
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "AC-AUDIT36-9",
+      "source_ids": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "statement": "Confirmed: empty selections can miss bindings; packet rechecks risks only, so labels disappear and non-empty risks can fail.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "AC-AUDIT36-13",
+      "source_ids": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "statement": "Confirmed: develop-only waves skip admittedEvidence; issued action then omits development_packet.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "AC-AUDIT36-14",
+      "source_ids": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "statement": "Confirmed: validated ResearchResult contributes only its artifact ref; conclusions/constraints do not reach packet fields.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "AC-AUDIT36-25",
+      "source_ids": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "statement": "Confirmed: publicFailure returns schema/status/code/message, defaults unknown errors to EXECUTION and omits phase/next action; inspect is behind bootstrap guards.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "high",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-e4ba6822b3db8ce6e6a47e2a9feb50c26d516845adcce5cb71c774c19d1b61ab"
+  },
+  "objective": "Check current source against accepted criteria.",
+  "options": [
+    {
+      "description": "Bind admitted risks/labels in both paths; issue packet before developer stage; carry cited findings as implementation constraints; emit safe typed reason/phase/next_action. Add focused regressions for all ACs and missing packet/expired lease/resource/denied policy, preserving inspect guards.",
+      "evidence_refs": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "label": "Minimal fix",
+      "option_id": "bounded-fix"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "Do current source meet AC-AUDIT36-9/13/14/25?",
+  "readiness": "informational",
+  "recommendation": {
+    "evidence_refs": [
+      "accepted_ac",
+      "code_source"
+    ],
+    "option_id": "bounded-fix",
+    "rationale": "Closes accepted behavior without schema edits or fabricated classifications."
+  },
+  "result_id": "research-e4ba6822b3db8ce6e6a47e2a9feb50c26d516845",
+  "schema": "ResearchResult/v1",
+  "scope_id": "audit-36-core-20261001-scope",
+  "source_refs": [
+    {
+      "claim": "AC-AUDIT36-9 risk/label binding; AC-AUDIT36-13 packet before developer issue; AC-AUDIT36-14 observed research conclusions/constraints in packet; AC-AUDIT36-25 safe distinct reason/phase/action.",
+      "locator": ".agent/work/audit-36-core-20261001/acceptance.json",
+      "retrieved_at": "2026-09-30T21:38:01Z",
+      "source_id": "accepted_ac",
+      "source_kind": "internal",
+      "title": "Accepted ACs"
+    },
+    {
+      "claim": "Run drops risks/labels on both selections; selector uses them. Develop-only waves skip packets. Builder checks risk only, stores research refs and leaves other fields empty. publicFailure collapses unlisted errors and omits phase/action; inspect follows bootstrap guards.",
+      "locator": "packages/agent/bin/run.mjs; packages/agent/src/config/runtime-config.ts; packages/agent/src/orchestration/admitted-development-packet.ts; packages/agent/src/orchestration/mastra-boundary.ts; packages/agent/src/orchestration/observed-research-result.ts",
+      "retrieved_at": "2026-09-30T21:38:01Z",
+      "source_id": "code_source",
+      "source_kind": "internal",
+      "title": "Current source"
+    }
+  ],
+  "source_revision": "7c3480f0c18a39b53d6cea8f442effaad7732506081b509212f1e70f10044bce",
+  "sr_ids": [],
+  "topic": "Audit36 core ACs 9/13/14/25",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "ResearchResult has no typed constraint field; diagnostics require error_class/log_ref/message. Safest: cited confirmed findings to implementation_constraints only; do not infer security/prohibition/failed-attempt classes.",
+      "uncertainty_id": "constraint-mapping"
+    },
+    {
+      "material": true,
+      "statement": "No tests or runtime reproduction; existing resume/inspect records are not Runtime acceptance.",
+      "uncertainty_id": "verification"
+    }
+  ],
+  "updated_at": "2026-09-30T21:18:02.199Z",
+  "work_item_id": "audit-36-core-20261001"
+}

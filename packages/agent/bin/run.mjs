@@ -1393,11 +1393,54 @@ const publicCodes = new Set(Object.keys(publicMessages));
 
 function publicFailure(error) {
   const code = publicCodes.has(error?.code) ? error.code : 'GAP-VIDA-RUN-EXECUTION-001';
+  // Classify only known validation language. Never expose caller messages, paths,
+  // credentials or stack traces through the public diagnostic envelope.
+  const reasons = [
+    [
+      /lease.*expired|expired.*lease/i,
+      'ownership lease expired',
+      'lease recovery',
+      'Inspect the work and recover its exact expired lease before continuing.',
+    ],
+    [
+      /CAS|revision changed|version changed/i,
+      'current state revision changed',
+      'state validation',
+      'Inspect the work and retry the uncommitted operation with its returned state version.',
+    ],
+    [
+      /source.*changed|runtime code changed|source.*differs/i,
+      'bound source changed',
+      'source validation',
+      'Inspect the work and use the supported current-source continuation or recovery operation.',
+    ],
+    [
+      /summary|research.*artifact|synthesis.*field|AC IDs|source-backed|evidence references/i,
+      'observed artifact does not satisfy its current contract',
+      'observation validation',
+      'Check the issued output contract and accepted trace IDs; preserve the actual observation and inspect before resubmission.',
+    ],
+    [
+      /configured context|initialization|project context|configuration.*stale/i,
+      'configured context is unavailable or stale',
+      'context binding',
+      'Inspect project initialization and configured package resources before continuing.',
+    ],
+    [
+      /owner|ownership|foreign|ticket|claim|FIFO/i,
+      'current ownership boundary rejected the operation',
+      'ownership validation',
+      'Inspect the exact work and conflicting resource ownership; do not repeat a source action.',
+    ],
+  ];
+  const reason = reasons.find(([pattern]) => pattern.test(typeof error?.message === 'string' ? error.message : ''));
   return {
     schema: 'VidaAgentRunResult/v1',
     status: 'blocked',
     code,
-    message: publicMessages[code] ?? 'The requested run was blocked by runtime validation.',
+    message: reason
+      ? `Phase: ${reason[2]}. Reason: ${reason[1]}. Next action: ${reason[3]}`
+      : `${publicMessages[code] ?? 'The requested run was blocked by runtime validation.'} Next action: inspect the exact work and check its issued contract before retrying.`,
   };
 }
 
@@ -1515,14 +1558,47 @@ export async function run(args = process.argv.slice(2)) {
   }
   if (!values.projects.includes(pathProject.project_id))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The work path is outside the selected project context.');
+  let selectedWorkItem;
+  if (values.intake) selectedWorkItem = readBoundedReport(values.intake).work_item;
+  else {
+    const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
+    const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+    const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+    const project = loadProjectSetContext(values.project_root, config, config.repository.repository_id, [
+      pathProject.project_id,
+    ]);
+    const selectionLedger = openConfiguredMastraSessionLedger(values.project_root);
+    try {
+      const work = selectionLedger.hostState.readHostStateSnapshot({
+        repository_id: project.repository_id,
+        project_ids: project.project_ids,
+        integrations_digest: project.integrations_digest,
+        work_id: values.work_id,
+      }).work;
+      if (work) {
+        const ref = work.artifacts.find(
+          (entry) => entry.artifact_id === 'local-session-intake' && entry.schema === 'VidaLocalSessionIntake/v1',
+        );
+        if (!ref) fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted intake is missing.');
+        const bytes = requireSafeRepositoryAccess(values.project_root).readBytes(ref.path, 'current selection intake');
+        if (bytes.length > 32768 || digest(bytes) !== ref.sha256)
+          fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted intake changed.');
+        selectedWorkItem = JSON.parse(bytes.toString('utf8')).work_item;
+        if (canonicalJsonDigest(selectedWorkItem) !== work.binding.work_item_digest)
+          fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted work item changed.');
+      }
+    } finally {
+      selectionLedger.close();
+    }
+  }
+  const selectionMetadata = { risk_flags: selectedWorkItem?.risk_flags ?? [], labels: selectedWorkItem?.labels ?? [] };
   const selections = values.projects.map((projectId) =>
     selectWorkflow(config, {
       team: values.team,
       kind: values.kind,
       intent: values.intent,
       project: projectId,
-      risk_flags: [],
-      labels: [],
+      ...selectionMetadata,
     }),
   );
   if (selections.some((selection) => selection.workflow_id !== values.workflow))
@@ -1540,8 +1616,7 @@ export async function run(args = process.argv.slice(2)) {
         kind: values.kind,
         intent: values.intent,
         project: pathProject.project_id,
-        risk_flags: [],
-        labels: [],
+        ...selectionMetadata,
       },
     });
     const access = requireSafeRepositoryAccess(values.project_root);
@@ -1915,8 +1990,7 @@ export async function run(args = process.argv.slice(2)) {
       kind: values.kind,
       intent: values.intent,
       project: pathProject.project_id,
-      risk_flags: [],
-      labels: [],
+      ...selectionMetadata,
     };
     const bridge = await MastraSessionBridge.open({
       repositoryRoot: values.project_root,
@@ -1950,7 +2024,7 @@ export async function run(args = process.argv.slice(2)) {
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Configured context changed outside the admitted native output.');
       return current;
     };
-    const admittedEvidence = async (currentJournal) => {
+    const admittedEvidence = async (currentJournal, requireImplementation = true, pendingDeveloper = null) => {
       const { openAdmittedSessionExecution } = await import('../src/orchestration/admitted-session-execution.ts');
       const { buildAdmittedDevelopmentPacket } = await import('../src/orchestration/admitted-development-packet.ts');
       const { buildAdmittedImplementationResult } =
@@ -1972,9 +2046,11 @@ export async function run(args = process.argv.slice(2)) {
             (stage) => stage.id === item.request.stage_id && stage.kind === 'develop',
           ),
         );
-      const configuredContext = developer
-        ? requireConfiguredContext(developer.request, developer.observation?.changed_paths ?? [])
-        : null;
+      const configuredContext = pendingDeveloper
+        ? requireConfiguredContext(pendingDeveloper)
+        : developer
+          ? requireConfiguredContext(developer.request, developer.observation?.changed_paths ?? [])
+          : null;
       const packet = buildAdmittedDevelopmentPacket({
         repositoryRoot: values.project_root,
         config,
@@ -1986,13 +2062,15 @@ export async function run(args = process.argv.slice(2)) {
         acceptanceBytes: access.readBytes(work.contracts.acceptance.path, 'current admitted acceptance'),
         configuredContext,
       });
-      const implementationResult = buildAdmittedImplementationResult({
-        repositoryRoot: values.project_root,
-        config,
-        packet,
-        host,
-        ledger: currentJournal,
-      });
+      const implementationResult = requireImplementation
+        ? buildAdmittedImplementationResult({
+            repositoryRoot: values.project_root,
+            config,
+            packet,
+            host,
+            ledger: currentJournal,
+          })
+        : undefined;
       return {
         packet,
         implementationResult,
@@ -2759,6 +2837,14 @@ export async function run(args = process.argv.slice(2)) {
           const issuedStages = workflowSnapshot.requests.map((request) =>
             config.workflows[values.workflow].stages.find((stage) => stage.id === request.stage_id),
           );
+          if (issueKinds.has('develop')) {
+            const developerRequest = workflowSnapshot.requests.find(
+              (request) =>
+                config.workflows[values.workflow].stages.find((stage) => stage.id === request.stage_id)?.kind ===
+                'develop',
+            );
+            issuedEvidence = await admittedEvidence(journal, false, developerRequest);
+          }
           if (issueKinds.has('validate') || issueKinds.has('test') || issueKinds.has('deliver')) {
             issuedEvidence = await admittedEvidence(journal);
             if (
@@ -3247,7 +3333,9 @@ export async function run(args = process.argv.slice(2)) {
           ...(issuedEvidence
             ? {
                 development_packet: issuedEvidence.packet,
-                implementation_result: issuedEvidence.implementationResult,
+                ...(issuedEvidence.implementationResult
+                  ? { implementation_result: issuedEvidence.implementationResult }
+                  : {}),
               }
             : {}),
           ...(testerInstruction ? { tester_instruction: testerInstruction } : {}),

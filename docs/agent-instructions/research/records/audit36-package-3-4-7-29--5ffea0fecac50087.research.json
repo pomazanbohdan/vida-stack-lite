@@ -1,0 +1,167 @@
+{
+  "ac_ids": [
+    "AC-AUDIT36-3",
+    "AC-AUDIT36-4",
+    "AC-AUDIT36-7",
+    "AC-AUDIT36-29"
+  ],
+  "actor": "/root/audit_package_diagnostics_luna",
+  "br_ids": [
+    ".agent/work/audit-36-package-20261001/intake.json#work_item.description"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "Are the four package claims supported, and what fixes fit v1?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "Are the four package claims supported, and what fixes fit v1?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [],
+  "contour": "audit-36-package-20261001-scope",
+  "created_at": "2026-09-30T21:26:44.378Z",
+  "digest": "171e21b670d26ae3b77112b28e9ccb2c9faf349819e977eac4c4fdc1e89c0e42",
+  "evidence_classes": [
+    "Code",
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "#3",
+      "source_ids": [
+        "code"
+      ],
+      "statement": "Distinguish partial presence via existingInitialization; return partial_not_ready/nonzero without writes. Test lone AGENTS.md bytes preserved and no generated files.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "#4",
+      "source_ids": [
+        "code"
+      ],
+      "statement": "Use runtimePackageAccess for runtime.bundle refs; keep local/skill refs on SafeRepositoryAccess(projectRoot), no fallback. Test consumer without copied bundle.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Static",
+      "finding_id": "#7",
+      "source_ids": [
+        "code"
+      ],
+      "statement": "Fix test root to four parents or isolated fixture; pass with AGENT_RUNTIME_TEST_REPOSITORY_ROOT unset.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "#29",
+      "source_ids": [
+        "code"
+      ],
+      "statement": "Use 8,192-char head+tail excerpt, omission marker and truncated=true; retain full hash/bytes. Tail-sentinel regression; arbitrary middle range stays unsupported.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [
+    "GAP-VIDA-RUN-CONTEXT-001"
+  ],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "high",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-128e97c67652b509bd8cc11f4e316b31b47fd354800eb9ea38b598eaa9cb93a6"
+  },
+  "objective": "Confirm defects and minimal current-v1 fixes; no source edits.",
+  "options": [
+    {
+      "description": "Fix the four code paths with existing helpers and fields.",
+      "evidence_refs": [
+        "code",
+        "observed"
+      ],
+      "label": "Use current v1",
+      "option_id": "current-v1"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "Are the four package claims supported, and what fixes fit v1?",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "code",
+      "observed"
+    ],
+    "option_id": "current-v1",
+    "rationale": "Make scoped fixes; keep schemas and generic plugin GAP unchanged."
+  },
+  "result_id": "research-128e97c67652b509bd8cc11f4e316b31b47fd354",
+  "schema": "ResearchResult/v1",
+  "scope_id": "audit-36-package-20261001-scope",
+  "source_refs": [
+    {
+      "claim": "B .agent/work/audit-36-package-20261001/intake.json#work_item.description; S packages/agent/docs/system-specification.md#Package-and-consumer-boundaries and packages/agent/instructions/development-lifecycle.md#Execution-and-evidence; AC-AUDIT36-3, AC-AUDIT36-4, AC-AUDIT36-7, AC-AUDIT36-29; GAP-VIDA-RUN-CONTEXT-001. Init treats partial presence as complete; local refs use projectRoot; excerpts are prefix-only at 8,192 chars; test root goes up only three parents.",
+      "locator": "packages/agent/{bin/init-core.mjs#existingInitialization,src/orchestration/configured-context.ts#buildConfiguredContext,tests/bun/persistent-session-handoff.test.mjs#root,docs/system-specification.md#Package-and-consumer-boundaries}; .agent/work/audit-36-package-20261001/{intake,scope,acceptance}.json",
+      "retrieved_at": "2026-09-30T21:34:19Z",
+      "source_id": "code",
+      "source_kind": "internal",
+      "title": "Code and accepted scope"
+    },
+    {
+      "claim": "Recovery reached revision 21/no pending; resume exited 1 with generic context GAP. This shows sequence, not #4 causality or user acceptance. #7 test fails without env override.",
+      "locator": ".agent/work/vida-plugin-codex-package-20260930/{recover-command,inspect-command,resume-command}.json; research-registry.md#3,#4,#7,#29",
+      "retrieved_at": "2026-09-30T21:34:19Z",
+      "source_id": "observed",
+      "source_kind": "internal",
+      "title": "Sanitized operation evidence"
+    }
+  ],
+  "source_revision": "de515ac3e9512ec1bb01ecfc221a1b543817894f9f9197545e1034c80d6eafa5",
+  "sr_ids": [
+    "packages/agent/docs/system-specification.md#Package-and-consumer-boundaries",
+    "packages/agent/instructions/development-lifecycle.md#Execution-and-evidence"
+  ],
+  "topic": "Audit36 package #3/#4/#7/#29",
+  "uncertainties": [
+    {
+      "material": false,
+      "statement": "Generic resume GAP does not prove #4 caused failure.",
+      "uncertainty_id": "plugin-cause"
+    },
+    {
+      "material": false,
+      "statement": "No arbitrary middle retrieval in v1; scoped tail need can use current fields.",
+      "uncertainty_id": "middle-range"
+    }
+  ],
+  "updated_at": "2026-09-30T21:26:44.378Z",
+  "work_item_id": "audit-36-package-20261001"
+}

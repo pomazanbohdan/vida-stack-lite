@@ -3780,7 +3780,7 @@ export class HostStateStore {
           ...work,
           revision: work.revision + 1,
           lease: { ticket_id: ticketId, thread_id: input.nativeSessionHandle, generation: ledger.open_generation },
-          binding: { ...work.binding, runtime_code_digest: newRuntimeDigest },
+          binding: { ...work.binding, runtime_code_digest: newRuntimeDigest, runtime_source_revision: newRuntimeDigest },
           lifecycle: {
             ...work.lifecycle,
             revision: work.revision + 1,
@@ -3832,7 +3832,7 @@ export class HostStateStore {
         // This dedicated transition explicitly rebinds only the freshly verified bundle digest.
         // All remaining lifecycle, authority, resource and history deltas use the ordinary validator.
         requireState(
-          sameJson(nextWork.binding, { ...work.binding, runtime_code_digest: newRuntimeDigest }) &&
+          sameJson(nextWork.binding, { ...work.binding, runtime_code_digest: newRuntimeDigest, runtime_source_revision: newRuntimeDigest }) &&
             sameJson(nextWork.lifecycle.config_binding, {
               ...work.lifecycle.config_binding,
               runtime_code_digest: newRuntimeDigest,

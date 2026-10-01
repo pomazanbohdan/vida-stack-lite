@@ -5241,3 +5241,43 @@ test('issued readonly release: completed official-docs predecessor does not bloc
     expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').get()).toEqual(beforeRow);
   });
 });
+
+
+test('expired recovery keeps runtime identity coupled across verified bundle changes without replaying research', () => {
+  const seed = fixture();
+  const digestA = 'a'.repeat(64), digestB = 'b'.repeat(64);
+  seed.nextWork.binding.runtime_source_revision = digestA;
+  seed.nextWork.binding.runtime_code_digest = digestA;
+  seed.nextWork.lifecycle.config_binding.runtime_code_digest = digestA;
+  const initial = store.compareAndSwapHostState(seed);
+  database.exec('CREATE TABLE agent_host_mastra_session_ledger(workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)');
+  const journal = {
+    schema: 'MastraSessionLedger/v1', workspace_id: workspace, work_id: identity.work_id, attempt: 1,
+    run_id: initial.work.execution.run_id,
+    completed: [{ step_id: 'research', items: [{ issue_id: 'observed-research', observation: { status: 'reported_complete' } }] }],
+    items: [{ issue_id: null, observation: null }],
+  };
+  const journalBytes = canonicalJson(journal), journalDigest = canonicalJsonDigest(journal);
+  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(workspace, identity.work_id, 1, 1, journalBytes, journalDigest);
+  const now = Date.now;
+  let recovered;
+  try {
+    Date.now = () => Date.parse(initial.ledger.tickets[0].expires_at) + 1;
+    recovered = store.recoverExpiredLocalLease({
+      identity, attempt: 1, nativeSessionHandle: 'thread', generation: 1,
+      expectedWork: initial.workVersion, expectedLedger: initial.ledgerVersion,
+      expectedJournal: { revision: 1, digest: journalDigest }, expectedMaintenanceGeneration: initial.maintenanceGeneration,
+      verifyCurrent: () => ({ runtimeCodeDigest: digestB, authorityPointer: 'user:verified-current-bundle' }),
+    });
+  } finally { Date.now = now; }
+  expect(recovered.work.binding.runtime_source_revision).toBe(digestB);
+  expect(recovered.work.binding.runtime_code_digest).toBe(digestB);
+  expect(recovered.work.lifecycle.config_binding.runtime_code_digest).toBe(digestB);
+  expect(recovered.work.execution.assignment_attempts).toEqual([]);
+  expect(recovered.work.lease.ticket_id).not.toBe(initial.work.lease.ticket_id);
+  expect(recovered.ledger.tickets[0].status).toBe('read_only');
+  const stored = database.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger').get();
+  expect(stored.payload).toBe(journalBytes);
+  expect(stored.digest).toBe(journalDigest);
+  expect(stored.revision).toBe(2);
+});

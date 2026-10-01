@@ -1,0 +1,178 @@
+{
+  "ac_ids": [
+    "AC-AUDIT36-9",
+    "AC-AUDIT36-13",
+    "AC-AUDIT36-14",
+    "AC-AUDIT36-25"
+  ],
+  "actor": "/root/audit_core_diagnostics_luna",
+  "br_ids": [],
+  "completeness": {
+    "answered_questions": [
+      "How does current code meet accepted ACs?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [
+      "No code changes or tests.",
+      "AC21/F01 are separate."
+    ],
+    "missing_questions": [
+      "Focused regression and public follow-through."
+    ],
+    "required_questions": [
+      "How does current code meet accepted ACs?"
+    ],
+    "status": "blocked"
+  },
+  "conflicts": [],
+  "contour": "audit-36-core-20261001-scope",
+  "created_at": "2026-09-30T21:18:02.741Z",
+  "digest": "4add38519135458e2bc4e1004f6357a1497ac50d83732a5fae310928d6ff6eab",
+  "evidence_classes": [
+    "Code",
+    "Static",
+    "GAP"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "AC-AUDIT36-9",
+      "source_ids": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "statement": "Fresh/resume selections drop admitted risks and labels; preserve WorkItem values through selection and packet binding.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "AC-AUDIT36-13",
+      "source_ids": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "statement": "Develop-only issue skips packet preparation; prepare the current packet before developer issue.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "AC-AUDIT36-14",
+      "source_ids": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "statement": "Packet carries typed research artifact refs only; map cited findings into existing implementation_constraints.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "report-and-AC-AUDIT36-25",
+      "source_ids": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "statement": "Report failed because source claims abbreviated full AC IDs required verbatim by normalizer. publicFailure also hides distinct reason/phase/action.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Static",
+      "finding_id": "AC21-scope",
+      "source_ids": [
+        "code_source"
+      ],
+      "statement": "research_mode/topic branches conflict with strict v1 scope. Keep schema unchanged pending functional repair and scope authorization.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "high",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-9b12e68ea28a8d88c2e6a47c4b1f7d4cb92571b3463e41375bcb6eea94b9f4ef"
+  },
+  "objective": "Trace source gaps.",
+  "options": [
+    {
+      "description": "Preserve selection; prepare packet; map cited constraints; add safe diagnostics and focused regressions. Keep AC21/F01 separate.",
+      "evidence_refs": [
+        "accepted_ac",
+        "code_source"
+      ],
+      "label": "Fix accepted paths",
+      "option_id": "bounded-fix"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "How does current code meet accepted ACs?",
+  "readiness": "blocked",
+  "recommendation": {
+    "evidence_refs": [
+      "accepted_ac",
+      "code_source"
+    ],
+    "option_id": "bounded-fix",
+    "rationale": "Close accepted gaps without scope expansion."
+  },
+  "result_id": "research-9b12e68ea28a8d88c2e6a47c4b1f7d4cb92571b3",
+  "schema": "ResearchResult/v1",
+  "scope_id": "audit-36-core-20261001-scope",
+  "source_refs": [
+    {
+      "claim": "AC-AUDIT36-9 risk/label binding; AC-AUDIT36-13 packet before developer issue; AC-AUDIT36-14 observed research constraints in packet; AC-AUDIT36-25 safe distinct reason/phase/action.",
+      "locator": ".agent/work/audit-36-core-20261001/acceptance.json",
+      "retrieved_at": "2026-09-30T22:06:22Z",
+      "source_id": "accepted_ac",
+      "source_kind": "internal",
+      "title": "Accepted scope"
+    },
+    {
+      "claim": "run drops risks/labels and calls admittedEvidence only for validate/test/deliver; report normalizes before ledger commit; publicFailure hides reason/phase/action. Selector uses risks/labels; packet carries research refs only. Normalizer requires every full AC in a source claim; prior report abbreviated 13/14/25. Strict scope omits research_mode/topic; scratch AC21 registry blocks schema change pending repair.",
+      "locator": "packages/agent/bin/run.mjs; packages/agent/src/config/runtime-config.ts; packages/agent/src/orchestration/admitted-development-packet.ts; packages/agent/src/orchestration/observed-research-result.ts; packages/agent/schemas/implementation-scope.v1.schema.json; .tmp/audit-36-validation-20261001/research-registry.md#21",
+      "retrieved_at": "2026-09-30T22:06:22Z",
+      "source_id": "code_source",
+      "source_kind": "internal",
+      "title": "Current paths and contracts"
+    }
+  ],
+  "source_revision": "7c3480f0c18a39b53d6cea8f442effaad7732506081b509212f1e70f10044bce",
+  "sr_ids": [],
+  "topic": "Audit36 AC9/13/14/25; AC21/F01 separate",
+  "uncertainties": [
+    {
+      "material": true,
+      "statement": "No tests or Runtime proof.",
+      "uncertainty_id": "verification"
+    },
+    {
+      "material": true,
+      "statement": "F01 A-to-B recovery remains separate and open.",
+      "uncertainty_id": "F01-follow-up"
+    }
+  ],
+  "updated_at": "2026-09-30T21:18:02.741Z",
+  "work_item_id": "audit-36-core-20261001"
+}

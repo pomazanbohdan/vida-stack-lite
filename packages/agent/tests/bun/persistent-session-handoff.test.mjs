@@ -13,7 +13,7 @@ import {
 
 const root =
   process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const config = loadRuntimeConfig(root);
 const workspaceId = 'a'.repeat(64);
 const context = { work_id: 'new-work', attempt: 1, scope_digest: 'b'.repeat(64) };
@@ -38,7 +38,14 @@ function store() {
 }
 
 function selection(kind, intent) {
-  return { team: 'default-development', kind, intent, project: 'refactoring', risk_flags: [], labels: [] };
+  return {
+    team: 'default-development',
+    kind,
+    intent,
+    project: config.teams['default-development'].allowed_projects[0],
+    risk_flags: [],
+    labels: [],
+  };
 }
 
 function observed(snapshot, action, issueId) {

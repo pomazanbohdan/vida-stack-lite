@@ -12,7 +12,7 @@ import {
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { HostStateSnapshot } from '../host-state.js';
-import { validateResearchResult } from '../research-decision.js';
+import { validateResearchResult, type ResearchResult } from '../research-decision.js';
 import type { LocalWorkAdmissionInput } from './local-work-admission.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { buildConfiguredContext, type ConfiguredContext } from './configured-context.js';
@@ -73,6 +73,22 @@ function uniqueSorted(values: readonly string[]): readonly string[] {
   return [...new Set(values)].sort();
 }
 
+/** Cited confirmed findings retain their evidence identity without inventing a diagnostic class. */
+export function citedResearchConstraints(
+  result: Pick<ResearchResult, 'result_id' | 'source_refs' | 'findings'>,
+): readonly string[] {
+  const sources = new Set(result.source_refs.map((source) => source.source_id));
+  return result.findings
+    .filter((finding) => finding.status === 'confirmed')
+    .map((finding) => {
+      requirePacket(
+        finding.source_ids.length > 0 && finding.source_ids.every((id) => sources.has(id)),
+        'confirmed research finding has no matching cited source',
+      );
+      return `Research ${result.result_id}/${finding.finding_id} [${finding.source_ids.join(', ')}]: ${finding.statement}`;
+    });
+}
+
 /** Builds a packet only from admitted, current and observed local evidence. */
 export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketInput): DevelopmentTaskPacket {
   const { repositoryRoot: root, config, host, ledger, workItem, selection, configuredContext } = input;
@@ -95,6 +111,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       workItem.intent === selection.intent &&
       workItem.canonical_kind === selection.kind &&
       canonicalJsonDigest(workItem.risk_flags) === canonicalJsonDigest(selection.risk_flags) &&
+      canonicalJsonDigest(workItem.labels) === canonicalJsonDigest(selection.labels) &&
       binding.config_digest === runtimeConfigDigest(config),
     'work item, workflow or configuration differs from admission',
   );
@@ -194,6 +211,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     ),
   );
   const researchRefs: string[] = [];
+  const researchConstraints: string[] = [];
   for (const item of observed.filter((entry) => researchStageIds.has(entry.request.stage_id))) {
     const plan = item.research_normalization;
     requirePacket(
@@ -238,6 +256,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       'research result differs from admitted work',
     );
     researchRefs.push(`artifact://research/${result.result_id}/${artifact.sha256}`);
+    researchConstraints.push(...citedResearchConstraints(result));
   }
   requirePacket(
     researchStageIds.size === 0 || researchRefs.length > 0,
@@ -314,7 +333,10 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     diagnostics: [],
     failed_approaches: [],
     prohibited_patterns: [],
-    implementation_constraints: [`Modify only admitted implementation paths: ${scope.implementation_paths.join(', ')}`],
+    implementation_constraints: [
+      `Modify only admitted implementation paths: ${scope.implementation_paths.join(', ')}`,
+      ...researchConstraints,
+    ],
     security_constraints: [],
     expected_tests: [...scope.test_trace],
     delivery_conditions: contracts.map(

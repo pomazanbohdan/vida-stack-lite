@@ -1331,7 +1331,18 @@ export class MastraSessionLedger {
     observation: SessionBridgeObservation,
     sourceScope: ScopedSourceSnapshot | null = null,
   ): MastraSessionLedgerSnapshot {
-    const issued = this.#read(workId, attempt)?.state.items.find(
+    const current = this.#read(workId, attempt);
+    const recorded = current && [...current.state.items, ...current.state.completed.flatMap((wave) => wave.items)]
+      .find((item) => item.request.action_id === observation.action_id && item.observation !== null);
+    if (recorded) {
+      requireState(
+        recorded.issue_id === observation.issue_id &&
+          canonicalJsonDigest(recorded.observation) === canonicalJsonDigest(observation),
+        'Mastra session observation retry differs from recorded terminal observation',
+      );
+      return current!;
+    }
+    const issued = current?.state.items.find(
       (item) => item.request.action_id === observation.action_id,
     );
     if (issued?.host_reservation) {

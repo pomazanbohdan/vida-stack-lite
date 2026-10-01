@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { assertLoadedRuntimeConfig, type AgentRuntimeConfig } from '../config/runtime-config.js';
+import { assertLoadedRuntimeConfig, runtimePackageAccess, type AgentRuntimeConfig } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 
@@ -73,11 +73,18 @@ function readLocal(
   const second = access.readBytes(target, `configured context stable read ${relative}`);
   requireContext(first.equals(second), `${relative} changed during read`);
   const content = new TextDecoder('utf-8', { fatal: true }).decode(first);
+  const omission = '\n[middle omitted; read source for complete content]\n';
+  const visibleChars = MAX_EXCERPT_CHARS - omission.length;
+  const headChars = Math.ceil(visibleChars / 2);
+  const tailChars = Math.floor(visibleChars / 2);
   return {
     status: 'local_excerpt',
     sha256: createHash('sha256').update(first).digest('hex'),
     bytes: first.length,
-    content: content.slice(0, MAX_EXCERPT_CHARS),
+    content:
+      content.length <= MAX_EXCERPT_CHARS
+        ? content
+        : content.slice(0, headChars) + omission + content.slice(-tailChars),
     truncated: content.length > MAX_EXCERPT_CHARS,
   };
 }
@@ -129,7 +136,9 @@ export function buildConfiguredContext(
       kind: 'local',
       location: source.location,
       title: source.title,
-      ...readLocal(access, root, source.location, usedBytes),
+      ...(source.location.startsWith(config.runtime.bundle + '/')
+        ? readLocal(runtimePackageAccess(), '', source.location.slice(config.runtime.bundle.length + 1), usedBytes)
+        : readLocal(access, root, source.location, usedBytes)),
     });
   }
   for (const location of skillRefs) {

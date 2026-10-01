@@ -198,9 +198,18 @@ function initializationContext({ projectRoot, repository, mappings, bundleRoot }
 }
 
 function existingInitialization(access) {
-  const existing = [...outputs.map(([, output]) => output), receiptPath].filter((output) =>
-    access.fileExists(output, 'initialization output'),
-  );
+  const required = [...outputs.map(([, output]) => output), receiptPath];
+  const existing = required.filter((output) => access.fileExists(output, 'initialization output'));
+  if (existing.length > 0 && existing.length < required.length)
+    throw new Error(
+      JSON.stringify({
+        status: 'partial_not_ready',
+        ready: false,
+        existing,
+        missing: required.filter((output) => !existing.includes(output)),
+        next_action: 'Complete the project-owned integration files, then use explicit reconciliation.',
+      }),
+    );
   return existing.length
     ? {
         status: 'existing',
