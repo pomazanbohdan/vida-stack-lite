@@ -410,7 +410,11 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         const artifact = work.artifacts.find((entry) => entry.path === plan.record_path &&
           entry.sha256 === plan.record_sha256 && entry.stage_id === item.request.stage_id);
         requireAdmission(item.observation?.status === 'reported_complete' &&
-          plan.observation_digest === canonicalJsonDigest(item.observation) && artifact,
+          plan.observation_digest === canonicalJsonDigest(item.observation) && artifact &&
+          plan.binding.work_id === work.binding.lifecycle_work_id && plan.binding.run_id === work.execution.run_id &&
+          plan.binding.scope_id === work.binding.scope_id && plan.binding.scope_digest === work.binding.work_source_revision &&
+          plan.binding.config_digest === work.binding.config_digest && plan.binding.issue_id === item.issue_id &&
+          plan.binding.action_id === item.observation.action_id,
           'predecessor research normalization is pending or mismatched');
         const bytes = access.readBytes(artifact.path, 'predecessor accepted research provenance');
         requireAdmission(digest(bytes) === artifact.sha256,
@@ -419,6 +423,9 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         if (artifact.schema === 'ResearchResult/v1') validateResearchResult(record);
         else if (artifact.schema === 'ResearchSynthesis/v1') validateResearchSynthesis(record);
         else requireAdmission(false, 'predecessor normalized artifact has an unexpected contract');
+        requireAdmission(record.digest===plan.result_digest && record.work_item_id===work.binding.lifecycle_work_id &&
+          record.source_revision===work.binding.work_source_revision && record.scope_id===work.binding.scope_id,
+          'predecessor normalized artifact authority differs');
       }
       return assignment?.role === item.request.role && profile && !item.host_reservation &&
         !(item.issue_id !== null && profile.mutation_scope === 'repository_source');

@@ -3,6 +3,7 @@ import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createHash,randomUUID} from 'node:crypto';
 import {canonicalJson,canonicalJsonDigest} from '../src/contracts/public-ingress.ts';
 import {loadRuntimeConfig} from '../src/config/runtime-config.ts';
 import {requireSafeRepositoryAccess} from '../src/config/safe-repository-access.ts';
@@ -122,5 +123,57 @@ test('invalid new request attribution and successor source drift fail before pre
   writeFileSync(path.join(f.root,'AGENT.sidecar.md'),'Changed declared source');
   expect(()=>admitLocalSessionWork(drift)).toThrow(/revision is stale/);
   expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+ }finally{f.close();}
+});
+
+test('successful normalized readonly research is retained as historical provenance on absorption',()=>{
+ const f=fixture();try {
+  const old=f.prepare('old','user:old'),admitted=f.admit(old),work=admitted.host.work;
+  const stage=f.config.workflows[work.binding.workflow_id].stages.find(stage=>stage.kind==='research');
+  const timestamp=new Date().toISOString(),question='What evidence remains unfinished?';
+  const body={schema:'ResearchResult/v1',result_id:'old-research',work_item_id:'old',source_revision:work.binding.work_source_revision,
+   scope_id:work.binding.scope_id,contour:work.binding.scope_id,topic:'Fixture provenance',objective:'Preserve source evidence',question,
+   source_refs:[{source_id:'source',source_kind:'internal',locator:'AGENT.sidecar.md',title:'Fixture source',version_or_date:'2026-10-01',
+    claim:'AC-SHARED SR-SHARED evidence',retrieved_at:timestamp,independence_group:'fixture-source',digest:'d'.repeat(64)}],
+   findings:[{finding_id:'finding',statement:'Unfinished fixture evidence',source_ids:['source'],evidence_class:'Static',status:'confirmed'}],
+   uncertainties:[],conflicts:[],evidence_classes:['Static'],br_ids:['BR-SHARED'],sr_ids:['SR-SHARED'],ac_ids:['AC-SHARED'],gap_ids:[],
+   options:[{option_id:'continue',label:'Continue',description:'Carry unfinished evidence',evidence_refs:['source']}],
+   recommendation:{option_id:'continue',rationale:'Current evidence',evidence_refs:['source']},
+   completeness:{status:'pass',required_questions:[question],answered_questions:[question],missing_questions:[],material_gaps:[],
+    external_validation:{required:false,source_count:0,minimum_sources:0,status:'not_required',live_check:null}},readiness:'ready',
+   instruction_activation:{use_id:'use-fixture',risk:'medium',phase:'trace',lane:'researcher',trigger:'research_intent',required_instruction_ids:[],
+    instruction_ids:['research-protocol'],registry_digest:'b'.repeat(64),source_digests:[{instruction_id:'research-protocol',source_sha256:'c'.repeat(64)}]},
+   actor:'fixture-setup',pointer:'TEST-SETUP',created_at:timestamp,updated_at:timestamp};
+  const result={...body,digest:canonicalJsonDigest(body)},bytes=Buffer.from(JSON.stringify(result));
+  const recordPath='.agent/work/old/old-research.research.json';writeFileSync(path.join(f.root,recordPath),bytes);
+  const actionId='7'.repeat(64),issueId=randomUUID();
+  const observation={schema:'VidaSessionObservation/v1',action_id:actionId,issue_id:issueId,agent_id:'fixture',tool_call_ref:'fixture-readonly',
+   status:'reported_complete',summary:'Completed fixture research',output_digest:canonicalJsonDigest('Completed fixture research'),evidence_refs:['fixture:source']};
+  const binding={work_id:'old',attempt:1,run_id:work.execution.run_id,action_id:actionId,issue_id:issueId,
+   scope_id:work.binding.scope_id,scope_digest:work.binding.work_source_revision,source_revision:work.binding.work_source_revision,
+   source_scope_digest:work.binding.work_source_revision,config_digest:work.binding.config_digest,maintenance_generation:admitted.host.maintenanceGeneration,
+   lease_ticket_id:work.lease.ticket_id,lease_thread_id:work.lease.thread_id,lease_generation:work.lease.generation};
+  const planBody={schema:'ObservedResearchRecordPlan/v1',binding,observation_digest:canonicalJsonDigest(observation),result_digest:result.digest,
+   record_path:recordPath,record_pre_sha256:null,record_sha256:createHash('sha256').update(bytes).digest('hex'),
+   changelog_path:'.agent/work/old/research.changelog.jsonl',changelog_pre_sha256:null,changelog_sha256:'a'.repeat(64),before_digest:null};
+  const plan={...planBody,digest:canonicalJsonDigest(planBody)};
+  const nextWork={...work,revision:work.revision+1,lifecycle:{...work.lifecycle,revision:work.lifecycle.revision+1},
+   artifacts:[{artifact_id:'fixture-research',schema:'ResearchResult/v1',path:recordPath,sha256:plan.record_sha256,stage_id:stage.id,
+    source_revision:work.binding.work_source_revision,scope_id:work.binding.scope_id,ac_ids:work.binding.ac_ids}]};
+  f.store.compareAndSwapHostState({expectedWork:admitted.host.workVersion,expectedLedger:admitted.host.ledgerVersion,
+   nextWork,nextLedger:{...admitted.host.ledger,revision:admitted.host.ledger.revision+1}});
+  const journal={schema:'MastraSessionLedger/v1',workspace_id:f.store.workspaceId,work_id:'old',attempt:1,run_id:work.execution.run_id,
+   step_id:'unissued-next-wave',items:[],completed:[{step_id:'observed-research',items:[{request:{stage_id:stage.id,assignment_index:0,
+    role:stage.assignments[0].role},issue_id:issueId,observation,research_normalization:plan}]}]};
+  f.database.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE work_id=?')
+   .run(canonicalJson(journal),canonicalJsonDigest(journal),'old');
+  const before=f.store.readWorkspaceSnapshot().work[0].work;
+  const successor=admitLocalSessionWork(f.prepare('next','user:next'));
+  expect(successor.host.work.request_transition.predecessor_work_ids).toEqual(['old']);
+  const prior=f.store.readWorkspaceSnapshot().work.find(entry=>entry.work.binding.lifecycle_work_id==='old').work;
+  expect(prior.artifacts).toEqual(before.artifacts);
+  expect(prior.lifecycle.assurance).toEqual(before.lifecycle.assurance);
+  expect(readFileSync(path.join(f.root,recordPath))).toEqual(bytes);
+  expect(JSON.parse(f.database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('old').payload)).toEqual(journal);
  }finally{f.close();}
 });
