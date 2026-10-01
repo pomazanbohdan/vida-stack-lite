@@ -1645,6 +1645,15 @@ export function openHostStateDatabase(databasePath: string): Database {
     typeof databasePath === 'string' && path.isAbsolute(databasePath),
     'host state requires an absolute file-backed database path',
   );
+  try {
+    const stats = lstatSync(databasePath);
+    requireState(
+      stats.isFile() && !stats.isSymbolicLink() && stats.nlink === 1,
+      'host state database path is unsafe',
+    );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
   const database = new Database(databasePath, { create: true, strict: true });
   try {
     database.exec('PRAGMA journal_mode=WAL');
