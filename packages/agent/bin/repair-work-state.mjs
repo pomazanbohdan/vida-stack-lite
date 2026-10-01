@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import path from 'node:path';
+import { lstatSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -35,6 +36,9 @@ export function runWorkStateRepair(args) {
     'canonical HostState database is unavailable; inspection never creates one');
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
   if (mode === 'inspect') return inspectHostWorkspaceDatabase(databasePath, workspaceId);
+  const stat = lstatSync(databasePath);
+  requireRepair(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1,
+    'canonical HostState database must be a single-link regular file');
   const database = openHostStateDatabase(databasePath);
   try {
     const store = new HostStateStore(database, workspaceId);

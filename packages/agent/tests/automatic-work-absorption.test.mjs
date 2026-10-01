@@ -1,9 +1,10 @@
 import { test, expect } from 'bun:test';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { linkSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
+import { Database } from 'bun:sqlite';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -433,6 +434,36 @@ test('work-state inspection CLI refuses missing canonical SQLite without creatin
     expect(() => runWorkStateRepair(['--kind', 'work-state', '--mode', 'inspect', '--project-root', f.root])).toThrow(
       /unavailable/,
     );
+  } finally {
+    f.close();
+  }
+});
+
+test('writable work-state repair refuses a hard-linked canonical SQLite without modifying its target', () => {
+  const f = fixture();
+  const outside = path.join(f.root, 'outside.sqlite');
+  try {
+    const unrelated = new Database(outside, { create: true, strict: true });
+    unrelated.exec('CREATE TABLE sentinel (value TEXT); PRAGMA journal_mode=DELETE');
+    unrelated.close();
+    const config = loadRuntimeConfig(f.root);
+    const databasePath = path.join(f.root, config.control.work_root, 'session-handoff.v1.sqlite');
+    mkdirSync(path.dirname(databasePath), { recursive: true });
+    linkSync(outside, databasePath);
+
+    expect(() =>
+      runWorkStateRepair([
+        '--kind', 'work-state', '--mode', 'plan', '--project-root', f.root,
+        '--repair-id', 'hard-link-repair', '--actor', 'fixture',
+      ]),
+    ).toThrow(/single-link regular file/);
+
+    const observed = new Database(outside, { readonly: true, strict: true });
+    expect(observed.query('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'delete' });
+    expect(observed.query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all()).toEqual([
+      { name: 'sentinel' },
+    ]);
+    observed.close();
   } finally {
     f.close();
   }
