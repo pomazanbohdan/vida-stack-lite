@@ -18,8 +18,11 @@ authorizes the orchestrating session to commit and push after EACH successful
 package formation. Finish Source changes and candidate preparation/checks,
 pack ONE archive, commit the qualified Source payload and perform an ordinary
 non-force push, then obtain fresh blind reviews/reverse/CLEAR and install the
-exact sealed archive. A Git HEAD binding change requires qualification derived
-from the committed payload before sealing, not manual integrity-value replay.
+exact sealed archive. Qualification binds current declared source-file bytes
+and the archive; Git HEAD/commit metadata are excluded. An ordinary commit with
+unchanged included bytes needs no additional requalification. Changed included
+source inputs or archive bytes invalidate their affected proof; use public
+operation identities without manual integrity-value replay.
 Failed packing retains its pending operation and is not this Git trigger.
 Exact retries preserve the same archive/operation and avoid duplicate effects.
 This Source-only instruction does not authorize consumer Git operations or

@@ -97,8 +97,10 @@ orchestrating session's commit/push between successful pack and final assurance;
 this does not make the package CLI a Git caller or grant Runtime acceptance.
 For this Source repository, `AGENT.sidecar.md#source-package-git-policy` owns the
 required ordinary commit/push order. Failed formation does not trigger it. A
-changed HEAD binding requires current qualification from the committed payload
-before sealing the exact archive. Consumer Git authority is separate.
+changed included source input or archive invalidates its affected qualification.
+`releaseSourceBinding` binds declared current file bytes, excluding `.git`, HEAD,
+commit metadata and `dist`; ordinary commits with unchanged included bytes do
+not change that binding. Consumer Git authority is separate.
 
 One admitted maintainer process owns candidate allocation and worker launch.
 Packing and installation return control asynchronously and expose actual

@@ -338,9 +338,11 @@ its Git commit/push permission requirement. Apply that repository's Sidecar
 exception and release order; do not transfer it to a consumer project or infer
 Git authorization from Runtime acceptance. A failed package is no successful
 formation trigger. The orchestrating session performs authorized Git operations;
-the package release command remains outside Git. A changed HEAD binding needs
-current qualification from committed payload before seal, never manual integrity
-replay. This changes no generic assurance or Runtime acceptance gate.
+the package release command remains outside Git. Qualification follows declared
+current source-file and exact archive bytes; ordinary commits with unchanged
+included bytes do not invalidate it. Changed included inputs invalidate their
+affected proof, without manual integrity replay. This changes no generic
+assurance or Runtime acceptance gate.
 
 ## Delivery and cutover
 

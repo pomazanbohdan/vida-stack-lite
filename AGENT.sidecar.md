@@ -51,9 +51,12 @@ only to this Source repository, not Crea or other consumer repositories.
 Finish Source changes, prepare the candidate version and run qualifying checks;
 pack ONE archive; then commit that Source payload and push; then obtain fresh
 blind reviews, reverse validation and CLEAR, seal and globally install the exact
-qualified archive. If Git HEAD changes a qualification binding, derive current
-qualification from the committed payload before sealing. Use public returned
-identities and operation state; do not manually replay integrity values. Exact
+qualified archive. Release qualification binds current declared source-file
+bytes and the exact archive, not Git HEAD or commit metadata. Ordinary commit/
+push with unchanged included bytes does not invalidate that binding. Changes to
+included source inputs or archive bytes invalidate their affected qualification.
+Use public returned identities and operation state; do not manually replay
+integrity values. Exact
 operation retries retain the pending archive and avoid duplicate effects.
 
 The release CLI itself performs no Git operation. The orchestrating session is
