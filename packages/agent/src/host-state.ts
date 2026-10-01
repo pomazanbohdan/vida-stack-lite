@@ -630,6 +630,8 @@ function checkedWork(value: unknown): WorkState {
   requireState(validateWork(value), 'work record must match current WorkState/v1');
   const work = value as WorkState,
     binding = work.binding;
+  requireState(binding.project_ids.every((id,index)=>index===0 || binding.project_ids[index-1]! < id),
+    'work project identity must be an exact sorted set');
   validateLifecycleAggregate(work);
   if (work.migration) {
     const migration = work.migration;
@@ -1058,6 +1060,7 @@ function validateProgress(
     appendOnly(old.artifacts, work.artifacts, (ref) => ref.artifact_id, 'artifact references');
   }
   if (!before.work) {
+    requireState(work.request_transition == null, 'new request lineage requires dedicated successor admission');
     requireState(work.execution.assignment_attempts.length === 0, 'new work cannot import attempt authority');
     requireState(
       !work.migration || work.migration.rebind_status === 'pending',
@@ -2602,6 +2605,9 @@ export class HostStateStore {
     readonly operationId: string; readonly actor?: string;
   }): Readonly<Record<string,unknown>> {
     requireState(/^[a-z0-9][a-z0-9._-]{0,79}$/.test(input.operationId), 'work repair operation identity invalid');
+    requireState(['inspect','plan','apply','resume','restore'].includes(input.mode) &&
+      (input.mode==='plan' ? Boolean(input.actor?.trim() && !/\p{Cc}/u.test(input.actor)) : input.actor===undefined),
+      'work repair mode or attribution invalid');
     requireState(!this.#database.inTransaction, 'nested work repair forbidden');
     return this.#database.transaction(() => {
       this.#assertMaintenanceAvailable();
@@ -2635,6 +2641,13 @@ export class HostStateStore {
       let operation:Operation|null=row ? JSON.parse(row.payload) as Operation : null;
       if(operation) requireState(canonicalJsonDigest(operation)===row!.digest && operation.schema==='WorkStateRepairOperation/v1' &&
         operation.workspace_id===this.#workspaceId && operation.operation_id===input.operationId, 'work repair operation integrity differs');
+      if(operation) for(const change of operation.changes) {
+        const before=checkedWork(change.before),after=checkedWork(change.after);
+        requireState(sameJson(workIdentity(before),change.identity) &&
+          !Object.hasOwn(before,'request_transition') && sameJson(after,{...before,request_transition:null,
+            revision:before.revision+1,lifecycle:{...before.lifecycle,revision:before.lifecycle.revision+1}}),
+          'work repair transformation differs from the bundled current-v1 contract');
+      }
       if(input.mode==='plan') {
         requireState(input.actor?.trim() && !/\p{Cc}/u.test(input.actor),'work repair attribution missing');
         if(operation) {

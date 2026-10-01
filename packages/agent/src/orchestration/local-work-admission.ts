@@ -390,6 +390,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       };
   const predecessors: Parameters<HostStateStore['admitSuccessorWork']>[0]['predecessors'][number][] = [];
   const verifyPredecessor = (work: NonNullable<HostStateSnapshot['work']>, journal: Readonly<Record<string,unknown>>, requestPointer: string) => {
+    requireAdmission(work.binding.config_digest === configDigest, 'predecessor configured rights are stale');
     const priorScopeBytes = access.readBytes(work.contracts.scope.path, 'predecessor bound implementation scope');
     requireAdmission(digest(priorScopeBytes) === work.contracts.scope.sha256,
       'predecessor scope artifact changed');
@@ -423,8 +424,17 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         !(item.issue_id !== null && profile.mutation_scope === 'repository_source');
     }), 'predecessor active or reserved source effect prevents absorption');
     if (input.changeKind === 'fix') {
+      const oldAcceptanceBytes=access.readBytes(work.contracts.acceptance.path,'unfinished predecessor acceptance');
+      requireAdmission(digest(oldAcceptanceBytes)===work.contracts.acceptance.sha256,
+        'predecessor acceptance artifact changed');
+      const oldAcceptance=JSON.parse(oldAcceptanceBytes.toString('utf8')) as {contracts:{id:string;definition:string;sr:string}[]};
+      const newAcceptance=JSON.parse(acceptanceBytes.toString('utf8')) as typeof oldAcceptance;
       requireAdmission(work.binding.ac_ids.every((id) => scope.ac_ids.includes(id)),
         'debug correction must carry unfinished predecessor acceptance');
+      requireAdmission(oldAcceptance.contracts.every(old=>newAcceptance.contracts.some(current=>
+        current.id===old.id && current.definition===old.definition && current.sr===old.sr)) &&
+        work.binding.implementation_paths.every(item=>scope.implementation_paths.includes(item)),
+        'debug correction must preserve unfinished predecessor intent and scope');
     }
   };
   const workspace = store.readWorkspaceSnapshot();
