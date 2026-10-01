@@ -1854,6 +1854,7 @@ export async function run(args = process.argv.slice(2)) {
     }
   }
   if (values.renew_lease) {
+    const { readLocalSourceWriteAuthorization } = await import('../src/orchestration/local-source-authorization.ts');
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
@@ -1912,6 +1913,20 @@ export async function run(args = process.argv.slice(2)) {
                   item.host_reservation.receipt.attempt.lease.generation !== work.lease.generation))
             )
               fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal current request or issued writer binding is unsafe.');
+            if (profile.mutation_scope === 'repository_source' && item.issue_id !== null) {
+              const reference = work.lifecycle.references.find((entry) => entry.kind === 'execution_approval' &&
+                entry.artifact_schema === 'LocalSourceWriteAuthorization/v1' && entry.disposition === 'current' &&
+                entry.decision === 'approved');
+              if (!reference) fail('GAP-VIDA-RUN-CONTEXT-001', 'Writer heartbeat source authority was revoked.');
+              const bound = readLocalSourceWriteAuthorization(values.project_root, reference.path);
+              const authority = bound.authorization;
+              if (bound.sha256 !== reference.sha256 || authority.work_id !== work.binding.lifecycle_work_id ||
+                authority.attempt !== Number(values.attempt) || authority.native_session_handle !== values.native_session_handle ||
+                authority.scope_digest !== work.binding.work_source_revision || authority.config_digest !== work.binding.config_digest ||
+                authority.workflow_id !== work.binding.workflow_id || !authority.stage_ids.includes(item.request.stage_id) ||
+                canonicalJsonDigest([...authority.implementation_paths].sort()) !== canonicalJsonDigest([...work.binding.implementation_paths].sort()))
+                fail('GAP-VIDA-RUN-CONTEXT-001', 'Writer heartbeat source authority changed.');
+            }
           }
           if (
             runtimeConfigDigest(currentConfig) !== work.binding.config_digest ||

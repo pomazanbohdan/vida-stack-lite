@@ -11,6 +11,7 @@ import {
   assertCodexDesktopAdapterContract,
   HostStateStore,
   openHostStateDatabase,
+  inspectHostWorkspaceDatabase,
   workMigrationId,
 } from '../../src/host-state.ts';
 import * as trustedHostSurface from '../../src/trusted-host.ts';
@@ -292,6 +293,42 @@ test('successor admission atomically releases predecessor rights and rejects cha
   expect(store.admitSuccessorWork(request)).toEqual(admitted);
   expect(()=>store.admitSuccessorWork({...request,requestPointer:'user:changed'})).toThrow(/retry differs/);
   expect(JSON.parse(database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('work').payload)).toEqual(journal);
+});
+
+test('bundled work-state repair plans atomically, resumes exact postimages and restores without evidence loss', () => {
+  const original=store.compareAndSwapHostState(fixture());
+  const inspection=store.repairRequestTransitionFields({mode:'inspect',operationId:'fixture-repair'});
+  expect(inspection.changed_work).toHaveLength(1);
+  expect(store.readHostStateSnapshot(identity)).toEqual(original);
+  const plan=store.repairRequestTransitionFields({mode:'plan',operationId:'fixture-repair',actor:'fixture-owner'});
+  expect(plan.status).toBe('planned');
+  expect(store.readHostStateSnapshot(identity)).toEqual(original);
+  const applied=store.repairRequestTransitionFields({mode:'apply',operationId:'fixture-repair'});
+  expect(applied.status).toBe('applied');
+  const saved=store.readHostStateSnapshot(identity);
+  expect(saved.work.request_transition).toBeNull();
+  expect(saved.work.artifacts).toEqual(original.work.artifacts);
+  expect(saved.work.execution).toEqual(original.work.execution);
+  expect(saved.ledgerVersion).toEqual(original.ledgerVersion);
+  expect(store.repairRequestTransitionFields({mode:'resume',operationId:'fixture-repair'})).toEqual(applied);
+  const restored=store.repairRequestTransitionFields({mode:'restore',operationId:'fixture-repair'});
+  expect(restored.status).toBe('restored');
+  const after=store.readHostStateSnapshot(identity);
+  expect(Object.hasOwn(after.work,'request_transition')).toBe(false);
+  expect(after.work.revision).toBe(saved.work.revision+1);
+  expect(after.work.lifecycle.phase).toBe(original.work.lifecycle.phase);
+  expect(after.work.lifecycle.assurance).toEqual(original.work.lifecycle.assurance);
+  expect(store.repairRequestTransitionFields({mode:'restore',operationId:'fixture-repair'})).toEqual(restored);
+});
+
+test('readonly canonical workspace inspection preserves state and rejects a missing database', () => {
+  const original=store.compareAndSwapHostState(fixture());
+  const observed=inspectHostWorkspaceDatabase(databasePath,workspace);
+  expect(observed.schema).toBe('HostWorkspaceInspection/v1');
+  expect(observed.work[0].state).toEqual(original.work);
+  expect(observed.ledger_version).toEqual(original.ledgerVersion);
+  expect(store.readHostStateSnapshot(identity)).toEqual(original);
+  expect(()=>inspectHostWorkspaceDatabase(path.join(root,'missing.sqlite'),workspace)).toThrow();
 });
 function quiesceImportedState(states, ledger) {
   for (const state of states) {

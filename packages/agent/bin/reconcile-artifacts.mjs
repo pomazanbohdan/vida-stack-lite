@@ -16,6 +16,7 @@ import { runRuntimeConfigRebind } from './runtime-config-rebind.mjs';
 import { runDocumentationPolicyTransition } from './documentation-policy-transition.mjs';
 import { runSynthesisQualificationRepair } from './reconcile-synthesis-qualification.mjs';
 import { runSynthesisObservationCorrection } from './synthesis-observation-correction.mjs';
+import { runWorkStateRepair } from './repair-work-state.mjs';
 
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const json = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
@@ -117,6 +118,7 @@ function boundMaintenance(root, config, plan, selectorBytes) {
 
 /** Bundle-owned narrow current-v1 reconciliation; no historical ledger or observation rewrite. */
 export async function runReconcileArtifacts(args, { onPhase } = {}) {
+  if (args.includes('--kind') && args.includes('work-state')) return runWorkStateRepair(args);
   if (args.includes('--kind') && args.includes('documentation-policy'))
     return runDocumentationPolicyTransition(args, { onPhase });
   if (args.includes('--kind') && args.includes('runtime-config')) return runRuntimeConfigRebind(args, { onPhase });

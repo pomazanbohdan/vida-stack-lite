@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
-import { realpathSync, statSync } from 'node:fs';
+import { lstatSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { deriveWorkspaceId } from './workspace-identity.js';
 import type { SynthesisObservationCorrectionPlan } from './orchestration/persistent-session-handoff.js';
@@ -1437,6 +1437,67 @@ function expectedAttemptReconciliation(
   };
 }
 
+/** Read canonical existing rows without creating a database, schema, journal mode or authority. */
+export function inspectHostWorkspaceDatabase(databasePath: string, workspaceId: string): {
+  readonly schema: 'HostWorkspaceInspection/v1'; readonly workspace_id: string;
+  readonly work: readonly {readonly identity:WorkIdentity;readonly version:StateVersion;readonly state:WorkState}[];
+  readonly ledger: CoordinationLedger | null; readonly ledger_version: StateVersion | null;
+  readonly journals: readonly {readonly work_id:string;readonly attempt:number;readonly version:StateVersion;readonly state:Readonly<Record<string,unknown>>}[];
+  readonly governance: readonly {readonly store_id:string;readonly kind:string;readonly record_key:string;readonly version:StateVersion;readonly state:Readonly<Record<string,unknown>>}[];
+} {
+  requireState(path.isAbsolute(databasePath) && hashPattern.test(workspaceId), 'workspace inspection identity invalid');
+  const stat = lstatSync(databasePath);
+  requireState(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'workspace inspection database is unsafe');
+  const database = new Database(databasePath, {readonly:true,strict:true});
+  try {
+    return database.transaction(() => {
+      requireState((database.query('PRAGMA quick_check').get() as {quick_check:string})?.quick_check === 'ok',
+        'workspace inspection database integrity failed');
+      const rows = database.query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
+        .all(workspaceId) as {kind:string;id:string;revision:number;payload:string;digest:string}[];
+      let ledger: CoordinationLedger|null=null;
+      const work: {identity:WorkIdentity;version:StateVersion;state:WorkState}[]=[];
+      for (const row of rows) {
+        const value = JSON.parse(row.payload);
+        requireState(canonicalJsonDigest(value) === row.digest && value.revision === row.revision &&
+          value.workspace_id === workspaceId, 'workspace inspection row integrity differs');
+        if (row.kind === 'work') {
+          const state=checkedWork(value), identity=workIdentity(state);
+          requireState(identityKey(identity)===row.id,'workspace inspection work key differs');
+          work.push({identity,version:{revision:row.revision,digest:row.digest},state});
+        } else {
+          requireState(row.kind==='ledger' && row.id==='shared' && ledger===null,'workspace inspection state kind invalid');
+          ledger=checkedLedger(value);
+        }
+      }
+      for (const entry of work) requireState(ledger && (validatePair(entry.state,ledger),true),
+        'workspace inspection coordination unavailable');
+      const hasJournals=Boolean(database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'").get());
+      const journalRows=hasJournals ? database.query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt')
+        .all(workspaceId) as {work_id:string;attempt:number;revision:number;payload:string;digest:string}[] : [];
+      const journals=journalRows.map((row)=>{
+        const state=JSON.parse(row.payload) as Record<string,unknown>;
+        const owner=work.find((entry)=>entry.identity.work_id===row.work_id);
+        requireState(owner && canonicalJsonDigest(state)===row.digest && state.schema==='MastraSessionLedger/v1' &&
+          state.workspace_id===workspaceId && state.work_id===row.work_id && state.attempt===row.attempt &&
+          state.run_id===owner.state.execution.run_id && Array.isArray(state.items) && Array.isArray(state.completed),
+          'workspace inspection journal integrity differs');
+        return {work_id:row.work_id,attempt:row.attempt,version:{revision:row.revision,digest:row.digest},state};
+      });
+      const governance=database.query('SELECT store_id,kind,record_key,revision,payload,digest FROM agent_host_governance WHERE workspace_id=? ORDER BY store_id,kind,record_key')
+        .all(workspaceId).map((value)=>{
+          const row=value as {store_id:string;kind:string;record_key:string;revision:number;payload:string;digest:string};
+          const state=JSON.parse(row.payload) as Record<string,unknown>;
+          requireState(canonicalJsonDigest(state)===row.digest && ['operation','approval'].includes(row.kind),
+            'workspace inspection governance integrity differs');
+          return {store_id:row.store_id,kind:row.kind,record_key:row.record_key,version:{revision:row.revision,digest:row.digest},state};
+        });
+      return snapshot({schema:'HostWorkspaceInspection/v1' as const,workspace_id:workspaceId,work,ledger,
+        ledger_version:version(ledger),journals,governance});
+    }).deferred();
+  } finally {database.close();}
+}
+
 export function openHostStateDatabase(databasePath: string): Database {
   requireState(
     typeof databasePath === 'string' && path.isAbsolute(databasePath),
@@ -2533,6 +2594,91 @@ export class HostStateStore {
         canonicalJsonDigest(state) === row.digest, 'journal inspection identity differs');
       return snapshot({ attempt: row.attempt, version: {revision:row.revision,digest:row.digest}, state });
     }).deferred();
+  }
+
+  /** Bundle-owned current-v1 normalization with one atomic operation record and exact recovery preimages. */
+  repairRequestTransitionFields(input: {
+    readonly mode: 'inspect'|'plan'|'apply'|'resume'|'restore';
+    readonly operationId: string; readonly actor?: string;
+  }): Readonly<Record<string,unknown>> {
+    requireState(/^[a-z0-9][a-z0-9._-]{0,79}$/.test(input.operationId), 'work repair operation identity invalid');
+    requireState(!this.#database.inTransaction, 'nested work repair forbidden');
+    return this.#database.transaction(() => {
+      this.#assertMaintenanceAvailable();
+      this.#assertGovernanceQuiescent();
+      const journalTable=Boolean(this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'").get());
+      const journals=journalTable ? this.#database.query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt')
+        .all(this.#workspaceId) as {work_id:string;attempt:number;revision:number;payload:string;digest:string}[] : [];
+      for(const row of journals) {
+        const state=JSON.parse(row.payload) as {schema:string;items:{issue_id:string|null;observation:unknown;host_reservation?:unknown}[];completed:{items:{issue_id:string|null;observation:unknown;host_reservation?:unknown}[]}[]};
+        requireState(canonicalJsonDigest(state)===row.digest && state.schema==='MastraSessionLedger/v1' &&
+          [...state.items,...state.completed.flatMap(wave=>wave.items)].every(item=>
+            !item.host_reservation && (item.issue_id===null || item.observation!==null)),
+          'work repair requires settled native effects');
+      }
+      const rows=this.#database.query("SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id")
+        .all(this.#workspaceId) as {id:string}[];
+      const states=rows.map(row=>this.#load('work',row.id) as WorkState);
+      const ledger=this.#load('ledger','shared') as CoordinationLedger|null;
+      const bindings={ledger_version:version(ledger),journals:journals.map(({work_id,attempt,revision,digest})=>({work_id,attempt,version:{revision,digest}}))};
+      const changes=states.filter(state=>!Object.hasOwn(state,'request_transition')).map(before=>({
+        identity:workIdentity(before),before,after:checkedWork({...before,request_transition:null,
+          revision:before.revision+1,lifecycle:{...before.lifecycle,revision:before.lifecycle.revision+1}}),
+      }));
+      if(input.mode==='inspect') return snapshot({schema:'WorkStateRepairInspection/v1',operation_id:input.operationId,
+        status:'repairable_current_v1',workspace_id:this.#workspaceId,bindings,
+        changed_work:changes.map(change=>({identity:change.identity,version:version(change.before)}))});
+      this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_work_state_repair (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id))');
+      const row=this.#database.query('SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?')
+        .get(this.#workspaceId,input.operationId) as {payload:string;digest:string}|null;
+      type Operation={schema:'WorkStateRepairOperation/v1';operation_id:string;workspace_id:string;actor:string;status:'planned'|'applied'|'restored';bindings:typeof bindings;changes:typeof changes;restored?:readonly WorkState[]};
+      let operation:Operation|null=row ? JSON.parse(row.payload) as Operation : null;
+      if(operation) requireState(canonicalJsonDigest(operation)===row!.digest && operation.schema==='WorkStateRepairOperation/v1' &&
+        operation.workspace_id===this.#workspaceId && operation.operation_id===input.operationId, 'work repair operation integrity differs');
+      if(input.mode==='plan') {
+        requireState(input.actor?.trim() && !/\p{Cc}/u.test(input.actor),'work repair attribution missing');
+        if(operation) {
+          requireState(operation.actor===input.actor,'work repair attribution differs');
+          return snapshot(operation!);
+        }
+        operation={schema:'WorkStateRepairOperation/v1',operation_id:input.operationId,workspace_id:this.#workspaceId,
+          actor:input.actor!,status:'planned',bindings,changes};
+        this.#database.query('INSERT INTO agent_host_work_state_repair VALUES(?,?,?,?)')
+          .run(this.#workspaceId,input.operationId,canonicalJson(operation),canonicalJsonDigest(operation));
+        return snapshot(operation!);
+      }
+      requireState(operation,'work repair frozen plan unavailable');
+      requireState(sameJson(bindings,operation.bindings),'work repair dependent coordination or journal changed');
+      const current=operation.changes.map(change=>this.#load('work',identityKey(change.identity)) as WorkState|null);
+      if(operation.status==='restored') {
+        requireState(input.mode==='restore' && sameJson(current,operation.restored),'restored work repair postimage changed');
+        return snapshot(operation);
+      }
+      if(operation.status==='applied' && input.mode!=='restore') {
+        requireState(sameJson(current,operation.changes.map(change=>change.after)),'applied work repair postimage changed');
+        return snapshot(operation);
+      }
+      const restoring=input.mode==='restore';
+      requireState(restoring || operation.status==='planned','work repair operation status invalid');
+      const expected=operation.changes.map(change=>operation!.status==='applied' ? change.after : change.before);
+      requireState(sameJson(current,expected),'work repair exact preimage changed');
+      const targets=restoring ? operation.changes.map((change,index)=>operation!.status==='planned' ? change.before :
+        checkedWork({...change.before,revision:current[index]!.revision+1,
+          lifecycle:{...change.before.lifecycle,revision:current[index]!.lifecycle.revision+1}})) : operation.changes.map(change=>change.after);
+      if(!restoring || operation.status==='applied') for(const [index,target] of targets.entries()) {
+        const old=current[index]!;
+        if(ledger) validatePair(target,ledger);
+        const changed=this.#database.query("UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?")
+          .run(target.revision,canonicalJson(target),canonicalJsonDigest(target),this.#workspaceId,
+            identityKey(workIdentity(target)),old.revision,canonicalJsonDigest(old));
+        requireState(changed.changes===1,'work repair CAS conflict');
+      }
+      const next:Operation={...operation,status:restoring?'restored':'applied',...(restoring?{restored:targets}:{})};
+      const changed=this.#database.query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?')
+        .run(canonicalJson(next),canonicalJsonDigest(next),this.#workspaceId,input.operationId,row!.digest);
+      requireState(changed.changes===1,'work repair operation CAS conflict');
+      return snapshot(next);
+    }).immediate();
   }
 
   /** Admit and supersede as one HostState/coordination transaction, without rewriting native journals. */
