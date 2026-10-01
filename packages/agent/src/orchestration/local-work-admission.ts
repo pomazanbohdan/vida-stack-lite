@@ -21,6 +21,7 @@ import {
 import { type SessionHandoffContext } from './session-handoff.js';
 import { sessionBridgeRunId } from './mastra-session-bridge.js';
 import { readLocalSourceWriteAuthorization } from './local-source-authorization.js';
+import { validateObservedResearchRecordPlan, validateResearchResult, validateResearchSynthesis } from '../research-decision.js';
 
 const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: boolean }) => {
   compile(schema: object): (value: unknown) => boolean;
@@ -186,7 +187,20 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     work_id: context.work_id,
   };
   const before = store.readHostStateSnapshot(identity);
-  requireAdmission(before.work === null, 'local work was already admitted');
+  if (before.work) {
+    requireAdmission(before.work.request_transition?.request_pointer === scope.attribution.pointer &&
+      before.work.request_transition.native_session_handle === nativeSessionHandle &&
+      before.work.binding.work_item_digest === canonicalJsonDigest(workItem) &&
+      before.work.binding.scope_contract_digest === digest(scopeBytes) &&
+      before.work.binding.acceptance_manifest_digest === digest(acceptanceBytes) &&
+      before.work.binding.work_source_revision === source.digest &&
+      before.work.binding.config_digest === configDigest &&
+      before.work.binding.runtime_code_digest === codeDigest &&
+      before.work.binding.workflow_id === selected.workflow_id &&
+      before.work.request_transition.successor_work_id === null,
+      'local work retry differs from the admitted successor');
+    return { host: before, source };
+  }
   const ticketId = 'ticket-' + canonicalJsonDigest({ identity, nativeSessionHandle }).slice(0, 40);
   const resources = ['execution:' + context.work_id];
   const allowedResources = [...scope.allowed_paths.map((item) => 'file:' + item), ...resources].sort();
@@ -384,14 +398,29 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       priorScope.attribution.thread_id === nativeSessionHandle && priorScope.attribution.pointer.length > 0 &&
       priorScope.attribution.pointer === requestPointer &&
       !/\p{Cc}/u.test(priorScope.attribution.pointer), 'predecessor request attribution invalid');
-    const items = [...journal.items as {request:{stage_id:string;assignment_index:number;role:string};issue_id:string|null;host_reservation?:unknown;research_normalization?:unknown}[],
+    const items = [...journal.items as {request:{stage_id:string;assignment_index:number;role:string};issue_id:string|null;host_reservation?:unknown;research_normalization?:unknown;observation?:{status:string;action_id:string;issue_id:string}}[],
       ...(journal.completed as {items:typeof items}[]).flatMap((wave) => wave.items)];
     requireAdmission(items.every((item) => {
       const assignment = config.workflows[work.binding.workflow_id]?.stages.find((stage) => stage.id === item.request.stage_id)
         ?.assignments[item.request.assignment_index];
       const profile = assignment && config.agents.profiles[assignment.profile];
+      if (item.research_normalization) {
+        const plan = validateObservedResearchRecordPlan(item.research_normalization);
+        const artifact = work.artifacts.find((entry) => entry.path === plan.record_path &&
+          entry.sha256 === plan.record_sha256 && entry.stage_id === item.request.stage_id);
+        requireAdmission(item.observation?.status === 'reported_complete' &&
+          plan.observation_digest === canonicalJsonDigest(item.observation) && artifact,
+          'predecessor research normalization is pending or mismatched');
+        const bytes = access.readBytes(artifact.path, 'predecessor accepted research provenance');
+        requireAdmission(digest(bytes) === artifact.sha256,
+          'predecessor canonical research artifact changed');
+        const record = JSON.parse(bytes.toString('utf8'));
+        if (artifact.schema === 'ResearchResult/v1') validateResearchResult(record);
+        else if (artifact.schema === 'ResearchSynthesis/v1') validateResearchSynthesis(record);
+        else requireAdmission(false, 'predecessor normalized artifact has an unexpected contract');
+      }
       return assignment?.role === item.request.role && profile && !item.host_reservation &&
-        !(item.issue_id !== null && profile.mutation_scope === 'repository_source') && !item.research_normalization;
+        !(item.issue_id !== null && profile.mutation_scope === 'repository_source');
     }), 'predecessor active or reserved source effect prevents absorption');
     if (input.changeKind === 'fix') {
       requireAdmission(work.binding.ac_ids.every((id) => scope.ac_ids.includes(id)),
