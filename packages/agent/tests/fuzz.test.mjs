@@ -1,4 +1,6 @@
-import { describe, expect, test } from 'vitest';
+import { rmSync } from 'node:fs';
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
+import { afterAll, describe, expect, test } from 'vitest';
 import fc from 'fast-check';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,9 +21,17 @@ import {
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
+afterAll(() => {
+  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
+});
 const config = loadRuntimeConfig(repositoryRoot);
-const context = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const context = loadProjectContext(
+  repositoryRoot,
+  config,
+  config.repository.repository_id,
+  config.projects[0].project_id,
+);
 const authorizer = createConfiguredProjectAuthorizer(repositoryRoot, config);
 const seed = Number.parseInt(process.env.FAST_CHECK_SEED ?? '20260830', 10);
 const numRuns = Number.parseInt(process.env.FAST_CHECK_NUM_RUNS ?? '1000', 10);

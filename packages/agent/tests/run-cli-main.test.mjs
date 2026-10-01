@@ -60,7 +60,8 @@ describe('vida-agent run CLI main', () => {
       schema: 'VidaAgentRunResult/v1',
       status: 'blocked',
       code: 'GAP-VIDA-RUN-CLI-001',
-      message: 'Launcher arguments are incomplete or contain an unsupported option.',
+      message:
+        'Launcher arguments are incomplete or contain an unsupported option. Next action: inspect the exact work and check its issued contract before retrying.',
     });
     expect(exit.exitCode).toBe(1);
   });
@@ -80,7 +81,8 @@ describe('vida-agent run CLI main', () => {
       schema: 'VidaAgentRunResult/v1',
       status: 'blocked',
       code: 'GAP-VIDA-RUN-EXECUTION-001',
-      message: 'The requested run was blocked by runtime validation.',
+      message:
+        'The requested run was blocked by runtime validation. Next action: inspect the exact work and check its issued contract before retrying.',
     });
     expect(exit.exitCode).toBe(1);
   });

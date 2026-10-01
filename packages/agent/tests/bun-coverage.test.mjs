@@ -1,8 +1,9 @@
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { test } from 'bun:test';
+import { afterAll, test } from 'bun:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -49,13 +50,21 @@ function stampFixtureCoverage(directory, { nativeReport = true } = {}) {
     runFixtureCoverageGate(directory, '--stamp-native');
   }
 }
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(candidateRoot, '..');
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(candidateRoot);
+afterAll(() => {
+  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
+});
 const runtimeConfig = loadRuntimeConfig(repositoryRoot);
 const projectContext = Object.freeze(
-  loadProjectContext(repositoryRoot, runtimeConfig, runtimeConfig.repository.repository_id, '3mob'),
+  loadProjectContext(
+    repositoryRoot,
+    runtimeConfig,
+    runtimeConfig.repository.repository_id,
+    runtimeConfig.projects[0].project_id,
+  ),
 );
 const projectBinding = projectContext.project_bindings[0];
-if (!projectBinding) throw new Error('Expected the configured 3mob project binding');
+if (!projectBinding) throw new Error('Expected the configured fixture project binding');
 const registryHash = projectContext.registry_hash;
 const contextTenant = projectContext.repository_id;
 const contextProject = projectBinding.project_id;
@@ -310,23 +319,14 @@ test('mutation inventory assigns every maintained source, including production C
   );
   assert.ok(sourceInventory.typescriptSources.includes('src/orchestration/session-handoff.ts'));
   assert.ok(sourceInventory.typescriptSources.includes('src/orchestration/persistent-session-handoff.ts'));
-  for (const source of [
-    'src/reconciliation/current-v1-engine.ts',
-    'src/reconciliation/manifest.ts',
-    'src/reconciliation/planner.ts',
-    'src/reconciliation/coordination-ledger.ts',
-    'src/reconciliation/historical-disposition.ts',
-    'src/reconciliation/orphan-coordination-disposition.ts',
-  ]) {
-    assert.ok(sourceInventory.repositoryOnlySources.includes(source), source);
-    assert.ok(!sourceInventory.mutationSources.includes(source), source);
-  }
+  // Historical reconciliation sources are archived outside this npm package.
+  assert.deepEqual(sourceInventory.repositoryOnlySources, []);
   assert.deepEqual([...inventory.expected_sources].sort(), maintained);
   assert.deepEqual(
     maintained.filter((source) => !assigned.has(source)),
     [],
   );
-  for (const cli of ['bun.mjs', 'init.mjs', 'install.mjs', 'run.mjs']) {
+  for (const cli of ['bun.mjs', 'init.mjs', 'install.mjs', 'run.mjs', 'repair-work-state.mjs']) {
     assert.ok(inventory.expected_sources.includes(`bin/${cli}`));
     assert.ok(inventory.partitions.some((partition) => partition.sources.includes(`bin/${cli}`)));
     assert.ok(sourceInventory.v8CoverageSources.includes(`bin/${cli}`));

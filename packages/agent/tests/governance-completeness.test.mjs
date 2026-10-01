@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vitest';
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
+import { afterAll, describe, expect, test } from 'vitest';
 import path from 'node:path';
 import os from 'node:os';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -26,9 +27,17 @@ import {
 } from '../src/governance/edictum-boundary.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
+afterAll(() => {
+  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
+});
 const config = loadRuntimeConfig(repositoryRoot);
-const project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const project = loadProjectContext(
+  repositoryRoot,
+  config,
+  config.repository.repository_id,
+  config.projects[0].project_id,
+);
 let sequence = 0;
 
 function evidence() {
@@ -39,10 +48,10 @@ function evidence() {
     principal: 'principal-1',
     role: 'developer-orchestrator',
     action: 'write',
-    tenant: project.tenant_id,
-    project: project.project_id,
-    resourceTenant: project.tenant_id,
-    resourceProject: project.project_id,
+    tenant: project.repository_id,
+    project: project.project_ids[0],
+    resourceTenant: project.repository_id,
+    resourceProject: project.project_ids[0],
     registryHash: project.registry_hash,
   };
   const operationHash = computeWriteOperationHash({
@@ -55,8 +64,8 @@ function evidence() {
     decision: 'approved',
     decision_id: `approval-${sequence}`,
     approver: 'operator-1',
-    tenant: project.tenant_id,
-    project: project.project_id,
+    tenant: project.repository_id,
+    project: project.project_ids[0],
     operation_hash: operationHash,
     approved_at: approvedAt,
     expires_at: new Date(Date.now() + 60_000).toISOString(),
@@ -88,8 +97,8 @@ function identity() {
     source: 'authenticated-context',
     principal: 'principal-1',
     role: 'developer-orchestrator',
-    tenant: project.tenant_id,
-    project: project.project_id,
+    tenant: project.repository_id,
+    project: project.project_ids[0],
     registry_hash: project.registry_hash,
   });
 }
@@ -432,7 +441,7 @@ describe('governed write completeness', () => {
         expect(store.inspect(blockedFixture.operationHash)).toMatchObject({ status: 'reserved' });
         rmSync(reservationRoot, { recursive: true, force: true });
         writeFileSync(reservationRoot, 'blocked', 'utf8');
-        expect(store.inspect(blockedFixture.operationHash)).toBeNull();
+        expect(() => store.inspect(blockedFixture.operationHash)).toThrow(/ENOTDIR|not a directory/);
         await expect(store.markCommitStarted(blocked)).rejects.toBeDefined();
       } finally {
         rmSync(temporaryRoot, { recursive: true, force: true });

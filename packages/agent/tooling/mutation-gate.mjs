@@ -139,6 +139,13 @@ const partitions = [
     report: 'mutation-bun-cli-install.json',
   },
   {
+    name: 'bun-public-cli',
+    environment: 'bun',
+    sources: ['bin/scope.mjs', 'bin/vida-agent.mjs'],
+    tests: ['tests/scoped-source-snapshot.test.mjs', 'tests/portable-instructions.test.mjs'],
+    report: 'mutation-bun-public-cli.json',
+  },
+  {
     name: 'bun-cli-run',
     environment: 'bun',
     sources: ['bin/run.mjs'],
@@ -229,6 +236,13 @@ const partitions = [
       'tests/repair-cli-behavior.test.mjs',
     ],
     report: 'mutation-bun-dispatch-repair.json',
+  },
+  {
+    name: 'bun-work-state-repair',
+    environment: 'bun',
+    sources: ['bin/repair-work-state.mjs'],
+    tests: ['tests/bun/host-state.test.mjs', 'tests/automatic-work-absorption.test.mjs'],
+    report: 'mutation-bun-work-state-repair.json',
   },
   {
     name: 'bun-runtime-code-rebind',

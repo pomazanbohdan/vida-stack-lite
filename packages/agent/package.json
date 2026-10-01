@@ -29,6 +29,7 @@
     "bin/run.mjs",
     "bin/forward-review-proof.mjs",
     "bin/reconcile-artifacts.mjs",
+    "bin/repair-work-state.mjs",
     "bin/reconcile-readonly-dispatch.mjs",
     "bin/reconcile-synthesis-qualification.mjs",
     "bin/synthesis-observation-correction.mjs",

@@ -86,7 +86,7 @@ describe('host capability provider boundary', () => {
       package: { name: '@openclaw/fs-safe', version: '0.5.6', integrity: 'package-integrity' },
       attested: false,
     });
-    expect(host.nativeNoFollowAvailable).toBe(false);
+    // Primitive availability does not attest a particular Windows filesystem.
     expect(() => host.requireNativeNoFollowCapability(process.cwd())).toThrow(
       'native no-follow host capability is unavailable; persistent path operations fail closed',
     );
@@ -100,6 +100,10 @@ describe('host capability provider boundary', () => {
     const host = await import('../src/config/host-capability.ts?provider-unavailable');
 
     expect(host.nativeNoFollowAvailable).toBe(false);
+    expect(host.detectNativeNoFollowCapability(process.cwd())).toBeNull();
+    expect(() => host.requireNativeNoFollowCapability(process.cwd())).toThrow(
+      'native no-follow host capability is unavailable; persistent path operations fail closed',
+    );
   });
 
   test('requires both native flags and the Linux platform for availability', async () => {
@@ -127,6 +131,9 @@ describe('host capability provider boundary', () => {
     }));
     const host = await import('../src/config/host-capability.ts?windows-platform');
 
-    expect(host.nativeNoFollowAvailable).toBe(false);
+    expect(host.detectNativeNoFollowCapability(process.cwd())).toBeNull();
+    expect(() => host.requireNativeNoFollowCapability(process.cwd())).toThrow(
+      'native no-follow host capability is unavailable; persistent path operations fail closed',
+    );
   });
 });

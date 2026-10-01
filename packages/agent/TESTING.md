@@ -9,26 +9,31 @@ results; case timings alone do not establish aggregate savings.
 
 ## Candidate repository verification
 
-Run the current-v1 candidate checks below with declared Bun 1.4.2 and the frozen lockfile. A different global Bun must not silently change the selected version. Build-generated output counts only when source and package fingerprints match. `ci:candidate` includes numeric quality diagnostics; historical differential/parity tooling is archived outside the active package. First-cutover approval uses the retained-behavior matrix and exact outcomes below. Aggregate 100% coverage/mutation and `CRAP < 5` remain measured, owned post-cutover GAPs, as authorized by the user.
+Run the current-v1 candidate checks below from `packages/agent`, using Node 24.19.0, npm 11.x and the declared Bun 1.4.2 with the frozen lockfile. Use the checked-in launcher for installation and package scripts for checks. A different global Bun must not silently change the selected version. Build-generated output counts only when source and package fingerprints match. `ci:candidate` includes numeric quality diagnostics; historical differential/parity corpora are outside the active candidate script matrix. The retained-behavior matrix below identifies applicable checks; first-cutover acceptance requirements remain separate from source-development validation. Aggregate 100% coverage/mutation and `CRAP < 5` remain measured, owned post-cutover GAPs, as authorized by the user.
 
-```text
-bun install --frozen-lockfile
-bun run ci:candidate
-bun run test:toolchain
-bun run preflight
-bun run typecheck
-bun run test:config
-bun run test
-bun run test:pack
-bun run test:fuzz
-bun run test:zombies
-bun run test:deep
-bun run quality:static
-bun run test:coverage
-bun run coverage:gate
-bun run crap
-bun run test:mutation
-bun run format:check
+```sh
+node bin/bun.mjs install --frozen-lockfile
+npm run ci:candidate
+```
+
+The aggregate candidate command runs the declared matrix. While editing, select applicable individual scripts instead of repeating that entire matrix:
+
+```sh
+npm run test:toolchain
+npm run preflight
+npm run typecheck
+npm run test:config
+npm run test
+npm run test:pack
+npm run test:fuzz
+npm run test:zombies
+npm run test:deep
+npm run quality:static
+npm run test:coverage
+npm run coverage:gate
+npm run crap
+npm run test:mutation
+npm run format:check
 ```
 
 Use focused checks while editing and record each final-fingerprint result. Re-run affected checks after relevant changes. The ultimate quality gate is aggregate 100% coverage/mutation and `CRAP < 5` for every maintained function, with real output; report first-cutover shortfalls as owned post-cutover GAPs rather than passes. V8 covers packaged TypeScript other than the five Bun-native sources, plus public packaged `bin` entrypoints; the Bun-native lane binds LCOV and Istanbul counters to exact bytes. Report dependencies, generated output, tests, maintained production source, and tooling separately in size comparisons. The old differential corpus has 17 skipped of 18 cases and the parity manifest has pending candidate execution; neither proves old/new parity. Old-state task/ticket transfer and retired facade compatibility are excluded by the authorized clean start. Retained behavior is verified through the current-v1 routes below, without relabeling those historical corpora.
@@ -41,9 +46,9 @@ Use focused checks while editing and record each final-fingerprint result. Re-ru
 | Lifecycle reviews, reverse validation, status and delivery         | `lifecycle-state`, `observed-validation`, plus exactly three fresh blind final reviews and reverse receipts on one sealed fingerprint.                                                                                                                                                                                                    |
 | Documentation CLEAR                                                | Public `vida-agent-documentation-clear` baseline/closeout/verify in `documentation-clear.test.mjs`, typed deletion lineage and map denial, and real checkpoint revalidation at DELIVERY/COMPLETE in `bun/lifecycle-state.test.mjs`. The configured project policy is preserved as project data; old operational receipts remain inactive. |
 
-These entries name maintained files. The fixture-based tests prove first-to-second progression for all five configured workflows and bounded task-path receipt behavior; complete native terminal execution for all five remains a Runtime GAP. Eight native no-follow cases are skipped on this Windows host (six runtime-kernel and two Edictum); these remain platform GAPs, not PASS or equivalent native Linux evidence. Host-neutral implementation and Linux simulation do not close the missing native or first-delivery Runtime proof.
+These entries name maintained files. The fixture-based tests prove first-to-second progression for all five configured workflows and bounded task-path receipt behavior; complete native terminal execution for all five remains a Runtime GAP. Historical Windows runs skipped eight native no-follow cases (six runtime-kernel and two Edictum). Those observations are scoped to that platform and run; they do not establish the result on a current Linux host. Record actual native results and skips for each tested platform. Host-neutral implementation and Linux simulation do not substitute for native no-follow or first-delivery Runtime proof.
 
-Generic dynamic decomposition has no current consumer or accepted requirement. The historical parity corpus remains a GAP, not current-v1 acceptance evidence. CLEAR tests must run against an isolated built bundle named by `VIDA_CLEAR_BUNDLE`; the active project policy, its source path and schema are checked before the public operation writes evidence.
+Generic dynamic decomposition has no current consumer or accepted requirement. The historical parity corpus remains a GAP, not current-v1 acceptance evidence. CLEAR tests create an isolated built-package fixture by default; `VIDA_CLEAR_BUNDLE` may select an existing absolute isolated bundle. The active project policy, its source path and schema are checked before the public operation writes evidence.
 
 ## Audit-state and successor qualification
 
@@ -116,9 +121,9 @@ Exactly three fresh blind reviews, reverse validation, CLEAR closeout, installed
 for this candidate. Installed `0.1.1` is immutable. Numeric and native-platform
 GAPs above remain separate from the focused pass.
 
-## Portable bundle verification
+## Portable package verification
 
-Run `bun run verify` or `bun run ci` from the bundle root. Both install the frozen declared dependencies, copy the bundle into an unrelated temporary project, initialize its root integration files, prepare a no-provider public-run action, and run shipped generic tests and tooling. Their final-payload result remains to be measured. This check deliberately omits differential and parity, which require repository-only corpora, and the coverage, CRAP, and mutation gates, which do not yet have isolated installed-bundle evidence. `GAP-VIDA-PORTABLE-RELEASE-001` remains open after the first cutover and blocks any claim that portable verification proves the ultimate numeric targets. A passing portable check does not close that GAP or replace installed-runtime user acceptance.
+Run `npm run verify` or `npm run ci` from the package root with its pinned launcher. Both install the frozen declared dependencies, pack and extract the declared npm payload into an unrelated temporary project, initialize its root integration files, prepare a no-provider public-run action, and run shipped generic tests and tooling. Record actual final-payload results separately; listing these commands is not a pass receipt. This check deliberately omits differential and parity, which require repository-only corpora, and the coverage, CRAP, and mutation gates, which do not yet have isolated installed-bundle evidence. `GAP-VIDA-PORTABLE-RELEASE-001` remains open after the first cutover and blocks any claim that portable verification proves the ultimate numeric targets. A passing portable check does not close that GAP or replace installed-runtime user acceptance.
 
 ## Required integration evidence
 
@@ -138,6 +143,8 @@ authorization and receipts are test setup, never real native or Runtime proof.
 
 These scenarios are required acceptance criteria, not claims that the candidate already passes all of them. The public `vida-agent-run` path uses one LibSQL-backed Mastra graph for configured stage progression and a CAS ledger for session action issuance and observations. The active session alone invokes built-in collaboration tools. A fresh admitted source-writing work item uses the existing HostState work/ticket/lease and narrowly scoped `source.write` approval path. Bounded source and context snapshots invalidate affected evidence when declared bytes drift; they cannot attribute an external edit during the same write interval or inspect undeclared paths. A research-free task fixture has actual read-only Luna validator and tester observations through issuance of `prepare_delivery`, with synthesis/developer steps explicitly marked TEST SETUP. A separate source test prepares `DeliveryInstruction/v1` from a persisted proposal and current receipts. Another injected-fault test proves that a pre-issue HostState effect blocks replay until explicit positive no-invocation/quiescence evidence is supplied, reconciled and bound to a successor lease generation. Research-producing workflows still need genuine current `ResearchResult/v1` artifacts; portable installation, full assurance and user acceptance remain open. Runtime acceptance is attributable only to the user.
 
+The Root integration and Archive and cutover rows retain the former copied-bundle migration requirements. Their predecessor paths are historical scope, not instructions to recreate or activate those paths in this npm source repository.
+
 | Area                      | Required observation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Portable install          | Copy only the complete bundle into an unrelated repository/path/identity. With this checkout inaccessible, install declared tools, initialize root files, load its own project YAML, and prepare/resume a new no-provider Mastra public run. Repeated initialization must preserve existing project values. A final-payload result remains to be measured.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -152,6 +159,8 @@ These scenarios are required acceptance criteria, not claims that the candidate 
 
 ## Assurance and delivery
 
-The final layout is reviewed before installation. Run exactly three fresh history-isolated blind reviews, reverse validation, and documentation CLEAR against the same sealed bytes after quality checks. A relevant mutation, including detected external drift in the scoped source, invalidates affected checks and the bound review set. Before `execute`, validate the approved `VidaCutoverActivationDecision/v1` at `.agent/cutover/<cutover-id>/activation-decision.v1.json`: the plan, payload manifest, projected selector intent, and six separate parity/security/assurance/rollback/DEV/UAT evidence files must match their current hashes. Exercise missing, rejected, stale and changed-decision or evidence cases, including `--resume`; no direct selector publication path may bypass the decision. These byte checks establish integrity, not authenticated DEV/UAT observation, current-attempt Cedar/Edictum enforcement, or general external-edit detection. The delivery manifest identifies created and modified files, exact installation destination and order, archived/repository-only items, and post-install checks. Static tests, file copying and hashes do not close Runtime acceptance; obtain attributable user testing of the installed version. Commit follows acceptance; push requires a separate instruction.
+Current npm local publication follows the repository-owned `release:local` workflow in [the installation guide](docs/installation.md#local-npm-publication). It does not run the former copied-bundle cutover or migrate consumer state.
 
-Focused preparation, archive, stage, and entrypoint tests provide Code/Static evidence for the staged registry and exact old-test archive only; the live registry and `tests/agent-runtime/` remain unchanged before cutover. Source and tests provide Code/Static evidence only. Require separate observation of built-in session tool calls, installed bundle behavior, selector-bound cutover and user Runtime acceptance. Do not report a Desktop attestation, migrated ticket, or Windows-specific proof as a substitute.
+The final layout is reviewed before installation. Run exactly three fresh history-isolated blind reviews, reverse validation, and documentation CLEAR against the same sealed bytes after quality checks. A relevant mutation, including detected external drift in the scoped source, invalidates affected checks and the bound review set. For the former copied-bundle cutover, before its `execute` operation, validate the approved `VidaCutoverActivationDecision/v1` at `.agent/cutover/<cutover-id>/activation-decision.v1.json`: the plan, payload manifest, projected selector intent, and six separate parity/security/assurance/rollback/DEV/UAT evidence files must match their current hashes. Exercise missing, rejected, stale and changed-decision or evidence cases, including `--resume`; no direct selector publication path may bypass the decision. These byte checks establish integrity, not authenticated DEV/UAT observation, current-attempt Cedar/Edictum enforcement, or general external-edit detection. The delivery manifest identifies created and modified files, exact installation destination and order, archived/repository-only items, and post-install checks. Static tests, file copying and hashes do not close Runtime acceptance; obtain attributable user testing of the installed version. Commit follows acceptance; push requires a separate instruction.
+
+Historical copied-bundle preparation, archive, stage and entrypoint evidence applies only to its staged registry and exact old-test archive. The table's Root integration and Archive and cutover rows retain that migration scope; their predecessor paths are inactive provenance, not current npm source-development instructions. Source and tests provide Code/Static evidence only. Require separate observation of built-in session tool calls, installed bundle behavior, selector-bound cutover and user Runtime acceptance. Do not report a Desktop attestation, migrated ticket, or Windows-specific proof as a substitute.

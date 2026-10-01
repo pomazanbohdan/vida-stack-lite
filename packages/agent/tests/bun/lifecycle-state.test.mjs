@@ -28,9 +28,9 @@ function clearFixture() {
     write(
       destination,
       readFileSync(path.join(packageRoot, 'templates', template), 'utf8')
-        .replaceAll('{{REPOSITORY}}', 'creatio-sample-repository')
-        .replaceAll('{{PROJECTS}}', 'refactoring')
-        .replaceAll('{{PROJECT}}', 'refactoring')
+        .replaceAll('{{REPOSITORY}}', 'fixture-repository')
+        .replaceAll('{{PROJECTS}}', 'fixture-project')
+        .replaceAll('{{PROJECT}}', 'fixture-project')
         .replaceAll('{{BUNDLE}}', 'vida-agent'),
     );
   write(
@@ -38,7 +38,7 @@ function clearFixture() {
     readFileSync(path.join(packageRoot, 'schemas/documentation-policy.v1.schema.json')),
   );
   write('vida-agent/TESTING.md', 'fixture testing\n');
-  write('docs/creatio/map.md', 'map\n');
+  write('docs/fixture/map.md', 'map\n');
   write('docs/agent-instructions/index.md', 'index\n');
   write('docs/agent-instructions/current.md', 'current\n');
   write(
@@ -46,9 +46,9 @@ function clearFixture() {
     JSON.stringify({
       schema: 'DocumentationPolicy/v1',
       policy_id: 'lifecycle-clear',
-      project_id: 'refactoring',
+      project_id: 'fixture-project',
       source_path: 'docs/agent-instructions/documentation-policy.v1.json',
-      owner: 'project:refactoring',
+      owner: 'project:fixture-project',
       required: true,
       canonical_roots: ['docs/agent-instructions'],
       map_paths: ['docs/agent-instructions/index.md'],
@@ -178,8 +178,8 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       const fingerprint = hash('e');
       const clearInput = {
         repository_root: fixture.root,
-        repository_id: 'creatio-sample-repository',
-        project_id: 'refactoring',
+        repository_id: 'fixture-repository',
+        project_id: 'fixture-project',
         work_id: 'lifecycle-clear',
         source_revision: 'source-1',
         scope_paths: ['src/task.ts'],
@@ -335,8 +335,8 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       work = transitionLifecycleState(work, 'VERIFY', 'Review.');
       const clearInput = {
         repository_root: fixture.root,
-        repository_id: 'creatio-sample-repository',
-        project_id: 'refactoring',
+        repository_id: 'fixture-repository',
+        project_id: 'fixture-project',
         work_id: 'lifecycle-clear',
         source_revision: 'source-1',
         scope_paths: ['src/task.ts'],

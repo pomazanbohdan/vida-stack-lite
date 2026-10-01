@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
-import {readFileSync,writeFileSync} from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -365,11 +365,11 @@ test('bundled work-state repair plans atomically, resumes exact postimages and r
 
 test('readonly canonical workspace inspection preserves populated governance and database bytes', async () => {
   const original = store.compareAndSwapHostState(fixture());
-  const operation = store.reserveOperation('inspection','1'.repeat(64),'2'.repeat(64));
-  store.transitionOperation(operation,'commit_unknown');
-  store.transitionOperation(operation,'applied','3'.repeat(64));
+  const operation = store.reserveOperation('inspection', '1'.repeat(64), '2'.repeat(64));
+  store.transitionOperation(operation, 'commit_unknown');
+  store.transitionOperation(operation, 'applied', '3'.repeat(64));
   const bytes = await readFile(databasePath);
-  const schema = database.query("SELECT name,sql FROM sqlite_master ORDER BY name").all();
+  const schema = database.query('SELECT name,sql FROM sqlite_master ORDER BY name').all();
   const journalMode = database.query('PRAGMA journal_mode').get();
   const observed = inspectHostWorkspaceDatabase(databasePath, workspace);
   expect(observed.schema).toBe('HostWorkspaceInspection/v1');
@@ -378,7 +378,7 @@ test('readonly canonical workspace inspection preserves populated governance and
   expect(observed.governance).toHaveLength(1);
   expect(observed.governance[0].state.status).toBe('applied');
   expect(await readFile(databasePath)).toEqual(bytes);
-  expect(database.query("SELECT name,sql FROM sqlite_master ORDER BY name").all()).toEqual(schema);
+  expect(database.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(schema);
   expect(database.query('PRAGMA journal_mode').get()).toEqual(journalMode);
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
   expect(() => inspectHostWorkspaceDatabase(path.join(root, 'missing.sqlite'), workspace)).toThrow();
@@ -445,17 +445,23 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
   expect(JSON.parse(row.payload)).toEqual(journal);
   expect(() => store.renewActiveLocalLease({ ...request, nativeSessionHandle: 'foreign' })).toThrow();
   const readClock = Date.now;
-  const expiredClock = Date.parse(renewed.ledger.tickets.find((ticket) => ticket.ticket_id === renewed.work.lease.ticket_id).expires_at) + 1;
+  const expiredClock =
+    Date.parse(renewed.ledger.tickets.find((ticket) => ticket.ticket_id === renewed.work.lease.ticket_id).expires_at) +
+    1;
   try {
     Date.now = () => expiredClock;
-    expect(() => store.renewActiveLocalLease({
-      ...request,
-      expectedWork: renewed.workVersion,
-      expectedLedger: renewed.ledgerVersion,
-      expectedJournal: { revision: row.revision, digest: canonicalJsonDigest(journal) },
-    })).toThrow(/live expiry differs/);
+    expect(() =>
+      store.renewActiveLocalLease({
+        ...request,
+        expectedWork: renewed.workVersion,
+        expectedLedger: renewed.ledgerVersion,
+        expectedJournal: { revision: row.revision, digest: canonicalJsonDigest(journal) },
+      }),
+    ).toThrow(/live expiry differs/);
     expect(store.readHostStateSnapshot(identity)).toEqual(renewed);
-  } finally { Date.now = readClock; }
+  } finally {
+    Date.now = readClock;
+  }
 });
 function quiesceImportedState(states, ledger) {
   for (const state of states) {
@@ -1045,86 +1051,132 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
   quiesceImportedState([initial.nextWork], initial.nextLedger);
   store.compareAndSwapHostState(initial);
   const before = store.readWorkspaceSnapshot();
-  const consumerFile = path.join(root,'consumer-source.txt');
+  const consumerFile = path.join(root, 'consumer-source.txt');
   const originalBytes = Buffer.from('original consumer source\n');
-  writeFileSync(consumerFile,originalBytes);
-  const competingHandle = new Database(databasePath,{strict:true});
+  writeFileSync(consumerFile, originalBytes);
+  const competingHandle = new Database(databasePath, { strict: true });
   handles.push(competingHandle);
-  const competing = new HostStateStore(competingHandle,workspace);
-  const migration = maintenanceStore(), fence = migration.acquireMaintenanceFence(maintenanceBinding());
-  expect(()=>competing.recordAdmissionAttempt('held-fence',1,{valid:'fixture'})).toThrow(/maintenance fence/);
+  const competing = new HostStateStore(competingHandle, workspace);
+  const migration = maintenanceStore(),
+    fence = migration.acquireMaintenanceFence(maintenanceBinding());
+  expect(() => competing.recordAdmissionAttempt('held-fence', 1, { valid: 'fixture' })).toThrow(/maintenance fence/);
   expect(database.query('SELECT count(*) AS count FROM agent_host_admission_attempt').get().count).toBe(0);
   let callbacks = 0;
   const baseline = migration.consumerMigrationState(fence, 'baseline', () => {
     callbacks++;
-    expect(() => store.recordAdmissionAttempt('blocked',1,{valid:'fixture'})).toThrow(/maintenance|nested/);
+    expect(() => store.recordAdmissionAttempt('blocked', 1, { valid: 'fixture' })).toThrow(/maintenance|nested/);
     return 'files archived';
   });
   expect(baseline.status).toBe('baseline');
   expect(migration.readWorkspaceSnapshot().work).toHaveLength(0);
   expect(migration.readWorkspaceSnapshot().ledger).toBeNull();
-  writeFileSync(consumerFile,'deterministic initialization failure output');
-  expect(()=>migration.consumerMigrationState(fence,'restore',()=>{
-    writeFileSync(consumerFile,originalBytes);
-    throw Error('interrupted restore after exact file publication');
-  })).toThrow(/interrupted restore/);
+  writeFileSync(consumerFile, 'deterministic initialization failure output');
+  expect(() =>
+    migration.consumerMigrationState(fence, 'restore', () => {
+      writeFileSync(consumerFile, originalBytes);
+      throw Error('interrupted restore after exact file publication');
+    }),
+  ).toThrow(/interrupted restore/);
   expect(readFileSync(consumerFile)).toEqual(originalBytes);
   expect(migration.readWorkspaceSnapshot().work).toHaveLength(0);
-  expect(()=>competing.recordAdmissionAttempt('interrupted-fence',1,{valid:'fixture'})).toThrow(/maintenance fence/);
-  const restored = migration.consumerMigrationState(fence,'restore',()=>{
+  expect(() => competing.recordAdmissionAttempt('interrupted-fence', 1, { valid: 'fixture' })).toThrow(
+    /maintenance fence/,
+  );
+  const restored = migration.consumerMigrationState(fence, 'restore', () => {
     callbacks++;
-    expect(() => store.recordAdmissionAttempt('blocked',1,{valid:'fixture'})).toThrow(/maintenance|nested/);
+    expect(() => store.recordAdmissionAttempt('blocked', 1, { valid: 'fixture' })).toThrow(/maintenance|nested/);
     expect(readFileSync(consumerFile)).toEqual(originalBytes);
     return 'files restored';
   });
   expect(restored.status).toBe('restored');
   await migration.releaseMaintenanceFence(fence);
   const after = migration.readWorkspaceSnapshot();
-  expect(after).toEqual({...before, work: before.work.map(row=>({...row,maintenanceGeneration:fence.fence.generation}))});
+  expect(after).toEqual({
+    ...before,
+    work: before.work.map((row) => ({ ...row, maintenanceGeneration: fence.fence.generation })),
+  });
   expect(after.work[0].maintenanceGeneration).toBeGreaterThan(before.work[0].maintenanceGeneration);
   expect(callbacks).toBe(2);
   expect(readFileSync(consumerFile)).toEqual(originalBytes);
 });
 
 test('consumer migration restore refuses a prepared admission even when no WorkState was created', async () => {
-  const migration = maintenanceStore(), binding = maintenanceBinding();
+  const migration = maintenanceStore(),
+    binding = maintenanceBinding();
   const first = migration.acquireMaintenanceFence(binding);
-  migration.consumerMigrationState(first,'baseline',()=>undefined);
+  migration.consumerMigrationState(first, 'baseline', () => undefined);
   await migration.releaseMaintenanceFence(first);
-  migration.recordAdmissionAttempt('failed-before-work',1,{minimum_valid_identity:'fixture'});
+  migration.recordAdmissionAttempt('failed-before-work', 1, { minimum_valid_identity: 'fixture' });
   const second = migration.acquireMaintenanceFence(binding);
   let called = false;
-  expect(()=>migration.consumerMigrationState(second,'restore',()=>{called=true;})).toThrow(/new admission/);
+  expect(() =>
+    migration.consumerMigrationState(second, 'restore', () => {
+      called = true;
+    }),
+  ).toThrow(/new admission/);
   expect(called).toBe(false);
   expect(migration.readWorkspaceSnapshot().work).toHaveLength(0);
 });
 
 test('consumer migration rejects issued unknown journals before baseline filesystem effects', () => {
   const initial = fixture();
-  quiesceImportedState([initial.nextWork],initial.nextLedger);
+  quiesceImportedState([initial.nextWork], initial.nextLedger);
   store.compareAndSwapHostState(initial);
-  const journal = {schema:'MastraSessionLedger/v1',workspace_id:workspace,work_id:'work',attempt:1,run_id:'run-work',items:[{issue_id:'fixture-issued',observation:null}],completed:[]};
-  database.exec('CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))');
-  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(workspace,'work',1,1,canonicalJson(journal),canonicalJsonDigest(journal));
+  const journal = {
+    schema: 'MastraSessionLedger/v1',
+    workspace_id: workspace,
+    work_id: 'work',
+    attempt: 1,
+    run_id: 'run-work',
+    items: [{ issue_id: 'fixture-issued', observation: null }],
+    completed: [],
+  };
+  database.exec(
+    'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
+  );
+  database
+    .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+    .run(workspace, 'work', 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
   const before = database.query('SELECT * FROM agent_host_state ORDER BY kind,id').all();
-  const migration = maintenanceStore(),fence=migration.acquireMaintenanceFence(maintenanceBinding());
-  let called=false;
-  expect(()=>migration.consumerMigrationState(fence,'baseline',()=>{called=true;})).toThrow(/outcome remains unknown/);
+  const migration = maintenanceStore(),
+    fence = migration.acquireMaintenanceFence(maintenanceBinding());
+  let called = false;
+  expect(() =>
+    migration.consumerMigrationState(fence, 'baseline', () => {
+      called = true;
+    }),
+  ).toThrow(/outcome remains unknown/);
   expect(called).toBe(false);
   expect(database.query('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(before);
-  expect(JSON.parse(database.query('SELECT payload FROM agent_host_mastra_session_ledger').get().payload)).toEqual(journal);
+  expect(JSON.parse(database.query('SELECT payload FROM agent_host_mastra_session_ledger').get().payload)).toEqual(
+    journal,
+  );
 });
 
 test('consumer migration rejects foreign canonical rows appearing after its baseline', () => {
-  const migration=maintenanceStore(),fence=migration.acquireMaintenanceFence(maintenanceBinding());
-  migration.consumerMigrationState(fence,'baseline',()=>undefined);
-  const foreign=fixture('foreign').nextWork;
-  const key=JSON.stringify([foreign.binding.repository_id,foreign.binding.project_ids,foreign.binding.integrations_digest,foreign.binding.lifecycle_work_id]);
-  database.query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)').run(workspace,'work',key,foreign.revision,canonicalJson(foreign),canonicalJsonDigest(foreign));
-  let called=false;
-  expect(()=>migration.consumerMigrationState(fence,'restore',()=>{called=true;})).toThrow(/new admission|changed canonical state/);
+  const migration = maintenanceStore(),
+    fence = migration.acquireMaintenanceFence(maintenanceBinding());
+  migration.consumerMigrationState(fence, 'baseline', () => undefined);
+  const foreign = fixture('foreign').nextWork;
+  const key = JSON.stringify([
+    foreign.binding.repository_id,
+    foreign.binding.project_ids,
+    foreign.binding.integrations_digest,
+    foreign.binding.lifecycle_work_id,
+  ]);
+  database
+    .query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)')
+    .run(workspace, 'work', key, foreign.revision, canonicalJson(foreign), canonicalJsonDigest(foreign));
+  let called = false;
+  expect(() =>
+    migration.consumerMigrationState(fence, 'restore', () => {
+      called = true;
+    }),
+  ).toThrow(/new admission|changed canonical state/);
   expect(called).toBe(false);
-  expect(database.query('SELECT payload FROM agent_host_state WHERE id=?').get(key).payload).toBe(canonicalJson(foreign));
+  expect(database.query('SELECT payload FROM agent_host_state WHERE id=?').get(key).payload).toBe(
+    canonicalJson(foreign),
+  );
 });
 
 describe('host-owned durable maintenance fence', () => {

@@ -305,8 +305,14 @@ v8CoverageTest(
       nodeVersion: JSON.parse(readFileSync(path.join(root, 'package.json'))).engines.node,
       bunExecutable,
     };
-    const first = install(initArgs(project), installOptions);
-    assert.equal(first.initialization, 'delegated_successfully');
+    assert.throws(
+      () => install(initArgs(project), installOptions),
+      (error) => {
+        assert.equal(error.message, 'Project initialization failed.');
+        assert.equal(error.exitCode, 1);
+        return true;
+      },
+    );
     assert.equal(readFileSync(sidecar, 'utf8'), 'Existing project owner context\n');
     for (const absent of [
       'AGENTS.md',

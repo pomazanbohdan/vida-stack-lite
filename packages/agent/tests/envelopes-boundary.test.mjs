@@ -1,5 +1,15 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
+import { rmSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { afterAll, afterEach, describe, expect, test, vi } from 'vitest';
 import path from 'node:path';
+
+const repositoryRoot =
+  process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
+  createConsumerFixture(path.resolve(fileURLToPath(new URL('..', import.meta.url))));
+afterAll(() => {
+  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
+});
 
 afterEach(() => {
   vi.resetModules();
@@ -187,9 +197,9 @@ describe('runtime envelope canonicalization boundary', () => {
     const cedar = await import('../src/authorization/cedar-boundary.ts?execution-failure');
     const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
     const { loadProjectContext } = await import('../src/config/project-context.ts');
-    const root = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(process.cwd(), '..');
+    const root = repositoryRoot;
     const config = loadRuntimeConfig(root);
-    const project = loadProjectContext(root, config, config.repository.repository_id, '3mob');
+    const project = loadProjectContext(root, config, config.repository.repository_id, config.projects[0].project_id);
     const request = {
       principal: 'principal-1',
       role: 'developer-orchestrator',

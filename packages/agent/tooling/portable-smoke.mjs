@@ -89,6 +89,11 @@ try {
   assert.equal(existsSync(path.join(copiedBundle, 'package.json')), true);
   assert.equal(existsSync(path.join(copiedBundle, '..', 'agent-runtime')), false);
 
+  // Bun pack omits its root lockfile. Restore the shipped frozen lock only in
+  // this disposable copy before installing, never in the source or global package.
+  if (!existsSync(path.join(copiedBundle, 'bun.lock'))) {
+    cpSync(path.join(copiedBundle, 'dist/portable/bun.lock'), path.join(copiedBundle, 'bun.lock'));
+  }
   run(copiedBundle, ['install', '--frozen-lockfile']);
   run(copiedBundle, [
     'bin/init.mjs',

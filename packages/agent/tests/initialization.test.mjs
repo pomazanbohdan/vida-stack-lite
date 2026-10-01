@@ -285,8 +285,13 @@ v8CoverageTest(
       await mkdir(path.dirname(path.join(root, existing)), { recursive: true });
       await writeFile(path.join(root, existing), 'owner bytes');
       const result = await init();
-      expect(result.exitCode).toBe(0);
-      expect(JSON.parse(result.stdout).existing).toEqual([existing]);
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(JSON.parse(result.stderr)).toMatchObject({
+        status: 'partial_not_ready',
+        ready: false,
+        existing: [existing],
+      });
       expect(await readFile(path.join(root, existing), 'utf8')).toBe('owner bytes');
       expect((await readdir(root)).sort()).toEqual([existing.split('/')[0], 'tools'].sort());
       await rm(path.join(root, existing.split('/')[0]), {
@@ -347,8 +352,10 @@ v8CoverageTest(
     expect((await readdir(root)).sort()).toEqual(['AGENTS.md', 'tools']);
     const repeated = await init();
     expect(repeated.exitCode, repeated.stderr).toBe(1);
-    expect(JSON.parse(repeated.stdout)).toMatchObject({
+    expect(repeated.stdout).toBe('');
+    expect(JSON.parse(repeated.stderr)).toMatchObject({
       status: 'partial_not_ready',
+      ready: false,
       existing: ['AGENTS.md'],
     });
     expect(await readFile(path.join(root, 'AGENTS.md'))).toEqual(firstBytes);

@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vitest';
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
+import { afterAll, describe, expect, test } from 'vitest';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -6,9 +7,17 @@ import { tmpdir } from 'node:os';
 import * as runtime from '../src/index.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
+afterAll(() => {
+  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
+});
 const config = runtime.loadRuntimeConfig(repositoryRoot);
-const context = runtime.loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const context = runtime.loadProjectContext(
+  repositoryRoot,
+  config,
+  config.repository.repository_id,
+  config.projects[0].project_id,
+);
 const categories = Object.freeze(['Zero', 'One', 'Many', 'Boundary', 'Interface', 'Exception', 'Simple']);
 const publicExports = Object.freeze([
   'LifecycleStateError',
@@ -230,15 +239,15 @@ function documentationClearFixture() {
   mkdirSync(path.dirname(path.join(root, schemaPath)), { recursive: true });
   cpSync(path.join(packageRoot, 'schemas/documentation-policy.v1.schema.json'), path.join(root, schemaPath));
   write(`${config.runtime.bundle}/TESTING.md`, 'fixture testing\n');
-  write('docs/creatio/map.md', 'map\n');
+  write('docs/fixture/map.md', 'map\n');
   write('docs/agent-instructions/index.md', 'index\n');
   write('docs/agent-instructions/current.md', 'current\n');
   const policy = {
     schema: 'DocumentationPolicy/v1',
     policy_id: 'clear-zombies',
-    project_id: 'creatio-sample',
+    project_id: config.repository.repository_id,
     source_path: 'docs/agent-instructions/documentation-policy.v1.json',
-    owner: 'project:refactoring',
+    owner: 'project:' + config.projects[0].project_id,
     required: true,
     canonical_roots: ['docs/agent-instructions'],
     map_paths: ['docs/agent-instructions/index.md'],
@@ -251,8 +260,8 @@ function documentationClearFixture() {
   write(policy.source_path, JSON.stringify(policy) + '\n');
   const input = {
     repository_root: root,
-    repository_id: 'creatio-sample-repository',
-    project_id: 'refactoring',
+    repository_id: config.repository.repository_id,
+    project_id: config.projects[0].project_id,
     work_id: 'clear-zombies',
     source_revision: 'source-1',
     scope_paths: ['docs/agent-instructions/current.md'],
@@ -446,7 +455,7 @@ describe('machine-checked public export ZOMBIES matrix', () => {
         team: 'default-development',
         kind: 'research',
         intent: 'information_research',
-        project: '3mob',
+        project: config.projects[0].project_id,
         risk_flags: [],
         labels: [],
       }).workflow_id,

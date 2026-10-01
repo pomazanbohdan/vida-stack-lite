@@ -3,6 +3,30 @@
 Owner: agent maintainers. Class: derived installation guide.
 Sources: [system specification](system-specification.md), [package declarations](../package.json), [Bun pin](../.bun-version), [public command](../bin/vida-agent.mjs), [initializer](../bin/init.mjs).
 
+## Source development setup
+
+The repository source layout is `agent=packages/agent` and `plugin=packages/plugin`. Use the existing checkout and the package-owned launcher; npm scripts select the exact Bun pin. From the repository root:
+
+```sh
+cd packages/agent
+node bin/bun.mjs install --frozen-lockfile
+npm run build
+npm run test:toolchain
+npm run verify
+```
+
+Package engines require Node 24.19.0 and npm 11.x; `.bun-version` and the package declarations pin Bun 1.4.2. Check [TESTING.md](../TESTING.md) for the full candidate matrix and evidence requirements. Source setup prepares local development; it does not globally install the agent, initialize a consumer, switch a selector or close Runtime acceptance. Keep credentials out of saved instructions and preserve the tracked manifests and lockfile during installation.
+
+## Linux lock upgrade boundary
+
+Linux now uses the same `resource + ".lock"` sibling namespace as Windows.
+Older Linux runtimes that lock the resource itself must not run concurrently
+with this version against shared state: their lock namespaces do not coordinate.
+Upgrade only after affected processes are quiescent. Source-development setup
+in an isolated checkout is not a live-state migration or consumer upgrade.
+
+## Local npm publication
+
 The package name and public PATH command are `vida-agent`. The repository-owned
 `npm run release:local` command prepares a candidate, packages it once through
 npm prepack, and installs that exact archive globally after current assurance.
@@ -56,7 +80,7 @@ Use native absolute paths on Windows. npm creates the PATH shims in its configur
 
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
-Node and npm versions come from package engines. Bun comes only from the exact package pin and matching declarations. The pinned launcher first checks an absolute realpath PATH executable for the exact version and otherwise may fetch Bun through npm's cache and namespaces the transpiler cache outside the installed package. Explicit custom and disabled-cache settings remain supported. These operations are not an offline guarantee. The package installer checks npm-managed dependencies without running Bun installation in the global tree; embedded lock evidence is read without modifying that tree.
+Node and npm versions come from package engines. Bun comes only from the exact package pin and matching declarations. The pinned launcher first checks an absolute realpath PATH executable for the exact version and otherwise may fetch Bun through npm's cache and namespaces the transpiler cache outside the installed package. For npm layouts whose native executable is named `bun.exe` on Linux, nested commands use the adjacent `.bin/bun` alias only when its realpath is that same verified executable; another alias cannot replace it. Explicit custom and disabled-cache settings remain supported. These operations are not an offline guarantee. The package installer checks npm-managed dependencies without running Bun installation in the global tree; embedded lock evidence is read without modifying that tree.
 
 Neutral configuration uses local integration metadata for the explicit product set. Real provider, tenant, namespace, credentials and paths remain project-owned data. They do not select identity or grant authority.
 
@@ -157,13 +181,7 @@ issue. That correction preserves the original observation and does not prove
 no native effect. Inspect the frozen plan and current owner/selector state
 before applying either repair. These commands do not grant Runtime acceptance.
 
-The current source-write route uses cooperative exact-path ownership and scoped
-source authorization, with source rereads at issue/report and validation/delivery
-boundaries. External edits invalidate affected proof; a lease does not physically
-prevent another local process from editing files. Local declarations establish
-consistency, not human or tool-origin authentication. Installation and advisory
-handoff do not close Runtime acceptance; the specification owns the precise
-source/policy/evidence contract.
+The current source-write path uses cooperative exact-path ownership, leases, scoped `source.write` authorization and HostState policy/attempt checks, including the existing Cedar/Edictum boundaries. The CLI rereads declared source and configured context at issue, report, validation and delivery-preparation boundaries; changed bytes invalidate affected evidence unless they are admitted in-scope writer output. A lease does not prevent user or external edits, attribute concurrent edits, inspect undeclared paths or provide physical filesystem exclusion. Installation and an advisory handoff do not prove complete native workflow, consumer migration or user Runtime acceptance. The [system specification](system-specification.md) owns these bounded guarantees.
 
 Public `vida-agent reconcile-artifacts --kind work-state --mode inspect
 --project-root /absolute/consumer` reads existing canonical state without creating

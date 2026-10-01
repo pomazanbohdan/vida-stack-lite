@@ -1,17 +1,26 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { buildConfiguredContext } from '../src/orchestration/configured-context.ts';
 
-const root = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
+const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
+const root = createConsumerFixture(packageRoot, 'vida-configured-context-');
+afterAll(() => rmSync(root, { recursive: true, force: true }));
+mkdirSync(path.join(root, '.codex/skills/fixture-skill'), { recursive: true });
+writeFileSync(
+  path.join(root, '.codex/skills/fixture-skill/SKILL.md'),
+  '# Authored fixture skill\nRead the configured source.\n',
+);
 const config = loadRuntimeConfig(root);
 const base = {
   work_id: 'context-test',
   attempt: 1,
-  source_ids: ['candidate-testing', 'a2a-1'],
-  skill_refs: ['.codex/skills/clio/SKILL.md'],
+  source_ids: ['runtime-development-lifecycle', 'a2a-1'],
+  skill_refs: ['.codex/skills/fixture-skill/SKILL.md'],
 };
 
 describe('configured local context', () => {
@@ -23,9 +32,9 @@ describe('configured local context', () => {
     });
     expect(first).toEqual(second);
     expect(first.entries.map((entry) => [entry.kind, entry.id])).toEqual([
-      ['local', 'candidate-testing'],
+      ['local', 'runtime-development-lifecycle'],
       ['official', 'a2a-1'],
-      ['skill', '.codex/skills/clio/SKILL.md'],
+      ['skill', '.codex/skills/fixture-skill/SKILL.md'],
     ]);
     expect(first.entries[1]).toMatchObject({ status: 'unfetched_reference', sha256: null, bytes: null, content: null });
     for (const entry of [first.entries[0], first.entries[2]]) {

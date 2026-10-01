@@ -1,8 +1,9 @@
-import { test, expect } from 'bun:test';
+import { tmpdir } from 'node:os';
+import { afterEach, test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync, cpSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync, cpSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
@@ -19,13 +20,20 @@ import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snap
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 const source = process.env.VIDA_CONFIG_REBIND_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '..');
-const stage = path.resolve(import.meta.dirname, '../..');
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const json = (v) => JSON.stringify(v, null, 2) + '\n';
 
+const fixtureRoots = [];
+afterEach(() => {
+  for (const root of fixtureRoots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
 function fixture() {
-  const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? stage;
+  const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? tmpdir();
+  if (!path.isAbsolute(fixtureRoot)) throw Error('absolute private fixture root required');
+  mkdirSync(fixtureRoot, { recursive: true });
   const root = mkdtempSync(path.join(fixtureRoot, 'fixture-'));
+  fixtureRoots.push(root);
   const put = (relative, bytes) => {
     const file = path.join(root, relative);
     mkdirSync(path.dirname(file), { recursive: true });

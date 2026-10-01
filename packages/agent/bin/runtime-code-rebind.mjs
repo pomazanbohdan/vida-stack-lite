@@ -184,7 +184,8 @@ export function planRuntimeCodeRebind({ database, root, config, workspaceId, pro
   const pausedOwner = paused && prior && releasedClaim && release &&
     prior.source_revision === state.source_scope?.digest &&
     prior.exclusive_resources.every((resource) =>
-      owner.binding.allowed_resources.includes(resource) && resource.startsWith('file:')) &&
+      owner.binding.allowed_resources.includes(resource) &&
+      (resource.startsWith('file:') || resource === 'execution:' + workId)) &&
     !owner.execution.assignment_attempts.some((entry) =>
       entry.status === 'started' || entry.status === 'uncertain');
   requireRebind(owner.schema === 'WorkState/v1' && owner.workspace_id === workspaceId &&

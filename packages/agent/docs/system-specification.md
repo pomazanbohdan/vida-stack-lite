@@ -148,6 +148,12 @@ observations and unknown outcome. Replacement, admission and writer acquisition
 still require fresh source bindings. Unknown writer effects remain blocked;
 late original replies cannot satisfy a replacement generation.
 
+Paused runtime-code rebind accepts the exact owner-attributed released ticket
+with resources still present in the work binding: file resources or the
+internally derived `execution:<work_id>` resource for that same work. Foreign
+execution resources remain invalid; the source, configuration, journal,
+released claim and installed forward lineage checks still apply.
+
 The public session launcher offers `--renew-lease true` for the current live
 same-owner work, attempt, ticket, claim and generation. It checks the latest
 work/ledger/journal CAS, exact source, scope, configuration, schema and current
@@ -197,6 +203,12 @@ outputs independently of stage declaration order. Only the persisted Mastra
 workflow outcome `success` projects completion. A null suspended step with a
 failed, canceled or unknown outcome remains blocked; a ledger-only read cannot
 infer success from the absence of a suspended step.
+
+A staged runtime witness first checks the exact terminal journal identity,
+digest and absence of pending items. It then requires the same persisted Mastra
+run to report `success`, no pending requests, and observations exactly matching
+the completed journal. A ledger-only `blocked` projection does not reject a
+separately verified successful run or grant success to an unknown outcome.
 
 Automatic successor admission groups attributable requests by the existing
 validated implementation scope's exact `attribution.thread_id` and opaque
@@ -278,9 +290,26 @@ record-first partial write uses the same persisted observation and plan.
 The pinned Bun launcher validates package metadata and the exact pin before
 checking an absolute realpath executable from PATH. Only an exact version is
 used; absent, malformed or mismatched PATH candidates fall back to the existing
-npm pinned resolver. Explicit executable overrides retain strict checks. This
-local tool discovery does not attest toolchain provenance or guarantee offline
+npm pinned resolver. Nested commands may use an adjacent npm `.bin/bun` alias
+(including Linux packages whose native executable is named `bun.exe`) only
+when that alias resolves to the exact verified executable realpath. Explicit
+executable overrides retain strict checks. This local tool discovery does not attest toolchain provenance or guarantee offline
 operation.
+
+The safe repository access lock coordinates each protected resource through a
+dedicated `resource + ".lock"` sibling artifact on both Linux and Windows. Acquiring and
+releasing a lock must preserve the protected resource's bytes and retain
+no-follow path validation; contention never grants a caller ownership.
+
+Reflink cloning is optional acceleration for Linux file replacement and
+recovery. Filesystems without it use bounded, exclusive descriptor copying
+with no-follow containment, owned-file cleanup and existing byte/CAS checks.
+A native clone descriptor that is write-only is reopened readably only after
+matching its inode identity. Replacement and recovery do not guarantee atomic
+whole-file visibility: interruption can leave a missing or partial destination.
+Ambiguous destination contents fail closed while retaining the original
+backup. Cooperative locks coordinate runtime access; external edits remain
+possible. These guarantees do not promise universal power-loss recovery.
 
 ## Host integration direction
 

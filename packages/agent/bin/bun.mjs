@@ -176,7 +176,17 @@ export function pinnedEnvironment(executable, env = process.env, root = bundleRo
   );
   const key = keys.includes('PATH') ? 'PATH' : (keys[0] ?? 'PATH');
   for (const duplicate of keys) delete next[duplicate];
-  next[key] = `${path.dirname(executable)}${path.delimiter}${env[key] ?? ''}`;
+  let commandDirectory = path.dirname(executable);
+  // npm can name the native Linux executable bun.exe. Its verified .bin/bun
+  // alias lets nested shell commands keep using the same exact executable.
+  const npmCommandDirectory = path.resolve(commandDirectory, '../../.bin');
+  const npmCommand = path.join(npmCommandDirectory, process.platform === 'win32' ? 'bun.exe' : 'bun');
+  try {
+    if (realpathSync(npmCommand) === realpathSync(executable)) commandDirectory = npmCommandDirectory;
+  } catch {
+    /* Non-npm executables retain their own command directory. */
+  }
+  next[key] = `${commandDirectory}${path.delimiter}${env[key] ?? ''}`;
   return next;
 }
 

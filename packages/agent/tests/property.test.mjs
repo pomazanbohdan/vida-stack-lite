@@ -1,4 +1,7 @@
-import { test } from 'bun:test';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { parse, stringify } from 'yaml';
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
+import { afterAll, test } from 'bun:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,11 +14,39 @@ import {
 } from '../src/index.ts';
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 
-const repositoryRoot =
-  process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
+afterAll(() => {
+  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
+});
+if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) {
+  const file = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
+  const fixture = parse(readFileSync(file, 'utf8'));
+  fixture.projects[0].project_root = 'projects/fixture-project';
+  const secondary = structuredClone(fixture.projects[0]);
+  secondary.project_id = 'fixture-secondary';
+  secondary.title = 'Secondary fixture';
+  secondary.project_root = 'projects/fixture-secondary';
+  secondary.delivery_group = 'fixture-secondary';
+  fixture.projects.push(secondary);
+  for (const project of fixture.projects)
+    mkdirSync(path.join(repositoryRoot, project.project_root), { recursive: true });
+  fixture.integrations.providers.push({
+    ...fixture.integrations.providers[0],
+    id: 'local-fixture-secondary',
+    project_id: 'fixture-secondary',
+    namespace: 'fixture-secondary',
+  });
+  fixture.teams['default-development'].allowed_projects.push('fixture-secondary');
+  writeFileSync(file, stringify(fixture));
+}
 const config = loadRuntimeConfig(repositoryRoot);
-const projectContext = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const projectContext = loadProjectContext(
+  repositoryRoot,
+  config,
+  config.repository.repository_id,
+  config.projects[0].project_id,
+);
 const authorize = createConfiguredProjectAuthorizer(repositoryRoot, config);
 const repositoryId = projectContext.repository_id;
 const projectId = projectContext.project_ids[0];
@@ -87,7 +118,7 @@ test('workflow selection and compiled graph are deterministic (cases=256)', () =
       team: 'default-development',
       kind: item.kind,
       intent: item.intent,
-      project: random() > 0.5 ? '3mob' : 'refactoring',
+      project: config.projects[Math.floor(random() * config.projects.length)].project_id,
       risk_flags: [],
       labels: [],
     });
@@ -95,7 +126,7 @@ test('workflow selection and compiled graph are deterministic (cases=256)', () =
       team: 'default-development',
       kind: item.kind,
       intent: item.intent,
-      project: '3mob',
+      project: config.projects[0].project_id,
       risk_flags: [],
       labels: [],
     });

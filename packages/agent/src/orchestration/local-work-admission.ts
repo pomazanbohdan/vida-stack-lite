@@ -94,7 +94,11 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   );
   loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [selection.project]);
   store.recordAdmissionAttempt(context.work_id, context.attempt, {
-    workItem, nativeSessionHandle, context, scopePath: input.scopePath, acceptancePath: input.acceptancePath,
+    workItem,
+    nativeSessionHandle,
+    context,
+    scopePath: input.scopePath,
+    acceptancePath: input.acceptancePath,
   });
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const scopeBytes = access.readBytes(input.scopePath, 'accepted implementation scope');

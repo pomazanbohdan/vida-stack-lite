@@ -1,7 +1,16 @@
 import { test, expect } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { cpSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync, unlinkSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  symlinkSync,
+  writeFileSync,
+  unlinkSync,
+  existsSync,
+} from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { preparedFixture } from './documentation-policy-transition.test.mjs';
@@ -16,9 +25,13 @@ test('sealed public admin denies altered authority, root, closure and target bef
   // This private test payload uses current source; its synthetic review tuple is setup only.
   for (const file of ['bin/forward-candidate-admission.mjs', 'bin/documentation-policy-transition.mjs'])
     writeFileSync(path.join(bundle, file), readFileSync(path.resolve(import.meta.dirname, '..', file)));
-  const installedDeps = path.dirname(
-    path.dirname(createRequire(path.join(f.bundle, 'package.json')).resolve('ajv/package.json')),
-  );
+  const installedDeps = createRequire(path.join(f.bundle, 'package.json'))
+    .resolve.paths('yaml')
+    .find(
+      (directory) =>
+        existsSync(path.join(directory, 'yaml/package.json')) && existsSync(path.join(directory, 'ajv/package.json')),
+    );
+  if (!installedDeps) throw new Error('Fixture requires installed package dependencies');
   symlinkSync(installedDeps, path.join(f.root, 'node_modules'), 'junction');
   symlinkSync(installedDeps, path.join(f.root, 'vida-agent/node_modules'), 'junction');
   for (const file of ['bun.lock', '.bun-version'])

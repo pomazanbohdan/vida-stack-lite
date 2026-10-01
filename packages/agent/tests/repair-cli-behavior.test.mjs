@@ -1,8 +1,9 @@
+import { writeConsumerFixture } from './helpers/consumer-fixture.mjs';
 import { afterEach, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +17,6 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repository = path.dirname(bundle);
 const timestamp = new Date(Date.now() - 60_000).toISOString();
 const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
 const sha = (value) => createHash('sha256').update(value).digest('hex');
@@ -31,14 +31,8 @@ afterEach(() => {
 function fixture() {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-repair-cli-'));
   roots.push(root);
-  mkdirSync(path.join(root, '.git'));
-  mkdirSync(path.join(root, 'vida-agent'));
-  for (const relative of ['agent-runtime.config.v1.yaml', 'AGENTS.md', 'AGENT.sidecar.md', 'vida-agent/TESTING.md'])
-    writeFileSync(path.join(root, relative), readFileSync(path.join(repository, relative)));
-  cpSync(path.join(bundle, 'schemas'), path.join(root, 'vida-agent/schemas'), { recursive: true });
-  writeFileSync(path.join(root, 'vida-agent/package.json'), readFileSync(path.join(bundle, 'package.json')));
+  writeConsumerFixture(root, bundle);
   symlinkSync(path.join(bundle, 'node_modules'), path.join(root, 'vida-agent/node_modules'), 'junction');
-  cpSync(path.join(repository, 'docs'), path.join(root, 'docs'), { recursive: true });
   const config = loadRuntimeConfig(root);
   const records = config.research_decision.paths.research_records;
   const changelog = config.research_decision.paths.changelog;
@@ -284,7 +278,7 @@ function persisted(context, results, record, normalized = true) {
   database.exec(
     'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, PRIMARY KEY(workspace_id,work_id,attempt))',
   );
-  const projectIds = ['refactoring'];
+  const projectIds = ['fixture-project'];
   const project = loadProjectSetContext(
     context.root,
     context.config,
@@ -630,7 +624,7 @@ test('synthesis observation dispatcher plans the real provenance collision and p
     '--correction-id',
     'correction-test',
     '--projects',
-    'refactoring',
+    'fixture-project',
     '--work-id',
     'work-repair',
     '--attempt',
@@ -956,7 +950,7 @@ test('synthesis observation dispatcher prepares a new issue while keeping the or
     '--correction-id',
     'correction-test',
     '--projects',
-    'refactoring',
+    'fixture-project',
     '--work-id',
     'work-repair',
     '--attempt',

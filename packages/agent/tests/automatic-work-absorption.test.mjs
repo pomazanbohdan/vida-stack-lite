@@ -197,22 +197,51 @@ test('work-state inspection CLI refuses missing canonical SQLite without creatin
 });
 
 test('valid public intake records the admission cutoff before failed scope preparation', async () => {
-  const f=fixture();
+  const f = fixture();
   try {
-    const verifier={principal:'fixture:consumer-maintenance',projectIds:['sample'],verify(fence){return {schema:'MaintenanceReleaseAuthorization/v1',principal:this.principal,fence_digest:canonicalJsonDigest(fence),closure_digest:fence.binding.closure_digest,bundle_digest:fence.binding.bundle_digest};}};
-    const migration=new HostStateStore(f.database,f.store.workspaceId,undefined,undefined,undefined,verifier);
-    const binding={schema:'MaintenanceFenceBinding/v1',project_ids:['sample'],operation_id:'fixture-migration',manifest_digest:'1'.repeat(64),request_digest:'2'.repeat(64),bindings_digest:'3'.repeat(64),closure_digest:'4'.repeat(64),bundle_digest:'5'.repeat(64)};
-    const baseline=migration.acquireMaintenanceFence(binding);
-    migration.consumerMigrationState(baseline,'baseline',()=>undefined);
+    const verifier = {
+      principal: 'fixture:consumer-maintenance',
+      projectIds: ['sample'],
+      verify(fence) {
+        return {
+          schema: 'MaintenanceReleaseAuthorization/v1',
+          principal: this.principal,
+          fence_digest: canonicalJsonDigest(fence),
+          closure_digest: fence.binding.closure_digest,
+          bundle_digest: fence.binding.bundle_digest,
+        };
+      },
+    };
+    const migration = new HostStateStore(f.database, f.store.workspaceId, undefined, undefined, undefined, verifier);
+    const binding = {
+      schema: 'MaintenanceFenceBinding/v1',
+      project_ids: ['sample'],
+      operation_id: 'fixture-migration',
+      manifest_digest: '1'.repeat(64),
+      request_digest: '2'.repeat(64),
+      bindings_digest: '3'.repeat(64),
+      closure_digest: '4'.repeat(64),
+      bundle_digest: '5'.repeat(64),
+    };
+    const baseline = migration.acquireMaintenanceFence(binding);
+    migration.consumerMigrationState(baseline, 'baseline', () => undefined);
     await migration.releaseMaintenanceFence(baseline);
-    expect(()=>admitLocalSessionWork(f.prepare('failed-preparation',''))).toThrow(/schema is invalid/);
+    expect(() => admitLocalSessionWork(f.prepare('failed-preparation', ''))).toThrow(/schema is invalid/);
     expect(f.store.readWorkspaceSnapshot().work).toHaveLength(0);
-    expect(f.database.query('SELECT work_id,attempt FROM agent_host_admission_attempt').all()).toEqual([{work_id:'failed-preparation',attempt:1}]);
-    const restore=migration.acquireMaintenanceFence(binding);
-    let called=false;
-    expect(()=>migration.consumerMigrationState(restore,'restore',()=>{called=true;})).toThrow(/new admission/);
+    expect(f.database.query('SELECT work_id,attempt FROM agent_host_admission_attempt').all()).toEqual([
+      { work_id: 'failed-preparation', attempt: 1 },
+    ]);
+    const restore = migration.acquireMaintenanceFence(binding);
+    let called = false;
+    expect(() =>
+      migration.consumerMigrationState(restore, 'restore', () => {
+        called = true;
+      }),
+    ).toThrow(/new admission/);
     expect(called).toBe(false);
-  } finally {f.close();}
+  } finally {
+    f.close();
+  }
 });
 
 test('second predecessor verification failure leaves every canonical row and raw journal unchanged', () => {
@@ -224,18 +253,21 @@ test('second predecessor verification failure leaves every canonical row and raw
     const journals = f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all();
     const admit = f.store.admitSuccessorWork.bind(f.store);
     let verified = 0;
-    f.store.admitSuccessorWork = (input) => admit({
-      ...input,
-      verifyCurrent(work, journal, pointer) {
-        input.verifyCurrent(work, journal, pointer);
-        if (++verified === 2) throw new Error('injected second predecessor verification fault');
-      },
-    });
+    f.store.admitSuccessorWork = (input) =>
+      admit({
+        ...input,
+        verifyCurrent(work, journal, pointer) {
+          input.verifyCurrent(work, journal, pointer);
+          if (++verified === 2) throw new Error('injected second predecessor verification fault');
+        },
+      });
     expect(() => admitLocalSessionWork(f.prepare('next', 'user:next'))).toThrow(/second predecessor/);
     expect(verified).toBe(2);
     expect(f.store.readWorkspaceSnapshot()).toEqual(before);
     expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journals);
-  } finally { f.close(); }
+  } finally {
+    f.close();
+  }
 });
 
 test('competing successor requests prepared against identical versions permit only one commit', () => {
@@ -259,7 +291,9 @@ test('competing successor requests prepared against identical versions permit on
     expect(f.store.readWorkspaceSnapshot()).toEqual(committed);
     expect(admit(proposals[0])).toEqual(result);
     expect(committed.work.filter((row) => row.work.execution.status === 'active')).toHaveLength(1);
-  } finally { f.close(); }
+  } finally {
+    f.close();
+  }
 });
 
 test('two-predecessor SQL commit fault rolls back all work and coordination rows and preserves raw journals', () => {

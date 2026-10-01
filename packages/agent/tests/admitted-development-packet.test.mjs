@@ -3,20 +3,22 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { buildAdmittedDevelopmentPacket } from '../src/orchestration/admitted-development-packet.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 
-const root = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
+const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
+const root = createConsumerFixture(packageRoot, 'vida-admitted-packet-');
 const config = loadRuntimeConfig(root);
 const scratchRoot = path.join(root, '.planning', 'agent-flow');
 mkdirSync(scratchRoot, { recursive: true });
 const fixture = mkdtempSync(path.join(scratchRoot, 'packet-adapter-'));
 afterAll(() => {
   if (!fixture.startsWith(scratchRoot + path.sep)) throw new Error('unsafe packet fixture cleanup');
-  rmSync(fixture, { recursive: true, force: true });
+  rmSync(root, { recursive: true, force: true });
 });
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let fixtureNumber = 0;
@@ -32,7 +34,7 @@ function admitted(intent = 'task_execution') {
     provider_type: 'Task',
     canonical_kind: intent === 'task_execution' ? 'task' : 'story',
     intent,
-    project_id: '3mob',
+    project_id: 'fixture-project',
     title: 'Add one scoped file',
     description: 'Create the agreed scoped file and verify its acceptance.',
     risk_flags: [],
@@ -42,13 +44,13 @@ function admitted(intent = 'task_execution') {
     team: 'default-development',
     kind: workItem.canonical_kind,
     intent,
-    project: '3mob',
+    project: 'fixture-project',
     risk_flags: [],
     labels: [],
   };
   const target = relative('new-file.ts');
-  const contextPath = 'agent-runtime-new/TESTING.md';
-  const allowedPaths = [target, contextPath].sort();
+  const contextPath = 'vida-agent/TESTING.md';
+  const allowedPaths = [target, contextPath].sort((left, right) => left.localeCompare(right));
   const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), allowedPaths);
   const scope = {
     schema: 'ImplementationScope/v1',
@@ -100,7 +102,7 @@ function admitted(intent = 'task_execution') {
     work_item_digest: canonicalJsonDigest(workItem),
     team_id: selection.team,
     workflow_id: workflowId,
-    project_ids: ['3mob'],
+    project_ids: ['fixture-project'],
     config_digest: runtimeConfigDigest(config),
     scope_id: scope.scope_id,
     scope_contract_digest: digest(scopeBytes),

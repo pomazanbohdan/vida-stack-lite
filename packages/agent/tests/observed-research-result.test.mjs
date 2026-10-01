@@ -1,4 +1,6 @@
-import { expect, test } from 'bun:test';
+import { rmSync } from 'node:fs';
+import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
+import { afterAll, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,9 +11,11 @@ import {
   researchObservationOutputContract,
 } from '../src/orchestration/observed-research-result.ts';
 
-const root =
-  process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
+afterAll(() => {
+  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(root, { recursive: true, force: true });
+});
 const config = loadRuntimeConfig(root);
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const timestamp = new Date(Date.now() - 60_000).toISOString();
@@ -24,7 +28,7 @@ function fixture() {
     id: 'work-1',
     canonical_kind: 'research',
     intent: 'information_research',
-    project_id: 'refactoring',
+    project_id: config.projects[0].project_id,
     title: 'Inspect bounded sources',
     description: 'Research one scoped question.',
     risk_flags: [],
