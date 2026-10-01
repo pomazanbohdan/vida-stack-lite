@@ -1,14 +1,19 @@
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  chmodSync,
   closeSync,
+  copyFileSync,
   existsSync,
   lstatSync,
+  mkdtempSync,
   mkdirSync,
   openSync,
   readFileSync,
   realpathSync,
   renameSync,
+  rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
@@ -318,7 +323,7 @@ function pathCli(env) {
   for (const folder of pathValue.split(path.delimiter)) {
     if (!folder) continue;
     const file = path.join(folder, executable);
-    if (existsSync(file) && lstatSync(file).isFile()) return file;
+    if (existsSync(file) && statSync(file).isFile()) return file;
   }
   throw new Error('vida-agent is absent from system PATH.');
 }
@@ -346,6 +351,7 @@ export async function executeRelease({
     state = { ...state, ...extra, status, elapsed_ms: Date.now() - started };
     save(stateFile, state);
   };
+  let snapshotFolder;
   try {
     const qualification = await qualify({ root, operation, version: value.version });
     // Qualification is issued by the fixed repository-owned assurance adapter, never a caller boolean.
@@ -389,6 +395,14 @@ export async function executeRelease({
       update('awaiting_assurance');
       return state;
     }
+    snapshotFolder = mkdtempSync(
+      path.join(directory(root, `.agent/work/agent-local-release/${operation}`), 'install-input-'),
+    );
+    const snapshot = path.join(snapshotFolder, path.basename(tarball));
+    copyFileSync(tarball, snapshot);
+    chmodSync(snapshot, 0o400);
+    if (sha(readFileSync(snapshot)) !== state.tarball_sha256)
+      throw new Error('Pending tarball changed while creating installation snapshot.');
     const prefix = await npm(['prefix', '--global'], 'prefix');
     const globalRoot = await npm(['root', '--global'], 'global-root');
     if (!path.isAbsolute(prefix) || !path.isAbsolute(globalRoot))
@@ -407,7 +421,7 @@ export async function executeRelease({
       if (state.install_started)
         throw new Error('Prior install outcome differs or remains uncertain; inspect before retrying installation.');
       update('installing', { install_started: true });
-      await npm(['install', '--global', tarball], 'install');
+      await npm(['install', '--global', snapshot], 'install');
     }
     const unrelated = directory(root, `.tmp/releases/${operation}/unrelated-cwd`);
     const cli = pathCli(env);
@@ -453,6 +467,8 @@ export async function executeRelease({
   } catch (error) {
     update(error.message.startsWith('awaiting_assurance:') ? 'awaiting_assurance' : 'failed', { error: error.message });
     throw error;
+  } finally {
+    if (snapshotFolder) rmSync(snapshotFolder, { recursive: true, force: true });
   }
 }
 async function main(args) {

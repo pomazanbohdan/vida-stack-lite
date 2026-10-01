@@ -191,15 +191,49 @@ test('initial candidate 0.1.0 and subsequent successful publications increment p
     assert.equal(result.status, 'successful');
     assert.equal(fixtureValue.calls.filter((args) => args[1] === 'install' && args[2] === '--global').length, 1);
     const install = fixtureValue.calls.find((args) => args[1] === 'install' && args[2] === '--global');
-    assert.equal(
+    assert.notEqual(
       install.at(-1),
       path.join(fixtureValue.root, '.tmp/releases', candidate.operation_id, 'vida-agent-0.1.0.tgz'),
     );
+    assert.ok(
+      install.at(-1).startsWith(
+        path.join(fixtureValue.root, '.agent/work/agent-local-release', candidate.operation_id, 'install-input-'),
+      ),
+    );
+    assert.equal(existsSync(install.at(-1)), false);
     await executeRelease({ ...fixtureValue, operation: candidate.operation_id });
     assert.equal(fixtureValue.calls.filter((args) => args[1] === 'install' && args[2] === '--global').length, 1);
     assert.ok(fixtureValue.calls.every((args) => !args.includes('publish')));
     rmSync(path.join(fixtureValue.root, '.tmp'), { recursive: true });
     assert.equal((await prepareRelease(fixtureValue.root)).version, '0.1.1');
+  } finally {
+    rmSync(fixtureValue.root, { recursive: true });
+  }
+});
+test('installation consumes a protected snapshot when the release archive is replaced after validation', async () => {
+  const fixtureValue = fixture();
+  try {
+    const candidate = await prepareRelease(fixtureValue.root);
+    await executeRelease({ ...fixtureValue, operation: candidate.operation_id, packOnly: true });
+    const tarball = path.join(
+      fixtureValue.root,
+      '.tmp/releases',
+      candidate.operation_id,
+      'vida-agent-0.1.0.tgz',
+    );
+    const approved = readFileSync(tarball);
+    const replacement = Buffer.from('TEST SETUP unapproved replacement');
+    let installedBytes;
+    const command = async (cmd, args, options) => {
+      if (args[1] === 'prefix') writeFileSync(tarball, replacement);
+      if (args[1] === 'install' && args[2] === '--global') installedBytes = readFileSync(args.at(-1));
+      return fixtureValue.command(cmd, args, options);
+    };
+
+    await executeRelease({ ...fixtureValue, command, operation: candidate.operation_id });
+
+    assert.deepEqual(readFileSync(tarball), replacement);
+    assert.deepEqual(installedBytes, approved);
   } finally {
     rmSync(fixtureValue.root, { recursive: true });
   }
