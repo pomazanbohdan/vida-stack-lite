@@ -108,7 +108,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     allowed_paths: string[];
     implementation_paths: string[];
     documentation_paths?: string[];
-    attribution: { thread_id: string };
+    attribution: { thread_id: string; pointer: string };
   };
   const acceptance = JSON.parse(acceptanceBytes.toString('utf8')) as {
     ac_ids: string[];
@@ -374,12 +374,64 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         operations: [],
         retirements: [],
       };
-  const host = store.compareAndSwapHostState({
-    expectedWork: null,
+  const predecessors: Parameters<HostStateStore['admitSuccessorWork']>[0]['predecessors'][number][] = [];
+  const verifyPredecessor = (work: NonNullable<HostStateSnapshot['work']>, journal: Readonly<Record<string,unknown>>) => {
+    const priorScopeBytes = access.readBytes(work.contracts.scope.path, 'predecessor bound implementation scope');
+    requireAdmission(digest(priorScopeBytes) === work.contracts.scope.sha256,
+      'predecessor scope artifact changed');
+    const priorScope = JSON.parse(priorScopeBytes.toString('utf8')) as typeof scope;
+    requireAdmission(validScope(priorScope) && priorScope.work_id === work.binding.lifecycle_work_id &&
+      priorScope.attribution.thread_id === nativeSessionHandle && priorScope.attribution.pointer.length > 0 &&
+      !/\p{Cc}/u.test(priorScope.attribution.pointer), 'predecessor request attribution invalid');
+    const items = [...journal.items as {request:{stage_id:string;assignment_index:number;role:string};issue_id:string|null;host_reservation?:unknown;research_normalization?:unknown}[],
+      ...(journal.completed as {items:typeof items}[]).flatMap((wave) => wave.items)];
+    requireAdmission(items.every((item) => {
+      const assignment = config.workflows[work.binding.workflow_id]?.stages.find((stage) => stage.id === item.request.stage_id)
+        ?.assignments[item.request.assignment_index];
+      const profile = assignment && config.agents.profiles[assignment.profile];
+      return assignment?.role === item.request.role && profile && !item.host_reservation &&
+        !(item.issue_id !== null && profile.mutation_scope === 'repository_source') && !item.research_normalization;
+    }), 'predecessor active or reserved source effect prevents absorption');
+    if (input.changeKind === 'fix') {
+      requireAdmission(work.binding.ac_ids.every((id) => scope.ac_ids.includes(id)),
+        'debug correction must carry unfinished predecessor acceptance');
+    }
+  };
+  const workspace = store.readWorkspaceSnapshot();
+  requireAdmission(canonicalJsonDigest(workspace.ledger_version) === canonicalJsonDigest(before.ledgerVersion),
+    'coordination changed during successor discovery');
+  for (const prior of workspace.work) {
+    const work = prior.work!;
+    if (work.binding.lifecycle_work_id === context.work_id || work.binding.repository_id !== identity.repository_id ||
+      canonicalJsonDigest(work.binding.project_ids) !== canonicalJsonDigest(identity.project_ids) ||
+      work.binding.integrations_digest !== identity.integrations_digest || work.execution.status === 'complete' ||
+      work.lifecycle.phase === 'COMPLETE' || work.request_transition?.successor_work_id != null) continue;
+    const owners = workspace.ledger?.tickets.filter((ticket) => ticket.work_id === work.binding.lifecycle_work_id &&
+      ticket.repository_id === identity.repository_id && canonicalJsonDigest(ticket.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+      ['active','queued','blocked'].includes(ticket.status)) ?? [];
+    if (owners.length === 0 || owners.some((ticket) => ticket.thread_id !== nativeSessionHandle)) continue;
+    const priorScopeBytes = access.readBytes(work.contracts.scope.path, 'predecessor request group');
+    requireAdmission(digest(priorScopeBytes) === work.contracts.scope.sha256, 'predecessor scope artifact changed');
+    const priorScope = JSON.parse(priorScopeBytes.toString('utf8')) as typeof scope;
+    requireAdmission(validScope(priorScope) && priorScope.attribution.thread_id === nativeSessionHandle &&
+      priorScope.attribution.pointer.length > 0, 'predecessor request group invalid');
+    if (priorScope.attribution.pointer === scope.attribution.pointer) continue;
+    const priorIdentity = { ...identity, work_id: work.binding.lifecycle_work_id };
+    const journal = store.readWorkSessionJournal(priorIdentity);
+    requireAdmission(journal && prior.workVersion, 'predecessor bound journal unavailable');
+    verifyPredecessor(work, journal.state);
+    predecessors.push({identity:priorIdentity,expectedWork:prior.workVersion,attempt:journal.attempt,
+      expectedJournal:journal.version,requestPointer:priorScope.attribution.pointer});
+  }
+  const host = store.admitSuccessorWork({
     expectedLedger: before.ledgerVersion,
     expectedMaintenanceGeneration: before.maintenanceGeneration,
     nextWork,
     nextLedger,
+    nativeSessionHandle,
+    requestPointer: scope.attribution.pointer,
+    predecessors,
+    verifyCurrent: verifyPredecessor,
   });
   return { host, source };
 }

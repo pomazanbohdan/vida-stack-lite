@@ -2497,6 +2497,179 @@ export class HostStateStore {
     requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
     return this.#database.transaction(() => this.#read(identity)).deferred();
   }
+  /** One transaction reads the existing authoritative rows; it grants no admission or completion. */
+  readWorkspaceSnapshot(): {
+    readonly schema: 'HostWorkspaceSnapshot/v1';
+    readonly workspace_id: string;
+    readonly work: readonly HostStateSnapshot[];
+    readonly ledger: CoordinationLedger | null;
+    readonly ledger_version: StateVersion | null;
+  } {
+    requireState(!this.#database.inTransaction, 'nested workspace inspection forbidden');
+    return this.#database.transaction(() => {
+      const rows = this.#database.query(
+        "SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id",
+      ).all(this.#workspaceId) as { id: string }[];
+      const work = rows.map((row) => this.#read(workIdentity(this.#load('work', row.id) as WorkState)));
+      const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
+      return snapshot({ schema: 'HostWorkspaceSnapshot/v1' as const, workspace_id: this.#workspaceId,
+        work, ledger, ledger_version: version(ledger) });
+    }).deferred();
+  }
+  readWorkSessionJournal(identity: WorkIdentity): {
+    readonly attempt: number; readonly version: StateVersion; readonly state: Readonly<Record<string, unknown>>;
+  } | null {
+    requireState(!this.#database.inTransaction, 'nested journal inspection forbidden');
+    return this.#database.transaction(() => {
+      const work = this.#read(identity).work;
+      requireState(work, 'journal work is unavailable');
+      const row = this.#database.query(
+        'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+      ).get(this.#workspaceId, identity.work_id) as {attempt:number;revision:number;payload:string;digest:string}|null;
+      if (!row) return null;
+      const state = JSON.parse(row.payload) as Record<string, unknown>;
+      requireState(state.schema === 'MastraSessionLedger/v1' && state.workspace_id === this.#workspaceId &&
+        state.work_id === identity.work_id && state.attempt === row.attempt && state.run_id === work.execution.run_id &&
+        canonicalJsonDigest(state) === row.digest, 'journal inspection identity differs');
+      return snapshot({ attempt: row.attempt, version: {revision:row.revision,digest:row.digest}, state });
+    }).deferred();
+  }
+
+  /** Admit and supersede as one HostState/coordination transaction, without rewriting native journals. */
+  admitSuccessorWork(input: {
+    readonly nextWork: WorkState;
+    readonly nextLedger: CoordinationLedger;
+    readonly expectedLedger: StateVersion | null;
+    readonly expectedMaintenanceGeneration: number;
+    readonly nativeSessionHandle: string;
+    readonly requestPointer: string;
+    readonly predecessors: readonly {
+      readonly identity: WorkIdentity;
+      readonly expectedWork: StateVersion;
+      readonly attempt: number;
+      readonly expectedJournal: StateVersion;
+      readonly requestPointer: string;
+    }[];
+    readonly verifyCurrent: (work: WorkState, journal: Readonly<Record<string, unknown>>) => void;
+  }): HostStateSnapshot {
+    const successor = checkedWork(snapshot(input.nextWork));
+    const incomingLedger = checkedLedger(snapshot(input.nextLedger));
+    requireState(successor.workspace_id === this.#workspaceId && incomingLedger.workspace_id === this.#workspaceId &&
+      input.requestPointer.length > 0 && input.nativeSessionHandle.length > 0 &&
+      !/\p{Cc}/u.test(input.requestPointer + input.nativeSessionHandle), 'successor identity invalid');
+    requireState(!this.#database.inTransaction, 'nested successor admission forbidden');
+    return this.#database.transaction(() => {
+      this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+      const before = this.#read(workIdentity(successor));
+      if (before.work) {
+        requireState(sameJson(before.work.binding, successor.binding) &&
+          sameJson(before.work.contracts, successor.contracts) &&
+          before.work.execution.input_digest === successor.execution.input_digest &&
+          before.work.request_transition?.request_pointer === input.requestPointer &&
+          before.work.request_transition.native_session_handle === input.nativeSessionHandle &&
+          sameJson(before.work.request_transition.predecessor_work_ids,
+            input.predecessors.map((entry) => entry.identity.work_id).sort()),
+          'successor retry differs from admitted intent');
+        return before;
+      }
+      matchesExpected(before.workVersion, null);
+      matchesExpected(before.ledgerVersion, input.expectedLedger);
+      validatePair(successor, incomingLedger);
+      validateProgress(before, successor, incomingLedger);
+      const baseline = before.ledger;
+      requireState(input.predecessors.length === 0 || baseline !== null, 'predecessors need existing coordination');
+      unique(input.predecessors.map((entry) => identityKey(entry.identity)), 'successor predecessors');
+      const now = new Date().toISOString();
+      let ledger = incomingLedger;
+      const updates: { before: HostStateSnapshot; next: WorkState }[] = [];
+      for (const candidate of input.predecessors) {
+        const prior = this.#read(candidate.identity);
+        matchesExpected(prior.workVersion, candidate.expectedWork);
+        requireState(prior.work && baseline && prior.workVersion &&
+          prior.work.binding.repository_id === successor.binding.repository_id &&
+          sameJson(prior.work.binding.project_ids, successor.binding.project_ids) &&
+          prior.work.binding.integrations_digest === successor.binding.integrations_digest &&
+          candidate.identity.work_id !== successor.binding.lifecycle_work_id &&
+          candidate.requestPointer.length > 0 && candidate.requestPointer !== input.requestPointer &&
+          prior.work.request_transition?.successor_work_id == null &&
+          prior.work.execution.status !== 'complete' &&
+          prior.work.lifecycle.phase !== 'COMPLETE' &&
+          !prior.work.execution.assignment_attempts.some((entry) => ['started', 'uncertain'].includes(entry.status)),
+          'predecessor authority or active source effect prevents absorption');
+        const work = prior.work;
+        const tickets = baseline.tickets.filter((ticket) => identityKey(ticketIdentity(ticket)) === identityKey(candidate.identity) &&
+          ['active', 'queued', 'blocked'].includes(ticket.status));
+        requireState(tickets.length > 0 && tickets.every((ticket) => ticket.thread_id === input.nativeSessionHandle),
+          'predecessor owner or ticket differs');
+        const journalRow = this.#database.query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        ).get(this.#workspaceId, candidate.identity.work_id, candidate.attempt) as {revision:number;payload:string;digest:string}|null;
+        requireState(journalRow && journalRow.revision === candidate.expectedJournal.revision &&
+          journalRow.digest === candidate.expectedJournal.digest, 'predecessor journal CAS changed');
+        const journal = JSON.parse(journalRow.payload) as Record<string, unknown>;
+        requireState(canonicalJsonDigest(journal) === journalRow.digest && journal.schema === 'MastraSessionLedger/v1' &&
+          journal.workspace_id === this.#workspaceId && journal.work_id === candidate.identity.work_id &&
+          journal.attempt === candidate.attempt && journal.run_id === work.execution.run_id &&
+          Array.isArray(journal.items) && Array.isArray(journal.completed), 'predecessor journal identity invalid');
+        const journalItems = [...(journal.items as Record<string,unknown>[]),
+          ...(journal.completed as {items:Record<string,unknown>[]}[]).flatMap((wave) => wave.items)];
+        requireState(journalItems.every((item) => !item.host_reservation),
+          'reserved source action prevents absorption');
+        input.verifyCurrent(snapshot(work), snapshot(journal));
+        const ids = new Set(tickets.map((ticket) => ticket.ticket_id));
+        const next = checkedWork({ ...work, revision: work.revision + 1, lease: null,
+          request_transition: { schema: 'WorkRequestTransition/v1', request_pointer: candidate.requestPointer,
+            native_session_handle: input.nativeSessionHandle,
+            predecessor_work_ids: work.request_transition?.predecessor_work_ids ?? [],
+            successor_work_id: successor.binding.lifecycle_work_id },
+          execution: { ...work.execution, status: 'suspended' },
+          lifecycle: { ...work.lifecycle, revision: work.lifecycle.revision + 1,
+            next_action: 'Continue unfinished intent through successor ' + successor.binding.lifecycle_work_id + '.' } });
+        const releaseTickets = (values: CoordinationLedger['tickets']) => values.map((ticket) => ids.has(ticket.ticket_id)
+          ? { ...ticket, status: 'released' as const, expires_at: null, active_resources: [], blocked_resources: [] } : ticket);
+        const releaseClaims = (values: CoordinationLedger['claims']) => values.map((claim) => ids.has(claim.ticket_id) && claim.status === 'active'
+          ? { ...claim, status: 'released' as const, renewed_at: now } : claim);
+        const operations = tickets.map((ticket) => ({ schema: 'CoordinationOperation/v1' as const,
+          operation_id: 'absorb-' + canonicalJsonDigest({ successor: successor.binding.lifecycle_work_id, ticket: ticket.ticket_id }).slice(0,40),
+          kind: 'release' as const, ticket_id: ticket.ticket_id, work_id: ticket.work_id, thread_id: ticket.thread_id,
+          source_revision: ticket.source_revision, resources: ticket.exclusive_resources,
+          from_ledger_revision: baseline.revision, to_ledger_revision: incomingLedger.revision,
+          decided_by: input.nativeSessionHandle, decision_pointer: input.requestPointer, created_at: now }));
+        const projection = checkedLedger({ ...baseline, revision: baseline.revision + 1,
+          tickets: releaseTickets(baseline.tickets), claims: releaseClaims(baseline.claims),
+          operations: [...baseline.operations, ...operations] });
+        validatePair(next, projection);
+        validateProgress(prior, { ...next, request_transition: work.request_transition ?? null }, projection);
+        ledger = checkedLedger({ ...ledger, tickets: releaseTickets(ledger.tickets), claims: releaseClaims(ledger.claims),
+          operations: [...ledger.operations, ...operations] });
+        updates.push({ before: prior, next });
+      }
+      const nextSuccessor = checkedWork({ ...successor, request_transition: {
+        schema: 'WorkRequestTransition/v1', request_pointer: input.requestPointer,
+        native_session_handle: input.nativeSessionHandle,
+        predecessor_work_ids: input.predecessors.map((entry) => entry.identity.work_id).sort(), successor_work_id: null } });
+      validatePair(nextSuccessor, ledger);
+      for (const {next} of updates) validatePair(next, ledger);
+      for (const entry of [...updates, { before, next: nextSuccessor }]) {
+        const id = identityKey(workIdentity(entry.next));
+        const priorVersion = entry.before.workVersion;
+        const result = priorVersion ? this.#database.query(
+          "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+        ).run(entry.next.revision, canonicalJson(entry.next), canonicalJsonDigest(entry.next), this.#workspaceId, id, priorVersion.revision, priorVersion.digest)
+          : this.#database.query("INSERT INTO agent_host_state (revision,payload,digest,workspace_id,kind,id) VALUES(?,?,?,?,'work',?)")
+            .run(entry.next.revision, canonicalJson(entry.next), canonicalJsonDigest(entry.next), this.#workspaceId, id);
+        requireState(result.changes === 1, 'successor work CAS conflict');
+      }
+      const priorLedger = before.ledgerVersion;
+      const result = priorLedger ? this.#database.query(
+        "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared' AND revision=? AND digest=?",
+      ).run(ledger.revision, canonicalJson(ledger), canonicalJsonDigest(ledger), this.#workspaceId, priorLedger.revision, priorLedger.digest)
+        : this.#database.query("INSERT INTO agent_host_state (revision,payload,digest,workspace_id,kind,id) VALUES(?,?,?,?,'ledger','shared')")
+          .run(ledger.revision, canonicalJson(ledger), canonicalJsonDigest(ledger), this.#workspaceId);
+      requireState(result.changes === 1, 'successor ledger CAS conflict');
+      return this.#read(workIdentity(nextSuccessor));
+    }).immediate();
+  }
   #writeAttempts(before: HostStateSnapshot, attempts: readonly AssignmentAttempt[]): HostStateSnapshot {
     const revision = before.work!.revision + 1;
     const work = checkedWork({
