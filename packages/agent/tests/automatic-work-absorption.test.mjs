@@ -18,6 +18,8 @@ function fixture(){
   .replaceAll('{{REPOSITORY}}','absorption-repository').replaceAll('{{PROJECT}}','sample').replaceAll('{{BUNDLE}}','vida-agent'));
  writeFileSync(path.join(root,'AGENTS.md'),'Test fixture policy');
  writeFileSync(path.join(root,'AGENT.sidecar.md'),'Test fixture source map');
+ mkdirSync(path.join(root,'docs','agent-instructions'),{recursive:true});
+ writeFileSync(path.join(root,'docs','agent-instructions','documentation-policy.v1.json'),'{}');
  const config=loadRuntimeConfig(root),database=openHostStateDatabase(path.join(root,'fixture.sqlite')),
   store=new HostStateStore(database,'a'.repeat(64)), source=snapshotDeclaredSources(requireSafeRepositoryAccess(root),['AGENT.sidecar.md']);
  database.exec('CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))');
@@ -87,5 +89,38 @@ test('public admission rejects drifted predecessor attribution without any effec
 test('work-state inspection CLI refuses missing canonical SQLite without creating it',()=>{
  const f=fixture();try{
   expect(()=>runWorkStateRepair(['--kind','work-state','--mode','inspect','--project-root',f.root])).toThrow(/unavailable/);
+ }finally{f.close();}
+});
+
+test('two-predecessor SQL commit fault rolls back all work and coordination rows and preserves raw journals',()=>{
+ const f=fixture();try{
+  f.admit(f.prepare('one','user:first'));f.admit(f.prepare('two','user:first'));
+  const before=f.store.readWorkspaceSnapshot();
+  const journalBytes=f.database.query('SELECT payload FROM agent_host_mastra_session_ledger ORDER BY work_id').all();
+  const next=f.prepare('next','user:second');
+  f.database.exec("CREATE TRIGGER fixture_commit_fault BEFORE UPDATE ON agent_host_state WHEN NEW.kind='ledger' BEGIN SELECT RAISE(ABORT,'fixture SQL commit fault'); END");
+  expect(()=>admitLocalSessionWork(next)).toThrow(/fixture SQL commit fault/);
+  expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+  expect(f.database.query('SELECT payload FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journalBytes);
+  f.database.exec('DROP TRIGGER fixture_commit_fault');
+  const admitted=admitLocalSessionWork(next);
+  expect(admitted.host.work.request_transition.predecessor_work_ids).toEqual(['one','two']);
+ }finally{f.close();}
+});
+
+test('invalid new request attribution and successor source drift fail before predecessor effects',()=>{
+ const f=fixture();try{
+  f.admit(f.prepare('old','user:old'));
+  const next=f.prepare('next','');
+  const before=f.store.readWorkspaceSnapshot();
+  expect(()=>admitLocalSessionWork(next)).toThrow(/schema is invalid/);
+  expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+  const wrong=f.prepare('wrong','user:next','another-session');wrong.nativeSessionHandle='session';
+  expect(()=>admitLocalSessionWork(wrong)).toThrow(/session binding differs/);
+  expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+  const drift=f.prepare('drift','user:next');
+  writeFileSync(path.join(f.root,'AGENT.sidecar.md'),'Changed declared source');
+  expect(()=>admitLocalSessionWork(drift)).toThrow(/revision is stale/);
+  expect(f.store.readWorkspaceSnapshot()).toEqual(before);
  }finally{f.close();}
 });

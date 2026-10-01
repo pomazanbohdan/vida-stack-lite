@@ -45,6 +45,62 @@ These entries name maintained files. The fixture-based tests prove first-to-seco
 
 Generic dynamic decomposition has no current consumer or accepted requirement. The historical parity corpus remains a GAP, not current-v1 acceptance evidence. CLEAR tests must run against an isolated built bundle named by `VIDA_CLEAR_BUNDLE`; the active project policy, its source path and schema are checked before the public operation writes evidence.
 
+## Audit-state and successor qualification
+
+The frozen focused Source lane uses Bun 1.4.2: 20 tests, 269 assertions,
+0 failures in 15.24 seconds. It is bounded evidence, not the complete release
+matrix. A prior 219-test/1579-assertion, 182-second sweep observed Source changes
+mid-run and is diagnostic only. Identity-specific CLEAR test 10 measured
+59.55 seconds serially; speed optimization is unproven. Measure control return
+separately from test duration: the under-two-second target remains open where
+the Windows command tool's observed minimum is 10.9 seconds.
+
+Require the following checks on frozen current inputs before qualifying the
+coordinated release; record actual results rather than inferring them from this
+list:
+
+- Recovery rebind updates all runtime identity fields; the next public admitted
+  action succeeds, old controller fails, and retained observations stay intact.
+- Declared produced-contract/artifact checks accept task-packet-only synthesis;
+  failed research is durably reported without a success artifact.
+- Exact lost-ACK report and intake retries return current state before/after
+  progress; changed payload conflicts. No external side-effect deduplication is
+  implied. Persisted Mastra success, failure, cancellation and unknown outcomes
+  project correctly; a null step alone cannot complete.
+- Same live owner writer heartbeat preserves its fence and unrevoked scope;
+  expired and foreign takeover stay denied. Original configured assignment
+  indexes and graph-declared terminal outputs survive filtering/permutation.
+- Successor intake is prevalidated before one immediate multi-work/shared-ledger
+  transaction. Same-pointer parallel contours survive; different-pointer safe
+  predecessors in the exact session/repository/project set are superseded and
+  release only their own rights/queued intents. Preserve phase, evidence and raw
+  journals; reject old resume, ambiguity, reserved/unknown effects, stale CAS,
+  partial transaction failure and foreign-project absorption.
+- Public `reconcile-artifacts --kind work-state` inspect cannot create a database
+  or mutate pragmas/state. Qualify plan/apply/resume/restore with dependency
+  drift, atomic recovery, bounded owned-field restore, increasing versions and
+  unknown-effect guards before live artifact mutation or upgraded readers.
+- Consumer full-snapshot rollback binds its read-only baseline, exact admission
+  cutoff and maintenance/CAS through restore. Permit it before first new admitted
+  work, regardless of initialization; deny it afterward even if preparation
+  fails. Public fenced consumer restore is still an implementation GAP.
+
+F05 process-kill cutoff-lock recovery remains a release GAP: the actual Linux
+SIGKILL probe exercised extracted cutoff functions, not a full public CLI or
+native Windows/power-loss scenario. Required process-interruption recovery must
+be repaired and verified or explicitly scoped out by attributable authority;
+a finally-only lock cleanup is not that proof. F11 issue-before-activation is
+currently static sequence evidence requiring a bounded public counterexample.
+Current-v1 optional research selectors remain unreachable through the strict
+scope schema; this does not establish a fresh-run failure or authorize schema
+migration. One native invocation producing multiple action slots is outside the
+current caller contract; never fabricate distinct tool references.
+
+Exactly three fresh blind reviews, reverse validation, CLEAR closeout, installed
+`0.1.2` observations and attributable user Runtime acceptance remain unperformed
+for this candidate. Installed `0.1.1` is immutable. Numeric and native-platform
+GAPs above remain separate from the focused pass.
+
 ## Portable bundle verification
 
 Run `bun run verify` or `bun run ci` from the bundle root. Both install the frozen declared dependencies, copy the bundle into an unrelated temporary project, initialize its root integration files, prepare a no-provider public-run action, and run shipped generic tests and tooling. Their final-payload result remains to be measured. This check deliberately omits differential and parity, which require repository-only corpora, and the coverage, CRAP, and mutation gates, which do not yet have isolated installed-bundle evidence. `GAP-VIDA-PORTABLE-RELEASE-001` remains open after the first cutover and blocks any claim that portable verification proves the ultimate numeric targets. A passing portable check does not close that GAP or replace installed-runtime user acceptance.

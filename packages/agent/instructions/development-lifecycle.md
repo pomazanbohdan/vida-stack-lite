@@ -43,15 +43,20 @@ request set. An issued action with an uncertain outcome stays blocked from
 automatic reissue. The CLI cannot call session tools or maintain background
 agents after the session exits.
 
-An attributable new request in the same native chat may suspend a quiescent
-predecessor through exact current-v1 HostState compare-and-swap. Bind the same
-thread and project, current journal, unexpired ticket and claim, FIFO order,
-and the documentation CLEAR context when the phase requires it. Release only
-that work item's source claim; preserve its lifecycle phase, seal, review
-history, and pending Runtime acceptance. Admit unrelated next work under a new
-work ID. Feedback on the predecessor needs a fresh fenced claim. Active or
-uncertain source-writing native child effects or a stale version deny
-ordinary suspension. An interruption request alone is not quiescence.
+An attributable new request reuses the validated scope's exact
+`attribution.thread_id` and opaque `attribution.pointer`; equal pointers preserve
+parallel contours of the same request. A different pointer may absorb eligible
+predecessors only under the same stable native session, repository and exact
+sorted project set. Prevalidate the successor intake and current predecessor
+contracts, then admit it, supersede selected works and release only their rights
+and queued intents in one immediate HostState/shared-ledger CAS transaction.
+Preserve lifecycle phase, seals, observations, raw journals and pending Runtime
+acceptance. Supersession denies old resume and never fabricates completion or
+acceptance. Corrections carry unfinished predecessor intent and ACs. Exact intake
+retry returns the persisted successor; changed intent conflicts. Status and
+continuation requests retain their request group. Ambiguity, reservations,
+issued/unknown source effects or stale versions deny ordinary absorption; an
+interruption request alone is not quiescence.
 
 Read-only intake owns no future implementation files. Its ordinary active
 ticket owns one real same-work execution resource, claim and lease expiry;
@@ -88,7 +93,10 @@ requires its supported recovery operation; interruption and expiry alone prove
 neither quiescence nor no effect.
 
 Live same-owner lease extension uses the public `--renew-lease true` mode with
-the latest inspected state version and current fence. Expired accepted readonly
+the latest inspected state version and current fence. A started or uncertain
+writer may renew only its same live ticket/generation with current scoped source,
+bound assignment/reservation and unrevoked source-write authority. This grants
+no expired or foreign takeover and resolves no unknown effect. Expired accepted readonly
 work instead uses `--recover-expired-lease true --rebind-current-bundle true`
 only under the exact unchanged source/scope/config/schema and verified original
 attributable authority. Recovery replaces the old ticket/claim at the existing
@@ -123,9 +131,16 @@ observation, current action/issue and source scope. The admitted local source
 write requires its live exact-path lease and current `source.write` authorization;
 it does not grant `delivery.execute`. At configured validator and tester stages,
 parse structured pass/fail results, reread affected source bytes and reissue
-the existing trusted receipts from the persisted journal. Research-producing
-work still requires a genuine current `ResearchResult/v1` artifact before
-validator issue; do not convert an untyped summary into that authority.
+the existing trusted receipts from the persisted journal. A completed stage is checked against its declared produced contracts and bound
+artifacts; task-packet-only synthesis does not require unrelated research.
+Research-producing work requires a genuine current `ResearchResult/v1` before
+its success gate; an untyped summary grants no such authority. A failed research
+or synthesis report is a durable terminal observation, creates no success
+artifact and cannot pass that gate. Exact action/issue/observation retry after a
+lost acknowledgement returns current persisted state even after wave advance;
+changed payload conflicts. Mastra's authoritative persisted outcome projects
+ledger status; a null suspended step alone remains blocked. Preserve original
+assignment indexes through filtering and select graph-declared terminal outputs.
 For synthesis, each predecessor result keeps its own local source IDs. The
 issued action supplies a catalog bound to the exact sorted result IDs and
 digests; cite sources only as `rN:<local source ID>` from that catalog.
@@ -147,6 +162,14 @@ artifact repair command for all affected active files and dependencies,
 including atomic application and recovery. Until it exists, stop before
 changing active artifacts. Runtime readers accept only current v1; archived
 old state never becomes production input or a reader fallback.
+The public work-state repair is bounded to its declared optional transition
+field and dependency preimages. Qualify its public inspect/plan/apply/resume/
+restore behavior before live repair or a reader upgrade; it is not general
+consumer migration proof. Read workspace baseline through the constructor-free
+read-only public projection. Consumer full-snapshot rollback is allowed only
+before first new admitted work and must retain maintenance/CAS through restore;
+initialization or timestamps alone do not classify that boundary. Public fenced
+consumer restore remains an implementation/qualification GAP.
 An authorized in-scope source edit continues the same work attempt and
 invalidates only evidence bound to its prior bytes. Configuration, schema or
 installed-bundle authority drift, and out-of-scope source drift, stop

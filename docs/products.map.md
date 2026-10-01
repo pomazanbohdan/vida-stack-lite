@@ -4,6 +4,7 @@ Owner: repository maintainer. Class: derived map; canonical behavior is not
 duplicated here.
 
 - Agent system behavior: `packages/agent/docs/system-specification.md`.
+- Audit-state and successor qualification evidence: `packages/agent/docs/research/audit-36-validation-20261001.md` (supporting research, not acceptance).
 - Supporting execution-backend research: `packages/agent/docs/research/openai-execution-backends.md`.
 - Agent lifecycle and speed protocol: `packages/agent/instructions/development-lifecycle.md`.
 - Agent verification: `packages/agent/TESTING.md`.

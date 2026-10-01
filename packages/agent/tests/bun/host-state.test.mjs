@@ -330,6 +330,30 @@ test('readonly canonical workspace inspection preserves state and rejects a miss
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
   expect(()=>inspectHostWorkspaceDatabase(path.join(root,'missing.sqlite'),workspace)).toThrow();
 });
+
+test('same live writer heartbeat preserves its fence and unknown outcome while revocation and expiry deny renewal', () => {
+  let state=store.compareAndSwapHostState(fixture());
+  const started=store.claimWorkflowAttempt({identity,expectedWork:state.workVersion,expectedLedger:state.ledgerVersion,
+    stageId:'implementation',assignmentIndex:0,requestDigest:'5'.repeat(64),lease:clone(state.work.lease)});
+  state=store.readHostStateSnapshot(identity);
+  const journal={schema:'MastraSessionLedger/v1',workspace_id:workspace,work_id:'work',attempt:1,run_id:'run-work',
+    step_id:'writer-wave',items:[{issue_id:'fixture-issued',observation:null,host_reservation:{receipt:{attempt:started.attempt}}}],completed:[]};
+  database.exec('CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))');
+  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(workspace,'work',1,1,canonicalJson(journal),canonicalJsonDigest(journal));
+  const request={identity,attempt:1,nativeSessionHandle:'thread',generation:1,expectedWork:state.workVersion,
+    expectedLedger:state.ledgerVersion,expectedJournal:{revision:1,digest:canonicalJsonDigest(journal)},
+    expectedMaintenanceGeneration:state.maintenanceGeneration,verifyCurrent(){}};
+  expect(()=>store.renewActiveLocalLease({...request,verifyCurrent(){throw Error('source authority revoked');}})).toThrow(/revoked/);
+  expect(store.readHostStateSnapshot(identity)).toEqual(state);
+  const renewed=store.renewActiveLocalLease(request);
+  expect(renewed.work.lease).toEqual(state.work.lease);
+  expect(renewed.work.execution.assignment_attempts).toEqual(state.work.execution.assignment_attempts);
+  expect(renewed.work.execution.assignment_attempts[0].status).toBe('started');
+  const row=database.query('SELECT revision,payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('work');
+  expect(row.revision).toBe(2);
+  expect(JSON.parse(row.payload)).toEqual(journal);
+  expect(()=>store.renewActiveLocalLease({...request,nativeSessionHandle:'foreign'})).toThrow();
+});
 function quiesceImportedState(states, ledger) {
   for (const state of states) {
     state.lease = null;

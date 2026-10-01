@@ -206,13 +206,33 @@ orchestrating session, repository and sorted project set. The successor and
 every predecessor's current contracts, journal, work and coordination versions
 are validated before one host-owned SQLite transaction admits the successor,
 records typed predecessor/successor relations and releases only the eligible
-old owner's unissued resources. Historical phase, evidence, observations and
+old owner's resources and queued intents. Historical phase, evidence, observations and
 pending Runtime acceptance remain intact. A superseded predecessor cannot
 resume; active, reserved or unknown source-writing effects remain guarded.
 Debug corrections carry unfinished predecessor intent and acceptance into the
 successor contract. Status and continuation requests do not create a new request
 group. Functional bundled current-v1 repair, atomic application and recovery
 must be qualified before active artifacts or installed readers are upgraded.
+The successor's intake, scope, acceptance and source bindings are checked before
+admission. Immediate transaction CAS covers every selected predecessor work,
+the successor and the single shared ledger, with current journal and maintenance
+bindings. An ambiguous request or an issued/unknown effect does not authorize
+ordinary absorption. Exact public intake retry returns the existing admitted
+successor; changed intent for that identity conflicts. Supersession is neither
+completion nor user acceptance and does not rewrite raw native journals.
+
+The public `vida-agent reconcile-artifacts --kind work-state --mode inspect
+--project-root ABSROOT` returns `HostWorkspaceInspection/v1` from the existing
+canonical SQLite database. It uses a constructor-free read-only connection:
+no database creation, initialization, mutating pragmas or lifecycle advancement.
+Missing state fails closed. This projection is evidence, not a second status
+store. The same kind supports `plan`, `apply`, `resume` and `restore`, bound to
+`--repair-id ID`; `plan` also records `--actor STRING` as attribution. The
+current bounded repair normalizes an absent optional `request_transition` to
+null using frozen preimages, postimages and dependency versions in one atomic
+transaction. Restore changes only its owned field with advancing revisions;
+pending, reserved or uncertain native effects remain guarded. This work-state
+repair does not establish general consumer configuration/storage migration.
 
 Consumer rollback binds an authoritative read-only HostState baseline and the
 existing maintenance fence through restore. Initialization alone does not close
@@ -220,6 +240,12 @@ rollback; the cutoff is the first admitted new-work attempt, including an
 attempt whose preparation later fails. Current rows, attempts and pending native
 effects are compared with the bound baseline. Unknown or changed state blocks
 restore. The projection creates no database or independent lifecycle authority.
+The required restore retains the maintenance fence and exact baseline/current
+CAS through its complete snapshot effect. It is allowed before the first new
+admitted work; timestamps, initialization and maintenance generation alone
+cannot classify that cutoff. The read-only projection is implemented in Source;
+public baseline comparison and fenced consumer snapshot restore remain an
+implementation and qualification GAP.
 
 Research normalization preserves its immutable current-v1 reserved plan, exact
 target-record CAS and unique lineage event. Under the existing changelog lock,
@@ -244,6 +270,15 @@ not an additional architecture contract or a runtime research receipt.
 The generic runtime keeps orchestration, policy, state and artifact authority
 separate from host adapters. The current adapter uses available native session
 tools and records their actual outcomes through the public protocol.
+
+Core is the sole owner of lifecycle, state, rights and acceptance. Connector
+work covers Codex SDK, App Server, Agents SDK and Agents API adapters; those
+adapters normalize only issued effects and events. Plugin UI/MCP uses public
+interfaces and owns no duplicate lifecycle ledger. These domains remain inside
+the two products `agent` and `plugin`. Optional future providers neither delay
+the coordinated `0.1.2` release nor activate provider execution or API billing.
+Its default remains built-in session tools. The connector public seam is not
+yet implemented or verified and remains a GAP.
 
 The target adapter sequence is OpenAI Agents API, TypeScript Agents SDK, then
 Codex support around the same generic runtime. The beta Agents API provides
@@ -322,8 +357,10 @@ product data preserved. Static tests never close attributable Runtime acceptance
 
 Current Code evidence includes the full transferred source, public umbrella
 discovery, package/consumer initialization access split and new-repository
-reconciliation. Global package installation, selected external-package run,
-consumer artifact repair, final assurance and Runtime acceptance remain GAPs.
+reconciliation. The installed `0.1.1` package is immutable; the coordinated
+`0.1.2` candidate remains pending. Selected external-package run, qualified
+consumer artifact repair/rollback, final assurance and current installed Runtime
+acceptance remain GAPs. Focused Source checks do not qualify a complete release.
 The future OpenAI/SDK/Codex adapters and per-product directory extensions are
 separate planned work. The old executor-only repair does not prove general
 configuration or storage relocation.
