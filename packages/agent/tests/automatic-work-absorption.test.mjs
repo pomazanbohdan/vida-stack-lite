@@ -173,6 +173,23 @@ test('admission normalizes a caller runtime subset into one immutable canonical 
   } finally {f.close();}
 });
 
+test('admission rejects a canonical intake that normalization expands beyond the reader limit', () => {
+  const f=fixture();
+  try {
+    const input=f.prepare('oversized-canonical','user:oversized-canonical');
+    input.intakePath='.agent/work/oversized-canonical/raw-intake.json';
+    input.workItem={...input.workItem,description:'x'.repeat(29000)};
+    const raw=JSON.stringify({schema:'VidaLocalSessionIntake/v1',work_item:input.workItem,native_session_handle:input.nativeSessionHandle,
+      scope_path:input.scopePath,acceptance_path:input.acceptancePath,runtime_code_paths:input.runtimeCodePaths,
+      route:input.route,risk:input.risk,change_kind:input.changeKind});
+    expect(Buffer.byteLength(raw)).toBeLessThanOrEqual(32768);
+    writeFileSync(path.join(f.root,input.intakePath),raw);
+    expect(()=>f.admit(input)).toThrow(/canonical local session intake exceeds/);
+    expect(()=>readFileSync(path.join(f.root,'.agent/work/oversized-canonical/local-session-intake.v1.json'))).toThrow();
+    expect(f.store.readWorkspaceSnapshot().work).toHaveLength(0);
+  } finally {f.close();}
+});
+
 test('effective artifact producers reject risk omission and unsupported tester or delivery cardinality', () => {
   const f=fixture(),file=path.join(f.root,'agent-runtime.config.v1.yaml'),original=readFileSync(file,'utf8');
   try {

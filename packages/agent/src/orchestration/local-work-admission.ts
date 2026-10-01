@@ -168,6 +168,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   if(intakeBytes !== null) {
     const raw=JSON.parse(intakeBytes.toString('utf8'));
     intakeBytes=Buffer.from(canonicalJson({...raw,runtime_code_paths:runtimeCode.entries.map(entry=>entry.path)}));
+    requireAdmission(intakeBytes.length <= 32768, 'canonical local session intake exceeds the bounded artifact size');
   }
   const configDigest = runtimeConfigDigest(config);
   const sourceAuthorization =
