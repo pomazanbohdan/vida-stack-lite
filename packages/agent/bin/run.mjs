@@ -1167,21 +1167,30 @@ function writeDurable(file, value) {
   if (!regularFile(file).equals(bytes)) fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness publication failed.');
 }
 
-function advanceCutoff(selector, values) {
+export async function advanceCutoff(selector, values) {
   if (!selector) return;
   const file = path.join(selector.generationRoot, 'cutoff-witness.json');
   const lock = path.join(selector.generationRoot, 'cutoff-witness.lock');
-  let lockFd;
-  try {
-    lockFd = openSync(lock, 'wx', 0o600);
-  } catch {
+  if (pathExists(lock))
     fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
-  }
+  const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
+  const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { withHostStateExclusiveTransaction } = await import('../src/host-state.ts');
+  const config=loadRuntimeConfig(values.project_root);
+  const access=requireSafeRepositoryAccess(values.project_root);
+  access.ensureDirectory(config.control.work_root,'cutoff transaction root');
+  const databasePath=sessionHandoffDatabasePath(values.project_root,config);
   try {
-    advanceLockedCutoff(file, selector, values);
-  } finally {
-    closeSync(lockFd);
-    unlinkSync(lock);
+    withHostStateExclusiveTransaction(databasePath,()=>{
+      if (pathExists(lock) ||
+        digest(access.readBytes('.agent/active-runtime-selector.v1.json','cutoff current selector'))!==selector.selectorSha)
+        fail('GAP-VIDA-RUN-CUTOFF-001','Cutoff selector changed while acquiring exclusion.');
+      advanceLockedCutoff(file, selector, values);
+    });
+  } catch(error) {
+    if(error.code==='SQLITE_BUSY') fail('GAP-VIDA-RUN-CUTOFF-001','Cutoff witness is held or unsafe.');
+    throw error;
   }
 }
 
@@ -1991,7 +2000,7 @@ export async function run(args = process.argv.slice(2)) {
       attempt: Number(values.attempt),
     });
   }
-  if (!values.issue_wave && !values.report && !values.reconcile) advanceCutoff(selector, values);
+  if (!values.issue_wave && !values.report && !values.reconcile) await advanceCutoff(selector, values);
   {
     const { MastraSessionBridge, configuredContextForStage, parseSessionBridgeObservation, sessionBridgeRunId } =
       await import('../src/orchestration/mastra-session-bridge.ts');

@@ -1518,6 +1518,13 @@ export function openHostStateDatabase(databasePath: string): Database {
   }
 }
 
+/** SQLite's process-owned writer lock is released on termination; no persistent liveness marker is created. */
+export function withHostStateExclusiveTransaction<T>(databasePath: string, operation: () => T): T {
+  const database=openHostStateDatabase(databasePath);
+  try { return database.transaction(operation).immediate(); }
+  finally { database.close(); }
+}
+
 export class HostStateStore {
   readonly #database: Database;
   readonly #workspaceId: string;
