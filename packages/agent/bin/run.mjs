@@ -2768,6 +2768,7 @@ export async function run(args = process.argv.slice(2)) {
         workflowSnapshot.step_id,
         workflowSnapshot.requests,
         pendingSourceEffect && storedScope?.digest !== sourceSnapshot?.digest ? storedScope : sourceSnapshot,
+        workflowSnapshot.status,
       );
       let reconciliationRequired = await unresolvedHostEffect(journal);
       let status = created ? 'prepared' : 'resumed';
@@ -3179,6 +3180,7 @@ export async function run(args = process.argv.slice(2)) {
           workflowSnapshot.step_id,
           workflowSnapshot.requests,
           sourceSnapshot,
+          workflowSnapshot.status,
         );
         status = journal.resume_status === 'complete' ? 'all_reports_collected' : 'resumed';
       }

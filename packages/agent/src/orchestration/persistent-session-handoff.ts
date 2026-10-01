@@ -506,7 +506,7 @@ interface ReadOnlyDispatchActivation {
 }
 
 function mastraLedgerStatus(state: MastraSessionLedgerState): MastraSessionLedgerSnapshot['resume_status'] {
-  if (state.step_id === null) return 'complete';
+  if (state.step_id === null) return 'blocked';
   if (state.items.some((item) => item.issue_id !== null && item.observation === null))
     return 'issued_outcome_uncertain';
   if (state.items.length > 0 && state.items.every((item) => item.observation !== null))
@@ -1173,7 +1173,12 @@ export class MastraSessionLedger {
     stepId: string | null,
     requests: readonly SessionBridgeRequest[],
     sourceScope: ScopedSourceSnapshot | null = null,
+    workflowStatus: 'suspended' | 'success' | 'failed' | 'canceled' | 'unknown' = 'unknown',
   ): MastraSessionLedgerSnapshot {
+    const project = (value: MastraSessionLedgerSnapshot): MastraSessionLedgerSnapshot =>
+      stepId === null ? freezeJsonValue({ ...value, resume_status: workflowStatus === 'success' ? 'complete' : 'blocked' }) : value;
+    requireState(stepId === null || workflowStatus === 'suspended' || workflowStatus === 'unknown',
+      'terminal workflow cannot have suspended requests');
     requireState(
       (stepId === null && requests.length === 0) ||
         (stepId !== null && requests.length > 0 && requests.every((request) => request.run_id === runId)),
@@ -1204,7 +1209,7 @@ export class MastraSessionLedger {
             .run(this.#workspaceId, workId, attempt, 1, canonicalJson(state), digest);
         })
         .immediate();
-      if (result.changes === 0) return this.sync(workId, attempt, runId, stepId, requests, sourceScope);
+      if (result.changes === 0) return this.sync(workId, attempt, runId, stepId, requests, sourceScope, workflowStatus);
       return this.#read(workId, attempt)!;
     }
     requireState(current.state.run_id === runId, 'Mastra session run id differs from ledger');
@@ -1221,7 +1226,7 @@ export class MastraSessionLedger {
         ),
         'Mastra suspended request set differs from ledger',
       );
-      return current;
+      return project(current);
     }
     requireState(
       current.state.step_id !== null &&
@@ -1229,12 +1234,12 @@ export class MastraSessionLedger {
         !current.state.completed.some((entry) => entry.step_id === stepId),
       'Mastra advanced without all unique observed effects',
     );
-    return this.#change(workId, attempt, current.version, (state) => ({
+    return project(this.#change(workId, attempt, current.version, (state) => ({
       ...state,
       step_id: stepId,
       items: requests.map((request) => ({ request, issue_id: null, observation: null })),
       completed: [...state.completed, { step_id: state.step_id!, items: state.items }],
-    }));
+    })));
   }
 
   issueWave(
