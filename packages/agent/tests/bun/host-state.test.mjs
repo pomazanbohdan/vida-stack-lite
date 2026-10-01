@@ -262,6 +262,37 @@ function next(snapshot = store.readHostStateSnapshot(identity)) {
     nextLedger: ledger,
   };
 }
+
+test('successor admission atomically releases predecessor rights and rejects changed retry or stale CAS', () => {
+  const first = store.compareAndSwapHostState(fixture('work', 'file:src/one.ts'));
+  const journal = {schema:'MastraSessionLedger/v1',workspace_id:workspace,work_id:'work',attempt:1,
+    run_id:'run-work',step_id:'wave0',items:[],completed:[]};
+  database.exec('CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))');
+  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+    .run(workspace,'work',1,1,canonicalJson(journal),canonicalJsonDigest(journal));
+  const incoming = includeExistingLedger(fixture('successor','file:src/two.ts'),first.ledger);
+  const request = {...incoming,expectedLedger:first.ledgerVersion,expectedMaintenanceGeneration:first.maintenanceGeneration,
+    nativeSessionHandle:'thread',requestPointer:'user:second',predecessors:[{identity,expectedWork:first.workVersion,
+      attempt:1,expectedJournal:{revision:1,digest:canonicalJsonDigest(journal)},requestPointer:'user:first'}],
+    verifySuccessor(){},verifyCurrent(work,current,pointer){expect(pointer).toBe('user:first');expect(current).toEqual(journal);}};
+  delete request.expectedWork;
+  const bad = {...request,predecessors:[{...request.predecessors[0],expectedJournal:{revision:2,digest:canonicalJsonDigest(journal)}}]};
+  expect(()=>store.admitSuccessorWork(bad)).toThrow(/journal CAS/);
+  expect(store.readHostStateSnapshot(identity)).toEqual(first);
+  expect(store.readHostStateSnapshot({...identity,work_id:'successor'}).work).toBeNull();
+  const admitted=store.admitSuccessorWork(request);
+  const prior=store.readHostStateSnapshot(identity);
+  expect(prior.work.lease).toBeNull();
+  expect(prior.work.execution.status).toBe('suspended');
+  expect(prior.work.lifecycle.phase).toBe(first.work.lifecycle.phase);
+  expect(prior.work.artifacts).toEqual(first.work.artifacts);
+  expect(prior.work.request_transition.successor_work_id).toBe('successor');
+  expect(admitted.work.request_transition.predecessor_work_ids).toEqual(['work']);
+  expect(admitted.ledger.claims.find(claim=>claim.work_id==='work').status).toBe('released');
+  expect(store.admitSuccessorWork(request)).toEqual(admitted);
+  expect(()=>store.admitSuccessorWork({...request,requestPointer:'user:changed'})).toThrow(/retry differs/);
+  expect(JSON.parse(database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('work').payload)).toEqual(journal);
+});
 function quiesceImportedState(states, ledger) {
   for (const state of states) {
     state.lease = null;
