@@ -3501,6 +3501,12 @@ export class HostStateStore {
           'lease renewal owner, fencing identity or live expiry differs',
         );
         requireState(
+          work.execution.assignment_attempts.every((entry) =>
+            !['started', 'uncertain'].includes(entry.status) ||
+            sameJson(entry.lease, work.lease)),
+          'lease renewal cannot retain a foreign writer fence',
+        );
+        requireState(
           !ledger.claims.some(
             (entry) =>
               entry.status === 'active' &&
@@ -3541,6 +3547,12 @@ export class HostStateStore {
             journal.run_id === work.execution.run_id &&
             Array.isArray(journal.items),
           'lease renewal journal identity changed',
+        );
+        requireState(
+          (journal.items as { host_reservation?: { receipt?: { attempt?: { lease?: unknown } } } }[])
+            .every((entry) => !entry.host_reservation ||
+              sameJson(entry.host_reservation.receipt?.attempt?.lease, work.lease)),
+          'lease renewal writer reservation fence differs',
         );
         input.verifyCurrent(snapshot(work), snapshot(journal));
         const expiry = new Date(
