@@ -266,93 +266,172 @@ function next(snapshot = store.readHostStateSnapshot(identity)) {
 
 test('successor admission atomically releases predecessor rights and rejects changed retry or stale CAS', () => {
   const first = store.compareAndSwapHostState(fixture('work', 'file:src/one.ts'));
-  const journal = {schema:'MastraSessionLedger/v1',workspace_id:workspace,work_id:'work',attempt:1,
-    run_id:'run-work',step_id:'wave0',items:[],completed:[]};
-  database.exec('CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))');
-  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
-    .run(workspace,'work',1,1,canonicalJson(journal),canonicalJsonDigest(journal));
-  const incoming = includeExistingLedger(fixture('successor','file:src/two.ts'),first.ledger);
-  const request = {...incoming,expectedLedger:first.ledgerVersion,expectedMaintenanceGeneration:first.maintenanceGeneration,
-    nativeSessionHandle:'thread',requestPointer:'user:second',predecessors:[{identity,expectedWork:first.workVersion,
-      attempt:1,expectedJournal:{revision:1,digest:canonicalJsonDigest(journal)},requestPointer:'user:first'}],
-    verifySuccessor(){},verifyCurrent(work,current,pointer){expect(pointer).toBe('user:first');expect(current).toEqual(journal);}};
+  const journal = {
+    schema: 'MastraSessionLedger/v1',
+    workspace_id: workspace,
+    work_id: 'work',
+    attempt: 1,
+    run_id: 'run-work',
+    step_id: 'wave0',
+    items: [],
+    completed: [],
+  };
+  database.exec(
+    'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
+  );
+  database
+    .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+    .run(workspace, 'work', 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
+  const incoming = includeExistingLedger(fixture('successor', 'file:src/two.ts'), first.ledger);
+  const request = {
+    ...incoming,
+    expectedLedger: first.ledgerVersion,
+    expectedMaintenanceGeneration: first.maintenanceGeneration,
+    nativeSessionHandle: 'thread',
+    requestPointer: 'user:second',
+    predecessors: [
+      {
+        identity,
+        expectedWork: first.workVersion,
+        attempt: 1,
+        expectedJournal: { revision: 1, digest: canonicalJsonDigest(journal) },
+        requestPointer: 'user:first',
+      },
+    ],
+    verifySuccessor() {},
+    verifyCurrent(work, current, pointer) {
+      expect(pointer).toBe('user:first');
+      expect(current).toEqual(journal);
+    },
+  };
   delete request.expectedWork;
-  const bad = {...request,predecessors:[{...request.predecessors[0],expectedJournal:{revision:2,digest:canonicalJsonDigest(journal)}}]};
-  expect(()=>store.admitSuccessorWork(bad)).toThrow(/journal CAS/);
+  const bad = {
+    ...request,
+    predecessors: [
+      { ...request.predecessors[0], expectedJournal: { revision: 2, digest: canonicalJsonDigest(journal) } },
+    ],
+  };
+  expect(() => store.admitSuccessorWork(bad)).toThrow(/journal CAS/);
   expect(store.readHostStateSnapshot(identity)).toEqual(first);
-  expect(store.readHostStateSnapshot({...identity,work_id:'successor'}).work).toBeNull();
-  const admitted=store.admitSuccessorWork(request);
-  const prior=store.readHostStateSnapshot(identity);
+  expect(store.readHostStateSnapshot({ ...identity, work_id: 'successor' }).work).toBeNull();
+  const admitted = store.admitSuccessorWork(request);
+  const prior = store.readHostStateSnapshot(identity);
   expect(prior.work.lease).toBeNull();
   expect(prior.work.execution.status).toBe('suspended');
   expect(prior.work.lifecycle.phase).toBe(first.work.lifecycle.phase);
   expect(prior.work.artifacts).toEqual(first.work.artifacts);
   expect(prior.work.request_transition.successor_work_id).toBe('successor');
   expect(admitted.work.request_transition.predecessor_work_ids).toEqual(['work']);
-  expect(admitted.ledger.claims.find(claim=>claim.work_id==='work').status).toBe('released');
+  expect(admitted.ledger.claims.find((claim) => claim.work_id === 'work').status).toBe('released');
   expect(store.admitSuccessorWork(request)).toEqual(admitted);
-  expect(()=>store.admitSuccessorWork({...request,requestPointer:'user:changed'})).toThrow(/retry differs/);
-  expect(JSON.parse(database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('work').payload)).toEqual(journal);
+  expect(() => store.admitSuccessorWork({ ...request, requestPointer: 'user:changed' })).toThrow(/retry differs/);
+  expect(
+    JSON.parse(
+      database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('work').payload,
+    ),
+  ).toEqual(journal);
 });
 
 test('bundled work-state repair plans atomically, resumes exact postimages and restores without evidence loss', () => {
-  const original=store.compareAndSwapHostState(fixture());
-  const inspection=store.repairRequestTransitionFields({mode:'inspect',operationId:'fixture-repair'});
+  const original = store.compareAndSwapHostState(fixture());
+  const inspection = store.repairRequestTransitionFields({ mode: 'inspect', operationId: 'fixture-repair' });
   expect(inspection.changed_work).toHaveLength(1);
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
-  const plan=store.repairRequestTransitionFields({mode:'plan',operationId:'fixture-repair',actor:'fixture-owner'});
+  const plan = store.repairRequestTransitionFields({
+    mode: 'plan',
+    operationId: 'fixture-repair',
+    actor: 'fixture-owner',
+  });
   expect(plan.status).toBe('planned');
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
-  const applied=store.repairRequestTransitionFields({mode:'apply',operationId:'fixture-repair'});
+  const applied = store.repairRequestTransitionFields({ mode: 'apply', operationId: 'fixture-repair' });
   expect(applied.status).toBe('applied');
-  const saved=store.readHostStateSnapshot(identity);
+  const saved = store.readHostStateSnapshot(identity);
   expect(saved.work.request_transition).toBeNull();
   expect(saved.work.artifacts).toEqual(original.work.artifacts);
   expect(saved.work.execution).toEqual(original.work.execution);
   expect(saved.ledgerVersion).toEqual(original.ledgerVersion);
-  expect(store.repairRequestTransitionFields({mode:'resume',operationId:'fixture-repair'})).toEqual(applied);
-  const restored=store.repairRequestTransitionFields({mode:'restore',operationId:'fixture-repair'});
+  expect(store.repairRequestTransitionFields({ mode: 'resume', operationId: 'fixture-repair' })).toEqual(applied);
+  const restored = store.repairRequestTransitionFields({ mode: 'restore', operationId: 'fixture-repair' });
   expect(restored.status).toBe('restored');
-  const after=store.readHostStateSnapshot(identity);
-  expect(Object.hasOwn(after.work,'request_transition')).toBe(false);
-  expect(after.work.revision).toBe(saved.work.revision+1);
+  const after = store.readHostStateSnapshot(identity);
+  expect(Object.hasOwn(after.work, 'request_transition')).toBe(false);
+  expect(after.work.revision).toBe(saved.work.revision + 1);
   expect(after.work.lifecycle.phase).toBe(original.work.lifecycle.phase);
   expect(after.work.lifecycle.assurance).toEqual(original.work.lifecycle.assurance);
-  expect(store.repairRequestTransitionFields({mode:'restore',operationId:'fixture-repair'})).toEqual(restored);
+  expect(store.repairRequestTransitionFields({ mode: 'restore', operationId: 'fixture-repair' })).toEqual(restored);
 });
 
 test('readonly canonical workspace inspection preserves state and rejects a missing database', () => {
-  const original=store.compareAndSwapHostState(fixture());
-  const observed=inspectHostWorkspaceDatabase(databasePath,workspace);
+  const original = store.compareAndSwapHostState(fixture());
+  const observed = inspectHostWorkspaceDatabase(databasePath, workspace);
   expect(observed.schema).toBe('HostWorkspaceInspection/v1');
   expect(observed.work[0].state).toEqual(original.work);
   expect(observed.ledger_version).toEqual(original.ledgerVersion);
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
-  expect(()=>inspectHostWorkspaceDatabase(path.join(root,'missing.sqlite'),workspace)).toThrow();
+  expect(() => inspectHostWorkspaceDatabase(path.join(root, 'missing.sqlite'), workspace)).toThrow();
 });
 
 test('same live writer heartbeat preserves its fence and unknown outcome while revocation and expiry deny renewal', () => {
-  let state=store.compareAndSwapHostState(fixture());
-  const started=store.claimWorkflowAttempt({identity,expectedWork:state.workVersion,expectedLedger:state.ledgerVersion,
-    stageId:'implementation',assignmentIndex:0,requestDigest:'5'.repeat(64),lease:clone(state.work.lease)});
-  state=store.readHostStateSnapshot(identity);
-  const journal={schema:'MastraSessionLedger/v1',workspace_id:workspace,work_id:'work',attempt:1,run_id:'run-work',
-    step_id:'writer-wave',items:[{issue_id:'fixture-issued',observation:null,host_reservation:{receipt:{attempt:started.attempt}}}],completed:[]};
-  database.exec('CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))');
-  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(workspace,'work',1,1,canonicalJson(journal),canonicalJsonDigest(journal));
-  const request={identity,attempt:1,nativeSessionHandle:'thread',generation:1,expectedWork:state.workVersion,
-    expectedLedger:state.ledgerVersion,expectedJournal:{revision:1,digest:canonicalJsonDigest(journal)},
-    expectedMaintenanceGeneration:state.maintenanceGeneration,verifyCurrent(){}};
-  expect(()=>store.renewActiveLocalLease({...request,verifyCurrent(){throw Error('source authority revoked');}})).toThrow(/revoked/);
+  let state = store.compareAndSwapHostState(fixture());
+  const started = store.claimWorkflowAttempt({
+    identity,
+    expectedWork: state.workVersion,
+    expectedLedger: state.ledgerVersion,
+    stageId: 'implementation',
+    assignmentIndex: 0,
+    requestDigest: '5'.repeat(64),
+    lease: clone(state.work.lease),
+  });
+  state = store.readHostStateSnapshot(identity);
+  const journal = {
+    schema: 'MastraSessionLedger/v1',
+    workspace_id: workspace,
+    work_id: 'work',
+    attempt: 1,
+    run_id: 'run-work',
+    step_id: 'writer-wave',
+    items: [
+      { issue_id: 'fixture-issued', observation: null, host_reservation: { receipt: { attempt: started.attempt } } },
+    ],
+    completed: [],
+  };
+  database.exec(
+    'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
+  );
+  database
+    .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+    .run(workspace, 'work', 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
+  const request = {
+    identity,
+    attempt: 1,
+    nativeSessionHandle: 'thread',
+    generation: 1,
+    expectedWork: state.workVersion,
+    expectedLedger: state.ledgerVersion,
+    expectedJournal: { revision: 1, digest: canonicalJsonDigest(journal) },
+    expectedMaintenanceGeneration: state.maintenanceGeneration,
+    verifyCurrent() {},
+  };
+  expect(() =>
+    store.renewActiveLocalLease({
+      ...request,
+      verifyCurrent() {
+        throw Error('source authority revoked');
+      },
+    }),
+  ).toThrow(/revoked/);
   expect(store.readHostStateSnapshot(identity)).toEqual(state);
-  const renewed=store.renewActiveLocalLease(request);
+  const renewed = store.renewActiveLocalLease(request);
   expect(renewed.work.lease).toEqual(state.work.lease);
   expect(renewed.work.execution.assignment_attempts).toEqual(state.work.execution.assignment_attempts);
   expect(renewed.work.execution.assignment_attempts[0].status).toBe('started');
-  const row=database.query('SELECT revision,payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('work');
+  const row = database
+    .query('SELECT revision,payload FROM agent_host_mastra_session_ledger WHERE work_id=?')
+    .get('work');
   expect(row.revision).toBe(2);
   expect(JSON.parse(row.payload)).toEqual(journal);
-  expect(()=>store.renewActiveLocalLease({...request,nativeSessionHandle:'foreign'})).toThrow();
+  expect(() => store.renewActiveLocalLease({ ...request, nativeSessionHandle: 'foreign' })).toThrow();
 });
 function quiesceImportedState(states, ledger) {
   for (const state of states) {
@@ -5334,34 +5413,51 @@ test('issued readonly release: completed official-docs predecessor does not bloc
   });
 });
 
-
 test('expired recovery keeps runtime identity coupled across verified bundle changes without replaying research', () => {
   const seed = fixture();
-  const digestA = 'a'.repeat(64), digestB = 'b'.repeat(64);
+  const digestA = 'a'.repeat(64),
+    digestB = 'b'.repeat(64);
   seed.nextWork.binding.runtime_source_revision = digestA;
   seed.nextWork.binding.runtime_code_digest = digestA;
   seed.nextWork.lifecycle.config_binding.runtime_code_digest = digestA;
   const initial = store.compareAndSwapHostState(seed);
-  database.exec('CREATE TABLE agent_host_mastra_session_ledger(workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)');
+  database.exec(
+    'CREATE TABLE agent_host_mastra_session_ledger(workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)',
+  );
   const journal = {
-    schema: 'MastraSessionLedger/v1', workspace_id: workspace, work_id: identity.work_id, attempt: 1,
+    schema: 'MastraSessionLedger/v1',
+    workspace_id: workspace,
+    work_id: identity.work_id,
+    attempt: 1,
     run_id: initial.work.execution.run_id,
-    completed: [{ step_id: 'research', items: [{ issue_id: 'observed-research', observation: { status: 'reported_complete' } }] }],
+    completed: [
+      { step_id: 'research', items: [{ issue_id: 'observed-research', observation: { status: 'reported_complete' } }] },
+    ],
     items: [{ issue_id: null, observation: null }],
   };
-  const journalBytes = canonicalJson(journal), journalDigest = canonicalJsonDigest(journal);
-  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(workspace, identity.work_id, 1, 1, journalBytes, journalDigest);
+  const journalBytes = canonicalJson(journal),
+    journalDigest = canonicalJsonDigest(journal);
+  database
+    .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+    .run(workspace, identity.work_id, 1, 1, journalBytes, journalDigest);
   const now = Date.now;
   let recovered;
   try {
     Date.now = () => Date.parse(initial.ledger.tickets[0].expires_at) + 1;
     recovered = store.recoverExpiredLocalLease({
-      identity, attempt: 1, nativeSessionHandle: 'thread', generation: 1,
-      expectedWork: initial.workVersion, expectedLedger: initial.ledgerVersion,
-      expectedJournal: { revision: 1, digest: journalDigest }, expectedMaintenanceGeneration: initial.maintenanceGeneration,
+      identity,
+      attempt: 1,
+      nativeSessionHandle: 'thread',
+      generation: 1,
+      expectedWork: initial.workVersion,
+      expectedLedger: initial.ledgerVersion,
+      expectedJournal: { revision: 1, digest: journalDigest },
+      expectedMaintenanceGeneration: initial.maintenanceGeneration,
       verifyCurrent: () => ({ runtimeCodeDigest: digestB, authorityPointer: 'user:verified-current-bundle' }),
     });
-  } finally { Date.now = now; }
+  } finally {
+    Date.now = now;
+  }
   expect(recovered.work.binding.runtime_source_revision).toBe(digestB);
   expect(recovered.work.binding.runtime_code_digest).toBe(digestB);
   expect(recovered.work.lifecycle.config_binding.runtime_code_digest).toBe(digestB);

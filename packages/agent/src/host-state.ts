@@ -630,8 +630,22 @@ function checkedWork(value: unknown): WorkState {
   requireState(validateWork(value), 'work record must match current WorkState/v1');
   const work = value as WorkState,
     binding = work.binding;
-  requireState(binding.project_ids.every((id,index)=>index===0 || binding.project_ids[index-1]! < id),
-    'work project identity must be an exact sorted set');
+  requireState(
+    binding.project_ids.every((id, index) => index === 0 || binding.project_ids[index - 1]! < id),
+    'work project identity must be an exact sorted set',
+  );
+  if (work.request_transition) {
+    const transition = work.request_transition;
+    requireState(
+      !/\p{Cc}/u.test(transition.request_pointer + transition.native_session_handle) &&
+        transition.successor_work_id !== binding.lifecycle_work_id &&
+        transition.predecessor_work_ids.every(
+          (id, index) =>
+            id !== binding.lifecycle_work_id && (index === 0 || transition.predecessor_work_ids[index - 1]! < id),
+        ),
+      'request transition identity invalid',
+    );
+  }
   validateLifecycleAggregate(work);
   if (work.migration) {
     const migration = work.migration;
@@ -1054,8 +1068,10 @@ function validateProgress(
       sameJson(old.migration ?? null, work.migration ?? null),
       'migration lineage requires a dedicated rebind transaction',
     );
-    requireState(sameJson(old.request_transition ?? null, work.request_transition ?? null),
-      'request transition requires its dedicated admission transaction');
+    requireState(
+      sameJson(old.request_transition ?? null, work.request_transition ?? null),
+      'request transition requires its dedicated admission transaction',
+    );
     appendOnly(old.contracts.decisions, work.contracts.decisions, (ref) => ref.path, 'decision references');
     appendOnly(old.artifacts, work.artifacts, (ref) => ref.artifact_id, 'artifact references');
   }
@@ -1441,64 +1457,156 @@ function expectedAttemptReconciliation(
 }
 
 /** Read canonical existing rows without creating a database, schema, journal mode or authority. */
-export function inspectHostWorkspaceDatabase(databasePath: string, workspaceId: string): {
-  readonly schema: 'HostWorkspaceInspection/v1'; readonly workspace_id: string;
-  readonly work: readonly {readonly identity:WorkIdentity;readonly version:StateVersion;readonly state:WorkState}[];
-  readonly ledger: CoordinationLedger | null; readonly ledger_version: StateVersion | null;
-  readonly journals: readonly {readonly work_id:string;readonly attempt:number;readonly version:StateVersion;readonly state:Readonly<Record<string,unknown>>}[];
-  readonly governance: readonly {readonly store_id:string;readonly kind:string;readonly record_key:string;readonly version:StateVersion;readonly state:Readonly<Record<string,unknown>>}[];
+export function inspectHostWorkspaceDatabase(
+  databasePath: string,
+  workspaceId: string,
+): {
+  readonly schema: 'HostWorkspaceInspection/v1';
+  readonly workspace_id: string;
+  readonly work: readonly {
+    readonly identity: WorkIdentity;
+    readonly version: StateVersion;
+    readonly state: WorkState;
+  }[];
+  readonly ledger: CoordinationLedger | null;
+  readonly ledger_version: StateVersion | null;
+  readonly journals: readonly {
+    readonly work_id: string;
+    readonly attempt: number;
+    readonly version: StateVersion;
+    readonly state: Readonly<Record<string, unknown>>;
+  }[];
+  readonly governance: readonly {
+    readonly store_id: string;
+    readonly kind: string;
+    readonly record_key: string;
+    readonly version: StateVersion;
+    readonly state: Readonly<Record<string, unknown>>;
+  }[];
 } {
   requireState(path.isAbsolute(databasePath) && hashPattern.test(workspaceId), 'workspace inspection identity invalid');
   const stat = lstatSync(databasePath);
   requireState(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'workspace inspection database is unsafe');
-  const database = new Database(databasePath, {readonly:true,strict:true});
+  const database = new Database(databasePath, { readonly: true, strict: true });
   try {
-    return database.transaction(() => {
-      requireState((database.query('PRAGMA quick_check').get() as {quick_check:string})?.quick_check === 'ok',
-        'workspace inspection database integrity failed');
-      const rows = database.query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
-        .all(workspaceId) as {kind:string;id:string;revision:number;payload:string;digest:string}[];
-      let ledger: CoordinationLedger|null=null;
-      const work: {identity:WorkIdentity;version:StateVersion;state:WorkState}[]=[];
-      for (const row of rows) {
-        const value = JSON.parse(row.payload);
-        requireState(canonicalJsonDigest(value) === row.digest && value.revision === row.revision &&
-          value.workspace_id === workspaceId, 'workspace inspection row integrity differs');
-        if (row.kind === 'work') {
-          const state=checkedWork(value), identity=workIdentity(state);
-          requireState(identityKey(identity)===row.id,'workspace inspection work key differs');
-          work.push({identity,version:{revision:row.revision,digest:row.digest},state});
-        } else {
-          requireState(row.kind==='ledger' && row.id==='shared' && ledger===null,'workspace inspection state kind invalid');
-          ledger=checkedLedger(value);
+    return database
+      .transaction(() => {
+        requireState(
+          (database.query('PRAGMA quick_check').get() as { quick_check: string })?.quick_check === 'ok',
+          'workspace inspection database integrity failed',
+        );
+        const rows = database
+          .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
+          .all(workspaceId) as { kind: string; id: string; revision: number; payload: string; digest: string }[];
+        let ledger: CoordinationLedger | null = null;
+        const work: { identity: WorkIdentity; version: StateVersion; state: WorkState }[] = [];
+        for (const row of rows) {
+          const value = JSON.parse(row.payload);
+          requireState(
+            canonicalJsonDigest(value) === row.digest &&
+              value.revision === row.revision &&
+              value.workspace_id === workspaceId,
+            'workspace inspection row integrity differs',
+          );
+          if (row.kind === 'work') {
+            const state = checkedWork(value),
+              identity = workIdentity(state);
+            requireState(identityKey(identity) === row.id, 'workspace inspection work key differs');
+            work.push({ identity, version: { revision: row.revision, digest: row.digest }, state });
+          } else {
+            requireState(
+              row.kind === 'ledger' && row.id === 'shared' && ledger === null,
+              'workspace inspection state kind invalid',
+            );
+            ledger = checkedLedger(value);
+          }
         }
-      }
-      for (const entry of work) requireState(ledger && (validatePair(entry.state,ledger),true),
-        'workspace inspection coordination unavailable');
-      const hasJournals=Boolean(database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'").get());
-      const journalRows=hasJournals ? database.query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt')
-        .all(workspaceId) as {work_id:string;attempt:number;revision:number;payload:string;digest:string}[] : [];
-      const journals=journalRows.map((row)=>{
-        const state=JSON.parse(row.payload) as Record<string,unknown>;
-        const owner=work.find((entry)=>entry.identity.work_id===row.work_id);
-        requireState(owner && canonicalJsonDigest(state)===row.digest && state.schema==='MastraSessionLedger/v1' &&
-          state.workspace_id===workspaceId && state.work_id===row.work_id && state.attempt===row.attempt &&
-          state.run_id===owner.state.execution.run_id && Array.isArray(state.items) && Array.isArray(state.completed),
-          'workspace inspection journal integrity differs');
-        return {work_id:row.work_id,attempt:row.attempt,version:{revision:row.revision,digest:row.digest},state};
-      });
-      const governance=database.query('SELECT store_id,kind,record_key,revision,payload,digest FROM agent_host_governance WHERE workspace_id=? ORDER BY store_id,kind,record_key')
-        .all(workspaceId).map((value)=>{
-          const row=value as {store_id:string;kind:string;record_key:string;revision:number;payload:string;digest:string};
-          const state=JSON.parse(row.payload) as Record<string,unknown>;
-          requireState(canonicalJsonDigest(state)===row.digest && ['operation','approval'].includes(row.kind),
-            'workspace inspection governance integrity differs');
-          return {store_id:row.store_id,kind:row.kind,record_key:row.record_key,version:{revision:row.revision,digest:row.digest},state};
+        for (const entry of work)
+          requireState(
+            ledger && (validatePair(entry.state, ledger), true),
+            'workspace inspection coordination unavailable',
+          );
+        const hasJournals = Boolean(
+          database
+            .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
+            .get(),
+        );
+        const journalRows = hasJournals
+          ? (database
+              .query(
+                'SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
+              )
+              .all(workspaceId) as {
+              work_id: string;
+              attempt: number;
+              revision: number;
+              payload: string;
+              digest: string;
+            }[])
+          : [];
+        const journals = journalRows.map((row) => {
+          const state = JSON.parse(row.payload) as Record<string, unknown>;
+          const owner = work.find((entry) => entry.identity.work_id === row.work_id);
+          requireState(
+            owner &&
+              canonicalJsonDigest(state) === row.digest &&
+              state.schema === 'MastraSessionLedger/v1' &&
+              state.workspace_id === workspaceId &&
+              state.work_id === row.work_id &&
+              state.attempt === row.attempt &&
+              state.run_id === owner.state.execution.run_id &&
+              Array.isArray(state.items) &&
+              Array.isArray(state.completed),
+            'workspace inspection journal integrity differs',
+          );
+          return {
+            work_id: row.work_id,
+            attempt: row.attempt,
+            version: { revision: row.revision, digest: row.digest },
+            state,
+          };
         });
-      return snapshot({schema:'HostWorkspaceInspection/v1' as const,workspace_id:workspaceId,work,ledger,
-        ledger_version:version(ledger),journals,governance});
-    }).deferred();
-  } finally {database.close();}
+        const governance = database
+          .query(
+            'SELECT store_id,kind,record_key,revision,payload,digest FROM agent_host_governance WHERE workspace_id=? ORDER BY store_id,kind,record_key',
+          )
+          .all(workspaceId)
+          .map((value) => {
+            const row = value as {
+              store_id: string;
+              kind: string;
+              record_key: string;
+              revision: number;
+              payload: string;
+              digest: string;
+            };
+            const state = JSON.parse(row.payload) as Record<string, unknown>;
+            requireState(
+              canonicalJsonDigest(state) === row.digest && ['operation', 'approval'].includes(row.kind),
+              'workspace inspection governance integrity differs',
+            );
+            return {
+              store_id: row.store_id,
+              kind: row.kind,
+              record_key: row.record_key,
+              version: { revision: row.revision, digest: row.digest },
+              state,
+            };
+          });
+        return snapshot({
+          schema: 'HostWorkspaceInspection/v1' as const,
+          workspace_id: workspaceId,
+          work,
+          ledger,
+          ledger_version: version(ledger),
+          journals,
+          governance,
+        });
+      })
+      .deferred();
+  } finally {
+    database.close();
+  }
 }
 
 export function openHostStateDatabase(databasePath: string): Database {
@@ -1520,9 +1628,12 @@ export function openHostStateDatabase(databasePath: string): Database {
 
 /** SQLite's process-owned writer lock is released on termination; no persistent liveness marker is created. */
 export function withHostStateExclusiveTransaction<T>(databasePath: string, operation: () => T): T {
-  const database=openHostStateDatabase(databasePath);
-  try { return database.transaction(operation).immediate(); }
-  finally { database.close(); }
+  const database = openHostStateDatabase(databasePath);
+  try {
+    return database.transaction(operation).immediate();
+  } finally {
+    database.close();
+  }
 }
 
 export class HostStateStore {
@@ -2577,128 +2688,278 @@ export class HostStateStore {
     readonly ledger_version: StateVersion | null;
   } {
     requireState(!this.#database.inTransaction, 'nested workspace inspection forbidden');
-    return this.#database.transaction(() => {
-      const rows = this.#database.query(
-        "SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id",
-      ).all(this.#workspaceId) as { id: string }[];
-      const work = rows.map((row) => this.#read(workIdentity(this.#load('work', row.id) as WorkState)));
-      const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
-      return snapshot({ schema: 'HostWorkspaceSnapshot/v1' as const, workspace_id: this.#workspaceId,
-        work, ledger, ledger_version: version(ledger) });
-    }).deferred();
+    return this.#database
+      .transaction(() => {
+        const rows = this.#database
+          .query("SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id")
+          .all(this.#workspaceId) as { id: string }[];
+        const work = rows.map((row) => this.#read(workIdentity(this.#load('work', row.id) as WorkState)));
+        const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
+        return snapshot({
+          schema: 'HostWorkspaceSnapshot/v1' as const,
+          workspace_id: this.#workspaceId,
+          work,
+          ledger,
+          ledger_version: version(ledger),
+        });
+      })
+      .deferred();
   }
   readWorkSessionJournal(identity: WorkIdentity): {
-    readonly attempt: number; readonly version: StateVersion; readonly state: Readonly<Record<string, unknown>>;
+    readonly attempt: number;
+    readonly version: StateVersion;
+    readonly state: Readonly<Record<string, unknown>>;
   } | null {
     requireState(!this.#database.inTransaction, 'nested journal inspection forbidden');
-    return this.#database.transaction(() => {
-      const work = this.#read(identity).work;
-      requireState(work, 'journal work is unavailable');
-      const row = this.#database.query(
-        'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-      ).get(this.#workspaceId, identity.work_id) as {attempt:number;revision:number;payload:string;digest:string}|null;
-      if (!row) return null;
-      const state = JSON.parse(row.payload) as Record<string, unknown>;
-      requireState(state.schema === 'MastraSessionLedger/v1' && state.workspace_id === this.#workspaceId &&
-        state.work_id === identity.work_id && state.attempt === row.attempt && state.run_id === work.execution.run_id &&
-        canonicalJsonDigest(state) === row.digest, 'journal inspection identity differs');
-      return snapshot({ attempt: row.attempt, version: {revision:row.revision,digest:row.digest}, state });
-    }).deferred();
+    return this.#database
+      .transaction(() => {
+        const work = this.#read(identity).work;
+        requireState(work, 'journal work is unavailable');
+        const row = this.#database
+          .query(
+            'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+          )
+          .get(this.#workspaceId, identity.work_id) as {
+          attempt: number;
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
+        if (!row) return null;
+        const state = JSON.parse(row.payload) as Record<string, unknown>;
+        requireState(
+          state.schema === 'MastraSessionLedger/v1' &&
+            state.workspace_id === this.#workspaceId &&
+            state.work_id === identity.work_id &&
+            state.attempt === row.attempt &&
+            state.run_id === work.execution.run_id &&
+            canonicalJsonDigest(state) === row.digest,
+          'journal inspection identity differs',
+        );
+        return snapshot({ attempt: row.attempt, version: { revision: row.revision, digest: row.digest }, state });
+      })
+      .deferred();
   }
 
   /** Bundle-owned current-v1 normalization with one atomic operation record and exact recovery preimages. */
   repairRequestTransitionFields(input: {
-    readonly mode: 'inspect'|'plan'|'apply'|'resume'|'restore';
-    readonly operationId: string; readonly actor?: string;
-  }): Readonly<Record<string,unknown>> {
+    readonly mode: 'inspect' | 'plan' | 'apply' | 'resume' | 'restore';
+    readonly operationId: string;
+    readonly actor?: string;
+  }): Readonly<Record<string, unknown>> {
     requireState(/^[a-z0-9][a-z0-9._-]{0,79}$/.test(input.operationId), 'work repair operation identity invalid');
-    requireState(['inspect','plan','apply','resume','restore'].includes(input.mode) &&
-      (input.mode==='plan' ? Boolean(input.actor?.trim() && !/\p{Cc}/u.test(input.actor)) : input.actor===undefined),
-      'work repair mode or attribution invalid');
+    requireState(
+      ['inspect', 'plan', 'apply', 'resume', 'restore'].includes(input.mode) &&
+        (input.mode === 'plan'
+          ? Boolean(input.actor?.trim() && !/\p{Cc}/u.test(input.actor))
+          : input.actor === undefined),
+      'work repair mode or attribution invalid',
+    );
     requireState(!this.#database.inTransaction, 'nested work repair forbidden');
-    return this.#database.transaction(() => {
-      this.#assertMaintenanceAvailable();
-      this.#assertGovernanceQuiescent();
-      const journalTable=Boolean(this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'").get());
-      const journals=journalTable ? this.#database.query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt')
-        .all(this.#workspaceId) as {work_id:string;attempt:number;revision:number;payload:string;digest:string}[] : [];
-      for(const row of journals) {
-        const state=JSON.parse(row.payload) as {schema:string;items:{issue_id:string|null;observation:unknown;host_reservation?:unknown}[];completed:{items:{issue_id:string|null;observation:unknown;host_reservation?:unknown}[]}[]};
-        requireState(canonicalJsonDigest(state)===row.digest && state.schema==='MastraSessionLedger/v1' &&
-          [...state.items,...state.completed.flatMap(wave=>wave.items)].every(item=>
-            !item.host_reservation && (item.issue_id===null || item.observation!==null)),
-          'work repair requires settled native effects');
-      }
-      const rows=this.#database.query("SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id")
-        .all(this.#workspaceId) as {id:string}[];
-      const states=rows.map(row=>this.#load('work',row.id) as WorkState);
-      const ledger=this.#load('ledger','shared') as CoordinationLedger|null;
-      const bindings={ledger_version:version(ledger),journals:journals.map(({work_id,attempt,revision,digest})=>({work_id,attempt,version:{revision,digest}}))};
-      const changes=states.filter(state=>!Object.hasOwn(state,'request_transition')).map(before=>({
-        identity:workIdentity(before),before,after:checkedWork({...before,request_transition:null,
-          revision:before.revision+1,lifecycle:{...before.lifecycle,revision:before.lifecycle.revision+1}}),
-      }));
-      if(input.mode==='inspect') return snapshot({schema:'WorkStateRepairInspection/v1',operation_id:input.operationId,
-        status:'repairable_current_v1',workspace_id:this.#workspaceId,bindings,
-        changed_work:changes.map(change=>({identity:change.identity,version:version(change.before)}))});
-      this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_work_state_repair (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id))');
-      const row=this.#database.query('SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?')
-        .get(this.#workspaceId,input.operationId) as {payload:string;digest:string}|null;
-      type Operation={schema:'WorkStateRepairOperation/v1';operation_id:string;workspace_id:string;actor:string;status:'planned'|'applied'|'restored';bindings:typeof bindings;changes:typeof changes;restored?:readonly WorkState[]};
-      let operation:Operation|null=row ? JSON.parse(row.payload) as Operation : null;
-      if(operation) requireState(canonicalJsonDigest(operation)===row!.digest && operation.schema==='WorkStateRepairOperation/v1' &&
-        operation.workspace_id===this.#workspaceId && operation.operation_id===input.operationId, 'work repair operation integrity differs');
-      if(operation) for(const change of operation.changes) {
-        const before=checkedWork(change.before),after=checkedWork(change.after);
-        requireState(sameJson(workIdentity(before),change.identity) &&
-          !Object.hasOwn(before,'request_transition') && sameJson(after,{...before,request_transition:null,
-            revision:before.revision+1,lifecycle:{...before.lifecycle,revision:before.lifecycle.revision+1}}),
-          'work repair transformation differs from the bundled current-v1 contract');
-      }
-      if(input.mode==='plan') {
-        requireState(input.actor?.trim() && !/\p{Cc}/u.test(input.actor),'work repair attribution missing');
-        if(operation) {
-          requireState(operation.actor===input.actor,'work repair attribution differs');
+    return this.#database
+      .transaction(() => {
+        this.#assertMaintenanceAvailable();
+        this.#assertGovernanceQuiescent();
+        const journalTable = Boolean(
+          this.#database
+            .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
+            .get(),
+        );
+        const journals = journalTable
+          ? (this.#database
+              .query(
+                'SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
+              )
+              .all(this.#workspaceId) as {
+              work_id: string;
+              attempt: number;
+              revision: number;
+              payload: string;
+              digest: string;
+            }[])
+          : [];
+        for (const row of journals) {
+          const state = JSON.parse(row.payload) as {
+            schema: string;
+            items: { issue_id: string | null; observation: unknown; host_reservation?: unknown }[];
+            completed: { items: { issue_id: string | null; observation: unknown; host_reservation?: unknown }[] }[];
+          };
+          requireState(
+            canonicalJsonDigest(state) === row.digest &&
+              state.schema === 'MastraSessionLedger/v1' &&
+              [...state.items, ...state.completed.flatMap((wave) => wave.items)].every(
+                (item) => !item.host_reservation && (item.issue_id === null || item.observation !== null),
+              ),
+            'work repair requires settled native effects',
+          );
+        }
+        const rows = this.#database
+          .query("SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id")
+          .all(this.#workspaceId) as { id: string }[];
+        const states = rows.map((row) => this.#load('work', row.id) as WorkState);
+        const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
+        const bindings = {
+          ledger_version: version(ledger),
+          journals: journals.map(({ work_id, attempt, revision, digest }) => ({
+            work_id,
+            attempt,
+            version: { revision, digest },
+          })),
+        };
+        const changes = states
+          .filter((state) => !Object.hasOwn(state, 'request_transition'))
+          .map((before) => ({
+            identity: workIdentity(before),
+            before,
+            after: checkedWork({
+              ...before,
+              request_transition: null,
+              revision: before.revision + 1,
+              lifecycle: { ...before.lifecycle, revision: before.lifecycle.revision + 1 },
+            }),
+          }));
+        if (input.mode === 'inspect')
+          return snapshot({
+            schema: 'WorkStateRepairInspection/v1',
+            operation_id: input.operationId,
+            status: 'repairable_current_v1',
+            workspace_id: this.#workspaceId,
+            bindings,
+            changed_work: changes.map((change) => ({ identity: change.identity, version: version(change.before) })),
+          });
+        this.#database.exec(
+          'CREATE TABLE IF NOT EXISTS agent_host_work_state_repair (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id))',
+        );
+        const row = this.#database
+          .query('SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?')
+          .get(this.#workspaceId, input.operationId) as { payload: string; digest: string } | null;
+        type Operation = {
+          schema: 'WorkStateRepairOperation/v1';
+          operation_id: string;
+          workspace_id: string;
+          actor: string;
+          status: 'planned' | 'applied' | 'restored';
+          bindings: typeof bindings;
+          changes: typeof changes;
+          restored?: readonly WorkState[];
+        };
+        let operation: Operation | null = row ? (JSON.parse(row.payload) as Operation) : null;
+        if (operation)
+          requireState(
+            canonicalJsonDigest(operation) === row!.digest &&
+              operation.schema === 'WorkStateRepairOperation/v1' &&
+              operation.workspace_id === this.#workspaceId &&
+              operation.operation_id === input.operationId,
+            'work repair operation integrity differs',
+          );
+        if (operation)
+          for (const change of operation.changes) {
+            const before = checkedWork(change.before),
+              after = checkedWork(change.after);
+            requireState(
+              sameJson(workIdentity(before), change.identity) &&
+                !Object.hasOwn(before, 'request_transition') &&
+                sameJson(after, {
+                  ...before,
+                  request_transition: null,
+                  revision: before.revision + 1,
+                  lifecycle: { ...before.lifecycle, revision: before.lifecycle.revision + 1 },
+                }),
+              'work repair transformation differs from the bundled current-v1 contract',
+            );
+          }
+        if (input.mode === 'plan') {
+          requireState(input.actor?.trim() && !/\p{Cc}/u.test(input.actor), 'work repair attribution missing');
+          if (operation) {
+            requireState(operation.actor === input.actor, 'work repair attribution differs');
+            return snapshot(operation!);
+          }
+          operation = {
+            schema: 'WorkStateRepairOperation/v1',
+            operation_id: input.operationId,
+            workspace_id: this.#workspaceId,
+            actor: input.actor!,
+            status: 'planned',
+            bindings,
+            changes,
+          };
+          this.#database
+            .query('INSERT INTO agent_host_work_state_repair VALUES(?,?,?,?)')
+            .run(this.#workspaceId, input.operationId, canonicalJson(operation), canonicalJsonDigest(operation));
           return snapshot(operation!);
         }
-        operation={schema:'WorkStateRepairOperation/v1',operation_id:input.operationId,workspace_id:this.#workspaceId,
-          actor:input.actor!,status:'planned',bindings,changes};
-        this.#database.query('INSERT INTO agent_host_work_state_repair VALUES(?,?,?,?)')
-          .run(this.#workspaceId,input.operationId,canonicalJson(operation),canonicalJsonDigest(operation));
-        return snapshot(operation!);
-      }
-      requireState(operation,'work repair frozen plan unavailable');
-      requireState(sameJson(bindings,operation.bindings),'work repair dependent coordination or journal changed');
-      const current=operation.changes.map(change=>this.#load('work',identityKey(change.identity)) as WorkState|null);
-      if(operation.status==='restored') {
-        requireState(input.mode==='restore' && sameJson(current,operation.restored),'restored work repair postimage changed');
-        return snapshot(operation);
-      }
-      if(operation.status==='applied' && input.mode!=='restore') {
-        requireState(sameJson(current,operation.changes.map(change=>change.after)),'applied work repair postimage changed');
-        return snapshot(operation);
-      }
-      const restoring=input.mode==='restore';
-      requireState(restoring || operation.status==='planned','work repair operation status invalid');
-      const expected=operation.changes.map(change=>operation!.status==='applied' ? change.after : change.before);
-      requireState(sameJson(current,expected),'work repair exact preimage changed');
-      const targets=restoring ? operation.changes.map((change,index)=>operation!.status==='planned' ? change.before :
-        checkedWork({...change.before,revision:current[index]!.revision+1,
-          lifecycle:{...change.before.lifecycle,revision:current[index]!.lifecycle.revision+1}})) : operation.changes.map(change=>change.after);
-      if(!restoring || operation.status==='applied') for(const [index,target] of targets.entries()) {
-        const old=current[index]!;
-        if(ledger) validatePair(target,ledger);
-        const changed=this.#database.query("UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?")
-          .run(target.revision,canonicalJson(target),canonicalJsonDigest(target),this.#workspaceId,
-            identityKey(workIdentity(target)),old.revision,canonicalJsonDigest(old));
-        requireState(changed.changes===1,'work repair CAS conflict');
-      }
-      const next:Operation={...operation,status:restoring?'restored':'applied',...(restoring?{restored:targets}:{})};
-      const changed=this.#database.query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?')
-        .run(canonicalJson(next),canonicalJsonDigest(next),this.#workspaceId,input.operationId,row!.digest);
-      requireState(changed.changes===1,'work repair operation CAS conflict');
-      return snapshot(next);
-    }).immediate();
+        requireState(operation, 'work repair frozen plan unavailable');
+        requireState(sameJson(bindings, operation.bindings), 'work repair dependent coordination or journal changed');
+        const current = operation.changes.map(
+          (change) => this.#load('work', identityKey(change.identity)) as WorkState | null,
+        );
+        if (operation.status === 'restored') {
+          requireState(
+            input.mode === 'restore' && sameJson(current, operation.restored),
+            'restored work repair postimage changed',
+          );
+          return snapshot(operation);
+        }
+        if (operation.status === 'applied' && input.mode !== 'restore') {
+          requireState(
+            sameJson(
+              current,
+              operation.changes.map((change) => change.after),
+            ),
+            'applied work repair postimage changed',
+          );
+          return snapshot(operation);
+        }
+        const restoring = input.mode === 'restore';
+        requireState(restoring || operation.status === 'planned', 'work repair operation status invalid');
+        const expected = operation.changes.map((change) =>
+          operation!.status === 'applied' ? change.after : change.before,
+        );
+        requireState(sameJson(current, expected), 'work repair exact preimage changed');
+        const targets = restoring
+          ? operation.changes.map((change, index) =>
+              operation!.status === 'planned'
+                ? change.before
+                : checkedWork({
+                    ...change.before,
+                    revision: current[index]!.revision + 1,
+                    lifecycle: { ...change.before.lifecycle, revision: current[index]!.lifecycle.revision + 1 },
+                  }),
+            )
+          : operation.changes.map((change) => change.after);
+        if (!restoring || operation.status === 'applied')
+          for (const [index, target] of targets.entries()) {
+            const old = current[index]!;
+            if (ledger) validatePair(target, ledger);
+            const changed = this.#database
+              .query(
+                "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+              )
+              .run(
+                target.revision,
+                canonicalJson(target),
+                canonicalJsonDigest(target),
+                this.#workspaceId,
+                identityKey(workIdentity(target)),
+                old.revision,
+                canonicalJsonDigest(old),
+              );
+            requireState(changed.changes === 1, 'work repair CAS conflict');
+          }
+        const next: Operation = {
+          ...operation,
+          status: restoring ? 'restored' : 'applied',
+          ...(restoring ? { restored: targets } : {}),
+        };
+        const changed = this.#database
+          .query(
+            'UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?',
+          )
+          .run(canonicalJson(next), canonicalJsonDigest(next), this.#workspaceId, input.operationId, row!.digest);
+        requireState(changed.changes === 1, 'work repair operation CAS conflict');
+        return snapshot(next);
+      })
+      .immediate();
   }
 
   /** Admit and supersede as one HostState/coordination transaction, without rewriting native journals. */
@@ -2717,126 +2978,264 @@ export class HostStateStore {
       readonly requestPointer: string;
     }[];
     readonly verifySuccessor: () => void;
-    readonly verifyCurrent: (work: WorkState, journal: Readonly<Record<string, unknown>>, requestPointer: string) => void;
+    readonly verifyCurrent: (
+      work: WorkState,
+      journal: Readonly<Record<string, unknown>>,
+      requestPointer: string,
+    ) => void;
   }): HostStateSnapshot {
     const successor = checkedWork(snapshot(input.nextWork));
     const incomingLedger = checkedLedger(snapshot(input.nextLedger));
-    requireState(successor.workspace_id === this.#workspaceId && incomingLedger.workspace_id === this.#workspaceId &&
-      input.requestPointer.length > 0 && input.nativeSessionHandle.length > 0 &&
-      !/\p{Cc}/u.test(input.requestPointer + input.nativeSessionHandle), 'successor identity invalid');
+    requireState(
+      successor.workspace_id === this.#workspaceId &&
+        incomingLedger.workspace_id === this.#workspaceId &&
+        input.requestPointer.length > 0 &&
+        input.nativeSessionHandle.length > 0 &&
+        !/\p{Cc}/u.test(input.requestPointer + input.nativeSessionHandle),
+      'successor identity invalid',
+    );
     requireState(!this.#database.inTransaction, 'nested successor admission forbidden');
-    return this.#database.transaction(() => {
-      this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
-      const before = this.#read(workIdentity(successor));
-      if (before.work) {
-        requireState(sameJson(before.work.binding, successor.binding) &&
-          sameJson(before.work.contracts, successor.contracts) &&
-          before.work.execution.input_digest === successor.execution.input_digest &&
-          before.work.request_transition?.request_pointer === input.requestPointer &&
-          before.work.request_transition.native_session_handle === input.nativeSessionHandle &&
-          sameJson(before.work.request_transition.predecessor_work_ids,
-            input.predecessors.map((entry) => entry.identity.work_id).sort()),
-          'successor retry differs from admitted intent');
-        return before;
-      }
-      matchesExpected(before.workVersion, null);
-      matchesExpected(before.ledgerVersion, input.expectedLedger);
-      input.verifySuccessor();
-      validatePair(successor, incomingLedger);
-      validateProgress(before, successor, incomingLedger);
-      const baseline = before.ledger;
-      requireState(input.predecessors.length === 0 || baseline !== null, 'predecessors need existing coordination');
-      unique(input.predecessors.map((entry) => identityKey(entry.identity)), 'successor predecessors');
-      const now = new Date().toISOString();
-      let ledger = incomingLedger;
-      const updates: { before: HostStateSnapshot; next: WorkState }[] = [];
-      for (const candidate of input.predecessors) {
-        const prior = this.#read(candidate.identity);
-        matchesExpected(prior.workVersion, candidate.expectedWork);
-        requireState(prior.work && baseline && prior.workVersion &&
-          prior.work.binding.repository_id === successor.binding.repository_id &&
-          sameJson(prior.work.binding.project_ids, successor.binding.project_ids) &&
-          prior.work.binding.integrations_digest === successor.binding.integrations_digest &&
-          candidate.identity.work_id !== successor.binding.lifecycle_work_id &&
-          candidate.requestPointer.length > 0 && candidate.requestPointer !== input.requestPointer &&
-          prior.work.request_transition?.successor_work_id == null &&
-          prior.work.execution.status !== 'complete' &&
-          prior.work.lifecycle.phase !== 'COMPLETE' &&
-          !prior.work.execution.assignment_attempts.some((entry) => ['started', 'uncertain'].includes(entry.status)),
-          'predecessor authority or active source effect prevents absorption');
-        const work = prior.work;
-        const tickets = baseline.tickets.filter((ticket) => identityKey(ticketIdentity(ticket)) === identityKey(candidate.identity) &&
-          ['active', 'queued', 'blocked'].includes(ticket.status));
-        requireState(tickets.length > 0 && tickets.every((ticket) => ticket.thread_id === input.nativeSessionHandle),
-          'predecessor owner or ticket differs');
-        const journalRow = this.#database.query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        ).get(this.#workspaceId, candidate.identity.work_id, candidate.attempt) as {revision:number;payload:string;digest:string}|null;
-        requireState(journalRow && journalRow.revision === candidate.expectedJournal.revision &&
-          journalRow.digest === candidate.expectedJournal.digest, 'predecessor journal CAS changed');
-        const journal = JSON.parse(journalRow.payload) as Record<string, unknown>;
-        requireState(canonicalJsonDigest(journal) === journalRow.digest && journal.schema === 'MastraSessionLedger/v1' &&
-          journal.workspace_id === this.#workspaceId && journal.work_id === candidate.identity.work_id &&
-          journal.attempt === candidate.attempt && journal.run_id === work.execution.run_id &&
-          Array.isArray(journal.items) && Array.isArray(journal.completed), 'predecessor journal identity invalid');
-        const journalItems = [...(journal.items as Record<string,unknown>[]),
-          ...(journal.completed as {items:Record<string,unknown>[]}[]).flatMap((wave) => wave.items)];
-        requireState(journalItems.every((item) => !item.host_reservation),
-          'reserved source action prevents absorption');
-        input.verifyCurrent(snapshot(work), snapshot(journal), candidate.requestPointer);
-        const ids = new Set(tickets.map((ticket) => ticket.ticket_id));
-        const next = checkedWork({ ...work, revision: work.revision + 1, lease: null,
-          request_transition: { schema: 'WorkRequestTransition/v1', request_pointer: candidate.requestPointer,
+    return this.#database
+      .transaction(() => {
+        this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+        const gate = this.#readReconciliationGate();
+        requireState(!gate || gate.status === 'closed', 'successor admission blocked by current reconciliation');
+        const before = this.#read(workIdentity(successor));
+        if (before.work) {
+          requireState(
+            sameJson(before.work.binding, successor.binding) &&
+              sameJson(before.work.contracts, successor.contracts) &&
+              before.work.execution.input_digest === successor.execution.input_digest &&
+              before.work.request_transition?.request_pointer === input.requestPointer &&
+              before.work.request_transition.native_session_handle === input.nativeSessionHandle &&
+              sameJson(
+                before.work.request_transition.predecessor_work_ids,
+                input.predecessors.map((entry) => entry.identity.work_id).sort(),
+              ),
+            'successor retry differs from admitted intent',
+          );
+          return before;
+        }
+        matchesExpected(before.workVersion, null);
+        matchesExpected(before.ledgerVersion, input.expectedLedger);
+        input.verifySuccessor();
+        validatePair(successor, incomingLedger);
+        validateProgress(before, successor, incomingLedger);
+        const baseline = before.ledger;
+        requireState(input.predecessors.length === 0 || baseline !== null, 'predecessors need existing coordination');
+        unique(
+          input.predecessors.map((entry) => identityKey(entry.identity)),
+          'successor predecessors',
+        );
+        const now = new Date().toISOString();
+        let ledger = incomingLedger;
+        const updates: { before: HostStateSnapshot; next: WorkState }[] = [];
+        for (const candidate of input.predecessors) {
+          const prior = this.#read(candidate.identity);
+          matchesExpected(prior.workVersion, candidate.expectedWork);
+          requireState(
+            prior.work &&
+              baseline &&
+              prior.workVersion &&
+              prior.work.binding.repository_id === successor.binding.repository_id &&
+              sameJson(prior.work.binding.project_ids, successor.binding.project_ids) &&
+              prior.work.binding.integrations_digest === successor.binding.integrations_digest &&
+              candidate.identity.work_id !== successor.binding.lifecycle_work_id &&
+              candidate.requestPointer.length > 0 &&
+              candidate.requestPointer !== input.requestPointer &&
+              prior.work.request_transition?.successor_work_id == null &&
+              prior.work.execution.status !== 'complete' &&
+              prior.work.lifecycle.phase !== 'COMPLETE' &&
+              !prior.work.execution.assignment_attempts.some((entry) =>
+                ['started', 'uncertain'].includes(entry.status),
+              ),
+            'predecessor authority or active source effect prevents absorption',
+          );
+          const work = prior.work;
+          const tickets = baseline.tickets.filter(
+            (ticket) =>
+              identityKey(ticketIdentity(ticket)) === identityKey(candidate.identity) &&
+              ['active', 'queued', 'blocked'].includes(ticket.status),
+          );
+          requireState(
+            tickets.length > 0 && tickets.every((ticket) => ticket.thread_id === input.nativeSessionHandle),
+            'predecessor owner or ticket differs',
+          );
+          const journalRow = this.#database
+            .query(
+              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+            )
+            .get(this.#workspaceId, candidate.identity.work_id, candidate.attempt) as {
+            revision: number;
+            payload: string;
+            digest: string;
+          } | null;
+          requireState(
+            journalRow &&
+              journalRow.revision === candidate.expectedJournal.revision &&
+              journalRow.digest === candidate.expectedJournal.digest,
+            'predecessor journal CAS changed',
+          );
+          const journal = JSON.parse(journalRow.payload) as Record<string, unknown>;
+          requireState(
+            canonicalJsonDigest(journal) === journalRow.digest &&
+              journal.schema === 'MastraSessionLedger/v1' &&
+              journal.workspace_id === this.#workspaceId &&
+              journal.work_id === candidate.identity.work_id &&
+              journal.attempt === candidate.attempt &&
+              journal.run_id === work.execution.run_id &&
+              Array.isArray(journal.items) &&
+              Array.isArray(journal.completed),
+            'predecessor journal identity invalid',
+          );
+          const journalItems = [
+            ...(journal.items as Record<string, unknown>[]),
+            ...(journal.completed as { items: Record<string, unknown>[] }[]).flatMap((wave) => wave.items),
+          ];
+          requireState(
+            journalItems.every((item) => !item.host_reservation),
+            'reserved source action prevents absorption',
+          );
+          input.verifyCurrent(snapshot(work), snapshot(journal), candidate.requestPointer);
+          const ids = new Set(tickets.map((ticket) => ticket.ticket_id));
+          const next = checkedWork({
+            ...work,
+            revision: work.revision + 1,
+            lease: null,
+            request_transition: {
+              schema: 'WorkRequestTransition/v1',
+              request_pointer: candidate.requestPointer,
+              native_session_handle: input.nativeSessionHandle,
+              predecessor_work_ids: work.request_transition?.predecessor_work_ids ?? [],
+              successor_work_id: successor.binding.lifecycle_work_id,
+            },
+            execution: { ...work.execution, status: 'suspended' },
+            lifecycle: {
+              ...work.lifecycle,
+              revision: work.lifecycle.revision + 1,
+              next_action: 'Continue unfinished intent through successor ' + successor.binding.lifecycle_work_id + '.',
+            },
+          });
+          const releaseTickets = (values: CoordinationLedger['tickets']) =>
+            values.map((ticket) =>
+              ids.has(ticket.ticket_id)
+                ? {
+                    ...ticket,
+                    status: 'released' as const,
+                    expires_at: null,
+                    active_resources: [],
+                    blocked_resources: [],
+                  }
+                : ticket,
+            );
+          const releaseClaims = (values: CoordinationLedger['claims']) =>
+            values.map((claim) =>
+              ids.has(claim.ticket_id) && claim.status === 'active'
+                ? { ...claim, status: 'released' as const, renewed_at: now }
+                : claim,
+            );
+          const operations = tickets.map((ticket) => ({
+            schema: 'CoordinationOperation/v1' as const,
+            operation_id:
+              'absorb-' +
+              canonicalJsonDigest({ successor: successor.binding.lifecycle_work_id, ticket: ticket.ticket_id }).slice(
+                0,
+                40,
+              ),
+            kind: 'release' as const,
+            ticket_id: ticket.ticket_id,
+            work_id: ticket.work_id,
+            thread_id: ticket.thread_id,
+            source_revision: ticket.source_revision,
+            resources: ticket.exclusive_resources,
+            from_ledger_revision: baseline.revision,
+            to_ledger_revision: incomingLedger.revision,
+            decided_by: input.nativeSessionHandle,
+            decision_pointer: input.requestPointer,
+            created_at: now,
+          }));
+          const projection = checkedLedger({
+            ...baseline,
+            revision: baseline.revision + 1,
+            tickets: releaseTickets(baseline.tickets),
+            claims: releaseClaims(baseline.claims),
+            operations: [...baseline.operations, ...operations],
+          });
+          validatePair(next, projection);
+          validateProgress(prior, { ...next, request_transition: work.request_transition ?? null }, projection);
+          ledger = checkedLedger({
+            ...ledger,
+            tickets: releaseTickets(ledger.tickets),
+            claims: releaseClaims(ledger.claims),
+            operations: [...ledger.operations, ...operations],
+          });
+          updates.push({ before: prior, next });
+        }
+        const nextSuccessor = checkedWork({
+          ...successor,
+          request_transition: {
+            schema: 'WorkRequestTransition/v1',
+            request_pointer: input.requestPointer,
             native_session_handle: input.nativeSessionHandle,
-            predecessor_work_ids: work.request_transition?.predecessor_work_ids ?? [],
-            successor_work_id: successor.binding.lifecycle_work_id },
-          execution: { ...work.execution, status: 'suspended' },
-          lifecycle: { ...work.lifecycle, revision: work.lifecycle.revision + 1,
-            next_action: 'Continue unfinished intent through successor ' + successor.binding.lifecycle_work_id + '.' } });
-        const releaseTickets = (values: CoordinationLedger['tickets']) => values.map((ticket) => ids.has(ticket.ticket_id)
-          ? { ...ticket, status: 'released' as const, expires_at: null, active_resources: [], blocked_resources: [] } : ticket);
-        const releaseClaims = (values: CoordinationLedger['claims']) => values.map((claim) => ids.has(claim.ticket_id) && claim.status === 'active'
-          ? { ...claim, status: 'released' as const, renewed_at: now } : claim);
-        const operations = tickets.map((ticket) => ({ schema: 'CoordinationOperation/v1' as const,
-          operation_id: 'absorb-' + canonicalJsonDigest({ successor: successor.binding.lifecycle_work_id, ticket: ticket.ticket_id }).slice(0,40),
-          kind: 'release' as const, ticket_id: ticket.ticket_id, work_id: ticket.work_id, thread_id: ticket.thread_id,
-          source_revision: ticket.source_revision, resources: ticket.exclusive_resources,
-          from_ledger_revision: baseline.revision, to_ledger_revision: incomingLedger.revision,
-          decided_by: input.nativeSessionHandle, decision_pointer: input.requestPointer, created_at: now }));
-        const projection = checkedLedger({ ...baseline, revision: baseline.revision + 1,
-          tickets: releaseTickets(baseline.tickets), claims: releaseClaims(baseline.claims),
-          operations: [...baseline.operations, ...operations] });
-        validatePair(next, projection);
-        validateProgress(prior, { ...next, request_transition: work.request_transition ?? null }, projection);
-        ledger = checkedLedger({ ...ledger, tickets: releaseTickets(ledger.tickets), claims: releaseClaims(ledger.claims),
-          operations: [...ledger.operations, ...operations] });
-        updates.push({ before: prior, next });
-      }
-      const nextSuccessor = checkedWork({ ...successor, request_transition: {
-        schema: 'WorkRequestTransition/v1', request_pointer: input.requestPointer,
-        native_session_handle: input.nativeSessionHandle,
-        predecessor_work_ids: input.predecessors.map((entry) => entry.identity.work_id).sort(), successor_work_id: null } });
-      validatePair(nextSuccessor, ledger);
-      for (const {next} of updates) validatePair(next, ledger);
-      for (const entry of [...updates, { before, next: nextSuccessor }]) {
-        const id = identityKey(workIdentity(entry.next));
-        const priorVersion = entry.before.workVersion;
-        const result = priorVersion ? this.#database.query(
-          "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
-        ).run(entry.next.revision, canonicalJson(entry.next), canonicalJsonDigest(entry.next), this.#workspaceId, id, priorVersion.revision, priorVersion.digest)
-          : this.#database.query("INSERT INTO agent_host_state (revision,payload,digest,workspace_id,kind,id) VALUES(?,?,?,?,'work',?)")
-            .run(entry.next.revision, canonicalJson(entry.next), canonicalJsonDigest(entry.next), this.#workspaceId, id);
-        requireState(result.changes === 1, 'successor work CAS conflict');
-      }
-      const priorLedger = before.ledgerVersion;
-      const result = priorLedger ? this.#database.query(
-        "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared' AND revision=? AND digest=?",
-      ).run(ledger.revision, canonicalJson(ledger), canonicalJsonDigest(ledger), this.#workspaceId, priorLedger.revision, priorLedger.digest)
-        : this.#database.query("INSERT INTO agent_host_state (revision,payload,digest,workspace_id,kind,id) VALUES(?,?,?,?,'ledger','shared')")
-          .run(ledger.revision, canonicalJson(ledger), canonicalJsonDigest(ledger), this.#workspaceId);
-      requireState(result.changes === 1, 'successor ledger CAS conflict');
-      return this.#read(workIdentity(nextSuccessor));
-    }).immediate();
+            predecessor_work_ids: input.predecessors.map((entry) => entry.identity.work_id).sort(),
+            successor_work_id: null,
+          },
+        });
+        validatePair(nextSuccessor, ledger);
+        for (const { next } of updates) validatePair(next, ledger);
+        for (const entry of [...updates, { before, next: nextSuccessor }]) {
+          const id = identityKey(workIdentity(entry.next));
+          const priorVersion = entry.before.workVersion;
+          const result = priorVersion
+            ? this.#database
+                .query(
+                  "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+                )
+                .run(
+                  entry.next.revision,
+                  canonicalJson(entry.next),
+                  canonicalJsonDigest(entry.next),
+                  this.#workspaceId,
+                  id,
+                  priorVersion.revision,
+                  priorVersion.digest,
+                )
+            : this.#database
+                .query(
+                  "INSERT INTO agent_host_state (revision,payload,digest,workspace_id,kind,id) VALUES(?,?,?,?,'work',?)",
+                )
+                .run(
+                  entry.next.revision,
+                  canonicalJson(entry.next),
+                  canonicalJsonDigest(entry.next),
+                  this.#workspaceId,
+                  id,
+                );
+          requireState(result.changes === 1, 'successor work CAS conflict');
+        }
+        const priorLedger = before.ledgerVersion;
+        const result = priorLedger
+          ? this.#database
+              .query(
+                "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared' AND revision=? AND digest=?",
+              )
+              .run(
+                ledger.revision,
+                canonicalJson(ledger),
+                canonicalJsonDigest(ledger),
+                this.#workspaceId,
+                priorLedger.revision,
+                priorLedger.digest,
+              )
+          : this.#database
+              .query(
+                "INSERT INTO agent_host_state (revision,payload,digest,workspace_id,kind,id) VALUES(?,?,?,?,'ledger','shared')",
+              )
+              .run(ledger.revision, canonicalJson(ledger), canonicalJsonDigest(ledger), this.#workspaceId);
+        requireState(result.changes === 1, 'successor ledger CAS conflict');
+        return this.#read(workIdentity(nextSuccessor));
+      })
+      .immediate();
   }
   #writeAttempts(before: HostStateSnapshot, attempts: readonly AssignmentAttempt[]): HostStateSnapshot {
     const revision = before.work!.revision + 1;
@@ -3851,9 +4250,9 @@ export class HostStateStore {
           'lease renewal owner, fencing identity or live expiry differs',
         );
         requireState(
-          work.execution.assignment_attempts.every((entry) =>
-            !['started', 'uncertain'].includes(entry.status) ||
-            sameJson(entry.lease, work.lease)),
+          work.execution.assignment_attempts.every(
+            (entry) => !['started', 'uncertain'].includes(entry.status) || sameJson(entry.lease, work.lease),
+          ),
           'lease renewal cannot retain a foreign writer fence',
         );
         requireState(
@@ -3899,9 +4298,9 @@ export class HostStateStore {
           'lease renewal journal identity changed',
         );
         requireState(
-          (journal.items as { host_reservation?: { receipt?: { attempt?: { lease?: unknown } } } }[])
-            .every((entry) => !entry.host_reservation ||
-              sameJson(entry.host_reservation.receipt?.attempt?.lease, work.lease)),
+          (journal.items as { host_reservation?: { receipt?: { attempt?: { lease?: unknown } } } }[]).every(
+            (entry) => !entry.host_reservation || sameJson(entry.host_reservation.receipt?.attempt?.lease, work.lease),
+          ),
           'lease renewal writer reservation fence differs',
         );
         input.verifyCurrent(snapshot(work), snapshot(journal));
@@ -4132,7 +4531,11 @@ export class HostStateStore {
           ...work,
           revision: work.revision + 1,
           lease: { ticket_id: ticketId, thread_id: input.nativeSessionHandle, generation: ledger.open_generation },
-          binding: { ...work.binding, runtime_code_digest: newRuntimeDigest, runtime_source_revision: newRuntimeDigest },
+          binding: {
+            ...work.binding,
+            runtime_code_digest: newRuntimeDigest,
+            runtime_source_revision: newRuntimeDigest,
+          },
           lifecycle: {
             ...work.lifecycle,
             revision: work.revision + 1,
@@ -4184,7 +4587,11 @@ export class HostStateStore {
         // This dedicated transition explicitly rebinds only the freshly verified bundle digest.
         // All remaining lifecycle, authority, resource and history deltas use the ordinary validator.
         requireState(
-          sameJson(nextWork.binding, { ...work.binding, runtime_code_digest: newRuntimeDigest, runtime_source_revision: newRuntimeDigest }) &&
+          sameJson(nextWork.binding, {
+            ...work.binding,
+            runtime_code_digest: newRuntimeDigest,
+            runtime_source_revision: newRuntimeDigest,
+          }) &&
             sameJson(nextWork.lifecycle.config_binding, {
               ...work.lifecycle.config_binding,
               runtime_code_digest: newRuntimeDigest,

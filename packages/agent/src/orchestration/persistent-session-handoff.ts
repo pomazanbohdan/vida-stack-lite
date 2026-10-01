@@ -1176,9 +1176,13 @@ export class MastraSessionLedger {
     workflowStatus: 'suspended' | 'success' | 'failed' | 'canceled' | 'unknown' = 'unknown',
   ): MastraSessionLedgerSnapshot {
     const project = (value: MastraSessionLedgerSnapshot): MastraSessionLedgerSnapshot =>
-      stepId === null ? freezeJsonValue({ ...value, resume_status: workflowStatus === 'success' ? 'complete' : 'blocked' }) : value;
-    requireState(stepId === null || workflowStatus === 'suspended' || workflowStatus === 'unknown',
-      'terminal workflow cannot have suspended requests');
+      stepId === null
+        ? freezeJsonValue({ ...value, resume_status: workflowStatus === 'success' ? 'complete' : 'blocked' })
+        : value;
+    requireState(
+      stepId === null || workflowStatus === 'suspended' || workflowStatus === 'unknown',
+      'terminal workflow cannot have suspended requests',
+    );
     requireState(
       (stepId === null && requests.length === 0) ||
         (stepId !== null && requests.length > 0 && requests.every((request) => request.run_id === runId)),
@@ -1234,12 +1238,14 @@ export class MastraSessionLedger {
         !current.state.completed.some((entry) => entry.step_id === stepId),
       'Mastra advanced without all unique observed effects',
     );
-    return project(this.#change(workId, attempt, current.version, (state) => ({
-      ...state,
-      step_id: stepId,
-      items: requests.map((request) => ({ request, issue_id: null, observation: null })),
-      completed: [...state.completed, { step_id: state.step_id!, items: state.items }],
-    })));
+    return project(
+      this.#change(workId, attempt, current.version, (state) => ({
+        ...state,
+        step_id: stepId,
+        items: requests.map((request) => ({ request, issue_id: null, observation: null })),
+        completed: [...state.completed, { step_id: state.step_id!, items: state.items }],
+      })),
+    );
   }
 
   issueWave(
@@ -1337,8 +1343,11 @@ export class MastraSessionLedger {
     sourceScope: ScopedSourceSnapshot | null = null,
   ): MastraSessionLedgerSnapshot {
     const current = this.#read(workId, attempt);
-    const recorded = current && [...current.state.items, ...current.state.completed.flatMap((wave) => wave.items)]
-      .find((item) => item.request.action_id === observation.action_id && item.observation !== null);
+    const recorded =
+      current &&
+      [...current.state.items, ...current.state.completed.flatMap((wave) => wave.items)].find(
+        (item) => item.request.action_id === observation.action_id && item.observation !== null,
+      );
     if (recorded) {
       requireState(
         recorded.issue_id === observation.issue_id &&
@@ -1347,9 +1356,7 @@ export class MastraSessionLedger {
       );
       return current!;
     }
-    const issued = current?.state.items.find(
-      (item) => item.request.action_id === observation.action_id,
-    );
+    const issued = current?.state.items.find((item) => item.request.action_id === observation.action_id);
     if (issued?.host_reservation) {
       const reservation = issued.host_reservation;
       const host = this.hostState.readHostStateSnapshot(reservation.receipt.identity);

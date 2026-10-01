@@ -40,47 +40,79 @@ const v8CoverageMode = process.env.AGENT_RUNTIME_V8_COVERAGE === '1';
 const ordinaryDescribe = mutationMode ? describe.skip : describe;
 const liveInstallTest = v8CoverageMode ? test.skip : test;
 
-test('cutoff SQLite exclusion rejects a live owner and recovers after process termination without an orphan marker',async()=>{
- const root=mkdtempSync(path.join(tmpdir(),'vida-cutoff-process-'));
- let child;
- try {
-  for(const file of ['agent-runtime.config.v1.yaml','AGENTS.md','AGENT.sidecar.md'])
-   writeFileSync(path.join(root,file),readFileSync(path.join(repositoryRoot,file)));
-  const generationRoot=path.join(root,'.agent','cutover','fixture-generation');
-  mkdirSync(generationRoot,{recursive:true});
-  const selectorBytes=Buffer.from(JSON.stringify({schema:'FixtureSelector',generation:'fixture-generation'}));
-  const selectorSha=createHash('sha256').update(selectorBytes).digest('hex');
-  writeFileSync(path.join(root,'.agent','active-runtime-selector.v1.json'),selectorBytes);
-  const witnessPath=path.join(generationRoot,'cutoff-witness.json');
-  writeFileSync(witnessPath,JSON.stringify({schema:'VidaNewWorkCutoffWitness/v1',generation:'fixture-generation',
-   selector_sha256:selectorSha,first_admitted_work_attempt:null},null,2)+'\n');
-  const config=loadRuntimeConfig(root);
-  mkdirSync(path.join(root,config.control.work_root),{recursive:true});
-  const databasePath=path.join(root,config.control.work_root,'session-handoff.v1.sqlite');
-  const sourceUrl=pathToFileURL(path.join(packageRoot,'src','host-state.ts')).href;
-  child=spawn(process.execPath,['-e',`import {withHostStateExclusiveTransaction} from ${JSON.stringify(sourceUrl)};
+test('cutoff SQLite exclusion rejects a live owner and recovers after process termination without an orphan marker', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-cutoff-process-'));
+  let child;
+  try {
+    for (const file of ['agent-runtime.config.v1.yaml', 'AGENTS.md', 'AGENT.sidecar.md'])
+      writeFileSync(path.join(root, file), readFileSync(path.join(repositoryRoot, file)));
+    const generationRoot = path.join(root, '.agent', 'cutover', 'fixture-generation');
+    mkdirSync(generationRoot, { recursive: true });
+    const selectorBytes = Buffer.from(JSON.stringify({ schema: 'FixtureSelector', generation: 'fixture-generation' }));
+    const selectorSha = createHash('sha256').update(selectorBytes).digest('hex');
+    writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), selectorBytes);
+    const witnessPath = path.join(generationRoot, 'cutoff-witness.json');
+    writeFileSync(
+      witnessPath,
+      JSON.stringify(
+        {
+          schema: 'VidaNewWorkCutoffWitness/v1',
+          generation: 'fixture-generation',
+          selector_sha256: selectorSha,
+          first_admitted_work_attempt: null,
+        },
+        null,
+        2,
+      ) + '\n',
+    );
+    const config = loadRuntimeConfig(root);
+    mkdirSync(path.join(root, config.control.work_root), { recursive: true });
+    const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+    const sourceUrl = pathToFileURL(path.join(packageRoot, 'src', 'host-state.ts')).href;
+    child = spawn(
+      process.execPath,
+      [
+        '-e',
+        `import {withHostStateExclusiveTransaction} from ${JSON.stringify(sourceUrl)};
     withHostStateExclusiveTransaction(${JSON.stringify(databasePath)},()=>{process.stdout.write('locked\\n');
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0);});`],{cwd:packageRoot,windowsHide:true,stdio:['ignore','pipe','pipe']});
-  const exited=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));
-  await new Promise((resolve,reject)=>{
-   const timer=setTimeout(()=>reject(Error('fixture writer did not acquire SQLite exclusion')),10000);
-   child.stdout.once('data',bytes=>{clearTimeout(timer);bytes.toString().includes('locked')?resolve():reject(Error('unexpected child output'));});
-   child.once('error',error=>{clearTimeout(timer);reject(error);});
-  });
-  const selector={generationRoot,generation:'fixture-generation',selectorSha};
-  const values={project_root:root,repository:'fixture-repository',work_id:'new-work',attempt:'1',scope_digest:'a'.repeat(64)};
-  await expect(advanceCutoff(selector,values)).rejects.toMatchObject({code:'GAP-VIDA-RUN-CUTOFF-001'});
-  expect(JSON.parse(readFileSync(witnessPath)).first_admitted_work_attempt).toBeNull();
-  child.kill('SIGKILL');
-  await exited;
-  await advanceCutoff(selector,values);
-  expect(JSON.parse(readFileSync(witnessPath)).first_admitted_work_attempt).toBe('fixture-repository/new-work/1/'+values.scope_digest);
-  expect(existsSync(path.join(generationRoot,'cutoff-witness.lock'))).toBe(false);
- } finally {
-  if(child?.exitCode===null && child?.signalCode===null)child.kill('SIGKILL');
-  rmSync(root,{recursive:true,force:true});
- }
-},20000);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0);});`,
+      ],
+      { cwd: packageRoot, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+    const exited = new Promise((resolve) => child.once('exit', (code, signal) => resolve({ code, signal })));
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(Error('fixture writer did not acquire SQLite exclusion')), 10000);
+      child.stdout.once('data', (bytes) => {
+        clearTimeout(timer);
+        bytes.toString().includes('locked') ? resolve() : reject(Error('unexpected child output'));
+      });
+      child.once('error', (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+    const selector = { generationRoot, generation: 'fixture-generation', selectorSha };
+    const values = {
+      project_root: root,
+      repository: 'fixture-repository',
+      work_id: 'new-work',
+      attempt: '1',
+      scope_digest: 'a'.repeat(64),
+    };
+    await expect(advanceCutoff(selector, values)).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CUTOFF-001' });
+    expect(JSON.parse(readFileSync(witnessPath)).first_admitted_work_attempt).toBeNull();
+    child.kill('SIGKILL');
+    await exited;
+    await advanceCutoff(selector, values);
+    expect(JSON.parse(readFileSync(witnessPath)).first_admitted_work_attempt).toBe(
+      'fixture-repository/new-work/1/' + values.scope_digest,
+    );
+    expect(existsSync(path.join(generationRoot, 'cutoff-witness.lock'))).toBe(false);
+  } finally {
+    if (child?.exitCode === null && child?.signalCode === null) child.kill('SIGKILL');
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 20000);
 const common = [
   '--project-root',
   repositoryRoot,

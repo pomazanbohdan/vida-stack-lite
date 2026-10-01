@@ -345,11 +345,11 @@ v8CoverageTest(
     const template = await readFile(path.join(bundle, 'templates/AGENTS.template.md'), 'utf8');
     expect(firstBytes.toString()).toBe(template.replaceAll('{{BUNDLE}}', 'tools/agents'));
     expect((await readdir(root)).sort()).toEqual(['AGENTS.md', 'tools']);
-      const repeated = await init();
-      expect(repeated.exitCode, repeated.stderr).toBe(1);
-      expect(JSON.parse(repeated.stdout)).toMatchObject({
-        status: 'partial_not_ready',
-        existing: ['AGENTS.md'],
+    const repeated = await init();
+    expect(repeated.exitCode, repeated.stderr).toBe(1);
+    expect(JSON.parse(repeated.stdout)).toMatchObject({
+      status: 'partial_not_ready',
+      existing: ['AGENTS.md'],
     });
     expect(await readFile(path.join(root, 'AGENTS.md'))).toEqual(firstBytes);
     expect((await readdir(root)).sort()).toEqual(['AGENTS.md', 'tools']);
