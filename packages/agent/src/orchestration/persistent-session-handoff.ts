@@ -1335,6 +1335,16 @@ export class MastraSessionLedger {
     });
   }
 
+  retrieveReportedObservation(workId:string,attempt:number,observation:SessionBridgeObservation):MastraSessionLedgerSnapshot|null {
+    const current=this.#read(workId,attempt);
+    const recorded=current && [...current.state.items,...current.state.completed.flatMap(wave=>wave.items)]
+      .find(item=>item.request.action_id === observation.action_id && item.observation !== null);
+    if (!recorded) return null;
+    requireState(recorded.issue_id === observation.issue_id && canonicalJsonDigest(recorded.observation) === canonicalJsonDigest(observation),
+      'Mastra session observation retry differs from recorded terminal observation');
+    return current!;
+  }
+
   report(
     workId: string,
     attempt: number,
@@ -1364,8 +1374,10 @@ export class MastraSessionLedger {
         (item) => item.attempt_id === reservation.receipt.attempt.attempt_id,
       );
       requireState(
-        completed?.status === 'completed' && completed.result_digest === canonicalJsonDigest(observation),
-        'Mastra source observation has no completed current host attempt',
+        observation.status === 'reported_failed'
+          ? completed?.status === 'uncertain' && completed.result === null && completed.result_digest === null
+          : completed?.status === 'completed' && completed.result_digest === canonicalJsonDigest(observation),
+        'Mastra source observation has no matching current host outcome',
       );
     }
     return this.#change(workId, attempt, expected, (state) => {
@@ -1379,7 +1391,7 @@ export class MastraSessionLedger {
         observation.host_attempt_id === item.host_reservation?.receipt.attempt.attempt_id,
         'Mastra session host attempt identity differs',
       );
-      if (item.host_reservation) {
+      if (item.host_reservation && observation.status === 'reported_complete') {
         requireState(
           state.source_scope && sourceScope && Array.isArray(observation.changed_paths),
           'source-writing observation needs a scoped source change set',
@@ -1389,7 +1401,7 @@ export class MastraSessionLedger {
           canonicalJsonDigest(changed) === canonicalJsonDigest([...observation.changed_paths!].sort()),
           'source-writing observation differs from actual scoped file changes',
         );
-      } else if (state.source_scope)
+      } else if (!item.host_reservation && state.source_scope)
         requireState(
           sourceScope?.digest === state.source_scope.digest,
           'read-only observation cannot rebase changed source',
@@ -1406,7 +1418,7 @@ export class MastraSessionLedger {
       );
       return {
         ...state,
-        ...(item.host_reservation ? { source_scope: sourceScope } : {}),
+        ...(item.host_reservation && observation.status === 'reported_complete' ? { source_scope: sourceScope } : {}),
         items: state.items.map((entry) =>
           entry.request.action_id === observation.action_id ? { ...entry, observation } : entry,
         ),

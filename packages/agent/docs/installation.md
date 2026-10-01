@@ -178,7 +178,13 @@ Consumer migration Source primitives retain canonical DB/WAL/SHM paths, save
 historical row beforeimages under maintenance, and use synchronous filesystem
 callbacks within the state transaction. The first admitted NEW work attempt
 closes rollback even if preparation fails; initialization alone does not.
-Consumer deployment wrapper integration and broader negative qualification remain
-pending, so this guide supplies no executable migration command yet. Preserve
+The Source-only async SDK helper `runConsumerMigrationState` in `trusted-host`
+binds the repository root, operation ID, actor and baseline/restore mode; its
+filesystem callback must be synchronous and idempotent. It receives configured
+canonical/workflow database paths and initial consistent backup bytes (null on
+retry). Unknown state blocks callback effects; interrupted restore retains its
+fence and resumes the same operation. Helper independent qualification and the
+repository-only deployment adapter remain pending, so this guide supplies no
+executable migration CLI command yet. Preserve
 existing consumers and unrelated files until that route and the installed package
 are qualified. SQL/filesystem atomicity and old-task migration are not promised.

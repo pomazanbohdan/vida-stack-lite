@@ -168,14 +168,20 @@ restore behavior before live repair or a reader upgrade; it is not general
 consumer migration proof. Read workspace baseline through the constructor-free
 read-only public projection. Consumer full-snapshot rollback is allowed only
 before first new admitted work and must retain maintenance/CAS through restore;
-initialization or timestamps alone do not classify that boundary. Canonical admission-attempt persistence now precedes fresh preparation. Source
+initialization or timestamps alone do not classify that boundary. Canonical admission-attempt persistence now precedes fresh
+preparation. Source
 consumer migration primitives preserve same-store historical row beforeimages,
 use a synchronous filesystem callback under maintenance/transaction, and restore
 old row semantics while maintenance metadata stays monotonic. Retain canonical
 DB/WAL/SHM paths and partition work children; use a consistent backup, not live
-root rename or physical database-byte equality. Consumer deployment wrapper
-integration and negative qualification remain pending. SQL/filesystem effects
-are not claimed atomic and old tasks are not migrated.
+root rename or physical database-byte equality. The async trusted-host SDK helper
+binds
+repository root/operation/actor/mode and supplies configured database paths plus
+initial backup bytes, null on retry. Its filesystem callback is synchronous and
+idempotent; unknown/inflight state denies effects. Interrupted restore keeps its
+fence/restoring state for exact-operation resume. Independent helper and
+repository-only deployment adapter qualification remain pending; no migration
+CLI is implied. SQL/filesystem effects are not claimed atomic and old tasks are not migrated.
 An authorized in-scope source edit continues the same work attempt and
 invalidates only evidence bound to its prior bytes. Configuration, schema or
 installed-bundle authority drift, and out-of-scope source drift, stop

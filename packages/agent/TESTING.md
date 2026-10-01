@@ -95,9 +95,7 @@ focused test passed: one test, four assertions for concurrent-owner denial,
 observed SIGKILL termination, subsequent success and no orphan. This is Source
 Static process-interruption evidence, not installed/native acceptance or
 power-loss proof. Historical orphan-marker repair remains guarded; neither PID
-nor age authorizes deletion. Source admission-cutoff and consumer migration
-primitives passed two tests/twelve assertions; require final wrapper/negative
-qualification before consumer readiness claims. No SQL/filesystem atomicity is
+nor age authorizes deletion. Require final helper/negative qualification before consumer readiness claims. No SQL/filesystem atomicity is
 claimed. F11 issue-before-activation is
 currently static sequence evidence requiring a bounded public counterexample.
 Current-v1 optional research selectors remain unreachable through the strict
@@ -105,11 +103,24 @@ scope schema; this does not establish a fresh-run failure or authorize schema
 migration. One native invocation producing multiple action slots is outside the
 current caller contract; never fabricate distinct tool references.
 
-Independent Luna Source QA: automatic absorption eight tests/38 assertions in
-3.86 seconds; focused host/cutoff five tests/48 assertions in 4.29 seconds.
-Later writer-only true heartbeat-expiry one-test/ten-assertion pass in 1.332
-seconds and two-test/twelve-assertion migration primitive pass still require
-independent qualification. These exact lanes do not establish full-candidate PASS.
+Current finite independent Source QA: automatic absorption ten tests/53
+assertions; focused host/run nine tests/82 assertions. Later actual SDK helper
+14-test/75-assertion pass in 18.02 seconds is writer-only pending independent
+Luna qualification. Require unknown/inflight-before-callback denial, sync callback,
+initial backup/null retry, baseline retry, interrupted restore/held fence,
+exact restored-state retry, original DB/WAL/SHM inspection stability and retained
+monotonic maintenance metadata. These are not full candidate or deployed PASS.
+
+Current D01/D03/D08/D13/D15/D16 fixes need final public ordering, writer-failure,
+package-inventory, exact execution-resource, producer/cardinality and queued-owner
+release regressions. SAME-attempt bounded correction has no approved budget yet;
+linked successor does not close that GAP. Partial-init recovery, temp cleanup,
+Unicode boundaries and conditional answer/save surfaces remain open. Prove actual
+clean-ledger headroom before first admission; after clean migration require
+closure-safe historical rollover/read lookup before sustained use. Do not invent
+a jobs cap or compact active current-v1 history unsafely. Repeat-build optimization
+is follow-up debt; directory fsync is an accepted nonblocking limitation, not a
+power-loss guarantee. The current D/R table is owned by the existing audit research.
 
 Exactly three fresh blind reviews, reverse validation, CLEAR closeout, installed
 `0.1.2` observations and attributable user Runtime acceptance remain unperformed

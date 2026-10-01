@@ -84,7 +84,9 @@ function readLocal(
     content:
       content.length <= MAX_EXCERPT_CHARS
         ? content
-        : content.slice(0, headChars) + omission + content.slice(-tailChars),
+        : content.slice(0, headChars).replace(/[\uD800-\uDBFF]$/u, '') +
+          omission +
+          content.slice(-tailChars).replace(/^[\uDC00-\uDFFF]/u, ''),
     truncated: content.length > MAX_EXCERPT_CHARS,
   };
 }

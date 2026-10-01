@@ -69,3 +69,30 @@ test('bounded local excerpts preserve the required tail and disclose the omitted
   expect(entry.bytes).toBe(Buffer.byteLength(long));
   expect(entry.sha256).toBe(createHash('sha256').update(long).digest('hex'));
 });
+
+test('bounded excerpts cut inward at both supplementary-character boundaries', async () => {
+  const { root, config } = await consumer();
+  const omission = '\n[middle omitted; read source for complete content]\n';
+  const head = Math.ceil((8192 - omission.length) / 2);
+  const tail = Math.floor((8192 - omission.length) / 2);
+  const content = 'H'.repeat(head - 1) + '😀' + 'middle'.repeat(300) + '𝄞' + 'T'.repeat(tail - 1);
+  await writeFile(path.join(root, 'long.md'), content);
+  const entry = buildConfiguredContext(root, config, { work_id: 'unicode-context', attempt: 1, source_ids: ['long-local'], skill_refs: [] }).entries[0];
+  expect(entry.content).toBe('H'.repeat(head - 1) + omission + 'T'.repeat(tail - 1));
+  expect(entry.content.length).toBeLessThanOrEqual(8192);
+  expect(entry.content.isWellFormed()).toBe(true);
+  expect(entry.sha256).toBe(createHash('sha256').update(content).digest('hex'));
+  expect(entry.truncated).toBe(true);
+});
+
+test('local UTF-8 rejects encoded lone surrogates and preserves complete supplementary characters', async () => {
+  const { root, config } = await consumer();
+  const request = { work_id: 'unicode-context', attempt: 1, source_ids: ['long-local'], skill_refs: [] };
+  const content = '😀𝄞 valid';
+  await writeFile(path.join(root, 'long.md'), content);
+  expect(buildConfiguredContext(root, config, request).entries[0].content).toBe(content);
+  for (const bytes of [Buffer.from([0xed, 0xa0, 0x80]), Buffer.from([0xed, 0xb0, 0x80])]) {
+    await writeFile(path.join(root, 'long.md'), bytes);
+    expect(() => buildConfiguredContext(root, config, request)).toThrow();
+  }
+});

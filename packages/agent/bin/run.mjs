@@ -1158,12 +1158,19 @@ function writeDurable(file, value) {
   const target = `${file}.pending-${randomUUID()}`;
   const fd = openSync(target, 'wx', 0o600);
   try {
-    writeFileSync(fd, bytes);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
+    try {
+      writeFileSync(fd, bytes);
+      fsyncSync(fd);
+    } finally {
+      closeSync(fd);
+    }
+    renameSync(target, file);
+  } catch (error) {
+    try { unlinkSync(target); } catch (cleanupError) {
+      if (cleanupError.code !== 'ENOENT') throw new AggregateError([error, cleanupError], 'Cutoff publication and temporary cleanup failed.');
+    }
+    throw error;
   }
-  renameSync(target, file);
   if (!regularFile(file).equals(bytes)) fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness publication failed.');
 }
 
@@ -1451,6 +1458,17 @@ function publicFailure(error) {
       ? `Phase: ${reason[2]}. Reason: ${reason[1]}. Next action: ${reason[3]}`
       : `${publicMessages[code] ?? 'The requested run was blocked by runtime validation.'} Next action: inspect the exact work and check its issued contract before retrying.`,
   };
+}
+
+async function readLocalSessionIntake(file) {
+  const {z}=await import('zod');
+  const schema=z.object({schema:z.literal('VidaLocalSessionIntake/v1'),native_session_handle:z.string().min(1).max(256),
+    work_item:z.object({schema:z.literal('WorkItem/v1'),id:z.string().min(1),provider:z.string().min(1),provider_type:z.string().min(1),
+      canonical_kind:z.string().min(1),intent:z.string().min(1),project_id:z.string().min(1),title:z.string().min(1),description:z.string(),
+      labels:z.array(z.string()),risk_flags:z.array(z.string())}).strict(),scope_path:z.string().min(1),acceptance_path:z.string().min(1),
+    source_authorization_path:z.string().min(1).optional(),runtime_code_paths:z.array(z.string().min(1)).min(1).max(512),
+    route:z.enum(['R1','R2','R3','R4']),risk:z.enum(['low','medium','high']),change_kind:z.enum(['feature','fix','refactor','migration','documentation','incident'])}).strict();
+  try {return schema.parse(readBoundedReport(file));} catch {fail('GAP-VIDA-RUN-CONTEXT-001','The local session intake is invalid.');}
 }
 
 function readBoundedReport(file) {
@@ -2020,6 +2038,41 @@ export async function run(args = process.argv.slice(2)) {
       project: pathProject.project_id,
       ...selectionMetadata,
     };
+    const ledger = openConfiguredMastraSessionLedger(values.project_root);
+    if (values.report) {
+      try {
+        const observation=parseSessionBridgeObservation(readBoundedReport(values.report));
+        const recorded=ledger.retrieveReportedObservation(context.work_id,context.attempt,observation);
+        if (recorded) {
+          const {loadProjectSetContext}=await import('../src/config/project-context.ts');
+          const project=loadProjectSetContext(values.project_root,config,config.repository.repository_id,values.projects);
+          const host=ledger.hostState.readHostStateSnapshot({repository_id:project.repository_id,project_ids:project.project_ids,integrations_digest:project.integrations_digest,work_id:context.work_id});
+          const item=[...recorded.state.items,...recorded.state.completed.flatMap(wave=>wave.items)].find(item=>item.request.action_id === observation.action_id);
+          if(!host.work || host.work.binding.workflow_id !== values.workflow || host.work.binding.config_digest !== configDigest ||
+            host.work.binding.work_source_revision !== context.scope_digest || host.work.execution.run_id !== recorded.state.run_id ||
+            item.request.workflow_id !== values.workflow || item.request.scope_digest !== context.scope_digest || item.request.config_digest !== configDigest)
+            fail('GAP-VIDA-RUN-CONTEXT-001','Recorded observation belongs to another current work binding.');
+          const response={schema:'VidaAgentRunResult/v1',status:'report_retrieved',workflow:values.workflow,mastra_run_id:recorded.state.run_id,
+            mastra_step_id:recorded.state.step_id,resume_status:recorded.resume_status,state_version:recorded.version,
+            issued_actions:[],completed_observations:recorded.state.completed.flatMap(wave=>wave.items.map(item=>item.observation)),
+            recorded_observation:observation,initialization_status:initialization.workspace_binding_status};
+          ledger.close();return response;
+        }
+      } catch(error) {ledger.close();throw error;}
+    }
+    const {loadProjectSetContext:loadAdmissionProjectContext}=await import('../src/config/project-context.ts');
+    const admissionProject=loadAdmissionProjectContext(values.project_root,config,config.repository.repository_id,values.projects);
+    try {ledger.hostState.readHostStateSnapshot({repository_id:admissionProject.repository_id,project_ids:admissionProject.project_ids,
+      integrations_digest:admissionProject.integrations_digest,work_id:context.work_id});} catch(error) {ledger.close();throw error;}
+    const admissionIntake=values.intake ? await readLocalSessionIntake(values.intake) : null;
+    if(admissionIntake) {
+      if (admissionIntake.work_item.id !== context.work_id || admissionIntake.work_item.canonical_kind !== selection.kind ||
+        admissionIntake.work_item.intent !== selection.intent || admissionIntake.work_item.project_id !== selection.project ||
+        /\p{Cc}/u.test(admissionIntake.native_session_handle)) {ledger.close();fail('GAP-VIDA-RUN-CONTEXT-001','Intake identity differs from current configured work.');}
+      try {ledger.hostState.recordAdmissionAttempt(context.work_id,context.attempt,{workItem:admissionIntake.work_item,
+        nativeSessionHandle:admissionIntake.native_session_handle,context,scopePath:admissionIntake.scope_path,acceptancePath:admissionIntake.acceptance_path});}
+      catch(error) {ledger.close();throw error;}
+    }
     const bridge = await MastraSessionBridge.open({
       repositoryRoot: values.project_root,
       config,
@@ -2028,7 +2081,6 @@ export async function run(args = process.argv.slice(2)) {
       workflowId: values.workflow,
       workspaceId: initialization.workspace_id,
     });
-    const ledger = openConfiguredMastraSessionLedger(values.project_root);
     const requireConfiguredContext = (request, allowedChangedPaths = []) => {
       const current = configuredContextForStage(
         values.project_root,
@@ -2635,40 +2687,7 @@ export async function run(args = process.argv.slice(2)) {
       let admittedSource = null;
       if (values.intake) {
         const { z } = await import('zod');
-        const intakeSchema = z
-          .object({
-            schema: z.literal('VidaLocalSessionIntake/v1'),
-            native_session_handle: z.string().min(1).max(256),
-            work_item: z
-              .object({
-                schema: z.literal('WorkItem/v1'),
-                id: z.string().min(1),
-                provider: z.string().min(1),
-                provider_type: z.string().min(1),
-                canonical_kind: z.string().min(1),
-                intent: z.string().min(1),
-                project_id: z.string().min(1),
-                title: z.string().min(1),
-                description: z.string(),
-                labels: z.array(z.string()),
-                risk_flags: z.array(z.string()),
-              })
-              .strict(),
-            scope_path: z.string().min(1),
-            acceptance_path: z.string().min(1),
-            source_authorization_path: z.string().min(1).optional(),
-            runtime_code_paths: z.array(z.string().min(1)).min(1).max(512),
-            route: z.enum(['R1', 'R2', 'R3', 'R4']),
-            risk: z.enum(['low', 'medium', 'high']),
-            change_kind: z.enum(['feature', 'fix', 'refactor', 'migration', 'documentation', 'incident']),
-          })
-          .strict();
-        let intake;
-        try {
-          intake = intakeSchema.parse(readBoundedReport(values.intake));
-        } catch {
-          fail('GAP-VIDA-RUN-CONTEXT-001', 'The local session intake is invalid.');
-        }
+        const intake=admissionIntake;
         if (values.continuation) {
           const stateVersion = z
             .object({

@@ -187,9 +187,30 @@ admit successor work separately. Unknown issued readonly work is not this case.
 
 Reports of failed native research or synthesis remain durable terminal
 observations. They create no successful research artifact and cannot satisfy a
-success gate. An exact action, issue and observation retry returns the current
+success gate. An exact action, issue and observation retry must return the current
 persisted snapshot after a lost acknowledgement, including after wave advance;
 a changed payload conflicts. This does not deduplicate external effects.
+
+Known source-writer failure must remain distinct from unknown effects: preserve
+the durable original issue and effect identity, create no successful artifact,
+and grant no replay or no-effect proof. Public report ordering and durable writer
+failure remain current implementation GAPs despite read-only failure/journal
+retry fixes. Current correction uses a linked successor; SAME-attempt bounded
+correction remains required with its budget/exhaustion policy unspecified.
+
+Before fresh admission, package-owned executable inventory must establish runtime
+identity; a caller-selected subset cannot define that authority. Recovery accepts
+only exact owned execution resources or validated file resources. Effective graph
+validation must retain required producers and consumer cardinality. Suspension
+must retire only the same work's unissued queued ticket intents. These current
+corrective items remain open until final behavioral evidence exists.
+
+Append-only coordination history has a finite canonical JSON budget. Prove actual
+clean-ledger headroom before first admission. After first clean migration,
+closure-safe historical rollover and read lookup are required before sustained
+use; this open P1 need does not authorize unsafe current-v1 compaction or an
+invented work-count limit. Optional answer/save research surfaces and partial-init
+recovery remain requirements with current implementation/qualification gaps.
 
 Risk filtering preserves each action's original configured assignment index.
 The configured DAG's declared terminal stages identify terminal synthesis
@@ -225,8 +246,9 @@ The public `vida-agent reconcile-artifacts --kind work-state --mode inspect
 --project-root ABSROOT` returns `HostWorkspaceInspection/v1` from the existing
 canonical SQLite database. It uses a constructor-free read-only connection:
 no database creation, initialization, mutating pragmas or lifecycle advancement.
-Missing state fails closed. This projection is evidence, not a second status
-store. The same kind supports `plan`, `apply`, `resume` and `restore`, bound to
+Missing state fails closed. Its copy/SQLite inspection validates the canonical
+composite governance envelope and reads without mutating original SHM/schema/
+journal mode. This projection is evidence, not a second status store. The same kind supports `plan`, `apply`, `resume` and `restore`, bound to
 `--repair-id ID`; `plan` also records `--actor STRING` as attribution. The
 current bounded repair normalizes an absent optional `request_transition` to
 null using frozen preimages, postimages and dependency versions in one atomic
@@ -248,8 +270,17 @@ retains historical canonical rows as same-store beforeimages and clears active
 rows; restore recovers exact old row semantics while maintenance metadata remains
 monotonic. Its synchronous filesystem callback executes inside the transaction.
 SQL and filesystem effects are not one atomic persistence system. The
-package-owned `runConsumerMigrationState` SDK helper is Source implementation;
-consumer deployment wrapper integration and negative qualification remain pending.
+async package-owned SDK entry `runConsumerMigrationState(input, files)` is
+exported through `trusted-host`; input binds `repositoryRoot`, `operationId`,
+`actor` and `mode: baseline|restore`. Its callback receives configured
+`database_path`, `workflow_database_path` and `backup` bytes only on the initial
+baseline, otherwise null. The callback must be synchronous and idempotent.
+Unknown/inflight native or Mastra state is denied before callback effects. An
+interrupted restore retains its durable restoring state and maintenance fence;
+the exact operation resumes. Baseline retry reuses its beforeimages, and restored
+retry calls the idempotent callback only when restored rows/admissions remain
+exact. Source helper qualification and repository-only deployment adapter work
+remain pending; no migration CLI or installed readiness is established.
 
 Retain the canonical database and its WAL/SHM at the configured path, partition
 archived work children around that authority, and obtain a consistent database

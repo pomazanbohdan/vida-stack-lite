@@ -8,9 +8,16 @@ import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingr
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
-import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
+import {
+  HostStateStore,
+  openHostStateDatabase,
+  runConsumerMigrationState,
+  inspectHostWorkspaceDatabase,
+} from '../src/host-state.ts';
+import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork } from '../src/orchestration/local-work-admission.ts';
 import { runWorkStateRepair } from '../bin/repair-work-state.mjs';
+import {MastraSessionLedger} from '../src/orchestration/persistent-session-handoff.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function fixture() {
@@ -158,6 +165,53 @@ test('public admission preserves same-request parallel contours and atomically a
   }
 });
 
+test('expired real execution-only admission rebinds only its owned execution resource', () => {
+  const f=fixture();
+  try {
+    const initial=f.admit(f.prepare('old','user:old'));
+    const historical=JSON.parse(f.database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('old').payload);
+    historical.completed=[{step_id:'fixture-accepted-readonly',items:[{issue_id:randomUUID(),observation:{status:'reported_complete'}}]}];
+    historical.items=[{issue_id:null,observation:null}];
+    f.database.query('UPDATE agent_host_mastra_session_ledger SET revision=2,payload=?,digest=? WHERE work_id=?').run(canonicalJson(historical),canonicalJsonDigest(historical),'old');
+    const work=initial.host.work, journal=f.store.readWorkSessionJournal({repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:'old'});
+    const originalClock=Date.now;
+    try {
+      Date.now=()=>Date.parse(initial.host.ledger.tickets.find(ticket=>ticket.ticket_id === work.lease.ticket_id).expires_at)+1;
+      const recovered=f.store.recoverExpiredLocalLease({identity:{repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:'old'},attempt:1,nativeSessionHandle:'session',generation:work.lease.generation,expectedWork:initial.host.workVersion,expectedLedger:initial.host.ledgerVersion,expectedJournal:journal.version,expectedMaintenanceGeneration:initial.host.maintenanceGeneration,verifyCurrent(){return {runtimeCodeDigest:work.binding.runtime_code_digest,authorityPointer:'fixture:current-package'};}});
+      expect(recovered.ledger.rebinds.at(-1).resources).toEqual(['execution:old']);
+      expect(recovered.ledger.claims.filter(claim=>claim.status === 'active')[0].resources).toEqual(['execution:old']);
+      expect(recovered.work.binding.allowed_resources).toEqual(work.binding.allowed_resources);
+    } finally {Date.now=originalClock;}
+  } finally {f.close();}
+});
+
+test('known failed source report persists while its host effect remains uncertain and fenced', () => {
+  const f=fixture();
+  try {
+    const initial=f.admit(f.prepare('old','user:old')), work=initial.host.work;
+    const identity={repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:'old'};
+    const claimed=f.store.claimWorkflowAttempt({identity,expectedWork:initial.host.workVersion,expectedLedger:initial.host.ledgerVersion,stageId:'fixture-source-action',assignmentIndex:0,requestDigest:'1'.repeat(64),lease:work.lease});
+    f.database.query('DELETE FROM agent_host_mastra_session_ledger WHERE work_id=?').run('old');
+    const ledger=new MastraSessionLedger(f.database,f.store.workspaceId,f.config,f.root,f.store);
+    const request={schema:'VidaSessionRequest/v1',run_id:work.execution.run_id,workflow_id:work.binding.workflow_id,wave_index:0,action_id:'2'.repeat(64),assignment_index:0,stage_id:'fixture-source-action',role:'fixture-writer',config_digest:work.binding.config_digest,scope_digest:work.binding.work_source_revision,bindings_manifest_ref:'3'.repeat(64)};
+    const reservation={schema:'WorkflowSessionReservation/v1',receipt:claimed,request:{workItemId:'old',stageId:request.stage_id,assignmentIndex:0}};
+    let journal=ledger.sync('old',1,work.execution.run_id,'fixture-writer-wave',[request],initial.source);
+    journal=ledger.issueWave('old',1,journal.version,{[request.action_id]:reservation});
+    f.store.markWorkflowAttemptUncertain(claimed);
+    const before=f.store.readHostStateSnapshot(identity);
+    const summary='Observed writer failure; filesystem outcome remains uncertain';
+    const failed={schema:'VidaSessionObservation/v1',action_id:request.action_id,issue_id:journal.state.items[0].issue_id,host_attempt_id:claimed.attempt.attempt_id,agent_id:'fixture-writer',tool_call_ref:'fixture-failed-source-call',status:'reported_failed',summary,output_digest:canonicalJsonDigest(summary),evidence_refs:['fixture:observed-failure']};
+    const recorded=ledger.report('old',1,journal.version,failed,null);
+    expect(recorded.state.items[0].observation).toEqual(failed);
+    expect(recorded.resume_status).toBe('blocked');
+    expect(recorded.state.source_scope).toEqual(initial.source);
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+    expect(before.work.execution.assignment_attempts[0].status).toBe('uncertain');
+    expect(before.work.lease).toEqual(work.lease);
+    expect(ledger.report('old',1,journal.version,failed,null)).toEqual(recorded);
+  } finally {f.close();}
+});
+
 test('public admission rejects drifted predecessor attribution without any effects and preserves foreign sessions', () => {
   const f = fixture();
   try {
@@ -197,22 +251,127 @@ test('work-state inspection CLI refuses missing canonical SQLite without creatin
 });
 
 test('valid public intake records the admission cutoff before failed scope preparation', async () => {
-  const f=fixture();
+  const f = fixture();
   try {
-    const verifier={principal:'fixture:consumer-maintenance',projectIds:['sample'],verify(fence){return {schema:'MaintenanceReleaseAuthorization/v1',principal:this.principal,fence_digest:canonicalJsonDigest(fence),closure_digest:fence.binding.closure_digest,bundle_digest:fence.binding.bundle_digest};}};
-    const migration=new HostStateStore(f.database,f.store.workspaceId,undefined,undefined,undefined,verifier);
-    const binding={schema:'MaintenanceFenceBinding/v1',project_ids:['sample'],operation_id:'fixture-migration',manifest_digest:'1'.repeat(64),request_digest:'2'.repeat(64),bindings_digest:'3'.repeat(64),closure_digest:'4'.repeat(64),bundle_digest:'5'.repeat(64)};
-    const baseline=migration.acquireMaintenanceFence(binding);
-    migration.consumerMigrationState(baseline,'baseline',()=>undefined);
+    const verifier = {
+      principal: 'fixture:consumer-maintenance',
+      projectIds: ['sample'],
+      verify(fence) {
+        return {
+          schema: 'MaintenanceReleaseAuthorization/v1',
+          principal: this.principal,
+          fence_digest: canonicalJsonDigest(fence),
+          closure_digest: fence.binding.closure_digest,
+          bundle_digest: fence.binding.bundle_digest,
+        };
+      },
+    };
+    const migration = new HostStateStore(f.database, f.store.workspaceId, undefined, undefined, undefined, verifier);
+    const binding = {
+      schema: 'MaintenanceFenceBinding/v1',
+      project_ids: ['sample'],
+      operation_id: 'fixture-migration',
+      manifest_digest: '1'.repeat(64),
+      request_digest: '2'.repeat(64),
+      bindings_digest: '3'.repeat(64),
+      closure_digest: '4'.repeat(64),
+      bundle_digest: '5'.repeat(64),
+    };
+    const baseline = migration.acquireMaintenanceFence(binding);
+    migration.consumerMigrationState(baseline, 'baseline', () => undefined);
     await migration.releaseMaintenanceFence(baseline);
-    expect(()=>admitLocalSessionWork(f.prepare('failed-preparation',''))).toThrow(/schema is invalid/);
+    expect(() => admitLocalSessionWork(f.prepare('failed-preparation', ''))).toThrow(/schema is invalid/);
     expect(f.store.readWorkspaceSnapshot().work).toHaveLength(0);
-    expect(f.database.query('SELECT work_id,attempt FROM agent_host_admission_attempt').all()).toEqual([{work_id:'failed-preparation',attempt:1}]);
-    const restore=migration.acquireMaintenanceFence(binding);
-    let called=false;
-    expect(()=>migration.consumerMigrationState(restore,'restore',()=>{called=true;})).toThrow(/new admission/);
+    expect(f.database.query('SELECT work_id,attempt FROM agent_host_admission_attempt').all()).toEqual([
+      { work_id: 'failed-preparation', attempt: 1 },
+    ]);
+    const restore = migration.acquireMaintenanceFence(binding);
+    let called = false;
+    expect(() =>
+      migration.consumerMigrationState(restore, 'restore', () => {
+        called = true;
+      }),
+    ).toThrow(/new admission/);
     expect(called).toBe(false);
-  } finally {f.close();}
+  } finally {
+    f.close();
+  }
+});
+
+test('public consumer wrapper checks the separate Mastra store and recovers the same fenced operation', async () => {
+  const f = fixture();
+  try {
+    const workflowPath = path.join(f.root, f.config.control.work_root, 'mastra-workflows.v1.sqlite');
+    mkdirSync(path.dirname(workflowPath), { recursive: true });
+    const workflow = openHostStateDatabase(workflowPath);
+    workflow.exec('CREATE TABLE mastra_workflow_snapshot(snapshot TEXT)');
+    workflow.query('INSERT INTO mastra_workflow_snapshot VALUES(?)').run(JSON.stringify({ status: 'running' }));
+    workflow.close();
+    const input = {
+      repositoryRoot: f.root,
+      operationId: 'public-consumer-fixture',
+      actor: 'fixture:consumer',
+      mode: 'baseline',
+    };
+    let called = false;
+    await expect(
+      runConsumerMigrationState(input, () => {
+        called = true;
+      }),
+    ).rejects.toThrow(/unknown or inflight/);
+    expect(called).toBe(false);
+    const settled = openHostStateDatabase(workflowPath);
+    settled.query('UPDATE mastra_workflow_snapshot SET snapshot=?').run(JSON.stringify({ status: 'suspended' }));
+    settled.close();
+    let databasePath, backup;
+    const result = await runConsumerMigrationState(input, (bindings) => {
+      databasePath = bindings.database_path;
+      backup = bindings.backup;
+      expect(bindings.workflow_database_path).toBe(workflowPath);
+      return 'baseline-files';
+    });
+    expect(result.status).toBe('baseline');
+    expect(Buffer.from(backup).subarray(0, 16).toString()).toBe('SQLite format 3\u0000');
+    expect(databasePath).toBe(path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite'));
+    await runConsumerMigrationState(input, (bindings) => {
+      expect(bindings.backup).toBeNull();
+      return 'retry-files';
+    });
+    const consumerFile = path.join(f.root, 'consumer-init-output.txt');
+    writeFileSync(consumerFile, 'known init failure');
+    await expect(
+      runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
+        writeFileSync(consumerFile, 'original consumer bytes');
+        throw Error('fixture interruption after file restore');
+      }),
+    ).rejects.toThrow(/fixture interruption/);
+    const restored = await runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
+      expect(readFileSync(consumerFile, 'utf8')).toBe('original consumer bytes');
+      return 'recovered-files';
+    });
+    expect(restored.status).toBe('restored');
+    const corrupt = openHostStateDatabase(databasePath);
+    corrupt.exec('DROP TABLE agent_host_admission_attempt');
+    const schemaBefore = corrupt.query('SELECT name,sql FROM sqlite_master ORDER BY name').all();
+    corrupt.close();
+    const bytesBefore = readFileSync(databasePath);
+    let unexpectedCallback = false;
+    await expect(
+      runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
+        unexpectedCallback = true;
+      }),
+    ).rejects.toThrow(/admission metadata missing/);
+    expect(unexpectedCallback).toBe(false);
+    expect(() =>
+      inspectHostWorkspaceDatabase(databasePath, deriveWorkspaceId(f.config.repository.repository_id, f.root)),
+    ).toThrow(/admission metadata missing/);
+    expect(readFileSync(databasePath)).toEqual(bytesBefore);
+    const unchanged = openHostStateDatabase(databasePath);
+    expect(unchanged.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(schemaBefore);
+    unchanged.close();
+  } finally {
+    f.close();
+  }
 });
 
 test('second predecessor verification failure leaves every canonical row and raw journal unchanged', () => {
@@ -224,18 +383,21 @@ test('second predecessor verification failure leaves every canonical row and raw
     const journals = f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all();
     const admit = f.store.admitSuccessorWork.bind(f.store);
     let verified = 0;
-    f.store.admitSuccessorWork = (input) => admit({
-      ...input,
-      verifyCurrent(work, journal, pointer) {
-        input.verifyCurrent(work, journal, pointer);
-        if (++verified === 2) throw new Error('injected second predecessor verification fault');
-      },
-    });
+    f.store.admitSuccessorWork = (input) =>
+      admit({
+        ...input,
+        verifyCurrent(work, journal, pointer) {
+          input.verifyCurrent(work, journal, pointer);
+          if (++verified === 2) throw new Error('injected second predecessor verification fault');
+        },
+      });
     expect(() => admitLocalSessionWork(f.prepare('next', 'user:next'))).toThrow(/second predecessor/);
     expect(verified).toBe(2);
     expect(f.store.readWorkspaceSnapshot()).toEqual(before);
     expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journals);
-  } finally { f.close(); }
+  } finally {
+    f.close();
+  }
 });
 
 test('competing successor requests prepared against identical versions permit only one commit', () => {
@@ -259,7 +421,9 @@ test('competing successor requests prepared against identical versions permit on
     expect(f.store.readWorkspaceSnapshot()).toEqual(committed);
     expect(admit(proposals[0])).toEqual(result);
     expect(committed.work.filter((row) => row.work.execution.status === 'active')).toHaveLength(1);
-  } finally { f.close(); }
+  } finally {
+    f.close();
+  }
 });
 
 test('two-predecessor SQL commit fault rolls back all work and coordination rows and preserves raw journals', () => {
