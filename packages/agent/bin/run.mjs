@@ -1771,7 +1771,7 @@ export async function run(args = process.argv.slice(2)) {
                     'GAP-VIDA-RUN-CONTEXT-001',
                     'Expired recovery requires an already admitted unchanged canonical research artifact.',
                   );
-              } else if (stage.kind === 'research' || stage.kind === 'synthesize') {
+              } else if (stage.produces.includes('ResearchResult/v1') || stage.produces.includes('ResearchSynthesis/v1')) {
                 fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery cannot import unnormalized research.');
               }
             }
@@ -1795,11 +1795,7 @@ export async function run(args = process.argv.slice(2)) {
               !profile ||
               item.request.role !== assignment.role ||
                 item.request.config_digest !== work.binding.config_digest ||
-              (profile.mutation_scope === 'repository_source' && item.issue_id !== null &&
-                (!item.host_reservation ||
-                  item.host_reservation.receipt.identity.work_id !== work.binding.lifecycle_work_id ||
-                  item.host_reservation.receipt.attempt.lease.ticket_id !== work.lease.ticket_id ||
-                  item.host_reservation.receipt.attempt.lease.generation !== work.lease.generation))
+              (profile.mutation_scope === 'repository_source' && item.issue_id !== null)
             )
               fail(
                 'GAP-VIDA-RUN-CONTEXT-001',
@@ -1909,7 +1905,11 @@ export async function run(args = process.argv.slice(2)) {
               !profile ||
               item.request.role !== assignment.role ||
               item.request.config_digest !== work.binding.config_digest ||
-              (profile.mutation_scope === 'repository_source' && item.issue_id !== null)
+              (profile.mutation_scope === 'repository_source' && item.issue_id !== null &&
+                (!item.host_reservation ||
+                  item.host_reservation.receipt.identity.work_id !== work.binding.lifecycle_work_id ||
+                  item.host_reservation.receipt.attempt.lease.ticket_id !== work.lease.ticket_id ||
+                  item.host_reservation.receipt.attempt.lease.generation !== work.lease.generation))
             )
               fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal current request or issued writer binding is unsafe.');
           }
@@ -2139,7 +2139,7 @@ export async function run(args = process.argv.slice(2)) {
     const normalizeObservedResearch = async (currentJournal) => {
       const researchItems = currentJournal.state.items.filter(
         (item) =>
-          item.observation &&
+          item.observation?.status === 'reported_complete' &&
           config.workflows[values.workflow].stages.some(
             (stage) =>
               stage.id === item.request.stage_id &&
@@ -3024,7 +3024,7 @@ export async function run(args = process.argv.slice(2)) {
             parseObservedTesterVerdict(observation);
           }
           if (
-            issued &&
+            issued && observation.status === 'reported_complete' &&
             config.workflows[values.workflow].stages.find((stage) => stage.id === issued.request.stage_id)?.kind ===
               'research'
           ) {
@@ -3054,7 +3054,7 @@ export async function run(args = process.argv.slice(2)) {
             });
           }
           if (
-            issued &&
+            issued && observation.status === 'reported_complete' &&
             config.workflows[values.workflow].stages
               .find((stage) => stage.id === issued.request.stage_id)
               ?.produces.includes('ResearchSynthesis/v1')
@@ -3195,7 +3195,12 @@ export async function run(args = process.argv.slice(2)) {
       )
         deliveryInstruction = await preparedDelivery(journal);
       let researchSynthesis = null;
-      const terminalStage = config.workflows[values.workflow].stages.at(-1);
+      const terminalSynthesisStages = config.workflows[values.workflow].stages.filter((stage) =>
+        config.workflows[values.workflow].terminal_stages.includes(stage.id) &&
+        stage.kind === 'synthesize' && stage.produces.includes('ResearchSynthesis/v1'));
+      if (terminalSynthesisStages.length > 1)
+        fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal research synthesis must have one declared output stage.');
+      const terminalStage = terminalSynthesisStages[0];
       if (
         journal.resume_status === 'complete' &&
         terminalStage?.kind === 'synthesize' &&
