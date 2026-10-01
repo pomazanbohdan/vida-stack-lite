@@ -36,3 +36,35 @@ test('exact reported observation retry survives lost ACK and wave advancement, w
   expect(f.ledger.resume('test',1)).toEqual(advanced);
  }finally{f.close();}
 });
+
+test('null suspended step requires the authoritative Mastra success status', () => {
+ const f=fixture();try {
+  let state=f.ledger.sync('test',1,'run-test','wave0',[f.request('1')]);
+  state=f.ledger.issueWave('test',1,state.version);
+  const item=state.state.items[0], summary='Observed terminal fixture';
+  f.ledger.report('test',1,state.version,{schema:'VidaSessionObservation/v1',action_id:item.request.action_id,
+   issue_id:item.issue_id,agent_id:'fixture',tool_call_ref:'fixture-terminal',status:'reported_complete',
+   summary,output_digest:canonicalJsonDigest(summary),evidence_refs:['fixture:terminal']});
+  for(const status of ['failed','canceled','unknown'])
+   expect(f.ledger.sync('test',1,'run-test',null,[],null,status).resume_status).toBe('blocked');
+  expect(f.ledger.sync('test',1,'run-test',null,[],null,'success').resume_status).toBe('complete');
+  expect(f.ledger.resume('test',1).resume_status).toBe('blocked');
+ }finally{f.close();}
+});
+
+test('failed research observation is durable without a successful result or resume gate',()=>{
+ const f=fixture();try{
+  let state=f.ledger.sync('test',1,'run-test','wave0',[f.request('1'),f.request('2'),f.request('3')]);
+  state=f.ledger.issueWave('test',1,state.version);
+  for(const [index,item] of state.state.items.entries()) {
+   const summary=index===2?'Observed failure':'Observed completion';
+   state=f.ledger.report('test',1,state.version,{schema:'VidaSessionObservation/v1',action_id:item.request.action_id,
+    issue_id:item.issue_id,agent_id:'fixture-'+index,tool_call_ref:'fixture-failed-wave-'+index,
+    status:index===2?'reported_failed':'reported_complete',summary,
+    output_digest:canonicalJsonDigest(summary),evidence_refs:['fixture:wave']});
+  }
+  expect(state.resume_status).toBe('blocked');
+  expect(state.state.items.every(item=>item.observation!==null)).toBe(true);
+  expect(state.state.items.some(item=>item.research_normalization)).toBe(false);
+ }finally{f.close();}
+});
