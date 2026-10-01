@@ -375,13 +375,14 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         retirements: [],
       };
   const predecessors: Parameters<HostStateStore['admitSuccessorWork']>[0]['predecessors'][number][] = [];
-  const verifyPredecessor = (work: NonNullable<HostStateSnapshot['work']>, journal: Readonly<Record<string,unknown>>) => {
+  const verifyPredecessor = (work: NonNullable<HostStateSnapshot['work']>, journal: Readonly<Record<string,unknown>>, requestPointer: string) => {
     const priorScopeBytes = access.readBytes(work.contracts.scope.path, 'predecessor bound implementation scope');
     requireAdmission(digest(priorScopeBytes) === work.contracts.scope.sha256,
       'predecessor scope artifact changed');
     const priorScope = JSON.parse(priorScopeBytes.toString('utf8')) as typeof scope;
     requireAdmission(validScope(priorScope) && priorScope.work_id === work.binding.lifecycle_work_id &&
       priorScope.attribution.thread_id === nativeSessionHandle && priorScope.attribution.pointer.length > 0 &&
+      priorScope.attribution.pointer === requestPointer &&
       !/\p{Cc}/u.test(priorScope.attribution.pointer), 'predecessor request attribution invalid');
     const items = [...journal.items as {request:{stage_id:string;assignment_index:number;role:string};issue_id:string|null;host_reservation?:unknown;research_normalization?:unknown}[],
       ...(journal.completed as {items:typeof items}[]).flatMap((wave) => wave.items)];
@@ -419,7 +420,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     const priorIdentity = { ...identity, work_id: work.binding.lifecycle_work_id };
     const journal = store.readWorkSessionJournal(priorIdentity);
     requireAdmission(journal && prior.workVersion, 'predecessor bound journal unavailable');
-    verifyPredecessor(work, journal.state);
+    verifyPredecessor(work, journal.state, priorScope.attribution.pointer);
     predecessors.push({identity:priorIdentity,expectedWork:prior.workVersion,attempt:journal.attempt,
       expectedJournal:journal.version,requestPointer:priorScope.attribution.pointer});
   }
@@ -431,6 +432,15 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     nativeSessionHandle,
     requestPointer: scope.attribution.pointer,
     predecessors,
+    verifySuccessor: () => {
+      requireAdmission(digest(access.readBytes(input.scopePath, 'successor current scope')) === binding.scope_contract_digest &&
+        digest(access.readBytes(input.acceptancePath, 'successor current acceptance')) === binding.acceptance_manifest_digest &&
+        snapshotDeclaredSources(access, scope.allowed_paths).digest === source.digest,
+        'successor contracts or source changed before atomic admission');
+      if (sourceAuthorization !== null)
+        requireAdmission(readLocalSourceWriteAuthorization(repositoryRoot, input.sourceAuthorizationPath!).sha256 === sourceAuthorization.sha256,
+          'successor source authorization changed before admission');
+    },
     verifyCurrent: verifyPredecessor,
   });
   return { host, source };

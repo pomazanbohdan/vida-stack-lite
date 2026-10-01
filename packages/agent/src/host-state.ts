@@ -2550,7 +2550,8 @@ export class HostStateStore {
       readonly expectedJournal: StateVersion;
       readonly requestPointer: string;
     }[];
-    readonly verifyCurrent: (work: WorkState, journal: Readonly<Record<string, unknown>>) => void;
+    readonly verifySuccessor: () => void;
+    readonly verifyCurrent: (work: WorkState, journal: Readonly<Record<string, unknown>>, requestPointer: string) => void;
   }): HostStateSnapshot {
     const successor = checkedWork(snapshot(input.nextWork));
     const incomingLedger = checkedLedger(snapshot(input.nextLedger));
@@ -2574,6 +2575,7 @@ export class HostStateStore {
       }
       matchesExpected(before.workVersion, null);
       matchesExpected(before.ledgerVersion, input.expectedLedger);
+      input.verifySuccessor();
       validatePair(successor, incomingLedger);
       validateProgress(before, successor, incomingLedger);
       const baseline = before.ledger;
@@ -2615,7 +2617,7 @@ export class HostStateStore {
           ...(journal.completed as {items:Record<string,unknown>[]}[]).flatMap((wave) => wave.items)];
         requireState(journalItems.every((item) => !item.host_reservation),
           'reserved source action prevents absorption');
-        input.verifyCurrent(snapshot(work), snapshot(journal));
+        input.verifyCurrent(snapshot(work), snapshot(journal), candidate.requestPointer);
         const ids = new Set(tickets.map((ticket) => ticket.ticket_id));
         const next = checkedWork({ ...work, revision: work.revision + 1, lease: null,
           request_transition: { schema: 'WorkRequestTransition/v1', request_pointer: candidate.requestPointer,
