@@ -1794,8 +1794,12 @@ export async function run(args = process.argv.slice(2)) {
               !assignment ||
               !profile ||
               item.request.role !== assignment.role ||
-              item.request.config_digest !== work.binding.config_digest ||
-              (profile.mutation_scope === 'repository_source' && item.issue_id !== null)
+                item.request.config_digest !== work.binding.config_digest ||
+              (profile.mutation_scope === 'repository_source' && item.issue_id !== null &&
+                (!item.host_reservation ||
+                  item.host_reservation.receipt.identity.work_id !== work.binding.lifecycle_work_id ||
+                  item.host_reservation.receipt.attempt.lease.ticket_id !== work.lease.ticket_id ||
+                  item.host_reservation.receipt.attempt.lease.generation !== work.lease.generation))
             )
               fail(
                 'GAP-VIDA-RUN-CONTEXT-001',

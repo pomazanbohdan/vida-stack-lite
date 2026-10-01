@@ -182,7 +182,10 @@ export function sessionActionsForWave(
   requireCondition(wave !== undefined, 'session handoff wave is unavailable');
   return wave
     .flatMap((stage) =>
-      stage.assignments.map((assignment, index) => {
+      stage.assignments.map((assignment) => {
+        const index = config.workflows[workflowId]!.stages
+          .find((configuredStage) => configuredStage.id === stage.id)!.assignments.indexOf(assignment);
+        requireCondition(index >= 0, 'session assignment is not in the configured stage');
         const profile = config.agents.profiles[assignment.profile];
         const instructions = config.agents.role_instructions[assignment.role];
         requireCondition(profile, 'session handoff profile is unavailable');

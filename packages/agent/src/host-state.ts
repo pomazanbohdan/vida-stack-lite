@@ -3501,12 +3501,6 @@ export class HostStateStore {
           'lease renewal owner, fencing identity or live expiry differs',
         );
         requireState(
-          !work.execution.assignment_attempts.some(
-            (entry) => entry.status === 'started' || entry.status === 'uncertain',
-          ),
-          'issued writer outcome must settle before lease renewal',
-        );
-        requireState(
           !ledger.claims.some(
             (entry) =>
               entry.status === 'active' &&
@@ -3547,10 +3541,6 @@ export class HostStateStore {
             journal.run_id === work.execution.run_id &&
             Array.isArray(journal.items),
           'lease renewal journal identity changed',
-        );
-        requireState(
-          !(journal.items as { host_reservation?: unknown }[]).some((entry) => entry.host_reservation),
-          'issued writer-bound wave must advance before lease renewal',
         );
         input.verifyCurrent(snapshot(work), snapshot(journal));
         const expiry = new Date(
