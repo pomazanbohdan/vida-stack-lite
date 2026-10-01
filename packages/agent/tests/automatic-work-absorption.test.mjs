@@ -142,6 +142,21 @@ function fixture() {
   };
 }
 
+test('workspace projection bounds individual rows and includes its shared ledger only once', () => {
+  const f=fixture();
+  try {
+    for(let index=0;index<12;index++) f.admit(f.prepare('parallel-'+index,'user:parallel'));
+    const current=f.store.readWorkspaceSnapshot();
+    expect(current.work).toHaveLength(12);
+    expect(current.work.every(row=>!Object.hasOwn(row,'ledger') && !Object.hasOwn(row,'ledgerVersion'))).toBe(true);
+    for(const row of current.work) expect(row.workVersion.digest).toBe(canonicalJsonDigest(row.work));
+    expect(current.ledger_version.digest).toBe(canonicalJsonDigest(current.ledger));
+    const inspected=inspectHostWorkspaceDatabase(path.join(f.root,'fixture.sqlite'),f.store.workspaceId);
+    expect(inspected.work).toHaveLength(12);
+    expect(inspected.ledger_version).toEqual(current.ledger_version);
+  } finally {f.close();}
+});
+
 test('public admission preserves same-request parallel contours and atomically absorbs old same-session requests', () => {
   const f = fixture();
   try {
