@@ -19,7 +19,7 @@ if (!isolated && !underStryker) {
     );
     expect(child.error).toBeUndefined();
     expect(child.status).toBe(0);
-    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+10 passed/);
+    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+12 passed/);
   }, 180_000);
 } else {
   const realFs = await vi.importActual('node:fs');
@@ -28,6 +28,7 @@ if (!isolated && !underStryker) {
   const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
   const roots = [];
   const fdPaths = new Map();
+  const copyDescriptors = new Set();
   const simulatedNoFollow = 0x20000000;
   const simulatedDirectory = 0x10000000;
   let cloneFailuresRemaining = 0;
@@ -36,6 +37,7 @@ if (!isolated && !underStryker) {
   let shortCopyWrites = false;
   let copyWriteFault;
   let copyCleanupFault = false;
+  let substituteRestoredTarget = false;
   let replaceCloneTargetAfterSuccess = false;
   let removeCloneSourceBeforeFailure = false;
   let createCloneTargetBeforeFailure = false;
@@ -80,15 +82,31 @@ if (!isolated && !underStryker) {
     }
     const fd = realFs.openSync(resolved, cleanFlags, mode);
     fdPaths.set(fd, path.resolve(String(resolved)));
+    if (typeof cleanFlags === 'number' && cleanFlags & realFs.constants.O_CREAT && cleanFlags & realFs.constants.O_RDWR)
+      copyDescriptors.add(fd);
     return fd;
   }
 
   function trackedClose(fd) {
     if (!fdPaths.has(fd)) return;
     try {
+      const file = fdPaths.get(fd);
+      if (
+        substituteRestoredTarget &&
+        copyDescriptors.has(fd) &&
+        file &&
+        path.basename(file) === 'fallback.txt' &&
+        realFs.existsSync(file) &&
+        realFs.readFileSync(file, 'utf8') === 'before'
+      ) {
+        substituteRestoredTarget = false;
+        realFs.renameSync(file, file + '.displaced');
+        realFs.writeFileSync(file, 'foreign');
+      }
       realFs.closeSync(fd);
     } finally {
       fdPaths.delete(fd);
+      copyDescriptors.delete(fd);
     }
   }
 
@@ -256,6 +274,7 @@ if (!isolated && !underStryker) {
     shortCopyWrites = false;
     copyWriteFault = undefined;
     copyCleanupFault = false;
+    substituteRestoredTarget = false;
     replaceCloneTargetAfterSuccess = false;
     removeCloneSourceBeforeFailure = false;
     createCloneTargetBeforeFailure = false;
@@ -584,6 +603,32 @@ if (!isolated && !underStryker) {
       const backup = realFs.readdirSync(path.join(repositoryRoot, 'data')).find((name) => name.endsWith('.cas-old'));
       expect(realFs.readFileSync(path.join(repositoryRoot, 'data', backup), 'utf8')).toBe('before');
     });
+
+    for (const recovery of ['orphan', 'rollback']) {
+      test(`preserves original backup when ${recovery} target is substituted after descriptor verification`, () => {
+        const repositoryRoot = temporaryRoot();
+        const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+        access.ensureDirectory('data', 'data directory');
+        access.writeExclusive('data/fallback.txt', 'before', 'original');
+        const data = path.join(repositoryRoot, 'data');
+        if (recovery === 'orphan') {
+          realFs.renameSync(
+            path.join(data, 'fallback.txt'),
+            path.join(data, '.fallback.txt.11111111-1111-4111-8111-111111111111.cas-old'),
+          );
+        } else {
+          copyWriteFault = 'zero';
+        }
+        cloneUnavailableRemaining = 3;
+        substituteRestoredTarget = true;
+        expect(() => access.replaceAtomic('data/fallback.txt', hash('before'), 'after', 'restore race')).toThrow();
+        expect(substituteRestoredTarget).toBe(false);
+        expect(realFs.readFileSync(path.join(data, 'fallback.txt'), 'utf8')).toBe('foreign');
+        const backups = realFs.readdirSync(data).filter((name) => name.endsWith('.cas-old'));
+        expect(backups).toHaveLength(1);
+        expect(realFs.readFileSync(path.join(data, backups[0]), 'utf8')).toBe('before');
+      });
+    }
 
     test('copies without reflink using explicit offsets and completes partial writes', () => {
       const repositoryRoot = temporaryRoot();

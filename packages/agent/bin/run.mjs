@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { verifyForwardReviewSet } from './forward-review-proof.mjs';
 import {
   parseDocumentationPolicyTransitionEnvelope,
@@ -25,8 +26,9 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { standaloneRuntime } from './bun.mjs';
 
-const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const bundleRoot = standaloneRuntime()?.root ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const isBunRuntime = typeof Bun !== 'undefined';
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const controllerJson = (value) => `${JSON.stringify(value, null, 2)}\n`;
@@ -1153,7 +1155,7 @@ export function assertNoActiveCutoverMaintenance(selector) {
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover maintenance release proof is invalid.');
 }
 
-function writeDurable(file, value) {
+export function writeDurable(file, value) {
   const bytes = Buffer.from(controllerJson(value));
   const target = `${file}.pending-${randomUUID()}`;
   const fd = openSync(target, 'wx', 0o600);
@@ -1166,8 +1168,11 @@ function writeDurable(file, value) {
     }
     renameSync(target, file);
   } catch (error) {
-    try { unlinkSync(target); } catch (cleanupError) {
-      if (cleanupError.code !== 'ENOENT') throw new AggregateError([error, cleanupError], 'Cutoff publication and temporary cleanup failed.');
+    try {
+      unlinkSync(target);
+    } catch (cleanupError) {
+      if (cleanupError.code !== 'ENOENT')
+        throw new AggregateError([error, cleanupError], 'Cutoff publication and temporary cleanup failed.');
     }
     throw error;
   }
@@ -1178,25 +1183,27 @@ export async function advanceCutoff(selector, values) {
   if (!selector) return;
   const file = path.join(selector.generationRoot, 'cutoff-witness.json');
   const lock = path.join(selector.generationRoot, 'cutoff-witness.lock');
-  if (pathExists(lock))
-    fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
+  if (pathExists(lock)) fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
   const { withHostStateExclusiveTransaction } = await import('../src/host-state.ts');
-  const config=loadRuntimeConfig(values.project_root);
-  const access=requireSafeRepositoryAccess(values.project_root);
-  access.ensureDirectory(config.control.work_root,'cutoff transaction root');
-  const databasePath=sessionHandoffDatabasePath(values.project_root,config);
+  const config = loadRuntimeConfig(values.project_root);
+  const access = requireSafeRepositoryAccess(values.project_root);
+  access.ensureDirectory(config.control.work_root, 'cutoff transaction root');
+  const databasePath = sessionHandoffDatabasePath(values.project_root, config);
   try {
-    withHostStateExclusiveTransaction(databasePath,()=>{
-      if (pathExists(lock) ||
-        digest(access.readBytes('.agent/active-runtime-selector.v1.json','cutoff current selector'))!==selector.selectorSha)
-        fail('GAP-VIDA-RUN-CUTOFF-001','Cutoff selector changed while acquiring exclusion.');
+    withHostStateExclusiveTransaction(databasePath, () => {
+      if (
+        pathExists(lock) ||
+        digest(access.readBytes('.agent/active-runtime-selector.v1.json', 'cutoff current selector')) !==
+          selector.selectorSha
+      )
+        fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff selector changed while acquiring exclusion.');
       advanceLockedCutoff(file, selector, values);
     });
-  } catch(error) {
-    if(error.code==='SQLITE_BUSY') fail('GAP-VIDA-RUN-CUTOFF-001','Cutoff witness is held or unsafe.');
+  } catch (error) {
+    if (error.code === 'SQLITE_BUSY') fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
     throw error;
   }
 }
@@ -1254,6 +1261,8 @@ function parseArgs(args) {
     '--native-session-handle',
     '--lease-generation',
     '--report',
+    '--correct',
+    '--prepare-assurance',
     '--reconcile',
     '--export-staged-witness',
     '--payload-manifest-sha256',
@@ -1303,11 +1312,11 @@ function parseArgs(args) {
   if (required.some((key) => !values[key]) || values.projects.length < 1 || (!values.scope_digest && !deriveScope))
     fail('GAP-VIDA-RUN-CLI-001', 'All launcher arguments are required.');
   const changing = Boolean(
-    values.issue_wave || values.report || values.reconcile || values.recover_expired_lease || values.renew_lease,
+    values.issue_wave || values.report || values.correct || values.prepare_assurance || values.reconcile || values.recover_expired_lease || values.renew_lease,
   );
   const exporting = Boolean(values.export_staged_witness || values.payload_manifest_sha256);
   if (
-    [values.issue_wave, values.report, values.reconcile, values.recover_expired_lease, values.renew_lease].filter(
+    [values.issue_wave, values.report, values.correct, values.prepare_assurance, values.reconcile, values.recover_expired_lease, values.renew_lease].filter(
       Boolean,
     ).length > 1 ||
     (values.issue_wave && values.issue_wave !== 'true') ||
@@ -1336,7 +1345,7 @@ function parseArgs(args) {
       (!/^[1-9][0-9]*$/.test(values.expected_revision ?? '') ||
         !Number.isSafeInteger(Number(values.expected_revision)) ||
         !/^[a-f0-9]{64}$/.test(values.expected_digest ?? ''))) ||
-    [values.report, values.reconcile]
+    [values.report, values.correct, values.prepare_assurance, values.reconcile]
       .filter(Boolean)
       .some((entry) => !path.isAbsolute(entry) || path.resolve(entry) !== entry) ||
     (exporting &&
@@ -1461,14 +1470,40 @@ function publicFailure(error) {
 }
 
 async function readLocalSessionIntake(file) {
-  const {z}=await import('zod');
-  const schema=z.object({schema:z.literal('VidaLocalSessionIntake/v1'),native_session_handle:z.string().min(1).max(256),
-    work_item:z.object({schema:z.literal('WorkItem/v1'),id:z.string().min(1),provider:z.string().min(1),provider_type:z.string().min(1),
-      canonical_kind:z.string().min(1),intent:z.string().min(1),project_id:z.string().min(1),title:z.string().min(1),description:z.string(),
-      labels:z.array(z.string()),risk_flags:z.array(z.string())}).strict(),scope_path:z.string().min(1),acceptance_path:z.string().min(1),
-    source_authorization_path:z.string().min(1).optional(),runtime_code_paths:z.array(z.string().min(1)).min(1).max(512),
-    route:z.enum(['R1','R2','R3','R4']),risk:z.enum(['low','medium','high']),change_kind:z.enum(['feature','fix','refactor','migration','documentation','incident'])}).strict();
-  try {return schema.parse(readBoundedReport(file));} catch {fail('GAP-VIDA-RUN-CONTEXT-001','The local session intake is invalid.');}
+  const { z } = await import('zod');
+  const schema = z
+    .object({
+      schema: z.literal('VidaLocalSessionIntake/v1'),
+      native_session_handle: z.string().min(1).max(256),
+      work_item: z
+        .object({
+          schema: z.literal('WorkItem/v1'),
+          id: z.string().min(1),
+          provider: z.string().min(1),
+          provider_type: z.string().min(1),
+          canonical_kind: z.string().min(1),
+          intent: z.string().min(1),
+          project_id: z.string().min(1),
+          title: z.string().min(1),
+          description: z.string(),
+          labels: z.array(z.string()),
+          risk_flags: z.array(z.string()),
+        })
+        .strict(),
+      scope_path: z.string().min(1),
+      acceptance_path: z.string().min(1),
+      source_authorization_path: z.string().min(1).optional(),
+      runtime_code_paths: z.array(z.string().min(1)).min(1).max(512),
+      route: z.enum(['R1', 'R2', 'R3', 'R4']),
+      risk: z.enum(['low', 'medium', 'high']),
+      change_kind: z.enum(['feature', 'fix', 'refactor', 'migration', 'documentation', 'incident']),
+    })
+    .strict();
+  try {
+    return schema.parse(readBoundedReport(file));
+  } catch {
+    fail('GAP-VIDA-RUN-CONTEXT-001', 'The local session intake is invalid.');
+  }
 }
 
 function readBoundedReport(file) {
@@ -1504,6 +1539,270 @@ function readBoundedReport(file) {
   }
 }
 
+async function captureStoppedSource(args) {
+ const {readFileSync,writeFileSync,realpathSync}=await import('node:fs');const {createHash}=await import('node:crypto');
+ const {HostStateStore,openHostStateDatabase,inspectHostWorkspaceDatabase}=await import('../src/host-state.ts');
+ const {canonicalJsonDigest}=await import('../src/contracts/public-ingress.ts');const {loadRuntimeConfig}=await import('../src/config/runtime-config.ts');
+ const {sessionHandoffDatabasePath}=await import('../src/orchestration/persistent-session-handoff.ts');const {deriveWorkspaceId}=await import('../src/workspace-identity.ts');
+const base=path.resolve(import.meta.dirname,'../../..');
+if(args.length!==6||args[0]!=='--mode'||args[2]!=='--project-root'||args[4]!=='--request')throw Error('Usage: run.mjs --capture-stopped-source true --mode inspect|plan|apply|resume --project-root ABS --request REL');
+const mode=args[1],root=realpathSync(args[3]);if(!['inspect','plan','apply','resume'].includes(mode))throw Error('Capture operation mode invalid');
+const fixture=path.dirname(root)===base&&path.basename(root).startsWith('fixture-');
+const config=loadRuntimeConfig(root);
+const databasePath=fixture?path.join(root,'fixture.sqlite'):sessionHandoffDatabasePath(root,config);
+const expectedWorkspace=deriveWorkspaceId(config.repository.repository_id,root);
+const file=path.resolve(root,args[5]),requestRelative=path.relative(root,file);if(requestRelative.startsWith('..')||path.isAbsolute(requestRelative)||realpathSync(file)!==file)throw Error('Bounded capture request path differs');const bytes=readFileSync(file);if(bytes.length>1048576)throw Error('Capture request exceeds bound');const input=JSON.parse(bytes);if(input.workspace_id!==expectedWorkspace)throw Error('Capture workspace/root binding differs');
+let approvedFiles=[];
+function verifyCurrent(){
+ for(const [absolute,approved] of approvedFiles)if(!readFileSync(absolute).equals(approved))throw Error("Capture approved evidence changed");
+ const terminalPath=path.resolve(root,input.terminalEvidence.observation_ref),terminalRelative=path.relative(root,terminalPath);if(terminalRelative.startsWith('..')||path.isAbsolute(terminalRelative)||realpathSync(terminalPath)!==terminalPath)throw Error('Terminal observation path differs');const terminalBytes=readFileSync(terminalPath);if(terminalBytes.length>65536)throw Error('Terminal evidence exceeds bound');const terminal=JSON.parse(terminalBytes);if(!fixture&&(terminal.native_status!=='completed'||!terminal.source_turn_id||!terminal.final_message_id||terminal.current_tmp_only_turn_id===terminal.source_turn_id||terminal.owner_thread_id!==input.nativeSessionHandle))throw Error('Actual stopped SOURCE turn provenance incomplete');
+ if(terminal.schema!==(fixture?'FixtureObservedStoppedSource/v1':'RootObservedStoppedSource/v1')||terminal.status!=='partial_stopped'||terminal.actor!==input.terminalEvidence.native_actor||terminal.action_id!==input.observation.action_id||terminal.issue_id!==input.observation.issue_id||terminal.host_attempt_id!==input.observation.host_attempt_id||terminal.observation_ref!==input.terminalEvidence.observation_ref)throw Error('actual terminal fixture evidence differs');
+ for(const entry of input.candidateSnapshot.entries){const absolute=path.resolve(root,entry.path),relative=path.relative(root,absolute);if(relative.startsWith('..')||path.isAbsolute(relative)||realpathSync(absolute)!==absolute)throw Error('candidate source path differs');const data=readFileSync(absolute);if(data.length!==entry.size||createHash('sha256').update(data).digest('hex')!==entry.sha256)throw Error('candidate source changed after frozen request');}
+}
+verifyCurrent();
+const workspace=inspectHostWorkspaceDatabase(databasePath,input.workspace_id);const selected=workspace.work.find(row=>row.identity.work_id===input.identity.work_id);if(!selected)throw Error('fixture exact work missing');
+const {workspace_id,...operation}=input;
+const planPath=fixture?path.join(root,'capture-plan.json'):path.join(path.dirname(file),'capture-plan-'+operation.identity.work_id+'.json');
+async function verifyAuthorization(){
+ if(fixture)return;
+ const authorizationPath=path.resolve(root,operation.terminalEvidence.owner_decision_ref),relative=path.relative(root,authorizationPath);if(relative.startsWith('..')||path.isAbsolute(relative)||realpathSync(authorizationPath)!==authorizationPath)throw Error('Capture authorization path differs');
+ const bytes=readFileSync(authorizationPath);if(bytes.length>65536)throw Error('Capture authorization exceeds bound');const authorization=JSON.parse(bytes);
+ const {developmentControllerBinding}=await import('./development-controller.mjs');const candidateBinding=developmentControllerBinding(bundleRoot);
+ if(authorization.schema!=='StoppedSourceCaptureAuthorization/v1'||authorization.action!=='source.capture-failed-and-release'||authorization.owner_thread_id!==operation.nativeSessionHandle||authorization.request_digest!==canonicalJsonDigest(operation)||authorization.candidate_binding!==candidateBinding||authorization.source_turn_id!==JSON.parse(readFileSync(path.resolve(root,operation.terminalEvidence.observation_ref),'utf8')).source_turn_id||authorization.status!=='approved_exact_manifest')throw Error('Capture exact manifest/owner authorization differs');
+ const reviews=authorization.reviews;if(!Array.isArray(reviews)||reviews.length!==3||new Set(reviews.map(r=>r.actor_id)).size!==3||new Set(reviews.map(r=>r.history_ref)).size!==3||new Set(reviews.map(r=>r.tool_call_ref)).size!==3||reviews.some(r=>r.verdict!=='pass'||r.candidate_binding!==candidateBinding||r.actor_id===operation.terminalEvidence.native_actor||!r.receipt_ref))throw Error('Three fresh candidate review references required');
+ approvedFiles=[[authorizationPath,bytes]];
+ for(const review of reviews){
+   const receiptPath=path.resolve(root,review.receipt_ref),receiptRelative=path.relative(root,receiptPath);
+   if(receiptRelative.startsWith('..')||path.isAbsolute(receiptRelative)||realpathSync(receiptPath)!==receiptPath)throw Error('Capture review receipt path differs');
+   const receiptBytes=readFileSync(receiptPath);if(receiptBytes.length>65536)throw Error('Capture review receipt exceeds bound');
+   const receipt=JSON.parse(receiptBytes);
+   if(receipt.schema!=='StoppedSourceCandidateReview/v1'||receipt.verdict!=='pass'||receipt.candidate_binding!==candidateBinding||receipt.actor_id!==review.actor_id||receipt.history_ref!==review.history_ref||receipt.tool_call_ref!==review.tool_call_ref||receipt.request_digest!==authorization.request_digest)throw Error('Capture frozen review receipt differs');
+   approvedFiles.push([receiptPath,receiptBytes]);
+ }
+ verifyCurrent();
+
+}
+
+if(['inspect','plan'].includes(mode)){
+ if(canonicalJsonDigest(selected.version)!==canonicalJsonDigest(operation.expectedWork)||canonicalJsonDigest(workspace.ledger_version)!==canonicalJsonDigest(operation.expectedLedger))throw Error('capture plan CAS differs');
+ const plan={schema:'StoppedSourceCapturePlan/v1',request_digest:canonicalJsonDigest(operation),request:operation,rights_granted:false,canonical_acceptance:false,requires_exact_manifest_authorization:!fixture};if(mode==='plan')writeFileSync(planPath,JSON.stringify(plan,null,2)+'\n',{flag:'wx'});return {status:mode==='plan'?'planned':'inspect_current',plan_ref:path.relative(root,planPath).replaceAll(path.sep,'/'),request_digest:plan.request_digest};
+}else{
+ const plan=JSON.parse(readFileSync(planPath,'utf8'));await verifyAuthorization();if(plan.schema!=='StoppedSourceCapturePlan/v1'||plan.request_digest!==canonicalJsonDigest(operation))throw Error('frozen capture plan differs');const database=openHostStateDatabase(databasePath);try{const store=new HostStateStore(database,workspace_id);const result=store.captureStoppedSourceObservation({...operation,verifyCurrent});return {status:'captured_partial_source_released',work_version:result.workVersion,ledger_version:result.ledgerVersion,rights_granted:false,canonical_acceptance:false};}finally{database.close();}
+}
+
+}
+
+
+async function retireInterruptedSourceOwner(args) {
+  if (
+    args.length !== 8 ||
+    args[0] !== '--mode' ||
+    args[2] !== '--project-root' ||
+    args[4] !== '--native-session-handle' ||
+    args[6] !== '--request'
+  )
+    throw Error('Interrupted Source retirement requires mode, exact root, current owner handle and request');
+  const mode = args[1], root = realpathSync(args[3]), operatorHandle = args[5];
+  if (!['inspect', 'apply'].includes(mode)) throw Error('Interrupted Source retirement mode invalid');
+  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
+  const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
+  const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+  const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+  const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
+  const config = loadRuntimeConfig(root), access = requireSafeRepositoryAccess(root), requestBytes = access.readBytes(args[7], 'interrupted Source retirement request');
+  if (!requestBytes.length || requestBytes.length > 65536) throw Error('Interrupted Source retirement request exceeds bound');
+  const input = JSON.parse(requestBytes.toString('utf8'));
+  if (
+    !exactKeys(input, mode === 'inspect' ? ['identity', 'attempt'] : ['identity', 'attempt', 'actionId', 'issueId', 'expectedWork', 'expectedLedger', 'expectedJournal', 'expectedMaintenanceGeneration', 'decisionPointer', 'evidence']) ||
+    !exactKeys(input.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) ||
+    (mode === 'apply' && !exactKeys(input.evidence, ['schema', 'source_thread_id', 'source_thread_status', 'read_thread_ref', 'list_agents_ref', 'active_source_writer_ids']))
+  ) throw Error('Interrupted Source retirement request shape differs');
+  if (
+    input.identity.repository_id !== config.repository.repository_id ||
+    !Array.isArray(input.identity.project_ids) || input.identity.project_ids.length !== 1 ||
+    typeof input.identity.work_id !== 'string' || !input.identity.work_id ||
+    typeof operatorHandle !== 'string' || !operatorHandle.trim() ||
+    !Number.isSafeInteger(input.attempt) || input.attempt < 1
+  ) throw Error('Interrupted Source retirement identity differs');
+  const project = loadProjectSetContext(root, config, input.identity.repository_id, input.identity.project_ids);
+  if (project.integrations_digest !== input.identity.integrations_digest) throw Error('Interrupted Source retirement ProjectContext differs');
+  const ledger = openConfiguredMastraSessionLedger(root);
+  try {
+    const store = ledger.hostState, host = store.readHostStateSnapshot(input.identity),
+      intake = readAdmittedSessionIntake(root, store, input.identity),
+      journalRow = store.readWorkSessionJournal(input.identity);
+    if (
+      !host.work || !journalRow || journalRow.attempt !== input.attempt ||
+      !host.workVersion || !host.ledgerVersion ||
+      host.work.binding.config_digest !== runtimeConfigDigest(config) ||
+      intake.native_session_handle !== operatorHandle ||
+      (host.work.lease && host.work.lease.thread_id !== operatorHandle)
+    ) throw Error('Interrupted Source retirement current owner or project binding differs');
+    const journal = journalRow.state, items = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)],
+      eligible = items.filter((entry) => entry.issue_id && entry.observation === null &&
+        entry.host_reservation?.approvalAction === 'source.write' &&
+        entry.host_reservation.authorization?.receipt?.attempt?.status === 'started' &&
+        entry.host_reservation.authorization?.approval?.status === 'commit_unknown'),
+      item = eligible.length === 1 ? eligible[0] : null, reservation = item?.host_reservation,
+      authorization = reservation?.authorization;
+    if (!item || !authorization || authorization.receipt.attempt.lease.thread_id !== operatorHandle)
+      throw Error('Interrupted Source retirement requires one exact pending Source issue');
+    const projection = { identity: input.identity, attempt: input.attempt,
+      actionId: item.request.action_id, issueId: item.issue_id,
+      expectedWork: host.workVersion, expectedLedger: host.ledgerVersion,
+      expectedJournal: journalRow.version, expectedMaintenanceGeneration: host.maintenanceGeneration };
+    if (mode === 'inspect') {
+      if (!host.work.lease) throw Error('Interrupted Source owner already has no active lease');
+      return { status: 'interrupted_source_retirement_inspected', request: projection,
+        owner_thread_id: operatorHandle, rights_granted: false, attempt_outcome_resolved: false };
+    }
+    const request = {
+      identity: input.identity, attempt: input.attempt, actionId: input.actionId, issueId: input.issueId,
+      expectedWork: input.expectedWork, expectedLedger: input.expectedLedger, expectedJournal: input.expectedJournal,
+      expectedMaintenanceGeneration: input.expectedMaintenanceGeneration, authorization, operatorHandle,
+      decisionPointer: input.decisionPointer, evidence: input.evidence,
+    }, priorRelease = host.ledger.operations.some((entry) =>
+      entry.operation_id === 'interrupted-source-release-' + canonicalJsonDigest(request));
+    for (const key of Object.keys(projection)) {
+      if (priorRelease && ['expectedWork', 'expectedLedger'].includes(key)) continue;
+      if (canonicalJsonDigest(input[key]) !== canonicalJsonDigest(projection[key]))
+        throw Error('Interrupted Source retirement Work/Ledger/Journal/maintenance CAS differs');
+    }
+    if (
+      !item || item.issue_id !== input.issueId || item.observation !== null || !reservation ||
+      reservation.approvalAction !== 'source.write' || authorization?.receipt?.attempt?.status !== 'started' ||
+      authorization.approval?.status !== 'commit_unknown' || input.evidence.schema !== 'InterruptedSourceRetirementEvidence/v1' ||
+      input.evidence.source_thread_status !== 'interrupted' ||
+      typeof input.evidence.source_thread_id !== 'string' || !input.evidence.source_thread_id.trim() ||
+      typeof input.evidence.read_thread_ref !== 'string' || !input.evidence.read_thread_ref.trim() ||
+      typeof input.evidence.list_agents_ref !== 'string' || !input.evidence.list_agents_ref.trim() ||
+      !Array.isArray(input.evidence.active_source_writer_ids) || input.evidence.active_source_writer_ids.length !== 0 ||
+      !Number.isSafeInteger(input.attempt) || input.attempt < 1 ||
+      !Number.isSafeInteger(input.expectedMaintenanceGeneration) ||
+      typeof input.decisionPointer !== 'string' || !input.decisionPointer.trim()
+    ) throw Error('Interrupted Source retirement target or cooperative evidence differs');
+    const result = store.retireInterruptedSourceOwner(request), after = store.readWorkSessionJournal(input.identity);
+    if (!after || canonicalJsonDigest(after.version) !== canonicalJsonDigest(input.expectedJournal))
+      throw Error('Interrupted Source retirement unexpectedly changed the session journal');
+    return {
+      status: 'interrupted_source_owner_released', operation_id: result.operation_id,
+      request_digest: result.request_digest, work_version: result.snapshot.workVersion,
+      ledger_version: result.snapshot.ledgerVersion, attempt_status: result.attempt_receipt.attempt.status,
+      rights_granted: false, attempt_outcome_resolved: false, journal_version: after.version,
+    };
+  } finally { ledger.close(); }
+}
+
+async function releaseCompletedReadonly(args) {
+  if(args.length!==6||args[0]!=='--mode'||args[2]!=='--project-root'||args[4]!=='--request')throw Error('Readonly release requires mode, exact root and request');
+  const mode=args[1],root=realpathSync(args[3]);
+  if(!['inspect','plan','apply','resume'].includes(mode))throw Error('Readonly release mode invalid');
+  const {canonicalJsonDigest}=await import('../src/contracts/public-ingress.ts');
+  const {loadRuntimeConfig,runtimeConfigDigest}=await import('../src/config/runtime-config.ts');
+  const {requireSafeRepositoryAccess}=await import('../src/config/safe-repository-access.ts');
+  const {sessionHandoffDatabasePath}=await import('../src/orchestration/persistent-session-handoff.ts');
+  const {deriveWorkspaceId}=await import('../src/workspace-identity.ts');
+  const {HostStateStore,openHostStateDatabase,inspectHostWorkspaceDatabase}=await import('../src/host-state.ts');
+  const {suspendCompletedReadOnlyWork}=await import('../src/orchestration/suspend-local-work.ts');
+  const {readAdmittedSessionIntake}=await import('../src/orchestration/admitted-session-execution.ts');
+  const {Database}=await import('bun:sqlite');
+  const {buildSessionBridgeRequest,configuredContextForStage,parseSessionBridgeObservation,parseSessionBridgeRequest,parseSessionBridgeRunState,sessionBridgeDatabasePath,sessionBridgeRunId}=await import('../src/orchestration/mastra-session-bridge.ts');
+  const {sessionActionsForWave}=await import('../src/orchestration/session-handoff.ts');
+  const config=loadRuntimeConfig(root),access=requireSafeRepositoryAccess(root);
+  const requestBytes=access.readBytes(args[5],'completed readonly release request');
+  if(requestBytes.length>65536)throw Error('Readonly release request exceeds bound');
+  const request=JSON.parse(requestBytes),equal=(a,b)=>canonicalJsonDigest(a)===canonicalJsonDigest(b);
+  if(request.schema!=='CompletedReadonlyReleaseRequest/v1'||request.workspace_id!==deriveWorkspaceId(config.repository.repository_id,root)||request.identity.project_ids.length!==1||!['linked_correction','next_work'].includes(request.requestIntent))throw Error('Readonly release identity differs');
+  const databasePath=sessionHandoffDatabasePath(root,config),workspace=inspectHostWorkspaceDatabase(databasePath,request.workspace_id);
+  const selected=workspace.work.find(row=>equal(row.identity,request.identity)),row=workspace.journals.find(j=>j.work_id===request.identity.work_id&&j.attempt===request.attempt);
+  if(!selected||!row||!equal(row.version,request.expectedJournal))throw Error('Readonly release journal identity/CAS differs');
+  const {settledSessionItems,configuredReadonlyAssignment,validateWorkSessionBinding}=await import('../src/orchestration/final-assurance.ts');
+  const work=selected.state,state=row.state,settlement=settledSessionItems(state),items=settlement.observed,inertItems=settlement.inert;
+  if(work.binding.config_digest!==runtimeConfigDigest(config)||state.run_id!==(state.corrective_execution?.engine_run_id??work.execution.run_id)||state.source_scope?.digest!==work.binding.work_source_revision||state.attempt!==request.attempt||work.execution.assignment_attempts.length!==0||!items.length)throw Error('Readonly release current binding or host effects differ');
+  const engine=new Database(sessionBridgeDatabasePath(root,config),{readonly:true,strict:true});
+  try {
+    const snapshots=engine.query('SELECT workflow_name,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?').all(state.run_id);
+    if(snapshots.length!==1)throw Error('Readonly release original engine missing/ambiguous');
+    const snapshot=JSON.parse(snapshots[0].snapshot),parseRunState=value=>{
+      const parsed=parseSessionBridgeRunState(value);
+      if(!isDeepStrictEqual(parsed,value))throw Error('Readonly release actual engine completion differs');
+      return parsed;
+    },input=parseRunState(snapshot.context?.input),context={work_id:input.work_id,attempt:input.attempt,scope_digest:input.scope_digest};
+    if(snapshot.status!=='suspended'||snapshot.runId!==state.run_id||input.work_id!==request.identity.work_id||input.attempt!==request.attempt||input.config_digest!==work.binding.config_digest||input.scope_digest!==state.source_scope.digest||input.workflow_id!==snapshots[0].workflow_name||input.observations.length!==0||!Array.isArray(input.selection?.risk_flags))throw Error('Readonly release original engine binding differs');
+    const engineWaves=Object.entries(snapshot.context??{}).map(([key,value])=>({waveIndex:/^wave-(\d+)$/.test(key)?Number(key.slice(5)):null,value})).filter(entry=>entry.waveIndex!==null).sort((a,b)=>a.waveIndex-b.waveIndex),frontiers=engineWaves.filter(entry=>entry.value?.status==='suspended');
+    if(frontiers.length!==1)throw Error('Readonly release actual engine frontier differs');
+    const frontier=frontiers[0],frontierStep=frontier.value;
+    if(engineWaves.some(entry=>entry.value?.status!=='success'&&entry.waveIndex!==frontier.waveIndex))throw Error('Readonly release actual engine frontier differs');
+    if(!Object.prototype.hasOwnProperty.call(frontierStep,'payload')||!Object.prototype.hasOwnProperty.call(frontierStep,'suspendPayload')||!frontierStep.suspendPayload||typeof frontierStep.suspendPayload!=='object'||!Array.isArray(frontierStep.suspendPayload.requests))throw Error('Readonly release actual engine frontier differs');
+    const frontierRequests=frontierStep.suspendPayload.requests.map(parseSessionBridgeRequest);
+    if(!frontierRequests.length)throw Error('Readonly release actual engine frontier differs');
+    const correctiveExecution=frontierRequests[0].corrective_execution,baseRunId=sessionBridgeRunId(request.workspace_id,context,input.workflow_id);
+    if(frontierRequests.some(entry=>!isDeepStrictEqual(entry.corrective_execution,correctiveExecution))||!isDeepStrictEqual(state.corrective_execution??undefined,correctiveExecution)||baseRunId!==work.execution.run_id)throw Error('Readonly release original engine binding differs');
+    validateWorkSessionBinding(work,{attempt:state.attempt,run_id:state.run_id,corrective_execution:correctiveExecution},root);
+    if(correctiveExecution?(correctiveExecution.base_run_id!==baseRunId||correctiveExecution.engine_run_id!==state.run_id):state.run_id!==baseRunId)throw Error('Readonly release original engine binding differs');
+    const groupedItems=new Map();
+    for(const item of items){
+      const issued=parseSessionBridgeRequest(item.request),observed=parseSessionBridgeObservation(item.observation);
+      if(!isDeepStrictEqual(issued,item.request)||!isDeepStrictEqual(observed,item.observation)||!isDeepStrictEqual(issued.corrective_execution,correctiveExecution)||item.issue_id===null||observed.status!=='reported_complete'||observed.action_id!==issued.action_id||observed.issue_id!==item.issue_id||observed.output_digest!==canonicalJsonDigest(observed.summary)||item.host_reservation||item.research_activation||item.research_normalization||!configuredReadonlyAssignment(config,issued)||issued.run_id!==state.run_id||issued.config_digest!==input.config_digest||issued.scope_digest!==input.scope_digest||issued.workflow_id!==input.workflow_id)throw Error('Readonly release actual accepted readonly action differs');
+      const group=groupedItems.get(issued.wave_index)??[];
+      group.push({item,issued,observed});
+      groupedItems.set(issued.wave_index,group);
+    }
+    let priorState=input;
+    const verifiedWaves=new Set();
+    for(const {waveIndex,value:step} of engineWaves.filter(entry=>entry.value?.status==='success')){
+      if(waveIndex>=frontier.waveIndex||!Object.prototype.hasOwnProperty.call(step,'payload')||!Object.prototype.hasOwnProperty.call(step,'resumePayload')||!Object.prototype.hasOwnProperty.call(step,'output')||Object.prototype.hasOwnProperty.call(step,'suspendPayload'))throw Error('Readonly release actual engine completion differs');
+      const waveInput=parseRunState(step.payload);
+      if(!isDeepStrictEqual(waveInput,priorState)||waveInput.work_id!==input.work_id||waveInput.attempt!==input.attempt||waveInput.workflow_id!==input.workflow_id||waveInput.config_digest!==input.config_digest||waveInput.scope_digest!==input.scope_digest||!isDeepStrictEqual(waveInput.selection,input.selection))throw Error('Readonly release actual engine completion differs');
+      const resumePayload=step.resumePayload;
+      if(!resumePayload||typeof resumePayload!=='object'||Array.isArray(resumePayload)||!Array.isArray(resumePayload.observations))throw Error('Readonly release actual engine completion differs');
+      const resumeObservations=resumePayload.observations.map(parseSessionBridgeObservation);
+      if(!isDeepStrictEqual(resumePayload,{observations:resumeObservations}))throw Error('Readonly release actual engine completion differs');
+      const output=parseRunState(step.output),expectedOutput={...waveInput,observations:[...waveInput.observations,...resumeObservations]};
+      if(!isDeepStrictEqual(output,expectedOutput))throw Error('Readonly release actual engine completion differs');
+      const actions=sessionActionsForWave(config,waveInput.selection,context,waveInput.workflow_id,waveIndex,[],correctiveExecution);
+      const expectedRequests=actions.map(action=>buildSessionBridgeRequest({runId:state.run_id,workflowId:waveInput.workflow_id,configDigest:waveInput.config_digest,context,waveIndex,action,configuredContext:configuredContextForStage(root,config,waveInput.workflow_id,action.stage_id,context),priorResults:waveInput.observations,correctiveExecution}));
+      const journalItems=groupedItems.get(waveIndex)??[];
+      if(!expectedRequests.length||journalItems.length!==expectedRequests.length||resumeObservations.length!==expectedRequests.length||new Set(resumeObservations.map(entry=>entry.action_id)).size!==resumeObservations.length)throw Error('Readonly release actual engine completion differs');
+      for(const expected of expectedRequests){
+        const matches=journalItems.filter(entry=>entry.issued.action_id===expected.action_id);
+        const engineMatches=resumeObservations.filter(entry=>entry.action_id===expected.action_id);
+        if(matches.length!==1||engineMatches.length!==1||!isDeepStrictEqual(matches[0].issued,expected)||!isDeepStrictEqual(engineMatches[0],matches[0].observed)||engineMatches[0].issue_id!==matches[0].item.issue_id)throw Error('Readonly release actual engine completion differs');
+      }
+      verifiedWaves.add(waveIndex);
+      priorState=output;
+    }
+    if(verifiedWaves.size!==groupedItems.size||inertItems.length!==frontierRequests.length)throw Error('Readonly release actual engine completion differs');
+    const frontierInput=parseRunState(frontierStep.payload);
+    if(!isDeepStrictEqual(frontierInput,priorState)||frontierInput.work_id!==input.work_id||frontierInput.attempt!==input.attempt||frontierInput.workflow_id!==input.workflow_id||frontierInput.config_digest!==input.config_digest||frontierInput.scope_digest!==input.scope_digest||!isDeepStrictEqual(frontierInput.selection,input.selection))throw Error('Readonly release actual engine frontier differs');
+    const frontierActions=sessionActionsForWave(config,frontierInput.selection,context,frontierInput.workflow_id,frontier.waveIndex,[],correctiveExecution);
+    const expectedFrontier=frontierActions.map(action=>buildSessionBridgeRequest({runId:state.run_id,workflowId:frontierInput.workflow_id,configDigest:frontierInput.config_digest,context,waveIndex:frontier.waveIndex,action,configuredContext:configuredContextForStage(root,config,frontierInput.workflow_id,action.stage_id,context),priorResults:frontierInput.observations,correctiveExecution}));
+    const inertRequests=inertItems.map(item=>{
+      const issued=parseSessionBridgeRequest(item.request);
+      if(!isDeepStrictEqual(issued,item.request)||item.issue_id!==null||item.observation!==null||item.host_reservation||item.research_activation||item.research_normalization)throw Error('Readonly release actual engine frontier differs');
+      return issued;
+    });
+    if(!expectedFrontier.length||!isDeepStrictEqual(frontierRequests,expectedFrontier)||!isDeepStrictEqual(inertRequests,expectedFrontier))throw Error('Readonly release actual engine frontier differs');
+  } finally {engine.close();}
+  const planPath=path.join(path.dirname(path.resolve(root,args[5])),'readonly-release-plan-'+request.identity.work_id+'.json');
+  const database=openHostStateDatabase(databasePath);
+  try {
+    const store=new HostStateStore(database,request.workspace_id),intake=readAdmittedSessionIntake(root,store,request.identity);
+    if(intake.native_session_handle!==request.nativeSessionHandle||work.binding.thread_id!==request.identity.thread_id&&request.identity.thread_id!==undefined)throw Error('Readonly release original owner differs');
+    if(['inspect','plan'].includes(mode)){
+      if(!equal(selected.version,request.expectedWork)||!equal(workspace.ledger_version,request.expectedLedger))throw Error('Readonly release work/ledger CAS differs');
+      const plan={schema:'CompletedReadonlyReleasePlan/v1',request_digest:canonicalJsonDigest(request),request,rights_granted:false,canonical_acceptance:false};
+      if(mode==='plan')writeFileSync(planPath,controllerJson(plan),{flag:'wx'});
+      return {status:mode==='plan'?'readonly_release_planned':'readonly_release_inspected',plan_ref:path.relative(root,planPath).replaceAll(path.sep,'/'),rights_granted:false};
+    }
+    const plan=JSON.parse(readFileSync(planPath,'utf8'));
+    if(plan.schema!=='CompletedReadonlyReleasePlan/v1'||plan.request_digest!==canonicalJsonDigest(request)||!access.readBytes(args[5],'readonly release replay').equals(requestBytes)||runtimeConfigDigest(loadRuntimeConfig(root))!==work.binding.config_digest)throw Error('Readonly release frozen context changed');
+    const result=suspendCompletedReadOnlyWork({store,identity:request.identity,journal:{version:row.version,state,resume_status:'ready_to_resume'},expectedWork:request.expectedWork,expectedLedger:request.expectedLedger,nativeSessionHandle:request.nativeSessionHandle,userRequestPointer:request.userRequestPointer,requestIntent:request.requestIntent,documentationContext:{repository_root:root,repository_id:request.identity.repository_id,project_id:request.identity.project_ids[0],work_id:request.identity.work_id},config});
+    return {status:'completed_readonly_owner_released',work_version:result.workVersion,ledger_version:result.ledgerVersion,rights_granted:false,canonical_acceptance:false,runtime_acceptance:false};
+  } finally {database.close();}
+}
+
 export async function run(args = process.argv.slice(2)) {
   if (!isBunRuntime) {
     const { runPinnedBun } = await import('./bun.mjs');
@@ -1511,6 +1810,26 @@ export async function run(args = process.argv.slice(2)) {
       root: bundleRoot,
       cwd: bundleRoot,
     });
+  }
+  if (args.includes('--retire-interrupted-source-owner')) {
+    if (
+      args[0] !== '--retire-interrupted-source-owner' ||
+      args[1] !== 'true' ||
+      args.includes('--report') ||
+      args.includes('--issue-wave') ||
+      args.includes('--capture-stopped-source') ||
+      args.includes('--release-completed-readonly')
+    )
+      throw Error('Interrupted Source retirement requires its exact separate signal');
+    return retireInterruptedSourceOwner(args.slice(2));
+  }
+  if(args.includes('--release-completed-readonly')){
+    if(args[0]!=='--release-completed-readonly'||args[1]!=='true'||args.includes('--report')||args.includes('--issue-wave')||args.includes('--capture-stopped-source'))throw Error('Readonly release requires separate exact signal');
+    return releaseCompletedReadonly(args.slice(2));
+  }
+  if (args.includes('--capture-stopped-source')) {
+    if(args[0]!=='--capture-stopped-source'||args[1]!=='true'||args.includes('--report')||args.includes('--issue-wave'))throw Error('Stopped-source capture requires exact separate capture signal');
+    return captureStoppedSource(args.slice(2));
   }
   const { checkManifest, readPin } = await import('./bun.mjs');
   let values = parseArgs(args);
@@ -1520,7 +1839,7 @@ export async function run(args = process.argv.slice(2)) {
   assertNoActiveCutoverMaintenance(selector);
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
-  const { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess, selectWorkflow } =
+  const { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess, runtimePackageCodePaths, selectWorkflow } =
     await import('../src/config/runtime-config.ts');
   const { resolveProjectForRepositoryPath } = await import('../src/config/project-context.ts');
   const pin = readPin(bundleRoot);
@@ -1575,6 +1894,8 @@ export async function run(args = process.argv.slice(2)) {
     .digest('hex');
   if (initialization.schema_sha256 !== schemaSha)
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization schema is stale.');
+  const { assertRuntimePackageExports } = await import('../tooling/maintained-source-inventory.mjs');
+  assertRuntimePackageExports(runtimePackageAccess().repository_root);
   if (values.projects.some((id) => !config.projects.some((project) => project.project_id === id)))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The project context is not bound to the requested identity.');
   let pathProject;
@@ -1798,7 +2119,10 @@ export async function run(args = process.argv.slice(2)) {
                     'GAP-VIDA-RUN-CONTEXT-001',
                     'Expired recovery requires an already admitted unchanged canonical research artifact.',
                   );
-              } else if (stage.produces.includes('ResearchResult/v1') || stage.produces.includes('ResearchSynthesis/v1')) {
+              } else if (
+                stage.produces.includes('ResearchResult/v1') ||
+                stage.produces.includes('ResearchSynthesis/v1')
+              ) {
                 fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery cannot import unnormalized research.');
               }
             }
@@ -1821,7 +2145,7 @@ export async function run(args = process.argv.slice(2)) {
               !assignment ||
               !profile ||
               item.request.role !== assignment.role ||
-                item.request.config_digest !== work.binding.config_digest ||
+              item.request.config_digest !== work.binding.config_digest ||
               (profile.mutation_scope === 'repository_source' && item.issue_id !== null)
             )
               fail(
@@ -1848,10 +2172,16 @@ export async function run(args = process.argv.slice(2)) {
           if (digest(intakeBytes) !== intakeRef.sha256)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery intake changed.');
           const intake = JSON.parse(intakeBytes.toString('utf8'));
+          const inventory = runtimePackageCodePaths(currentConfig.runtime.bundle);
+          if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory))
+            fail(
+              'GAP-VIDA-RUN-CONTEXT-001',
+              'Expired recovery intake requires qualified canonical runtime inventory repair.',
+            );
           const runtime = snapshotRuntimePackageSources(
             runtimePackageAccess(),
             currentConfig.runtime.bundle,
-            intake.runtime_code_paths,
+            inventory,
           );
           const schema = digest(
             runtimePackageAccess().readBytes(
@@ -1885,10 +2215,12 @@ export async function run(args = process.argv.slice(2)) {
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
-    const { snapshotDeclaredSources, snapshotRuntimePackageSources } =
+    const { snapshotDeclaredSources, snapshotRuntimePackageSources, compareScopedSourceSnapshots } =
       await import('../src/orchestration/scoped-source-snapshot.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
     const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
+    const {default:Ajv}=await import('ajv/dist/2020.js');
+    const validateScope=new Ajv({strict:true,allErrors:true}).compile(JSON.parse(runtimePackageAccess().readBytes('schemas/implementation-scope.v1.schema.json','renew scope schema')));
     const project = loadProjectSetContext(values.project_root, config, values.repository, values.projects);
     const identity = {
       repository_id: project.repository_id,
@@ -1922,6 +2254,7 @@ export async function run(args = process.argv.slice(2)) {
         expectedMaintenanceGeneration: host.maintenanceGeneration,
         verifyCurrent: (work, state) => {
           const currentConfig = loadRuntimeConfig(values.project_root);
+          let currentWriterAuthority;
           for (const item of state.items) {
             const stage = currentConfig.workflows[work.binding.workflow_id]?.stages.find(
               (entry) => entry.id === item.request.stage_id,
@@ -1933,7 +2266,8 @@ export async function run(args = process.argv.slice(2)) {
               !profile ||
               item.request.role !== assignment.role ||
               item.request.config_digest !== work.binding.config_digest ||
-              (profile.mutation_scope === 'repository_source' && item.issue_id !== null &&
+              (profile.mutation_scope === 'repository_source' &&
+                item.issue_id !== null &&
                 (!item.host_reservation ||
                   item.host_reservation.receipt.identity.work_id !== work.binding.lifecycle_work_id ||
                   item.host_reservation.receipt.attempt.lease.ticket_id !== work.lease.ticket_id ||
@@ -1941,17 +2275,29 @@ export async function run(args = process.argv.slice(2)) {
             )
               fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal current request or issued writer binding is unsafe.');
             if (profile.mutation_scope === 'repository_source' && item.issue_id !== null) {
-              const reference = work.lifecycle.references.find((entry) => entry.kind === 'execution_approval' &&
-                entry.artifact_schema === 'LocalSourceWriteAuthorization/v1' && entry.disposition === 'current' &&
-                entry.decision === 'approved');
+              const reference = work.lifecycle.references.find(
+                (entry) =>
+                  entry.kind === 'execution_approval' &&
+                  entry.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+                  entry.disposition === 'current' &&
+                  entry.decision === 'approved',
+              );
               if (!reference) fail('GAP-VIDA-RUN-CONTEXT-001', 'Writer heartbeat source authority was revoked.');
               const bound = readLocalSourceWriteAuthorization(values.project_root, reference.path);
               const authority = bound.authorization;
-              if (bound.sha256 !== reference.sha256 || authority.work_id !== work.binding.lifecycle_work_id ||
-                authority.attempt !== Number(values.attempt) || authority.native_session_handle !== values.native_session_handle ||
-                authority.scope_digest !== work.binding.work_source_revision || authority.config_digest !== work.binding.config_digest ||
-                authority.workflow_id !== work.binding.workflow_id || !authority.stage_ids.includes(item.request.stage_id) ||
-                canonicalJsonDigest([...authority.implementation_paths].sort()) !== canonicalJsonDigest([...work.binding.implementation_paths].sort()))
+              currentWriterAuthority=authority;
+              if (
+                bound.sha256 !== reference.sha256 ||
+                authority.work_id !== work.binding.lifecycle_work_id ||
+                authority.attempt !== Number(values.attempt) ||
+                authority.native_session_handle !== values.native_session_handle ||
+                authority.scope_digest !== work.binding.work_source_revision ||
+                authority.config_digest !== work.binding.config_digest ||
+                authority.workflow_id !== work.binding.workflow_id ||
+                !authority.stage_ids.includes(item.request.stage_id) ||
+                canonicalJsonDigest([...authority.implementation_paths].sort()) !==
+                  canonicalJsonDigest([...work.binding.implementation_paths].sort())
+              )
                 fail('GAP-VIDA-RUN-CONTEXT-001', 'Writer heartbeat source authority changed.');
             }
           }
@@ -1966,18 +2312,26 @@ export async function run(args = process.argv.slice(2)) {
             access,
             state.source_scope.entries.map((entry) => entry.path),
           );
-          if (source.digest !== state.source_scope.digest)
-            fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal declared source changed.');
+          const scopeBytes=access.readBytes(work.contracts.scope.path,'renew bound scope'),scope=JSON.parse(scopeBytes);
+          if(digest(scopeBytes)!==work.contracts.scope.sha256||!validateScope(scope)||scope.work_id!==work.binding.lifecycle_work_id||scope.scope_id!==work.binding.scope_id||scope.source_revision!==work.binding.work_source_revision||scope.attribution.thread_id!==values.native_session_handle||canonicalJsonDigest([...state.source_scope.entries.map(entry=>entry.path)].sort())!==canonicalJsonDigest([...scope.allowed_paths].sort())||canonicalJsonDigest([...scope.allowed_paths].sort())!==canonicalJsonDigest([...work.lifecycle.scope.allowed_paths].sort())||canonicalJsonDigest(scope.ac_ids)!==canonicalJsonDigest(work.binding.ac_ids)||canonicalJsonDigest([...scope.implementation_paths].sort())!==canonicalJsonDigest([...work.binding.implementation_paths].sort()))fail('GAP-VIDA-RUN-CONTEXT-001','Lease renewal bound scope differs.');
+          const changes=compareScopedSourceSnapshots(state.source_scope,source);
+          if(changes.some(change=>!currentWriterAuthority||!scope.allowed_paths.includes(change.path)||!currentWriterAuthority.implementation_paths.includes(change.path)))fail('GAP-VIDA-RUN-CONTEXT-001','Lease renewal source changed outside issued writer authority.');
           const intakeRef = work.artifacts.find((entry) => entry.artifact_id === 'local-session-intake');
           if (!intakeRef) fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal intake is unavailable.');
           const intakeBytes = access.readBytes(intakeRef.path, 'lease renewal intake');
           if (digest(intakeBytes) !== intakeRef.sha256)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal intake changed.');
           const intake = JSON.parse(intakeBytes.toString('utf8'));
+          const inventory = runtimePackageCodePaths(currentConfig.runtime.bundle);
+          if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory))
+            fail(
+              'GAP-VIDA-RUN-CONTEXT-001',
+              'Lease renewal intake requires qualified canonical runtime inventory repair.',
+            );
           const runtime = snapshotRuntimePackageSources(
             runtimePackageAccess(),
             currentConfig.runtime.bundle,
-            intake.runtime_code_paths,
+            inventory,
           );
           const schema = digest(
             runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'lease renewal schema'),
@@ -2018,14 +2372,15 @@ export async function run(args = process.argv.slice(2)) {
       attempt: Number(values.attempt),
     });
   }
-  if (!values.issue_wave && !values.report && !values.reconcile) await advanceCutoff(selector, values);
+  if (!values.issue_wave && !values.report && !values.correct && !values.prepare_assurance && !values.reconcile) await advanceCutoff(selector, values);
   {
     const { MastraSessionBridge, configuredContextForStage, parseSessionBridgeObservation, sessionBridgeRunId } =
       await import('../src/orchestration/mastra-session-bridge.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-    const { snapshotDeclaredSources } = await import('../src/orchestration/scoped-source-snapshot.ts');
+    const { snapshotDeclaredSources, snapshotRuntimePackageSources } =
+      await import('../src/orchestration/scoped-source-snapshot.ts');
     const context = {
       work_id: values.work_id,
       attempt: Number(values.attempt),
@@ -2039,48 +2394,227 @@ export async function run(args = process.argv.slice(2)) {
       ...selectionMetadata,
     };
     const ledger = openConfiguredMastraSessionLedger(values.project_root);
-    if (values.report) {
+    if (values.report && readBoundedReport(values.report).schema === 'VidaSessionObservation/v1') {
       try {
-        const observation=parseSessionBridgeObservation(readBoundedReport(values.report));
-        const recorded=ledger.retrieveReportedObservation(context.work_id,context.attempt,observation);
+        const observation = parseSessionBridgeObservation(readBoundedReport(values.report));
+        const recorded = ledger.retrieveReportedObservation(context.work_id, context.attempt, observation);
         if (recorded) {
-          const {loadProjectSetContext}=await import('../src/config/project-context.ts');
-          const project=loadProjectSetContext(values.project_root,config,config.repository.repository_id,values.projects);
-          const host=ledger.hostState.readHostStateSnapshot({repository_id:project.repository_id,project_ids:project.project_ids,integrations_digest:project.integrations_digest,work_id:context.work_id});
-          const item=[...recorded.state.items,...recorded.state.completed.flatMap(wave=>wave.items)].find(item=>item.request.action_id === observation.action_id);
-          if(!host.work || host.work.binding.workflow_id !== values.workflow || host.work.binding.config_digest !== configDigest ||
-            host.work.binding.work_source_revision !== context.scope_digest || host.work.execution.run_id !== recorded.state.run_id ||
-            item.request.workflow_id !== values.workflow || item.request.scope_digest !== context.scope_digest || item.request.config_digest !== configDigest)
-            fail('GAP-VIDA-RUN-CONTEXT-001','Recorded observation belongs to another current work binding.');
-          const response={schema:'VidaAgentRunResult/v1',status:'report_retrieved',workflow:values.workflow,mastra_run_id:recorded.state.run_id,
-            mastra_step_id:recorded.state.step_id,resume_status:recorded.resume_status,state_version:recorded.version,
-            issued_actions:[],completed_observations:recorded.state.completed.flatMap(wave=>wave.items.map(item=>item.observation)),
-            recorded_observation:observation,initialization_status:initialization.workspace_binding_status};
-          ledger.close();return response;
+          const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+          const project = loadProjectSetContext(
+            values.project_root,
+            config,
+            config.repository.repository_id,
+            values.projects,
+          );
+          const host = ledger.hostState.readHostStateSnapshot({
+            repository_id: project.repository_id,
+            project_ids: project.project_ids,
+            integrations_digest: project.integrations_digest,
+            work_id: context.work_id,
+          });
+          const item = [...recorded.state.items, ...recorded.state.completed.flatMap((wave) => wave.items)].find(
+            (item) => item.request.action_id === observation.action_id,
+          ) ?? ledger.hostState.findArchivedReportedObservation(context.work_id, context.attempt, observation);
+          if (
+            !host.work ||
+            host.work.binding.workflow_id !== values.workflow ||
+            host.work.binding.config_digest !== configDigest ||
+            host.work.binding.work_source_revision !== context.scope_digest ||
+            host.work.execution.run_id !== (recorded.state.corrective_execution?.base_run_id ?? recorded.state.run_id) ||
+            !item ||
+            item.request.workflow_id !== values.workflow ||
+            item.request.scope_digest !== context.scope_digest ||
+            item.request.config_digest !== configDigest
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Recorded observation belongs to another current work binding.');
+          const response = {
+            schema: 'VidaAgentRunResult/v1',
+            status: 'report_retrieved',
+            workflow: values.workflow,
+            mastra_run_id: recorded.state.run_id,
+            mastra_step_id: recorded.state.step_id,
+            resume_status: recorded.resume_status,
+            state_version: recorded.version,
+            issued_actions: [],
+            completed_observations: recorded.state.completed.flatMap((wave) =>
+              wave.items.map((item) => item.observation),
+            ),
+            recorded_observation: observation,
+            initialization_status: initialization.workspace_binding_status,
+          };
+          ledger.close();
+          return response;
         }
-      } catch(error) {ledger.close();throw error;}
+      } catch (error) {
+        ledger.close();
+        throw error;
+      }
     }
-    const {loadProjectSetContext:loadAdmissionProjectContext}=await import('../src/config/project-context.ts');
-    const admissionProject=loadAdmissionProjectContext(values.project_root,config,config.repository.repository_id,values.projects);
-    try {ledger.hostState.readHostStateSnapshot({repository_id:admissionProject.repository_id,project_ids:admissionProject.project_ids,
-      integrations_digest:admissionProject.integrations_digest,work_id:context.work_id});} catch(error) {ledger.close();throw error;}
-    const admissionIntake=values.intake ? await readLocalSessionIntake(values.intake) : null;
-    if(admissionIntake) {
-      if (admissionIntake.work_item.id !== context.work_id || admissionIntake.work_item.canonical_kind !== selection.kind ||
-        admissionIntake.work_item.intent !== selection.intent || admissionIntake.work_item.project_id !== selection.project ||
-        /\p{Cc}/u.test(admissionIntake.native_session_handle)) {ledger.close();fail('GAP-VIDA-RUN-CONTEXT-001','Intake identity differs from current configured work.');}
-      try {ledger.hostState.recordAdmissionAttempt(context.work_id,context.attempt,{workItem:admissionIntake.work_item,
-        nativeSessionHandle:admissionIntake.native_session_handle,context,scopePath:admissionIntake.scope_path,acceptancePath:admissionIntake.acceptance_path});}
-      catch(error) {ledger.close();throw error;}
+    const { loadProjectSetContext: loadAdmissionProjectContext } = await import('../src/config/project-context.ts');
+    let admissionProject;
+    try {
+      admissionProject = loadAdmissionProjectContext(
+        values.project_root,
+        config,
+        config.repository.repository_id,
+        values.projects,
+      );
+    } catch (error) {
+      ledger.close();
+      throw error;
     }
-    const bridge = await MastraSessionBridge.open({
-      repositoryRoot: values.project_root,
-      config,
-      selection,
-      context,
-      workflowId: values.workflow,
-      workspaceId: initialization.workspace_id,
-    });
+    let admissionHost;
+    const admissionIdentity = {
+      repository_id: admissionProject.repository_id,
+      project_ids: admissionProject.project_ids,
+      integrations_digest: admissionProject.integrations_digest,
+      work_id: context.work_id,
+    };
+    try {
+      admissionHost = ledger.hostState.readHostStateSnapshot(admissionIdentity);
+    } catch (error) {
+      ledger.close();
+      throw error;
+    }
+    let finalJournal=ledger.hostState.readFinalAssurance(admissionIdentity,context.attempt);
+    if (values.prepare_assurance || (finalJournal && !values.correct)) {
+      try {
+        const {prepareFinalAssurance,issueFinalAssuranceWave,reportFinalAssurance,finalAssuranceStatus,finalAssuranceReceiptReferences}=await import('../src/orchestration/final-assurance.ts');
+        const {assertAdmittedRuntimeCodeCurrent}=await import('../src/orchestration/admitted-session-execution.ts');
+        const expected={revision:Number(values.expected_revision),digest:values.expected_digest};
+        if(values.prepare_assurance&&finalJournal&&path.relative(values.project_root,values.prepare_assurance).split(path.sep).join('/')!==finalJournal.state.packet.preparation_path)
+          fail('GAP-VIDA-RUN-CONTEXT-001','Assurance preparation retry differs from the current packet.');
+        if(values.prepare_assurance&&!finalJournal){
+          assertAdmittedRuntimeCodeCurrent(values.project_root,ledger.hostState,admissionIdentity);
+          const journal=ledger.resume(context.work_id,context.attempt);
+          if(!journal||journal.version.revision!==expected.revision||journal.version.digest!==expected.digest)
+            fail('GAP-VIDA-RUN-CONTEXT-001','Assurance preparation journal version is stale.');
+          finalJournal=prepareFinalAssurance({root:values.project_root,config,store:ledger.hostState,identity:admissionIdentity,journal,preparationPath:path.relative(values.project_root,values.prepare_assurance).split(path.sep).join('/')});
+        }
+        let status='assurance_resumed',issued=[];
+        if(values.issue_wave||values.report){
+          assertAdmittedRuntimeCodeCurrent(values.project_root,ledger.hostState,admissionIdentity);
+          const next=values.issue_wave?issueFinalAssuranceWave(finalJournal.state):reportFinalAssurance(finalJournal.state,readBoundedReport(values.report));
+          const duplicate=canonicalJsonDigest(next)===canonicalJsonDigest(finalJournal.state);
+          if(!duplicate){
+            if(finalJournal.version.revision!==expected.revision||finalJournal.version.digest!==expected.digest)
+              fail('GAP-VIDA-RUN-CONTEXT-001','Final assurance journal version is stale.');
+            const host=ledger.hostState.readHostStateSnapshot(admissionIdentity);
+            finalJournal=ledger.hostState.compareAndSwapFinalAssurance({identity:admissionIdentity,attempt:context.attempt,expected:finalJournal.version,expectedWork:host.workVersion,expectedLedger:host.ledgerVersion,next});
+          }
+          status=values.issue_wave?'assurance_wave_issued':duplicate?'assurance_report_retrieved':'assurance_reported';
+          if(values.issue_wave)issued=finalJournal.state.actions.filter(action=>action.issue_id&&!action.observation);
+        }
+        let host=ledger.hostState.readHostStateSnapshot(admissionIdentity),deliveryGap=null;
+        if((values.report||values.prepare_assurance)&&finalAssuranceStatus(finalJournal.state)==='reviewed'&&host.work.lifecycle.phase==='VERIFY'){
+          try{
+            const references=finalAssuranceReceiptReferences(values.project_root,host.work,finalJournal.state);
+            host=ledger.hostState.commitFinalAssuranceDelivery({identity:admissionIdentity,attempt:context.attempt,expected:finalJournal.version,expectedWork:host.workVersion,expectedLedger:host.ledgerVersion,references,documentationContext:{repository_root:values.project_root,repository_id:admissionIdentity.repository_id,project_id:pathProject.project_id,work_id:context.work_id}});
+          }catch(error){deliveryGap=error.message;}
+        }
+        const action=(entry)=>({...entry,role:finalJournal.state.packet.role,model:finalJournal.state.packet.model,reasoning:finalJournal.state.packet.reasoning,packet:finalJournal.state.packet,review:entry.kind==='reverse'?finalJournal.state.actions.find(review=>review.kind==='review'&&review.perspective===entry.perspective)?.observation:null,tool:entry.kind==='review'?'spawn_agent':'followup_task',instruction:entry.kind==='review'?'Fresh isolated blind review. Observe correctness, security and assurance checks explicitly; report only actual findings.':'Same reviewer performs a separate reverse validation of its accepted review, scope/trace, tests/security/rollback and evidence/invalidation/bindings.'});
+        const nextKind=finalJournal.state.actions.filter(entry=>entry.kind==='review').every(entry=>entry.observation?.verdict==='pass')?'reverse':'review';
+        return {schema:'VidaAgentRunResult/v1',status:host.work.lifecycle.phase==='DELIVERY'?'delivery':status,assurance_status:finalAssuranceStatus(finalJournal.state),workflow:values.workflow,state_version:finalJournal.version,issued_actions:issued.map(action),next_actions:finalAssuranceStatus(finalJournal.state)==='ready'?finalJournal.state.actions.filter(entry=>!entry.issue_id&&entry.kind===nextKind).map(action):[],delivery_gap:deliveryGap,delivery_manifest:host.work.lifecycle.references.find(ref=>ref.kind==='delivery_manifest'&&ref.disposition==='current')??null,runtime_acceptance:'pending_attributable_user_testing',initialization_status:initialization.workspace_binding_status};
+      } finally {ledger.close();}
+    }
+    let admissionIntake;
+    try {
+      admissionIntake = values.intake ? await readLocalSessionIntake(values.intake) : null;
+    } catch (error) {
+      ledger.close();
+      throw error;
+    }
+    if (admissionIntake) {
+      if (
+        admissionIntake.work_item.id !== context.work_id ||
+        admissionIntake.work_item.canonical_kind !== selection.kind ||
+        admissionIntake.work_item.intent !== selection.intent ||
+        admissionIntake.work_item.project_id !== selection.project ||
+        /\p{Cc}/u.test(admissionIntake.native_session_handle)
+      ) {
+        ledger.close();
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'Intake identity differs from current configured work.');
+      }
+      try {
+        ledger.hostState.recordAdmissionAttempt(context.work_id, context.attempt, {
+          workItem: admissionIntake.work_item,
+          nativeSessionHandle: admissionIntake.native_session_handle,
+          context,
+          scopePath: admissionIntake.scope_path,
+          acceptancePath: admissionIntake.acceptance_path,
+        });
+      } catch (error) {
+        ledger.close();
+        throw error;
+      }
+    }
+    if (values.correct) {
+      try {
+        const { correctiveExecutionPlanSchema, prepareLifecycleForCorrection } =
+          await import('../src/orchestration/final-assurance.ts');
+        const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
+        const plan = correctiveExecutionPlanSchema.parse(readBoundedReport(values.correct));
+        if (plan.work_id !== context.work_id || plan.attempt !== context.attempt)
+          fail('GAP-VIDA-RUN-CONTEXT-001', 'Correction plan belongs to another work or attempt.');
+        assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
+        const expected = { revision: Number(values.expected_revision), digest: values.expected_digest };
+        let corrective = ledger.hostState.retrieveCorrectiveAuthorization({identity:admissionIdentity,attempt:context.attempt,journal:expected,stageIds:plan.stage_ids,userInstructionRef:plan.user_instruction_ref});
+        if (!corrective) {
+          const current = ledger.resume(context.work_id, context.attempt);
+          if (!current || current.version.revision !== expected.revision || current.version.digest !== expected.digest)
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Correction journal version is stale.');
+          const host = prepareLifecycleForCorrection({root:values.project_root,config,store:ledger.hostState,identity:admissionIdentity,journal:current,preparationPath:plan.preparation_path});
+          corrective = ledger.hostState.authorizeCorrectiveExecution({identity:admissionIdentity,attempt:context.attempt,expectedWork:host.workVersion,expectedLedger:host.ledgerVersion,expectedJournal:expected,stageIds:plan.stage_ids,userInstructionRef:plan.user_instruction_ref,config});
+        }
+        const current = ledger.resume(context.work_id, context.attempt);
+        return {schema:'VidaAgentRunResult/v1',status:'correction_authorized',workflow:values.workflow,corrective_execution:corrective,state_version:current.version,issued_actions:[],next_actions:[],next_operation:'resume_same_work_attempt',initialization_status:initialization.workspace_binding_status};
+      } finally { ledger.close(); }
+    }
+    if (admissionHost.work?.lease && !ledger.resume(context.work_id, context.attempt)?.state.corrective_execution) {
+      try {
+        const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
+        const canonicalIntake = readAdmittedSessionIntake(values.project_root, ledger.hostState, admissionIdentity);
+        const canonicalRef = admissionHost.work.artifacts.find(
+          (artifact) => artifact.artifact_id === 'local-session-intake',
+        );
+        ledger.hostState.reconcileCompletedSourceOwnership({
+          identity: admissionIdentity,
+          nativeSessionHandle: canonicalIntake.native_session_handle,
+          verifyCurrent: () => {
+            if (
+              !canonicalRef ||
+              createHash('sha256')
+                .update(
+                  requireSafeRepositoryAccess(values.project_root).readBytes(
+                    canonicalRef.path,
+                    'historical terminal ownership intake',
+                  ),
+                )
+                .digest('hex') !== canonicalRef.sha256
+            )
+              fail('GAP-VIDA-RUN-CONTEXT-001', 'Completed source ownership intake binding changed.');
+          },
+        });
+      } catch (error) {
+        ledger.close();
+        throw error;
+      }
+    }
+    let bridge;
+    try {
+      bridge = await MastraSessionBridge.open({
+        repositoryRoot: values.project_root,
+        config,
+        selection,
+        context,
+        workflowId: values.workflow,
+        workspaceId: initialization.workspace_id,
+        correctiveExecution: ledger.resume(context.work_id, context.attempt)?.state.corrective_execution,
+      });
+    } catch (error) {
+      ledger.close();
+      throw error;
+    }
     const requireConfiguredContext = (request, allowedChangedPaths = []) => {
       const current = configuredContextForStage(
         values.project_root,
@@ -2155,6 +2689,7 @@ export async function run(args = process.argv.slice(2)) {
         packet,
         implementationResult,
         authority: execution.composition.deliveryEvidenceAuthority,
+        host,
       };
     };
     const completedValidationReceipts = async (currentJournal, evidence) => {
@@ -2164,7 +2699,7 @@ export async function run(args = process.argv.slice(2)) {
       const compiled = compileDevelopmentWorkflow(config, values.team, values.workflow, selection.risk_flags);
       const expected = compiled.waves.flatMap((wave, index) =>
         wave.some((stage) => stage.kind === 'validate')
-          ? sessionActionsForWave(config, selection, context, values.workflow, index, []).filter(
+          ? sessionActionsForWave(config, selection, context, values.workflow, index, [], currentJournal.state.corrective_execution).filter(
               (action) => action.stage_kind === 'validate',
             )
           : [],
@@ -2178,6 +2713,7 @@ export async function run(args = process.argv.slice(2)) {
           journal: currentJournal,
           actionId: action.action_id,
           authority: evidence.authority,
+          host: evidence.host,
         }),
       );
       if (
@@ -2198,6 +2734,7 @@ export async function run(args = process.argv.slice(2)) {
         implementationResult: evidence.implementationResult,
         journal: evidenceJournal,
         authority: evidence.authority,
+        host: evidence.host,
       });
       const { prepareObservedDeliveryInstruction } = await import('../src/orchestration/observed-delivery.ts');
       return prepareObservedDeliveryInstruction({
@@ -2428,7 +2965,8 @@ export async function run(args = process.argv.slice(2)) {
       for (const item of writers) {
         const previous = host.work?.execution.assignment_attempts.findLast(
           (attempt) =>
-            attempt.stage_id === item.request.stage_id && attempt.assignment_index === item.request.assignment_index,
+            attempt.stage_id === item.request.stage_id && attempt.assignment_index === item.request.assignment_index &&
+            attempt.correction_generation === (currentJournal.state.corrective_execution?.correction_generation ?? 0),
         );
         if (
           previous &&
@@ -2687,7 +3225,7 @@ export async function run(args = process.argv.slice(2)) {
       let admittedSource = null;
       if (values.intake) {
         const { z } = await import('zod');
-        const intake=admissionIntake;
+        const intake = admissionIntake;
         if (values.continuation) {
           const stateVersion = z
             .object({
@@ -2916,6 +3454,7 @@ export async function run(args = process.argv.slice(2)) {
                 implementationResult: issuedEvidence.implementationResult,
                 journal,
                 authority: issuedEvidence.authority,
+                host: issuedEvidence.host,
               }));
               if (testReceipt.status !== 'pass')
                 fail('GAP-VIDA-RUN-EXECUTION-001', 'Configured tester receipt is not passing.');
@@ -2925,7 +3464,7 @@ export async function run(args = process.argv.slice(2)) {
           const waveActions =
             waveIndex === undefined
               ? []
-              : sessionActionsForWave(config, selection, context, values.workflow, waveIndex, []);
+              : sessionActionsForWave(config, selection, context, values.workflow, waveIndex, [], journal.state.corrective_execution);
           const writers = waveActions.filter((action) => action.mutation_scope === 'repository_source');
           let reservations = {};
           const researchBindings = new Map();
@@ -3068,7 +3607,8 @@ export async function run(args = process.argv.slice(2)) {
             parseObservedTesterVerdict(observation);
           }
           if (
-            issued && observation.status === 'reported_complete' &&
+            issued &&
+            observation.status === 'reported_complete' &&
             config.workflows[values.workflow].stages.find((stage) => stage.id === issued.request.stage_id)?.kind ===
               'research'
           ) {
@@ -3098,7 +3638,8 @@ export async function run(args = process.argv.slice(2)) {
             });
           }
           if (
-            issued && observation.status === 'reported_complete' &&
+            issued &&
+            observation.status === 'reported_complete' &&
             config.workflows[values.workflow].stages
               .find((stage) => stage.id === issued.request.stage_id)
               ?.produces.includes('ResearchSynthesis/v1')
@@ -3240,9 +3781,12 @@ export async function run(args = process.argv.slice(2)) {
       )
         deliveryInstruction = await preparedDelivery(journal);
       let researchSynthesis = null;
-      const terminalSynthesisStages = config.workflows[values.workflow].stages.filter((stage) =>
-        config.workflows[values.workflow].terminal_stages.includes(stage.id) &&
-        stage.kind === 'synthesize' && stage.produces.includes('ResearchSynthesis/v1'));
+      const terminalSynthesisStages = config.workflows[values.workflow].stages.filter(
+        (stage) =>
+          config.workflows[values.workflow].terminal_stages.includes(stage.id) &&
+          stage.kind === 'synthesize' &&
+          stage.produces.includes('ResearchSynthesis/v1'),
+      );
       if (terminalSynthesisStages.length > 1)
         fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal research synthesis must have one declared output stage.');
       const terminalStage = terminalSynthesisStages[0];
@@ -3296,7 +3840,7 @@ export async function run(args = process.argv.slice(2)) {
       const actions =
         actionWave === undefined
           ? []
-          : sessionActionsForWave(config, selection, context, values.workflow, actionWave, []);
+          : sessionActionsForWave(config, selection, context, values.workflow, actionWave, [], journal.state.corrective_execution);
       const actionById = new Map(actions.map((action) => [action.action_id, action]));
       const { researchObservationOutputContract } = await import('../src/orchestration/observed-research-result.ts');
       const { synthesisObservationOutputContract, admittedResearchResultsForSynthesis, synthesisSourceCatalog } =

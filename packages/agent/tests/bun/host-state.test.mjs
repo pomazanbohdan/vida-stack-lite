@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -382,6 +382,33 @@ test('readonly canonical workspace inspection preserves populated governance and
   expect(database.query('PRAGMA journal_mode').get()).toEqual(journalMode);
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
   expect(() => inspectHostWorkspaceDatabase(path.join(root, 'missing.sqlite'), workspace)).toThrow();
+});
+
+test('fresh terminal ownership inspection does not create a journal or infer missing issued evidence is settled', () => {
+  const initial = store.compareAndSwapHostState(fixture());
+  const reconcile = () =>
+    store.reconcileCompletedSourceOwnership({
+      identity,
+      nativeSessionHandle: initial.work.lease.thread_id,
+      verifyCurrent() {},
+    });
+  expect(store.readWorkSessionJournal(identity)).toBeNull();
+  expect(reconcile()).toEqual(initial);
+  expect(
+    database.query("SELECT name FROM sqlite_master WHERE name='agent_host_mastra_session_ledger'").get(),
+  ).toBeNull();
+  const claimed = store.claimWorkflowAttempt(attemptRequest(initial));
+  const inflight = store.readHostStateSnapshot(identity);
+  expect(reconcile).toThrow(/journal missing for retained host effects/);
+  expect(store.readHostStateSnapshot(identity)).toEqual(inflight);
+  database.exec(
+    'CREATE TABLE agent_host_mastra_session_ledger(workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)',
+  );
+  expect(reconcile).toThrow(/journal missing for retained host effects/);
+  store.markWorkflowAttemptUncertain(claimed);
+  const unknown = store.readHostStateSnapshot(identity);
+  expect(reconcile).toThrow(/journal missing for retained host effects/);
+  expect(store.readHostStateSnapshot(identity)).toEqual(unknown);
 });
 
 test('same live writer heartbeat preserves its fence and unknown outcome while revocation and expiry deny renewal', () => {
@@ -1098,6 +1125,45 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
   expect(after.work[0].maintenanceGeneration).toBeGreaterThan(before.work[0].maintenanceGeneration);
   expect(callbacks).toBe(2);
   expect(readFileSync(consumerFile)).toEqual(originalBytes);
+});
+
+test('consumer migration archives individually bounded governance rows beyond the aggregate ingress node budget', async () => {
+  const operation = store.reserveOperation('archive', '1'.repeat(64), '2'.repeat(64));
+  store.transitionOperation(operation, 'commit_unknown');
+  store.transitionOperation(operation, 'applied', '3'.repeat(64));
+  const template = database.query("SELECT * FROM agent_host_governance WHERE kind='operation'").get();
+  database
+    .transaction(() => {
+      for (let index = 0; index < 1400; index++) {
+        const key = createHash('sha256')
+          .update('archive-operation-' + index)
+          .digest('hex');
+        const payload = { ...JSON.parse(template.payload), operation_key: key };
+        const digest = canonicalJsonDigest({
+          workspace_id: workspace,
+          store_id: template.store_id,
+          kind: template.kind,
+          record_key: key,
+          revision: template.revision,
+          payload,
+        });
+        database
+          .query('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)')
+          .run(workspace, template.store_id, template.kind, key, template.revision, canonicalJson(payload), digest);
+      }
+    })
+    .immediate();
+  const rows = database.query('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid').all(workspace);
+  expect(() => canonicalJsonDigest(rows)).toThrow(/node budget/);
+  const migration = maintenanceStore(),
+    fence = migration.acquireMaintenanceFence(maintenanceBinding());
+  expect(migration.consumerMigrationState(fence, 'baseline', () => undefined).status).toBe('baseline');
+  expect(database.query('SELECT count(*) AS count FROM agent_host_governance').get().count).toBe(0);
+  expect(migration.consumerMigrationState(fence, 'restore', () => undefined).status).toBe('restored');
+  expect(
+    database.query('SELECT * FROM agent_host_governance WHERE workspace_id=? ORDER BY rowid').all(workspace),
+  ).toEqual(rows);
+  await migration.releaseMaintenanceFence(fence);
 });
 
 test('consumer migration restore refuses a prepared admission even when no WorkState was created', async () => {
@@ -5616,6 +5682,11 @@ test('issued readonly release: completed official-docs predecessor does not bloc
 
 test('expired recovery keeps runtime identity coupled across verified bundle changes without replaying research', () => {
   const seed = fixture();
+  seed.nextWork.binding.allowed_resources.push('execution:work');
+  seed.nextLedger.tickets[0].contour_keys.push('execution:work');
+  seed.nextLedger.tickets[0].exclusive_resources = ['execution:work'];
+  seed.nextLedger.tickets[0].active_resources = ['execution:work'];
+  seed.nextLedger.claims[0].resources = ['execution:work'];
   const digestA = 'a'.repeat(64),
     digestB = 'b'.repeat(64);
   seed.nextWork.binding.runtime_source_revision = digestA;

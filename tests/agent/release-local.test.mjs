@@ -1,26 +1,162 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, cpSync, rmSync, existsSync, statSync } from 'node:fs';
-import { spawn } from 'node:child_process';
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  cpSync,
+  rmSync,
+  existsSync,
+  statSync,
+  linkSync,
+  symlinkSync,
+} from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import {
   candidateVersion,
   executeRelease,
   prepareRelease,
   selectedTarball,
+  packedDistribution,
   withReleaseAdmission,
   parsePackOutput,
   reserveReleaseWorker,
   claimReleaseWorker,
+  nativeInstallationPaths,
+  publishNativeExecutable,
 } from '../../tooling/agent/release-local.mjs';
-import { findNpmCli } from '../../packages/agent/bin/bun.mjs';
+import { findNpmCli, resolvePinnedBun, standaloneRuntime } from '../../packages/agent/bin/bun.mjs';
 import { verifyForwardReviewSet } from '../../tooling/agent/controllers/forward-review-proof.mjs';
 
 const json = (value) => JSON.stringify(value);
+test('embedded launcher rejects forged Node markers and strips hostile options from its pinned Bun child boundary', () => {
+  const packageRoot = path.resolve(import.meta.dirname, '../../packages/agent');
+  assert.throws(
+    () =>
+      standaloneRuntime({
+        VIDA_STANDALONE_ROOT: packageRoot,
+        VIDA_STANDALONE_EXECUTABLE: process.execPath,
+        BUN_BE_BUN: '1',
+      }),
+    /markers do not match/,
+  );
+  const executable = resolvePinnedBun({ root: packageRoot });
+  const module = new URL('../../packages/agent/bin/bun.mjs', import.meta.url).href;
+  const program = `import {runPinnedBun} from ${JSON.stringify(module)};
+    const root=${JSON.stringify(packageRoot)};
+    const env={...process.env,BUN_BE_BUN:'1',VIDA_STANDALONE_ROOT:root,VIDA_STANDALONE_EXECUTABLE:process.execPath,
+      NODE_OPTIONS:'--require=hostile-caller',BUN_OPTIONS:'--preload=hostile-caller'};
+    runPinnedBun(['-e','true'],{root,env,spawn(command,args,options){
+      console.log(JSON.stringify({command,args,node:options.env.NODE_OPTIONS ?? null,bun:options.env.BUN_OPTIONS ?? null,embedded:options.env.BUN_BE_BUN}));
+      return {status:0};}});`;
+  const result = spawnSync(
+    executable,
+    ['--no-env-file', '--no-install', '--config=' + path.join(packageRoot, 'bunfig.toml'), '-e', program],
+    { encoding: 'utf8', windowsHide: true, timeout: 30000 },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const observed = JSON.parse(result.stdout);
+  assert.deepEqual(observed.args.slice(0, 3), [
+    '--no-env-file',
+    '--no-install',
+    '--config=' + path.join(packageRoot, 'bunfig.toml'),
+  ]);
+  assert.equal(observed.node, null);
+  assert.equal(observed.bun, null);
+  assert.equal(observed.embedded, '1');
+});
+test('native publication rejects linked directories and hardlinked prior executables without changing their owners', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-native-links-'));
+  try {
+    const bytes = Buffer.from('TEST FIXTURE native bytes'),
+      source = path.join(root, 'asset'),
+      owner = path.join(root, 'owner');
+    writeFileSync(source, bytes);
+    writeFileSync(owner, bytes);
+    const asset = {
+      path: source,
+      bytes: bytes.length,
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+    };
+    const destination = path.join(root, 'linked-executable');
+    linkSync(owner, destination);
+    assert.throws(
+      () => publishNativeExecutable(asset, destination, { ...asset, path: destination }),
+      /unowned or linked/,
+    );
+    assert.deepEqual(readFileSync(owner), bytes);
+    const ownedFolder = path.join(root, 'owned-folder'),
+      linkedFolder = path.join(root, 'linked-folder');
+    mkdirSync(ownedFolder);
+    symlinkSync(ownedFolder, linkedFolder, process.platform === 'win32' ? 'junction' : 'dir');
+    assert.throws(
+      () => publishNativeExecutable(asset, path.join(linkedFolder, 'vida-agent')),
+      /directory must not be linked/,
+    );
+    assert.equal(existsSync(path.join(ownedFolder, 'vida-agent')), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+test('native publication uses exclusive first creation and exact prior-asset CAS without replacing unrelated files', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-native-cas-'));
+  try {
+    const source = path.join(root, 'asset'),
+      destination = path.join(root, 'bin', process.platform === 'win32' ? 'vida-agent.exe' : 'vida-agent');
+    const asset = (bytes) => {
+      writeFileSync(source, bytes);
+      return {
+        path: source,
+        bytes: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+      };
+    };
+    const first = asset(Buffer.from('TEST FIXTURE native bytes first'));
+    publishNativeExecutable(first, destination);
+    assert.deepEqual(readFileSync(destination), readFileSync(source));
+    assert.throws(() => publishNativeExecutable(first, destination), /unowned/);
+    const prior = { ...first, path: destination },
+      second = asset(Buffer.from('TEST FIXTURE native bytes second'));
+    assert.throws(
+      () => publishNativeExecutable(second, destination, { ...prior, sha256: '0'.repeat(64) }),
+      /Prior native artifact differs/,
+    );
+    assert.equal(readFileSync(destination, 'utf8'), 'TEST FIXTURE native bytes first');
+    publishNativeExecutable(second, destination, prior);
+    assert.deepEqual(readFileSync(destination), readFileSync(source));
+    writeFileSync(source, 'TEST FIXTURE tampered asset');
+    assert.throws(
+      () => publishNativeExecutable(second, destination, { ...second, path: destination }),
+      /source asset differs/,
+    );
+    assert.equal(readFileSync(destination, 'utf8'), 'TEST FIXTURE native bytes second');
+    assert.throws(
+      () =>
+        nativeInstallationPaths({
+          version: '0.1.2',
+          operation: 'local-test',
+          target: 'bun-foreign-x64',
+          env: {},
+        }),
+      /target differs/,
+    );
+    const locations = nativeInstallationPaths({
+      version: '0.1.2',
+      operation: 'local-test',
+      target: 'bun-' + process.platform.replace('win32', 'windows') + '-' + process.arch,
+      env: { LOCALAPPDATA: root, XDG_DATA_HOME: root },
+    });
+    assert.ok(locations.installed_root.includes('0.1.2-local-test'));
+    assert.equal(path.dirname(locations.path_command), locations.prefix);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 function admissionChild(root, name, mode = 'hold') {
   const module = new URL('../../tooling/agent/release-local.mjs', import.meta.url).href;
   const code = `import { withReleaseAdmission, prepareRelease } from ${JSON.stringify(module)};
@@ -165,7 +301,10 @@ function fixture() {
     const version = JSON.parse(readFileSync(path.join(source, 'package.json'))).version;
     if (action === 'version') return json({ name: 'vida-agent', version });
     if (action === 'instructions')
-      return json({ version, path: path.join(globalRoot, 'vida-agent/instructions/development-lifecycle.md') });
+      return json({
+        version,
+        path: path.join(globalRoot, 'vida-agent/instructions/development-lifecycle.md'),
+      });
     if (action === 'install' && args[2] === '--check') return json({ status: 'prerequisites_valid', bun_pin: '1.4.2' });
     throw new Error('Unexpected TEST SETUP command: ' + args.join(' '));
   };
@@ -297,7 +436,12 @@ test('worker mutex recovers unrelated live PIDs, rejects startup losers and rele
     // TEST SETUP: a live unrelated process occupies the old numeric reservation.
     writeFileSync(
       journal,
-      json({ ...JSON.parse(readFileSync(journal)), pid: process.pid, status: 'running', install_started: true }),
+      json({
+        ...JSON.parse(readFileSync(journal)),
+        pid: process.pid,
+        status: 'running',
+        install_started: true,
+      }),
     );
     const first = workerChild(value.root, operation, 'worker-first');
     children.push(first);
@@ -494,7 +638,12 @@ test('interrupted successful pack observation is adopted without a rebuild and r
       journal,
       json({ ...candidate, status: 'failed', source_binding: 'TEST SETUP prior controller bytes' }),
     );
-    const result = await executeRelease({ ...fixtureValue, npmCli, operation: candidate.operation_id, packOnly: true });
+    const result = await executeRelease({
+      ...fixtureValue,
+      npmCli,
+      operation: candidate.operation_id,
+      packOnly: true,
+    });
     assert.equal(result.status, 'awaiting_assurance');
     assert.equal(fixtureValue.calls.length, 0);
     writeFileSync(path.join(fixtureValue.source, 'bin/vida-agent.mjs'), '// TEST SETUP drift');
@@ -568,5 +717,113 @@ test('isolated local review receipts use a release namespace while preserving th
     );
   } finally {
     rmSync(root, { recursive: true });
+  }
+});
+
+test('explicit npm compatibility packs and installs only the exact projected SDK archive and observes an uncertain install without replay', async () => {
+  const value = fixture();
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(value.source, 'package.json')));
+    pkg.files = ['bin/vida-agent.mjs', 'instructions/**', 'dist/standalone/**', 'bin/standalone.mjs'];
+    pkg.scripts = {
+      prepack: 'native-only',
+      'build:standalone': 'node tooling/build-standalone.mjs',
+    };
+    writeFileSync(path.join(value.source, 'package.json'), json(pkg));
+    mkdirSync(path.join(value.source, 'tooling'));
+    writeFileSync(path.join(value.source, 'tooling/pack-sdk.mjs'), '// TEST SETUP owned helper payload');
+    const { sdkCompatibilityManifest } = await import('../../packages/agent/tooling/pack-sdk.mjs');
+    const npmCli = (await import('../../packages/agent/bin/bun.mjs')).findNpmCli();
+    const tar = createRequire(npmCli)('tar');
+    const candidate = await prepareRelease(value.root);
+    let archive,
+      failCheck = true,
+      installs = 0;
+    const command = async (exe, args, options) => {
+      if (args[0].endsWith('pack-sdk.mjs')) {
+        assert.equal(args[1], '--pack');
+        assert.equal(args[3], value.source);
+        const destination = args[5];
+        const stage = path.join(value.root, 'sdk-stage');
+        cpSync(value.source, stage, { recursive: true });
+        writeFileSync(path.join(stage, 'package.json'), sdkCompatibilityManifest({ root: value.source }).bytes);
+        archive = path.join(destination, 'vida-agent-0.1.0.tgz');
+        const files = [
+          'package.json',
+          'bin/vida-agent.mjs',
+          'instructions/development-lifecycle.md',
+          'tooling/pack-sdk.mjs',
+        ];
+        await tar.c({ gzip: true, cwd: stage, prefix: 'package/', file: archive }, files);
+        return json([
+          {
+            name: 'vida-agent',
+            version: '0.1.0',
+            filename: path.basename(archive),
+            integrity: 'sha512-' + createHash('sha512').update(readFileSync(archive)).digest('base64'),
+            files: files.map((path) => ({ path })),
+          },
+        ]);
+      }
+      if (args[1] === 'install' && args[2] === '--global') {
+        assert.equal(args[3], archive);
+        installs++;
+        await value.command(exe, args, options);
+        writeFileSync(
+          path.join(value.prefix, 'node_modules/vida-agent/package.json'),
+          sdkCompatibilityManifest({ root: value.source }).bytes,
+        );
+        return '';
+      }
+      if (args[1] === 'install' && args[2] === '--check' && failCheck)
+        throw new Error('TEST SETUP observed install check failure');
+      return value.command(exe, args, options);
+    };
+    const args = {
+      ...value,
+      npmCli,
+      command,
+      operation: candidate.operation_id,
+      distribution: 'npm',
+    };
+    const packed = await executeRelease({ ...args, packOnly: true });
+    assert.equal(packedDistribution(packed.pack_metadata), 'npm');
+    assert.ok(packed.pack_metadata[0].files.every((file) => !file.path.startsWith('dist/standalone/')));
+    await assert.rejects(executeRelease(args), /observed install check failure/);
+    assert.equal(installs, 1);
+    failCheck = false;
+    assert.equal((await executeRelease(args)).status, 'successful');
+    assert.equal(installs, 1);
+    assert.equal((await prepareRelease(value.root)).version, '0.1.1');
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
+  }
+});
+
+test('exact archive distribution rejects ambiguous paths and refuses a different requested channel before installation', async () => {
+  assert.throws(
+    () => packedDistribution([{ files: [{ path: 'package.json' }, { path: 'package.json' }] }]),
+    /ambiguous/,
+  );
+  assert.throws(() => packedDistribution([{ files: [{ path: 'dist/standalone/../asset' }] }]), /ambiguous/);
+  assert.equal(packedDistribution([{ files: [{ path: 'dist/standalone/asset' }] }]), 'native');
+  const value = fixture();
+  try {
+    const candidate = await prepareRelease(value.root);
+    await assert.rejects(
+      executeRelease({
+        ...value,
+        operation: candidate.operation_id,
+        packOnly: true,
+        distribution: 'native',
+      }),
+      /distribution differs/,
+    );
+    assert.equal(
+      value.calls.some((args) => args[1] === 'install'),
+      false,
+    );
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
   }
 });

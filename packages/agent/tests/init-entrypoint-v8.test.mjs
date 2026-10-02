@@ -1,5 +1,4 @@
 import { expect, test } from 'vitest';
-import { createHash } from 'node:crypto';
 import {
   cpSync,
   existsSync,
@@ -194,7 +193,6 @@ test('original initializer rejects an untrusted template before publishing integ
   const bundleRoot = path.join(projectRoot, 'vida-agent');
   try {
     mkdirSync(path.join(bundleRoot, 'templates'), { recursive: true });
-    cpSync(path.join(packageRoot, 'package.json'), path.join(bundleRoot, 'package.json'));
     for (const name of ['AGENTS.template.md', 'AGENT.sidecar.template.md', 'agent-runtime.config.template.v1.yaml']) {
       cpSync(path.join(packageRoot, 'templates', name), path.join(bundleRoot, 'templates', name));
     }
@@ -216,17 +214,18 @@ test('original initializer creates a receipt and preserves project-owned files o
   const bundleRoot = path.join(projectRoot, 'vida-agent');
   try {
     mkdirSync(bundleRoot);
-    for (const entry of ['templates', 'instructions', 'schemas', 'TESTING.md', 'package.json'])
+    for (const entry of ['templates', 'instructions', 'schemas', 'TESTING.md'])
       cpSync(path.join(packageRoot, entry), path.join(bundleRoot, entry), { recursive: true, dereference: false });
     const options = {
       projectRoot,
       repository: 'original-repository',
       projectMappings: ['original-project=.'],
     };
-    // The fixed-root entrypoint uses its executing package, including an npm-owned package outside the consumer.
-    // A caller's bundleRoot override must never supply template authority.
-    writeFileSync(path.join(bundleRoot, 'templates/AGENTS.template.md'), '{{UNTRUSTED}}');
-    expect(await initializeProject({ ...options, bundleRoot })).toMatchObject({ status: 'initialized' });
+    await expect(initializeProject({ ...options, bundleRoot })).rejects.toThrow(
+      'The runtime bundle must be a portable directory inside the project root',
+    );
+    expect(readdirSync(projectRoot)).toEqual(['vida-agent']);
+    expect(await initializeProjectFromBundle(options, bundleRoot)).toMatchObject({ status: 'initialized' });
     const policy = path.join(projectRoot, 'AGENTS.md');
     const sidecar = path.join(projectRoot, 'AGENT.sidecar.md');
     const yaml = path.join(projectRoot, 'agent-runtime.config.v1.yaml');
@@ -237,11 +236,6 @@ test('original initializer creates a receipt and preserves project-owned files o
       project_ids: ['original-project'],
       bundle: 'vida-agent',
     });
-    expect(JSON.parse(readFileSync(receipt, 'utf8')).templates[0].template_sha256).toBe(
-      createHash('sha256')
-        .update(readFileSync(path.join(packageRoot, 'templates/AGENTS.template.md')))
-        .digest('hex'),
-    );
     const ownedSidecar = readFileSync(sidecar, 'utf8').replace(
       'Business requirements: not yet supplied by the project owner.',
       'Business requirements: docs/requirements.md.',

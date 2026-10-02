@@ -1,5 +1,5 @@
-import { afterAll, expect, test } from 'bun:test';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { expect, test } from 'bun:test';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,21 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const isolatedRoot = process.env.VIDA_CLEAR_BUNDLE ? null : mkdtempSync(path.join(tmpdir(), 'vida-clear-package-'));
-const bundle = process.env.VIDA_CLEAR_BUNDLE ?? path.join(isolatedRoot, 'vida-agent');
-if (isolatedRoot) {
-  mkdirSync(bundle);
-  for (const entry of ['src', 'dist', 'bin', 'schemas', 'instructions', 'templates', 'package.json', 'TESTING.md'])
-    cpSync(path.join(packageRoot, entry), path.join(bundle, entry), { recursive: true });
-  symlinkSync(
-    path.join(packageRoot, 'node_modules'),
-    path.join(bundle, 'node_modules'),
-    process.platform === 'win32' ? 'junction' : 'dir',
-  );
-}
-afterAll(() => {
-  if (isolatedRoot) rmSync(isolatedRoot, { recursive: true, force: true });
-});
+const bundle = process.env.VIDA_CLEAR_BUNDLE;
 const write = (root, relative, content) => {
   const file = path.join(root, relative);
   mkdirSync(path.dirname(file), { recursive: true });

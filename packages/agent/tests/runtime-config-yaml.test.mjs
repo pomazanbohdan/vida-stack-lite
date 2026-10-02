@@ -1947,7 +1947,7 @@ test.skipIf(runningUnderVitest && process.env.AGENT_RUNTIME_SKIP_PACKAGE_TEST ==
       /\b(?:createTestRuntimeKernelHost|createTestWorkflowHostCapability|createTestOperationReservationStore|createTestGovernanceGuard|createCompositionRootGovernanceGuard|issueTestTrustedPathProfileOverride|createTestTrustedHostLauncherCapability|createRuntimeKernelHostProofForCompositionRoot|createWorkflowHostAuthenticationProofForCompositionRoot)\b/;
     const packedReadme = await readFile(path.join(packedRoot, 'README.md'), 'utf8');
     // README is a consumer-facing package artifact; verify its package-scope claims separately from code scans.
-    expect(packedReadme).toContain('The npm package contains runtime source and output');
+    expect(packedReadme).toContain('The `vida-agent/` bundle contains runtime source and output');
     expect(packedReadme).toContain('Source and passing tests provide Code/Static evidence;');
     expect(packedReadme).not.toMatch(shippedTestIssuerPattern);
     expect(packedReadme).not.toMatch(/\b(?:password|passphrase|api[_-]?key|client[_-]?secret|private[_-]?key)\s*[:=]/i);
@@ -2024,7 +2024,7 @@ if (!denied) process.exit(12);`,
         '--input-type=module',
         '-e',
         `const trusted = await import('vida-agent/trusted-host');
-if (Object.keys(trusted).sort().join(',') !== 'HostStateError,HostStateStore,createTrustedHostComposition,inspectHostWorkspaceDatabase,openHostStateDatabase,runConsumerMigrationState,withHostStateExclusiveTransaction') process.exit(18);
+if (Object.keys(trusted).sort().join(',') !== 'HostStateError,HostStateStore,createTrustedHostComposition,openHostStateDatabase') process.exit(18);
 if ('createTestTrustedHostLauncherCapability' in trusted || 'TrustedHostCompositionInput' in trusted) process.exit(19);
 const authentication = { schema: 'TrustedHostAuthentication/v1', repositoryRoot: process.env.TRUSTED_REPOSITORY_ROOT, tenantId: process.env.TRUSTED_TENANT_ID, projectId: process.env.TRUSTED_PROJECT_ID, principal: 'principal-1', configRevision: Number(process.env.TRUSTED_CONFIG_REVISION), permittedOperations: ['runtime.read'] };
 const services = { resolveIdentity: () => null, verifyApproval: () => null, runtimeRevision: () => ({ sourceRevision: 'source-1', currentRevision: 1 }), casWriter: () => ({ applied: true }) };

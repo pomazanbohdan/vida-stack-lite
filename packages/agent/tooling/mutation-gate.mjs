@@ -118,6 +118,24 @@ const partitions = [
     report: 'mutation-bun-runtime-initialization.json',
   },
   {
+    name: 'bun-development-controller',
+    environment: 'bun',
+    sources: ['bin/development-controller.mjs'],
+    tests: ['tests/development-controller.test.mjs'],
+    report: 'mutation-bun-development-controller.json',
+  },
+  {
+    name: 'bun-cli-public-entrypoints',
+    environment: 'bun',
+    sources: ['bin/repair-work-state.mjs', 'bin/scope.mjs', 'bin/vida-agent.mjs'],
+    tests: [
+      'tests/run-entrypoint.test.mjs',
+      'tests/automatic-work-absorption.test.mjs',
+      'tests/package-boundary.test.mjs',
+    ],
+    report: 'mutation-bun-cli-public-entrypoints.json',
+  },
+  {
     name: 'bun-cli-toolchain',
     environment: 'bun',
     sources: ['bin/bun.mjs'],
@@ -137,13 +155,6 @@ const partitions = [
     sources: ['bin/install.mjs'],
     tests: ['tests/install.test.mjs'],
     report: 'mutation-bun-cli-install.json',
-  },
-  {
-    name: 'bun-public-cli',
-    environment: 'bun',
-    sources: ['bin/scope.mjs', 'bin/vida-agent.mjs'],
-    tests: ['tests/scoped-source-snapshot.test.mjs', 'tests/portable-instructions.test.mjs'],
-    report: 'mutation-bun-public-cli.json',
   },
   {
     name: 'bun-cli-run',
@@ -236,13 +247,6 @@ const partitions = [
       'tests/repair-cli-behavior.test.mjs',
     ],
     report: 'mutation-bun-dispatch-repair.json',
-  },
-  {
-    name: 'bun-work-state-repair',
-    environment: 'bun',
-    sources: ['bin/repair-work-state.mjs'],
-    tests: ['tests/bun/host-state.test.mjs', 'tests/automatic-work-absorption.test.mjs'],
-    report: 'mutation-bun-work-state-repair.json',
   },
   {
     name: 'bun-runtime-code-rebind',

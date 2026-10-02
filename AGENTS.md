@@ -35,9 +35,11 @@ A missing secondary source is not automatically blocking. Continue when the inte
 For work on the agent framework, resolve its installed instruction with
 `vida-agent instructions --path development-lifecycle`, then read the returned
 file's `self-development-protocol` section after the sidecar and before planning
-or mutation. Minimize agent execution
-steps without losing required quality; keep new authorized directives in their
-current instruction owner and maintained templates.
+or mutation. Apply that section's architectural defect, relevant official
+framework-reference research and execution-step reduction policy; it is the
+single instruction owner. Minimize agent execution steps without losing required
+quality; keep new authorized directives in their current instruction owner and
+maintained templates.
 
 ## 1. Operating contract
 
@@ -52,11 +54,11 @@ current instruction owner and maintained templates.
 
 ## 2. Three-layer project model
 
-| Layer | Meaning | Typical content | Constraint |
-|---|---|---|---|
-| **B — Business requirements** | Human description of why and what is needed | outcomes, user needs, policies, business rules, scope, constraints, acceptance language | May use any fully human structure. Preserve its language and organization. |
-| **S — System specifications** | Detailed behavioral description of what the system must implement | components and responsibilities, states, flows, APIs/events, data rules, algorithms as behavior, errors, edge cases, security, performance, integrations, operational behavior | Detailed enough to implement, but remains a specification rather than source code. |
-| **C — Code and executable evidence** | Actual implementation | source, tests, schemas, migrations, configuration, IaC, build/deploy automation | Must implement S and remain traceable to B. |
+| Layer                                | Meaning                                                           | Typical content                                                                                                                                                                | Constraint                                                                         |
+| ------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| **B — Business requirements**        | Human description of why and what is needed                       | outcomes, user needs, policies, business rules, scope, constraints, acceptance language                                                                                        | May use any fully human structure. Preserve its language and organization.         |
+| **S — System specifications**        | Detailed behavioral description of what the system must implement | components and responsibilities, states, flows, APIs/events, data rules, algorithms as behavior, errors, edge cases, security, performance, integrations, operational behavior | Detailed enough to implement, but remains a specification rather than source code. |
+| **C — Code and executable evidence** | Actual implementation                                             | source, tests, schemas, migrations, configuration, IaC, build/deploy automation                                                                                                | Must implement S and remain traceable to B.                                        |
 
 The sidecar maps the actual files, systems, URLs, owners, and update policy for each layer. Do not assume names such as `requirements/`, `specs/`, or `src/`.
 
@@ -182,13 +184,13 @@ READ SIDECAR
 
 ### Route levels
 
-| Route | Use when | Internal process |
-|---|---|---|
-| **R0 Evidence** | questions, explanations, location/search | bootstrap → gather evidence → answer |
-| **R1 Micro** | one localized reversible change with clear behavior | bootstrap → trace → tiny plan → implement → focused check |
-| **R2 Standard** | bounded feature/fix across several files | bootstrap → trace → plan → plan check → execute → verify → reconcile |
-| **R3 Full** | business/system change, multi-component or high-risk work | discovery/discussion → B/S trace → research → plan/waves → independent plan check → execute → verify/review → reconcile |
-| **R4 Incident** | urgent failure | triage → contain → diagnose root cause → minimal safe patch → regression → deferred documentation/cleanup |
+| Route           | Use when                                                  | Internal process                                                                                                        |
+| --------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **R0 Evidence** | questions, explanations, location/search                  | bootstrap → gather evidence → answer                                                                                    |
+| **R1 Micro**    | one localized reversible change with clear behavior       | bootstrap → trace → tiny plan → implement → focused check                                                               |
+| **R2 Standard** | bounded feature/fix across several files                  | bootstrap → trace → plan → plan check → execute → verify → reconcile                                                    |
+| **R3 Full**     | business/system change, multi-component or high-risk work | discovery/discussion → B/S trace → research → plan/waves → independent plan check → execute → verify/review → reconcile |
+| **R4 Incident** | urgent failure                                            | triage → contain → diagnose root cause → minimal safe patch → regression → deferred documentation/cleanup               |
 
 The user never selects a route or invokes a workflow command. Select it automatically and escalate when new evidence increases scope or risk.
 
@@ -305,19 +307,19 @@ Do not expose internal slash-command choreography unless diagnosing the harness 
 
 ## 7. Role and Ponytail policy
 
-| Lane/role | Ponytail | Rule |
-|---|---:|---|
-| business analyst, requirements reader | **off** | Preserve human meaning; do not minimize requirements. |
-| system analyst/specification author | **off** | Produce complete behavioral contracts. |
-| researcher/codebase mapper | **off** | Gather evidence without solution bias. |
-| implementation planner | **lite** | Use only after B/S behavior is locked; simplify implementation, not scope or acceptance. |
-| plan checker | **off** | Independently find omissions and unsafe sequencing. |
-| executor/code writer | **full** | Minimize implementation while preserving all requirements. |
-| debugger/code fixer | **full** | Fix the shared root cause, not the named symptom. |
-| verifier/test reviewer | **off** | Seek counterexamples and missing behavior. |
-| security/data/migration reviewer | **off** | Never optimize away controls or evidence. |
-| documentation reconciler | **off** | Preserve authoritative meaning and structure. |
-| final complexity reviewer | **review/audit** | Optional, after correctness and security pass. |
+| Lane/role                             |         Ponytail | Rule                                                                                     |
+| ------------------------------------- | ---------------: | ---------------------------------------------------------------------------------------- |
+| business analyst, requirements reader |          **off** | Preserve human meaning; do not minimize requirements.                                    |
+| system analyst/specification author   |          **off** | Produce complete behavioral contracts.                                                   |
+| researcher/codebase mapper            |          **off** | Gather evidence without solution bias.                                                   |
+| implementation planner                |         **lite** | Use only after B/S behavior is locked; simplify implementation, not scope or acceptance. |
+| plan checker                          |          **off** | Independently find omissions and unsafe sequencing.                                      |
+| executor/code writer                  |         **full** | Minimize implementation while preserving all requirements.                               |
+| debugger/code fixer                   |         **full** | Fix the shared root cause, not the named symptom.                                        |
+| verifier/test reviewer                |          **off** | Seek counterexamples and missing behavior.                                               |
+| security/data/migration reviewer      |          **off** | Never optimize away controls or evidence.                                                |
+| documentation reconciler              |          **off** | Preserve authoritative meaning and structure.                                            |
+| final complexity reviewer             | **review/audit** | Optional, after correctness and security pass.                                           |
 
 Never inject Ponytail indiscriminately into every subagent.
 
@@ -410,35 +412,44 @@ Materialize only the sections needed:
 - Risk: low | medium | high
 
 ## Request
+
 <desired outcome and scope>
 
 ## Sources
+
 - B: <path/url#heading or none>
 - S: <path/url#heading or derived gap>
 - C: <paths/symbols/tests>
 
 ## Trace
+
 | Business intent | System behavior | Code/tests | Status |
-|---|---|---|---|
+| --------------- | --------------- | ---------- | ------ |
 
 ## Acceptance
+
 - [ ] <observable condition>
 
 ## Plan and tasks
+
 - [ ] <small executable task with verification>
 
 ## Decisions and assumptions
+
 - <only material items>
 
 ## Verification
+
 - `<command>` — pass/fail/not-run
 - Behavioral result: <evidence>
 
 ## Documentation reconciliation
+
 - Updated: <authoritative sources>
 - Proposed/gap: <when edits are not permitted>
 
 ## Result
+
 <what changed, remaining real risk>
 ```
 
@@ -492,10 +503,14 @@ writer owns an overlapping path. The detailed owner is
 the installed agent-allocation instruction resolved through the public CLI.
 
 All sessions share one live worktree version. Before a tracked mutation, use
-the local `.agent/coordination/ownership.v1.json` ledger: exact shared files
-are FIFO-owned by one writer, while explicit B/S/AC/component keys form a
-delivery contour. A queued claim is a blocker, not permission to create a
-worktree or alternate snapshot. After assurance a work enters
+the current configured trusted Host coordination inspector and supported typed
+operations to verify the active ProjectContext, exact path/contour owner, FIFO
+position and CAS state. The storage location comes only from project
+configuration and the sidecar; do not create or edit a parallel coordination
+ledger. Exact shared files have one FIFO writer, while explicit B/S/AC/component
+keys form a delivery contour. A queued, foreign, expired or unknown claim blocks
+until its truthful disposition is established through supported operations; it
+does not authorize an alternate snapshot. After assurance a work enters
 `READY_FOR_HANDOFF`; the frozen contour produces one mixed-operation release
 batch for user testing. Bootstrap displays notices and the one next action.
 
@@ -617,13 +632,13 @@ only outside the active canon and cannot authorize a current decision.
 
 ### Documentation classes
 
-| Class | CLEAR rule |
-|---|---|
-| Canonical living documents, including B/S sources, runtime instructions, policies and contracts | Full CLEAR control, canonical inventory and relations, external lineage, readiness and blocking closeout |
-| Derived documents, including maps, README files, plans, generated agent context and delivery instructions | Current-only content with owner and canonical source pointer; never duplicate the authoritative contract |
-| Schema descriptions, API documentation and code comments | Describe current behavior only; do not create a per-comment changelog |
+| Class                                                                                                                       | CLEAR rule                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Canonical living documents, including B/S sources, runtime instructions, policies and contracts                             | Full CLEAR control, canonical inventory and relations, external lineage, readiness and blocking closeout                                        |
+| Derived documents, including maps, README files, plans, generated agent context and delivery instructions                   | Current-only content with owner and canonical source pointer; never duplicate the authoritative contract                                        |
+| Schema descriptions, API documentation and code comments                                                                    | Describe current behavior only; do not create a per-comment changelog                                                                           |
 | Runtime operational artifacts, including resumes, checkpoints, receipts, ledgers, manifests, `.agent/**` and `.planning/**` | Excluded from canonical documentation inventory and documentation lineage; their existing schema, CAS, retention and audit policies still apply |
-| `historical_evidence` | Excluded from the active canon and current agent authority; usable only as explicitly labelled provenance |
+| `historical_evidence`                                                                                                       | Excluded from the active canon and current agent authority; usable only as explicitly labelled provenance                                       |
 
 Project-specific canonical roots, profiles, owners, map/index locations and
 exclusions are data in a schema-validated `DocumentationPolicy/v1` bound to the

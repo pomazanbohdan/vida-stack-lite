@@ -48,7 +48,7 @@ async function interrupt(root, target, selectedBundle = bundle) {
   expect(result.code, result.stderr).toBe(0);
 }
 async function snapshot(root) {
-  const names = (await readdir(root, { recursive: true })).sort(),
+  const names = (await readdir(root, { recursive: true })).map((name) => name.split(path.sep).join('/')).sort(),
     bytes = {};
   for (const name of names)
     try {
@@ -89,15 +89,15 @@ test('public partial initialization fails explicitly and preserves all existing 
   }
 });
 
-test('explicit reconciliation resumes each interrupted exclusive-write boundary using the same intent', async () => {
-  for (const target of [
-    'AGENTS.md',
-    'AGENT.sidecar.md',
-    'agent-runtime.config.v1.yaml',
-    'docs/agent-instructions/documentation-policy.v1.json',
-    receipt,
-    'archive',
-  ]) {
+for (const target of [
+  'AGENTS.md',
+  'AGENT.sidecar.md',
+  'agent-runtime.config.v1.yaml',
+  'docs/agent-instructions/documentation-policy.v1.json',
+  receipt,
+  'archive',
+]) {
+  test(`explicit reconciliation resumes interrupted ${target} using the same intent`, async () => {
     const root = await consumer();
     await interrupt(root, target);
     const intent = await readFile(path.join(root, pending));
@@ -116,8 +116,8 @@ test('explicit reconciliation resumes each interrupted exclusive-write boundary 
       'existing',
     );
     expect(await snapshot(root)).toEqual(after);
-  }
-}, 30_000);
+  }, 15_000);
+}
 
 test('pending recovery preserves project-owned sidecar, policy and YAML settings while binding actual output evidence', async () => {
   const root = await consumer();
@@ -141,7 +141,7 @@ test('pending recovery preserves project-owned sidecar, policy and YAML settings
   expect(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(configBytes);
   expect(await readFile(path.join(root, policyPath))).toEqual(policyBytes);
   expect(JSON.parse(await readFile(path.join(root, receipt), 'utf8')).provenance).toBe('adopted_existing');
-});
+}, 15_000);
 
 test('pending recovery denies changed managed AGENTS, foreign repository/project/root and unknown old partials before publication', async () => {
   const root = await consumer();
@@ -177,7 +177,7 @@ test('pending recovery denies changed managed AGENTS, foreign repository/project
     /requires all existing/,
   );
   expect(await snapshot(unknown)).toEqual(unknownBefore);
-});
+}, 15_000);
 
 test('pending intent refuses changed templates and conflicting canonical receipt while retaining all bytes', async () => {
   const root = await consumer();
@@ -204,4 +204,4 @@ test('pending intent refuses changed templates and conflicting canonical receipt
     /cannot replace/,
   );
   expect(await snapshot(committed)).toEqual(conflict);
-});
+}, 15_000);

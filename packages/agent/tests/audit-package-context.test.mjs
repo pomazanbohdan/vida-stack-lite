@@ -62,8 +62,8 @@ test('bounded local excerpts preserve the required tail and disclose the omitted
     skill_refs: [],
   });
   expect(entry.content.length).toBeLessThanOrEqual(8192);
-  expect(entry.content.startsWith('HEAD-REQUIREMENT')).toBe(true);
-  expect(entry.content.endsWith('FINAL-REQUIRED-PASSAGE')).toBe(true);
+  expect(entry.content).toStartWith('HEAD-REQUIREMENT');
+  expect(entry.content).toEndWith('FINAL-REQUIRED-PASSAGE');
   expect(entry.content).toContain('[middle omitted;');
   expect(entry.truncated).toBe(true);
   expect(entry.bytes).toBe(Buffer.byteLength(long));

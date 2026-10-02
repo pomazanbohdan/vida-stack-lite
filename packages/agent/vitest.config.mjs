@@ -9,7 +9,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/*.test.mjs'],
-    exclude: ['tests/bun-coverage.test.mjs', 'tests/differential.test.mjs'],
+    exclude: ['tests/bun-coverage.test.mjs'],
     env: { AGENT_RUNTIME_SKIP_PACKAGE_TEST: '1' },
     sequence: { shuffle: false },
     testTimeout: 60_000,

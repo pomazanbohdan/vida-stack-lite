@@ -1,7 +1,6 @@
-import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
-import { afterEach, test, expect } from 'bun:test';
+import { test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { rmSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planReadOnlyDispatchRepair, applyReadOnlyDispatchRepair } from '../bin/read-only-dispatch-repair.mjs';
@@ -12,14 +11,22 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const fixtureRoots = [];
-afterEach(() => {
-  for (const root of fixtureRoots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+function sourceRoot() {
+  let current = path.dirname(bundle);
+  for (;;) {
+    if (
+      existsSync(path.join(current, 'agent-runtime.config.v1.yaml')) &&
+      existsSync(path.join(current, 'AGENT.sidecar.md'))
+    )
+      return current;
+    const parent = path.dirname(current);
+    if (parent === current) throw new Error('runtime configuration fixture unavailable');
+    current = parent;
+  }
+}
 
 function fixture() {
-  const repositoryRoot = createConsumerFixture(bundle);
-  fixtureRoots.push(repositoryRoot);
+  const repositoryRoot = sourceRoot();
   const config = loadRuntimeConfig(repositoryRoot);
   const database = new Database(':memory:');
   database.exec(
@@ -29,7 +36,7 @@ function fixture() {
     'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT)',
   );
   const workspaceId = 'a'.repeat(64);
-  const projectIds = ['fixture-project'];
+  const projectIds = ['agent'];
   const project = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds);
   const workId = 'repair-fixture';
   const attempt = 2;

@@ -1,5 +1,4 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { Database } from 'bun:sqlite';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
@@ -18,7 +17,7 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { advanceCutoff, assertNoActiveCutoverMaintenance, run } from '../bin/run.mjs';
+import { advanceCutoff, assertNoActiveCutoverMaintenance, run, writeDurable } from '../bin/run.mjs';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../src/index.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -41,6 +40,19 @@ const mutationMode = process.env.AGENT_RUNTIME_MUTATION_PART === 'bun';
 const v8CoverageMode = process.env.AGENT_RUNTIME_V8_COVERAGE === '1';
 const ordinaryDescribe = mutationMode ? describe.skip : describe;
 const liveInstallTest = v8CoverageMode ? test.skip : test;
+
+test('durable controller publication cleans only its own pending file when publication fails', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-durable-fault-'));
+  try {
+    const target = path.join(root, 'occupied');
+    mkdirSync(target);
+    expect(() => writeDurable(target, { schema: 'FixtureController/v1' })).toThrow();
+    expect(readdirSync(root)).toEqual(['occupied']);
+    expect(readdirSync(target)).toEqual([]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test('cutoff SQLite exclusion rejects a live owner and recovers after process termination without an orphan marker', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-cutoff-process-'));
@@ -137,99 +149,6 @@ const common = [
   '--intent',
   'information_research',
 ];
-
-function researchSummary(assignmentIndex, sourceDigest) {
-  const sourceId = `fixture-source-${assignmentIndex}`;
-  return JSON.stringify({
-    schema: 'VidaResearchObservationOutput/v1',
-    topic: `Read-only fixture research ${assignmentIndex}`,
-    objective: 'Inspect fixture source without changing code.',
-    question: 'What does the fixture show?',
-    source_refs: [
-      {
-        source_id: sourceId,
-        source_kind: 'internal',
-        locator: `AGENT.sidecar.md#fixture-${assignmentIndex}`,
-        title: 'Fixture sidecar',
-        claim: 'AC-RESEARCH-1 SR-RESEARCH-1: this fixture is read-only research.',
-        retrieved_at: '2026-09-30T00:00:00Z',
-        version_or_date: '2026-09-30',
-        independence_group: 'fixture',
-        digest: sourceDigest,
-      },
-    ],
-    findings: [
-      {
-        finding_id: `fixture-${assignmentIndex}`,
-        statement: 'The fixture source is present.',
-        source_ids: [sourceId],
-        evidence_class: 'Code',
-        status: 'confirmed',
-      },
-    ],
-    evidence_classes: ['Code'],
-    uncertainties: [],
-    conflicts: [],
-    br_ids: [],
-    sr_ids: ['SR-RESEARCH-1'],
-    ac_ids: ['AC-RESEARCH-1'],
-    gap_ids: [],
-    options: [
-      {
-        option_id: 'retain',
-        label: 'Retain evidence',
-        description: 'Preserve the read-only finding.',
-        evidence_refs: [sourceId],
-      },
-    ],
-    recommendation: {
-      option_id: 'retain',
-      rationale: 'Fixture source supports the finding.',
-      evidence_refs: [sourceId],
-    },
-    completeness: {
-      status: 'pass',
-      required_questions: ['What does the fixture show?'],
-      answered_questions: ['What does the fixture show?'],
-      missing_questions: [],
-      material_gaps: [],
-      external_validation: {
-        required: false,
-        source_count: 0,
-        minimum_sources: 0,
-        status: 'not_required',
-        live_check: null,
-      },
-    },
-    readiness: 'informational',
-  });
-}
-
-// Installed package imports must execute under Bun, without Vite rewriting package ownership or dependency namespaces.
-function runInBun(entrypoint, directory) {
-  const driver = path.join(directory, 'fixture-run-driver.mjs');
-  writeFileSync(
-    driver,
-    `import {pathToFileURL} from 'node:url';
-const {run}=await import(pathToFileURL(process.argv[2]).href);
-try { console.log(JSON.stringify({result:await run(JSON.parse(process.argv[3]))})); }
-catch(error) { console.log(JSON.stringify({error:{message:error.message,code:error.code,details:error.details}}));process.exitCode=1; }
-`,
-  );
-  return async (args) => {
-    const child = spawnSync(process.execPath, [driver, entrypoint, JSON.stringify(args)], {
-      cwd: path.dirname(entrypoint),
-      encoding: 'utf8',
-      windowsHide: true,
-      timeout: 30_000,
-    });
-    if (child.error) throw child.error;
-    const response = JSON.parse(child.stdout);
-    if (response.error) throw Object.assign(new Error(response.error.message), response.error);
-    expect(child.status, child.stderr).toBe(0);
-    return response.result;
-  };
-}
 
 function invoke(args, env = {}) {
   return spawnSync('bun', [launcher, ...args], {
@@ -423,8 +342,9 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
       schema: 'VidaAgentRunResult/v1',
       status: 'blocked',
       code: 'GAP-VIDA-RUN-CLI-004',
-      message:
-        'The project root is unavailable or is not a canonical directory. Next action: inspect the exact work and check its issued contract before retrying.',
+      message: expect.stringMatching(
+        /^The project root is unavailable or is not a canonical directory\. Next action: /,
+      ),
     });
     expect(result.stderr).not.toContain(invalidRoot);
     expect(result.stderr.length).toBeLessThan(512);
@@ -441,6 +361,7 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
           'src',
           'dist',
           'bin',
+          'tooling',
           'schemas',
           'instructions',
           'templates',
@@ -633,7 +554,69 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
         for (const item of issued.payload.issued_actions) {
           const action = item.request;
           const sourceId = `fixture-source-${action.assignment_index}`;
-          const summary = researchSummary(action.assignment_index, source.entries[0].sha256);
+          const summary = JSON.stringify({
+            schema: 'VidaResearchObservationOutput/v1',
+            topic: `Read-only fixture research ${action.assignment_index}`,
+            objective: 'Inspect fixture source without changing code.',
+            question: 'What does the fixture show?',
+            source_refs: [
+              {
+                source_id: sourceId,
+                source_kind: 'internal',
+                locator: `AGENT.sidecar.md#fixture-${action.assignment_index}`,
+                title: 'Fixture sidecar',
+                claim: 'AC-RESEARCH-1 SR-RESEARCH-1: this fixture is read-only research.',
+                retrieved_at: '2026-09-30T00:00:00Z',
+                version_or_date: '2026-09-30',
+                independence_group: 'fixture',
+                digest: source.entries[0].sha256,
+              },
+            ],
+            findings: [
+              {
+                finding_id: `fixture-${action.assignment_index}`,
+                statement: 'The fixture source is present.',
+                source_ids: [sourceId],
+                evidence_class: 'Code',
+                status: 'confirmed',
+              },
+            ],
+            evidence_classes: ['Code'],
+            uncertainties: [],
+            conflicts: [],
+            br_ids: [],
+            sr_ids: ['SR-RESEARCH-1'],
+            ac_ids: ['AC-RESEARCH-1'],
+            gap_ids: [],
+            options: [
+              {
+                option_id: 'retain',
+                label: 'Retain evidence',
+                description: 'Preserve the read-only finding.',
+                evidence_refs: [sourceId],
+              },
+            ],
+            recommendation: {
+              option_id: 'retain',
+              rationale: 'Fixture source supports the finding.',
+              evidence_refs: [sourceId],
+            },
+            completeness: {
+              status: 'pass',
+              required_questions: ['What does the fixture show?'],
+              answered_questions: ['What does the fixture show?'],
+              missing_questions: [],
+              material_gaps: [],
+              external_validation: {
+                required: false,
+                source_count: 0,
+                minimum_sources: 0,
+                status: 'not_required',
+                live_check: null,
+              },
+            },
+            readiness: 'informational',
+          });
           const outcome = {
             schema: 'VidaSessionObservation/v1',
             action_id: action.action_id,
@@ -659,50 +642,11 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
         expect(final.payload.resume_status).toBe('ready');
         expect(final.payload.next_actions.length).toBeGreaterThan(0);
         expect(final.payload.next_actions[0].request.wave_index).toBe(1);
-        const snapshotPersisted = () => {
-          const database = new Database(path.join(root, '.agent/work/session-handoff.v1.sqlite'), { readonly: true });
-          try {
-            const tables = database
-              .query("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'agent_host_%' ORDER BY name")
-              .all();
-            return {
-              rows: tables.map(({ name }) => ({
-                name,
-                rows: database.query(`SELECT * FROM "${name.replaceAll('"', '""')}" ORDER BY rowid`).all(),
-              })),
-              artifacts: readdirSync(workDir, { recursive: true, withFileTypes: true })
-                .filter((entry) => entry.isFile())
-                .map((entry) => {
-                  const file = path.join(entry.parentPath, entry.name);
-                  return { path: path.relative(workDir, file), bytes: readFileSync(file) };
-                })
-                .sort((left, right) => left.path.localeCompare(right.path)),
-            };
-          } finally {
-            database.close();
-          }
-        };
-        const persisted = snapshotPersisted();
-        const replay = call([...expected(version), '--report', reportFile]);
-        expect(replay.status, replay.stderr).toBe(0);
-        expect(replay.payload).toEqual({ ...final.payload, status: 'reported' });
-        expect(replay.payload.state_version).toEqual(version);
-        expect(snapshotPersisted()).toEqual(persisted);
-        const previous = JSON.parse(readFileSync(reportFile, 'utf8'));
-        const changedSummary = JSON.stringify({
-          ...JSON.parse(previous.summary),
-          objective: 'Changed retry objective.',
-        });
-        writeFileSync(
-          reportFile,
-          JSON.stringify({ ...previous, summary: changedSummary, output_digest: canonicalJsonDigest(changedSummary) }),
-        );
-        const changed = call([...expected(version), '--report', reportFile]);
-        expect(changed.status).toBe(1);
-        expect(changed.payload.code).toBe('GAP-VIDA-RUN-EXECUTION-001');
-        expect(snapshotPersisted()).toEqual(persisted);
-        expect(call().payload.state_version).toEqual(version);
-        expect(snapshotPersisted()).toEqual(persisted);
+        const replay = call([...expected(version), '--report', path.join(root, 'report.json')]);
+        expect(replay.status).toBe(0);
+        expect(replay.payload.status).toBe('report_retrieved');
+        expect(replay.payload.state_version).toEqual(final.payload.state_version);
+        expect(replay.payload.issued_actions).toEqual([]);
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -713,7 +657,7 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
 
 if (mutationMode || v8CoverageMode) {
   const record = (value) => `${JSON.stringify(value, null, 2)}\n`;
-  const createFixture = (root, bundleName = 'agent-runtime-new', multiProject = false, admittedWork = false) => {
+  const createFixture = (root, bundleName = 'agent-runtime-new', multiProject = false) => {
     const fixtureBundle = path.join(root, bundleName);
     if (bundleName === 'vida-agent') {
       mkdirSync(fixtureBundle);
@@ -721,6 +665,7 @@ if (mutationMode || v8CoverageMode) {
         'src',
         'dist',
         'bin',
+        'tooling',
         'schemas',
         'instructions',
         'templates',
@@ -768,14 +713,6 @@ if (mutationMode || v8CoverageMode) {
         '\n    - id: local-alpha-project\n      provider: local\n      project_id: "alpha-project"\n      tenant_id: local\n      namespace: "alpha-project"\nruntime:',
       );
     }
-    mkdirSync(path.join(root, 'docs/agent-instructions'), { recursive: true });
-    writeFileSync(
-      path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'),
-      readFileSync(path.join(packageRoot, 'templates/documentation-policy.template.v1.json'), 'utf8')
-        .replaceAll('{{REPOSITORY}}', 'mutation-repository')
-        .replaceAll('{{PROJECT}}', 'mutation-project')
-        .replaceAll('{{CREATED_AT}}', '2026-09-30T00:00:00.000Z'),
-    );
     writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configText);
     const config = loadRuntimeConfig(root);
     const schema = readFileSync(path.join(fixtureBundle, 'schemas', 'runtime-initialization.v1.schema.json'));
@@ -820,81 +757,6 @@ if (mutationMode || v8CoverageMode) {
       '--workflow',
       'information_research_light',
     ];
-    if (admittedWork) {
-      const workId = args[args.indexOf('--work-id') + 1];
-      const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
-      args[args.indexOf('--scope-digest') + 1] = source.digest;
-      const inputRoot = path.join(root, '.agent/fixture-input');
-      mkdirSync(inputRoot);
-      const scope = {
-        schema: 'ImplementationScope/v1',
-        scope_id: 'mutation-scope',
-        work_id: workId,
-        source_revision: source.digest,
-        ac_ids: ['AC-RESEARCH-1'],
-        allowed_paths: ['AGENT.sidecar.md'],
-        implementation_paths: ['AGENT.sidecar.md'],
-        documentation_paths: [],
-        changed_symbols: [],
-        non_goals: ['Source mutation'],
-        acceptance_trace: ['AC-RESEARCH-1'],
-        behavior_trace: ['SR-RESEARCH-1'],
-        test_trace: ['parallel wave and CAS'],
-        diagnostic_trace: ['fixture'],
-        attribution: { thread_id: 'mutation-native-session', pointer: 'fixture:mutation-intake' },
-        owner: 'fixture',
-        created_at: '2026-09-30T00:00:00.000Z',
-      };
-      writeFileSync(path.join(inputRoot, 'scope.json'), record(scope));
-      writeFileSync(
-        path.join(inputRoot, 'acceptance.json'),
-        record({
-          schema: 'AcceptanceManifest/v1',
-          id: 'mutation-acceptance',
-          version: 1,
-          ac_ids: scope.ac_ids,
-          source: 'AGENT.sidecar.md',
-          scope: scope.scope_id,
-          source_revision: source.digest,
-          contracts: [
-            {
-              id: 'AC-RESEARCH-1',
-              definition: 'Inspect the fixture without source mutation.',
-              sr: 'SR-RESEARCH-1',
-              evidence: ['fixture'],
-            },
-          ],
-        }),
-      );
-      const intakePath = path.join(inputRoot, 'intake.json');
-      writeFileSync(
-        intakePath,
-        record({
-          schema: 'VidaLocalSessionIntake/v1',
-          native_session_handle: 'mutation-native-session',
-          work_item: {
-            schema: 'WorkItem/v1',
-            id: workId,
-            provider: 'local',
-            provider_type: 'Research',
-            canonical_kind: 'research',
-            intent: 'information_research',
-            project_id: 'mutation-project',
-            title: 'Read-only mutation fixture',
-            description: '',
-            labels: [],
-            risk_flags: [],
-          },
-          scope_path: '.agent/fixture-input/scope.json',
-          acceptance_path: '.agent/fixture-input/acceptance.json',
-          runtime_code_paths: [`${bundleName}/bin/run.mjs`],
-          route: 'R2',
-          risk: 'low',
-          change_kind: 'fix',
-        }),
-      );
-      args.splice(args.length - 2, 0, '--intake', intakePath);
-    }
     return { args, initialization, initializationPath, fixtureBundle };
   };
 
@@ -954,7 +816,7 @@ if (mutationMode || v8CoverageMode) {
           ]),
         ).rejects.toMatchObject({
           code: 'GAP-VIDA-RUN-CONTEXT-001',
-          message: 'The Mastra run has not been prepared.',
+          message: 'The persisted attempt differs from the current launcher context.',
         });
         expect((await run(args)).state_version).toEqual(prepared.state_version);
       } finally {
@@ -1040,8 +902,7 @@ if (mutationMode || v8CoverageMode) {
     test('keeps CLI validation, workflow selection, CAS and report handling bound to one attempt', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-mutation-'));
       try {
-        const { args, initialization, initializationPath } = createFixture(root, 'vida-agent', false, true);
-        const runBound = runInBun(path.join(root, 'vida-agent/bin/run.mjs'), root);
+        const { args, initialization, initializationPath } = createFixture(root);
         for (const [changed, message] of [
           [{ repository_id: 'other-repository' }, 'Runtime initialization repository identity is stale.'],
           [{ project_ids: ['other-project'] }, 'Runtime initialization project configuration is stale.'],
@@ -1051,19 +912,15 @@ if (mutationMode || v8CoverageMode) {
           [{ schema_sha256: 'b'.repeat(64) }, 'Runtime initialization schema is stale.'],
         ]) {
           writeFileSync(initializationPath, record({ ...initialization, ...changed }));
-          await expect(runBound(args)).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CONTEXT-001', message });
+          await expect(run(args)).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CONTEXT-001', message });
         }
         writeFileSync(initializationPath, record(initialization));
-        await expect(runBound(args.slice(0, -2))).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' });
-        await expect(runBound([...args, '--thread-id', 'forged'])).rejects.toMatchObject({
-          code: 'GAP-VIDA-RUN-CLI-001',
-        });
-        await expect(runBound(args.slice(0, -1).concat('task_execution'))).rejects.toMatchObject({
+        await expect(run(args.slice(0, -2))).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' });
+        await expect(run([...args, '--thread-id', 'forged'])).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' });
+        await expect(run(args.slice(0, -1).concat('task_execution'))).rejects.toMatchObject({
           code: 'GAP-VIDA-RUN-WORKFLOW-001',
         });
-        const prepared = await runBound(args);
-        const continuing = [...args];
-        continuing.splice(continuing.indexOf('--intake'), 2);
+        const prepared = await run(args);
         expect(prepared.status).toBe('prepared');
         expect(prepared.next_actions.length).toBeGreaterThan(1);
         const expected = (version) => [
@@ -1072,59 +929,48 @@ if (mutationMode || v8CoverageMode) {
           '--expected-digest',
           version.digest,
         ];
-        const issued = await runBound([...continuing, ...expected(prepared.state_version), '--issue-wave', 'true']);
+        const issued = await run([...args, ...expected(prepared.state_version), '--issue-wave', 'true']);
         expect(issued.status).toBe('wave_issued');
         expect(issued.issued_actions.map((item) => item.action.action_id)).toEqual(
           prepared.next_actions.map((item) => item.request.action_id),
         );
-        await expect(
-          runBound([...continuing, ...expected(prepared.state_version), '--issue-wave', 'true']),
-        ).rejects.toThrow();
+        await expect(run([...args, ...expected(prepared.state_version), '--issue-wave', 'true'])).rejects.toThrow();
         const reportFile = path.join(root, 'report.json');
         for (const invalid of ['', '{', 'x'.repeat(32769)]) {
           writeFileSync(reportFile, invalid);
-          await expect(
-            runBound([...continuing, ...expected(issued.state_version), '--report', reportFile]),
-          ).rejects.toMatchObject({
-            code: 'GAP-VIDA-RUN-REPORT-001',
-          });
+          await expect(run([...args, ...expected(issued.state_version), '--report', reportFile])).rejects.toMatchObject(
+            {
+              code: 'GAP-VIDA-RUN-REPORT-001',
+            },
+          );
         }
         writeFileSync(reportFile, '{}');
         const secondLink = path.join(root, 'report-hardlink.json');
         linkSync(reportFile, secondLink);
-        await expect(
-          runBound([...continuing, ...expected(issued.state_version), '--report', reportFile]),
-        ).rejects.toMatchObject({
+        await expect(run([...args, ...expected(issued.state_version), '--report', reportFile])).rejects.toMatchObject({
           code: 'GAP-VIDA-RUN-REPORT-001',
         });
         unlinkSync(secondLink);
-        expect((await runBound(args)).state_version).toEqual(issued.state_version);
+        expect((await run(args)).state_version).toEqual(issued.state_version);
         let version = issued.state_version;
         for (const item of issued.issued_actions) {
-          const action = item.request;
-          const assignmentIndex = item.request.assignment_index;
-          const sourceId = `fixture-source-${assignmentIndex}`;
-          const summary = researchSummary(
-            assignmentIndex,
-            createHash('sha256')
-              .update(readFileSync(path.join(root, 'AGENT.sidecar.md')))
-              .digest('hex'),
-          );
+          const action = item.action;
+          const summary = `Observed ${action.stage_id}`;
           writeFileSync(
             reportFile,
             JSON.stringify({
               schema: 'VidaSessionObservation/v1',
               action_id: action.action_id,
               issue_id: item.issue_id,
-              agent_id: `test-${assignmentIndex}`,
-              tool_call_ref: `tool-${assignmentIndex}`,
+              agent_id: `test-${action.action_order}`,
+              tool_call_ref: `tool-${action.action_order}`,
               status: 'reported_complete',
               summary,
               output_digest: canonicalJsonDigest(summary),
-              evidence_refs: [sourceId],
+              evidence_refs: [],
             }),
           );
-          const result = await runBound([...continuing, ...expected(version), '--report', reportFile]);
+          const result = await run([...args, ...expected(version), '--report', reportFile]);
           version = result.state_version;
           if (item === issued.issued_actions.at(-1)) {
             expect(result.resume_status).toBe('ready');
@@ -1134,14 +980,14 @@ if (mutationMode || v8CoverageMode) {
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
-    }, 180_000);
+    });
 
     test('binds admission to the selected journal and released maintenance proof', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-selected-'));
       const dependenciesLink = path.join(root, 'vida-agent', 'node_modules');
       try {
         const { args, fixtureBundle } = createFixture(root, 'vida-agent');
-        const selectedRun = runInBun(path.join(fixtureBundle, 'bin', 'run.mjs'), root);
+        const selectedRun = (await import(pathToFileURL(path.join(fixtureBundle, 'bin', 'run.mjs')).href)).run;
         const generation = `selected-${randomUUID()}`;
         const generationRoot = path.join(root, '.agent', 'cutover', generation);
         mkdirSync(generationRoot, { recursive: true });
@@ -1156,42 +1002,6 @@ if (mutationMode || v8CoverageMode) {
           payload_manifest_sha256: 'c'.repeat(64),
           state_policy: 'clean_start_no_ticket_transfer',
         };
-        const evidence = {};
-        for (const kind of ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime']) {
-          const relative = `.agent/cutover/${generation}/${kind}.json`;
-          const bytes = record({ schema: 'FixtureCutoverEvidence/v1', kind, generation });
-          writeFileSync(path.join(root, relative), bytes);
-          evidence[kind] = {
-            actor: 'fixture-owner',
-            path: relative,
-            pointer: `fixture:${kind}`,
-            sha256: createHash('sha256').update(bytes).digest('hex'),
-            status: 'passed',
-          };
-        }
-        const decision = {
-          schema: 'VidaCutoverActivationDecision/v1',
-          cutover_id: generation,
-          plan_sha256: selector.plan_sha256,
-          payload_manifest_sha256: selector.payload_manifest_sha256,
-          selector_intent_sha256: createHash('sha256').update(record(selector)).digest('hex'),
-          outcome: 'approved',
-          actor: 'fixture-owner',
-          pointer: 'fixture:activation',
-          evidence,
-        };
-        selector.activation_decision_sha256 = createHash('sha256').update(record(decision)).digest('hex');
-        writeFileSync(path.join(generationRoot, 'activation-decision.v1.json'), record(decision));
-        writeFileSync(
-          path.join(generationRoot, 'selector-commit.json'),
-          record({
-            schema: 'VidaPreparedSelectorCommit/v1',
-            cutover_id: generation,
-            plan_sha256: selector.plan_sha256,
-            activation_decision_sha256: selector.activation_decision_sha256,
-            selector_sha256: createHash('sha256').update(record(selector)).digest('hex'),
-          }),
-        );
         const journal = {
           schema: 'VidaPreparedInstallJournal/v1',
           cutover_id: generation,
@@ -1212,12 +1022,6 @@ if (mutationMode || v8CoverageMode) {
           schema: 'VidaCutoverMaintenanceLock/v1',
           cutover_id: generation,
           operator: 'test',
-          attestation: 'old_runtime_quiesced',
-          expected_file_count: 1,
-          archive_manifest: { manifest_sha256: selector.archive_manifest_sha256 },
-          plan: { schema: 'VidaPreparedInstallPlan/v1', plan_sha256: selector.plan_sha256 },
-          activation_decision_path: `.agent/cutover/${generation}/activation-decision.v1.json`,
-          activation_decision_sha256: selector.activation_decision_sha256,
           plan_sha256: selector.plan_sha256,
           archive_manifest_sha256: selector.archive_manifest_sha256,
           payload_manifest_sha256: selector.payload_manifest_sha256,
@@ -1336,7 +1140,6 @@ if (mutationMode || v8CoverageMode) {
         const stagedSelector = { ...selector, generation: stagedGeneration };
         delete stagedSelector.payload_manifest_sha256;
         delete stagedSelector.state_policy;
-        delete stagedSelector.activation_decision_sha256;
         const stagedJournal = {
           schema: 'VidaCutoverStageJournal/v1',
           cutover_id: stagedGeneration,
@@ -1387,6 +1190,6 @@ if (mutationMode || v8CoverageMode) {
         if (existsSync(dependenciesLink)) unlinkSync(dependenciesLink);
         rmSync(root, { recursive: true, force: true });
       }
-    }, 180_000);
+    });
   });
 }

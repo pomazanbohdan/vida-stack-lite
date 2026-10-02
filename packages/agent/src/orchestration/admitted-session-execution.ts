@@ -1,5 +1,10 @@
 import { createHash } from 'node:crypto';
-import { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess } from '../config/runtime-config.js';
+import {
+  loadRuntimeConfig,
+  runtimeConfigDigest,
+  runtimePackageAccess,
+  runtimePackageCodePaths,
+} from '../config/runtime-config.js';
 import { loadProjectSetContext } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
@@ -11,12 +16,12 @@ function requireExecution(condition: unknown, message: string): asserts conditio
   if (!condition) throw new Error(message);
 }
 
-/** Check the intake-pinned runtime bytes before issuing any native action. */
-export function assertAdmittedRuntimeCodeCurrent(
+/** Read the one bound current-v1 intake; historical ownership cleanup grants no executable freshness. */
+export function readAdmittedSessionIntake(
   repositoryRoot: string,
   store: HostStateStore,
   identity: WorkIdentity,
-): { work_item: unknown; native_session_handle: string } {
+): { work_item: unknown; runtime_code_paths: string[]; native_session_handle: string } {
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const work = store.readHostStateSnapshot(identity).work;
   requireExecution(work, 'admitted local session work is unavailable');
@@ -34,7 +39,29 @@ export function assertAdmittedRuntimeCodeCurrent(
     runtime_code_paths: string[];
     native_session_handle: string;
   };
+  requireExecution(
+    canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest &&
+      typeof intake.native_session_handle === 'string' &&
+      intake.native_session_handle.length > 0,
+    'admitted local session intake identity differs',
+  );
+  return intake;
+}
+
+/** Check the canonical package closure before issuing any native action. */
+export function assertAdmittedRuntimeCodeCurrent(
+  repositoryRoot: string,
+  store: HostStateStore,
+  identity: WorkIdentity,
+): { work_item: unknown; native_session_handle: string } {
+  const intake = readAdmittedSessionIntake(repositoryRoot, store, identity);
+  const work = store.readHostStateSnapshot(identity).work!;
   const config = loadRuntimeConfig(repositoryRoot);
+  requireExecution(
+    canonicalJsonDigest(intake.runtime_code_paths) ===
+      canonicalJsonDigest(runtimePackageCodePaths(config.runtime.bundle)),
+    'admitted runtime inventory differs; qualified runtime repair/rebind is required',
+  );
   const current = snapshotRuntimePackageSources(
     runtimePackageAccess(),
     config.runtime.bundle,

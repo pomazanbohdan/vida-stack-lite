@@ -1,8 +1,10 @@
 import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity } from '../host-state.js';
+import { completedSourceJournalObservationMatches } from '../host-state.js';
 import type { DocumentationVerificationContext } from '../lifecycle/lifecycle-state.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { type AgentRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
+import { configuredReadonlyAssignment, settledSessionItems } from './final-assurance.js';
 
 function requireSuspension(value: unknown, message: string): asserts value {
   if (!value) throw new Error(`local work suspension: ${message}`);
@@ -31,11 +33,20 @@ export function suspendLocalWork(input: SuspensionInput): HostStateSnapshot {
  * The admitted capture entrypoint validates original configured readonly rights.
  */
 export function suspendCompletedReadOnlyWork(input: SuspensionInput): HostStateSnapshot {
-  const issues = [...input.journal.state.completed.flatMap((step) => step.items), ...input.journal.state.items];
+  // Trusted older callers already validate configured rights and omit config.
+  const issues = input.config
+    ? settledSessionItems(input.journal.state).observed
+    : [...input.journal.state.completed.flatMap((step) => step.items), ...input.journal.state.items];
   requireSuspension(
     issues.length > 0 &&
       issues.every(
-        (item) => item.issue_id !== null && item.observation?.status === 'reported_complete' && !item.host_reservation,
+        (item) =>
+          item.issue_id !== null &&
+          item.observation?.status === 'reported_complete' &&
+          !item.host_reservation &&
+          !item.research_activation &&
+          !item.research_normalization &&
+          (!input.config || configuredReadonlyAssignment(input.config, item.request)),
       ),
     'completed readonly owner still has unobserved, failed or reserved activity',
   );
@@ -75,6 +86,12 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
     'admitted work or ledger is missing',
   );
   const work = host.work;
+  requireSuspension(
+    [...journal.state.items, ...journal.state.completed.flatMap((wave) => wave.items)].every(
+      (item) => !item.host_reservation || completedSourceJournalObservationMatches(work, item),
+    ),
+    'source observation is not an authoritative completed host result',
+  );
   requireSuspension(
     work.binding.repository_id === identity.repository_id &&
       canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&

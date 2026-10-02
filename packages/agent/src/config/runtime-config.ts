@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { lstatSync, readFileSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync } from 'node:fs';
+import { runtimeExecutableInventory } from '../../tooling/maintained-source-inventory.mjs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -22,7 +23,10 @@ const CONFIG_FILE = 'agent-runtime.config.v1.yaml';
 const CONFIG_SCHEMA_ID = 'https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json';
 const CONFIG_SCHEMA_SHA256 = 'ed7c14b68f51c103aa06172b057a7c60cf58af69fa6727bad6aa11d9180d40e9';
 const CONFIG_SCHEMA_FILE = fileURLToPath(new URL('../../schemas/agent-runtime-config.v1.schema.json', import.meta.url));
-const RUNTIME_PACKAGE_ROOT = path.dirname(path.dirname(CONFIG_SCHEMA_FILE));
+const resourceRoot = path.dirname(path.dirname(CONFIG_SCHEMA_FILE));
+const RUNTIME_PACKAGE_ROOT = existsSync(path.join(resourceRoot, 'package.json'))
+  ? resourceRoot
+  : path.dirname(resourceRoot);
 
 /** Package resources are owned by the executing npm package, never the consumer. */
 export function runtimePackageAccess(): SafeRepositoryAccess {
@@ -30,6 +34,13 @@ export function runtimePackageAccess(): SafeRepositoryAccess {
   const manifest = JSON.parse(access.readText('package.json', 'runtime package identity')) as { name?: unknown };
   assertCondition(manifest.name === 'vida-agent', 'runtime package identity differs');
   return access;
+}
+/** Logical inventory paths never expose a developer home or consumer checkout. */
+export function runtimePackageCodePaths(bundle: string): readonly string[] {
+  return runtimeExecutableInventory(
+    runtimePackageAccess().repository_root,
+    resourceRoot === RUNTIME_PACKAGE_ROOT ? 'source' : 'dist',
+  ).map((file) => bundle + '/' + file);
 }
 const MAX_CONFIG_BYTES = 4 * 1024 * 1024;
 const MAX_SNAPSHOT_NODES = 50_000;

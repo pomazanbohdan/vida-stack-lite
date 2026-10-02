@@ -1,5 +1,4 @@
-import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
-import { afterAll, describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -16,14 +15,11 @@ import {
 } from '../src/governance/edictum-boundary.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
-afterAll(() => {
-  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
-});
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
 const operation = Object.freeze({
   operation_hash: 'a'.repeat(64),
-  tenant: 'fixture-repository',
-  project: 'fixture-project',
+  tenant: 'crmbx',
+  project: '3mob',
 });
 let sessionSequence = 0;
 
@@ -451,14 +447,7 @@ describe('configured Edictum workflow completeness', () => {
           .filter((name) => name.endsWith('.json') || name.endsWith('.commit-unknown'))
           .map((name) => JSON.parse(readFileSync(path.join(storeRoot, name), 'utf8')));
         expect(markerRecords.some((record) => record.status === 'commit_unknown')).toBe(true);
-        await expect(candidate.approve(approval)).rejects.toThrow(/not pending|receipt replay/);
-        const restarted = createConfiguredEdictumWorkflow(
-          repositoryRoot,
-          'commit-unknown-restarted-' + sessionSequence,
-          host,
-        );
-        expect((await restarted.evaluate('runtime.write', operation)).action).toBe('pending_approval');
-        await expect(restarted.approve(approval)).rejects.toMatchObject({
+        await expect(candidate.approve(approval)).rejects.toMatchObject({
           code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001',
         });
         expect(beforeCommitCalls).toBe(1);

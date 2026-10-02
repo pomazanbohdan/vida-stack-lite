@@ -271,7 +271,7 @@ v8CoverageTest(
   'npm-owned package initializes from unrelated cwd and preserves existing project integration',
   () => {
     const { root, project } = fixture();
-    for (const entry of ['src', 'schemas', 'templates', 'instructions', 'TESTING.md'])
+    for (const entry of ['src', 'dist', 'tooling', 'schemas', 'templates', 'instructions', 'TESTING.md'])
       cpSync(path.join(source, entry), path.join(root, entry), {
         recursive: true,
         dereference: false,
@@ -305,14 +305,7 @@ v8CoverageTest(
       nodeVersion: JSON.parse(readFileSync(path.join(root, 'package.json'))).engines.node,
       bunExecutable,
     };
-    assert.throws(
-      () => install(initArgs(project), installOptions),
-      (error) => {
-        assert.equal(error.message, 'Project initialization failed.');
-        assert.equal(error.exitCode, 1);
-        return true;
-      },
-    );
+    assert.throws(() => install(initArgs(project), installOptions), /Project initialization failed/);
     assert.equal(readFileSync(sidecar, 'utf8'), 'Existing project owner context\n');
     for (const absent of [
       'AGENTS.md',

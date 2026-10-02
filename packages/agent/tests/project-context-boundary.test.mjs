@@ -1,7 +1,4 @@
-import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
-import { fileURLToPath } from 'node:url';
-import { parse, stringify } from 'yaml';
-import { afterAll, afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
   loadProjectContext,
   loadProjectSetContext,
@@ -17,59 +14,16 @@ import {
   validateResolvedPathProfile,
 } from '../src/config/project-context.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
-import {
-  linkSync,
-  readFileSync,
-  mkdirSync,
-  mkdtempSync,
-  realpathSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs';
+import { linkSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = createConsumerFixture(packageRoot);
-const fixtureFile = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
-const fixture = parse(readFileSync(fixtureFile, 'utf8'));
-fixture.paths.processing_scope = 'whole_repository';
-fixture.projects[0].project_root = 'projects/fixture-project';
-fixture.projects[0].path_overrides = { project_root: 'projects/fixture-project' };
-const secondary = structuredClone(fixture.projects[0]);
-secondary.project_id = 'fixture-secondary';
-secondary.title = 'Secondary fixture';
-secondary.project_root = 'projects/fixture-secondary';
-secondary.path_overrides = { project_root: secondary.project_root };
-secondary.wiki_root = 'docs/secondary';
-secondary.code_selectors = ['projects/fixture-secondary/**'];
-secondary.delivery_group = 'fixture-secondary';
-fixture.projects.push(secondary);
-fixture.integrations.providers.push({
-  id: 'local-secondary',
-  provider: 'local',
-  project_id: secondary.project_id,
-  tenant_id: 'secondary-tenant',
-  namespace: 'secondary',
-});
-fixture.teams['default-development'].allowed_projects.push(secondary.project_id);
-writeFileSync(fixtureFile, stringify(fixture));
-for (const directory of [
-  '.agent/work',
-  'src',
-  'projects/fixture-project',
-  'projects/fixture-secondary',
-  'docs/secondary',
-  'agent-runtime-new',
-])
-  mkdirSync(path.join(repositoryRoot, directory), { recursive: true });
-afterAll(() => rmSync(repositoryRoot, { recursive: true, force: true }));
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(process.cwd(), '..');
 const config = loadRuntimeConfig(repositoryRoot);
-const project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, 'fixture-project');
+const project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
 function binding(context, projectId) {
   return context.project_bindings.find((entry) => entry.project_id === projectId);
 }
-const scopeId = binding(project, 'fixture-project').path_profile.scope_id;
+const scopeId = binding(project, '3mob').path_profile.scope_id;
 const temporaryRoots = [];
 
 function relative(value) {
@@ -79,7 +33,7 @@ function options(paths = {}) {
   return {
     processing_scope: 'selected_project',
     repository_id: config.repository.repository_id,
-    project_id: 'fixture-project',
+    project_id: '3mob',
     trusted_override: issueTestTrustedPathProfileOverride({
       schema: 'TrustedPathProfileOverride/v1',
       scope_id: scopeId,
@@ -141,41 +95,35 @@ describe('project context path boundary', () => {
 
   test('binds an exact multi-project context without a primary project', () => {
     const first = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
-      'fixture-secondary',
-      'fixture-project',
+      'refactoring',
+      '3mob',
     ]);
     const reordered = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
-      'fixture-project',
-      'fixture-secondary',
+      '3mob',
+      'refactoring',
     ]);
-    expect(first.project_ids).toEqual(['fixture-project', 'fixture-secondary']);
+    expect(first.project_ids).toEqual(['3mob', 'refactoring']);
     expect(
-      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
-        'fixture-project',
-        'fixture-project',
-      ]).project_ids,
-    ).toEqual(['fixture-project']);
+      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, ['3mob', '3mob']).project_ids,
+    ).toEqual(['3mob']);
     expect(first.project_context_digest).toBe(reordered.project_context_digest);
     expect(first.integrations_digest).toBe(reordered.integrations_digest);
     expect(first.path_bindings_digest).toBe(reordered.path_bindings_digest);
-    expect(first.project_bindings.map((entry) => entry.project_id)).toEqual(['fixture-project', 'fixture-secondary']);
-    expect(first.integration_bindings.map((entry) => entry.project_id)).toEqual([
-      'fixture-project',
-      'fixture-secondary',
-    ]);
+    expect(first.project_bindings.map((entry) => entry.project_id)).toEqual(['3mob', 'refactoring']);
+    expect(first.integration_bindings.map((entry) => entry.project_id)).toEqual(['3mob', 'refactoring']);
     expect(first).not.toHaveProperty('integration_binding');
     expect(() => loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [])).toThrow(
       /project ids must be non-empty/,
     );
     expect(() =>
-      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, ['fixture-project', 'missing']),
+      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, ['3mob', 'missing']),
     ).toThrow(/project identity is not configured/);
     expect(() =>
-      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, ['fixture-project'], {
+      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, ['3mob'], {
         trusted_overrides: {
-          'fixture-secondary': issueTestTrustedPathProfileOverride({
+          refactoring: issueTestTrustedPathProfileOverride({
             schema: 'TrustedPathProfileOverride/v1',
-            scope_id: 'repository:' + config.repository.repository_id + '/project:fixture-secondary',
+            scope_id: 'repository:' + config.repository.repository_id + '/project:refactoring',
             paths: {},
           }),
         },
@@ -229,16 +177,14 @@ describe('project context path boundary', () => {
   test('rejects unissued caller path overrides', () => {
     const forged = {
       schema: 'TrustedPathProfileOverride/v1',
-      scope_id: binding(project, 'fixture-project').path_profile.scope_id,
+      scope_id: binding(project, '3mob').path_profile.scope_id,
       paths: { work_root: 'agent-runtime-new' },
     };
     expect(() => resolvePathProfile(repositoryRoot, config, { ...options(), trusted_override: forged })).toThrow(
       /capability/,
     );
     expect(() =>
-      loadProjectContext(repositoryRoot, config, config.repository.repository_id, 'fixture-project', {
-        trusted_override: forged,
-      }),
+      loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob', { trusted_override: forged }),
     ).toThrow(/capability/);
   });
   test('rejects selector and snapshot violations', () => {
@@ -246,21 +192,21 @@ describe('project context path boundary', () => {
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: undefined,
-        project_id: 'fixture-project',
+        project_id: '3mob',
       }),
     ).toThrow(/repository id is invalid/);
     expect(() =>
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: 'bad!',
-        project_id: 'fixture-project',
+        project_id: '3mob',
       }),
     ).toThrow(/repository id is invalid/);
     expect(() =>
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
-        repository_id: '!fixture',
-        project_id: 'fixture-project',
+        repository_id: '!crmbx',
+        project_id: '3mob',
       }),
     ).toThrow(/repository id is invalid/);
     expect(() =>
@@ -290,26 +236,26 @@ describe('project context path boundary', () => {
         repository_id: config.repository.repository_id,
         project_id: 'missing',
       }),
-    ).toThrow('project identity is not configured: fixture-repository/missing');
+    ).toThrow('project identity is not configured: creatio-sample-repository/missing');
     expect(
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: config.repository.repository_id,
-        project_id: 'fixture-secondary',
+        project_id: 'refactoring',
       }).scope_id,
-    ).toContain('project:fixture-secondary');
+    ).toContain('project:refactoring');
     expect(
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: config.repository.repository_id,
-        project_id: 'fixture-project',
+        project_id: '3mob',
       }).scope_id,
-    ).toContain('project:fixture-project');
+    ).toContain('project:3mob');
     expect(() =>
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: 'missing',
-        project_id: 'fixture-project',
+        project_id: '3mob',
       }),
     ).toThrow('repository identity is not configured: missing');
     expect(() =>
@@ -319,22 +265,19 @@ describe('project context path boundary', () => {
       }),
     ).toThrow(/whole_repository scope cannot include project identity/);
     expect(() =>
-      resolvePathProfile(repositoryRoot, config, {
-        processing_scope: 'whole_repository',
-        project_id: 'fixture-project',
-      }),
+      resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository', project_id: '3mob' }),
     ).toThrow(/whole_repository scope cannot include project identity/);
     const stale = structuredClone(config);
     stale.config_revision += 1;
     expect(() => resolvePathProfile(repositoryRoot, stale, {})).toThrow(/runtime config snapshot is stale or forged/);
-    expect(() => loadProjectContext(repositoryRoot, config, 'missing', 'fixture-project')).toThrow(
+    expect(() => loadProjectContext(repositoryRoot, config, 'missing', '3mob')).toThrow(
       'project context repository identity is invalid',
     );
     expect(() => loadProjectContext(repositoryRoot, config, config.repository.repository_id, 'missing')).toThrow(
-      'project identity is not configured: fixture-repository/missing',
+      'project identity is not configured: creatio-sample-repository/missing',
     );
-    expect(loadProjectContext(repositoryRoot, config, 'fixture-repository', 'fixture-project').project_ids).toEqual([
-      'fixture-project',
+    expect(loadProjectContext(repositoryRoot, config, 'creatio-sample-repository', '3mob').project_ids).toEqual([
+      '3mob',
     ]);
   });
 
@@ -380,7 +323,7 @@ describe('project context path boundary', () => {
     expect(whole.scope_id).toBe('repository:' + config.config_id);
     expect(whole.processing_scope).toBe('whole_repository');
     expect(whole.path_identities.repository_root).not.toBeNull();
-    const project3 = binding(project, 'fixture-project');
+    const project3 = binding(project, '3mob');
     expect(project3.path_bindings.schema).toBe('ProjectPathBindings/v1');
     expect(project3.path_bindings.repository_root).toBe(repositoryRoot);
     expect(project3.path_bindings.contour).toBe(project3.path_profile.scope_id);
@@ -399,19 +342,19 @@ describe('project context path boundary', () => {
     expect(validateResolvedPathProfile(whole, repositoryRoot)).toBe(whole);
     expect(validateProjectContextBinding(project, repositoryRoot)).toBe(project);
     expect(validateProjectContext(project, repositoryRoot)).toBe(project);
-    const second = loadProjectContext(repositoryRoot, config, 'fixture-repository', 'fixture-secondary');
-    const secondBinding = binding(second, 'fixture-secondary');
-    expect(secondBinding.integration_binding.tenant_id).toBe('secondary-tenant');
+    const second = loadProjectContext(repositoryRoot, config, 'creatio-sample-repository', 'refactoring');
+    const secondBinding = binding(second, 'refactoring');
+    expect(secondBinding.integration_binding.tenant_id).toBe('agentsustem');
     expect(project.repository_title).toBe(config.repository.title);
     expect(second.repository_title).toBe(config.repository.title);
     expect(second.repository_title).not.toBe(secondBinding.project_title);
-    expect(secondBinding.project_title).toBe('Secondary fixture');
+    expect(secondBinding.project_title).toBe('АгентСустем refactoring');
     expect(secondBinding.code_selectors).toEqual(
-      config.projects.find((entry) => entry.project_id === 'fixture-secondary').code_selectors,
+      config.projects.find((entry) => entry.project_id === 'refactoring').code_selectors,
     );
     expect(secondBinding.path_profile.provenance.wiki_root).toEqual({
       layer: 'project-config',
-      pointer: '$.projects[fixture-secondary].wiki_root',
+      pointer: '$.projects[refactoring].wiki_root',
     });
     expect(secondBinding.path_bindings.schema).toBe('ProjectPathBindings/v1');
     expect(secondBinding.path_bindings.paths).toHaveLength(21);
@@ -475,13 +418,13 @@ describe('project context path boundary', () => {
     expect(repositoryProfile.paths.work_root).toBe('.');
     expect(isolated.validateResolvedPathProfile(repositoryProfile, repositoryRoot)).toBe(repositoryProfile);
     expect(() =>
-      isolated.loadProjectContext(repositoryRoot, repositoryConfig, 'unconfigured-repository', 'fixture-project'),
+      isolated.loadProjectContext(repositoryRoot, repositoryConfig, 'unconfigured-repository', '3mob'),
     ).toThrow('project context repository identity is invalid');
     expect(() =>
       isolated.resolvePathProfile(repositoryRoot, repositoryConfig, {
         processing_scope: 'selected_project',
         repository_id: config.repository.repository_id,
-        project_id: 'fixture-project',
+        project_id: '3mob',
         trusted_override: isolated.issueTestTrustedPathProfileOverride({
           schema: 'TrustedPathProfileOverride/v1',
           scope_id: 'repository:' + config.config_id,
@@ -490,36 +433,29 @@ describe('project context path boundary', () => {
       }),
     ).toThrow();
     const partialConfig = structuredClone(config);
-    delete partialConfig.projects.find((entry) => entry.project_id === 'fixture-project').path_overrides;
+    delete partialConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides;
     activeConfig = partialConfig;
     const partialProfile = isolated.resolvePathProfile(repositoryRoot, partialConfig, {
       processing_scope: 'selected_project',
       repository_id: config.repository.repository_id,
-      project_id: 'fixture-project',
+      project_id: '3mob',
     });
     expect(partialProfile.paths.project_root).toBe(partialConfig.paths.defaults.project_root);
     activeConfig = structuredClone(config);
-    const context = isolated.loadProjectContext(
-      repositoryRoot,
-      activeConfig,
-      config.repository.repository_id,
-      'fixture-project',
-    );
+    const context = isolated.loadProjectContext(repositoryRoot, activeConfig, config.repository.repository_id, '3mob');
     const overrideRoot = tempRoot();
-    activeConfig.projects.find((entry) => entry.project_id === 'fixture-project').path_overrides = {
+    activeConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides = {
       work_root: relative(overrideRoot),
     };
     const overriddenContext = isolated.loadProjectContext(
       repositoryRoot,
       activeConfig,
       config.repository.repository_id,
-      'fixture-project',
+      '3mob',
     );
-    expect(binding(overriddenContext, 'fixture-project').path_profile.paths.work_root).toBe(relative(overrideRoot));
-    expect(binding(overriddenContext, 'fixture-project').path_profile.resolved_paths.work_root).toBe(overrideRoot);
-    expect(binding(overriddenContext, 'fixture-project').path_profile.provenance.work_root.layer).toBe(
-      'project-config',
-    );
+    expect(binding(overriddenContext, '3mob').path_profile.paths.work_root).toBe(relative(overrideRoot));
+    expect(binding(overriddenContext, '3mob').path_profile.resolved_paths.work_root).toBe(overrideRoot);
+    expect(binding(overriddenContext, '3mob').path_profile.provenance.work_root.layer).toBe('project-config');
     activeConfig.paths.defaults.work_root += '/changed';
     expect(() => isolated.validateProjectContextBinding(context, repositoryRoot)).toThrow(
       'resolved path profile config is stale',
@@ -531,13 +467,13 @@ describe('project context path boundary', () => {
     );
     const profileRoot = tempRoot();
     activeConfig = structuredClone(config);
-    activeConfig.projects.find((entry) => entry.project_id === 'fixture-project').path_overrides = {
+    activeConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides = {
       work_root: relative(profileRoot),
     };
     const profile = isolated.resolvePathProfile(repositoryRoot, activeConfig, {
       processing_scope: 'selected_project',
       repository_id: config.repository.repository_id,
-      project_id: 'fixture-project',
+      project_id: '3mob',
     });
     rmSync(profileRoot, { recursive: true, force: true });
     expect(() => isolated.validateResolvedPathProfile(profile, repositoryRoot)).toThrow(

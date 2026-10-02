@@ -1,10 +1,10 @@
-import { tmpdir } from 'node:os';
 import { afterEach, test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync, cpSync, rmSync } from 'node:fs';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
 import { cooperativeReadonlyAssignments } from '../bin/runtime-config-rebind.mjs';
@@ -20,18 +20,15 @@ import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snap
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 const source = process.env.VIDA_CONFIG_REBIND_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '..');
-const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
-const json = (v) => JSON.stringify(v, null, 2) + '\n';
-
 const fixtureRoots = [];
 afterEach(() => {
   for (const root of fixtureRoots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const json = (v) => JSON.stringify(v, null, 2) + '\n';
 
 function fixture() {
   const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? tmpdir();
-  if (!path.isAbsolute(fixtureRoot)) throw Error('absolute private fixture root required');
-  mkdirSync(fixtureRoot, { recursive: true });
   const root = mkdtempSync(path.join(fixtureRoot, 'fixture-'));
   fixtureRoots.push(root);
   const put = (relative, bytes) => {
@@ -218,6 +215,8 @@ function seedState(
           request_digest: digest,
           stage_id: 'implementation',
           assignment_index: 0,
+          correction_generation: 0,
+          correction_authorization: null,
           lease: workLease,
           status: effect,
           result: null,
@@ -694,7 +693,13 @@ for (const [name, mutation, validateFixture] of [
       const item = state.items.find((entry) => entry.issue_id);
       item.host_reservation = {
         schema: 'WorkflowSessionReservation/v1',
-        receipt: { attempt: { attempt_id: canonicalJsonDigest({ fixture: 'reservation' }) } },
+        receipt: {
+          attempt: {
+            attempt_id: canonicalJsonDigest({ fixture: 'reservation' }),
+            correction_generation: 0,
+            correction_authorization: null,
+          },
+        },
         request: {
           workItemId: state.work_id,
           stageId: item.request.stage_id,

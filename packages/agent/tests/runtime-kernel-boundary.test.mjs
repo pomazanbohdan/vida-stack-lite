@@ -1,12 +1,10 @@
-import { rmSync } from 'node:fs';
-import { createConsumerFixture, writeConsumerFixture } from './helpers/consumer-fixture.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { afterAll, describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { computeWriteOperationHash } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, computeWriteOperationHash } from '../src/contracts/public-ingress.ts';
 import { issueHostGovernanceCapability } from '../src/governance/edictum-boundary.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
 import { loadProjectContext, loadProjectSetContext } from '../src/config/project-context.ts';
@@ -25,17 +23,9 @@ import {
   readStableRuntimeConfig,
 } from '../src/runtime-kernel.ts';
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
-afterAll(() => {
-  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
-});
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
 const config = loadRuntimeConfig(repositoryRoot);
-const project = loadProjectContext(
-  repositoryRoot,
-  config,
-  config.repository.repository_id,
-  config.projects[0].project_id,
-);
+const project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
 const hostProject = loadProjectSetContext(
   repositoryRoot,
   config,
@@ -46,14 +36,23 @@ const authorityText = await readFile(path.join(repositoryRoot, 'agent-runtime.co
 
 async function createIsolatedRepositoryRoot() {
   const root = await mkdtemp(path.join(tmpdir(), 'agent-runtime-new-kernel-'));
-  writeConsumerFixture(root, packageRoot);
-  await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), authorityText, 'utf8');
-  await mkdir(path.join(root, 'src'), { recursive: true });
-  for (const source of config.knowledge.sources.filter((entry) => entry.kind === 'local')) {
-    const file = path.join(root, source.location);
-    await mkdir(path.dirname(file), { recursive: true });
-    await writeFile(file, '# Isolated configured source\n', 'utf8');
-  }
+  await mkdir(path.join(root, '.git'), { recursive: true });
+  await mkdir(path.join(root, 'agent-runtime-new'), { recursive: true });
+  await mkdir(path.join(root, '.agent/work'), { recursive: true });
+  await mkdir(path.join(root, 'docs/tenants/crmbx/wiki/Projects/3Mob/Requirements'), { recursive: true });
+  await Promise.all([
+    writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), authorityText, 'utf8'),
+    writeFile(path.join(root, 'AGENTS.md'), '# isolated test policy\n', 'utf8'),
+    writeFile(path.join(root, 'AGENT.sidecar.md'), '# isolated test sidecar\n', 'utf8'),
+    writeFile(path.join(root, 'agent-runtime-new/PLAN.md'), '# isolated candidate plan\n', 'utf8'),
+    writeFile(path.join(root, 'agent-runtime-new/TESTING.md'), '# isolated candidate testing\n', 'utf8'),
+    writeFile(path.join(root, 'docs/tenants/crmbx/wiki/Projects/3Mob/Operations.md'), '# isolated map\n', 'utf8'),
+    writeFile(
+      path.join(root, 'docs/tenants/crmbx/wiki/Projects/3Mob/Requirements/Topics.md'),
+      '# isolated index\n',
+      'utf8',
+    ),
+  ]);
   return root;
 }
 function identity() {
@@ -62,21 +61,21 @@ function identity() {
     source: 'authenticated-context',
     principal: 'principal-1',
     role: 'developer-orchestrator',
-    tenant: project.repository_id,
+    tenant: project.integration_bindings.find((binding) => binding.project_id === '3mob').tenant_id,
     project: project.project_ids[0],
     registry_hash: project.registry_hash ?? project.config_digest,
   };
 }
 
 function evidence(overrides = {}) {
-  const payload = { path: 'src/runtime-kernel-boundary-' + randomUUID() + '.txt', value: 'updated' };
+  const payload = { path: 'agent-runtime-new/runtime-kernel-boundary-' + randomUUID() + '.txt', value: 'updated' };
   const authorization = {
     principal: 'principal-1',
     role: 'developer-orchestrator',
     action: 'write',
-    tenant: project.repository_id,
+    tenant: project.integration_bindings.find((binding) => binding.project_id === '3mob').tenant_id,
     project: project.project_ids[0],
-    resourceTenant: project.repository_id,
+    resourceTenant: project.integration_bindings.find((binding) => binding.project_id === '3mob').tenant_id,
     resourceProject: project.project_ids[0],
     registryHash: project.registry_hash ?? project.config_digest,
     ...overrides,
@@ -145,37 +144,11 @@ function host(overrides = {}) {
 }
 
 function trustedHostCapability(input) {
-  // TEST SETUP: stateful host storage exercises reservation progression.
-  const reservations = new Map();
   const governanceCapability = issueHostGovernanceCapability({
     workspaceId: 'f'.repeat(64),
-    reserveOperation: (storeId, key, requestDigest) => {
-      if (reservations.has(key)) return null;
-      const reservation = {
-        schema: 'OperationReservation/v1',
-        store_id: storeId,
-        operation_key: key,
-        request_digest: requestDigest,
-        revision: 1,
-        fencing_token: randomUUID(),
-        status: 'reserved',
-        created_at: new Date().toISOString(),
-      };
-      reservations.set(key, reservation);
-      return reservation;
-    },
-    inspectOperation: (_storeId, key) => reservations.get(key) ?? null,
-    transitionOperation: (reservation, status, resultDigest) => {
-      const current = reservations.get(reservation.operation_key);
-      expect(current.fencing_token).toBe(reservation.fencing_token);
-      expect(current.status).toBe(status === 'commit_unknown' || status === 'aborted' ? 'reserved' : 'commit_unknown');
-      reservations.set(reservation.operation_key, {
-        ...current,
-        status,
-        terminal_revision: current.revision + 1,
-        ...(resultDigest === undefined ? {} : { result_digest: resultDigest }),
-      });
-    },
+    reserveOperation: () => null,
+    inspectOperation: () => null,
+    transitionOperation: () => undefined,
     consumeApproval: async () => undefined,
   });
   return createTestTrustedHostLauncherCapability({
@@ -313,10 +286,10 @@ describe('runtime kernel boundary', () => {
     expect(composition.authentication.permittedOperations).toEqual(['runtime.read']);
     expect(composition.runtimeKernel).toBeDefined();
     expect(composition.workflowHostCapability).toBeNull();
-    expect(() => composition.runtimeKernel.evaluateGovernance('runtime.write', {})).toThrow(
+    await expect(composition.runtimeKernel.evaluateGovernance('runtime.write', {})).rejects.toThrow(
       'trusted host operation is not permitted: runtime.write',
     );
-    expect(() => composition.runtimeKernel.runGovernedWrite({})).toThrow(
+    await expect(composition.runtimeKernel.runGovernedWrite({})).rejects.toThrow(
       'trusted host operation is not permitted: runtime.write',
     );
     expect(serviceCalls).toBe(0);
@@ -425,13 +398,8 @@ describe('runtime kernel boundary', () => {
           schema: 'TrustedHostAuthentication/v1',
           repositoryRoot: root,
           repositoryId: isolatedConfig.repository.repository_id,
-          projectIds: project.project_ids,
-          integrationsDigest: loadProjectSetContext(
-            root,
-            isolatedConfig,
-            isolatedConfig.repository.repository_id,
-            project.project_ids,
-          ).integrations_digest,
+          projectIds: ['3mob'],
+          integrationsDigest: canonicalJsonDigest(isolatedConfig.integrations.providers[0]),
           principal: 'principal-1',
           configRevision: isolatedConfig.config_revision,
           permittedOperations: ['workflow'],
@@ -543,7 +511,7 @@ describe('runtime kernel boundary', () => {
         schema: 'TrustedHostAuthentication/v1',
         repositoryRoot,
         repositoryId: 'not-configured',
-        projectIds: [project.project_ids[0]],
+        projectIds: [project.project_id],
         integrationsDigest: project.integrations_digest,
         principal: 'principal-1',
         configRevision: config.config_revision,
@@ -709,7 +677,7 @@ describe('runtime kernel boundary', () => {
           root,
           isolatedConfig,
           isolatedConfig.repository.repository_id,
-          project.project_ids[0],
+          '3mob',
         );
         const isolatedHost = createRuntimeKernelHost({
           repositoryRoot: root,

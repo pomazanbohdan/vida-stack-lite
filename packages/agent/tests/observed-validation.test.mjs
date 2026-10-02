@@ -1,9 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { rmSync } from 'node:fs';
-import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
-import { afterAll, test, expect } from 'bun:test';
+import { test, expect } from 'bun:test';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
@@ -18,18 +16,16 @@ import {
 import { observedReceiptEvidenceReference } from '../src/orchestration/observed-receipt-evidence.ts';
 import { buildAdmittedImplementationResult } from '../src/orchestration/admitted-implementation-result.ts';
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const root = createConsumerFixture(packageRoot, 'vida-observed-validation-');
-afterAll(() => rmSync(root, { recursive: true, force: true }));
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = loadRuntimeConfig(root);
 const workId = 'observed-validator-test';
-const owned = ['vida-agent/TESTING.md'];
+const owned = ['agent-runtime-new/TESTING.md'];
 const initial = snapshotDeclaredSources(requireSafeRepositoryAccess(root), owned);
 const selection = {
   team: 'default-development',
   kind: 'story',
   intent: 'implementation_change',
-  project: 'fixture-project',
+  project: 'refactoring',
   risk_flags: [],
   labels: [],
 };
@@ -94,7 +90,7 @@ const summary = JSON.stringify({
   schema: 'VidaValidatorVerdict/v1',
   verdict: 'pass',
   findings: [],
-  evidence_refs: ['vida-agent/TESTING.md#validator'],
+  evidence_refs: ['agent-runtime-new/TESTING.md#validator'],
 });
 const observation = {
   schema: 'VidaSessionObservation/v1',
@@ -105,7 +101,7 @@ const observation = {
   status: 'reported_complete',
   summary,
   output_digest: canonicalJsonDigest(summary),
-  evidence_refs: ['vida-agent/TESTING.md#validator'],
+  evidence_refs: ['agent-runtime-new/TESTING.md#validator'],
 };
 const authority = { issueValidationReceipt: (input) => ({ schema: 'ValidationReceipt/v1', ...input }) };
 const journal = {
@@ -139,7 +135,7 @@ test('issues a role and final-fingerprint bound receipt from a matching observed
   expect(receipt.evidence_refs).toEqual([
     `artifact://session-observation/${request.run_id}/${request.action_id}/${observation.output_digest}`,
   ]);
-  expect(observation.evidence_refs).toEqual(['vida-agent/TESTING.md#validator']);
+  expect(observation.evidence_refs).toEqual(['agent-runtime-new/TESTING.md#validator']);
   expect(() => observedReceiptEvidenceReference(journal, request.action_id, 'f'.repeat(64))).toThrow(
     /unique persisted observation/,
   );
@@ -189,7 +185,7 @@ test('rejects foreign action, stale final fingerprint, and inconsistent verdict'
   expect(() => parseObservedValidatorVerdict({ ...observation, status: 'reported_failed' })).toThrow(/status differs/);
   for (const evidence_refs of [
     ['../outside.txt'],
-    ['vida-agent/TESTING.md#../outside.txt'],
+    ['agent-runtime-new/TESTING.md#../outside.txt'],
     ['https://example.com/report'],
     ['C:/outside.txt'],
     ['agent-runtime-new\\TESTING.md'],

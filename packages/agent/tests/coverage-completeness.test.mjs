@@ -1,9 +1,7 @@
-import { parse, stringify } from 'yaml';
-import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
-import { afterAll, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import {
   assertCanonicalJsonValue,
   buildGovernedWriteRequest,
@@ -51,25 +49,11 @@ import { requireAbsoluteRepositoryRoot } from '../src/config/project-context.ts'
 import { validateConfiguredRepositoryAccess } from '../src/config/runtime-config.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
-afterAll(() => {
-  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
-});
-if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) {
-  const file = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
-  const fixture = parse(readFileSync(file, 'utf8'));
-  fixture.paths.processing_scope = 'whole_repository';
-  writeFileSync(file, stringify(fixture));
-}
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
 const config = loadRuntimeConfig(repositoryRoot);
-const project = loadProjectContext(
-  repositoryRoot,
-  config,
-  config.repository.repository_id,
-  config.projects[0].project_id,
-);
+const project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
 const projectBinding = project.project_bindings[0];
-if (!projectBinding) throw new Error('Expected the configured fixture project binding');
+if (!projectBinding) throw new Error('Expected the configured 3mob project binding');
 
 function clock(...values) {
   return {
@@ -481,7 +465,7 @@ describe('direct maintained-source completeness', () => {
       optimization_required: true,
       optimization_reason: 'runtime call exceeded 2000ms',
     });
-    const info = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     defaultRuntimeTimingSink().record(threshold.events[0]);
     defaultRuntimeTimingSink().record(exactThreshold.events[0]);
     defaultRuntimeTimingSink().record({ ...exactThreshold.events[0], optimization_required: false });
@@ -858,7 +842,7 @@ describe('direct maintained-source completeness', () => {
         team: 'default-development',
         kind: 'bug',
         intent: 'bug_fix',
-        project: 'fixture-project',
+        project: '3mob',
         risk_flags: ['security'],
         labels: [],
       }),
@@ -868,7 +852,7 @@ describe('direct maintained-source completeness', () => {
         team: 'missing',
         kind: 'task',
         intent: 'task_execution',
-        project: 'fixture-project',
+        project: '3mob',
         risk_flags: [],
         labels: [],
       }),
@@ -898,7 +882,7 @@ describe('direct maintained-source completeness', () => {
     );
     expect(() => validateWorkflowConfiguration(duplicateDeveloper)).toThrow(/developer-orchestrator/);
     if (!nativeNoFollowAvailable) return;
-    const whole = resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository' });
+    const whole = resolvePathProfile(repositoryRoot, config);
     expect(validateResolvedPathProfile(whole, repositoryRoot)).toBe(whole);
     expect(() => validateResolvedPathProfile({ ...whole }, repositoryRoot)).toThrow(/issued/);
     expect(validateConfiguredRepositoryAccess(repositoryRoot).attested).toBe(true);
@@ -1125,46 +1109,30 @@ describe('direct maintained-source completeness', () => {
     expect(() => createConfiguredProjectAuthorizer(path.resolve(repositoryRoot, 'agent-runtime-new'), config)).toThrow(
       'runtime config is not bound to the repository root',
     );
-    if (process.platform === 'linux') {
-      expect(capability).toStrictEqual({
-        schema: 'NativeNoFollowCapability/v1',
-        platform: 'linux',
-        node_version: process.versions.node,
-        primitive: 'O_NOFOLLOW',
-        provider: 'linux-proc-fd',
-        ancestor_binding: 'directory-handle',
-        atomic_replace: 'fsync-temp-rename',
-        containment: 'kernel-atomic',
-        assurance_profile: 'linux-kernel-atomic-v1',
-        filesystem: 'linux-native',
-        attested: true,
-      });
-    } else {
-      expect(capability).toStrictEqual({
-        schema: 'NativeNoFollowCapability/v1',
-        platform: process.platform,
-        node_version: process.versions.node,
-        primitive: 'fs-safe-root-boundary',
-        provider: 'fs-safe-windows',
-        ancestor_binding: 'root-identity',
-        atomic_replace: 'fsync-temp-rename',
-        containment: 'best-effort',
-        assurance_profile: 'windows-best-effort-v1',
-        filesystem: 'unknown',
-        package: {
-          name: '@openclaw/fs-safe',
-          version: '0.5.6',
-          integrity: 'sha512-0M1vz1PEFAgCwTxhB1lt/B7z+TRTTWmlYJ3dSbdhjZp2AcfM7rXPGjQVJqHXpzpsb9SRxvKGrAM454Uul/Xy5g==',
-        },
-        residual_risks: [
-          'Windows reparse containment is best-effort and requires supported-host NTFS/ReFS evidence.',
-          'Windows synchronous mutation operations fail closed until a native component-wise no-follow mutation primitive is available.',
-          'The fs-safe package does not provide the runtime revision/fence CAS; the candidate kernel retains that responsibility.',
-          'Windows compare-and-replace removes the expected target before no-replace publication; external recreation wins and causes a fail-closed restore conflict.',
-        ],
-        attested: true,
-      });
-    }
+    expect(capability).toStrictEqual({
+      schema: 'NativeNoFollowCapability/v1',
+      platform: process.platform,
+      node_version: process.versions.node,
+      primitive: 'fs-safe-root-boundary',
+      provider: 'fs-safe-windows',
+      ancestor_binding: 'root-identity',
+      atomic_replace: 'fsync-temp-rename',
+      containment: 'best-effort',
+      assurance_profile: 'windows-best-effort-v1',
+      filesystem: 'unknown',
+      package: {
+        name: '@openclaw/fs-safe',
+        version: '0.5.6',
+        integrity: 'sha512-0M1vz1PEFAgCwTxhB1lt/B7z+TRTTWmlYJ3dSbdhjZp2AcfM7rXPGjQVJqHXpzpsb9SRxvKGrAM454Uul/Xy5g==',
+      },
+      residual_risks: [
+        'Windows reparse containment is best-effort and requires supported-host NTFS/ReFS evidence.',
+        'Windows synchronous mutation operations fail closed until a native component-wise no-follow mutation primitive is available.',
+        'The fs-safe package does not provide the runtime revision/fence CAS; the candidate kernel retains that responsibility.',
+        'Windows compare-and-replace removes the expected target before no-replace publication; external recreation wins and causes a fail-closed restore conflict.',
+      ],
+      attested: true,
+    });
     expect(capability?.attested).toBe(true);
     expect(requireNativeNoFollowCapability(repositoryRoot)).toStrictEqual(capability);
   });
@@ -1196,9 +1164,8 @@ describe('direct maintained-source completeness', () => {
     const events = [];
     const host = createRuntimeKernelHost({
       repositoryRoot,
-      repositoryId: project.repository_id,
-      projectIds: project.project_ids,
-      integrationsDigest: project.integrations_digest,
+      tenantId: project.repository_id,
+      projectId: projectBinding.project_id,
       resolveIdentity: () => identity(),
       verifyApproval: () => null,
       runtimeRevision: () => ({ sourceRevision: 'source-1', currentRevision: 1 }),
@@ -1208,7 +1175,7 @@ describe('direct maintained-source completeness', () => {
     });
     const kernel = await createRuntimeKernel(repositoryRoot, host);
     expect((await kernel.readConfig()).schema).toBe('AgentRuntimeConfig/v1');
-    expect((await kernel.readProjectContext()).project_ids).toEqual(project.project_ids);
+    expect((await kernel.readProjectContext()).project_id).toBe(projectBinding.project_id);
     expect((await kernel.evaluateGovernance('runtime.read', {})).decision).toBe('allow');
     const fixture = governedEvidence();
     await expect(
@@ -1258,9 +1225,8 @@ describe('direct maintained-source completeness', () => {
     expect((await kernel.evaluateGovernance('runtime.write', {})).decision).toBe('deny');
     const bindingDefaults = {
       repositoryRoot,
-      repositoryId: project.repository_id,
-      projectIds: project.project_ids,
-      integrationsDigest: project.integrations_digest,
+      tenantId: project.repository_id,
+      projectId: projectBinding.project_id,
       resolveIdentity: () => identity(),
       verifyApproval: () => null,
       runtimeRevision: () => ({ sourceRevision: 'source-1', currentRevision: 1 }),
@@ -1279,11 +1245,11 @@ describe('direct maintained-source completeness', () => {
     expect(() => createRuntimeKernelHost({ ...bindingDefaults, repositoryRoot: null })).toThrow(
       'runtime kernel host repository root is required',
     );
-    expect(() => createRuntimeKernelHost({ ...bindingDefaults, repositoryId: null })).toThrow(
-      'runtime kernel host repository id is required',
+    expect(() => createRuntimeKernelHost({ ...bindingDefaults, tenantId: null })).toThrow(
+      'runtime kernel host tenant id is required',
     );
-    expect(() => createRuntimeKernelHost({ ...bindingDefaults, projectIds: null })).toThrow(
-      'runtime kernel host project ids are required',
+    expect(() => createRuntimeKernelHost({ ...bindingDefaults, projectId: null })).toThrow(
+      'runtime kernel host project id is required',
     );
     expect(() =>
       createRuntimeKernelHost({ ...bindingDefaults, repositoryRoot: repositoryRoot + path.sep + '.' }),
@@ -1310,9 +1276,8 @@ describe('direct maintained-source completeness', () => {
       expect(() => createRuntimeKernelHost(bindings)).toThrow();
     const otherRootHost = createRuntimeKernelHost({
       repositoryRoot: packageRoot,
-      repositoryId: 'x',
-      projectIds: ['y'],
-      integrationsDigest: 'a'.repeat(64),
+      tenantId: 'x',
+      projectId: 'y',
       resolveIdentity: () => null,
       verifyApproval: () => null,
       runtimeRevision: () => ({ sourceRevision: 'x', currentRevision: 1 }),

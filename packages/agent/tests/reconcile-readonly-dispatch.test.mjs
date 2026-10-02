@@ -1,7 +1,6 @@
-import { writeConsumerFixture } from './helpers/consumer-fixture.mjs';
 import { test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,12 +14,45 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+function sourceRoot() {
+  let current = path.dirname(bundle);
+  for (;;) {
+    if (
+      existsSync(path.join(current, 'agent-runtime.config.v1.yaml')) &&
+      existsSync(path.join(current, 'AGENT.sidecar.md'))
+    )
+      return current;
+    const parent = path.dirname(current);
+    if (parent === current) throw new Error('source fixture missing');
+    current = parent;
+  }
+}
+
 function fixture() {
+  const source = sourceRoot();
   const root = mkdtempSync(path.join(tmpdir(), 'vida-readonly-dispatch-'));
-  writeConsumerFixture(root, bundle);
+  const put = (relative, bytes) => {
+    const target = path.join(root, relative);
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, bytes);
+  };
+  mkdirSync(path.join(root, '.git'));
+  for (const relative of [
+    'AGENTS.md',
+    'AGENT.sidecar.md',
+    'agent-runtime.config.v1.yaml',
+    'docs/products.map.md',
+    'docs/agent-instructions/documentation-policy.v1.json',
+  ])
+    put(relative, readFileSync(path.join(source, relative)));
+  cpSync(bundle, path.join(root, 'packages/agent'), {
+    recursive: true,
+    filter: (entry) => !['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'].includes(path.basename(entry)),
+  });
+  cpSync(path.join(source, 'packages/plugin'), path.join(root, 'packages/plugin'), { recursive: true });
   const config = loadRuntimeConfig(root);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
-  const projectIds = ['fixture-project'];
+  const projectIds = ['agent'];
   const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds);
   const workId = 'readonly-repair-fixture';
   const attempt = 2;
@@ -59,8 +91,8 @@ function fixture() {
     scope_contract_digest: 'c'.repeat(64),
     acceptance_manifest_digest: 'd'.repeat(64),
     ac_ids: ['AC-1'],
-    implementation_paths: ['vida-agent/TESTING.md'],
-    allowed_resources: ['file:vida-agent/TESTING.md'],
+    implementation_paths: ['packages/agent/TESTING.md'],
+    allowed_resources: ['file:packages/agent/TESTING.md'],
     config_digest: runtimeConfigDigest(config),
     runtime_source_revision: 'runtime-source',
     schema_digest: 'f'.repeat(64),
@@ -104,9 +136,9 @@ function fixture() {
       },
       scope: {
         scope_id: binding.scope_id,
-        allowed_paths: ['vida-agent/TESTING.md'],
-        fingerprint_paths: ['vida-agent/TESTING.md'],
-        implementation_paths: ['vida-agent/TESTING.md'],
+        allowed_paths: ['packages/agent/TESTING.md'],
+        fingerprint_paths: ['packages/agent/TESTING.md'],
+        implementation_paths: ['packages/agent/TESTING.md'],
         documentation_paths: [],
       },
       seal: null,
@@ -185,7 +217,7 @@ function fixture() {
           '--timestamp',
           '2026-09-28T10:00:00.000Z',
           '--projects',
-          'fixture-project',
+          'agent',
           '--work-id',
           workId,
           '--attempt',

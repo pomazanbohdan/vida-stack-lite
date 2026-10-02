@@ -170,3 +170,18 @@ export {
   type DocumentationClearCheckpoint,
   type DocumentationClearInput,
 } from './documentation/clear.js';
+export {
+  finalAssurancePreparationSchema,
+  finalAssurancePacketSchema,
+  finalAssuranceReviewSchema,
+  finalAssuranceReverseSchema,
+  finalAssuranceStateSchema,
+  correctiveExecutionPlanSchema,
+  correctiveExecutionSchema,
+  correctiveAssignmentAuthorizationSchema,
+  type FinalAssurancePacket,
+  type FinalAssuranceState,
+  type FinalAssuranceReport,
+  type FinalAssuranceSnapshot,
+  type CorrectiveExecution,
+} from './orchestration/final-assurance.js';

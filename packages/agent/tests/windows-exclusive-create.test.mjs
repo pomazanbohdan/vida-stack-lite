@@ -219,3 +219,18 @@ test('Linux resource locks recover only dead stale sidecars and preserve unsafe 
   expect(readdirSync(outside)).toEqual(['sentinel']);
   expect(readFileSync(path.join(root, 'operation.json'))).toEqual(payload);
 });
+
+test('Linux resource locks preserve legal long UTF-8 basenames through release and reacquisition', async () => {
+  if (process.platform !== 'linux') return;
+  const { root, access } = fixture();
+  for (const name of ['x'.repeat(194), 'x'.repeat(195), 'x'.repeat(239), 'x'.repeat(255), 'я'.repeat(127)]) {
+    writeFileSync(path.join(root, name), 'preserved');
+    await access.withExclusiveLockAsync(name, 'long resource', async () => {
+      await expect(access.withExclusiveLockAsync(name, 'contender', async () => undefined)).rejects.toThrow();
+      expect(readFileSync(path.join(root, name), 'utf8')).toBe('preserved');
+    });
+    expect(access.withExclusiveLock(name, 'reacquire', () => 'held')).toBe('held');
+    expect(readdirSync(root)).toEqual([name]);
+    rmSync(path.join(root, name));
+  }
+});

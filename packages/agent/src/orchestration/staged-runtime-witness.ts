@@ -74,7 +74,7 @@ export async function createStagedRuntimeWitness(input: {
       snapshot.state.work_id === workId &&
       snapshot.state.attempt === attempt &&
       snapshot.state.step_id === null &&
-      snapshot.state.items.length === 0 &&
+      snapshot.resume_status === 'complete' &&
       snapshot.state.run_id.length > 0 &&
       snapshot.version.digest === canonicalJsonDigest(snapshot.state),
     'persisted journal identity or digest is invalid',

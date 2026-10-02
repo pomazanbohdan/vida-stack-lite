@@ -10,6 +10,7 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { main } from '../bin/run.mjs';
+import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
 import { citedResearchConstraints } from '../src/orchestration/admitted-development-packet.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -82,6 +83,7 @@ test('audit core preserves selection on resumed developer-only issue and returns
       'schemas',
       'instructions',
       'templates',
+      'tooling',
       'package.json',
       'TESTING.md',
       'bun.lock',
@@ -201,7 +203,7 @@ test('audit core preserves selection on resumed developer-only issue and returns
       scope_path: relative('scope.json'),
       acceptance_path: relative('acceptance.json'),
       source_authorization_path: relative('source-authorization.json'),
-      runtime_code_paths: ['tools/agents/bin/run.mjs'],
+      runtime_code_paths: runtimeExecutableInventory(bundle).map((file) => 'tools/agents/' + file),
       route: 'R2',
       risk: 'low',
       change_kind: 'fix',

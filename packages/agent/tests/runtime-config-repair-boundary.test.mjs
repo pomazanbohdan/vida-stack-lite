@@ -1,5 +1,4 @@
-import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
-import { afterAll, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -13,10 +12,7 @@ import {
 } from '../src/config/runtime-config.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
-afterAll(() => {
-  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
-});
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
 const sourceBytes = readFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'));
 
 describe('current-v1 exact-byte config repair boundary', () => {

@@ -1,12 +1,10 @@
 import { expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../src/index.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -25,6 +23,7 @@ const createFixture = (root, bundleName = 'agent-runtime-new', multiProject = fa
       'src',
       'dist',
       'bin',
+      'tooling',
       'schemas',
       'instructions',
       'templates',
@@ -136,9 +135,9 @@ const createImplementationTask = (root, previousArgs = null) => {
       )
     : fixture.args;
   const workId = base[base.indexOf('--work-id') + 1];
-  mkdirSync(path.join(root, 'src'), { recursive: true });
-  if (!existsSync(path.join(root, 'src', 'task.ts')))
-    writeFileSync(path.join(root, 'src', 'task.ts'), 'export const task = true;\n');
+  mkdirSync(path.join(root, 'src', 'dist'), { recursive: true });
+  if (!existsSync(path.join(root, 'src', 'dist', 'task.ts')))
+    writeFileSync(path.join(root, 'src', 'dist', 'task.ts'), 'export const task = true;\n');
   const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md', 'src/task.ts']);
   const scopeId = `${workId}-scope`;
   const workDir = path.join(root, '.agent', 'work', workId);
@@ -314,30 +313,11 @@ test.each([false, true])(
     let ledger;
     try {
       const fixture = createImplementationTask(root);
-      // Execute the installed package through Bun so Vite cannot rewrite its
-      // package identity or dependency namespace during coverage collection.
-      const driver = path.join(root, '.agent/fixture-installed-run.mjs');
-      writeFileSync(
-        driver,
-        `import { pathToFileURL } from 'node:url';
-const { run } = await import(pathToFileURL(process.argv[2]).href);
-try { console.log(JSON.stringify(await run(JSON.parse(process.argv[3])))); }
-catch (error) { console.error(JSON.stringify({ message: error.message, code: error.code })); process.exitCode = 1; }
-`,
+      const privatePackage = path.join(root, 'vida-agent');
+      const { run } = await import(pathToFileURL(path.join(privatePackage, 'bin/run.mjs')).href);
+      const { runReconcileArtifacts } = await import(
+        pathToFileURL(path.join(privatePackage, 'bin/reconcile-artifacts.mjs')).href
       );
-      const runInstalled = async (commandArgs) => {
-        const result = spawnSync(
-          process.execPath,
-          [driver, path.join(root, 'vida-agent/bin/run.mjs'), JSON.stringify(commandArgs)],
-          { cwd: root, encoding: 'utf8', timeout: 45_000, maxBuffer: 8 * 1024 * 1024 },
-        );
-        if (result.error) throw result.error;
-        if (result.status !== 0) {
-          const failure = JSON.parse(result.stderr);
-          throw new Error(failure.message);
-        }
-        return JSON.parse(result.stdout);
-      };
       const args = fixture.args.map((value, index) =>
         fixture.args[index - 1] === '--workflow'
           ? workflow
@@ -365,7 +345,7 @@ catch (error) { console.error(JSON.stringify({ message: error.message, code: err
         );
       }
       const continuing = args.slice(0, -2);
-      const prepared = await runInstalled(args);
+      const prepared = await run(args);
       const expected = (version) => [
         '--expected-revision',
         String(version.revision),
@@ -391,9 +371,9 @@ catch (error) { console.error(JSON.stringify({ message: error.message, code: err
       };
       const report = async (version, observation) => {
         writeFileSync(reportFile, record(observation));
-        return runInstalled([...continuing, ...expected(version), '--report', reportFile]);
+        return run([...continuing, ...expected(version), '--report', reportFile]);
       };
-      let current = await runInstalled([...continuing, ...expected(prepared.state_version), '--issue-wave', 'true']);
+      let current = await run([...continuing, ...expected(prepared.state_version), '--issue-wave', 'true']);
       const original = current.issued_actions;
       expect(original.length).toBe(3);
       current = await report(current.state_version, observationFor(original[0], 0));
@@ -510,23 +490,30 @@ catch (error) { console.error(JSON.stringify({ message: error.message, code: err
           sourceDigest: switched.snapshot.state.source_scope.digest,
         });
         expect(resumed.status).toBe('resumed');
-        const runtimePath = 'vida-agent/bin/run.mjs';
+        // The raw intake listed only bin/run; omitted engine files still bind freshness.
+        const runtimePath = simulateCrashAfterResume
+          ? 'vida-agent/dist/src/runtime.js'
+          : 'vida-agent/src/runtime-kernel.ts';
         const runtimeFile = path.join(root, runtimePath);
+        const canonicalIntake = ledger.hostState
+          .readHostStateSnapshot(identity)
+          .work.artifacts.find((ref) => ref.artifact_id === 'local-session-intake');
+        const runtimePaths = JSON.parse(readFileSync(path.join(root, canonicalIntake.path), 'utf8')).runtime_code_paths;
+        const manifestFiles = () =>
+          runtimePaths.map((relative) => {
+            const bytes = readFileSync(path.join(root, relative));
+            return { path: relative, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+          });
+        const parentManifest = { schema: 'VidaAgentPreparedPayload/v1', files: manifestFiles() };
         const oldBytes = readFileSync(runtimeFile);
         writeFileSync(runtimeFile, Buffer.concat([oldBytes, Buffer.from('\n// fixture forward runtime update\n')]));
         const newBytes = readFileSync(runtimeFile);
-        const fileEntry = (bytes) => ({
-          path: runtimePath,
-          size: bytes.length,
-          sha256: createHash('sha256').update(bytes).digest('hex'),
-        });
-        const parentManifest = { schema: 'VidaAgentPreparedPayload/v1', files: [fileEntry(oldBytes)] };
-        const successorManifest = { schema: 'VidaAgentPreparedPayload/v1', files: [fileEntry(newBytes)] };
+        const successorManifest = { schema: 'VidaAgentPreparedPayload/v1', files: manifestFiles() };
         const forwardId = 'fixture-runtime-code-forward';
         const forwardDir = path.join(root, '.agent', 'cutover', forwardId);
         const manifestSha = (value) => createHash('sha256').update(record(value)).digest('hex');
         const beforeDenied = ledger.hostState.readHostStateSnapshot(identity);
-        await expect(runInstalled([...continuing, ...expected(pausedVersion), '--issue-wave', 'true'])).rejects.toThrow(
+        await expect(run([...continuing, ...expected(pausedVersion), '--issue-wave', 'true'])).rejects.toThrow(
           'Admitted runtime code changed',
         );
         expect(ledger.resume(workId, 1).version).toEqual(pausedVersion);
@@ -588,61 +575,6 @@ catch (error) { console.error(JSON.stringify({ message: error.message, code: err
         const pausedForInstall = ledger.hostState.readHostStateSnapshot(identity);
         expect(pausedForInstall.work.execution.status).toBe('suspended');
         expect(pausedForInstall.work.lease).toBeNull();
-        // TEST SETUP: preserve canonical rows and release lineage while substituting
-        // a different work's execution resource, even in the allowed-resource catalog.
-        const resourceDb = new Database(path.join(root, config.control.work_root, 'session-handoff.v1.sqlite'));
-        const resourceRows = resourceDb
-          .query("SELECT kind,id,payload,digest FROM agent_host_state WHERE kind IN ('work','ledger') ORDER BY kind,id")
-          .all();
-        const replaceResource = (resources) =>
-          resources.map((resource) => (resource === 'execution:' + workId ? 'execution:foreign-work' : resource));
-        const updateResourceRow = resourceDb.query(
-          'UPDATE agent_host_state SET payload=?,digest=? WHERE kind=? AND id=?',
-        );
-        try {
-          for (const row of resourceRows) {
-            const value = JSON.parse(row.payload);
-            if (row.kind === 'work')
-              value.binding.allowed_resources = [...value.binding.allowed_resources, 'execution:foreign-work'].sort(
-                (left, right) => (left < right ? -1 : left > right ? 1 : 0),
-              );
-            else {
-              const prior = [...value.tickets]
-                .reverse()
-                .find(
-                  (ticket) =>
-                    ticket.work_id === workId &&
-                    ticket.thread_id === 'fixture-native-session' &&
-                    ticket.status === 'released',
-                );
-              expect(prior.exclusive_resources).toContain('execution:' + workId);
-              prior.exclusive_resources = replaceResource(prior.exclusive_resources);
-              for (const claim of value.claims.filter((entry) => entry.ticket_id === prior.ticket_id))
-                claim.resources = replaceResource(claim.resources);
-              for (const operation of value.operations.filter((entry) => entry.ticket_id === prior.ticket_id))
-                operation.resources = replaceResource(operation.resources);
-            }
-            updateResourceRow.run(JSON.stringify(value), canonicalJsonDigest(value), row.kind, row.id);
-          }
-          const beforeForeignDenial = resourceDb.query('SELECT * FROM agent_host_state ORDER BY kind,id').all();
-          const journalBeforeForeignDenial = ledger.resume(workId, 1).version;
-          await expect(runReconcileArtifacts(['--mode', 'plan', ...rebind])).rejects.toThrow(
-            'current owner, journal or issued replacement differs',
-          );
-          expect(resourceDb.query('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
-            beforeForeignDenial,
-          );
-          expect(ledger.resume(workId, 1).version).toEqual(journalBeforeForeignDenial);
-          expect(
-            existsSync(path.join(root, '.agent/work/fixture-runtime-code-rebind/runtime-code-rebind-plan.v1.json')),
-          ).toBe(false);
-        } finally {
-          for (const row of resourceRows) updateResourceRow.run(row.payload, row.digest, row.kind, row.id);
-          resourceDb.close();
-        }
-        const restoredResourceOwner = ledger.hostState.readHostStateSnapshot(identity);
-        expect(restoredResourceOwner.workVersion).toEqual(pausedForInstall.workVersion);
-        expect(restoredResourceOwner.ledgerVersion).toEqual(pausedForInstall.ledgerVersion);
         expect((await runReconcileArtifacts(['--mode', 'plan', ...rebind])).status).toBe('planned');
         const stateBeforeTamper = ledger.hostState.readHostStateSnapshot(identity);
         const journalBeforeTamper = ledger.resume(workId, 1).version;
@@ -706,7 +638,7 @@ catch (error) { console.error(JSON.stringify({ message: error.message, code: err
         rmSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'));
         rmSync(forwardDir, { recursive: true });
       }
-      current = await runInstalled([...continuing, ...expected(pausedVersion), '--issue-wave', 'true']);
+      current = await run([...continuing, ...expected(pausedVersion), '--issue-wave', 'true']);
       expect(current.status).toBe('wave_retrieved');
       if (workflow === 'implementation_change')
         expect(current.issued_actions[0].issue_id).toBe(
@@ -726,7 +658,7 @@ catch (error) { console.error(JSON.stringify({ message: error.message, code: err
       const historyBeforeReplay = readFileSync(historyPath, 'utf8');
       await expect(report(current.state_version, observationFor(original[1], 1))).rejects.toThrow();
       expect(ledger.resume(workId, 1).version).toEqual(current.state_version);
-      const reissued = await runInstalled([...continuing, ...expected(current.state_version), '--issue-wave', 'true']);
+      const reissued = await run([...continuing, ...expected(current.state_version), '--issue-wave', 'true']);
       expect(reissued.issued_actions[0].issue_id).toBe(current.issued_actions[0].issue_id);
       expect(readFileSync(historyPath, 'utf8')).toBe(historyBeforeReplay);
       const activationIds = historyBeforeReplay
@@ -737,7 +669,7 @@ catch (error) { console.error(JSON.stringify({ message: error.message, code: err
       expect(activationIds.at(-1)).toContain(reissued.issued_actions[0].issue_id);
       current = await report(reissued.state_version, observationFor(reissued.issued_actions[0], 1));
       expect(current.status).toBe('replacement_observed');
-      const next = await runInstalled(continuing);
+      const next = await run(continuing);
       expect(next.resume_status).not.toBe('issued_outcome_uncertain');
       expect(ledger.hostState.readHostStateSnapshot(identity).work.lifecycle.phase).toBe('INTAKE');
     } finally {

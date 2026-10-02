@@ -756,7 +756,8 @@ function openExclusiveLock(root: string, target: string, label: string): OpenedE
   const parent = openParent(root, safeRelative(root, target, label), label);
   const opened = { succeeded: false };
   try {
-    const lock = openExclusiveLockAt(parent.fd, parent.name + '.lock', label);
+    const lockName = resourceLockName(parent.name);
+    const lock = openExclusiveLockAt(parent.fd, lockName, label);
     opened.succeeded = true;
     return lock;
   } finally {
@@ -766,6 +767,13 @@ function openExclusiveLock(root: string, target: string, label: string): OpenedE
       () => closeQuietly(parent.fd),
     );
   }
+}
+function resourceLockName(resourceName: string): string {
+  // Leave 56 bytes for the longest reclaim-guard quarantine component.
+  const sidecar = resourceName + '.lock';
+  return Buffer.byteLength(sidecar, 'utf8') <= 199
+    ? sidecar
+    : '.vida-resource-lock-' + createHash('sha256').update(resourceName, 'utf8').digest('hex') + '.lock';
 }
 function releaseExclusiveLock(parentFd: number, name: string, fd: number): void {
   const guard = acquireReclaimGuard(parentFd, name, 'exclusive lock release');
@@ -1184,6 +1192,32 @@ function cloneOrCopyExclusive(
   }
   return readableClonedFile(clonedFd, parentFd, name, label);
 }
+function verifyLinuxTargetPath(
+  parentFd: number,
+  name: string,
+  label: string,
+  expectedHashes: readonly string[],
+  expectedIdentity?: Stats,
+): void {
+  const target = childPath(parentFd, name);
+  const fd = openSync(target, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+  try {
+    const opened = fstatSync(fd);
+    const pathStats = lstatSync(target);
+    regularFile(opened, label + ' restored target');
+    const contentHash = rawHash(readBoundedBuffer(fd, label));
+    reject(
+      any(
+        !sameFileIdentity(opened, pathStats),
+        expectedIdentity !== undefined && !sameFileIdentity(expectedIdentity, opened),
+        !expectedHashes.includes(contentHash),
+      ),
+      label + ' restored target path or content changed before backup retirement',
+    );
+  } finally {
+    closeQuietly(fd);
+  }
+}
 function replaceAtomicLinux(root: string, target: string, expectedHash: string, contents: string, label: string): void {
   const native = linuxNativeBinding;
   reject(!native, label + ' requires the bundled Linux descriptor-bound copy primitive');
@@ -1313,6 +1347,7 @@ function recoverLinuxOrphanBackup(
   desiredHash: string,
   label: string,
 ): void {
+  let restoredTargetIdentity: Stats | undefined;
   const escaped = targetName.replace(/[\^$.*+?()[\]{}|]/g, '\\$&');
   const names = readdirSync(childPath(parentFd, '.')).filter((name) =>
     new RegExp('^[.]' + escaped + '[.][0-9a-f-]{36}[.]cas-old$').test(name),
@@ -1376,11 +1411,13 @@ function recoverLinuxOrphanBackup(
             const restoredFd = cloneOrCopyExclusive(native, backupFd, parentFd, targetName, label);
             try {
               fsyncSync(restoredFd);
-              regularFile(fstatSync(restoredFd), label);
+              const restoredStats = fstatSync(restoredFd);
+              regularFile(restoredStats, label);
               reject(
                 rawHash(readBoundedBuffer(restoredFd, label)) !== expectedHash,
                 label + ' orphan backup restore content verification failed',
               );
+              restoredTargetIdentity = restoredStats;
               fsyncSync(parentFd);
             } finally {
               closeQuietly(restoredFd);
@@ -1394,6 +1431,7 @@ function recoverLinuxOrphanBackup(
             !sameFileIdentity(backupIdentity, fstatSync(currentBackupFd)),
             label + ' private backup identity changed during recovery',
           );
+          verifyLinuxTargetPath(parentFd, targetName, label, [expectedHash, desiredHash], restoredTargetIdentity);
           unlinkSync(childPath(parentFd, backupName));
           fsyncSync(parentFd);
         } finally {
@@ -1425,10 +1463,13 @@ function restoreLinuxBackup(
             () => {
               const backupFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow);
               try {
+                const backupIdentity = fstatSync(backupFd);
                 const restoredFd = cloneOrCopyExclusive(native, backupFd, parentFd, targetName, label);
+                let restoredIdentity: Stats;
                 try {
                   fsyncSync(restoredFd);
-                  regularFile(fstatSync(restoredFd), label);
+                  restoredIdentity = fstatSync(restoredFd);
+                  regularFile(restoredIdentity, label);
                   reject(
                     rawHash(readBoundedBuffer(restoredFd, label)) !== expectedHash,
                     label + ' orphan backup restore content verification failed',
@@ -1437,6 +1478,8 @@ function restoreLinuxBackup(
                 } finally {
                   closeQuietly(restoredFd);
                 }
+                verifyLinuxTargetPath(parentFd, targetName, label, [expectedHash], restoredIdentity);
+                verifyLinuxTargetPath(parentFd, backupName, label, [expectedHash], backupIdentity);
                 unlinkSync(childPath(parentFd, backupName));
                 fsyncSync(parentFd);
               } finally {

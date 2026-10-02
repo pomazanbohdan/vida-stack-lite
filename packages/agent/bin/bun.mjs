@@ -19,6 +19,46 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const bundleRoot = fileURLToPath(new URL('../', import.meta.url));
 
+// These markers select an already materialized executable payload, never authority.
+export function standaloneRuntime(env = process.env) {
+  const root = env.VIDA_STANDALONE_ROOT;
+  const executable = env.VIDA_STANDALONE_EXECUTABLE;
+  if (root === undefined && executable === undefined) return null;
+  if (
+    process.versions.bun !== '1.4.2' ||
+    env.BUN_BE_BUN !== '1' ||
+    typeof root !== 'string' ||
+    !path.isAbsolute(root) ||
+    path.resolve(root) !== root ||
+    typeof executable !== 'string' ||
+    !path.isAbsolute(executable) ||
+    realpathSync(executable) !== realpathSync(process.execPath)
+  )
+    throw new Error('Embedded runtime markers do not match the executing pinned Bun payload.');
+  for (let current = root; ; current = path.dirname(current)) {
+    const info = lstatSync(current);
+    if (!info.isDirectory() || info.isSymbolicLink())
+      throw new Error('Embedded package root must be a non-link directory.');
+    if (current === path.dirname(current)) break;
+  }
+  const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  if (manifest.name !== 'vida-agent') throw new Error('Embedded package identity differs.');
+  const pin = readPin(root);
+  checkManifest(root, pin);
+  if (pin !== process.versions.bun) throw new Error('Embedded runtime pin differs.');
+  return { root, executable: realpathSync(executable) };
+}
+
+export function standaloneEnvironment(env = process.env) {
+  const runtime = standaloneRuntime(env);
+  if (!runtime) return { ...env };
+  const next = { ...env };
+  for (const key of Object.keys(next))
+    if (['NODE_OPTIONS', 'BUN_OPTIONS'].includes(key.toUpperCase())) delete next[key];
+  next.BUN_BE_BUN = '1';
+  return next;
+}
+
 export function readPin(root = bundleRoot) {
   const file = path.join(root, '.bun-version');
   const identity = lstatSync(file);
@@ -148,7 +188,7 @@ export function boundedSpawnSync(spawn, command, args, options, label, cleanup =
 }
 
 export function pinnedEnvironment(executable, env = process.env, root = bundleRoot) {
-  const next = { ...env };
+  const next = standaloneEnvironment(env);
   const canonical = realpathSync(root);
   const pin = readPin(canonical);
   const inheritedCache = env.BUN_RUNTIME_TRANSPILER_CACHE_PATH;
@@ -191,6 +231,14 @@ export function pinnedEnvironment(executable, env = process.env, root = bundleRo
 }
 
 export function resolvePinnedBun(options = {}) {
+  const embedded = standaloneRuntime(options.env ?? process.env);
+  if (embedded) {
+    if (options.root && realpathSync(options.root) !== embedded.root)
+      throw new Error('Embedded runtime package root differs.');
+    if (options.executable && realpathSync(options.executable) !== embedded.executable)
+      throw new Error('Embedded runtime executable differs.');
+    return embedded.executable;
+  }
   const root = options.root ?? bundleRoot;
   const pin = readPin(root);
   checkManifest(root, pin);
@@ -292,7 +340,8 @@ export function resolvePinnedBun(options = {}) {
 }
 
 export function runPinnedBun(args, options = {}) {
-  const root = options.root ?? bundleRoot;
+  const embedded = standaloneRuntime(options.env ?? process.env);
+  const root = options.root ?? embedded?.root ?? bundleRoot;
   const pin = readPin(root);
   checkManifest(root, pin);
   const spawn = options.spawn ?? spawnSync;
@@ -302,7 +351,7 @@ export function runPinnedBun(args, options = {}) {
   const result = boundedSpawnSync(
     spawn,
     executable,
-    args,
+    embedded ? ['--no-env-file', '--no-install', '--config=' + path.join(root, 'bunfig.toml'), ...args] : args,
     {
       cwd: options.cwd ?? process.cwd(),
       env: pinnedEnvironment(executable, env, root),

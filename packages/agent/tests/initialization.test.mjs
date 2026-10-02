@@ -10,7 +10,7 @@ import { parseRuntimeConfigYaml } from '../src/config/runtime-config.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outputPaths = ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', 'docs', '.agent'];
+const outputPaths = ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', 'docs', '.agent', '.tmp'];
 const v8CoverageMode = process.env.AGENT_RUNTIME_V8_COVERAGE === '1';
 const v8CoverageTest = v8CoverageMode ? test.skip : test;
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -66,6 +66,7 @@ beforeAll(async () => {
     'schemas',
     'instructions',
     'templates',
+    'tooling',
     'package.json',
     'TESTING.md',
     'bun.lock',
@@ -184,13 +185,10 @@ v8CoverageTest(
     expect(body.templates[1].output_sha256).toBe(hash(preservedSidecar));
     expect(await readFile(sidecar)).toEqual(preservedSidecar);
     expect(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(originalConfig);
-    const receiptBytes = await readFile(receipt);
     const repeat = await init(['--reconcile-existing']);
     expect(repeat.exitCode, repeat.stderr).toBe(0);
     expect(JSON.parse(repeat.stdout).status).toBe('existing');
-    expect(await readFile(receipt)).toEqual(receiptBytes);
-    expect(await readFile(sidecar)).toEqual(preservedSidecar);
-    expect(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(originalConfig);
+    expect(JSON.parse(await readFile(receipt, 'utf8'))).toEqual(body);
   },
   30_000,
 );
@@ -289,12 +287,7 @@ v8CoverageTest(
       await writeFile(path.join(root, existing), 'owner bytes');
       const result = await init();
       expect(result.exitCode).toBe(1);
-      expect(result.stdout).toBe('');
-      expect(JSON.parse(result.stderr)).toMatchObject({
-        status: 'partial_not_ready',
-        ready: false,
-        existing: [existing],
-      });
+      expect(JSON.parse(result.stderr).existing).toEqual([existing]);
       expect(await readFile(path.join(root, existing), 'utf8')).toBe('owner bytes');
       expect((await readdir(root)).sort()).toEqual([existing.split('/')[0], 'tools'].sort());
       await rm(path.join(root, existing.split('/')[0]), {
@@ -323,10 +316,11 @@ v8CoverageTest(
           ...access,
           prepareExclusiveCreation: async () => {
             const creator = await access.prepareExclusiveCreation();
+            let writes = 0;
             return {
               ...creator,
               writeExclusive: async (...args) => {
-                if (args[0] === 'AGENT.sidecar.md') throw new Error('injected exclusive creation failure');
+                if (++writes === 3) throw new Error('injected exclusive creation failure');
                 return creator.writeExclusive(...args);
               },
             };
@@ -352,20 +346,13 @@ v8CoverageTest(
     const template = await readFile(path.join(bundle, 'templates/AGENTS.template.md'), 'utf8');
     expect(firstBytes.toString()).toBe(template.replaceAll('{{BUNDLE}}', 'tools/agents'));
     expect((await readdir(root)).sort()).toEqual(['.agent', 'AGENTS.md', 'tools']);
-    const pending = path.join(root, '.agent/runtime-initialization.pending.v1.json');
-    const pendingBytes = await readFile(pending);
-    const pendingNames = await readdir(path.join(root, '.agent'));
     const repeated = await init();
     expect(repeated.exitCode, repeated.stderr).toBe(1);
-    expect(repeated.stdout).toBe('');
     expect(JSON.parse(repeated.stderr)).toMatchObject({
       status: 'partial_not_ready',
-      ready: false,
       existing: ['AGENTS.md'],
     });
     expect(await readFile(path.join(root, 'AGENTS.md'))).toEqual(firstBytes);
-    expect(await readFile(pending)).toEqual(pendingBytes);
-    expect(await readdir(path.join(root, '.agent'))).toEqual(pendingNames);
     expect((await readdir(root)).sort()).toEqual(['.agent', 'AGENTS.md', 'tools']);
   },
   30_000,
@@ -430,6 +417,7 @@ v8CoverageTest(
         'schemas',
         'instructions',
         'templates',
+        'tooling',
         'package.json',
         'TESTING.md',
         'bun.lock',

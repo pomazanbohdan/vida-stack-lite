@@ -1,52 +1,10 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { parse, stringify } from 'yaml';
-import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
-import { afterAll, test } from 'bun:test';
+import { configuredTestContext } from './configured-context.mjs';
+import { test } from 'bun:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import {
-  compileDevelopmentWorkflow,
-  loadProjectContext,
-  loadRuntimeConfig,
-  resolveConfigPath,
-  selectWorkflow,
-} from '../src/index.ts';
+import { compileDevelopmentWorkflow, resolveConfigPath, selectWorkflow } from '../src/index.ts';
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
-afterAll(() => {
-  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
-});
-if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) {
-  const file = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
-  const fixture = parse(readFileSync(file, 'utf8'));
-  fixture.projects[0].project_root = 'projects/fixture-project';
-  const secondary = structuredClone(fixture.projects[0]);
-  secondary.project_id = 'fixture-secondary';
-  secondary.title = 'Secondary fixture';
-  secondary.project_root = 'projects/fixture-secondary';
-  secondary.delivery_group = 'fixture-secondary';
-  fixture.projects.push(secondary);
-  for (const project of fixture.projects)
-    mkdirSync(path.join(repositoryRoot, project.project_root), { recursive: true });
-  fixture.integrations.providers.push({
-    ...fixture.integrations.providers[0],
-    id: 'local-fixture-secondary',
-    project_id: 'fixture-secondary',
-    namespace: 'fixture-secondary',
-  });
-  fixture.teams['default-development'].allowed_projects.push('fixture-secondary');
-  writeFileSync(file, stringify(fixture));
-}
-const config = loadRuntimeConfig(repositoryRoot);
-const projectContext = loadProjectContext(
-  repositoryRoot,
-  config,
-  config.repository.repository_id,
-  config.projects[0].project_id,
-);
+const { repositoryRoot, config, context: projectContext } = configuredTestContext();
 const authorize = createConfiguredProjectAuthorizer(repositoryRoot, config);
 const repositoryId = projectContext.repository_id;
 const projectId = projectContext.project_ids[0];
@@ -106,9 +64,21 @@ test('configured Cedar remains default-deny for deterministic role and scope com
 test('workflow selection and compiled graph are deterministic (cases=256)', () => {
   const random = seeded(20260818);
   const cases = [
-    { kind: 'research', intent: 'information_research', workflow: 'information_research_light' },
-    { kind: 'feature', intent: 'implementation_new', workflow: 'implementation_new' },
-    { kind: 'story', intent: 'implementation_change', workflow: 'implementation_change' },
+    {
+      kind: 'research',
+      intent: 'information_research',
+      workflow: 'information_research_light',
+    },
+    {
+      kind: 'feature',
+      intent: 'implementation_new',
+      workflow: 'implementation_new',
+    },
+    {
+      kind: 'story',
+      intent: 'implementation_change',
+      workflow: 'implementation_change',
+    },
     { kind: 'bug', intent: 'bug_fix', workflow: 'bug_fix' },
     { kind: 'task', intent: 'task_execution', workflow: 'task_execution' },
   ];
@@ -126,7 +96,7 @@ test('workflow selection and compiled graph are deterministic (cases=256)', () =
       team: 'default-development',
       kind: item.kind,
       intent: item.intent,
-      project: config.projects[0].project_id,
+      project: projectId,
       risk_flags: [],
       labels: [],
     });

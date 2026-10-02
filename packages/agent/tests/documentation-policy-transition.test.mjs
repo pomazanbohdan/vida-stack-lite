@@ -1,7 +1,7 @@
-import { tmpdir } from 'node:os';
-import { afterEach, expect, test } from 'bun:test';
+import { expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, cpSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, cpSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
@@ -60,18 +60,12 @@ test('policy transition parser rejects unknown fields and incomplete forged clos
   ).toThrow('schema');
 });
 
-const fixtureRoots = [];
-afterEach(() => {
-  for (const root of fixtureRoots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
-
 function fixture() {
   const bundle = process.env.VIDA_POLICY_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '..');
-  const scratch = process.env.VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT ?? tmpdir();
+  const scratch = process.env.VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT ?? process.env.TEMP ?? tmpdir();
   if (!scratch || !path.isAbsolute(scratch)) throw Error('absolute private fixture root required');
   mkdirSync(scratch, { recursive: true });
   const root = mkdtempSync(path.join(scratch, 'policy-'));
-  fixtureRoots.push(root);
   const put = (file, content) => {
     mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
     writeFileSync(path.join(root, file), content);

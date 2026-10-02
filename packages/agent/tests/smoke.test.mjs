@@ -1,6 +1,4 @@
-import { rmSync } from 'node:fs';
-import { createConsumerFixture } from './helpers/consumer-fixture.mjs';
-import { afterAll, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -11,17 +9,9 @@ import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-bo
 import { createRuntimeKernelHostProofForCompositionRoot } from '../src/runtime-kernel.ts';
 import { stable } from '../src/lifecycle/runtime-facade.ts';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
-afterAll(() => {
-  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(repositoryRoot, { recursive: true, force: true });
-});
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
 const config = runtime.loadRuntimeConfig(repositoryRoot);
-const projectContext = runtime.loadProjectContext(
-  repositoryRoot,
-  config,
-  config.repository.repository_id,
-  config.projects[0].project_id,
-);
+const projectContext = runtime.loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
 const projectId = projectContext.project_ids[0];
 
 function identity(role = 'developer-orchestrator') {
@@ -501,7 +491,7 @@ describe('clean v1 package surface', () => {
       work_item: {
         kind: 'feature',
         intent: 'implementation_new',
-        project: config.projects[0].project_id,
+        project: '3mob',
         risk_flags: [],
         labels: [],
       },

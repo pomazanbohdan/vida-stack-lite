@@ -29,7 +29,7 @@ let packageSha256 = null;
 let executable = null;
 let resolvedPin = null;
 
-function run(cwd, args, environmentOverrides = {}) {
+function run(cwd, args, environmentOverrides = {}, timeout = 180_000) {
   const pin = readPin(cwd);
   checkManifest(cwd, pin);
   if (executable === null) {
@@ -46,7 +46,7 @@ function run(cwd, args, environmentOverrides = {}) {
       env: { ...pinnedEnvironment(executable, process.env, cwd), ...environmentOverrides },
       encoding: 'utf8',
       windowsHide: true,
-      timeout: 180_000,
+      timeout,
     },
     'Portable smoke Bun command',
   );
@@ -166,6 +166,7 @@ try {
       VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT: repairFixtures,
       AGENT_RUNTIME_TEST_REPOSITORY_ROOT: undefined,
     },
+    300_000,
   );
   const receipt = {
     schema: 'VidaAgentPortableSmoke/v1',

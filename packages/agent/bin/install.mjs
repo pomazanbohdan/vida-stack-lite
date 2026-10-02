@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { checkManifest, findNpmCli, readPin, runPinnedBun } from './bun.mjs';
+import { checkManifest, findNpmCli, readPin, runPinnedBun, standaloneRuntime } from './bun.mjs';
 
 const bundleRoot = fileURLToPath(new URL('../', import.meta.url));
 const protectedFiles = ['package.json', 'bun.lock', '.bun-version', 'bin/bun.mjs', 'bin/init.mjs', 'bin/install.mjs'];
@@ -20,6 +20,14 @@ function packedLockfilePath(root) {
     throw new Error('Portable bundle is missing its lockfile.');
   }
   return 'dist/portable/bun.lock';
+}
+
+export function readPortableLock(root = bundleRoot) {
+  const file = path.join(root, packedLockfilePath(root));
+  const info = lstatSync(file);
+  if (!info.isFile() || info.isSymbolicLink() || info.nlink !== 1)
+    throw new Error('Installer lockfile must be a regular unlinked file.');
+  return readFileSync(file);
 }
 
 function directoryChain(directory) {
@@ -45,7 +53,7 @@ function snapshot(root) {
     .join(':');
 }
 
-function argumentsFor(args, root) {
+function argumentsFor(args, _root) {
   const values = { projects: [] };
   let check = false;
   for (let index = 0; index < args.length; index++) {
@@ -114,10 +122,44 @@ function requireSuccess(result, label) {
 }
 
 export function install(args, options = {}) {
-  const root = path.resolve(options.root ?? bundleRoot);
+  const embedded = standaloneRuntime();
+  const root = path.resolve(options.root ?? embedded?.root ?? bundleRoot);
+  if (embedded && root !== embedded.root) throw new Error('Embedded installer package root differs.');
   const { check, init } = argumentsFor(args, root);
   const before = snapshot(root);
   const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  if (embedded) {
+    const unchanged = () => {
+      if (snapshot(root) !== before) throw new Error('Installer inputs changed; stop and reconcile before retrying.');
+    };
+    unchanged();
+    if (check)
+      return {
+        status: 'prerequisites_valid',
+        bun_pin: readPin(root),
+        runtime: 'embedded',
+        initialization: 'not_requested',
+      };
+    if (init.length) {
+      let status;
+      try {
+        status = runPinnedBun([path.join(root, 'bin/init.mjs'), ...init], {
+          root,
+          cwd: root,
+          executable: embedded.executable,
+        });
+      } finally {
+        unchanged();
+      }
+      requireSuccess({ status }, 'Project initialization');
+    }
+    return {
+      status: 'embedded_runtime_valid',
+      bun_pin: readPin(root),
+      initialization: init.length ? 'delegated_successfully' : 'not_requested',
+      runtime_activation: 'not_performed',
+    };
+  }
   const nodeVersion = options.nodeVersion ?? process.versions.node;
   if (!stableVersion.test(manifest.engines?.node ?? '') || nodeVersion !== manifest.engines.node) {
     throw new Error('Node version must equal package.json engines.node: ' + manifest.engines?.node);
@@ -166,7 +208,10 @@ export function install(args, options = {}) {
   if (dependencyCheck.error || dependencyCheck.signal || dependencyCheck.status !== 0)
     throw new Error(
       'Cannot find module for a declared npm dependency: ' +
-        String(dependencyCheck.stderr || dependencyCheck.error?.message || 'dependency resolution failed').slice(0, 1024),
+        String(dependencyCheck.stderr || dependencyCheck.error?.message || 'dependency resolution failed').slice(
+          0,
+          1024,
+        ),
     );
   const run = options.runBun ?? runPinnedBun;
   const bunOptions = {

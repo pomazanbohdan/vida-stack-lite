@@ -1,6 +1,4 @@
-import { createConsumerFixture } from '../helpers/consumer-fixture.mjs';
-import { rmSync } from 'node:fs';
-import { afterAll, afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -13,11 +11,9 @@ import {
   sessionHandoffDatabasePath,
 } from '../../src/orchestration/persistent-session-handoff.ts';
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const root = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? createConsumerFixture(packageRoot);
-afterAll(() => {
-  if (!process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT) rmSync(root, { recursive: true, force: true });
-});
+const root =
+  process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const config = loadRuntimeConfig(root);
 const workspaceId = 'a'.repeat(64);
 const context = { work_id: 'new-work', attempt: 1, scope_digest: 'b'.repeat(64) };

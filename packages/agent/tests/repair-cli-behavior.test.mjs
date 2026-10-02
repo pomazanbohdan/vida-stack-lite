@@ -1,9 +1,8 @@
-import { writeConsumerFixture } from './helpers/consumer-fixture.mjs';
 import { afterEach, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +16,7 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const repository = path.resolve(bundle, '../..');
 const timestamp = new Date(Date.now() - 60_000).toISOString();
 const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
 const sha = (value) => createHash('sha256').update(value).digest('hex');
@@ -31,8 +31,17 @@ afterEach(() => {
 function fixture() {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-repair-cli-'));
   roots.push(root);
-  writeConsumerFixture(root, bundle);
-  symlinkSync(path.join(bundle, 'node_modules'), path.join(root, 'vida-agent/node_modules'), 'junction');
+  mkdirSync(path.join(root, '.git'));
+  const copiedBundle = path.join(root, 'packages/agent');
+  for (const relative of ['agent-runtime.config.v1.yaml', 'AGENTS.md', 'AGENT.sidecar.md'])
+    writeFileSync(path.join(root, relative), readFileSync(path.join(repository, relative)));
+  cpSync(bundle, copiedBundle, {
+    recursive: true,
+    filter: (entry) => !['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'].includes(path.basename(entry)),
+  });
+  symlinkSync(path.join(bundle, 'node_modules'), path.join(copiedBundle, 'node_modules'), 'junction');
+  cpSync(path.join(repository, 'packages/plugin'), path.join(root, 'packages/plugin'), { recursive: true });
+  cpSync(path.join(repository, 'docs'), path.join(root, 'docs'), { recursive: true });
   const config = loadRuntimeConfig(root);
   const records = config.research_decision.paths.research_records;
   const changelog = config.research_decision.paths.changelog;
@@ -49,7 +58,7 @@ function fixture() {
     }),
   );
   const workspace = deriveWorkspaceId(config.repository.repository_id, root);
-  const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['vida-agent/TESTING.md']);
+  const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['packages/agent/TESTING.md']);
   return { root, config, records, changelog, workspace, source };
 }
 
@@ -278,7 +287,7 @@ function persisted(context, results, record, normalized = true) {
   database.exec(
     'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, PRIMARY KEY(workspace_id,work_id,attempt))',
   );
-  const projectIds = ['fixture-project'];
+  const projectIds = ['agent'];
   const project = loadProjectSetContext(
     context.root,
     context.config,
@@ -300,8 +309,8 @@ function persisted(context, results, record, normalized = true) {
     work_item_digest: '1'.repeat(64),
     scope_contract_digest: '2'.repeat(64),
     acceptance_manifest_digest: '3'.repeat(64),
-    implementation_paths: ['vida-agent/TESTING.md'],
-    allowed_resources: ['file:vida-agent/TESTING.md'],
+    implementation_paths: ['packages/agent/TESTING.md'],
+    allowed_resources: ['file:packages/agent/TESTING.md'],
     runtime_source_revision: 'test-setup',
     schema_digest: '4'.repeat(64),
     runtime_code_digest: '5'.repeat(64),
@@ -624,7 +633,7 @@ test('synthesis observation dispatcher plans the real provenance collision and p
     '--correction-id',
     'correction-test',
     '--projects',
-    'fixture-project',
+    'agent',
     '--work-id',
     'work-repair',
     '--attempt',
@@ -667,7 +676,7 @@ test('synthesis observation dispatcher plans the real provenance collision and p
   wrongIssue[wrongIssue.indexOf('--issue-id') + 1] = 'foreign-issue';
   await expect(runReconcileArtifacts(wrongIssue)).rejects.toThrow('correction scope');
   expect(database.query('SELECT payload FROM agent_host_mastra_session_ledger').get().payload).toBe(row.payload);
-  writeFileSync(path.join(context.root, 'vida-agent/TESTING.md'), 'changed source\n');
+  writeFileSync(path.join(context.root, 'packages/agent/TESTING.md'), 'changed source\n');
   await expect(runReconcileArtifacts(args('inspect'))).rejects.toThrow('declared source changed');
   await expect(
     runReconcileArtifacts([
@@ -950,7 +959,7 @@ test('synthesis observation dispatcher prepares a new issue while keeping the or
     '--correction-id',
     'correction-test',
     '--projects',
-    'fixture-project',
+    'agent',
     '--work-id',
     'work-repair',
     '--attempt',
