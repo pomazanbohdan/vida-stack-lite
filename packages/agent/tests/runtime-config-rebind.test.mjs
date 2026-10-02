@@ -2,7 +2,17 @@ import { afterEach, test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync, cpSync, rmSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  cpSync,
+  rmSync,
+  renameSync,
+  symlinkSync,
+} from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -19,6 +29,7 @@ import { sessionBridgeRunId } from '../src/orchestration/mastra-session-bridge.t
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
+import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
 const source = process.env.VIDA_CONFIG_REBIND_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '..');
 const fixtureRoots = [];
 afterEach(() => {
@@ -27,7 +38,7 @@ afterEach(() => {
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const json = (v) => JSON.stringify(v, null, 2) + '\n';
 
-function fixture() {
+function fixture({ sourceMode = false } = {}) {
   const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? tmpdir();
   const root = mkdtempSync(path.join(fixtureRoot, 'fixture-'));
   fixtureRoots.push(root);
@@ -37,18 +48,34 @@ function fixture() {
     writeFileSync(file, bytes);
   };
   mkdirSync(path.join(root, '.git'));
+  const bundle = sourceMode ? 'packages/agent' : 'vida-agent';
+  const projectId = sourceMode ? 'agent' : 'fixture-project';
   const template = (name) =>
     readFileSync(path.join(source, 'templates', name), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'fixture-repository')
-      .replaceAll('{{PROJECTS}}', 'fixture-project')
-      .replaceAll('{{PROJECT}}', 'fixture-project')
-      .replaceAll('{{BUNDLE}}', 'vida-agent')
+      .replaceAll('{{PROJECTS}}', projectId)
+      .replaceAll('{{PROJECT}}', projectId)
+      .replaceAll('{{BUNDLE}}', bundle)
       .replaceAll('{{CREATED_AT}}', '2026-09-30T00:00:00.000Z');
   put('AGENTS.md', template('AGENTS.template.md'));
   put('AGENT.sidecar.md', template('AGENT.sidecar.template.md'));
   put('agent-runtime.config.v1.yaml', template('agent-runtime.config.template.v1.yaml'));
   put('docs/agent-instructions/documentation-policy.v1.json', template('documentation-policy.template.v1.json'));
-  for (const file of ['package.json', 'TESTING.md']) put('vida-agent/' + file, readFileSync(path.join(source, file)));
+  for (const file of ['package.json', 'TESTING.md']) put(bundle + '/' + file, readFileSync(path.join(source, file)));
+  if (sourceMode) {
+    put('package.json', json({ private: true, workspaces: [bundle] }));
+    put(
+      'agent-runtime.config.v1.yaml',
+      readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8')
+        .replace(
+          /(projects:\r?\n  - project_id: "agent"\r?\n    title: "agent"\r?\n    project_root:) \./,
+          '$1 packages/agent',
+        )
+        .replaceAll('src/**', 'packages/agent/**'),
+    );
+    for (const file of runtimeExecutableInventory(source))
+      put(bundle + '/' + file, readFileSync(path.join(source, file)));
+  }
   put(
     'agent-runtime.config.v1.yaml',
     readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8').replace(
@@ -56,10 +83,10 @@ function fixture() {
       '$1gpt-6-sol$2high',
     ),
   );
-  cpSync(path.join(source, 'schemas'), path.join(root, 'vida-agent/schemas'), { recursive: true });
+  cpSync(path.join(source, 'schemas'), path.join(root, bundle, 'schemas'), { recursive: true });
   const config = loadRuntimeConfig(root),
     workspace = deriveWorkspaceId(config.repository.repository_id, root);
-  const schemaSha = sha(readFileSync(path.join(root, 'vida-agent/schemas/runtime-initialization.v1.schema.json')));
+  const schemaSha = sha(readFileSync(path.join(root, bundle, 'schemas/runtime-initialization.v1.schema.json')));
   const receipt = {
     schema: 'RuntimeInitialization/v1',
     version: 1,
@@ -68,7 +95,7 @@ function fixture() {
     integrations_digest: canonicalJsonDigest(config.integrations),
     workspace_id: workspace,
     workspace_binding_status: 'bound',
-    bundle: 'vida-agent',
+    bundle,
     config_digest: runtimeConfigDigest(config),
     schema_sha256: schemaSha,
     templates: [
@@ -90,21 +117,22 @@ function fixture() {
     created_at: '2026-09-30T00:00:00.000Z',
   };
   put('.agent/runtime-initialization.v1.json', json(receipt));
-  put(
-    '.agent/active-runtime-selector.v1.json',
-    json({
-      schema: 'ActiveRuntimeSelector/v1',
-      generation: 'fixture-v10',
-      runtime: 'vida-agent',
-      bundle_root: 'vida-agent',
-      config_path: 'agent-runtime.config.v1.yaml',
-      payload_manifest_sha256: sha(Buffer.from('fixture-payload')),
-    }),
-  );
+  if (!sourceMode)
+    put(
+      '.agent/active-runtime-selector.v1.json',
+      json({
+        schema: 'ActiveRuntimeSelector/v1',
+        generation: 'fixture-v10',
+        runtime: 'vida-agent',
+        bundle_root: 'vida-agent',
+        config_path: 'agent-runtime.config.v1.yaml',
+        payload_manifest_sha256: sha(Buffer.from('fixture-payload')),
+      }),
+    );
   const oldYaml = readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8');
   const target = oldYaml.replace(
     /(    executor:\r?\n      model: )gpt-6-sol(\r?\n      reasoning: )high/,
-    '$1gpt-6.1-sol$2medium',
+    sourceMode ? '$1gpt-6-luna$2max' : '$1gpt-6.1-sol$2medium',
   );
   expect(target).not.toBe(oldYaml);
   put('proposed.yaml', target);
@@ -137,7 +165,7 @@ function fixture() {
         ]
       : []),
   ];
-  return { root, put, args, target, oldYaml, receipt, workspace };
+  return { root, put, args, target, oldYaml, receipt, workspace, bundle };
 }
 
 function withDatabase(f, callback, readonly = false) {
@@ -437,6 +465,139 @@ test('inspect/plan are read-only for YAML/receipt/database; fenced apply precede
   expect(appliedState.agent_host_mastra_session_ledger).toEqual(persisted.agent_host_mastra_session_ledger);
   expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
 }, 30_000);
+
+test('Source without selector rebinds Luna under the same fence and preserves work state', async () => {
+  const f = fixture({ sourceMode: true });
+  const before = databaseState(f);
+  expect((await runReconcileArtifacts(f.args('inspect'))).status).toBe('inspect_ready_unauthorized');
+  expect(databaseState(f)).toEqual(before);
+  await runReconcileArtifacts(f.args('plan'));
+  expect((await runReconcileArtifacts(f.args('apply'))).status).toBe('author_config_required');
+  f.put('agent-runtime.config.v1.yaml', f.target);
+  expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
+  expect(loadRuntimeConfig(f.root).agents.profiles.executor.model).toBe('gpt-6-luna');
+  expect(loadRuntimeConfig(f.root).agents.profiles.executor.reasoning).toBe('max');
+  expect(databaseState(f).agent_host_state).toEqual(before.agent_host_state);
+  expect(existsSync(path.join(f.root, '.agent/active-runtime-selector.v1.json'))).toBe(false);
+  expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual({
+    ...f.receipt,
+    config_digest: runtimeConfigDigest(loadRuntimeConfig(f.root)),
+  });
+  expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
+}, 30_000);
+
+test.each(['source bytes', 'inventory addition', 'selector appearance', 'workspace identity'])(
+  'Source rebind rejects %s drift before acquiring maintenance',
+  async (change) => {
+    const f = fixture({ sourceMode: true });
+    await runReconcileArtifacts(f.args('plan'));
+    const before = databaseState(f);
+    if (change === 'source bytes') f.put(f.bundle + '/bin/run.mjs', '// changed Source');
+    if (change === 'inventory addition') f.put(f.bundle + '/src/config/new-feature.ts', '// added Source');
+    if (change === 'workspace identity') f.put('package.json', json({ private: false, workspaces: [f.bundle] }));
+    if (change === 'selector appearance')
+      f.put(
+        '.agent/active-runtime-selector.v1.json',
+        json({
+          schema: 'ActiveRuntimeSelector/v1',
+          generation: 'foreign-selector',
+          runtime: 'vida-agent',
+          bundle_root: 'vida-agent',
+          config_path: 'agent-runtime.config.v1.yaml',
+          payload_manifest_sha256: sha('foreign'),
+        }),
+      );
+    await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(/differs|differ|rejects an active selector/);
+    expect(databaseState(f)).toEqual(before);
+    expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(f.oldYaml);
+  },
+  30_000,
+);
+
+test('a consumer without selector cannot use Source rebind', async () => {
+  const f = fixture();
+  rmSync(path.join(f.root, '.agent/active-runtime-selector.v1.json'));
+  const before = databaseState(f);
+  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/only for the Source project/);
+  expect(databaseState(f)).toEqual(before);
+});
+
+test('Source rejects a preexisting consumer-shaped selector without state changes', async () => {
+  const f = fixture({ sourceMode: true });
+  f.put(
+    '.agent/active-runtime-selector.v1.json',
+    json({
+      schema: 'ActiveRuntimeSelector/v1',
+      generation: 'foreign-selector',
+      runtime: 'vida-agent',
+      bundle_root: 'vida-agent',
+      config_path: 'agent-runtime.config.v1.yaml',
+      payload_manifest_sha256: sha('foreign'),
+    }),
+  );
+  const before = databaseState(f);
+  for (const mode of ['inspect', 'plan'])
+    await expect(runReconcileArtifacts(f.args(mode))).rejects.toThrow(/Source configuration rejects/);
+  expect(databaseState(f)).toEqual(before);
+  expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(f.oldYaml);
+  expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual(f.receipt);
+  expect(existsSync(path.join(f.root, '.agent/work/fixture-rebind'))).toBe(false);
+}, 30_000);
+
+test('Source inventory rejects linked directories before traversal and bounds enumeration', async () => {
+  const f = fixture({ sourceMode: true });
+  const directory = path.join(f.root, f.bundle, 'src');
+  renameSync(directory, directory + '-original');
+  f.put('external/file.ts', '// outside Source');
+  symlinkSync(path.join(f.root, 'external'), directory, process.platform === 'win32' ? 'junction' : 'dir');
+  const before = databaseState(f);
+  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/symlink|reparse|boundary|link/);
+  expect(databaseState(f)).toEqual(before);
+  const g = fixture({ sourceMode: true });
+  for (let i = 0; i < 513; i++) g.put(g.bundle + '/src/config/entry-' + i + '.ts', '// bounded fixture');
+  const otherBefore = databaseState(g);
+  await expect(runReconcileArtifacts(g.args('inspect'))).rejects.toThrow(/inventory exceeds the path bound/);
+  expect(databaseState(g)).toEqual(otherBefore);
+}, 30_000);
+
+test('reasoning-only targets are accepted while invalid reasoning and unrelated profiles are denied', async () => {
+  const f = fixture();
+  f.put('proposed.yaml', f.oldYaml.replace(/(model: gpt-6-sol\r?\n      reasoning:) high/, '$1 max'));
+  const before = databaseState(f);
+  expect((await runReconcileArtifacts(f.args('inspect'))).status).toBe('inspect_ready_unauthorized');
+  expect(databaseState(f)).toEqual(before);
+  const invalidReasoning = f.target.replace(
+    /(    executor:\r?\n      model: [^\r\n]+\r?\n      reasoning:) medium/,
+    '$1 123',
+  );
+  expect(invalidReasoning).not.toBe(f.target);
+  f.put('proposed.yaml', invalidReasoning);
+  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/validation failed/);
+  const invalidModel = f.target.replace(/(    executor:\r?\n      model:) [^\r\n]+/, '$1 123');
+  expect(invalidModel).not.toBe(f.target);
+  f.put('proposed.yaml', invalidModel);
+  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/validation failed/);
+  f.put('proposed.yaml', f.target.replace(/(architect:\r?\n      model:) [^\r\n]+/, '$1 another-model'));
+  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/only requested executor/);
+  expect(databaseState(f)).toEqual(before);
+});
+
+test.each(['source bytes', 'selector appearance'])(
+  'Source rebind preserves its fence after post-authoring %s drift',
+  async (change) => {
+    const f = fixture({ sourceMode: true });
+    await runReconcileArtifacts(f.args('plan'));
+    await runReconcileArtifacts(f.args('apply'));
+    const held = fence(f);
+    f.put('agent-runtime.config.v1.yaml', f.target);
+    if (change === 'source bytes') f.put(f.bundle + '/bin/run.mjs', '// changed Source');
+    else f.put('.agent/active-runtime-selector.v1.json', json({ schema: 'ActiveRuntimeSelector/v1' }));
+    await expect(runReconcileArtifacts(f.args('resume'))).rejects.toThrow(/differs|differ|rejects an active selector/);
+    expect(fence(f)).toEqual(held);
+    expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual(f.receipt);
+  },
+  30_000,
+);
 
 test('no-effect abandonment releases its own fence; receipt-applied rollback is always denied', async () => {
   const f = fixture();

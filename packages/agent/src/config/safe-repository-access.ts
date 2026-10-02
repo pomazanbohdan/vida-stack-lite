@@ -25,6 +25,7 @@ import path from 'node:path';
 import { root as createFsSafeRoot, type Root as FsSafeRoot } from '@openclaw/fs-safe';
 import { assertNoSymlinkParentsSync, openRootFileSync, sameFileIdentity } from '@openclaw/fs-safe/advanced';
 import { withFileLock } from '@openclaw/fs-safe/file-lock';
+import { FsSafeError } from '@openclaw/fs-safe/errors';
 type LinuxNativeBinding = {
   readonly cloneFileExclusive: (sourceFd: number, targetRootFd: number, targetRelPath: string) => number;
   readonly renameNoReplace: (
@@ -1740,6 +1741,23 @@ function windowsWithExclusiveLock<T>(root: string, target: string, label: string
   reject(!windowsNativeBinding, label + ' requires the pinned native provider');
   fail(label + ' synchronous lock unavailable on Windows: safe cleanup requires an async root handle');
 }
+function windowsLockDisappearanceError(error: unknown): boolean {
+  if (error instanceof FsSafeError) return error.code === 'path-mismatch';
+  const denial = error as NodeJS.ErrnoException | null;
+  return all(
+    denial?.code === 'EPERM',
+    denial?.syscall === 'stat',
+    /^[a-z]:\\\$Extend\\\$Deleted\\[^\\]+$/i.test(denial?.path ?? ''),
+  );
+}
+async function windowsLockIsAbsent(root: FsSafeRoot, relative: string, error: unknown): Promise<boolean> {
+  if (!windowsLockDisappearanceError(error)) return false;
+  try {
+    return !(await root.exists(relative + '.lock'));
+  } catch {
+    return false;
+  }
+}
 async function windowsWithExclusiveLockAsync<T>(
   root: string,
   target: string,
@@ -1761,16 +1779,28 @@ async function windowsWithExclusiveLockAsync<T>(
   });
   const trustedRoot =
     lockRoot ?? (await createFsSafeRoot(root, { symlinks: 'reject', hardlinks: 'reject', mkdir: false, mode: 0o600 }));
-  return withFileLock(
-    absolute,
-    {
-      payload: async () => ({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid, label }),
-      staleRecovery: 'fail-closed',
-      timeoutMs: 0,
-      lockRoot: trustedRoot,
-    },
-    operation,
-  );
+  let entered = false;
+  try {
+    return await withFileLock(
+      absolute,
+      {
+        payload: async () => ({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid, label }),
+        staleRecovery: 'fail-closed',
+        timeoutMs: 0,
+        lockRoot: trustedRoot,
+      },
+      async () => {
+        entered = true;
+        return await operation();
+      },
+    );
+  } catch (error) {
+    if (!entered && (await windowsLockIsAbsent(trustedRoot, relative, error)))
+      throw Object.assign(new Error(label + ' lock disappeared before acquisition', { cause: error }), {
+        code: 'file_lock_timeout',
+      });
+    throw error;
+  }
 }
 function windowsMoveNoReplaceAsync(
   root: string,

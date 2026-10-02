@@ -47,6 +47,41 @@ Work trace: `.agent/work/vida-final-assurance-finish-20261001/WORK.md`.
 
 ## Current defect applicability
 
+### Source configuration and explicit model selection
+
+Owner: agent maintainer. Work: `npm-process-correction-20261002`. Behavior
+owner: [Source development controller](../system-specification.md#source-development-controller).
+The configured Source target has no active selector; a configuration repair
+therefore binds its declared package inventory and selector absence. This
+selection does not grant ownership or settle unknown effects. Consumer selector
+binding and global maintenance/quiescence checks remain independent requirements.
+
+[Mastra model selection](https://mastra.ai/reference/processors/model-selection-processor)
+documents explicit model selection and overrides. It supports keeping the model
+in the validated configuration rather than hardcoding a single migration target.
+It does not authorize changing a model already bound to an issued local action.
+[Bun SQLite](https://bun.com/docs/runtime/sqlite) documents read-only connections
+and transactions; existing read-only inspection and fenced transactional state
+checks remain in use. The official Mastra snapshots URL returned 404 during this
+research, so it provides no additional evidence for this repair. These sources
+inform mechanics, not local authorization or Runtime acceptance.
+
+### Windows lock acquisition and disappearing sidecars
+
+Owner: agent maintainer. Work: `npm-process-correction-20261002`. Behavior
+owner: [scoped source and lease continuity](../system-specification.md#scoped-source-and-lease-continuity).
+[fs-safe](https://fs-safe.io/) describes a root capability that verifies opened
+file identity and preserves the filesystem boundary. Applicable mechanics are
+the installed, attested `@openclaw/fs-safe` 0.5.6 `withFileLock`, sidecar snapshot
+and pinned-root existence operations; current website APIs do not change that pin.
+Local physical deletion during Bun 1.4.2 Windows `realpath` reproduced both a
+`stat` failure on `$Extend\\$Deleted` and an opened-file identity mismatch.
+The failed handle is never accepted. Only a separate absence check through the
+same pinned root permits classification as acquisition contention, preserving
+the original cause and existing caller bounds. Callback/release errors, ordinary
+permission denials and present replacements retain their failures. Test evidence
+and unresolved aggregate qualification belong to the work record, not this map.
+
 ### Explicit correction defaults repair
 
 Owner: agent maintainer. Work: `correction-defaults-repair-20261002`. Behavior

@@ -1,9 +1,23 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+  unlinkSync,
+  readFileSync,
+  symlinkSync,
+  linkSync,
+  renameSync,
+  existsSync,
+} from 'node:fs';
 import os from 'node:os';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { FsSafeError } from '@openclaw/fs-safe/errors';
+import { __setFsSafeTestHooksForTest } from '@openclaw/fs-safe/test-hooks';
 import {
   detectSafeRepositoryAccess,
   requireSafeRepositoryAccess,
@@ -20,10 +34,126 @@ function root() {
 }
 
 afterEach(() => {
+  __setFsSafeTestHooksForTest(undefined);
   while (roots.length) rmSync(roots.pop(), { recursive: true, force: true });
 });
 
+function disappearanceError(repositoryRoot, kind) {
+  if (kind === 'identity') return new FsSafeError('path-mismatch', 'opened file disappeared');
+  return Object.assign(new Error('deleted opened file'), {
+    code: 'EPERM',
+    syscall: 'stat',
+    path: path.join(path.parse(repositoryRoot).root, '$Extend', '$Deleted', 'fixture'),
+  });
+}
+
 describe('safe repository access completeness', () => {
+  test.each(['deleted', 'identity'])('Windows missing %s lock is contention before callback entry', async (kind) => {
+    if (process.platform !== 'win32') return;
+    const repositoryRoot = root(),
+      access = requireSafeRepositoryAccess(repositoryRoot);
+    const sidecar = path.join(repositoryRoot, 'resource.lock');
+    const failure = disappearanceError(repositoryRoot, kind);
+    writeFileSync(path.join(repositoryRoot, 'resource'), 'protected payload');
+    writeFileSync(sidecar, '{}');
+    let calls = 0;
+    __setFsSafeTestHooksForTest({
+      afterOpen: (file) => {
+        if (path.resolve(file) !== sidecar) return;
+        unlinkSync(sidecar);
+        throw failure;
+      },
+    });
+    await expect(access.withExclusiveLockAsync('resource', 'fixture', async () => ++calls)).rejects.toMatchObject({
+      code: 'file_lock_timeout',
+      cause: failure,
+    });
+    expect(calls).toBe(0);
+    __setFsSafeTestHooksForTest(undefined);
+    await expect(access.withExclusiveLockAsync('resource', 'fixture', async () => ++calls)).resolves.toBe(1);
+    expect(calls).toBe(1);
+    expect(readFileSync(path.join(repositoryRoot, 'resource'), 'utf8')).toBe('protected payload');
+  });
+
+  test.each([
+    'replacement',
+    'identity-present',
+    'junction',
+    'hardlink',
+    'permission',
+    'wrong-syscall',
+    'outside',
+    'untyped',
+    'root-replaced',
+  ])('Windows %s lock failure remains denied', async (kind) => {
+    if (process.platform !== 'win32') return;
+    const repositoryRoot = root(),
+      access = requireSafeRepositoryAccess(repositoryRoot);
+    const sidecar = path.join(repositoryRoot, 'resource.lock'),
+      other = path.join(repositoryRoot, 'other');
+    const movedRoot = path.join(path.dirname(repositoryRoot), path.basename(repositoryRoot) + '-moved');
+    let failure = disappearanceError(repositoryRoot, kind === 'identity-present' ? 'identity' : 'deleted');
+    if (kind === 'permission') failure.path = sidecar;
+    if (kind === 'wrong-syscall') failure.syscall = 'open';
+    if (kind === 'outside') failure = new FsSafeError('outside-workspace', 'outside');
+    if (kind === 'untyped') failure = Object.assign(new Error('not a typed identity error'), { code: 'path-mismatch' });
+    writeFileSync(other, 'other payload');
+    writeFileSync(sidecar, '{}');
+    let calls = 0;
+    __setFsSafeTestHooksForTest({
+      afterOpen: (file) => {
+        if (path.resolve(file) !== sidecar) return;
+        if (kind !== 'identity-present') unlinkSync(sidecar);
+        if (kind === 'replacement') writeFileSync(sidecar, 'replacement');
+        if (kind === 'junction') {
+          const directory = path.join(repositoryRoot, 'linked-directory');
+          mkdirSync(directory);
+          symlinkSync(directory, sidecar, 'junction');
+        }
+        if (kind === 'hardlink') linkSync(other, sidecar);
+        if (kind === 'root-replaced') {
+          expect(path.dirname(movedRoot)).toBe(path.dirname(repositoryRoot));
+          expect(existsSync(movedRoot)).toBe(false);
+          renameSync(repositoryRoot, movedRoot);
+          roots.push(movedRoot);
+          mkdirSync(repositoryRoot);
+        }
+        throw failure;
+      },
+    });
+    await expect(access.withExclusiveLockAsync('resource', 'fixture', async () => ++calls)).rejects.toBe(failure);
+    expect(calls).toBe(0);
+    expect(readFileSync(kind === 'root-replaced' ? path.join(movedRoot, 'other') : other, 'utf8')).toBe(
+      'other payload',
+    );
+  });
+
+  test.each(['callback', 'release'])('Windows %s errors never become acquisition contention', async (stage) => {
+    if (process.platform !== 'win32') return;
+    const repositoryRoot = root(),
+      access = requireSafeRepositoryAccess(repositoryRoot);
+    const sidecar = path.join(repositoryRoot, 'resource.lock');
+    const failure = disappearanceError(repositoryRoot, 'deleted');
+    let calls = 0,
+      releasing = false;
+    __setFsSafeTestHooksForTest({
+      afterOpen: (file) => {
+        if (!releasing || path.resolve(file) !== sidecar) return;
+        unlinkSync(sidecar);
+        throw failure;
+      },
+    });
+    await expect(
+      access.withExclusiveLockAsync('resource', 'fixture', async () => {
+        calls++;
+        if (stage === 'callback') throw failure;
+        releasing = true;
+        return 'effect occurred';
+      }),
+    ).rejects.toBe(failure);
+    expect(calls).toBe(1);
+  });
+
   test('provider exposes its native binding and truthful platform assurance', async () => {
     const repositoryRoot = root();
     const access = requireSafeRepositoryAccess(repositoryRoot);

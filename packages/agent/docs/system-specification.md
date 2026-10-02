@@ -133,6 +133,22 @@ Opt-in bounded stage markers expose install and snapshot elapsed time. These
 changes do not claim a speed improvement without comparable measurement.
 No current controller or successful qualification is inferred from this contract.
 
+The existing `reconcile-artifacts --kind runtime-config` operation accepts a
+schema-valid change limited to the executor model and reasoning. It does not
+select a model on the caller's behalf or reinterpret an issued invocation.
+Selected consumer installations retain their selector binding. Source without a
+selector requires the `agent` project at `packages/agent`, a private workspace
+that declares that package, the `vida-agent` package identity and its complete
+maintained executable inventory. In the existing operation fields,
+`selector_digest` binds selector absence and workspace metadata, while
+`bundle_digest` binds the Source executable bytes. Every phase rechecks this
+identity, inventory and selection; appearing selectors or changed bytes deny
+continuation. No synthetic selector, alternate operation format or source lease
+is created. The maintenance fence, unchanged-state CAS, exact YAML/receipt
+checks and global quiescence remain mandatory. An expired active owner or an
+unknown effect still blocks applying a new configuration. Only the public
+operation updates the initialization receipt after the authorized YAML edit.
+
 ## Terminal observations and exact owner release
 
 Task outcome, effect certainty and lease ownership are independent. A known
@@ -652,6 +668,14 @@ guarantee offline operation.
 
 Safe repository locks treat the requested path as the protected resource and
 create an exclusive `.lock` sidecar, preserving any existing payload bytes.
+On Windows, an acquisition-only opened-file identity mismatch or the precise
+deleted-file `EPERM`/`stat` failure is reported as lock contention only when the
+same pinned filesystem root confirms that the sidecar is absent. A present
+replacement or a failed absence check preserves the original failure. The
+original error remains attached as the cause; ordinary permission errors remain
+denials. Existing callers retain their bounded retry policy; this classification
+adds no retry loop or deadline. Once the protected callback starts, neither its
+errors nor release errors may become retryable acquisition failures.
 On Linux, sidecar names longer than 199 UTF-8 bytes use a fixed-size
 `.vida-resource-lock-<sha256 of resource basename>.lock` name in the same
 directory, reserving room for reclaim and quarantine suffixes within NAME_MAX.

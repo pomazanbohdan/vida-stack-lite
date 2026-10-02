@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { __setFsSafeTestHooksForTest } from '@openclaw/fs-safe/test-hooks';
 import { configuredTestContext } from '../configured-context.mjs';
 import { bindRuntimeInitialization } from '../../src/runtime-initialization.ts';
 import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
@@ -40,6 +41,7 @@ beforeEach(() => {
   store = new HostStateStore(database, workspaceId);
 });
 afterEach(async () => {
+  __setFsSafeTestHooksForTest(undefined);
   for (const racer of racers)
     if (racer.child.exitCode === null && racer.child.signalCode === null) racer.child.kill('SIGKILL');
   await Promise.allSettled(racers.map((racer) => racer.done));
@@ -64,6 +66,32 @@ test('same workspace binding is idempotent under concurrent callers', async () =
   expect(results[1]).toEqual(results[0]);
   const boundBytes = readFileSync(receiptPath);
   expect(await bindRuntimeInitialization(root, store)).toEqual(results[0]);
+  expect(readFileSync(receiptPath)).toEqual(boundBytes);
+});
+
+test('workspace binding retries a disappeared Windows lock before the receipt transition', async () => {
+  if (process.platform !== 'win32') return;
+  const lockPath = receiptPath + '.lock';
+  writeFileSync(lockPath, '{}');
+  let injected = false;
+  __setFsSafeTestHooksForTest({
+    afterOpen: (file) => {
+      if (injected || path.resolve(file) !== lockPath) return;
+      injected = true;
+      unlinkSync(lockPath);
+      expect(JSON.parse(readFileSync(receiptPath)).workspace_binding_status).toBe('pending');
+      throw Object.assign(new Error('deleted opened lock'), {
+        code: 'EPERM',
+        syscall: 'stat',
+        path: path.join(path.parse(root).root, '$Extend', '$Deleted', 'fixture'),
+      });
+    },
+  });
+  const bound = await bindRuntimeInitialization(root, store);
+  expect(injected).toBe(true);
+  expect(bound).toEqual({ ...receipt, workspace_binding_status: 'bound' });
+  const boundBytes = readFileSync(receiptPath);
+  expect(await bindRuntimeInitialization(root, store)).toEqual(bound);
   expect(readFileSync(receiptPath)).toEqual(boundBytes);
 });
 

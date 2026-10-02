@@ -21,6 +21,8 @@ import {
   sessionBridgeDatabasePath,
 } from '../src/orchestration/mastra-session-bridge.ts';
 import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
+import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
+import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 
 const requireRebind = (valid, message) => {
   if (!valid) throw new Error(`vida runtime-config rebind: ${message}`);
@@ -89,11 +91,6 @@ function sameIdentity(root, config, receipt) {
 function targetConfig(access, root, oldConfig, targetPath) {
   const bytes = access.readBytes(targetPath, 'authored target YAML');
   const target = validateRuntimeConfigRepairTargetBytes(bytes, root);
-  const profile = target.agents.profiles.executor;
-  requireRebind(
-    profile.model === 'gpt-6.1-sol' && profile.reasoning === 'medium',
-    'target differs from requested executor profile',
-  );
   const unchanged = structuredClone(target);
   unchanged.agents.profiles.executor.model = oldConfig.agents.profiles.executor.model;
   unchanged.agents.profiles.executor.reasoning = oldConfig.agents.profiles.executor.reasoning;
@@ -337,6 +334,54 @@ function selector(access) {
   return { bytes, value };
 }
 
+function runtimeBinding(access, config) {
+  const bundle = config.runtime.bundle;
+  const selectedExists = access.fileExists(selectorPath, 'active selector presence');
+  if (bundle !== 'packages/agent') {
+    requireRebind(selectedExists, 'selector absence is supported only for the Source project');
+    const selected = selector(access);
+    return { selector_digest: sha(selected.bytes), bundle_digest: selected.value.payload_manifest_sha256 };
+  }
+  requireRebind(!selectedExists, 'Source configuration rejects an active selector');
+  requireRebind(
+    bundle === 'packages/agent' &&
+      config.projects.some((project) => project.project_id === 'agent' && project.project_root === bundle),
+    'selector absence is supported only for the Source project',
+  );
+  const workspace = JSON.parse(access.readBytes('package.json', 'Source workspace'));
+  const manifest = JSON.parse(access.readBytes(bundle + '/package.json', 'Source package'));
+  requireRebind(
+    workspace.private === true &&
+      Array.isArray(workspace.workspaces) &&
+      workspace.workspaces.includes(bundle) &&
+      manifest.name === 'vida-agent',
+    'Source workspace or package identity differs',
+  );
+  const packageRoot = path.join(access.repository_root, bundle);
+  const inventory = runtimeExecutableInventory(packageRoot, 'source', requireSafeRepositoryAccess(packageRoot));
+  requireRebind(
+    inventory.includes('src/runtime-kernel.ts') && inventory.includes('bin/run.mjs'),
+    'Source runtime is incomplete',
+  );
+  const source = snapshotDeclaredSources(
+    access,
+    inventory.map((file) => bundle + '/' + file),
+  );
+  requireRebind(
+    source.entries.every((entry) => entry.exists),
+    'Source runtime file disappeared',
+  );
+  const selection = snapshotDeclaredSources(access, [selectorPath, 'package.json']);
+  requireRebind(
+    selection.entries.find((entry) => entry.path === selectorPath)?.exists === false,
+    'Source selector appeared',
+  );
+  return {
+    selector_digest: selection.digest,
+    bundle_digest: source.digest,
+  };
+}
+
 function frozenPlan(values, root, config, access, db) {
   const receipt = readReceipt(access, config);
   const projects = sameIdentity(root, config, receipt.value);
@@ -344,7 +389,7 @@ function frozenPlan(values, root, config, access, db) {
     receipt.value.config_digest === runtimeConfigDigest(config),
     'plan requires unchanged baseline YAML and receipt',
   );
-  const selected = selector(access);
+  const binding = runtimeBinding(access, config);
   const target = targetConfig(access, root, config, values['--target-config']);
   const schema = runtimePackageAccess().readBytes(
     'schemas/runtime-initialization.v1.schema.json',
@@ -366,8 +411,7 @@ function frozenPlan(values, root, config, access, db) {
     old_config_digest: runtimeConfigDigest(config),
     target_config_digest: runtimeConfigDigest(target.config),
     initialization_schema_digest: sha(schema),
-    selector_digest: sha(selected.bytes),
-    bundle_digest: selected.value.payload_manifest_sha256,
+    ...binding,
     state_digest: currentState(db, receipt.value.workspace_id, root, config),
     token: randomUUID(),
   };
@@ -417,10 +461,12 @@ function exactContext(access, root, config, operation, db) {
   const receipt = readReceipt(access, config);
   sameIdentity(root, old, JSON.parse(plan.baseline_receipt));
   sameIdentity(root, target, receipt.value);
+  const binding = runtimeBinding(access, old);
   requireRebind(
     runtimeConfigDigest(old) === plan.old_config_digest &&
       runtimeConfigDigest(target) === plan.target_config_digest &&
-      sha(selector(access).bytes) === plan.selector_digest &&
+      binding.selector_digest === plan.selector_digest &&
+      binding.bundle_digest === plan.bundle_digest &&
       sha(
         runtimePackageAccess().readBytes('schemas/runtime-initialization.v1.schema.json', 'initialization schema'),
       ) === plan.initialization_schema_digest &&

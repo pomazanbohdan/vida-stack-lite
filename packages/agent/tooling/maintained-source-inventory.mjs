@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 export const expectedJavascriptFiles = [
@@ -8,18 +8,22 @@ export const expectedJavascriptFiles = [
   'trusted-host.js',
 ];
 
-export function assertRuntimePackageExports(root) {
-  if (expectedJavascriptFiles.some((file) => !existsSync(path.join(root, 'dist', 'src', file))))
+function inventoryExists(root, file, access) {
+  return access ? access.fileExists(file, 'runtime inventory presence') : existsSync(path.join(root, file));
+}
+
+export function assertRuntimePackageExports(root, access) {
+  if (expectedJavascriptFiles.some((file) => !inventoryExists(root, 'dist/src/' + file, access)))
     throw new Error('Runtime package public exports are incomplete; build the package before production execution.');
 }
 
 /** Executable package closure, rooted in the executing package rather than its consumer. */
-export function runtimeExecutableInventory(root, shape = 'source') {
-  const maintained = maintainedSourceInventory(root);
+export function runtimeExecutableInventory(root, shape = 'source', access) {
+  const maintained = maintainedSourceInventory(root, access);
   if (shape !== 'source' && shape !== 'dist') throw new Error('Runtime package execution shape is invalid.');
-  const hasDist = expectedJavascriptFiles.some((file) => existsSync(path.join(root, 'dist', 'src', file)));
-  if (shape === 'dist' || hasDist) assertRuntimePackageExports(root);
-  const schemas = sourceFiles(path.join(root, 'schemas'), '.json', root);
+  const hasDist = expectedJavascriptFiles.some((file) => inventoryExists(root, 'dist/src/' + file, access));
+  if (shape === 'dist' || hasDist) assertRuntimePackageExports(root, access);
+  const schemas = sourceFiles(path.join(root, 'schemas'), '.json', root, [], access);
   const paths = [
     'package.json',
     'tooling/maintained-source-inventory.mjs',
@@ -27,9 +31,9 @@ export function runtimeExecutableInventory(root, shape = 'source') {
     ...maintained.typescriptSources,
     ...schemas,
     ...(hasDist ? expectedJavascriptFiles.map((file) => 'dist/src/' + file) : []),
-    ...(hasDist ? sourceFiles(path.join(root, 'dist', 'schemas'), '.json', root) : []),
+    ...(hasDist ? sourceFiles(path.join(root, 'dist', 'schemas'), '.json', root, [], access) : []),
   ].sort();
-  if (!paths.length || paths.some((file) => !existsSync(path.join(root, file))))
+  if (!paths.length || paths.some((file) => !inventoryExists(root, file, access)))
     throw new Error('Runtime package executable inventory is incomplete.');
   return paths;
 }
@@ -42,13 +46,21 @@ export const bunCoverageSources = [
   'src/runtime-kernel.ts',
 ];
 
-function sourceFiles(directory, extension, root, values = []) {
-  if (!existsSync(directory)) return values;
-  for (const entry of readdirSync(directory, { withFileTypes: true })) {
-    const absolute = path.join(directory, entry.name);
-    if (entry.isDirectory()) sourceFiles(absolute, extension, root, values);
-    else if (entry.isFile() && entry.name.endsWith(extension))
-      values.push(path.relative(root, absolute).replaceAll('\\', '/'));
+function sourceFiles(directory, extension, root, values = [], access, budget = { nodes: 0 }) {
+  const relative = path.relative(root, directory).replaceAll('\\', '/');
+  if (!inventoryExists(root, relative, access)) return values;
+  const entries = access
+    ? access.listFiles(relative, 'runtime inventory directory')
+    : readdirSync(directory, { withFileTypes: true });
+  if (access && (budget.nodes += entries.length) > 512) throw new Error('Runtime inventory exceeds the path bound.');
+  for (const entry of entries) {
+    const name = access ? entry : entry.name;
+    const absolute = path.join(directory, name);
+    const file = path.relative(root, absolute).replaceAll('\\', '/');
+    if (access) access.fileExists(file, 'runtime inventory entry');
+    const info = access ? lstatSync(absolute) : entry;
+    if (info.isDirectory()) sourceFiles(absolute, extension, root, values, access, budget);
+    else if (info.isFile() && name.endsWith(extension)) values.push(file);
   }
   return values;
 }
@@ -70,14 +82,18 @@ function isPackedFile(file, patterns) {
   return patterns.some((pattern) => globRegExp(pattern).test(file));
 }
 
-export function maintainedSourceInventory(root) {
-  const packageJson = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+export function maintainedSourceInventory(root, access) {
+  const packageJson = JSON.parse(
+    access
+      ? access.readBytes('package.json', 'runtime inventory manifest')
+      : readFileSync(path.join(root, 'package.json'), 'utf8'),
+  );
   if (!Array.isArray(packageJson.files) || !packageJson.bin || typeof packageJson.bin !== 'object')
     throw new Error('Package source inventory requires files and bin declarations.');
 
   const packagePatterns = packageJson.files.map((entry) => String(entry).replaceAll('\\', '/'));
-  const allTypescriptSources = sourceFiles(path.join(root, 'src'), '.ts', root).sort();
-  const allBinSources = sourceFiles(path.join(root, 'bin'), '.mjs', root).sort();
+  const allTypescriptSources = sourceFiles(path.join(root, 'src'), '.ts', root, [], access).sort();
+  const allBinSources = sourceFiles(path.join(root, 'bin'), '.mjs', root, [], access).sort();
   const typescriptSources = allTypescriptSources.filter((file) => isPackedFile(file, packagePatterns));
   const binSources = allBinSources.filter((file) => isPackedFile(file, packagePatterns));
   const sourceFilesForMutation = [...typescriptSources, ...binSources].sort();
