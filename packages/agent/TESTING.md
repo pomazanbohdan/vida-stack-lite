@@ -132,6 +132,14 @@ Use focused checks while editing and record each final-fingerprint result. Re-ru
 | Lifecycle reviews, reverse validation, status and delivery         | `lifecycle-state`, `observed-validation`, plus exactly three fresh blind final reviews and reverse receipts on one sealed fingerprint.                                                                                                                                                                                                    |
 | Documentation CLEAR                                                | Public `vida-agent-documentation-clear` baseline/closeout/verify in `documentation-clear.test.mjs`, typed deletion lineage and map denial, and real checkpoint revalidation at DELIVERY/COMPLETE in `bun/lifecycle-state.test.mjs`. The configured project policy is preserved as project data; old operational receipts remain inactive. |
 
+Project-path regressions exercise equal-root membership for either selected
+member, deepest nested foreign exclusion, POSIX versus Windows case matching,
+outside-root paths through exact selected scope, unchanged `code_selectors`,
+and fail-closed multiple selection. Keep `--repository-path` limited to
+read-only evidence outside every product root. Scope and admission checks retain
+traversal and symlink denial; forged foreign admission records only its existing
+attempt audit and creates no work or writer lease.
+
 These entries name maintained files. Fixture progression is bounded Code/Static
 evidence; complete native terminal behavior requires its own actual observations.
 Record platform skips as GAPs rather than PASS or equivalent native proof;

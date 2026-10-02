@@ -326,12 +326,28 @@ compatibility runtime to unblock waiting developers through normal admission.
 
 ## Scoped source and lease continuity
 
-The public scope command accepts repeated `--repository-path` values for exact
-repository-shared files outside every configured project root. Project files,
-including unselected products, use the existing `--path` coverage rules. Both
-sets enter the same current-v1 bounded, stable, no-follow source snapshot;
-duplicates, collisions, traversal and unsafe paths fail. A snapshot grants no
-source write or delivery authority.
+Project membership for a repository path comes from the deepest matching
+configured `project_root`. Equal deepest roots are explicitly shared by those
+projects. A nested root owns its descendants and excludes a broader parent
+project there. Membership comparisons are case-sensitive on POSIX and
+case-insensitive on Windows. The public singular path resolver keeps unique-root
+callers unchanged and requires an explicit selected member for an equal-root
+path.
+
+The public scope command accepts `--path` for paths that belong to a selected
+project and for repository-shared paths outside every configured project root.
+An outside-root path becomes source evidence only through the exact current
+scope and selected `ProjectContext`; it does not grant write authority. During
+admission, every `allowed_paths` and `implementation_paths` entry is checked
+against the selected project before the source snapshot or lease capability is
+created. Configured wiki, internal and skills locations are informational and
+do not form a closed path allowlist or change `code_selectors`.
+
+Repeated `--repository-path` values remain limited to exact repository-shared
+files outside every configured project root. They enter the same current-v1
+bounded, stable, no-follow snapshot as `--path`, but provide read-only evidence
+and never source-write authorization. Duplicates, collisions, traversal,
+symlinks and unsafe paths fail.
 
 Admission creates an active coordination ticket bound to the exact work,
 repository, projects, thread and source snapshot, with one real same-work

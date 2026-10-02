@@ -753,16 +753,6 @@ function assertConfiguredPaths(config: AgentRuntimeConfig): void {
       ...overrides,
     ] as [string, string][];
   });
-  const projectRoots = config.projects.map((project) => project.project_root.toLowerCase());
-  assertUnique(projectRoots, 'project roots');
-  projectRoots.forEach((root) =>
-    projectRoots.forEach((other) => {
-      assertCondition(
-        root === other || (root !== '.' && !other.startsWith(root + '/')),
-        'project roots must not overlap',
-      );
-    }),
-  );
   const knowledgePaths = config.knowledge.sources.flatMap((source) =>
     choose(
       source.kind === 'local',
@@ -1264,6 +1254,10 @@ function assertResearchDecisionConfiguration(config: AgentRuntimeConfig): void {
 }
 
 function assertTeamsAndBindings(config: AgentRuntimeConfig): void {
+  assertUnique(
+    config.projects.map((project) => project.project_id),
+    'project ids',
+  );
   const projectIds = new Set([
     config.repository.repository_id,
     ...config.projects.map((project) => project.project_id),

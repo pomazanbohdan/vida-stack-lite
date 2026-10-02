@@ -8,10 +8,17 @@ import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime
 import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
 import { validateActivationUse } from '../../src/research-decision.ts';
 import {
+  buildSessionBridgeRequest,
+  configuredContextForStage,
+  sessionBridgeRunId,
+} from '../../src/orchestration/mastra-session-bridge.ts';
+import {
   MastraSessionLedger,
   PersistentSessionHandoffStore,
   sessionHandoffDatabasePath,
 } from '../../src/orchestration/persistent-session-handoff.ts';
+import { sessionActionsForWave } from '../../src/orchestration/session-handoff.ts';
+import { compileDevelopmentWorkflow } from '../../src/orchestration/workflow-plan.ts';
 
 const root =
   process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
@@ -98,6 +105,31 @@ function bridgeRequest({ actionId, workflowId, stageId, assignmentIndex, waveInd
     scope_digest: 'b'.repeat(64),
     bindings_manifest_ref: 'e'.repeat(64),
   };
+}
+
+function actualFocusedValidatorRequests(workId) {
+  const workflowId = 'task_execution';
+  const selected = selection('task', workflowId);
+  const requestContext = { ...context, work_id: workId };
+  const compiled = compileDevelopmentWorkflow(config, selected.team, workflowId, selected.risk_flags);
+  const waveIndex = compiled.waves.findIndex((wave) => wave.some((stage) => stage.id === 'validate_focused'));
+  const actions = sessionActionsForWave(config, selected, requestContext, workflowId, waveIndex, []);
+  const runId = sessionBridgeRunId(workspaceId, requestContext, workflowId);
+  const requests = actions
+    .filter((action) => action.stage_id === 'validate_focused')
+    .map((action) =>
+      buildSessionBridgeRequest({
+        runId,
+        workflowId,
+        configDigest: runtimeConfigDigest(config),
+        context: requestContext,
+        waveIndex,
+        action,
+        configuredContext: configuredContextForStage(root, config, workflowId, action.stage_id, requestContext),
+        priorResults: [],
+      }),
+    );
+  return { requestContext, runId, waveIndex, requests };
 }
 
 function seedMastraLedger(database, state) {
@@ -477,44 +509,127 @@ describe('durable Mastra research exposure and invocation identity', () => {
     );
   });
 
-  test('allows one invocation to report the configured co-issued read-only validator slots', async () => {
+  test('allows one invocation for actual focused validator requests with distinct action-bound manifests', async () => {
     scratch = await mkdtemp(path.join(tmpdir(), 'mastra-batch-report-'));
-    const { database, instance, workId } = mastraLedger('batch-report');
-    const workflowId = 'task_execution';
-    const stageId = 'validate_focused';
-    const requests = [0, 1].map((assignmentIndex) =>
-      bridgeRequest({
-        actionId: (assignmentIndex === 0 ? 'c' : 'd').repeat(64),
-        workflowId,
-        stageId,
-        assignmentIndex,
-      }),
-    );
-    const issueIds = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222'];
-    seedMastraLedger(
-      database,
-      mastraState(
-        workId,
-        requests,
-        requests.map((request, index) => ({ request, issue_id: issueIds[index], observation: null })),
-      ),
-    );
-    let current = instance.resume(workId, 1);
+    const workId = 'batch-report';
+    const { requestContext, runId, requests } = actualFocusedValidatorRequests(workId);
+    expect(requests).toHaveLength(2);
+    expect(new Set(requests.map((request) => request.action_id)).size).toBe(2);
+    expect(new Set(requests.map((request) => request.bindings_manifest_ref)).size).toBe(2);
+    expect(requests.map((request) => request.role).sort()).toEqual(['correctness-validator', 'requirements-validator']);
+    const { instance } = mastraLedger(workId);
+    let current = instance.sync(workId, requestContext.attempt, runId, 'validate_focused', requests);
+    current = instance.issueWave(workId, requestContext.attempt, current.version);
+    expect(current.state.items.every((item) => item.host_reservation === undefined)).toBe(true);
     const sharedRef = 'one-controlled-tool-invocation';
-    const first = mastraObservation(requests[0], issueIds[0], sharedRef, undefined, 'same-agent');
-    current = instance.report(workId, 1, current.version, first);
-    const exactRetry = instance.report(workId, 1, current.version, first);
+    const firstItem = current.state.items[0];
+    const secondItem = current.state.items[1];
+    expect(firstItem.issue_id).not.toBe(secondItem.issue_id);
+    const first = mastraObservation(firstItem.request, firstItem.issue_id, sharedRef, undefined, 'same-agent');
+    current = instance.report(workId, requestContext.attempt, current.version, first);
+    const exactRetry = instance.report(workId, requestContext.attempt, current.version, first);
     expect(exactRetry.version).toEqual(current.version);
     expect(() =>
-      instance.report(workId, 1, current.version, { ...first, summary: 'conflicting duplicate slot' }),
+      instance.report(workId, requestContext.attempt, current.version, {
+        ...first,
+        summary: 'conflicting duplicate slot',
+      }),
     ).toThrow(/retry differs/);
     current = instance.report(
       workId,
-      1,
+      requestContext.attempt,
       current.version,
-      mastraObservation(requests[1], issueIds[1], sharedRef, undefined, 'same-agent'),
+      mastraObservation(secondItem.request, secondItem.issue_id, sharedRef, undefined, 'same-agent'),
     );
     expect(current.state.items.map((item) => item.observation?.tool_call_ref)).toEqual([sharedRef, sharedRef]);
+  });
+
+  test('rejects generated validator batching across mismatched context, role, identity, stage, wave, or scope', async () => {
+    scratch = await mkdtemp(path.join(tmpdir(), 'mastra-batch-bindings-'));
+    const changes = [
+      [
+        'context',
+        (request) => ({
+          ...request,
+          configured_context_digest: 'c'.repeat(64),
+          configured_context_files: [{ path: 'packages/agent/TESTING.md', sha256: 'd'.repeat(64) }],
+        }),
+      ],
+      ['role', (request) => ({ ...request, role: 'code-researcher' })],
+      ['stage', (request) => ({ ...request, stage_id: 'synthesize_task' })],
+      ['wave', (request, fixture) => ({ ...request, wave_index: fixture.waveIndex + 1 })],
+      ['scope', (request) => ({ ...request, scope_digest: 'c'.repeat(64) })],
+    ];
+
+    for (const [label, change] of changes) {
+      const workId = `batch-mismatch-${label}`;
+      const fixture = actualFocusedValidatorRequests(workId);
+      const requests = fixture.requests.map((request, index) => (index === 1 ? change(request, fixture) : request));
+      const { instance } = mastraLedger(workId);
+      expect(() => {
+        let current = instance.sync(
+          workId,
+          fixture.requestContext.attempt,
+          fixture.runId,
+          'validate_focused',
+          requests,
+        );
+        current = instance.issueWave(workId, fixture.requestContext.attempt, current.version);
+        const [left, right] = current.state.items;
+        const sharedRef = `mismatch-${label}`;
+        current = instance.report(
+          workId,
+          fixture.requestContext.attempt,
+          current.version,
+          mastraObservation(left.request, left.issue_id, sharedRef, undefined, 'same-agent'),
+        );
+        instance.report(
+          workId,
+          fixture.requestContext.attempt,
+          current.version,
+          mastraObservation(right.request, right.issue_id, sharedRef, undefined, 'same-agent'),
+        );
+      }).toThrow();
+    }
+
+    const workId = 'batch-mismatch-run';
+    const fixture = actualFocusedValidatorRequests(workId);
+    const requests = [fixture.requests[0], { ...fixture.requests[1], run_id: 'foreign-run' }];
+    const { instance } = mastraLedger(workId);
+    expect(() =>
+      instance.sync(workId, fixture.requestContext.attempt, fixture.runId, 'validate_focused', requests),
+    ).toThrow(/invalid suspended requests/);
+  });
+
+  test('rejects a different agent identity for an otherwise valid generated validator pair', async () => {
+    scratch = await mkdtemp(path.join(tmpdir(), 'mastra-batch-agent-'));
+    const workId = 'batch-mismatch-agent';
+    const fixture = actualFocusedValidatorRequests(workId);
+    const { instance } = mastraLedger(workId);
+    let current = instance.sync(
+      workId,
+      fixture.requestContext.attempt,
+      fixture.runId,
+      'validate_focused',
+      fixture.requests,
+    );
+    current = instance.issueWave(workId, fixture.requestContext.attempt, current.version);
+    const [left, right] = current.state.items;
+    const sharedRef = 'different-agent-invocation';
+    current = instance.report(
+      workId,
+      fixture.requestContext.attempt,
+      current.version,
+      mastraObservation(left.request, left.issue_id, sharedRef, undefined, 'first-agent'),
+    );
+    expect(() =>
+      instance.report(
+        workId,
+        fixture.requestContext.attempt,
+        current.version,
+        mastraObservation(right.request, right.issue_id, sharedRef, undefined, 'second-agent'),
+      ),
+    ).toThrow(/outside an allowed read-only slot batch/);
   });
 
   test('rejects reuse of a batched invocation reference from a completed wave', async () => {

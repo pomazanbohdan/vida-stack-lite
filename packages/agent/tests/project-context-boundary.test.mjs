@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import {
   loadProjectContext,
   loadProjectSetContext,
@@ -7,24 +7,47 @@ import {
   PathProfileError,
   pathProfileGap,
   requireAbsoluteRepositoryRoot,
+  projectMayScopeRepositoryPath,
   resolvePathProfile,
+  resolveProjectPathMembership,
   resolveProjectForRepositoryPath,
+  resolveSelectedProjectForRepositoryPath,
   validateProjectContext,
   validateProjectContextBinding,
   validateResolvedPathProfile,
 } from '../src/config/project-context.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
+import { initializeProject } from '../bin/init.mjs';
 import { linkSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(process.cwd(), '..');
-const config = loadRuntimeConfig(repositoryRoot);
-const project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const projectId = 'sample';
+const secondProjectId = 'second';
+let repositoryRoot;
+let config;
+let project;
+let scopeId;
+const temporaryRoots = [];
+
 function binding(context, projectId) {
   return context.project_bindings.find((entry) => entry.project_id === projectId);
 }
-const scopeId = binding(project, '3mob').path_profile.scope_id;
-const temporaryRoots = [];
+
+beforeAll(async () => {
+  repositoryRoot = mkdtempSync(path.join(tmpdir(), 'project-context-boundary-'));
+  mkdirSync(path.join(repositoryRoot, 'products', projectId), { recursive: true });
+  mkdirSync(path.join(repositoryRoot, 'products', secondProjectId), { recursive: true });
+  await initializeProject({
+    projectRoot: repositoryRoot,
+    repository: 'project-context-fixture',
+    projectMappings: [`${projectId}=products/${projectId}`, `${secondProjectId}=products/${secondProjectId}`],
+  });
+  mkdirSync(path.join(repositoryRoot, '.agent', 'work'), { recursive: true });
+  config = loadRuntimeConfig(repositoryRoot);
+  project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, projectId);
+  scopeId = binding(project, projectId).path_profile.scope_id;
+});
 
 function relative(value) {
   return path.relative(repositoryRoot, value).split(path.sep).join('/');
@@ -33,7 +56,7 @@ function options(paths = {}) {
   return {
     processing_scope: 'selected_project',
     repository_id: config.repository.repository_id,
-    project_id: '3mob',
+    project_id: projectId,
     trusted_override: issueTestTrustedPathProfileOverride({
       schema: 'TrustedPathProfileOverride/v1',
       scope_id: scopeId,
@@ -61,8 +84,12 @@ afterEach(() => {
   while (temporaryRoots.length) rmSync(temporaryRoots.pop(), { recursive: true, force: true });
 });
 
+afterAll(() => {
+  if (repositoryRoot) rmSync(repositoryRoot, { recursive: true, force: true });
+});
+
 describe('project context path boundary', () => {
-  test('resolves the longest unique project root and blocks equal-depth ambiguity', () => {
+  test('resolves deepest project membership and requires a selected member for shared roots', () => {
     const projects = [
       { project_id: 'root', project_root: '.' },
       { project_id: 'services', project_root: 'services' },
@@ -75,16 +102,52 @@ describe('project context path boundary', () => {
       specificity: 2,
     });
     expect(resolveProjectForRepositoryPath(projects, 'services/other')).toMatchObject({ project_id: 'services' });
-    expect(() =>
-      resolveProjectForRepositoryPath(
-        [
-          { project_id: 'aa', project_root: 'packages/a' },
-          { project_id: 'bb', project_root: 'packages/a' },
-        ],
-        'packages/a/src',
-      ),
-    ).toThrow(/ambiguous project roots/);
+    const equalRoots = [
+      { project_id: 'aa', project_root: 'packages/a' },
+      { project_id: 'bb', project_root: 'packages/a' },
+    ];
+    expect(resolveProjectPathMembership(equalRoots, 'packages/a/src')).toEqual({
+      project_ids: ['aa', 'bb'],
+      project_root: 'packages/a',
+      specificity: 2,
+    });
+    expect(() => resolveProjectForRepositoryPath(equalRoots, 'packages/a/src')).toThrow(/ambiguous project roots/);
+    expect(resolveProjectForRepositoryPath(equalRoots, 'packages/a/src', { selected_project_id: 'bb' })).toMatchObject({
+      project_id: 'bb',
+      project_root: 'packages/a',
+      specificity: 2,
+    });
+    expect(projectMayScopeRepositoryPath(equalRoots, 'packages/a/src', 'aa')).toBe(true);
+    expect(projectMayScopeRepositoryPath(equalRoots, 'packages/a/src', 'bb')).toBe(true);
+    expect(projectMayScopeRepositoryPath(equalRoots, 'wiki/skills/guide.md', 'aa')).toBe(true);
+    expect(resolveSelectedProjectForRepositoryPath(equalRoots, 'wiki/skills/guide.md', ['aa'])).toMatchObject({
+      project_id: 'aa',
+      specificity: -1,
+    });
+    expect(() => resolveSelectedProjectForRepositoryPath(equalRoots, 'wiki/skills/guide.md', ['aa', 'bb'])).toThrow(
+      /ambiguous selected project membership/,
+    );
+    expect(() => resolveSelectedProjectForRepositoryPath(equalRoots, 'packages/a/src', ['aa', 'ghost'])).toThrow(
+      /selected project is not configured/,
+    );
+    const nestedRoots = [
+      { project_id: 'parent', project_root: 'products' },
+      { project_id: 'foreign', project_root: 'products/foreign' },
+    ];
+    expect(resolveProjectPathMembership(nestedRoots, 'products/foreign/src/main.ts').project_ids).toEqual(['foreign']);
+    expect(projectMayScopeRepositoryPath(nestedRoots, 'products/foreign/src/main.ts', 'parent')).toBe(false);
+    expect(projectMayScopeRepositoryPath(nestedRoots, 'products/foreign/src/main.ts', 'foreign')).toBe(true);
+    expect(
+      resolveProjectPathMembership(nestedRoots, 'products/foreign/src/main.ts', { platform: 'win32' }).project_ids,
+    ).toEqual(['foreign']);
+    expect(
+      resolveProjectPathMembership(nestedRoots, 'PRODUCTS/FOREIGN/src/main.ts', { platform: 'win32' }).project_ids,
+    ).toEqual(['foreign']);
+    expect(
+      resolveProjectPathMembership(nestedRoots, 'PRODUCTS/FOREIGN/src/main.ts', { platform: 'posix' }).project_ids,
+    ).toEqual([]);
     expect(() => resolveProjectForRepositoryPath(projects, 'outside/../root')).toThrow(/unsafe path segment/);
+    expect(() => resolveProjectPathMembership(equalRoots, 'packages/a/../foreign')).toThrow(/unsafe path segment/);
   });
 
   test('canonicalizes task project ids without changing project identity', () => {
@@ -95,35 +158,36 @@ describe('project context path boundary', () => {
 
   test('binds an exact multi-project context without a primary project', () => {
     const first = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
-      'refactoring',
-      '3mob',
+      secondProjectId,
+      projectId,
     ]);
     const reordered = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
-      '3mob',
-      'refactoring',
+      projectId,
+      secondProjectId,
     ]);
-    expect(first.project_ids).toEqual(['3mob', 'refactoring']);
+    expect(first.project_ids).toEqual([projectId, secondProjectId]);
     expect(
-      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, ['3mob', '3mob']).project_ids,
-    ).toEqual(['3mob']);
+      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [projectId, projectId])
+        .project_ids,
+    ).toEqual([projectId]);
     expect(first.project_context_digest).toBe(reordered.project_context_digest);
     expect(first.integrations_digest).toBe(reordered.integrations_digest);
     expect(first.path_bindings_digest).toBe(reordered.path_bindings_digest);
-    expect(first.project_bindings.map((entry) => entry.project_id)).toEqual(['3mob', 'refactoring']);
-    expect(first.integration_bindings.map((entry) => entry.project_id)).toEqual(['3mob', 'refactoring']);
+    expect(first.project_bindings.map((entry) => entry.project_id)).toEqual([projectId, secondProjectId]);
+    expect(first.integration_bindings.map((entry) => entry.project_id)).toEqual([projectId, secondProjectId]);
     expect(first).not.toHaveProperty('integration_binding');
     expect(() => loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [])).toThrow(
       /project ids must be non-empty/,
     );
     expect(() =>
-      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, ['3mob', 'missing']),
+      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [projectId, 'missing']),
     ).toThrow(/project identity is not configured/);
     expect(() =>
-      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, ['3mob'], {
+      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [projectId], {
         trusted_overrides: {
-          refactoring: issueTestTrustedPathProfileOverride({
+          [secondProjectId]: issueTestTrustedPathProfileOverride({
             schema: 'TrustedPathProfileOverride/v1',
-            scope_id: 'repository:' + config.repository.repository_id + '/project:refactoring',
+            scope_id: 'repository:' + config.repository.repository_id + '/project:' + secondProjectId,
             paths: {},
           }),
         },
@@ -177,14 +241,16 @@ describe('project context path boundary', () => {
   test('rejects unissued caller path overrides', () => {
     const forged = {
       schema: 'TrustedPathProfileOverride/v1',
-      scope_id: binding(project, '3mob').path_profile.scope_id,
+      scope_id: binding(project, projectId).path_profile.scope_id,
       paths: { work_root: 'agent-runtime-new' },
     };
     expect(() => resolvePathProfile(repositoryRoot, config, { ...options(), trusted_override: forged })).toThrow(
       /capability/,
     );
     expect(() =>
-      loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob', { trusted_override: forged }),
+      loadProjectContext(repositoryRoot, config, config.repository.repository_id, projectId, {
+        trusted_override: forged,
+      }),
     ).toThrow(/capability/);
   });
   test('rejects selector and snapshot violations', () => {
@@ -192,21 +258,21 @@ describe('project context path boundary', () => {
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: undefined,
-        project_id: '3mob',
+        project_id: projectId,
       }),
     ).toThrow(/repository id is invalid/);
     expect(() =>
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: 'bad!',
-        project_id: '3mob',
+        project_id: projectId,
       }),
     ).toThrow(/repository id is invalid/);
     expect(() =>
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: '!crmbx',
-        project_id: '3mob',
+        project_id: projectId,
       }),
     ).toThrow(/repository id is invalid/);
     expect(() =>
@@ -236,26 +302,26 @@ describe('project context path boundary', () => {
         repository_id: config.repository.repository_id,
         project_id: 'missing',
       }),
-    ).toThrow('project identity is not configured: creatio-sample-repository/missing');
+    ).toThrow('project identity is not configured: ' + config.repository.repository_id + '/missing');
     expect(
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: config.repository.repository_id,
-        project_id: 'refactoring',
+        project_id: secondProjectId,
       }).scope_id,
-    ).toContain('project:refactoring');
+    ).toContain('project:' + secondProjectId);
     expect(
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: config.repository.repository_id,
-        project_id: '3mob',
+        project_id: projectId,
       }).scope_id,
-    ).toContain('project:3mob');
+    ).toContain('project:' + projectId);
     expect(() =>
       resolvePathProfile(repositoryRoot, config, {
         processing_scope: 'selected_project',
         repository_id: 'missing',
-        project_id: '3mob',
+        project_id: projectId,
       }),
     ).toThrow('repository identity is not configured: missing');
     expect(() =>
@@ -265,19 +331,19 @@ describe('project context path boundary', () => {
       }),
     ).toThrow(/whole_repository scope cannot include project identity/);
     expect(() =>
-      resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository', project_id: '3mob' }),
+      resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository', project_id: projectId }),
     ).toThrow(/whole_repository scope cannot include project identity/);
     const stale = structuredClone(config);
     stale.config_revision += 1;
     expect(() => resolvePathProfile(repositoryRoot, stale, {})).toThrow(/runtime config snapshot is stale or forged/);
-    expect(() => loadProjectContext(repositoryRoot, config, 'missing', '3mob')).toThrow(
+    expect(() => loadProjectContext(repositoryRoot, config, 'missing', projectId)).toThrow(
       'project context repository identity is invalid',
     );
     expect(() => loadProjectContext(repositoryRoot, config, config.repository.repository_id, 'missing')).toThrow(
-      'project identity is not configured: creatio-sample-repository/missing',
+      'project identity is not configured: ' + config.repository.repository_id + '/missing',
     );
-    expect(loadProjectContext(repositoryRoot, config, 'creatio-sample-repository', '3mob').project_ids).toEqual([
-      '3mob',
+    expect(loadProjectContext(repositoryRoot, config, config.repository.repository_id, projectId).project_ids).toEqual([
+      projectId,
     ]);
   });
 
@@ -318,43 +384,48 @@ describe('project context path boundary', () => {
   });
 
   test('issues canonical profiles and validates bindings, identities, and path kinds', () => {
-    const whole = resolvePathProfile(repositoryRoot, config);
+    const whole = resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository' });
     expect(whole.schema).toBe('ResolvedPathProfile/v1');
     expect(whole.scope_id).toBe('repository:' + config.config_id);
     expect(whole.processing_scope).toBe('whole_repository');
     expect(whole.path_identities.repository_root).not.toBeNull();
-    const project3 = binding(project, '3mob');
-    expect(project3.path_bindings.schema).toBe('ProjectPathBindings/v1');
-    expect(project3.path_bindings.repository_root).toBe(repositoryRoot);
-    expect(project3.path_bindings.contour).toBe(project3.path_profile.scope_id);
-    expect(project3.path_bindings.provider).toBe('agent-runtime.config.v1.yaml');
-    expect(project3.path_bindings.paths.find((entry) => entry.kind === 'wiki_path').expected_type).toBe('file-parent');
-    expect(project3.path_bindings.paths.find((entry) => entry.kind === 'documentation_policy_path').expected_type).toBe(
-      'file',
+    const primaryBinding = binding(project, projectId);
+    expect(primaryBinding.path_bindings.schema).toBe('ProjectPathBindings/v1');
+    expect(primaryBinding.path_bindings.repository_root).toBe(repositoryRoot);
+    expect(primaryBinding.path_bindings.contour).toBe(primaryBinding.path_profile.scope_id);
+    expect(primaryBinding.path_bindings.provider).toBe('agent-runtime.config.v1.yaml');
+    expect(primaryBinding.path_bindings.paths.find((entry) => entry.kind === 'wiki_path').expected_type).toBe(
+      'file-parent',
     );
-    expect(project3.path_bindings.paths.find((entry) => entry.kind === 'work_root').expected_type).toBe('directory');
+    expect(
+      primaryBinding.path_bindings.paths.find((entry) => entry.kind === 'documentation_policy_path').expected_type,
+    ).toBe('file');
+    expect(primaryBinding.path_bindings.paths.find((entry) => entry.kind === 'work_root').expected_type).toBe(
+      'directory',
+    );
     const overridden = resolve({ work_root: '.' });
     expect(overridden.provenance.work_root).toEqual({
       layer: 'trusted-override',
       pointer: '$trusted_override.paths.work_root',
     });
-    expect(validateResolvedPathProfile(project3.path_profile, repositoryRoot)).toBe(project3.path_profile);
+    expect(validateResolvedPathProfile(primaryBinding.path_profile, repositoryRoot)).toBe(primaryBinding.path_profile);
     expect(validateResolvedPathProfile(whole, repositoryRoot)).toBe(whole);
     expect(validateProjectContextBinding(project, repositoryRoot)).toBe(project);
     expect(validateProjectContext(project, repositoryRoot)).toBe(project);
-    const second = loadProjectContext(repositoryRoot, config, 'creatio-sample-repository', 'refactoring');
-    const secondBinding = binding(second, 'refactoring');
-    expect(secondBinding.integration_binding.tenant_id).toBe('agentsustem');
+    const second = loadProjectContext(repositoryRoot, config, config.repository.repository_id, secondProjectId);
+    const secondBinding = binding(second, secondProjectId);
+    const secondProjectConfig = config.projects.find((entry) => entry.project_id === secondProjectId);
+    expect(secondBinding.integration_binding.tenant_id).toBe(
+      config.integrations.providers.find((entry) => entry.project_id === secondProjectId).tenant_id,
+    );
     expect(project.repository_title).toBe(config.repository.title);
     expect(second.repository_title).toBe(config.repository.title);
     expect(second.repository_title).not.toBe(secondBinding.project_title);
-    expect(secondBinding.project_title).toBe('АгентСустем refactoring');
-    expect(secondBinding.code_selectors).toEqual(
-      config.projects.find((entry) => entry.project_id === 'refactoring').code_selectors,
-    );
+    expect(secondBinding.project_title).toBe(secondProjectConfig.title);
+    expect(secondBinding.code_selectors).toEqual(secondProjectConfig.code_selectors);
     expect(secondBinding.path_profile.provenance.wiki_root).toEqual({
       layer: 'project-config',
-      pointer: '$.projects[refactoring].wiki_root',
+      pointer: '$.projects[' + secondProjectId + '].wiki_root',
     });
     expect(secondBinding.path_bindings.schema).toBe('ProjectPathBindings/v1');
     expect(secondBinding.path_bindings.paths).toHaveLength(21);
@@ -379,7 +450,7 @@ describe('project context path boundary', () => {
       'project context must be issued by loadProjectSetContext',
     );
     expect(() =>
-      validateResolvedPathProfile(project3.path_profile, path.join(repositoryRoot, 'agent-runtime-new')),
+      validateResolvedPathProfile(primaryBinding.path_profile, path.join(repositoryRoot, 'agent-runtime-new')),
     ).toThrow('resolved path profile identity is invalid');
     expect(() => requireAbsoluteRepositoryRoot(null)).toThrow('trusted repository root must be absolute');
     expect(() => requireAbsoluteRepositoryRoot('.')).toThrow('trusted repository root must be absolute');
@@ -418,13 +489,13 @@ describe('project context path boundary', () => {
     expect(repositoryProfile.paths.work_root).toBe('.');
     expect(isolated.validateResolvedPathProfile(repositoryProfile, repositoryRoot)).toBe(repositoryProfile);
     expect(() =>
-      isolated.loadProjectContext(repositoryRoot, repositoryConfig, 'unconfigured-repository', '3mob'),
+      isolated.loadProjectContext(repositoryRoot, repositoryConfig, 'unconfigured-repository', projectId),
     ).toThrow('project context repository identity is invalid');
     expect(() =>
       isolated.resolvePathProfile(repositoryRoot, repositoryConfig, {
         processing_scope: 'selected_project',
         repository_id: config.repository.repository_id,
-        project_id: '3mob',
+        project_id: projectId,
         trusted_override: isolated.issueTestTrustedPathProfileOverride({
           schema: 'TrustedPathProfileOverride/v1',
           scope_id: 'repository:' + config.config_id,
@@ -433,29 +504,34 @@ describe('project context path boundary', () => {
       }),
     ).toThrow();
     const partialConfig = structuredClone(config);
-    delete partialConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides;
+    delete partialConfig.projects.find((entry) => entry.project_id === projectId).path_overrides;
     activeConfig = partialConfig;
     const partialProfile = isolated.resolvePathProfile(repositoryRoot, partialConfig, {
       processing_scope: 'selected_project',
       repository_id: config.repository.repository_id,
-      project_id: '3mob',
+      project_id: projectId,
     });
     expect(partialProfile.paths.project_root).toBe(partialConfig.paths.defaults.project_root);
     activeConfig = structuredClone(config);
-    const context = isolated.loadProjectContext(repositoryRoot, activeConfig, config.repository.repository_id, '3mob');
+    const context = isolated.loadProjectContext(
+      repositoryRoot,
+      activeConfig,
+      config.repository.repository_id,
+      projectId,
+    );
     const overrideRoot = tempRoot();
-    activeConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides = {
+    activeConfig.projects.find((entry) => entry.project_id === projectId).path_overrides = {
       work_root: relative(overrideRoot),
     };
     const overriddenContext = isolated.loadProjectContext(
       repositoryRoot,
       activeConfig,
       config.repository.repository_id,
-      '3mob',
+      projectId,
     );
-    expect(binding(overriddenContext, '3mob').path_profile.paths.work_root).toBe(relative(overrideRoot));
-    expect(binding(overriddenContext, '3mob').path_profile.resolved_paths.work_root).toBe(overrideRoot);
-    expect(binding(overriddenContext, '3mob').path_profile.provenance.work_root.layer).toBe('project-config');
+    expect(binding(overriddenContext, projectId).path_profile.paths.work_root).toBe(relative(overrideRoot));
+    expect(binding(overriddenContext, projectId).path_profile.resolved_paths.work_root).toBe(overrideRoot);
+    expect(binding(overriddenContext, projectId).path_profile.provenance.work_root.layer).toBe('project-config');
     activeConfig.paths.defaults.work_root += '/changed';
     expect(() => isolated.validateProjectContextBinding(context, repositoryRoot)).toThrow(
       'resolved path profile config is stale',
@@ -467,13 +543,13 @@ describe('project context path boundary', () => {
     );
     const profileRoot = tempRoot();
     activeConfig = structuredClone(config);
-    activeConfig.projects.find((entry) => entry.project_id === '3mob').path_overrides = {
+    activeConfig.projects.find((entry) => entry.project_id === projectId).path_overrides = {
       work_root: relative(profileRoot),
     };
     const profile = isolated.resolvePathProfile(repositoryRoot, activeConfig, {
       processing_scope: 'selected_project',
       repository_id: config.repository.repository_id,
-      project_id: '3mob',
+      project_id: projectId,
     });
     rmSync(profileRoot, { recursive: true, force: true });
     expect(() => isolated.validateResolvedPathProfile(profile, repositoryRoot)).toThrow(

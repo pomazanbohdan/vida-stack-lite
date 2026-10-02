@@ -21,25 +21,23 @@ export async function inspectScope(args) {
   if (!suppliedRoot || !path.isAbsolute(suppliedRoot)) throw new Error('scope requires an absolute project root');
   const root = path.resolve(suppliedRoot);
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
-  const { loadProjectSetContext, resolveProjectForRepositoryPath } = await import('../src/config/project-context.ts');
+  const {
+    loadProjectSetContext,
+    projectMayScopeRepositoryPath,
+    resolveProjectPathMembership,
+  } = await import('../src/config/project-context.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { snapshotDeclaredSources } = await import('../src/orchestration/scoped-source-snapshot.ts');
   const config = loadRuntimeConfig(root);
   const context = loadProjectSetContext(root, config, values['--repository'], values.projects);
   for (const relative of values.paths) {
-    const selected = resolveProjectForRepositoryPath(config.projects, relative);
-    if (!context.project_ids.includes(selected.project_id)) throw new Error('scope path is outside selected products');
+    if (!context.project_ids.some((projectId) => projectMayScopeRepositoryPath(config.projects, relative, projectId)))
+      throw new Error('scope path is outside selected products');
   }
   // Repository paths are read-only evidence, never source-write authorization.
   const fold = (value) => (process.platform === 'win32' ? value.toLowerCase() : value);
   for (const relative of values.repositoryPaths) {
-    if (
-      config.projects.some((project) => {
-        const projectRoot = fold(project.project_root ?? '.');
-        const target = fold(relative);
-        return projectRoot === '.' || target === projectRoot || target.startsWith(projectRoot + '/');
-      })
-    )
+    if (resolveProjectPathMembership(config.projects, relative).project_ids.length > 0)
       throw new Error('repository scope path is covered by a configured project; use --path');
   }
   const paths = [...values.paths, ...values.repositoryPaths];

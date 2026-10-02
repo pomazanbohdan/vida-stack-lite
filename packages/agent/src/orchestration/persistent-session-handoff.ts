@@ -61,6 +61,14 @@ const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean
 const validSessionState = new Ajv2020Constructor({ strict: true, allErrors: true }).compile(stateSchema);
 const sameJson = (left: unknown, right: unknown): boolean => canonicalJson(left) === canonicalJson(right);
 
+function requestRoleMatchesConfiguredAssignment(config: AgentRuntimeConfig, request: SessionBridgeRequest): boolean {
+  return (
+    config.workflows[request.workflow_id]?.stages.find((stage) => stage.id === request.stage_id)?.assignments[
+      request.assignment_index
+    ]?.role === request.role
+  );
+}
+
 export interface PersistentSessionHandoffState {
   readonly schema: 'PersistentSessionHandoffState/v1';
   readonly workspace_id: string;
@@ -640,8 +648,11 @@ export class MastraSessionLedger {
       left.issue_id === null ||
       right.issue_id === null ||
       left.issue_id === right.issue_id ||
+      leftRequest.action_id === rightRequest.action_id ||
       left.host_reservation ||
       right.host_reservation ||
+      !requestRoleMatchesConfiguredAssignment(this.#config, leftRequest) ||
+      !requestRoleMatchesConfiguredAssignment(this.#config, rightRequest) ||
       leftRequest.workflow_id !== 'task_execution' ||
       rightRequest.workflow_id !== 'task_execution' ||
       leftRequest.workflow_id !== rightRequest.workflow_id ||
@@ -651,7 +662,6 @@ export class MastraSessionLedger {
       leftRequest.wave_index !== rightRequest.wave_index ||
       leftRequest.config_digest !== rightRequest.config_digest ||
       leftRequest.scope_digest !== rightRequest.scope_digest ||
-      leftRequest.bindings_manifest_ref !== rightRequest.bindings_manifest_ref ||
       canonicalJsonDigest(leftRequest.configured_context_files ?? []) !==
         canonicalJsonDigest(rightRequest.configured_context_files ?? []) ||
       leftRequest.configured_context_digest !== rightRequest.configured_context_digest

@@ -117,11 +117,19 @@ export interface ProjectPathResolutionEntry {
 
 export interface ProjectPathResolutionOptions {
   readonly platform?: 'win32' | 'posix';
+  /** Resolve an equal-deepest shared root for this explicitly selected member. */
+  readonly selected_project_id?: string;
 }
 
 export interface ProjectPathResolution {
   readonly project_id: string;
   readonly project_root: string;
+  readonly specificity: number;
+}
+
+export interface ProjectPathMembership {
+  readonly project_ids: readonly string[];
+  readonly project_root: string | null;
   readonly specificity: number;
 }
 
@@ -181,18 +189,27 @@ function normalizeRepositoryPath(value: string): string {
   const normalized = value.replace(/\/+$/, '') || '.';
   enforce(
     normalized === '.' ||
-      normalized.split('/').every((segment) => segment.length > 0 && segment !== '.' && segment !== '..'),
+      normalized
+        .split('/')
+        .every(
+          (segment) =>
+            segment.length > 0 &&
+            segment !== '.' &&
+            segment !== '..' &&
+            !invalidPathSegment(segment) &&
+            !/\p{Cc}/u.test(segment),
+        ),
     'repository path contains an unsafe path segment',
   );
   return normalized;
 }
 
-/** Resolve the deepest configured project root, blocking equal-depth ambiguity. */
-export function resolveProjectForRepositoryPath(
+/** Resolve membership at the deepest matching configured project root. */
+export function resolveProjectPathMembership(
   projects: readonly ProjectPathResolutionEntry[],
   repositoryPath: string,
   options: ProjectPathResolutionOptions = {},
-): ProjectPathResolution {
+): ProjectPathMembership {
   enforce(projects.length > 0, 'projects must be non-empty');
   const platform = options.platform ?? process.platform;
   const fold = (value: string): string => (platform === 'win32' ? value.toLowerCase() : value);
@@ -222,11 +239,81 @@ export function resolveProjectForRepositoryPath(
       fold(target) === fold(candidate.project_root) ||
       fold(target).startsWith(fold(candidate.project_root) + '/'),
   );
-  enforce(matches.length > 0, 'repository path is not covered by a configured project');
+  if (matches.length === 0)
+    return Object.freeze({ project_ids: Object.freeze([]), project_root: null, specificity: -1 });
   const deepest = Math.max(...matches.map((candidate) => candidate.specificity));
   const selected = matches.filter((candidate) => candidate.specificity === deepest);
-  enforce(selected.length === 1, 'repository path has ambiguous project roots at equal specificity');
-  return Object.freeze(selected[0]!);
+  return Object.freeze({
+    project_ids: Object.freeze(selected.map((candidate) => candidate.project_id).sort()),
+    project_root: selected[0]!.project_root,
+    specificity: deepest,
+  });
+}
+
+/** A path is eligible for this selected project when it belongs to its deepest root or is repository-shared. */
+export function projectMayScopeRepositoryPath(
+  projects: readonly ProjectPathResolutionEntry[],
+  repositoryPath: string,
+  projectId: string,
+  options: ProjectPathResolutionOptions = {},
+): boolean {
+  const membership = resolveProjectPathMembership(projects, repositoryPath, options);
+  enforce(
+    projects.some((project) => project.project_id === projectId),
+    'selected project is not configured',
+  );
+  return membership.project_ids.length === 0 || membership.project_ids.includes(projectId);
+}
+
+/** Resolve a work path from the explicit selected set, failing closed on multiple eligible projects. */
+export function resolveSelectedProjectForRepositoryPath(
+  projects: readonly ProjectPathResolutionEntry[],
+  repositoryPath: string,
+  selectedProjectIds: readonly string[],
+  options: ProjectPathResolutionOptions = {},
+): ProjectPathResolution {
+  const ids = normalizeProjectIds(selectedProjectIds);
+  const membership = resolveProjectPathMembership(projects, repositoryPath, options);
+  enforce(
+    ids.every((projectId) => projects.some((project) => project.project_id === projectId)),
+    'selected project is not configured',
+  );
+  const candidates =
+    membership.project_ids.length === 0 ? ids : ids.filter((projectId) => membership.project_ids.includes(projectId));
+  enforce(candidates.length > 0, 'repository path is outside the selected projects');
+  enforce(candidates.length === 1, 'repository path has ambiguous selected project membership');
+  const selectedProject = projects.find((project) => project.project_id === candidates[0]);
+  if (!selectedProject) failPath('selected project is not configured');
+  const projectRoot = normalizeProjectRoot(
+    selectedProject.project_root ?? selectedProject.path_overrides?.project_root,
+    'project root',
+  );
+  return Object.freeze({
+    project_id: candidates[0]!,
+    project_root: projectRoot,
+    specificity: membership.specificity,
+  });
+}
+
+/** Resolve the deepest project root, requiring an explicit member for shared equal-depth roots. */
+export function resolveProjectForRepositoryPath(
+  projects: readonly ProjectPathResolutionEntry[],
+  repositoryPath: string,
+  options: ProjectPathResolutionOptions = {},
+): ProjectPathResolution {
+  const membership = resolveProjectPathMembership(projects, repositoryPath, options);
+  enforce(membership.project_ids.length > 0, 'repository path is not covered by a configured project');
+  const selectedProjectId = options.selected_project_id;
+  const candidates =
+    selectedProjectId === undefined
+      ? membership.project_ids
+      : membership.project_ids.filter((projectId) => projectId === selectedProjectId);
+  enforce(candidates.length === 1, 'repository path has ambiguous project roots at equal specificity');
+  return Object.freeze({
+    project_id: candidates[0]!,
+    project_root: membership.project_root!,
+    specificity: membership.specificity,
+  });
 }
 
 /** Canonical project membership for task and maintenance bindings. */
@@ -629,7 +716,7 @@ export function resolvePathProfile(
   return profile;
 }
 function selectedProfileOptions(profile: ResolvedPathProfile): PathProfileResolutionOptions {
-  const base = choose(
+  const base = choose<PathProfileResolutionOptions>(
     profile.processing_scope === 'selected_project',
     () => {
       const [repositoryPart, projectId] = profile.scope_id.split('/project:') as [string, string];
@@ -639,7 +726,7 @@ function selectedProfileOptions(profile: ResolvedPathProfile): PathProfileResolu
         project_id: projectId,
       };
     },
-    () => ({}),
+    () => ({ processing_scope: 'whole_repository' as const }),
   );
   const trustedPaths = {} as PathProfileOverride;
   PATH_KEYS.filter(

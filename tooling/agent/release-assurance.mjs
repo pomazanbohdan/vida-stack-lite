@@ -9,16 +9,24 @@ const rootDefault = fileURLToPath(new URL('../../', import.meta.url));
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const read = (file) => JSON.parse(readFileSync(file, 'utf8'));
 const excluded = new Set(['node_modules', 'dist', 'coverage', '.pack-inspect']);
+const operationalScratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent']);
 function sources(root, relative) {
   const file = path.join(root, relative),
     stat = lstatSync(file);
   if (stat.isSymbolicLink()) throw new Error('Assurance refuses linked source.');
   if (stat.isFile()) return [{ path: relative, sha256: sha(readFileSync(file)) }];
   if (!stat.isDirectory()) throw new Error('Assurance source is not a file or directory.');
+  if (operationalScratch.has(relative)) return [];
   return readdirSync(file)
     .sort()
-    .filter((name) => !excluded.has(name))
-    .flatMap((name) => sources(root, relative + '/' + name));
+    .flatMap((name) => {
+      const child = path.join(file, name),
+        info = lstatSync(child);
+      if (info.isSymbolicLink()) throw new Error('Assurance refuses linked source.');
+      const childRelative = relative + '/' + name;
+      if (info.isDirectory() && (excluded.has(name) || operationalScratch.has(childRelative))) return [];
+      return sources(root, childRelative);
+    });
 }
 export function releaseSourceBinding(root = rootDefault) {
   const entries = [

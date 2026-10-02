@@ -1841,7 +1841,7 @@ export async function run(args = process.argv.slice(2)) {
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess, runtimePackageCodePaths, selectWorkflow } =
     await import('../src/config/runtime-config.ts');
-  const { resolveProjectForRepositoryPath } = await import('../src/config/project-context.ts');
+  const { resolveSelectedProjectForRepositoryPath } = await import('../src/config/project-context.ts');
   const pin = readPin(bundleRoot);
   checkManifest(bundleRoot, pin);
   if (Bun.version !== pin) fail('GAP-VIDA-RUN-BUN-001', `Pinned Bun ${pin} is required; running ${Bun.version}.`);
@@ -1900,7 +1900,7 @@ export async function run(args = process.argv.slice(2)) {
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The project context is not bound to the requested identity.');
   let pathProject;
   try {
-    pathProject = resolveProjectForRepositoryPath(config.projects, values.work_path);
+    pathProject = resolveSelectedProjectForRepositoryPath(config.projects, values.work_path, values.projects);
   } catch {
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The work path is not bound to the selected project context.');
   }

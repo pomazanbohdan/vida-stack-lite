@@ -18,6 +18,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { advanceCutoff, assertNoActiveCutoverMaintenance, run, writeDurable } from '../bin/run.mjs';
+import { initializeProject } from '../bin/init.mjs';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../src/index.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -212,6 +213,74 @@ describe('vida-agent run entrypoint fast checks', () => {
       await expect(run([...args, ...extra])).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' });
     }
   });
+
+  test('selects an equal-root work path from one explicit project and fails closed on ambiguous or foreign roots', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-run-project-membership-'));
+    try {
+      for (const directory of ['products/shared', 'products/foreign'])
+        mkdirSync(path.join(root, directory), { recursive: true });
+      await initializeProject({
+        projectRoot: root,
+        repository: 'shared-run-fixture',
+        projectMappings: [
+          'alpha=products/shared',
+          'peer=products/shared',
+          'broad=products',
+          'foreign=products/foreign',
+        ],
+      });
+      const base = [
+        '--project-root',
+        root,
+        '--repository',
+        'shared-run-fixture',
+        '--work-id',
+        'membership-work',
+        '--attempt',
+        '1',
+        '--scope-digest',
+        'a'.repeat(64),
+        '--team',
+        'default-development',
+        '--kind',
+        'research',
+        '--intent',
+        'information_research',
+        '--workflow',
+        'unsupported-for-membership-check',
+      ];
+      const invokeRoot = (args) =>
+        spawnSync('bun', [launcher, ...args], {
+          cwd: packageRoot,
+          encoding: 'utf8',
+          windowsHide: true,
+        });
+      const chosenEqualMember = invokeRoot([
+        ...base,
+        '--project',
+        'alpha',
+        '--work-path',
+        'products/shared/src/probe.ts',
+      ]);
+      expect(JSON.parse(chosenEqualMember.stderr).code).toBe('GAP-VIDA-RUN-WORKFLOW-001');
+      const outsideRoot = invokeRoot([...base, '--project', 'alpha', '--work-path', 'wiki/skills/guide.md']);
+      expect(JSON.parse(outsideRoot.stderr).code).toBe('GAP-VIDA-RUN-WORKFLOW-001');
+      const ambiguous = invokeRoot([
+        ...base,
+        '--project',
+        'alpha',
+        '--project',
+        'peer',
+        '--work-path',
+        'products/shared/src/probe.ts',
+      ]);
+      expect(JSON.parse(ambiguous.stderr).code).toBe('GAP-VIDA-RUN-CONTEXT-001');
+      const nestedForeign = invokeRoot([...base, '--project', 'broad', '--work-path', 'products/foreign/src/probe.ts']);
+      expect(JSON.parse(nestedForeign.stderr).code).toBe('GAP-VIDA-RUN-CONTEXT-001');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 60_000);
 });
 
 ordinaryDescribe('vida-agent run entrypoint', () => {

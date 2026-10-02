@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 import { initializeProject } from '../bin/init.mjs';
 import { inspectScope } from '../bin/scope.mjs';
+import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import {
   compareScopedSourceSnapshots,
   snapshotDeclaredSources,
@@ -21,31 +22,58 @@ function reader(files) {
 }
 
 describe('cooperative scoped source evidence', () => {
-  test('public scope snapshots explicit shared files and rejects unsafe or project-covered shared paths', async () => {
+  test('public scope resolves equal, nested, shared and repository-evidence paths without widening selectors', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'scope-shared-fixture-'));
     mkdirSync(path.join(root, '.git'), { recursive: true });
-    for (const project of ['selected', 'foreign']) {
+    for (const project of ['selected', 'foreign'])
       mkdirSync(path.join(root, 'products', project, 'src'), { recursive: true });
-      writeFileSync(path.join(root, 'products', project, 'src/probe.txt'), project);
-    }
+    mkdirSync(path.join(root, 'products/src'), { recursive: true });
+    mkdirSync(path.join(root, 'wiki/skills'), { recursive: true });
+    mkdirSync(path.join(root, 'docs/internal'), { recursive: true });
+    writeFileSync(path.join(root, 'products/selected/src/probe.txt'), 'selected');
+    writeFileSync(path.join(root, 'products/foreign/src/probe.txt'), 'foreign');
+    writeFileSync(path.join(root, 'products/src/shared-probe.txt'), 'broad-root');
+    writeFileSync(path.join(root, 'wiki/skills/guide.md'), 'informational skills path');
+    writeFileSync(path.join(root, 'docs/internal/reference.md'), 'informational internal path');
     await initializeProject({
       projectRoot: root,
       repository: 'scope-fixture',
-      projectMappings: ['selected=products/selected', 'foreign=products/foreign'],
+      projectMappings: [
+        'selected=products/selected',
+        'peer=products/selected',
+        'broad=products',
+        'foreign=products/foreign',
+      ],
     });
+    const config = loadRuntimeConfig(root);
+    expect(config.projects.find((project) => project.project_id === 'selected').code_selectors).toEqual([
+      'products/selected/src/**',
+    ]);
     writeFileSync(path.join(root, 'shared.txt'), 'shared');
-    const base = ['--project-root', root, '--repository', 'scope-fixture', '--project', 'selected'];
-    const invoke = (args) =>
-      spawnSync(process.execPath, [path.join(packageRoot, 'bin/scope.mjs'), ...base, ...args], {
-        encoding: 'utf8',
-        windowsHide: true,
-      });
+    const base = ['--project-root', root, '--repository', 'scope-fixture'];
+    const invoke = (args, projects = ['selected']) =>
+      spawnSync(
+        process.execPath,
+        [
+          path.join(packageRoot, 'bin/scope.mjs'),
+          ...base,
+          ...projects.flatMap((project) => ['--project', project]),
+          ...args,
+        ],
+        {
+          encoding: 'utf8',
+          windowsHide: true,
+        },
+      );
     const shared = invoke(['--path', 'products/selected/src/probe.txt', '--repository-path', 'shared.txt']);
     expect(shared.status).toBe(0);
     expect(JSON.parse(shared.stdout).entries.map((entry) => entry.path)).toEqual([
       'products/selected/src/probe.txt',
       'shared.txt',
     ]);
+    expect(invoke(['--path', 'products/selected/src/probe.txt'], ['peer']).status).toBe(0);
+    expect(invoke(['--path', 'wiki/skills/guide.md', '--path', 'docs/internal/reference.md']).status).toBe(0);
+    expect(invoke(['--path', 'products/src/shared-probe.txt'], ['broad']).status).toBe(0);
     for (const args of [
       ['--repository-path', 'products/selected/src/probe.txt'],
       ['--repository-path', 'products/foreign/src/probe.txt'],
@@ -54,6 +82,7 @@ describe('cooperative scoped source evidence', () => {
       ['--repository-path', '../escape.txt'],
     ])
       expect(invoke(args).status).not.toBe(0);
+    expect(invoke(['--path', 'products/foreign/src/probe.txt'], ['broad']).status).not.toBe(0);
     mkdirSync(path.join(root, 'shared-dir'));
     writeFileSync(path.join(root, 'shared-dir/probe.txt'), 'shared');
     symlinkSync(path.join(root, 'shared-dir'), path.join(root, 'linked-dir'), 'junction');

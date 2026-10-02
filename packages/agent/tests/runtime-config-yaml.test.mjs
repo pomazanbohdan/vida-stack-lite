@@ -743,14 +743,22 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     );
   });
 
-  test('rejects equal or nested monorepo project roots', () => {
-    for (const root of [config.projects[0].project_root, 'project']) {
-      const changed = JSON.parse(JSON.stringify(config));
-      changed.projects[1].project_root = root;
-      expect(() => validateRuntimeConfigSource(changed)).toThrow(
-        /project roots (contains duplicates|must not overlap)/,
-      );
-    }
+  test('permits equal and nested project roots while retaining unique project identities', () => {
+    const equal = JSON.parse(JSON.stringify(config));
+    equal.projects[1].project_root = equal.projects[0].project_root;
+    expect(validateRuntimeConfigSource(equal).projects.map((project) => project.project_id)).toEqual(
+      config.projects.map((project) => project.project_id),
+    );
+
+    const nested = JSON.parse(JSON.stringify(config));
+    nested.projects[1].project_root = nested.projects[0].project_root + '/nested';
+    expect(validateRuntimeConfigSource(nested).projects[1].project_root).toBe(
+      nested.projects[0].project_root + '/nested',
+    );
+
+    const duplicateIdentity = JSON.parse(JSON.stringify(config));
+    duplicateIdentity.projects[1].project_id = duplicateIdentity.projects[0].project_id;
+    expect(() => validateRuntimeConfigSource(duplicateIdentity)).toThrow(/project ids contains duplicates/);
   });
 
   test('compiles Mastra from the selected graph and enforces role tools', async () => {

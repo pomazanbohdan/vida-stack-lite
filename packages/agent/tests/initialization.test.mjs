@@ -578,12 +578,11 @@ v8CoverageTest(
 );
 
 v8CoverageTest(
-  'multi-project initialization rejects bare, equal, and overlapping project roots before writing integration files',
+  'multi-project initialization still requires explicit roots and unique project ids',
   async () => {
     const cases = [
       ['--project', 'alpha', '--project', 'beta=packages/beta'],
-      ['--project', 'alpha=packages/shared', '--project', 'beta=packages/shared'],
-      ['--project', 'alpha=packages', '--project', 'beta=packages/beta'],
+      ['--project', 'alpha=packages/alpha', '--project', 'alpha=packages/beta'],
     ];
     for (const args of cases) {
       const result = await run([
@@ -597,6 +596,53 @@ v8CoverageTest(
       expect(result.exitCode).toBe(1);
       expect(await readdir(root)).toEqual(['tools']);
     }
+  },
+  30_000,
+);
+
+v8CoverageTest(
+  'multi-project initialization allows equal roots with distinct project identities',
+  async () => {
+    await mkdir(path.join(root, 'packages', 'shared'), { recursive: true });
+    const result = await run([
+      path.join(bundle, 'bin/init.mjs'),
+      '--project-root',
+      root,
+      '--repository',
+      'equal-roots-repository',
+      '--project',
+      'alpha=packages/shared',
+      '--project',
+      'beta=packages/shared',
+    ]);
+    expect(result.exitCode, result.stderr).toBe(0);
+    const config = parseYaml(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8'));
+    expect(config.projects.map((project) => project.project_id)).toEqual(['alpha', 'beta']);
+    expect(config.projects.map((project) => project.project_root)).toEqual(['packages/shared', 'packages/shared']);
+  },
+  30_000,
+);
+
+v8CoverageTest(
+  'multi-project initialization allows a nested project root',
+  async () => {
+    await mkdir(path.join(root, 'packages', 'child'), { recursive: true });
+    const result = await run([
+      path.join(bundle, 'bin/init.mjs'),
+      '--project-root',
+      root,
+      '--repository',
+      'nested-roots-repository',
+      '--project',
+      'parent=packages',
+      '--project',
+      'child=packages/child',
+    ]);
+    expect(result.exitCode, result.stderr).toBe(0);
+    const config = parseYaml(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8'));
+    expect(config.projects.map((project) => project.project_id)).toEqual(['child', 'parent']);
+    expect(config.projects.find((project) => project.project_id === 'parent').project_root).toBe('packages');
+    expect(config.projects.find((project) => project.project_id === 'child').project_root).toBe('packages/child');
   },
   30_000,
 );

@@ -334,8 +334,9 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
         Buffer.byteLength(summary, 'utf8') <= 3000,
       'task synthesis summary is missing, stale, mismatched or over budget',
     );
+    const packetSummary = summary.replace(/[\r\n\t]/g, ' ');
     taskSynthesisConstraints.push(
-      `Observed task synthesis ${item.request.action_id}/${item.observation!.output_digest}: ${summary}`,
+      `Observed task synthesis ${item.request.action_id}/${item.observation!.output_digest}: ${packetSummary}`,
     );
   }
   for (const item of observed.filter((entry) => researchStageIds.has(entry.request.stage_id))) {

@@ -93,19 +93,9 @@ function requireExplicitMultiProjectRoots(mappings) {
     throw new Error('Multi-project initialization requires every --project as PROJECT_ID=RELATIVE_ROOT');
 }
 
-function requireUniqueProjectRoots(mappings) {
+function requireUniqueProjectIds(mappings) {
   if (new Set(mappings.map((entry) => entry.id)).size !== mappings.length)
     throw new Error('Project ids must be unique');
-  const roots = mappings.map((entry) => entry.root.toLowerCase());
-  if (new Set(roots).size !== roots.length) throw new Error('Project roots must be unique');
-  return roots;
-}
-
-function requireNonoverlappingProjectRoots(roots) {
-  for (const root of roots) {
-    if (roots.some((other) => other !== root && (root === '.' || other.startsWith(root + '/'))))
-      throw new Error('Project roots must not overlap');
-  }
 }
 
 function projectMappings(value) {
@@ -114,7 +104,7 @@ function projectMappings(value) {
   const mappings = value.map(parseProjectMapping);
   requireExplicitMultiProjectRoots(mappings);
   const normalized = mappings.map((entry) => ({ ...entry, root: entry.root ?? '.' }));
-  requireNonoverlappingProjectRoots(requireUniqueProjectRoots(normalized));
+  requireUniqueProjectIds(normalized);
   return normalized.sort((left, right) => left.id.localeCompare(right.id));
 }
 

@@ -127,7 +127,7 @@ function fixture(sourceWriter = false, publicStore = false) {
   };
 }
 
-test('public final assurance commits three synthetic review reverse pairs and current delivery evidence atomically', async () => {
+test('public final assurance commits three synthetic review reverse pairs at a released nonzero maintenance generation', async () => {
   const f = fixture(true, true);
   const invoke = (args) =>
     spawnSync(
@@ -160,6 +160,31 @@ test('public final assurance commits three synthetic review reverse pairs and cu
     expect(JSON.parse(lines[0]).status).toBe('blocked');
   };
   try {
+    const maintenancePrincipal = 'fixture:maintenance-host',
+      maintenanceStore = new HostStateStore(f.database, f.store.workspaceId, undefined, undefined, undefined, {
+        principal: maintenancePrincipal,
+        projectIds: ['sample'],
+        verify: (fence) => ({
+          schema: 'MaintenanceReleaseAuthorization/v1',
+          principal: maintenancePrincipal,
+          fence_digest: canonicalJsonDigest(fence),
+          closure_digest: fence.binding.closure_digest,
+          bundle_digest: fence.binding.bundle_digest,
+        }),
+      }),
+      maintenanceReceipt = maintenanceStore.acquireMaintenanceFence({
+        schema: 'MaintenanceFenceBinding/v1',
+        project_ids: ['sample'],
+        operation_id: 'assurance-public-maintenance',
+        manifest_digest: '1'.repeat(64),
+        request_digest: '2'.repeat(64),
+        bindings_digest: '3'.repeat(64),
+        closure_digest: '4'.repeat(64),
+        bundle_digest: '5'.repeat(64),
+      });
+    expect(maintenanceReceipt.fence.generation).toBe(1);
+    expect((await maintenanceStore.releaseMaintenanceFence(maintenanceReceipt)).status).toBe('released');
+
     const id = 'assurance-public',
       input = f.prepare(id, 'user:current-correction');
     input.selection.kind = 'task';
@@ -198,8 +223,9 @@ test('public final assurance commits three synthetic review reverse pairs and cu
         change_kind: input.changeKind,
       }),
     );
-    const initial = admitLocalSessionWork(input),
-      work = initial.host.work,
+    const initial = admitLocalSessionWork(input);
+    expect(initial.host.maintenanceGeneration).toBe(1);
+    const work = initial.host.work,
       identity = {
         repository_id: work.binding.repository_id,
         project_ids: work.binding.project_ids,
@@ -240,6 +266,7 @@ test('public final assurance commits three synthetic review reverse pairs and cu
       identity,
       expectedWork: sourceLease.workVersion,
       expectedLedger: sourceLease.ledgerVersion,
+      expectedMaintenanceGeneration: sourceLease.maintenanceGeneration,
       stageId: 'develop_task',
       assignmentIndex: 0,
       requestDigest: '1'.repeat(64),

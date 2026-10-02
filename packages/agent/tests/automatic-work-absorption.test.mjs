@@ -983,6 +983,69 @@ test('valid public intake records the admission cutoff before failed scope prepa
   }
 });
 
+test('admission rejects forged foreign implementation paths before source snapshot or writer ownership', () => {
+  const f = fixture();
+  try {
+    const rawConfig = parseYaml(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8'));
+    const project = rawConfig.projects[0];
+    const broadProject = structuredClone(project);
+    const foreignProject = structuredClone(project);
+    rawConfig.projects = [
+      { ...broadProject, project_root: 'products' },
+      {
+        ...foreignProject,
+        project_id: 'foreign',
+        title: 'foreign',
+        delivery_group: 'foreign',
+        project_root: 'products/foreign',
+      },
+    ];
+    const integration = rawConfig.integrations.providers[0];
+    const sampleIntegration = structuredClone(integration);
+    const foreignIntegration = structuredClone(integration);
+    rawConfig.integrations.providers = [
+      { ...sampleIntegration, project_id: 'sample', namespace: 'sample' },
+      { ...foreignIntegration, id: 'local-foreign', project_id: 'foreign', namespace: 'foreign' },
+    ];
+    writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), stringifyYaml(rawConfig));
+    const config = loadRuntimeConfig(f.root);
+    mkdirSync(path.join(f.root, 'products/foreign/src'), { recursive: true });
+    writeFileSync(path.join(f.root, 'products/foreign/src/secret.ts'), 'foreign source');
+
+    const input = f.prepare('forged-foreign-scope', 'user:forged-foreign-scope');
+    const scopePath = path.join(f.root, input.scopePath);
+    const scope = JSON.parse(readFileSync(scopePath, 'utf8'));
+    scope.allowed_paths = ['products/foreign/src/secret.ts'];
+    scope.implementation_paths = ['products/foreign/src/secret.ts'];
+    writeFileSync(scopePath, JSON.stringify(scope));
+
+    expect(() => admitLocalSessionWork({ ...input, config })).toThrow(/outside selected project membership/);
+    expect(f.store.readWorkspaceSnapshot().work).toEqual([]);
+    expect(f.database.query('SELECT work_id,attempt FROM agent_host_admission_attempt').all()).toEqual([
+      { work_id: 'forged-foreign-scope', attempt: 1 },
+    ]);
+  } finally {
+    f.close();
+  }
+});
+
+test('admission accepts an exact out-of-root shared path under the selected project context', () => {
+  const f = fixture();
+  try {
+    const rawConfig = parseYaml(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8'));
+    rawConfig.projects[0].project_root = 'products/sample';
+    writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), stringifyYaml(rawConfig));
+    mkdirSync(path.join(f.root, 'products/sample'), { recursive: true });
+    const config = loadRuntimeConfig(f.root);
+    const input = f.prepare('shared-path', 'user:shared-path');
+    const admitted = admitLocalSessionWork({ ...input, config });
+    expect(admitted.source.entries.map((entry) => entry.path)).toEqual(['AGENT.sidecar.md']);
+    expect(admitted.host.work.binding.project_ids).toEqual(['sample']);
+  } finally {
+    f.close();
+  }
+});
+
 test('public consumer wrapper checks the separate Mastra store and recovers the same fenced operation', async () => {
   const f = fixture();
   try {

@@ -564,6 +564,77 @@ describe('admitted development packet', () => {
     ).toThrow(/task synthesis summary is missing, stale, mismatched or over budget/);
   });
 
+  test('projects task synthesis line breaks while retaining its raw observation and digest', () => {
+    const input = admitted();
+    const wave = input.ledger.state.completed[0];
+    const item = wave.items[0];
+    const summary = 'alpha\rbravo\ncharlie\tdelta';
+    const outputDigest = canonicalJsonDigest(summary);
+    const observation = { ...item.observation, summary, output_digest: outputDigest };
+    const state = {
+      ...input.ledger.state,
+      completed: [{ ...wave, items: [{ ...item, observation }] }],
+    };
+    const withSynthesis = {
+      ...input,
+      ledger: { version: { revision: 2, digest: canonicalJsonDigest(state) }, state },
+    };
+
+    const packet = buildAdmittedDevelopmentPacket(withSynthesis);
+
+    expect(packet.implementation_constraints).toContain(
+      `Observed task synthesis ${item.request.action_id}/${outputDigest}: alpha bravo charlie delta`,
+    );
+    expect(observation.summary).toBe(summary);
+    expect(observation.output_digest).toBe(outputDigest);
+    expect(packet.implementation_constraints.every((entry) => !/[\r\n\t]/.test(entry))).toBe(true);
+  });
+
+  test('keeps task synthesis credential screening and other control rejection fail-closed', () => {
+    const withSummary = (summary) => {
+      const input = admitted();
+      const wave = input.ledger.state.completed[0];
+      const item = wave.items[0];
+      const observation = { ...item.observation, summary, output_digest: canonicalJsonDigest(summary) };
+      const state = {
+        ...input.ledger.state,
+        completed: [{ ...wave, items: [{ ...item, observation }] }],
+      };
+      return {
+        input: { ...input, ledger: { version: { revision: 2, digest: canonicalJsonDigest(state) }, state } },
+        observation,
+      };
+    };
+
+    const credential = withSummary('token=\nfake-token');
+    expect(() => buildAdmittedDevelopmentPacket(credential.input)).toThrow(/contains sensitive material/);
+
+    for (const control of ['\0', '\v']) {
+      const invalid = withSummary(`before${control}after`);
+      expect(() => buildAdmittedDevelopmentPacket(invalid.input)).toThrow(/is invalid/);
+    }
+
+    const untampered = withSummary('a\nb');
+    const tamperedState = {
+      ...untampered.input.ledger.state,
+      completed: untampered.input.ledger.state.completed.map((wave) => ({
+        ...wave,
+        items: wave.items.map((item) => ({
+          ...item,
+          observation: { ...item.observation, summary: 'a b' },
+        })),
+      })),
+    };
+    const tampered = {
+      ...untampered.input,
+      ledger: { version: { revision: 3, digest: canonicalJsonDigest(tamperedState) }, state: tamperedState },
+    };
+    expect(untampered.observation.summary).toBe('a\nb');
+    expect(() => buildAdmittedDevelopmentPacket(tampered)).toThrow(
+      /task synthesis summary is missing, stale, mismatched or over budget/,
+    );
+  });
+
   test('consumes a current validated synthesis artifact and rejects changed artifact bytes', () => {
     const input = addObservedSynthesis(admitted('implementation_change'));
     try {

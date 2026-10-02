@@ -816,6 +816,7 @@ function prepareLifecycleAssurance(
     host = store.compareAndSwapHostState({
       expectedWork: host.workVersion,
       expectedLedger: host.ledgerVersion,
+      expectedMaintenanceGeneration: host.maintenanceGeneration,
       expectedSessionJournal: { attempt: preparation.attempt, version: journal.version },
       nextWork: next,
       nextLedger: { ...host.ledger!, revision: host.ledger!.revision + 1 },

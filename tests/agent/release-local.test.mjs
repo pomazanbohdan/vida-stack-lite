@@ -9,6 +9,8 @@ import {
   rmSync,
   existsSync,
   statSync,
+  chmodSync,
+  unlinkSync,
   linkSync,
   symlinkSync,
 } from 'node:fs';
@@ -29,9 +31,11 @@ import {
   claimReleaseWorker,
   nativeInstallationPaths,
   publishNativeExecutable,
+  runCommand,
 } from '../../tooling/agent/release-local.mjs';
 import { findNpmCli, resolvePinnedBun, standaloneRuntime } from '../../packages/agent/bin/bun.mjs';
 import { verifyForwardReviewSet } from '../../tooling/agent/controllers/forward-review-proof.mjs';
+import { releaseSourceBinding, testInputBinding } from '../../tooling/agent/release-assurance.mjs';
 
 const json = (value) => JSON.stringify(value);
 test('embedded launcher rejects forged Node markers and strips hostile options from its pinned Bun child boundary', () => {
@@ -69,6 +73,42 @@ test('embedded launcher rejects forged Node markers and strips hostile options f
   assert.equal(observed.node, null);
   assert.equal(observed.bun, null);
   assert.equal(observed.embedded, '1');
+});
+test('release bindings ignore only exact operational scratch and retain nested cache-named sources', () => {
+  const root = releaseBindingFixture();
+  try {
+    const initial = releaseSourceBinding(root).source_binding,
+      initialPackageBinding = testInputBinding(root, ['packages/agent']);
+    mkdirSync(path.join(root, '.tmp/vida-bun-cache'), { recursive: true });
+    mkdirSync(path.join(root, '.tmp/releases/stage'), { recursive: true });
+    mkdirSync(path.join(root, '.agent/work'), { recursive: true });
+    mkdirSync(path.join(root, 'packages/agent/.tmp/vida-bun-cache'), { recursive: true });
+    mkdirSync(path.join(root, 'packages/agent/.agent/work'), { recursive: true });
+    const initialOperationalBinding = testInputBinding(root, ['.agent', '.tmp']);
+    writeFileSync(path.join(root, '.tmp/vida-bun-cache/cache.bin'), 'TEST SETUP cache bytes');
+    writeFileSync(path.join(root, '.tmp/releases/stage/archive.tgz'), 'TEST SETUP stage bytes');
+    writeFileSync(path.join(root, '.agent/work/observation.json'), 'TEST SETUP operation bytes');
+    writeFileSync(path.join(root, 'packages/agent/.tmp/vida-bun-cache/cache.bin'), 'TEST SETUP package cache bytes');
+    writeFileSync(path.join(root, 'packages/agent/.agent/work/observation.json'), 'TEST SETUP package operation bytes');
+    assert.equal(releaseSourceBinding(root).source_binding, initial);
+    assert.equal(testInputBinding(root, ['packages/agent']), initialPackageBinding);
+    assert.equal(testInputBinding(root, ['.agent', '.tmp']), initialOperationalBinding);
+    mkdirSync(path.join(root, 'packages/agent/src/.tmp'), { recursive: true });
+    mkdirSync(path.join(root, 'packages/agent/src/.agent'), { recursive: true });
+    mkdirSync(path.join(root, 'packages/agent/src/cache'), { recursive: true });
+    writeFileSync(path.join(root, 'packages/agent/src/.tmp/bound.mjs'), 'TEST SETUP maintained tmp source');
+    writeFileSync(path.join(root, 'packages/agent/src/.agent/bound.mjs'), 'TEST SETUP maintained agent source');
+    writeFileSync(path.join(root, 'packages/agent/src/cache/bound.mjs'), 'TEST SETUP product cache source');
+    assert.notEqual(releaseSourceBinding(root).source_binding, initial);
+    assert.notEqual(testInputBinding(root, ['packages/agent']), initialPackageBinding);
+    symlinkSync(
+      path.join(root, 'packages/agent/src/cache/bound.mjs'),
+      path.join(root, 'packages/agent/src/.tmp/linked.mjs'),
+    );
+    assert.throws(() => releaseSourceBinding(root), /linked source/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 test('native publication rejects linked directories and hardlinked prior executables without changing their owners', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-native-links-'));
@@ -262,10 +302,22 @@ function fixture() {
   mkdirSync(globalRoot, { recursive: true });
   const shimFolder = process.platform === 'win32' ? prefix : path.join(prefix, 'bin');
   mkdirSync(shimFolder, { recursive: true });
-  const calls = [];
-  const command = async (_command, args) => {
+  const calls = [],
+    executions = [],
+    npmCli = path.join(root, 'npm-cli.js');
+  const command = async (executable, args, options = {}) => {
     calls.push(args);
-    const action = args[1];
+    executions.push({ executable, args: [...args], cwd: options.cwd });
+    let action, actionArgs;
+    if (process.platform === 'win32' && args[0] === '/d' && args[1] === '/s' && args[2] === '/c') {
+      const commandLine = args[3] ?? '';
+      action = ['version', 'instructions', 'install'].find((candidate) => commandLine.includes(`"${candidate}"`));
+      actionArgs = action === 'install' ? ['--check'] : [];
+    } else {
+      const npmInvocation = args[0] === npmCli;
+      actionArgs = npmInvocation ? args.slice(2) : args.slice(1);
+      action = npmInvocation ? args[1] : args[0];
+    }
     if (action === 'pack') {
       const folder = args.at(-1),
         version = JSON.parse(readFileSync(path.join(source, 'package.json'))).version;
@@ -288,10 +340,15 @@ function fixture() {
     }
     if (action === 'prefix') return prefix;
     if (action === 'root') return globalRoot;
-    if (action === 'install' && args[2] === '--global') {
+    if (action === 'install' && actionArgs[0] === '--global') {
+      const installed = path.join(globalRoot, 'vida-agent');
+      rmSync(installed, { recursive: true, force: true });
       cpSync(source, path.join(globalRoot, 'vida-agent'), { recursive: true });
       if (process.platform === 'win32')
-        writeFileSync(path.join(prefix, 'vida-agent.cmd'), 'node_modules/vida-agent/bin/vida-agent.mjs');
+        writeFileSync(
+          path.join(prefix, 'vida-agent.cmd'),
+          '@echo off\r\nnode "%~dp0node_modules\\vida-agent\\bin\\vida-agent.mjs" %*\r\n',
+        );
       else {
         const { symlinkSync } = await import('node:fs');
         symlinkSync(path.join(globalRoot, 'vida-agent/bin/vida-agent.mjs'), path.join(prefix, 'bin/vida-agent'));
@@ -305,7 +362,8 @@ function fixture() {
         version,
         path: path.join(globalRoot, 'vida-agent/instructions/development-lifecycle.md'),
       });
-    if (action === 'install' && args[2] === '--check') return json({ status: 'prerequisites_valid', bun_pin: '1.4.2' });
+    if (action === 'install' && actionArgs[0] === '--check')
+      return json({ status: 'prerequisites_valid', bun_pin: '1.4.2' });
     throw new Error('Unexpected TEST SETUP command: ' + args.join(' '));
   };
   return {
@@ -313,10 +371,143 @@ function fixture() {
     prefix,
     source,
     calls,
+    executions,
     command,
     env: { PATH: shimFolder },
     qualify: async () => ({ source_binding: 'TEST SETUP exact source binding' }),
-    npmCli: path.join(root, 'npm-cli.js'),
+    npmCli,
+  };
+}
+function releaseBindingFixture() {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida release binding ')),
+    repository = path.resolve(import.meta.dirname, '../..');
+  for (const relative of [
+    'package.json',
+    'agent-runtime.config.v1.yaml',
+    'AGENT.sidecar.md',
+    'packages/agent',
+    'tooling/agent/release-local.mjs',
+    'tooling/agent/release-assurance.mjs',
+    'tooling/agent/controllers/forward-review-proof.mjs',
+    'tests/agent/release-local.test.mjs',
+  ]) {
+    const destination = path.join(root, relative);
+    mkdirSync(path.dirname(destination), { recursive: true });
+    cpSync(path.join(repository, relative), destination, { recursive: true, dereference: false });
+  }
+  return root;
+}
+async function npmCompatibility(value, { failCheck = false, installMutation } = {}) {
+  const pkg = JSON.parse(readFileSync(path.join(value.source, 'package.json')));
+  pkg.files = ['bin/vida-agent.mjs', 'instructions/**'];
+  pkg.scripts = { prepack: 'node bin/bun.mjs tooling/pack-sdk.mjs --verify' };
+  writeFileSync(path.join(value.source, 'package.json'), json(pkg));
+  mkdirSync(path.join(value.source, 'tooling'));
+  writeFileSync(path.join(value.source, 'tooling/pack-sdk.mjs'), '// TEST SETUP owned helper payload');
+  writeFileSync(
+    path.join(value.source, 'bin/vida-agent.mjs'),
+    `#!/usr/bin/env node
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const version=JSON.parse(readFileSync(path.join(root,'package.json'),'utf8')).version;
+const [action,...args]=process.argv.slice(2);
+if(action==='version') console.log(JSON.stringify({name:'vida-agent',version}));
+else if(action==='instructions') console.log(JSON.stringify({version,path:path.join(root,'instructions/development-lifecycle.md')}));
+else if(action==='install' && args[0]==='--check') console.log(JSON.stringify({status:'prerequisites_valid',bun_pin:'1.4.2'}));
+else process.exitCode=2;
+`,
+  );
+  chmodSync(path.join(value.source, 'bin/vida-agent.mjs'), 0o755);
+  const { sdkCompatibilityManifest } = await import('../../packages/agent/tooling/pack-sdk.mjs');
+  const npmCli = findNpmCli(),
+    tar = createRequire(npmCli)('tar'),
+    packSdk = path.join(value.source, 'tooling/pack-sdk.mjs'),
+    installed = path.join(value.prefix, 'node_modules/vida-agent'),
+    expectedShim =
+      process.platform === 'win32'
+        ? path.join(value.prefix, 'vida-agent.cmd')
+        : path.join(value.prefix, 'bin/vida-agent'),
+    env = { ...process.env };
+  for (const key of Object.keys(env)) if (key.toLowerCase() === 'path') delete env[key];
+  env.PATH = [value.env.PATH, process.env.PATH].filter(Boolean).join(path.delimiter);
+  const state = { archive: undefined, failCheck, installMutation, installs: 0, cliInvocations: [] };
+  const writeInstalled = (mutation = undefined) => {
+    rmSync(installed, { recursive: true, force: true });
+    cpSync(value.source, installed, { recursive: true });
+    writeFileSync(path.join(installed, 'package.json'), sdkCompatibilityManifest({ root: value.source }).bytes);
+    mkdirSync(path.join(installed, 'node_modules/test-owned-dependency'), { recursive: true });
+    writeFileSync(path.join(installed, 'node_modules/test-owned-dependency/index.js'), '// TEST SETUP npm dependency');
+    if (process.platform === 'win32')
+      writeFileSync(expectedShim, '@echo off\r\nnode "%~dp0node_modules\\vida-agent\\bin\\vida-agent.mjs" %*\r\n');
+    else {
+      rmSync(expectedShim, { force: true });
+      symlinkSync(path.join(installed, 'bin/vida-agent.mjs'), expectedShim);
+    }
+    if (mutation === 'missing') unlinkSync(path.join(installed, 'instructions/development-lifecycle.md'));
+    if (mutation === 'changed')
+      writeFileSync(path.join(installed, 'bin/vida-agent.mjs'), '// TEST SETUP corrupted installed archive byte');
+    if (mutation === 'foreign')
+      writeFileSync(path.join(installed, 'foreign-after-install.txt'), 'TEST SETUP unowned npm output');
+  };
+  const command = async (executable, args, options = {}) => {
+    if (args[0] === packSdk) {
+      const destination = args[5],
+        stage = path.join(value.root, 'sdk-stage'),
+        version = JSON.parse(readFileSync(path.join(value.source, 'package.json'))).version,
+        files = ['package.json', 'bin/vida-agent.mjs', 'instructions/development-lifecycle.md', 'tooling/pack-sdk.mjs'];
+      cpSync(value.source, stage, { recursive: true });
+      writeFileSync(path.join(stage, 'package.json'), sdkCompatibilityManifest({ root: value.source }).bytes);
+      state.archive = path.join(destination, `vida-agent-${version}.tgz`);
+      await tar.c({ gzip: true, cwd: stage, prefix: 'package/', file: state.archive }, files);
+      return json([
+        {
+          name: 'vida-agent',
+          version,
+          filename: path.basename(state.archive),
+          integrity: 'sha512-' + createHash('sha512').update(readFileSync(state.archive)).digest('base64'),
+          files: files.map((relative) => ({ path: relative })),
+        },
+      ]);
+    }
+    if (args[0] === npmCli && args[1] === 'prefix') return value.prefix;
+    if (args[0] === npmCli && args[1] === 'root') return path.join(value.prefix, 'node_modules');
+    if (args[0] === npmCli && args[1] === 'install' && args[2] === '--global') {
+      assert.equal(args[3], state.archive);
+      state.installs++;
+      writeInstalled(state.installMutation);
+      return '';
+    }
+    const isWindowsCli =
+      process.platform === 'win32' &&
+      executable.toLowerCase().endsWith('cmd.exe') &&
+      args[0] === '/d' &&
+      args[1] === '/s' &&
+      args[2] === '/c';
+    const isUnixCli = process.platform !== 'win32' && executable === expectedShim;
+    if (isWindowsCli || isUnixCli) {
+      const commandText = isWindowsCli ? (args[3] ?? '') : args.join(' ');
+      state.cliInvocations.push({ executable, args: [...args], cwd: options.cwd, commandText });
+      if (state.failCheck && commandText.includes('install') && commandText.includes('--check'))
+        throw new Error('TEST SETUP observed install check failure');
+      return runCommand(executable, args, options);
+    }
+    throw new Error('Unexpected TEST SETUP command: ' + [executable, ...args].join(' '));
+  };
+  const candidate = await prepareRelease(value.root);
+  return {
+    value,
+    candidate,
+    npmCli,
+    packSdk,
+    expectedShim,
+    installed,
+    env,
+    state,
+    command,
+    writeInstalled,
+    args: { ...value, npmCli, command, env, operation: candidate.operation_id, distribution: 'npm' },
   };
 }
 test('initial candidate 0.1.0 and subsequent successful publications increment patch only', async () => {
@@ -373,6 +564,39 @@ test('missing assurance and failed prepack preserve the pending version without 
     assert.equal(JSON.parse(readFileSync(path.join(fixtureValue.source, 'package.json'))).version, '0.1.0');
   } finally {
     rmSync(fixtureValue.root, { recursive: true });
+  }
+});
+test('local release waits for pending qualification before starting package work', async () => {
+  const value = fixture();
+  try {
+    const candidate = await prepareRelease(value.root);
+    let releaseQualification,
+      qualificationCalls = 0,
+      packStarted = false;
+    const held = new Promise((resolve) => {
+      releaseQualification = resolve;
+    });
+    const operation = executeRelease({
+      ...value,
+      operation: candidate.operation_id,
+      packOnly: true,
+      qualify: async () => {
+        if (++qualificationCalls === 1) await held;
+        return { source_binding: 'TEST SETUP delayed qualification' };
+      },
+      command: async (executable, args, options) => {
+        if (args[0] === value.npmCli && args[1] === 'pack') packStarted = true;
+        return value.command(executable, args, options);
+      },
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(packStarted, false);
+    releaseQualification();
+    await operation;
+    assert.equal(packStarted, true);
+    assert.equal(qualificationCalls, 2);
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
   }
 });
 test('pack metadata refuses multiple archives, traversal and unrelated artifact identity', () => {
@@ -473,10 +697,7 @@ test('worker mutex recovers unrelated live PIDs, rejects startup losers and rele
     assert.equal((await prepareRelease(value.root)).operation_id, operation);
     const mutex = await claimReleaseWorker(value.root, operation, process.pid);
     try {
-      await assert.rejects(
-        executeRelease({ ...value, operation }),
-        /Prior install outcome differs or remains uncertain/,
-      );
+      await assert.rejects(executeRelease({ ...value, operation }), /Prior install targets differ or remain uncertain/);
       assert.equal(
         value.calls.some((args) => args.includes('--global') && args.includes('install')),
         false,
@@ -537,7 +758,8 @@ test('verification failure after install resumes exact installed artifact withou
     const candidate = await prepareRelease(fixtureValue.root);
     await executeRelease({ ...fixtureValue, operation: candidate.operation_id, packOnly: true });
     const command = async (cmd, args, options) => {
-      if (args[1] === 'version') throw new Error('transient version observation failure');
+      if (args[0] === 'version' || args[1] === 'version' || args[3]?.includes('"version"'))
+        throw new Error('transient version observation failure');
       return fixtureValue.command(cmd, args, options);
     };
     await assert.rejects(
@@ -557,7 +779,8 @@ test('scratch removal after an install effect preserves unknown outcome and prev
     const candidate = await prepareRelease(fixtureValue.root);
     await executeRelease({ ...fixtureValue, operation: candidate.operation_id, packOnly: true });
     const command = async (cmd, args, options) => {
-      if (args[1] === 'version') throw new Error('observation interrupted');
+      if (args[0] === 'version' || args[1] === 'version' || args[3]?.includes('"version"'))
+        throw new Error('observation interrupted');
       return fixtureValue.command(cmd, args, options);
     };
     await assert.rejects(
@@ -720,84 +943,214 @@ test('isolated local review receipts use a release namespace while preserving th
   }
 });
 
-test('explicit npm compatibility packs and installs only the exact projected SDK archive and observes an uncertain install without replay', async () => {
+test('explicit npm compatibility executes the actual PATH shim from an unrelated cwd and keeps uncertain installs unreplayed', async () => {
   const value = fixture();
   try {
-    const pkg = JSON.parse(readFileSync(path.join(value.source, 'package.json')));
-    pkg.files = ['bin/vida-agent.mjs', 'instructions/**'];
-    pkg.scripts = {
-      prepack: 'node bin/bun.mjs tooling/pack-sdk.mjs --verify',
-    };
-    writeFileSync(path.join(value.source, 'package.json'), json(pkg));
-    mkdirSync(path.join(value.source, 'tooling'));
-    writeFileSync(path.join(value.source, 'tooling/pack-sdk.mjs'), '// TEST SETUP owned helper payload');
-    const { sdkCompatibilityManifest } = await import('../../packages/agent/tooling/pack-sdk.mjs');
-    const npmCli = (await import('../../packages/agent/bin/bun.mjs')).findNpmCli();
-    const tar = createRequire(npmCli)('tar');
-    const candidate = await prepareRelease(value.root);
-    let archive,
-      failCheck = true,
-      installs = 0;
-    const command = async (exe, args, options) => {
-      if (args[0].endsWith('pack-sdk.mjs')) {
-        assert.equal(args[1], '--pack');
-        assert.equal(args[3], value.source);
-        const destination = args[5];
-        const stage = path.join(value.root, 'sdk-stage');
-        cpSync(value.source, stage, { recursive: true });
-        writeFileSync(path.join(stage, 'package.json'), sdkCompatibilityManifest({ root: value.source }).bytes);
-        archive = path.join(destination, 'vida-agent-0.1.0.tgz');
-        const files = [
-          'package.json',
-          'bin/vida-agent.mjs',
-          'instructions/development-lifecycle.md',
-          'tooling/pack-sdk.mjs',
-        ];
-        await tar.c({ gzip: true, cwd: stage, prefix: 'package/', file: archive }, files);
-        return json([
-          {
-            name: 'vida-agent',
-            version: '0.1.0',
-            filename: path.basename(archive),
-            integrity: 'sha512-' + createHash('sha512').update(readFileSync(archive)).digest('base64'),
-            files: files.map((path) => ({ path })),
-          },
-        ]);
-      }
-      if (args[1] === 'install' && args[2] === '--global') {
-        assert.equal(args[3], archive);
-        installs++;
-        await value.command(exe, args, options);
-        writeFileSync(
-          path.join(value.prefix, 'node_modules/vida-agent/package.json'),
-          sdkCompatibilityManifest({ root: value.source }).bytes,
-        );
-        return '';
-      }
-      if (args[1] === 'install' && args[2] === '--check' && failCheck)
-        throw new Error('TEST SETUP observed install check failure');
-      return value.command(exe, args, options);
-    };
-    const args = {
-      ...value,
-      npmCli,
-      command,
-      operation: candidate.operation_id,
-      distribution: 'npm',
-    };
-    const packed = await executeRelease({ ...args, packOnly: true });
+    const release = await npmCompatibility(value, { failCheck: true }),
+      unrelated = path.join(value.root, '.tmp/releases', release.candidate.operation_id, 'unrelated-cwd'),
+      relativeShimFolder = path.relative(unrelated, path.dirname(release.expectedShim));
+    release.env.PATH = [relativeShimFolder, process.env.PATH].filter(Boolean).join(path.delimiter);
+    const packed = await executeRelease({ ...release.args, packOnly: true });
     assert.equal(packedDistribution(packed.pack_metadata), 'npm');
     assert.ok(packed.pack_metadata[0].files.every((file) => !file.path.startsWith('dist/standalone/')));
-    await assert.rejects(executeRelease(args), /observed install check failure/);
-    assert.equal(installs, 1);
-    failCheck = false;
-    assert.equal((await executeRelease(args)).status, 'successful');
-    assert.equal(installs, 1);
+    await assert.rejects(executeRelease(release.args), /observed install check failure/);
+    assert.equal(release.state.installs, 1);
+    assert.ok(existsSync(path.join(release.installed, 'node_modules/test-owned-dependency/index.js')));
+    assert.equal(release.state.cliInvocations.length, 3);
+    assert.ok(release.state.cliInvocations.every((invocation) => invocation.cwd === unrelated));
+    if (process.platform === 'win32') {
+      assert.ok(
+        release.state.cliInvocations.every(
+          ({ args, commandText }) =>
+            args[0] === '/d' &&
+            args[1] === '/s' &&
+            args[2] === '/c' &&
+            commandText.includes(`"${release.expectedShim}"`) &&
+            commandText.includes('global prefix') &&
+            commandText.includes('Україна'),
+        ),
+      );
+    } else {
+      assert.ok(release.state.cliInvocations.every(({ executable }) => executable === release.expectedShim));
+      assert.ok(release.state.cliInvocations.every(({ executable }) => executable.includes('global prefix')));
+      assert.ok(release.state.cliInvocations.every(({ executable }) => executable.includes('Україна')));
+      assert.ok(
+        release.state.cliInvocations.every(
+          ({ args }) =>
+            args[0] === 'version' ||
+            (args[0] === 'instructions' && args[1] === '--path') ||
+            (args[0] === 'install' && args[1] === '--check'),
+        ),
+      );
+    }
+    release.state.failCheck = false;
+    writeFileSync(path.join(release.installed, 'unexpected-after-install.txt'), 'TEST SETUP post-effect drift');
+    await assert.rejects(executeRelease(release.args), /Prior install outcome differs or remains uncertain/);
+    assert.equal(release.state.installs, 1);
+    unlinkSync(path.join(release.installed, 'unexpected-after-install.txt'));
+    assert.equal((await executeRelease(release.args)).status, 'successful');
+    assert.equal(release.state.installs, 1);
     assert.equal((await prepareRelease(value.root)).version, '0.1.1');
   } finally {
     rmSync(value.root, { recursive: true, force: true });
   }
 });
+
+test('npm postinstall missing, changed, or foreign bytes fail closed and cannot replay installation', async (t) => {
+  for (const kind of ['missing', 'changed', 'foreign']) {
+    await t.test(kind, async () => {
+      const value = fixture();
+      try {
+        const release = await npmCompatibility(value, { installMutation: kind });
+        await executeRelease({ ...release.args, packOnly: true });
+        await assert.rejects(executeRelease(release.args));
+        const journal = JSON.parse(
+          readFileSync(
+            path.join(value.root, '.agent/work/agent-local-release', release.candidate.operation_id, 'release.json'),
+          ),
+        );
+        assert.equal(journal.install_started, true);
+        assert.equal(release.state.installs, 1);
+        assert.equal(release.state.cliInvocations.length, 0);
+        release.state.installMutation = undefined;
+        await assert.rejects(executeRelease(release.args), /Prior install outcome differs or remains uncertain/);
+        assert.equal(release.state.installs, 1);
+      } finally {
+        rmSync(value.root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
+test('npm preinstall reconciliation replaces missing, changed, extra-file, unknown-directory, and unprojected-manifest payloads', async (t) => {
+  for (const kind of ['missing', 'changed', 'extra-file', 'empty-directory', 'projected-manifest']) {
+    await t.test(kind, async () => {
+      const value = fixture();
+      try {
+        const release = await npmCompatibility(value);
+        await executeRelease({ ...release.args, packOnly: true });
+        release.writeInstalled();
+        if (kind === 'missing') unlinkSync(path.join(release.installed, 'instructions/development-lifecycle.md'));
+        if (kind === 'changed')
+          writeFileSync(path.join(release.installed, 'bin/vida-agent.mjs'), '// TEST SETUP changed installed byte');
+        if (kind === 'extra-file')
+          writeFileSync(path.join(release.installed, 'unexpected.txt'), 'TEST SETUP not archive owned');
+        if (kind === 'empty-directory') mkdirSync(path.join(release.installed, 'unexpected-empty-directory'));
+        if (kind === 'projected-manifest')
+          writeFileSync(
+            path.join(release.installed, 'package.json'),
+            readFileSync(path.join(value.source, 'package.json')),
+          );
+        assert.equal((await executeRelease(release.args)).status, 'successful');
+        assert.equal(release.state.installs, 1);
+      } finally {
+        rmSync(value.root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
+test(
+  'npm preinstall reconciliation replaces symlinked and hardlinked archive-owned files',
+  { skip: process.platform === 'win32' },
+  async (t) => {
+    for (const kind of ['symlink', 'hardlink']) {
+      await t.test(kind, async () => {
+        const value = fixture();
+        try {
+          const release = await npmCompatibility(value);
+          await executeRelease({ ...release.args, packOnly: true });
+          release.writeInstalled();
+          const target = path.join(release.installed, 'bin/vida-agent.mjs'),
+            owner = path.join(value.root, 'linked-owner.mjs');
+          if (kind === 'symlink') {
+            writeFileSync(owner, readFileSync(target));
+            unlinkSync(target);
+            symlinkSync(owner, target);
+          } else {
+            linkSync(target, owner);
+            unlinkSync(target);
+            linkSync(owner, target);
+          }
+          assert.equal((await executeRelease(release.args)).status, 'successful');
+          assert.equal(release.state.installs, 1);
+          assert.equal(statSync(owner).nlink, 1);
+        } finally {
+          rmSync(value.root, { recursive: true, force: true });
+        }
+      });
+    }
+  },
+);
+
+test(
+  'POSIX npm command comparison preserves path case even when an aliased directory resolves to the same shim',
+  { skip: process.platform === 'win32' },
+  async () => {
+    const value = fixture();
+    try {
+      const release = await npmCompatibility(value),
+        alias = path.join(value.root, 'Global Prefix');
+      symlinkSync(value.prefix, alias, 'dir');
+      const unrelated = path.join(value.root, '.tmp/releases', release.candidate.operation_id, 'unrelated-cwd');
+      release.env.PATH = [path.relative(unrelated, path.join(alias, 'bin')), process.env.PATH]
+        .filter(Boolean)
+        .join(path.delimiter);
+      await executeRelease({ ...release.args, packOnly: true });
+      await assert.rejects(executeRelease(release.args), /PATH command differs from npm global prefix/);
+      assert.equal(release.state.installs, 1);
+    } finally {
+      rmSync(value.root, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  'Windows npm command invocation rejects cmd.exe expansion in the resolved shim path',
+  { skip: process.platform !== 'win32' },
+  async () => {
+    const value = fixture();
+    try {
+      value.prefix = path.join(value.root, 'prefix %TEMP%');
+      value.env.PATH = value.prefix;
+      mkdirSync(path.join(value.prefix, 'node_modules'), { recursive: true });
+      const release = await npmCompatibility(value);
+      await executeRelease({ ...release.args, packOnly: true });
+      await assert.rejects(executeRelease(release.args), /unsafe cmd\.exe command text/);
+      assert.equal(release.state.installs, 1);
+      assert.equal(release.state.cliInvocations.length, 0);
+    } finally {
+      rmSync(value.root, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  'Windows npm PATH casing resolves to the canonical saved shim without reinstalling',
+  { skip: process.platform !== 'win32' },
+  async () => {
+    const value = fixture();
+    try {
+      const release = await npmCompatibility(value);
+      release.env.PATH = [path.dirname(release.expectedShim).toUpperCase(), process.env.PATH]
+        .filter(Boolean)
+        .join(path.delimiter);
+      await executeRelease({ ...release.args, packOnly: true });
+      assert.equal((await executeRelease(release.args)).status, 'successful');
+      const journal = JSON.parse(
+        readFileSync(
+          path.join(value.root, '.agent/work/agent-local-release', release.candidate.operation_id, 'release.json'),
+        ),
+      );
+      assert.equal(journal.path_command, release.expectedShim);
+      assert.equal(release.state.installs, 1);
+      assert.equal((await executeRelease(release.args)).status, 'successful');
+      assert.equal(release.state.installs, 1);
+    } finally {
+      rmSync(value.root, { recursive: true, force: true });
+    }
+  },
+);
 
 test('exact archive distribution rejects ambiguous paths and refuses a different requested channel before installation', async () => {
   assert.throws(

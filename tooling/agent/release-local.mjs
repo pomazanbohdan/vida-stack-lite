@@ -186,23 +186,26 @@ function prepareCandidate(root) {
           path.join(root, '.tmp/releases', pending.operation_id),
           pending.version,
         );
+        const distribution = packedDistribution(completed.pack_metadata);
         const installedManifestBytes =
-          packedDistribution(completed.pack_metadata) === 'npm' &&
+          distribution === 'npm' &&
           completed.pack_metadata[0].files.some((file) => file.path === 'tooling/pack-sdk.mjs')
             ? sdkCompatibilityManifest({ root: path.join(root, 'packages/agent') }).bytes
             : undefined;
-        const exact =
-          sha(readFileSync(archive)) === completed.tarball_sha256 &&
-          completed.pack_metadata[0].files.every(({ path: relative }) => {
-            const source = path.join(root, 'packages/agent', relative),
-              target = path.join(completed.installed_root, relative);
-            return (
-              existsSync(target) &&
-              sha(
-                relative === 'package.json' && installedManifestBytes ? installedManifestBytes : readFileSync(source),
-              ) === sha(readFileSync(target))
-            );
-          });
+        const archiveMatches = sha(readFileSync(archive)) === completed.tarball_sha256;
+        let installedMatches = false;
+        if (archiveMatches) {
+          try {
+            verifyInstalledTree(root, completed.pack_metadata, completed.installed_root, {
+              distribution,
+              expectedManifestBytes: installedManifestBytes,
+            });
+            installedMatches = true;
+          } catch {
+            installedMatches = false;
+          }
+        }
+        const exact = archiveMatches && installedMatches;
         if (!exact) throw new Error('Completed publication must be reconciled against installed bytes.');
         save(successFile, completed);
         successful = completed;
@@ -231,7 +234,7 @@ function prepareCandidate(root) {
   save(journalFile(root, operation_id), prepared);
   return prepared;
 }
-export function runCommand(command, args, { cwd, env = process.env, log } = {}) {
+export function runCommand(command, args, { cwd, env = process.env, log, windowsVerbatimArguments = false } = {}) {
   return new Promise((resolve, reject) => {
     const started = Date.now();
     const child = spawn(command, args, {
@@ -239,6 +242,7 @@ export function runCommand(command, args, { cwd, env = process.env, log } = {}) 
       env,
       windowsHide: true,
       shell: false,
+      windowsVerbatimArguments,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '',
@@ -363,15 +367,51 @@ export async function verifyPackedSources(root, metadata, tarball, npmCli, expec
   });
   if (errors.length || seen.size !== expected.size) throw new Error(errors[0] ?? 'Archive file set incomplete.');
 }
-function pathCli(env) {
+function pathCli(env, cwd = process.cwd()) {
   const executable = process.platform === 'win32' ? 'vida-agent.cmd' : 'vida-agent';
   const pathValue = Object.entries(env).find(([key]) => key.toLowerCase() === 'path')?.[1] ?? '';
   for (const folder of pathValue.split(path.delimiter)) {
     if (!folder) continue;
-    const file = path.join(folder, executable);
-    if (existsSync(file) && lstatSync(file).isFile()) return file;
+    const file = path.resolve(cwd, folder, executable);
+    if (!existsSync(file)) continue;
+    const info = lstatSync(file);
+    if (process.platform !== 'win32' && info.isSymbolicLink()) {
+      const target = realpathSync(file),
+        targetInfo = lstatSync(target);
+      if (!targetInfo.isFile() || targetInfo.isSymbolicLink() || targetInfo.nlink !== 1)
+        throw new Error('PATH executable symlink does not resolve to an owned regular file.');
+      return file;
+    }
+    if (!info.isFile() || info.isSymbolicLink() || info.nlink !== 1)
+      throw new Error('PATH command is not an owned regular file or executable symlink.');
+    return file;
   }
   throw new Error('vida-agent is absent from system PATH.');
+}
+
+function samePlatformPath(left, right) {
+  if (typeof left !== 'string' || typeof right !== 'string') return false;
+  const normalizedLeft = path.resolve(left),
+    normalizedRight = path.resolve(right);
+  return process.platform === 'win32'
+    ? normalizedLeft.toLowerCase() === normalizedRight.toLowerCase()
+    : normalizedLeft === normalizedRight;
+}
+
+function invokeNpmPathCommand(command, cli, args, options) {
+  if (process.platform !== 'win32') return command(cli, args, options);
+  const unsafeCmdText = /[%!^&|<>()"\r\n]/;
+  if (
+    !cli.toLowerCase().endsWith('.cmd') ||
+    unsafeCmdText.test(cli) ||
+    args.some((argument) => typeof argument !== 'string' || unsafeCmdText.test(argument))
+  )
+    throw new Error('Windows npm shim contains unsafe cmd.exe command text.');
+  const systemRoot = process.env.SystemRoot;
+  if (!systemRoot || !path.isAbsolute(systemRoot)) throw new Error('Windows system command directory is unavailable.');
+  const cmd = path.join(systemRoot, 'System32', 'cmd.exe');
+  const commandText = `""${cli}" ${args.map((argument) => `"${argument}"`).join(' ')}"`;
+  return command(cmd, ['/d', '/s', '/c', commandText], { ...options, windowsVerbatimArguments: true });
 }
 
 function nativePath(file, create = false) {
@@ -528,18 +568,29 @@ async function extractNativeTree(root, metadata, tarball, npmCli, destination) {
   verifyInstalledTree(root, metadata, destination);
 }
 
-function verifyInstalledTree(root, metadata, destination) {
+function verifyInstalledTree(root, metadata, destination, { distribution = 'native', expectedManifestBytes } = {}) {
+  if (!['native', 'npm'].includes(distribution)) throw new Error('Installed package distribution is invalid.');
   nativePath(destination);
-  const files = nativeArchiveFiles(metadata),
+  const files = distribution === 'npm' ? npmArchiveFiles(metadata) : nativeArchiveFiles(metadata),
     expected = new Set(files.map((file) => file.path));
+  const expectedDirectories = new Set();
+  for (const file of files) {
+    const parts = file.path.split('/');
+    parts.pop();
+    for (let index = 1; index <= parts.length; index++) expectedDirectories.add(parts.slice(0, index).join('/'));
+  }
   const visit = (directory, relative = '') => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       const name = relative + entry.name,
         absolute = path.join(directory, entry.name);
-      if (entry.isSymbolicLink()) throw new Error('Installed native tree contains a linked entry.');
-      if (entry.isDirectory()) visit(absolute, name + '/');
-      else if (!entry.isFile() || !expected.has(name))
-        throw new Error('Installed native tree contains an unknown entry.');
+      if (entry.isSymbolicLink()) throw new Error(`Installed ${distribution} tree contains a linked entry.`);
+      if (distribution === 'npm' && relative === '' && entry.name === 'node_modules' && entry.isDirectory()) continue;
+      if (entry.isDirectory()) {
+        if (distribution === 'npm' && !expectedDirectories.has(name))
+          throw new Error('Installed npm tree contains an unknown directory.');
+        visit(absolute, name + '/');
+      } else if (!entry.isFile() || !expected.has(name))
+        throw new Error(`Installed ${distribution} tree contains an unknown entry.`);
     }
   };
   visit(destination);
@@ -551,9 +602,13 @@ function verifyInstalledTree(root, metadata, destination) {
       !info.isFile() ||
       info.isSymbolicLink() ||
       info.nlink !== 1 ||
-      !readFileSync(target).equals(readFileSync(path.join(root, 'packages/agent', file.path)))
+      !readFileSync(target).equals(
+        file.path === 'package.json' && expectedManifestBytes !== undefined
+          ? expectedManifestBytes
+          : readFileSync(path.join(root, 'packages/agent', file.path)),
+      )
     )
-      throw new Error('Installed native release tree differs.');
+      throw new Error(`Installed ${distribution} release tree differs.`);
   }
 }
 
@@ -571,6 +626,15 @@ function nativeArchiveFiles(metadata) {
     )
   )
     throw new Error('Native archive paths differ.');
+  return files;
+}
+
+function npmArchiveFiles(metadata) {
+  const files = nativeArchiveFiles(metadata),
+    paths = new Set(files.map((file) => (process.platform === 'win32' ? file.path.toLowerCase() : file.path)));
+  if (!paths.has('package.json')) throw new Error('Installed npm archive manifest is missing.');
+  if ([...paths].some((relative) => relative === 'node_modules' || relative.startsWith('node_modules/')))
+    throw new Error('npm-managed dependencies cannot be archive-owned package entries.');
   return files;
 }
 
@@ -843,6 +907,7 @@ export async function executeRelease({
     if (distribution !== undefined && actualDistribution !== distribution)
       throw new Error('Packed distribution differs from the explicit request.');
     const nativeChannel = actualDistribution === 'native';
+    if (!nativeChannel) npmArchiveFiles(state.pack_metadata);
     const installedManifestBytes =
       expectedManifest ??
       (actualDistribution === 'npm' && state.pack_metadata[0].files.some((file) => file.path === 'tooling/pack-sdk.mjs')
@@ -878,32 +943,61 @@ export async function executeRelease({
     if (!path.isAbsolute(prefix) || !path.isAbsolute(globalRoot))
       throw new Error('npm global locations must be absolute.');
     const installed = path.join(globalRoot, 'vida-agent');
-    const installedManifest = path.join(installed, 'package.json');
-    let matches = false;
-    if (existsSync(installedManifest) && read(installedManifest).version === value.version) {
-      matches = state.pack_metadata[0].files.every(({ path: relative }) => {
-        const source = path.join(root, 'packages/agent', relative),
-          target = path.join(installed, relative);
-        return (
-          existsSync(source) &&
-          existsSync(target) &&
-          sha(relative === 'package.json' && installedManifestBytes ? installedManifestBytes : readFileSync(source)) ===
-            sha(readFileSync(target))
-        );
-      });
+    if (existsSync(globalRoot)) nativePath(globalRoot);
+    else nativePath(path.dirname(globalRoot));
+    try {
+      const installedInfo = lstatSync(installed);
+      if (!installedInfo.isDirectory() || installedInfo.isSymbolicLink())
+        throw new Error('npm package installation directory must not be linked.');
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
     }
-    if (!matches) {
-      if (state.install_started)
-        throw new Error('Prior install outcome differs or remains uncertain; inspect before retrying installation.');
-      update('installing', { install_started: true });
-      await npm(['install', '--global', tarball], 'install');
-    }
-    const unrelated = directory(root, `.tmp/releases/${operation}/unrelated-cwd`);
-    const cli = pathCli(env);
     const expectedShim =
       process.platform === 'win32' ? path.join(prefix, 'vida-agent.cmd') : path.join(prefix, 'bin/vida-agent');
-    if (path.resolve(cli).toLowerCase() !== path.resolve(expectedShim).toLowerCase())
-      throw new Error('PATH command differs from npm global prefix.');
+    let matches = false;
+    if (state.install_started) {
+      if (
+        !samePlatformPath(state.installed_root, installed) ||
+        !samePlatformPath(state.prefix, prefix) ||
+        !samePlatformPath(state.path_command, expectedShim)
+      )
+        throw new Error('Prior install targets differ or remain uncertain; inspect before retrying installation.');
+      try {
+        verifyInstalledTree(root, state.pack_metadata, installed, {
+          distribution: 'npm',
+          expectedManifestBytes: installedManifestBytes,
+        });
+        matches = true;
+      } catch {
+        throw new Error('Prior install outcome differs or remains uncertain; inspect before retrying installation.');
+      }
+    } else {
+      try {
+        verifyInstalledTree(root, state.pack_metadata, installed, {
+          distribution: 'npm',
+          expectedManifestBytes: installedManifestBytes,
+        });
+        matches = true;
+      } catch {
+        matches = false;
+      }
+    }
+    if (!matches) {
+      update('installing', {
+        installed_root: installed,
+        prefix,
+        path_command: expectedShim,
+        install_started: true,
+      });
+      await npm(['install', '--global', tarball], 'install');
+      verifyInstalledTree(root, state.pack_metadata, installed, {
+        distribution: 'npm',
+        expectedManifestBytes: installedManifestBytes,
+      });
+    }
+    const unrelated = directory(root, `.tmp/releases/${operation}/unrelated-cwd`);
+    const cli = pathCli(env, unrelated);
+    if (!samePlatformPath(cli, expectedShim)) throw new Error('PATH command differs from npm global prefix.');
     const entrypoint = path.join(installed, 'bin/vida-agent.mjs');
     if (
       process.platform === 'win32' &&
@@ -914,7 +1008,7 @@ export async function executeRelease({
     if (process.platform !== 'win32' && realpathSync(cli) !== realpathSync(entrypoint))
       throw new Error('PATH executable does not target installed package.');
     const invoke = (args, label) =>
-      command(process.execPath, [entrypoint, ...args], {
+      invokeNpmPathCommand(command, cli, args, {
         cwd: unrelated,
         env,
         log: path.join(folder, `${label}.json`),
@@ -934,7 +1028,7 @@ export async function executeRelease({
     update('successful', {
       installed_root: installed,
       prefix,
-      path_command: cli,
+      path_command: expectedShim,
       completed_at: new Date().toISOString(),
     });
     save(path.join(root, '.agent/work/agent-local-release/successful.json'), state);

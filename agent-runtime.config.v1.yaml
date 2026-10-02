@@ -90,8 +90,8 @@ projects:
 agents:
   profiles:
     executor:
-      model: gpt-6.1-sol
-      reasoning: medium
+      model: gpt-6-luna
+      reasoning: max
       execution_mode: standard
       mutation_scope: repository_source
       tools_policy: developer

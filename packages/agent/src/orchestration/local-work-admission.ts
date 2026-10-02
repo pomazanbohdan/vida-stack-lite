@@ -12,7 +12,7 @@ import {
   selectWorkflow,
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { loadProjectSetContext } from '../config/project-context.js';
+import { loadProjectSetContext, projectMayScopeRepositoryPath } from '../config/project-context.js';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
 import {
   HostStateStore,
@@ -148,6 +148,12 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       scope.implementation_paths.length > 0 &&
       scope.implementation_paths.every((item) => scope.allowed_paths.includes(item)),
     'accepted task scope, AC or session binding differs',
+  );
+  requireAdmission(
+    [...scope.allowed_paths, ...scope.implementation_paths].every((item) =>
+      projectMayScopeRepositoryPath(config.projects, item, selection.project),
+    ),
+    'accepted scope path is outside selected project membership',
   );
   const source = snapshotDeclaredSources(access, scope.allowed_paths);
   requireAdmission(

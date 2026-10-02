@@ -197,3 +197,21 @@ Existing OpenAI observability and Mastra persistence references describe tracing
 and stored observations, not trusted subprocess provenance. V10 therefore keeps
 cooperative tester report consistency explicit and does not invent executed-suite
 proof, native host enforcement or Runtime acceptance.
+
+## Deepest project-root membership (2026-10-02)
+
+Owner: agent maintainer. Work: `core-directory-policy-20261002`. Behavior owner:
+[scoped source and lease continuity](../system-specification.md#scoped-source-and-lease-continuity).
+The verified official [Claude Agent SDK permissions reference](https://code.claude.com/docs/en/agent-sdk/permissions)
+describes deny-precedence mechanics. The official [fs-safe root boundary](https://fs-safe.io/root.html)
+and [path scope reference](https://fs-safe.io/path-scope.html) describe rooted
+filesystem access and path-scoped operations. These references were fetched
+successfully on 2026-10-02. They support applying explicit membership denial
+before scoped source access while retaining existing rooted no-follow checks;
+they do not define this project's directory ownership model.
+
+The accepted local invariant is deepest-root membership: equal deepest roots
+share membership, a nested project excludes a broader parent below that root,
+and a path outside all product roots is eligible only through an exact scoped
+work item and selected `ProjectContext`. Repository-path evidence remains
+read-only; membership does not change `code_selectors` or current-v1 schemas.
