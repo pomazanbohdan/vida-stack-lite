@@ -489,7 +489,12 @@ attempt's status, null result and observation, issue, approval, scope and lease;
 repair neither releases ownership nor settles `commit_unknown` or authorizes
 replay. Freeze work, journal, ledger, governance and maintenance dependencies
 and apply all postimages in the existing immediate transaction with CAS. Exact
-resume and semantic restore retain strict current-v1 shape. Owner retirement
+resume and semantic restore retain strict current-v1 shape. The bundle-owned
+repair operation stores an
+ordered aggregate of individually validated, bounded rows with a checksum of
+the exact stored payload. Its immutable recovery projection is not one public
+ingress document; public input and individual row limits remain unchanged.
+Owner retirement
 and outcome reconciliation remain separate public operations on the actual
 owner's state.
 

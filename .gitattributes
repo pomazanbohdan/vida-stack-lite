@@ -1,0 +1,2 @@
+# Keep package text consistent with its formatter on every checkout platform.
+packages/agent/** text=auto eol=lf

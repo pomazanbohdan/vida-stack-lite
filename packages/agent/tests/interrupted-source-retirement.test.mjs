@@ -265,9 +265,24 @@ async function fixture({ writer = true } = {}) {
       console.warn('Fixture cleanup deferred (closed SQLite handles, OS EBUSY): ' + root);
     }
   }
-  async function laterWriter(id, file, { readonly = false } = {}) {
+  async function laterWriter(id, file, { readonly = false, ownershipOnly = false } = {}) {
     if (file !== 'AGENT.sidecar.md') writeFileSync(path.join(root, file), 'Synthetic disjoint source');
     const next = admission(id, file, 'synthetic-' + id);
+    if (ownershipOnly) {
+      const host = store.readHostStateSnapshot(next.identity);
+      acquireLocalSourceWriterLease({
+        repositoryRoot: root,
+        config,
+        store,
+        identity: next.identity,
+        nativeSessionHandle: next.input.nativeSessionHandle,
+        stageId: 'develop_task',
+        assignmentIndex: 0,
+        expectedWork: host.workVersion,
+        expectedLedger: host.ledgerVersion,
+      });
+      return next;
+    }
     const nextBridge = await MastraSessionBridge.open({
       repositoryRoot: root,
       config,
@@ -388,7 +403,7 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
       retired.snapshot,
     );
 
-    await f.laterWriter('later-overlap', 'AGENT.sidecar.md');
+    await f.laterWriter('later-overlap', 'AGENT.sidecar.md', { ownershipOnly: true });
     await expect(retireInterruptedSourceOwnerForSession(f.executionCapability, request)).rejects.toThrow(
       'another active Source owner overlaps',
     );

@@ -40,11 +40,20 @@ test('SDK manifest projection is deterministic, idempotent and retains public co
   expect(first.value.exports).toEqual(JSON.parse(original).exports);
   expect(first.value.bin).toEqual(JSON.parse(original).bin);
   expect(first.value.files).not.toContain('dist/standalone/**');
-  expect(first.value.files).toContain('!dist/standalone/**');
+  expect(first.value.files).not.toContain('!dist/standalone/**');
   expect(first.value.scripts.prepack).toBe('node bin/bun.mjs tooling/pack-sdk.mjs --verify');
   expect(readFileSync(path.join(root, 'package.json'))).toEqual(original);
   writeFileSync(path.join(root, 'package.json'), first.bytes);
   expect(sdkCompatibilityManifest({ root }).bytes).toEqual(first.bytes);
+  for (const entry of ['dist/standalone/**', '!dist/standalone/**']) {
+    writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({ ...first.value, files: [...first.value.files, entry] }),
+    );
+    expect(() => sdkCompatibilityManifest({ root })).toThrow(
+      'SDK manifest must not declare unavailable standalone package files',
+    );
+  }
 });
 
 test('SDK validation rejects missing declarations, resources and changed portable frozen lock', async () => {

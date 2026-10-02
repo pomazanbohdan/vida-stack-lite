@@ -194,8 +194,8 @@
     "test:config:pinned": "bun run build:pinned && bun test tests/runtime-config-yaml.test.mjs tests/runtime-config-repair-boundary.test.mjs",
     "test:research-decision": "node bin/bun.mjs run test:research-decision:pinned",
     "test:research-decision:pinned": "bun run build:pinned && bun test tests/research-source-catalog.test.mjs",
-    "test": "node bin/bun.mjs run test:pinned && node bin/bun.mjs run test:run-entrypoint:pinned",
-    "test:pinned": "bun run build:pinned && bun test tests/cedar-validation.test.mjs tests/runtime-config-yaml.test.mjs tests/runtime-config-repair-boundary.test.mjs tests/runtime-config-rebind.test.mjs tests/documentation-policy-transition.test.mjs tests/completed-readonly-capture.test.mjs tests/runtime-timing-output.test.mjs tests/bun-cache-routing.test.mjs tests/forward-candidate-admission.test.mjs tests/forward-candidate-authority.test.mjs tests/repair-cli-behavior.test.mjs tests/smoke.test.mjs tests/property.test.mjs tests/research-source-catalog.test.mjs tests/package-boundary.test.mjs tests/portable-instructions.test.mjs tests/initialization.test.mjs tests/install.test.mjs tests/read-only-dispatch-repair.test.mjs tests/reconcile-readonly-dispatch.test.mjs tests/paused-replacement-entrypoint.test.mjs tests/bun/host-state.test.mjs tests/bun/lifecycle-state.test.mjs tests/bun/persistent-session-handoff.test.mjs tests/bun/runtime-initialization.test.mjs tests/admitted-synthesis-projection.test.mjs tests/observed-testing.test.mjs tests/admitted-development-packet.test.mjs tests/observed-research-result.test.mjs tests/session-handoff.test.mjs tests/interrupted-source-retirement.test.mjs --test-name-pattern \"^(?!package archive is the complete portable vida-agent bundle with a clean production surface$)\"",
+    "test": "node bin/bun.mjs run test:pinned && node bin/bun.mjs run test:repair:pinned && node bin/bun.mjs run test:host-state:pinned && node bin/bun.mjs run test:package-boundary:pinned && node bin/bun.mjs run test:run-entrypoint:pinned",
+    "test:pinned": "bun run build:pinned && bun test tests/cedar-validation.test.mjs tests/runtime-config-yaml.test.mjs tests/runtime-config-repair-boundary.test.mjs tests/runtime-timing-output.test.mjs tests/bun-cache-routing.test.mjs tests/forward-candidate-admission.test.mjs tests/forward-candidate-authority.test.mjs tests/smoke.test.mjs tests/property.test.mjs tests/research-source-catalog.test.mjs tests/portable-instructions.test.mjs tests/initialization.test.mjs tests/install.test.mjs tests/bun/persistent-session-handoff.test.mjs tests/bun/runtime-initialization.test.mjs tests/admitted-synthesis-projection.test.mjs tests/observed-testing.test.mjs tests/admitted-development-packet.test.mjs tests/observed-research-result.test.mjs tests/session-handoff.test.mjs --test-name-pattern \"^(?!package archive is the complete portable vida-agent bundle with a clean production surface$)\"",
     "test:run-entrypoint": "node bin/bun.mjs run test:run-entrypoint:pinned",
     "test:run-entrypoint:pinned": "bun test tests/run-entrypoint.test.mjs",
     "test:pack": "node bin/bun.mjs run test:pack:pinned",
@@ -235,7 +235,7 @@
     "ci": "node bin/bun.mjs run ci:pinned",
     "ci:pinned": "bun run verify:portable:pinned",
     "ci:candidate": "node bin/bun.mjs run ci:candidate:pinned",
-    "ci:candidate:pinned": "bun install --frozen-lockfile && bun run test:toolchain:pinned && bun run preflight:pinned && bun run typecheck:pinned && bun run test:config:pinned && bun run test:pinned && bun run test:pack:pinned && bun run test:fuzz:pinned && bun run test:zombies:pinned && bun run test:deep:pinned && bun run quality:static:pinned && bun run test:coverage:pinned && bun run coverage:gate:pinned && bun run crap:pinned && bun run format:check:pinned",
+    "ci:candidate:pinned": "bun install --frozen-lockfile && bun run test:toolchain:pinned && bun run preflight:pinned && bun run typecheck:pinned && bun run test:config:pinned && bun run test:pinned && bun run test:repair:pinned && bun run test:host-state:pinned && bun run test:package-boundary:pinned && bun run test:run-entrypoint:pinned && bun run test:pack:pinned && bun run test:fuzz:pinned && bun run test:zombies:pinned && bun run test:deep:pinned && bun run quality:static:pinned && bun run test:coverage:pinned && bun run coverage:gate:pinned && bun run crap:pinned && bun run format:check:pinned",
     "test:toolchain": "node bin/bun.mjs run test:toolchain:pinned",
     "test:toolchain:pinned": "bun test tests/bun-toolchain.test.mjs",
     "test:watch": "node bin/bun.mjs run test:watch:pinned",
@@ -252,7 +252,11 @@
     "test:host-state": "node bin/bun.mjs run test:host-state:pinned",
     "test:host-state:pinned": "bun test tests/bun/host-state.test.mjs tests/bun/lifecycle-state.test.mjs",
     "pack:sdk": "node bin/bun.mjs run pack:sdk:pinned",
-    "pack:sdk:pinned": "bun -e \"const {spawnSync}=await import('node:child_process'); const path=await import('node:path'); const result=spawnSync(process.execPath,['--no-env-file','--no-install','--config='+path.resolve('bunfig.toml'),'tooling/pack-sdk.mjs','--pack','--root',process.cwd(),'--destination',path.resolve('.tmp/sdk-package')],{stdio:'inherit',windowsHide:true}); if(result.error)throw result.error; process.exit(result.status??1);\""
+    "pack:sdk:pinned": "bun -e \"const {spawnSync}=await import('node:child_process'); const path=await import('node:path'); const result=spawnSync(process.execPath,['--no-env-file','--no-install','--config='+path.resolve('bunfig.toml'),'tooling/pack-sdk.mjs','--pack','--root',process.cwd(),'--destination',path.resolve('.tmp/sdk-package')],{stdio:'inherit',windowsHide:true}); if(result.error)throw result.error; process.exit(result.status??1);\"",
+    "test:repair": "node bin/bun.mjs run test:repair:pinned",
+    "test:repair:pinned": "bun test tests/runtime-config-rebind.test.mjs tests/documentation-policy-transition.test.mjs tests/completed-readonly-capture.test.mjs tests/repair-cli-behavior.test.mjs tests/read-only-dispatch-repair.test.mjs tests/reconcile-readonly-dispatch.test.mjs tests/paused-replacement-entrypoint.test.mjs tests/interrupted-source-retirement.test.mjs",
+    "test:package-boundary": "node bin/bun.mjs run test:package-boundary:pinned",
+    "test:package-boundary:pinned": "bun test tests/package-boundary.test.mjs --test-name-pattern \"^(?!package archive is the complete portable vida-agent bundle with a clean production surface$)\""
   },
   "dependencies": {
     "@babel/parser": "8.0.4",

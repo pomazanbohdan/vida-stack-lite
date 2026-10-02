@@ -724,10 +724,9 @@ test('explicit npm compatibility packs and installs only the exact projected SDK
   const value = fixture();
   try {
     const pkg = JSON.parse(readFileSync(path.join(value.source, 'package.json')));
-    pkg.files = ['bin/vida-agent.mjs', 'instructions/**', 'dist/standalone/**', 'bin/standalone.mjs'];
+    pkg.files = ['bin/vida-agent.mjs', 'instructions/**'];
     pkg.scripts = {
-      prepack: 'native-only',
-      'build:standalone': 'node tooling/build-standalone.mjs',
+      prepack: 'node bin/bun.mjs tooling/pack-sdk.mjs --verify',
     };
     writeFileSync(path.join(value.source, 'package.json'), json(pkg));
     mkdirSync(path.join(value.source, 'tooling'));

@@ -28,6 +28,7 @@ import { runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { run } from '../bin/run.mjs';
 import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
 import { prepareLifecycleForCorrection } from '../src/orchestration/final-assurance.ts';
+import { issueObservedResearchActivation } from '../src/orchestration/observed-research-activation.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function fixture(sourceWriter = false, publicStore = false) {
@@ -53,6 +54,11 @@ function fixture(sourceWriter = false, publicStore = false) {
     store = new HostStateStore(
       database,
       publicStore ? deriveWorkspaceId(config.repository.repository_id, root) : 'a'.repeat(64),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      publicStore ? root : undefined,
     ),
     source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
   database.exec(
@@ -411,6 +417,20 @@ test('public report retrieves an exact durable observation before stale CAS and 
     };
     let journal = ledger.sync('ack', 1, work.execution.run_id, 'research_parallel', [request], f.source);
     journal = ledger.issueWave('ack', 1, journal.version);
+    const activation = await issueObservedResearchActivation({
+      repositoryRoot: f.root,
+      config: f.config,
+      ledger,
+      identity: {
+        repository_id: work.binding.repository_id,
+        project_ids: work.binding.project_ids,
+        integrations_digest: work.binding.integrations_digest,
+        work_id: 'ack',
+      },
+      journal,
+      actionId: request.action_id,
+    });
+    journal = ledger.markResearchWaveExposurePossible('ack', 1, activation.journal.version);
     const summary = 'Observed readonly fixture result',
       observation = {
         schema: 'VidaSessionObservation/v1',
@@ -1372,6 +1392,7 @@ test.each(['started', 'completed'])('explicit correction-generation repair (%s r
       work_id: 'repair-base',
     };
     expect(() => repair('plan', 'fixture')).toThrow('released ownership');
+    expect(() => repair('plan', 'x'.repeat(8_388_609))).toThrow('canonical JSON byte budget exceeded');
     const started = f.store.claimWorkflowAttempt({
       identity,
       expectedWork: admitted.host.workVersion,
@@ -1439,6 +1460,25 @@ test.each(['started', 'completed'])('explicit correction-generation repair (%s r
         },
       },
     ];
+    if (receiptStatus === 'started') {
+      const readonlyItem = structuredClone(oldJournal.items[0]);
+      delete readonlyItem.host_reservation;
+      const readonlyObservation = structuredClone(readonlyItem.observation);
+      delete readonlyObservation.host_attempt_id;
+      oldJournal.items.push(
+        ...Array.from({ length: 200 }, (_, index) => ({
+          ...readonlyItem,
+          request: { ...readonlyItem.request, action_id: canonicalJsonDigest('readonly-' + index) },
+          issue_id: 'readonly-issue-' + index,
+          observation: {
+            ...readonlyObservation,
+            action_id: canonicalJsonDigest('readonly-' + index),
+            issue_id: 'readonly-issue-' + index,
+            tool_call_ref: 'local:readonly-' + index,
+          },
+        })),
+      );
+    }
     const saveJournal = (state) =>
       f.database
         .query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE work_id=?')
@@ -1479,6 +1519,18 @@ test.each(['started', 'completed'])('explicit correction-generation repair (%s r
     saveJournal(oldJournal);
     expect(repair('inspect').status).toBe('repairable_current_v1');
     const planned = repair('plan', 'fixture');
+    if (receiptStatus === 'started')
+      expect(() => canonicalJson(planned)).toThrow('canonical JSON node budget exceeded');
+    const planRow = f.database.query('SELECT payload,digest FROM agent_host_work_state_repair').get();
+    f.database.query('UPDATE agent_host_work_state_repair SET payload=?').run(planRow.payload + ' ');
+    expect(() => repair('resume')).toThrow('repair operation checksum differs');
+    f.database.query('UPDATE agent_host_work_state_repair SET payload=?').run(planRow.payload);
+    if (receiptStatus === 'completed') {
+      f.database
+        .query('UPDATE agent_host_work_state_repair SET payload=?,digest=?')
+        .run(canonicalJson(planned), canonicalJsonDigest(planned));
+      expect(repair('plan', 'fixture')).toEqual(planned);
+    }
     expect(planned.work_changes).toHaveLength(1);
     expect(planned.work_changes[0].after.execution.assignment_attempts[0].attempt_id).toBe(started.attempt.attempt_id);
     f.database.exec(

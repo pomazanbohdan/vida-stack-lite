@@ -18,6 +18,15 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 let root;
 async function createFixture() {
   const fixtureRoot = mkdtempSync(path.join(tmpdir(), 'vida-session-handoff-'));
+  if (root) {
+    // Handoff cases vary configuration; initialize once and copy isolated inputs without Host state.
+    cpSync(root, fixtureRoot, {
+      recursive: true,
+      dereference: false,
+      filter: (entry) => path.basename(entry) !== '.agent',
+    });
+    return fixtureRoot;
+  }
   const bundleRoot = path.join(fixtureRoot, 'vida-agent');
   mkdirSync(bundleRoot);
   for (const entry of ['templates', 'instructions', 'schemas', 'TESTING.md', 'package.json'])

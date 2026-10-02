@@ -3577,6 +3577,7 @@ export class HostStateStore {
       'correction repair mode/attribution invalid',
     );
     requireState(!this.#database.inTransaction, 'nested correction repair forbidden');
+    if (input.mode === 'plan') assertCanonicalJsonValue(input.actor);
     return this.#database
       .transaction(() => {
         this.#assertMaintenanceAvailable();
@@ -4049,9 +4050,9 @@ export class HostStateStore {
           journal_changes: typeof journalChanges;
           post_bindings?: typeof bindings;
         };
+        const payloadDigest = (payload: string): string => createHash('sha256').update(payload).digest('hex');
+        if (stored) requireState(payloadDigest(stored.payload) === stored.digest, 'repair operation checksum differs');
         const rawOperation = stored ? JSON.parse(stored.payload) : null;
-        if (rawOperation)
-          requireState(canonicalJsonDigest(rawOperation) === stored!.digest, 'repair operation checksum differs');
         const serialize = (value: Operation): unknown =>
           kind === 'correction-generation'
             ? value
@@ -4084,6 +4085,10 @@ export class HostStateStore {
                     }
                   : {}),
               };
+        // Bundle-owned recovery aggregates contain individually bounded rows, not one public ingress document.
+        const operationPayload = (value: Operation): string => JSON.stringify(serialize(value));
+        const operationSnapshot = (payload: string): Readonly<Record<string, unknown>> =>
+          freezeJsonValue(JSON.parse(payload));
         let operation: Operation | null = rawOperation
           ? kind === 'correction-generation'
             ? rawOperation
@@ -4116,7 +4121,7 @@ export class HostStateStore {
         if (input.mode === 'plan') {
           if (operation) {
             requireState(operation.actor === input.actor, 'repair attribution differs');
-            return snapshot(serialize(operation) as Record<string, unknown>);
+            return operationSnapshot(operationPayload(operation));
           }
           operation = {
             schema:
@@ -4131,15 +4136,11 @@ export class HostStateStore {
             work_changes: workChanges,
             journal_changes: journalChanges,
           };
+          const payload = operationPayload(operation);
           this.#database
             .query('INSERT INTO agent_host_work_state_repair VALUES(?,?,?,?)')
-            .run(
-              this.#workspaceId,
-              input.operationId,
-              canonicalJson(serialize(operation)),
-              canonicalJsonDigest(serialize(operation)),
-            );
-          return snapshot(serialize(operation) as Record<string, unknown>);
+            .run(this.#workspaceId, input.operationId, payload, payloadDigest(payload));
+          return operationSnapshot(payload);
         }
         requireState(operation, 'correction repair frozen plan unavailable');
         const restoring = input.mode === 'restore';
@@ -4156,7 +4157,7 @@ export class HostStateStore {
                 : canonicalJson(bindings) === canonicalJson(operation.post_bindings)),
             'restored repair changed',
           );
-          return snapshot(serialize(operation) as Record<string, unknown>);
+          return operationSnapshot(operationPayload(operation));
         }
         if (operation.status === 'applied' && !restoring) {
           requireState(
@@ -4167,7 +4168,7 @@ export class HostStateStore {
               : canonicalJson(bindings) === canonicalJson(operation.post_bindings),
             'applied repair changed',
           );
-          return snapshot(serialize(operation) as Record<string, unknown>);
+          return operationSnapshot(operationPayload(operation));
         }
         requireState(
           kind === 'request-transition'
@@ -4310,19 +4311,14 @@ export class HostStateStore {
           status: restoring ? ('restored' as const) : ('applied' as const),
           post_bindings: post,
         };
+        const payload = operationPayload(next);
         const saved = this.#database
           .query(
             'UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND digest=?',
           )
-          .run(
-            canonicalJson(serialize(next)),
-            canonicalJsonDigest(serialize(next)),
-            this.#workspaceId,
-            input.operationId,
-            stored!.digest,
-          );
+          .run(payload, payloadDigest(payload), this.#workspaceId, input.operationId, stored!.digest);
         requireState(saved.changes === 1, 'repair operation CAS conflict');
-        return snapshot(serialize(next) as Record<string, unknown>);
+        return operationSnapshot(payload);
       })
       .immediate();
   }

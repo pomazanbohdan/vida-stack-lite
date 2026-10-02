@@ -333,7 +333,12 @@ test('every public developer script enters the pinned bootstrap without recursio
     (name) => !name.endsWith(':pinned') && name !== 'toolchain:sync',
   );
   for (const task of publicTasks) {
-    assert.equal(manifest.scripts[task], `node bin/bun.mjs run ${task}:pinned`);
+    assert.equal(
+      manifest.scripts[task],
+      task === 'test'
+        ? 'node bin/bun.mjs run test:pinned && node bin/bun.mjs run test:repair:pinned && node bin/bun.mjs run test:host-state:pinned && node bin/bun.mjs run test:package-boundary:pinned && node bin/bun.mjs run test:run-entrypoint:pinned'
+        : `node bin/bun.mjs run ${task}:pinned`,
+    );
     assert.ok(manifest.scripts[`${task}:pinned`]);
     assert.equal(manifest.scripts[`${task}:pinned`].includes(`run ${task} `), false);
     for (const [, dependency] of manifest.scripts[`${task}:pinned`].matchAll(/\bbun run ([\w:-]+)/g)) {
@@ -356,4 +361,64 @@ test('non-regular pin fails before package resolution, including Windows junctio
   symlinkSync(target, file, process.platform === 'win32' ? 'junction' : 'file');
   assert.throws(() => runPinnedBun([], { root, spawn: () => assert.fail('must not spawn') }), /regular non-link/);
   assert.throws(() => syncPin(root), /regular non-link/);
+});
+
+test('ordinary pinned phases preserve the complete disjoint test inventory and one build', () => {
+  const { scripts } = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../package.json'), 'utf8'));
+  const phases = [
+    'test:pinned',
+    'test:repair:pinned',
+    'test:host-state:pinned',
+    'test:package-boundary:pinned',
+    'test:run-entrypoint:pinned',
+  ];
+  const expected = [
+    'tests/admitted-development-packet.test.mjs',
+    'tests/admitted-synthesis-projection.test.mjs',
+    'tests/bun-cache-routing.test.mjs',
+    'tests/bun/host-state.test.mjs',
+    'tests/bun/lifecycle-state.test.mjs',
+    'tests/bun/persistent-session-handoff.test.mjs',
+    'tests/bun/runtime-initialization.test.mjs',
+    'tests/cedar-validation.test.mjs',
+    'tests/completed-readonly-capture.test.mjs',
+    'tests/documentation-policy-transition.test.mjs',
+    'tests/forward-candidate-admission.test.mjs',
+    'tests/forward-candidate-authority.test.mjs',
+    'tests/initialization.test.mjs',
+    'tests/install.test.mjs',
+    'tests/interrupted-source-retirement.test.mjs',
+    'tests/observed-research-result.test.mjs',
+    'tests/observed-testing.test.mjs',
+    'tests/package-boundary.test.mjs',
+    'tests/paused-replacement-entrypoint.test.mjs',
+    'tests/portable-instructions.test.mjs',
+    'tests/property.test.mjs',
+    'tests/read-only-dispatch-repair.test.mjs',
+    'tests/reconcile-readonly-dispatch.test.mjs',
+    'tests/repair-cli-behavior.test.mjs',
+    'tests/research-source-catalog.test.mjs',
+    'tests/run-entrypoint.test.mjs',
+    'tests/runtime-config-rebind.test.mjs',
+    'tests/runtime-config-repair-boundary.test.mjs',
+    'tests/runtime-config-yaml.test.mjs',
+    'tests/runtime-timing-output.test.mjs',
+    'tests/session-handoff.test.mjs',
+    'tests/smoke.test.mjs',
+  ];
+  const actual = phases.flatMap((phase) =>
+    [...scripts[phase].matchAll(/tests\/[\w/-]+\.test\.mjs/g)].map(([file]) => file),
+  );
+  assert.equal(
+    scripts['test:package-boundary:pinned'].split(' --test-name-pattern ')[1],
+    scripts['test:pinned'].split(' --test-name-pattern ')[1],
+  );
+  assert.equal(new Set(actual).size, actual.length, 'ordinary phases must not duplicate tests');
+  assert.deepEqual(actual.sort(), expected);
+  assert.equal(
+    phases.reduce((count, phase) => count + [...scripts[phase].matchAll(/run build:pinned/g)].length, 0),
+    1,
+  );
+  assert.equal(scripts.test, phases.map((phase) => 'node bin/bun.mjs run ' + phase).join(' && '));
+  assert.ok(scripts['ci:candidate:pinned'].includes(phases.map((phase) => 'bun run ' + phase).join(' && ')));
 });

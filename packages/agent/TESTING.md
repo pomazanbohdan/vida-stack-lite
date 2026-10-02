@@ -88,13 +88,16 @@ from construction; a copied tree or successful thin probe cannot close this gate
 
 ## Candidate repository verification
 
-The ordinary `npm test` command runs the Bun regression list and the public
-run-entrypoint matrix as two required sequential launcher invocations. Each
-keeps the existing five-minute process-tree deadline. `test:pinned` is the first
-phase; `test:run-entrypoint:pinned` is the second and uses its completed build.
-For an isolated second-phase rerun, build the current package first. Separating
-these phases preserves all assertions and bounds; it makes no speed claim.
-
+The ordinary `npm test` command runs five required sequential pinned launcher
+invocations: `test:pinned`, `test:repair:pinned`, `test:host-state:pinned`,
+`test:package-boundary:pinned` and `test:run-entrypoint:pinned`. Each keeps the
+existing five-minute
+process-tree deadline. The first phase builds once; subsequent phases reuse that
+build. The phases cover the complete ordinary inventory without duplication.
+For an isolated later-phase rerun, build the current package first. The local
+candidate aggregate includes all five phases and retains its separate aggregate
+launcher deadline. This scheduling preserves all assertions and bounds; it
+makes no total execution-time improvement claim.
 
 Run the current-v1 candidate checks below with declared Bun 1.4.2 and the frozen lockfile. A different global Bun must not silently change the selected version. Build-generated output counts only when source and package fingerprints match. Any retained `ci:candidate` script is a local command name, not authorization to run tests in CI/CD. Local aggregate checks exclude mutation; launch it explicitly when requested. First-cutover approval uses the retained-behavior matrix and exact outcomes below. Aggregate 100% coverage/mutation and `CRAP < 5` remain measured, owned post-cutover GAPs, as authorized by the user.
 

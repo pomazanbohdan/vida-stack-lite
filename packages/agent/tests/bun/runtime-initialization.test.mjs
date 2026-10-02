@@ -1,7 +1,6 @@
-import { afterEach, beforeEach, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -13,6 +12,7 @@ import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 
 let root, receiptPath, receipt, database, store;
+let racers = [];
 beforeEach(() => {
   root = mkdtempSync(path.join(tmpdir(), 'vida-init-binding-'));
   const { repositoryRoot } = configuredTestContext();
@@ -39,7 +39,11 @@ beforeEach(() => {
   database = openHostStateDatabase(path.join(root, '.agent', 'host.sqlite'));
   store = new HostStateStore(database, workspaceId);
 });
-afterEach(() => {
+afterEach(async () => {
+  for (const racer of racers)
+    if (racer.child.exitCode === null && racer.child.signalCode === null) racer.child.kill('SIGKILL');
+  await Promise.allSettled(racers.map((racer) => racer.done));
+  racers = [];
   database?.close();
   rmSync(root, { recursive: true, force: true });
 });
@@ -98,21 +102,52 @@ test('competing workspace is denied after the first bind', async () => {
   expect(readFileSync(receiptPath)).toEqual(bytes);
 });
 
-test('separate processes bind one pending receipt without changing its identity', async () => {
-  const hostModule = new URL('../../src/host-state.ts', import.meta.url).href;
-  const initModule = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
-  const program = `
+describe('separate process initialization', () => {
+  beforeEach(async () => {
+    const hostModule = new URL('../../src/host-state.ts', import.meta.url).href;
+    const initModule = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
+    const program = `
     const { HostStateStore, openHostStateDatabase } = await import(${JSON.stringify(hostModule)});
     const { bindRuntimeInitialization } = await import(${JSON.stringify(initModule)});
     const db = openHostStateDatabase(${JSON.stringify(path.join(root, '.agent', 'host.sqlite'))});
     try {
       const store = new HostStateStore(db, ${JSON.stringify(receipt.workspace_id)});
+      console.log('READY');
+      await new Promise(resolve => process.stdin.once('data', resolve));
       console.log(JSON.stringify(await bindRuntimeInitialization(${JSON.stringify(root)}, store)));
     } finally { db.close(); }
   `;
-  const run = () => promisify(execFile)(process.execPath, ['-e', program], { cwd: tmpdir(), timeout: 15000 });
-  const outputs = await Promise.all([run(), run()]);
-  for (const output of outputs)
-    expect(JSON.parse(output.stdout)).toEqual({ ...receipt, workspace_binding_status: 'bound' });
-  expect(JSON.parse(readFileSync(receiptPath, 'utf8'))).toEqual({ ...receipt, workspace_binding_status: 'bound' });
+    racers = [1, 2].map(() => {
+      let child;
+      const done = new Promise((resolve, reject) => {
+        child = execFile(
+          process.execPath,
+          ['-e', program],
+          { cwd: tmpdir(), timeout: 15000, windowsHide: true },
+          (error, stdout) => (error ? reject(error) : resolve(stdout)),
+        );
+      });
+      const ready = new Promise((resolve, reject) => {
+        let output = '';
+        child.stdout.on('data', (data) => {
+          output += data;
+          if (output.includes('READY\n')) resolve();
+        });
+        done.then(() => reject(new Error('race process exited before release')), reject);
+      });
+      return { child, ready, done };
+    });
+    await Promise.all(racers.map((racer) => racer.ready));
+  });
+
+  test('separate processes bind one pending receipt without changing its identity', async () => {
+    for (const racer of racers) racer.child.stdin.end('go\n');
+    const outputs = await Promise.all(racers.map((racer) => racer.done));
+    for (const output of outputs)
+      expect(JSON.parse(output.slice(output.indexOf('\n') + 1))).toEqual({
+        ...receipt,
+        workspace_binding_status: 'bound',
+      });
+    expect(JSON.parse(readFileSync(receiptPath, 'utf8'))).toEqual({ ...receipt, workspace_binding_status: 'bound' });
+  });
 });
