@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, cpSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
@@ -61,7 +62,7 @@ test('policy transition parser rejects unknown fields and incomplete forged clos
 
 function fixture() {
   const bundle = process.env.VIDA_POLICY_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '..');
-  const scratch = process.env.VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT ?? process.env.TEMP;
+  const scratch = process.env.VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT ?? process.env.TEMP ?? tmpdir();
   if (!scratch || !path.isAbsolute(scratch)) throw Error('absolute private fixture root required');
   mkdirSync(scratch, { recursive: true });
   const root = mkdtempSync(path.join(scratch, 'policy-'));

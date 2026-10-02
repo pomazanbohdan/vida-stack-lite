@@ -243,6 +243,43 @@ test('nested commands get one leading pinned directory even without PATH', () =>
   assert.equal(pinnedEnvironment(executable, {}).PATH, `${path.dirname(executable)}${path.delimiter}`);
 });
 
+test('npm native executable alias supplies bun to nested shells without selecting another binary', () => {
+  const { root } = fixture();
+  const binaryDirectory = path.join(root, 'node_modules/bun/bin');
+  const commandDirectory = path.join(root, 'node_modules/.bin');
+  mkdirSync(binaryDirectory, { recursive: true });
+  const executable = path.join(binaryDirectory, 'bun.exe');
+  const command = path.join(commandDirectory, process.platform === 'win32' ? 'bun.exe' : 'bun');
+  writeFileSync(executable, 'verified executable fixture');
+  if (process.platform === 'win32') {
+    symlinkSync(binaryDirectory, commandDirectory, 'junction');
+  } else {
+    mkdirSync(commandDirectory);
+    symlinkSync(executable, command);
+  }
+  assert.equal(
+    pinnedEnvironment(executable, { PATH: 'other-tools' }, root).PATH,
+    `${commandDirectory}${path.delimiter}other-tools`,
+  );
+
+  if (process.platform === 'win32') {
+    rmSync(commandDirectory, { recursive: true });
+    const differentDirectory = path.join(root, 'other-package/bin');
+    mkdirSync(differentDirectory, { recursive: true });
+    writeFileSync(path.join(differentDirectory, 'bun.exe'), 'different executable');
+    symlinkSync(differentDirectory, commandDirectory, 'junction');
+  } else {
+    rmSync(command);
+    const different = path.join(binaryDirectory, 'different.exe');
+    writeFileSync(different, 'different executable');
+    symlinkSync(different, command);
+  }
+  assert.equal(
+    pinnedEnvironment(executable, { PATH: 'other-tools' }, root).PATH,
+    `${binaryDirectory}${path.delimiter}other-tools`,
+  );
+});
+
 test('Windows does not retain competing case variants of PATH', () => {
   if (process.platform !== 'win32') return;
   const executable = path.resolve('cache', 'bun.exe');

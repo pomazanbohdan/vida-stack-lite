@@ -24,18 +24,22 @@ afterEach(() => {
 });
 
 describe('safe repository access completeness', () => {
-  test('Windows provider exposes native containment and truthful directory durability', async () => {
+  test('provider exposes its native binding and truthful platform assurance', async () => {
     const repositoryRoot = root();
     const access = requireSafeRepositoryAccess(repositoryRoot);
     expect(safeRepositoryProviderAvailable).toBe(true);
     expect(access).toMatchObject({
       schema: 'SafeRepositoryAccess/v1',
-      provider: 'fs-safe-windows',
       repository_root: repositoryRoot,
       attested: true,
-      containment: 'best-effort',
-      filesystem: 'unknown',
-      directory_sync: 'unsupported',
+      ...(process.platform === 'win32'
+        ? {
+            provider: 'fs-safe-windows',
+            containment: 'best-effort',
+            filesystem: 'unknown',
+            directory_sync: 'unsupported',
+          }
+        : { provider: 'linux-proc-fd', ancestor_binding: 'directory-handle', atomic_replace: 'fsync-temp-rename' }),
     });
     expect(access.assertAvailable()).toBeUndefined();
 
@@ -51,12 +55,17 @@ describe('safe repository access completeness', () => {
       'result',
     );
     expect(() => access.ensureDirectory('data', 'data directory')).not.toThrow();
-    expect(() => access.removeFile('data/value.txt', 'value file')).toThrow(/parent-handle delete/);
-    expect(access.readText('data/value.txt', 'value file')).toBe('after');
+    if (process.platform === 'win32') {
+      expect(() => access.removeFile('data/value.txt', 'value file')).toThrow(/parent-handle delete/);
+      expect(access.readText('data/value.txt', 'value file')).toBe('after');
+    } else {
+      access.removeFile('data/value.txt', 'value file');
+      expect(access.fileExists('data/value.txt', 'value file')).toBe(false);
+    }
     expect(access.readText('value.txt', 'value file')).toBe('before');
   });
 
-  test('Windows native CAS replaces only the expected bytes', async () => {
+  test('native CAS replaces only the expected bytes', async () => {
     const repositoryRoot = root();
     const access = requireSafeRepositoryAccess(repositoryRoot);
     writeFileSync(path.join(repositoryRoot, 'race.txt'), 'original');
@@ -92,7 +101,7 @@ describe('safe repository access completeness', () => {
     }
   });
 
-  test('Windows provider preserves safe reads and rejects unsafe paths', async () => {
+  test('provider preserves safe reads and rejects unsafe paths', async () => {
     const repositoryRoot = root();
     const access = detectSafeRepositoryAccess(repositoryRoot);
     writeFileSync(path.join(repositoryRoot, 'new.txt'), 'x');
@@ -108,13 +117,19 @@ describe('safe repository access completeness', () => {
     expect(() => access.readText('.git/config', 'repository metadata')).toThrow(/unsafe path segment/);
     expect(() => access.readBytes('', 'empty')).toThrow(/escapes/);
     expect(() => access.assertDirectory('missing', 'missing')).toThrow();
-    expect(() => access.removeFile('new.txt', 'file')).toThrow(/parent-handle delete/);
-    expect(access.readText('new.txt', 'file')).toBe('x');
+    if (process.platform === 'win32') {
+      expect(() => access.removeFile('new.txt', 'file')).toThrow(/parent-handle delete/);
+      expect(access.readText('new.txt', 'file')).toBe('x');
+    } else {
+      access.removeFile('new.txt', 'file');
+      expect(access.fileExists('new.txt', 'file')).toBe(false);
+    }
 
-    expect(() => access.assertDirectory('new.txt', 'ordinary')).toThrow(/director/);
+    writeFileSync(path.join(repositoryRoot, 'ordinary.txt'), 'file');
+    expect(() => access.assertDirectory('ordinary.txt', 'ordinary')).toThrow(/director/);
   });
 
-  test('Windows provider treats the repository Git directory as a marker only', () => {
+  test('provider treats the repository Git directory as a marker only', () => {
     const repositoryRoot = root();
     const access = detectSafeRepositoryAccess(repositoryRoot);
     expect(access.fileExists('.git', 'repository marker')).toBe(false);

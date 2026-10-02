@@ -19,7 +19,7 @@ if (!isolated && !underStryker) {
     );
     expect(child.error).toBeUndefined();
     expect(child.status).toBe(0);
-    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+6 passed/);
+    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+12 passed/);
   }, 180_000);
 } else {
   const realFs = await vi.importActual('node:fs');
@@ -28,9 +28,17 @@ if (!isolated && !underStryker) {
   const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
   const roots = [];
   const fdPaths = new Map();
+  const copyDescriptors = new Set();
   const simulatedNoFollow = 0x20000000;
   const simulatedDirectory = 0x10000000;
   let cloneFailuresRemaining = 0;
+  let cloneUnavailableRemaining = 0;
+  let cloneUnavailableCode = 'ENOTSUP';
+  let shortCopyWrites = false;
+  let copyWriteFault;
+  let copyCleanupFault = false;
+  let substituteRestoredTarget = false;
+  let replaceCloneTargetAfterSuccess = false;
   let removeCloneSourceBeforeFailure = false;
   let createCloneTargetBeforeFailure = false;
   let rootIdentityMismatchRemaining = 0;
@@ -74,15 +82,31 @@ if (!isolated && !underStryker) {
     }
     const fd = realFs.openSync(resolved, cleanFlags, mode);
     fdPaths.set(fd, path.resolve(String(resolved)));
+    if (typeof cleanFlags === 'number' && cleanFlags & realFs.constants.O_CREAT && cleanFlags & realFs.constants.O_RDWR)
+      copyDescriptors.add(fd);
     return fd;
   }
 
   function trackedClose(fd) {
     if (!fdPaths.has(fd)) return;
     try {
+      const file = fdPaths.get(fd);
+      if (
+        substituteRestoredTarget &&
+        copyDescriptors.has(fd) &&
+        file &&
+        path.basename(file) === 'fallback.txt' &&
+        realFs.existsSync(file) &&
+        realFs.readFileSync(file, 'utf8') === 'before'
+      ) {
+        substituteRestoredTarget = false;
+        realFs.renameSync(file, file + '.displaced');
+        realFs.writeFileSync(file, 'foreign');
+      }
       realFs.closeSync(fd);
     } finally {
       fdPaths.delete(fd);
+      copyDescriptors.delete(fd);
     }
   }
 
@@ -97,6 +121,23 @@ if (!isolated && !underStryker) {
     constants: { ...realFs.constants, O_NOFOLLOW: simulatedNoFollow, O_DIRECTORY: simulatedDirectory },
     openSync: trackedOpen,
     closeSync: trackedClose,
+    writeSync(fd, buffer, offset, length, position) {
+      const file = fdPaths.get(fd);
+      if (file && path.basename(file) === 'fallback.txt') {
+        if (copyWriteFault) {
+          const mode = copyWriteFault;
+          copyWriteFault = undefined;
+          if (mode === 'zero') return 0;
+          if (mode === 'foreign') {
+            realFs.unlinkSync(file);
+            realFs.writeFileSync(file, 'foreign');
+          }
+          throw Object.assign(new Error('simulated copy write failure'), { code: 'EIO' });
+        }
+        if (shortCopyWrites) length = Math.min(length, 2);
+      }
+      return realFs.writeSync(fd, buffer, offset, length, position);
+    },
     fsyncSync: simulatedFsync,
     existsSync(value) {
       if (value === '/proc/self/fd') return true;
@@ -137,6 +178,10 @@ if (!isolated && !underStryker) {
     const targetRoot = fdPaths.get(targetRootFd);
     if (!source || !targetRoot) throw Object.assign(new Error('unknown simulated clone descriptor'), { code: 'EBADF' });
     const target = path.join(targetRoot, ...targetRelPath.split('/'));
+    if (cloneUnavailableRemaining > 0) {
+      cloneUnavailableRemaining -= 1;
+      throw Object.assign(new Error('simulated unavailable reflink'), { code: cloneUnavailableCode });
+    }
     if (cloneFailuresRemaining > 0) {
       cloneFailuresRemaining -= 1;
       if (removeCloneSourceBeforeFailure) realFs.unlinkSync(source);
@@ -150,7 +195,13 @@ if (!isolated && !underStryker) {
     );
     realFs.writeFileSync(writeFd, realFs.readFileSync(source));
     trackedClose(writeFd);
-    return trackedOpen(target, realFs.constants.O_RDWR);
+    const copied = trackedOpen(target, realFs.constants.O_WRONLY);
+    if (replaceCloneTargetAfterSuccess) {
+      replaceCloneTargetAfterSuccess = false;
+      realFs.renameSync(target, target + '.displaced');
+      realFs.writeFileSync(target, 'foreign');
+    }
+    return copied;
   }
 
   function renameNoReplace(sourceRootFd, sourceRelPath, targetRootFd, targetRelPath) {
@@ -158,6 +209,10 @@ if (!isolated && !underStryker) {
     const targetRoot = fdPaths.get(targetRootFd);
     if (!sourceRoot || !targetRoot)
       throw Object.assign(new Error('unknown simulated rename descriptor'), { code: 'EBADF' });
+    if (copyCleanupFault && sourceRelPath === 'fallback.txt' && targetRelPath.endsWith('.reclaimed')) {
+      copyCleanupFault = false;
+      throw Object.assign(new Error('simulated copy cleanup failure'), { code: 'EIO' });
+    }
     const source = path.join(sourceRoot, ...sourceRelPath.split('/'));
     const target = path.join(targetRoot, ...targetRelPath.split('/'));
     if (realFs.existsSync(target))
@@ -214,6 +269,13 @@ if (!isolated && !underStryker) {
   afterEach(() => {
     while (roots.length) realFs.rmSync(roots.pop(), { recursive: true, force: true });
     cloneFailuresRemaining = 0;
+    cloneUnavailableRemaining = 0;
+    cloneUnavailableCode = 'ENOTSUP';
+    shortCopyWrites = false;
+    copyWriteFault = undefined;
+    copyCleanupFault = false;
+    substituteRestoredTarget = false;
+    replaceCloneTargetAfterSuccess = false;
     removeCloneSourceBeforeFailure = false;
     createCloneTargetBeforeFailure = false;
     rootIdentityMismatchRemaining = 0;
@@ -294,6 +356,38 @@ if (!isolated && !underStryker) {
       expect(access.readText('data/value.txt', 'value file')).toBe('final');
     });
 
+    test('locks an existing payload without changing it and excludes other holders', async () => {
+      const repositoryRoot = temporaryRoot();
+      const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      const contender = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      access.ensureDirectory('data', 'data directory');
+      access.writeExclusive('data/operation.json', '{"phase":"planned"}', 'operation');
+      const payload = access.readBytes('data/operation.json', 'operation');
+      const sidecar = path.join(repositoryRoot, 'data', 'operation.json.lock');
+      expect(
+        access.withExclusiveLock('data/operation.json', 'operation', () => {
+          expect(realFs.existsSync(sidecar)).toBe(true);
+          expect(() =>
+            contender.withExclusiveLock('data/operation.json', 'nested operation', () => undefined),
+          ).toThrow();
+          return 'locked';
+        }),
+      ).toBe('locked');
+      await access.withExclusiveLockAsync('data/operation.json', 'operation', async () => {
+        await expect(
+          contender.withExclusiveLockAsync('data/operation.json', 'contender', async () => undefined),
+        ).rejects.toThrow();
+        expect(access.readBytes('data/operation.json', 'operation')).toEqual(payload);
+      });
+      await expect(
+        access.withExclusiveLockAsync('data/operation.json', 'throwing operation', async () => {
+          throw new Error('operation failed');
+        }),
+      ).rejects.toThrow('operation failed');
+      expect(realFs.existsSync(sidecar)).toBe(false);
+      expect(access.readBytes('data/operation.json', 'operation')).toEqual(payload);
+    });
+
     test('rejects unsafe paths, wrong node types, hard links, and bounded-size violations', () => {
       const repositoryRoot = temporaryRoot();
       const access = linuxSafe.detectSafeRepositoryAccess(repositoryRoot);
@@ -321,12 +415,12 @@ if (!isolated && !underStryker) {
       const lockPayload = (owner_pid) =>
         JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid, label: 'fixture' });
 
-      const stale = path.join(repositoryRoot, 'data', 'stale.lock');
+      const stale = path.join(repositoryRoot, 'data', 'stale.lock.lock');
       realFs.writeFileSync(stale, lockPayload(2_147_483_647));
       realFs.utimesSync(stale, old, old);
       expect(access.withExclusiveLock('data/stale.lock', 'stale lock', () => 'reclaimed')).toBe('reclaimed');
 
-      const orphaned = path.join(repositoryRoot, 'data', 'orphaned.lock');
+      const orphaned = path.join(repositoryRoot, 'data', 'orphaned.lock.lock');
       realFs.writeFileSync(orphaned, lockPayload(2_147_483_647));
       realFs.utimesSync(orphaned, old, old);
       const orphanGuard = orphaned + '.reclaim';
@@ -338,7 +432,7 @@ if (!isolated && !underStryker) {
       realFs.rmSync(orphanGuard, { recursive: true, force: true });
       realFs.rmSync(orphaned, { force: true });
 
-      const recoverable = path.join(repositoryRoot, 'data', 'recoverable.lock');
+      const recoverable = path.join(repositoryRoot, 'data', 'recoverable.lock.lock');
       realFs.writeFileSync(recoverable, lockPayload(2_147_483_647));
       realFs.utimesSync(recoverable, old, old);
       const recoverableGuard = recoverable + '.reclaim';
@@ -359,24 +453,24 @@ if (!isolated && !underStryker) {
       );
       expect(realFs.existsSync(recoverableGuard)).toBe(false);
 
-      const live = path.join(repositoryRoot, 'data', 'live.lock');
+      const live = path.join(repositoryRoot, 'data', 'live.lock.lock');
       realFs.writeFileSync(live, lockPayload(process.pid));
       realFs.utimesSync(live, old, old);
       expect(() => access.withExclusiveLock('data/live.lock', 'live lock', () => undefined)).toThrow();
       realFs.rmSync(live, { force: true });
 
-      const invalid = path.join(repositoryRoot, 'data', 'invalid.lock');
+      const invalid = path.join(repositoryRoot, 'data', 'invalid.lock.lock');
       realFs.writeFileSync(invalid, lockPayload(0));
       realFs.utimesSync(invalid, old, old);
       expect(() => access.withExclusiveLock('data/invalid.lock', 'invalid lock', () => undefined)).toThrow(/owner/);
       realFs.rmSync(invalid, { force: true });
 
-      const guarded = path.join(repositoryRoot, 'data', 'guarded.lock');
+      const guarded = path.join(repositoryRoot, 'data', 'guarded.lock.lock');
       realFs.mkdirSync(guarded + '.reclaim');
       expect(() => access.withExclusiveLock('data/guarded.lock', 'guarded lock', () => undefined)).toThrow(/reclaim/);
       realFs.rmSync(guarded + '.reclaim', { recursive: true, force: true });
 
-      const releaseBlocked = path.join(repositoryRoot, 'data', 'release-blocked.lock');
+      const releaseBlocked = path.join(repositoryRoot, 'data', 'release-blocked.lock.lock');
       expect(
         access.withExclusiveLock('data/release-blocked.lock', 'release blocked', () => {
           realFs.mkdirSync(releaseBlocked + '.reclaim');
@@ -386,7 +480,7 @@ if (!isolated && !underStryker) {
       realFs.rmSync(releaseBlocked, { force: true });
       realFs.rmSync(releaseBlocked + '.reclaim', { recursive: true, force: true });
 
-      const changedOwner = path.join(repositoryRoot, 'data', 'changed-owner.lock');
+      const changedOwner = path.join(repositoryRoot, 'data', 'changed-owner.lock.lock');
       expect(
         access.withExclusiveLock('data/changed-owner.lock', 'changed owner', () => {
           realFs.writeFileSync(changedOwner, lockPayload(2_147_483_647));
@@ -399,7 +493,7 @@ if (!isolated && !underStryker) {
           access.withExclusiveLock('data/nested.lock', 'inner lock', () => undefined),
         ),
       ).toThrow();
-      realFs.rmSync(path.join(repositoryRoot, 'data', 'nested.lock'), { force: true });
+      realFs.rmSync(path.join(repositoryRoot, 'data', 'nested.lock.lock'), { force: true });
     });
 
     test('keeps stale reclaim guards fail-closed when owner evidence is live, malformed, or mixed', () => {
@@ -409,7 +503,7 @@ if (!isolated && !underStryker) {
       const data = path.join(repositoryRoot, 'data');
       const old = new Date(Date.now() - 60_000);
       const staleLock = (name) => {
-        const target = path.join(data, name);
+        const target = path.join(data, name + '.lock');
         realFs.writeFileSync(
           target,
           JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: 2_147_483_647 }),
@@ -477,7 +571,7 @@ if (!isolated && !underStryker) {
       access.ensureDirectory('data', 'data directory');
       const sentinel = path.join(outsideRoot, 'sentinel');
       realFs.writeFileSync(sentinel, 'preserve');
-      const guardPath = path.join(repositoryRoot, 'data', 'unsafe.lock.reclaim');
+      const guardPath = path.join(repositoryRoot, 'data', 'unsafe.lock.lock.reclaim');
       let linkedOutside = false;
       try {
         realFs.symlinkSync(outsideRoot, guardPath, 'junction');
@@ -493,7 +587,101 @@ if (!isolated && !underStryker) {
       expect(realFs.readFileSync(sentinel, 'utf8')).toBe('preserve');
       if (linkedOutside) expect(realFs.lstatSync(guardPath).isSymbolicLink()).toBe(true);
       else expect(realFs.readFileSync(guardPath, 'utf8')).toBe('preserve');
-      expect(realFs.existsSync(path.join(repositoryRoot, 'data', 'unsafe.lock'))).toBe(false);
+      expect(realFs.existsSync(path.join(repositoryRoot, 'data', 'unsafe.lock.lock'))).toBe(false);
+    });
+
+    test('rejects native clone inode substitution without overwriting its replacement', () => {
+      const repositoryRoot = temporaryRoot();
+      const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      access.ensureDirectory('data', 'data directory');
+      access.writeExclusive('data/clone.txt', 'before', 'clone source');
+      replaceCloneTargetAfterSuccess = true;
+      expect(() => access.replaceAtomic('data/clone.txt', hash('before'), 'after', 'clone')).toThrow(
+        /identity changed/,
+      );
+      expect(access.readText('data/clone.txt', 'foreign clone target')).toBe('foreign');
+      const backup = realFs.readdirSync(path.join(repositoryRoot, 'data')).find((name) => name.endsWith('.cas-old'));
+      expect(realFs.readFileSync(path.join(repositoryRoot, 'data', backup), 'utf8')).toBe('before');
+    });
+
+    for (const recovery of ['orphan', 'rollback']) {
+      test(`preserves original backup when ${recovery} target is substituted after descriptor verification`, () => {
+        const repositoryRoot = temporaryRoot();
+        const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+        access.ensureDirectory('data', 'data directory');
+        access.writeExclusive('data/fallback.txt', 'before', 'original');
+        const data = path.join(repositoryRoot, 'data');
+        if (recovery === 'orphan') {
+          realFs.renameSync(
+            path.join(data, 'fallback.txt'),
+            path.join(data, '.fallback.txt.11111111-1111-4111-8111-111111111111.cas-old'),
+          );
+        } else {
+          copyWriteFault = 'zero';
+        }
+        cloneUnavailableRemaining = 3;
+        substituteRestoredTarget = true;
+        expect(() => access.replaceAtomic('data/fallback.txt', hash('before'), 'after', 'restore race')).toThrow();
+        expect(substituteRestoredTarget).toBe(false);
+        expect(realFs.readFileSync(path.join(data, 'fallback.txt'), 'utf8')).toBe('foreign');
+        const backups = realFs.readdirSync(data).filter((name) => name.endsWith('.cas-old'));
+        expect(backups).toHaveLength(1);
+        expect(realFs.readFileSync(path.join(data, backups[0]), 'utf8')).toBe('before');
+      });
+    }
+
+    test('copies without reflink using explicit offsets and completes partial writes', () => {
+      const repositoryRoot = temporaryRoot();
+      const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      access.ensureDirectory('data', 'data directory');
+      for (const code of ['EINVAL', 'ENOSYS', 'ENOTSUP', 'EOPNOTSUPP', 'EPERM', 'EXDEV']) {
+        access.writeExclusive('data/fallback.txt', 'before', 'copy source');
+        cloneUnavailableCode = code;
+        cloneUnavailableRemaining = 1;
+        shortCopyWrites = true;
+        access.replaceAtomic('data/fallback.txt', hash('before'), 'after-copy', 'fallback');
+        expect(access.readText('data/fallback.txt', 'copied file')).toBe('after-copy');
+        access.removeFile('data/fallback.txt', 'copied file');
+      }
+      access.writeExclusive('data/fallback.txt', 'original', 'copy source');
+      realFs.renameSync(
+        path.join(repositoryRoot, 'data', 'fallback.txt'),
+        path.join(repositoryRoot, 'data', '.fallback.txt.11111111-1111-4111-8111-111111111111.cas-old'),
+      );
+      cloneUnavailableRemaining = 2;
+      access.replaceAtomic('data/fallback.txt', hash('original'), 'recovered-copy', 'fallback recovery');
+      expect(access.readText('data/fallback.txt', 'recovered copy')).toBe('recovered-copy');
+      expect(realFs.readdirSync(path.join(repositoryRoot, 'data'))).toEqual(['fallback.txt']);
+    });
+
+    test('cleans only its failed exclusive copies and preserves uncertain foreign or partial targets', () => {
+      for (const mode of ['error', 'zero', 'foreign', 'cleanup-error']) {
+        const repositoryRoot = temporaryRoot();
+        const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+        access.ensureDirectory('data', 'data directory');
+        access.writeExclusive('data/fallback.txt', 'before', 'copy source');
+        cloneUnavailableRemaining = 2;
+        copyWriteFault = mode === 'cleanup-error' ? 'error' : mode;
+        copyCleanupFault = mode === 'cleanup-error';
+        expect(() => access.replaceAtomic('data/fallback.txt', hash('before'), 'after', 'fallback')).toThrow();
+        if (mode === 'error' || mode === 'zero') {
+          expect(access.readText('data/fallback.txt', 'restored copy')).toBe('before');
+          expect(realFs.readdirSync(path.join(repositoryRoot, 'data'))).toEqual(['fallback.txt']);
+        } else {
+          expect(access.readText('data/fallback.txt', 'uncertain target')).toBe(mode === 'foreign' ? 'foreign' : '');
+          const backup = realFs
+            .readdirSync(path.join(repositoryRoot, 'data'))
+            .find((name) => name.endsWith('.cas-old'));
+          expect(backup).toBeDefined();
+          expect(realFs.readFileSync(path.join(repositoryRoot, 'data', backup), 'utf8')).toBe('before');
+          expect(() =>
+            access.replaceAtomic('data/fallback.txt', hash('before'), 'after', 'uncertain recovery'),
+          ).toThrow(/ambiguous/);
+          expect(access.readText('data/fallback.txt', 'preserved uncertain target')).toBe(
+            mode === 'foreign' ? 'foreign' : '',
+          );
+        }
+      }
     });
 
     test('recovers orphan backups and restores the original after clone failure', () => {

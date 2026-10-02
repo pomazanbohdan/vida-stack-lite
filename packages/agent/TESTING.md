@@ -128,6 +128,21 @@ host-neutral logic and simulation cannot close installed/native Runtime evidence
 
 Generic dynamic decomposition has no current consumer or accepted requirement. CLEAR tests must run against an isolated built bundle named by `VIDA_CLEAR_BUNDLE`; the active project policy, its source path and schema are checked before the public operation writes evidence.
 
+### Linux I/O and nested pinned Bun commands
+
+On Linux, run `tests/safe-repository-linux-simulation.test.mjs` through the
+isolated Bun/Vitest driver. It covers resource sidecar locks, unavailable
+reflinks, partial descriptor writes, ambiguous/foreign copy targets, identity
+substitution and bounded recovery. `tests/safe-repository-completeness.test.mjs`
+checks the active provider contract; `tests/windows-exclusive-create.test.mjs`
+checks portable exclusive creation and resource-lock behavior. Windows-native
+results require an actual Windows runner; Linux simulation is not native Windows
+evidence. `tests/bun-toolchain.test.mjs` verifies that a `.bin/bun` alias is used
+only when its realpath matches the pinned executable. `tooling/portable-smoke.mjs`
+checks the packed current bundle, frozen install and public initialization/run
+from an unrelated consumer directory. These focused checks provide Code/Static
+evidence and do not establish installed user acceptance or Runtime readiness.
+
 ## Audit-state and successor qualification
 
 Run these checks on frozen current inputs; record outcomes in the current work,
@@ -244,3 +259,8 @@ These scenarios are required acceptance criteria, not claims that the candidate 
 The final layout is reviewed before installation. Run exactly three fresh history-isolated blind reviews, reverse validation, and documentation CLEAR against the same sealed bytes after quality checks. A relevant mutation, including detected external drift in the scoped source, invalidates affected checks and the bound review set. Before `execute`, validate the approved `VidaCutoverActivationDecision/v1` at `.agent/cutover/<cutover-id>/activation-decision.v1.json`: the plan, payload manifest, projected selector intent, and six separate parity/security/assurance/rollback/DEV/UAT evidence files must match their current hashes. Exercise missing, rejected, stale and changed-decision or evidence cases, including `--resume`; no direct selector publication path may bypass the decision. These byte checks establish integrity, not authenticated DEV/UAT observation, current-attempt Cedar/Edictum enforcement, or general external-edit detection. The delivery manifest identifies created and modified files, exact installation destination and order, archived/repository-only items, and post-install checks. Static tests, file copying and hashes do not close Runtime acceptance; obtain attributable user testing of the installed version. Apply the project's attributable Git authorization and Sidecar exception. This Source repository's standing pack-success commit/push order is owned by `AGENT.sidecar.md#source-package-git-policy`; qualification follows current declared source-file and exact archive bytes. Git HEAD/commit metadata changes alone do not invalidate it; changed included inputs invalidate their affected proof. No consumer Git authority or Runtime acceptance is inferred.
 
 Focused preparation, archive, stage, and entrypoint tests provide Code/Static evidence for the staged registry and exact old-test archive only; the live registry and `tests/agent-runtime/` remain unchanged before cutover. Source and tests provide Code/Static evidence only. Require separate observation of built-in session tool calls, installed bundle behavior, selector-bound cutover and user Runtime acceptance. Do not report a Desktop attestation, migrated ticket, or Windows-specific proof as a substitute.
+
+Linux lock regressions cover legal 255-byte and multibyte resource basenames,
+contention, release and reacquisition. Recovery fault injection substitutes the
+restored target after descriptor verification in orphan and rollback paths; both
+must preserve the original backup and leave the foreign target unchanged.

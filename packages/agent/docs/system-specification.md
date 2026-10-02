@@ -610,9 +610,36 @@ record-first partial write uses the same persisted observation and plan.
 The pinned Bun launcher validates package metadata and the exact pin before
 checking an absolute realpath executable from PATH. Only an exact version is
 used; absent, malformed or mismatched PATH candidates fall back to the existing
-npm pinned resolver. Explicit executable overrides retain strict checks. This
-local tool discovery does not attest toolchain provenance or guarantee offline
-operation.
+npm pinned resolver. Explicit executable overrides retain strict checks. For
+nested shell commands, the launcher uses npm's `.bin` directory only when the
+alias resolves to that same pinned executable; otherwise it prepends the
+executable's own directory. This supports npm's Linux `bun.exe` payload without
+accepting a different Bun. Standalone runtime marker checks and child arguments
+remain unchanged. Local tool discovery does not attest toolchain provenance or
+guarantee offline operation.
+
+Safe repository locks treat the requested path as the protected resource and
+create an exclusive `.lock` sidecar, preserving any existing payload bytes.
+On Linux, sidecar names longer than 199 UTF-8 bytes use a fixed-size
+`.vida-resource-lock-<sha256 of resource basename>.lock` name in the same
+directory, reserving room for reclaim and quarantine suffixes within NAME_MAX.
+Linux lock acquisition, stale-lock quarantine and release stay bound to opened
+directory/file identities and fail closed on foreign or changed entries. The
+lock namespace change requires quiescence while upgrading cooperating writers;
+it does not promise coordination with older processes still using the prior
+in-place lock name.
+
+Linux compare-and-swap replacement uses the native exclusive clone when the
+filesystem supports it. For known clone-unavailable errors (`EINVAL`, `ENOSYS`,
+`ENOTSUP`, `EOPNOTSUPP`, `EPERM` or `EXDEV`), it falls back to a bounded,
+explicit-offset copy between already-open regular-file descriptors. The copy
+target is created exclusively without following links; partial writes are
+completed, and cleanup/recovery verifies the created file identity before
+removal or replacement. Other errors and ambiguous targets remain failures.
+Before retiring an original backup, recovery reopens and verifies the restored
+pathname against its descriptor identity and expected content; ambiguous or
+substituted targets retain the original backup. These checks do not provide
+physical fencing against noncooperating writers or a power-loss guarantee.
 
 ## Host integration direction
 
