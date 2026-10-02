@@ -1,3 +1,4 @@
+import { eligibleReadonlyRelinquishment } from './final-assurance.js';
 import { createHash } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
 import acceptanceSchema from '../../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
@@ -505,7 +506,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
           profile &&
           (item.host_reservation
             ? completedSourceJournalObservationMatches(work, item)
-            : !(item.issue_id !== null && profile.mutation_scope === 'repository_source'))
+            : eligibleReadonlyRelinquishment(config, item))
         );
       }),
       'predecessor active or reserved source effect prevents absorption',
@@ -654,13 +655,18 @@ export function acquireLocalSourceWriterLease(input: {
     requireSafeRepositoryAccess(input.repositoryRoot),
     work.lifecycle.scope.allowed_paths,
   );
-  const correctiveJournal=work.lifecycle.assurance.correction_count>0?input.store.readWorkSessionJournal(input.identity):null;
-  const correctiveState=correctiveJournal?.state as unknown as MastraSessionLedgerState|undefined;
+  const correctiveJournal =
+    work.lifecycle.assurance.correction_count > 0 ? input.store.readWorkSessionJournal(input.identity) : null;
+  const correctiveState = correctiveJournal?.state as unknown as MastraSessionLedgerState | undefined;
   requireAdmission(
     correctiveState
-      ? correctiveState.corrective_execution?.correction_generation===work.lifecycle.assurance.correction_count&&
-        correctiveState.source_scope?.digest===source.digest&&
-        Boolean(input.expectedSessionJournal&&canonicalJsonDigest(correctiveJournal!.version)===canonicalJsonDigest(input.expectedSessionJournal.version))
+      ? correctiveState.corrective_execution?.correction_generation === work.lifecycle.assurance.correction_count &&
+          correctiveState.source_scope?.digest === source.digest &&
+          Boolean(
+            input.expectedSessionJournal &&
+            canonicalJsonDigest(correctiveJournal!.version) ===
+              canonicalJsonDigest(input.expectedSessionJournal.version),
+          )
       : source.digest === work.binding.work_source_revision,
     'declared source changed before source writer acquisition',
   );

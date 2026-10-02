@@ -24,7 +24,8 @@ import { readPortableLock } from '../bin/install.mjs';
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const sourceRoot = process.env.VIDA_CONTROLLER_TEST_TARGET ?? path.resolve(import.meta.dirname, '../../..');
 function cleanupOwnedFixture(scratch) {
-  const tempRoot = realpathSync(tmpdir()), resolved = realpathSync(scratch);
+  const tempRoot = realpathSync(tmpdir()),
+    resolved = realpathSync(scratch);
   const relative = path.relative(tempRoot, resolved);
   if (resolved !== scratch || !relative || relative.startsWith('..') || path.isAbsolute(relative))
     throw new Error('Fixture cleanup requires the exact physical owned temporary path');
@@ -32,10 +33,16 @@ function cleanupOwnedFixture(scratch) {
 }
 
 test('controller failure diagnostics preserve bounded sanitized terminal fields without claiming no effects', () => {
-  const diagnostic = developmentControllerChildDiagnostic({
-    status: null, signal: 'SIGTERM', stdout: 'Bearer private-value\n' + 'x'.repeat(5000),
-    stderr: 'token=private-value', error: new Error('password=private-value'),
-  }, 120001.4);
+  const diagnostic = developmentControllerChildDiagnostic(
+    {
+      status: null,
+      signal: 'SIGTERM',
+      stdout: 'Bearer private-value\n' + 'x'.repeat(5000),
+      stderr: 'token=private-value',
+      error: new Error('password=private-value'),
+    },
+    120001.4,
+  );
   expect(diagnostic.signal).toBe('SIGTERM');
   expect(diagnostic.status).toBeNull();
   expect(diagnostic.elapsed_ms).toBe(120001);

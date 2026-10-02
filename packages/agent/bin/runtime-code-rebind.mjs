@@ -248,7 +248,7 @@ export function planRuntimeCodeRebind({
   const assignment = stage?.assignments[item?.request.assignment_index];
   const profile = config.agents.profiles[assignment?.profile];
   const toolPolicy = config.agents.tool_policies[profile?.tools_policy];
-  const dispatchRow = correctionId
+  const dispatchRow = focusedFailureCorrection || correctionId
     ? null
     : database
         .query(

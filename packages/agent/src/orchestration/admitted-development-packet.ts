@@ -189,8 +189,8 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       (stage) => stage.kind === 'research' || stage.kind === 'synthesize',
     ).map((stage) => stage.id),
   );
-  validateWorkSessionBinding(work,ledger.state,root);
-  const planning=ledger.state.corrective_execution?readCorrectivePlanningJournal(root,work,ledger):ledger.state;
+  validateWorkSessionBinding(work, ledger.state, root);
+  const planning = ledger.state.corrective_execution ? readCorrectivePlanningJournal(root, work, ledger) : ledger.state;
   const observed = planning.completed
     .flatMap((wave) => wave.items)
     .filter((item) => prerequisiteStages.has(item.request.stage_id));

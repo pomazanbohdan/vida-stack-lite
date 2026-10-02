@@ -500,7 +500,7 @@ test('public final assurance commits three synthetic review reverse pairs and cu
     expect(response.issued_actions).toHaveLength(3);
     const reverses = response.issued_actions.map((action) => {
       const prior = reviews.find((review) => review.perspective === action.perspective);
-      const { schema, perspective, findings, ...binding } = prior;
+      const { schema: _schema, perspective: _perspective, findings: _findings, ...binding } = prior;
       return {
         ...binding,
         schema: 'FinalAssuranceReverse/v1',

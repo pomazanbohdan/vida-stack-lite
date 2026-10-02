@@ -27,7 +27,7 @@ import { runtimePackageCodePaths } from '../src/config/runtime-config.ts';
 import { runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { run } from '../bin/run.mjs';
 import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
-import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
+import { prepareLifecycleForCorrection } from '../src/orchestration/final-assurance.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function fixture(sourceWriter = false, publicStore = false) {
@@ -151,11 +151,12 @@ function fixture(sourceWriter = false, publicStore = false) {
     config,
     database,
     store,
+    source,
     prepare,
     admit,
     close() {
       database.close();
-      rmSync(root, { recursive: true, force: true, maxRetries:3, retryDelay:100 });
+      rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     },
   };
 }
@@ -408,7 +409,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
       scope_digest: work.binding.work_source_revision,
       bindings_manifest_ref: '3'.repeat(64),
     };
-    let journal = ledger.sync('ack', 1, work.execution.run_id, 'research_parallel', [request], fixtureSource);
+    let journal = ledger.sync('ack', 1, work.execution.run_id, 'research_parallel', [request], f.source);
     journal = ledger.issueWave('ack', 1, journal.version);
     const summary = 'Observed readonly fixture result',
       observation = {
@@ -422,7 +423,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
         output_digest: canonicalJsonDigest(summary),
         evidence_refs: ['fixture:observed-result'],
       };
-    const recorded = ledger.report('ack', 1, journal.version, observation, fixtureSource),
+    const recorded = ledger.report('ack', 1, journal.version, observation, f.source),
       report = path.join(f.root, 'report.json');
     writeFileSync(report, JSON.stringify(observation));
     writeFileSync(path.join(f.root, 'AGENT.sidecar.md'), 'changed source after accepted report');
@@ -440,7 +441,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
       '--attempt',
       '1',
       '--scope-digest',
-      fixtureSource.digest,
+      f.source.digest,
       '--team',
       'default-development',
       '--kind',
@@ -531,10 +532,10 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
         role: 'developer-orchestrator',
         bindings_manifest_ref: '3'.repeat(64),
         stage_id: 'develop_change',
-        scope_digest: fixtureSource.digest,
+        scope_digest: f.source.digest,
         config_digest: active.work.binding.config_digest,
       };
-      let journal = ledger.sync('writer', 1, request.run_id, request.step_id, [request], fixtureSource);
+      let journal = ledger.sync('writer', 1, request.run_id, request.step_id, [request], f.source);
       journal = ledger.issueWave('writer', 1, journal.version, {
         [request.action_id]: {
           schema: 'WorkflowSessionReservation/v1',
@@ -606,7 +607,7 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
       }
       const publish = () =>
         scenario === 'new-report'
-          ? ledger.report('writer', 1, journal.version, observation, fixtureSource)
+          ? ledger.report('writer', 1, journal.version, observation, f.source)
           : (f.store.reconcileCompletedSourceOwnership({
               identity,
               nativeSessionHandle: 'session',
@@ -635,16 +636,16 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
         expect(after.work.lifecycle.phase).toBe(before.work.lifecycle.phase);
         expect(after.work.lifecycle.assurance).toEqual(before.work.lifecycle.assurance);
         expect(after.work.artifacts).toEqual(before.work.artifacts);
-        expect(ledger.report('writer', 1, journal.version, observation, fixtureSource)).toEqual(recorded);
+        expect(ledger.report('writer', 1, journal.version, observation, f.source)).toEqual(recorded);
         expect(f.store.readHostStateSnapshot(identity)).toEqual(after);
         if (scenario !== 'new-report') expect(recorded).toEqual(journal);
         if (scenario === 'durable-drift')
           expect(
             snapshotDeclaredSources(
               requireSafeRepositoryAccess(f.root),
-              fixtureSource.entries.map((entry) => entry.path),
+              f.source.entries.map((entry) => entry.path),
             ).digest,
-          ).not.toBe(fixtureSource.digest);
+          ).not.toBe(f.source.digest);
         else if (scenario === 'new-report') {
           expect(after.ledger.tickets.find((ticket) => ticket.ticket_id === peerQueued.ticket_id)).toEqual(peerQueued);
           const peer = f.store.readHostStateSnapshot(peerIdentity);
@@ -678,7 +679,7 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
             correction.ledger.tickets.find((ticket) => ticket.work_id === 'writer' && ticket.status === 'queued')
               .sequence,
           ).toBeGreaterThan(peerQueued.sequence);
-          expect(ledger.report('writer', 1, journal.version, observation, fixtureSource)).toEqual(recorded);
+          expect(ledger.report('writer', 1, journal.version, observation, f.source)).toEqual(recorded);
           expect(
             f.store.reconcileCompletedSourceOwnership({ identity, nativeSessionHandle: 'session', verifyCurrent() {} }),
           ).toEqual(correction);
@@ -763,7 +764,7 @@ test('ten successive source writers release file rights while their work and Run
         scope_digest: work.binding.work_source_revision,
         bindings_manifest_ref: '3'.repeat(64),
       };
-      let journal = ledger.sync(id, 1, work.execution.run_id, 'develop_change', [request], fixtureSource);
+      let journal = ledger.sync(id, 1, work.execution.run_id, 'develop_change', [request], f.source);
       journal = ledger.issueWave(id, 1, journal.version, {
         [action]: {
           schema: 'WorkflowSessionReservation/v1',
@@ -786,7 +787,7 @@ test('ten successive source writers release file rights while their work and Run
           changed_paths: [],
         };
       f.store.completeWorkflowAttempt(claimed, observation);
-      ledger.report(id, 1, journal.version, observation, fixtureSource);
+      ledger.report(id, 1, journal.version, observation, f.source);
       const current = f.store.readHostStateSnapshot(identity);
       expect(
         current.ledger.claims.filter((claim) => claim.status === 'active').flatMap((claim) => claim.resources),
@@ -846,7 +847,7 @@ test('known failed source report persists while its host effect remains uncertai
       receipt: claimed,
       request: { workItemId: 'old', stageId: request.stage_id, assignmentIndex: 0 },
     };
-    let journal = ledger.sync('old', 1, work.execution.run_id, 'fixture-writer-wave', [request], fixtureSource);
+    let journal = ledger.sync('old', 1, work.execution.run_id, 'fixture-writer-wave', [request], f.source);
     journal = ledger.issueWave('old', 1, journal.version, { [request.action_id]: reservation });
     f.store.markWorkflowAttemptUncertain(claimed);
     const before = f.store.readHostStateSnapshot(identity);
@@ -866,7 +867,7 @@ test('known failed source report persists while its host effect remains uncertai
     const recorded = ledger.report('old', 1, journal.version, failed, null);
     expect(recorded.state.items[0].observation).toEqual(failed);
     expect(recorded.resume_status).toBe('blocked');
-    expect(recorded.state.source_scope).toEqual(fixtureSource);
+    expect(recorded.state.source_scope).toEqual(f.source);
     expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
     expect(before.work.execution.assignment_attempts[0].status).toBe('uncertain');
     expect(before.work.lease).toEqual(work.lease);
@@ -1308,7 +1309,13 @@ test('successful normalized readonly research is retained as historical provenan
           step_id: 'observed-research',
           items: [
             {
-              request: { stage_id: stage.id, assignment_index: 0, role: stage.assignments[0].role },
+              request: {
+                workflow_id: work.binding.workflow_id,
+                action_id: actionId,
+                stage_id: stage.id,
+                assignment_index: 0,
+                role: stage.assignments[0].role,
+              },
               issue_id: issueId,
               observation,
               research_normalization: plan,
@@ -1340,170 +1347,901 @@ test('successful normalized readonly research is retained as historical provenan
 });
 
 test('explicit correction-generation repair preserves base identities, restores current authority and fences dependent writes', () => {
-  const f=fixture(false,true);
-  const repair=(mode,actor)=>runWorkStateRepair(['--kind','work-state','--authority','correction-generation','--mode',mode,'--project-root',f.root,'--repair-id','base-authority',...(actor?['--actor',actor]:[])]);
+  const f = fixture(false, true);
+  const repair = (mode, actor) =>
+    runWorkStateRepair([
+      '--kind',
+      'work-state',
+      '--authority',
+      'correction-generation',
+      '--mode',
+      mode,
+      '--project-root',
+      f.root,
+      '--repair-id',
+      'base-authority',
+      ...(actor ? ['--actor', actor] : []),
+    ]);
   try {
-    const admitted=f.admit(f.prepare('repair-base','user:repair')),work=admitted.host.work;
-    const identity={repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:'repair-base'};
-    expect(()=>repair('plan','fixture')).toThrow('released ownership');
-    const started=f.store.claimWorkflowAttempt({identity,expectedWork:admitted.host.workVersion,expectedLedger:admitted.host.ledgerVersion,stageId:'fixture-stage',assignmentIndex:0,requestDigest:'1'.repeat(64),lease:work.lease});
-    const terminalSummary='Observed terminal writer result for repair closure',repairIssue=randomUUID(),repairAction='2'.repeat(64);
-    const terminalObservation={schema:'VidaSessionObservation/v1',action_id:repairAction,issue_id:repairIssue,agent_id:'repair-writer',tool_call_ref:'local:repair-terminal',status:'reported_complete',summary:terminalSummary,output_digest:canonicalJsonDigest(terminalSummary),evidence_refs:['local://repair/terminal'],host_attempt_id:started.attempt.attempt_id};
-    f.store.completeWorkflowAttempt(started,terminalObservation);
-    const row=f.database.query("SELECT id,payload FROM agent_host_state WHERE kind='work'").get();
-    const old=JSON.parse(row.payload);old.lease=null;old.execution.status='suspended';
-    for(const attempt of old.execution.assignment_attempts){delete attempt.correction_generation;delete attempt.correction_authorization;}
-    const journalRow=f.database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('repair-base'),oldJournal=JSON.parse(journalRow.payload);
-    oldJournal.items=[{request:{schema:'VidaSessionRequest/v1',run_id:work.execution.run_id,workflow_id:work.binding.workflow_id,wave_index:0,action_id:repairAction,assignment_index:0,stage_id:'fixture-stage',role:'developer',config_digest:work.binding.config_digest,scope_digest:work.binding.work_source_revision,bindings_manifest_ref:'3'.repeat(64)},issue_id:repairIssue,observation:terminalObservation,host_reservation:{schema:'WorkflowSessionReservation/v1',receipt:{...started,attempt:old.execution.assignment_attempts[0]},request:{workItemId:'repair-base',stageId:'fixture-stage',assignmentIndex:0}}}];
-    const saveJournal=state=>f.database.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE work_id=?').run(canonicalJson(state),canonicalJsonDigest(state),'repair-base');
+    const admitted = f.admit(f.prepare('repair-base', 'user:repair')),
+      work = admitted.host.work;
+    const identity = {
+      repository_id: work.binding.repository_id,
+      project_ids: work.binding.project_ids,
+      integrations_digest: work.binding.integrations_digest,
+      work_id: 'repair-base',
+    };
+    expect(() => repair('plan', 'fixture')).toThrow('released ownership');
+    const started = f.store.claimWorkflowAttempt({
+      identity,
+      expectedWork: admitted.host.workVersion,
+      expectedLedger: admitted.host.ledgerVersion,
+      stageId: 'fixture-stage',
+      assignmentIndex: 0,
+      requestDigest: '1'.repeat(64),
+      lease: work.lease,
+    });
+    const terminalSummary = 'Observed terminal writer result for repair closure',
+      repairIssue = randomUUID(),
+      repairAction = '2'.repeat(64);
+    const terminalObservation = {
+      schema: 'VidaSessionObservation/v1',
+      action_id: repairAction,
+      issue_id: repairIssue,
+      agent_id: 'repair-writer',
+      tool_call_ref: 'local:repair-terminal',
+      status: 'reported_complete',
+      summary: terminalSummary,
+      output_digest: canonicalJsonDigest(terminalSummary),
+      evidence_refs: ['local://repair/terminal'],
+      host_attempt_id: started.attempt.attempt_id,
+    };
+    f.store.completeWorkflowAttempt(started, terminalObservation);
+    const row = f.database.query("SELECT id,payload FROM agent_host_state WHERE kind='work'").get();
+    const old = JSON.parse(row.payload);
+    old.lease = null;
+    old.execution.status = 'suspended';
+    for (const attempt of old.execution.assignment_attempts) {
+      delete attempt.correction_generation;
+      delete attempt.correction_authorization;
+    }
+    const journalRow = f.database
+        .query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?')
+        .get('repair-base'),
+      oldJournal = JSON.parse(journalRow.payload);
+    oldJournal.items = [
+      {
+        request: {
+          schema: 'VidaSessionRequest/v1',
+          run_id: work.execution.run_id,
+          workflow_id: work.binding.workflow_id,
+          wave_index: 0,
+          action_id: repairAction,
+          assignment_index: 0,
+          stage_id: 'fixture-stage',
+          role: 'developer',
+          config_digest: work.binding.config_digest,
+          scope_digest: work.binding.work_source_revision,
+          bindings_manifest_ref: '3'.repeat(64),
+        },
+        issue_id: repairIssue,
+        observation: terminalObservation,
+        host_reservation: {
+          schema: 'WorkflowSessionReservation/v1',
+          receipt: { ...started, attempt: old.execution.assignment_attempts[0] },
+          request: { workItemId: 'repair-base', stageId: 'fixture-stage', assignmentIndex: 0 },
+        },
+      },
+    ];
+    const saveJournal = (state) =>
+      f.database
+        .query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE work_id=?')
+        .run(canonicalJson(state), canonicalJsonDigest(state), 'repair-base');
     saveJournal(oldJournal);
-    f.database.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work' AND id=?").run(canonicalJson(old),canonicalJsonDigest(old),row.id);
-    const ledgerRow=f.database.query("SELECT payload FROM agent_host_state WHERE kind='ledger'").get(),settledLedger=JSON.parse(ledgerRow.payload);
-    settledLedger.claims=settledLedger.claims.map(claim=>({...claim,status:'released'}));
-    settledLedger.tickets=settledLedger.tickets.map(ticket=>({...ticket,status:'released',active_resources:[],blocked_resources:[],expires_at:null}));
-    f.database.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'").run(canonicalJson(settledLedger),canonicalJsonDigest(settledLedger));
-    expect(()=>f.store.readHostStateSnapshot(identity)).toThrow();
-    saveJournal({...oldJournal,items:[{...oldJournal.items[0],observation:null}]});
-    expect(()=>repair('plan','fixture')).toThrow('terminal issued observations');
+    f.database
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work' AND id=?")
+      .run(canonicalJson(old), canonicalJsonDigest(old), row.id);
+    const ledgerRow = f.database.query("SELECT payload FROM agent_host_state WHERE kind='ledger'").get(),
+      settledLedger = JSON.parse(ledgerRow.payload);
+    settledLedger.claims = settledLedger.claims.map((claim) => ({ ...claim, status: 'released' }));
+    settledLedger.tickets = settledLedger.tickets.map((ticket) => ({
+      ...ticket,
+      status: 'released',
+      active_resources: [],
+      blocked_resources: [],
+      expires_at: null,
+    }));
+    f.database
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+      .run(canonicalJson(settledLedger), canonicalJsonDigest(settledLedger));
+    expect(() => f.store.readHostStateSnapshot(identity)).toThrow();
+    saveJournal({ ...oldJournal, items: [{ ...oldJournal.items[0], observation: null }] });
+    expect(() => repair('plan', 'fixture')).toThrow('terminal issued observations');
     saveJournal(oldJournal);
     expect(repair('inspect').status).toBe('repairable_current_v1');
-    const planned=repair('plan','fixture');
-    expect(planned.work_changes).toHaveLength(1);expect(planned.work_changes[0].after.execution.assignment_attempts[0].attempt_id).toBe(started.attempt.attempt_id);
-    f.database.exec("CREATE TRIGGER repair_fault BEFORE UPDATE ON agent_host_state BEGIN SELECT RAISE(ABORT,'repair apply fault'); END");
-    expect(()=>repair('apply')).toThrow('repair apply fault');
-    expect(JSON.parse(f.database.query("SELECT payload FROM agent_host_state WHERE kind='work'").get().payload)).toEqual(old);
+    const planned = repair('plan', 'fixture');
+    expect(planned.work_changes).toHaveLength(1);
+    expect(planned.work_changes[0].after.execution.assignment_attempts[0].attempt_id).toBe(started.attempt.attempt_id);
+    f.database.exec(
+      "CREATE TRIGGER repair_fault BEFORE UPDATE ON agent_host_state BEGIN SELECT RAISE(ABORT,'repair apply fault'); END",
+    );
+    expect(() => repair('apply')).toThrow('repair apply fault');
+    expect(
+      JSON.parse(f.database.query("SELECT payload FROM agent_host_state WHERE kind='work'").get().payload),
+    ).toEqual(old);
     f.database.exec('DROP TRIGGER repair_fault');
-    const applied=repair('resume');expect(applied.status).toBe('applied');
+    const applied = repair('resume');
+    expect(applied.status).toBe('applied');
     expect(repair('resume')).toEqual(applied);
-    const current=JSON.parse(f.database.query("SELECT payload FROM agent_host_state WHERE kind='work'").get().payload);
-    expect(current.execution.assignment_attempts[0]).toEqual({...old.execution.assignment_attempts[0],correction_generation:0,correction_authorization:null});
-    const repairedJournal=JSON.parse(f.database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('repair-base').payload);
+    const current = JSON.parse(
+      f.database.query("SELECT payload FROM agent_host_state WHERE kind='work'").get().payload,
+    );
+    expect(current.execution.assignment_attempts[0]).toEqual({
+      ...old.execution.assignment_attempts[0],
+      correction_generation: 0,
+      correction_authorization: null,
+    });
+    const repairedJournal = JSON.parse(
+      f.database.query('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?').get('repair-base')
+        .payload,
+    );
     expect(repairedJournal.items[0].host_reservation.receipt.attempt.correction_generation).toBe(0);
     expect(repairedJournal.items[0].issue_id).toBe(repairIssue);
     expect(repair('restore').status).toBe('restored');
-    const restored=f.store.readHostStateSnapshot(identity);
+    const restored = f.store.readHostStateSnapshot(identity);
     expect(restored.work.execution.assignment_attempts[0].attempt_id).toBe(started.attempt.attempt_id);
     expect(restored.work.execution.assignment_attempts[0].result).toEqual(old.execution.assignment_attempts[0].result);
     expect(restored.work.execution.assignment_attempts[0].correction_generation).toBe(0);
     expect(restored.work.execution.assignment_attempts[0].correction_authorization).toBeNull();
     expect(repair('restore').status).toBe('restored');
-    const stable=f.store.readHostStateSnapshot(identity);
-    f.store.compareAndSwapHostState({expectedWork:stable.workVersion,expectedLedger:stable.ledgerVersion,
-      nextWork:{...stable.work,revision:stable.work.revision+1,lifecycle:{...stable.work.lifecycle,revision:stable.work.lifecycle.revision+1},execution:{...stable.work.execution,status:'failed'}},
-      nextLedger:{...stable.ledger,revision:stable.ledger.revision+1}});
-    expect(()=>repair('restore')).toThrow('restored repair changed');
-    expect(()=>repair('resume')).toThrow('restored repair changed');
+    const stable = f.store.readHostStateSnapshot(identity);
+    f.store.compareAndSwapHostState({
+      expectedWork: stable.workVersion,
+      expectedLedger: stable.ledgerVersion,
+      nextWork: {
+        ...stable.work,
+        revision: stable.work.revision + 1,
+        lifecycle: { ...stable.work.lifecycle, revision: stable.work.lifecycle.revision + 1 },
+        execution: { ...stable.work.execution, status: 'failed' },
+      },
+      nextLedger: { ...stable.ledger, revision: stable.ledger.revision + 1 },
+    });
+    expect(() => repair('restore')).toThrow('restored repair changed');
+    expect(() => repair('resume')).toThrow('restored repair changed');
     expect(f.store.readHostStateSnapshot(identity).work.execution.status).toBe('failed');
-  }finally{f.close();}
+  } finally {
+    f.close();
+  }
 });
 
-for (const failureStage of ['validate','test']) test('public same-work correction after real report resume sync '+failureStage, async () => {
-  const f=fixture(true,true);
-  let failure;
-  const publicRun=args=>{const result=spawnSync(process.execPath,['--no-env-file','--no-install','--config='+path.join(bundle,'bunfig.toml'),path.join(bundle,'bin/run.mjs'),...args],{cwd:bundle,encoding:'utf8',windowsHide:true,timeout:30000});if(result.status!==0)throw new Error(JSON.stringify({status:result.status,signal:result.signal,error:result.error?.message,stderr:result.stderr?.slice(-4096),stdout:result.stdout?.slice(-4096)}));return JSON.parse(result.stdout);};
-  try {
-    const id='corrective-public',input=f.prepare(id,'user:current-correction');
-    input.selection.kind='task';input.selection.intent='task_execution';
-    input.workItem={...input.workItem,canonical_kind:'task',intent:'task_execution',provider_type:'Task'};
-    input.sourceAuthorizationPath=`.agent/work/${id}/authorization.json`;
-    writeFileSync(path.join(f.root,input.sourceAuthorizationPath),JSON.stringify({schema:'LocalSourceWriteAuthorization/v1',action:'source.write',user_instruction_ref:'fixture:actual-owner-directive',work_id:id,attempt:1,scope_digest:input.context.scope_digest,config_digest:runtimeConfigDigest(f.config),workflow_id:'task_execution',stage_ids:['develop_task'],implementation_paths:['AGENT.sidecar.md'],native_session_handle:'session'}));
-    input.intakePath=`.agent/work/${id}/raw-intake.json`;
-    writeFileSync(path.join(f.root,input.intakePath),JSON.stringify({schema:'VidaLocalSessionIntake/v1',work_item:input.workItem,native_session_handle:input.nativeSessionHandle,scope_path:input.scopePath,acceptance_path:input.acceptancePath,source_authorization_path:input.sourceAuthorizationPath,runtime_code_paths:input.runtimeCodePaths,route:input.route,risk:input.risk,change_kind:input.changeKind}));
-    const initial=admitLocalSessionWork(input),work=initial.host.work,identity={repository_id:work.binding.repository_id,project_ids:work.binding.project_ids,integrations_digest:work.binding.integrations_digest,work_id:id};
-    writeFileSync(path.join(f.root,'.agent/runtime-initialization.v1.json'),JSON.stringify({schema:'RuntimeInitialization/v1',version:1,repository_id:f.config.repository.repository_id,project_ids:['sample'],integrations_digest:canonicalJsonDigest(f.config.integrations),workspace_id:f.store.workspaceId,workspace_binding_status:'pending',bundle:f.config.runtime.bundle,config_digest:runtimeConfigDigest(f.config),schema_sha256:createHash('sha256').update(readFileSync(path.join(bundle,'schemas/runtime-initialization.v1.schema.json'))).digest('hex'),templates:[],created_at:new Date().toISOString()}));
-    const sourceLease=acquireLocalSourceWriterLease({repositoryRoot:f.root,config:f.config,store:f.store,identity,nativeSessionHandle:'session',stageId:'develop_task',assignmentIndex:0,expectedWork:initial.host.workVersion,expectedLedger:initial.host.ledgerVersion});
-    const claimed=f.store.claimWorkflowAttempt({identity,expectedWork:sourceLease.workVersion,expectedLedger:sourceLease.ledgerVersion,stageId:'develop_task',assignmentIndex:0,requestDigest:'1'.repeat(64),lease:sourceLease.work.lease});
-    const args=['--project-root',f.root,'--repository',f.config.repository.repository_id,'--project','sample','--work-path','AGENT.sidecar.md','--work-id',id,'--attempt','1','--scope-digest',work.binding.work_source_revision,'--team','default-development','--kind','task','--intent','task_execution','--workflow','task_execution'];
-    const fixtureSource=snapshotDeclaredSources(requireSafeRepositoryAccess(f.root),work.lifecycle.scope.allowed_paths);
-    const bridge=await MastraSessionBridge.open({repositoryRoot:f.root,config:f.config,selection:input.selection,context:input.context,workflowId:'task_execution',workspaceId:f.store.workspaceId});
-    const fixtureHost=new HostStateStore(f.database,f.store.workspaceId,undefined,undefined,undefined,undefined,f.root);
-    const ledger=new MastraSessionLedger(f.database,f.store.workspaceId,f.config,f.root,fixtureHost);
-    let snapshot=await bridge.start();
-    const sync=()=>ledger.sync(id,1,snapshot.run_id,snapshot.step_id,snapshot.requests,fixtureSource,snapshot.status);
-    let journal=sync();
-    const observed=(item,summary,status='reported_complete')=>({schema:'VidaSessionObservation/v1',action_id:item.request.action_id,issue_id:item.issue_id,agent_id:item.request.stage_id+'-'+item.request.assignment_index,tool_call_ref:'local:original-'+item.request.action_id,status,summary,output_digest:canonicalJsonDigest(summary),evidence_refs:['local://fixture/terminal']});
-    journal=ledger.issueWave(id,1,journal.version);
-    for(const item of journal.state.items)journal=ledger.report(id,1,journal.version,observed(item,'Observed fixture synthesis'),fixtureSource);
-    snapshot=await bridge.resume(journal.state.step_id,journal.state.items.map(item=>item.observation));journal=sync();
-    const developer=journal.state.items[0].request;
-    const reservation={schema:'WorkflowSessionReservation/v1',receipt:claimed,request:{workItemId:id,stageId:'develop_task',assignmentIndex:0}};
-    journal=ledger.issueWave(id,1,journal.version,{[developer.action_id]:reservation});
-    const writer={...observed(journal.state.items[0],'Actual isolated fixture writer terminal'),host_attempt_id:claimed.attempt.attempt_id,changed_paths:[]};
-    f.store.completeWorkflowAttempt(claimed,writer);
-    journal=ledger.report(id,1,journal.version,writer,fixtureSource);
-    snapshot=await bridge.resume(journal.state.step_id,journal.state.items.map(item=>item.observation));journal=sync();
-    journal=ledger.issueWave(id,1,journal.version);
-    const report=(item,summary,status)=>{const observation=observed(item,summary,status),file=path.join(f.root,'.agent/work/'+id+'/report-'+item.request.stage_id+'-'+item.request.assignment_index+'.json');writeFileSync(file,JSON.stringify(observation));return publicRun([...args,'--report',file,'--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest]);};
-    const validatorItems=[...journal.state.items];
-    for(const item of validatorItems){
-      const verdict=failureStage==='validate'?'fail':'pass';
-      report(item,JSON.stringify({schema:'VidaValidatorVerdict/v1',verdict,findings:verdict==='fail'?['Actual fixture correctness defect']:[],evidence_refs:['local://fixture/terminal']}),verdict==='fail'?'reported_failed':'reported_complete');
-      journal=ledger.resume(id,1);
-    }
-    if(failureStage==='test'){
-      journal=ledger.issueWave(id,1,journal.version);
-      report(journal.state.items[0],JSON.stringify({schema:'VidaTesterVerdict/v1',status:'fail',evidence_refs:['local://fixture/terminal']}),'reported_failed');
-      journal=ledger.resume(id,1);
-    }
-    const original=journal.state;
-    expect(original.items.filter(item=>item.observation?.status==='reported_failed')).toHaveLength(failureStage==='validate'?2:1);
-    expect(ledger.resume(id,1).resume_status).toBe('blocked'); expect((await bridge.snapshot()).status).toBe('suspended');
-    expect(original.run_id).toBe(work.execution.run_id);
-    if(failureStage==='validate'){
-      const beforeHost=f.store.readHostStateSnapshot(identity),beforeJournal=ledger.resume(id,1);
-      const denied=spawnSync(process.execPath,['--no-env-file','--no-install','--config='+path.join(bundle,'bunfig.toml'),path.join(bundle,'bin/run.mjs'),...args,'--issue-wave','true','--expected-revision',String(beforeJournal.version.revision),'--expected-digest',beforeJournal.version.digest],{cwd:bundle,encoding:'utf8',windowsHide:true,timeout:30000});
-      expect(denied.status).toBe(1);expect(denied.signal).toBeNull();expect(denied.error).toBeUndefined();
-      const denialLines=denied.stderr.trim().split(/\r?\n/u).filter(line=>line.startsWith('{"schema":"VidaAgentRunResult/v1"'));expect(denialLines).toHaveLength(1);
-      const denial=JSON.parse(denialLines[0]);
-      expect(denial).toMatchObject({schema:'VidaAgentRunResult/v1',status:'blocked',code:'GAP-VIDA-RUN-EXECUTION-001'});
-      expect(denied.stdout.trim()).toBe('');expect(denial.issued_actions??[]).toEqual([]);expect(denial.next_actions??[]).toEqual([]);
-      expect(ledger.resume(id,1)).toEqual(beforeJournal);
-      expect(f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts).toEqual(beforeHost.work.execution.assignment_attempts);
-      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root),work.lifecycle.scope.allowed_paths)).toEqual(fixtureSource);
-      expect((await bridge.snapshot()).status).toBe('suspended');
-    }
-    await bridge.close();
-    const originalVersion=f.store.readWorkSessionJournal(identity).version;
-    const policyPath='docs/agent-instructions/documentation-policy.v1.json';
-    writeFileSync(path.join(f.root,policyPath),JSON.stringify({schema:'DocumentationPolicy/v1',policy_id:'corrective-public-fixture',project_id:'sample',source_path:policyPath,owner:'fixture',required:false,canonical_roots:['docs'],map_paths:['AGENT.sidecar.md'],excluded_roots:[],changelog_required:false,changelog_path:null,relations:['documents'],updated_at:new Date().toISOString()}));
-    const doc={repository_root:f.root,repository_id:work.binding.repository_id,project_id:'sample',work_id:id,source_revision:work.binding.work_source_revision,scope_paths:['AGENT.sidecar.md']};
-    await executeDocumentationClearOperation(doc,'baseline');const clear=await executeDocumentationClearOperation(doc,'closeout');
-    const mechanics={source_plan:['scope_acceptance_trace','verification_rollback'],platform_knowledge:['platform_contracts','official_reference_lookup'],implementation_policy:['root_cause_owner','affected_callers','existing_primitives'],change_impact_pre:['affected_paths','invalidation','rollback'],documentation_validation:['current_inventory','current_clear']};
-    const prerequisites=Object.entries(mechanics).map(([kind,labels])=>{const file=`.agent/work/${id}/${kind}.json`;writeFileSync(path.join(f.root,file),JSON.stringify({schema:'LifecyclePreparationObservation/v1',record_id:kind,kind,work_id:id,attempt:1,source_revision:work.binding.work_source_revision,scope_id:work.binding.scope_id,config_digest:work.binding.config_digest,ac_ids:work.binding.ac_ids,observed_at:new Date().toISOString(),observer_id:'fixture-observer',status:'pass',evidence_refs:['local://fixture/current-source'],observations:labels.map(mechanic=>({mechanic,actual:'Explicit isolated current contract fixture observation',evidence_ref:'local://fixture/current-source'})),gaps:[]}));return {kind,path:file};});
-    const preparationPath=`.agent/work/${id}/preparation.json`;writeFileSync(path.join(f.root,preparationPath),JSON.stringify({schema:'FinalAssurancePreparation/v1',work_id:id,attempt:1,prerequisites,documentation_precheck_path:clear.path,clear_path:clear.path,delivery_manifest_path:`.agent/work/${id}/delivery.json`}));
-    const planPath=path.join(f.root,`.agent/work/${id}/correction-plan.json`);writeFileSync(planPath,JSON.stringify({schema:'CorrectiveExecutionPlan/v1',work_id:id,attempt:1,stage_ids:['develop_task','validate_focused','test_task'],user_instruction_ref:'fixture:actual-correction-owner',preparation_path:preparationPath}));
+for (const scenario of ['validate', 'test', 'runtime-rebind'])
+  test(
+    'public same-work correction after real report resume sync ' + scenario,
+    async () => {
+      const failureStage = scenario === 'runtime-rebind' ? 'validate' : scenario;
+      const f = fixture(true, true);
+      let failure;
+      const publicRun = (args) => {
+        const result = spawnSync(
+          process.execPath,
+          [
+            '--no-env-file',
+            '--no-install',
+            '--config=' + path.join(bundle, 'bunfig.toml'),
+            path.join(bundle, 'bin/run.mjs'),
+            ...args,
+          ],
+          { cwd: bundle, encoding: 'utf8', windowsHide: true, timeout: 30000 },
+        );
+        if (result.status !== 0)
+          throw new Error(
+            JSON.stringify({
+              status: result.status,
+              signal: result.signal,
+              error: result.error?.message,
+              stderr: result.stderr?.slice(-4096),
+              stdout: result.stdout?.slice(-4096),
+            }),
+          );
+        return JSON.parse(result.stdout);
+      };
+      try {
+        const id = 'corrective-public',
+          input = f.prepare(id, 'user:current-correction');
+        input.selection.kind = 'task';
+        input.selection.intent = 'task_execution';
+        input.workItem = { ...input.workItem, canonical_kind: 'task', intent: 'task_execution', provider_type: 'Task' };
+        input.sourceAuthorizationPath = `.agent/work/${id}/authorization.json`;
+        writeFileSync(
+          path.join(f.root, input.sourceAuthorizationPath),
+          JSON.stringify({
+            schema: 'LocalSourceWriteAuthorization/v1',
+            action: 'source.write',
+            user_instruction_ref: 'fixture:actual-owner-directive',
+            work_id: id,
+            attempt: 1,
+            scope_digest: input.context.scope_digest,
+            config_digest: runtimeConfigDigest(f.config),
+            workflow_id: 'task_execution',
+            stage_ids: ['develop_task'],
+            implementation_paths: ['AGENT.sidecar.md'],
+            native_session_handle: 'session',
+          }),
+        );
+        input.intakePath = `.agent/work/${id}/raw-intake.json`;
+        writeFileSync(
+          path.join(f.root, input.intakePath),
+          JSON.stringify({
+            schema: 'VidaLocalSessionIntake/v1',
+            work_item: input.workItem,
+            native_session_handle: input.nativeSessionHandle,
+            scope_path: input.scopePath,
+            acceptance_path: input.acceptancePath,
+            source_authorization_path: input.sourceAuthorizationPath,
+            runtime_code_paths: input.runtimeCodePaths,
+            route: input.route,
+            risk: input.risk,
+            change_kind: input.changeKind,
+          }),
+        );
+        const initial = admitLocalSessionWork(input),
+          work = initial.host.work,
+          identity = {
+            repository_id: work.binding.repository_id,
+            project_ids: work.binding.project_ids,
+            integrations_digest: work.binding.integrations_digest,
+            work_id: id,
+          };
+        writeFileSync(
+          path.join(f.root, '.agent/runtime-initialization.v1.json'),
+          JSON.stringify({
+            schema: 'RuntimeInitialization/v1',
+            version: 1,
+            repository_id: f.config.repository.repository_id,
+            project_ids: ['sample'],
+            integrations_digest: canonicalJsonDigest(f.config.integrations),
+            workspace_id: f.store.workspaceId,
+            workspace_binding_status: 'pending',
+            bundle: f.config.runtime.bundle,
+            config_digest: runtimeConfigDigest(f.config),
+            schema_sha256: createHash('sha256')
+              .update(readFileSync(path.join(bundle, 'schemas/runtime-initialization.v1.schema.json')))
+              .digest('hex'),
+            templates: [],
+            created_at: new Date().toISOString(),
+          }),
+        );
+        const sourceLease = acquireLocalSourceWriterLease({
+          repositoryRoot: f.root,
+          config: f.config,
+          store: f.store,
+          identity,
+          nativeSessionHandle: 'session',
+          stageId: 'develop_task',
+          assignmentIndex: 0,
+          expectedWork: initial.host.workVersion,
+          expectedLedger: initial.host.ledgerVersion,
+        });
+        const claimed = f.store.claimWorkflowAttempt({
+          identity,
+          expectedWork: sourceLease.workVersion,
+          expectedLedger: sourceLease.ledgerVersion,
+          stageId: 'develop_task',
+          assignmentIndex: 0,
+          requestDigest: '1'.repeat(64),
+          lease: sourceLease.work.lease,
+        });
+        const args = [
+          '--project-root',
+          f.root,
+          '--repository',
+          f.config.repository.repository_id,
+          '--project',
+          'sample',
+          '--work-path',
+          'AGENT.sidecar.md',
+          '--work-id',
+          id,
+          '--attempt',
+          '1',
+          '--scope-digest',
+          work.binding.work_source_revision,
+          '--team',
+          'default-development',
+          '--kind',
+          'task',
+          '--intent',
+          'task_execution',
+          '--workflow',
+          'task_execution',
+        ];
+        const fixtureSource = snapshotDeclaredSources(
+          requireSafeRepositoryAccess(f.root),
+          work.lifecycle.scope.allowed_paths,
+        );
+        const bridge = await MastraSessionBridge.open({
+          repositoryRoot: f.root,
+          config: f.config,
+          selection: input.selection,
+          context: input.context,
+          workflowId: 'task_execution',
+          workspaceId: f.store.workspaceId,
+        });
+        const fixtureHost = new HostStateStore(
+          f.database,
+          f.store.workspaceId,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          f.root,
+        );
+        const ledger = new MastraSessionLedger(f.database, f.store.workspaceId, f.config, f.root, fixtureHost);
+        let snapshot = await bridge.start();
+        const sync = () =>
+          ledger.sync(id, 1, snapshot.run_id, snapshot.step_id, snapshot.requests, fixtureSource, snapshot.status);
+        let journal = sync();
+        const observed = (item, summary, status = 'reported_complete') => ({
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          agent_id: item.request.stage_id + '-' + item.request.assignment_index,
+          tool_call_ref: 'local:original-' + item.request.action_id,
+          status,
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['local://fixture/terminal'],
+        });
+        journal = ledger.issueWave(id, 1, journal.version);
+        for (const item of journal.state.items)
+          journal = ledger.report(id, 1, journal.version, observed(item, 'Observed fixture synthesis'), fixtureSource);
+        snapshot = await bridge.resume(
+          journal.state.step_id,
+          journal.state.items.map((item) => item.observation),
+        );
+        journal = sync();
+        const developer = journal.state.items[0].request;
+        const reservation = {
+          schema: 'WorkflowSessionReservation/v1',
+          receipt: claimed,
+          request: { workItemId: id, stageId: 'develop_task', assignmentIndex: 0 },
+        };
+        journal = ledger.issueWave(id, 1, journal.version, { [developer.action_id]: reservation });
+        const writer = {
+          ...observed(journal.state.items[0], 'Actual isolated fixture writer terminal'),
+          host_attempt_id: claimed.attempt.attempt_id,
+          changed_paths: [],
+        };
+        f.store.completeWorkflowAttempt(claimed, writer);
+        journal = ledger.report(id, 1, journal.version, writer, fixtureSource);
+        snapshot = await bridge.resume(
+          journal.state.step_id,
+          journal.state.items.map((item) => item.observation),
+        );
+        journal = sync();
+        journal = ledger.issueWave(id, 1, journal.version);
+        const report = (item, summary, status) => {
+          const observation = observed(item, summary, status),
+            file = path.join(
+              f.root,
+              '.agent/work/' + id + '/report-' + item.request.stage_id + '-' + item.request.assignment_index + '.json',
+            );
+          writeFileSync(file, JSON.stringify(observation));
+          return publicRun([
+            ...args,
+            '--report',
+            file,
+            '--expected-revision',
+            String(journal.version.revision),
+            '--expected-digest',
+            journal.version.digest,
+          ]);
+        };
+        const validatorItems = [...journal.state.items];
+        for (const item of validatorItems) {
+          const verdict = failureStage === 'validate' ? 'fail' : 'pass';
+          report(
+            item,
+            JSON.stringify({
+              schema: 'VidaValidatorVerdict/v1',
+              verdict,
+              findings: verdict === 'fail' ? ['Actual fixture correctness defect'] : [],
+              evidence_refs: ['local://fixture/terminal'],
+            }),
+            verdict === 'fail' ? 'reported_failed' : 'reported_complete',
+          );
+          journal = ledger.resume(id, 1);
+        }
+        if (failureStage === 'test') {
+          journal = ledger.issueWave(id, 1, journal.version);
+          report(
+            journal.state.items[0],
+            JSON.stringify({
+              schema: 'VidaTesterVerdict/v1',
+              status: 'fail',
+              evidence_refs: ['local://fixture/terminal'],
+            }),
+            'reported_failed',
+          );
+          journal = ledger.resume(id, 1);
+        }
+        const original = journal.state;
+        expect(original.items.filter((item) => item.observation?.status === 'reported_failed')).toHaveLength(
+          failureStage === 'validate' ? 2 : 1,
+        );
+        expect(ledger.resume(id, 1).resume_status).toBe('blocked');
+        expect((await bridge.snapshot()).status).toBe('suspended');
+        expect(original.run_id).toBe(work.execution.run_id);
+        if (failureStage === 'validate') {
+          const beforeHost = f.store.readHostStateSnapshot(identity),
+            beforeJournal = ledger.resume(id, 1);
+          const denied = spawnSync(
+            process.execPath,
+            [
+              '--no-env-file',
+              '--no-install',
+              '--config=' + path.join(bundle, 'bunfig.toml'),
+              path.join(bundle, 'bin/run.mjs'),
+              ...args,
+              '--issue-wave',
+              'true',
+              '--expected-revision',
+              String(beforeJournal.version.revision),
+              '--expected-digest',
+              beforeJournal.version.digest,
+            ],
+            { cwd: bundle, encoding: 'utf8', windowsHide: true, timeout: 30000 },
+          );
+          expect(denied.status).toBe(1);
+          expect(denied.signal).toBeNull();
+          expect(denied.error).toBeUndefined();
+          const denialLines = denied.stderr
+            .trim()
+            .split(/\r?\n/u)
+            .filter((line) => line.startsWith('{"schema":"VidaAgentRunResult/v1"'));
+          expect(denialLines).toHaveLength(1);
+          const denial = JSON.parse(denialLines[0]);
+          expect(denial).toMatchObject({
+            schema: 'VidaAgentRunResult/v1',
+            status: 'blocked',
+            code: 'GAP-VIDA-RUN-EXECUTION-001',
+          });
+          expect(denied.stdout.trim()).toBe('');
+          expect(denial.issued_actions ?? []).toEqual([]);
+          expect(denial.next_actions ?? []).toEqual([]);
+          expect(ledger.resume(id, 1)).toEqual(beforeJournal);
+          expect(f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts).toEqual(
+            beforeHost.work.execution.assignment_attempts,
+          );
+          expect(
+            snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), work.lifecycle.scope.allowed_paths),
+          ).toEqual(fixtureSource);
+          expect((await bridge.snapshot()).status).toBe('suspended');
+        }
+        await bridge.close();
+        const originalVersion = f.store.readWorkSessionJournal(identity).version;
+        const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
+        writeFileSync(
+          path.join(f.root, policyPath),
+          JSON.stringify({
+            schema: 'DocumentationPolicy/v1',
+            policy_id: 'corrective-public-fixture',
+            project_id: 'sample',
+            source_path: policyPath,
+            owner: 'fixture',
+            required: false,
+            canonical_roots: ['docs'],
+            map_paths: ['AGENT.sidecar.md'],
+            excluded_roots: [],
+            changelog_required: false,
+            changelog_path: null,
+            relations: ['documents'],
+            updated_at: new Date().toISOString(),
+          }),
+        );
+        const doc = {
+          repository_root: f.root,
+          repository_id: work.binding.repository_id,
+          project_id: 'sample',
+          work_id: id,
+          source_revision: work.binding.work_source_revision,
+          scope_paths: ['AGENT.sidecar.md'],
+        };
+        await executeDocumentationClearOperation(doc, 'baseline');
+        const clear = await executeDocumentationClearOperation(doc, 'closeout');
+        const mechanics = {
+          source_plan: ['scope_acceptance_trace', 'verification_rollback'],
+          platform_knowledge: ['platform_contracts', 'official_reference_lookup'],
+          implementation_policy: ['root_cause_owner', 'affected_callers', 'existing_primitives'],
+          change_impact_pre: ['affected_paths', 'invalidation', 'rollback'],
+          documentation_validation: ['current_inventory', 'current_clear'],
+        };
+        const prerequisites = Object.entries(mechanics).map(([kind, labels]) => {
+          const file = `.agent/work/${id}/${kind}.json`;
+          writeFileSync(
+            path.join(f.root, file),
+            JSON.stringify({
+              schema: 'LifecyclePreparationObservation/v1',
+              record_id: kind,
+              kind,
+              work_id: id,
+              attempt: 1,
+              source_revision: work.binding.work_source_revision,
+              scope_id: work.binding.scope_id,
+              config_digest: work.binding.config_digest,
+              ac_ids: work.binding.ac_ids,
+              observed_at: new Date().toISOString(),
+              observer_id: 'fixture-observer',
+              status: 'pass',
+              evidence_refs: ['local://fixture/current-source'],
+              observations: labels.map((mechanic) => ({
+                mechanic,
+                actual: 'Explicit isolated current contract fixture observation',
+                evidence_ref: 'local://fixture/current-source',
+              })),
+              gaps: [],
+            }),
+          );
+          return { kind, path: file };
+        });
+        const preparationPath = `.agent/work/${id}/preparation.json`;
+        writeFileSync(
+          path.join(f.root, preparationPath),
+          JSON.stringify({
+            schema: 'FinalAssurancePreparation/v1',
+            work_id: id,
+            attempt: 1,
+            prerequisites,
+            documentation_precheck_path: clear.path,
+            clear_path: clear.path,
+            delivery_manifest_path: `.agent/work/${id}/delivery.json`,
+          }),
+        );
+        const planPath = path.join(f.root, `.agent/work/${id}/correction-plan.json`);
+        writeFileSync(
+          planPath,
+          JSON.stringify({
+            schema: 'CorrectiveExecutionPlan/v1',
+            work_id: id,
+            attempt: 1,
+            stage_ids: ['develop_task', 'validate_focused', 'test_task'],
+            user_instruction_ref: 'fixture:actual-correction-owner',
+            preparation_path: preparationPath,
+          }),
+        );
 
-    const authorized=publicRun([...args,'--correct',planPath,'--expected-revision',String(originalVersion.revision),'--expected-digest',originalVersion.digest]);
-    expect(publicRun([...args,'--correct',planPath,'--expected-revision',String(originalVersion.revision),'--expected-digest',originalVersion.digest]).corrective_execution).toEqual(authorized.corrective_execution);
-    expect(f.store.readHostStateSnapshot(identity).work.lifecycle.assurance.correction_count).toBe(1);
-    const originalPlan=readFileSync(planPath);const changedPlan=JSON.parse(originalPlan);changedPlan.user_instruction_ref='fixture:changed-owner';writeFileSync(planPath,JSON.stringify(changedPlan));expect(()=>publicRun([...args,'--correct',planPath,'--expected-revision',String(originalVersion.revision),'--expected-digest',originalVersion.digest])).toThrow('blocked');writeFileSync(planPath,originalPlan);
-    expect(authorized.status).toBe('correction_authorized');expect(authorized.corrective_execution.base_run_id).toBe(work.execution.run_id);expect(authorized.corrective_execution.engine_run_id).not.toBe(work.execution.run_id);
-    expect(f.store.readHostStateSnapshot(identity).work.lifecycle.references.find(ref=>ref.kind==='correction_authorization').disposition).toBe('retired');
-    const resumed=publicRun(args);expect(resumed.mastra_run_id).toBe(authorized.corrective_execution.engine_run_id);expect(resumed.next_actions.map(action=>action.request.stage_id)).toEqual(['develop_task']);
-    const issued=publicRun([...args,'--issue-wave','true','--expected-revision',String(resumed.state_version.revision),'--expected-digest',resumed.state_version.digest]);
-    expect(issued.issued_actions).toHaveLength(1);expect(issued.issued_actions[0].request.corrective_execution).toEqual(authorized.corrective_execution);
-    const currentAttempts=f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts;
-    const boundHost=new HostStateStore(f.database,f.store.workspaceId,undefined,undefined,undefined,undefined,f.root);
-    expect(()=>boundHost.assertCorrectiveExecutionForWork(id,2,authorized.corrective_execution)).toThrow('corrective authority contract differs');
-    expect(currentAttempts).toHaveLength(2);expect(currentAttempts[1].correction_generation).toBe(1);expect(currentAttempts[1].previous_attempt_id).toBe(claimed.attempt.attempt_id);
-    expect(f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts[0].attempt_id).toBe(claimed.attempt.attempt_id);
-    expect(JSON.parse(f.database.query('SELECT payload FROM agent_host_corrective_recovery WHERE work_id=?').get(id).payload).original_journal.state).toEqual(original);
-    if(failureStage==='validate'){
-      journal=ledger.resume(id,1);
-      const correctionWriter=journal.state.items[0];
-      const corrected={...observed(correctionWriter,'Observed corrective writer terminal'),host_attempt_id:issued.issued_actions[0].host_attempt_id,changed_paths:[]};
-      const correctionReport=path.join(f.root,'.agent/work/'+id+'/correction-writer-report.json');writeFileSync(correctionReport,JSON.stringify(corrected));
-      publicRun([...args,'--report',correctionReport,'--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest]);
-      journal=ledger.resume(id,1);expect(journal.state.items.map(item=>item.request.stage_id)).toEqual(['validate_focused','validate_focused']);
-      publicRun([...args,'--issue-wave','true','--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest]);
-      journal=ledger.resume(id,1);
-      for(const item of [...journal.state.items]){report(item,JSON.stringify({schema:'VidaValidatorVerdict/v1',verdict:'pass',findings:[],evidence_refs:['local://fixture/terminal']}),'reported_complete');journal=ledger.resume(id,1);}
-      expect(journal.state.items.map(item=>item.request.stage_id)).toEqual(['test_task']);
-      publicRun([...args,'--issue-wave','true','--expected-revision',String(journal.version.revision),'--expected-digest',journal.version.digest]);journal=ledger.resume(id,1);
-      report(journal.state.items[0],JSON.stringify({schema:'VidaTesterVerdict/v1',status:'fail',evidence_refs:['local://fixture/terminal']}),'reported_failed');journal=ledger.resume(id,1);
-      expect(journal.resume_status).toBe('blocked');expect(journal.state.attempt).toBe(1);expect(journal.state.work_id).toBe(id);
-      expect(journal.state.completed.flatMap(wave=>wave.items).find(item=>item.request.stage_id==='develop_task').observation.host_attempt_id).toBe(issued.issued_actions[0].host_attempt_id);
-    }
-  }catch(error){failure=error;throw error;}finally{try{f.close();}catch(cleanup){if(failure)throw new AggregateError([failure,cleanup],'Public correction failed; owned fixture cleanup also failed');throw cleanup;}}
-},60000);
+        if (scenario === 'runtime-rebind') {
+          prepareLifecycleForCorrection({
+            root: f.root,
+            config: f.config,
+            store: fixtureHost,
+            identity,
+            journal: ledger.resume(id, 1),
+            preparationPath,
+          });
+          let current = fixtureHost.readHostStateSnapshot(identity);
+          const negative = original.items.find((item) => item.observation?.status === 'reported_failed');
+          const verifier = {
+            principal: 'synthetic-forward-rebind-verifier',
+            verify: (request) => ({
+              schema: 'VidaRuntimeCodeRebindAuthorization/v1',
+              request_digest: canonicalJsonDigest(request),
+              principal: verifier.principal,
+              forward_operation_id: request.forwardOperationId,
+              parent_manifest_digest: request.parentManifestDigest,
+              successor_manifest_digest: request.successorManifestDigest,
+              owner_correction_pointer: request.focusedFailureCorrection.ownerCorrectionPointer,
+            }),
+          };
+          const reboundStore = new HostStateStore(
+            f.database,
+            f.store.workspaceId,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            f.root,
+            verifier,
+          );
+          const request = {
+            identity,
+            attempt: 1,
+            actionId: negative.request.action_id,
+            issueId: negative.issue_id,
+            nativeSessionHandle: 'session',
+            expectedWork: current.workVersion,
+            expectedLedger: current.ledgerVersion,
+            expectedJournal: ledger.resume(id, 1).version,
+            expectedMaintenanceGeneration: current.maintenanceGeneration,
+            oldRuntimeCodeDigest: current.work.binding.runtime_code_digest,
+            newRuntimeCodeDigest: canonicalJsonDigest('synthetic-fixture-successor-package'),
+            forwardOperationId: 'synthetic-forward-operation',
+            parentManifestDigest: canonicalJsonDigest('synthetic-parent-manifest'),
+            successorManifestDigest: canonicalJsonDigest('synthetic-successor-manifest'),
+            focusedFailureCorrection: { ownerCorrectionPointer: 'synthetic-owner:correct-known-terminal-failures' },
+          };
+          const oldAttempts = structuredClone(current.work.execution.assignment_attempts),
+            oldJournal = structuredClone(ledger.resume(id, 1)),
+            priorImplementation = current.work.lifecycle.references.find(
+              (reference) => reference.kind === 'implementation_result' && reference.disposition === 'current',
+            );
+          expect(priorImplementation).toBeDefined();
+          f.database.exec(
+            'CREATE TABLE agent_host_runtime_code_rebind (workspace_id TEXT NOT NULL, work_id TEXT NOT NULL, attempt INTEGER NOT NULL, action_id TEXT NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,work_id,attempt,action_id))',
+          );
+          f.database.exec(
+            "CREATE TRIGGER reject_synthetic_rebind BEFORE INSERT ON agent_host_runtime_code_rebind BEGIN SELECT RAISE(ABORT,'synthetic receipt rollback'); END",
+          );
+          await expect(reboundStore.rebindRuntimeCode(request)).rejects.toThrow('synthetic receipt rollback');
+          expect(reboundStore.readHostStateSnapshot(identity)).toEqual(current);
+          expect(
+            f.database.query('SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE work_id=?').get(id),
+          ).toBeNull();
+          f.database.exec('DROP TRIGGER reject_synthetic_rebind');
+          const rebound = await reboundStore.rebindRuntimeCode(request);
+          expect(rebound.work.binding.runtime_code_digest).toBe(request.newRuntimeCodeDigest);
+          expect(rebound.work.execution.assignment_attempts).toEqual(oldAttempts);
+          expect(rebound.work.lifecycle.phase).toBe('EXECUTE');
+          expect(rebound.work.lifecycle.seal).toBeNull();
+          expect(rebound.work.lifecycle.assurance.correction_count).toBe(
+            current.work.lifecycle.assurance.correction_count + 1,
+          );
+          expect(
+            rebound.work.lifecycle.references.find((reference) => reference.kind === 'execution_approval').disposition,
+          ).toBe('current');
+          expect(
+            rebound.work.lifecycle.references.find(
+              (reference) =>
+                reference.kind === 'implementation_result' && reference.record_id === priorImplementation.record_id,
+            ).disposition,
+          ).toBe('retired');
+          expect(ledger.resume(id, 1)).toEqual(oldJournal);
+          const restarted = new HostStateStore(
+            f.database,
+            f.store.workspaceId,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            f.root,
+            verifier,
+          );
+          const databasePath = path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite');
+          expect(restarted.readHostStateSnapshot(identity).work.execution.assignment_attempts).toEqual(oldAttempts);
+          expect(
+            inspectHostWorkspaceDatabase(databasePath, f.store.workspaceId).work.find(
+              (row) => row.identity.work_id === id,
+            ).state.execution.assignment_attempts,
+          ).toEqual(oldAttempts);
+          const row = f.database
+              .query('SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE work_id=?')
+              .get(id),
+            receipt = JSON.parse(row.payload);
+          expect(receipt.binding_history.original_work.binding).toEqual(current.work.binding);
+          expect(receipt.binding_history.terminal_attempt_ids).toEqual(
+            oldAttempts.map((attempt) => attempt.attempt_id),
+          );
+          const successorRow = f.database
+            .query(
+              "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+            )
+            .get(f.store.workspaceId, id);
+          expect(successorRow).not.toBeNull();
+          f.database
+            .query(
+              "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+            )
+            .run(
+              current.work.revision,
+              canonicalJson(current.work),
+              canonicalJsonDigest(current.work),
+              f.store.workspaceId,
+              id,
+            );
+          expect(() => restarted.readHostStateSnapshot(identity)).toThrow('runtime binding history authority differs');
+          expect(() => inspectHostWorkspaceDatabase(databasePath, f.store.workspaceId)).toThrow(
+            'runtime binding history authority differs',
+          );
+          f.database
+            .query(
+              "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+            )
+            .run(successorRow.revision, successorRow.payload, successorRow.digest, f.store.workspaceId, id);
+          expect(restarted.readHostStateSnapshot(identity).work.binding.runtime_code_digest).toBe(
+            request.newRuntimeCodeDigest,
+          );
+          expect(
+            inspectHostWorkspaceDatabase(databasePath, f.store.workspaceId).work.find(
+              (row) => row.identity.work_id === id,
+            ).state.binding.runtime_code_digest,
+          ).toBe(request.newRuntimeCodeDigest);
+          const bad = structuredClone(receipt);
+          bad.binding_history.terminal_attempt_ids = ['foreign-terminal-attempt'];
+          f.database
+            .query('UPDATE agent_host_runtime_code_rebind SET payload=?,digest=? WHERE work_id=?')
+            .run(canonicalJson(bad), canonicalJsonDigest(bad), id);
+          expect(() => restarted.readHostStateSnapshot(identity)).toThrow('unknown or unlisted');
+          f.database
+            .query('UPDATE agent_host_runtime_code_rebind SET payload=?,digest=? WHERE work_id=?')
+            .run(row.payload, row.digest, id);
+          expect(restarted.readHostStateSnapshot(identity).work.binding.runtime_code_digest).toBe(
+            request.newRuntimeCodeDigest,
+          );
+          return;
+        }
 
+        const authorized = publicRun([
+          ...args,
+          '--correct',
+          planPath,
+          '--expected-revision',
+          String(originalVersion.revision),
+          '--expected-digest',
+          originalVersion.digest,
+        ]);
+        expect(
+          publicRun([
+            ...args,
+            '--correct',
+            planPath,
+            '--expected-revision',
+            String(originalVersion.revision),
+            '--expected-digest',
+            originalVersion.digest,
+          ]).corrective_execution,
+        ).toEqual(authorized.corrective_execution);
+        expect(f.store.readHostStateSnapshot(identity).work.lifecycle.assurance.correction_count).toBe(1);
+        const originalPlan = readFileSync(planPath);
+        const changedPlan = JSON.parse(originalPlan);
+        changedPlan.user_instruction_ref = 'fixture:changed-owner';
+        writeFileSync(planPath, JSON.stringify(changedPlan));
+        expect(() =>
+          publicRun([
+            ...args,
+            '--correct',
+            planPath,
+            '--expected-revision',
+            String(originalVersion.revision),
+            '--expected-digest',
+            originalVersion.digest,
+          ]),
+        ).toThrow('blocked');
+        writeFileSync(planPath, originalPlan);
+        expect(authorized.status).toBe('correction_authorized');
+        expect(authorized.corrective_execution.base_run_id).toBe(work.execution.run_id);
+        expect(authorized.corrective_execution.engine_run_id).not.toBe(work.execution.run_id);
+        expect(
+          f.store
+            .readHostStateSnapshot(identity)
+            .work.lifecycle.references.find((ref) => ref.kind === 'correction_authorization').disposition,
+        ).toBe('retired');
+        const resumed = publicRun(args);
+        expect(resumed.mastra_run_id).toBe(authorized.corrective_execution.engine_run_id);
+        expect(resumed.next_actions.map((action) => action.request.stage_id)).toEqual(['develop_task']);
+        const issued = publicRun([
+          ...args,
+          '--issue-wave',
+          'true',
+          '--expected-revision',
+          String(resumed.state_version.revision),
+          '--expected-digest',
+          resumed.state_version.digest,
+        ]);
+        expect(issued.issued_actions).toHaveLength(1);
+        expect(issued.issued_actions[0].request.corrective_execution).toEqual(authorized.corrective_execution);
+        const currentAttempts = f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts;
+        const boundHost = new HostStateStore(
+          f.database,
+          f.store.workspaceId,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          f.root,
+        );
+        expect(() => boundHost.assertCorrectiveExecutionForWork(id, 2, authorized.corrective_execution)).toThrow(
+          'corrective authority contract differs',
+        );
+        expect(currentAttempts).toHaveLength(2);
+        expect(currentAttempts[1].correction_generation).toBe(1);
+        expect(currentAttempts[1].previous_attempt_id).toBe(claimed.attempt.attempt_id);
+        expect(f.store.readHostStateSnapshot(identity).work.execution.assignment_attempts[0].attempt_id).toBe(
+          claimed.attempt.attempt_id,
+        );
+        expect(
+          JSON.parse(
+            f.database.query('SELECT payload FROM agent_host_corrective_recovery WHERE work_id=?').get(id).payload,
+          ).original_journal.state,
+        ).toEqual(original);
+        if (failureStage === 'validate') {
+          journal = ledger.resume(id, 1);
+          const correctionWriter = journal.state.items[0];
+          const corrected = {
+            ...observed(correctionWriter, 'Observed corrective writer terminal'),
+            host_attempt_id: issued.issued_actions[0].host_attempt_id,
+            changed_paths: [],
+          };
+          const correctionReport = path.join(f.root, '.agent/work/' + id + '/correction-writer-report.json');
+          writeFileSync(correctionReport, JSON.stringify(corrected));
+          publicRun([
+            ...args,
+            '--report',
+            correctionReport,
+            '--expected-revision',
+            String(journal.version.revision),
+            '--expected-digest',
+            journal.version.digest,
+          ]);
+          journal = ledger.resume(id, 1);
+          expect(journal.state.items.map((item) => item.request.stage_id)).toEqual([
+            'validate_focused',
+            'validate_focused',
+          ]);
+          publicRun([
+            ...args,
+            '--issue-wave',
+            'true',
+            '--expected-revision',
+            String(journal.version.revision),
+            '--expected-digest',
+            journal.version.digest,
+          ]);
+          journal = ledger.resume(id, 1);
+          for (const item of [...journal.state.items]) {
+            report(
+              item,
+              JSON.stringify({
+                schema: 'VidaValidatorVerdict/v1',
+                verdict: 'pass',
+                findings: [],
+                evidence_refs: ['local://fixture/terminal'],
+              }),
+              'reported_complete',
+            );
+            journal = ledger.resume(id, 1);
+          }
+          expect(journal.state.items.map((item) => item.request.stage_id)).toEqual(['test_task']);
+          publicRun([
+            ...args,
+            '--issue-wave',
+            'true',
+            '--expected-revision',
+            String(journal.version.revision),
+            '--expected-digest',
+            journal.version.digest,
+          ]);
+          journal = ledger.resume(id, 1);
+          report(
+            journal.state.items[0],
+            JSON.stringify({
+              schema: 'VidaTesterVerdict/v1',
+              status: 'fail',
+              evidence_refs: ['local://fixture/terminal'],
+            }),
+            'reported_failed',
+          );
+          journal = ledger.resume(id, 1);
+          expect(journal.resume_status).toBe('blocked');
+          expect(journal.state.attempt).toBe(1);
+          expect(journal.state.work_id).toBe(id);
+          expect(
+            journal.state.completed
+              .flatMap((wave) => wave.items)
+              .find((item) => item.request.stage_id === 'develop_task').observation.host_attempt_id,
+          ).toBe(issued.issued_actions[0].host_attempt_id);
+        }
+      } catch (error) {
+        failure = error;
+        throw error;
+      } finally {
+        try {
+          f.close();
+        } catch (cleanup) {
+          if (failure)
+            throw new AggregateError([failure, cleanup], 'Public correction failed; owned fixture cleanup also failed');
+          throw cleanup;
+        }
+      }
+    },
+    60000,
+  );

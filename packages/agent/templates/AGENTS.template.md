@@ -37,8 +37,9 @@ For work on the agent framework, resolve its installed instruction with
 file's `self-development-protocol` section after the sidecar and before planning
 or mutation. Apply that section's architectural defect, relevant official
 framework-reference research and execution-step reduction policy; it is the
-single instruction owner. Keep new authorized directives in their current
-instruction owner and maintained templates.
+single instruction owner. Minimize agent execution steps without losing required
+quality; keep new authorized directives in their current instruction owner and
+maintained templates.
 
 ## 1. Operating contract
 
@@ -502,10 +503,14 @@ writer owns an overlapping path. The detailed owner is
 the installed agent-allocation instruction resolved through the public CLI.
 
 All sessions share one live worktree version. Before a tracked mutation, use
-the local `.agent/coordination/ownership.v1.json` ledger: exact shared files
-are FIFO-owned by one writer, while explicit B/S/AC/component keys form a
-delivery contour. A queued claim is a blocker, not permission to create a
-worktree or alternate snapshot. After assurance a work enters
+the current configured trusted Host coordination inspector and supported typed
+operations to verify the active ProjectContext, exact path/contour owner, FIFO
+position and CAS state. The storage location comes only from project
+configuration and the sidecar; do not create or edit a parallel coordination
+ledger. Exact shared files have one FIFO writer, while explicit B/S/AC/component
+keys form a delivery contour. A queued, foreign, expired or unknown claim blocks
+until its truthful disposition is established through supported operations; it
+does not authorize an alternate snapshot. After assurance a work enters
 `READY_FOR_HANDOFF`; the frozen contour produces one mixed-operation release
 batch for user testing. Bootstrap displays notices and the one next action.
 

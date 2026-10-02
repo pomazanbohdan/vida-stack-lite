@@ -64,7 +64,10 @@ export function issueObservedValidationReceipt(input: {
   host?: HostStateSnapshot;
 }): ValidationReceipt {
   const { repositoryRoot, config, packet, implementationResult, journal, actionId, authority } = input;
-  if(journal.state.corrective_execution){requireValidation(input.host?.work,'corrective receipt requires current Host binding');validateWorkSessionBinding(input.host.work,journal.state,repositoryRoot);}
+  if (journal.state.corrective_execution) {
+    requireValidation(input.host?.work, 'corrective receipt requires current Host binding');
+    validateWorkSessionBinding(input.host.work, journal.state, repositoryRoot);
+  }
   const matches = journal.state.completed
     .flatMap((entry) => entry.items)
     .filter((item) => item.request.action_id === actionId && item.issue_id && item.observation);

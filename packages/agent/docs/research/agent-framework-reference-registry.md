@@ -25,6 +25,26 @@ GAP. Vendor mechanics remain separate from approved local requirements.
 | Mastra | [Agentic workflows](https://mastra.ai/articles/agentic-workflows), [snapshots](https://mastra.ai/en/reference/workflows/snapshots) | The opened workflow article supports persistence, parallel execution and suspend/resume. Official search retrieved the snapshots body; direct snapshot retrieval was unavailable in the final reference check. |
 | Temporal, a durable workflow system | [Tasks](https://docs.temporal.io/tasks), [workflow definitions](https://docs.temporal.io/workflow-definition) | History replay, task versus business-execution failure, and separate external/non-deterministic activities. |
 
+## Packet-text screening applicability
+
+The public development-task packet builder receives free text at a source
+boundary. Explicit credential assignments and recognizable credential formats
+remain denied across packet fields. Common words such as `state`, `session`,
+`code`, `sig` and `signature` require protocol context so ordinary descriptive
+prose and labels remain usable. These references support that local distinction;
+they do not define local policy or add a runtime dependency.
+Canonical behavior owner: [system specification](../system-specification.md#development-task-packet-text-screening).
+Work trace: `.agent/work/vida-final-assurance-finish-20261001/WORK.md`.
+
+| Topic | Official reference | Applicability |
+| --- | --- | --- |
+| Sensitive values and session identifiers | [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html), [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) | Credentials, tokens and session identifiers need protection. A blanket word list can misclassify ordinary text; evaluate the surrounding context. |
+| Classification and redaction | [Microsoft logging source generation and redaction](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging/source-generation) | The documented logging pipeline classifies sensitive data and selects redactors by classification, supporting explicit sensitive categories rather than treating every short label as a secret. |
+| Payload-bearing diagnostics | [OpenAI Node SDK client configuration](https://github.com/openai/openai-node/blob/main/docs/configuration.md) | SDK debug logs may include request and response bodies even when some authentication headers are redacted. Free-text packet fields therefore remain a relevant input boundary. |
+| OAuth values and bearer credentials | [RFC 6749](https://www.rfc-editor.org/rfc/rfc6749.html), [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750.html) | `state` and authorization `code` are meaningful in OAuth response context; bearer credentials remain recognizable credentials. The local screen preserves context-qualified checks while allowing ordinary labels. |
+| OIDC nonce | [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) | `nonce` is meaningful in the ID Token and replay-checking context; the local screen treats protocol-qualified values as sensitive. |
+| SAML response | [OASIS SAML 2.0 technical overview](https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html) | The `SAMLResponse` parameter carries the encoded SAML response in the HTTP POST binding; qualified response values remain sensitive. |
+
 ## Current defect applicability
 
 The generic final-assurance defect uses Mastra's persisted suspend/resume join

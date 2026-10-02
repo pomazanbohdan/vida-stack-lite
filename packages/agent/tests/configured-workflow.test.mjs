@@ -9,33 +9,88 @@ import { parse, stringify } from 'yaml';
 import { randomUUID } from 'node:crypto';
 import { selectCorrectiveEvidence } from '../src/orchestration/final-assurance.ts';
 
-const correctiveEvidenceWorkflow = { stages: [{ id: 'validator', kind: 'validate' }, { id: 'tester', kind: 'test' }] };
+const correctiveEvidenceWorkflow = {
+  stages: [
+    { id: 'validator', kind: 'validate' },
+    { id: 'tester', kind: 'test' },
+  ],
+};
 function correctiveFailure(stage = 'validator') {
   const action = stage === 'validator' ? 'a'.repeat(64) : 'b'.repeat(64);
-  const issue = randomUUID(), evidence = ['local://fixture/negative'];
-  return { request: { action_id: action, stage_id: stage }, issue_id: issue,
-    observation: { action_id: action, issue_id: issue, status: 'reported_failed',
-      summary: JSON.stringify(stage === 'validator'
-        ? { schema: 'VidaValidatorVerdict/v1', verdict: 'fail', findings: ['defect'], evidence_refs: evidence }
-        : { schema: 'VidaTesterVerdict/v1', status: 'fail', evidence_refs: evidence }), evidence_refs: evidence } };
+  const issue = randomUUID(),
+    evidence = ['local://fixture/negative'];
+  return {
+    request: { action_id: action, stage_id: stage },
+    issue_id: issue,
+    observation: {
+      action_id: action,
+      issue_id: issue,
+      status: 'reported_failed',
+      summary: JSON.stringify(
+        stage === 'validator'
+          ? { schema: 'VidaValidatorVerdict/v1', verdict: 'fail', findings: ['defect'], evidence_refs: evidence }
+          : { schema: 'VidaTesterVerdict/v1', status: 'fail', evidence_refs: evidence },
+      ),
+      evidence_refs: evidence,
+    },
+  };
 }
 
 test('corrective evidence accepts archived negative verdict and preserves wholly unissued downstream wave', () => {
-  const failed = correctiveFailure(), unissued = { request: { stage_id: 'tester', action_id: 'c'.repeat(64) }, issue_id: null, observation: null };
-  const journal = { completed: [{ step_id: 'validator-wave', items: [failed] }], items: [unissued] }, before = JSON.stringify(journal);
-  expect(selectCorrectiveEvidence(journal, correctiveEvidenceWorkflow)).toEqual({ observed: [failed], failed: [failed] });
+  const failed = correctiveFailure(),
+    unissued = { request: { stage_id: 'tester', action_id: 'c'.repeat(64) }, issue_id: null, observation: null };
+  const journal = { completed: [{ step_id: 'validator-wave', items: [failed] }], items: [unissued] },
+    before = JSON.stringify(journal);
+  expect(selectCorrectiveEvidence(journal, correctiveEvidenceWorkflow)).toEqual({
+    observed: [failed],
+    failed: [failed],
+  });
   expect(JSON.stringify(journal)).toBe(before);
-  expect(selectCorrectiveEvidence({ completed: [{ items: [correctiveFailure('tester')] }], items: [] }, correctiveEvidenceWorkflow).failed).toHaveLength(1);
+  expect(
+    selectCorrectiveEvidence(
+      { completed: [{ items: [correctiveFailure('tester')] }], items: [] },
+      correctiveEvidenceWorkflow,
+    ).failed,
+  ).toHaveLength(1);
 });
 
 test('corrective evidence rejects unknown mixed waves, reservations, malformed and foreign negative reports', () => {
-  const failed = correctiveFailure(), ready = { request: { stage_id: 'tester', action_id: 'c'.repeat(64) }, issue_id: null, observation: null };
-  for (const unsafe of [{ ...ready, issue_id: randomUUID() }, { ...ready, host_reservation: {} }, { ...ready, research_activation: {} }, { ...ready, research_normalization: {} }])
-    expect(() => selectCorrectiveEvidence({ completed: [{ items: [failed] }], items: [ready, unsafe] }, correctiveEvidenceWorkflow)).toThrow('unfinished issued effects');
-  for (const observation of [{ ...failed.observation, action_id: 'd'.repeat(64) }, { ...failed.observation, issue_id: randomUUID() }])
-    expect(() => selectCorrectiveEvidence({ completed: [], items: [{ ...failed, observation }] }, correctiveEvidenceWorkflow)).toThrow('unfinished issued effects');
-  expect(() => selectCorrectiveEvidence({ completed: [], items: [{ ...failed, observation: { ...failed.observation, summary: 'unstructured failure' } }] }, correctiveEvidenceWorkflow)).toThrow('structured JSON');
-  expect(() => selectCorrectiveEvidence({ completed: [], items: [{ ...failed, request: { ...failed.request, stage_id: 'writer' } }] }, correctiveEvidenceWorkflow)).toThrow('not a focused verdict');
+  const failed = correctiveFailure(),
+    ready = { request: { stage_id: 'tester', action_id: 'c'.repeat(64) }, issue_id: null, observation: null };
+  for (const unsafe of [
+    { ...ready, issue_id: randomUUID() },
+    { ...ready, host_reservation: {} },
+    { ...ready, research_activation: {} },
+    { ...ready, research_normalization: {} },
+  ])
+    expect(() =>
+      selectCorrectiveEvidence(
+        { completed: [{ items: [failed] }], items: [ready, unsafe] },
+        correctiveEvidenceWorkflow,
+      ),
+    ).toThrow('unfinished issued effects');
+  for (const observation of [
+    { ...failed.observation, action_id: 'd'.repeat(64) },
+    { ...failed.observation, issue_id: randomUUID() },
+  ])
+    expect(() =>
+      selectCorrectiveEvidence({ completed: [], items: [{ ...failed, observation }] }, correctiveEvidenceWorkflow),
+    ).toThrow('unfinished issued effects');
+  expect(() =>
+    selectCorrectiveEvidence(
+      {
+        completed: [],
+        items: [{ ...failed, observation: { ...failed.observation, summary: 'unstructured failure' } }],
+      },
+      correctiveEvidenceWorkflow,
+    ),
+  ).toThrow('structured JSON');
+  expect(() =>
+    selectCorrectiveEvidence(
+      { completed: [], items: [{ ...failed, request: { ...failed.request, stage_id: 'writer' } }] },
+      correctiveEvidenceWorkflow,
+    ),
+  ).toThrow('not a focused verdict');
 });
 
 const engineFault = vi.hoisted(() => ({
@@ -78,6 +133,10 @@ vi.mock('../src/governance/edictum-boundary.ts', async (original) => ({
 }));
 
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
+import {
+  buildDevelopmentTaskPacket as buildPublicDevelopmentTaskPacket,
+  loadRuntimeConfig as loadPublicRuntimeConfig,
+} from '../src/index.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { issueHostGovernanceCapability } from '../src/governance/edictum-boundary.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -182,6 +241,153 @@ beforeEach(async () => {
 
 afterEach(async () => {
   if (root) await rm(root, { recursive: true, force: true });
+});
+
+function publicPacketInput(overrides = {}) {
+  const riskFlags = [];
+  return {
+    packet_id: 'packet-public-screening',
+    work_item_id: 'work-public-screening',
+    team_id: 'default-development',
+    workflow_id: 'task_execution',
+    work_item: {
+      kind: 'task',
+      intent: 'task_execution',
+      project: 'example-project',
+      risk_flags: riskFlags,
+      labels: [],
+    },
+    attempt: 1,
+    risk_flags: riskFlags,
+    objective: 'Complete the configured work safely.',
+    acceptance: ['The focused acceptance passes.'],
+    in_scope: ['packages/agent/src/orchestration/mastra-boundary.ts'],
+    out_of_scope: [],
+    owned_paths: ['packages/agent/src/orchestration/mastra-boundary.ts'],
+    affected_symbols: [],
+    skill_refs: [],
+    documentation_refs: [],
+    code_evidence_refs: [],
+    research_artifact_refs: [],
+    diagnostics: [],
+    failed_approaches: [],
+    prohibited_patterns: [],
+    implementation_constraints: ['Keep packet validation at the input boundary.'],
+    security_constraints: [],
+    expected_tests: ['bun test tests/configured-workflow.test.mjs'],
+    delivery_conditions: ['The public packet contract is verified.'],
+    source_revision: 'git:test',
+    lease_expires_at: new Date(Date.now() + 60_000).toISOString(),
+    ...overrides,
+  };
+}
+
+function packetInputWithText(field, text) {
+  const input = publicPacketInput();
+  if (field === 'objective' || field === 'source_revision') {
+    input[field] = text;
+  } else if (field === 'risk_flags' || field === 'work_item.risk_flags') {
+    input.risk_flags = [text];
+    input.work_item = { ...input.work_item, risk_flags: [text] };
+  } else if (field === 'work_item.labels') {
+    input.work_item = { ...input.work_item, labels: [text] };
+  } else if (field === 'work_item.kind' || field === 'work_item.intent') {
+    input.work_item = { ...input.work_item, [field.slice('work_item.'.length)]: text };
+  } else {
+    input[field] = [text];
+  }
+  return input;
+}
+
+test('public DevelopmentTaskPacket screening accepts ordinary prose and short protocol labels', () => {
+  const publicConfig = loadPublicRuntimeConfig(root);
+  const ordinary = [
+    ['objective', 'Both Source documents explicitly state: packet prose remains valid.'],
+    ['source_revision', 'state: pending'],
+    ['acceptance', 'session: active'],
+    ['out_of_scope', 'code: generated'],
+    ['implementation_constraints', 'signature: required'],
+    ['security_constraints', 'sig: required'],
+    ['security_constraints', 'password=[REDACTED]'],
+    ['security_constraints', 'Bearer [REDACTED]'],
+    ['security_constraints', 'Authorization: Bearer [REDACTED]'],
+    ['security_constraints', '{"password":"[REDACTED]"}'],
+    ['security_constraints', "{'api_key':'[REDACTED]'}"],
+    ['out_of_scope', 'state=ordinary'],
+    ['out_of_scope', 'passwordx=opaque'],
+    ['work_item.labels', 'signature: required'],
+    ['research_artifact_refs', 'artifact://research/reference-1/' + 'a'.repeat(64)],
+  ];
+  for (const [field, text] of ordinary) {
+    const packet = buildPublicDevelopmentTaskPacket(publicConfig, packetInputWithText(field, text));
+    const result = field === 'objective' || field === 'source_revision'
+      ? packet[field]
+      : field === 'work_item.labels'
+        ? packet.work_item.labels
+        : packet[field];
+    expect(result).toEqual(field === 'objective' || field === 'source_revision' ? text : [text]);
+  }
+});
+
+test('public DevelopmentTaskPacket screening rejects credentials across descriptive fields', () => {
+  const publicConfig = loadPublicRuntimeConfig(root);
+  const fields = [
+    'objective',
+    'source_revision',
+    'acceptance',
+    'risk_flags',
+    'in_scope',
+    'out_of_scope',
+    'affected_symbols',
+    'skill_refs',
+    'documentation_refs',
+    'code_evidence_refs',
+    'failed_approaches',
+    'prohibited_patterns',
+    'implementation_constraints',
+    'security_constraints',
+    'expected_tests',
+    'delivery_conditions',
+    'work_item.labels',
+    'work_item.kind',
+    'work_item.intent',
+  ];
+  for (const field of fields) {
+    expect(() => buildPublicDevelopmentTaskPacket(publicConfig, packetInputWithText(field, 'api_key=opaque'))).toThrow(
+      /sensitive material/,
+    );
+  }
+
+  const sensitive = [
+    ['out_of_scope', 'password=opaque'],
+    ['out_of_scope', '{"password":"secret-value"}'],
+    ['out_of_scope', "{'api_key':'secret-value'}"],
+    ['out_of_scope', 'jwt=opaque'],
+    ['out_of_scope', 'token:opaque'],
+    ['implementation_constraints', 'api_key=opaque'],
+    ['security_constraints', 'Authorization: Bearer opaque'],
+    ['security_constraints', 'Cookie: session=opaque'],
+    ['acceptance', 'client_secret=opaque'],
+    ['out_of_scope', 'Bearer opaque'],
+    ['out_of_scope', '-----BEGIN PRIVATE KEY-----'],
+    ['out_of_scope', 'x-amz-signature=opaque'],
+    ['out_of_scope', 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signature123'],
+    ['out_of_scope', 'https://user:secret@example.test/path'],
+    ['out_of_scope', 'https://example.test/callback?state=opaque'],
+    ['out_of_scope', 'https://example.test/callback?relay=ok&state=opaque'],
+    ['out_of_scope', 'https://example.test/callback#code=opaque'],
+    ['out_of_scope', 'https://example.test/callback?code=opaque'],
+    ['out_of_scope', 'https://example.test/callback?oauth_state=opaque'],
+    ['out_of_scope', 'https://example.test/callback?oidc_nonce=opaque'],
+    ['out_of_scope', 'https://example.test/callback?SAMLResponse=opaque'],
+    ['out_of_scope', 'https://example.test/callback?sessionId=opaque'],
+    ['research_artifact_refs', 'artifact://research/reference-1/' + 'a'.repeat(64) + '?state=opaque'],
+  ];
+  for (const [field, text] of sensitive) {
+    expect(() => buildPublicDevelopmentTaskPacket(publicConfig, packetInputWithText(field, text))).toThrow(
+      /sensitive material/,
+    );
+  }
 });
 
 function fixtureAttempts() {

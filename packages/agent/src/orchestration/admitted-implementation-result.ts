@@ -32,7 +32,7 @@ export function buildAdmittedImplementationResult(input: {
       ledger.version.digest === canonicalJsonDigest(ledger.state),
     'admitted work or persisted run differs from packet',
   );
-  validateWorkSessionBinding(work,ledger.state,repositoryRoot);
+  validateWorkSessionBinding(work, ledger.state, repositoryRoot);
   const source = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireResult(
     ledger.state.source_scope?.digest === source.digest,

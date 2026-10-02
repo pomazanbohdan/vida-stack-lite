@@ -41,12 +41,14 @@ For this Source repository, the standing instruction in
 authorizes the orchestrating session to commit and push after EACH successful
 package formation. Finish Source changes and candidate preparation/checks,
 form the final exact assets once, commit the qualified Source payload and perform an ordinary
-non-force push, then obtain fresh blind reviews/reverse/CLEAR and install the
-exact sealed target assets. Qualification binds current declared source-file bytes
-and the archive; Git HEAD/commit metadata are excluded. An ordinary commit with
-unchanged included bytes needs no additional requalification. Changed included
-source inputs or archive bytes invalidate their affected proof; use public
-operation identities without manual integrity-value replay.
+non-force push, then seal the same operation's archive. Obtain three fresh blind
+reviews, reverse validation and CLEAR against those sealed bytes, record
+assurance, and install the exact qualified target assets. Qualification binds
+current declared source-file bytes and the archive; Git HEAD/commit metadata are
+excluded. An ordinary commit with unchanged included bytes needs no additional
+requalification. Changed included source inputs or archive bytes invalidate
+their affected proof; use public operation identities without manual integrity-
+value replay.
 Failed packing retains its pending operation and is not this Git trigger.
 Exact retries preserve the same archive/operation and avoid duplicate effects.
 This Source-only instruction does not authorize consumer Git operations or
@@ -102,7 +104,7 @@ npm run release:local -- --prepare
 npm run release:local -- --pack OPERATION
 npm run release:local -- --status OPERATION
 # Source only: after successful pack, the session commits/pushes its qualified payload.
-# Join fresh real reviews, reverse validation and CLEAR; seal this exact archive.
+# Seal this exact archive, then join fresh real reviews, reverse validation and CLEAR.
 npm run release:local -- --operation OPERATION
 npm run release:local -- --status OPERATION
 ```

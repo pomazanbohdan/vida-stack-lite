@@ -9,6 +9,8 @@ import type {
   MigrationRebindVerifier,
   WorkIdentity,
   HostStateStore,
+  InterruptedSourceRetirementRequest,
+  InterruptedSourceRetirementResult,
 } from './host-state.js';
 import {
   createFileOperationReservationStore,
@@ -71,6 +73,10 @@ const trustedHostLauncherBindings = new WeakMap<object, TrustedHostCompositionIn
 const composingTrustedHostLauncherCapabilities = new WeakSet<object>();
 const workflowExecutionBrand: unique symbol = Symbol('host-workflow-execution');
 const workflowExecutors = new WeakMap<object, (request: WorkflowAssignmentRequest) => Promise<unknown>>();
+const workflowSessionRetirers = new WeakMap<
+  object,
+  (request: InterruptedSourceRetirementRequest) => Promise<InterruptedSourceRetirementResult>
+>();
 export interface WorkflowSessionReservation {
   readonly schema: 'WorkflowSessionReservation/v1';
   readonly request: WorkflowAssignmentRequest;
@@ -303,6 +309,18 @@ export async function completeWorkflowAssignmentForSession(
   assertCanonicalJsonValue(reservation, '$');
   assertCanonicalJsonValue(observed, '$');
   await complete!(freezeJsonValue(reservation), freezeJsonValue(observed));
+}
+
+/** Retire only the matching interrupted Source owner through the opaque host execution capability. */
+export async function retireInterruptedSourceOwnerForSession(
+  capability: WorkflowExecutionCapability,
+  request: InterruptedSourceRetirementRequest,
+): Promise<InterruptedSourceRetirementResult> {
+  const retire =
+    capability !== null && typeof capability === 'object' ? workflowSessionRetirers.get(capability) : undefined;
+  requireCondition(retire !== undefined, 'interrupted Source retirement requires an opaque host capability');
+  assertCanonicalJsonValue(request, '$');
+  return retire!(freezeJsonValue(JSON.parse(JSON.stringify(request))) as InterruptedSourceRetirementRequest);
 }
 
 export interface RuntimeKernelHost {
@@ -688,6 +706,9 @@ export interface TrustedHostServices {
     readonly abortUnstartedWorkflowAttempt: (
       authorization: WorkflowAttemptApprovalAuthorization | WorkflowAttemptReceipt,
     ) => unknown;
+    readonly retireInterruptedSourceOwner?: (
+      request: InterruptedSourceRetirementRequest,
+    ) => InterruptedSourceRetirementResult | Promise<InterruptedSourceRetirementResult>;
   };
   readonly resolveWorkflowWorkItem?: (workItemId: string, project: ProjectContext) => unknown;
   readonly dispatchWorkflowAssignment?: (invocation: TrustedWorkflowAssignment) => unknown;
@@ -794,6 +815,7 @@ function requireWorkflowAttemptShape(attempts: TrustedHostServices['workflowAtte
     'claimWorkflowAssignmentWithApproval',
     'beginWorkflowAttemptEffect',
     'completeWorkflowAttemptWithApproval',
+    'retireInterruptedSourceOwner',
   ] as const)
     requireOptionalTrustedHostFunction(attempts[method], 'trusted protected attempt persistence service is invalid');
 }
@@ -828,6 +850,9 @@ function snapshotWorkflowAttempts(
     completeWorkflowAttempt: attempts.completeWorkflowAttempt.bind(attempts),
     markWorkflowAttemptUncertain: attempts.markWorkflowAttemptUncertain.bind(attempts),
     abortUnstartedWorkflowAttempt: attempts.abortUnstartedWorkflowAttempt.bind(attempts),
+    ...definedTrustedHostProperties([
+      ['retireInterruptedSourceOwner', attempts.retireInterruptedSourceOwner?.bind(attempts)],
+    ]),
     ...definedTrustedHostProperties([
       ['claimWorkflowAssignmentWithApproval', attempts.claimWorkflowAssignmentWithApproval?.bind(attempts)],
       ['beginWorkflowAttemptEffect', attempts.beginWorkflowAttemptEffect?.bind(attempts)],
@@ -1068,6 +1093,7 @@ export async function createTrustedLocalSessionComposition(input: {
               requireLiveAdmission('receipt' in receipt ? receipt.receipt.identity.work_id : receipt.identity.work_id);
               return admitted.store.abortUnstartedWorkflowAttempt(receipt);
             },
+            retireInterruptedSourceOwner: (request) => admitted.store.retireInterruptedSourceOwner(request),
           },
           resolveWorkflowWorkItem: (workId, context) => {
             requireLiveAdmission(workId);
@@ -1402,7 +1428,14 @@ const workflowAttemptReceiptSchema = z
         stage_id: workContextTextSchema,
         assignment_index: z.number().int().nonnegative(),
         correction_generation: z.number().int().nonnegative(),
-        correction_authorization: z.object({schema:workContextTextSchema.regex(/^[A-Za-z][A-Za-z0-9]*\/v1$/),path:workContextTextSchema,sha256:workContextDigestSchema}).strict().nullable(),
+        correction_authorization: z
+          .object({
+            schema: workContextTextSchema.regex(/^[A-Za-z][A-Za-z0-9]*\/v1$/),
+            path: workContextTextSchema,
+            sha256: workContextDigestSchema,
+          })
+          .strict()
+          .nullable(),
         lease: z
           .object({
             ticket_id: workContextTextSchema,
@@ -1570,6 +1603,10 @@ function issueWorkflowExecutionCapability(
     );
     return pending;
   };
+  if (attempts?.retireInterruptedSourceOwner)
+    workflowSessionRetirers.set(capability, (request) =>
+      serializeState(async () => attempts.retireInterruptedSourceOwner!(request)),
+    );
   const pinContext = (context: WorkExecutionContext) => {
     const previous = contexts.get(context.binding.lifecycle_work_id);
     if (previous) assertWorkContextProgress(previous, context);

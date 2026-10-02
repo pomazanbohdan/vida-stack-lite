@@ -78,7 +78,10 @@ export function issueObservedTestReceipt(input: {
   host?: HostStateSnapshot;
 }): { instruction: TesterInstruction; receipt: TestReceipt } {
   const { repositoryRoot, config, packet, implementationResult, journal, authority } = input;
-  if(journal.state.corrective_execution){requireTest(input.host?.work,'corrective test receipt requires current Host binding');validateWorkSessionBinding(input.host.work,journal.state,repositoryRoot);}
+  if (journal.state.corrective_execution) {
+    requireTest(input.host?.work, 'corrective test receipt requires current Host binding');
+    validateWorkSessionBinding(input.host.work, journal.state, repositoryRoot);
+  }
   validateImplementationResult(packet, implementationResult);
   const source = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireTest(

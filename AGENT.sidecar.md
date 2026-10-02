@@ -54,14 +54,19 @@ only to this Source repository, not Crea or other consumer repositories.
 
 Finish Source changes, prepare the candidate version and run qualifying checks;
 form the exact target release assets once; then commit that Source payload and
-push; then obtain fresh blind reviews, reverse validation and CLEAR, seal and
-install the exact qualified assets through their declared delivery manifest. Release qualification binds current declared source-file
+push; then seal the same operation's exact archive, obtain three fresh blind
+reviews, reverse validation and CLEAR against those sealed bytes, record
+assurance, and install the exact qualified assets through their declared
+delivery manifest. Release qualification binds current declared source-file
 bytes and the exact archive, not Git HEAD or commit metadata. Ordinary commit/
 push with unchanged included bytes does not invalidate that binding. Changes to
 included source inputs or archive bytes invalidate their affected qualification.
 Use public returned identities and operation state; do not manually replay
-integrity values. Exact
-operation retries retain the pending archive and avoid duplicate effects.
+integrity values. Exact operation retries retain the pending archive and avoid
+duplicate effects. Any source-only bootstrap exception is operational
+provenance for the already-authorized repair only; it does not create a
+standing bypass. Subsequent Source work uses supported retirement/release
+methods and current ownership checks.
 
 The release CLI itself performs no Git operation. The orchestrating session is
 the authorized Git caller. This scoped standing instruction satisfies the Git

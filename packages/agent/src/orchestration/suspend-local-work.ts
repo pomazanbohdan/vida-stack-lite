@@ -34,11 +34,19 @@ export function suspendLocalWork(input: SuspensionInput): HostStateSnapshot {
  */
 export function suspendCompletedReadOnlyWork(input: SuspensionInput): HostStateSnapshot {
   // Trusted older callers already validate configured rights and omit config.
-  const issues = input.config ? settledSessionItems(input.journal.state).observed : [...input.journal.state.completed.flatMap(step=>step.items),...input.journal.state.items];
+  const issues = input.config
+    ? settledSessionItems(input.journal.state).observed
+    : [...input.journal.state.completed.flatMap((step) => step.items), ...input.journal.state.items];
   requireSuspension(
     issues.length > 0 &&
       issues.every(
-        (item) => item.issue_id !== null && item.observation?.status === 'reported_complete' && !item.host_reservation && !item.research_activation && !item.research_normalization && (!input.config || configuredReadonlyAssignment(input.config,item.request)),
+        (item) =>
+          item.issue_id !== null &&
+          item.observation?.status === 'reported_complete' &&
+          !item.host_reservation &&
+          !item.research_activation &&
+          !item.research_normalization &&
+          (!input.config || configuredReadonlyAssignment(input.config, item.request)),
       ),
     'completed readonly owner still has unobserved, failed or reserved activity',
   );

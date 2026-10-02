@@ -75,6 +75,26 @@ pointers before retiring the former consumer bundle. Existing consumer v10
 and unrelated files remain until the replacement is verified. Prior tasks
 are preserved as inactive provenance; new work does not inherit their rights.
 
+## Development task packet text screening
+
+The public `buildDevelopmentTaskPacket` boundary screens free-text packet fields
+and string-list values before constructing `DevelopmentTaskPacket/v1`. It
+rejects explicit credential assignments and formats, including passwords,
+tokens and API keys, authorization and cookie credentials, client secrets,
+private-key material, bearer values, compact JWTs, cloud signature credentials and
+URL user-info credentials. A clearly redacted placeholder remains acceptable.
+
+Short protocol words are contextual: a bare `state`, `session`, `code`, `sig`
+or `signature` label does not make ordinary prose sensitive. Text such as
+“Both Source documents explicitly state: …” and labels such as `state: pending`,
+`session: active`, `code: generated` and `signature: required` are valid.
+Qualified OAuth/OIDC parameters, SAML response values and session identifiers
+remain sensitive in their protocol context, including `state`, `code`, `nonce`,
+`SAMLResponse`, session identifiers and their actual URL query values.
+The same rule applies wherever text is supplied to the packet, so selecting a
+different field cannot bypass it. Supporting rationale and official reference
+applicability are recorded in the [packet-text screening applicability](research/agent-framework-reference-registry.md#packet-text-screening-applicability).
+
 ## Source development controller
 
 The bundle-owned development-controller seam provides prepare, inspect, verify
@@ -142,7 +162,33 @@ the original engine, issue, configured read-only tools and bounded configured
 egress hosts. A wholly unissued downstream wave is inert only with no issue,
 observation, reservation, activation or normalization. Release never executes
 that wave. Unknown/unbounded egress and issued writer effects deny this route.
+The release decision uses the stored binding as provenance; current Source-file
+or installed-package byte drift alone does not prevent relinquishing that old
+readonly owner. Current configuration, original-engine completion evidence,
+owner identity and Work/Ledger/Journal CAS checks still apply. Release changes
+no source outcome, grants no write rights and establishes no Runtime acceptance.
 Fresh writer execution requires ordinary FIFO ownership and current authority.
+
+`run --retire-interrupted-source-owner true` provides `inspect` and `apply` for
+one exact started Source writer whose provider result is unknown. The request
+binds its Work, Ledger, Journal and maintenance-generation versions, action and
+issue, original approval authorization, operator decision pointer, and
+cooperative interruption evidence. The active operator work supplies the
+opaque workflow capability and operator handle; the target remains bound to
+its own stored source identity and lease. The evidence records the source
+thread as interrupted, references the actual `read_thread` and `list_agents`
+observations, and lists no active Source writer IDs. These references are
+cooperative evidence, not API attestation or proof of process-level
+quiescence.
+
+Apply performs one HostState transaction that marks only the exact started
+attempt uncertain with a null result, releases only its Source ticket and
+claim, and suspends that owner. It preserves the journal and `commit_unknown`
+approval. It does not create a Source observation, no-effect proof, replay
+right, new generation, source-write authority or acceptance. Exact retries are
+operation-bound; active overlapping owners and earlier FIFO waiters deny
+retirement. The unknown effect remains unresolved, and late results stay
+fenced from the released owner.
 
 A known-terminal VERIFY failure may use the existing forward runtime-code rebind
 under an explicit owner correction basis, exact attempt/live lease/CAS and verified
@@ -176,9 +222,11 @@ actual test outcomes bind their relevant executable inputs, allowing reuse when
 those inputs remain current. Each final target payload is formed once and
 identified by structured exact artifact metadata; npm compatibility formation
 uses prepack. A pending operation retains its candidate identity while its
-distribution implementation and qualification are reconciled. Three actual fresh history-isolated blind
-reviews, reverse validation and current public documentation CLEAR bind the
-sealed source and archive before installation. The local maintainer adapter
+distribution implementation and qualification are reconciled. The final exact
+target archive is formed once, then the authorized Source commit/push order runs.
+Three actual fresh history-isolated blind reviews, reverse validation and
+current public documentation CLEAR bind the sealed source and that same archive
+before installation. The local maintainer adapter
 verifies consistency and currentness; the orchestrating session verifies native
 review provenance. Local JSON grants neither cryptographic tool-origin proof
 nor physical filesystem isolation. No caller skip or approval boolean bypasses

@@ -8,12 +8,12 @@ import {
 } from '../config/runtime-config.js';
 import { assertCanonicalJsonValue, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import { compileDevelopmentWorkflow } from './workflow-plan.js';
-import type {CorrectiveExecution} from './final-assurance.js';
+import type { CorrectiveExecution } from './final-assurance.js';
 
 /** A serialized instruction for the orchestrating session. This module never issues an agent tool call. */
 export interface SessionAgentAction {
   readonly action_id: string;
-  readonly corrective_execution?:CorrectiveExecution;
+  readonly corrective_execution?: CorrectiveExecution;
   readonly work_id: string;
   readonly attempt: number;
   readonly scope_digest: string;
@@ -178,12 +178,14 @@ export function sessionActionsForWave(
   workflowId: string,
   waveIndex: number,
   outcomes: readonly SessionAgentOutcome[],
-  correctiveExecution?:CorrectiveExecution,
+  correctiveExecution?: CorrectiveExecution,
 ): readonly SessionAgentAction[] {
   const compiled = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags);
   const wave = compiled.waves[waveIndex];
   requireCondition(wave !== undefined, 'session handoff wave is unavailable');
-  const selectedWave=correctiveExecution?wave.filter(stage=>correctiveExecution.stage_ids.includes(stage.id)):wave;
+  const selectedWave = correctiveExecution
+    ? wave.filter((stage) => correctiveExecution.stage_ids.includes(stage.id))
+    : wave;
   return selectedWave
     .flatMap((stage) =>
       stage.assignments.map((assignment) => {
@@ -197,14 +199,14 @@ export function sessionActionsForWave(
         requireCondition(instructions, 'session handoff role instructions are unavailable');
         return {
           action_id: canonicalJsonDigest({
-            ...(correctiveExecution?{corrective_execution:correctiveExecution}:{}),
+            ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
             context,
             workflow_id: workflowId,
             wave_index: waveIndex,
             stage_id: stage.id,
             assignment_index: index,
           }),
-          ...(correctiveExecution?{corrective_execution:correctiveExecution}:{}),
+          ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
           work_id: context.work_id,
           attempt: context.attempt,
           scope_digest: context.scope_digest,

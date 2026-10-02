@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { verifyForwardReviewSet } from './forward-review-proof.mjs';
 import {
   parseDocumentationPolicyTransitionEnvelope,
@@ -1592,6 +1593,99 @@ if(['inspect','plan'].includes(mode)){
 }
 
 
+async function retireInterruptedSourceOwner(args) {
+  if (
+    args.length !== 8 ||
+    args[0] !== '--mode' ||
+    args[2] !== '--project-root' ||
+    args[4] !== '--operator-work-id' ||
+    args[6] !== '--request'
+  )
+    throw Error('Interrupted Source retirement requires mode, exact root, active operator work and request');
+  const mode = args[1], root = realpathSync(args[3]), operatorWorkId = args[5];
+  if (!['inspect', 'apply'].includes(mode)) throw Error('Interrupted Source retirement mode invalid');
+  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
+  const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
+  const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+  const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
+  const { HostStateStore, openHostStateDatabase, inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
+  const { openAdmittedSessionExecution, readAdmittedSessionIntake } =
+    await import('../src/orchestration/admitted-session-execution.ts');
+  const config = loadRuntimeConfig(root), access = requireSafeRepositoryAccess(root), requestBytes = access.readBytes(args[7], 'interrupted Source retirement request');
+  if (!requestBytes.length || requestBytes.length > 65536) throw Error('Interrupted Source retirement request exceeds bound');
+  const input = JSON.parse(requestBytes.toString('utf8'));
+  if (
+    !exactKeys(input, ['identity', 'attempt', 'actionId', 'issueId', 'expectedWork', 'expectedLedger', 'expectedJournal', 'expectedMaintenanceGeneration', 'decisionPointer', 'evidence']) ||
+    !exactKeys(input.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) ||
+    !exactKeys(input.evidence, ['schema', 'source_thread_id', 'source_thread_status', 'read_thread_ref', 'list_agents_ref', 'active_source_writer_ids'])
+  ) throw Error('Interrupted Source retirement request shape differs');
+  if (
+    input.identity.repository_id !== config.repository.repository_id ||
+    !Array.isArray(input.identity.project_ids) || input.identity.project_ids.length !== 1 ||
+    typeof input.identity.work_id !== 'string' || !input.identity.work_id ||
+    typeof operatorWorkId !== 'string' || !operatorWorkId || operatorWorkId === input.identity.work_id
+  ) throw Error('Interrupted Source retirement identity differs');
+  const project = loadProjectSetContext(root, config, input.identity.repository_id, input.identity.project_ids);
+  if (project.integrations_digest !== input.identity.integrations_digest) throw Error('Interrupted Source retirement ProjectContext differs');
+  const databasePath = sessionHandoffDatabasePath(root, config), workspaceId = deriveWorkspaceId(config.repository.repository_id, root),
+    database = openHostStateDatabase(databasePath);
+  try {
+    const store = new HostStateStore(database, workspaceId),
+      operatorExecution = await openAdmittedSessionExecution(root, store, input.identity.project_ids[0], operatorWorkId),
+      operatorHandle = readAdmittedSessionIntake(root, store, operatorExecution.identity).native_session_handle,
+      host = store.readHostStateSnapshot(input.identity), workspace = inspectHostWorkspaceDatabase(databasePath, workspaceId),
+      selected = workspace.work.find((row) => canonicalJsonDigest(row.identity) === canonicalJsonDigest(input.identity)),
+      journalRow = workspace.journals.find((row) => row.work_id === input.identity.work_id && row.attempt === input.attempt);
+    if (
+      !selected || !journalRow || !host.workVersion || !host.ledgerVersion ||
+      canonicalJsonDigest(selected.version) !== canonicalJsonDigest(input.expectedWork) ||
+      canonicalJsonDigest(host.ledgerVersion) !== canonicalJsonDigest(input.expectedLedger) ||
+      canonicalJsonDigest(journalRow.version) !== canonicalJsonDigest(input.expectedJournal) ||
+      host.maintenanceGeneration !== input.expectedMaintenanceGeneration
+    ) throw Error('Interrupted Source retirement Work/Ledger/Journal/maintenance CAS differs');
+    const journal = journalRow.state, items = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)],
+      item = items.find((entry) => entry.request.action_id === input.actionId), reservation = item?.host_reservation,
+      authorization = reservation?.authorization;
+    if (
+      !item || item.issue_id !== input.issueId || item.observation !== null || !reservation ||
+      reservation.approvalAction !== 'source.write' || authorization?.receipt?.attempt?.status !== 'started' ||
+      authorization.approval?.status !== 'commit_unknown' || input.evidence.schema !== 'InterruptedSourceRetirementEvidence/v1' ||
+      input.evidence.source_thread_status !== 'interrupted' ||
+      input.evidence.source_thread_id !== authorization.receipt.attempt.lease.thread_id ||
+      typeof input.evidence.read_thread_ref !== 'string' || !input.evidence.read_thread_ref.trim() ||
+      typeof input.evidence.list_agents_ref !== 'string' || !input.evidence.list_agents_ref.trim() ||
+      !Array.isArray(input.evidence.active_source_writer_ids) || input.evidence.active_source_writer_ids.length !== 0 ||
+      !Number.isSafeInteger(input.attempt) || input.attempt < 1 ||
+      !Number.isSafeInteger(input.expectedMaintenanceGeneration) ||
+      typeof input.decisionPointer !== 'string' || !input.decisionPointer.trim()
+    ) throw Error('Interrupted Source retirement target or cooperative evidence differs');
+    const request = {
+      identity: input.identity, attempt: input.attempt, actionId: input.actionId, issueId: input.issueId,
+      expectedWork: input.expectedWork, expectedLedger: input.expectedLedger, expectedJournal: input.expectedJournal,
+      expectedMaintenanceGeneration: input.expectedMaintenanceGeneration, authorization, operatorHandle,
+      decisionPointer: input.decisionPointer, evidence: input.evidence,
+    };
+    if (mode === 'inspect') return { status: 'interrupted_source_retirement_inspected', operation_digest: canonicalJsonDigest(request), rights_granted: false, attempt_outcome_resolved: false };
+    const capability = operatorExecution.composition.workflowExecutionCapability;
+    if (!capability) throw Error('Interrupted Source retirement trusted workflow capability unavailable');
+    const { retireInterruptedSourceOwnerForSession } = await import('../src/runtime-kernel.ts');
+    const result = await retireInterruptedSourceOwnerForSession(capability, request),
+      after = inspectHostWorkspaceDatabase(databasePath, workspaceId).journals.find(
+        (row) => row.work_id === input.identity.work_id && row.attempt === input.attempt,
+      );
+    if (!after || canonicalJsonDigest(after.version) !== canonicalJsonDigest(input.expectedJournal))
+      throw Error('Interrupted Source retirement unexpectedly changed the session journal');
+    return {
+      status: 'interrupted_source_owner_released', operation_id: result.operation_id,
+      request_digest: result.request_digest, work_version: result.snapshot.workVersion,
+      ledger_version: result.snapshot.ledgerVersion, attempt_status: result.attempt_receipt.attempt.status,
+      rights_granted: false, attempt_outcome_resolved: false, journal_version: after.version,
+    };
+  } finally { database.close(); }
+}
+
 async function releaseCompletedReadonly(args) {
   if(args.length!==6||args[0]!=='--mode'||args[2]!=='--project-root'||args[4]!=='--request')throw Error('Readonly release requires mode, exact root and request');
   const mode=args[1],root=realpathSync(args[3]);
@@ -1599,14 +1693,14 @@ async function releaseCompletedReadonly(args) {
   const {canonicalJsonDigest}=await import('../src/contracts/public-ingress.ts');
   const {loadRuntimeConfig,runtimeConfigDigest}=await import('../src/config/runtime-config.ts');
   const {requireSafeRepositoryAccess}=await import('../src/config/safe-repository-access.ts');
-  const {snapshotDeclaredSources}=await import('../src/orchestration/scoped-source-snapshot.ts');
   const {sessionHandoffDatabasePath}=await import('../src/orchestration/persistent-session-handoff.ts');
   const {deriveWorkspaceId}=await import('../src/workspace-identity.ts');
   const {HostStateStore,openHostStateDatabase,inspectHostWorkspaceDatabase}=await import('../src/host-state.ts');
   const {suspendCompletedReadOnlyWork}=await import('../src/orchestration/suspend-local-work.ts');
   const {readAdmittedSessionIntake}=await import('../src/orchestration/admitted-session-execution.ts');
   const {Database}=await import('bun:sqlite');
-  const {sessionBridgeDatabasePath,parseSessionBridgeRequest,sessionBridgeRunId}=await import('../src/orchestration/mastra-session-bridge.ts');
+  const {buildSessionBridgeRequest,configuredContextForStage,parseSessionBridgeObservation,parseSessionBridgeRequest,parseSessionBridgeRunState,sessionBridgeDatabasePath,sessionBridgeRunId}=await import('../src/orchestration/mastra-session-bridge.ts');
+  const {sessionActionsForWave}=await import('../src/orchestration/session-handoff.ts');
   const config=loadRuntimeConfig(root),access=requireSafeRepositoryAccess(root);
   const requestBytes=access.readBytes(args[5],'completed readonly release request');
   if(requestBytes.length>65536)throw Error('Readonly release request exceeds bound');
@@ -1615,28 +1709,79 @@ async function releaseCompletedReadonly(args) {
   const databasePath=sessionHandoffDatabasePath(root,config),workspace=inspectHostWorkspaceDatabase(databasePath,request.workspace_id);
   const selected=workspace.work.find(row=>equal(row.identity,request.identity)),row=workspace.journals.find(j=>j.work_id===request.identity.work_id&&j.attempt===request.attempt);
   if(!selected||!row||!equal(row.version,request.expectedJournal))throw Error('Readonly release journal identity/CAS differs');
-  const {settledSessionItems,configuredReadonlyAssignment}=await import('../src/orchestration/final-assurance.ts');
-  const work=selected.state,state=row.state,items=settledSessionItems(state).observed;
-  if(work.binding.config_digest!==runtimeConfigDigest(config)||state.run_id!==work.execution.run_id||state.source_scope?.digest!==work.binding.work_source_revision||state.attempt!==request.attempt||work.execution.assignment_attempts.length!==0||!items.length)throw Error('Readonly release current binding or host effects differ');
-  if(!equal(snapshotDeclaredSources(access,state.source_scope.entries.map(e=>e.path)),state.source_scope))throw Error('Readonly release source changed');
+  const {settledSessionItems,configuredReadonlyAssignment,validateWorkSessionBinding}=await import('../src/orchestration/final-assurance.ts');
+  const work=selected.state,state=row.state,settlement=settledSessionItems(state),items=settlement.observed,inertItems=settlement.inert;
+  if(work.binding.config_digest!==runtimeConfigDigest(config)||state.run_id!==(state.corrective_execution?.engine_run_id??work.execution.run_id)||state.source_scope?.digest!==work.binding.work_source_revision||state.attempt!==request.attempt||work.execution.assignment_attempts.length!==0||!items.length)throw Error('Readonly release current binding or host effects differ');
   const engine=new Database(sessionBridgeDatabasePath(root,config),{readonly:true,strict:true});
   try {
     const snapshots=engine.query('SELECT workflow_name,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?').all(state.run_id);
     if(snapshots.length!==1)throw Error('Readonly release original engine missing/ambiguous');
-    const snapshot=JSON.parse(snapshots[0].snapshot),input=snapshot.context?.input;
-    if(snapshot.status!=='suspended'||snapshot.runId!==state.run_id||input?.work_id!==request.identity.work_id||input.attempt!==request.attempt||input.config_digest!==work.binding.config_digest||input.scope_digest!==state.source_scope.digest||snapshots[0].workflow_name!==input.workflow_id||sessionBridgeRunId(request.workspace_id,{work_id:input.work_id,attempt:input.attempt,scope_digest:input.scope_digest},input.workflow_id)!==state.run_id)throw Error('Readonly release original engine binding differs');
+    const snapshot=JSON.parse(snapshots[0].snapshot),parseRunState=value=>{
+      const parsed=parseSessionBridgeRunState(value);
+      if(!isDeepStrictEqual(parsed,value))throw Error('Readonly release actual engine completion differs');
+      return parsed;
+    },input=parseRunState(snapshot.context?.input),context={work_id:input.work_id,attempt:input.attempt,scope_digest:input.scope_digest};
+    if(snapshot.status!=='suspended'||snapshot.runId!==state.run_id||input.work_id!==request.identity.work_id||input.attempt!==request.attempt||input.config_digest!==work.binding.config_digest||input.scope_digest!==state.source_scope.digest||input.workflow_id!==snapshots[0].workflow_name||input.observations.length!==0||!Array.isArray(input.selection?.risk_flags))throw Error('Readonly release original engine binding differs');
+    const engineWaves=Object.entries(snapshot.context??{}).map(([key,value])=>({waveIndex:/^wave-(\d+)$/.test(key)?Number(key.slice(5)):null,value})).filter(entry=>entry.waveIndex!==null).sort((a,b)=>a.waveIndex-b.waveIndex),frontiers=engineWaves.filter(entry=>entry.value?.status==='suspended');
+    if(frontiers.length!==1)throw Error('Readonly release actual engine frontier differs');
+    const frontier=frontiers[0],frontierStep=frontier.value;
+    if(engineWaves.some(entry=>entry.value?.status!=='success'&&entry.waveIndex!==frontier.waveIndex))throw Error('Readonly release actual engine frontier differs');
+    if(!Object.prototype.hasOwnProperty.call(frontierStep,'payload')||!Object.prototype.hasOwnProperty.call(frontierStep,'suspendPayload')||!frontierStep.suspendPayload||typeof frontierStep.suspendPayload!=='object'||!Array.isArray(frontierStep.suspendPayload.requests))throw Error('Readonly release actual engine frontier differs');
+    const frontierRequests=frontierStep.suspendPayload.requests.map(parseSessionBridgeRequest);
+    if(!frontierRequests.length)throw Error('Readonly release actual engine frontier differs');
+    const correctiveExecution=frontierRequests[0].corrective_execution,baseRunId=sessionBridgeRunId(request.workspace_id,context,input.workflow_id);
+    if(frontierRequests.some(entry=>!isDeepStrictEqual(entry.corrective_execution,correctiveExecution))||!isDeepStrictEqual(state.corrective_execution??undefined,correctiveExecution)||baseRunId!==work.execution.run_id)throw Error('Readonly release original engine binding differs');
+    validateWorkSessionBinding(work,{attempt:state.attempt,run_id:state.run_id,corrective_execution:correctiveExecution},root);
+    if(correctiveExecution?(correctiveExecution.base_run_id!==baseRunId||correctiveExecution.engine_run_id!==state.run_id):state.run_id!==baseRunId)throw Error('Readonly release original engine binding differs');
+    const groupedItems=new Map();
     for(const item of items){
-      const issued=parseSessionBridgeRequest(item.request),stage=config.workflows[issued.workflow_id]?.stages.find(s=>s.id===issued.stage_id),assignment=stage?.assignments[issued.assignment_index],profile=config.agents.profiles[assignment?.profile],tools=config.agents.tool_policies[profile?.tools_policy];
-      if(item.issue_id===null||item.observation?.status!=='reported_complete'||item.observation.action_id!==issued.action_id||item.observation.issue_id!==item.issue_id||item.observation.output_digest!==canonicalJsonDigest(item.observation.summary)||item.host_reservation||item.research_activation||item.research_normalization||!configuredReadonlyAssignment(config,issued)||issued.run_id!==state.run_id||issued.config_digest!==input.config_digest||issued.scope_digest!==input.scope_digest||issued.workflow_id!==input.workflow_id||issued.action_id!==canonicalJsonDigest({context:{work_id:input.work_id,attempt:input.attempt,scope_digest:input.scope_digest},workflow_id:issued.workflow_id,wave_index:issued.wave_index,stage_id:issued.stage_id,assignment_index:issued.assignment_index})||!equal(snapshot.context?.['wave-'+issued.wave_index]?.suspendPayload?.requests?.find(r=>r.action_id===issued.action_id),issued))throw Error('Readonly release actual accepted readonly action differs');
+      const issued=parseSessionBridgeRequest(item.request),observed=parseSessionBridgeObservation(item.observation);
+      if(!isDeepStrictEqual(issued,item.request)||!isDeepStrictEqual(observed,item.observation)||!isDeepStrictEqual(issued.corrective_execution,correctiveExecution)||item.issue_id===null||observed.status!=='reported_complete'||observed.action_id!==issued.action_id||observed.issue_id!==item.issue_id||observed.output_digest!==canonicalJsonDigest(observed.summary)||item.host_reservation||item.research_activation||item.research_normalization||!configuredReadonlyAssignment(config,issued)||issued.run_id!==state.run_id||issued.config_digest!==input.config_digest||issued.scope_digest!==input.scope_digest||issued.workflow_id!==input.workflow_id)throw Error('Readonly release actual accepted readonly action differs');
+      const group=groupedItems.get(issued.wave_index)??[];
+      group.push({item,issued,observed});
+      groupedItems.set(issued.wave_index,group);
     }
+    let priorState=input;
+    const verifiedWaves=new Set();
+    for(const {waveIndex,value:step} of engineWaves.filter(entry=>entry.value?.status==='success')){
+      if(waveIndex>=frontier.waveIndex||!Object.prototype.hasOwnProperty.call(step,'payload')||!Object.prototype.hasOwnProperty.call(step,'resumePayload')||!Object.prototype.hasOwnProperty.call(step,'output')||Object.prototype.hasOwnProperty.call(step,'suspendPayload'))throw Error('Readonly release actual engine completion differs');
+      const waveInput=parseRunState(step.payload);
+      if(!isDeepStrictEqual(waveInput,priorState)||waveInput.work_id!==input.work_id||waveInput.attempt!==input.attempt||waveInput.workflow_id!==input.workflow_id||waveInput.config_digest!==input.config_digest||waveInput.scope_digest!==input.scope_digest||!isDeepStrictEqual(waveInput.selection,input.selection))throw Error('Readonly release actual engine completion differs');
+      const resumePayload=step.resumePayload;
+      if(!resumePayload||typeof resumePayload!=='object'||Array.isArray(resumePayload)||!Array.isArray(resumePayload.observations))throw Error('Readonly release actual engine completion differs');
+      const resumeObservations=resumePayload.observations.map(parseSessionBridgeObservation);
+      if(!isDeepStrictEqual(resumePayload,{observations:resumeObservations}))throw Error('Readonly release actual engine completion differs');
+      const output=parseRunState(step.output),expectedOutput={...waveInput,observations:[...waveInput.observations,...resumeObservations]};
+      if(!isDeepStrictEqual(output,expectedOutput))throw Error('Readonly release actual engine completion differs');
+      const actions=sessionActionsForWave(config,waveInput.selection,context,waveInput.workflow_id,waveIndex,[],correctiveExecution);
+      const expectedRequests=actions.map(action=>buildSessionBridgeRequest({runId:state.run_id,workflowId:waveInput.workflow_id,configDigest:waveInput.config_digest,context,waveIndex,action,configuredContext:configuredContextForStage(root,config,waveInput.workflow_id,action.stage_id,context),priorResults:waveInput.observations,correctiveExecution}));
+      const journalItems=groupedItems.get(waveIndex)??[];
+      if(!expectedRequests.length||journalItems.length!==expectedRequests.length||resumeObservations.length!==expectedRequests.length||new Set(resumeObservations.map(entry=>entry.action_id)).size!==resumeObservations.length)throw Error('Readonly release actual engine completion differs');
+      for(const expected of expectedRequests){
+        const matches=journalItems.filter(entry=>entry.issued.action_id===expected.action_id);
+        const engineMatches=resumeObservations.filter(entry=>entry.action_id===expected.action_id);
+        if(matches.length!==1||engineMatches.length!==1||!isDeepStrictEqual(matches[0].issued,expected)||!isDeepStrictEqual(engineMatches[0],matches[0].observed)||engineMatches[0].issue_id!==matches[0].item.issue_id)throw Error('Readonly release actual engine completion differs');
+      }
+      verifiedWaves.add(waveIndex);
+      priorState=output;
+    }
+    if(verifiedWaves.size!==groupedItems.size||inertItems.length!==frontierRequests.length)throw Error('Readonly release actual engine completion differs');
+    const frontierInput=parseRunState(frontierStep.payload);
+    if(!isDeepStrictEqual(frontierInput,priorState)||frontierInput.work_id!==input.work_id||frontierInput.attempt!==input.attempt||frontierInput.workflow_id!==input.workflow_id||frontierInput.config_digest!==input.config_digest||frontierInput.scope_digest!==input.scope_digest||!isDeepStrictEqual(frontierInput.selection,input.selection))throw Error('Readonly release actual engine frontier differs');
+    const frontierActions=sessionActionsForWave(config,frontierInput.selection,context,frontierInput.workflow_id,frontier.waveIndex,[],correctiveExecution);
+    const expectedFrontier=frontierActions.map(action=>buildSessionBridgeRequest({runId:state.run_id,workflowId:frontierInput.workflow_id,configDigest:frontierInput.config_digest,context,waveIndex:frontier.waveIndex,action,configuredContext:configuredContextForStage(root,config,frontierInput.workflow_id,action.stage_id,context),priorResults:frontierInput.observations,correctiveExecution}));
+    const inertRequests=inertItems.map(item=>{
+      const issued=parseSessionBridgeRequest(item.request);
+      if(!isDeepStrictEqual(issued,item.request)||item.issue_id!==null||item.observation!==null||item.host_reservation||item.research_activation||item.research_normalization)throw Error('Readonly release actual engine frontier differs');
+      return issued;
+    });
+    if(!expectedFrontier.length||!isDeepStrictEqual(frontierRequests,expectedFrontier)||!isDeepStrictEqual(inertRequests,expectedFrontier))throw Error('Readonly release actual engine frontier differs');
   } finally {engine.close();}
   const planPath=path.join(path.dirname(path.resolve(root,args[5])),'readonly-release-plan-'+request.identity.work_id+'.json');
   const database=openHostStateDatabase(databasePath);
   try {
     const store=new HostStateStore(database,request.workspace_id),intake=readAdmittedSessionIntake(root,store,request.identity);
     if(intake.native_session_handle!==request.nativeSessionHandle||work.binding.thread_id!==request.identity.thread_id&&request.identity.thread_id!==undefined)throw Error('Readonly release original owner differs');
-    // Observe the consumer's original installed closure, not this maintenance candidate's changed bytes.
-    if(snapshotDeclaredSources(access,intake.runtime_code_paths).digest!==work.binding.runtime_code_digest)throw Error('Readonly release original installed context changed');
     if(['inspect','plan'].includes(mode)){
       if(!equal(selected.version,request.expectedWork)||!equal(workspace.ledger_version,request.expectedLedger))throw Error('Readonly release work/ledger CAS differs');
       const plan={schema:'CompletedReadonlyReleasePlan/v1',request_digest:canonicalJsonDigest(request),request,rights_granted:false,canonical_acceptance:false};
@@ -1644,7 +1789,7 @@ async function releaseCompletedReadonly(args) {
       return {status:mode==='plan'?'readonly_release_planned':'readonly_release_inspected',plan_ref:path.relative(root,planPath).replaceAll(path.sep,'/'),rights_granted:false};
     }
     const plan=JSON.parse(readFileSync(planPath,'utf8'));
-    if(plan.schema!=='CompletedReadonlyReleasePlan/v1'||plan.request_digest!==canonicalJsonDigest(request)||!access.readBytes(args[5],'readonly release replay').equals(requestBytes)||runtimeConfigDigest(loadRuntimeConfig(root))!==work.binding.config_digest||!equal(snapshotDeclaredSources(access,state.source_scope.entries.map(e=>e.path)),state.source_scope))throw Error('Readonly release frozen context changed');
+    if(plan.schema!=='CompletedReadonlyReleasePlan/v1'||plan.request_digest!==canonicalJsonDigest(request)||!access.readBytes(args[5],'readonly release replay').equals(requestBytes)||runtimeConfigDigest(loadRuntimeConfig(root))!==work.binding.config_digest)throw Error('Readonly release frozen context changed');
     const result=suspendCompletedReadOnlyWork({store,identity:request.identity,journal:{version:row.version,state,resume_status:'ready_to_resume'},expectedWork:request.expectedWork,expectedLedger:request.expectedLedger,nativeSessionHandle:request.nativeSessionHandle,userRequestPointer:request.userRequestPointer,requestIntent:request.requestIntent,documentationContext:{repository_root:root,repository_id:request.identity.repository_id,project_id:request.identity.project_ids[0],work_id:request.identity.work_id},config});
     return {status:'completed_readonly_owner_released',work_version:result.workVersion,ledger_version:result.ledgerVersion,rights_granted:false,canonical_acceptance:false,runtime_acceptance:false};
   } finally {database.close();}
@@ -1657,6 +1802,18 @@ export async function run(args = process.argv.slice(2)) {
       root: bundleRoot,
       cwd: bundleRoot,
     });
+  }
+  if (args.includes('--retire-interrupted-source-owner')) {
+    if (
+      args[0] !== '--retire-interrupted-source-owner' ||
+      args[1] !== 'true' ||
+      args.includes('--report') ||
+      args.includes('--issue-wave') ||
+      args.includes('--capture-stopped-source') ||
+      args.includes('--release-completed-readonly')
+    )
+      throw Error('Interrupted Source retirement requires its exact separate signal');
+    return retireInterruptedSourceOwner(args.slice(2));
   }
   if(args.includes('--release-completed-readonly')){
     if(args[0]!=='--release-completed-readonly'||args[1]!=='true'||args.includes('--report')||args.includes('--issue-wave')||args.includes('--capture-stopped-source'))throw Error('Readonly release requires separate exact signal');
@@ -2050,10 +2207,12 @@ export async function run(args = process.argv.slice(2)) {
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
-    const { snapshotDeclaredSources, snapshotRuntimePackageSources } =
+    const { snapshotDeclaredSources, snapshotRuntimePackageSources, compareScopedSourceSnapshots } =
       await import('../src/orchestration/scoped-source-snapshot.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
     const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
+    const {default:Ajv}=await import('ajv/dist/2020.js');
+    const validateScope=new Ajv({strict:true,allErrors:true}).compile(JSON.parse(runtimePackageAccess().readBytes('schemas/implementation-scope.v1.schema.json','renew scope schema')));
     const project = loadProjectSetContext(values.project_root, config, values.repository, values.projects);
     const identity = {
       repository_id: project.repository_id,
@@ -2087,6 +2246,7 @@ export async function run(args = process.argv.slice(2)) {
         expectedMaintenanceGeneration: host.maintenanceGeneration,
         verifyCurrent: (work, state) => {
           const currentConfig = loadRuntimeConfig(values.project_root);
+          let currentWriterAuthority;
           for (const item of state.items) {
             const stage = currentConfig.workflows[work.binding.workflow_id]?.stages.find(
               (entry) => entry.id === item.request.stage_id,
@@ -2117,6 +2277,7 @@ export async function run(args = process.argv.slice(2)) {
               if (!reference) fail('GAP-VIDA-RUN-CONTEXT-001', 'Writer heartbeat source authority was revoked.');
               const bound = readLocalSourceWriteAuthorization(values.project_root, reference.path);
               const authority = bound.authorization;
+              currentWriterAuthority=authority;
               if (
                 bound.sha256 !== reference.sha256 ||
                 authority.work_id !== work.binding.lifecycle_work_id ||
@@ -2143,8 +2304,10 @@ export async function run(args = process.argv.slice(2)) {
             access,
             state.source_scope.entries.map((entry) => entry.path),
           );
-          if (source.digest !== state.source_scope.digest)
-            fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal declared source changed.');
+          const scopeBytes=access.readBytes(work.contracts.scope.path,'renew bound scope'),scope=JSON.parse(scopeBytes);
+          if(digest(scopeBytes)!==work.contracts.scope.sha256||!validateScope(scope)||scope.work_id!==work.binding.lifecycle_work_id||scope.scope_id!==work.binding.scope_id||scope.source_revision!==work.binding.work_source_revision||scope.attribution.thread_id!==values.native_session_handle||canonicalJsonDigest([...state.source_scope.entries.map(entry=>entry.path)].sort())!==canonicalJsonDigest([...scope.allowed_paths].sort())||canonicalJsonDigest([...scope.allowed_paths].sort())!==canonicalJsonDigest([...work.lifecycle.scope.allowed_paths].sort())||canonicalJsonDigest(scope.ac_ids)!==canonicalJsonDigest(work.binding.ac_ids)||canonicalJsonDigest([...scope.implementation_paths].sort())!==canonicalJsonDigest([...work.binding.implementation_paths].sort()))fail('GAP-VIDA-RUN-CONTEXT-001','Lease renewal bound scope differs.');
+          const changes=compareScopedSourceSnapshots(state.source_scope,source);
+          if(changes.some(change=>!currentWriterAuthority||!scope.allowed_paths.includes(change.path)||!currentWriterAuthority.implementation_paths.includes(change.path)))fail('GAP-VIDA-RUN-CONTEXT-001','Lease renewal source changed outside issued writer authority.');
           const intakeRef = work.artifacts.find((entry) => entry.artifact_id === 'local-session-intake');
           if (!intakeRef) fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal intake is unavailable.');
           const intakeBytes = access.readBytes(intakeRef.path, 'lease renewal intake');

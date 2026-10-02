@@ -294,6 +294,12 @@ No PID/age deletion, power-loss or SQL/filesystem atomicity claim is implied.
 
 ## Self-development protocol
 
+All subsequent native agent launches and resumes use `gpt-6-luna` for every
+role under the current human model directive. Finish an already issued native
+invocation under its original bound model; never rewrite its configuration or
+report a different model retroactively. A configured model conflict requires
+the supported typed configuration/rebind route before a new dispatch.
+
 Immediately save research results, accepted decisions and discussion outcomes
 in the corresponding current product or project document. Separate verified
 facts, proposals, accepted decisions and open questions; register ownership,

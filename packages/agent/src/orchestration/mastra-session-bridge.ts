@@ -11,8 +11,8 @@ import { compileDevelopmentWorkflow } from './workflow-plan.js';
 import { buildConfiguredContext, type ConfiguredContext } from './configured-context.js';
 import { parseObservedValidatorVerdict } from './observed-validation.js';
 import { parseObservedTesterVerdict } from './observed-testing.js';
-import { sessionActionsForWave, type SessionHandoffContext } from './session-handoff.js';
-import {correctiveExecutionSchema,type CorrectiveExecution} from './final-assurance.js';
+import { sessionActionsForWave, type SessionAgentAction, type SessionHandoffContext } from './session-handoff.js';
+import { correctiveExecutionSchema, type CorrectiveExecution } from './final-assurance.js';
 
 const observationSchema = z
   .object({
@@ -49,6 +49,10 @@ const runStateSchema = z.object({
   observations: z.array(observationSchema),
 });
 
+export function parseSessionBridgeRunState(value: unknown): z.infer<typeof runStateSchema> {
+  return runStateSchema.parse(value);
+}
+
 const requestSchema = z
   .object({
     schema: z.literal('VidaSessionRequest/v1'),
@@ -62,7 +66,7 @@ const requestSchema = z
     config_digest: z.string().regex(/^[a-f0-9]{64}$/),
     scope_digest: z.string().regex(/^[a-f0-9]{64}$/),
     bindings_manifest_ref: z.string().regex(/^[a-f0-9]{64}$/),
-    corrective_execution:correctiveExecutionSchema.optional(),
+    corrective_execution: correctiveExecutionSchema.optional(),
     configured_context_digest: z
       .string()
       .regex(/^[a-f0-9]{64}$/)
@@ -85,6 +89,62 @@ export type SessionBridgeRequest = z.infer<typeof requestSchema>;
 /** Pure persisted-request validation; does not initialize workflow storage. */
 export function parseSessionBridgeRequest(value: unknown): SessionBridgeRequest {
   return requestSchema.parse(value);
+}
+
+export function buildSessionBridgeRequest(args: {
+  runId: string;
+  workflowId: string;
+  configDigest: string;
+  context: SessionHandoffContext;
+  waveIndex: number;
+  action: SessionAgentAction;
+  configuredContext: ConfiguredContext | null;
+  priorResults: readonly SessionBridgeObservation[];
+  correctiveExecution?: CorrectiveExecution;
+}): SessionBridgeRequest {
+  const {
+    runId,
+    workflowId,
+    configDigest,
+    context,
+    waveIndex,
+    action,
+    configuredContext,
+    priorResults,
+    correctiveExecution,
+  } = args;
+  return {
+    ...(configuredContext ? { configured_context_digest: configuredContext.digest } : {}),
+    ...(configuredContext
+      ? {
+          configured_context_files: configuredContext.entries
+            .filter((entry) => entry.sha256 !== null)
+            .map((entry) => ({ path: entry.location, sha256: entry.sha256 as string })),
+        }
+      : {}),
+    schema: 'VidaSessionRequest/v1',
+    ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
+    run_id: runId,
+    workflow_id: workflowId,
+    wave_index: waveIndex,
+    action_id: action.action_id,
+    assignment_index: action.assignment_index,
+    stage_id: action.stage_id,
+    role: action.role,
+    config_digest: configDigest,
+    scope_digest: context.scope_digest,
+    bindings_manifest_ref: canonicalJsonDigest({
+      config_digest: configDigest,
+      scope_digest: context.scope_digest,
+      work_id: context.work_id,
+      attempt: context.attempt,
+      action_id: action.action_id,
+      stage_id: action.stage_id,
+      configured_context_digest: configuredContext?.digest ?? null,
+      wave_index: waveIndex,
+      prior_results: priorResults.map((entry) => entry.output_digest),
+    }),
+  };
 }
 
 export function configuredContextForStage(
@@ -168,14 +228,16 @@ export class MastraSessionBridge {
     context: SessionHandoffContext;
     workflowId: string;
     workspaceId: string;
-    correctiveExecution?:CorrectiveExecution;
+    correctiveExecution?: CorrectiveExecution;
   }): Promise<MastraSessionBridge> {
     const { repositoryRoot, config, selection, context, workflowId, workspaceId } = args;
     const plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags);
-    const correctiveExecution=args.correctiveExecution?correctiveExecutionSchema.parse(args.correctiveExecution):undefined;
-    const baseRunId=sessionBridgeRunId(workspaceId, context, workflowId);
-    requireBridge(!correctiveExecution||correctiveExecution.base_run_id===baseRunId,'corrective base run differs');
-    const runId = correctiveExecution?.engine_run_id??baseRunId;
+    const correctiveExecution = args.correctiveExecution
+      ? correctiveExecutionSchema.parse(args.correctiveExecution)
+      : undefined;
+    const baseRunId = sessionBridgeRunId(workspaceId, context, workflowId);
+    requireBridge(!correctiveExecution || correctiveExecution.base_run_id === baseRunId, 'corrective base run differs');
+    const runId = correctiveExecution?.engine_run_id ?? baseRunId;
     const configDigest = runtimeConfigDigest(config);
     const workflow = createWorkflow({
       id: workflowId,
@@ -184,7 +246,7 @@ export class MastraSessionBridge {
       description: 'Configured VIDA session workflow with durable agent handoff.',
     });
     for (const [waveIndex, wave] of plan.waves.entries()) {
-      if(correctiveExecution&&!wave.some(stage=>correctiveExecution.stage_ids.includes(stage.id)))continue;
+      if (correctiveExecution && !wave.some((stage) => correctiveExecution.stage_ids.includes(stage.id))) continue;
       if (wave.every((stage) => stage.assignments.length === 0)) continue;
       workflow.then(
         createStep({
@@ -195,49 +257,35 @@ export class MastraSessionBridge {
           resumeSchema,
           execute: async ({ inputData, resumeData, suspend }) => {
             requireBridge(inputData.config_digest === configDigest, 'Mastra configuration changed during attempt');
-            const actions = sessionActionsForWave(config, selection, context, workflowId, waveIndex, [],correctiveExecution);
+            const actions = sessionActionsForWave(
+              config,
+              selection,
+              context,
+              workflowId,
+              waveIndex,
+              [],
+              correctiveExecution,
+            );
             requireBridge(actions.length > 0, 'Mastra wave has no executable assignments');
-            const requests = actions.map((action) => {
-              const configuredContext = configuredContextForStage(
-                repositoryRoot,
-                config,
+            const requests = actions.map((action) =>
+              buildSessionBridgeRequest({
+                runId,
                 workflowId,
-                action.stage_id,
+                configDigest,
                 context,
-              );
-              return {
-                ...(configuredContext ? { configured_context_digest: configuredContext.digest } : {}),
-                ...(configuredContext
-                  ? {
-                      configured_context_files: configuredContext.entries
-                        .filter((entry) => entry.sha256 !== null)
-                        .map((entry) => ({ path: entry.location, sha256: entry.sha256 as string })),
-                    }
-                  : {}),
-                schema: 'VidaSessionRequest/v1' as const,
-                ...(correctiveExecution?{corrective_execution:correctiveExecution}:{}),
-                run_id: runId,
-                workflow_id: workflowId,
-                wave_index: waveIndex,
-                action_id: action.action_id,
-                assignment_index: action.assignment_index,
-                stage_id: action.stage_id,
-                role: action.role,
-                config_digest: configDigest,
-                scope_digest: context.scope_digest,
-                bindings_manifest_ref: canonicalJsonDigest({
-                  config_digest: configDigest,
-                  scope_digest: context.scope_digest,
-                  work_id: context.work_id,
-                  attempt: context.attempt,
-                  action_id: action.action_id,
-                  stage_id: action.stage_id,
-                  configured_context_digest: configuredContext?.digest ?? null,
-                  wave_index: waveIndex,
-                  prior_results: inputData.observations.map((entry) => entry.output_digest),
-                }),
-              };
-            });
+                waveIndex,
+                action,
+                configuredContext: configuredContextForStage(
+                  repositoryRoot,
+                  config,
+                  workflowId,
+                  action.stage_id,
+                  context,
+                ),
+                priorResults: inputData.observations,
+                ...(correctiveExecution ? { correctiveExecution } : {}),
+              }),
+            );
             if (!resumeData) return await suspend({ requests });
             const expected = new Set(requests.map((request) => request.action_id));
             requireBridge(resumeData.observations.length === expected.size, 'Mastra wave observation count differs');

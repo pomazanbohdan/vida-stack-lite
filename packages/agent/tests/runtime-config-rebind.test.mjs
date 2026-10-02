@@ -215,6 +215,8 @@ function seedState(
           request_digest: digest,
           stage_id: 'implementation',
           assignment_index: 0,
+          correction_generation: 0,
+          correction_authorization: null,
           lease: workLease,
           status: effect,
           result: null,
@@ -691,7 +693,13 @@ for (const [name, mutation, validateFixture] of [
       const item = state.items.find((entry) => entry.issue_id);
       item.host_reservation = {
         schema: 'WorkflowSessionReservation/v1',
-        receipt: { attempt: { attempt_id: canonicalJsonDigest({ fixture: 'reservation' }) } },
+        receipt: {
+          attempt: {
+            attempt_id: canonicalJsonDigest({ fixture: 'reservation' }),
+            correction_generation: 0,
+            correction_authorization: null,
+          },
+        },
         request: {
           workItemId: state.work_id,
           stageId: item.request.stage_id,
