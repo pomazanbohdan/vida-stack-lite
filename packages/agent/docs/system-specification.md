@@ -475,6 +475,15 @@ with its retained authorization. Normalize only the wholly absent
 the nested authorization receipt. Partial fields, corrective history, mismatched
 authority, competing Source ownership and unrelated unknown effects fail closed.
 Unrelated execution-only read-only claims remain unchanged under ledger CAS.
+Journals requiring no correction metadata normalization remain unchanged frozen
+CAS dependencies, including issued read-only actions without a Host reservation
+or observation. Their unknown outcomes are neither settled nor inferred. Every
+journal requiring normalization retains the complete issued-action checks;
+an unrelated unknown action inside that changed journal still blocks repair.
+An observed terminal Host attempt may retain its original started reservation
+receipt. Require exact stable attempt fields and a matching recorded observation
+and Host result digest; only status, result and result digest may differ between
+that original receipt and its completed Host attempt. Preserve both states.
 Preserve the
 attempt's status, null result and observation, issue, approval, scope and lease;
 repair neither releases ownership nor settles `commit_unknown` or authorizes

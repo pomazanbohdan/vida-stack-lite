@@ -64,6 +64,18 @@ missing pair in Host and dependent receipts, preserving issue, unknown outcome
 and authority. Existing Mastra persistence is retained; no new execution or
 workflow replay is needed for this metadata operation.
 
+Verified [SQLite isolation](https://www.sqlite.org/isolation.html) and transaction
+references, retrieved 2026-10-02, support a consistent transactional scan and
+serialized writes. They do not supply application-level CAS: the repair binds
+all journal rows and compares their versions before changing only normalized
+postimages. Unchanged journals with unknown read-only actions remain frozen
+dependencies; no outcome is inferred. A changed journal retains its complete
+issued-action validation. This behavior is covered by the interrupted Source
+retirement regression and traced to `audit-36-absorption-release-20261001`.
+The application-owned `agent_host_mastra_session_ledger` rows are separate from
+Mastra workflow checkpoints; framework checkpoint isolation does not establish
+the correctness of this repair or authorize replay.
+
 Research GAP: official JSON Schema 2020-12 core and validation pages returned
 HTTP 403 during the bounded lookup. The repository's strict current-v1 schema
 and executable checks remain the available local evidence. Source fixture

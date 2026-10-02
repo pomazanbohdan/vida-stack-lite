@@ -3933,7 +3933,9 @@ export class HostStateStore {
             );
             requireState(
               actual &&
-                canonicalJson(actual) === canonicalJson(attempt) &&
+                (sameJson(actual, attempt) ||
+                  (actual.status === 'completed' &&
+                    sameJson(attempt, { ...actual, status: 'started', result: null, result_digest: null }))) &&
                 ((actual.status === 'completed' &&
                   item.observation?.host_attempt_id === attempt.attempt_id &&
                   actual.result_digest === canonicalJsonDigest(item.observation)) ||
@@ -3974,6 +3976,15 @@ export class HostStateStore {
                     canonicalJsonDigest(before) === row.digest,
                   'repair journal preimage integrity differs',
                 );
+                const needsNormalization = journalItems(before).some((item) =>
+                  [item.host_reservation?.receipt.attempt, item.host_reservation?.authorization?.receipt.attempt].some(
+                    (attempt) =>
+                      attempt !== undefined &&
+                      (!Object.hasOwn(attempt, 'correction_generation') ||
+                        !Object.hasOwn(attempt, 'correction_authorization')),
+                  ),
+                );
+                if (!needsNormalization) return [];
                 const normalized = normalizeJournal(before);
                 return canonicalJson(normalized) === canonicalJson(before) ? [] : [{ row, before, after: normalized }];
               });

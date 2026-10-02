@@ -1346,7 +1346,7 @@ test('successful normalized readonly research is retained as historical provenan
   }
 });
 
-test('explicit correction-generation repair preserves base identities, restores current authority and fences dependent writes', () => {
+test.each(['started', 'completed'])('explicit correction-generation repair (%s receipt)', (receiptStatus) => {
   const f = fixture(false, true);
   const repair = (mode, actor) =>
     runWorkStateRepair([
@@ -1428,7 +1428,13 @@ test('explicit correction-generation repair preserves base identities, restores 
         observation: terminalObservation,
         host_reservation: {
           schema: 'WorkflowSessionReservation/v1',
-          receipt: { ...started, attempt: old.execution.assignment_attempts[0] },
+          receipt: {
+            ...started,
+            attempt: {
+              ...old.execution.assignment_attempts[0],
+              ...(receiptStatus === 'started' ? { status: 'started', result: null, result_digest: null } : {}),
+            },
+          },
           request: { workItemId: 'repair-base', stageId: 'fixture-stage', assignmentIndex: 0 },
         },
       },
@@ -1457,6 +1463,19 @@ test('explicit correction-generation repair preserves base identities, restores 
     expect(() => f.store.readHostStateSnapshot(identity)).toThrow();
     saveJournal({ ...oldJournal, items: [{ ...oldJournal.items[0], observation: null }] });
     expect(() => repair('plan', 'fixture')).toThrow('terminal issued observations');
+    saveJournal(oldJournal);
+    const mismatchedReceipt = structuredClone(oldJournal);
+    mismatchedReceipt.items[0].host_reservation.receipt.attempt.request_digest = 'f'.repeat(64);
+    saveJournal(mismatchedReceipt);
+    expect(() => repair('inspect')).toThrow(
+      'repair reservation is not an exact terminal or retained unknown Host attempt',
+    );
+    const mismatchedObservation = structuredClone(oldJournal);
+    mismatchedObservation.items[0].observation.summary = 'A different reported outcome';
+    saveJournal(mismatchedObservation);
+    expect(() => repair('inspect')).toThrow(
+      'repair reservation is not an exact terminal or retained unknown Host attempt',
+    );
     saveJournal(oldJournal);
     expect(repair('inspect').status).toBe('repairable_current_v1');
     const planned = repair('plan', 'fixture');

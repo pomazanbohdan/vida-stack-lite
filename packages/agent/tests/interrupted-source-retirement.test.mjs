@@ -265,7 +265,7 @@ async function fixture({ writer = true } = {}) {
       console.warn('Fixture cleanup deferred (closed SQLite handles, OS EBUSY): ' + root);
     }
   }
-  async function laterWriter(id, file) {
+  async function laterWriter(id, file, { readonly = false } = {}) {
     if (file !== 'AGENT.sidecar.md') writeFileSync(path.join(root, file), 'Synthetic disjoint source');
     const next = admission(id, file, 'synthetic-' + id);
     const nextBridge = await MastraSessionBridge.open({
@@ -281,6 +281,7 @@ async function fixture({ writer = true } = {}) {
     const nextSync = () => ledger.sync(id, 1, state.run_id, state.step_id, state.requests, next.source, state.status);
     let nextJournal = nextSync();
     nextJournal = ledger.issueWave(id, 1, nextJournal.version);
+    if (readonly) return { ...next, journal: nextJournal };
     const action = nextJournal.state.items[0],
       summary = 'Synthetic later readonly synthesis';
     nextJournal = ledger.report(
@@ -673,6 +674,19 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
   try {
     database = openHostStateDatabase(sessionHandoffDatabasePath(f.root, f.config));
     f.admission('readonly-independent', 'AGENTS.md', 'synthetic-readonly-owner');
+    for (const id of ['unknown-readonly-a', 'unknown-readonly-b']) {
+      const pending = await f.laterWriter(id, id + '.txt', { readonly: true });
+      expect(pending.journal.state.items[0].issue_id).toBeTruthy();
+      expect(pending.journal.state.items[0].observation).toBeNull();
+      expect(pending.journal.state.items[0].host_reservation).toBeUndefined();
+    }
+    const unrelatedRows = () =>
+      database
+        .query(
+          'SELECT * FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id LIKE ? ORDER BY work_id',
+        )
+        .all(f.workspace, 'unknown-readonly-%');
+    const unrelatedBefore = unrelatedRows();
     const hostRow = database
       .query("SELECT id,payload FROM agent_host_state WHERE workspace_id=? AND kind='work'")
       .all(f.workspace)
@@ -710,6 +724,20 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
     expect(inspection.status).toBe('repairable_current_v1');
     expect(inspection.changed_work).toHaveLength(1);
     expect(inspection.changed_journals).toBe(1);
+    const contaminatedJournal = structuredClone(originalJournal);
+    const unrelatedItem = JSON.parse(unrelatedBefore[0].payload).items[0];
+    contaminatedJournal.items.push(unrelatedItem);
+    database
+      .query(
+        'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .run(canonicalJson(contaminatedJournal), canonicalJsonDigest(contaminatedJournal), f.workspace, 'stopped', 1);
+    expect(() => repair('inspect')).toThrow(/interrupted repair has another issued unknown journal item/);
+    database
+      .query(
+        'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .run(canonicalJson(originalJournal), canonicalJsonDigest(originalJournal), f.workspace, 'stopped', 1);
     const plan = repair('plan', 'synthetic-repair-owner');
     expect(plan.status).toBe('planned');
     expect(plan.work_changes[0].after.execution.assignment_attempts[0]).toEqual({
@@ -731,13 +759,13 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
       .query(
         'UPDATE agent_host_mastra_session_ledger SET revision=revision+1 WHERE workspace_id=? AND work_id=? AND attempt=?',
       )
-      .run(f.workspace, 'stopped', 1);
+      .run(f.workspace, 'unknown-readonly-a', 1);
     expect(() => repair('apply')).toThrow(/repair dependency CAS conflict/);
     database
       .query(
         'UPDATE agent_host_mastra_session_ledger SET revision=revision-1 WHERE workspace_id=? AND work_id=? AND attempt=?',
       )
-      .run(f.workspace, 'stopped', 1);
+      .run(f.workspace, 'unknown-readonly-a', 1);
     database.exec(
       "CREATE TRIGGER correction_repair_fault BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'synthetic correction repair fault'); END",
     );
@@ -762,6 +790,7 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
     const applied = repair('apply');
     expect(applied.status).toBe('applied');
     expect(repair('resume')).toEqual(applied);
+    expect(unrelatedRows()).toEqual(unrelatedBefore);
 
     const repairedJournal = f.ledger.resume('stopped', 1),
       repairedItem = repairedJournal.state.items.find((item) => item.host_reservation),
