@@ -1,6 +1,6 @@
 import { test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -12,7 +12,10 @@ import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snap
 import { openHostStateDatabase, inspectHostWorkspaceDatabase } from '../src/host-state.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
-import { openAdmittedSessionExecution } from '../src/orchestration/admitted-session-execution.ts';
+import {
+  openAdmittedSessionExecution,
+  readAdmittedSessionIntake,
+} from '../src/orchestration/admitted-session-execution.ts';
 import {
   openConfiguredMastraSessionLedger,
   sessionHandoffDatabasePath,
@@ -614,30 +617,30 @@ test('completed configured readonly egress can release with a fully inert unissu
 }, 60000);
 
 test('completed readonly release tolerates package and declared-source drift while releasing only the old owner', async () => {
+  mkdirSync(path.join(bundle, '.tmp'), { recursive: true });
   const f = await fixture({ writer: false }),
     packageFixtureRoot = mkdtempSync(path.join(bundle, '.tmp', 'readonly-release-drift-')),
     packageRoot = path.join(packageFixtureRoot, 'vida-agent');
   try {
-    cpSync(bundle, packageRoot, {
-      recursive: true,
-      filter: (source) => {
-        const relative = path.relative(bundle, source);
-        if (!relative) return true;
-        return !['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect', 'dist'].includes(
-          relative.split(path.sep)[0],
-        );
-      },
-    });
+    mkdirSync(packageRoot);
+    const excluded = ['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'];
+    for (const entry of readdirSync(bundle)) {
+      if (!excluded.includes(entry))
+        cpSync(path.join(bundle, entry), path.join(packageRoot, entry), { recursive: true });
+    }
     const clonedRuntime = await import(pathToFileURL(path.join(packageRoot, 'src/config/runtime-config.ts')).href),
-      clonedSnapshots = await import(pathToFileURL(path.join(packageRoot, 'src/orchestration/scoped-source-snapshot.ts')).href),
+      clonedSnapshots = await import(
+        pathToFileURL(path.join(packageRoot, 'src/orchestration/scoped-source-snapshot.ts')).href
+      ),
       clonedRun = await import(pathToFileURL(path.join(packageRoot, 'bin/run.mjs')).href),
       host = f.store.readHostStateSnapshot(f.identity),
       journal = f.ledger.resume('stopped', 1),
+      runtimeCodePaths = readAdmittedSessionIntake(f.root, f.store, f.identity).runtime_code_paths,
       scopedPaths = journal.state.source_scope.entries.map((entry) => entry.path),
       beforePackage = clonedSnapshots.snapshotRuntimePackageSources(
         clonedRuntime.runtimePackageAccess(),
         f.config.runtime.bundle,
-        f.input.runtimeCodePaths,
+        runtimeCodePaths,
       ),
       beforeProject = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), scopedPaths);
     expect(beforePackage.digest).toBe(host.work.binding.runtime_code_digest);
@@ -646,12 +649,15 @@ test('completed readonly release tolerates package and declared-source drift whi
     writeFileSync(path.join(f.root, 'AGENT.sidecar.md'), 'Synthetic changed scoped source');
     writeFileSync(
       path.join(packageRoot, 'bin/run.mjs'),
-      Buffer.concat([readFileSync(path.join(packageRoot, 'bin/run.mjs')), Buffer.from('\n// synthetic package drift\n')]),
+      Buffer.concat([
+        readFileSync(path.join(packageRoot, 'bin/run.mjs')),
+        Buffer.from('\n// synthetic package drift\n'),
+      ]),
     );
     const afterPackage = clonedSnapshots.snapshotRuntimePackageSources(
         clonedRuntime.runtimePackageAccess(),
         f.config.runtime.bundle,
-        f.input.runtimeCodePaths,
+        runtimeCodePaths,
       ),
       afterProject = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), scopedPaths);
     expect(afterPackage.digest).not.toBe(beforePackage.digest);

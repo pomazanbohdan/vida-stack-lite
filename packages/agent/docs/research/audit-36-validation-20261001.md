@@ -7,6 +7,36 @@ lifecycle, review, delivery or Runtime acceptance. Work attribution:
 Source batch is direct delegation, not a public runtime-issued attempt. It
 creates no host attempt, native issue or accepted Code receipt by declaration.
 
+## Owner-reducing interrupted Source recovery
+
+The admitted parent owner and the delegated writer are separate identities.
+Requiring an unrelated active work or a live target lease for relinquishment
+creates a circular admission gate after expiry or a runtime Source edit.
+The accepted recovery uses the configured Host's existing purpose-limited
+retirement method: inspection derives its target, stored approval and typed CAS;
+the current owner's cooperative handle and decision correlate the interrupted
+child with that scope. Apply preserves unknown outcome, journal, fencing,
+FIFO, overlap and transactional rollback checks and grants no new authority.
+No cryptographic native-session attestation follows from local observation refs.
+
+SQLite's [transaction contract](https://www.sqlite.org/lang_transaction.html)
+supports retaining the immediate transaction and CAS boundary. Codex's
+[interrupt API](https://github.com/openai/codex/blob/main/sdk/python/src/openai_codex/api.py)
+is an interruption request; observed terminal state and absence of active
+writers remain separate evidence. Microsoft's
+[lease contract](https://learn.microsoft.com/en-us/rest/api/storageservices/lease-blob)
+distinguishes relinquishment/expiry from stale-writer protection.
+
+Test copies enumerate allowed top-level Source entries into an owned clone,
+excluding dependencies and scratch. This preserves dependency ancestry while
+avoiding a recursive source-to-descendant root copy. Node's
+[temporary-directory](https://nodejs.org/api/fs.html#fs_mkdtemp) and
+[copy contracts](https://nodejs.org/api/fs.html#fs.cpsyncsrc-dest-options)
+require an existing temporary parent and valid source/destination paths.
+
+Code and focused/full qualification results are recorded by the release
+operation; research alone supplies no test pass or Runtime acceptance.
+
 ## Accepted Source development-controller seam
 
 Decision: after independent plan approval, the Source self-development seam uses

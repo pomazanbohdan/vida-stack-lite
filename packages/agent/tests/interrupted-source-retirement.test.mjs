@@ -1,9 +1,9 @@
 import { test, expect } from 'bun:test';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -17,7 +17,11 @@ import {
   sessionHandoffDatabasePath,
 } from '../src/orchestration/persistent-session-handoff.ts';
 import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
-import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession, retireInterruptedSourceOwnerForSession } from '../src/runtime-kernel.ts';
+import {
+  prepareWorkflowExecution,
+  reserveWorkflowAssignmentForSession,
+  retireInterruptedSourceOwnerForSession,
+} from '../src/runtime-kernel.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixtureEvidence = 'local://synthetic/stopped-source';
@@ -205,8 +209,7 @@ async function fixture({ writer = true } = {}) {
     journal.state.items.map((entry) => entry.observation),
   );
   journal = sync();
-  let reservation,
-    executionCapability;
+  let reservation, executionCapability;
   if (writer) {
     const host = store.readHostStateSnapshot(identity);
     acquireLocalSourceWriterLease({
@@ -244,10 +247,16 @@ async function fixture({ writer = true } = {}) {
     });
     journal = ledger.issueWave('stopped', 1, journal.version, { [request.action_id]: reservation });
   }
-  async function close() {
+  let connectionsClosed = false;
+  async function closeConnections() {
+    if (connectionsClosed) return;
     for (const extra of extraBridges) await extra.close();
     await bridge.close();
     ledger.close();
+    connectionsClosed = true;
+  }
+  async function close() {
+    await closeConnections();
     try {
       await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     } catch (error) {
@@ -323,6 +332,7 @@ async function fixture({ writer = true } = {}) {
     reservation,
     readonlyObservation,
     close,
+    closeConnections,
     admission,
     laterWriter,
   };
@@ -344,11 +354,11 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
         expectedJournal: journal.version,
         expectedMaintenanceGeneration: before.maintenanceGeneration,
         authorization: f.reservation.authorization,
-        operatorHandle: 'synthetic-root-operator',
+        operatorHandle: f.input.nativeSessionHandle,
         decisionPointer: 'synthetic:approved-interrupted-source-retirement',
         evidence: {
           schema: 'InterruptedSourceRetirementEvidence/v1',
-          source_thread_id: f.input.nativeSessionHandle,
+          source_thread_id: 'synthetic-interrupted-child',
           source_thread_status: 'interrupted',
           read_thread_ref: 'synthetic:read-thread:interrupted',
           list_agents_ref: 'synthetic:list-agents:no-source-writers',
@@ -368,11 +378,15 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
     expect(retired.attempt_receipt.attempt.status).toBe('uncertain');
     expect(retired.attempt_receipt.attempt.result).toBeNull();
     expect(retired.attempt_receipt.attempt.result_digest).toBeNull();
-    expect(retired.snapshot.ledger.tickets.find((ticket) => ticket.ticket_id === before.work.lease.ticket_id).status).toBe('released');
+    expect(
+      retired.snapshot.ledger.tickets.find((ticket) => ticket.ticket_id === before.work.lease.ticket_id).status,
+    ).toBe('released');
     expect(f.store.readWorkSessionJournal(f.identity).version).toEqual(journal.version);
-    expect((await retireInterruptedSourceOwnerForSession(f.executionCapability, request)).snapshot).toEqual(retired.snapshot);
+    expect((await retireInterruptedSourceOwnerForSession(f.executionCapability, request)).snapshot).toEqual(
+      retired.snapshot,
+    );
 
-    const later = await f.laterWriter('later-overlap', 'AGENT.sidecar.md');
+    await f.laterWriter('later-overlap', 'AGENT.sidecar.md');
     await expect(retireInterruptedSourceOwnerForSession(f.executionCapability, request)).rejects.toThrow(
       'another active Source owner overlaps',
     );
@@ -398,6 +412,103 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
   }
 });
 
+test('public owner retirement restarts after lease expiry and package drift without an execution capability', async () => {
+  mkdirSync(path.join(bundle, '.tmp'), { recursive: true });
+  const f = await fixture(),
+    cloneRoot = mkdtempSync(path.join(bundle, '.tmp', 'interrupted-recovery-')),
+    packageRoot = path.join(cloneRoot, 'vida-agent'),
+    realNow = Date.now;
+  let observer;
+  try {
+    mkdirSync(packageRoot);
+    const excluded = ['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'];
+    for (const entry of readdirSync(bundle)) {
+      if (!excluded.includes(entry))
+        cpSync(path.join(bundle, entry), path.join(packageRoot, entry), { recursive: true });
+    }
+    const before = f.store.readHostStateSnapshot(f.identity),
+      originalJournal = f.ledger.resume('stopped', 1);
+    writeFileSync(
+      path.join(packageRoot, 'bin/run.mjs'),
+      readFileSync(path.join(packageRoot, 'bin/run.mjs'), 'utf8') + '\n// synthetic post-admission runtime drift\n',
+    );
+    writeFileSync(path.join(f.root, 'AGENT.sidecar.md'), 'Synthetic changed Source after interruption');
+    await f.closeConnections();
+    f.executionCapability = undefined;
+    Date.now = () => realNow() + 3 * 60 * 60 * 1000;
+    const { run } = await import(pathToFileURL(path.join(packageRoot, 'bin/run.mjs')).href),
+      requestRef = '.agent/work/stopped/retirement.json',
+      cli = (mode, handle = f.input.nativeSessionHandle) =>
+        run([
+          '--retire-interrupted-source-owner',
+          'true',
+          '--mode',
+          mode,
+          '--project-root',
+          f.root,
+          '--native-session-handle',
+          handle,
+          '--request',
+          requestRef,
+        ]);
+    writeJson(f.root, requestRef, { identity: f.identity, attempt: 1 });
+    await expect(cli('inspect', 'foreign-owner')).rejects.toThrow('owner');
+    const inspected = await cli('inspect');
+    expect(inspected.status).toBe('interrupted_source_retirement_inspected');
+    expect(inspected.owner_thread_id).toBe(f.input.nativeSessionHandle);
+    expect(inspected.request.actionId).toBe(originalJournal.state.items[0].request.action_id);
+    expect(inspected.request.issueId).toBe(originalJournal.state.items[0].issue_id);
+    const request = {
+      ...inspected.request,
+      decisionPointer: 'synthetic-owner:relinquish-for-interrupted-child',
+      evidence: {
+        schema: 'InterruptedSourceRetirementEvidence/v1',
+        source_thread_id: 'synthetic-interrupted-child',
+        source_thread_status: 'interrupted',
+        read_thread_ref: 'synthetic:actual-child-interrupted',
+        list_agents_ref: 'synthetic:no-running-source-writers',
+        active_source_writer_ids: [],
+      },
+    };
+    writeJson(f.root, requestRef, {
+      ...request,
+      expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 },
+    });
+    await expect(cli('apply')).rejects.toThrow('CAS');
+    writeJson(f.root, requestRef, { ...request, evidence: { ...request.evidence, source_thread_status: 'running' } });
+    await expect(cli('apply')).rejects.toThrow('evidence');
+    writeJson(f.root, requestRef, request);
+    const released = await cli('apply');
+    expect(released).toMatchObject({
+      status: 'interrupted_source_owner_released',
+      attempt_status: 'uncertain',
+      rights_granted: false,
+      attempt_outcome_resolved: false,
+    });
+    expect((await cli('apply')).operation_id).toBe(released.operation_id);
+    observer = openConfiguredMastraSessionLedger(f.root);
+    const after = observer.hostState.readHostStateSnapshot(f.identity);
+    expect(after.work.execution.status).toBe('suspended');
+    expect(after.work.lease).toBeNull();
+    expect(after.work.execution.assignment_attempts[0]).toMatchObject({
+      status: 'uncertain',
+      result: null,
+      result_digest: null,
+    });
+    expect(after.ledger.tickets.length).toBe(before.ledger.tickets.length);
+    expect(observer.hostState.readWorkSessionJournal(f.identity)).toEqual({
+      attempt: 1,
+      version: originalJournal.version,
+      state: originalJournal.state,
+    });
+  } finally {
+    Date.now = realNow;
+    observer?.close();
+    await f.close();
+    await rm(cloneRoot, { recursive: true, force: true });
+  }
+}, 60000);
+
 test('interrupted Source retirement rejects missing, running, foreign, and stale evidence without mutation', async () => {
   const f = await fixture();
   try {
@@ -414,21 +525,38 @@ test('interrupted Source retirement rejects missing, running, foreign, and stale
         expectedJournal: journal.version,
         expectedMaintenanceGeneration: before.maintenanceGeneration,
         authorization: f.reservation.authorization,
-        operatorHandle: 'synthetic-root-operator',
+        operatorHandle: f.input.nativeSessionHandle,
         decisionPointer: 'synthetic:approved-interrupted-source-retirement',
         evidence: {
           schema: 'InterruptedSourceRetirementEvidence/v1',
-          source_thread_id: f.input.nativeSessionHandle,
+          source_thread_id: 'synthetic-interrupted-child',
           source_thread_status: 'interrupted',
           read_thread_ref: 'synthetic:read-thread:interrupted',
           list_agents_ref: 'synthetic:list-agents:no-source-writers',
           active_source_writer_ids: [],
         },
       };
-    expect(() => f.store.retireInterruptedSourceOwner({ ...request, evidence: { ...request.evidence, read_thread_ref: '' } })).toThrow('evidence');
-    expect(() => f.store.retireInterruptedSourceOwner({ ...request, evidence: { ...request.evidence, source_thread_status: 'running' } })).toThrow('evidence');
-    expect(() => f.store.retireInterruptedSourceOwner({ ...request, evidence: { ...request.evidence, source_thread_id: 'foreign-thread' } })).toThrow('evidence');
-    expect(() => f.store.retireInterruptedSourceOwner({ ...request, evidence: { ...request.evidence, active_source_writer_ids: ['competing-writer'] } })).toThrow('evidence');
+    expect(() =>
+      f.store.retireInterruptedSourceOwner({ ...request, evidence: { ...request.evidence, read_thread_ref: '' } }),
+    ).toThrow('evidence');
+    expect(() =>
+      f.store.retireInterruptedSourceOwner({
+        ...request,
+        evidence: { ...request.evidence, source_thread_status: 'running' },
+      }),
+    ).toThrow('evidence');
+    expect(() =>
+      f.store.retireInterruptedSourceOwner({
+        ...request,
+        operatorHandle: 'foreign-owner-thread',
+      }),
+    ).toThrow('owner attribution');
+    expect(() =>
+      f.store.retireInterruptedSourceOwner({
+        ...request,
+        evidence: { ...request.evidence, active_source_writer_ids: ['competing-writer'] },
+      }),
+    ).toThrow('evidence');
     expect(() => f.store.retireInterruptedSourceOwner({ ...request, issueId: 'stale-issue' })).toThrow('issue');
     const staleAuthorization = {
       ...request.authorization,
@@ -436,12 +564,22 @@ test('interrupted Source retirement rejects missing, running, foreign, and stale
         ...request.authorization.receipt,
         attempt: {
           ...request.authorization.receipt.attempt,
-          lease: { ...request.authorization.receipt.attempt.lease, generation: request.authorization.receipt.attempt.lease.generation + 1 },
+          lease: {
+            ...request.authorization.receipt.attempt.lease,
+            generation: request.authorization.receipt.attempt.lease.generation + 1,
+          },
         },
       },
     };
-    expect(() => f.store.retireInterruptedSourceOwner({ ...request, authorization: staleAuthorization })).toThrow('lease');
-    expect(() => f.store.retireInterruptedSourceOwner({ ...request, expectedLedger: { ...before.ledgerVersion, digest: 'f'.repeat(64) } })).toThrow('compare-and-swap');
+    expect(() => f.store.retireInterruptedSourceOwner({ ...request, authorization: staleAuthorization })).toThrow(
+      'lease',
+    );
+    expect(() =>
+      f.store.retireInterruptedSourceOwner({
+        ...request,
+        expectedLedger: { ...before.ledgerVersion, digest: 'f'.repeat(64) },
+      }),
+    ).toThrow('compare-and-swap');
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(f.store.readWorkSessionJournal(f.identity).version).toEqual(journal.version);
   } finally {
@@ -465,11 +603,11 @@ test('interrupted Source retirement transaction rolls back the attempt downgrade
         expectedJournal: journal.version,
         expectedMaintenanceGeneration: before.maintenanceGeneration,
         authorization: f.reservation.authorization,
-        operatorHandle: 'synthetic-root-operator',
+        operatorHandle: f.input.nativeSessionHandle,
         decisionPointer: 'synthetic:approved-interrupted-source-retirement',
         evidence: {
           schema: 'InterruptedSourceRetirementEvidence/v1',
-          source_thread_id: f.input.nativeSessionHandle,
+          source_thread_id: 'synthetic-interrupted-child',
           source_thread_status: 'interrupted',
           read_thread_ref: 'synthetic:read-thread:interrupted',
           list_agents_ref: 'synthetic:list-agents:no-source-writers',
@@ -477,7 +615,9 @@ test('interrupted Source retirement transaction rolls back the attempt downgrade
         },
       },
       db = openHostStateDatabase(sessionHandoffDatabasePath(f.root, f.config));
-    db.exec("CREATE TRIGGER fail_retirement_ledger BEFORE UPDATE ON agent_host_state WHEN OLD.kind='ledger' BEGIN SELECT RAISE(ABORT, 'synthetic retirement fault'); END;");
+    db.exec(
+      "CREATE TRIGGER fail_retirement_ledger BEFORE UPDATE ON agent_host_state WHEN OLD.kind='ledger' BEGIN SELECT RAISE(ABORT, 'synthetic retirement fault'); END;",
+    );
     try {
       expect(() => f.store.retireInterruptedSourceOwner(request)).toThrow('synthetic retirement fault');
     } finally {

@@ -320,11 +320,12 @@ test('public DevelopmentTaskPacket screening accepts ordinary prose and short pr
   ];
   for (const [field, text] of ordinary) {
     const packet = buildPublicDevelopmentTaskPacket(publicConfig, packetInputWithText(field, text));
-    const result = field === 'objective' || field === 'source_revision'
-      ? packet[field]
-      : field === 'work_item.labels'
-        ? packet.work_item.labels
-        : packet[field];
+    const result =
+      field === 'objective' || field === 'source_revision'
+        ? packet[field]
+        : field === 'work_item.labels'
+          ? packet.work_item.labels
+          : packet[field];
     expect(result).toEqual(field === 'objective' || field === 'source_revision' ? text : [text]);
   }
 });

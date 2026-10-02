@@ -1598,62 +1598,83 @@ async function retireInterruptedSourceOwner(args) {
     args.length !== 8 ||
     args[0] !== '--mode' ||
     args[2] !== '--project-root' ||
-    args[4] !== '--operator-work-id' ||
+    args[4] !== '--native-session-handle' ||
     args[6] !== '--request'
   )
-    throw Error('Interrupted Source retirement requires mode, exact root, active operator work and request');
-  const mode = args[1], root = realpathSync(args[3]), operatorWorkId = args[5];
+    throw Error('Interrupted Source retirement requires mode, exact root, current owner handle and request');
+  const mode = args[1], root = realpathSync(args[3]), operatorHandle = args[5];
   if (!['inspect', 'apply'].includes(mode)) throw Error('Interrupted Source retirement mode invalid');
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
-  const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
+  const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { loadProjectSetContext } = await import('../src/config/project-context.ts');
-  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
-  const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
-  const { HostStateStore, openHostStateDatabase, inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
-  const { openAdmittedSessionExecution, readAdmittedSessionIntake } =
-    await import('../src/orchestration/admitted-session-execution.ts');
+  const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
   const config = loadRuntimeConfig(root), access = requireSafeRepositoryAccess(root), requestBytes = access.readBytes(args[7], 'interrupted Source retirement request');
   if (!requestBytes.length || requestBytes.length > 65536) throw Error('Interrupted Source retirement request exceeds bound');
   const input = JSON.parse(requestBytes.toString('utf8'));
   if (
-    !exactKeys(input, ['identity', 'attempt', 'actionId', 'issueId', 'expectedWork', 'expectedLedger', 'expectedJournal', 'expectedMaintenanceGeneration', 'decisionPointer', 'evidence']) ||
+    !exactKeys(input, mode === 'inspect' ? ['identity', 'attempt'] : ['identity', 'attempt', 'actionId', 'issueId', 'expectedWork', 'expectedLedger', 'expectedJournal', 'expectedMaintenanceGeneration', 'decisionPointer', 'evidence']) ||
     !exactKeys(input.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) ||
-    !exactKeys(input.evidence, ['schema', 'source_thread_id', 'source_thread_status', 'read_thread_ref', 'list_agents_ref', 'active_source_writer_ids'])
+    (mode === 'apply' && !exactKeys(input.evidence, ['schema', 'source_thread_id', 'source_thread_status', 'read_thread_ref', 'list_agents_ref', 'active_source_writer_ids']))
   ) throw Error('Interrupted Source retirement request shape differs');
   if (
     input.identity.repository_id !== config.repository.repository_id ||
     !Array.isArray(input.identity.project_ids) || input.identity.project_ids.length !== 1 ||
     typeof input.identity.work_id !== 'string' || !input.identity.work_id ||
-    typeof operatorWorkId !== 'string' || !operatorWorkId || operatorWorkId === input.identity.work_id
+    typeof operatorHandle !== 'string' || !operatorHandle.trim() ||
+    !Number.isSafeInteger(input.attempt) || input.attempt < 1
   ) throw Error('Interrupted Source retirement identity differs');
   const project = loadProjectSetContext(root, config, input.identity.repository_id, input.identity.project_ids);
   if (project.integrations_digest !== input.identity.integrations_digest) throw Error('Interrupted Source retirement ProjectContext differs');
-  const databasePath = sessionHandoffDatabasePath(root, config), workspaceId = deriveWorkspaceId(config.repository.repository_id, root),
-    database = openHostStateDatabase(databasePath);
+  const ledger = openConfiguredMastraSessionLedger(root);
   try {
-    const store = new HostStateStore(database, workspaceId),
-      operatorExecution = await openAdmittedSessionExecution(root, store, input.identity.project_ids[0], operatorWorkId),
-      operatorHandle = readAdmittedSessionIntake(root, store, operatorExecution.identity).native_session_handle,
-      host = store.readHostStateSnapshot(input.identity), workspace = inspectHostWorkspaceDatabase(databasePath, workspaceId),
-      selected = workspace.work.find((row) => canonicalJsonDigest(row.identity) === canonicalJsonDigest(input.identity)),
-      journalRow = workspace.journals.find((row) => row.work_id === input.identity.work_id && row.attempt === input.attempt);
+    const store = ledger.hostState, host = store.readHostStateSnapshot(input.identity),
+      intake = readAdmittedSessionIntake(root, store, input.identity),
+      journalRow = store.readWorkSessionJournal(input.identity);
     if (
-      !selected || !journalRow || !host.workVersion || !host.ledgerVersion ||
-      canonicalJsonDigest(selected.version) !== canonicalJsonDigest(input.expectedWork) ||
-      canonicalJsonDigest(host.ledgerVersion) !== canonicalJsonDigest(input.expectedLedger) ||
-      canonicalJsonDigest(journalRow.version) !== canonicalJsonDigest(input.expectedJournal) ||
-      host.maintenanceGeneration !== input.expectedMaintenanceGeneration
-    ) throw Error('Interrupted Source retirement Work/Ledger/Journal/maintenance CAS differs');
+      !host.work || !journalRow || journalRow.attempt !== input.attempt ||
+      !host.workVersion || !host.ledgerVersion ||
+      host.work.binding.config_digest !== runtimeConfigDigest(config) ||
+      intake.native_session_handle !== operatorHandle ||
+      (host.work.lease && host.work.lease.thread_id !== operatorHandle)
+    ) throw Error('Interrupted Source retirement current owner or project binding differs');
     const journal = journalRow.state, items = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)],
-      item = items.find((entry) => entry.request.action_id === input.actionId), reservation = item?.host_reservation,
+      eligible = items.filter((entry) => entry.issue_id && entry.observation === null &&
+        entry.host_reservation?.approvalAction === 'source.write' &&
+        entry.host_reservation.authorization?.receipt?.attempt?.status === 'started' &&
+        entry.host_reservation.authorization?.approval?.status === 'commit_unknown'),
+      item = eligible.length === 1 ? eligible[0] : null, reservation = item?.host_reservation,
       authorization = reservation?.authorization;
+    if (!item || !authorization || authorization.receipt.attempt.lease.thread_id !== operatorHandle)
+      throw Error('Interrupted Source retirement requires one exact pending Source issue');
+    const projection = { identity: input.identity, attempt: input.attempt,
+      actionId: item.request.action_id, issueId: item.issue_id,
+      expectedWork: host.workVersion, expectedLedger: host.ledgerVersion,
+      expectedJournal: journalRow.version, expectedMaintenanceGeneration: host.maintenanceGeneration };
+    if (mode === 'inspect') {
+      if (!host.work.lease) throw Error('Interrupted Source owner already has no active lease');
+      return { status: 'interrupted_source_retirement_inspected', request: projection,
+        owner_thread_id: operatorHandle, rights_granted: false, attempt_outcome_resolved: false };
+    }
+    const request = {
+      identity: input.identity, attempt: input.attempt, actionId: input.actionId, issueId: input.issueId,
+      expectedWork: input.expectedWork, expectedLedger: input.expectedLedger, expectedJournal: input.expectedJournal,
+      expectedMaintenanceGeneration: input.expectedMaintenanceGeneration, authorization, operatorHandle,
+      decisionPointer: input.decisionPointer, evidence: input.evidence,
+    }, priorRelease = host.ledger.operations.some((entry) =>
+      entry.operation_id === 'interrupted-source-release-' + canonicalJsonDigest(request));
+    for (const key of Object.keys(projection)) {
+      if (priorRelease && ['expectedWork', 'expectedLedger'].includes(key)) continue;
+      if (canonicalJsonDigest(input[key]) !== canonicalJsonDigest(projection[key]))
+        throw Error('Interrupted Source retirement Work/Ledger/Journal/maintenance CAS differs');
+    }
     if (
       !item || item.issue_id !== input.issueId || item.observation !== null || !reservation ||
       reservation.approvalAction !== 'source.write' || authorization?.receipt?.attempt?.status !== 'started' ||
       authorization.approval?.status !== 'commit_unknown' || input.evidence.schema !== 'InterruptedSourceRetirementEvidence/v1' ||
       input.evidence.source_thread_status !== 'interrupted' ||
-      input.evidence.source_thread_id !== authorization.receipt.attempt.lease.thread_id ||
+      typeof input.evidence.source_thread_id !== 'string' || !input.evidence.source_thread_id.trim() ||
       typeof input.evidence.read_thread_ref !== 'string' || !input.evidence.read_thread_ref.trim() ||
       typeof input.evidence.list_agents_ref !== 'string' || !input.evidence.list_agents_ref.trim() ||
       !Array.isArray(input.evidence.active_source_writer_ids) || input.evidence.active_source_writer_ids.length !== 0 ||
@@ -1661,20 +1682,7 @@ async function retireInterruptedSourceOwner(args) {
       !Number.isSafeInteger(input.expectedMaintenanceGeneration) ||
       typeof input.decisionPointer !== 'string' || !input.decisionPointer.trim()
     ) throw Error('Interrupted Source retirement target or cooperative evidence differs');
-    const request = {
-      identity: input.identity, attempt: input.attempt, actionId: input.actionId, issueId: input.issueId,
-      expectedWork: input.expectedWork, expectedLedger: input.expectedLedger, expectedJournal: input.expectedJournal,
-      expectedMaintenanceGeneration: input.expectedMaintenanceGeneration, authorization, operatorHandle,
-      decisionPointer: input.decisionPointer, evidence: input.evidence,
-    };
-    if (mode === 'inspect') return { status: 'interrupted_source_retirement_inspected', operation_digest: canonicalJsonDigest(request), rights_granted: false, attempt_outcome_resolved: false };
-    const capability = operatorExecution.composition.workflowExecutionCapability;
-    if (!capability) throw Error('Interrupted Source retirement trusted workflow capability unavailable');
-    const { retireInterruptedSourceOwnerForSession } = await import('../src/runtime-kernel.ts');
-    const result = await retireInterruptedSourceOwnerForSession(capability, request),
-      after = inspectHostWorkspaceDatabase(databasePath, workspaceId).journals.find(
-        (row) => row.work_id === input.identity.work_id && row.attempt === input.attempt,
-      );
+    const result = store.retireInterruptedSourceOwner(request), after = store.readWorkSessionJournal(input.identity);
     if (!after || canonicalJsonDigest(after.version) !== canonicalJsonDigest(input.expectedJournal))
       throw Error('Interrupted Source retirement unexpectedly changed the session journal');
     return {
@@ -1683,7 +1691,7 @@ async function retireInterruptedSourceOwner(args) {
       ledger_version: result.snapshot.ledgerVersion, attempt_status: result.attempt_receipt.attempt.status,
       rights_granted: false, attempt_outcome_resolved: false, journal_version: after.version,
     };
-  } finally { database.close(); }
+  } finally { ledger.close(); }
 }
 
 async function releaseCompletedReadonly(args) {

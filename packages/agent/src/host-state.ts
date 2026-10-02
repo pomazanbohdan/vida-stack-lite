@@ -6723,19 +6723,24 @@ export class HostStateStore {
     requireState(
       request.evidence?.schema === 'InterruptedSourceRetirementEvidence/v1' &&
         request.evidence.source_thread_status === 'interrupted' &&
-        request.evidence.source_thread_id === request.authorization.receipt.attempt.lease.thread_id &&
         typeof request.evidence.read_thread_ref === 'string' &&
         request.evidence.read_thread_ref.trim().length > 0 &&
         typeof request.evidence.list_agents_ref === 'string' &&
         request.evidence.list_agents_ref.trim().length > 0 &&
+        typeof request.evidence.source_thread_id === 'string' &&
+        request.evidence.source_thread_id.trim().length > 0 &&
+        request.evidence.source_thread_id.length <= 256 &&
         Array.isArray(request.evidence.active_source_writer_ids) &&
         request.evidence.active_source_writer_ids.length === 0,
       'interrupted Source retirement evidence is missing, running, or competing',
     );
     requireState(
-      typeof request.operatorHandle === 'string' && request.operatorHandle.trim().length > 0 &&
-        typeof request.decisionPointer === 'string' && request.decisionPointer.trim().length > 0,
-      'interrupted Source retirement attribution is required',
+      typeof request.operatorHandle === 'string' &&
+        request.operatorHandle.trim().length > 0 &&
+        request.operatorHandle === request.authorization.receipt.attempt.lease.thread_id &&
+        typeof request.decisionPointer === 'string' &&
+        request.decisionPointer.trim().length > 0,
+      'interrupted Source retirement owner attribution is required',
     );
     const requestDigest = canonicalJsonDigest(request),
       operationId = 'interrupted-source-release-' + requestDigest;
@@ -6747,10 +6752,17 @@ export class HostStateStore {
         const before = this.#read(request.identity),
           work = before.work,
           ledger = before.ledger;
-        requireState(work && ledger && identityKey(workIdentity(work)) === identityKey(request.identity), 'retirement work unavailable');
+        requireState(
+          work && ledger && identityKey(workIdentity(work)) === identityKey(request.identity),
+          'retirement work unavailable',
+        );
         const priorRelease = ledger.operations.find((entry) => entry.operation_id === operationId),
-          target = ledger.tickets.find((entry) => entry.ticket_id === (work.lease?.ticket_id ?? priorRelease?.ticket_id)),
-          activeClaims = ledger.claims.filter((entry) => entry.ticket_id === target?.ticket_id && entry.status === 'active');
+          target = ledger.tickets.find(
+            (entry) => entry.ticket_id === (work.lease?.ticket_id ?? priorRelease?.ticket_id),
+          ),
+          activeClaims = ledger.claims.filter(
+            (entry) => entry.ticket_id === target?.ticket_id && entry.status === 'active',
+          );
         if (priorRelease) {
           requireState(
             priorRelease.kind === 'release' &&
@@ -6759,11 +6771,15 @@ export class HostStateStore {
             'interrupted Source retirement retry differs',
           );
           requireState(
-            work.execution.status === 'suspended' && work.lease === null &&
+            work.execution.status === 'suspended' &&
+              work.lease === null &&
               target?.status === 'released' &&
-              work.execution.assignment_attempts.some((attempt) =>
-                attempt.attempt_id === request.authorization.receipt.attempt.attempt_id &&
-                attempt.status === 'uncertain' && attempt.result === null && attempt.result_digest === null,
+              work.execution.assignment_attempts.some(
+                (attempt) =>
+                  attempt.attempt_id === request.authorization.receipt.attempt.attempt_id &&
+                  attempt.status === 'uncertain' &&
+                  attempt.result === null &&
+                  attempt.result_digest === null,
               ),
             'interrupted Source retirement retry no longer has its retained unknown outcome',
           );
@@ -6793,7 +6809,7 @@ export class HostStateStore {
             request.authorization.receipt.attempt.result_digest === null &&
             canonicalJsonDigest(request.authorization.receipt.attempt.lease) === canonicalJsonDigest(work.lease) &&
             target?.status === 'active' &&
-            target.thread_id === request.evidence.source_thread_id &&
+            target.thread_id === request.operatorHandle &&
             target.generation === work.lease.generation &&
             target.ticket_id === work.lease.ticket_id &&
             target.exclusive_resources.some((resource) => resource.startsWith('file:')) &&
@@ -6810,16 +6826,22 @@ export class HostStateStore {
         this.#assertNoOverlappingActiveSourceOwner(ledger, target);
         requireState(
           !ledger.tickets.some(
-            (entry) => entry.status === 'queued' && entry.sequence < target.sequence &&
+            (entry) =>
+              entry.status === 'queued' &&
+              entry.sequence < target.sequence &&
               entry.exclusive_resources.some((resource) => target.exclusive_resources.includes(resource)),
           ),
           'earlier FIFO Source owner is waiting for the resource',
         );
         const journalRow = this.#database
-          .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
-          .get(this.#workspaceId, request.identity.work_id, request.attempt) as
-          | { revision: number; payload: string; digest: string }
-          | null;
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
         requireState(
           journalRow &&
             journalRow.revision === request.expectedJournal.revision &&
@@ -6841,7 +6863,10 @@ export class HostStateStore {
           authorization = request.authorization,
           approval = authorization.approval;
         requireState(
-          item && item.issue_id === request.issueId && item.observation === null && reservation &&
+          item &&
+            item.issue_id === request.issueId &&
+            item.observation === null &&
+            reservation &&
             reservation.request.stageId === item.request.stage_id &&
             reservation.request.assignmentIndex === item.request.assignment_index &&
             reservation.receipt.attempt.attempt_id === authorization.receipt.attempt.attempt_id &&
@@ -6853,13 +6878,19 @@ export class HostStateStore {
             canonicalJsonDigest(reservation.authorization.approval) === canonicalJsonDigest(approval),
           'interrupted Source retirement issue or commit-unknown approval differs',
         );
-        const storedApproval = this.#governanceRead(approval.store_id, 'approval', canonicalJsonDigest(approval.binding));
+        const storedApproval = this.#governanceRead(
+          approval.store_id,
+          'approval',
+          canonicalJsonDigest(approval.binding),
+        );
         requireState(
           storedApproval && canonicalJsonDigest(storedApproval.record) === canonicalJsonDigest(approval),
           'interrupted Source retirement approval fence changed',
         );
         const expectedAttempt = authorization.receipt.attempt,
-          presentAttempt = work.execution.assignment_attempts.find((entry) => entry.attempt_id === expectedAttempt.attempt_id),
+          presentAttempt = work.execution.assignment_attempts.find(
+            (entry) => entry.attempt_id === expectedAttempt.attempt_id,
+          ),
           uncertainAttempt = { ...expectedAttempt, status: 'uncertain' as const, result: null, result_digest: null };
         requireState(
           presentAttempt &&
@@ -6873,42 +6904,59 @@ export class HostStateStore {
           nextLedger: CoordinationLedger = {
             ...ledger,
             revision: ledger.revision + 1,
-            tickets: ledger.tickets.map((entry) => entry.ticket_id === target.ticket_id
-              ? { ...entry, status: 'released' as const, active_resources: [], blocked_resources: [], expires_at: null }
-              : entry),
-            claims: ledger.claims.map((entry) => entry.claim_id === activeClaims[0]!.claim_id
-              ? { ...entry, status: 'released' as const, renewed_at: now }
-              : entry),
-            operations: [...ledger.operations, {
-              schema: 'CoordinationOperation/v1',
-              operation_id: operationId,
-              kind: 'release',
-              ticket_id: target.ticket_id,
-              work_id: target.work_id,
-              thread_id: target.thread_id,
-              source_revision: target.source_revision,
-              resources: [...target.exclusive_resources],
-              from_ledger_revision: ledger.revision,
-              to_ledger_revision: ledger.revision + 1,
-              decided_by: request.operatorHandle,
-              decision_pointer: request.decisionPointer,
-              created_at: now,
-            }],
+            tickets: ledger.tickets.map((entry) =>
+              entry.ticket_id === target.ticket_id
+                ? {
+                    ...entry,
+                    status: 'released' as const,
+                    active_resources: [],
+                    blocked_resources: [],
+                    expires_at: null,
+                  }
+                : entry,
+            ),
+            claims: ledger.claims.map((entry) =>
+              entry.claim_id === activeClaims[0]!.claim_id
+                ? { ...entry, status: 'released' as const, renewed_at: now }
+                : entry,
+            ),
+            operations: [
+              ...ledger.operations,
+              {
+                schema: 'CoordinationOperation/v1',
+                operation_id: operationId,
+                kind: 'release',
+                ticket_id: target.ticket_id,
+                work_id: target.work_id,
+                thread_id: target.thread_id,
+                source_revision: target.source_revision,
+                resources: [...target.exclusive_resources],
+                from_ledger_revision: ledger.revision,
+                to_ledger_revision: ledger.revision + 1,
+                decided_by: request.operatorHandle,
+                decision_pointer: request.decisionPointer,
+                created_at: now,
+              },
+            ],
           };
-        const after = this.#commitHostState({
-          expectedWork: staged.workVersion,
-          expectedLedger: before.ledgerVersion,
-          expectedMaintenanceGeneration: before.maintenanceGeneration,
-          expectedSessionJournal: { attempt: request.attempt, version: request.expectedJournal },
-          nextWork: {
-            ...staged.work!,
-            revision: staged.work!.revision + 1,
-            lifecycle: { ...staged.work!.lifecycle, revision: staged.work!.revision + 1 },
-            lease: null,
-            execution: { ...staged.work!.execution, status: 'suspended' },
+        const after = this.#commitHostState(
+          {
+            expectedWork: staged.workVersion,
+            expectedLedger: before.ledgerVersion,
+            expectedMaintenanceGeneration: before.maintenanceGeneration,
+            expectedSessionJournal: { attempt: request.attempt, version: request.expectedJournal },
+            nextWork: {
+              ...staged.work!,
+              revision: staged.work!.revision + 1,
+              lifecycle: { ...staged.work!.lifecycle, revision: staged.work!.revision + 1 },
+              lease: null,
+              execution: { ...staged.work!.execution, status: 'suspended' },
+            },
+            nextLedger,
           },
-          nextLedger,
-        }, undefined, true);
+          undefined,
+          true,
+        );
         const finalAttempt = after.work!.execution.assignment_attempts.find(
           (entry) => entry.attempt_id === uncertain.attempt.attempt_id,
         )!;
@@ -6930,10 +6978,11 @@ export class HostStateStore {
   #assertNoOverlappingActiveSourceOwner(ledger: CoordinationLedger, target: CoordinationTicket): void {
     const resources = target.exclusive_resources.filter((resource) => resource.startsWith('file:'));
     requireState(
-      !ledger.tickets.some((ticket) =>
-        ticket.ticket_id !== target.ticket_id &&
-        ['active', 'ready_for_handoff'].includes(ticket.status) &&
-        ticket.active_resources.some((resource) => resources.includes(resource)),
+      !ledger.tickets.some(
+        (ticket) =>
+          ticket.ticket_id !== target.ticket_id &&
+          ['active', 'ready_for_handoff'].includes(ticket.status) &&
+          ticket.active_resources.some((resource) => resources.includes(resource)),
       ),
       'another active Source owner overlaps the retired resource',
     );

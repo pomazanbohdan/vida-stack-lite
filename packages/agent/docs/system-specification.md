@@ -170,12 +170,20 @@ no source outcome, grants no write rights and establishes no Runtime acceptance.
 Fresh writer execution requires ordinary FIFO ownership and current authority.
 
 `run --retire-interrupted-source-owner true` provides `inspect` and `apply` for
-one exact started Source writer whose provider result is unknown. The request
-binds its Work, Ledger, Journal and maintenance-generation versions, action and
-issue, original approval authorization, operator decision pointer, and
-cooperative interruption evidence. The active operator work supplies the
-opaque workflow capability and operator handle; the target remains bound to
-its own stored source identity and lease. The evidence records the source
+one exact started Source writer whose provider result is unknown. Inspection
+takes the target identity and attempt and the current owner's cooperative
+`--native-session-handle`. It derives the unique pending Source issue, stored
+approval and Work/Ledger/Journal/maintenance versions from the configured Host.
+Apply consumes that returned projection, an owner decision pointer and
+cooperative interruption evidence. It requires the handle to match the stored
+intake, original lease and Source owner; no second active work, live lease,
+execution capability or current Source/package byte equality is required.
+Current configuration, project identity, original approval and CAS remain
+checked. This narrow operation cannot issue Source writes or create leases.
+The persisted owner and delegated Source writer are distinct identities: the
+parent owner can remain active while the observed child is interrupted. The
+owner decision explicitly correlates the held scope with that child without
+inventing an original tool-call binding. The evidence records the source
 thread as interrupted, references the actual `read_thread` and `list_agents`
 observations, and lists no active Source writer IDs. These references are
 cooperative evidence, not API attestation or proof of process-level
@@ -187,7 +195,8 @@ claim, and suspends that owner. It preserves the journal and `commit_unknown`
 approval. It does not create a Source observation, no-effect proof, replay
 right, new generation, source-write authority or acceptance. Exact retries are
 operation-bound; active overlapping owners and earlier FIFO waiters deny
-retirement. The unknown effect remains unresolved, and late results stay
+retirement. A retained exact apply request supports lost-acknowledgement retry;
+changed requests or conflicting later ownership are rejected. The unknown effect remains unresolved, and late results stay
 fenced from the released owner.
 
 A known-terminal VERIFY failure may use the existing forward runtime-code rebind
