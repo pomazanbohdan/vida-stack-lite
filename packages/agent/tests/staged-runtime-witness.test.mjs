@@ -137,6 +137,7 @@ test('exports only a genuinely successful persisted configured Mastra run', { ti
         journal = ledger.sync('work', 1, wave.run_id, wave.step_id, wave.requests);
       }
       expect(wave.status, JSON.stringify(wave)).toBe('success');
+      expect(ledger.resume('work', 1)?.resume_status).toBe('blocked');
     } finally {
       ledger.close();
       await bridge.close();
