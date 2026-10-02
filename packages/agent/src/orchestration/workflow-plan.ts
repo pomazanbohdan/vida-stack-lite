@@ -81,6 +81,51 @@ export function compileDevelopmentWorkflow(
     })),
   );
   const effectiveStages = waves.flat();
+  assert(
+    effectiveStages.some((stage) => stage.assignments.length > 0),
+    'workflow ' + workflowId + ' has no effective assignments after risk filters',
+  );
+  const effectiveStageIds = new Set(
+    effectiveStages.filter((stage) => stage.assignments.length > 0).map((stage) => stage.id),
+  );
+  for (const stage of effectiveStages) {
+    if (stage.assignments.length === 0) continue;
+    assert(
+      stage.required_after.every((dependency) => effectiveStageIds.has(dependency)),
+      'workflow ' + workflowId + ' effective stage ' + stage.id + ' is missing a required stage after risk filters',
+    );
+  }
+  for (const terminal of workflow!.terminal_stages) {
+    assert(
+      effectiveStageIds.has(terminal),
+      'workflow ' + workflowId + ' requires effective terminal stage ' + terminal + '; check risk filters',
+    );
+  }
+  const effectiveProducers = new Map<string, WorkflowStage[]>();
+  effectiveStages.forEach((stage) => {
+    if (stage.assignments.length === 0) return;
+    stage.produces.forEach((artifact) =>
+      effectiveProducers.set(artifact, [...(effectiveProducers.get(artifact) ?? []), stage]),
+    );
+  });
+  effectiveStages
+    .filter((stage) => stage.assignments.length > 0)
+    .forEach((consumer) => {
+      consumer.consumes
+        .filter((artifact) => artifact !== 'WorkItem/v1')
+        .forEach((artifact) => {
+          assert(
+            effectiveProducers.has(artifact),
+            'workflow ' +
+              workflowId +
+              ' effective stage ' +
+              consumer.id +
+              ' consumes ' +
+              artifact +
+              ' without an effective producer after risk filters',
+          );
+        });
+    });
   for (const [artifact, role] of [
     ['TestReceipt/v1', 'tester'],
     ['DeliveryInstruction/v1', 'delivery-agent'],

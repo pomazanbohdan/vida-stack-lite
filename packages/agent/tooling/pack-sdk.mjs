@@ -38,22 +38,15 @@ export function sdkCompatibilityManifest({ root }) {
   const value = manifestAt(root);
   assert.equal(value.name, 'vida-agent');
   assert.ok(Array.isArray(value.files));
-  const nativeFiles = new Set([
-    'bin/standalone.mjs',
-    'bin/standalone-resources.mjs',
-    'tooling/build-standalone.mjs',
-    'tooling/release-notes.mjs',
-    'tooling/release-publish.mjs',
-    'dist/standalone/**',
-    '!dist/standalone/**',
-  ]);
-  value.files = value.files.filter((entry) => !nativeFiles.has(entry));
-  for (const [name, command] of Object.entries(value.scripts)) {
-    if (/standalone|tooling\/(?:build-standalone|release-notes|release-publish)\.mjs/.test(command))
-      delete value.scripts[name];
-  }
+  assert.ok(
+    value.files.every((entry) => !/standalone|release-notes|release-publish/.test(entry)),
+    'SDK manifest must not declare unavailable standalone package files',
+  );
+  assert.ok(
+    Object.keys(value.scripts).every((name) => !/standalone/.test(name)),
+    'SDK manifest must not advertise unavailable standalone commands',
+  );
   if (!value.files.includes('tooling/pack-sdk.mjs')) value.files.push('tooling/pack-sdk.mjs');
-  value.files.push('!dist/standalone/**');
   value.scripts.prepack = 'node bin/bun.mjs tooling/pack-sdk.mjs --verify';
   value.scripts['prepack:pinned'] = 'bun tooling/pack-sdk.mjs --verify';
   return { value, bytes: Buffer.from(JSON.stringify(value, null, 2) + '\n') };

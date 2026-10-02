@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
@@ -22,6 +22,7 @@ import {
   reserveWorkflowAssignmentForSession,
   retireInterruptedSourceOwnerForSession,
 } from '../src/runtime-kernel.ts';
+import { runWorkStateRepair } from '../bin/repair-work-state.mjs';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixtureEvidence = 'local://synthetic/stopped-source';
@@ -412,6 +413,27 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
   }
 });
 
+test('an interrupted Source owner keeps a later FIFO contender queued', async () => {
+  const f = await fixture();
+  try {
+    await expect(f.laterWriter('fifo-contender', 'AGENT.sidecar.md')).rejects.toThrow(
+      'source writer ownership is queued behind an earlier exclusive resource',
+    );
+    const after = f.store.readHostStateSnapshot(f.identity),
+      owner = after.ledger.tickets.find((ticket) => ticket.ticket_id === after.work.lease.ticket_id),
+      contender = after.ledger.tickets.find(
+        (ticket) => ticket.work_id === 'fifo-contender' && ticket.status === 'queued',
+      );
+    expect(owner.status).toBe('active');
+    expect(contender).toBeTruthy();
+    expect(contender.sequence).toBeGreaterThan(owner.sequence);
+    expect(contender.active_resources).toEqual([]);
+    expect(contender.blocked_resources).toContain('file:AGENT.sidecar.md');
+  } finally {
+    await f.close();
+  }
+});
+
 test('public owner retirement restarts after lease expiry and package drift without an execution capability', async () => {
   mkdirSync(path.join(bundle, '.tmp'), { recursive: true });
   const f = await fixture(),
@@ -627,6 +649,321 @@ test('interrupted Source retirement transaction rolls back the attempt downgrade
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(f.store.readWorkSessionJournal(f.identity).version).toEqual(journal.version);
   } finally {
+    await f.close();
+  }
+});
+
+test('correction defaults repair preserves an issued unknown Source attempt and supports public retirement', async () => {
+  const f = await fixture();
+  let database;
+  const repair = (mode, actor) =>
+    runWorkStateRepair([
+      '--kind',
+      'work-state',
+      '--authority',
+      'correction-generation',
+      '--mode',
+      mode,
+      '--project-root',
+      f.root,
+      '--repair-id',
+      'interrupted-source-defaults',
+      ...(actor ? ['--actor', actor] : []),
+    ]);
+  try {
+    database = openHostStateDatabase(sessionHandoffDatabasePath(f.root, f.config));
+    f.admission('readonly-independent', 'AGENTS.md', 'synthetic-readonly-owner');
+    const hostRow = database
+      .query("SELECT id,payload FROM agent_host_state WHERE workspace_id=? AND kind='work'")
+      .all(f.workspace)
+      .find((row) => JSON.parse(row.payload).binding.lifecycle_work_id === 'stopped');
+    const originalWork = JSON.parse(hostRow.payload);
+    expect(originalWork.execution.assignment_attempts).toHaveLength(1);
+    expect(originalWork.execution.assignment_attempts[0].status).toBe('started');
+    for (const attempt of originalWork.execution.assignment_attempts) {
+      delete attempt.correction_generation;
+      delete attempt.correction_authorization;
+    }
+    database
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=?")
+      .run(canonicalJson(originalWork), canonicalJsonDigest(originalWork), f.workspace, hostRow.id);
+    const journalRow = database
+      .query('SELECT payload FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+      .get(f.workspace, 'stopped', 1);
+    const originalJournal = JSON.parse(journalRow.payload);
+    const issued = originalJournal.items.find((item) => item.host_reservation);
+    expect(issued.issue_id).toBeTruthy();
+    expect(issued.observation).toBeNull();
+    expect(issued.host_reservation.authorization.approval.status).toBe('commit_unknown');
+    for (const receipt of [issued.host_reservation.receipt, issued.host_reservation.authorization.receipt]) {
+      delete receipt.attempt.correction_generation;
+      delete receipt.attempt.correction_authorization;
+    }
+    database
+      .query(
+        'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .run(canonicalJson(originalJournal), canonicalJsonDigest(originalJournal), f.workspace, 'stopped', 1);
+    expect(() => f.store.readHostStateSnapshot(f.identity)).toThrow();
+
+    const inspection = repair('inspect');
+    expect(inspection.status).toBe('repairable_current_v1');
+    expect(inspection.changed_work).toHaveLength(1);
+    expect(inspection.changed_journals).toBe(1);
+    const plan = repair('plan', 'synthetic-repair-owner');
+    expect(plan.status).toBe('planned');
+    expect(plan.work_changes[0].after.execution.assignment_attempts[0]).toEqual({
+      ...originalWork.execution.assignment_attempts[0],
+      correction_generation: 0,
+      correction_authorization: null,
+    });
+    const preApplyWork = JSON.parse(
+      database
+        .query("SELECT payload FROM agent_host_state WHERE workspace_id=? AND kind='work' AND id=?")
+        .get(f.workspace, hostRow.id).payload,
+    );
+    const preApplyJournal = JSON.parse(
+      database
+        .query('SELECT payload FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(f.workspace, 'stopped', 1).payload,
+    );
+    database
+      .query(
+        'UPDATE agent_host_mastra_session_ledger SET revision=revision+1 WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .run(f.workspace, 'stopped', 1);
+    expect(() => repair('apply')).toThrow(/repair dependency CAS conflict/);
+    database
+      .query(
+        'UPDATE agent_host_mastra_session_ledger SET revision=revision-1 WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .run(f.workspace, 'stopped', 1);
+    database.exec(
+      "CREATE TRIGGER correction_repair_fault BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'synthetic correction repair fault'); END",
+    );
+    expect(() => repair('apply')).toThrow(/synthetic correction repair fault/);
+    database.exec('DROP TRIGGER correction_repair_fault');
+    expect(
+      JSON.parse(
+        database
+          .query("SELECT payload FROM agent_host_state WHERE workspace_id=? AND kind='work' AND id=?")
+          .get(f.workspace, hostRow.id).payload,
+      ),
+    ).toEqual(preApplyWork);
+    expect(
+      JSON.parse(
+        database
+          .query(
+            'SELECT payload FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(f.workspace, 'stopped', 1).payload,
+      ),
+    ).toEqual(preApplyJournal);
+    const applied = repair('apply');
+    expect(applied.status).toBe('applied');
+    expect(repair('resume')).toEqual(applied);
+
+    const repairedJournal = f.ledger.resume('stopped', 1),
+      repairedItem = repairedJournal.state.items.find((item) => item.host_reservation),
+      repairedAttempt = repairedItem.host_reservation.receipt.attempt;
+    expect(repairedJournal.state.items.map((item) => item.observation)).toEqual(
+      originalJournal.items.map((item) => item.observation),
+    );
+    expect(repairedItem.issue_id).toBe(issued.issue_id);
+    expect(repairedItem.observation).toBeNull();
+    expect(repairedAttempt.status).toBe('started');
+    expect(repairedAttempt.attempt_id).toBe(issued.host_reservation.receipt.attempt.attempt_id);
+    expect(repairedItem.host_reservation.authorization.receipt.attempt).toEqual(repairedAttempt);
+    expect(repairedItem.host_reservation.authorization.approval).toEqual(
+      issued.host_reservation.authorization.approval,
+    );
+    expect(repairedItem.host_reservation.authorization.approval.status).toBe('commit_unknown');
+    const repairedHost = f.store.readHostStateSnapshot(f.identity);
+    expect(repairedHost.work.lease).toEqual(originalWork.lease);
+    expect(repairedHost.work.execution.assignment_attempts[0].status).toBe('started');
+    expect(repairedHost.ledger.claims.find((claim) => claim.work_id === 'readonly-independent').status).toBe('active');
+    expect(repairedHost.work.execution.assignment_attempts[0].attempt_id).toBe(
+      originalWork.execution.assignment_attempts[0].attempt_id,
+    );
+    expect(repairedHost.work.lifecycle.assurance.correction_count).toBe(0);
+    expect(repair('restore').status).toBe('restored');
+    expect(repair('restore').status).toBe('restored');
+    const afterRestore = f.store.readHostStateSnapshot(f.identity);
+    expect(afterRestore.work.execution.assignment_attempts[0]).toEqual({
+      ...originalWork.execution.assignment_attempts[0],
+      correction_generation: 0,
+      correction_authorization: null,
+    });
+    expect(afterRestore.ledger.claims.find((claim) => claim.work_id === 'readonly-independent').status).toBe('active');
+    const afterRestoreJournal = f.ledger.resume('stopped', 1),
+      afterRestoreItem = afterRestoreJournal.state.items.find((item) => item.host_reservation);
+
+    const retirement = await retireInterruptedSourceOwnerForSession(f.executionCapability, {
+      identity: f.identity,
+      attempt: 1,
+      actionId: afterRestoreItem.request.action_id,
+      issueId: afterRestoreItem.issue_id,
+      expectedWork: afterRestore.workVersion,
+      expectedLedger: afterRestore.ledgerVersion,
+      expectedJournal: afterRestoreJournal.version,
+      expectedMaintenanceGeneration: afterRestore.maintenanceGeneration,
+      authorization: afterRestoreItem.host_reservation.authorization,
+      operatorHandle: f.input.nativeSessionHandle,
+      decisionPointer: 'synthetic:approved-interrupted-source-retirement-after-repair',
+      evidence: {
+        schema: 'InterruptedSourceRetirementEvidence/v1',
+        source_thread_id: 'synthetic-interrupted-child',
+        source_thread_status: 'interrupted',
+        read_thread_ref: 'synthetic:read-thread:interrupted',
+        list_agents_ref: 'synthetic:list-agents:no-source-writers',
+        active_source_writer_ids: [],
+      },
+    });
+    expect(retirement.attempt_receipt.attempt.status).toBe('uncertain');
+    expect(retirement.attempt_receipt.attempt.result).toBeNull();
+    expect(retirement.snapshot.work.lease).toBeNull();
+    expect(retirement.snapshot.work.lifecycle.assurance.correction_count).toBe(0);
+    const retiredJournal = f.ledger.resume('stopped', 1),
+      retiredItem = retiredJournal.state.items.find((item) => item.host_reservation);
+    expect(retiredItem.issue_id).toBe(issued.issue_id);
+    expect(retiredItem.observation).toBeNull();
+    expect(retiredItem.host_reservation.authorization.approval.status).toBe('commit_unknown');
+    expect(retirement.snapshot.ledger.claims.find((claim) => claim.work_id === 'readonly-independent').status).toBe(
+      'active',
+    );
+    expect(() => repair('restore')).toThrow();
+  } finally {
+    database?.close();
+    await f.close();
+  }
+});
+
+test('interrupted correction defaults repair rejects partial authority and mismatched approval receipt copies', async () => {
+  const f = await fixture();
+  let database;
+  const repair = () =>
+    runWorkStateRepair([
+      '--kind',
+      'work-state',
+      '--authority',
+      'correction-generation',
+      '--mode',
+      'inspect',
+      '--project-root',
+      f.root,
+    ]);
+  try {
+    database = openHostStateDatabase(sessionHandoffDatabasePath(f.root, f.config));
+    const hostRow = database
+      .query("SELECT id,payload FROM agent_host_state WHERE workspace_id=? AND kind='work'")
+      .all(f.workspace)
+      .find((row) => JSON.parse(row.payload).binding.lifecycle_work_id === 'stopped');
+    const legacyWork = JSON.parse(hostRow.payload);
+    for (const attempt of legacyWork.execution.assignment_attempts) {
+      delete attempt.correction_generation;
+      delete attempt.correction_authorization;
+    }
+    const journalRow = database
+      .query('SELECT payload FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+      .get(f.workspace, 'stopped', 1);
+    const legacyJournal = JSON.parse(journalRow.payload),
+      issued = legacyJournal.items.find((item) => item.host_reservation);
+    for (const receipt of [issued.host_reservation.receipt, issued.host_reservation.authorization.receipt]) {
+      delete receipt.attempt.correction_generation;
+      delete receipt.attempt.correction_authorization;
+    }
+    const saveWork = (value) =>
+      database
+        .query("UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=?")
+        .run(canonicalJson(value), canonicalJsonDigest(value), f.workspace, hostRow.id);
+    const saveJournal = (value) =>
+      database
+        .query(
+          'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .run(canonicalJson(value), canonicalJsonDigest(value), f.workspace, 'stopped', 1);
+    const rejectJournalChange = (change) => {
+      saveWork(legacyWork);
+      const changed = structuredClone(legacyJournal),
+        item = changed.items.find((entry) => entry.host_reservation);
+      change(item, changed);
+      saveJournal(changed);
+      expect(() => repair()).toThrow(/repair|binding|governance|authorization|issue|attempt/i);
+      saveJournal(legacyJournal);
+    };
+    rejectJournalChange((item) => {
+      item.host_reservation.authorization.receipt.attempt.request_digest = 'f'.repeat(64);
+    });
+    rejectJournalChange((item) => {
+      item.request.action_id = 'a'.repeat(64);
+    });
+    rejectJournalChange((item) => {
+      item.host_reservation.invocation.assignmentIndex++;
+    });
+    rejectJournalChange((item) => {
+      item.host_reservation.invocation.teamId = 'foreign-team';
+    });
+    rejectJournalChange((item) => {
+      item.host_reservation.invocation.profile.mutation_scope = 'none';
+    });
+    rejectJournalChange((item) => {
+      item.host_reservation.invocation.profile.egress_policy = 'network';
+    });
+    rejectJournalChange((item) => {
+      item.host_reservation.invocation.workContext.binding.repository_id = 'foreign-repository';
+    });
+    rejectJournalChange((item) => {
+      item.host_reservation.request.teamId = 'foreign-team';
+    });
+    rejectJournalChange((item, journal) => {
+      journal.source_scope.digest = 'f'.repeat(64);
+    });
+    rejectJournalChange((item) => {
+      item.host_reservation.authorization.approval.binding.operation_hash = 'e'.repeat(64);
+    });
+
+    const approvalRow = database
+      .query(
+        "SELECT store_id,record_key,revision,payload,digest FROM agent_host_governance WHERE workspace_id=? AND kind='approval'",
+      )
+      .all(f.workspace)
+      .find((row) => {
+        const value = JSON.parse(row.payload);
+        return (
+          row.store_id === issued.host_reservation.authorization.approval.store_id &&
+          row.record_key === canonicalJsonDigest(issued.host_reservation.authorization.approval.binding) &&
+          value.status === 'commit_unknown'
+        );
+      });
+    database
+      .query(
+        "DELETE FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind='approval' AND record_key=?",
+      )
+      .run(f.workspace, approvalRow.store_id, approvalRow.record_key);
+    expect(() => repair()).toThrow(/governance|approval|repair/i);
+    database
+      .query('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)')
+      .run(
+        f.workspace,
+        approvalRow.store_id,
+        'approval',
+        approvalRow.record_key,
+        approvalRow.revision,
+        approvalRow.payload,
+        approvalRow.digest,
+      );
+
+    const partialWork = structuredClone(legacyWork);
+    partialWork.execution.assignment_attempts[0].correction_generation = 0;
+    saveWork(partialWork);
+    expect(() => repair()).toThrow(/partial assignment authority|ambiguous/i);
+
+    const correctiveHistory = structuredClone(legacyWork);
+    correctiveHistory.lifecycle.assurance.correction_count = 1;
+    saveWork(correctiveHistory);
+    expect(() => repair()).toThrow(/corrective history|correction_count|base generation/i);
+  } finally {
+    database?.close();
     await f.close();
   }
 });

@@ -29,6 +29,26 @@ export interface SessionAgentAction {
   readonly model: string;
   readonly reasoning: string;
   readonly mutation_scope: string;
+  readonly context_skill_refs: readonly string[];
+  readonly resolved_profile: {
+    readonly schema: 'ResolvedAgentProfile/v1';
+    readonly config_digest: string;
+    readonly profile_id: string;
+    readonly model: string;
+    readonly reasoning: string;
+    readonly execution_mode: 'fast' | 'standard';
+    readonly mutation_scope: string;
+    readonly tools_policy: {
+      readonly id: string;
+      readonly source_write: boolean;
+      readonly allowed_tools: readonly string[];
+    };
+    readonly egress_policy: {
+      readonly id: string;
+      readonly allowed_hosts: readonly string[];
+    };
+    readonly enforcement_status: 'not_asserted';
+  };
   readonly role_description: string;
   readonly role_rules: readonly string[];
   readonly consumes: readonly string[];
@@ -197,6 +217,10 @@ export function sessionActionsForWave(
         const instructions = config.agents.role_instructions[assignment.role];
         requireCondition(profile, 'session handoff profile is unavailable');
         requireCondition(instructions, 'session handoff role instructions are unavailable');
+        const toolPolicy = config.agents.tool_policies[profile.tools_policy];
+        const egressPolicy = config.agents.egress_policies[profile.egress_policy];
+        requireCondition(toolPolicy, 'session handoff tool policy is unavailable');
+        requireCondition(egressPolicy, 'session handoff egress policy is unavailable');
         return {
           action_id: canonicalJsonDigest({
             ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
@@ -222,6 +246,26 @@ export function sessionActionsForWave(
           model: profile.model,
           reasoning: profile.reasoning,
           mutation_scope: profile.mutation_scope,
+          context_skill_refs: stage.context_skill_refs ?? [],
+          resolved_profile: {
+            schema: 'ResolvedAgentProfile/v1' as const,
+            config_digest: runtimeConfigDigest(config),
+            profile_id: assignment.profile,
+            model: profile.model,
+            reasoning: profile.reasoning,
+            execution_mode: profile.execution_mode,
+            mutation_scope: profile.mutation_scope,
+            tools_policy: {
+              id: profile.tools_policy,
+              source_write: toolPolicy.source_write,
+              allowed_tools: toolPolicy.allowed_tools,
+            },
+            egress_policy: {
+              id: profile.egress_policy,
+              allowed_hosts: egressPolicy.allowed_hosts,
+            },
+            enforcement_status: 'not_asserted' as const,
+          },
           role_description: instructions.description,
           role_rules: instructions.rules,
           consumes: stage.consumes,
@@ -231,6 +275,72 @@ export function sessionActionsForWave(
       }),
     )
     .map((action, action_order) => ({ ...action, action_order }));
+}
+
+/** The only configured slot pair allowed to share one caller-reported tool invocation. */
+export function allowsSharedInvocationForConfiguredSlots(
+  config: AgentRuntimeConfig,
+  left: { readonly workflow_id: string; readonly stage_id: string; readonly assignment_index: number },
+  right: { readonly workflow_id: string; readonly stage_id: string; readonly assignment_index: number },
+): boolean {
+  if (
+    left.workflow_id !== 'task_execution' ||
+    right.workflow_id !== left.workflow_id ||
+    left.stage_id !== 'validate_focused' ||
+    right.stage_id !== left.stage_id ||
+    left.assignment_index === right.assignment_index
+  )
+    return false;
+  const stage = config.workflows.task_execution?.stages.find((candidate) => candidate.id === left.stage_id);
+  if (!stage || stage.kind !== 'validate' || stage.mode !== 'parallel') return false;
+  const assignments = [stage.assignments[left.assignment_index], stage.assignments[right.assignment_index]];
+  if (
+    !assignments.every(
+      (assignment) => assignment && config.agents.profiles[assignment.profile]?.mutation_scope === 'none',
+    )
+  )
+    return false;
+  return (
+    canonicalJsonDigest(assignments.map((assignment) => assignment!.role).sort()) ===
+    canonicalJsonDigest(['correctness-validator', 'requirements-validator'])
+  );
+}
+
+export function sessionReportsCanShareInvocation(
+  config: AgentRuntimeConfig,
+  workflowId: string,
+  leftAction: SessionAgentAction,
+  left: SessionAgentOutcome,
+  rightAction: SessionAgentAction,
+  right: SessionAgentOutcome,
+): boolean {
+  return (
+    leftAction.action_id !== rightAction.action_id &&
+    left.session_result.tool_call_ref === right.session_result.tool_call_ref &&
+    left.session_result.issue_id !== right.session_result.issue_id &&
+    left.session_result.agent_id === right.session_result.agent_id &&
+    left.handoff_digest === right.handoff_digest &&
+    left.work_id === right.work_id &&
+    left.attempt === right.attempt &&
+    left.scope_digest === right.scope_digest &&
+    left.wave_index === right.wave_index &&
+    left.stage_id === right.stage_id &&
+    left.role === leftAction.role &&
+    right.role === rightAction.role &&
+    allowsSharedInvocationForConfiguredSlots(
+      config,
+      {
+        workflow_id: workflowId,
+        stage_id: leftAction.stage_id,
+        assignment_index: leftAction.assignment_index,
+      },
+      {
+        workflow_id: workflowId,
+        stage_id: rightAction.stage_id,
+        assignment_index: rightAction.assignment_index,
+      },
+    )
+  );
 }
 
 /** Prepare the first configured wave from the root YAML; no provider action has occurred. */
@@ -294,15 +404,33 @@ export function advanceSessionWorkflowHandoffFromConfig(
   assertCanonicalJsonValue(outcomes, '$');
   requireCondition(outcomes.length === expected.length, 'session handoff requires every wave outcome');
   for (const [index, outcome] of outcomes.entries()) validateSessionAgentOutcome(state, expected[index]!, outcome);
+  const reportPairs = outcomes.map((outcome, index) => ({ action: expected[index]!, outcome }));
   requireCondition(
-    new Set(outcomes.map((outcome) => outcome.session_result.tool_call_ref)).size === outcomes.length,
-    'session handoff tool call references contain duplicates',
+    outcomes.every(
+      (outcome) =>
+        !state.outcomes.some((prior) => prior.session_result.tool_call_ref === outcome.session_result.tool_call_ref),
+    ),
+    'session handoff tool call reference was replayed from a prior wave',
   );
-  requireCondition(
-    new Set([...state.outcomes, ...outcomes].map((outcome) => outcome.session_result.tool_call_ref)).size ===
-      state.outcomes.length + outcomes.length,
-    'session handoff tool call reference was replayed',
-  );
+  const byReference = new Map<string, typeof reportPairs>();
+  for (const pair of reportPairs) {
+    const reference = pair.outcome.session_result.tool_call_ref;
+    byReference.set(reference, [...(byReference.get(reference) ?? []), pair]);
+  }
+  for (const pairs of byReference.values())
+    if (pairs.length > 1)
+      requireCondition(
+        pairs.length === 2 &&
+          sessionReportsCanShareInvocation(
+            config,
+            state.workflow_id,
+            pairs[0]!.action,
+            pairs[0]!.outcome,
+            pairs[1]!.action,
+            pairs[1]!.outcome,
+          ),
+        'session handoff tool call reference is shared outside an allowed configured slot batch',
+      );
   const recorded = [...state.outcomes, ...outcomes];
   const failed = outcomes.some((outcome) => outcome.status === 'reported_failed');
   const nextIndex = state.wave_index + 1;

@@ -1,17 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { configuredTestContext } from './configured-context.mjs';
 import * as runtime from '../src/index.ts';
 import { runLibSqlSmoke } from '../src/orchestration/mastra-boundary.ts';
 import { loadConfiguredEdictumGovernancePolicy } from '../src/governance/edictum-boundary.ts';
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 import { createRuntimeKernelHostProofForCompositionRoot } from '../src/runtime-kernel.ts';
 import { stable } from '../src/lifecycle/runtime-facade.ts';
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
-const config = runtime.loadRuntimeConfig(repositoryRoot);
-const projectContext = runtime.loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const { repositoryRoot, config, context: projectContext } = configuredTestContext();
 const projectId = projectContext.project_ids[0];
 
 function identity(role = 'developer-orchestrator') {
@@ -491,7 +488,7 @@ describe('clean v1 package surface', () => {
       work_item: {
         kind: 'feature',
         intent: 'implementation_new',
-        project: '3mob',
+        project: projectId,
         risk_flags: [],
         labels: [],
       },

@@ -466,6 +466,24 @@ authority in strict current-v1 shape, including explicit generation zero for
 base attempts; raw preimages remain provenance. New assignment or work writes
 after the frozen repair postimage block restore through dependency CAS.
 
+The explicit correction-generation repair may normalize a proven original
+non-corrective Source attempt while its provider outcome remains unknown.
+Require the unchanged generation-zero assignment identity, zero correction
+count, matching original Host and journal receipts, and the exact issued action
+with its retained authorization. Normalize only the wholly absent
+`correction_generation`/`correction_authorization` pair to `0`/`null`, including
+the nested authorization receipt. Partial fields, corrective history, mismatched
+authority, competing Source ownership and unrelated unknown effects fail closed.
+Unrelated execution-only read-only claims remain unchanged under ledger CAS.
+Preserve the
+attempt's status, null result and observation, issue, approval, scope and lease;
+repair neither releases ownership nor settles `commit_unknown` or authorizes
+replay. Freeze work, journal, ledger, governance and maintenance dependencies
+and apply all postimages in the existing immediate transaction with CAS. Exact
+resume and semantic restore retain strict current-v1 shape. Owner retirement
+and outcome reconciliation remain separate public operations on the actual
+owner's state.
+
 Before fresh admission, package-owned executable inventory establishes runtime
 identity; caller-selected subsets cannot define that authority. Source CLI and
 SDK use the same canonical package-root inventory, including live renewal,
@@ -746,3 +764,57 @@ checks do not qualify a complete release.
 The future OpenAI/SDK/Codex adapters and per-product directory extensions are
 separate planned work. The old executor-only repair does not prove general
 configuration or storage relocation.
+
+
+## Distribution, recovery and evidence boundaries
+
+The Source reaudit findings apply to their recorded snapshot and must be
+revalidated against current Source. Merged Linux portability changes are Source
+evidence, not Windows or installed release acceptance. Native standalone remains
+the target distribution; until its tracked implementation and target-specific
+qualification exist, normal npm packaging describes only the implemented SDK
+compatibility payload and verifies that payload. An absent native builder cannot
+be a working default prepack dependency or be replaced by an unverified archive.
+
+Runtime initialization retries bounded lock-acquisition contention on Linux and
+Windows, rereading the receipt under the acquired lock. Once the protected
+operation starts, an error is returned without retrying its possibly completed
+effects. Pending-to-bound receipt identity and source CAS checks remain required.
+
+Research-wave local preparation and possible external exposure are distinct.
+Durable issue identities precede preparation; recovery retains the same issue,
+work and journal identities. A durable exposure barrier must precede returning
+any issued action. Once output may have escaped, null observations do not prove
+no external effect and never authorize redispatch. Legacy incomplete preparation
+is recoverable only through an explicit operation proving the whole original
+wave could not have been exposed; otherwise it remains uncertain.
+
+Tester reports currently provide cooperative report consistency bound to the
+observed tester action and current source bytes. They do not attest execution of
+an expected subprocess suite. Public delivery projections must distinguish the
+tester-reported verdict from verified test execution; stronger automated
+execution-proof assurance requires a trusted execution boundary and cannot be
+manufactured from another caller-controlled exit code or reference.
+
+The reported SQLite corruption incident has no available frozen DB/WAL/SHM or
+reproducer in the supplied attachment. Its cause is unlocalized; no database
+repair, data deletion, or successful causal fix is inferred from Source changes.
+
+
+Workflow compilation validates the effective graph after risk filtering, before
+opening or starting Mastra: at least one assignment must remain, required stages
+and declared terminals must survive, and consumed artifacts need effective
+producers. Filtering preserves each original assignment index. An empty or
+incomplete graph is a typed block, never a successful no-op.
+
+Public session actions carry a versioned resolved profile bound to the current
+configuration: model, reasoning, execution mode, mutation scope, resolved tool
+and egress policy, and configured skill references. This projection declares
+requirements; `enforcement_status: not_asserted` does not certify native host
+capabilities, sandboxing or actual policy application.
+
+Current strict implementation scope supports the ordinary typed research result
+and synthesis normalization path. Undeclared `research_mode`, `answer_only`,
+`save_document` and associated output hints are not supported public scope
+fields. Strict schema validation rejects these fields; the ordinary typed normalization
+path remains the single supported contract.

@@ -350,309 +350,365 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
     expect(result.stderr.length).toBeLessThan(512);
   });
 
-  liveInstallTest(
-    'copied bundle issues an admitted parallel wave before reports and advances by CAS',
-    () => {
-      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-session-'));
-      try {
-        const bundle = path.join(root, 'tools', 'agents');
-        mkdirSync(bundle, { recursive: true });
-        for (const entry of [
-          'src',
-          'dist',
-          'bin',
-          'tooling',
-          'schemas',
-          'instructions',
-          'templates',
-          'package.json',
-          'TESTING.md',
-          'bun.lock',
-          '.bun-version',
-        ])
-          cpSync(path.join(packageRoot, entry), path.join(bundle, entry), { recursive: true, dereference: false });
-        symlinkSync(
-          path.join(packageRoot, 'node_modules'),
-          path.join(bundle, 'node_modules'),
-          process.platform === 'win32' ? 'junction' : 'dir',
-        );
-        const externalConfig = path.join(root, 'source-config.yaml');
-        writeFileSync(
-          externalConfig,
-          readFileSync(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
-            .replaceAll('{{REPOSITORY}}', 'ignored-repository')
-            .replaceAll('{{PROJECT}}', 'ignored-project')
-            .replaceAll('{{BUNDLE}}', 'ignored-runtime'),
-        );
-        const invokeCopy = (args, env = {}) =>
-          spawnSync('bun', args, {
-            cwd: bundle,
-            encoding: 'utf8',
-            windowsHide: true,
-            env: { ...process.env, ...env },
+  const researchFirstRoutes = [
+    { workflow: 'information_research_light', kind: 'research', intent: 'information_research' },
+    { workflow: 'implementation_new', kind: 'feature', intent: 'implementation_new' },
+    { workflow: 'implementation_change', kind: 'task', intent: 'implementation_change' },
+    { workflow: 'bug_fix', kind: 'bug', intent: 'bug_fix' },
+  ];
+  for (const route of researchFirstRoutes)
+    liveInstallTest(
+      `copied bundle recovers interrupted ${route.workflow} research preparation by CAS`,
+      async () => {
+        const root = mkdtempSync(path.join(tmpdir(), 'vida-run-session-'));
+        try {
+          const bundle = path.join(root, 'tools', 'agents');
+          mkdirSync(bundle, { recursive: true });
+          for (const entry of [
+            'src',
+            'dist',
+            'bin',
+            'tooling',
+            'schemas',
+            'instructions',
+            'templates',
+            'package.json',
+            'TESTING.md',
+            'bun.lock',
+            '.bun-version',
+          ])
+            cpSync(path.join(packageRoot, entry), path.join(bundle, entry), { recursive: true, dereference: false });
+          symlinkSync(
+            path.join(packageRoot, 'node_modules'),
+            path.join(bundle, 'node_modules'),
+            process.platform === 'win32' ? 'junction' : 'dir',
+          );
+          const externalConfig = path.join(root, 'source-config.yaml');
+          writeFileSync(
+            externalConfig,
+            readFileSync(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
+              .replaceAll('{{REPOSITORY}}', 'ignored-repository')
+              .replaceAll('{{PROJECT}}', 'ignored-project')
+              .replaceAll('{{BUNDLE}}', 'ignored-runtime'),
+          );
+          const invokeCopy = (args, env = {}) =>
+            spawnSync('bun', args, {
+              cwd: bundle,
+              encoding: 'utf8',
+              windowsHide: true,
+              env: { ...process.env, ...env },
+            });
+          const initialized = invokeCopy(
+            [
+              path.join(bundle, 'bin/init.mjs'),
+              '--project-root',
+              root,
+              '--repository',
+              'different-repository',
+              '--project',
+              'different-project',
+            ],
+            { AGENT_RUNTIME_CONFIG: externalConfig },
+          );
+          expect(initialized.status, initialized.stderr).toBe(0);
+          const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
+          const workDir = path.join(root, '.agent', 'work', 'session-work');
+          mkdirSync(workDir, { recursive: true });
+          const relative = (name) => `.agent/work/session-work/${name}`;
+          const put = (name, value) => writeFileSync(path.join(workDir, name), JSON.stringify(value));
+          put('scope.json', {
+            schema: 'ImplementationScope/v1',
+            scope_id: 'session-scope',
+            work_id: 'session-work',
+            source_revision: source.digest,
+            ac_ids: ['AC-RESEARCH-1'],
+            allowed_paths: ['AGENT.sidecar.md'],
+            implementation_paths: ['AGENT.sidecar.md'],
+            documentation_paths: [],
+            changed_symbols: [],
+            non_goals: ['Source mutation'],
+            acceptance_trace: ['AC-RESEARCH-1'],
+            behavior_trace: ['SR-RESEARCH-1'],
+            test_trace: ['parallel wave and CAS fixture'],
+            diagnostic_trace: ['fixture'],
+            attribution: { thread_id: 'fixture-native-session', pointer: relative('intake.json') },
+            owner: 'fixture',
+            created_at: new Date().toISOString(),
           });
-        const initialized = invokeCopy(
-          [
-            path.join(bundle, 'bin/init.mjs'),
+          put('acceptance.json', {
+            schema: 'AcceptanceManifest/v1',
+            id: 'session-acceptance',
+            version: 1,
+            ac_ids: ['AC-RESEARCH-1'],
+            source: 'AGENT.sidecar.md',
+            scope: 'session-scope',
+            source_revision: source.digest,
+            contracts: [
+              {
+                id: 'AC-RESEARCH-1',
+                definition: 'Inspect the fixture without source mutation.',
+                sr: 'SR-RESEARCH-1',
+                evidence: ['fixture'],
+              },
+            ],
+          });
+          put('intake.json', {
+            schema: 'VidaLocalSessionIntake/v1',
+            native_session_handle: 'fixture-native-session',
+            work_item: {
+              schema: 'WorkItem/v1',
+              id: 'session-work',
+              provider: 'local',
+              provider_type: 'Research',
+              canonical_kind: route.kind,
+              intent: route.intent,
+              project_id: 'different-project',
+              title: 'Read-only parallel research fixture',
+              description: '',
+              labels: [],
+              risk_flags: [],
+            },
+            scope_path: relative('scope.json'),
+            acceptance_path: relative('acceptance.json'),
+            runtime_code_paths: ['tools/agents/bin/run.mjs'],
+            route: 'R2',
+            risk: 'low',
+            change_kind: 'fix',
+          });
+          const args = [
+            path.join(bundle, 'bin/run.mjs'),
             '--project-root',
             root,
             '--repository',
             'different-repository',
             '--project',
             'different-project',
-          ],
-          { AGENT_RUNTIME_CONFIG: externalConfig },
-        );
-        expect(initialized.status, initialized.stderr).toBe(0);
-        const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
-        const workDir = path.join(root, '.agent', 'work', 'session-work');
-        mkdirSync(workDir, { recursive: true });
-        const relative = (name) => `.agent/work/session-work/${name}`;
-        const put = (name, value) => writeFileSync(path.join(workDir, name), JSON.stringify(value));
-        put('scope.json', {
-          schema: 'ImplementationScope/v1',
-          scope_id: 'session-scope',
-          work_id: 'session-work',
-          source_revision: source.digest,
-          ac_ids: ['AC-RESEARCH-1'],
-          allowed_paths: ['AGENT.sidecar.md'],
-          implementation_paths: ['AGENT.sidecar.md'],
-          documentation_paths: [],
-          changed_symbols: [],
-          non_goals: ['Source mutation'],
-          acceptance_trace: ['AC-RESEARCH-1'],
-          behavior_trace: ['SR-RESEARCH-1'],
-          test_trace: ['parallel wave and CAS fixture'],
-          diagnostic_trace: ['fixture'],
-          attribution: { thread_id: 'fixture-native-session', pointer: relative('intake.json') },
-          owner: 'fixture',
-          created_at: new Date().toISOString(),
-        });
-        put('acceptance.json', {
-          schema: 'AcceptanceManifest/v1',
-          id: 'session-acceptance',
-          version: 1,
-          ac_ids: ['AC-RESEARCH-1'],
-          source: 'AGENT.sidecar.md',
-          scope: 'session-scope',
-          source_revision: source.digest,
-          contracts: [
-            {
-              id: 'AC-RESEARCH-1',
-              definition: 'Inspect the fixture without source mutation.',
-              sr: 'SR-RESEARCH-1',
-              evidence: ['fixture'],
-            },
-          ],
-        });
-        put('intake.json', {
-          schema: 'VidaLocalSessionIntake/v1',
-          native_session_handle: 'fixture-native-session',
-          work_item: {
-            schema: 'WorkItem/v1',
-            id: 'session-work',
-            provider: 'local',
-            provider_type: 'Research',
-            canonical_kind: 'research',
-            intent: 'information_research',
-            project_id: 'different-project',
-            title: 'Read-only parallel research fixture',
-            description: '',
-            labels: [],
-            risk_flags: [],
-          },
-          scope_path: relative('scope.json'),
-          acceptance_path: relative('acceptance.json'),
-          runtime_code_paths: ['tools/agents/bin/run.mjs'],
-          route: 'R2',
-          risk: 'low',
-          change_kind: 'fix',
-        });
-        const args = [
-          path.join(bundle, 'bin/run.mjs'),
-          '--project-root',
-          root,
-          '--repository',
-          'different-repository',
-          '--project',
-          'different-project',
-          '--work-path',
-          'tools/agents',
-          '--work-id',
-          'session-work',
-          '--attempt',
-          '1',
-          '--scope-digest',
-          source.digest,
-          '--team',
-          'default-development',
-          '--kind',
-          'research',
-          '--intent',
-          'information_research',
-          '--workflow',
-          'information_research_light',
-        ];
-        const call = (extra = []) => {
-          const result = invokeCopy([...args, ...extra]);
-          return { ...result, payload: JSON.parse(result.status === 0 ? result.stdout : result.stderr) };
-        };
-        const prepared = call(['--intake', path.join(workDir, 'intake.json')]);
-        expect(prepared.status, prepared.stderr).toBe(0);
-        expect(prepared.payload.next_actions.length).toBeGreaterThan(1);
-        const expected = (version) => [
-          '--expected-revision',
-          String(version.revision),
-          '--expected-digest',
-          version.digest,
-        ];
-        const issued = call([...expected(prepared.payload.state_version), '--issue-wave', 'true']);
-        if (issued.status !== 0) {
-          const diagnostic = invokeCopy([
-            '-e',
-            `const {run}=await import(${JSON.stringify(pathToFileURL(path.join(bundle, 'bin/run.mjs')).href)});try{await run(${JSON.stringify([...args.slice(1), ...expected(prepared.payload.state_version), '--issue-wave', 'true'])});}catch(error){console.error(error.message);process.exitCode=1;}`,
+            '--work-path',
+            'tools/agents',
+            '--work-id',
+            'session-work',
+            '--attempt',
+            '1',
+            '--scope-digest',
+            source.digest,
+            '--team',
+            'default-development',
+            '--kind',
+            route.kind,
+            '--intent',
+            route.intent,
+            '--workflow',
+            route.workflow,
+          ];
+          const call = (extra = []) => {
+            const result = invokeCopy([...args, ...extra]);
+            return {
+              ...result,
+              payload: JSON.parse(
+                (result.status === 0 ? result.stdout : result.stderr)
+                  .split('\n')
+                  .filter((line) => !line.startsWith('runtime call: '))
+                  .join('\n'),
+              ),
+            };
+          };
+          const prepared = call(['--intake', path.join(workDir, 'intake.json')]);
+          expect(prepared.status, prepared.stderr).toBe(0);
+          expect(prepared.payload.next_actions.length).toBeGreaterThan(1);
+          const expected = (version) => [
+            '--expected-revision',
+            String(version.revision),
+            '--expected-digest',
+            version.digest,
+          ];
+          // Fail after durable issue reservation but before activation history append.
+          // A live lock owner simulates a local preparation interruption without
+          // making the external issued_actions response possible.
+          const activationHistory = path.join(root, '.agent/work/session-work/instruction-activation-history.jsonl');
+          writeFileSync(
+            `${activationHistory}.lock.lock`,
+            JSON.stringify({
+              schema: 'SafeRepositoryAccessLock/v1',
+              owner_pid: process.pid,
+            }),
+          );
+          const interrupted = call([...expected(prepared.payload.state_version), '--issue-wave', 'true']);
+          expect(interrupted.status, interrupted.stderr).toBe(1);
+          unlinkSync(`${activationHistory}.lock.lock`);
+          const { openConfiguredMastraSessionLedger } =
+            await import('../src/orchestration/persistent-session-handoff.ts');
+          const interruptedLedger = openConfiguredMastraSessionLedger(root);
+          const interruptedSnapshot = interruptedLedger.resume('session-work', 1);
+          interruptedLedger.close();
+          expect(interruptedSnapshot?.state.research_wave_exposure).toBe('preparing');
+          const reservedIssues = interruptedSnapshot.state.items
+            .filter((item) => item.issue_id !== null)
+            .map((item) => ({ action_id: item.request.action_id, issue_id: item.issue_id }));
+          expect(reservedIssues).toHaveLength(prepared.payload.next_actions.length);
+          expect(interruptedSnapshot.state.items.filter((item) => item.research_activation)).toHaveLength(1);
+          expect(existsSync(activationHistory)).toBe(false);
+          const preparationStatus = call();
+          expect(preparationStatus.status, preparationStatus.stderr).toBe(0);
+          expect(preparationStatus.payload.research_preparation_status).toBe('preparation_incomplete');
+          expect(
+            preparationStatus.payload.action_statuses.every(
+              (item) => item.status === 'research_preparation_incomplete',
+            ),
+          ).toBe(true);
+
+          const issued = call([...expected(interruptedSnapshot.version), '--issue-wave', 'true']);
+          expect(issued.status, issued.stderr).toBe(0);
+          expect(issued.payload.status).toBe('wave_recovered');
+          expect(issued.payload.research_preparation_status).toBe('exposure_possible');
+          expect(issued.payload.action_statuses.every((item) => item.status === 'issued_outcome_uncertain')).toBe(true);
+          expect(
+            issued.payload.issued_actions.every(
+              (item) =>
+                item.action.resolved_profile?.schema === 'ResolvedAgentProfile/v1' &&
+                item.action.resolved_profile.enforcement_status === 'not_asserted',
+            ),
+          ).toBe(true);
+          expect(issued.payload.issued_actions.map((item) => item.request.action_id)).toEqual(
+            prepared.payload.next_actions.map((item) => item.request.action_id),
+          );
+          expect(
+            issued.payload.issued_actions.map(({ request, issue_id }) => ({ action_id: request.action_id, issue_id })),
+          ).toEqual(reservedIssues);
+          expect(issued.payload.issued_actions.every((item) => item.instruction_activation)).toBe(true);
+          expect(new Set(issued.payload.issued_actions.map((item) => item.issue_id)).size).toBe(
+            issued.payload.issued_actions.length,
+          );
+          const stale = call([...expected(issued.payload.state_version), '--issue-wave', 'true']);
+          expect(stale.status).toBe(1);
+          const mixed = call([
+            ...expected(issued.payload.state_version),
+            '--issue-wave',
+            'true',
+            '--report',
+            path.join(root, 'report.json'),
           ]);
-          expect(issued.status, diagnostic.stderr).toBe(0);
-        }
-        expect(issued.status, issued.stderr).toBe(0);
-        expect(issued.payload.status).toBe('wave_issued');
-        expect(issued.payload.issued_actions.map((item) => item.request.action_id)).toEqual(
-          prepared.payload.next_actions.map((item) => item.request.action_id),
-        );
-        expect(new Set(issued.payload.issued_actions.map((item) => item.issue_id)).size).toBe(
-          issued.payload.issued_actions.length,
-        );
-        const stale = call([...expected(prepared.payload.state_version), '--issue-wave', 'true']);
-        expect(stale.status).toBe(1);
-        const mixed = call([
-          ...expected(issued.payload.state_version),
-          '--issue-wave',
-          'true',
-          '--report',
-          path.join(root, 'report.json'),
-        ]);
-        expect(mixed.status).toBe(1);
-        expect(mixed.payload.code).toBe('GAP-VIDA-RUN-CLI-001');
-        const reportFile = path.join(root, 'report.json');
-        writeFileSync(reportFile, 'x'.repeat(32769));
-        const oversized = call([...expected(issued.payload.state_version), '--report', reportFile]);
-        expect(oversized.status).toBe(1);
-        expect(oversized.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
-        writeFileSync(reportFile, '{');
-        const malformed = call([...expected(issued.payload.state_version), '--report', reportFile]);
-        expect(malformed.status).toBe(1);
-        expect(malformed.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
-        writeFileSync(reportFile, '{}');
-        const secondLink = path.join(root, 'report-hardlink.json');
-        linkSync(reportFile, secondLink);
-        const linked = call([...expected(issued.payload.state_version), '--report', reportFile]);
-        expect(linked.status).toBe(1);
-        expect(linked.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
-        unlinkSync(secondLink);
-        let version = issued.payload.state_version;
-        let final;
-        for (const item of issued.payload.issued_actions) {
-          const action = item.request;
-          const sourceId = `fixture-source-${action.assignment_index}`;
-          const summary = JSON.stringify({
-            schema: 'VidaResearchObservationOutput/v1',
-            topic: `Read-only fixture research ${action.assignment_index}`,
-            objective: 'Inspect fixture source without changing code.',
-            question: 'What does the fixture show?',
-            source_refs: [
-              {
-                source_id: sourceId,
-                source_kind: 'internal',
-                locator: `AGENT.sidecar.md#fixture-${action.assignment_index}`,
-                title: 'Fixture sidecar',
-                claim: 'AC-RESEARCH-1 SR-RESEARCH-1: this fixture is read-only research.',
-                retrieved_at: '2026-09-30T00:00:00Z',
-                version_or_date: '2026-09-30',
-                independence_group: 'fixture',
-                digest: source.entries[0].sha256,
-              },
-            ],
-            findings: [
-              {
-                finding_id: `fixture-${action.assignment_index}`,
-                statement: 'The fixture source is present.',
-                source_ids: [sourceId],
-                evidence_class: 'Code',
-                status: 'confirmed',
-              },
-            ],
-            evidence_classes: ['Code'],
-            uncertainties: [],
-            conflicts: [],
-            br_ids: [],
-            sr_ids: ['SR-RESEARCH-1'],
-            ac_ids: ['AC-RESEARCH-1'],
-            gap_ids: [],
-            options: [
-              {
+          expect(mixed.status).toBe(1);
+          expect(mixed.payload.code).toBe('GAP-VIDA-RUN-CLI-001');
+          const reportFile = path.join(root, 'report.json');
+          writeFileSync(reportFile, 'x'.repeat(32769));
+          const oversized = call([...expected(issued.payload.state_version), '--report', reportFile]);
+          expect(oversized.status).toBe(1);
+          expect(oversized.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
+          writeFileSync(reportFile, '{');
+          const malformed = call([...expected(issued.payload.state_version), '--report', reportFile]);
+          expect(malformed.status).toBe(1);
+          expect(malformed.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
+          writeFileSync(reportFile, '{}');
+          const secondLink = path.join(root, 'report-hardlink.json');
+          linkSync(reportFile, secondLink);
+          const linked = call([...expected(issued.payload.state_version), '--report', reportFile]);
+          expect(linked.status).toBe(1);
+          expect(linked.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
+          unlinkSync(secondLink);
+          let version = issued.payload.state_version;
+          let final;
+          for (const item of issued.payload.issued_actions) {
+            const action = item.request;
+            const sourceId = `fixture-source-${action.assignment_index}`;
+            const summary = JSON.stringify({
+              schema: 'VidaResearchObservationOutput/v1',
+              topic: `Read-only fixture research ${action.assignment_index}`,
+              objective: 'Inspect fixture source without changing code.',
+              question: 'What does the fixture show?',
+              source_refs: [
+                {
+                  source_id: sourceId,
+                  source_kind: 'internal',
+                  locator: `AGENT.sidecar.md#fixture-${action.assignment_index}`,
+                  title: 'Fixture sidecar',
+                  claim: 'AC-RESEARCH-1 SR-RESEARCH-1: this fixture is read-only research.',
+                  retrieved_at: '2026-09-30T00:00:00Z',
+                  version_or_date: '2026-09-30',
+                  independence_group: 'fixture',
+                  digest: source.entries[0].sha256,
+                },
+              ],
+              findings: [
+                {
+                  finding_id: `fixture-${action.assignment_index}`,
+                  statement: 'The fixture source is present.',
+                  source_ids: [sourceId],
+                  evidence_class: 'Code',
+                  status: 'confirmed',
+                },
+              ],
+              evidence_classes: ['Code'],
+              uncertainties: [],
+              conflicts: [],
+              br_ids: [],
+              sr_ids: ['SR-RESEARCH-1'],
+              ac_ids: ['AC-RESEARCH-1'],
+              gap_ids: [],
+              options: [
+                {
+                  option_id: 'retain',
+                  label: 'Retain evidence',
+                  description: 'Preserve the read-only finding.',
+                  evidence_refs: [sourceId],
+                },
+              ],
+              recommendation: {
                 option_id: 'retain',
-                label: 'Retain evidence',
-                description: 'Preserve the read-only finding.',
+                rationale: 'Fixture source supports the finding.',
                 evidence_refs: [sourceId],
               },
-            ],
-            recommendation: {
-              option_id: 'retain',
-              rationale: 'Fixture source supports the finding.',
-              evidence_refs: [sourceId],
-            },
-            completeness: {
-              status: 'pass',
-              required_questions: ['What does the fixture show?'],
-              answered_questions: ['What does the fixture show?'],
-              missing_questions: [],
-              material_gaps: [],
-              external_validation: {
-                required: false,
-                source_count: 0,
-                minimum_sources: 0,
-                status: 'not_required',
-                live_check: null,
+              completeness: {
+                status: 'pass',
+                required_questions: ['What does the fixture show?'],
+                answered_questions: ['What does the fixture show?'],
+                missing_questions: [],
+                material_gaps: [],
+                external_validation: {
+                  required: false,
+                  source_count: 0,
+                  minimum_sources: 0,
+                  status: 'not_required',
+                  live_check: null,
+                },
               },
-            },
-            readiness: 'informational',
-          });
-          const outcome = {
-            schema: 'VidaSessionObservation/v1',
-            action_id: action.action_id,
-            issue_id: item.issue_id,
-            agent_id: `test-${action.assignment_index}`,
-            tool_call_ref: `tool-${action.assignment_index}`,
-            status: 'reported_complete',
-            summary,
-            output_digest: canonicalJsonDigest(summary),
-            evidence_refs: [sourceId],
-          };
-          if (action.assignment_index === 0) {
-            writeFileSync(reportFile, JSON.stringify({ ...outcome, action_id: 'wrong-action' }));
-            const mismatched = call([...expected(version), '--report', reportFile]);
-            expect(mismatched.status).toBe(1);
-            expect(call().payload.state_version).toEqual(version);
+              readiness: 'informational',
+            });
+            const outcome = {
+              schema: 'VidaSessionObservation/v1',
+              action_id: action.action_id,
+              issue_id: item.issue_id,
+              agent_id: `test-${action.assignment_index}`,
+              tool_call_ref: `tool-${action.assignment_index}`,
+              status: 'reported_complete',
+              summary,
+              output_digest: canonicalJsonDigest(summary),
+              evidence_refs: [sourceId],
+            };
+            if (action.assignment_index === 0) {
+              writeFileSync(reportFile, JSON.stringify({ ...outcome, action_id: 'wrong-action' }));
+              const mismatched = call([...expected(version), '--report', reportFile]);
+              expect(mismatched.status).toBe(1);
+              expect(call().payload.state_version).toEqual(version);
+            }
+            writeFileSync(reportFile, JSON.stringify(outcome));
+            final = call([...expected(version), '--report', reportFile]);
+            expect(final.status, final.stderr).toBe(0);
+            version = final.payload.state_version;
           }
-          writeFileSync(reportFile, JSON.stringify(outcome));
-          final = call([...expected(version), '--report', reportFile]);
-          expect(final.status, final.stderr).toBe(0);
-          version = final.payload.state_version;
+          expect(final.payload.resume_status).toBe('ready');
+          expect(final.payload.next_actions.length).toBeGreaterThan(0);
+          expect(final.payload.next_actions[0].request.wave_index).toBe(1);
+          const replay = call([...expected(version), '--report', path.join(root, 'report.json')]);
+          expect(replay.status).toBe(0);
+          expect(replay.payload.status).toBe('report_retrieved');
+          expect(replay.payload.state_version).toEqual(final.payload.state_version);
+          expect(replay.payload.issued_actions).toEqual([]);
+        } finally {
+          rmSync(root, { recursive: true, force: true });
         }
-        expect(final.payload.resume_status).toBe('ready');
-        expect(final.payload.next_actions.length).toBeGreaterThan(0);
-        expect(final.payload.next_actions[0].request.wave_index).toBe(1);
-        const replay = call([...expected(version), '--report', path.join(root, 'report.json')]);
-        expect(replay.status).toBe(0);
-        expect(replay.payload.status).toBe('report_retrieved');
-        expect(replay.payload.state_version).toEqual(final.payload.state_version);
-        expect(replay.payload.issued_actions).toEqual([]);
-      } finally {
-        rmSync(root, { recursive: true, force: true });
-      }
-    },
-    180_000,
-  );
+      },
+      180_000,
+    );
 });
 
 if (mutationMode || v8CoverageMode) {

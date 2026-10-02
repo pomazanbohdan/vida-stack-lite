@@ -2727,7 +2727,7 @@ export async function run(args = process.argv.slice(2)) {
       const evidence = await admittedEvidence(evidenceJournal);
       const receipts = await completedValidationReceipts(evidenceJournal, evidence);
       const { issueObservedTestReceipt } = await import('../src/orchestration/observed-testing.ts');
-      const { instruction: testerInstruction, receipt: testReceipt } = issueObservedTestReceipt({
+      const { instruction: testerInstruction, receipt: testReceipt, evidence: testerEvidence } = issueObservedTestReceipt({
         repositoryRoot: values.project_root,
         config,
         packet: evidence.packet,
@@ -2737,7 +2737,7 @@ export async function run(args = process.argv.slice(2)) {
         host: evidence.host,
       });
       const { prepareObservedDeliveryInstruction } = await import('../src/orchestration/observed-delivery.ts');
-      return prepareObservedDeliveryInstruction({
+      const instruction = await prepareObservedDeliveryInstruction({
         repositoryRoot: values.project_root,
         config,
         packet: evidence.packet,
@@ -2748,6 +2748,7 @@ export async function run(args = process.argv.slice(2)) {
         testReceipt,
         authority: evidence.authority,
       });
+      return { instruction, evidence: testerEvidence };
     };
     const normalizeObservedResearch = async (currentJournal) => {
       const researchItems = currentJournal.state.items.filter(
@@ -2809,15 +2810,6 @@ export async function run(args = process.argv.slice(2)) {
           ?.produces.includes('ResearchSynthesis/v1')
           ? 'ResearchSynthesis/v1'
           : 'ResearchResult/v1';
-        const acceptedScope = JSON.parse(
-          access.readBytes(host.work.contracts.scope.path, 'research accepted scope').toString('utf8'),
-        );
-        const researchMode = acceptedScope.research_mode ?? null;
-        if (
-          researchMode === 'answer_only' ||
-          (researchMode === 'save_document' && artifactSchema === 'ResearchResult/v1')
-        )
-          continue;
         const admittedArtifact =
           admittedPlan &&
           host.work.artifacts.find(
@@ -2865,23 +2857,6 @@ export async function run(args = process.argv.slice(2)) {
                 }),
               })
             : buildObservedResearchResult(base);
-        if (
-          researchMode === 'save_document' &&
-          (result.topic !== acceptedScope.research_output_topic ||
-            acceptedScope.documentation_paths?.[1] !== config.research_decision.paths.changelog)
-        )
-          fail('GAP-VIDA-RUN-EXECUTION-001', 'Saved research output differs from admitted document scope.');
-        const predecessorResults =
-          researchMode === 'save_document'
-            ? admittedResearchResultsForSynthesis({
-                repositoryRoot: values.project_root,
-                config,
-                journal: currentJournal,
-                work: host.work,
-                workflowId: values.workflow,
-                workItem: execution.workItem,
-              })
-            : undefined;
         const current = () =>
           currentObservedResearchBinding({
             repositoryRoot: values.project_root,
@@ -2901,10 +2876,7 @@ export async function run(args = process.argv.slice(2)) {
             binding,
             host_state: ledger.hostState,
             readCurrent: current,
-            predecessor_results: predecessorResults,
           });
-          if (researchMode === 'save_document' && plan.record_path !== acceptedScope.documentation_paths[0])
-            fail('GAP-VIDA-RUN-EXECUTION-001', 'Canonical synthesis path differs from claimed output.');
           currentJournal = ledger.reserveResearchNormalization(
             context.work_id,
             context.attempt,
@@ -2925,7 +2897,6 @@ export async function run(args = process.argv.slice(2)) {
           host_state: ledger.hostState,
           readCurrent: current,
           plan,
-          predecessor_results: predecessorResults,
         });
         await commitObservedResearchArtifact({
           repositoryRoot: values.project_root,
@@ -2935,7 +2906,6 @@ export async function run(args = process.argv.slice(2)) {
           attempt: context.attempt,
           actionId: item.request.action_id,
           result,
-          predecessorResults,
         });
       }
       return currentJournal;
@@ -3358,6 +3328,7 @@ export async function run(args = process.argv.slice(2)) {
       let validationReceipts = [];
       let testerInstruction = null;
       let testReceipt = null;
+      let testEvidence = null;
       let deliveryInstruction = null;
       if (values.issue_wave || values.report || values.reconcile) {
         if (
@@ -3423,6 +3394,14 @@ export async function run(args = process.argv.slice(2)) {
           const issuedStages = workflowSnapshot.requests.map((request) =>
             config.workflows[values.workflow].stages.find((stage) => stage.id === request.stage_id),
           );
+          const researchItems = journal.state.items.filter((item) => {
+            const stage = config.workflows[item.request.workflow_id]?.stages.find(
+              (candidate) => candidate.id === item.request.stage_id,
+            );
+            return stage?.produces.includes('ResearchResult/v1') || stage?.produces.includes('ResearchSynthesis/v1');
+          });
+          const hasIssuedResearchWave =
+            researchItems.length > 0 && journal.state.items.some((item) => item.issue_id !== null);
           if (issueKinds.has('develop')) {
             const developerRequest = workflowSnapshot.requests.find(
               (request) =>
@@ -3447,7 +3426,7 @@ export async function run(args = process.argv.slice(2)) {
             }
             if (issueKinds.has('deliver')) {
               const { issueObservedTestReceipt } = await import('../src/orchestration/observed-testing.ts');
-              ({ instruction: testerInstruction, receipt: testReceipt } = issueObservedTestReceipt({
+              ({ instruction: testerInstruction, receipt: testReceipt, evidence: testEvidence } = issueObservedTestReceipt({
                 repositoryRoot: values.project_root,
                 config,
                 packet: issuedEvidence.packet,
@@ -3460,89 +3439,23 @@ export async function run(args = process.argv.slice(2)) {
                 fail('GAP-VIDA-RUN-EXECUTION-001', 'Configured tester receipt is not passing.');
             }
           }
-          const waveIndex = workflowSnapshot.requests[0]?.wave_index;
-          const waveActions =
-            waveIndex === undefined
-              ? []
-              : sessionActionsForWave(config, selection, context, values.workflow, waveIndex, [], journal.state.corrective_execution);
-          const writers = waveActions.filter((action) => action.mutation_scope === 'repository_source');
-          let reservations = {};
           const researchBindings = new Map();
-          if (writers.length > 0) {
-            if (writers.length !== 1 || !sourceSnapshot)
-              fail('GAP-VIDA-RUN-EXECUTION-001', 'Source-writing wave needs one admitted exact-path scope.');
-            const writerAction = writers[0];
-            const writerRequest = journal.state.items.find(
-              (item) => item.request.action_id === writerAction.action_id,
-            )?.request;
-            if (!writerRequest) fail('GAP-VIDA-RUN-EXECUTION-001', 'Mastra source action is missing.');
-            const { loadProjectSetContext } = await import('../src/config/project-context.ts');
-            const projectContext = loadProjectSetContext(values.project_root, config, config.repository.repository_id, [
-              pathProject.project_id,
-            ]);
-            const writerIdentity = {
-              repository_id: projectContext.repository_id,
-              project_ids: projectContext.project_ids,
-              integrations_digest: projectContext.integrations_digest,
-              work_id: context.work_id,
-            };
-            const beforeWriter = ledger.hostState.readHostStateSnapshot(writerIdentity);
-            const { acquireLocalSourceWriterLease } = await import('../src/orchestration/local-work-admission.ts');
-            acquireLocalSourceWriterLease({
-              repositoryRoot: values.project_root,
-              config,
-              store: ledger.hostState,
-              identity: writerIdentity,
-              nativeSessionHandle: beforeWriter.work?.lease?.thread_id,
-              stageId: writerRequest.stage_id,
-              assignmentIndex: writerRequest.assignment_index,
-              expectedWork: beforeWriter.workVersion,
-              expectedLedger: beforeWriter.ledgerVersion,
-              expectedSessionJournal: { attempt: context.attempt, version: journal.version },
-            });
-            const { openAdmittedSessionExecution } = await import('../src/orchestration/admitted-session-execution.ts');
-            const { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } =
-              await import('../src/runtime-kernel.ts');
-            const execution = await openAdmittedSessionExecution(
-              values.project_root,
-              ledger.hostState,
-              pathProject.project_id,
-              context.work_id,
-            );
-            const capability = execution.composition.workflowExecutionCapability;
-            const prepared = await prepareWorkflowExecution(capability, {
-              repositoryRoot: values.project_root,
-              configDigest,
-              teamId: values.team,
-              workItemId: context.work_id,
-            });
-            const action = writers[0];
-            const request = journal.state.items.find((item) => item.request.action_id === action.action_id)?.request;
-            if (!request) fail('GAP-VIDA-RUN-EXECUTION-001', 'Mastra source action is missing.');
-            const reserved = await reserveWorkflowAssignmentForSession(capability, {
-              repositoryRoot: values.project_root,
-              configDigest,
-              teamId: values.team,
-              workflowId: values.workflow,
-              stageId: request.stage_id,
-              assignmentIndex: request.assignment_index,
-              workItemId: context.work_id,
-              workItemDigest: prepared.workItemDigest,
-              workContextDigest: prepared.workContextDigest,
-              input: { bindings_manifest_ref: request.bindings_manifest_ref },
-            });
-            reservations = { [action.action_id]: reserved };
-          }
-          journal = ledger.issueWave(context.work_id, context.attempt, journal.version, reservations);
-          if (
-            issuedStages.some(
-              (stage) =>
-                stage?.produces.includes('ResearchResult/v1') || stage?.produces.includes('ResearchSynthesis/v1'),
+          if (hasIssuedResearchWave) {
+            if (journal.state.research_wave_exposure === 'possible')
+              fail(
+                'GAP-VIDA-RUN-EXECUTION-001',
+                'Research batch exposure may already have occurred; report or reconcile the existing issue before any retry.',
+              );
+            if (journal.state.research_wave_exposure === undefined)
+              journal = ledger.beginLegacyResearchPreparationRecovery(context.work_id, context.attempt, journal.version);
+            if (
+              journal.state.research_wave_exposure !== 'preparing' ||
+              journal.state.items.some((item) => item.issue_id === null || item.observation || item.host_reservation)
             )
-          ) {
+              fail('GAP-VIDA-RUN-EXECUTION-001', 'Research preparation is not safely resumable for the current wave.');
             const { openAdmittedSessionExecution } = await import('../src/orchestration/admitted-session-execution.ts');
-            const { issueObservedResearchActivation } =
-              await import('../src/orchestration/observed-research-activation.ts');
+            const { currentObservedResearchBinding } = await import('../src/orchestration/observed-research-binding.ts');
+            const { applyInstructionActivationUseWriteAsync } = await import('../src/research-decision.ts');
             const execution = await openAdmittedSessionExecution(
               values.project_root,
               ledger.hostState,
@@ -3550,12 +3463,28 @@ export async function run(args = process.argv.slice(2)) {
               context.work_id,
             );
             for (const item of journal.state.items.filter((entry) =>
-              config.workflows[values.workflow].stages.some(
-                (stage) =>
-                  stage.id === entry.request.stage_id &&
-                  (stage.produces.includes('ResearchResult/v1') || stage.produces.includes('ResearchSynthesis/v1')),
-              ),
+              researchItems.some((candidate) => candidate.request.action_id === entry.request.action_id),
             )) {
+              if (item.research_activation) {
+                const bindingInput = {
+                  repositoryRoot: values.project_root,
+                  ledger,
+                  identity: execution.identity,
+                  workId: context.work_id,
+                  attempt: context.attempt,
+                  actionId: item.request.action_id,
+                };
+                const binding = currentObservedResearchBinding(bindingInput);
+                await applyInstructionActivationUseWriteAsync({
+                  root: values.project_root,
+                  use: item.research_activation.use,
+                  plan: item.research_activation.plan,
+                  binding,
+                  host_state: ledger.hostState,
+                  readCurrent: () => currentObservedResearchBinding(bindingInput),
+                });
+              }
+              const { issueObservedResearchActivation } = await import('../src/orchestration/observed-research-activation.ts');
               const activated = await issueObservedResearchActivation({
                 repositoryRoot: values.project_root,
                 config,
@@ -3567,26 +3496,158 @@ export async function run(args = process.argv.slice(2)) {
               journal = activated.journal;
               researchBindings.set(item.request.action_id, activated.bindings);
             }
+            status = 'wave_recovered';
+            issuedActions = journal.state.items.map((item) => ({
+              request: item.request,
+              issue_id: item.issue_id,
+              host_attempt_id: item.host_reservation?.receipt.attempt.attempt_id,
+              ...(item.research_activation
+                ? {
+                    instruction_activation: item.research_activation.use,
+                    instruction_bindings: researchBindings.get(item.request.action_id),
+                    ...(config.workflows[values.workflow].stages.find((stage) => stage.id === item.request.stage_id)?.kind ===
+                    'research'
+                      ? {
+                          research_instruction_activation: item.research_activation.use,
+                          research_instruction_bindings: researchBindings.get(item.request.action_id),
+                        }
+                      : {}),
+                  }
+                : {}),
+            }));
+          } else {
+            const waveIndex = workflowSnapshot.requests[0]?.wave_index;
+            const waveActions =
+              waveIndex === undefined
+                ? []
+                : sessionActionsForWave(
+                    config,
+                    selection,
+                    context,
+                    values.workflow,
+                    waveIndex,
+                    [],
+                    journal.state.corrective_execution,
+                  );
+            const writers = waveActions.filter((action) => action.mutation_scope === 'repository_source');
+            let reservations = {};
+            if (writers.length > 0) {
+              if (writers.length !== 1 || !sourceSnapshot)
+                fail('GAP-VIDA-RUN-EXECUTION-001', 'Source-writing wave needs one admitted exact-path scope.');
+              const writerAction = writers[0];
+              const writerRequest = journal.state.items.find(
+                (item) => item.request.action_id === writerAction.action_id,
+              )?.request;
+              if (!writerRequest) fail('GAP-VIDA-RUN-EXECUTION-001', 'Mastra source action is missing.');
+              const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+              const projectContext = loadProjectSetContext(values.project_root, config, config.repository.repository_id, [
+                pathProject.project_id,
+              ]);
+              const writerIdentity = {
+                repository_id: projectContext.repository_id,
+                project_ids: projectContext.project_ids,
+                integrations_digest: projectContext.integrations_digest,
+                work_id: context.work_id,
+              };
+              const beforeWriter = ledger.hostState.readHostStateSnapshot(writerIdentity);
+              const { acquireLocalSourceWriterLease } = await import('../src/orchestration/local-work-admission.ts');
+              acquireLocalSourceWriterLease({
+                repositoryRoot: values.project_root,
+                config,
+                store: ledger.hostState,
+                identity: writerIdentity,
+                nativeSessionHandle: beforeWriter.work?.lease?.thread_id,
+                stageId: writerRequest.stage_id,
+                assignmentIndex: writerRequest.assignment_index,
+                expectedWork: beforeWriter.workVersion,
+                expectedLedger: beforeWriter.ledgerVersion,
+                expectedSessionJournal: { attempt: context.attempt, version: journal.version },
+              });
+              const { openAdmittedSessionExecution } = await import('../src/orchestration/admitted-session-execution.ts');
+              const { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } = await import('../src/runtime-kernel.ts');
+              const execution = await openAdmittedSessionExecution(
+                values.project_root,
+                ledger.hostState,
+                pathProject.project_id,
+                context.work_id,
+              );
+              const capability = execution.composition.workflowExecutionCapability;
+              const prepared = await prepareWorkflowExecution(capability, {
+                repositoryRoot: values.project_root,
+                configDigest,
+                teamId: values.team,
+                workItemId: context.work_id,
+              });
+              const action = writers[0];
+              const request = journal.state.items.find((item) => item.request.action_id === action.action_id)?.request;
+              if (!request) fail('GAP-VIDA-RUN-EXECUTION-001', 'Mastra source action is missing.');
+              const reserved = await reserveWorkflowAssignmentForSession(capability, {
+                repositoryRoot: values.project_root,
+                configDigest,
+                teamId: values.team,
+                workflowId: values.workflow,
+                stageId: request.stage_id,
+                assignmentIndex: request.assignment_index,
+                workItemId: context.work_id,
+                workItemDigest: prepared.workItemDigest,
+                workContextDigest: prepared.workContextDigest,
+                input: { bindings_manifest_ref: request.bindings_manifest_ref },
+              });
+              reservations = { [action.action_id]: reserved };
+            }
+            journal = ledger.issueWave(context.work_id, context.attempt, journal.version, reservations);
+            if (
+              issuedStages.some(
+                (stage) => stage?.produces.includes('ResearchResult/v1') || stage?.produces.includes('ResearchSynthesis/v1'),
+              )
+            ) {
+              const { openAdmittedSessionExecution } = await import('../src/orchestration/admitted-session-execution.ts');
+              const { issueObservedResearchActivation } = await import('../src/orchestration/observed-research-activation.ts');
+              const execution = await openAdmittedSessionExecution(
+                values.project_root,
+                ledger.hostState,
+                pathProject.project_id,
+                context.work_id,
+              );
+              for (const item of journal.state.items.filter((entry) =>
+                config.workflows[values.workflow].stages.some(
+                  (stage) =>
+                    stage.id === entry.request.stage_id &&
+                    (stage.produces.includes('ResearchResult/v1') || stage.produces.includes('ResearchSynthesis/v1')),
+                ),
+              )) {
+                const activated = await issueObservedResearchActivation({
+                  repositoryRoot: values.project_root,
+                  config,
+                  ledger,
+                  identity: execution.identity,
+                  journal,
+                  actionId: item.request.action_id,
+                });
+                journal = activated.journal;
+                researchBindings.set(item.request.action_id, activated.bindings);
+              }
+            }
+            status = 'wave_issued';
+            issuedActions = journal.state.items.map((item) => ({
+              request: item.request,
+              issue_id: item.issue_id,
+              host_attempt_id: item.host_reservation?.receipt.attempt.attempt_id,
+              ...(item.research_activation
+                ? {
+                    instruction_activation: item.research_activation.use,
+                    instruction_bindings: researchBindings.get(item.request.action_id),
+                    ...(config.workflows[values.workflow].stages.find((stage) => stage.id === item.request.stage_id)?.kind ===
+                    'research'
+                      ? {
+                          research_instruction_activation: item.research_activation.use,
+                          research_instruction_bindings: researchBindings.get(item.request.action_id),
+                        }
+                      : {}),
+                  }
+                : {}),
+            }));
           }
-          status = 'wave_issued';
-          issuedActions = journal.state.items.map((item) => ({
-            request: item.request,
-            issue_id: item.issue_id,
-            host_attempt_id: item.host_reservation?.receipt.attempt.attempt_id,
-            ...(item.research_activation
-              ? {
-                  instruction_activation: item.research_activation.use,
-                  instruction_bindings: researchBindings.get(item.request.action_id),
-                  ...(config.workflows[values.workflow].stages.find((stage) => stage.id === item.request.stage_id)
-                    ?.kind === 'research'
-                    ? {
-                        research_instruction_activation: item.research_activation.use,
-                        research_instruction_bindings: researchBindings.get(item.request.action_id),
-                      }
-                    : {}),
-                }
-              : {}),
-          }));
         } else {
           const observation = parseSessionBridgeObservation(readBoundedReport(values.report));
           const issued = journal.state.items.find((item) => item.request.action_id === observation.action_id);
@@ -3750,7 +3811,7 @@ export async function run(args = process.argv.slice(2)) {
             ),
           )
         )
-          deliveryInstruction = await preparedDelivery(journal);
+          ({ instruction: deliveryInstruction, evidence: testEvidence } = await preparedDelivery(journal));
         const stepId = journal.state.step_id;
         if (!stepId) fail('GAP-VIDA-RUN-EXECUTION-001', 'The Mastra resume step is missing.');
         workflowSnapshot = await bridge.resume(
@@ -3779,7 +3840,7 @@ export async function run(args = process.argv.slice(2)) {
           ),
         )
       )
-        deliveryInstruction = await preparedDelivery(journal);
+        ({ instruction: deliveryInstruction, evidence: testEvidence } = await preparedDelivery(journal));
       let researchSynthesis = null;
       const terminalSynthesisStages = config.workflows[values.workflow].stages.filter(
         (stage) =>
@@ -3883,7 +3944,7 @@ export async function run(args = process.argv.slice(2)) {
           requireConfiguredContext(item.request),
         ]),
       );
-      return {
+      const result = {
         schema: 'VidaAgentRunResult/v1',
         status,
         workflow: values.workflow,
@@ -3892,6 +3953,12 @@ export async function run(args = process.argv.slice(2)) {
         execution_status: workflowSnapshot.status,
         resume_status: reconciliationRequired ? 'reconciliation_required' : journal.resume_status,
         reconciliation_required: reconciliationRequired,
+        research_preparation_status:
+          journal.state.research_wave_exposure === 'preparing'
+            ? 'preparation_incomplete'
+            : journal.state.research_wave_exposure === 'possible'
+              ? 'exposure_possible'
+              : null,
         source_snapshot_digest: sourceSnapshot?.digest ?? null,
         state_version: journal.version,
         next_actions:
@@ -3946,17 +4013,25 @@ export async function run(args = process.argv.slice(2)) {
         })),
         test_receipt_status: testReceipt
           ? {
+              ...testEvidence,
               receipt_id: testReceipt.receipt_id,
               status: testReceipt.status,
               implementation_fingerprint: testReceipt.implementation_fingerprint,
             }
           : null,
         delivery_instruction: deliveryInstruction,
+        delivery_evidence: deliveryInstruction ? testEvidence : null,
         research_synthesis: researchSynthesis,
         action_statuses: journal.state.items.map((item) => ({
           action_id: item.request.action_id,
           status:
-            item.issue_id === null ? 'unissued' : item.observation === null ? 'issued_outcome_uncertain' : 'reported',
+            item.issue_id === null
+              ? 'unissued'
+              : item.observation === null
+                ? journal.state.research_wave_exposure === 'preparing'
+                  ? 'research_preparation_incomplete'
+                  : 'issued_outcome_uncertain'
+                : 'reported',
         })),
         completed_observations: journal.state.completed.flatMap((entry) => entry.items.map((item) => item.observation)),
         initialization_status: initialization.workspace_binding_status,
@@ -3968,6 +4043,17 @@ export async function run(args = process.argv.slice(2)) {
             }
           : {}),
       };
+      if (issuedActions.length > 0 && journal.state.research_wave_exposure === 'preparing') {
+        journal = ledger.markResearchWaveExposurePossible(context.work_id, context.attempt, journal.version);
+        result.state_version = journal.version;
+        result.resume_status = journal.resume_status;
+        result.research_preparation_status = 'exposure_possible';
+        result.action_statuses = result.action_statuses.map((item) => ({
+          ...item,
+          status: item.status === 'research_preparation_incomplete' ? 'issued_outcome_uncertain' : item.status,
+        }));
+      }
+      return result;
     } finally {
       ledger.close();
       await bridge.close();

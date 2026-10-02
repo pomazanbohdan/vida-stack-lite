@@ -67,6 +67,16 @@ export function buildObservedTesterInstruction(
   );
 }
 
+export interface ObservedTestEvidenceClassification {
+  readonly classification: 'caller_report_consistency';
+  readonly test_execution_verified: false;
+}
+
+const observedTestEvidenceClassification: ObservedTestEvidenceClassification = Object.freeze({
+  classification: 'caller_report_consistency',
+  test_execution_verified: false,
+});
+
 /** Reissues in-memory authority only from the exact persisted native tester observation. */
 export function issueObservedTestReceipt(input: {
   repositoryRoot: string;
@@ -76,8 +86,18 @@ export function issueObservedTestReceipt(input: {
   journal: MastraSessionLedgerSnapshot;
   authority: DeliveryEvidenceAuthority;
   host?: HostStateSnapshot;
-}): { instruction: TesterInstruction; receipt: TestReceipt } {
+}): {
+  instruction: TesterInstruction;
+  receipt: TestReceipt;
+  evidence: ObservedTestEvidenceClassification;
+} {
   const { repositoryRoot, config, packet, implementationResult, journal, authority } = input;
+  requireTest(
+    Object.keys(input).every((key) =>
+      ['repositoryRoot', 'config', 'packet', 'implementationResult', 'journal', 'authority', 'host'].includes(key),
+    ),
+    'test evidence classification is runtime-derived and caller fields are closed',
+  );
   if (journal.state.corrective_execution) {
     requireTest(input.host?.work, 'corrective test receipt requires current Host binding');
     validateWorkSessionBinding(input.host.work, journal.state, repositoryRoot);
@@ -141,5 +161,5 @@ export function issueObservedTestReceipt(input: {
     status: verdict.status,
     evidence_refs: [observedReceiptEvidenceReference(journal, item.request.action_id, item.observation.output_digest)],
   });
-  return { instruction, receipt };
+  return { instruction, receipt, evidence: observedTestEvidenceClassification };
 }

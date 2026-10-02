@@ -423,6 +423,8 @@ function fixtureAttempts() {
         request_digest: requestDigest,
         stage_id: invocation.stage.id,
         assignment_index: invocation.assignmentIndex,
+        correction_generation: 0,
+        correction_authorization: null,
         lease,
         status: 'started',
         result: null,

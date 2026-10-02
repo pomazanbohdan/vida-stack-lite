@@ -1,18 +1,14 @@
 import { expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
+import { configuredTestContext } from './configured-context.mjs';
+import { runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import {
   buildObservedResearchResult,
   researchObservationOutputContract,
 } from '../src/orchestration/observed-research-result.ts';
 
-const root =
-  process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const config = loadRuntimeConfig(root);
+const { config } = configuredTestContext();
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const timestamp = new Date(Date.now() - 60_000).toISOString();
 
@@ -24,7 +20,7 @@ function fixture() {
     id: 'work-1',
     canonical_kind: 'research',
     intent: 'information_research',
-    project_id: 'refactoring',
+    project_id: config.projects[0].project_id,
     title: 'Inspect bounded sources',
     description: 'Research one scoped question.',
     risk_flags: [],

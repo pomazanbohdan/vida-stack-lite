@@ -3,7 +3,7 @@
 Owner: agent maintainers. Class: derived installation guide.
 Sources: [system specification](system-specification.md), [package declarations](../package.json), [Bun pin](../.bun-version), [public command](../bin/vida-agent.mjs), [initializer](../bin/init.mjs).
 
-The primary public installation is one qualified native `vida-agent` executable
+The target primary public installation is one qualified native `vida-agent` executable
 per supported OS/CPU with embedded Bun 1.4.2. Direct installation and first run
 require no external Node, npm or Bun and no runtime download. Native target
 claims require actual full VIDA/native/WASM/state checks; a minimal probe or
@@ -84,6 +84,13 @@ execution; no controller readiness is established by this documentation.
 
 ## npm and SDK compatibility channel
 
+The current Source snapshot implements npm/SDK packaging. Ordinary `npm pack`
+runs the SDK payload verifier; it does not require or claim a native executable.
+Native build helpers and entrypoints are not present in this snapshot, so native
+asset formation remains explicitly unavailable until implemented and qualified.
+The native installation contract above is a target requirement, not a readiness
+claim or an executable installation procedure for this Source snapshot.
+
 The following sequence describes the maintained npm compatibility coordinator;
 it does not implement or qualify primary native installation. An explicit human
 request authorizes manual npm compatibility formation and system update while
@@ -101,7 +108,7 @@ archive selection or integrity-value calculation is needed:
 ```sh
 npm run release:local -- --prepare
 # Run applicable current checks and join actual test evidence for the operation.
-npm run release:local -- --pack OPERATION
+npm run release:local -- --pack-npm OPERATION
 npm run release:local -- --status OPERATION
 # Source only: after successful pack, the session commits/pushes its qualified payload.
 # Seal this exact archive, then join fresh real reviews, reverse validation and CLEAR.

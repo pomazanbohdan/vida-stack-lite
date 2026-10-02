@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { configuredTestContext } from './configured-context.mjs';
 import {
   assertLoadedRuntimeConfig,
   loadRuntimeConfig,
@@ -11,8 +11,7 @@ import {
   validateRuntimeConfigRepairTargetBytes,
 } from '../src/config/runtime-config.ts';
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
+const { repositoryRoot } = configuredTestContext();
 const sourceBytes = readFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'));
 
 describe('current-v1 exact-byte config repair boundary', () => {

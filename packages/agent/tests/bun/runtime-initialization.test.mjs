@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -94,4 +96,23 @@ test('competing workspace is denied after the first bind', async () => {
   const bytes = readFileSync(receiptPath);
   await expect(bindRuntimeInitialization(root, new HostStateStore(database, 'f'.repeat(64)))).rejects.toThrow();
   expect(readFileSync(receiptPath)).toEqual(bytes);
+});
+
+test('separate processes bind one pending receipt without changing its identity', async () => {
+  const hostModule = new URL('../../src/host-state.ts', import.meta.url).href;
+  const initModule = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
+  const program = `
+    const { HostStateStore, openHostStateDatabase } = await import(${JSON.stringify(hostModule)});
+    const { bindRuntimeInitialization } = await import(${JSON.stringify(initModule)});
+    const db = openHostStateDatabase(${JSON.stringify(path.join(root, '.agent', 'host.sqlite'))});
+    try {
+      const store = new HostStateStore(db, ${JSON.stringify(receipt.workspace_id)});
+      console.log(JSON.stringify(await bindRuntimeInitialization(${JSON.stringify(root)}, store)));
+    } finally { db.close(); }
+  `;
+  const run = () => promisify(execFile)(process.execPath, ['-e', program], { cwd: tmpdir(), timeout: 15000 });
+  const outputs = await Promise.all([run(), run()]);
+  for (const output of outputs)
+    expect(JSON.parse(output.stdout)).toEqual({ ...receipt, workspace_binding_status: 'bound' });
+  expect(JSON.parse(readFileSync(receiptPath, 'utf8'))).toEqual({ ...receipt, workspace_binding_status: 'bound' });
 });

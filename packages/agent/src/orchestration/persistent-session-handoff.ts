@@ -20,6 +20,8 @@ import {
   prepareSessionWorkflowHandoffFromConfig,
   validateSessionAgentOutcome,
   validateSessionWorkflowHandoffFromConfig,
+  allowsSharedInvocationForConfiguredSlots,
+  sessionReportsCanShareInvocation,
   type SessionAgentOutcome,
   type SessionHandoffContext,
   type SessionWorkflowHandoff,
@@ -400,13 +402,32 @@ export class PersistentSessionHandoffStore {
       const action = state.handoff.actions.find((item) => item.action_id === outcome.action_id);
       requireState(action, 'session report action is not in the current wave');
       validateSessionAgentOutcome(state.handoff, action, outcome);
-      const existingRefs = [
-        ...state.handoff.outcomes,
-        ...state.issuances.flatMap((item) => (item.report ? [item.report] : [])),
-      ].map((item) => item.session_result.tool_call_ref);
+      const historicalRef = state.handoff.outcomes.some(
+        (item) => item.session_result.tool_call_ref === outcome.session_result.tool_call_ref,
+      );
+      const priorBatchReports = state.issuances.flatMap((entry) =>
+        entry.report?.session_result.tool_call_ref === outcome.session_result.tool_call_ref ? [entry.report] : [],
+      );
+      const priorBatchEntry = state.issuances.find(
+        (entry) => entry.report?.session_result.tool_call_ref === outcome.session_result.tool_call_ref,
+      );
+      const priorBatchAction =
+        priorBatchEntry && state.handoff.actions.find((candidate) => candidate.action_id === priorBatchEntry.action_id);
       requireState(
-        !existingRefs.includes(outcome.session_result.tool_call_ref),
-        'session tool call reference was replayed',
+        !historicalRef &&
+          (priorBatchReports.length === 0 ||
+            (priorBatchReports.length === 1 &&
+              priorBatchEntry?.operator_run_id === issuance.operator_run_id &&
+              priorBatchAction &&
+              sessionReportsCanShareInvocation(
+                this.#config,
+                state.handoff.workflow_id,
+                priorBatchAction,
+                priorBatchEntry.report!,
+                action,
+                outcome,
+              ))),
+        'session tool call reference was replayed outside an allowed configured slot batch',
       );
       const issuances = state.issuances.map((item) =>
         item.action_id === outcome.action_id ? { ...item, report: outcome } : item,
@@ -439,6 +460,8 @@ export interface MastraSessionLedgerState {
   readonly run_id: string;
   readonly corrective_execution?: CorrectiveExecution | null;
   readonly source_scope?: ScopedSourceSnapshot | null;
+  /** Current research wave: local preparation is resumable until exposure may have occurred. */
+  readonly research_wave_exposure?: 'preparing' | 'possible';
   readonly step_id: string | null;
   readonly items: readonly MastraLedgerItem[];
   readonly completed: readonly { readonly step_id: string; readonly items: readonly MastraLedgerItem[] }[];
@@ -568,6 +591,7 @@ export function validateResearchJournalItem(item: MastraLedgerItem, state: Mastr
 export class MastraSessionLedger {
   readonly #database: Database;
   readonly hostState: HostStateStore;
+  readonly #config: AgentRuntimeConfig;
   readonly #workspaceId: string;
   readonly #configDigest: string;
   readonly #repositoryRoot: string;
@@ -582,6 +606,7 @@ export class MastraSessionLedger {
   ) {
     this.#database = database;
     this.#workspaceId = workspaceId;
+    this.#config = config;
     this.#configDigest = runtimeConfigDigest(config);
     this.#repositoryRoot = repositoryRoot;
     this.hostState = hostState;
@@ -600,6 +625,55 @@ export class MastraSessionLedger {
     requireState(
       runtimeConfigDigest(loadRuntimeConfig(this.#repositoryRoot)) === this.#configDigest,
       'Mastra session root configuration changed during attempt',
+    );
+  }
+
+  #mayShareReadonlyInvocation(
+    left: MastraLedgerItem,
+    right: MastraLedgerItem,
+    rightObservation: SessionBridgeObservation,
+  ): boolean {
+    const leftRequest = left.request;
+    const rightRequest = right.request;
+    if (
+      left === right ||
+      left.issue_id === null ||
+      right.issue_id === null ||
+      left.issue_id === right.issue_id ||
+      left.host_reservation ||
+      right.host_reservation ||
+      leftRequest.workflow_id !== 'task_execution' ||
+      rightRequest.workflow_id !== 'task_execution' ||
+      leftRequest.workflow_id !== rightRequest.workflow_id ||
+      leftRequest.run_id !== rightRequest.run_id ||
+      leftRequest.stage_id !== 'validate_focused' ||
+      rightRequest.stage_id !== leftRequest.stage_id ||
+      leftRequest.wave_index !== rightRequest.wave_index ||
+      leftRequest.config_digest !== rightRequest.config_digest ||
+      leftRequest.scope_digest !== rightRequest.scope_digest ||
+      leftRequest.bindings_manifest_ref !== rightRequest.bindings_manifest_ref ||
+      canonicalJsonDigest(leftRequest.configured_context_files ?? []) !==
+        canonicalJsonDigest(rightRequest.configured_context_files ?? []) ||
+      leftRequest.configured_context_digest !== rightRequest.configured_context_digest
+    )
+      return false;
+    if (
+      left.observation?.tool_call_ref !== rightObservation.tool_call_ref ||
+      left.observation?.agent_id !== rightObservation.agent_id
+    )
+      return false;
+    return allowsSharedInvocationForConfiguredSlots(
+      this.#config,
+      {
+        workflow_id: leftRequest.workflow_id,
+        stage_id: leftRequest.stage_id,
+        assignment_index: leftRequest.assignment_index,
+      },
+      {
+        workflow_id: rightRequest.workflow_id,
+        stage_id: rightRequest.stage_id,
+        assignment_index: rightRequest.assignment_index,
+      },
     );
   }
   #maintenanceState(): { generation: number; status: string | null } {
@@ -645,6 +719,12 @@ export class MastraSessionLedger {
         row.revision > 0 &&
         row.digest === canonicalJsonDigest(state),
       'Mastra session ledger identity, shape or digest is invalid',
+    );
+    requireState(
+      state.research_wave_exposure === undefined ||
+        state.research_wave_exposure === 'preparing' ||
+        state.research_wave_exposure === 'possible',
+      'Mastra research wave exposure marker is invalid',
     );
     if (state.source_scope)
       requireState(
@@ -1264,7 +1344,7 @@ export class MastraSessionLedger {
     ) {
       requireState(stepId !== null, 'corrective engine has not reached its first configured suspension');
       return this.#change(workId, attempt, current.version, (state) => ({
-        ...state,
+        ...(({ research_wave_exposure: _exposure, ...retained }) => retained)(state),
         step_id: stepId,
         items: requests.map((request) => ({ request, issue_id: null, observation: null })),
       }));
@@ -1277,7 +1357,7 @@ export class MastraSessionLedger {
     );
     return project(
       this.#change(workId, attempt, current.version, (state) => ({
-        ...state,
+        ...(({ research_wave_exposure: _exposure, ...retained }) => retained)(state),
         step_id: stepId,
         items: requests.map((request) => ({ request, issue_id: null, observation: null })),
         completed: [...state.completed, { step_id: state.step_id!, items: state.items }],
@@ -1301,8 +1381,17 @@ export class MastraSessionLedger {
         Object.keys(reservations).every((actionId) => state.items.some((item) => item.request.action_id === actionId)),
         'native host reservation has no suspended action',
       );
+      const config = loadRuntimeConfig(this.#repositoryRoot);
+      const containsResearch = state.items.some((item) => {
+        const stage = config.workflows[item.request.workflow_id]?.stages.find(
+          (candidate) => candidate.id === item.request.stage_id,
+        );
+        return stage?.produces.includes('ResearchResult/v1') || stage?.produces.includes('ResearchSynthesis/v1');
+      });
+      const { research_wave_exposure: _priorExposure, ...retained } = state;
       return {
-        ...state,
+        ...retained,
+        ...(containsResearch ? { research_wave_exposure: 'preparing' as const } : {}),
         items: state.items.map((item) => ({
           ...item,
           issue_id: randomUUID(),
@@ -1311,6 +1400,63 @@ export class MastraSessionLedger {
             : { host_reservation: reservations[item.request.action_id] }),
         })),
       };
+    });
+  }
+
+  /** Adopt only a provably interrupted legacy research preparation; never infer exposure from missing data. */
+  beginLegacyResearchPreparationRecovery(
+    workId: string,
+    attempt: number,
+    expected: StateVersion,
+  ): MastraSessionLedgerSnapshot {
+    return this.#change(workId, attempt, expected, (state) => {
+      requireState(state.research_wave_exposure === undefined, 'legacy research recovery requires an unmarked journal');
+      const config = loadRuntimeConfig(this.#repositoryRoot);
+      const isResearch = (item: MastraLedgerItem) => {
+        const stage = config.workflows[item.request.workflow_id]?.stages.find(
+          (candidate) => candidate.id === item.request.stage_id,
+        );
+        return stage?.produces.includes('ResearchResult/v1') || stage?.produces.includes('ResearchSynthesis/v1');
+      };
+      const researchItems = state.items.filter(isResearch);
+      requireState(researchItems.length > 0, 'legacy research recovery has no canonical research action');
+      requireState(
+        state.items.every((item) => item.issue_id !== null && item.observation === null && !item.host_reservation),
+        'legacy research recovery requires the complete unobserved, unreserved issued wave',
+      );
+      requireState(
+        researchItems.some((item) => !item.research_activation),
+        'legacy research recovery requires an incomplete activation preparation',
+      );
+      return { ...state, research_wave_exposure: 'preparing' };
+    });
+  }
+
+  /** Durable one-way barrier immediately before any prepared research batch is returned to its caller. */
+  markResearchWaveExposurePossible(
+    workId: string,
+    attempt: number,
+    expected: StateVersion,
+  ): MastraSessionLedgerSnapshot {
+    return this.#change(workId, attempt, expected, (state) => {
+      requireState(state.research_wave_exposure === 'preparing', 'research wave is not in preparation');
+      const config = loadRuntimeConfig(this.#repositoryRoot);
+      const researchItems = state.items.filter((item) => {
+        const stage = config.workflows[item.request.workflow_id]?.stages.find(
+          (candidate) => candidate.id === item.request.stage_id,
+        );
+        return stage?.produces.includes('ResearchResult/v1') || stage?.produces.includes('ResearchSynthesis/v1');
+      });
+      requireState(researchItems.length > 0, 'research exposure barrier has no canonical research action');
+      requireState(
+        state.items.every((item) => item.issue_id !== null && item.observation === null && !item.host_reservation),
+        'research exposure barrier requires the complete unobserved, unreserved issued wave',
+      );
+      requireState(
+        researchItems.every((item) => item.research_activation),
+        'research exposure barrier requires every instruction activation to be committed',
+      );
+      return { ...state, research_wave_exposure: 'possible' };
     });
   }
 
@@ -1414,6 +1560,10 @@ export class MastraSessionLedger {
       );
       return current!;
     }
+    requireState(
+      current?.state.research_wave_exposure !== 'preparing',
+      'research wave has not crossed the durable exposure barrier; report is premature',
+    );
     const issued = current?.state.items.find((item) => item.request.action_id === observation.action_id);
     if (issued?.host_reservation) {
       const reservation = issued.host_reservation;
@@ -1459,10 +1609,18 @@ export class MastraSessionLedger {
         'Mastra session report output digest differs',
       );
       requireState(
-        ![...state.items, ...state.completed.flatMap((entry) => entry.items)].some(
-          (entry) => entry.observation?.tool_call_ref === observation.tool_call_ref,
-        ),
-        'Mastra session tool call reference was replayed',
+        (() => {
+          const matches = [...state.items, ...state.completed.flatMap((entry) => entry.items)].filter(
+            (entry) => entry.observation?.tool_call_ref === observation.tool_call_ref,
+          );
+          return (
+            matches.length === 0 ||
+            (matches.length === 1 &&
+              state.items.includes(matches[0]!) &&
+              this.#mayShareReadonlyInvocation(matches[0]!, item!, observation))
+          );
+        })(),
+        'Mastra session tool call reference was replayed outside an allowed read-only slot batch',
       );
       return {
         ...state,

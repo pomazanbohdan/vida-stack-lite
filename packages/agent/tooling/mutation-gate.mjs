@@ -111,6 +111,13 @@ const partitions = [
     report: 'mutation-bun-lifecycle-state.json',
   },
   {
+    name: 'bun-final-assurance',
+    environment: 'bun',
+    sources: ['src/orchestration/final-assurance.ts'],
+    tests: ['tests/final-assurance.test.mjs', 'tests/final-assurance-public.test.mjs'],
+    report: 'mutation-bun-final-assurance.json',
+  },
+  {
     name: 'bun-runtime-initialization',
     environment: 'bun',
     sources: ['src/runtime-initialization.ts', 'src/workspace-identity.ts'],

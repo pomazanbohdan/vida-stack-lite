@@ -12,13 +12,26 @@ import {
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { HostStateSnapshot } from '../host-state.js';
-import { validateResearchResult, type ResearchResult } from '../research-decision.js';
+import {
+  validateResearchResult,
+  validateResearchSynthesis,
+  validateSynthesisReferencesForResults,
+  type ResearchResult,
+  type ResearchSynthesis,
+} from '../research-decision.js';
 import type { LocalWorkAdmissionInput } from './local-work-admission.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { buildConfiguredContext, type ConfiguredContext } from './configured-context.js';
 import { buildDevelopmentTaskPacket, type DevelopmentTaskPacket } from './mastra-boundary.js';
 import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
-import { validateWorkSessionBinding, readCorrectivePlanningJournal } from './final-assurance.js';
+import {
+  validateWorkSessionBinding,
+  readCorrectivePlanningJournal,
+  selectCorrectiveEvidence,
+} from './final-assurance.js';
+import { parseObservedValidatorVerdict } from './observed-validation.js';
+import { parseObservedTesterVerdict } from './observed-testing.js';
+import { observedReceiptEvidenceReference } from './observed-receipt-evidence.js';
 
 const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: boolean }) => {
   compile(schema: object): (value: unknown) => boolean;
@@ -88,6 +101,86 @@ export function citedResearchConstraints(
       );
       return `Research ${result.result_id}/${finding.finding_id} [${finding.source_ids.join(', ')}]: ${finding.statement}`;
     });
+}
+
+/** Project only decision-relevant, validated synthesis into the bounded developer packet. */
+export function citedSynthesisConstraints(synthesis: ResearchSynthesis): readonly string[] {
+  const findings = synthesis.findings
+    .filter((finding) => finding.status === 'confirmed')
+    .map((finding) => {
+      requirePacket(finding.source_refs.length > 0, 'confirmed synthesis finding has no matching cited source');
+      return `Synthesis ${synthesis.bundle_id}/${finding.finding_id} [${finding.source_refs.join(', ')}]: ${finding.statement}`;
+    });
+  const uncertainty = synthesis.uncertainties
+    .filter((entry) => entry.material)
+    .map((entry) => `Synthesis uncertainty ${entry.uncertainty_id}: ${entry.statement}`);
+  const conflicts = synthesis.conflicts
+    .filter((entry) => entry.status === 'open' || entry.status === 'accepted_unknown')
+    .map((entry) => `Synthesis conflict ${entry.conflict_id} (${entry.status}): ${entry.statement}`);
+  const options = synthesis.options.map(
+    (entry) => `Synthesis option ${entry.option_id}: ${entry.label} — ${entry.description}`,
+  );
+  const recommendation = synthesis.recommendation
+    ? [`Synthesis recommendation ${synthesis.recommendation.option_id}: ${synthesis.recommendation.rationale}`]
+    : [];
+  const gaps = synthesis.completeness.material_gaps.map((entry) => `Synthesis completeness gap: ${entry}`);
+  const projection = [...new Set([...findings, ...uncertainty, ...conflicts, ...options, ...recommendation, ...gaps])];
+  requirePacket(
+    projection.length <= 32 &&
+      projection.every((entry) => Buffer.byteLength(entry, 'utf8') <= 1024) &&
+      projection.reduce((total, entry) => total + Buffer.byteLength(entry, 'utf8'), 0) <= 8192,
+    'synthesis consumer projection exceeds its bounded packet budget',
+  );
+  return projection;
+}
+
+/** Project only current corrective validator/tester observations into the next packet. */
+export function correctivePacketEvidence(
+  journal: Parameters<typeof selectCorrectiveEvidence>[0],
+  workflow: AgentRuntimeConfig['workflows'][string],
+): {
+  readonly diagnostics: readonly { error_class: string; log_ref: string; message: string }[];
+  readonly failed_approaches: readonly string[];
+  readonly security_constraints: readonly string[];
+} {
+  const { failed } = selectCorrectiveEvidence(journal, workflow);
+  const snapshot = { state: journal } as MastraSessionLedgerSnapshot;
+  const diagnostics: { error_class: string; log_ref: string; message: string }[] = [];
+  const failedApproaches: string[] = [];
+  const securityConstraints: string[] = [];
+  for (const item of failed) {
+    const observation = item.observation!;
+    const kind = workflow.stages.find((stage) => stage.id === item.request.stage_id)?.kind;
+    const logRef = observedReceiptEvidenceReference(snapshot, item.request.action_id, observation.output_digest);
+    if (kind === 'validate') {
+      const verdict = parseObservedValidatorVerdict(observation);
+      for (const finding of verdict.findings) {
+        requirePacket(Buffer.byteLength(finding, 'utf8') <= 1024, 'corrective validator finding exceeds packet budget');
+        diagnostics.push({ error_class: 'validator_failure', log_ref: logRef, message: finding });
+        if (item.request.role === 'security-data-validator')
+          securityConstraints.push(`Prior validator security finding: ${finding}`);
+      }
+      failedApproaches.push(
+        `Failed validator observation ${item.request.action_id}/${observation.output_digest}: ${verdict.findings.join('; ')}`,
+      );
+    } else if (kind === 'test') {
+      parseObservedTesterVerdict(observation);
+      diagnostics.push({
+        error_class: 'tester_failure',
+        log_ref: logRef,
+        message: 'Prior tester reported failure; inspect its bound observation evidence.',
+      });
+      failedApproaches.push(`Failed tester observation ${item.request.action_id}/${observation.output_digest}`);
+    }
+  }
+  requirePacket(
+    diagnostics.length <= 32 &&
+      diagnostics.reduce((total, entry) => total + Buffer.byteLength(entry.message, 'utf8'), 0) <= 8192 &&
+      failedApproaches.length <= 32 &&
+      failedApproaches.every((entry) => Buffer.byteLength(entry, 'utf8') <= 4096),
+    'corrective evidence exceeds packet budget',
+  );
+  return { diagnostics, failed_approaches: failedApproaches, security_constraints: securityConstraints };
 }
 
 /** Builds a packet only from admitted, current and observed local evidence. */
@@ -212,8 +305,39 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       (stage) => stage.id,
     ),
   );
+  const taskSynthesisStageIds = new Set(
+    config.workflows[workflowId]!.stages.filter(
+      (stage) => stage.kind === 'synthesize' && stage.produces.includes('DevelopmentTaskPacket/v1'),
+    ).map((stage) => stage.id),
+  );
+  const synthesisStageIds = new Set(
+    config.workflows[workflowId]!.stages.filter((stage) => stage.produces.includes('ResearchSynthesis/v1')).map(
+      (stage) => stage.id,
+    ),
+  );
   const researchRefs: string[] = [];
   const researchConstraints: string[] = [];
+  const admittedResearchResults: ResearchResult[] = [];
+  const taskSynthesisConstraints: string[] = [];
+  for (const item of observed.filter((entry) => taskSynthesisStageIds.has(entry.request.stage_id))) {
+    const summary = item.observation!.summary;
+    requirePacket(
+      item.request.workflow_id === workflowId &&
+        item.request.scope_digest === binding.work_source_revision &&
+        item.request.config_digest === binding.config_digest &&
+        item.issue_id !== null &&
+        item.observation!.issue_id === item.issue_id &&
+        item.observation!.action_id === item.request.action_id &&
+        item.observation!.status === 'reported_complete' &&
+        item.observation!.output_digest === canonicalJsonDigest(summary) &&
+        Buffer.byteLength(summary, 'utf8') > 0 &&
+        Buffer.byteLength(summary, 'utf8') <= 3000,
+      'task synthesis summary is missing, stale, mismatched or over budget',
+    );
+    taskSynthesisConstraints.push(
+      `Observed task synthesis ${item.request.action_id}/${item.observation!.output_digest}: ${summary}`,
+    );
+  }
   for (const item of observed.filter((entry) => researchStageIds.has(entry.request.stage_id))) {
     const plan = item.research_normalization;
     requirePacket(
@@ -259,11 +383,68 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     );
     researchRefs.push(`artifact://research/${result.result_id}/${artifact.sha256}`);
     researchConstraints.push(...citedResearchConstraints(result));
+    admittedResearchResults.push(result);
   }
   requirePacket(
     researchStageIds.size === 0 || researchRefs.length > 0,
     'research workflow needs a completed typed research artifact',
   );
+  const synthesisRefs: string[] = [];
+  const synthesisConstraints: string[] = [];
+  for (const item of observed.filter((entry) => synthesisStageIds.has(entry.request.stage_id))) {
+    const plan = item.research_normalization;
+    requirePacket(
+      plan &&
+        plan.schema === 'ObservedSynthesisRecordPlan/v1' &&
+        item.research_activation &&
+        plan.binding.action_id === item.request.action_id &&
+        plan.binding.issue_id === item.issue_id &&
+        plan.observation_digest === canonicalJsonDigest(item.observation) &&
+        canonicalJsonDigest(plan.binding) === canonicalJsonDigest(item.research_activation.plan.binding) &&
+        item.research_activation.plan.use_digest === item.research_activation.use.digest,
+      'synthesis action has no completed canonical normalization reservation',
+    );
+    const artifact = work.artifacts.find(
+      (entry) =>
+        entry.sha256 === plan.record_sha256 &&
+        entry.path === plan.record_path &&
+        entry.stage_id === item.request.stage_id &&
+        entry.schema === 'ResearchSynthesis/v1' &&
+        entry.path.startsWith(config.research_decision.paths.research_records + '/') &&
+        entry.path.endsWith('.synthesis.json'),
+    );
+    requirePacket(artifact !== undefined, 'synthesis action has no current admitted typed artifact');
+    const bytes = access.readBytes(artifact.path, 'packet observed synthesis artifact');
+    requirePacket(bytes.length <= 64 * 1024 && sha256(bytes) === artifact.sha256, 'synthesis artifact bytes changed');
+    const synthesis = validateResearchSynthesis(JSON.parse(bytes.toString('utf8')));
+    requirePacket(
+      synthesis.bundle_id === artifact.artifact_id &&
+        synthesis.digest === plan.result_digest &&
+        synthesis.work_item_id === workItem.id &&
+        synthesis.scope_id === scope.scope_id &&
+        synthesis.source_revision === binding.work_source_revision &&
+        canonicalJsonDigest(synthesis.ac_ids) === canonicalJsonDigest(scope.ac_ids),
+      'synthesis differs from admitted work',
+    );
+    requirePacket(
+      admittedResearchResults.length > 0,
+      'synthesis has no admitted research predecessors in the development packet',
+    );
+    validateSynthesisReferencesForResults(synthesis, admittedResearchResults);
+    synthesisRefs.push(`artifact://research/${synthesis.bundle_id}/${artifact.sha256}`);
+    synthesisConstraints.push(...citedSynthesisConstraints(synthesis));
+  }
+  requirePacket(
+    synthesisStageIds.size === 0 || synthesisRefs.length > 0,
+    'synthesis workflow needs a completed typed artifact',
+  );
+  requirePacket(
+    taskSynthesisStageIds.size === 0 || taskSynthesisConstraints.length >= taskSynthesisStageIds.size,
+    'task synthesis workflow needs one current observed summary per configured stage',
+  );
+  const correction = ledger.state.corrective_execution
+    ? correctivePacketEvidence(planning, config.workflows[workflowId]!)
+    : { diagnostics: [], failed_approaches: [], security_constraints: [] };
   if (configuredContext !== null) {
     requirePacket(
       configuredContext.work_id === workItem.id &&
@@ -331,15 +512,17 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       configuredContext?.entries.filter((entry) => entry.kind === 'skill').map((entry) => entry.location) ?? [],
     documentation_refs: uniqueSorted([...documentationRefs, ...(scope.documentation_paths ?? [])]),
     code_evidence_refs: codeRefs,
-    research_artifact_refs: researchRefs,
-    diagnostics: [],
-    failed_approaches: [],
+    research_artifact_refs: [...researchRefs, ...synthesisRefs],
+    diagnostics: [...correction.diagnostics],
+    failed_approaches: [...correction.failed_approaches],
     prohibited_patterns: [],
     implementation_constraints: [
       `Modify only admitted implementation paths: ${scope.implementation_paths.join(', ')}`,
       ...researchConstraints,
+      ...synthesisConstraints,
+      ...taskSynthesisConstraints,
     ],
-    security_constraints: [],
+    security_constraints: [...correction.security_constraints],
     expected_tests: [...scope.test_trace],
     delivery_conditions: contracts.map(
       (entry) => `Current evidence required for ${entry.id}: ${entry.evidence.join(', ')}`,

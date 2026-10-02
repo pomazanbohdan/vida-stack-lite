@@ -3586,12 +3586,198 @@ export class HostStateStore {
             "SELECT id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id",
           )
           .all(this.#workspaceId) as Row[];
+        const hasJournals = this.#database
+          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
+          .get();
+        type JournalRow = { work_id: string; attempt: number; revision: number; payload: string; digest: string };
+        const journals = hasJournals
+          ? (this.#database
+              .query(
+                'SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
+              )
+              .all(this.#workspaceId) as JournalRow[])
+          : [];
+        const maintenanceGeneration = this.#maintenanceGeneration();
         const normalizeAttempt = (value: AssignmentAttempt): AssignmentAttempt => {
           const hasGeneration = Object.hasOwn(value, 'correction_generation'),
             hasAuthority = Object.hasOwn(value, 'correction_authorization');
           requireState(hasGeneration === hasAuthority, 'partial assignment authority is ambiguous');
           return hasGeneration ? value : { ...value, correction_generation: 0, correction_authorization: null };
         };
+        const journalItems = (state: MastraSessionLedgerState) => [
+          ...state.items,
+          ...state.completed.flatMap((wave) => wave.items),
+        ];
+        const unknownRepair = new Map<
+          string,
+          {
+            readonly work: WorkState;
+            readonly authorization: WorkflowAttemptApprovalAuthorization;
+          }
+        >();
+        if (kind === 'correction-generation') {
+          for (const row of works) {
+            const work = JSON.parse(row.payload) as WorkState;
+            const pendingAttempts = work.execution.assignment_attempts.filter(
+              (attempt) => !['completed', 'no_effect'].includes(attempt.status),
+            );
+            if (pendingAttempts.length === 0) continue;
+            requireState(
+              work.lifecycle.assurance.correction_count === 0 && pendingAttempts.length === 1,
+              'old corrective history cannot be inferred as base generation',
+            );
+            const attempt = normalizeAttempt(pendingAttempts[0]!);
+            requireState(
+              attempt.correction_generation === 0 &&
+                attempt.correction_authorization === null &&
+                attempt.status === 'started' &&
+                attempt.result === null &&
+                attempt.result_digest === null &&
+                attempt.reconciliation === null,
+              'only an original started unknown assignment can use the interrupted repair exception',
+            );
+            const matches: {
+              journal: MastraSessionLedgerState;
+              item: MastraSessionLedgerState['items'][number];
+            }[] = [];
+            for (const journalRow of journals) {
+              if (journalRow.work_id !== work.binding.lifecycle_work_id) continue;
+              requireState(
+                canonicalJsonDigest(JSON.parse(journalRow.payload)) === journalRow.digest,
+                'repair journal preimage integrity differs',
+              );
+              const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState;
+              requireState(
+                journal.schema === 'MastraSessionLedger/v1' &&
+                  journal.workspace_id === this.#workspaceId &&
+                  journal.work_id === work.binding.lifecycle_work_id &&
+                  journal.attempt === journalRow.attempt &&
+                  journal.run_id === work.execution.run_id &&
+                  journal.source_scope?.schema === 'ScopedSourceSnapshot/v1' &&
+                  journal.source_scope.digest === work.binding.work_source_revision &&
+                  journal.source_scope.digest ===
+                    canonicalJsonDigest({
+                      schema: journal.source_scope.schema,
+                      entries: journal.source_scope.entries,
+                    }),
+                'repair journal identity differs',
+              );
+              for (const item of journalItems(journal)) {
+                const reservation = item.host_reservation;
+                if (reservation?.receipt.attempt.attempt_id === attempt.attempt_id) {
+                  matches.push({ journal, item });
+                }
+              }
+            }
+            requireState(matches.length === 1, 'interrupted repair requires one exact issued reservation');
+            const match = matches[0]!,
+              { item, journal } = match,
+              reservation = item.host_reservation!,
+              authorization = reservation.authorization;
+            requireState(
+              typeof item.issue_id === 'string' &&
+                item.issue_id.length > 0 &&
+                item.observation === null &&
+                reservation.schema === 'WorkflowSessionReservation/v1' &&
+                item.request.schema === 'VidaSessionRequest/v1' &&
+                item.request.action_id ===
+                  canonicalJsonDigest({
+                    context: {
+                      work_id: work.binding.lifecycle_work_id,
+                      attempt: journal.attempt,
+                      scope_digest: work.binding.work_source_revision,
+                    },
+                    workflow_id: work.binding.workflow_id,
+                    wave_index: item.request.wave_index,
+                    stage_id: attempt.stage_id,
+                    assignment_index: attempt.assignment_index,
+                  }) &&
+                canonicalJson(normalizeAttempt(reservation.receipt.attempt)) === canonicalJson(attempt) &&
+                identityKey(reservation.receipt.identity) === row.id &&
+                reservation.receipt.maintenanceGeneration === maintenanceGeneration &&
+                reservation.requestDigest === attempt.request_digest &&
+                item.request.run_id === work.execution.run_id &&
+                item.request.workflow_id === work.binding.workflow_id &&
+                item.request.config_digest === work.binding.config_digest &&
+                item.request.scope_digest === work.binding.work_source_revision &&
+                item.request.stage_id === attempt.stage_id &&
+                item.request.assignment_index === attempt.assignment_index &&
+                !item.request.corrective_execution &&
+                !journal.corrective_execution &&
+                authorization?.approval?.status === 'commit_unknown' &&
+                authorization.approval.attempt_id === attempt.attempt_id &&
+                authorization.receipt.identity &&
+                identityKey(authorization.receipt.identity) === row.id &&
+                authorization.receipt.maintenanceGeneration === maintenanceGeneration &&
+                canonicalJson(normalizeAttempt(authorization.receipt.attempt)) === canonicalJson(attempt) &&
+                sameJson(authorization.receipt.workVersion, reservation.receipt.workVersion) &&
+                canonicalJson(attempt.lease) === canonicalJson(work.lease) &&
+                reservation.approvalAction === 'source.write' &&
+                reservation.request.workItemId === work.binding.lifecycle_work_id &&
+                reservation.request.stageId === item.request.stage_id &&
+                reservation.request.assignmentIndex === item.request.assignment_index,
+              'interrupted repair issue, authorization, or owner binding differs',
+            );
+            const invocation = reservation.invocation;
+            requireState(
+              invocation &&
+                invocation.configDigest === work.binding.config_digest &&
+                invocation.workflowId === work.binding.workflow_id &&
+                invocation.teamId === work.binding.team_id &&
+                invocation.profile.mutation_scope === 'repository_source' &&
+                invocation.profile.egress_policy === 'none' &&
+                sameJson(invocation.workContext.binding, work.binding) &&
+                reservation.request.configDigest === work.binding.config_digest &&
+                reservation.request.workflowId === work.binding.workflow_id &&
+                reservation.request.teamId === work.binding.team_id &&
+                invocation.stage.id === attempt.stage_id &&
+                invocation.assignmentIndex === attempt.assignment_index &&
+                sameJson(reservation.request.input, invocation.input) &&
+                (invocation.input as Record<string, unknown>)?.bindings_manifest_ref ===
+                  item.request.bindings_manifest_ref &&
+                attempt.request_digest ===
+                  canonicalJsonDigest({
+                    binding: invocation.workContext.binding,
+                    operation_digest: canonicalJsonDigest(invocation.operation),
+                    stage_id: invocation.stage.id,
+                    assignment_index: invocation.assignmentIndex,
+                    role_instruction_digest: invocation.roleInstructionDigest,
+                    input: invocation.input,
+                  }),
+              'interrupted repair original invocation binding differs',
+            );
+            const approval = authorization!.approval!;
+            const originalApprovalFields = {
+              store_id: approval.store_id,
+              action: 'source.write',
+              identity: reservation.receipt.identity,
+              config_digest: work.binding.config_digest,
+              workflow_id: work.binding.workflow_id,
+              stage_id: attempt.stage_id,
+              assignment_id: attempt.assignment_id,
+              assignment_index: attempt.assignment_index,
+              request_digest: attempt.request_digest,
+              attempt_id: attempt.attempt_id,
+              lease: attempt.lease,
+            };
+            requireState(
+              approval.binding.operation_hash === canonicalJsonDigest(originalApprovalFields) &&
+                approval.binding.stage_id === attempt.stage_id &&
+                approval.binding.tenant === work.binding.repository_id &&
+                work.binding.project_ids.includes(approval.binding.project),
+              'interrupted repair original approval binding differs',
+            );
+            const unknownIssuedItems = journals
+              .filter((entry) => entry.work_id === work.binding.lifecycle_work_id)
+              .flatMap((entry) => journalItems(JSON.parse(entry.payload) as MastraSessionLedgerState))
+              .filter((entry) => entry.issue_id !== null && entry.observation === null);
+            requireState(
+              unknownIssuedItems.length === 1 && canonicalJson(unknownIssuedItems[0]) === canonicalJson(item),
+              'interrupted repair has another issued unknown journal item',
+            );
+            unknownRepair.set(attempt.attempt_id, { work, authorization: authorization! });
+          }
+        }
         const states = works.map((row) => {
           const before = JSON.parse(row.payload) as WorkState;
           requireState(
@@ -3623,59 +3809,152 @@ export class HostStateStore {
           );
           requireState(
             current.execution.assignment_attempts.every(
-              (attempt) => attempt.status === 'completed' || attempt.status === 'no_effect',
+              (attempt) =>
+                attempt.status === 'completed' ||
+                attempt.status === 'no_effect' ||
+                unknownRepair.has(attempt.attempt_id),
             ),
             'repair requires terminal Host attempts',
           );
           return { row, before, current };
         });
         const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
-        requireState(
-          kind === 'request-transition' || !ledger?.claims.some((claim) => claim.status === 'active'),
-          'repair requires released ownership claims',
-        );
+        if (kind === 'request-transition' || unknownRepair.size === 0) {
+          requireState(
+            kind === 'request-transition' || !ledger?.claims.some((claim) => claim.status === 'active'),
+            'repair requires released ownership claims',
+          );
+        } else {
+          requireState(unknownRepair.size === 1 && ledger, 'interrupted repair owner is ambiguous');
+          const [entry] = [...unknownRepair.values()],
+            work = entry!.work,
+            lease = work.lease,
+            ticket = ledger.tickets.find((candidate) => candidate.ticket_id === lease?.ticket_id),
+            activeClaims = ledger.claims.filter(
+              (claim) => claim.status === 'active' && claim.ticket_id === ticket?.ticket_id,
+            );
+          requireState(
+            lease &&
+              ticket?.status === 'active' &&
+              ticket.work_id === work.binding.lifecycle_work_id &&
+              ticket.repository_id === work.binding.repository_id &&
+              canonicalJson(ticket.project_ids) === canonicalJson(work.binding.project_ids) &&
+              ticket.thread_id === lease.thread_id &&
+              ticket.generation === lease.generation &&
+              activeClaims.length === 1 &&
+              activeClaims[0]!.ticket_id === ticket.ticket_id &&
+              ticket.claim_ids.includes(activeClaims[0]!.claim_id) &&
+              activeClaims[0]!.work_id === ticket.work_id &&
+              activeClaims[0]!.thread_id === ticket.thread_id &&
+              activeClaims[0]!.generation === ticket.generation &&
+              canonicalJson(activeClaims[0]!.resources) === canonicalJson(ticket.active_resources) &&
+              ticket.active_resources.some((resource) => resource.startsWith('file:')) &&
+              ticket.exclusive_resources.some((resource) => resource.startsWith('file:')),
+            'interrupted repair source owner claim differs',
+          );
+          this.#assertNoOverlappingActiveSourceOwner(ledger, ticket);
+          requireState(
+            !ledger.tickets.some(
+              (candidate) =>
+                candidate.status === 'queued' &&
+                candidate.sequence < ticket.sequence &&
+                candidate.exclusive_resources.some((resource) => ticket.exclusive_resources.includes(resource)),
+            ),
+            'earlier FIFO Source owner is waiting for the resource',
+          );
+        }
         const governance = this.#database
           .query('SELECT store_id,kind,record_key FROM agent_host_governance WHERE workspace_id=?')
           .all(this.#workspaceId) as { store_id: string; kind: string; record_key: string }[];
+        let matchedUnknownGovernance = 0;
         for (const record of governance) {
           requireState(record.kind === 'operation' || record.kind === 'approval', 'repair governance kind invalid');
-          const status = this.#governanceRead(record.store_id, record.kind, record.record_key)?.record.status;
-          requireState(status !== 'reserved' && status !== 'commit_unknown', 'repair requires settled governance');
+          const current = this.#governanceRead(record.store_id, record.kind, record.record_key),
+            matchingUnknown = [...unknownRepair.values()].some(({ authorization }) => {
+              const approval = authorization?.approval;
+              return (
+                record.kind === 'approval' &&
+                approval?.status === 'commit_unknown' &&
+                record.store_id === approval.store_id &&
+                record.record_key === canonicalJsonDigest(approval.binding) &&
+                current?.record &&
+                canonicalJson(current.record) === canonicalJson(approval)
+              );
+            });
+          if (matchingUnknown) matchedUnknownGovernance++;
+          requireState(
+            current?.record.status !== 'reserved' && (current?.record.status !== 'commit_unknown' || matchingUnknown),
+            'repair requires settled or exact retained unknown governance',
+          );
         }
-        const hasJournals = this.#database
-          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
-          .get();
-        type JournalRow = { work_id: string; attempt: number; revision: number; payload: string; digest: string };
-        const journals = hasJournals
-          ? (this.#database
-              .query(
-                'SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
-              )
-              .all(this.#workspaceId) as JournalRow[])
-          : [];
+        requireState(
+          matchedUnknownGovernance === unknownRepair.size,
+          'interrupted repair retained approval governance is missing or duplicated',
+        );
         const normalizeJournal = (before: MastraSessionLedgerState) => {
           const host = states.find((state) => state.current.binding.lifecycle_work_id === before.work_id)?.current;
           requireState(host && host.execution.run_id === before.run_id, 'repair journal/Host identity differs');
           const normalizeItem = (item: MastraSessionLedgerState['items'][number]) => {
+            const rawAttempt = item.host_reservation?.receipt.attempt,
+              interrupted = rawAttempt ? unknownRepair.get(rawAttempt.attempt_id) : undefined;
             requireState(
-              item.issue_id === null || item.observation !== null,
+              item.issue_id === null ||
+                item.observation !== null ||
+                (interrupted !== undefined && item.issue_id !== null && item.observation === null),
               'repair requires terminal issued observations',
             );
             if (!item.host_reservation) return item;
             const reservation = item.host_reservation,
               attempt = normalizeAttempt(reservation.receipt.attempt);
+            const authorization = reservation.authorization
+              ? {
+                  ...reservation.authorization,
+                  receipt: {
+                    ...reservation.authorization.receipt,
+                    attempt: normalizeAttempt(reservation.authorization.receipt.attempt),
+                  },
+                }
+              : undefined;
             const actual = host.execution.assignment_attempts.find(
               (candidate) => candidate.attempt_id === attempt.attempt_id,
             );
             requireState(
+              !authorization ||
+                (sameJson(authorization.receipt.identity, reservation.receipt.identity) &&
+                  authorization.receipt.maintenanceGeneration === reservation.receipt.maintenanceGeneration &&
+                  (sameJson(authorization.receipt.attempt, attempt) ||
+                    sameJson(authorization.receipt.attempt, {
+                      ...attempt,
+                      status: 'started',
+                      result: null,
+                      result_digest: null,
+                    }))),
+              'repair authorization receipt differs from its reservation',
+            );
+            requireState(
               actual &&
                 canonicalJson(actual) === canonicalJson(attempt) &&
-                actual.status === 'completed' &&
-                item.observation?.host_attempt_id === attempt.attempt_id &&
-                actual.result_digest === canonicalJsonDigest(item.observation),
-              'repair reservation is not an exact terminal Host attempt',
+                ((actual.status === 'completed' &&
+                  item.observation?.host_attempt_id === attempt.attempt_id &&
+                  actual.result_digest === canonicalJsonDigest(item.observation)) ||
+                  (interrupted !== undefined &&
+                    actual.status === 'started' &&
+                    item.issue_id !== null &&
+                    item.observation === null &&
+                    authorization !== undefined &&
+                    canonicalJson(authorization.receipt.attempt) === canonicalJson(actual) &&
+                    authorization.approval?.status === 'commit_unknown' &&
+                    authorization.approval.attempt_id === actual.attempt_id)),
+              'repair reservation is not an exact terminal or retained unknown Host attempt',
             );
-            return { ...item, host_reservation: { ...reservation, receipt: { ...reservation.receipt, attempt } } };
+            return {
+              ...item,
+              host_reservation: {
+                ...reservation,
+                receipt: { ...reservation.receipt, attempt },
+                ...(authorization ? { authorization } : {}),
+              },
+            };
           };
           return {
             ...before,
@@ -3714,6 +3993,7 @@ export class HostStateStore {
               ],
         );
         const bindings = {
+          maintenance_generation: maintenanceGeneration,
           ledger: version(ledger),
           works: works.map((row) => ({ id: row.id, revision: row.revision, digest: row.digest })),
           journals: journals.map((row) => ({

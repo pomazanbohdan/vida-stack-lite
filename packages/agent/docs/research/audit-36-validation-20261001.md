@@ -1,11 +1,15 @@
 # Audit36 architectural validation
 
 Owner: agent maintainer. Canonical behavior: `../system-specification.md`.
-This research records current evidence and qualification gaps; it grants no
+This research records the 2026-10-01 Source evidence and qualification gaps; it grants no
 lifecycle, review, delivery or Runtime acceptance. Work attribution:
 `.agent/work/audit-36-absorption-release-20261001/WORK.md`. The human-approved
 Source batch is direct delegation, not a public runtime-issued attempt. It
 creates no host attempt, native issue or accepted Code receipt by declaration.
+
+Subsequent 2026-10-02 reaudit decisions are recorded in the current system
+specification and official framework reference registry. Counts and pending
+writer/qualification statements below describe their dated snapshot.
 
 ## Owner-reducing interrupted Source recovery
 
@@ -344,7 +348,7 @@ rerun evidence is pending.
 |    10 | Repair CLI fixtures select the wrong repository root.                                                     | Fix fixture root bindings, then exercise the actual package-owned CLI.                                                                                                                     |
 |     3 | Copied fixtures omit required tooling.                                                                    | Complete only the declared fixture payload; rerun retained boundary checks.                                                                                                                |
 |     1 | Forward-payload dependency-symlink fixture uses wrong copy root.                                          | Correct fixture containment and retain the symlink denial invariant.                                                                                                                       |
-|     5 | Runtime-config cases inherit runner-global `AGENT_RUNTIME_TEST_REPOSITORY_ROOT` pointing at `3mob`.       | Isolate test context; this runner pollution does not justify production identity relaxation.                                                                                               |
+|     5 | Runtime-config cases inherit runner-global `AGENT_RUNTIME_TEST_REPOSITORY_ROOT` pointing at another consumer repository.       | Isolate test context; this runner pollution does not justify production identity relaxation.                                                                                               |
 |     2 | Read-only dispatch assertions describe an old refactoring.                                                | Reconcile current fixture expectations without weakening effect/ownership gates.                                                                                                           |
 |     1 | Property fixture uses old project identity.                                                               | Use the current configured identity, retaining foreign-project rejection.                                                                                                                  |
 |     2 | Read-only reconciliation fixtures reference retired docs/Creatio maps.                                    | Update fixture source maps; no consumer or retired-reader fallback is authorized.                                                                                                          |

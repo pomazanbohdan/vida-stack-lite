@@ -16,8 +16,32 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, test } from 'bun:test';
 import { maintainedSourceInventory } from '../tooling/maintained-source-inventory.mjs';
+import { sdkCompatibilityManifest } from '../tooling/pack-sdk.mjs';
 
 const candidateRoot = path.resolve(import.meta.dirname, '..');
+
+test('default npm packaging verifies the available SDK contract without advertising unfinished standalone assets', () => {
+  const manifest = JSON.parse(readFileSync(path.join(candidateRoot, 'package.json'), 'utf8'));
+  assert.equal(manifest.scripts.prepack, 'node bin/bun.mjs run prepack:pinned');
+  assert.equal(manifest.scripts['prepack:pinned'], 'bun tooling/pack-sdk.mjs --verify');
+  assert.ok(manifest.files.includes('tooling/pack-sdk.mjs'));
+  assert.ok(manifest.files.includes('tests/bun/runtime-initialization.test.mjs'));
+  assert.ok(
+    manifest.files.every((entry) => !/standalone|release-notes|release-publish/.test(entry)),
+    'npm package files must not promise unavailable standalone assets',
+  );
+  assert.ok(
+    Object.keys(manifest.scripts).every((name) => !/standalone/.test(name)),
+    'npm scripts must not advertise unavailable standalone commands',
+  );
+  const sdk = sdkCompatibilityManifest({ root: candidateRoot });
+  assert.ok(sdk.value.files.includes('tooling/pack-sdk.mjs'));
+  assert.equal(sdk.value.scripts.prepack, 'node bin/bun.mjs tooling/pack-sdk.mjs --verify');
+  assert.ok(
+    sdk.value.files.every((entry) => !/standalone|release-notes|release-publish/.test(entry)),
+    'SDK release projection must use the same explicit distribution boundary',
+  );
+});
 
 test('the internal research implementation ships for the CLI without becoming a public export', () => {
   const manifest = JSON.parse(readFileSync(path.join(candidateRoot, 'package.json'), 'utf8'));

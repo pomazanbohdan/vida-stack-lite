@@ -47,6 +47,31 @@ Work trace: `.agent/work/vida-final-assurance-finish-20261001/WORK.md`.
 
 ## Current defect applicability
 
+### Explicit correction defaults repair
+
+Owner: agent maintainer. Work: `correction-defaults-repair-20261002`. Behavior
+owner: [system specification](../system-specification.md). The repair preserves
+unknown provider outcomes while normalizing proven original attempt metadata;
+it does not perform settlement or replay.
+
+Verified official reference: [SQLite transactions](https://www.sqlite.org/lang_transaction.html),
+retrieved 2026-10-02. `BEGIN IMMEDIATE` starts a write transaction immediately
+and can fail with `SQLITE_BUSY` when another connection already holds a write
+transaction. This supports the existing single transaction and dependency-CAS
+boundary, including fail-closed contention. It does not define local repair
+authorization. The accepted local invariant is atomic normalization of the
+missing pair in Host and dependent receipts, preserving issue, unknown outcome
+and authority. Existing Mastra persistence is retained; no new execution or
+workflow replay is needed for this metadata operation.
+
+Research GAP: official JSON Schema 2020-12 core and validation pages returned
+HTTP 403 during the bounded lookup. The repository's strict current-v1 schema
+and executable checks remain the available local evidence. Source fixture
+results and controller qualification are distinct from actual Windows repair,
+installed behavior and Runtime acceptance.
+
+### Final assurance and settlement
+
 The generic final-assurance defect uses Mastra's persisted suspend/resume join
 and OpenAI's manager-owned orchestration as design evidence for explicit
 application-owned review and reverse actions. The local HostState remains the
@@ -95,3 +120,33 @@ Child/disjoint contours retain the original human request thread and pointer.
 Generated intake or WORK filenames are operational identities; changing them
 does not establish a changed human request. The admitted local source scope,
 approval, ownership and CAS controls remain mandatory.
+
+
+## Source reaudit applicability (2026-10-02)
+
+The user supplied `vida-agent-reaudit-26e960c.md`; it is historical Code/Static
+and incident evidence, not qualification of current Source. Independent bounded
+research confirmed the missing default native packaging input, issue-before-local
+activation recovery gap, incomplete action/packet projections and test fixture
+and inventory drift. The SQLite incident artifacts are absent: causal attribution
+remains a GAP. The existing LangGraph/Temporal/Mastra references support separating
+checkpoint retry from external-effect replay; they do not prove the local journal
+or filesystem invariant. The implementation retains local identity, CAS and
+possible-exposure boundaries.
+
+Official npm v11 [script lifecycle](https://docs.npmjs.com/cli/v11/using-npm/scripts/)
+and [package files](https://docs.npmjs.com/cli/v11/configuring-npm/package-json/#files)
+were retrieved by the distribution researcher: `prepack` participates in normal
+pack, and the files allowlist defines advertised package contents. Chosen local
+contract: verified SDK packaging is separate from unimplemented native delivery.
+Official [Node errors](https://nodejs.org/api/errors.html) and
+[Bun test runner](https://bun.sh/docs/test) were retrieved in the cloud session.
+The chosen local initialization invariant retries acquisition contention only,
+never a protected operation after entry. Required nested Bun regressions must be
+explicitly wired into the ordinary aggregate; mutation inventory completeness is
+separate from actual manual mutation results.
+
+Existing OpenAI observability and Mastra persistence references describe tracing
+and stored observations, not trusted subprocess provenance. V10 therefore keeps
+cooperative tester report consistency explicit and does not invent executed-suite
+proof, native host enforcement or Runtime acceptance.

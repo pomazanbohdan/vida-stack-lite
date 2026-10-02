@@ -7,7 +7,11 @@ import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { initializeProjectFromBundle } from '../bin/init-core.mjs';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import { advanceSessionWorkflowHandoff, prepareSessionWorkflowHandoff } from '../src/orchestration/session-handoff.ts';
+import {
+  advanceSessionWorkflowHandoff,
+  prepareSessionWorkflowHandoff,
+  validateSessionWorkflowHandoffFromConfig,
+} from '../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -124,6 +128,98 @@ describe('advisory session agent handoff', () => {
     expect(() => compileDevelopmentWorkflow(clone, 'default-development', 'bug_fix')).toThrow(
       'runtime config must come from loadRuntimeConfig',
     );
+  });
+
+  test('risk filters cannot remove every effective action or a required artifact producer', async () => {
+    const emptyRoot = await createFixture();
+    try {
+      const configPath = path.join(emptyRoot, 'agent-runtime.config.v1.yaml');
+      const config = parseYaml(readFileSync(configPath, 'utf8'));
+      config.workflows.information_research_light.stages.forEach((stage) => {
+        stage.risk_flags = ['security'];
+      });
+      writeFileSync(configPath, stringifyYaml(config));
+      const loaded = loadRuntimeConfig(emptyRoot);
+      expect(() => compileDevelopmentWorkflow(loaded, 'default-development', 'information_research_light')).toThrow(
+        'workflow information_research_light has no effective assignments after risk filters',
+      );
+      expect(() =>
+        prepareSessionWorkflowHandoff(emptyRoot, selection('research', 'information_research'), context),
+      ).toThrow('workflow information_research_light has no effective assignments after risk filters');
+    } finally {
+      rmSync(emptyRoot, { recursive: true, force: true });
+    }
+
+    const missingProducerRoot = await createFixture();
+    try {
+      const configPath = path.join(missingProducerRoot, 'agent-runtime.config.v1.yaml');
+      const config = parseYaml(readFileSync(configPath, 'utf8'));
+      config.workflows.information_research_light.stages[0].risk_flags = ['security'];
+      writeFileSync(configPath, stringifyYaml(config));
+      expect(() =>
+        compileDevelopmentWorkflow(
+          loadRuntimeConfig(missingProducerRoot),
+          'default-development',
+          'information_research_light',
+        ),
+      ).toThrow('effective stage synthesize_research is missing a required stage after risk filters');
+    } finally {
+      rmSync(missingProducerRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('action binds the complete resolved profile and configured skill refs to current config', async () => {
+    const profileRoot = await createFixture();
+    try {
+      const configPath = path.join(profileRoot, 'agent-runtime.config.v1.yaml');
+      const config = parseYaml(readFileSync(configPath, 'utf8'));
+      config.agents.profiles.executor.model = 'gpt-6-luna';
+      config.agents.profiles.executor.reasoning = 'high';
+      config.agents.profiles.executor.execution_mode = 'fast';
+      config.agents.profiles.executor.tools_policy = 'custom_developer';
+      config.agents.profiles.executor.egress_policy = 'custom_egress';
+      config.agents.tool_policies.custom_developer = structuredClone(config.agents.tool_policies.developer);
+      config.agents.egress_policies.custom_egress = { allowed_hosts: ['docs.example.test'] };
+      config.workflows.implementation_new.stages.find((stage) => stage.id === 'develop_change').context_skill_refs = [
+        '.codex/skills/source-review/SKILL.md',
+      ];
+      writeFileSync(configPath, stringifyYaml(config));
+      const loaded = loadRuntimeConfig(profileRoot);
+      const state = prepareSessionWorkflowHandoff(profileRoot, selection('feature', 'implementation_new'), context);
+      let current = state;
+      for (let i = 0; i < 2; i++)
+        current = advanceSessionWorkflowHandoff(profileRoot, current, simulatedReports(current));
+      const developerAction = current.actions[0];
+      expect(developerAction).toMatchObject({
+        model: 'gpt-6-luna',
+        reasoning: 'high',
+        mutation_scope: 'repository_source',
+        context_skill_refs: ['.codex/skills/source-review/SKILL.md'],
+        resolved_profile: {
+          schema: 'ResolvedAgentProfile/v1',
+          config_digest: state.config_digest,
+          profile_id: 'executor',
+          model: 'gpt-6-luna',
+          reasoning: 'high',
+          execution_mode: 'fast',
+          mutation_scope: 'repository_source',
+          tools_policy: {
+            id: 'custom_developer',
+            source_write: true,
+            allowed_tools: config.agents.tool_policies.developer.allowed_tools,
+          },
+          egress_policy: { id: 'custom_egress', allowed_hosts: ['docs.example.test'] },
+          enforcement_status: 'not_asserted',
+        },
+      });
+      const changed = structuredClone(current);
+      changed.actions[0].resolved_profile.execution_mode = 'standard';
+      const { digest: _oldDigest, ...changedBody } = changed;
+      changed.digest = canonicalJsonDigest(changedBody);
+      expect(() => validateSessionWorkflowHandoffFromConfig(loaded, changed)).toThrow(/actions changed/);
+    } finally {
+      rmSync(profileRoot, { recursive: true, force: true });
+    }
   });
 
   test('a loaded team profile mismatch cannot produce a workflow handoff', async () => {
@@ -302,12 +398,48 @@ describe('advisory session agent handoff', () => {
           tool_call_ref: reports[1].session_result.tool_call_ref,
         }),
       ),
-    ).toThrow(/duplicates/);
+    ).toThrow(/outside an allowed configured slot batch/);
     expect(() => advanceSessionWorkflowHandoff(root, state, replace('session_result', undefined))).toThrow(
       /canonical|session result/i,
     );
     expect(() => advanceSessionWorkflowHandoff(root, state, replace('approved', true))).toThrow(
       /outcome fields are invalid/,
+    );
+  });
+
+  test('allows the focused validator pair to share one invocation and rejects cross-wave reuse', () => {
+    let state = prepareSessionWorkflowHandoff(root, selection('task', 'task_execution'), context);
+    while (state.actions[0]?.stage_id !== 'validate_focused')
+      state = advanceSessionWorkflowHandoff(root, state, simulatedReports(state));
+    const sharedRef = 'single-focused-validator-invocation';
+    const reports = simulatedReports(state);
+    for (const report of reports) {
+      report.session_result.tool_call_ref = sharedRef;
+      report.session_result.agent_id = 'same-validator-agent';
+    }
+    const advanced = advanceSessionWorkflowHandoff(root, state, reports);
+    expect(
+      advanced.outcomes
+        .filter((outcome) => outcome.session_result.tool_call_ref === sharedRef)
+        .map((outcome) => outcome.role)
+        .sort(),
+    ).toEqual(['correctness-validator', 'requirements-validator']);
+    const nextReports = simulatedReports(advanced);
+    nextReports[0].session_result.tool_call_ref = sharedRef;
+    expect(() => advanceSessionWorkflowHandoff(root, advanced, nextReports)).toThrow(/replayed from a prior wave/);
+  });
+
+  test('does not extend shared invocation batching to the three-role validation wave', () => {
+    let state = prepareSessionWorkflowHandoff(root, selection('feature', 'implementation_new'), context);
+    while (state.actions[0]?.stage_id !== 'validate_parallel')
+      state = advanceSessionWorkflowHandoff(root, state, simulatedReports(state));
+    const reports = simulatedReports(state);
+    reports[0].session_result.tool_call_ref = 'same-invocation';
+    reports[1].session_result.tool_call_ref = 'same-invocation';
+    reports[0].session_result.agent_id = 'same-agent';
+    reports[1].session_result.agent_id = 'same-agent';
+    expect(() => advanceSessionWorkflowHandoff(root, state, reports)).toThrow(
+      /outside an allowed configured slot batch/,
     );
   });
 });

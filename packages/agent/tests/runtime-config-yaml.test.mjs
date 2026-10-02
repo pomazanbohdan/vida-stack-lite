@@ -1677,6 +1677,7 @@ test.skipIf(runningUnderVitest && process.env.AGENT_RUNTIME_SKIP_PACKAGE_TEST ==
     const portableAuthorityText = portableRuntimeConfigText(authorityText);
     await writeFile(path.join(isolatedRepositoryRoot, 'agent-runtime.config.v1.yaml'), portableAuthorityText);
     const isolatedConfig = loadRuntimeConfig(isolatedRepositoryRoot);
+    expect(path.relative(isolatedRepositoryRoot, isolatedPackageRoot)).toBe(isolatedConfig.runtime.bundle);
     await expect(readFile(path.join(isolatedRepositoryRoot, 'agent-runtime', 'AGENTS.md'))).rejects.toMatchObject({
       code: 'ENOENT',
     });
@@ -1687,6 +1688,11 @@ test.skipIf(runningUnderVitest && process.env.AGENT_RUNTIME_SKIP_PACKAGE_TEST ==
     const isolatedEnvironment = { ...hostileEnvironment };
     delete isolatedEnvironment.AGENT_RUNTIME_TEST_REPOSITORY_ROOT;
     expect(isolatedEnvironment.AGENT_RUNTIME_TEST_REPOSITORY_ROOT).toBeUndefined();
+    const isolatedTestEnvironment = {
+      ...isolatedEnvironment,
+      AGENT_RUNTIME_TEST_REPOSITORY_ROOT: isolatedRepositoryRoot,
+    };
+    expect(isolatedTestEnvironment.AGENT_RUNTIME_TEST_REPOSITORY_ROOT).toBe(isolatedRepositoryRoot);
     const readIsolatedFingerprint = async (label) => {
       const fingerprintResult = await runProcess({
         cmd: ['bun', 'tooling/fingerprint.mjs'],
@@ -1756,7 +1762,7 @@ test.skipIf(runningUnderVitest && process.env.AGENT_RUNTIME_SKIP_PACKAGE_TEST ==
         cwd: isolatedPackageRoot,
         stdout: 'pipe',
         stderr: 'pipe',
-        env: isolatedEnvironment,
+        env: label === 'isolated tests' ? isolatedTestEnvironment : isolatedEnvironment,
       });
       expect(result.exitCode, subprocessFailure(label, result)).toBe(0);
       if (label === 'isolated build') {
@@ -2024,7 +2030,7 @@ if (!denied) process.exit(12);`,
         '--input-type=module',
         '-e',
         `const trusted = await import('vida-agent/trusted-host');
-if (Object.keys(trusted).sort().join(',') !== 'HostStateError,HostStateStore,createTrustedHostComposition,openHostStateDatabase') process.exit(18);
+if (Object.keys(trusted).sort().join(',') !== 'HostStateError,HostStateStore,createTrustedHostComposition,inspectHostWorkspaceDatabase,openHostStateDatabase,runConsumerMigrationState,withHostStateExclusiveTransaction') process.exit(18);
 if ('createTestTrustedHostLauncherCapability' in trusted || 'TrustedHostCompositionInput' in trusted) process.exit(19);
 const authentication = { schema: 'TrustedHostAuthentication/v1', repositoryRoot: process.env.TRUSTED_REPOSITORY_ROOT, tenantId: process.env.TRUSTED_TENANT_ID, projectId: process.env.TRUSTED_PROJECT_ID, principal: 'principal-1', configRevision: Number(process.env.TRUSTED_CONFIG_REVISION), permittedOperations: ['runtime.read'] };
 const services = { resolveIdentity: () => null, verifyApproval: () => null, runtimeRevision: () => ({ sourceRevision: 'source-1', currentRevision: 1 }), casWriter: () => ({ applied: true }) };

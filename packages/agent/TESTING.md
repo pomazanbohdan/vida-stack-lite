@@ -88,6 +88,14 @@ from construction; a copied tree or successful thin probe cannot close this gate
 
 ## Candidate repository verification
 
+The ordinary `npm test` command runs the Bun regression list and the public
+run-entrypoint matrix as two required sequential launcher invocations. Each
+keeps the existing five-minute process-tree deadline. `test:pinned` is the first
+phase; `test:run-entrypoint:pinned` is the second and uses its completed build.
+For an isolated second-phase rerun, build the current package first. Separating
+these phases preserves all assertions and bounds; it makes no speed claim.
+
+
 Run the current-v1 candidate checks below with declared Bun 1.4.2 and the frozen lockfile. A different global Bun must not silently change the selected version. Build-generated output counts only when source and package fingerprints match. Any retained `ci:candidate` script is a local command name, not authorization to run tests in CI/CD. Local aggregate checks exclude mutation; launch it explicitly when requested. First-cutover approval uses the retained-behavior matrix and exact outcomes below. Aggregate 100% coverage/mutation and `CRAP < 5` remain measured, owned post-cutover GAPs, as authorized by the user.
 
 ```text
@@ -226,6 +234,17 @@ Run `bun run verify` or `bun run ci` from the bundle root. Both install the froz
 
 ## Required integration evidence
 
+Explicit correction-generation repair must exercise a real isolated admitted
+Source attempt with an issued action, `started` Host status, `commit_unknown`
+approval and null observation. Remove only both correction fields from Host and
+all mirrored receipts. Prove inspect/plan/apply/resume/restore preserves every
+other semantic field and grants no replay, outcome or ownership transition.
+Retain terminal repair coverage. Reject partial fields, corrective history,
+foreign/mismatched receipts or approvals, competing ownership and dependency
+drift. Inject transaction failure to verify no partial Host/journal changes;
+strict readers reject the preimage and accept only the repaired current-v1
+shape. Synthetic source fixtures do not prove live consumer repair or retirement.
+
 Project configuration rebind uses the public reconciliation kind
 `runtime-config` and a new strict `ConfigRebindOperation/v1`; existing YAML and
 initialization schema formats remain unchanged. The maintained focused test is
@@ -264,3 +283,28 @@ Linux lock regressions cover legal 255-byte and multibyte resource basenames,
 contention, release and reacquisition. Recovery fault injection substitutes the
 restored target after descriptor verification in orphan and rollback paths; both
 must preserve the original backup and leave the foreign target unchanged.
+
+
+## Reaudit regression obligations
+
+Run `tests/bun/runtime-initialization.test.mjs` in the ordinary Bun aggregate,
+including same-process and separate-process contention, unchanged receipt identity,
+foreign/stale receipts and bounded acquisition retry. An operation that already
+entered its critical section must not be replayed because its error resembles
+lock contention. Run Vitest suites importing Bun-only state under the pinned Bun
+host (`bun x --bun vitest`); Node import failure is zero executed tests, not a pass.
+
+`mutation-gate.mjs --inventory` must assign `final-assurance.ts` to the actual
+final-assurance unit/public tests. Passing inventory does not mean mutations were
+run or killed; manual mutation remains separately authorized and measured.
+Fixture regressions use the maintained configured-test-context resolver and
+current lifecycle/assignment factories, retaining negative assertions. Verify
+source, extracted and unrelated-cwd fixture layout independently.
+
+Package checks use normal SDK `npm pack` with its verifier and extracted artifact
+smoke. Native primary output requires its own implemented builder and target
+qualification; no SDK archive closes that gap. Tester evidence tests distinguish
+reported pass from executed-suite proof and deny caller-supplied proof classes.
+Research preparation tests must preserve issue identities on interruption and
+remain uncertain once dispatch exposure is possible, rather than replaying an
+unknown external effect.
