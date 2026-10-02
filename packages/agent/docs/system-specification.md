@@ -604,7 +604,9 @@ canonical SQLite immediate exclusion through selector/witness recheck and atomic
 filesystem witness publication. It creates no persistent wx lock; process
 termination releases SQLite exclusion. A historical orphan marker still fails
 closed pending explicit maintenance/terminal repair or retirement of the old
-selector. PID/age heuristics do not authorize deletion. This establishes no
+selector. The shared host-state database opener rejects existing symlink and
+multiply linked targets before SQLite initialization or journal configuration.
+PID/age heuristics do not authorize deletion. This establishes no
 power-loss guarantee or SQL/filesystem atomicity claim.
 
 Research artifact repair plan/apply resolves Ajv, YAML and schemas through the

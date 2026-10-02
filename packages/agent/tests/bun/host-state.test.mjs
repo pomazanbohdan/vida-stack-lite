@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { linkSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -982,6 +982,24 @@ test('host database opener pins recoverable SQLite settings and preserves state 
   expect(store.readHostStateSnapshot(identity)).toEqual(saved);
   expect(() => openHostStateDatabase(':memory:')).toThrow(/absolute file-backed database path/);
   expect(() => openHostStateDatabase('relative.sqlite')).toThrow(/absolute file-backed database path/);
+});
+
+test('host database opener rejects linked targets before SQLite can mutate them', () => {
+  const targetPath = path.join(root, 'external.db');
+  const target = new Database(targetPath, { create: true, strict: true });
+  target.exec('CREATE TABLE preserved (value TEXT); INSERT INTO preserved VALUES (\'unchanged\')');
+  target.close();
+  const before = readFileSync(targetPath);
+
+  const symlinkPath = path.join(root, 'symlink.db');
+  symlinkSync(targetPath, symlinkPath, 'file');
+  expect(() => openHostStateDatabase(symlinkPath)).toThrow(/database path is unsafe/);
+  expect(readFileSync(targetPath)).toEqual(before);
+
+  const hardlinkPath = path.join(root, 'hardlink.db');
+  linkSync(targetPath, hardlinkPath);
+  expect(() => openHostStateDatabase(hardlinkPath)).toThrow(/database path is unsafe/);
+  expect(readFileSync(targetPath)).toEqual(before);
 });
 
 const operationKey = '6'.repeat(64);
