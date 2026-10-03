@@ -1,8 +1,9 @@
-import { afterEach, expect, test } from 'bun:test';
+import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+import { boundedSpawnSync, executionBudget } from '../bin/bun.mjs';
 
 const bundleRoot = path.resolve(import.meta.dirname, '..');
 const required = [
@@ -14,12 +15,15 @@ const required = [
   'knowledge-graph',
 ];
 const roots = [];
-afterEach(() => {
+const fixtures = new Map();
+const phaseBudget = executionBudget(undefined, 30_000);
+afterAll(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-for (const bundleName of ['npm-package', 'vida agent-\u0454']) {
-  test(`portable AGENTS discovers package instructions after relocation: ${bundleName}`, () => {
+beforeAll(() => {
+  const started = performance.now();
+  for (const bundleName of ['npm-package', 'vida agent-\u0454']) {
     const root = mkdtempSync(path.join(os.tmpdir(), 'vida agent-\u0454-'));
     roots.push(root);
     const consumer = path.join(root, 'consumer');
@@ -35,19 +39,46 @@ for (const bundleName of ['npm-package', 'vida agent-\u0454']) {
       'vida-agent',
     );
     writeFileSync(path.join(consumer, 'AGENTS.md'), agents);
+    fixtures.set(bundleName, { consumer, bundle, agents });
+  }
+  phaseBudget.remaining();
+  process.stderr.write(
+    JSON.stringify({ stage: 'relocation fixture preparation', elapsed_ms: performance.now() - started }) + '\n',
+  );
+}, 5_000);
+
+for (const bundleName of ['npm-package', 'vida agent-\u0454']) {
+  test(`portable AGENTS template remains portable after relocation: ${bundleName}`, () => {
+    const { consumer, bundle, agents } = fixtures.get(bundleName);
     expect(agents).not.toContain('{{BUNDLE}}');
     expect(agents).toContain('vida-agent instructions --path development-lifecycle');
     expect(agents).toContain('vida-agent instructions --path NAME');
-    for (const name of required) {
-      expect(agents).toContain(name);
-      const result = spawnSync(
+    for (const name of required) expect(agents).toContain(name);
+    expect(existsSync(path.join(consumer, 'vida-agent'))).toBe(false);
+    expect(agents).not.toContain(bundle);
+    expect(agents).not.toMatch(/C:[/\\]|creatio-sample|agent-runtime\/instructions/);
+    expect(agents).toContain('`repository_id`');
+    expect(agents).toContain('`project_ids`');
+    expect(agents).toContain('Provider,\ntenant and namespace IDs are integration metadata only');
+    expect(agents).not.toContain('New tenant/project work uses protocol v4');
+    expect(agents).not.toContain('add tenant/project\ncontour keys');
+  });
+  for (const name of required)
+    test(`portable AGENTS discovers package instruction after relocation: ${bundleName}/${name}`, () => {
+      const { consumer, bundle } = fixtures.get(bundleName);
+      const result = boundedSpawnSync(
+        spawnSync,
         process.execPath,
         [path.join(bundle, 'bin/vida-agent.mjs'), 'instructions', '--path', name],
         {
           cwd: consumer,
           encoding: 'utf8',
           windowsHide: true,
+          timeout: 5_000,
+          budget: phaseBudget.child(5_000, 250),
+          diagnostics: true,
         },
+        `relocated instruction ${bundleName}/${name}`,
       );
       expect(result.status, result.stderr).toBe(0);
       const instruction = JSON.parse(result.stdout);
@@ -59,16 +90,7 @@ for (const bundleName of ['npm-package', 'vida agent-\u0454']) {
       expect(content).not.toMatch(
         /\b(?:crmbx|3mob|creatio-sample|agentsustem)\b|C:[/\\]|\/(?:Users|home)\/|agent-runtime\//i,
       );
-    }
-    expect(existsSync(path.join(consumer, 'vida-agent'))).toBe(false);
-    expect(agents).not.toContain(bundle);
-    expect(agents).not.toMatch(/C:[/\\]|creatio-sample|agent-runtime\/instructions/);
-    expect(agents).toContain('`repository_id`');
-    expect(agents).toContain('`project_ids`');
-    expect(agents).toContain('Provider,\ntenant and namespace IDs are integration metadata only');
-    expect(agents).not.toContain('New tenant/project work uses protocol v4');
-    expect(agents).not.toContain('add tenant/project\ncontour keys');
-  });
+    });
 }
 
 test('relocated sidecar keeps project context outside a Unicode bundle', () => {

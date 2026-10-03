@@ -139,51 +139,186 @@ export function findNpmCli(node = process.execPath) {
 function succeeded(result, label) {
   if (result.error || result.signal || result.status !== 0) {
     const diagnostic = result.timedOut
-      ? ` Timed out after ${result.timeoutMs} ms${result.cleanupAttempted ? '; process-tree cleanup was attempted' : ''}.`
+      ? ` Timed out after ${result.timeoutMs} ms${result.cleanupAttempted ? '; process-tree cleanup was attempted' : ''}. Cleanup outcome: ${result.cleanupOutcome ?? 'unknown'}.`
       : '';
     const error = new Error(`${label} failed${result.signal ? ` (${result.signal})` : ''}.${diagnostic}`);
     error.exitCode = Number.isInteger(result.status) && result.status > 0 ? result.status : 1;
+    error.timedOut = result.timedOut ?? false;
     throw error;
   }
   return String(result.stdout ?? '').trim();
 }
 
 function cleanupTimedOutProcessTree(result, cleanup = defaultTimeoutCleanup) {
-  if (!result?.pid) return false;
+  if (!result?.pid) return { attempted: false, outcome: 'unknown' };
   try {
-    cleanup(result.pid);
-    return true;
-  } catch {
-    return false;
+    const observation = cleanup(result.pid, result.cleanupTimeoutMs ?? 30_000);
+    const outcome =
+      observation?.error || observation?.signal || (Number.isInteger(observation?.status) && observation.status !== 0)
+        ? 'failed'
+        : observation?.status === 0
+          ? 'command_succeeded'
+          : 'unknown';
+    return { attempted: true, outcome, status: observation?.status, error_code: observation?.error?.code };
+  } catch (error) {
+    return { attempted: true, outcome: 'failed', error_code: error.code };
   }
 }
 
-function defaultTimeoutCleanup(pid) {
+function defaultTimeoutCleanup(pid, timeout = 30_000) {
   if (process.platform === 'win32') {
-    spawnSync('taskkill', ['/pid', String(pid), '/T', '/F'], {
+    return spawnSync('taskkill', ['/pid', String(pid), '/T', '/F'], {
       windowsHide: true,
       stdio: 'ignore',
-      timeout: 30_000,
+      timeout,
     });
-    return;
   }
   process.kill(-pid, 'SIGKILL');
+  return undefined; // A sent signal is not observed process-tree termination.
+}
+
+function executionCeiling(env) {
+  const duration = env.VIDA_PINNED_COMMAND_BUDGET_MS;
+  const expiry = env.VIDA_PINNED_COMMAND_DEADLINE_MS;
+  for (const value of [duration, expiry])
+    if (value !== undefined && (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))))
+      throw new Error('Invalid inherited pinned command budget.');
+  return {
+    duration: duration === undefined ? Infinity : Number(duration),
+    expiry: expiry === undefined ? Infinity : Number(expiry),
+  };
+}
+const inherited = executionCeiling(process.env);
+const inheritedDeadline = performance.now() + Math.min(inherited.duration, inherited.expiry - Date.now());
+
+export function executionBudget(timeoutMs = Infinity, reserveMs = 1_000, parentDeadline = Infinity) {
+  if (
+    !(Number.isSafeInteger(timeoutMs) || timeoutMs === Infinity) ||
+    timeoutMs <= 0 ||
+    !Number.isSafeInteger(reserveMs) ||
+    reserveMs < 0 ||
+    !(Number.isFinite(parentDeadline) || parentDeadline === Infinity)
+  )
+    throw new Error('Execution budget and reserve must be bounded integer durations.');
+  const deadline = Math.min(performance.now() + timeoutMs, inheritedDeadline, parentDeadline);
+  return {
+    deadline,
+    remaining(maximum = timeoutMs) {
+      if (!(Number.isSafeInteger(maximum) || maximum === Infinity) || maximum <= 0)
+        throw new Error('Child allowance must be a positive integer duration.');
+      const remaining = Math.floor(Math.min(maximum, deadline - performance.now() - reserveMs));
+      if (remaining <= 0) throw new Error('Execution budget exhausted before child launch.');
+      return remaining;
+    },
+    cleanupTimeout() {
+      // The existing reserve covers both cleanup and reporting. Cleanup cannot
+      // spend the report half, even when the child returns after its allowance.
+      if (reserveMs === 0) return Math.max(0, Math.floor(deadline - performance.now()));
+      return Math.max(
+        0,
+        Math.min(Math.floor(reserveMs / 2), Math.floor(deadline - performance.now() - Math.ceil(reserveMs / 2))),
+      );
+    },
+    child(duration, reserve = 1_000) {
+      return executionBudget(duration, reserve, deadline - reserveMs);
+    },
+  };
 }
 
 export function boundedSpawnSync(spawn, command, args, options, label, cleanup = defaultTimeoutCleanup) {
-  const timeoutMs = options.timeout ?? 300_000;
+  const { budget, diagnostics = false, timeout = Infinity, ...spawnOptions } = options;
+  if (!(Number.isSafeInteger(timeout) || timeout === Infinity) || timeout <= 0)
+    throw new Error('Child allowance must be a positive integer duration.');
+  const environment = options.env ?? process.env;
+  const ceiling = executionCeiling(environment);
+  const allowance = Math.min(
+    timeout,
+    ceiling.duration,
+    ceiling.expiry - Date.now(),
+    inheritedDeadline - performance.now(),
+  );
+  if (allowance <= 0) throw new Error('Execution budget exhausted before child launch.');
+  const timeoutMs = budget ? budget.remaining(Math.floor(allowance)) : Math.floor(allowance);
+  const started = performance.now();
   const result = spawn(command, args, {
-    ...options,
-    timeout: timeoutMs,
+    ...spawnOptions,
+    env: {
+      ...environment,
+      ...(Number.isFinite(timeoutMs)
+        ? {
+            VIDA_PINNED_COMMAND_BUDGET_MS: String(timeoutMs),
+            VIDA_PINNED_COMMAND_DEADLINE_MS: String(Math.min(ceiling.expiry, inherited.expiry, Date.now() + timeoutMs)),
+          }
+        : {}),
+    },
+    ...(Number.isFinite(timeoutMs) ? { timeout: timeoutMs } : {}),
     killSignal: 'SIGKILL',
     detached: process.platform !== 'win32',
   });
+  result.childElapsedMs = performance.now() - started;
   if (result?.error?.code === 'ETIMEDOUT') {
     result.timedOut = true;
     result.timeoutMs = timeoutMs;
-    result.cleanupAttempted = cleanupTimedOutProcessTree(result, cleanup);
+    result.cleanupTimeoutMs = budget ? Math.min(30_000, budget.cleanupTimeout()) : 30_000;
+    const cleanupStarted = performance.now();
+    const observation =
+      result.cleanupTimeoutMs > 0
+        ? cleanupTimedOutProcessTree(result, cleanup)
+        : { attempted: false, outcome: 'unknown' };
+    result.cleanupAttempted = observation.attempted;
+    result.cleanupOutcome = observation.outcome;
+    result.cleanupStatus = observation.status;
+    result.cleanupErrorCode = observation.error_code;
+    result.cleanupElapsedMs = performance.now() - cleanupStarted;
     result.diagnosticLabel = label;
   }
+  result.elapsedMs = performance.now() - started;
+  if (diagnostics)
+    process.stderr.write(
+      JSON.stringify({
+        stage: label,
+        elapsed_ms: performance.now() - started,
+        child_elapsed_ms: result.childElapsedMs,
+        cleanup_elapsed_ms: result.cleanupElapsedMs ?? null,
+        cleanup_allowance_ms: result.cleanupTimeoutMs ?? null,
+        timeout_ms: Number.isFinite(timeoutMs) ? timeoutMs : null,
+        status: result.status,
+        signal: result.signal,
+        timed_out: result.timedOut ?? false,
+        cleanup_outcome: result.cleanupOutcome ?? null,
+        cleanup_status: result.cleanupStatus ?? null,
+        cleanup_error_code: result.cleanupErrorCode ?? null,
+        error_code: result.error?.code ?? null,
+      }) + '\n',
+    );
+  return result;
+}
+
+export function commandOutcomeUnknown(result) {
+  return (
+    !result ||
+    result.timedOut === true ||
+    Boolean(result.error) ||
+    Boolean(result.signal) ||
+    !Number.isSafeInteger(result.status) ||
+    result.status < 0
+  );
+}
+
+export function requireTerminalCommand(result, label) {
+  if (commandOutcomeUnknown(result))
+    throw new Error(
+      `${label}: uncertain command outcome ${JSON.stringify({
+        status: result?.status ?? null,
+        signal: result?.signal ?? null,
+        error_code: result?.error?.code ?? null,
+        timed_out: result?.timedOut ?? false,
+        timeout_ms: result?.timeoutMs ?? null,
+        cleanup_outcome: result?.cleanupOutcome ?? null,
+        cleanup_status: result?.cleanupStatus ?? null,
+        cleanup_error_code: result?.cleanupErrorCode ?? null,
+      })}`,
+    );
   return result;
 }
 
@@ -285,14 +420,15 @@ export function resolvePinnedBun(options = {}) {
             spawn,
             discovered,
             ['--version'],
-            { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true },
+            { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true, budget: options.budget },
             'PATH Bun version check',
             cleanup,
           ),
           'PATH Bun version check',
         );
         if (version === pin) return discovered;
-      } catch {
+      } catch (error) {
+        if (error.timedOut) throw error;
         /* A failed PATH probe cannot bypass pinned npm resolution. */
       }
     }
@@ -315,7 +451,7 @@ export function resolvePinnedBun(options = {}) {
             '-e',
             'process.stdout.write(process.execPath)',
           ],
-          { cwd: root, env, encoding: 'utf8', timeout: 180_000, windowsHide: true },
+          { cwd: root, env, encoding: 'utf8', timeout: 180_000, windowsHide: true, budget: options.budget },
           'Exact Bun package resolution (npm)',
           cleanup,
         ),
@@ -329,7 +465,7 @@ export function resolvePinnedBun(options = {}) {
       spawn,
       executable,
       ['--version'],
-      { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true },
+      { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true, budget: options.budget },
       'Resolved Bun version check',
       cleanup,
     ),
@@ -347,17 +483,25 @@ export function runPinnedBun(args, options = {}) {
   const spawn = options.spawn ?? spawnSync;
   const env = options.env ?? process.env;
   const cleanup = options.cleanup ?? defaultTimeoutCleanup;
-  const executable = resolvePinnedBun({ ...options, root, spawn, env, cleanup });
+  const maximum = options.timeoutMs === undefined ? Infinity : options.timeoutMs;
+  // Validate before resolution can launch a version probe. A caller budget
+  // never converts malformed input into an unlimited command.
+  const commandBudget = executionBudget(maximum, 0);
+  const budget = options.budget ?? commandBudget;
+  const executable = resolvePinnedBun({ ...options, root, spawn, env, cleanup, budget });
+  const timeoutMs = budget ? budget.remaining(maximum) : maximum;
   const result = boundedSpawnSync(
     spawn,
     executable,
     embedded ? ['--no-env-file', '--no-install', '--config=' + path.join(root, 'bunfig.toml'), ...args] : args,
     {
       cwd: options.cwd ?? process.cwd(),
-      env: pinnedEnvironment(executable, env, root),
+      env: { ...pinnedEnvironment(executable, env, root), VIDA_PIPELINE_DIAGNOSTICS: undefined },
       stdio: 'inherit',
       windowsHide: true,
-      timeout: options.timeoutMs ?? 300_000,
+      timeout: timeoutMs,
+      budget,
+      diagnostics: options.diagnostics ?? false,
     },
     'Pinned Bun command',
     cleanup,
@@ -373,7 +517,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     if (process.argv.length === 3 && process.argv[2] === '--sync-pin') {
       console.log(syncPin() ? 'Bun manifest mirrors synchronized.' : 'Bun manifest mirrors already current.');
     } else {
-      process.exitCode = runPinnedBun(process.argv.slice(2));
+      process.exitCode = runPinnedBun(process.argv.slice(2), {
+        diagnostics: process.env.VIDA_PIPELINE_DIAGNOSTICS === 'true',
+      });
     }
   } catch (error) {
     console.error(error.message);

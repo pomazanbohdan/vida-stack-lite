@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test';
+import { test as bunTest, expect, afterAll } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { cpSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -24,11 +24,36 @@ import { MastraSessionBridge, sessionBridgeDatabasePath } from '../src/orchestra
 import { prepareWorkflowExecution, reserveWorkflowAssignmentForSession } from '../src/runtime-kernel.ts';
 import { suspendLocalWork, suspendCompletedReadOnlyWork } from '../src/orchestration/suspend-local-work.ts';
 import { run } from '../bin/run.mjs';
-import { developmentControllerBinding } from '../bin/development-controller.mjs';
+import { containedControllerFixture } from './contained-controller-fixture.mjs';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-// The package is frozen and physically contained for this whole focused suite.
-const candidateBinding = developmentControllerBinding(bundle);
+const containedPackage = containedControllerFixture(bundle);
+const candidateBinding = containedPackage.binding;
+let caseBudget;
+let checkedAfterCase;
+function test(name, body, timeout) {
+  bunTest(
+    name,
+    async () => {
+      caseBudget = containedPackage.caseBudget();
+      checkedAfterCase = false;
+      containedPackage.assertUnchanged();
+      caseBudget.remaining();
+      try {
+        await body();
+      } finally {
+        if (!checkedAfterCase) containedPackage.assertUnchanged();
+      }
+    },
+    timeout,
+  );
+}
+afterAll(() => containedPackage.close(), containedPackage.cleanupHookOptions);
+function copiedRun(args) {
+  const result = containedPackage.run(args, caseBudget);
+  if (result.status !== 0) throw new Error(result.payload.message);
+  return result.payload;
+}
 const fixtureEvidence = 'local://synthetic/stopped-source';
 const writeJson = (root, file, value) => {
   mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
@@ -184,6 +209,8 @@ async function fixture({ writer = true } = {}) {
   const original = admission(),
     { input, identity, source } = original;
   const bridge = await MastraSessionBridge.open({
+    ledger,
+    projectIds: [selection.project],
     repositoryRoot: root,
     config,
     selection,
@@ -191,8 +218,8 @@ async function fixture({ writer = true } = {}) {
     workflowId: 'task_execution',
     workspaceId: workspace,
   });
-  let engine = await bridge.start();
-  const sync = () => ledger.sync('stopped', 1, engine.run_id, engine.step_id, engine.requests, source, engine.status);
+  await bridge.start(source);
+  const sync = () => ledger.resume('stopped', 1);
   let journal = sync();
   journal = ledger.issueWave('stopped', 1, journal.version);
   const item = journal.state.items[0],
@@ -209,9 +236,10 @@ async function fixture({ writer = true } = {}) {
     evidence_refs: [fixtureEvidence],
   };
   journal = ledger.report('stopped', 1, journal.version, readonlyObservation, source);
-  engine = await bridge.resume(
+  await bridge.resume(
     journal.state.step_id,
     journal.state.items.map((entry) => entry.observation),
+    source,
   );
   journal = sync();
   let reservation;
@@ -263,9 +291,21 @@ async function fixture({ writer = true } = {}) {
     }
   };
   async function close() {
+    let packageError;
     for (const extra of extraBridges) await extra.close();
     await bridge.close();
     ledger.close();
+    try {
+      containedPackage.assertUnchanged();
+      checkedAfterCase = true;
+    } catch (error) {
+      packageError = error;
+    }
+    if (containedPackage.retained) {
+      console.warn('Consumer retained after package drift or unknown child outcome: ' + root);
+      if (packageError) throw packageError;
+      return;
+    }
     try {
       await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     } catch (error) {
@@ -277,6 +317,8 @@ async function fixture({ writer = true } = {}) {
     if (file !== 'AGENT.sidecar.md') writeFileSync(path.join(root, file), 'Synthetic disjoint source');
     const next = admission(id, file, 'synthetic-' + id);
     const nextBridge = await MastraSessionBridge.open({
+      ledger,
+      projectIds: [selection.project],
       repositoryRoot: root,
       config,
       selection,
@@ -285,8 +327,8 @@ async function fixture({ writer = true } = {}) {
       workspaceId: workspace,
     });
     extraBridges.push(nextBridge);
-    let state = await nextBridge.start();
-    const nextSync = () => ledger.sync(id, 1, state.run_id, state.step_id, state.requests, next.source, state.status);
+    await nextBridge.start(next.source);
+    const nextSync = () => ledger.resume(id, 1);
     let nextJournal = nextSync();
     nextJournal = ledger.issueWave(id, 1, nextJournal.version);
     const action = nextJournal.state.items[0],
@@ -308,9 +350,10 @@ async function fixture({ writer = true } = {}) {
       },
       next.source,
     );
-    state = await nextBridge.resume(
+    await nextBridge.resume(
       nextJournal.state.step_id,
       nextJournal.state.items.map((item) => item.observation),
+      next.source,
     );
     nextJournal = nextSync();
     const host = store.readHostStateSnapshot(next.identity);
@@ -421,7 +464,16 @@ async function fixture({ writer = true } = {}) {
       requestRef,
       verifyCurrent,
       cli: (mode) =>
-        run(['--capture-stopped-source', 'true', '--mode', mode, '--project-root', root, '--request', requestRef]),
+        copiedRun([
+          '--capture-stopped-source',
+          'true',
+          '--mode',
+          mode,
+          '--project-root',
+          root,
+          '--request',
+          requestRef,
+        ]),
     };
   }
   return {
@@ -600,7 +652,16 @@ test('completed configured readonly egress can release with a fully inert unissu
       requestRef = '.agent/work/stopped/readonly-request.json';
     writeJson(f.root, requestRef, request);
     const cli = (mode) =>
-      run(['--release-completed-readonly', 'true', '--mode', mode, '--project-root', f.root, '--request', requestRef]);
+      copiedRun([
+        '--release-completed-readonly',
+        'true',
+        '--mode',
+        mode,
+        '--project-root',
+        f.root,
+        '--request',
+        requestRef,
+      ]);
     expect((await cli('inspect')).status).toBe('readonly_release_inspected');
     expect((await cli('plan')).status).toBe('readonly_release_planned');
     expect(await cli('apply')).toMatchObject({
@@ -754,6 +815,25 @@ test('completed readonly release rejects absent and null engine completion evide
             requestRef,
           ]);
       await expect(cli()).rejects.toThrow('Readonly release actual engine completion differs');
+      const denied = containedPackage.run(
+        [
+          '--release-completed-readonly',
+          'true',
+          '--mode',
+          'inspect',
+          '--project-root',
+          f.root,
+          '--request',
+          requestRef,
+        ],
+        caseBudget,
+      );
+      expect(denied.status).toBe(1);
+      expect(denied.payload).toMatchObject({
+        schema: 'VidaAgentRunResult/v1',
+        status: 'blocked',
+        code: 'GAP-VIDA-RUN-EXECUTION-001',
+      });
       expect(f.inspect()).toEqual(before);
     } finally {
       await f.close();

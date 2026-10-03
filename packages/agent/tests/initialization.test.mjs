@@ -1,7 +1,8 @@
 import { afterAll, afterEach, beforeAll, expect, test } from 'bun:test';
 import { cp, mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { spawn } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
+import { boundedSpawnSync, executionBudget, commandOutcomeUnknown, requireTerminalCommand } from '../bin/bun.mjs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -12,34 +13,50 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputPaths = ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', 'docs', '.agent', '.tmp'];
 const v8CoverageMode = process.env.AGENT_RUNTIME_V8_COVERAGE === '1';
-const v8CoverageTest = v8CoverageMode ? test.skip : test;
+const baseTest = v8CoverageMode ? test.skip : test;
+const phaseBudget = executionBudget(undefined, 30_000);
+let initializationOutcomeUnknown = false;
+function v8CoverageTest(name, execute, timeout = 5_000) {
+  return baseTest(
+    name,
+    () => {
+      if (initializationOutcomeUnknown) throw Error('Prior initializer child outcome prevents fixture reuse.');
+      return execute(phaseBudget.child(timeout, 250));
+    },
+    timeout,
+  );
+}
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let root;
 let bundle;
 let originalTemplate;
 let externalConfig;
 
-async function run(args, env = {}, cwd = root, executable = 'bun') {
-  return new Promise((resolve, reject) => {
-    const child = spawn(executable, args, {
+function run(budget, args, env = {}, cwd = root, executable = 'bun') {
+  if (initializationOutcomeUnknown) throw Error('Prior initializer child outcome prevents fixture reuse.');
+  const label = `initializer ${path.basename(args[0])}/${executable}`;
+  const result = boundedSpawnSync(
+    spawnSync,
+    executable,
+    args,
+    {
       cwd,
       env: { ...process.env, ...env },
       windowsHide: true,
-    });
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on('data', (chunk) => {
-      stderr += chunk;
-    });
-    child.on('error', reject);
-    child.on('close', (exitCode) => resolve({ exitCode, stdout, stderr }));
-  });
+      encoding: 'utf8',
+      timeout: 300_000,
+      budget,
+      diagnostics: true,
+    },
+    label,
+  );
+  if (commandOutcomeUnknown(result)) initializationOutcomeUnknown = true;
+  requireTerminalCommand(result, label);
+  return { ...result, exitCode: result.status };
 }
-function init(extra = [], env = {}) {
+function init(budget, extra = [], env = {}) {
   return run(
+    budget,
     [
       path.join(bundle, 'bin/init.mjs'),
       '--project-root',
@@ -55,7 +72,7 @@ function init(extra = [], env = {}) {
 }
 
 beforeAll(async () => {
-  if (v8CoverageMode) return;
+  if (v8CoverageMode || initializationOutcomeUnknown) return;
   root = await mkdtemp(path.join(tmpdir(), 'portable-runtime-init-'));
   bundle = path.join(root, 'tools', 'agents');
   await mkdir(bundle, { recursive: true });
@@ -94,20 +111,20 @@ beforeAll(async () => {
 }, 180_000);
 
 afterEach(async () => {
-  if (v8CoverageMode) return;
+  if (v8CoverageMode || initializationOutcomeUnknown) return;
   for (const entry of outputPaths) await rm(path.join(root, entry), { recursive: true, force: true });
   await rm(path.join(root, 'packages'), { recursive: true, force: true });
   await writeFile(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), originalTemplate);
 });
 afterAll(async () => {
-  if (v8CoverageMode) return;
+  if (v8CoverageMode || initializationOutcomeUnknown) return;
   if (root) await rm(root, { recursive: true, force: true });
 }, 180_000);
 
 v8CoverageTest(
   'copied bundle with reused locked dependencies initializes explicit identity and records raw template hashes',
-  async () => {
-    const result = await init([], { AGENT_RUNTIME_CONFIG: externalConfig });
+  async (budget) => {
+    const result = await init(budget, [], { AGENT_RUNTIME_CONFIG: externalConfig });
     expect(result.stderr).toBe('');
     expect(result.exitCode, result.stderr).toBe(0);
     expect(JSON.parse(result.stdout).status).toBe('initialized');
@@ -139,7 +156,7 @@ v8CoverageTest(
       expect(entry.template_sha256).toBe(hash(await readFile(path.join(bundle, entry.template))));
       expect(entry.output_sha256).toBe(hash(await readFile(path.join(root, entry.output))));
     }
-    const repeated = await init();
+    const repeated = await init(budget);
     expect(JSON.parse(repeated.stdout).status).toBe('existing');
     expect(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(configBytes);
     expect(await readFile(path.join(root, 'AGENTS.md'), 'utf8')).toBe(agents);
@@ -149,8 +166,8 @@ v8CoverageTest(
 
 v8CoverageTest(
   'explicit reconciliation adopts only complete matching existing integration files',
-  async () => {
-    const initialized = await init();
+  async (budget) => {
+    const initialized = await init(budget);
     expect(initialized.exitCode, initialized.stderr).toBe(0);
     const receipt = path.join(root, '.agent/runtime-initialization.v1.json');
     await rm(receipt);
@@ -158,7 +175,7 @@ v8CoverageTest(
     const preservedSidecar = Buffer.concat([await readFile(sidecar), Buffer.from('\nProject-owned note.\n')]);
     await writeFile(sidecar, preservedSidecar);
     const originalConfig = await readFile(path.join(root, 'agent-runtime.config.v1.yaml'));
-    const partial = await run([
+    const partial = await run(budget, [
       path.join(bundle, 'bin/init.mjs'),
       '--project-root',
       root,
@@ -172,11 +189,11 @@ v8CoverageTest(
     expect(partial.stderr).toContain('Existing configuration does not match');
     expect(await readdir(path.join(root, '.agent'))).not.toContain('runtime-initialization.v1.json');
     await rm(sidecar);
-    const missing = await init(['--reconcile-existing']);
+    const missing = await init(budget, ['--reconcile-existing']);
     expect(missing.exitCode).toBe(1);
     expect(missing.stderr).toContain('requires all existing project integration files');
     await writeFile(sidecar, preservedSidecar);
-    const adopted = await init(['--reconcile-existing']);
+    const adopted = await init(budget, ['--reconcile-existing']);
     expect(adopted.exitCode, adopted.stderr).toBe(0);
     expect(JSON.parse(adopted.stdout).status).toBe('reconciled_existing');
     const body = JSON.parse(await readFile(receipt, 'utf8'));
@@ -185,7 +202,7 @@ v8CoverageTest(
     expect(body.templates[1].output_sha256).toBe(hash(preservedSidecar));
     expect(await readFile(sidecar)).toEqual(preservedSidecar);
     expect(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(originalConfig);
-    const repeat = await init(['--reconcile-existing']);
+    const repeat = await init(budget, ['--reconcile-existing']);
     expect(repeat.exitCode, repeat.stderr).toBe(0);
     expect(JSON.parse(repeat.stdout).status).toBe('existing');
     expect(JSON.parse(await readFile(receipt, 'utf8'))).toEqual(body);
@@ -195,8 +212,8 @@ v8CoverageTest(
 
 v8CoverageTest(
   'fresh local initialization exposes the current Mastra session prepare packet',
-  async () => {
-    const initialized = await init([], { AGENT_RUNTIME_CONFIG: externalConfig });
+  async (budget) => {
+    const initialized = await init(budget, [], { AGENT_RUNTIME_CONFIG: externalConfig });
     expect(initialized.exitCode, initialized.stderr).toBe(0);
     const config = parseRuntimeConfigYaml(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8'));
     const runArgs = [
@@ -224,7 +241,7 @@ v8CoverageTest(
       '--workflow',
       'information_research_light',
     ];
-    const result = await run(runArgs);
+    const result = await run(budget, runArgs);
     expect(result.exitCode, result.stderr).toBe(0);
     const prepared = JSON.parse(result.stdout);
     expect(prepared).toMatchObject({
@@ -237,7 +254,7 @@ v8CoverageTest(
     });
     expect(prepared.next_actions.length).toBeGreaterThan(0);
     const actionIds = prepared.next_actions.map((item) => item.request.action_id);
-    const resumed = await run(runArgs);
+    const resumed = await run(budget, runArgs);
     expect(resumed.exitCode, resumed.stderr).toBe(0);
     const resumedPacket = JSON.parse(resumed.stdout);
     expect(resumedPacket.resume_status).toBe('ready');
@@ -249,8 +266,9 @@ v8CoverageTest(
 
 v8CoverageTest(
   'published initializer launched by Node delegates to the pinned Bun runtime',
-  async () => {
+  async (budget) => {
     const result = await run(
+      budget,
       [
         path.join(bundle, 'bin/init.mjs'),
         '--project-root',
@@ -275,7 +293,7 @@ v8CoverageTest(
 
 v8CoverageTest(
   'each pre-existing integration file or receipt makes the entire invocation read-only',
-  async () => {
+  async (budget) => {
     for (const existing of [
       'AGENTS.md',
       'AGENT.sidecar.md',
@@ -285,7 +303,7 @@ v8CoverageTest(
     ]) {
       await mkdir(path.dirname(path.join(root, existing)), { recursive: true });
       await writeFile(path.join(root, existing), 'owner bytes');
-      const result = await init();
+      const result = await init(budget);
       expect(result.exitCode).toBe(1);
       expect(JSON.parse(result.stderr).existing).toEqual([existing]);
       expect(await readFile(path.join(root, existing), 'utf8')).toBe('owner bytes');
@@ -301,7 +319,7 @@ v8CoverageTest(
 
 v8CoverageTest(
   'interrupted exclusive creation preserves partial output and refuses implicit resume',
-  async () => {
+  async (budget) => {
     const safeAccessUrl = pathToFileURL(path.join(bundle, 'src/config/safe-repository-access.ts')).href;
     const initializerUrl = pathToFileURL(path.join(bundle, 'bin/init.mjs')).href;
     const script = `
@@ -340,13 +358,13 @@ v8CoverageTest(
       if (error.message !== 'injected exclusive creation failure') throw error;
     }
   `;
-    const failed = await run(['-e', script]);
+    const failed = await run(budget, ['-e', script]);
     expect(failed.exitCode, failed.stderr).toBe(0);
     const firstBytes = await readFile(path.join(root, 'AGENTS.md'));
     const template = await readFile(path.join(bundle, 'templates/AGENTS.template.md'), 'utf8');
     expect(firstBytes.toString()).toBe(template.replaceAll('{{BUNDLE}}', 'tools/agents'));
     expect((await readdir(root)).sort()).toEqual(['.agent', 'AGENTS.md', 'tools']);
-    const repeated = await init();
+    const repeated = await init(budget);
     expect(repeated.exitCode, repeated.stderr).toBe(1);
     expect(JSON.parse(repeated.stderr)).toMatchObject({
       status: 'partial_not_ready',
@@ -360,14 +378,14 @@ v8CoverageTest(
 
 v8CoverageTest(
   'malformed template and invalid generated configuration fail before output',
-  async () => {
+  async (budget) => {
     for (const content of [
       originalTemplate + '\nunknown: true\n',
       originalTemplate.replace('{{REPOSITORY}}', '{{UNKNOWN}}'),
       originalTemplate.replace('sidecar: AGENT.sidecar.md', 'sidecar: missing.md'),
     ]) {
       await writeFile(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), content);
-      const result = await init();
+      const result = await init(budget);
       expect(result.exitCode).toBe(1);
       expect(await readdir(root)).toEqual(['tools']);
     }
@@ -377,24 +395,24 @@ v8CoverageTest(
 
 v8CoverageTest(
   'configured instructions must exist in the copied bundle before initialization writes',
-  async () => {
+  async (budget) => {
     const instruction = path.join(bundle, 'instructions/development-lifecycle.md');
     const content = await readFile(instruction);
     await rm(instruction);
     try {
-      const result = await init();
+      const result = await init(budget);
       expect(result.exitCode).toBe(1);
     } finally {
-      await writeFile(instruction, content);
+      if (!initializationOutcomeUnknown) await writeFile(instruction, content);
     }
     expect(await readdir(root)).toEqual(['tools']);
   },
   30_000,
 );
 
-v8CoverageTest('absent root configuration fails even with the template installed', async () => {
+v8CoverageTest('absent root configuration fails even with the template installed', async (budget) => {
   const module = new URL('file:///' + path.join(bundle, 'src/config/runtime-config.ts').replaceAll('\\', '/')).href;
-  const result = await run([
+  const result = await run(budget, [
     '-e',
     `const {loadRuntimeConfig}=await import(${JSON.stringify(module)});loadRuntimeConfig(${JSON.stringify(root)});`,
   ]);
@@ -404,7 +422,7 @@ v8CoverageTest('absent root configuration fails even with the template installed
 
 v8CoverageTest(
   'installed public run rejects an incomplete prepared selector without creating cutoff or work state',
-  async () => {
+  async (budget) => {
     const ordinaryBundle = bundle;
     const installedBundle = path.join(root, 'vida-agent');
     const ordinaryConfig = await readFile(externalConfig, 'utf8');
@@ -430,7 +448,7 @@ v8CoverageTest(
       );
       bundle = installedBundle;
       await writeFile(externalConfig, ordinaryConfig.replaceAll('tools/agents', 'vida-agent'));
-      const initialized = await init([], { AGENT_RUNTIME_CONFIG: externalConfig });
+      const initialized = await init(budget, [], { AGENT_RUNTIME_CONFIG: externalConfig });
       expect(initialized.exitCode, initialized.stderr).toBe(0);
       const config = parseRuntimeConfigYaml(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8'));
       const generation = 'cutover-test';
@@ -478,11 +496,11 @@ v8CoverageTest(
         path.join(journalRoot, 'prepared-install.json'),
         record({ schema: 'VidaPreparedInstallJournal/v1' }),
       );
-      const interrupted = await run(runArgs);
+      const interrupted = await run(budget, runArgs);
       expect(interrupted.exitCode).toBe(1);
       expect(JSON.parse(interrupted.stderr).code).toBe('GAP-VIDA-RUN-SELECTOR-001');
       await writeFile(selectorPath, record(selector));
-      const incomplete = await run(runArgs);
+      const incomplete = await run(budget, runArgs);
       expect(incomplete.exitCode).toBe(1);
       expect(JSON.parse(incomplete.stderr).status).toBe('blocked');
       expect(await readFile(selectorPath, 'utf8')).toBe(record(selector));
@@ -493,8 +511,10 @@ v8CoverageTest(
       });
     } finally {
       bundle = ordinaryBundle;
-      await writeFile(externalConfig, ordinaryConfig);
-      await rm(installedBundle, { recursive: true, force: true });
+      if (!initializationOutcomeUnknown) {
+        await writeFile(externalConfig, ordinaryConfig);
+        await rm(installedBundle, { recursive: true, force: true });
+      }
     }
   },
   180_000,
@@ -502,10 +522,10 @@ v8CoverageTest(
 
 v8CoverageTest(
   'unsupported native write capability, tenant input and malformed identity produce no outputs',
-  async () => {
-    const disabled = await init([], { FS_SAFE_NATIVE_MODE: 'off' });
+  async (budget) => {
+    const disabled = await init(budget, [], { FS_SAFE_NATIVE_MODE: 'off' });
     expect(disabled.exitCode).toBe(1);
-    const invalid = await run([
+    const invalid = await run(budget, [
       path.join(bundle, 'bin/init.mjs'),
       '--project-root',
       root,
@@ -520,22 +540,24 @@ v8CoverageTest(
   30_000,
 );
 
-v8CoverageTest('reparse receipt ancestors fail without writing any root integration file', async () => {
+v8CoverageTest('reparse receipt ancestors fail without writing any root integration file', async (budget) => {
   const outside = await mkdtemp(path.join(tmpdir(), 'portable-init-outside-'));
   try {
     await symlink(outside, path.join(root, '.agent'), process.platform === 'win32' ? 'junction' : 'dir');
-    const result = await init();
+    const result = await init(budget);
     expect(result.exitCode).toBe(1);
     expect((await readdir(root)).sort()).toEqual(['.agent', 'tools']);
     expect(await readdir(outside)).toEqual([]);
   } finally {
-    await rm(path.join(root, '.agent'), { force: true, recursive: true });
-    await rm(outside, { force: true, recursive: true });
+    if (!initializationOutcomeUnknown) {
+      await rm(path.join(root, '.agent'), { force: true, recursive: true });
+      await rm(outside, { force: true, recursive: true });
+    }
   }
 });
 
-v8CoverageTest('maximum-length repository and project identities remain valid', async () => {
-  const result = await run([
+v8CoverageTest('maximum-length repository and project identities remain valid', async (budget) => {
+  const result = await run(budget, [
     path.join(bundle, 'bin/init.mjs'),
     '--project-root',
     root,
@@ -550,10 +572,10 @@ v8CoverageTest('maximum-length repository and project identities remain valid', 
 
 v8CoverageTest(
   'explicit multi-project initialization uses unique non-overlapping roots and records the selected set',
-  async () => {
+  async (budget) => {
     await mkdir(path.join(root, 'packages', 'alpha'), { recursive: true });
     await mkdir(path.join(root, 'packages', 'beta'), { recursive: true });
-    const result = await run([
+    const result = await run(budget, [
       path.join(bundle, 'bin/init.mjs'),
       '--project-root',
       root,
@@ -579,13 +601,13 @@ v8CoverageTest(
 
 v8CoverageTest(
   'multi-project initialization still requires explicit roots and unique project ids',
-  async () => {
+  async (budget) => {
     const cases = [
       ['--project', 'alpha', '--project', 'beta=packages/beta'],
       ['--project', 'alpha=packages/alpha', '--project', 'alpha=packages/beta'],
     ];
     for (const args of cases) {
-      const result = await run([
+      const result = await run(budget, [
         path.join(bundle, 'bin/init.mjs'),
         '--project-root',
         root,
@@ -602,9 +624,9 @@ v8CoverageTest(
 
 v8CoverageTest(
   'multi-project initialization allows equal roots with distinct project identities',
-  async () => {
+  async (budget) => {
     await mkdir(path.join(root, 'packages', 'shared'), { recursive: true });
-    const result = await run([
+    const result = await run(budget, [
       path.join(bundle, 'bin/init.mjs'),
       '--project-root',
       root,
@@ -625,9 +647,9 @@ v8CoverageTest(
 
 v8CoverageTest(
   'multi-project initialization allows a nested project root',
-  async () => {
+  async (budget) => {
     await mkdir(path.join(root, 'packages', 'child'), { recursive: true });
-    const result = await run([
+    const result = await run(budget, [
       path.join(bundle, 'bin/init.mjs'),
       '--project-root',
       root,
@@ -649,10 +671,10 @@ v8CoverageTest(
 
 v8CoverageTest(
   'multi-project initialization emits no YAML references and gives each generated value independent nested data',
-  async () => {
+  async (budget) => {
     await mkdir(path.join(root, 'packages', 'alpha'), { recursive: true });
     await mkdir(path.join(root, 'packages', 'beta'), { recursive: true });
-    const result = await run([
+    const result = await run(budget, [
       path.join(bundle, 'bin/init.mjs'),
       '--project-root',
       root,
@@ -680,7 +702,7 @@ v8CoverageTest(
     if (!firstTeam) throw new Error('Expected a generated team');
     firstTeam.allowed_projects.push('team-only');
     expect(config.projects[0]?.code_selectors).not.toContain('team-only');
-    const repeated = await init();
+    const repeated = await init(budget);
     expect(JSON.parse(repeated.stdout).status).toBe('existing');
     expect(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(bytes);
   },

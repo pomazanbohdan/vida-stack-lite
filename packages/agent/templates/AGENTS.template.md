@@ -481,6 +481,17 @@ This file is stack-managed and replaceable as a whole.
 
 ## 14. Portable runtime activation
 
+Reusable VIDA behavior must remain host-independent: never require a particular
+machine, OS, desktop application or provider for recovery, authentication,
+authorization, execution or assurance. Keep boundary adapters replaceable and
+separately qualified against portable contracts. In the human-given isolated
+agent environment, trusted internal session/controller and attributable human
+intent supply the recovery-review boundary; external issuer, OS, Desktop and
+provider attestation are not prerequisites. Preserve canonical CAS, readonly
+observation, same-thread body custody and UNKNOWN/no-reissue behavior. Review
+does not grant Source or Runtime rights. The single instruction owner is the installed
+development-lifecycle instruction's self-development protocol.
+
 The reusable runtime is the installed `vida-agent` npm package on PATH;
 its lifecycle is the single owner of
 assurance sequencing. Read the focused instruction named by the active task:
@@ -501,6 +512,23 @@ parallel workers only with disjoint ownership, and use fresh single-use agents
 when a plan/review/security/architect gate requires real independence. One
 writer owns an overlapping path. The detailed owner is
 the installed agent-allocation instruction resolved through the public CLI.
+
+For authorized runtime self-development, use one prior qualitative estimate to
+select dependency-ready engineering work with the largest workflow/step/token
+benefit. Count verified engineering outcomes, not subfixes, tests or reports.
+After each whole verified outcome, perform the qualified local system update
+without changing
+the current semantic version; retain exact payload/operation identity, pending
+UNKNOWN custody and required installed proof before dependent next-batch effects.
+Use selected affected files/cases while developing and run the full applicable
+current task suite once after its corrections are complete. Reuse still-current
+evidence in mandatory assurance at the checkpoint. The launcher and ordinary
+test phases have no implicit total-duration limit; explicit caller/host and
+operation-specific case/probe/install/cleanup bounds remain. Do not create a
+separate achieved-savings/ROI/token-benchmark
+lane or a full candidate cycle solely to score a task. Functional/security/data/
+numeric gates and final release/native requirements remain. The detailed policy
+has one owner: the installed development-lifecycle self-development protocol.
 
 All sessions share one live worktree version. Before a tracked mutation, use
 the current configured trusted Host coordination inspector and supported typed
@@ -548,6 +576,16 @@ require a new attempt or a manual hash-check step.
 
 Active artifacts use only their strict current v1 contracts. Before any future current-v1 schema change, implement and ship one functional bundle-owned artifact repair command for affected artifacts and dependencies, including atomic application and recovery. Until it exists, stop before changing active artifacts. Runtime readers do not select older formats.
 
+Delivered configuration does not replace local initialization or historical
+work authority. Preserve original scope snapshots, issued requests, owners and
+FAIL/UNKNOWN evidence. Recovery control precedes ordinary current-execution
+admission and grants no new execution or acceptance. Apply the installed
+development-lifecycle owner's historical recovery, repair-first, caller-evidence
+and same-attempt continuity rules. Do not copy another host's operational state
+or infer engine absence from a missing Host journal. Existing attributable
+permission is retained within its accepted scope; reviews and fresh ownership
+remain required without repeating the same human permission question.
+
 Before asking the human, classify the gap and choose `ask`, `retrieve`, `infer`,
 `proceed` or `block`. A material question names one decision, exact conflict and
 evidence, why it is needed, consequences of mutually exclusive options, at most
@@ -569,6 +607,8 @@ correction invalidates the prior review/verification set. The detailed and
 single normative owner is the installed development-lifecycle instruction.
 Commit follows current-version post-presentation acceptance; push requires the user's
 separate explicit command.
+
+Communicate with the user using approximately 80% ASD-STE100 principles: short sentences, plain words, consistent terms and one idea per paragraph. Preserve the user's language and required technical precision. This is an approximate style target, not a claim of formal ASD-STE100 compliance.
 
 Choose the smallest report that makes the result clear: prose for a simple
 outcome, checklist for actions/acceptance, table for mappings/comparisons, and

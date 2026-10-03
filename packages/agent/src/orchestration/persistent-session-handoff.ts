@@ -12,7 +12,14 @@ import {
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
-import { HostStateStore, openHostStateDatabase, type StateVersion, type WorkState } from '../host-state.js';
+import {
+  HostStateStore,
+  openHostStateDatabase,
+  type StateVersion,
+  type WorkState,
+  type SessionProducerHandle,
+} from '../host-state.js';
+import { loadProjectSetContext } from '../config/project-context.js';
 import { correctiveExecutionSchema, type CorrectiveExecution } from './final-assurance.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
 import {
@@ -604,6 +611,7 @@ export class MastraSessionLedger {
   readonly #configDigest: string;
   readonly #repositoryRoot: string;
   readonly #openedMaintenanceGeneration: number;
+  #producerSync: SessionProducerHandle | undefined;
 
   constructor(
     database: Database,
@@ -618,6 +626,7 @@ export class MastraSessionLedger {
     this.#configDigest = runtimeConfigDigest(config);
     this.#repositoryRoot = repositoryRoot;
     this.hostState = hostState;
+    Object.defineProperty(this, 'hostState', { writable: false, configurable: false });
     this.#openedMaintenanceGeneration = this.#maintenanceState().generation;
     database.exec('PRAGMA synchronous=FULL');
     database.exec(
@@ -627,6 +636,69 @@ export class MastraSessionLedger {
 
   close(): void {
     this.#database.close();
+  }
+
+  sessionProducerBinding() {
+    return {
+      database: this.#database,
+      host: this.hostState,
+      repositoryRoot: this.#repositoryRoot,
+      config: this.#config,
+      workspaceId: this.#workspaceId,
+    };
+  }
+
+  beginSessionProducer(args: {
+    selection: WorkItemSelection;
+    context: SessionHandoffContext;
+    workflowId: string;
+    runId: string;
+    projectIds: readonly string[];
+    phase: 'initialize' | 'start' | 'resume';
+    resumeIntent?: { readonly stepId: string; readonly observations: readonly SessionBridgeObservation[] };
+    sourceScope?: ScopedSourceSnapshot | null;
+  }): SessionProducerHandle {
+    this.#assertFreshConfig();
+    const project = loadProjectSetContext(
+      this.#repositoryRoot,
+      this.#config,
+      this.#config.repository.repository_id,
+      args.projectIds,
+    );
+    const host = this.hostState.readHostStateSnapshot({
+      repository_id: project.repository_id,
+      project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest,
+      work_id: args.context.work_id,
+    });
+    const journal = this.#read(args.context.work_id, args.context.attempt);
+    return this.hostState.beginSessionProducer(this, {
+      ...args,
+      repositoryRoot: this.#repositoryRoot,
+      config: this.#config,
+      expectedWork: host.workVersion,
+      expectedLedger: host.ledgerVersion,
+      expectedJournal: journal?.version ?? null,
+      maintenanceGeneration: host.maintenanceGeneration,
+    });
+  }
+
+  syncFromSessionProducer(
+    handle: SessionProducerHandle,
+    ...args: Parameters<MastraSessionLedger['sync']>
+  ): MastraSessionLedgerSnapshot {
+    requireState(this.#producerSync === undefined, 'nested producer journal sync forbidden');
+    this.hostState.assertSessionProducerCurrent(handle);
+    this.#producerSync = handle;
+    try {
+      return this.sync(...args);
+    } finally {
+      this.#producerSync = undefined;
+    }
+  }
+
+  #assertJournalWritesAllowed(): void {
+    this.hostState.assertSessionProducerJournalWriteAllowed(this.#producerSync);
   }
 
   #assertFreshConfig(): void {
@@ -798,6 +870,7 @@ export class MastraSessionLedger {
     requireState(!this.#database.inTransaction, 'nested Mastra ledger transaction is forbidden');
     return this.#database
       .transaction(() => {
+        this.#assertJournalWritesAllowed();
         this.#assertWorkingGeneration();
         const current = this.#read(workId, attempt);
         requireState(
@@ -907,6 +980,7 @@ export class MastraSessionLedger {
     requireState(!this.#database.inTransaction, 'nested read-only dispatch transaction forbidden');
     return this.#database
       .transaction(() => {
+        this.#assertJournalWritesAllowed();
         this.#assertWorkingGeneration();
         const current = this.#read(workId, attempt);
         const plan = this.#readDispatchPlan(workId, attempt, actionId);
@@ -1078,6 +1152,7 @@ export class MastraSessionLedger {
     requireState(!this.#database.inTransaction, 'nested synthesis correction transaction forbidden');
     return this.#database
       .transaction(() => {
+        this.#assertJournalWritesAllowed();
         this.#assertWorkingGeneration();
         const prior = this.synthesisCorrection(plan.work_id, plan.attempt, plan.action_id);
         if (prior) {
@@ -1185,6 +1260,7 @@ export class MastraSessionLedger {
     requireState(!this.#database.inTransaction, 'nested replacement report transaction forbidden');
     return this.#database
       .transaction(() => {
+        this.#assertJournalWritesAllowed();
         this.#assertWorkingGeneration();
         const current = this.#read(workId, attempt);
         requireState(
@@ -1313,6 +1389,7 @@ export class MastraSessionLedger {
       const digest = canonicalJsonDigest(state);
       const result = this.#database
         .transaction(() => {
+          this.#assertJournalWritesAllowed();
           this.#assertWorkingGeneration();
           return this.#database
             .query(

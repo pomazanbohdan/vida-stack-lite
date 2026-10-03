@@ -169,13 +169,41 @@ export async function withReleaseAdmission(root, action) {
 export function prepareRelease(root = repositoryRoot) {
   return withReleaseAdmission(root, () => prepareCandidate(root));
 }
-function prepareCandidate(root) {
+export function prepareSystemUpdate(root = repositoryRoot) {
+  return withReleaseAdmission(root, () => prepareCandidate(root, true));
+}
+function successfulBaseline(root, successful) {
+  if (!successful || successful.status !== 'successful')
+    throw new Error('System update requires a successful baseline.');
+  const completed = releaseState(journalFile(root, successful.operation_id));
+  if (
+    completed.operation_id !== successful.operation_id ||
+    completed.version !== successful.version ||
+    completed.status !== 'successful'
+  )
+    throw new Error('Successful baseline differs from its operation journal.');
+}
+function preflightSystemUpdate(root, currentVersion, pending, successful) {
+  if (successful) successfulBaseline(root, successful);
+  if (pending) {
+    const completed = releaseState(journalFile(root, pending.operation_id));
+    if (completed.operation_id !== pending.operation_id || completed.version !== pending.version)
+      throw new Error('Pending system update differs from its operation journal.');
+    if (pending.version !== currentVersion) throw new Error('Pending system update differs from manifest.');
+    // Only existing exact successful-receipt reconciliation may repair an unpublished baseline.
+    if (pending.operation_id !== successful?.operation_id && completed.status === 'successful') return;
+  }
+  if (!successful || successful.version !== currentVersion)
+    throw new Error('System update must preserve the successful manifest version.');
+}
+function prepareCandidate(root, systemUpdate = false) {
   const releases = directory(root, '.agent/work/agent-local-release');
   const pendingFile = path.join(releases, 'pending.json');
   const successFile = path.join(releases, 'successful.json');
   const { file, value } = manifest(root);
   let successful = existsSync(successFile) ? releaseState(successFile) : null;
   const pending = existsSync(pendingFile) ? releaseState(pendingFile) : null;
+  if (systemUpdate) preflightSystemUpdate(root, value.version, pending, successful);
   if (pending && pending.operation_id !== successful?.operation_id) {
     const completedFile = journalFile(root, pending.operation_id);
     if (existsSync(completedFile)) {
@@ -217,9 +245,14 @@ function prepareCandidate(root) {
     directory(root, `.tmp/releases/${pending.operation_id}`);
     if (!existsSync(journalFile(root, pending.operation_id)))
       throw new Error('Pending release journal missing; reconcile without repeating effects.');
-    return pending;
+    return systemUpdate ? releaseState(journalFile(root, pending.operation_id)) : pending;
   }
-  const version = candidateVersion(value.version, successful?.version);
+  if (systemUpdate) {
+    successful = releaseState(successFile);
+    successfulBaseline(root, successful);
+    if (successful.version !== value.version) throw new Error('System update baseline version differs from manifest.');
+  }
+  const version = systemUpdate ? value.version : candidateVersion(value.version, successful?.version);
   if (value.version !== version) save(file, { ...value, version });
   const operation_id = `local-${randomUUID()}`;
   directory(root, `.tmp/releases/${operation_id}`);
@@ -1042,6 +1075,7 @@ export async function executeRelease({
 }
 async function main(args) {
   if (args.length === 1 && args[0] === '--prepare') return prepareRelease();
+  if (args.length === 1 && args[0] === '--prepare-system-update') return prepareSystemUpdate();
   if (
     args.length !== 2 ||
     !['--operation', '--pack', '--pack-npm', '--status', '--worker', '--pack-worker', '--pack-npm-worker'].includes(
@@ -1049,7 +1083,9 @@ async function main(args) {
     ) ||
     !idPattern.test(args[1])
   )
-    throw new Error('Usage: release:local -- --prepare | --pack ID | --pack-npm ID | --operation ID | --status ID');
+    throw new Error(
+      'Usage: release:local -- --prepare | --prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID',
+    );
   const operation = args[1];
   const folder = directory(repositoryRoot, `.tmp/releases/${operation}`);
   if (args[0] === '--status') return read(journalFile(repositoryRoot, operation));

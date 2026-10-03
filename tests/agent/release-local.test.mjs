@@ -23,6 +23,7 @@ import {
   candidateVersion,
   executeRelease,
   prepareRelease,
+  prepareSystemUpdate,
   selectedTarball,
   packedDistribution,
   withReleaseAdmission,
@@ -101,10 +102,18 @@ test('release bindings ignore only exact operational scratch and retain nested c
     writeFileSync(path.join(root, 'packages/agent/src/cache/bound.mjs'), 'TEST SETUP product cache source');
     assert.notEqual(releaseSourceBinding(root).source_binding, initial);
     assert.notEqual(testInputBinding(root, ['packages/agent']), initialPackageBinding);
-    symlinkSync(
-      path.join(root, 'packages/agent/src/cache/bound.mjs'),
-      path.join(root, 'packages/agent/src/.tmp/linked.mjs'),
-    );
+    if (process.platform === 'win32') {
+      symlinkSync(
+        path.join(root, 'packages/agent/src/cache'),
+        path.join(root, 'packages/agent/src/.tmp/linked-dir'),
+        'junction',
+      );
+    } else {
+      symlinkSync(
+        path.join(root, 'packages/agent/src/cache/bound.mjs'),
+        path.join(root, 'packages/agent/src/.tmp/linked.mjs'),
+      );
+    }
     assert.throws(() => releaseSourceBinding(root), /linked source/);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -199,12 +208,13 @@ test('native publication uses exclusive first creation and exact prior-asset CAS
 });
 function admissionChild(root, name, mode = 'hold') {
   const module = new URL('../../tooling/agent/release-local.mjs', import.meta.url).href;
-  const code = `import { withReleaseAdmission, prepareRelease } from ${JSON.stringify(module)};
+  const code = `import { withReleaseAdmission, prepareRelease, prepareSystemUpdate } from ${JSON.stringify(module)};
     import { existsSync, writeFileSync } from 'node:fs';
     import path from 'node:path';
     const root=process.argv[1], name=process.argv[2], mode=process.argv[3];
     writeFileSync(path.join(root,name+'-attempt'), 'TEST SETUP attempted');
     if(mode==='prepare') console.log(JSON.stringify(await prepareRelease(root)));
+    else if(mode==='system-update') console.log(JSON.stringify(await prepareSystemUpdate(root)));
     else await withReleaseAdmission(root,()=>{
       writeFileSync(path.join(root,name+'-entered'),'TEST SETUP entered');
       const deadline=Date.now()+15000;
@@ -532,6 +542,161 @@ test('initial candidate 0.1.0 and subsequent successful publications increment p
     assert.equal((await prepareRelease(fixtureValue.root)).version, '0.1.1');
   } finally {
     rmSync(fixtureValue.root, { recursive: true });
+  }
+});
+test('same-version system update installs changed exact bytes and preserves an unknown pending operation', async () => {
+  const value = fixture();
+  try {
+    const release = await npmCompatibility(value);
+    await executeRelease({ ...release.args, packOnly: true });
+    await executeRelease(release.args);
+    const manifestBytes = readFileSync(path.join(value.source, 'package.json'));
+    const firstArchive = release.state.archive;
+    const firstArchiveBytes = readFileSync(firstArchive);
+    const changedPath = path.join(value.source, 'instructions/development-lifecycle.md');
+    writeFileSync(changedPath, 'TEST SETUP different same-version payload');
+    const update = await prepareSystemUpdate(value.root);
+    assert.equal(update.version, release.candidate.version);
+    assert.notEqual(update.operation_id, release.candidate.operation_id);
+    assert.deepEqual(readFileSync(path.join(value.source, 'package.json')), manifestBytes);
+    assert.deepEqual(await prepareSystemUpdate(value.root), update);
+    const args = { ...release.args, operation: update.operation_id };
+    await executeRelease({ ...args, packOnly: true });
+    assert.notEqual(release.state.archive, firstArchive);
+    assert.notDeepEqual(readFileSync(release.state.archive), firstArchiveBytes);
+    release.state.failCheck = true;
+    await assert.rejects(executeRelease(args), /observed install check failure/);
+    assert.equal(release.state.installs, 2);
+    const folder = path.join(value.root, '.agent/work/agent-local-release');
+    const journalFile = path.join(folder, update.operation_id, 'release.json');
+    const pendingBefore = readFileSync(path.join(folder, 'pending.json'));
+    const journalBefore = readFileSync(journalFile);
+    const pending = await prepareSystemUpdate(value.root);
+    assert.equal(pending.operation_id, update.operation_id);
+    assert.equal(pending.status, 'failed');
+    assert.equal(pending.install_started, true);
+    assert.deepEqual(readFileSync(path.join(folder, 'pending.json')), pendingBefore);
+    assert.deepEqual(readFileSync(journalFile), journalBefore);
+    assert.equal(release.state.installs, 2);
+    const installedPath = path.join(release.installed, 'instructions/development-lifecycle.md');
+    writeFileSync(installedPath, 'TEST SETUP uncertain installed bytes');
+    await assert.rejects(executeRelease(args), /Prior install outcome differs or remains uncertain/);
+    assert.equal(release.state.installs, 2);
+    writeFileSync(installedPath, readFileSync(changedPath));
+    release.state.failCheck = false;
+    assert.equal((await executeRelease(args)).status, 'successful');
+    assert.equal(release.state.installs, 2);
+    const next = await prepareSystemUpdate(value.root);
+    assert.equal(next.version, update.version);
+    assert.notEqual(next.operation_id, update.operation_id);
+    assert.deepEqual(readFileSync(path.join(value.source, 'package.json')), manifestBytes);
+    assert.equal((await prepareRelease(value.root)).operation_id, next.operation_id);
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
+  }
+});
+test('same-version system update rejects conflicting baseline and pending metadata without rewriting it', async (t) => {
+  const cases = [
+    ['missing successful baseline', (files) => unlinkSync(files.success)],
+    ['missing successful journal', (files) => unlinkSync(files.baselineJournal)],
+    ['unsuccessful baseline', (files, change) => change(files.success, { status: 'failed' })],
+    [
+      'substituted successful journal identity',
+      (files, change) => change(files.baselineJournal, { operation_id: 'local-foreign' }),
+    ],
+    ['substituted successful journal version', (files, change) => change(files.baselineJournal, { version: '0.1.9' })],
+    ['unsuccessful baseline journal', (files, change) => change(files.baselineJournal, { status: 'failed' })],
+    ['changed manifest version', (files, change) => change(files.manifest, { version: '0.1.9' })],
+    ['unsupported manifest', (files, change) => change(files.manifest, { version: '0.2.0' })],
+    ['missing pending journal', (files) => unlinkSync(files.pendingJournal)],
+    [
+      'substituted pending identity',
+      (files, change) => change(files.pendingJournal, { operation_id: 'local-foreign' }),
+    ],
+    ['substituted pending version', (files, change) => change(files.pendingJournal, { version: '0.1.9' })],
+    [
+      'outstanding patch candidate',
+      (files, change) => {
+        change(files.manifest, { version: '0.1.1' });
+        change(files.pending, { version: '0.1.1' });
+        change(files.pendingJournal, { version: '0.1.1' });
+      },
+    ],
+  ];
+  for (const [name, mutate] of cases)
+    await t.test(name, async () => {
+      const value = fixture();
+      try {
+        const baseline = await prepareRelease(value.root);
+        await executeRelease({ ...value, operation: baseline.operation_id, packOnly: true });
+        await executeRelease({ ...value, operation: baseline.operation_id });
+        const pending = await prepareSystemUpdate(value.root);
+        const folder = path.join(value.root, '.agent/work/agent-local-release');
+        const files = {
+          manifest: path.join(value.source, 'package.json'),
+          success: path.join(folder, 'successful.json'),
+          baselineJournal: path.join(folder, baseline.operation_id, 'release.json'),
+          pending: path.join(folder, 'pending.json'),
+          pendingJournal: path.join(folder, pending.operation_id, 'release.json'),
+        };
+        const change = (file, updates) => writeFileSync(file, json({ ...JSON.parse(readFileSync(file)), ...updates }));
+        mutate(files, change);
+        const before = Object.values(files).map((file) => (existsSync(file) ? readFileSync(file) : null));
+        const installCalls = value.calls.length;
+        await assert.rejects(prepareSystemUpdate(value.root));
+        Object.values(files).forEach((file, index) =>
+          assert.deepEqual(existsSync(file) ? readFileSync(file) : null, before[index]),
+        );
+        assert.equal(value.calls.length, installCalls);
+      } finally {
+        rmSync(value.root, { recursive: true, force: true });
+      }
+    });
+});
+test('same-version system update reconciles only an exact completed pending installation', async () => {
+  const value = fixture();
+  try {
+    const release = await npmCompatibility(value);
+    await executeRelease({ ...release.args, packOnly: true });
+    await executeRelease(release.args);
+    const folder = path.join(value.root, '.agent/work/agent-local-release');
+    const successFile = path.join(folder, 'successful.json');
+    unlinkSync(successFile);
+    const installedPath = path.join(release.installed, 'instructions/development-lifecycle.md');
+    const installedBytes = readFileSync(installedPath);
+    writeFileSync(installedPath, 'TEST SETUP drift after completed installation');
+    const pendingBefore = readFileSync(path.join(folder, 'pending.json'));
+    const journalBefore = readFileSync(path.join(folder, release.candidate.operation_id, 'release.json'));
+    await assert.rejects(prepareSystemUpdate(value.root), /must be reconciled against installed bytes/);
+    assert.equal(existsSync(successFile), false);
+    assert.deepEqual(readFileSync(path.join(folder, 'pending.json')), pendingBefore);
+    assert.deepEqual(readFileSync(path.join(folder, release.candidate.operation_id, 'release.json')), journalBefore);
+    writeFileSync(installedPath, installedBytes);
+    const next = await prepareSystemUpdate(value.root);
+    assert.equal(next.version, release.candidate.version);
+    assert.notEqual(next.operation_id, release.candidate.operation_id);
+    assert.equal(JSON.parse(readFileSync(successFile)).operation_id, release.candidate.operation_id);
+    assert.equal(release.state.installs, 1);
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
+  }
+});
+test('same-version system update preparation has one operation across independent process callers', async () => {
+  const value = fixture();
+  try {
+    const baseline = await prepareRelease(value.root);
+    await executeRelease({ ...value, operation: baseline.operation_id, packOnly: true });
+    await executeRelease({ ...value, operation: baseline.operation_id });
+    const left = admissionChild(value.root, 'system-left', 'system-update');
+    const right = admissionChild(value.root, 'system-right', 'system-update');
+    const outcomes = await Promise.all([left.completion, right.completion]);
+    for (const outcome of outcomes) assert.equal(outcome.code, 0, outcome.stderr);
+    const operations = outcomes.map((outcome) => JSON.parse(outcome.stdout));
+    assert.equal(operations[0].operation_id, operations[1].operation_id);
+    assert.equal(operations[0].version, baseline.version);
+    assert.notEqual(operations[0].operation_id, baseline.operation_id);
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
   }
 });
 test('missing assurance and failed prepack preserve the pending version without install', async () => {

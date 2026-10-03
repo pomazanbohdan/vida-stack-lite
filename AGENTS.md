@@ -570,6 +570,8 @@ single normative owner is the installed development-lifecycle instruction.
 Commit follows current-version post-presentation acceptance; push requires the user's
 separate explicit command.
 
+Communicate with the user using approximately 80% ASD-STE100 principles: short sentences, plain words, consistent terms and one idea per paragraph. Preserve the user's language and required technical precision. This is an approximate style target, not a claim of formal ASD-STE100 compliance.
+
 Choose the smallest report that makes the result clear: prose for a simple
 outcome, checklist for actions/acceptance, table for mappings/comparisons, and
 Mermaid only where flow, state, hierarchy or traceability is materially clearer

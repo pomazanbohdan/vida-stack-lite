@@ -14,16 +14,16 @@ sources below on 2026-10-01, directly except for the noted Mastra snapshot searc
 result; unavailable or changed relevant sources require an explicit research
 GAP. Vendor mechanics remain separate from approved local requirements.
 
-| Family | Official references | Supported mechanics |
-| --- | --- | --- |
-| OpenAI Agents SDK | [Orchestration](https://developers.openai.com/api/docs/guides/agents/orchestration), [running agents](https://developers.openai.com/api/docs/guides/agents/running-agents), [observability](https://developers.openai.com/api/docs/guides/agents/integrations-observability) | Manager ownership versus specialist handoff; run continuation; traces of calls, handoffs and guardrails. |
-| OpenAI Codex | [Built-in subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) | Bounded specialists, parent aggregation, status inspection and shared parent permission mode. Actual session tools require actual calls and observed results. |
-| Claude Agent SDK | [Subagents](https://code.claude.com/docs/en/agent-sdk/subagents), [permissions](https://code.claude.com/docs/en/agent-sdk/permissions) | Context-isolated bounded workers, final results and tool limits; explicit permission controls. |
-| LangChain / LangGraph | [LangChain agents](https://docs.langchain.com/oss/python/langchain/agents), [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence), [error and workflow design](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph) | LangChain's agent tool loop uses LangGraph primitives; checkpoints and thread resume; separate transient retry, agent recovery, human pause and unexpected failure. |
-| Microsoft Agent Framework | [Overview](https://learn.microsoft.com/en-us/agent-framework/overview/) | Explicit workflows for defined processes; documented successor of AutoGen and Semantic Kernel. |
-| Google ADK | [Workflow agents](https://adk.dev/agents/workflow-agents/) | Deterministic sequential, parallel and loop workflows; the page distinguishes Python/Go ADK 2.0 graph and dynamic workflows. |
-| Mastra | [Agentic workflows](https://mastra.ai/articles/agentic-workflows), [snapshots](https://mastra.ai/en/reference/workflows/snapshots) | The opened workflow article supports persistence, parallel execution and suspend/resume. Official search retrieved the snapshots body; direct snapshot retrieval was unavailable in the final reference check. |
-| Temporal, a durable workflow system | [Tasks](https://docs.temporal.io/tasks), [workflow definitions](https://docs.temporal.io/workflow-definition) | History replay, task versus business-execution failure, and separate external/non-deterministic activities. |
+| Family                              | Official references                                                                                                                                                                                                                                                          | Supported mechanics                                                                                                                                                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAI Agents SDK                   | [Orchestration](https://developers.openai.com/api/docs/guides/agents/orchestration), [running agents](https://developers.openai.com/api/docs/guides/agents/running-agents), [observability](https://developers.openai.com/api/docs/guides/agents/integrations-observability) | Manager ownership versus specialist handoff; run continuation; traces of calls, handoffs and guardrails.                                                                                                       |
+| OpenAI Codex                        | [Built-in subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)                                                                                                                                                                                           | Bounded specialists, parent aggregation, status inspection and shared parent permission mode. Actual session tools require actual calls and observed results.                                                  |
+| Claude Agent SDK                    | [Subagents](https://code.claude.com/docs/en/agent-sdk/subagents), [permissions](https://code.claude.com/docs/en/agent-sdk/permissions)                                                                                                                                       | Context-isolated bounded workers, final results and tool limits; explicit permission controls.                                                                                                                 |
+| LangChain / LangGraph               | [LangChain agents](https://docs.langchain.com/oss/python/langchain/agents), [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence), [error and workflow design](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph)     | LangChain's agent tool loop uses LangGraph primitives; checkpoints and thread resume; separate transient retry, agent recovery, human pause and unexpected failure.                                            |
+| Microsoft Agent Framework           | [Overview](https://learn.microsoft.com/en-us/agent-framework/overview/)                                                                                                                                                                                                      | Explicit workflows for defined processes; documented successor of AutoGen and Semantic Kernel.                                                                                                                 |
+| Google ADK                          | [Workflow agents](https://adk.dev/agents/workflow-agents/)                                                                                                                                                                                                                   | Deterministic sequential, parallel and loop workflows; the page distinguishes Python/Go ADK 2.0 graph and dynamic workflows.                                                                                   |
+| Mastra                              | [Agentic workflows](https://mastra.ai/articles/agentic-workflows), [snapshots](https://mastra.ai/en/reference/workflows/snapshots)                                                                                                                                           | The opened workflow article supports persistence, parallel execution and suspend/resume. Official search retrieved the snapshots body; direct snapshot retrieval was unavailable in the final reference check. |
+| Temporal, a durable workflow system | [Tasks](https://docs.temporal.io/tasks), [workflow definitions](https://docs.temporal.io/workflow-definition)                                                                                                                                                                | History replay, task versus business-execution failure, and separate external/non-deterministic activities.                                                                                                    |
 
 ## Packet-text screening applicability
 
@@ -36,14 +36,14 @@ they do not define local policy or add a runtime dependency.
 Canonical behavior owner: [system specification](../system-specification.md#development-task-packet-text-screening).
 Work trace: `.agent/work/vida-final-assurance-finish-20261001/WORK.md`.
 
-| Topic | Official reference | Applicability |
-| --- | --- | --- |
-| Sensitive values and session identifiers | [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html), [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) | Credentials, tokens and session identifiers need protection. A blanket word list can misclassify ordinary text; evaluate the surrounding context. |
-| Classification and redaction | [Microsoft logging source generation and redaction](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging/source-generation) | The documented logging pipeline classifies sensitive data and selects redactors by classification, supporting explicit sensitive categories rather than treating every short label as a secret. |
-| Payload-bearing diagnostics | [OpenAI Node SDK client configuration](https://github.com/openai/openai-node/blob/main/docs/configuration.md) | SDK debug logs may include request and response bodies even when some authentication headers are redacted. Free-text packet fields therefore remain a relevant input boundary. |
-| OAuth values and bearer credentials | [RFC 6749](https://www.rfc-editor.org/rfc/rfc6749.html), [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750.html) | `state` and authorization `code` are meaningful in OAuth response context; bearer credentials remain recognizable credentials. The local screen preserves context-qualified checks while allowing ordinary labels. |
-| OIDC nonce | [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) | `nonce` is meaningful in the ID Token and replay-checking context; the local screen treats protocol-qualified values as sensitive. |
-| SAML response | [OASIS SAML 2.0 technical overview](https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html) | The `SAMLResponse` parameter carries the encoded SAML response in the HTTP POST binding; qualified response values remain sensitive. |
+| Topic                                    | Official reference                                                                                                                                                                                                               | Applicability                                                                                                                                                                                                      |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sensitive values and session identifiers | [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html), [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) | Credentials, tokens and session identifiers need protection. A blanket word list can misclassify ordinary text; evaluate the surrounding context.                                                                  |
+| Classification and redaction             | [Microsoft logging source generation and redaction](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging/source-generation)                                                                                          | The documented logging pipeline classifies sensitive data and selects redactors by classification, supporting explicit sensitive categories rather than treating every short label as a secret.                    |
+| Payload-bearing diagnostics              | [OpenAI Node SDK client configuration](https://github.com/openai/openai-node/blob/main/docs/configuration.md)                                                                                                                    | SDK debug logs may include request and response bodies even when some authentication headers are redacted. Free-text packet fields therefore remain a relevant input boundary.                                     |
+| OAuth values and bearer credentials      | [RFC 6749](https://www.rfc-editor.org/rfc/rfc6749.html), [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750.html)                                                                                                                 | `state` and authorization `code` are meaningful in OAuth response context; bearer credentials remain recognizable credentials. The local screen preserves context-qualified checks while allowing ordinary labels. |
+| OIDC nonce                               | [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)                                                                                                                                                 | `nonce` is meaningful in the ID Token and replay-checking context; the local screen treats protocol-qualified values as sensitive.                                                                                 |
+| SAML response                            | [OASIS SAML 2.0 technical overview](https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html)                                                                                                          | The `SAMLResponse` parameter carries the encoded SAML response in the HTTP POST binding; qualified response values remain sensitive.                                                                               |
 
 ## Current defect applicability
 
@@ -168,7 +168,6 @@ Generated intake or WORK filenames are operational identities; changing them
 does not establish a changed human request. The admitted local source scope,
 approval, ownership and CAS controls remain mandatory.
 
-
 ## Source reaudit applicability (2026-10-02)
 
 The user supplied `vida-agent-reaudit-26e960c.md`; it is historical Code/Static
@@ -215,3 +214,377 @@ share membership, a nested project excludes a broader parent below that root,
 and a path outside all product roots is eligible only through an exact scoped
 work item and selected `ProjectContext`. Repository-path evidence remains
 read-only; membership does not change `code_selectors` or current-v1 schemas.
+
+## Historical recovery and delivered configuration
+
+Owner: Agent/Core. Behavior owner:
+[recovery across delivered configuration](../system-specification.md#recovery-across-delivered-configuration).
+Work: `core-cloud-continuation-20261002`.
+
+Verified official [Bun SQLite](https://bun.com/docs/runtime/sqlite) documentation
+defines readonly connections and synchronous immediate transactions. The
+chosen Host invariant checks the frozen global state on the acquisition's own
+connection before its fence write. This supports one-store transaction mechanics,
+not atomicity across Host, Mastra and filesystem receipts.
+[Mastra snapshots](https://mastra.ai/docs/workflows/snapshots) documents retained
+workflow input, run/status and suspend/resume context. The local recovery reader
+checks the actual original snapshot and configured requests; missing Host journal
+does not prove missing engine state.
+[Temporal Worker Versioning](https://docs.temporal.io/worker-versioning) describes
+pinned workflow execution and explicit version transitions. It is a comparison
+supporting immutable historical execution bindings, not a VIDA dependency or
+permission to migrate local work implicitly.
+
+The accepted local design keeps desired configuration, locally accepted
+configuration and historical work authority distinct. Recovery control remains
+reachable without authorizing new execution. Fresh local admission retains the
+complete canonical original scoped metadata in an attempt-specific Work artifact,
+rechecks it inside Host admission and verifies the immutable base run on retries.
+Existing filesystem exclusive creation supplies publication; Host SQLite supplies
+transactional Work/coordination commit. Their combined sequence is recoverable,
+without cross-store atomicity or Windows directory-durability guarantees.
+Interrupted unreferenced preparation grants no writer rights; historical Work
+without retained entries is not reconstructed from current bytes.
+Original historical scope proof,
+qualified artifact repair followed by durable source-delivery adoption, and
+same-attempt corrective rebinding are required to prevent the recovery/admission
+cycle. The bounded historical disposal implementation cannot close those GAPs.
+CLI equality and synthetic fixtures do not authenticate a native caller or
+provide attributable Runtime acceptance.
+
+Official [OpenAI Agents SDK human-in-the-loop guidance](https://openai.github.io/openai-agents-js/guides/human-in-the-loop/)
+describes resumable run state and approval decisions within that run. Checked on
+2026-10-03, this supports the local invariant that a decision or retained snapshot
+cannot silently move to a different execution attempt. It does not authenticate
+VIDA's local CLI caller or integrate the SDK into HostState. Mastra's snapshot
+identity similarly supplies actual engine run evidence, not source preimage
+bytes, filesystem rollback or permission to dispose of UNKNOWN work.
+
+## Pinned verification budget and process outcome
+
+Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
+Verification owner: [TESTING.md](../../TESTING.md); execution policy owner:
+[self-development protocol](../../instructions/development-lifecycle.md#self-development-protocol).
+
+Official [Bun test timeouts](https://bun.com/docs/test/writing-tests) define the
+default five-second case limit and timeout failure. Official
+[Node child-process documentation](https://nodejs.org/api/child_process.html)
+defines synchronous spawn timeout and signal behavior; a requested signal is
+not a descendant-termination observation. Microsoft's
+[taskkill reference](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/taskkill)
+defines `/T` process-tree targeting and `/F` forced termination. References were
+checked on 2026-10-03; actual pinned Bun/Windows outcomes require local evidence.
+
+The local invariant retains explicit case/operation limits and any selected
+caller/host deadline; ordinary phases impose no total-duration limit. Where a
+finite parent deadline is present, sequential children consume its remaining
+budget, including shell-forwarded stages;
+duration plus same-host expiry is rebased onto each process's monotonic clock.
+The explicitly selected or inherited launcher deadline remains authoritative and expired/malformed input
+denies another child. Cleanup command outcomes are recorded separately from
+execution timeout and observed termination; uncertain state prevents fixture
+reuse. Package reuse preserves immutable bytes and isolated mutable contexts,
+while the exact extracted archive still supplies its own install and repair
+proof. Measured stage costs inform further changes; neither wider timeouts nor
+partial test output establishes a performance gain or Runtime acceptance.
+
+The shared terminal guard distinguishes observed completed exit1 from timeout,
+signal, spawn error or missing terminal status. An uncertain command cannot
+supply parseable protocol evidence; its primary process failure remains visible.
+Initializer cases share one explicit bounded case budget, retaining all existing
+public inputs and assertions. A completed outer smoke failure can contain an
+uncertain child; parent archive/result staging is conservatively retained along
+with that child's own fixture. The Node and Microsoft process references above
+support these observation boundaries, without proving actual descendant death.
+
+Official [Bun benchmarking and CPU profiling](https://bun.com/docs/project/benchmarking)
+supports monotonic timing and `--cpu-prof-md` diagnostics. Checked on 2026-10-03,
+profiling and observer overhead make these conditions unsuitable for claiming
+comparable speed gains. The existing reserve is divided between cleanup and
+reporting; a spent cleanup allowance remains unknown rather than consuming the
+report tail. A known CAS exit1 remains distinct from a watchdog's null outcome.
+
+The bounded isolated initializer measurement in
+`core-cloud-continuation-20261002` used fresh copies of the actual pinned bundle,
+lock and dependency junction. Fixture preparation took349.627/359.380ms. Both
+five-second diagnostic conditions timed out and retained their roots; no final
+initializer qualification or speed gain is established. Partial observer output
+locates repeated guarded publication calls at255.287–332.336ms, with native creator
+preparation168.625ms. These are nested samples under instrumented conditions,
+not a complete disjoint duration partition or proof of a particular native
+provider, hashing or filesystem cause. Production startup, extracted installation
+and recovery-route cost remain open measurement/qualification GAPs. A performance
+change requires a newly frozen scope and independently checked behavioral
+equivalence; observation alone does not authorize weakening provider attestation.
+
+## Native creator effect boundary
+
+Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
+The official [fs-safe Root API](https://fs-safe.io/root.html),
+[security model](https://fs-safe.io/security-model.html) and
+[native-helper policy](https://github.com/openclaw/fs-safe/blob/main/docs/native-helper.md)
+were checked on 2026-10-03. They describe root identity, exclusive operations and
+platform-dependent containment. The actual pinned0.5.6 library already denies
+cached-await root replacement for both write and mkdir: original-code isolated
+controls produced no target in either root. This is preserved behavior, not a
+reproduced escaped-write vulnerability. The current website's
+assertBeforeMutation callback is absent from that installed version's JS/types;
+the implementation introduces neither that unsupported callback nor an upgrade.
+
+Each asynchronous creator caller owns its final package/root check after await
+and directly before native dispatch, plus its postcompletion check. First Root
+construction is also checked. Removing redundant cached-handle preparation
+does not cache attestation or weaken the native/path/identity controls. A
+separate completed readonly native-creator CPU profile recorded163.240ms
+preparation and nested379.8ms tree-hash samples including import; sampled totals
+are not added to wall time. The uninstrumented max identity control failed at
+4749ms child allowance before this correction; the current control completes
+the real public initializer in3907.018ms, case3920.10ms,1PASS/0FAIL. Its fresh
+root/pinned layout is preserved, but the failed baseline is censored and ambient
+load/cache variance is uncontrolled. This demonstrates one restored control,
+not a precise speedup percentage, full qualification or native acceptance.
+
+The shared Root promise also serves asynchronous replacement and locking. Their
+wrappers preserve both original package/root checks around the await before
+helper dispatch; their downstream cached binding is not fresh attestation.
+Caller enumeration is therefore part of the optimization's security boundary.
+Actual regressions denied attestation during the cached await: the uncorrected
+wrappers completed both operations, while corrected wrappers reject before
+payload, sidecar or callback effects. Root replacement controls remain denied.
+Only creator operations use the three-to-two check reduction.
+
+## Descriptor simulation host boundary
+
+Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
+Official [Windows FlushFileBuffers](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers)
+requires a handle with write access. The [Linux fsync contract](https://man7.org/linux/man-pages/man2/fsync.2.html)
+permits flushing a valid file descriptor and distinguishes file flushing from
+directory-entry persistence. [Bun's x documentation](https://bun.com/docs/pm/bunx)
+places the forced Bun host option before the executable. Checked2026-10-03.
+
+The Linux descriptor simulator's real Windows host rejected readonly clone
+flushing with EPERM, independently reproduced against the exact Source
+beforeimage. Its adapter preserves the production descriptor contract by
+opening only owned physical private fixture files without creation/truncation,
+requiring identical device/inode and actual flushing of the temporary writable
+handle. Real flush failures propagate and the handle always closes. Captured
+known-child failure diagnostics remain distinct from status/count assertions.
+Actual isolated12controls and the wrapper pass, including readonly unchanged
+content and substituted-path denial. No Linux native or directory durability
+qualification follows from Windows simulation.
+Directory classification uses the opened descriptor. A substituted directory at
+a regular file's pathname is denied before reopening, preserving the same
+descriptor identity boundary as file substitution.
+
+## Same-version update and engine production boundaries
+
+Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
+Checked2026-10-03: the official [SQLite transaction contract](https://www.sqlite.org/lang_transaction.html)
+defines immediate writer acquisition and one simultaneous writer. It supports
+the shared release allocator exclusion, not atomicity of separate file saves.
+[Mastra suspend/resume](https://mastra.ai/docs/workflows/suspend-and-resume)
+persists suspension snapshots and restores exact captured steps across restarts;
+it does not atomically commit this product's separate Host journal.
+
+The normal allocator selects the next patch.
+The explicit system-update route retains current version/manifest bytes and
+validates successful and pending identities before ordinary allocator effects.
+Only existing exact completed archive/installed reconciliation can repair a
+missing success stamp. Pending UNKNOWN returns its actual journal and remains
+unreplayed; archive/tree verification distinguishes changed same-version payloads.
+These controls use isolated fixtures, not the actual system installation.
+
+Current producer calls require the actual configured ledger and Host exclusion
+before LibSQL initialization and each start/resume. The CLI opens after intake
+and scope validation; staged witnesses inspect existing persistence without
+producing it. The protected existing governance reservation retains UNKNOWN
+across engine/journal crash windows. Actual private-process controls cover
+termination before init/start/resume, before journal sync and after journal sync;
+restart, competing production and maintenance cannot clear or replay UNKNOWN.
+Matching persisted engine/journal evidence permits normal private-handle
+settlement. These controls establish local persistence evidence, not atomicity
+between the two databases, installed qualification or user Runtime acceptance.
+The completed Codex assessment finds no usable authenticated recovery issuer in
+its inspected public surfaces; local handles and test capabilities do not supply
+native caller proof. Authenticated UNKNOWN recovery remains an integration GAP, separate
+from the system-update allocator and current human-authorized Source work.
+
+## Shared deterministic processing and qualification callers
+
+Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
+Checked2026-10-03: [RFC8785](https://www.rfc-editor.org/rfc/rfc8785)
+defines deterministic JSON serialization for stable data hashing. The existing
+canonicalize serializer remains the wire owner; this product's stricter finite
+payload and descriptor guards remain independently required.
+[ECMAScript SerializeJSONProperty](https://tc39.es/ecma262/multipage/structured-data.html#sec-serializejsonproperty)
+reads `toJSON` through the prototype chain and calls a callable result. Therefore
+deep freezing a loader-owned configuration is insufficient for unrestricted
+digest caching: its ordinary arrays retain mutable inherited hook exposure.
+Current loaded records have null prototypes; every cached digest read uses the
+existing canonical validator's live array/prototype hook guard. Non-loader objects
+are never memoized. Fresh YAML bytes still select a fresh loaded object.
+
+[Mastra LibSQL integration](https://mastra.ai/integrations/databases/libsql) and
+its [official storage implementation](https://github.com/mastra-ai/mastra/blob/main/stores/libsql/src/storage/index.ts)
+describe the storage lifecycle. Actual installed `@mastra/libsql`1.23.3 constructs
+its domain stores and performs local initialization. Journal-only CLI retrieval
+uses the existing actual readonly snapshot reader instead of opening storage;
+real start/resume retain initialization and Host producer exclusion. No init
+disable flag or dependency upgrade replaces those guards. Existing immutable
+copied-package cache namespaces are selected before each fresh recovery process;
+this removes redundant delegation without substituting an in-process CLI.
+
+[Bun profiling](https://bun.sh/docs/project/benchmarking) supports CPU diagnostic
+profiles. The local current fixture's profile identified repeated canonical
+processing and filesystem probes; sampled overlap is not summed into wall time.
+These diagnostics supply a shared-cause hypothesis, not measured savings, a
+benchmark score or qualification. A real contained controller setup uses supported
+prepare/verify and its frozen-lock production copy boundary. Fresh consumers run
+its actual copied public CLI independently of its exact-target exec contract.
+Per-case package binding checks and unknown-effect retention remain mandatory.
+
+## Testing bottlenecks and task-end qualification
+
+Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
+Checked2026-10-03 against primary documentation:
+
+- [Bun test discovery](https://bun.com/docs/test/discovery) supports exact file
+  selection and test-name filters. [Vitest filtering](https://vitest.dev/guide/filtering)
+  explains that name filters still load each selected file to discover tests;
+  combine file selection with a name filter to avoid unrelated module/setup cost.
+- [Vitest related](https://vitest.dev/guide/cli#vitest-related) selects dependencies
+  expressed with static import paths, but cannot discover a computed import path.
+  Configuration, filesystem and separately launched CLI dependencies therefore
+  need explicit affected-test selection in this product.
+- [Vitest performance diagnostics](https://vitest.dev/guide/profiling-test-performance)
+  separates transform, import, setup, environment and test time. Existing local
+  diagnostics are sufficient to identify a costly phase; they do not require a
+  fresh full benchmark cycle. Parallel phase totals are not aggregate wall time.
+- [Pytest fixture scopes](https://docs.pytest.org/en/stable/how-to/fixtures.html#scope-sharing-fixtures-across-classes-modules-packages-or-session)
+  reuse expensive setup within a chosen scope. This is a transferable pattern,
+  not an added Python dependency: reuse this product's immutable prepared package
+  while keeping per-case mutable state and required live binding checks fresh.
+- [Node spawnSync](https://nodejs.org/api/child_process.html#child_processspawnsynccommand-args-options)
+  has an optional timeout. An unlimited product command omits that native option;
+  it does not pass Infinity or serialize it into inherited deadline metadata.
+- [Bun afterAll](https://bun.com/reference/bun/test/afterAll) accepts HookOptions
+  for async fixture teardown. [Bun timeouts](https://bun.com/docs/test/writing-tests#timeouts)
+  use a five-second default and throw an uncatchable timeout. The contained
+  package fixture maps its existing cleanup/report reserve to that one hook,
+  with a static allocation and live pre-delete reserve checks. Fresh binding
+  verification and asynchronous deletion remain; exact-root pending/completion
+  diagnostics preserve custody when a hook timeout cannot be caught. This is
+  lifecycle allocation, not a faster operation or a general timeout increase.
+
+Current human decision: selected partial checks during development, full current
+task testing after the corrections are complete; cancel the implicit300-second
+launcher and ordinary phase limit. The maintained lifecycle instruction owns
+sequencing, TESTING owns check selection, and explicit case/probe/install and
+inherited host deadlines remain observable. No removed deadline is a speedup or
+a passing result. Static/code evidence cannot close installed Runtime acceptance.
+
+Current local command outcomes and retained-root dispositions are recorded in
+`.agent/work/core-cloud-continuation-20261002/PRODUCER-JOINS-GATE.md` at the Source
+repository. Setup/install/snapshot stage diagnostics explain cost; they do not
+establish measured savings. Failed observations stay failed, and uncertain
+private roots are never replayed or cleaned from PID absence.
+
+Read-only Luna/max phase audit found candidate suite writes in private copies or
+coverage/cache outputs, without a required Source dist rebuild between phases.
+Current candidate scripts reuse one Source build, retain every required phase,
+and run the exact separately withheld archive case with its actual private-copy
+build/install. Standalone commands keep their build guards; coverage start/stamps
+and current-source bindings remain. Focused script-graph controls verify that
+sequencing and alias-body equivalence. This is code/static evidence; aggregate
+wall-time improvement and complete candidate qualification remain unproved.
+Do not add a build-counter benchmark during development; final qualification
+must still observe every required phase against current inputs.
+
+## Host-independent recovery-review ingress
+
+Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
+Decision: the human-given isolated agent environment supplies the trusted internal
+caller boundary. External issuer, OS, Desktop and provider attestation are not
+prerequisites for internal recovery. All reusable VIDA behavior remains portable.
+Normative behavior is owned by the
+[system specification](../system-specification.md#host-independent-recovery-review-ingress);
+execution policy is owned by the
+[self-development protocol](../../instructions/development-lifecycle.md#self-development-protocol).
+Decision attribution and independent gates are retained in the Source work's
+`RECOVERY-CONTROL-INGRESS-PLAN.md`.
+
+Current local mechanics: the ordinary session reserve/complete pattern in
+`src/runtime-kernel.ts` records caller-observed consistency; admitted-session
+execution deliberately does not invoke native tools outside the active caller.
+The recovery route reuses `bin/runtime-config-rebind.mjs` historical inspection
+and a separate pinned `bin/run.mjs` call-through before ordinary admission.
+HostState protects a recovery namespace with existing `OperationReservation/v1`,
+CAS and producer/maintenance fences. Request/result bodies remain in same-thread
+caller history; stored digests bind them. Possible dispatch precedes the native
+call; UNKNOWN never permits reissue. No new runtime, dispatcher, schema or table
+is introduced. Test observations are injected fixtures, not native receipts.
+
+Relevant researched patterns use intent persistence before invocation, correlated
+terminal results, conservative replay and portable execution boundaries. Pi is a
+pattern reference only; existing VIDA libraries own implementation. No Pi package
+or second runtime is installed.
+
+External interface facts remain separately scoped:
+
+- [Codex App Server](https://learn.chatgpt.com/docs/app-server) documents stdio,
+  session/thread identity and turn completion. They correlate execution, not VIDA
+  historical-owner authority. Dynamic tools are experimental; the retained
+  stable0.160.0 schema lacks dynamicTools on ThreadStartParams.
+- [MCP authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)
+  distinguishes HTTP authorization from stdio credential handling and requires
+  audience validation. Transport authorization is not VIDA operator delegation.
+
+Source code and fixtures do not close actual native observation, installed
+qualification, release assurance or Runtime acceptance. The isolated internal
+premise is Decision evidence; no external proof-export GAP blocks this route.
+Current strict-v1 compatibility shapes remain unchanged; future artifact changes
+still require shipped functional bundle-owned repair.
+
+## Public export inventory and focused verification
+
+Checked2026-10-03. [TypeScript modules](https://www.typescriptlang.org/docs/handbook/2/modules.html)
+describe explicit module exports. The current `src/index.ts` exports project
+membership, selected-project resolution and repository-scope eligibility; the
+explicit ZOMBIES inventory includes them and references their observable boundary
+cases in `tests/project-context-boundary.test.mjs`. The expected inventory stays
+independent of runtime enumeration so an unexpected public export still fails.
+
+[Vitest filtering](https://vitest.dev/guide/filtering) distinguishes file selection
+from name filtering: a name filter alone still loads test files. Use the exact
+affected file with a case filter during correction, then its full owner and the
+referenced boundary tests. Reuse unchanged completed qualification evidence and
+continue unexecuted stages; these research facts grant no release or Runtime
+acceptance. Existing Vitest and TypeScript libraries satisfy this pattern.
+
+## Portable smoke aggregate deadlines
+
+Checked2026-10-04. [Bun runtime behavior](https://bun.sh/docs/test/runtime-behavior)
+documents that a test timeout of zero or Infinity disables its watchdog. Use zero
+for the packaging test that wraps the complete extracted smoke flow and the five
+serial restart/resume lifecycle wrappers identified in TESTING; other shipped
+test cases retain their bounds. Existing VIDA execution
+budgets use Infinity for aggregate work, omit an unbounded native timeout, and
+preserve explicit inherited caller deadlines with cleanup/report reserves.
+
+[Node child processes](https://nodejs.org/download/release/v24.19.0/docs/api/child_process.html)
+documents synchronous child waiting and timeout termination. A timed-out child
+does not establish descendant cleanup. Preserve failed receipts and uncertain
+private roots, and reconcile issued effects before another qualification. These
+patterns use current Bun and VIDA helpers; no dependency or host trust mechanism
+is added. Removing an aggregate deadline establishes neither speed improvement
+nor passing qualification. Check selection remains owned by TESTING and lifecycle.
+
+The extracted four-file suite completed beyond the former aggregate limit with
+80 passing cases and five restart/resume failures at Bun's implicit five-second
+watchdog. Subsequent fixture cleanup raced still-running callback writes. These
+five wrappers await every plan/apply/resume call; the rebind implementation awaits
+its lock callback and writes and closes its database in `finally`. Disabling that
+wrapper watchdog lets teardown follow actual callback settlement. Preserve
+existing lock settings, including an existing zero timeout, and explicit
+CLI/caller limits; the direct rebind API exposes no deadline option. This is
+fixture sequencing evidence, not a production deadline or Runtime acceptance.

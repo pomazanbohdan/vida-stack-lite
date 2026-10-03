@@ -5,6 +5,13 @@ import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { type AgentRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { configuredReadonlyAssignment, settledSessionItems } from './final-assurance.js';
+import { parseObservedValidatorVerdict } from './observed-validation.js';
+import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
+import {
+  compareScopedSourceSnapshots,
+  snapshotDeclaredSources,
+  type ScopedSourceSnapshot,
+} from './scoped-source-snapshot.js';
 
 function requireSuspension(value: unknown, message: string): asserts value {
   if (!value) throw new Error(`local work suspension: ${message}`);
@@ -33,6 +40,11 @@ export function suspendLocalWork(input: SuspensionInput): HostStateSnapshot {
  * The admitted capture entrypoint validates original configured readonly rights.
  */
 export function suspendCompletedReadOnlyWork(input: SuspensionInput): HostStateSnapshot {
+  requireCompletedReadonly(input);
+  return suspendLocalWorkCore(input, true);
+}
+
+function requireCompletedReadonly(input: SuspensionInput): void {
   // Trusted older callers already validate configured rights and omit config.
   const issues = input.config
     ? settledSessionItems(input.journal.state).observed
@@ -50,10 +62,151 @@ export function suspendCompletedReadOnlyWork(input: SuspensionInput): HostStateS
       ),
     'completed readonly owner still has unobserved, failed or reserved activity',
   );
-  return suspendLocalWorkCore(input, true);
 }
 
-function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean): HostStateSnapshot {
+type HistoricalSuspensionInput = SuspensionInput & {
+  readonly config: AgentRuntimeConfig;
+  readonly predicate: 'completed_readonly' | 'unknown_readonly' | 'settled_writer_failed_validators';
+  readonly expectedMaintenanceGeneration: number;
+  readonly preimage?: ScopedSourceSnapshot;
+};
+
+function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
+  const host = input.store.readHostStateSnapshot(input.identity);
+  requireSuspension(
+    host.work && host.maintenanceGeneration === input.expectedMaintenanceGeneration,
+    'historical maintenance version differs',
+  );
+  const work = host.work,
+    state = input.journal.state;
+  requireSuspension(
+    runtimeConfigDigest(input.config) === work.binding.config_digest &&
+      canonicalJsonDigest(state) === input.journal.version.digest &&
+      state.attempt > 0 &&
+      !state.corrective_execution &&
+      work.lifecycle.source_revision === work.binding.work_source_revision,
+    'historical original configuration, journal or base attempt differs',
+  );
+  if (input.predicate === 'settled_writer_failed_validators') {
+    requireSuspension(input.preimage && state.source_scope, 'historical writer requires full original preimage');
+    const { observed, inert } = settledSessionItems(state);
+    const preparation = observed.filter((item) => item.request.stage_id === 'synthesize_task');
+    const writers = observed.filter((item) => item.host_reservation);
+    const validators = observed.filter((item) => item.request.stage_id === 'validate_focused');
+    requireSuspension(
+      observed.length === 4 &&
+        inert.length === 0 &&
+        preparation.length === 1 &&
+        writers.length === 1 &&
+        validators.length === 2 &&
+        work.execution.assignment_attempts.length === 1 &&
+        observed.every(
+          (item) =>
+            !item.research_activation &&
+            !item.research_normalization &&
+            item.request.run_id === work.execution.run_id &&
+            item.request.workflow_id === work.binding.workflow_id &&
+            item.request.config_digest === work.binding.config_digest &&
+            item.request.scope_digest === work.binding.work_source_revision &&
+            !item.request.corrective_execution &&
+            item.observation?.action_id === item.request.action_id &&
+            item.observation.issue_id === item.issue_id,
+        ),
+      'historical writer requires exact four settled original actions',
+    );
+    const prep = preparation[0]!,
+      writer = writers[0]!;
+    requireSuspension(
+      prep.request.role === 'research-synthesizer' &&
+        prep.request.assignment_index === 0 &&
+        prep.request.wave_index === 0 &&
+        prep.observation?.status === 'reported_complete' &&
+        !prep.host_reservation &&
+        configuredReadonlyAssignment(input.config, prep.request) &&
+        writer.request.stage_id === 'develop_task' &&
+        writer.request.wave_index === 1 &&
+        writer.request.assignment_index === 0 &&
+        completedSourceJournalObservationMatches(work, writer) &&
+        canonicalJsonDigest(validators.map((item) => item.request.role).sort()) ===
+          canonicalJsonDigest(['correctness-validator', 'requirements-validator']) &&
+        validators.every(
+          (item) =>
+            item.request.wave_index === 2 &&
+            !item.host_reservation &&
+            item.observation?.status === 'reported_failed' &&
+            configuredReadonlyAssignment(input.config, item.request, 'settled-validation') &&
+            parseObservedValidatorVerdict(item.observation).verdict === 'fail',
+        ) &&
+        new Set(validators.map((item) => item.request.assignment_index)).size === 2,
+      'historical writer preparation, completed result or terminal validators differ',
+    );
+    requireSuspension(
+      input.preimage.digest === work.binding.work_source_revision,
+      'historical preimage binding differs',
+    );
+    requireSuspension(
+      canonicalJsonDigest(input.preimage.entries.map((entry) => entry.path)) ===
+        canonicalJsonDigest([...work.lifecycle.scope.fingerprint_paths].sort()),
+      'historical preimage domain differs from admitted scope',
+    );
+    const changed = compareScopedSourceSnapshots(input.preimage, state.source_scope).map((entry) => entry.path);
+    requireSuspension(
+      changed.length === 4 &&
+        canonicalJsonDigest(changed) === canonicalJsonDigest([...work.binding.implementation_paths].sort()) &&
+        canonicalJsonDigest(changed) === canonicalJsonDigest([...(writer.observation?.changed_paths ?? [])].sort()) &&
+        compareScopedSourceSnapshots(
+          state.source_scope,
+          snapshotDeclaredSources(
+            requireSafeRepositoryAccess(input.documentationContext.repository_root),
+            state.source_scope.entries.map((entry) => entry.path),
+          ),
+        ).length === 0,
+      'historical full preimage/postimage/current transition differs',
+    );
+  } else {
+    requireSuspension(
+      input.preimage === undefined && state.source_scope?.digest === work.binding.work_source_revision,
+      'historical readonly scope differs',
+    );
+    if (input.predicate === 'completed_readonly') requireCompletedReadonly(input);
+    else
+      requireSuspension(
+        input.predicate === 'unknown_readonly' &&
+          input.journal.resume_status === 'issued_outcome_uncertain' &&
+          [...state.items, ...state.completed.flatMap((wave) => wave.items)].filter(
+            (item) => item.issue_id !== null && item.observation === null,
+          ).length === 1,
+        'historical readonly predicate differs',
+      );
+  }
+}
+
+/** Historical disposal grants no execution or configuration adoption. Engine and caller provenance are checked by the public entrypoint. */
+export function suspendHistoricalOwnerWork(input: HistoricalSuspensionInput): HostStateSnapshot {
+  requireHistoricalPredicate(input);
+  return suspendLocalWorkCore(
+    input,
+    input.predicate === 'completed_readonly',
+    input.predicate === 'settled_writer_failed_validators',
+  );
+}
+
+export function inspectHistoricalOwnerWork(input: HistoricalSuspensionInput): HostStateSnapshot {
+  requireHistoricalPredicate(input);
+  return suspendLocalWorkCore(
+    input,
+    input.predicate === 'completed_readonly',
+    input.predicate === 'settled_writer_failed_validators',
+    true,
+  );
+}
+
+function suspendLocalWorkCore(
+  input: SuspensionInput,
+  completedReadonly: boolean,
+  settledWriter = false,
+  inspectOnly = false,
+): HostStateSnapshot {
   const {
     store,
     identity,
@@ -65,6 +218,10 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
     requestIntent,
     documentationContext,
   } = input;
+  requireSuspension(
+    canonicalJsonDigest(journal.state) === journal.version.digest,
+    'session journal evidence differs from its version',
+  );
   requireSuspension(
     nativeSessionHandle.length > 0 &&
       nativeSessionHandle.length <= 256 &&
@@ -120,6 +277,7 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
       const profile = assignment && input.config!.agents.profiles[assignment.profile];
       return (
         !item.host_reservation &&
+        !item.research_activation &&
         !item.research_normalization &&
         request.run_id === work.execution.run_id &&
         request.workflow_id === work.binding.workflow_id &&
@@ -128,10 +286,13 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
         assignment?.role === request.role &&
         (item === pending[0]
           ? profile?.mutation_scope === 'none' &&
+            configuredReadonlyAssignment(input.config!, request) &&
             input.config!.agents.tool_policies[profile.tools_policy]?.source_write === false &&
             profile.egress_policy === 'none' &&
             input.config!.agents.egress_policies[profile.egress_policy]?.allowed_hosts.length === 0
-          : item.issue_id !== null && item.observation?.status === 'reported_complete')
+          : item.issue_id !== null &&
+            item.observation?.status === 'reported_complete' &&
+            configuredReadonlyAssignment(input.config!, request))
       );
     });
   if (unknownReadonly) {
@@ -147,13 +308,15 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
       ),
     'native action or host assignment is still active or uncertain',
   );
-  const operationId = `${completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest({
-    work_id: identity.work_id,
-    nativeSessionHandle,
-    userRequestPointer,
-    requestIntent,
-    journal: journal.version.digest,
-  }).slice(0, 40)}`;
+  const operationId = `${settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
+    {
+      work_id: identity.work_id,
+      nativeSessionHandle,
+      userRequestPointer,
+      requestIntent,
+      journal: journal.version.digest,
+    },
+  ).slice(0, 40)}`;
   if (work.lease === null) {
     requireSuspension(
       work.execution.status === 'suspended' &&
@@ -229,7 +392,11 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
       ticket.work_id === identity.work_id &&
       ticket.generation === lease.generation &&
       ticket.expires_at !== null &&
-      (completedReadonly || expiredUnissued || unknownReadonly || Date.parse(ticket.expires_at) > Date.now()) &&
+      (completedReadonly ||
+        settledWriter ||
+        expiredUnissued ||
+        unknownReadonly ||
+        Date.parse(ticket.expires_at) > Date.now()) &&
       claims.length === 1 &&
       claims[0]!.thread_id === nativeSessionHandle &&
       claims[0]!.work_id === identity.work_id &&
@@ -237,6 +404,7 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
       (completedReadonly ||
         expiredUnissued ||
         unknownReadonly ||
+        settledWriter ||
         Date.parse(claims[0]!.lease_expires_at) > Date.now()) &&
       claims[0]!.lease_expires_at === ticket.expires_at &&
       canonicalJsonDigest([...claims[0]!.resources].sort()) === canonicalJsonDigest(expectedResources) &&
@@ -245,7 +413,7 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
       !host.ledger.tickets.some(
         (other) =>
           other.ticket_id !== ticket.ticket_id &&
-          (completedReadonly || other.sequence < ticket.sequence) &&
+          (completedReadonly || settledWriter || other.sequence < ticket.sequence) &&
           ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(other.status) &&
           other.exclusive_resources.some((resource) => expectedResources.includes(resource)),
       ),
@@ -274,7 +442,7 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
     lease: null,
     execution: {
       ...work.execution,
-      ...(completedReadonly ? {} : { phase: 'awaiting_followup' }),
+      ...(completedReadonly || settledWriter ? {} : { phase: 'awaiting_followup' }),
       status: 'suspended' as const,
     },
     lifecycle: {
@@ -333,14 +501,13 @@ function suspendLocalWorkCore(input: SuspensionInput, completedReadonly: boolean
       })),
     ],
   };
+  if (inspectOnly) return host;
   return store.compareAndSwapHostState({
     expectedWork,
     expectedLedger,
     expectedMaintenanceGeneration: host.maintenanceGeneration,
     documentationContext,
-    ...(unknownReadonly
-      ? { expectedSessionJournal: { attempt: journal.state.attempt, version: journal.version } }
-      : {}),
+    expectedSessionJournal: { attempt: journal.state.attempt, version: journal.version },
     nextWork,
     nextLedger,
   });

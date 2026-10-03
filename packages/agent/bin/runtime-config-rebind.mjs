@@ -23,6 +23,14 @@ import {
 import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
 import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
+import { inspectHostWorkspaceDatabase } from '../src/host-state.ts';
+import {
+  parseSessionBridgeObservation,
+  parseSessionBridgeRunState,
+  buildSessionBridgeRequest,
+  configuredContextForStage,
+} from '../src/orchestration/mastra-session-bridge.ts';
+import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 
 const requireRebind = (valid, message) => {
   if (!valid) throw new Error(`vida runtime-config rebind: ${message}`);
@@ -102,6 +110,299 @@ function targetConfig(access, root, oldConfig, targetPath) {
   return { bytes, config: target };
 }
 
+/** Recovery reads historical authority without passing the ordinary current-execution gate. No initializer or engine producer runs here. */
+export function inspectHistoricalOwnerContext(root, baselinePath, identity, attempt) {
+  const access = requireSafeRepositoryAccess(root),
+    current = loadRuntimeConfig(root);
+  requireRebind(
+    typeof baselinePath === 'string' && baselinePath.length <= 2048,
+    'historical baseline reference invalid',
+  );
+  const baselineBytes = access.readBytes(baselinePath, 'original configuration');
+  requireRebind(baselineBytes.length <= 1024 * 1024, 'historical baseline exceeds bound');
+  const config = validateRuntimeConfigRepairTargetBytes(baselineBytes, root),
+    receipt = readReceipt(access, current);
+  sameIdentity(root, config, receipt.value);
+  sameIdentity(root, current, receipt.value);
+  requireRebind(
+    config.runtime.bundle === 'packages/agent' && receipt.value.config_digest === runtimeConfigDigest(config),
+    'historical baseline is not the local accepted Source configuration',
+  );
+  const runtime = runtimeBinding(access, config);
+  requireRebind(
+    receipt.value.schema_sha256 ===
+      sha(runtimePackageAccess().readBytes('schemas/runtime-initialization.v1.schema.json', 'initialization schema')),
+    'historical initialization schema differs',
+  );
+  if (runtimeConfigDigest(current) !== runtimeConfigDigest(config)) targetConfig(access, root, config, configPath);
+  const project = loadProjectSetContext(root, current, config.repository.repository_id, identity.project_ids);
+  requireRebind(
+    identity.repository_id === project.repository_id &&
+      canonicalJsonDigest(identity.project_ids) === canonicalJsonDigest(project.project_ids) &&
+      identity.integrations_digest === project.integrations_digest &&
+      identity.project_ids.length === 1 &&
+      Number.isSafeInteger(attempt) &&
+      attempt > 0,
+    'historical project or attempt differs',
+  );
+  const workspace = inspectHostWorkspaceDatabase(sessionHandoffDatabasePath(root, current), receipt.value.workspace_id);
+  const owners = workspace.work.filter((row) => canonicalJsonDigest(row.identity) === canonicalJsonDigest(identity));
+  const journals = workspace.journals.filter((row) => row.work_id === identity.work_id && row.attempt === attempt);
+  requireRebind(
+    owners.length === 1 && journals.length === 1,
+    'historical work/journal missing or ambiguous; inert release is unsupported',
+  );
+  const owner = owners[0],
+    journal = journals[0],
+    work = owner.state,
+    state = journal.state;
+  const hostDatabase = database(root, current, true);
+  let maintenanceGeneration;
+  try {
+    maintenanceGeneration = new HostStateStore(hostDatabase, state.workspace_id).readHostStateSnapshot(
+      identity,
+    ).maintenanceGeneration;
+  } finally {
+    hostDatabase.close();
+  }
+  requireRebind(
+    work.binding.config_digest === runtimeConfigDigest(config) &&
+      state.workspace_id === receipt.value.workspace_id &&
+      state.attempt === attempt &&
+      state.run_id === work.execution.run_id &&
+      !state.corrective_execution,
+    'historical work configuration or base run differs',
+  );
+  const file = sessionBridgeDatabasePath(root, config);
+  access.readBytes(path.relative(root, file).split(path.sep).join('/'), 'original workflow database');
+  const engine = new Database(file, { readonly: true, strict: true });
+  try {
+    const rows = engine
+      .query('SELECT workflow_name,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?')
+      .all(state.run_id);
+    requireRebind(rows.length === 1, 'historical original engine missing or ambiguous');
+    const snapshot = JSON.parse(rows[0].snapshot),
+      input = parseSessionBridgeRunState(snapshot.context?.input);
+    requireRebind(
+      canonicalJsonDigest(input) === canonicalJsonDigest(snapshot.context.input) &&
+        snapshot.status === 'suspended' &&
+        snapshot.runId === state.run_id &&
+        input.work_id === state.work_id &&
+        input.attempt === attempt &&
+        input.workflow_id === work.binding.workflow_id &&
+        rows[0].workflow_name === input.workflow_id &&
+        input.config_digest === work.binding.config_digest &&
+        input.scope_digest === work.binding.work_source_revision &&
+        input.observations.length === 0 &&
+        Array.isArray(input.selection?.risk_flags) &&
+        input.selection.team === work.binding.team_id &&
+        input.selection.project === identity.project_ids[0],
+      'historical original engine input differs',
+    );
+    const context = { work_id: state.work_id, attempt, scope_digest: input.scope_digest };
+    requireRebind(
+      sessionBridgeRunId(state.workspace_id, context, input.workflow_id) === state.run_id,
+      'historical original run identity differs',
+    );
+    const waves = Object.entries(snapshot.context)
+      .filter(([key]) => /^wave-\d+$/.test(key))
+      .map(([key, value]) => ({ index: Number(key.slice(5)), value }))
+      .sort((a, b) => a.index - b.index);
+    const frontiers = waves.filter((entry) => entry.value?.status === 'suspended');
+    requireRebind(
+      frontiers.length === 1 &&
+        waves.every(
+          (entry, index) => entry.index === index && (entry.value.status === 'success' || entry === frontiers[0]),
+        ) &&
+        frontiers[0] === waves.at(-1),
+      'historical engine frontier differs',
+    );
+    const allItems = [...state.completed.flatMap((wave) => wave.items), ...state.items];
+    let prior = input,
+      matched = 0;
+    for (const { index, value: wave } of waves) {
+      requireRebind(
+        canonicalJsonDigest(wave.payload) === canonicalJsonDigest(prior),
+        'historical engine wave input differs',
+      );
+      // Current loader brands topology only after the executor-only delta was proved.
+      // Historical requests and rights retain the original configuration binding.
+      const actions = sessionActionsForWave(current, input.selection, context, input.workflow_id, index, []);
+      const requests = actions.map((action) =>
+        buildSessionBridgeRequest({
+          runId: state.run_id,
+          workflowId: input.workflow_id,
+          configDigest: input.config_digest,
+          context,
+          waveIndex: index,
+          action,
+          configuredContext: configuredContextForStage(root, config, input.workflow_id, action.stage_id, context),
+          priorResults: prior.observations,
+        }),
+      );
+      const items = allItems.filter((item) => item.request.wave_index === index);
+      requireRebind(
+        requests.length > 0 &&
+          items.length === requests.length &&
+          requests.every(
+            (request) =>
+              items.filter(
+                (item) =>
+                  canonicalJsonDigest(parseSessionBridgeRequest(item.request)) === canonicalJsonDigest(request) &&
+                  canonicalJsonDigest(item.request) === canonicalJsonDigest(request),
+              ).length === 1,
+          ),
+        'historical original configured requests differ',
+      );
+      matched += items.length;
+      if (wave.status === 'success') {
+        const observations = wave.resumePayload?.observations?.map(parseSessionBridgeObservation);
+        requireRebind(
+          Array.isArray(observations) &&
+            observations.length === items.length &&
+            observations.every(
+              (observation) =>
+                items.filter(
+                  (item) =>
+                    item.issue_id === observation.issue_id &&
+                    canonicalJsonDigest(item.observation) === canonicalJsonDigest(observation),
+                ).length === 1,
+            ) &&
+            !Object.hasOwn(wave, 'suspendPayload'),
+          'historical engine accepted observations differ',
+        );
+        prior = { ...prior, observations: [...prior.observations, ...observations] };
+        requireRebind(
+          canonicalJsonDigest(wave.output) === canonicalJsonDigest(prior),
+          'historical engine output differs',
+        );
+      } else
+        requireRebind(
+          canonicalJsonDigest(wave.suspendPayload?.requests) === canonicalJsonDigest(requests) &&
+            canonicalJsonDigest(state.items.map((item) => item.request)) === canonicalJsonDigest(requests),
+          'historical engine suspended requests differ',
+        );
+    }
+    requireRebind(matched === allItems.length, 'historical journal has extra engine actions');
+    for (const item of allItems) {
+      if (item.observation) {
+        const observation = parseSessionBridgeObservation(item.observation);
+        requireRebind(
+          canonicalJsonDigest(observation) === canonicalJsonDigest(item.observation) &&
+            observation.action_id === item.request.action_id &&
+            observation.issue_id === item.issue_id &&
+            observation.output_digest === canonicalJsonDigest(observation.summary),
+          'historical terminal observation differs',
+        );
+      }
+    }
+    return {
+      config,
+      current,
+      workspace,
+      owner,
+      journal,
+      maintenanceGeneration,
+      engine_binding: canonicalJsonDigest(snapshot),
+      baseline_binding: canonicalJsonDigest(baselineBytes.toString('utf8')),
+      receipt_binding: canonicalJsonDigest(receipt.value),
+      runtime_binding: runtime,
+    };
+  } finally {
+    engine.close();
+  }
+}
+
+/** Narrow trusted-isolated-caller API. Native tools and durable body custody belong to that caller. */
+export function openInternalRecoveryReview(input) {
+  const root = input.repositoryRoot;
+  requireRebind(path.isAbsolute(root) && path.resolve(root) === root, 'recovery root invalid');
+  const historical = () => inspectHistoricalOwnerContext(root, input.baselinePath, input.identity, input.attempt);
+  const contextBinding = (value) => ({
+    baseline: value.baseline_binding,
+    receipt: value.receipt_binding,
+    engine: value.engine_binding,
+    current_config: runtimeConfigDigest(value.current),
+    original_config: runtimeConfigDigest(value.config),
+    runtime: value.runtime_binding,
+    original_source: value.journal.state.source_scope?.digest,
+  });
+  const inspected = historical();
+  const ticket = inspected.workspace.ledger?.tickets.find((t) => t.work_id === input.identity.work_id);
+  requireRebind(ticket, 'original recovery owner unavailable');
+  const fresh = {
+    identity: input.identity,
+    attempt: input.attempt,
+    callerSession: input.callerSession,
+    controllerId: input.controllerId,
+    userInstructionRef: input.userInstructionRef,
+    historicalOwner: ticket.thread_id,
+    expectedWork: inspected.owner.version,
+    expectedLedger: inspected.workspace.ledger_version,
+    expectedJournal: inspected.journal.version,
+    maintenanceGeneration: inspected.maintenanceGeneration,
+    source: snapshotDeclaredSources(
+      requireSafeRepositoryAccess(root),
+      inspected.journal.state.source_scope.entries.map((entry) => entry.path),
+    ),
+    context: contextBinding(inspected),
+  };
+  // Exact caller history is required on resume; never reconstruct a changed request.
+  const request = input.request === undefined ? fresh : input.request;
+  requireRebind(canonicalJsonDigest(request) === canonicalJsonDigest(fresh), 'retained recovery request changed');
+  const frozen = JSON.parse(JSON.stringify(request));
+  const db = database(root, inspected.current, input.mode === 'inspect');
+  try {
+    const store = new HostStateStore(
+      db,
+      inspected.owner.state.workspace_id,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      root,
+    );
+    const handle = store.openRecoveryReview(
+      frozen,
+      () => {
+        const current = historical();
+        requireRebind(
+          canonicalJsonDigest(contextBinding(current)) === canonicalJsonDigest(frozen.context),
+          'recovery historical context changed',
+        );
+      },
+      input.request === undefined ? 'reserve' : 'resume',
+    );
+    let closed = false;
+    const live = () => requireRebind(!closed, 'recovery route is closed');
+    return Object.freeze({
+      request: structuredClone(frozen),
+      operation: handle.operation,
+      inspect: () => {
+        live();
+        return store.inspectRecoveryReview(handle);
+      },
+      begin: () => {
+        live();
+        return store.beginRecoveryReview(handle);
+      },
+      complete: (observed) => {
+        live();
+        return store.completeRecoveryReview(handle, observed);
+      },
+      close: () => {
+        if (!closed) {
+          closed = true;
+          db.close();
+        }
+      },
+    });
+  } catch (error) {
+    db.close();
+    throw error;
+  }
+}
+
 function database(root, config, readonly) {
   const access = requireSafeRepositoryAccess(root);
   const relative = `${config.control.work_root}/session-handoff.v1.sqlite`;
@@ -118,8 +419,19 @@ function checkedRows(db, table, workspace) {
   const rows = db.query(`SELECT * FROM ${table} WHERE workspace_id=? ORDER BY payload`).all(workspace);
   return rows.map((row) => {
     const value = JSON.parse(row.payload);
+    const integrityValue =
+      table === 'agent_host_governance'
+        ? {
+            workspace_id: row.workspace_id,
+            store_id: row.store_id,
+            kind: row.kind,
+            record_key: row.record_key,
+            revision: row.revision,
+            payload: value,
+          }
+        : value;
     requireRebind(
-      row.digest === canonicalJsonDigest(value) && Number.isSafeInteger(row.revision) && row.revision > 0,
+      row.digest === canonicalJsonDigest(integrityValue) && Number.isSafeInteger(row.revision) && row.revision > 0,
       `${table} row integrity differs`,
     );
     return { ...row, value };
@@ -525,6 +837,20 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
       const verifier = {
         principal: 'vida-agent-project-config-rebind',
         projectIds: plan.project_ids,
+        verifyAcquisition: (requested, prior) => {
+          requireRebind(db.inTransaction, 'maintenance acquisition must verify inside the Host transaction');
+          requireRebind(
+            canonicalJsonDigest(requested) === canonicalJsonDigest(binding) &&
+              canonicalJsonDigest(prior) === canonicalJsonDigest(observedMaintenance) &&
+              currentState(
+                db,
+                plan.workspace_id,
+                root,
+                validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
+              ) === plan.state_digest,
+            'current maintenance/global state differs from plan',
+          );
+        },
         verify: async (held) => {
           const current = context();
           const complete = operation.phase === 'applied' && !current.baseline && !current.oldReceipt;
@@ -541,6 +867,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
         },
       };
       const store = new HostStateStore(db, plan.workspace_id, undefined, undefined, undefined, verifier, root);
+      const observedMaintenance = store.readMaintenanceFence();
       const save = async (phase, released = false) => {
         const next = { ...operation, revision: operation.revision + 1, phase, maintenance_released: released };
         await access.replaceAtomicAsync(operationPath, sha(stored.bytes), json(next), 'config rebind operation phase');

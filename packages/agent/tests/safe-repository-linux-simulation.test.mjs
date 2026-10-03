@@ -9,7 +9,15 @@ if (!isolated && !underStryker) {
   test('runs Linux descriptor simulation in an isolated Bun process', () => {
     const child = spawnSync(
       'bun',
-      ['x', 'vitest', 'run', '--config', 'vitest.config.mjs', 'tests/safe-repository-linux-simulation.test.mjs'],
+      [
+        'x',
+        '--bun',
+        'vitest',
+        'run',
+        '--config',
+        'vitest.config.mjs',
+        'tests/safe-repository-linux-simulation.test.mjs',
+      ],
       {
         cwd: process.cwd(),
         env: { ...process.env, LINUX_SIMULATION_ISOLATED: '1' },
@@ -17,6 +25,8 @@ if (!isolated && !underStryker) {
         timeout: 120_000,
       },
     );
+    if (!child.error && !child.signal && Number.isInteger(child.status) && child.status !== 0)
+      console.error(`${child.stdout}\n${child.stderr}`);
     expect(child.error).toBeUndefined();
     expect(child.status).toBe(0);
     expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+12 passed/);
@@ -28,6 +38,7 @@ if (!isolated && !underStryker) {
   const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
   const roots = [];
   const fdPaths = new Map();
+  const fdAccess = new Map();
   const copyDescriptors = new Set();
   const simulatedNoFollow = 0x20000000;
   const simulatedDirectory = 0x10000000;
@@ -82,6 +93,7 @@ if (!isolated && !underStryker) {
     }
     const fd = realFs.openSync(resolved, cleanFlags, mode);
     fdPaths.set(fd, path.resolve(String(resolved)));
+    fdAccess.set(fd, cleanFlags);
     if (typeof cleanFlags === 'number' && cleanFlags & realFs.constants.O_CREAT && cleanFlags & realFs.constants.O_RDWR)
       copyDescriptors.add(fd);
     return fd;
@@ -106,13 +118,56 @@ if (!isolated && !underStryker) {
       realFs.closeSync(fd);
     } finally {
       fdPaths.delete(fd);
+      fdAccess.delete(fd);
       copyDescriptors.delete(fd);
     }
   }
 
   function simulatedFsync(fd) {
     const file = fdPaths.get(fd);
-    if (file && realFs.lstatSync(file).isDirectory()) return;
+    if (realFs.fstatSync(fd).isDirectory()) return;
+    const flags = fdAccess.get(fd);
+    if (
+      originalPlatform.value === 'win32' &&
+      typeof flags === 'number' &&
+      (flags & (realFs.constants.O_WRONLY | realFs.constants.O_RDWR)) === 0
+    ) {
+      const original = realFs.fstatSync(fd);
+      const owned = roots.some((candidate) => {
+        const relative = path.relative(candidate, file);
+        return (
+          relative &&
+          relative !== '..' &&
+          !relative.startsWith('..' + path.sep) &&
+          !path.isAbsolute(relative) &&
+          realFs.realpathSync(candidate) === candidate
+        );
+      });
+      if (
+        !owned ||
+        realFs.realpathSync(file) !== file ||
+        !original.isFile() ||
+        original.nlink !== 1 ||
+        !realFs.lstatSync(file).isFile()
+      )
+        throw new Error('simulated readonly flush target is not an owned private file');
+      const writable = realFs.openSync(file, realFs.constants.O_RDWR);
+      try {
+        const opened = realFs.fstatSync(writable);
+        if (
+          !opened.isFile() ||
+          opened.nlink !== 1 ||
+          opened.dev !== original.dev ||
+          opened.ino !== original.ino ||
+          realFs.realpathSync(file) !== file
+        )
+          throw new Error('simulated readonly flush target identity changed');
+        realFs.fsyncSync(writable);
+      } finally {
+        realFs.closeSync(writable);
+      }
+      return;
+    }
     realFs.fsyncSync(fd);
   }
 
@@ -299,6 +354,28 @@ if (!isolated && !underStryker) {
   describe('Linux descriptor-bound safe repository simulation', () => {
     test('performs descriptor-bound reads, creates, locks, and compare-reserve-replace', async () => {
       const repositoryRoot = temporaryRoot();
+      const flushPath = path.join(repositoryRoot, 'flush-probe.txt'),
+        displaced = flushPath + '.displaced';
+      realFs.writeFileSync(flushPath, 'owned flush');
+      const flushFd = trackedOpen(flushPath, realFs.constants.O_RDONLY);
+      try {
+        expect(() => simulatedFsync(flushFd)).not.toThrow();
+        expect(realFs.readFileSync(flushPath, 'utf8')).toBe('owned flush');
+        realFs.renameSync(flushPath, displaced);
+        realFs.writeFileSync(flushPath, 'foreign replacement');
+        if (originalPlatform.value === 'win32') expect(() => simulatedFsync(flushFd)).toThrow(/identity changed/);
+        expect(realFs.readFileSync(flushPath, 'utf8')).toBe('foreign replacement');
+        expect(realFs.readFileSync(displaced, 'utf8')).toBe('owned flush');
+        if (originalPlatform.value === 'win32') {
+          realFs.unlinkSync(flushPath);
+          realFs.mkdirSync(flushPath);
+          expect(() => simulatedFsync(flushFd)).toThrow(/not an owned private file/);
+          expect(realFs.lstatSync(flushPath).isDirectory()).toBe(true);
+          expect(realFs.readFileSync(displaced, 'utf8')).toBe('owned flush');
+        }
+      } finally {
+        trackedClose(flushFd);
+      }
       const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
       expect(linuxSafe.safeRepositoryProviderAvailable).toBe(true);
       expect(access).toMatchObject({

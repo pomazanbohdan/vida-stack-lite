@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'bun:test';
+import { afterEach, expect, test as baseTest } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -6,7 +6,8 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writ
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
+import { runReconcileArtifacts as executeReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
+import { boundedSpawnSync, executionBudget, commandOutcomeUnknown, requireTerminalCommand } from '../bin/bun.mjs';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -23,12 +24,57 @@ const sha = (value) => createHash('sha256').update(value).digest('hex');
 const sealed = (body) => ({ ...body, digest: canonicalJsonDigest(body) });
 const roots = [];
 const databases = [];
+const phaseBudget = executionBudget(undefined, 1_000);
+let repairOutcomeUnknown = false;
+let caseName;
+function report(stage, started, detail = {}) {
+  process.stderr.write(
+    JSON.stringify({ stage, case: caseName, elapsed_ms: performance.now() - started, ...detail }) + '\n',
+  );
+}
+function test(name, execute) {
+  return baseTest(
+    name,
+    async () => {
+      if (repairOutcomeUnknown) throw Error('Prior repair child outcome prevents fixture reuse.');
+      caseName = name;
+      const started = performance.now();
+      try {
+        return await execute(phaseBudget.child(5_000, 250));
+      } finally {
+        report('repair case', started, { outcome_unknown: repairOutcomeUnknown });
+      }
+    },
+    5_000,
+  );
+}
+async function runReconcileArtifacts(args, options) {
+  const started = performance.now();
+  try {
+    return await executeReconcileArtifacts(args, options);
+  } finally {
+    report('repair operation', started, {
+      kind: args.includes('--kind') ? args[args.indexOf('--kind') + 1] : 'research-identity',
+      mode: args[args.indexOf('--mode') + 1],
+    });
+  }
+}
 afterEach(() => {
+  const started = performance.now();
+  if (repairOutcomeUnknown) {
+    report('repair fixture retained', started, { roots: roots.length, databases: databases.length });
+    return;
+  }
   for (const database of databases.splice(0)) database.close();
+  report('repair databases closed', started);
+  const cleanup = performance.now();
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  report('repair fixture cleanup', cleanup);
 });
 
 function fixture() {
+  if (repairOutcomeUnknown) throw Error('Prior repair child outcome prevents fixture reuse.');
+  const started = performance.now();
   const root = mkdtempSync(path.join(tmpdir(), 'vida-repair-cli-'));
   roots.push(root);
   mkdirSync(path.join(root, '.git'));
@@ -59,6 +105,7 @@ function fixture() {
   );
   const workspace = deriveWorkspaceId(config.repository.repository_id, root);
   const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['packages/agent/TESTING.md']);
+  report('repair fresh fixture', started);
   return { root, config, records, changelog, workspace, source };
 }
 
@@ -729,7 +776,7 @@ test('synthesis qualification dispatcher applies its database projection and rep
   expect(database.query('SELECT payload FROM agent_host_mastra_session_ledger').get().payload).toBe(journal.payload);
 });
 
-test('synthesis qualification database CAS rejects a journal revision changed after file publication', async () => {
+test('synthesis qualification database CAS rejects a journal revision changed after file publication', async (budget) => {
   const context = fixture();
   const results = [
     research(context, 'research-a', 'same-source.md'),
@@ -840,7 +887,8 @@ test('synthesis qualification database CAS rejects a journal revision changed af
       work_id: 'work-repair',
     }),
   ).toThrow('working access blocked by maintenance fence');
-  const resumed = spawnSync(
+  const resumed = boundedSpawnSync(
+    spawnSync,
     process.execPath,
     [
       path.join(bundle, 'bin/reconcile-artifacts.mjs'),
@@ -853,8 +901,11 @@ test('synthesis qualification database CAS rejects a journal revision changed af
       '--repair-id',
       'repair-test',
     ],
-    { cwd: bundle, encoding: 'utf8', windowsHide: true, timeout: 15_000 },
+    { cwd: bundle, encoding: 'utf8', windowsHide: true, timeout: 15_000, budget, diagnostics: true },
+    'repair synthesis qualification resume',
   );
+  if (commandOutcomeUnknown(resumed)) repairOutcomeUnknown = true;
+  requireTerminalCommand(resumed, 'repair synthesis qualification resume');
   expect(resumed.status).toBe(1);
   expect(JSON.parse(resumed.stderr.trim())).toMatchObject({
     status: 'blocked',

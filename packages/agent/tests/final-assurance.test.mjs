@@ -6,7 +6,59 @@ import {
   finalAssuranceStatus,
   validateFinalAssuranceState,
   validateFinalAssuranceProgress,
+  configuredReadonlyAssignment,
+  eligibleReadonlyRelinquishment,
 } from '../src/orchestration/final-assurance.ts';
+test('settled validator inspection permits test.read without granting unknown or executable capabilities', () => {
+  const request = {
+    workflow_id: 'task',
+    stage_id: 'validate_focused',
+    assignment_index: 0,
+    role: 'correctness-validator',
+  };
+  const config = {
+    workflows: {
+      task: {
+        stages: [
+          { id: 'validate_focused', kind: 'validate', assignments: [{ role: request.role, profile: 'validator' }] },
+        ],
+      },
+    },
+    agents: {
+      profiles: { validator: { mutation_scope: 'none', tools_policy: 'inspect', egress_policy: 'none' } },
+      tool_policies: { inspect: { source_write: false, allowed_tools: ['runtime.read', 'source.read', 'test.read'] } },
+      egress_policies: { none: { allowed_hosts: [] } },
+    },
+  };
+  expect(configuredReadonlyAssignment(config, request, 'settled-validation')).toBe(true);
+  expect(configuredReadonlyAssignment(config, request)).toBe(false);
+  expect(eligibleReadonlyRelinquishment(config, { request, issue_id: 'unknown', observation: null })).toBe(false);
+  for (const tool of ['test.execute', 'runtime.write', 'source.write', 'delivery.write', 'unknown']) {
+    const candidate = structuredClone(config);
+    candidate.agents.tool_policies.inspect.allowed_tools.push(tool);
+    expect(configuredReadonlyAssignment(candidate, request, 'settled-validation')).toBe(false);
+  }
+  for (const change of [
+    (c) => {
+      c.workflows.task.stages[0].kind = 'test';
+    },
+    (c) => {
+      c.workflows.task.stages.push(structuredClone(c.workflows.task.stages[0]));
+    },
+    (c) => {
+      c.agents.profiles.validator.mutation_scope = 'repository_source';
+    },
+    (c) => {
+      c.agents.tool_policies.inspect.source_write = true;
+    },
+  ]) {
+    const candidate = structuredClone(config);
+    change(candidate);
+    expect(configuredReadonlyAssignment(candidate, request, 'settled-validation')).toBe(false);
+  }
+  expect(configuredReadonlyAssignment(config, { ...request, role: 'developer' }, 'settled-validation')).toBe(false);
+  expect(configuredReadonlyAssignment(config, { ...request, assignment_index: -1 }, 'settled-validation')).toBe(false);
+});
 const packet = {
   schema: 'FinalAssurancePacket/v1',
   packet_id: 'packet-one',

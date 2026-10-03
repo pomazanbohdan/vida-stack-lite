@@ -1,6 +1,6 @@
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
-import { createWorkflowStateReader, createStep, createWorkflow } from '@mastra/core/workflows';
+import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
 import z from 'zod';
@@ -13,6 +13,9 @@ import { parseObservedValidatorVerdict } from './observed-validation.js';
 import { parseObservedTesterVerdict } from './observed-testing.js';
 import { sessionActionsForWave, type SessionAgentAction, type SessionHandoffContext } from './session-handoff.js';
 import { correctiveExecutionSchema, type CorrectiveExecution } from './final-assurance.js';
+import { MastraSessionLedger } from './persistent-session-handoff.js';
+import { readSessionEngineSnapshot, type SessionEngineBinding } from './session-engine-snapshot.js';
+import type { ScopedSourceSnapshot } from './scoped-source-snapshot.js';
 
 const observationSchema = z
   .object({
@@ -195,12 +198,12 @@ export interface SessionBridgeSnapshot {
 export class MastraSessionBridge {
   readonly #workflow: ReturnType<typeof createWorkflow>;
   readonly #storage: LibSQLStore;
-  readonly #config: AgentRuntimeConfig;
-  readonly #selection: WorkItemSelection;
   readonly #context: SessionHandoffContext;
-  readonly #workflowId: string;
   readonly #runId: string;
-  readonly #configDigest: string;
+  readonly #binding: SessionEngineBinding;
+  readonly #ledger: MastraSessionLedger;
+  readonly #projectIds: readonly string[];
+  readonly #engineIdentity: { readonly dev: number; readonly ino: number };
 
   private constructor(
     workflow: ReturnType<typeof createWorkflow>,
@@ -210,15 +213,23 @@ export class MastraSessionBridge {
     context: SessionHandoffContext,
     workflowId: string,
     runId: string,
+    repositoryRoot: string,
+    ledger: MastraSessionLedger,
+    projectIds: readonly string[],
   ) {
     this.#workflow = workflow;
     this.#storage = storage;
-    this.#config = config;
-    this.#selection = selection;
-    this.#context = context;
-    this.#workflowId = workflowId;
+    this.#context = structuredClone(context);
     this.#runId = runId;
-    this.#configDigest = runtimeConfigDigest(config);
+    this.#binding = { ...structuredClone({ repositoryRoot, selection, context, workflowId, runId }), config };
+    this.#ledger = ledger;
+    this.#projectIds = [...projectIds];
+    const physical = lstatSync(sessionBridgeDatabasePath(repositoryRoot, config));
+    requireBridge(
+      physical.isFile() && !physical.isSymbolicLink() && physical.nlink === 1,
+      'Mastra database path is unsafe',
+    );
+    this.#engineIdentity = { dev: physical.dev, ino: physical.ino };
   }
 
   static async open(args: {
@@ -228,9 +239,19 @@ export class MastraSessionBridge {
     context: SessionHandoffContext;
     workflowId: string;
     workspaceId: string;
+    ledger: MastraSessionLedger;
+    projectIds: readonly string[];
     correctiveExecution?: CorrectiveExecution;
   }): Promise<MastraSessionBridge> {
     const { repositoryRoot, config, selection, context, workflowId, workspaceId } = args;
+    requireBridge(args.ledger instanceof MastraSessionLedger, 'Actual configured producer ledger is required');
+    const bound = MastraSessionLedger.prototype.sessionProducerBinding.call(args.ledger);
+    requireBridge(
+      bound.repositoryRoot === repositoryRoot &&
+        bound.workspaceId === workspaceId &&
+        runtimeConfigDigest(bound.config) === runtimeConfigDigest(config),
+      'Producer ledger binding differs',
+    );
     const plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags);
     const correctiveExecution = args.correctiveExecution
       ? correctiveExecutionSchema.parse(args.correctiveExecution)
@@ -318,20 +339,56 @@ export class MastraSessionBridge {
       );
     }
     workflow.commit();
+    const producer = args.ledger.beginSessionProducer({
+      selection,
+      context,
+      workflowId,
+      runId,
+      projectIds: args.projectIds,
+      phase: 'initialize',
+    });
+    args.ledger.hostState.assertSessionProducerCurrent(producer);
     const access = requireSafeRepositoryAccess(repositoryRoot);
     access.ensureDirectory(config.control.work_root, 'Mastra workflow storage root');
     const databasePath = sessionBridgeDatabasePath(repositoryRoot, config);
+    let physicalBefore: { dev: number; ino: number } | undefined;
     try {
       const stat = lstatSync(databasePath);
       requireBridge(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'Mastra database path is unsafe');
+      physicalBefore = { dev: stat.dev, ino: stat.ino };
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
     const storage = new LibSQLStore({ id: 'vida-workflow-state', url: 'file:' + databasePath });
     try {
+      args.ledger.hostState.assertSessionProducerCurrent(producer);
       await storage.init();
+      const physicalAfter = lstatSync(databasePath);
+      requireBridge(
+        physicalAfter.isFile() &&
+          !physicalAfter.isSymbolicLink() &&
+          physicalAfter.nlink === 1 &&
+          (!physicalBefore || (physicalAfter.dev === physicalBefore.dev && physicalAfter.ino === physicalBefore.ino)),
+        'Mastra database was substituted during initialization',
+      );
       new Mastra({ workflows: { configuredWorkflow: workflow }, storage, logger: false });
-      return new MastraSessionBridge(workflow, storage, config, selection, context, workflowId, runId);
+      const bridge = new MastraSessionBridge(
+        workflow,
+        storage,
+        config,
+        selection,
+        context,
+        workflowId,
+        runId,
+        repositoryRoot,
+        args.ledger,
+        args.projectIds,
+      );
+      args.ledger.hostState.settleSessionProducer(
+        producer,
+        args.ledger.resume(context.work_id, context.attempt)?.version ?? null,
+      );
+      return bridge;
     } catch (error) {
       await storage.close();
       throw error;
@@ -343,74 +400,99 @@ export class MastraSessionBridge {
   }
 
   async snapshot(): Promise<SessionBridgeSnapshot | null> {
-    const state = await this.#workflow.getWorkflowRunById(this.#runId);
-    if (!state) return null;
-    requireBridge(state.workflowName === this.#workflowId, 'Mastra workflow identity differs');
-    const input = runStateSchema.parse(state.status === 'success' ? state.result : state.payload);
-    requireBridge(
-      input.work_id === this.#context.work_id &&
-        input.attempt === this.#context.attempt &&
-        input.scope_digest === this.#context.scope_digest &&
-        input.config_digest === this.#configDigest &&
-        input.workflow_id === this.#workflowId &&
-        canonicalJsonDigest(input.selection) === canonicalJsonDigest(this.#selection),
-      'Mastra run binding differs from current context',
-    );
-    const suspended = createWorkflowStateReader(state).getSuspendedSteps();
-    requireBridge(suspended.length <= 1, 'Mastra has multiple outstanding wave suspensions');
-    const step = suspended[0];
-    const requests = step ? suspendSchema.parse(step.suspendPayload).requests : [];
-    requireBridge(
-      requests.every(
-        (request) =>
-          request.run_id === this.#runId &&
-          request.workflow_id === this.#workflowId &&
-          request.config_digest === this.#configDigest &&
-          request.scope_digest === this.#context.scope_digest,
-      ),
-      'Mastra suspended request binding differs',
-    );
-    return {
-      run_id: this.#runId,
-      status:
-        state.status === 'suspended' ||
-        state.status === 'success' ||
-        state.status === 'failed' ||
-        state.status === 'canceled'
-          ? state.status
-          : 'unknown',
-      step_id: step?.stepId ?? null,
-      requests,
-      observations: input.observations,
-    };
+    this.#assertEngineFile();
+    const snapshot = readSessionEngineSnapshot(this.#binding);
+    this.#assertEngineFile();
+    return snapshot;
   }
 
-  async start(): Promise<SessionBridgeSnapshot> {
+  #reserve(
+    phase: 'start' | 'resume',
+    sourceScope: ScopedSourceSnapshot | null,
+    resumeIntent?: { stepId: string; observations: readonly SessionBridgeObservation[] },
+  ) {
+    this.#assertEngineFile();
+    return this.#ledger.beginSessionProducer({
+      ...this.#binding,
+      projectIds: this.#projectIds,
+      phase,
+      sourceScope,
+      ...(resumeIntent ? { resumeIntent } : {}),
+    });
+  }
+
+  #assertEngineFile(): void {
+    const physical = lstatSync(sessionBridgeDatabasePath(this.#binding.repositoryRoot, this.#binding.config));
+    requireBridge(
+      physical.isFile() &&
+        !physical.isSymbolicLink() &&
+        physical.nlink === 1 &&
+        physical.dev === this.#engineIdentity.dev &&
+        physical.ino === this.#engineIdentity.ino,
+      'Mastra database was substituted',
+    );
+  }
+
+  #syncProducer(
+    producer: ReturnType<MastraSessionLedger['beginSessionProducer']>,
+    result: SessionBridgeSnapshot,
+    source: ScopedSourceSnapshot | null,
+  ): void {
+    const journal = this.#ledger.syncFromSessionProducer(
+      producer,
+      this.#context.work_id,
+      this.#context.attempt,
+      result.run_id,
+      result.step_id,
+      result.requests,
+      source,
+      result.status,
+    );
+    this.#ledger.hostState.settleSessionProducer(producer, journal.version);
+  }
+
+  async start(sourceScope: ScopedSourceSnapshot | null = null): Promise<SessionBridgeSnapshot> {
+    const producer = this.#reserve('start', sourceScope);
     requireBridge(!(await this.snapshot()), 'Mastra run already exists');
+    this.#ledger.hostState.assertSessionProducerCurrent(producer);
+    this.#assertEngineFile();
     const run = await this.#workflow.createRun({ runId: this.#runId, resourceId: this.#context.work_id });
+    this.#ledger.hostState.assertSessionProducerCurrent(producer);
+    this.#assertEngineFile();
     await run.start({
       inputData: {
         work_id: this.#context.work_id,
         attempt: this.#context.attempt,
-        workflow_id: this.#workflowId,
+        workflow_id: this.#binding.workflowId,
         scope_digest: this.#context.scope_digest,
-        config_digest: this.#configDigest,
-        selection: this.#selection,
+        config_digest: runtimeConfigDigest(this.#binding.config),
+        selection: this.#binding.selection,
         observations: [],
       },
     });
     const snapshot = await this.snapshot();
     requireBridge(snapshot, 'Mastra run did not persist a snapshot');
+    this.#syncProducer(producer, snapshot, sourceScope);
     return snapshot;
   }
 
-  async resume(stepId: string, observations: readonly SessionBridgeObservation[]): Promise<SessionBridgeSnapshot> {
+  async resume(
+    stepId: string,
+    observations: readonly SessionBridgeObservation[],
+    sourceScope: ScopedSourceSnapshot | null = null,
+  ): Promise<SessionBridgeSnapshot> {
+    const producer = this.#reserve('resume', sourceScope, { stepId, observations });
     const current = await this.snapshot();
     requireBridge(current?.status === 'suspended' && current.step_id === stepId, 'Mastra resume step is stale');
+    this.#ledger.hostState.assertSessionProducerCurrent(producer);
+    this.#assertEngineFile();
     const run = await this.#workflow.createRun({ runId: this.#runId, resourceId: this.#context.work_id });
+    this.#ledger.hostState.assertSessionProducerCurrent(producer);
+    this.#assertEngineFile();
     await run.resume({ step: stepId, resumeData: { observations: [...observations] } });
     const snapshot = await this.snapshot();
     requireBridge(snapshot, 'Mastra resume did not persist a snapshot');
+    this.#syncProducer(producer, snapshot, sourceScope);
     return snapshot;
   }
 }

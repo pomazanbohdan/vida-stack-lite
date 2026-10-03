@@ -1,10 +1,18 @@
 import { afterAll, describe, expect, test } from 'bun:test';
+import {
+  boundedSpawnSync,
+  executionBudget,
+  commandOutcomeUnknown,
+  requireTerminalCommand,
+  pinnedEnvironment,
+} from '../bin/bun.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   cpSync,
   existsSync,
   linkSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -25,6 +33,74 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const phaseBudget = executionBudget(undefined, 30_000);
+const copiedEntries = [
+  'src',
+  'dist',
+  'bin',
+  'tooling',
+  'schemas',
+  'instructions',
+  'templates',
+  'package.json',
+  'TESTING.md',
+  'bun.lock',
+  '.bun-version',
+];
+let sharedRecoveryBundle;
+let sharedRecoveryRoot;
+let sharedRecoveryBinding;
+let recoveryOutcomeUnknown = false;
+
+function copiedPackageBinding(bundle) {
+  const access = requireSafeRepositoryAccess(bundle);
+  const files = copiedEntries
+    .flatMap((entry) => {
+      if (!lstatSync(path.join(bundle, entry)).isDirectory()) return [entry];
+      return readdirSync(path.join(bundle, entry), { recursive: true })
+        .map((file) => path.posix.join(entry, file.replaceAll(path.sep, '/')))
+        .filter((file) => lstatSync(path.join(bundle, file)).isFile());
+    })
+    .sort();
+  const snapshots = [];
+  for (let index = 0; index < files.length; index += 512)
+    snapshots.push(snapshotDeclaredSources(access, files.slice(index, index + 512)));
+  return canonicalJsonDigest(snapshots);
+}
+
+function recoveryBundle() {
+  if (recoveryOutcomeUnknown) throw new Error('Prior recovery child outcome prevents shared fixture reuse.');
+  if (sharedRecoveryBundle) {
+    if (copiedPackageBinding(sharedRecoveryBundle) !== sharedRecoveryBinding) {
+      recoveryOutcomeUnknown = true;
+      throw new Error('Shared copied package changed before recovery route.');
+    }
+    return sharedRecoveryBundle;
+  }
+  const started = performance.now();
+  sharedRecoveryRoot = mkdtempSync(path.join(tmpdir(), 'vida-recovery-package-'));
+  sharedRecoveryBundle = path.join(sharedRecoveryRoot, 'tools', 'agents');
+  mkdirSync(sharedRecoveryBundle, { recursive: true });
+  for (const entry of copiedEntries)
+    cpSync(path.join(packageRoot, entry), path.join(sharedRecoveryBundle, entry), {
+      recursive: true,
+      dereference: false,
+    });
+  symlinkSync(
+    path.join(packageRoot, 'node_modules'),
+    path.join(sharedRecoveryBundle, 'node_modules'),
+    process.platform === 'win32' ? 'junction' : 'dir',
+  );
+  sharedRecoveryBinding = copiedPackageBinding(sharedRecoveryBundle);
+  phaseBudget.remaining();
+  process.stderr.write(
+    JSON.stringify({ stage: 'shared recovery package preparation', elapsed_ms: performance.now() - started }) + '\n',
+  );
+  return sharedRecoveryBundle;
+}
+afterAll(() => {
+  if (sharedRecoveryRoot && !recoveryOutcomeUnknown) rmSync(sharedRecoveryRoot, { recursive: true, force: true });
+});
 const repositoryRoot = mkdtempSync(path.join(tmpdir(), 'vida-run-uninitialized-'));
 afterAll(() => rmSync(repositoryRoot, { recursive: true, force: true }));
 writeFileSync(
@@ -429,29 +505,11 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
     liveInstallTest(
       `copied bundle recovers interrupted ${route.workflow} research preparation by CAS`,
       async () => {
+        const budget = phaseBudget.child(180_000);
         const root = mkdtempSync(path.join(tmpdir(), 'vida-run-session-'));
         try {
-          const bundle = path.join(root, 'tools', 'agents');
-          mkdirSync(bundle, { recursive: true });
-          for (const entry of [
-            'src',
-            'dist',
-            'bin',
-            'tooling',
-            'schemas',
-            'instructions',
-            'templates',
-            'package.json',
-            'TESTING.md',
-            'bun.lock',
-            '.bun-version',
-          ])
-            cpSync(path.join(packageRoot, entry), path.join(bundle, entry), { recursive: true, dereference: false });
-          symlinkSync(
-            path.join(packageRoot, 'node_modules'),
-            path.join(bundle, 'node_modules'),
-            process.platform === 'win32' ? 'junction' : 'dir',
-          );
+          const bundle = recoveryBundle();
+          mkdirSync(path.join(root, 'tools', 'agents'), { recursive: true });
           const externalConfig = path.join(root, 'source-config.yaml');
           writeFileSync(
             externalConfig,
@@ -460,13 +518,25 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
               .replaceAll('{{PROJECT}}', 'ignored-project')
               .replaceAll('{{BUNDLE}}', 'ignored-runtime'),
           );
-          const invokeCopy = (args, env = {}) =>
-            spawnSync('bun', args, {
-              cwd: bundle,
-              encoding: 'utf8',
-              windowsHide: true,
-              env: { ...process.env, ...env },
-            });
+          const invokeCopy = (args, env = {}) => {
+            const result = boundedSpawnSync(
+              spawnSync,
+              process.execPath,
+              args,
+              {
+                cwd: bundle,
+                encoding: 'utf8',
+                windowsHide: true,
+                env: pinnedEnvironment(process.execPath, { ...process.env, ...env }, bundle),
+                timeout: 180_000,
+                budget,
+                diagnostics: true,
+              },
+              `recovery ${route.workflow}/${path.basename(args[0])}`,
+            );
+            if (commandOutcomeUnknown(result)) recoveryOutcomeUnknown = true;
+            return requireTerminalCommand(result, `recovery ${route.workflow}/${path.basename(args[0])}`);
+          };
           const initialized = invokeCopy(
             [
               path.join(bundle, 'bin/init.mjs'),
@@ -480,6 +550,10 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
             { AGENT_RUNTIME_CONFIG: externalConfig },
           );
           expect(initialized.status, initialized.stderr).toBe(0);
+          expect(loadRuntimeConfig(root).runtime.bundle).toBe('vida-agent');
+          expect(
+            JSON.parse(readFileSync(path.join(root, '.agent/runtime-initialization.v1.json'), 'utf8')).bundle,
+          ).toBe('vida-agent');
           const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
           const workDir = path.join(root, '.agent', 'work', 'session-work');
           mkdirSync(workDir, { recursive: true });
@@ -539,7 +613,7 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
             },
             scope_path: relative('scope.json'),
             acceptance_path: relative('acceptance.json'),
-            runtime_code_paths: ['tools/agents/bin/run.mjs'],
+            runtime_code_paths: ['vida-agent/bin/run.mjs'],
             route: 'R2',
             risk: 'low',
             change_kind: 'fix',
@@ -583,6 +657,9 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
           };
           const prepared = call(['--intake', path.join(workDir, 'intake.json')]);
           expect(prepared.status, prepared.stderr).toBe(0);
+          const admittedIntake = JSON.parse(readFileSync(path.join(workDir, 'local-session-intake.v1.json'), 'utf8'));
+          expect(admittedIntake.runtime_code_paths).toContain('vida-agent/bin/run.mjs');
+          expect(admittedIntake.runtime_code_paths.every((file) => file.startsWith('vida-agent/'))).toBe(true);
           expect(prepared.payload.next_actions.length).toBeGreaterThan(1);
           const expected = (version) => [
             '--expected-revision',
@@ -773,7 +850,19 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
           expect(replay.payload.state_version).toEqual(final.payload.state_version);
           expect(replay.payload.issued_actions).toEqual([]);
         } finally {
-          rmSync(root, { recursive: true, force: true });
+          if (sharedRecoveryBundle && !recoveryOutcomeUnknown) {
+            const started = performance.now();
+            const observedBinding = copiedPackageBinding(sharedRecoveryBundle);
+            if (observedBinding !== sharedRecoveryBinding) recoveryOutcomeUnknown = true;
+            expect(observedBinding).toBe(sharedRecoveryBinding);
+            process.stderr.write(
+              JSON.stringify({
+                stage: `recovery ${route.workflow} package immutability`,
+                elapsed_ms: performance.now() - started,
+              }) + '\n',
+            );
+            rmSync(root, { recursive: true, force: true });
+          }
         }
       },
       180_000,

@@ -54,13 +54,31 @@ Exact retries preserve the same archive/operation and avoid duplicate effects.
 This Source-only instruction does not authorize consumer Git operations or
 replace Runtime acceptance. The package CLI itself still performs no commit/push.
 
-The first candidate is `0.1.0`. Each successful local publication advances the
-next candidate patch to `0.1.1`, `0.1.2`, and so on. Preparation settles the version
+The first normal release candidate is `0.1.0`. Each successful normal publication
+advances the next candidate patch to `0.1.1`, `0.1.2`, and so on. Preparation settles the version
 before assurance. Failed checks, failed packing and retries retain the pending
 candidate. Durable pending and successful publication receipts live under
 `.agent/work/agent-local-release`; archives and stage logs live under
 `.tmp/releases/OPERATION`. Removing scratch output does not reset successful
 version history. Preserve the durable receipts as project operational state.
+
+For the authorized update after each three verified engineering outcomes, use
+`npm run release:local -- --prepare-system-update` instead of normal preparation.
+It preserves the current successful Source manifest version and bytes, and
+allocates a new candidate operation after the prior operation completes. Exact
+Source and archive identity is verified later. Continue the same exact
+pack/assurance/install/status sequence below with that returned operation.
+Preparation checks the successful operation journal before metadata effects;
+an outstanding incompatible patch or missing/mismatched baseline rejects.
+A matching unfinished update returns its actual journal status and installation-
+start marker, without replacing its pending pointer, journal or archive. The sole
+missing-success reconciliation uses existing exact completed archive/installed
+proof; it never assumes success from a version string. Exact installed precheck,
+current qualification and postchecks are still required. No installation is
+performed by preparation, and its metadata does not prove current installed bytes.
+SQLite admission exclusion does not make separate file saves atomic. Retain the
+final release/native objective and pause dependent work until the checkpoint
+passes; intermediate system updates do not authorize registry publication.
 
 Release tests, coverage and CRAP run locally only; CI/CD build/package automation
 contains no test or mutation steps. Mutation requires an explicit manual launch.
@@ -102,11 +120,13 @@ the exact qualified archive. No publication or gate-bypass flag is implied. Keep
 native/CI gaps visible and unblock waiting developers only through the verified
 installed runtime and normal admission.
 
+For a first release or normal patch release, use `--prepare` as the alternative
+preparation command. The system-update sequence uses `--prepare-system-update`.
 The session uses the returned operation ID throughout this sequence; no manual
 archive selection or integrity-value calculation is needed:
 
 ```sh
-npm run release:local -- --prepare
+npm run release:local -- --prepare-system-update
 # Run applicable current checks and join actual test evidence for the operation.
 npm run release:local -- --pack-npm OPERATION
 npm run release:local -- --status OPERATION

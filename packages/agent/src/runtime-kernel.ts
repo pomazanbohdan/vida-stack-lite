@@ -954,6 +954,63 @@ export function createTestTrustedHostLauncherCapability(
   return issueTrustedHostLauncherCapability(input);
 }
 
+/** Fresh readonly admission predicate shared with data-only consumers; issues no capability. */
+export function requireLiveLocalSessionAdmission(input: {
+  readonly repositoryRoot: string;
+  readonly identity: WorkIdentity;
+  readonly store: HostStateStore;
+  readonly nativeSessionHandle: string;
+}): HostStateSnapshot {
+  const { repositoryRoot, identity, store } = input;
+  const nativeSessionHandle = requireLocalSessionHandle(input.nativeSessionHandle);
+  const state = store.readHostStateSnapshot(identity);
+  const work = state.work;
+  const lease = work?.lease;
+  const ticket = state.ledger?.tickets.find((entry) => entry.ticket_id === lease?.ticket_id);
+  const claim = state.ledger?.claims.find(
+    (entry) =>
+      entry.ticket_id === lease?.ticket_id && entry.thread_id === nativeSessionHandle && entry.status === 'active',
+  );
+  const resources = work?.binding.implementation_paths.map((item) => 'file:' + item).sort() ?? [];
+  requireCondition(
+    Boolean(
+      work &&
+      lease &&
+      ticket &&
+      claim &&
+      work.binding.config_digest === runtimeConfigDigest(loadRuntimeConfig(repositoryRoot)) &&
+      work.binding.repository_id === identity.repository_id &&
+      canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+      work.binding.integrations_digest === identity.integrations_digest &&
+      work.binding.lifecycle_work_id === identity.work_id &&
+      lease.thread_id === nativeSessionHandle &&
+      ticket.thread_id === nativeSessionHandle &&
+      lease.generation === ticket.generation &&
+      claim.generation === lease.generation &&
+      ticket.status === 'active' &&
+      ticket.work_id === identity.work_id &&
+      claim.work_id === identity.work_id &&
+      ticket.blocked_resources.length === 0 &&
+      (ticket.exclusive_resources.some((resource) => resource.startsWith('file:'))
+        ? resources.every((item) => ticket.active_resources.includes(item) && claim.resources.includes(item))
+        : ticket.exclusive_resources.length === 1 &&
+          ticket.exclusive_resources[0] === 'execution:' + identity.work_id &&
+          claim.resources.includes(ticket.exclusive_resources[0]) &&
+          ticket.active_resources.includes(ticket.exclusive_resources[0])) &&
+      Date.parse(ticket.expires_at ?? '') > Date.now() &&
+      Date.parse(claim.lease_expires_at) > Date.now(),
+    ),
+    'local workflow admission or exact-path lease is stale',
+  );
+  return state;
+}
+
+function requireLocalSessionHandle(value: unknown): string {
+  const handle = requireTrustedHostText(value, 'native session handle');
+  requireCondition(handle.length <= 256 && !/\p{Cc}/u.test(handle), 'native session handle is invalid');
+  return handle;
+}
+
 /**
  * In-process composition for an active local session. The native handle is a
  * correlation identity, not an OS or Desktop attestation. Write authority is
@@ -968,8 +1025,7 @@ export async function createTrustedLocalSessionComposition(input: {
   /** An already admitted work item in the same durable host state store. */
   readonly admittedWork?: { readonly workId: string; readonly store: HostStateStore };
 }): Promise<TrustedHostComposition> {
-  const handle = requireTrustedHostText(input.nativeSessionHandle, 'native session handle');
-  requireCondition(handle.length <= 256 && !/\p{Cc}/u.test(handle), 'native session handle is invalid');
+  const handle = requireLocalSessionHandle(input.nativeSessionHandle);
   const root = requireAbsoluteRepositoryRoot(input.repositoryRoot);
   const config = loadRuntimeConfig(root);
   requireCondition(
@@ -993,45 +1049,12 @@ export async function createTrustedLocalSessionComposition(input: {
       'local workflow work item is not the admitted work',
     );
     if (identity === null || admitted === undefined) throw new Error('local workflow admission is unavailable');
-    const state = admitted.store.readHostStateSnapshot(identity);
-    const work = state.work;
-    const lease = work?.lease;
-    const ticket = state.ledger?.tickets.find((entry) => entry.ticket_id === lease?.ticket_id);
-    const claim = state.ledger?.claims.find(
-      (entry) => entry.ticket_id === lease?.ticket_id && entry.thread_id === handle && entry.status === 'active',
-    );
-    const resources = work?.binding.implementation_paths.map((item) => 'file:' + item).sort() ?? [];
-    requireCondition(
-      Boolean(
-        work &&
-        lease &&
-        ticket &&
-        claim &&
-        work.binding.config_digest === runtimeConfigDigest(loadRuntimeConfig(root)) &&
-        work.binding.repository_id === identity.repository_id &&
-        canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
-        work.binding.integrations_digest === identity.integrations_digest &&
-        work.binding.lifecycle_work_id === identity.work_id &&
-        lease.thread_id === handle &&
-        ticket.thread_id === handle &&
-        lease.generation === ticket.generation &&
-        claim.generation === lease.generation &&
-        ticket.status === 'active' &&
-        ticket.work_id === identity.work_id &&
-        claim.work_id === identity.work_id &&
-        ticket.blocked_resources.length === 0 &&
-        (ticket.exclusive_resources.some((resource) => resource.startsWith('file:'))
-          ? resources.every((item) => ticket.active_resources.includes(item) && claim.resources.includes(item))
-          : ticket.exclusive_resources.length === 1 &&
-            ticket.exclusive_resources[0] === 'execution:' + identity.work_id &&
-            claim.resources.includes(ticket.exclusive_resources[0]) &&
-            ticket.active_resources.includes(ticket.exclusive_resources[0])) &&
-        Date.parse(ticket.expires_at ?? '') > Date.now() &&
-        Date.parse(claim.lease_expires_at) > Date.now(),
-      ),
-      'local workflow admission or exact-path lease is stale',
-    );
-    return state;
+    return requireLiveLocalSessionAdmission({
+      repositoryRoot: root,
+      identity,
+      store: admitted.store,
+      nativeSessionHandle: handle,
+    });
   };
   if (admitted !== undefined) {
     requireCondition(

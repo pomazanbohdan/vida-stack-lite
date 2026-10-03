@@ -17,6 +17,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
+import { run } from '../bin/run.mjs';
 import { cooperativeReadonlyAssignments } from '../bin/runtime-config-rebind.mjs';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -25,7 +26,11 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { MastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
-import { sessionBridgeRunId } from '../src/orchestration/mastra-session-bridge.ts';
+import {
+  sessionBridgeRunId,
+  buildSessionBridgeRequest,
+  configuredContextForStage,
+} from '../src/orchestration/mastra-session-bridge.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
@@ -37,6 +42,141 @@ afterEach(() => {
 });
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const json = (v) => JSON.stringify(v, null, 2) + '\n';
+
+function recoveryFixture() {
+  const { f, request } = historicalFixture('unknown_readonly');
+  const input = {
+    identity: request.identity,
+    attempt: 1,
+    baselinePath: 'baseline.yaml',
+    callerSession: 'fixture-current-caller',
+    controllerId: 'fixture-current-controller',
+    userInstructionRef: 'fixture:attributable-human-recovery-review',
+  };
+  const call = (mode, body = input, extra = []) => {
+    f.put('.tmp/recovery-input.json', json(body));
+    return run([
+      '--recovery-review',
+      'true',
+      '--mode',
+      mode,
+      '--project-root',
+      f.root,
+      '--request',
+      '.tmp/recovery-input.json',
+      ...extra,
+    ]);
+  };
+  const observation = (operation, status = 'PASS') => ({
+    action_id: operation.operation_key,
+    caller_session: input.callerSession,
+    controller_id: input.controllerId,
+    status,
+    // Injected fixture observation; no actual native execution or Runtime proof.
+    observation: { agent_id: 'fixture:reviewer', tool_call_ref: 'fixture:native-call', result: { findings: [] } },
+  });
+  return { f, input, call, observation };
+}
+
+test.each(['PASS', 'FAIL'])(
+  'internal recovery %s settles only its review and preserves original rights',
+  async (status) => {
+    const { f, input, call, observation } = recoveryFixture(),
+      before = databaseState(f);
+    const prepared = await call('prepare');
+    expect(prepared.status).toBe('reserved');
+    expect(prepared.request.historicalOwner).not.toBe(input.callerSession);
+    const resumed = { ...input, request: prepared.request };
+    expect((await call('inspect', resumed)).status).toBe('reserved');
+    expect((await call('begin', resumed)).status).toBe('commit_unknown');
+    const observed = observation(prepared.operation, status);
+    const settled = await call('complete', { ...resumed, observation: observed });
+    expect(settled.status).toBe('applied');
+    expect(settled.rights_granted).toBe(false);
+    expect(settled.runtime_acceptance).toBe(false);
+    expect(settled.native_dispatch_performed).toBe(false);
+    expect((await call('complete', { ...resumed, observation: observed })).operation).toEqual(settled.operation);
+    const changed = structuredClone(observed);
+    changed.observation.result = { findings: ['Different retained body'] };
+    await expect(call('complete', { ...resumed, observation: changed })).rejects.toThrow(/result conflict/);
+    const after = databaseState(f);
+    expect(after.agent_host_state).toEqual(before.agent_host_state);
+    expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  },
+  30000,
+);
+
+test('internal recovery UNKNOWN survives reopen and cannot reissue or reconstruct custody', async () => {
+  const { f, input, call, observation } = recoveryFixture();
+  const prepared = await call('prepare'),
+    resumed = { ...input, request: prepared.request };
+  await expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow(
+    /reissue forbidden/,
+  );
+  await call('begin', resumed);
+  const before = databaseState(f);
+  expect((await call('inspect', resumed)).status).toBe('commit_unknown');
+  await expect(call('begin', resumed)).rejects.toThrow(/reissue forbidden/);
+  await expect(call('prepare')).rejects.toThrow(/reservation exists/);
+  await expect(call('inspect', input)).rejects.toThrow(/shape/);
+  const foreign = { ...resumed, callerSession: 'fixture-foreign' };
+  await expect(call('inspect', foreign)).rejects.toThrow(/request changed/);
+  await expect(call('complete', { ...resumed, observation: { status: 'PASS' } })).rejects.toThrow(
+    /observation differs/,
+  );
+  const altered = observation(prepared.operation);
+  altered.controller_id = 'foreign';
+  await expect(call('complete', { ...resumed, observation: altered })).rejects.toThrow(/observation differs/);
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('internal recovery stale Source denies settlement while retaining UNKNOWN', async () => {
+  const { f, input, call, observation } = recoveryFixture();
+  const prepared = await call('prepare'),
+    resumed = { ...input, request: prepared.request };
+  await call('begin', resumed);
+  const before = databaseState(f);
+  f.put('.githooks/pre-commit', 'Concurrent scoped edit');
+  await expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow();
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('internal recovery controller drift outside original Work scope denies begin', async () => {
+  const { f, input, call } = recoveryFixture();
+  const prepared = await call('prepare'),
+    resumed = { ...input, request: prepared.request };
+  const before = databaseState(f);
+  f.put(
+    'packages/agent/src/runtime-kernel.ts',
+    readFileSync(path.join(f.root, 'packages/agent/src/runtime-kernel.ts'), 'utf8') +
+      '\n// Injected controller drift\n',
+  );
+  await expect(call('begin', resumed)).rejects.toThrow(/request changed/);
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('internal recovery reviews current declared Source while preserving historical preimages', async () => {
+  const { f, input, call, observation } = recoveryFixture();
+  f.put('.githooks/pre-commit', 'Authorized Source correction before recovery prepare');
+  const before = databaseState(f);
+  const prepared = await call('prepare'),
+    resumed = { ...input, request: prepared.request };
+  expect(prepared.request.source.digest).not.toBe(prepared.request.context.original_source);
+  await call('begin', resumed);
+  expect((await call('complete', { ...resumed, observation: observation(prepared.operation) })).status).toBe('applied');
+  const after = databaseState(f);
+  expect(after.agent_host_state).toEqual(before.agent_host_state);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+}, 30000);
+
+test('internal recovery denies mixed execution flags and missing original context without effects', async () => {
+  const { f, input, call } = recoveryFixture(),
+    before = databaseState(f);
+  await expect(call('prepare', input, ['--issue-wave', 'true'])).rejects.toThrow(/exact mode/);
+  await expect(call('prepare', { ...input, baselinePath: 'missing.yaml' })).rejects.toThrow();
+  await expect(call('prepare', { ...input, userInstructionRef: '' })).rejects.toThrow(/binding missing/);
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
 
 function fixture({ sourceMode = false } = {}) {
   const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? tmpdir();
@@ -374,7 +514,7 @@ function seedState(
     ['coordination-ledger', ledger],
   ]) {
     const validate = ajv.compile(
-      JSON.parse(readFileSync(path.join(f.root, `vida-agent/schemas/${name}.v1.schema.json`), 'utf8')),
+      JSON.parse(readFileSync(path.join(f.root, `${f.bundle}/schemas/${name}.v1.schema.json`), 'utf8')),
     );
     if (!validate(value)) throw Error(`fixture ${name} invalid: ${JSON.stringify(validate.errors)}`);
   }
@@ -655,6 +795,85 @@ test('target cannot move operational/path fields or edit YAML before held fence'
   await expect(runReconcileArtifacts(g.args('apply'))).rejects.toThrow(/wait for held/);
 });
 
+test.each(['queued ownership', 'work', 'journal', 'governance'])(
+  '%s arriving after preflight aborts acquisition without a new maintenance fence',
+  async (change) => {
+    const f = fixture();
+    await runReconcileArtifacts(f.args('plan'));
+    const original = HostStateStore.prototype.acquireMaintenanceFenceWithRecordedToken;
+    let injected;
+    HostStateStore.prototype.acquireMaintenanceFenceWithRecordedToken = function (...args) {
+      if (change === 'governance')
+        withDatabase(f, (db) =>
+          new HostStateStore(db, f.workspace).reserveOperation(
+            'race',
+            canonicalJsonDigest('operation'),
+            canonicalJsonDigest('request'),
+          ),
+        );
+      else seedState(f, change === 'queued ownership' ? { ticketStatus: 'queued' } : { native: change === 'journal' });
+      injected = databaseState(f);
+      return original.apply(this, args);
+    };
+    try {
+      await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(
+        /ownership|global state differs|governance effect pending\/unknown/,
+      );
+      expect(fence(f)).toBeNull();
+      expect(databaseState(f)).toEqual(injected);
+      expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual(f.receipt);
+    } finally {
+      HostStateStore.prototype.acquireMaintenanceFenceWithRecordedToken = original;
+    }
+  },
+);
+
+test('rebind preserves settled governance envelopes and refuses pending effects by outcome', async () => {
+  const f = fixture();
+  withDatabase(f, (db) => {
+    const store = new HostStateStore(db, f.workspace);
+    const operation = store.reserveOperation(
+      'settled',
+      canonicalJsonDigest('operation'),
+      canonicalJsonDigest('request'),
+    );
+    store.transitionOperation(operation, 'commit_unknown');
+    store.transitionOperation(operation, 'applied', canonicalJsonDigest('result'));
+  });
+  const before = databaseState(f);
+  expect((await runReconcileArtifacts(f.args('plan'))).status).toBe('planned');
+  expect((await runReconcileArtifacts(f.args('apply'))).status).toBe('author_config_required');
+  f.put('agent-runtime.config.v1.yaml', f.target);
+  expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
+  expect(databaseState(f).agent_host_governance).toEqual(before.agent_host_governance);
+});
+
+test('a foreign maintenance fence acquired after preflight is preserved without conversion or phase effects', async () => {
+  const f = fixture();
+  await runReconcileArtifacts(f.args('plan'));
+  const original = HostStateStore.prototype.acquireMaintenanceFenceWithRecordedToken;
+  let foreign, before;
+  HostStateStore.prototype.acquireMaintenanceFenceWithRecordedToken = function (...args) {
+    withDatabase(f, (db) => {
+      const owner = new HostStateStore(db, f.workspace, undefined, undefined, undefined, {
+        principal: 'fixture:foreign-maintenance',
+        projectIds: f.receipt.project_ids,
+        verify: () => null,
+      });
+      foreign = owner.acquireMaintenanceFence({ ...args[0], operation_id: 'foreign-operation' }).fence;
+    });
+    before = databaseState(f);
+    return original.apply(this, args);
+  };
+  try {
+    await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(/maintenance\/global state differs/);
+    expect(fence(f)).toEqual(foreign);
+    expect(databaseState(f)).toEqual(before);
+  } finally {
+    HostStateStore.prototype.acquireMaintenanceFenceWithRecordedToken = original;
+  }
+});
+
 test.each(['fence_acquired', 'fenced', 'receipt_rebound', 'applied', 'released'])(
   'interrupted %s resumes one current operation without duplicate receipt effects',
   async (phase) => {
@@ -672,6 +891,8 @@ test.each(['fence_acquired', 'fenced', 'receipt_rebound', 'applied', 'released']
       await expect(runReconcileArtifacts(f.args('resume'), { onPhase: interrupt })).rejects.toThrow(/injected/);
     expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
   },
+  // The serial lifecycle wrapper must settle before fixture teardown.
+  0,
 );
 
 // Persisted requests and JSONB snapshots are synthetic TEST SETUP, never native outcomes.
@@ -780,6 +1001,432 @@ function seedReadonlyUnknown(f, mutate = null, { writer = false, validateFixture
   }
   return { state, snapshot };
 }
+
+// Synthetic persisted engine observations are fixture setup, never external caller or Runtime evidence.
+function historicalFixture(predicate) {
+  const f = fixture({ sourceMode: true });
+  if (predicate === 'unknown_readonly') {
+    f.oldYaml = f.oldYaml.replace(/(    researcher:[\s\S]*?      egress_policy:) official_docs/, '$1 none');
+    f.target = f.oldYaml.replace(
+      /(    executor:\r?\n      model: )gpt-6-sol(\r?\n      reasoning: )high/,
+      '$1gpt-6-luna$2max',
+    );
+    f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+    f.receipt.config_digest = runtimeConfigDigest(loadRuntimeConfig(f.root));
+    f.put('.agent/runtime-initialization.v1.json', json(f.receipt));
+  }
+  f.put('baseline.yaml', f.oldYaml);
+  const config = loadRuntimeConfig(f.root),
+    { identity } = seedState(f, { lease: true });
+  const paths = [
+    '.githooks/pre-commit',
+    '.githooks/pre-push',
+    'tests/agent/git-quality-hooks.test.mjs',
+    'tooling/agent/git-quality-hooks.mjs',
+  ].sort();
+  const preimage = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), paths);
+  f.put('original-scope.json', json(preimage));
+  const context = { work_id: identity.work_id, attempt: 1, scope_digest: preimage.digest },
+    workflow = 'task_execution';
+  const runId = sessionBridgeRunId(f.workspace, context, workflow),
+    selection = {
+      team: 'default-development',
+      kind: 'task',
+      intent: 'task_execution',
+      project: 'agent',
+      risk_flags: [],
+      labels: [],
+    };
+  const workItem = { id: identity.work_id };
+  const intakePath = '.agent/work/' + identity.work_id + '/intake.json';
+  const intake = json({
+    work_item: workItem,
+    runtime_code_paths: ['packages/agent/bin/run.mjs'],
+    native_session_handle: 'fixture-thread',
+  });
+  f.put(intakePath, intake);
+  withDatabase(f, (db) => {
+    const workRow = db.query("SELECT * FROM agent_host_state WHERE kind='work'").get(),
+      work = JSON.parse(workRow.payload);
+    work.execution.run_id = runId;
+    work.execution.status = 'active';
+    Object.assign(work.binding, {
+      workflow_id: workflow,
+      work_source_revision: preimage.digest,
+      work_item_digest: canonicalJsonDigest(workItem),
+      implementation_paths: paths,
+      allowed_resources: paths.map((p) => 'file:' + p),
+    });
+    work.lifecycle.source_revision = preimage.digest;
+    Object.assign(work.lifecycle.scope, {
+      allowed_paths: paths,
+      fingerprint_paths: paths,
+      implementation_paths: paths,
+    });
+    work.artifacts = [
+      {
+        artifact_id: 'local-session-intake',
+        schema: 'VidaLocalSessionIntake/v1',
+        path: intakePath,
+        sha256: sha(Buffer.from(intake)),
+        stage_id: 'local-intake',
+        source_revision: preimage.digest,
+        scope_id: work.binding.scope_id,
+        ac_ids: work.binding.ac_ids,
+      },
+    ];
+    db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'").run(
+      json(work),
+      canonicalJsonDigest(work),
+    );
+    const ledgerRow = db.query("SELECT * FROM agent_host_state WHERE kind='ledger'").get(),
+      ledger = JSON.parse(ledgerRow.payload);
+    for (const ticket of ledger.tickets)
+      Object.assign(ticket, {
+        source_revision: preimage.digest,
+        exclusive_resources: work.binding.allowed_resources,
+        active_resources: work.binding.allowed_resources,
+        contour_keys: work.binding.allowed_resources,
+      });
+    ledger.claims[0].resources = work.binding.allowed_resources;
+    db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'").run(
+      json(ledger),
+      canonicalJsonDigest(ledger),
+    );
+  });
+  let prior = {
+    ...context,
+    workflow_id: workflow,
+    config_digest: runtimeConfigDigest(config),
+    selection,
+    observations: [],
+  };
+  const engineContext = { input: structuredClone(prior) },
+    completed = [];
+  let frontierItems,
+    postimage = preimage;
+  for (let waveIndex = 0; waveIndex < (predicate === 'settled_writer_failed_validators' ? 3 : 1); waveIndex++) {
+    const actions = sessionActionsForWave(config, selection, context, workflow, waveIndex, []);
+    const items = actions.map((action) => {
+      const request = buildSessionBridgeRequest({
+        runId,
+        workflowId: workflow,
+        configDigest: runtimeConfigDigest(config),
+        context,
+        waveIndex,
+        action,
+        configuredContext: configuredContextForStage(f.root, config, workflow, action.stage_id, context),
+        priorResults: prior.observations,
+      });
+      const summary =
+        waveIndex === 2
+          ? JSON.stringify({
+              schema: 'VidaValidatorVerdict/v1',
+              verdict: 'fail',
+              findings: ['Fixture negative finding'],
+              evidence_refs: ['local://fixture/terminal'],
+            })
+          : 'Synthetic terminal fixture evidence';
+      const item = {
+        request,
+        issue_id: randomUUID(),
+        observation:
+          predicate === 'unknown_readonly'
+            ? null
+            : {
+                schema: 'VidaSessionObservation/v1',
+                action_id: request.action_id,
+                issue_id: null,
+                agent_id: 'fixture-' + action.role,
+                tool_call_ref: 'fixture:' + action.action_id,
+                status: waveIndex === 2 ? 'reported_failed' : 'reported_complete',
+                summary,
+                output_digest: canonicalJsonDigest(summary),
+                evidence_refs: ['local://fixture/terminal'],
+              },
+      };
+      if (item.observation) item.observation.issue_id = item.issue_id;
+      if (waveIndex === 1)
+        withDatabase(f, (db) => {
+          const store = new HostStateStore(db, f.workspace),
+            before = store.readHostStateSnapshot(identity);
+          const receipt = store.claimWorkflowAttempt({
+            identity,
+            expectedWork: before.workVersion,
+            expectedLedger: before.ledgerVersion,
+            stageId: request.stage_id,
+            assignmentIndex: request.assignment_index,
+            requestDigest: canonicalJsonDigest(request),
+            lease: before.work.lease,
+          });
+          for (const relative of paths) f.put(relative, 'Synthetic authored ' + relative);
+          postimage = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), paths);
+          Object.assign(item.observation, { host_attempt_id: receipt.attempt.attempt_id, changed_paths: paths });
+          store.completeWorkflowAttempt(receipt, item.observation);
+          item.host_reservation = {
+            schema: 'WorkflowSessionReservation/v1',
+            receipt,
+            request: {
+              workItemId: identity.work_id,
+              stageId: request.stage_id,
+              assignmentIndex: request.assignment_index,
+            },
+          };
+        });
+      return item;
+    });
+    const frontier = waveIndex === (predicate === 'settled_writer_failed_validators' ? 2 : 0);
+    if (frontier) {
+      frontierItems = items;
+      engineContext['wave-' + waveIndex] = {
+        status: 'suspended',
+        payload: structuredClone(prior),
+        suspendPayload: { requests: items.map((item) => item.request) },
+      };
+    } else {
+      const output = { ...prior, observations: [...prior.observations, ...items.map((item) => item.observation)] };
+      engineContext['wave-' + waveIndex] = {
+        status: 'success',
+        payload: structuredClone(prior),
+        resumePayload: { observations: items.map((item) => item.observation) },
+        output,
+      };
+      prior = output;
+      completed.push({ step_id: 'wave-' + waveIndex, items });
+    }
+  }
+  const state = {
+    schema: 'MastraSessionLedger/v1',
+    workspace_id: f.workspace,
+    work_id: identity.work_id,
+    attempt: 1,
+    run_id: runId,
+    source_scope: postimage,
+    step_id: 'wave-' + completed.length,
+    items: frontierItems,
+    completed,
+  };
+  withDatabase(f, (db) =>
+    db
+      .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+      .run(f.workspace, identity.work_id, 1, 1, json(state), canonicalJsonDigest(state)),
+  );
+  const native = new Database(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'), {
+    create: true,
+    strict: true,
+  });
+  try {
+    native.exec('CREATE TABLE mastra_workflow_snapshot (workflow_name TEXT,run_id TEXT,snapshot BLOB)');
+    native
+      .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,jsonb(?))')
+      .run(workflow, runId, json({ runId, status: 'suspended', context: engineContext }));
+  } finally {
+    native.close();
+  }
+  f.put('agent-runtime.config.v1.yaml', f.target);
+  const request = {
+    schema: 'HistoricalOwnerReleaseRequest/v1',
+    identity,
+    attempt: 1,
+    userRequestPointer: 'fixture:human-owner-release',
+    requestIntent: 'linked_correction',
+    predicate,
+    ...(predicate === 'settled_writer_failed_validators' ? { preimage_ref: 'original-scope.json' } : {}),
+  };
+  f.put('release.json', json(request));
+  const args = (mode) => [
+    '--release-historical-owner',
+    'true',
+    '--mode',
+    mode,
+    '--project-root',
+    f.root,
+    '--native-session-handle',
+    'fixture-thread',
+    '--baseline-config',
+    'baseline.yaml',
+    '--request',
+    'release.json',
+  ];
+  return { f, args, request, state };
+}
+
+test.each(['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators'])(
+  'historical %s releases only its original owner after config delivery and preserves all original evidence',
+  async (predicate) => {
+    const { f, args, state } = historicalFixture(predicate),
+      before = databaseState(f),
+      engineBefore = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+    const inspected = await run(args('inspect'));
+    expect(inspected.caller_identity_authenticated).toBe(false);
+    expect(databaseState(f)).toEqual(before);
+    f.put('release.json', json(inspected.request));
+    const result = await run(args('apply'));
+    expect(result.status).toBe('historical_owner_released');
+    const after = databaseState(f);
+    expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+    const workBefore = JSON.parse(before.agent_host_state.find((row) => row.kind === 'work').payload),
+      workAfter = JSON.parse(after.agent_host_state.find((row) => row.kind === 'work').payload);
+    expect(workAfter.lease).toBeNull();
+    expect(workAfter.binding).toEqual(workBefore.binding);
+    expect(workAfter.execution.assignment_attempts).toEqual(workBefore.execution.assignment_attempts);
+    expect(workAfter.lifecycle.phase).toBe(workBefore.lifecycle.phase);
+    expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite')).equals(engineBefore)).toBe(true);
+    expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual(f.receipt);
+    expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+    expect(state.source_scope.digest).toBeTruthy();
+  },
+  30000,
+);
+
+test('public historical inspect runs from unrelated cwd while the ordinary receipt is stale', () => {
+  const { f, args } = historicalFixture('completed_readonly'),
+    before = databaseState(f);
+  const actual = spawnSync(process.execPath, [path.join(source, 'bin/run.mjs'), ...args('inspect')], {
+    cwd: tmpdir(),
+    encoding: 'utf8',
+    windowsHide: true,
+    timeout: 30000,
+  });
+  expect(actual.status).toBe(0);
+  expect(actual.error).toBeUndefined();
+  expect(JSON.parse(actual.stdout).status).toBe('historical_owner_release_inspected');
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test.each([
+  'wrong owner',
+  'wrong baseline',
+  'changed rights',
+  'missing engine',
+  'extra action',
+  'missing preimage',
+  'envelope preimage',
+  'foreign preimage',
+  'source drift',
+])(
+  'historical settled writer denies %s without state or receipt effects',
+  async (change) => {
+    const { f, args } = historicalFixture('settled_writer_failed_validators');
+    const values = args('inspect');
+    if (change === 'wrong owner') values[values.indexOf('--native-session-handle') + 1] = 'foreign';
+    if (change === 'wrong baseline') f.put('baseline.yaml', f.target);
+    if (change === 'changed rights')
+      f.put('agent-runtime.config.v1.yaml', f.target.replace('tools_policy: validator', 'tools_policy: developer'));
+    if (change === 'missing engine')
+      withDatabase(f, () => {
+        const engine = new Database(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'), { strict: true });
+        try {
+          engine.exec('DELETE FROM mastra_workflow_snapshot');
+        } finally {
+          engine.close();
+        }
+      });
+    if (change === 'extra action')
+      withDatabase(f, (db) => {
+        const row = db.query('SELECT * FROM agent_host_mastra_session_ledger').get(),
+          state = JSON.parse(row.payload);
+        state.items.push(structuredClone(state.items[0]));
+        db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=?').run(
+          json(state),
+          canonicalJsonDigest(state),
+        );
+      });
+    if (change === 'missing preimage')
+      renameSync(path.join(f.root, 'original-scope.json'), path.join(f.root, 'retained.json'));
+    if (change === 'envelope preimage')
+      f.put(
+        'original-scope.json',
+        json({ stdout: readFileSync(path.join(f.root, 'original-scope.json'), 'utf8'), exit_code: 0 }),
+      );
+    if (change === 'foreign preimage')
+      f.put(
+        'original-scope.json',
+        json(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), ['AGENT.sidecar.md'])),
+      );
+    if (change === 'source drift') f.put('.githooks/pre-commit', 'Concurrent source drift');
+    const before = databaseState(f),
+      receipt = readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'));
+    await expect(run(values)).rejects.toThrow();
+    expect(databaseState(f)).toEqual(before);
+    expect(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')).equals(receipt)).toBe(true);
+  },
+  30000,
+);
+
+test.each(['journal', 'preimage', 'maintenance'])(
+  'historical apply denies changed %s after inspect without releasing ownership',
+  async (change) => {
+    const { f, args } = historicalFixture('settled_writer_failed_validators');
+    const inspected = await run(args('inspect'));
+    f.put('release.json', json(inspected.request));
+    if (change === 'preimage')
+      f.put('original-scope.json', readFileSync(path.join(f.root, 'original-scope.json'), 'utf8') + '\n');
+    else if (change === 'journal')
+      withDatabase(f, (db) => {
+        const row = db.query('SELECT * FROM agent_host_mastra_session_ledger').get(),
+          state = JSON.parse(row.payload);
+        state.items[0].observation.evidence_refs.push('fixture:later-evidence');
+        db.query('UPDATE agent_host_mastra_session_ledger SET revision=revision+1,payload=?,digest=?').run(
+          json(state),
+          canonicalJsonDigest(state),
+        );
+      });
+    else {
+      // Host fixture state cannot acquire maintenance while the historical owner is active.
+      const changed = structuredClone(inspected.request);
+      changed.inspection.expectedMaintenanceGeneration++;
+      f.put('release.json', json(changed));
+    }
+    const before = databaseState(f);
+    await expect(run(args('apply'))).rejects.toThrow(/changed/);
+    expect(databaseState(f)).toEqual(before);
+  },
+  30000,
+);
+
+test('historical inert preparation remains blocked and mixed execution flags cannot dispatch', async () => {
+  const f = fixture({ sourceMode: true });
+  f.put('baseline.yaml', f.oldYaml);
+  const { identity } = seedState(f, { lease: true });
+  f.put('agent-runtime.config.v1.yaml', f.target);
+  f.put(
+    'release.json',
+    json({
+      schema: 'HistoricalOwnerReleaseRequest/v1',
+      identity,
+      attempt: 1,
+      userRequestPointer: 'fixture:inert',
+      requestIntent: 'next_work',
+      predicate: 'completed_readonly',
+    }),
+  );
+  const args = [
+    '--release-historical-owner',
+    'true',
+    '--mode',
+    'inspect',
+    '--project-root',
+    f.root,
+    '--native-session-handle',
+    'fixture-thread',
+    '--baseline-config',
+    'baseline.yaml',
+    '--request',
+    'release.json',
+  ];
+  const before = databaseState(f);
+  await expect(run(args)).rejects.toThrow(/inert release is unsupported/);
+  for (const flag of [
+    '--issue-wave',
+    '--report',
+    '--capture-stopped-source',
+    '--retire-interrupted-source-owner',
+    '--release-completed-readonly',
+  ])
+    await expect(run([...args, flag, 'true'])).rejects.toThrow();
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
 
 test('three original readonly unknowns remain unchanged across config rebind with a different quiescent current run', async () => {
   const f = fixture();

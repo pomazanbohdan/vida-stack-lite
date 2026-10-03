@@ -180,6 +180,8 @@ async function fixture({ writer = true } = {}) {
   const original = admission(),
     { input, identity, source } = original;
   const bridge = await MastraSessionBridge.open({
+    ledger,
+    projectIds: [selection.project],
     repositoryRoot: root,
     config,
     selection,
@@ -187,8 +189,8 @@ async function fixture({ writer = true } = {}) {
     workflowId: 'task_execution',
     workspaceId: workspace,
   });
-  let engine = await bridge.start();
-  const sync = () => ledger.sync('stopped', 1, engine.run_id, engine.step_id, engine.requests, source, engine.status);
+  await bridge.start(source);
+  const sync = () => ledger.resume('stopped', 1);
   let journal = sync();
   journal = ledger.issueWave('stopped', 1, journal.version);
   const item = journal.state.items[0],
@@ -205,9 +207,10 @@ async function fixture({ writer = true } = {}) {
     evidence_refs: [fixtureEvidence],
   };
   journal = ledger.report('stopped', 1, journal.version, readonlyObservation, source);
-  engine = await bridge.resume(
+  await bridge.resume(
     journal.state.step_id,
     journal.state.items.map((entry) => entry.observation),
+    source,
   );
   journal = sync();
   let reservation, executionCapability;
@@ -284,6 +287,8 @@ async function fixture({ writer = true } = {}) {
       return next;
     }
     const nextBridge = await MastraSessionBridge.open({
+      ledger,
+      projectIds: [selection.project],
       repositoryRoot: root,
       config,
       selection,
@@ -292,8 +297,8 @@ async function fixture({ writer = true } = {}) {
       workspaceId: workspace,
     });
     extraBridges.push(nextBridge);
-    let state = await nextBridge.start();
-    const nextSync = () => ledger.sync(id, 1, state.run_id, state.step_id, state.requests, next.source, state.status);
+    await nextBridge.start(next.source);
+    const nextSync = () => ledger.resume(id, 1);
     let nextJournal = nextSync();
     nextJournal = ledger.issueWave(id, 1, nextJournal.version);
     if (readonly) return { ...next, journal: nextJournal };
@@ -316,9 +321,10 @@ async function fixture({ writer = true } = {}) {
       },
       next.source,
     );
-    state = await nextBridge.resume(
+    await nextBridge.resume(
       nextJournal.state.step_id,
       nextJournal.state.items.map((item) => item.observation),
+      next.source,
     );
     nextJournal = nextSync();
     const host = store.readHostStateSnapshot(next.identity);

@@ -220,8 +220,34 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     integrations_digest: project.integrations_digest,
     work_id: context.work_id,
   };
+  const runId = sessionBridgeRunId(store.workspaceId, context, selected.workflow_id);
+  const sourceDirectory = `${config.control.work_root}/${context.work_id}`;
+  const sourcePath = `${sourceDirectory}/scoped-source-attempt-${context.attempt}.v1.json`;
+  const sourceBytes = Buffer.from(canonicalJson(source));
+  const sourceReference = {
+    artifact_id: 'admission-source-snapshot',
+    schema: 'ScopedSourceSnapshot/v1',
+    path: sourcePath,
+    sha256: digest(sourceBytes),
+    stage_id: 'intake',
+    source_revision: source.digest,
+    scope_id: scope.scope_id,
+    ac_ids: scope.ac_ids,
+  };
+  const verifyRetainedSource = (work: NonNullable<HostStateSnapshot['work']>) => {
+    requireAdmission(work.execution.run_id === runId, 'local work retry differs from the original attempt');
+    const reference = work.artifacts.find((artifact) => artifact.artifact_id === sourceReference.artifact_id);
+    // Historical Work is not backfilled from a current postimage.
+    if (reference === undefined) return;
+    requireAdmission(
+      canonicalJsonDigest(reference) === canonicalJsonDigest(sourceReference) &&
+        access.readBytes(reference.path, 'retained original admission source').equals(sourceBytes),
+      'retained admission source snapshot differs',
+    );
+  };
   const before = store.readHostStateSnapshot(identity);
   if (before.work) {
+    verifyRetainedSource(before.work);
     const admittedIntake = before.work.artifacts.find((artifact) => artifact.artifact_id === 'local-session-intake');
     requireAdmission(
       intakeBytes === null
@@ -246,6 +272,13 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     );
     return { host: before, source };
   }
+  access.ensureDirectory(sourceDirectory, 'canonical admission source directory');
+  if (access.fileExists(sourcePath, 'retained admission preparation exists'))
+    requireAdmission(
+      access.readBytes(sourcePath, 'existing same-attempt admission preparation').equals(sourceBytes),
+      'admission source preparation differs',
+    );
+  else access.writeExclusive(sourcePath, sourceBytes, 'retain complete original admission source');
   if (canonicalIntakePath !== null && intakeBytes !== null) {
     access.ensureDirectory(`.agent/work/${context.work_id}`, 'canonical intake directory');
     if (access.fileExists(canonicalIntakePath, 'canonical intake existence'))
@@ -342,7 +375,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     },
     lease: { ticket_id: ticketId, thread_id: nativeSessionHandle, generation },
     execution: {
-      run_id: sessionBridgeRunId(store.workspaceId, context, selected.workflow_id),
+      run_id: runId,
       input_digest: canonicalJsonDigest({
         workItem,
         scope: binding.scope_contract_digest,
@@ -401,8 +434,9 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
               },
             ],
     },
-    artifacts:
-      intakeBytes === null
+    artifacts: [
+      sourceReference,
+      ...(intakeBytes === null
         ? []
         : [
             {
@@ -415,7 +449,8 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
               scope_id: scope.scope_id,
               ac_ids: scope.ac_ids,
             },
-          ],
+          ]),
+    ],
   };
   const oldLedger = before.ledger;
   const nextLedger = oldLedger
@@ -599,6 +634,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     requestPointer: scope.attribution.pointer,
     predecessors,
     verifySuccessor: () => {
+      verifyRetainedSource(nextWork);
       requireAdmission(
         digest(access.readBytes(input.scopePath, 'successor current scope')) === binding.scope_contract_digest &&
           digest(access.readBytes(input.acceptancePath, 'successor current acceptance')) ===
@@ -615,6 +651,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     },
     verifyCurrent: verifyPredecessor,
   });
+  verifyRetainedSource(host.work!);
   return { host, source };
 }
 

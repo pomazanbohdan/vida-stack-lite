@@ -4,8 +4,8 @@ Owner: runtime maintainers. This file names required checks; it does not claim t
 
 For test-speed changes, follow the single normative rule in
 [`development-lifecycle.md#self-development-protocol`](instructions/development-lifecycle.md#self-development-protocol).
-Record comparable whole-command timings alongside the required verification
-results; case timings alone do not establish aggregate savings.
+Existing phase and whole-command timings describe observations; case timings
+alone do not establish aggregate savings. Removing a deadline is not a speedup.
 
 ## Local execution policy
 
@@ -18,6 +18,37 @@ comments describe the current architecture and supported behavior, without
 narratives about absent legacy implementations. Formatter/TypeScript 7 hooks and
 pre-push coverage/CRAP remain proposals for discussion; do not install or activate
 hooks from this policy.
+
+During development, run only selected affected test files/cases and the smallest
+regression controls for the current correction. Include callers, configuration,
+schemas and subprocess routes that import graphs cannot discover. Pass an exact
+file path together with a name filter so unrelated modules and expensive setup
+are not loaded. Build only when the selected checks need current generated
+outputs; reuse those outputs while their inputs remain unchanged. Do not run a
+full suite after each subfix or repeat passing unchanged checks to score savings.
+
+After the engineering task's corrections are complete, run the full applicable
+current task suite once. Reuse its still-current evidence in final mandatory
+assurance; source changes invalidate affected evidence rather than silently
+reusing it. A failure requires diagnosis, a scoped correction and its focused
+regression before the final affected completion check. Partial development
+results never establish full qualification or Runtime acceptance.
+
+Aggregate packaging and extracted portable-smoke wrappers have no implicit
+total-duration limit. Their ordinary multi-file suite runs without an aggregate
+watchdog; the Bun wrapper uses its native disabled timeout. Keep each individual
+case, packing, extraction, install and probe bound, and any explicit inherited
+caller deadline. Reserve 30 seconds for cleanup/reporting when a finite deadline
+applies. A failed or uncertain child retains its receipt and private roots;
+absence from a process list does not authorize replay or cleanup.
+
+The five parameterized `interrupted %s resumes one current operation without
+duplicate receipt effects` cases are serial restart/resume lifecycle wrappers,
+not latency checks. They use Bun's disabled case watchdog and await each operation
+before fixture teardown. Preserve their assertions, existing lock behavior and
+explicit CLI/caller limits. The direct rebind API has no deadline option; do not
+describe these operations as having a finite per-operation timeout. Other
+individual case bounds remain unchanged.
 
 ## Primary standalone qualification
 
@@ -90,14 +121,140 @@ from construction; a copied tree or successful thin probe cannot close this gate
 
 The ordinary `npm test` command runs five required sequential pinned launcher
 invocations: `test:pinned`, `test:repair:pinned`, `test:host-state:pinned`,
-`test:package-boundary:pinned` and `test:run-entrypoint:pinned`. Each keeps the
-existing five-minute
-process-tree deadline. The first phase builds once; subsequent phases reuse that
+`test:package-boundary:pinned` and `test:run-entrypoint:pinned`. The launcher and
+ordinary phases have no implicit total-duration deadline. A caller-selected or
+inherited finite deadline remains binding, including through a custom child
+environment; malformed deadline values reject before a child starts. Unbounded
+commands omit native timeout and synthesized deadline metadata. The first phase
+builds once; subsequent phases reuse that
 build. The phases cover the complete ordinary inventory without duplication.
 For an isolated later-phase rerun, build the current package first. The local
-candidate aggregate includes all five phases and retains its separate aggregate
-launcher deadline. This scheduling preserves all assertions and bounds; it
+candidate aggregate includes all five phases. Only an explicitly selected or
+inherited finite aggregate deadline applies. This scheduling preserves every
+assertion and operation-specific bound; it
 makes no total execution-time improvement claim.
+
+The final local candidate command also builds Source once, through `test:pinned`.
+Its aggregate-only `test:*:built:pinned` entries reuse that current output for
+fuzz, zombies, deep properties and coverage while retaining the standalone
+commands' build guards. The exact archive case excluded from main tests runs
+once in `test:pack:built:pinned` and keeps its separate disposable copied-package
+build/install. Coverage start/stamp/source binding, all ordinary phases, CRAP
+and format gates remain. These internal entries require current generated
+outputs; do not invoke them after changing build inputs without rebuilding.
+
+When a caller selects a finite parent deadline, nested harness commands spend
+that parent's remaining allowance;
+pack/extract/install/repair and recovery calls never restart that allowance.
+The pinned launcher propagates a bounded duration and same-host Unix expiry,
+then each child establishes a local monotonic deadline. Expired or malformed
+metadata fails before another child is launched. The original process-tree
+deadline remains authoritative through clock changes; this is not a lease or
+authorization mechanism. Reserve bounded cleanup/report time inside the parent
+budget. Preserve operation-specific case/probe/install deadlines, including
+five-second relocation cases, and bounded cleanup/report reserves. Record
+timeout, cleanup command status/error and unknown termination
+separately; a cleanup attempt or successful signal does not prove descendants
+stopped. Unknown child outcomes prevent fixture reuse or deletion.
+
+The existing reserve has two parts: cleanup may spend at most the time before
+its final report half. A late child return can leave no cleanup allowance; record
+that as an unattempted unknown outcome and retain its fixtures. Record child
+return time, allocated cleanup time, actual cleanup time and whole-command time
+separately. These are allocation and observation boundaries, not a hard real-time
+guarantee against OS scheduling delays. Every repair CLI case charges setup and
+in-process operations to its unchanged five-second case budget before any public
+resume child; completed exit1 still requires the original structured CAS denial
+and file, journal, lineage and maintenance-fence assertions. Unknown repair
+children prevent later fixture reuse and database/root teardown.
+
+A positive reserve also caps cleanup at its allocated half, even when a short
+child leaves more parent slack. A zero reserve retains its existing unpartitioned
+remaining-deadline behavior, without inventing a reserved report or cleanup half.
+
+Native exclusive-creation checks reuse the initialized Root promise, without
+caching package attestation. Verify the first native construction check, the
+current package/root check after every caller await immediately before mkdir or
+create, and unchanged postcompletion checks. Preserve real cached-await root
+replacement denial, exclusive collision and unavailable attestation controls.
+Attestation failure injection wraps only the test's synchronous package-read
+import; it changes neither production APIs nor shared dependency bytes. Wrong
+platform preparation may be skipped; actual supported-target behavior and native
+assurance remain independently qualified. A completed Windows test or Linux
+descriptor simulation does not qualify the whole native product.
+
+The cached Root also serves asynchronous CAS replacement and exclusive locking.
+Those callers retain their original pre-await and post-await package/root checks
+before helper dispatch. Exercise attestation drift and root replacement during
+the cached await; require unchanged payload, absent lock sidecars and no callback
+entry. The creator's three-to-two check reduction does not apply to these callers.
+
+Require an observed integer terminal status without timeout, signal or spawn
+error before parsing command protocol output. Completed expected exit1 still
+requires its original denial payload and assertions. Record the primary stage,
+timeout, status/signal/error and actual cleanup command result; JSON EOF must
+not mask an uncertain process outcome. Initializer cases pass one case-entry
+budget through every sequential child, including Node delegation, within each
+unchanged declared timeout and the phase ceiling. Retain their mutable package,
+consumer and linked external fixtures on uncertainty, including case-finally
+cleanup. The package parent retains archive/result staging on any abnormal or
+nonzero smoke exit because a completed smoke failure can carry an uncertain
+nested descendant. No failed phase becomes PASS through retention or diagnosis.
+
+Relocation prepares each immutable layout once and checks all six instruction
+names through separate public CLI cases. Portable package verification extracts
+one exact archive, checks every packaged-file assertion in that extraction,
+installs its shipped frozen lock and executes the actual extracted repair and
+admission tests. Recovery shares copied immutable package bytes while each of
+the four workflows retains separate project/config/Host/journal/artifact roots,
+its actual work directory, and fresh CLI interruption/restart/CAS/report/replay
+boundaries. Assert external logical package/resource mapping and package bytes
+before and after each route. The recovery dependency junction does not qualify
+the independent extracted installation. Capture fixture and per-command stage
+times plus whole-command duration and cache/resource conditions; partial output
+or fewer setups alone is not a speedup or a passing phase.
+
+Stopped-source capture prepares and verifies one actual physically contained
+controller through the supported frozen-lock copy installation. Its disposable
+Source-shaped qualification target is separate from every fresh consumer.
+Consumer cases execute the copied package's public `bin/run.mjs` through fresh
+copied pinned-Bun processes; they do not invoke controller exec against a foreign
+target. Compare the actual package binding before and after each case, and deny
+reuse and cleanup on drift or unknown child outcomes. Setup, binding checks and
+children share any explicitly inherited phase deadline; the fixture imposes no
+total setup/suite timer. Each case retains its 60000ms cap.
+Its single async teardown hook uses the cleanup half of the existing 30000ms
+cleanup/report reserve through Bun's supported HookOptions. This static hook
+allocation is at most 15000ms; live checks before and after the final fresh
+package-binding check deny deletion if the finite parent can no longer preserve
+that allocation and its report half. Bun's general default hook/case timeout is
+unchanged. Log the exact private root before deleting and actual completion
+afterward; a hook timeout, failed or deferred deletion retains custody and never
+authorizes another cleanup attempt. Other unknown roots remain untouched.
+Synthetic review/owner manifests bind the returned real package and never imply
+actual review, delivery or Runtime acceptance. Preserve the independent mutable
+package-drift control and original raw missing/null completion assertion; the
+latter also requires the copied public CLI's structured denial and unchanged Host.
+Recovery calls establish the copied package's existing pinned environment before
+each fresh public process, preserving cache identity and all process boundaries.
+
+Canonical JSON regression preserves nested wire equivalence, legal shared
+references, descriptor/getter/prototype/toJSON/cycle denial and unchanged finite
+node/depth/byte bounds. Loaded config digest reuse is limited to loader-owned
+deeply frozen objects and checks current inherited serialization hooks on every
+read, including after caching. Fresh YAML revisions and mutable external callers
+must still produce fresh validation and digests. Data-only admitted context
+checks retain current configuration, project, lease, canonical intake, native
+thread and runtime inventory denial; actual kernel consumers retain opaque
+capability construction and their later pre-effect/post-await checks. Journal-only
+CLI retrieval reads actual persisted engine state without initializing storage;
+start/resume still open the protected producer and preserve UNKNOWN custody.
+Kernel and data-only consumers share the existing live-admission and native-handle
+predicate. Require active matching ticket/claim/thread/generation/resources and
+future ticket/claim expiries, nonblank handles of at most256characters and no
+control characters. Exercise a coherent expired lease and inactive matching
+claim, plus the existing claim-expiry projection denial and unchanged Host on
+invalid handle. A schema-valid lease alone does not establish live admission.
 
 Run the current-v1 candidate checks below with declared Bun 1.4.2 and the frozen lockfile. A different global Bun must not silently change the selected version. Build-generated output counts only when source and package fingerprints match. Any retained `ci:candidate` script is a local command name, not authorization to run tests in CI/CD. Local aggregate checks exclude mutation; launch it explicitly when requested. First-cutover approval uses the retained-behavior matrix and exact outcomes below. Aggregate 100% coverage/mutation and `CRAP < 5` remain measured, owned post-cutover GAPs, as authorized by the user.
 
@@ -161,6 +318,21 @@ only when its realpath matches the pinned executable. `tooling/portable-smoke.mj
 checks the packed current bundle, frozen install and public initialization/run
 from an unrelated consumer directory. These focused checks provide Code/Static
 evidence and do not establish installed user acceptance or Runtime readiness.
+
+The Linux descriptor simulation runs its isolated Vitest child explicitly on
+Bun and exposes captured output for known nonzero failures before its original
+status and twelve-control assertions. Keep its120000ms child and180000ms wrapper
+limits. On an actual Windows host, only tracked readonly private files inside
+current physical owned fixture roots may use a writable, nontruncating flush
+handle. Verify identical device/inode, private regular-file identity and physical
+path before flushing, and always close the temporary handle. Unknown descriptors,
+foreign paths, identity drift and actual flush errors remain failures. Verify
+readonly flush success without content change and substituted-path denial.
+Directory synchronization remains simulated; this adapter establishes neither
+Linux native behavior nor Linux file or directory durability.
+Classify that directory exception by the opened descriptor, never its current
+pathname. A file descriptor whose path becomes a directory must be denied;
+retain this counterexample inside the existing positive control.
 
 ## Audit-state and successor qualification
 
@@ -294,7 +466,6 @@ Linux lock regressions cover legal 255-byte and multibyte resource basenames,
 contention, release and reacquisition. Recovery fault injection substitutes the
 restored target after descriptor verification in orphan and rollback paths; both
 must preserve the original backup and leave the foreign target unchanged.
-
 
 ## Reaudit regression obligations
 

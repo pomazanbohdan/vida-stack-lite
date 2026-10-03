@@ -1,5 +1,7 @@
 # Adaptive reporting
 
+Communicate with the user using approximately 80% ASD-STE100 principles: short sentences, plain words, consistent terms and one idea per paragraph. Preserve the user's language and required technical precision. This is an approximate style target, not a claim of formal ASD-STE100 compliance.
+
 Use prose for one outcome, a checklist for actions/acceptance, a table for
 mappings/comparisons and Mermaid only if flow, state, hierarchy or traceability
 is materially easier to understand—or the user explicitly requests a diagram.

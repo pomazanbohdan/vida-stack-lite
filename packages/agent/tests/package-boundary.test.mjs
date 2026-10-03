@@ -1,24 +1,16 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, test } from 'bun:test';
+import { boundedSpawnSync, executionBudget, commandOutcomeUnknown, requireTerminalCommand } from '../bin/bun.mjs';
 import { maintainedSourceInventory } from '../tooling/maintained-source-inventory.mjs';
 import { sdkCompatibilityManifest } from '../tooling/pack-sdk.mjs';
 
 const candidateRoot = path.resolve(import.meta.dirname, '..');
+const phaseBudget = executionBudget(undefined, 30_000);
 
 test('default npm packaging verifies the available SDK contract without advertising unfinished standalone assets', () => {
   const manifest = JSON.parse(readFileSync(path.join(candidateRoot, 'package.json'), 'utf8'));
@@ -169,10 +161,19 @@ test('installed-bundle verification has only shipped generic test inputs and pre
   }
   for (const repositoryOnlyGate of ['test:coverage:pinned', 'crap:pinned']) {
     assert.equal(manifest.scripts['ci:pinned'].includes(repositoryOnlyGate), false);
+    const candidateGate =
+      repositoryOnlyGate === 'test:coverage:pinned' ? 'test:coverage:built:pinned' : repositoryOnlyGate;
     assert.ok(
-      manifest.scripts['ci:candidate:pinned'].includes(repositoryOnlyGate),
+      manifest.scripts['ci:candidate:pinned'].includes(candidateGate),
       `candidate-repository ci retains ${repositoryOnlyGate}`,
     );
+    if (candidateGate !== repositoryOnlyGate) {
+      assert.equal(manifest.scripts['ci:pinned'].includes(candidateGate), false);
+      assert.equal(
+        manifest.scripts[candidateGate],
+        manifest.scripts[repositoryOnlyGate].replace(/^bun run build:pinned && /, ''),
+      );
+    }
   }
   assert.equal(manifest.scripts['test:mutation'], 'node bin/bun.mjs run test:mutation:pinned');
   assert.match(manifest.scripts['test:mutation:pinned'], /\bbun tooling\/mutation-gate\.mjs\b/u);
@@ -181,8 +182,12 @@ test('installed-bundle verification has only shipped generic test inputs and pre
 });
 
 const roots = [];
+const retainedRoots = new Set();
 afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  for (const root of roots.splice(0)) {
+    if (retainedRoots.has(root)) continue;
+    rmSync(root, { recursive: true, force: true });
+  }
 }, 60_000);
 
 function fixture() {
@@ -288,49 +293,49 @@ test('dist-only cleanup rejects a linked target outside the candidate root', () 
 }, 60_000);
 
 test('packed isolated copy executes the portable verification contract without this checkout', () => {
+  const budget = phaseBudget.child(Infinity, 30_000);
   const staging = mkdtempSync(path.join(os.tmpdir(), 'runtime-portable-package-'));
   roots.push(staging);
-  const packed = spawnSync(process.execPath, ['pm', 'pack', '--destination', staging, '--quiet'], {
-    cwd: candidateRoot,
-    encoding: 'utf8',
-    windowsHide: true,
-    timeout: 180_000,
-  });
-
+  const packed = boundedSpawnSync(
+    spawnSync,
+    process.execPath,
+    ['pm', 'pack', '--destination', staging, '--quiet'],
+    {
+      cwd: candidateRoot,
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 180_000,
+      budget,
+      diagnostics: true,
+    },
+    'portable archive packing',
+  );
+  if (commandOutcomeUnknown(packed) || packed.status !== 0) retainedRoots.add(staging);
+  requireTerminalCommand(packed, 'portable archive packing');
   assert.equal(packed.status, 0, packed.stderr);
   const archive = packed.stdout.trim().split(/\r?\n/).at(-1);
   assert.ok(archive, 'pack must report the archive path');
   const packageSha256 = createHash('sha256').update(readFileSync(archive)).digest('hex');
 
-  const unpacked = path.join(staging, 'unpacked');
-  mkdirSync(unpacked);
-  const extracted = spawnSync('tar', ['-xzf', archive, '-C', unpacked], {
-    cwd: staging,
-    encoding: 'utf8',
-    windowsHide: true,
-    timeout: 60_000,
-  });
-  assert.equal(extracted.status, 0, extracted.stderr);
-  const bundle = path.join(unpacked, 'package');
-  for (const file of [
-    'dist/src/documentation/transition-proof.js',
-    'dist/schemas/documentation-policy-transition.v1.schema.json',
-    'bin/capture-completed-readonly.mjs',
-  ])
-    assert.equal(existsSync(path.join(bundle, file)), true, `packed archive must include ${file}`);
-  assert.equal(existsSync(path.join(bundle, 'tests', 'fuzz.test.mjs')), true);
-  assert.equal(existsSync(path.join(bundle, 'tests', 'zombies.test.mjs')), true);
-  assert.equal(existsSync(path.join(bundle, 'tests', 'bun-coverage.test.mjs')), true);
-  assert.equal(existsSync(path.join(bundle, 'stryker.config.mjs')), true);
-  assert.equal(readdirSync(bundle).includes('agent-runtime'), false);
-
   const resultPath = path.join(staging, 'portable-smoke.result.json');
-  const smoke = spawnSync('node', ['tooling/portable-smoke.mjs', '--archive', archive, '--result', resultPath], {
-    cwd: bundle,
-    encoding: 'utf8',
-    windowsHide: true,
-    timeout: 420_000,
-  });
+  const smoke = boundedSpawnSync(
+    spawnSync,
+    'node',
+    [path.join(candidateRoot, 'tooling/portable-smoke.mjs'), '--archive', archive, '--result', resultPath],
+    {
+      cwd: staging,
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: Infinity,
+      budget,
+      diagnostics: true,
+    },
+    'extracted portable smoke',
+  );
+  // A completed smoke failure can carry an uncertain nested child. Keep its
+  // archive and result as well as the smoke owner's independently retained root.
+  if (commandOutcomeUnknown(smoke) || smoke.status !== 0) retainedRoots.add(staging);
+  requireTerminalCommand(smoke, 'extracted portable smoke');
   assert.equal(smoke.status, 0, smoke.stderr);
   assert.deepEqual(JSON.parse(readFileSync(resultPath, 'utf8')), {
     schema: 'VidaAgentPortableSmoke/v1',
@@ -346,4 +351,4 @@ test('packed isolated copy executes the portable verification contract without t
     ],
     run_result: { schema: 'VidaAgentRunResult/v1', status: 'prepared', execution_status: 'suspended' },
   });
-}, 420_000);
+}, 0);

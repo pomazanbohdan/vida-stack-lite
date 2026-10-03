@@ -9,7 +9,7 @@ import { loadProjectSetContext } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { HostStateStore, WorkIdentity } from '../host-state.js';
-import { createTrustedLocalSessionComposition } from '../runtime-kernel.js';
+import { createTrustedLocalSessionComposition, requireLiveLocalSessionAdmission } from '../runtime-kernel.js';
 import { snapshotRuntimePackageSources } from './scoped-source-snapshot.js';
 
 function requireExecution(condition: unknown, message: string): asserts condition {
@@ -71,8 +71,8 @@ export function assertAdmittedRuntimeCodeCurrent(
   return { work_item: intake.work_item, native_session_handle: intake.native_session_handle };
 }
 
-/** Reconstruct a fresh opaque kernel capability from one admitted work item on each CLI call. */
-export async function openAdmittedSessionExecution(
+/** Fresh admitted data checks; no kernel construction or capability issuance. */
+export function readAdmittedSessionExecutionContext(
   repositoryRoot: string,
   store: HostStateStore,
   projectId: string,
@@ -101,6 +101,7 @@ export async function openAdmittedSessionExecution(
           .integrations_digest,
     'admitted local session configuration or project differs',
   );
+  requireLiveLocalSessionAdmission({ repositoryRoot, identity, store, nativeSessionHandle: work.lease.thread_id });
   const intake = assertAdmittedRuntimeCodeCurrent(repositoryRoot, store, identity);
   const successorBound = work.execution.assignment_attempts.some(
     (attempt) =>
@@ -113,11 +114,21 @@ export async function openAdmittedSessionExecution(
       (intake.native_session_handle === work.lease.thread_id || successorBound),
     'admitted local session work item or thread differs',
   );
+  return { identity, workItem: intake.work_item, work };
+}
+
+/** Reconstruct a fresh opaque kernel capability only for actual capability consumers. */
+export async function openAdmittedSessionExecution(
+  repositoryRoot: string,
+  store: HostStateStore,
+  projectId: string,
+  workId: string,
+) {
+  const { identity, workItem, work } = readAdmittedSessionExecutionContext(repositoryRoot, store, projectId, workId);
   const runtimeSource = () => {
     assertAdmittedRuntimeCodeCurrent(repositoryRoot, store, identity);
     return { sourceRevision: work.binding.runtime_code_digest, currentRevision: 1 };
   };
-  runtimeSource();
   const composition = await createTrustedLocalSessionComposition({
     repositoryRoot,
     repositoryId: work.binding.repository_id,
@@ -128,7 +139,7 @@ export async function openAdmittedSessionExecution(
       governanceCapability: store.governanceCapability,
       resolveWorkflowWorkItem: (requestedId) => {
         requireExecution(requestedId === workId, 'local session requested foreign work');
-        return intake.work_item;
+        return workItem;
       },
       resolveWorkExecutionContext: (request) => {
         requireExecution(request.workItem.id === workId, 'local session requested foreign work');
@@ -185,5 +196,5 @@ export async function openAdmittedSessionExecution(
     composition.workflowExecutionCapability !== null,
     'admitted local session workflow capability is unavailable',
   );
-  return { composition, workItem: intake.work_item, identity };
+  return { composition, workItem, identity };
 }

@@ -294,11 +294,46 @@ No PID/age deletion, power-loss or SQL/filesystem atomicity claim is implied.
 
 ## Self-development protocol
 
+Keep all reusable VIDA behavior host-independent. Never introduce a mandatory
+dependency on a particular machine, operating system, desktop application or
+provider for recovery, authentication, authorization, execution or assurance.
+Use portable contracts with replaceable, separately qualified boundary adapters;
+platform-specific mechanisms must not define core identity, rights or policy.
+In the human-given isolated agent environment, the trusted active session and
+controller with attributable target-specific human intent define the internal
+recovery-review boundary. Do not require external issuer, OS, Desktop or provider
+attestation for that internal route. Preserve original context, readonly scope,
+canonical reservation, current CAS and UNKNOWN/no-reissue behavior. The caller
+owns actual native invocation, observation and same-thread request/result body
+custody. Core verifies cooperative report consistency; a review grants no Source,
+owner disposition, configuration adoption or Runtime rights. Separate Source
+admission remains required. The current product contract is owned by
+`docs/system-specification.md#host-independent-recovery-review-ingress`.
+
 All subsequent native agent launches and resumes use `gpt-6-luna` for every
 role under the current human model directive. Finish an already issued native
 invocation under its original bound model; never rewrite its configuration or
 report a different model retroactively. A configured model conflict requires
 the supported typed configuration/rebind route before a new dispatch.
+
+For delivered-configuration drift, preserve desired repository bytes, local
+accepted initialization and historical work bindings as distinct identities.
+Use the recovery-control boundary before ordinary execution admission; load
+the original configuration and engine/request evidence rather than deriving old
+rights from current YAML. Disposal grants no execution, configuration adoption
+or Runtime acceptance. Preserve original snapshots, attempts, FAIL/UNKNOWN and
+owner identity, with journal/work/ledger/maintenance CAS and FIFO. An owner handle
+or caller JSON is cooperative evidence, not caller authentication. Missing
+trusted live caller authority blocks effects. Do not infer engine absence from
+Host journal absence or copy another host's operational state during delivery.
+The architecture, finite supported predicates and repair/adoption/retention GAPs
+are owned by `docs/system-specification.md#recovery-across-delivered-configuration`.
+Artifact repair must be shipped before changing an active strict operation;
+same-attempt correction needs its own current execution authority. Standing
+human authoring permission remains valid within its accepted scope; apply the
+required review and fresh ownership gates without asking the same permission
+again. Human-authorized app reports do not substitute for native issuance,
+Source rights or Runtime acceptance; reconcile uncertain sends before retrying.
 
 Immediately save research results, accepted decisions and discussion outcomes
 in the corresponding current product or project document. Separate verified
@@ -310,11 +345,12 @@ The agent product architecture is owned by `docs/system-specification.md` in
 the source package. This protocol owns execution policy, not a second product
 architecture specification.
 
-When developer unblocking and migration are active together, prioritize verified
-developer unblocking, then project migration to the actual runtime, then
-optimization, then new functionality. Preserve the current acceptance and
-authorization boundaries; preparation or source smoke does not imply installed
-readiness or Runtime acceptance.
+Select dependency-ready self-development work by one prior qualitative estimate
+of the largest workflow, execution-step and token benefit. Shared developer
+unblocking takes priority; respect installation dependencies before migration
+or new functionality. Freeze one whole dependency-ready engineering outcome.
+Subfixes, tests and reports are not separate completed tasks. Preserve acceptance
+and authorization boundaries; Source smoke does not imply installed readiness.
 
 When changing the agent runtime, load the project sidecar, this section,
 `TESTING.md` and the focused instruction before planning or editing. Reuse a
@@ -326,24 +362,47 @@ The main optimization target is fewer agent execution steps without loss of
 required quality. Remove repeated discovery, handoffs, state writes and test
 runs, while preserving each authorization, CAS boundary, failure state, review
 and evidence class. Batch mechanical host operations only when the same checks
-and recoverability remain observable. Run focused tests while editing and the
-full assurance wave after the payload is stable. Do not claim a measured
-reduction without a comparable baseline.
+and recoverability remain observable. Run focused affected checks while editing
+and run the full applicable current task suite once after its corrections are
+complete. Reuse that current evidence in the mandatory installation assurance
+wave; do not repeat the full suite after each subfix.
+Do not add a full candidate cycle solely to score an individual outcome or
+interrupt a long check already running. Reuse accepted evidence only while its
+inputs remain current; changed inputs invalidate their affected proof.
 
-Test-speed changes must reduce comparable end-to-end wall time while retaining
-the same checks and verification semantics. Compare the same tool versions,
-resources and cold/warm conditions; report resource, cache and load variance
-that limits the comparison. Increased timeouts, skipped checks or weakened
-verification do not count as gains. Report measured and estimated savings
-separately. Continue only while the next safe expected end-to-end saving is at
-least 5%; stop below that threshold.
+Select exact affected test files/cases and direct callers during development,
+including configuration/schema/filesystem/subprocess dependencies outside static
+import graphs. Reuse current build outputs and immutable prepared fixtures while
+their inputs remain unchanged; mutable consumer state and required live integrity
+checks remain separate. The launcher and ordinary test phases have no implicit
+total-duration limit. Explicit caller/host deadlines and operation-specific case,
+probe, install and cleanup/report bounds remain binding; malformed input rejects
+before effects. An unbounded command does not serialize Infinity into a native
+timeout or deadline metadata. A removed limit is not measured speed improvement.
 
-Measure short-command and control-return latency; target less than two seconds,
-and investigate and optimize overruns. Start long tests, builds and installs
-asynchronously and return control early. Report actual end-to-end duration
-separately: an early yield is not faster execution. Reuse verified dependencies,
-warm caches and exact deltas without skipping or weakening checks or forcing
-timeouts. Record a tool's unavoidable minimum-latency exception explicitly.
+Use the prior estimate only to rank ready work. Do not create a separate achieved-
+savings, ROI, benchmark, token-accounting or repeated optimization-scoring lane,
+including OPT19. Estimated benefit is never measured evidence. Preserve every
+functional, security, data and mandatory numeric quality gate; increased
+timeouts, skipped checks and weakened verification do not establish improvement.
+
+After each whole verified engineering outcome, update the authorized local
+system agent without changing its current semantic version. Use the supported
+same-version preparation route, one returned operation and its exact qualified
+Source/archive payload. Version equality is not byte identity. An unfinished
+operation or uncertain installation retains its identity and effects; reconcile
+before retry. Required current checks, successful-formation Source Git order,
+three fresh blind reviews, reverse validation, CLEAR, installation and installed
+postchecks remain mandatory. Pause dependent next-batch effects until that
+checkpoint succeeds. Keep the separately authorized final release/native goal;
+an intermediate update grants neither registry publication nor Runtime acceptance.
+
+Target short-command and control return below two seconds; retain existing
+elapsed/failure diagnostics without a separate optimization measurement lane.
+Start long tests, builds and installs asynchronously and return control early;
+an early yield is not faster execution. Reuse verified dependencies, warm caches
+and exact deltas without weakening checks or forcing timeouts. Record an actual
+tool minimum-latency exception when it applies.
 
 Agents do not calculate, copy, paste, request or enumerate hashes as manual
 work steps in prompts, work records, reviews or routine handoffs. Pass the
@@ -377,7 +436,7 @@ behavioral regression. Reuse existing framework primitives; an architectural
 fix does not require new abstractions. Reduce agent execution steps, commands
 and handoffs, streamline existing commands and keep outputs compact and
 actionable while preserving authorization, recovery and evidence semantics.
-Report measured execution latency separately from estimates; fewer steps or
+Existing execution diagnostics remain separate from estimates; fewer steps or
 larger timeouts alone prove no speed improvement. References inform mechanics;
 current approved local contracts retain authority. An inaccessible relevant
 source is an explicit research GAP, never fabricated support.

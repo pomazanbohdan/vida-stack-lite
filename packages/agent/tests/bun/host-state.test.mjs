@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -27,6 +27,11 @@ import { acquireLocalSourceWriterLease } from '../../src/orchestration/local-wor
 import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
 import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
+import { MastraSessionBridge, sessionBridgeRunId } from '../../src/orchestration/mastra-session-bridge.ts';
+import {
+  MastraSessionLedger,
+  openConfiguredMastraSessionLedger,
+} from '../../src/orchestration/persistent-session-handoff.ts';
 import {
   computeEdictumWorkflowApprovalEvidenceDigest,
   createHostOperationReservationStore,
@@ -43,6 +48,7 @@ const identity = {
 let root, databasePath, database, store;
 const handles = [];
 const children = [];
+const producerRoots = [];
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 test('trusted host source entrypoint exposes host state without a test issuer', () => {
@@ -50,6 +56,27 @@ test('trusted host source entrypoint exposes host state without a test issuer', 
   expect(trustedHostSurface.openHostStateDatabase).toBe(openHostStateDatabase);
   expect(typeof trustedHostSurface.createTrustedHostComposition).toBe('function');
   expect('createTestTrustedHostLauncherCapability' in trustedHostSurface).toBe(false);
+});
+
+test('recovery namespace denies generic issuance, settlement and copied handles', () => {
+  const operation = {
+    schema: 'OperationReservation/v1',
+    store_id: 'vida-recovery-reviews',
+    operation_key: 'a'.repeat(64),
+    request_digest: 'b'.repeat(64),
+    revision: 1,
+    fencing_token: randomUUID(),
+    status: 'reserved',
+    created_at: new Date().toISOString(),
+  };
+  expect(() => store.reserveOperation(operation.store_id, operation.operation_key, operation.request_digest)).toThrow(
+    /protected/,
+  );
+  expect(() => store.transitionOperation(operation, 'commit_unknown')).toThrow(/protected/);
+  expect(() => store.inspectRecoveryReview({ operation })).toThrow(/foreign/);
+  expect(() => store.beginRecoveryReview({ operation })).toThrow(/foreign/);
+  expect(() => store.completeRecoveryReview({ operation }, { status: 'PASS' })).toThrow(/foreign/);
+  expect(database.query('SELECT * FROM agent_host_governance').all()).toEqual([]);
 });
 test('Codex Desktop adapter contract binds identity, digests, opaque host capability and service closure', () => {
   const contract = {
@@ -325,6 +352,13 @@ test('successor admission atomically releases predecessor rights and rejects cha
   expect(admitted.work.request_transition.predecessor_work_ids).toEqual(['work']);
   expect(admitted.ledger.claims.find((claim) => claim.work_id === 'work').status).toBe('released');
   expect(store.admitSuccessorWork(request)).toEqual(admitted);
+  expect(() =>
+    store.admitSuccessorWork({
+      ...request,
+      nextWork: { ...request.nextWork, execution: { ...request.nextWork.execution, run_id: 'another-base-attempt' } },
+    }),
+  ).toThrow(/retry differs/);
+  expect(store.readHostStateSnapshot({ ...identity, work_id: 'successor' })).toEqual(admitted);
   expect(() => store.admitSuccessorWork({ ...request, requestPointer: 'user:changed' })).toThrow(/retry differs/);
   expect(
     JSON.parse(
@@ -518,7 +552,7 @@ function includeExistingLedger(input, existing) {
   return input;
 }
 function quiescentJournal(workId = 'work', runId = 'run-work') {
-  return {
+  const journal = {
     version: { revision: 1, digest: '9'.repeat(64) },
     resume_status: 'complete',
     state: {
@@ -533,6 +567,26 @@ function quiescentJournal(workId = 'work', runId = 'run-work') {
       completed: [],
     },
   };
+  persistJournalFixture(journal);
+  return journal;
+}
+function persistJournalFixture(journal) {
+  journal.version.digest = canonicalJsonDigest(journal.state);
+  database.exec(
+    'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt))',
+  );
+  database
+    .query(
+      'INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?) ON CONFLICT(workspace_id,work_id,attempt) DO UPDATE SET revision=excluded.revision,payload=excluded.payload,digest=excluded.digest',
+    )
+    .run(
+      workspace,
+      journal.state.work_id,
+      journal.state.attempt,
+      journal.version.revision,
+      canonicalJson(journal.state),
+      journal.version.digest,
+    );
 }
 function ownerRecoveryPreviewJournal() {
   const journal = quiescentJournal();
@@ -560,7 +614,11 @@ function ownerRecoveryPreviewJournal() {
   ];
   return journal;
 }
-function ownerRecoveryPreviewRequest(initial, journal = ownerRecoveryPreviewJournal()) {
+function ownerRecoveryPreviewRequest(initial, journal) {
+  if (journal === undefined) {
+    journal = ownerRecoveryPreviewJournal();
+    persistJournalFixture(journal);
+  }
   return {
     store,
     identity: { ...identity },
@@ -669,6 +727,7 @@ test('owner recovery preview: current terminal actor does not turn original read
   const journal = ownerRecoveryPreviewJournal();
   journal.resume_status = 'issued_outcome_uncertain';
   journal.state.items[0].issue_id = 'original-unknown-readonly';
+  journal.version.digest = canonicalJsonDigest(journal.state);
   // SuspensionInput has no configured-rights/terminal-actor verifier. A role name cannot authorize release.
   const original = clone(journal);
   ownerRecoveryPreviewExpired(() =>
@@ -901,10 +960,389 @@ afterEach(async () => {
   identity.integrations_digest = 'e'.repeat(64);
   for (const child of children.splice(0)) if (child.exitCode === null) child.kill();
   for (const handle of handles.splice(0)) handle.close();
+  for (const fixtureRoot of producerRoots.splice(0)) {
+    if (
+      path.dirname(fixtureRoot) !== path.resolve(tmpdir()) ||
+      !path.basename(fixtureRoot).startsWith('vida-producer-')
+    )
+      throw new Error('unsafe producer fixture cleanup');
+    try {
+      await rm(fixtureRoot, { recursive: true, force: true });
+    } catch (error) {
+      if (error.code !== 'EBUSY') throw error;
+      console.error('Closed producer fixture retained (OS EBUSY): ' + fixtureRoot);
+    }
+  }
   const relative = path.relative(path.resolve(tmpdir()), path.resolve(root));
   if (!relative.startsWith('host-state-') || relative.includes(path.sep)) throw new Error('unsafe scratch cleanup');
   await rm(root, { recursive: true, force: true });
 });
+
+function producerFixture(name = 'producer') {
+  const repositoryRoot = mkdtempSync(path.join(tmpdir(), 'vida-producer-' + name + '-'));
+  producerRoots.push(repositoryRoot);
+  writeFileSync(
+    path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'),
+    readFileSync(path.join(bundleRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
+      .replaceAll('{{REPOSITORY}}', 'producer-repository')
+      .replaceAll('{{PROJECT}}', 'project')
+      .replaceAll('{{BUNDLE}}', 'vida-agent'),
+  );
+  writeFileSync(path.join(repositoryRoot, 'AGENTS.md'), 'Fixture policy');
+  writeFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'), 'Fixture source map');
+  mkdirSync(path.join(repositoryRoot, 'docs/agent-instructions'), { recursive: true });
+  writeFileSync(path.join(repositoryRoot, 'docs/agent-instructions/documentation-policy.v1.json'), '{}');
+  const config = loadRuntimeConfig(repositoryRoot),
+    ledger = openConfiguredMastraSessionLedger(repositoryRoot);
+  handles.push(ledger.sessionProducerBinding().database);
+  const args = {
+    repositoryRoot,
+    config,
+    ledger,
+    projectIds: ['project'],
+    selection: {
+      team: 'default-development',
+      kind: 'task',
+      intent: 'task_execution',
+      project: 'project',
+      risk_flags: [],
+      labels: [],
+    },
+    context: { work_id: 'producer', attempt: 1, scope_digest: 'c'.repeat(64) },
+    workflowId: 'task_execution',
+    workspaceId: deriveWorkspaceId(config.repository.repository_id, repositoryRoot),
+  };
+  const rows = () =>
+    ledger
+      .sessionProducerBinding()
+      .database.query(
+        "SELECT revision,payload FROM agent_host_governance WHERE store_id='vida-session-producers' AND kind='operation'",
+      )
+      .all();
+  const { ledger: _ledger, workspaceId: _workspaceId, ...input } = args;
+  return {
+    args,
+    input,
+    ledger,
+    rows,
+    enginePath: path.join(repositoryRoot, config.control.work_root, 'mastra-workflows.v1.sqlite'),
+  };
+}
+
+test('session producer requires the actual configured ledger before any engine effect', async () => {
+  const f = producerFixture();
+  for (const ledger of [undefined, {}, Object.create(MastraSessionLedger.prototype)]) {
+    await expect(MastraSessionBridge.open({ ...f.args, ledger })).rejects.toThrow();
+    expect(existsSync(f.enginePath)).toBe(false);
+    expect(f.rows()).toHaveLength(0);
+  }
+  for (const projectIds of [[], ['foreign'], ['project', 'project']]) {
+    await expect(MastraSessionBridge.open({ ...f.args, projectIds })).rejects.toThrow();
+    expect(existsSync(f.enginePath)).toBe(false);
+    expect(f.rows()).toHaveLength(0);
+  }
+  expect(() => f.ledger.hostState.reserveOperation('vida-session-producers', 'forged', 'a'.repeat(64))).toThrow(
+    /protected/,
+  );
+  expect(() =>
+    f.ledger.hostState.beginSessionProducer(f.ledger, {
+      ...f.input,
+      phase: 'start',
+      runId: 'foreign',
+      expectedWork: null,
+      expectedLedger: null,
+      expectedJournal: null,
+      maintenanceGeneration: 0,
+    }),
+  ).toThrow(/run differs/);
+  expect(f.rows()).toHaveLength(0);
+  expect(existsSync(f.enginePath)).toBe(false);
+});
+
+test('session producer acquisition rejects stale CAS, maintenance and selection without reservation', async () => {
+  const f = producerFixture();
+  const input = {
+    ...f.input,
+    phase: 'start',
+    runId: sessionBridgeRunId(f.args.workspaceId, f.args.context, f.args.workflowId),
+    expectedWork: null,
+    expectedLedger: null,
+    expectedJournal: null,
+    maintenanceGeneration: 0,
+  };
+  for (const change of [
+    { expectedWork: { revision: 1, digest: 'a'.repeat(64) } },
+    { expectedLedger: { revision: 1, digest: 'a'.repeat(64) } },
+    { expectedJournal: { revision: 1, digest: 'a'.repeat(64) } },
+    { maintenanceGeneration: 1 },
+    { selection: { ...input.selection, project: 'foreign' } },
+    { workflowId: 'implementation_change' },
+  ]) {
+    expect(() => f.ledger.hostState.beginSessionProducer(f.ledger, { ...input, ...change })).toThrow();
+    expect(f.rows()).toHaveLength(0);
+    expect(existsSync(f.enginePath)).toBe(false);
+  }
+  const yamlPath = path.join(f.args.repositoryRoot, 'agent-runtime.config.v1.yaml');
+  const yaml = readFileSync(yamlPath, 'utf8');
+  writeFileSync(yamlPath, yaml.replace('config_revision: 1', 'config_revision: 2'));
+  expect(() => f.ledger.hostState.beginSessionProducer(f.ledger, input)).toThrow(/configuration changed/);
+  expect(f.rows()).toHaveLength(0);
+  expect(existsSync(f.enginePath)).toBe(false);
+});
+
+test(
+  'session producer settles real engine and journal and rejects invalid resume before reservation',
+  { timeout: 30_000 },
+  async () => {
+    const f = producerFixture();
+    const bridge = await MastraSessionBridge.open(f.args);
+    try {
+      const first = await bridge.start();
+      let journal = f.ledger.resume('producer', 1);
+      expect(journal.state.run_id).toBe(first.run_id);
+      expect(journal.state.items.map((item) => item.request)).toEqual(first.requests);
+      expect(f.rows().every((row) => row.revision === 3 && JSON.parse(row.payload).status === 'applied')).toBe(true);
+      const before = f.rows();
+      await expect(bridge.start()).rejects.toThrow(/already exists/);
+      await expect(bridge.resume('wave-foreign', [])).rejects.toThrow(/resume intent/);
+      await expect(bridge.resume(first.step_id, [])).rejects.toThrow(/resume intent/);
+      expect(f.rows()).toEqual(before);
+      journal = f.ledger.issueWave('producer', 1, journal.version);
+      for (const item of journal.state.items) {
+        const summary = 'Actual local fixture observation';
+        journal = f.ledger.report('producer', 1, journal.version, {
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          agent_id: 'fixture',
+          tool_call_ref: 'local:producer/observation',
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['local://fixture/observation'],
+        });
+      }
+      const observations = journal.state.items.map((item) => item.observation);
+      await expect(
+        bridge.resume(
+          first.step_id,
+          observations.map((item) => ({ ...item, agent_id: 'foreign' })),
+        ),
+      ).rejects.toThrow(/resume intent/);
+      expect(f.rows()).toEqual(before);
+      const next = await bridge.resume(first.step_id, observations);
+      expect(next.step_id).not.toBe(first.step_id);
+      expect(f.ledger.resume('producer', 1).state.completed[0].items.map((item) => item.observation)).toEqual(
+        observations,
+      );
+      expect(f.rows().every((row) => row.revision === 3 && JSON.parse(row.payload).status === 'applied')).toBe(true);
+    } finally {
+      await bridge.close();
+    }
+  },
+);
+
+test(
+  'session producer handle and UNKNOWN fence survive close and exclude journal and maintenance writers',
+  { timeout: 30_000 },
+  async () => {
+    const f = producerFixture(),
+      bridge = await MastraSessionBridge.open(f.args);
+    await bridge.start();
+    const journal = f.ledger.resume('producer', 1);
+    const handle = f.ledger.beginSessionProducer({
+      ...f.input,
+      phase: 'initialize',
+      runId: sessionBridgeRunId(f.args.workspaceId, f.args.context, f.args.workflowId),
+    });
+    expect(() => f.ledger.hostState.assertSessionProducerCurrent({ ...handle })).toThrow(/foreign/);
+    expect(() => f.ledger.issueWave('producer', 1, journal.version)).toThrow(/producer is pending or unknown/);
+    const bound = f.ledger.sessionProducerBinding();
+    const maintenance = new HostStateStore(
+      bound.database,
+      f.args.workspaceId,
+      undefined,
+      undefined,
+      undefined,
+      maintenanceVerifier,
+      f.args.repositoryRoot,
+    );
+    expect(() => maintenance.acquireMaintenanceFence(maintenanceBinding())).toThrow(/producer is pending or unknown/);
+    expect(() => maintenance.reserveOperation('another-store', 'new-operation', 'a'.repeat(64))).toThrow(
+      /producer is pending or unknown/,
+    );
+    expect(() => f.ledger.hostState.transitionOperation(handle.operation, 'applied')).toThrow(/protected/);
+    const before = f.rows();
+    expect(() =>
+      f.ledger.hostState.settleSessionProducer(handle, { ...journal.version, revision: journal.version.revision + 1 }),
+    ).toThrow(/compare-and-swap/);
+    expect(f.rows()).toEqual(before);
+    await bridge.close();
+    await expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/producer is pending or unknown/);
+    expect(f.rows()).toEqual(before);
+    expect(JSON.parse(before.at(-1).payload).status).toBe('commit_unknown');
+    f.ledger.hostState.settleSessionProducer(handle, journal.version);
+    expect(() => f.ledger.hostState.settleSessionProducer(handle, journal.version)).toThrow(/foreign/);
+    expect(f.rows().every((row) => row.revision === 3 && JSON.parse(row.payload).status === 'applied')).toBe(true);
+  },
+);
+
+test(
+  'session producer readonly frontier rejects substituted execution paths before acquisition',
+  { timeout: 30_000 },
+  async () => {
+    const f = producerFixture(),
+      bridge = await MastraSessionBridge.open(f.args);
+    try {
+      const engine = await bridge.start(),
+        before = f.rows();
+      const persisted = new Database(f.enginePath, { strict: true });
+      try {
+        const original = persisted
+          .query('SELECT snapshot,json(snapshot) AS parsed FROM mastra_workflow_snapshot WHERE run_id=?')
+          .get(engine.run_id);
+        for (const executionPath of [[-1], [999], [0, 0]]) {
+          const substituted = JSON.parse(original.parsed);
+          substituted.suspendedPaths[engine.step_id] = executionPath;
+          persisted
+            .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+            .run(JSON.stringify(substituted), engine.run_id);
+          await expect(bridge.snapshot()).rejects.toThrow(/execution path|suspended path/);
+          await expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/execution path|suspended path/);
+          expect(f.rows()).toEqual(before);
+        }
+        persisted
+          .query('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
+          .run(original.snapshot, engine.run_id);
+        expect(await bridge.snapshot()).toEqual(engine);
+      } finally {
+        persisted.close();
+      }
+    } finally {
+      await bridge.close();
+    }
+  },
+);
+
+for (const phase of ['before-init', 'before-start', 'before-resume', 'before-journal', 'before-settle']) {
+  test('session producer process termination retains UNKNOWN at ' + phase, { timeout: 30_000 }, async () => {
+    const f = producerFixture(phase),
+      marker = path.join(f.args.repositoryRoot, 'producer-barrier');
+    const script = path.join(f.args.repositoryRoot, 'producer-child.mjs');
+    const source = (relative) => JSON.stringify(new URL(relative, import.meta.url).href);
+    writeFileSync(
+      script,
+      `
+      import {writeFileSync} from 'node:fs';
+      import {LibSQLStore} from ${JSON.stringify(new URL('../../node_modules/@mastra/libsql/dist/index.js', import.meta.url).href)};
+      import {HostStateStore} from ${source('../../src/host-state.ts')};
+      import {loadRuntimeConfig} from ${source('../../src/config/runtime-config.ts')};
+      import {canonicalJsonDigest} from ${source('../../src/contracts/public-ingress.ts')};
+      import {openConfiguredMastraSessionLedger, MastraSessionLedger} from ${source('../../src/orchestration/persistent-session-handoff.ts')};
+      import {MastraSessionBridge} from ${source('../../src/orchestration/mastra-session-bridge.ts')};
+      const args = ${JSON.stringify({ ...f.input, workspaceId: f.args.workspaceId })};
+      args.config = loadRuntimeConfig(args.repositoryRoot);
+      args.ledger = openConfiguredMastraSessionLedger(args.repositoryRoot);
+      const pause = () => {writeFileSync(${JSON.stringify(marker)}, 'actual protected producer reached'); Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);};
+      const phase = ${JSON.stringify(phase)};
+      if (phase === 'before-init') LibSQLStore.prototype.init = async function() {pause();};
+      const bridge = await MastraSessionBridge.open(args);
+      if (phase === 'before-start' || phase === 'before-resume') {
+        const actual = HostStateStore.prototype.assertSessionProducerCurrent;
+        HostStateStore.prototype.assertSessionProducerCurrent = function(handle) {
+          actual.call(this, handle);
+          const count = args.ledger.sessionProducerBinding().database.query("SELECT COUNT(*) AS count FROM agent_host_governance WHERE store_id='vida-session-producers' AND kind='operation'").get().count;
+          if (count === (phase === 'before-start' ? 2 : 3)) pause();
+        };
+      }
+      if (phase === 'before-journal') MastraSessionLedger.prototype.syncFromSessionProducer = function() {pause();};
+      if (phase === 'before-settle') HostStateStore.prototype.settleSessionProducer = function() {pause();};
+      const engine = await bridge.start();
+      if (phase === 'before-resume') {
+        let journal = args.ledger.resume('producer', 1);
+        journal = args.ledger.issueWave('producer', 1, journal.version);
+        for (const item of journal.state.items) {
+          const summary = 'Actual child fixture observation';
+          journal = args.ledger.report('producer', 1, journal.version, {schema: 'VidaSessionObservation/v1', action_id: item.request.action_id,
+            issue_id: item.issue_id, agent_id: 'child', tool_call_ref: 'local:producer/child', status: 'reported_complete', summary,
+            output_digest: canonicalJsonDigest(summary), evidence_refs: ['local://fixture/child']});
+        }
+        await bridge.resume(engine.step_id, journal.state.items.map(item => item.observation));
+      }
+      throw new Error('Producer did not reach its actual barrier');
+    `,
+    );
+    const child = spawn(process.execPath, ['--no-env-file', '--no-install', script], {
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let output = '',
+      terminal = false;
+    child.stdout.on('data', (chunk) => {
+      output += chunk;
+    });
+    child.stderr.on('data', (chunk) => {
+      output += chunk;
+    });
+    const exited = new Promise((resolve, reject) => {
+      child.once('error', reject);
+      child.once('exit', (code, signal) => {
+        terminal = true;
+        resolve({ code, signal });
+      });
+    });
+    try {
+      const deadline = Date.now() + 12_000;
+      while (!existsSync(marker) && !terminal && Date.now() < deadline)
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      expect(existsSync(marker), output).toBe(true);
+      const retained = f.rows();
+      expect(JSON.parse(retained.at(-1).payload).status).toBe('commit_unknown');
+      await expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/producer is pending or unknown/);
+      const journal = f.ledger.resume('producer', 1);
+      if (journal?.state.step_id)
+        expect(() => f.ledger.issueWave('producer', 1, journal.version)).toThrow(/producer is pending or unknown/);
+      const bound = f.ledger.sessionProducerBinding();
+      const maintenance = new HostStateStore(
+        bound.database,
+        f.args.workspaceId,
+        undefined,
+        undefined,
+        undefined,
+        maintenanceVerifier,
+        f.args.repositoryRoot,
+      );
+      expect(() => maintenance.acquireMaintenanceFence(maintenanceBinding())).toThrow(/producer is pending or unknown/);
+      expect(f.rows()).toEqual(retained);
+      child.kill();
+      await exited;
+      expect(terminal).toBe(true);
+      const restarted = openConfiguredMastraSessionLedger(f.args.repositoryRoot);
+      handles.push(restarted.sessionProducerBinding().database);
+      await expect(MastraSessionBridge.open({ ...f.args, ledger: restarted })).rejects.toThrow(
+        /producer is pending or unknown/,
+      );
+      expect(f.rows()).toEqual(retained);
+      if (phase === 'before-journal') {
+        expect(existsSync(f.enginePath)).toBe(true);
+        expect(restarted.resume('producer', 1)).toBeNull();
+      }
+      if (phase === 'before-settle') expect(restarted.resume('producer', 1).state.step_id).toBe('wave-0');
+      expect(() =>
+        restarted.hostState.assertSessionProducerCurrent({ operation: JSON.parse(retained.at(-1).payload) }),
+      ).toThrow(/foreign/);
+    } finally {
+      if (!terminal) {
+        child.kill();
+        await exited;
+      }
+      if (!terminal) {
+        producerRoots.splice(producerRoots.indexOf(f.args.repositoryRoot), 1);
+        throw new Error('Producer child outcome unknown; fixture retained: ' + f.args.repositoryRoot);
+      }
+    }
+  });
+}
 
 test('ten quiescent pre-delivery same-thread follow-ups release only their own claims', () => {
   store.compareAndSwapHostState(fixture());
@@ -966,6 +1404,7 @@ test('same-thread suspension denies foreign owner and uncertain native issue', (
   const uncertain = quiescentJournal();
   uncertain.resume_status = 'issued_outcome_uncertain';
   uncertain.state.items = [{ issue_id: 'issued', observation: null }];
+  uncertain.version.digest = canonicalJsonDigest(uncertain.state);
   expect(() => suspendLocalWork({ ...request, nativeSessionHandle: 'thread', journal: uncertain })).toThrow(
     /issued|uncertain|quiescent/,
   );
@@ -1246,6 +1685,47 @@ test('consumer migration rejects foreign canonical rows appearing after its base
 });
 
 describe('host-owned durable maintenance fence', () => {
+  test('trusted acquisition verifier runs under the same immediate lock and rejection writes no fence', () => {
+    const competing = new Database(databasePath, { strict: true });
+    handles.push(competing);
+    const other = maintenanceStore(competing);
+    let observations = 0;
+    const verifier = {
+      ...maintenanceVerifier,
+      verifyAcquisition: () => {
+        observations++;
+        expect(database.inTransaction).toBe(true);
+        expect(() => other.reserveOperation('race', operationKey, requestDigest)).toThrow(/locked|busy/i);
+        throw Error('frozen global state changed');
+      },
+    };
+    const checked = new HostStateStore(database, workspace, undefined, undefined, undefined, verifier);
+    expect(() => checked.acquireMaintenanceFenceWithRecordedToken(maintenanceBinding(), randomUUID())).toThrow(
+      'frozen global state changed',
+    );
+    expect(observations).toBe(1);
+    expect(checked.readMaintenanceFence()).toBeNull();
+    expect(database.query('SELECT count(*) AS count FROM agent_host_governance').get().count).toBe(0);
+  });
+  test('maintenance acquisition rejects asynchronous or boolean owner checks before fence effects', () => {
+    expect(
+      () =>
+        new HostStateStore(database, workspace, undefined, undefined, undefined, {
+          ...maintenanceVerifier,
+          verifyAcquisition: async () => undefined,
+        }),
+    ).toThrow('verifier invalid');
+    for (const verifyAcquisition of [() => true, () => Promise.resolve()]) {
+      const checked = new HostStateStore(database, workspace, undefined, undefined, undefined, {
+        ...maintenanceVerifier,
+        verifyAcquisition,
+      });
+      expect(() => checked.acquireMaintenanceFenceWithRecordedToken(maintenanceBinding(), randomUUID())).toThrow(
+        'must be synchronous',
+      );
+      expect(checked.readMaintenanceFence()).toBeNull();
+    }
+  });
   const seedQuiescentWork = (id, projectIds, workspaceId = workspace, repositoryId = 'project-repository') => {
     const work = fixture(id).nextWork;
     work.workspace_id = workspaceId;
@@ -5124,6 +5604,7 @@ test('completed readonly owner release closes an expired exact lease without pha
       request: { action_id: 'completed-readonly-action' },
     },
   ];
+  persistJournalFixture(journal);
   const request = {
     store,
     identity: { ...identity },
@@ -5161,6 +5642,7 @@ test('completed readonly owner release denies missing, reserved, failed and fore
   journal.state.items = [
     { issue_id: 'issued', observation: { status: 'reported_complete' }, request: { action_id: 'readonly' } },
   ];
+  persistJournalFixture(journal);
   const request = {
     store,
     identity: { ...identity },
@@ -5201,6 +5683,7 @@ test('completed readonly owner release denies stale CAS and a newer queued confl
   journal.state.items = [
     { issue_id: 'issued', observation: { status: 'reported_complete' }, request: { action_id: 'readonly' } },
   ];
+  persistJournalFixture(journal);
   const request = {
     store,
     identity: { ...identity },
@@ -5269,7 +5752,10 @@ const sourceLeaseConfig = {
       writer: { mutation_scope: 'repository_source', tools_policy: 'write', egress_policy: 'none' },
       readonly: { mutation_scope: 'none', tools_policy: 'read_only', egress_policy: 'none' },
     },
-    tool_policies: { write: { source_write: true }, read_only: { source_write: false } },
+    tool_policies: {
+      write: { source_write: true },
+      read_only: { source_write: false, allowed_tools: ['runtime.read', 'source.read', 'docs.read'] },
+    },
     egress_policies: { none: { allowed_hosts: [] } },
   },
 };
@@ -5413,14 +5899,32 @@ async function unknownReadonlyFixture(resourceFree = false, config = sourceLease
   journal.state.items[0].request.config_digest = initial.work.binding.config_digest;
   journal.state.items[0].request.scope_digest = prepared.source.digest;
   journal.version = { revision: 1, digest: canonicalJsonDigest(journal.state) };
-  database.exec(
-    'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt))',
-  );
-  database
-    .query('INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?)')
-    .run(workspace, 'work', 1, 1, canonicalJson(journal.state), journal.version.digest);
+  persistJournalFixture(journal);
   return { initial, journal, request: { ...ownerRecoveryPreviewRequest(initial, journal), config } };
 }
+
+test.each(['reported_complete', 'reported_failed'])(
+  'journal-backed suspension refuses concurrently changed %s evidence before releasing ownership',
+  async (status) => {
+    const { initial, journal, request } = await unknownReadonlyFixture();
+    journal.resume_status = 'complete';
+    journal.state.items[0].observation = { status };
+    journal.version = { revision: 2, digest: canonicalJsonDigest(journal.state) };
+    database
+      .query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=?')
+      .run(2, canonicalJson(journal.state), journal.version.digest);
+    const stale = clone(journal);
+    journal.state.items[0].observation.summary = 'Concurrent terminal evidence';
+    database
+      .query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=?')
+      .run(3, canonicalJson(journal.state), canonicalJsonDigest(journal.state));
+    const beforeRow = database.query('SELECT * FROM agent_host_mastra_session_ledger').get();
+    const suspend = status === 'reported_complete' ? suspendCompletedReadOnlyWork : suspendLocalWork;
+    expect(() => suspend({ ...request, config: undefined, journal: stale })).toThrow('session journal CAS changed');
+    expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+    expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').get()).toEqual(beforeRow);
+  },
+);
 test('issued readonly release: expired exact owner retires claims and preserves unknown journal bytes', async () => {
   const { initial, journal, request } = await unknownReadonlyFixture();
   const row = database.query('SELECT * FROM agent_host_mastra_session_ledger').get();
@@ -5475,6 +5979,7 @@ test('issued readonly release: configured source-writing or egress rights remain
   const writingJournal = clone(journal);
   writingJournal.state.items[0].request.stage_id = 'develop_fix';
   writingJournal.state.items[0].request.role = 'developer';
+  writingJournal.version.digest = canonicalJsonDigest(writingJournal.state);
   ownerRecoveryPreviewExpired(() =>
     expect(() => suspendLocalWork({ ...request, journal: writingJournal })).toThrow('uncertain'),
   );

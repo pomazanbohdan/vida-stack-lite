@@ -7,7 +7,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject } from 'ajv';
 import { parseDocument } from 'yaml';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './safe-repository-access.js';
-import { canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
+import { canonicalJson, canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
 import researchResultSchema from '../../schemas/research-result.v1.schema.json' with { type: 'json' };
 import researchSynthesisSchema from '../../schemas/research-synthesis.v1.schema.json' with { type: 'json' };
 
@@ -1448,6 +1448,7 @@ interface CachedConfig {
 const configCache = new Map<string, CachedConfig>();
 const authorizedRuntimeConfigs = new WeakSet<object>();
 const authorizedRuntimeConfigRoots = new WeakMap<object, string>();
+const loadedConfigDigests = new WeakMap<object, string>();
 
 export function assertLoadedRuntimeConfig(config: AgentRuntimeConfig, repositoryRoot?: string): void {
   assertCondition(authorizedRuntimeConfigs.has(config), 'runtime config must come from loadRuntimeConfig');
@@ -1481,7 +1482,14 @@ export function loadRuntimeConfig(repositoryRoot: string): AgentRuntimeConfig {
 }
 
 export function runtimeConfigDigest(config: AgentRuntimeConfig): string {
-  return canonicalJsonDigest(config);
+  if (!authorizedRuntimeConfigs.has(config)) return canonicalJsonDigest(config);
+  // Loaded records have null prototypes; their frozen arrays retain this live hook check.
+  canonicalJson([]);
+  const existing = loadedConfigDigests.get(config);
+  if (existing !== undefined) return existing;
+  const digest = canonicalJsonDigest(config);
+  loadedConfigDigests.set(config, digest);
+  return digest;
 }
 
 export function resolveAgentRoleProfile(repositoryRoot: string, profileId: string): AgentRoleProfile {

@@ -242,6 +242,24 @@ phase-specific evidence. Unknown fields and other schema identities are
 rejected. Removing scratch output preserves uncertain effects in the durable
 per-operation journal and cannot authorize replay.
 
+The explicit repository-owned same-version system-update preparation preserves
+the current successful manifest version and manifest bytes, allocating a distinct
+operation after a completed update. The normal release allocator still advances
+the next patch. Both use the same immediate admission exclusion and strict
+current-v1 release state; no extra artifact field or alternate ledger selects the
+mode. Same-version preflight validates successful pointer/journal identity,
+version and successful status before allocator metadata effects. Pending pointer
+and journal identities/versions must match, while their statuses may differ.
+An unfinished matching update returns its actual journal status/install_started
+without rewriting either record. An outstanding patch, missing/mismatched
+baseline or unsupported manifest rejects without rewriting those artifacts.
+The sole reconciliation exception is an exact completed pending installation:
+existing archive and installed-tree proof must match before repairing its success
+pointer; the baseline is re-read and validated before new allocation. SQLite
+writer exclusion does not make the separate filesystem saves atomic. Preparation
+metadata is not installed proof; version equality never replaces exact payload,
+archive, operation, current assurance or installed postchecks.
+
 Candidate preparation settles version and ownership before assurance. Applicable
 actual test outcomes bind their relevant executable inputs, allowing reuse when
 those inputs remain current. Each final target payload is formed once and
@@ -427,6 +445,227 @@ acceptance or continuation. Preserve the original journal, issue, handle,
 observations and unknown outcome. Replacement, admission and writer acquisition
 still require fresh source bindings. Unknown writer effects remain blocked;
 late original replies cannot satisfy a replacement generation.
+
+### Recovery across delivered configuration
+
+Owner: Agent/Core. Business intent: delivering Source or changing the requested
+executor must preserve accepted local work and leave a supported recovery path.
+The desired repository configuration, the configuration accepted by the local
+initialization receipt, and each work's original execution configuration are
+distinct identities. A delivery may change desired bytes; it cannot copy another
+host's receipt, database, lease or acceptance into local authority. Issued requests,
+attempts, models and terminal FAIL/UNKNOWN observations retain their original
+bindings. New execution requires an explicitly accepted current configuration.
+
+Recovery control is dispatched before the ordinary current-execution gate.
+The Source-only public `run --release-historical-owner true --mode inspect|apply
+--project-root ABS --native-session-handle OWNER --baseline-config REL
+--request REL` validates a bounded original YAML against the local receipt,
+unchanged repository/projects/integrations/schema and an executor-only desired
+model/reasoning change. It opens existing Host and original Mastra state for
+inspection; it never initializes or resumes a workflow. The inspected request
+returns opaque Work, Ledger, Journal, maintenance and original evidence bindings.
+Apply revalidates them and releases only the original owner's exact claim and
+owned queued intents, with no queue promotion, generation advance or acceptance.
+The CLI checks cooperative caller consistency. An owner string or JSON report
+is not authenticated caller authority; the trusted invoking session must retain
+actual owner/authorization evidence. Missing live caller authority blocks apply.
+
+Three finite predicates are separate: accepted completed readonly activity; one
+unknown no-egress readonly issue with no Host writer history; and one accepted
+`synthesize_task` preparation, one authoritative completed `develop_task` writer,
+and exactly two failed `validate_focused` correctness/requirements validators.
+No additional issued action, corrective mapping, reservation, activation or
+normalization is admitted by the settled-writer predicate. Its bounded explicit
+`preimage_ref` is a pure complete `ScopedSourceSnapshot/v1`, not a response envelope.
+The original Work/lifecycle/engine input/requests bind that admitted preimage;
+the authoritative writer/journal bind the postimage. Full ordered preimage to
+postimage changes must equal all four admitted writer paths and reported changes;
+current scoped bytes must equal that postimage. Missing or changed evidence
+denies without effects. Inspect does not reconstruct or discover historical bytes.
+`test.read` is permitted only for terminal configured validation inspection;
+it grants no test execution or broader UNKNOWN readonly capability.
+
+Every journal-backed release checks Journal CAS in the same immediate Host
+transaction as Work/Ledger/maintenance CAS. Changed completed or failed evidence
+cannot release ownership. Maintenance acquisition checks queued and active
+ownership and the frozen global Host/journal/governance state on the same Host
+connection inside its immediate acquisition transaction before writing a fence.
+The trusted rebind operation owner performs this synchronous verification;
+caller booleans and JSON cannot bypass it. Validated cooperative readonly UNKNOWN
+evidence remains unchanged. Exact held-operation/token retries preserve the fence.
+Host and Mastra databases and filesystem receipts form recoverable sequences;
+they do not establish cross-store atomicity.
+
+The configured Mastra engine has one Host-owned producer exclusion. Before
+storage initialization, start or resume, the actual configured journal and its
+bound Host acquire the protected governance reservation in an immediate Host
+transaction. Acquisition checks physical database/root, current configuration,
+exact sorted projects, workflow/selection/original attempt, Work/Ledger/Journal
+CAS, maintenance generation and admitted live claim/FIFO ownership. Mechanical
+preparation without intake binds the same configured identity and grants no
+Source, native dispatch or recovery authority. Invalid start/resume input denies
+before reservation; resume requires the exact current journal observations.
+
+The reservation becomes `commit_unknown` before any asynchronous engine effect.
+Only the Host's private in-process handle permits its bounded journal sync and
+settlement. Ordinary journal writes and Host ownership, correction, suspension,
+retirement and maintenance writes deny during reserved/UNKNOWN production.
+Initialization and each start/resume settle only after existing-file inspection
+proves actual engine/journal agreement and unchanged current CAS/config/owner.
+Separate database commits are not atomic. Termination, drift or failed settlement
+retains UNKNOWN; close, elapsed time, PID or restart cannot clear or replay it.
+Generic governance operations cannot create or settle this protected namespace.
+
+The CLI admits intake and validates current scope before opening the producer.
+Journal-only retrieval inspects actual persisted engine state through the readonly
+reader. It constructs the protected bridge only when start/resume requires engine
+production; inspection never initializes storage, fabricates a journal, settles
+UNKNOWN or authenticates recovery. Data-only admitted execution consumers perform
+fresh configuration/project/active-lease/canonical-intake/native-thread/current-code
+checks synchronously without issuing a kernel capability. Actual capability
+consumers construct the kernel and retain current runtime checks at every later
+pre-effect and post-await boundary. No persistent freshness inventory cache exists.
+Both consumer paths use the kernel owner's shared live-admission predicate:
+current configuration and exact work/project binding, matching active ticket and
+claim, thread/generation/resource ownership, future ticket and claim expiries, and
+the existing nonblank256-character/control-free native-handle bound. The predicate
+returns a fresh snapshot, grants no capability and is not a new public SDK surface.
+
+Canonical JSON retains its existing serializer and finite node/depth/byte bounds,
+dense own array elements, descriptor/hook/prototype/cycle rejection and legal
+shared references. Runtime configuration digests may be reused only for actual
+loader-owned deeply frozen configurations. Every digest read still checks live
+inherited serialization hooks without invoking accessors; current YAML bytes
+select their current configuration. Arbitrary caller objects remain uncached and
+fully validated. Digest reuse grants neither authority nor runtime freshness.
+
+Direct bridge callers require the actual configured ledger. Staged witnesses
+inspect existing completed persistence under Host exclusion and never initialize
+or resume engine storage. Missing journal is not engine-absence proof. Crashed
+UNKNOWN reconciliation still requires the exact authenticated recovery-control
+ingress and shipped artifact repair; local handles and test capabilities do not
+provide that authority or user Runtime acceptance.
+Physical identity checks detect persistent file substitution. SQLite connections
+open configured filenames; these checks and Host exclusion assume cooperative
+managed writers. They do not provide a descriptor-bound no-follow guarantee or
+isolation from hostile same-user filesystem replacement.
+
+The recurrence prevention contract also requires the complete original scoped
+snapshot to be retained at admission before any writer effect, within the
+filesystem provider's supported durability guarantees, through
+the work's existing artifact references. A digest alone cannot recover missing
+preimage entries. Fresh local admission publishes canonical `ScopedSourceSnapshot/v1`
+metadata through contained exclusive creation under the configured work root,
+at `<work-id>/scoped-source-attempt-<attempt>.v1.json`, and references it through
+the existing Work artifact array. It retains every ordered scoped entry,
+including absent files; it is not a source-byte backup or rollback payload.
+The same-attempt preparation may reuse only exact existing bytes. Partial,
+conflicting, linked or oversized evidence denies admission without overwrite.
+Host's immediate admission transaction rechecks retained bytes and current
+source before commit. Shared Host retries and local returns require the same
+immutable base execution run; a competing attempt cannot reuse another attempt's
+Work. Existing references must match the original attempt, scope, AC and bytes;
+missing or changed evidence denies retry and is never rebuilt from a postimage.
+Historical Work lacking the reference is left unchanged. Filesystem publication
+and SQL commit remain separate: interrupted preparation can leave an unreferenced
+file, which supplies no rights or execution authority. Windows publication
+flushes file contents but does not promise directory-entry survival after power
+loss where directory synchronization is unsupported. Missing retained evidence
+fails closed without reconstruction. Metadata retention does
+not close historical proof, artifact repair, engine or installed Runtime GAPs.
+Inert work without a journal,
+foreign/orphan ownership, uncertain writer/governance effects and unsupported
+corrective shapes remain blocked. Engine absence cannot be inferred from Host
+journal absence: engine persistence can precede the journal. A supported inert
+release requires qualified engine-owner lookup and producer exclusion/order
+across all retained base/corrective attempts and restart, not Host-only absence.
+
+Delivered-configuration adoption is a separate repair-first requirement. Before
+changing strict `ConfigRebindOperation/v1`, qualify and ship one bundle-owned
+artifact/dependency repair command with atomic application and recovery. The
+subsequent durable route must distinguish standard from source-delivery and bind
+the original local baseline/receipt, exact desired target, frozen global state
+and operation authority through plan/apply/resume/restore. No transient flag or
+target bytes convert a standard operation. Preserve pending receipt acceptance
+and old work history. Same-attempt correction then requires explicit current
+scope/configuration and base-to-corrective engine authority before new admission.
+Artifact repair, source-delivery adoption and historical corrective rebinding
+remain implementation/qualification GAPs; disposal alone cannot unblock execution.
+
+Acceptance evidence: isolated historical predicate controls in
+`tests/runtime-config-rebind.test.mjs`, concurrent completed/failed journal
+controls in `tests/bun/host-state.test.mjs`, and configured terminal-validator
+capability controls in `tests/final-assurance.test.mjs`. Required full-chain
+qualification additionally covers initialize A, admit work under A, deliver B,
+preserve history, diagnose/release only eligible A ownership, repair/adopt B,
+correct within the original attempt, and restart/interruption at each boundary.
+Missing installed/native/caller and attributable user-testing evidence remains
+Runtime GAP; fixture success never supplies it.
+
+#### Host-independent recovery-review ingress
+
+All reusable VIDA behavior must remain host-independent. Recovery, authentication,
+authorization, execution and assurance must never require a particular machine,
+operating system, desktop application or provider. Core defines portable identity,
+proof, authorization and session contracts. Replaceable boundary adapters may
+implement platform integrations only when separately qualified against those
+contracts; platform identity or API availability cannot define Core rights.
+
+In the human-given isolated agent environment, the active internal session and
+controller are the trusted caller. Target-specific attributable human intent
+binds one read-only recovery review. No external issuer, OS, Desktop, provider
+attestation or credential enrollment is a prerequisite for this internal route.
+The executing caller and historical owner remain separate roles; the caller
+never acquires the historical lease by presenting its identity.
+
+The existing pinned run entrypoint provides a separate `--recovery-review true`
+route with exact `--mode prepare|begin|complete|inspect`, `--project-root` and
+`--request` arguments. It precedes ordinary admitted execution and reuses
+`inspectHistoricalOwnerContext` for original configuration, receipt, engine and
+journal evidence despite the supported desired-configuration drift. Mixed
+ordinary execution flags deny. JSON input is a bounded export from the trusted
+caller's history, not an authentication token or another canonical artifact.
+
+`prepare` freezes caller session/controller, attributable instruction reference,
+original repository/projects/work/attempt/historical owner, source scope,
+baseline/receipt/engine/current-runtime bindings and current Work/ledger/journal/maintenance CAS.
+HostState uses the existing strict `OperationReservation/v1` in the protected
+`vida-recovery-reviews` namespace. Generic reservation and settlement deny this
+namespace. Its operation key permits one recovery review per original target
+and attempt. Local historical checks and CAS run inside the existing immediate
+transaction; source reads remain cooperative, not filesystem exclusion.
+
+Historical Source snapshots remain unchanged in Work and Journal. `prepare` reads
+current bytes over exactly their declared paths, including prior authorized
+in-scope corrections. `begin` and `complete` compare bytes to that prepared
+current snapshot. Current bytes never replace historical authority.
+
+The caller retains the full returned request in its same-thread history.
+`begin` requires that exact body and records `commit_unknown` before the actual
+native read-only invocation. The active caller owns invocation and observation;
+Core does not dispatch tools. `complete` requires the matching action/session/
+controller, native agent/tool reference and full observed result. A matching
+terminal PASS or FAIL stores its result digest as `applied`. Identical completion
+retry is safe; altered results reject. Timeout, disconnect or missing observation
+leaves UNKNOWN and cannot authorize reissue. After restart, only the exact
+retained request body can recover inspection or settlement; missing custody
+does not permit reconstruction. Result bodies also stay in the caller history.
+
+These checks establish cooperative report consistency, not independent native
+tool-origin attestation or Runtime acceptance. Both PASS and FAIL grant no Source
+write, owner disposition, configuration adoption or Runtime rights. Original
+Work, Journal, tickets and claims are preserved; producer and maintenance fences
+remain applicable. Subsequent Source admission requires its own original-context
+FIFO/CAS authority. No parallel ledger or cross-system atomicity is implied.
+
+The route is Source implementation; fixture regressions do not qualify actual
+native observation, installed delivery or Runtime acceptance. Existing
+`CodexDesktopAdapterContract/v1` remains a compatibility surface and does not
+supply or constrain internal recovery trust. Active strict-v1 shapes are unchanged;
+future changes still require functional bundle-owned artifact/dependency repair.
+Supporting facts and qualification limits are in the
+[framework reference registry](research/agent-framework-reference-registry.md#host-independent-recovery-review-ingress).
 
 The public session launcher offers `--renew-lease true` for the current live
 same-owner work, attempt, ticket, claim and generation. It checks the latest
@@ -796,9 +1035,13 @@ requirements, behavior and acceptance in the three Plugin canonical documents.
 
 ## Delivery priorities and acceptance
 
-Prioritize verified developer unblocking, project migration to the actual
-runtime, optimization, then new functionality. Detailed execution-speed law
-has one owner: the development-lifecycle self-development protocol.
+Select dependency-ready self-development batches by one prior qualitative
+workflow/step/token estimate, with shared developer unblocking first and installed
+dependencies preserved. Each whole verified engineering outcome requires an
+exact qualified local system update without changing the current semantic
+version before dependent next-batch effects. There is no separate achieved-
+savings/OPT19 scoring lane. Detailed execution policy and assurance sequencing
+have one owner: the development-lifecycle self-development protocol.
 
 Acceptance requires actual native primary PATH discovery from an unrelated cwd
 with external runtimes absent and first-run network unavailable,
@@ -819,8 +1062,43 @@ The future OpenAI/SDK/Codex adapters and per-product directory extensions are
 separate planned work. The old executor-only repair does not prove general
 configuration or storage relocation.
 
-
 ## Distribution, recovery and evidence boundaries
+
+Verification subprocesses consume any finite enclosing caller/host/case budget,
+including setup and prior operations; ordinary phases have no implicit total
+deadline. Cleanup preserves the
+reporting half of the existing reserve; a spent allowance records unknown
+termination without another cleanup effect. Child return, cleanup allocation,
+cleanup execution and whole-command duration are independent observations.
+Operating-system delays may exceed an allocated deadline and never establish
+successful termination. Unknown children retain their mutable fixtures and block
+reuse or teardown. The verification policy and command inventory remain owned
+by [TESTING.md](../TESTING.md).
+
+Native exclusive creation reuses one initialized Root promise while validating
+the first construction and each actual effect. Package attestation and original
+root identity are checked after the creator caller's await, immediately before
+native mkdir/create dispatch without an intervening JavaScript await, then
+again after completion. Reusing the Root never caches attestation or grants
+Host/work authority. Parent, path, byte, reparse, hardlink, collision and provider
+durability/containment checks remain required. Wrong-platform provider
+preparation returns unavailable before loading; libc inspection belongs only
+to Linux target selection. Simulation, Source timings and successful local
+Windows controls do not establish native target or Runtime acceptance.
+
+Asynchronous CAS replacement and exclusive locking also reuse this Root. They
+retain the original fresh package and root-identity checks before and after
+awaiting it, before dispatching the lock or replacement helper. A cached native
+binding is not current attestation. Drift during the await must deny entry
+without changing payload, creating a lock sidecar or invoking the callback.
+
+Descriptor simulation preserves the Linux production contract while adapting
+Windows flush access only inside owned test fixtures. Temporary writable handles
+require physical containment and the same private regular-file identity and
+must close after the flush. Simulation cannot grant native durability evidence;
+its verification contract remains owned by [TESTING.md](../TESTING.md).
+The intentional directory-synchronization simulation applies only to a directory
+descriptor; a mapped directory cannot suppress a regular-file identity check.
 
 The Source reaudit findings apply to their recorded snapshot and must be
 revalidated against current Source. Merged Linux portability changes are Source
@@ -853,7 +1131,6 @@ manufactured from another caller-controlled exit code or reference.
 The reported SQLite corruption incident has no available frozen DB/WAL/SHM or
 reproducer in the supplied attachment. Its cause is unlocalized; no database
 repair, data deletion, or successful causal fix is inferred from Source changes.
-
 
 Workflow compilation validates the effective graph after risk filtering, before
 opening or starting Mastra: at least one assignment must remain, required stages

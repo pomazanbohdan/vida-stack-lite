@@ -3,6 +3,8 @@ import { test } from 'bun:test';
 import assert from 'node:assert/strict';
 import { compileDevelopmentWorkflow, resolveConfigPath, selectWorkflow } from '../src/index.ts';
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
+import canonicalize from 'canonicalize';
+import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 
 const { repositoryRoot, config, context: projectContext } = configuredTestContext();
 const authorize = createConfiguredProjectAuthorizer(repositoryRoot, config);
@@ -16,6 +18,27 @@ function seeded(seed) {
     return state / 0x1_0000_0000;
   };
 }
+
+test('nested canonical JSON retains wire equivalence and legal shared references (cases=256)', () => {
+  const random = seeded(20261003);
+  for (let index = 0; index < 256; index += 1) {
+    const shared = { text: `case-${index}-ї`, number: Math.floor(random() * 10000), fraction: random() };
+    const value = { z: [shared, null, true, { nested: [shared, false] }], a: shared };
+    const serialized = canonicalize(value);
+    assert.equal(canonicalJson(value), serialized, `seed=20261003 case=${index}`);
+    assert.equal(canonicalJsonDigest(value), canonicalJsonDigest(JSON.parse(serialized)));
+    let reads = 0;
+    Object.defineProperty(shared, 'hostile', {
+      enumerable: true,
+      get() {
+        reads += 1;
+        return 'unsafe';
+      },
+    });
+    assert.throws(() => canonicalJson(value), /descriptor/);
+    assert.equal(reads, 0);
+  }
+});
 
 test('configured Cedar remains default-deny for deterministic role and scope combinations (cases=256)', () => {
   const random = seeded(20260817);

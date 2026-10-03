@@ -163,9 +163,14 @@ export function settledSessionItems(journal: MastraSessionLedgerState) {
 export function configuredReadonlyAssignment(
   config: AgentRuntimeConfig,
   request: MastraSessionLedgerState['items'][number]['request'],
+  purpose: 'readonly' | 'settled-validation' = 'readonly',
 ): boolean {
-  const assignment = config.workflows[request.workflow_id]?.stages.find((stage) => stage.id === request.stage_id)
-    ?.assignments[request.assignment_index];
+  const stages = config.workflows[request.workflow_id]?.stages.filter((stage) => stage.id === request.stage_id);
+  const stage = stages?.length === 1 ? stages[0] : undefined;
+  const assignment =
+    Number.isSafeInteger(request.assignment_index) && request.assignment_index >= 0
+      ? stage?.assignments[request.assignment_index]
+      : undefined;
   const profile = assignment && config.agents.profiles[assignment.profile];
   const tools = profile && config.agents.tool_policies[profile.tools_policy];
   const egress = profile && config.agents.egress_policies[profile.egress_policy];
@@ -173,7 +178,12 @@ export function configuredReadonlyAssignment(
     assignment?.role === request.role &&
     profile?.mutation_scope === 'none' &&
     tools?.source_write === false &&
-    tools.allowed_tools.every((tool) => ['runtime.read', 'source.read', 'docs.read', 'web.search'].includes(tool)) &&
+    Array.isArray(tools.allowed_tools) &&
+    tools.allowed_tools.every(
+      (tool) =>
+        ['runtime.read', 'source.read', 'docs.read', 'web.search'].includes(tool) ||
+        (purpose === 'settled-validation' && stage?.kind === 'validate' && tool === 'test.read'),
+    ) &&
     egress &&
     egress.allowed_hosts.every((host) => /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/i.test(host)),
   );

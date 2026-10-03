@@ -1,5 +1,15 @@
 import { test, expect } from 'bun:test';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+  unlinkSync,
+  linkSync,
+  symlinkSync,
+  existsSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,12 +32,16 @@ import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.
 import { MastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
-import { assertAdmittedRuntimeCodeCurrent } from '../src/orchestration/admitted-session-execution.ts';
+import {
+  assertAdmittedRuntimeCodeCurrent,
+  readAdmittedSessionExecutionContext,
+} from '../src/orchestration/admitted-session-execution.ts';
 import { runtimePackageCodePaths } from '../src/config/runtime-config.ts';
 import { runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { run } from '../bin/run.mjs';
 import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
 import { prepareLifecycleForCorrection } from '../src/orchestration/final-assurance.ts';
+import { requireLiveLocalSessionAdmission } from '../src/runtime-kernel.ts';
 import { issueObservedResearchActivation } from '../src/orchestration/observed-research-activation.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -167,6 +181,259 @@ function fixture(sourceWriter = false, publicStore = false) {
   };
 }
 
+test('admission retains complete original entries and exact retry rejects a different base attempt', () => {
+  const f = fixture();
+  try {
+    const input = f.prepare('retained', 'user:retained');
+    const source = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), ['missing.ts', 'AGENT.sidecar.md']);
+    const scope = JSON.parse(readFileSync(path.join(f.root, input.scopePath)));
+    const acceptance = JSON.parse(readFileSync(path.join(f.root, input.acceptancePath)));
+    writeFileSync(
+      path.join(f.root, input.scopePath),
+      JSON.stringify({ ...scope, allowed_paths: source.entries.map((e) => e.path), source_revision: source.digest }),
+    );
+    writeFileSync(
+      path.join(f.root, input.acceptancePath),
+      JSON.stringify({ ...acceptance, source_revision: source.digest }),
+    );
+    input.context = { ...input.context, scope_digest: source.digest };
+    const admitted = admitLocalSessionWork(input);
+    const reference = admitted.host.work.artifacts.find((a) => a.artifact_id === 'admission-source-snapshot');
+    expect(reference.schema).toBe('ScopedSourceSnapshot/v1');
+    expect(reference.path).toBe(`${f.config.control.work_root}/retained/scoped-source-attempt-1.v1.json`);
+    const bytes = readFileSync(path.join(f.root, reference.path));
+    expect(JSON.parse(bytes)).toEqual(source);
+    expect(JSON.parse(bytes).entries.find((e) => e.path === 'missing.ts').exists).toBe(false);
+    expect(admitLocalSessionWork(input)).toEqual(admitted);
+    expect(readFileSync(path.join(f.root, reference.path))).toEqual(bytes);
+    const restartedDatabase = openHostStateDatabase(path.join(f.root, 'fixture.sqlite'));
+    try {
+      const restarted = new HostStateStore(restartedDatabase, f.store.workspaceId);
+      expect(admitLocalSessionWork({ ...input, store: restarted })).toEqual(admitted);
+      expect(readFileSync(path.join(f.root, reference.path))).toEqual(bytes);
+    } finally {
+      restartedDatabase.close();
+    }
+    const before = f.store.readWorkspaceSnapshot();
+    expect(() => admitLocalSessionWork({ ...input, context: { ...input.context, attempt: 2 } })).toThrow(
+      /original attempt/,
+    );
+    expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+    expect(existsSync(path.join(f.root, reference.path.replace('attempt-1', 'attempt-2')))).toBe(false);
+    writeFileSync(path.join(f.root, 'missing.ts'), 'appeared after original admission');
+    expect(() => admitLocalSessionWork(input)).toThrow(/revision is stale/);
+    expect(readFileSync(path.join(f.root, reference.path))).toEqual(bytes);
+  } finally {
+    f.close();
+  }
+});
+
+test('admission retry never reconstructs missing or changed retained original evidence', () => {
+  for (const mode of ['missing', 'changed']) {
+    const f = fixture();
+    try {
+      const input = f.prepare('retry', 'user:retry'),
+        admitted = admitLocalSessionWork(input);
+      const reference = admitted.host.work.artifacts.find((a) => a.artifact_id === 'admission-source-snapshot');
+      const target = path.join(f.root, reference.path);
+      if (mode === 'missing') unlinkSync(target);
+      else writeFileSync(target, '{}');
+      const before = f.store.readWorkspaceSnapshot();
+      expect(() => admitLocalSessionWork(input)).toThrow();
+      expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+      if (mode === 'missing') expect(existsSync(target)).toBe(false);
+      else expect(readFileSync(target, 'utf8')).toBe('{}');
+    } finally {
+      f.close();
+    }
+  }
+});
+
+test('admission uses the validated configured work root for retained evidence', () => {
+  const f = fixture();
+  try {
+    const configPath = path.join(f.root, 'agent-runtime.config.v1.yaml');
+    const yaml = parseYaml(readFileSync(configPath, 'utf8'));
+    yaml.control.work_root = '.agent/owned-work';
+    writeFileSync(configPath, stringifyYaml(yaml));
+    const input = { ...f.prepare('configured-root', 'user:configured-root'), config: loadRuntimeConfig(f.root) };
+    const admitted = admitLocalSessionWork(input);
+    const reference = admitted.host.work.artifacts.find((a) => a.artifact_id === 'admission-source-snapshot');
+    expect(reference.path).toBe('.agent/owned-work/configured-root/scoped-source-attempt-1.v1.json');
+    expect(JSON.parse(readFileSync(path.join(f.root, reference.path)))).toEqual(f.source);
+    expect(existsSync(path.join(f.root, '.agent/work/configured-root/scoped-source-attempt-1.v1.json'))).toBe(false);
+  } finally {
+    f.close();
+  }
+});
+
+test('partial oversized or linked admission preparation denies without overwriting or granting rights', () => {
+  for (const mode of ['partial', 'oversized', 'hardlink', 'reparse']) {
+    const f = fixture();
+    try {
+      const input = f.prepare('blocked', 'user:blocked');
+      const target = path.join(f.root, f.config.control.work_root, 'blocked', 'scoped-source-attempt-1.v1.json');
+      const origin = path.join(f.root, 'foreign-snapshot.json');
+      writeFileSync(origin, canonicalJson(f.source));
+      if (mode === 'partial') writeFileSync(target, '{');
+      else if (mode === 'oversized') writeFileSync(target, Buffer.alloc(8 * 1024 * 1024 + 1));
+      else if (mode === 'hardlink') linkSync(origin, target);
+      else if (process.platform === 'win32') symlinkSync(f.root, target, 'junction');
+      else symlinkSync(origin, target, 'file');
+      const before = f.store.readWorkspaceSnapshot();
+      expect(() => admitLocalSessionWork(input)).toThrow();
+      expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+      if (mode === 'oversized') expect(readFileSync(target).length).toBe(8 * 1024 * 1024 + 1);
+      else if (mode !== 'reparse' || process.platform !== 'win32')
+        expect(readFileSync(target, 'utf8')).toBe(mode === 'partial' ? '{' : canonicalJson(f.source));
+      else expect(() => readFileSync(target)).toThrow();
+      expect(readFileSync(origin, 'utf8')).toBe(canonicalJson(f.source));
+    } finally {
+      f.close();
+    }
+  }
+});
+
+test('historical admitted Work without a retained snapshot is not backfilled from current source', () => {
+  const f = fixture();
+  try {
+    const input = f.prepare('historical', 'user:historical');
+    const admit = f.store.admitSuccessorWork.bind(f.store);
+    let proposal;
+    f.store.admitSuccessorWork = (request) => {
+      proposal = request;
+      throw Error('freeze legacy fixture');
+    };
+    expect(() => admitLocalSessionWork(input)).toThrow(/freeze legacy fixture/);
+    const reference = proposal.nextWork.artifacts.find((a) => a.artifact_id === 'admission-source-snapshot');
+    const legacy = admit({ ...proposal, nextWork: { ...proposal.nextWork, artifacts: [] } });
+    unlinkSync(path.join(f.root, reference.path));
+    f.store.admitSuccessorWork = admit;
+    expect(admitLocalSessionWork(input).host).toEqual(legacy);
+    expect(existsSync(path.join(f.root, reference.path))).toBe(false);
+    expect(f.store.readWorkspaceSnapshot().work[0].work.artifacts).toEqual([]);
+  } finally {
+    f.close();
+  }
+});
+
+test('source or retained artifact drift inside Host admission denies the actual transaction', () => {
+  for (const mode of ['source', 'artifact']) {
+    const f = fixture();
+    try {
+      const input = f.prepare('drift', 'user:drift');
+      const before = f.store.readWorkspaceSnapshot(),
+        admit = f.store.admitSuccessorWork.bind(f.store);
+      f.store.admitSuccessorWork = (request) => {
+        const target =
+          mode === 'source'
+            ? 'AGENT.sidecar.md'
+            : request.nextWork.artifacts.find((a) => a.artifact_id === 'admission-source-snapshot').path;
+        writeFileSync(path.join(f.root, target), 'changed before actual commit');
+        return admit(request);
+      };
+      expect(() => admitLocalSessionWork(input)).toThrow(/snapshot differs|source changed/);
+      expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+    } finally {
+      f.close();
+    }
+  }
+});
+
+test(
+  'producer binds original admitted risk and labels before initializing engine storage',
+  { timeout: 30_000 },
+  async () => {
+    const f = fixture(true, true);
+    let bridge;
+    try {
+      const input = f.prepare('producer-selection', 'user:producer-selection');
+      input.selection = { ...input.selection, risk_flags: ['security'], labels: ['original-label'] };
+      input.workItem = { ...input.workItem, risk_flags: input.selection.risk_flags, labels: input.selection.labels };
+      input.intakePath = '.agent/work/producer-selection/raw-intake.json';
+      writeFileSync(
+        path.join(f.root, input.intakePath),
+        JSON.stringify({
+          schema: 'VidaLocalSessionIntake/v1',
+          work_item: input.workItem,
+          native_session_handle: input.nativeSessionHandle,
+          scope_path: input.scopePath,
+          acceptance_path: input.acceptancePath,
+          runtime_code_paths: input.runtimeCodePaths,
+          route: input.route,
+          risk: input.risk,
+          change_kind: input.changeKind,
+        }),
+      );
+      admitLocalSessionWork(input);
+      const ledger = new MastraSessionLedger(f.database, f.store.workspaceId, f.config, f.root, f.store);
+      const args = {
+        repositoryRoot: f.root,
+        config: f.config,
+        ledger,
+        projectIds: ['sample'],
+        selection: input.selection,
+        context: input.context,
+        workflowId: 'implementation_change',
+        workspaceId: f.store.workspaceId,
+      };
+      const enginePath = path.join(f.root, f.config.control.work_root, 'mastra-workflows.v1.sqlite');
+      for (const selection of [
+        { ...input.selection, risk_flags: [] },
+        { ...input.selection, labels: [] },
+        { ...input.selection, kind: 'bug' },
+        { ...input.selection, intent: 'task_execution' },
+        { ...input.selection, project: 'foreign' },
+      ]) {
+        await expect(MastraSessionBridge.open({ ...args, selection })).rejects.toThrow();
+        expect(existsSync(enginePath)).toBe(false);
+        expect(
+          f.database
+            .query("SELECT COUNT(*) AS count FROM agent_host_governance WHERE store_id='vida-session-producers'")
+            .get().count,
+        ).toBe(0);
+      }
+      bridge = await MastraSessionBridge.open(args);
+      expect(await bridge.snapshot()).toBeNull();
+      expect(existsSync(enginePath)).toBe(true);
+    } finally {
+      if (bridge) await bridge.close();
+      f.database.close();
+      if (path.dirname(f.root) !== path.resolve(tmpdir()) || !path.basename(f.root).startsWith('vida-absorption-'))
+        throw new Error('unsafe producer selection fixture cleanup');
+      try {
+        rmSync(f.root, { recursive: true, force: true });
+      } catch (error) {
+        if (error.code !== 'EBUSY') throw error;
+        console.error('Closed producer selection fixture retained (OS EBUSY): ' + f.root);
+      }
+    }
+  },
+);
+
+test('competing base attempt commits before the local Host call and cannot be reused by its loser', () => {
+  const f = fixture();
+  try {
+    const loser = f.prepare('same-work', 'user:same-work');
+    const admit = f.store.admitSuccessorWork.bind(f.store);
+    let winner;
+    f.store.admitSuccessorWork = (request) => {
+      f.store.admitSuccessorWork = admit;
+      winner = admitLocalSessionWork({ ...loser, context: { ...loser.context, attempt: 2 } });
+      return admit(request);
+    };
+    expect(() => admitLocalSessionWork(loser)).toThrow(/retry differs/);
+    expect(f.store.readWorkspaceSnapshot().work).toHaveLength(1);
+    expect(f.store.readWorkspaceSnapshot().work[0].work.execution.run_id).toBe(winner.host.work.execution.run_id);
+    expect(winner.host.work.artifacts.find((a) => a.artifact_id === 'admission-source-snapshot').path).toContain(
+      'attempt-2',
+    );
+    expect(admitLocalSessionWork({ ...loser, context: { ...loser.context, attempt: 2 } })).toEqual(winner);
+  } finally {
+    f.close();
+  }
+});
+
 test('admission normalizes a caller runtime subset into one immutable canonical intake without changing raw input', () => {
   const f = fixture();
   try {
@@ -201,6 +468,10 @@ test('admission normalizes a caller runtime subset into one immutable canonical 
     expect(assertAdmittedRuntimeCodeCurrent(f.root, f.store, identity).native_session_handle).toBe(
       input.nativeSessionHandle,
     );
+    const data = readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'canonical');
+    expect(data.identity).toEqual(identity);
+    expect(data.workItem).toEqual(input.workItem);
+    expect(Object.hasOwn(data, 'composition')).toBe(false);
     writeFileSync(
       path.join(f.root, input.intakePath),
       JSON.stringify({ ...JSON.parse(raw), runtime_code_paths: ['vida-agent/bin/scope.mjs'] }),
@@ -208,8 +479,86 @@ test('admission normalizes a caller runtime subset into one immutable canonical 
     expect(assertAdmittedRuntimeCodeCurrent(f.root, f.store, identity).native_session_handle).toBe(
       input.nativeSessionHandle,
     );
+    const configPath = path.join(f.root, 'agent-runtime.config.v1.yaml'),
+      originalConfig = readFileSync(configPath, 'utf8');
+    writeFileSync(configPath, originalConfig.replace(/config_revision: \d+/, 'config_revision: 2'));
+    expect(() => readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'canonical')).toThrow(
+      'configuration or project differs',
+    );
+    writeFileSync(configPath, originalConfig);
     writeFileSync(path.join(f.root, reference.path), raw);
     expect(() => assertAdmittedRuntimeCodeCurrent(f.root, f.store, identity)).toThrow(/intake changed/);
+    expect(() => readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'canonical')).toThrow(/intake changed/);
+  } finally {
+    f.close();
+  }
+});
+
+test('data-only admitted context rejects expired tickets, expired claims and absent active claims', () => {
+  const f = fixture();
+  try {
+    const input = f.prepare('live-context', 'user:live-context');
+    input.intakePath = '.agent/work/live-context/raw-intake.json';
+    writeFileSync(
+      path.join(f.root, input.intakePath),
+      JSON.stringify({
+        schema: 'VidaLocalSessionIntake/v1',
+        work_item: input.workItem,
+        native_session_handle: input.nativeSessionHandle,
+        scope_path: input.scopePath,
+        acceptance_path: input.acceptancePath,
+        runtime_code_paths: input.runtimeCodePaths,
+        route: input.route,
+        risk: input.risk,
+        change_kind: input.changeKind,
+      }),
+    );
+    f.admit(input);
+    const row = f.database.query("SELECT payload FROM agent_host_state WHERE kind='ledger'").get();
+    const original = JSON.parse(row.payload);
+    expect(readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'live-context').work.lease.thread_id).toBe(
+      'session',
+    );
+    const current = readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'live-context');
+    const before = f.store.readHostStateSnapshot(current.identity);
+    for (const nativeSessionHandle of ['x'.repeat(257), 'session\u0001']) {
+      expect(() =>
+        requireLiveLocalSessionAdmission({
+          repositoryRoot: f.root,
+          identity: current.identity,
+          store: f.store,
+          nativeSessionHandle,
+        }),
+      ).toThrow('native session handle is invalid');
+      expect(f.store.readHostStateSnapshot(current.identity)).toEqual(before);
+    }
+    for (const scenario of ['ticket-expired', 'claim-expired', 'claim-inactive']) {
+      const changed = JSON.parse(row.payload);
+      const ticket = changed.tickets.find((item) => item.work_id === 'live-context');
+      const claim = changed.claims.find((item) => item.ticket_id === ticket.ticket_id);
+      if (scenario === 'ticket-expired') {
+        ticket.expires_at = claim.lease_expires_at = '2020-01-01T00:00:00.000Z';
+      } else if (scenario === 'claim-expired') claim.lease_expires_at = '2020-01-01T00:00:00.000Z';
+      else {
+        claim.status = 'released';
+        ticket.active_resources = [];
+        ticket.expires_at = null;
+      }
+      f.database
+        .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+        .run(canonicalJson(changed), canonicalJsonDigest(changed));
+      expect(() => readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'live-context')).toThrow(
+        scenario === 'claim-expired'
+          ? 'ticket effective lease differs from claims'
+          : 'local workflow admission or exact-path lease is stale',
+      );
+      f.database
+        .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+        .run(canonicalJson(original), canonicalJsonDigest(original));
+    }
+    expect(readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'live-context').work.lease.thread_id).toBe(
+      'session',
+    );
   } finally {
     f.close();
   }
@@ -1188,12 +1537,16 @@ test('two-predecessor SQL commit fault rolls back all work and coordination rows
       "CREATE TRIGGER fixture_commit_fault BEFORE UPDATE ON agent_host_state WHEN NEW.kind='ledger' BEGIN SELECT RAISE(ABORT,'fixture SQL commit fault'); END",
     );
     expect(() => admitLocalSessionWork(next)).toThrow(/fixture SQL commit fault/);
+    const retainedPath = path.join(f.root, f.config.control.work_root, 'next', 'scoped-source-attempt-1.v1.json');
+    const preparedBytes = readFileSync(retainedPath);
+    expect(JSON.parse(preparedBytes)).toEqual(f.source);
     expect(f.store.readWorkspaceSnapshot()).toEqual(before);
     expect(f.database.query('SELECT payload FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(
       journalBytes,
     );
     f.database.exec('DROP TRIGGER fixture_commit_fault');
     const admitted = admitLocalSessionWork(next);
+    expect(readFileSync(retainedPath)).toEqual(preparedBytes);
     expect(admitted.host.work.request_transition.predecessor_work_ids).toEqual(['one', 'two']);
   } finally {
     f.close();
@@ -1361,6 +1714,7 @@ test('successful normalized readonly research is retained as historical provenan
       revision: work.revision + 1,
       lifecycle: { ...work.lifecycle, revision: work.lifecycle.revision + 1 },
       artifacts: [
+        ...work.artifacts,
         {
           artifact_id: 'fixture-research',
           schema: 'ResearchResult/v1',
@@ -1793,14 +2147,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
           requireSafeRepositoryAccess(f.root),
           work.lifecycle.scope.allowed_paths,
         );
-        const bridge = await MastraSessionBridge.open({
-          repositoryRoot: f.root,
-          config: f.config,
-          selection: input.selection,
-          context: input.context,
-          workflowId: 'task_execution',
-          workspaceId: f.store.workspaceId,
-        });
+
         const fixtureHost = new HostStateStore(
           f.database,
           f.store.workspaceId,
@@ -1811,9 +2158,18 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
           f.root,
         );
         const ledger = new MastraSessionLedger(f.database, f.store.workspaceId, f.config, f.root, fixtureHost);
-        let snapshot = await bridge.start();
-        const sync = () =>
-          ledger.sync(id, 1, snapshot.run_id, snapshot.step_id, snapshot.requests, fixtureSource, snapshot.status);
+        const bridge = await MastraSessionBridge.open({
+          ledger,
+          projectIds: [input.selection.project],
+          repositoryRoot: f.root,
+          config: f.config,
+          selection: input.selection,
+          context: input.context,
+          workflowId: 'task_execution',
+          workspaceId: f.store.workspaceId,
+        });
+        await bridge.start(fixtureSource);
+        const sync = () => ledger.resume(id, 1);
         let journal = sync();
         const observed = (item, summary, status = 'reported_complete') => ({
           schema: 'VidaSessionObservation/v1',
@@ -1829,9 +2185,10 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
         journal = ledger.issueWave(id, 1, journal.version);
         for (const item of journal.state.items)
           journal = ledger.report(id, 1, journal.version, observed(item, 'Observed fixture synthesis'), fixtureSource);
-        snapshot = await bridge.resume(
+        await bridge.resume(
           journal.state.step_id,
           journal.state.items.map((item) => item.observation),
+          fixtureSource,
         );
         journal = sync();
         const developer = journal.state.items[0].request;
@@ -1848,9 +2205,10 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
         };
         f.store.completeWorkflowAttempt(claimed, writer);
         journal = ledger.report(id, 1, journal.version, writer, fixtureSource);
-        snapshot = await bridge.resume(
+        await bridge.resume(
           journal.state.step_id,
           journal.state.items.map((item) => item.observation),
+          fixtureSource,
         );
         journal = sync();
         journal = ledger.issueWave(id, 1, journal.version);

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import {
   mkdirSync,
@@ -26,6 +26,17 @@ import {
 
 const roots = [];
 const require = createRequire(import.meta.url);
+const packageReadGate = vi.hoisted(() => ({ denied: false }));
+vi.mock('@openclaw/fs-safe/advanced', async () => {
+  const actual = await vi.importActual('@openclaw/fs-safe/advanced');
+  return {
+    ...actual,
+    openRootFileSync: (options) => {
+      if (packageReadGate.denied && options.boundaryLabel === 'fs-safe package attestation') return { ok: false };
+      return actual.openRootFileSync(options);
+    },
+  };
+});
 
 function root() {
   const created = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-safe-')));
@@ -34,6 +45,7 @@ function root() {
 }
 
 afterEach(() => {
+  packageReadGate.denied = false;
   __setFsSafeTestHooksForTest(undefined);
   while (roots.length) rmSync(roots.pop(), { recursive: true, force: true });
 });
@@ -48,6 +60,126 @@ function disappearanceError(repositoryRoot, kind) {
 }
 
 describe('safe repository access completeness', () => {
+  test('Windows reused creator retains exclusive writes and collision denial', async () => {
+    if (process.platform !== 'win32') return;
+    const repositoryRoot = root(),
+      creator = await requireSafeRepositoryAccess(repositoryRoot).prepareExclusiveCreation();
+    await creator.ensureDirectory('data', 'owned directory');
+    await creator.writeExclusive('data/one.txt', 'one', 'owned first file');
+    await creator.writeExclusive('data/two.txt', 'two', 'owned second file');
+    await expect(creator.writeExclusive('data/one.txt', 'changed', 'existing file')).rejects.toThrow();
+    expect(readFileSync(path.join(repositoryRoot, 'data/one.txt'), 'utf8')).toBe('one');
+    expect(readFileSync(path.join(repositoryRoot, 'data/two.txt'), 'utf8')).toBe('two');
+  });
+
+  test.each(['write', 'mkdir'])('Windows cached-await root replacement denies %s before effects', async (mode) => {
+    if (process.platform !== 'win32') return;
+    const fixture = root(),
+      repositoryRoot = path.join(fixture, 'root'),
+      moved = path.join(fixture, 'moved');
+    mkdirSync(repositoryRoot);
+    const creator = await requireSafeRepositoryAccess(repositoryRoot).prepareExclusiveCreation();
+    const pending =
+      mode === 'write'
+        ? creator.writeExclusive('target.txt', 'owned fixture', 'owned race file')
+        : creator.ensureDirectory('target', 'owned race directory');
+    queueMicrotask(() => {
+      expect(path.dirname(path.resolve(repositoryRoot))).toBe(fixture);
+      expect(path.dirname(path.resolve(moved))).toBe(fixture);
+      renameSync(repositoryRoot, moved);
+      mkdirSync(repositoryRoot);
+    });
+    await expect(pending).rejects.toThrow(/root.*(changed|identity)/);
+    const target = mode === 'write' ? 'target.txt' : 'target';
+    expect(existsSync(path.join(repositoryRoot, target))).toBe(false);
+    expect(existsSync(path.join(moved, target))).toBe(false);
+  });
+
+  test.each(['write', 'mkdir'])(
+    'Windows reused creator denies unavailable package attestation before %s',
+    async (mode) => {
+      if (process.platform !== 'win32') return;
+      const repositoryRoot = root(),
+        creator = await requireSafeRepositoryAccess(repositoryRoot).prepareExclusiveCreation();
+      packageReadGate.denied = true;
+      try {
+        const pending =
+          mode === 'write'
+            ? creator.writeExclusive('target.txt', 'owned fixture', 'owned denied file')
+            : creator.ensureDirectory('target', 'owned denied directory');
+        await expect(pending).rejects.toThrow(/fs-safe package file is unsafe/);
+        expect(existsSync(path.join(repositoryRoot, mode === 'write' ? 'target.txt' : 'target'))).toBe(false);
+      } finally {
+        packageReadGate.denied = false;
+      }
+    },
+  );
+
+  test.each(['lock', 'replace'])('Windows cached %s denies attestation drift during await', async (mode) => {
+    if (process.platform !== 'win32') return;
+    const repositoryRoot = root(),
+      access = requireSafeRepositoryAccess(repositoryRoot);
+    await access.prepareExclusiveCreation();
+    writeFileSync(path.join(repositoryRoot, 'payload.txt'), 'before');
+    let calls = 0;
+    const pending =
+      mode === 'lock'
+        ? access.withExclusiveLockAsync('resource', 'owned lock', async () => ++calls)
+        : access.replaceAtomicAsync(
+            'payload.txt',
+            createHash('sha256').update('before').digest('hex'),
+            'after',
+            'owned CAS',
+          );
+    queueMicrotask(() => {
+      packageReadGate.denied = true;
+    });
+    try {
+      await expect(pending).rejects.toThrow(/fs-safe package file is unsafe/);
+      expect(calls).toBe(0);
+      expect(readFileSync(path.join(repositoryRoot, 'payload.txt'), 'utf8')).toBe('before');
+      expect(existsSync(path.join(repositoryRoot, 'resource.lock'))).toBe(false);
+      expect(existsSync(path.join(repositoryRoot, 'payload.txt.cas.lock.lock'))).toBe(false);
+    } finally {
+      packageReadGate.denied = false;
+    }
+  });
+
+  test.each(['lock', 'replace'])('Windows cached %s denies root replacement during await', async (mode) => {
+    if (process.platform !== 'win32') return;
+    const fixture = root(),
+      repositoryRoot = path.join(fixture, 'root'),
+      moved = path.join(fixture, 'moved');
+    mkdirSync(repositoryRoot);
+    writeFileSync(path.join(repositoryRoot, 'payload.txt'), 'before');
+    const access = requireSafeRepositoryAccess(repositoryRoot);
+    await access.prepareExclusiveCreation();
+    let calls = 0;
+    const pending =
+      mode === 'lock'
+        ? access.withExclusiveLockAsync('resource', 'owned root-race lock', async () => ++calls)
+        : access.replaceAtomicAsync(
+            'payload.txt',
+            createHash('sha256').update('before').digest('hex'),
+            'after',
+            'owned root-race CAS',
+          );
+    queueMicrotask(() => {
+      expect(path.dirname(path.resolve(repositoryRoot))).toBe(fixture);
+      expect(path.dirname(path.resolve(moved))).toBe(fixture);
+      renameSync(repositoryRoot, moved);
+      mkdirSync(repositoryRoot);
+    });
+    await expect(pending).rejects.toThrow(/root.*(changed|identity)/);
+    expect(calls).toBe(0);
+    expect(readFileSync(path.join(moved, 'payload.txt'), 'utf8')).toBe('before');
+    for (const location of [repositoryRoot, moved]) {
+      expect(existsSync(path.join(location, 'resource.lock'))).toBe(false);
+      expect(existsSync(path.join(location, 'payload.txt.cas.lock.lock'))).toBe(false);
+    }
+    expect(existsSync(path.join(repositoryRoot, 'payload.txt'))).toBe(false);
+  });
+
   test.each(['deleted', 'identity'])('Windows missing %s lock is contention before callback entry', async (kind) => {
     if (process.platform !== 'win32') return;
     const repositoryRoot = root(),

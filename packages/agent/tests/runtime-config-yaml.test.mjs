@@ -74,6 +74,73 @@ if (!configuredRoot) {
 const obsoletePackSurface =
   /runtime-compat|candidate-v2|(?:^|[\\/])(?:legacy|compatibility|upgraders?|backfill|fallback)(?:[\\/]|\.)|\b(?:create|load|open|migrate|upgrade|restore|backfill)(?:Legacy|Compatibility|Upgrader|Backfill|Fallback)[A-Z]\w*\b|\bexport\s+(?:declare\s+)?(?:class|function|const|type|interface)\s+(?:Legacy|Compatibility|Upgrader|Backfill|Fallback)[A-Z]\w*\b/i;
 
+test('loaded config digest rejects new inherited hooks after caching without invoking accessors', async () => {
+  const root = await fixtureRoot();
+  const loaded = loadRuntimeConfig(root),
+    original = runtimeConfigDigest(loaded);
+  expect(Object.isFrozen(loaded)).toBe(true);
+  expect(runtimeConfigDigest(loaded)).toBe(original);
+  for (const prototype of [Array.prototype, Object.prototype]) {
+    for (const accessor of [false, true]) {
+      const previous = Object.getOwnPropertyDescriptor(prototype, 'toJSON');
+      let reads = 0,
+        rejected;
+      try {
+        Object.defineProperty(
+          prototype,
+          'toJSON',
+          accessor
+            ? {
+                configurable: true,
+                get() {
+                  reads += 1;
+                  return () => null;
+                },
+              }
+            : {
+                configurable: true,
+                value() {
+                  reads += 1;
+                  return null;
+                },
+              },
+        );
+        try {
+          runtimeConfigDigest(loaded);
+        } catch (error) {
+          rejected = error;
+        }
+      } finally {
+        if (previous) Object.defineProperty(prototype, 'toJSON', previous);
+        else delete prototype.toJSON;
+      }
+      expect(rejected?.message).toContain('serialization hook');
+      expect(reads).toBe(0);
+      expect(runtimeConfigDigest(loaded)).toBe(original);
+    }
+  }
+});
+
+test('config digest keeps mutable callers and fresh YAML revisions current', async () => {
+  const root = await fixtureRoot();
+  const first = loadRuntimeConfig(root),
+    firstDigest = runtimeConfigDigest(first);
+  const mutable = JSON.parse(JSON.stringify(first));
+  expect(runtimeConfigDigest(mutable)).toBe(firstDigest);
+  mutable.config_revision += 1;
+  expect(runtimeConfigDigest(mutable)).not.toBe(firstDigest);
+  const yaml = await readFile(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8');
+  await writeFile(
+    path.join(root, 'agent-runtime.config.v1.yaml'),
+    yaml.replace(/config_revision: \d+/, `config_revision: ${first.config_revision + 1}`),
+  );
+  const current = loadRuntimeConfig(root);
+  expect(current).not.toBe(first);
+  expect(current.config_revision).toBe(first.config_revision + 1);
+  expect(runtimeConfigDigest(current)).not.toBe(firstDigest);
+  expect(runtimeConfigDigest(first)).toBe(firstDigest);
+});
+
 test('package surface guard rejects obsolete APIs while allowing current compatibility docs', () => {
   expect(
     obsoletePackSurface.test('Single-project compatibility entrypoint implemented through the exact-set factory.'),

@@ -4,9 +4,19 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { boundedSpawnSync, checkManifest, pinnedEnvironment, readPin, resolvePinnedBun } from '../bin/bun.mjs';
+import {
+  boundedSpawnSync,
+  checkManifest,
+  executionBudget,
+  commandOutcomeUnknown,
+  requireTerminalCommand,
+  pinnedEnvironment,
+  readPin,
+  resolvePinnedBun,
+} from '../bin/bun.mjs';
 
 const bundleRoot = path.resolve(import.meta.dirname, '..');
+const budget = executionBudget(undefined, 30_000);
 const smokeArgs = process.argv.slice(2);
 const optionValues = new Map();
 for (let index = 0; index < smokeArgs.length; index += 2) {
@@ -28,12 +38,13 @@ const copiedBundle = path.join(projectRoot, 'vida-agent');
 let packageSha256 = null;
 let executable = null;
 let resolvedPin = null;
+let childOutcomeUnknown = false;
 
 function run(cwd, args, environmentOverrides = {}, timeout = 180_000) {
   const pin = readPin(cwd);
   checkManifest(cwd, pin);
   if (executable === null) {
-    executable = resolvePinnedBun({ root: cwd });
+    executable = resolvePinnedBun({ root: cwd, budget });
     resolvedPin = pin;
   }
   assert.equal(pin, resolvedPin, 'copied bundle must use the validated Bun version');
@@ -47,20 +58,34 @@ function run(cwd, args, environmentOverrides = {}, timeout = 180_000) {
       encoding: 'utf8',
       windowsHide: true,
       timeout,
+      budget,
+      diagnostics: true,
     },
-    'Portable smoke Bun command',
+    `Portable smoke ${args[0]}`,
   );
+  if (commandOutcomeUnknown(result)) childOutcomeUnknown = true;
+  requireTerminalCommand(result, `Portable smoke ${args[0]}`);
   assert.equal(result.status, 0, `${args.join(' ')} failed:\n${result.stderr}`);
   return result.stdout;
 }
 
 function runProgram(cwd, command, args) {
-  const result = spawnSync(command, args, {
-    cwd,
-    encoding: 'utf8',
-    windowsHide: true,
-    timeout: 180_000,
-  });
+  const result = boundedSpawnSync(
+    spawnSync,
+    command,
+    args,
+    {
+      cwd,
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 60_000,
+      budget,
+      diagnostics: true,
+    },
+    'Portable smoke extraction',
+  );
+  if (commandOutcomeUnknown(result)) childOutcomeUnknown = true;
+  requireTerminalCommand(result, `Portable smoke ${command}`);
   assert.equal(result.status, 0, `${command} ${args.join(' ')} failed:\n${result.stderr}`);
 }
 
@@ -85,6 +110,18 @@ try {
   const unpacked = path.join(temporary, 'unpacked');
   mkdirSync(unpacked);
   runProgram(temporary, 'tar', ['-xzf', archive, '-C', unpacked]);
+  const extractedBundle = path.join(unpacked, 'package');
+  for (const file of [
+    'dist/src/documentation/transition-proof.js',
+    'dist/schemas/documentation-policy-transition.v1.schema.json',
+    'bin/capture-completed-readonly.mjs',
+    'tests/fuzz.test.mjs',
+    'tests/zombies.test.mjs',
+    'tests/bun-coverage.test.mjs',
+    'stryker.config.mjs',
+  ])
+    assert.equal(existsSync(path.join(extractedBundle, file)), true, `packed archive must include ${file}`);
+  assert.equal(existsSync(path.join(extractedBundle, 'agent-runtime')), false);
   cpSync(path.join(unpacked, 'package'), copiedBundle, { recursive: true });
   assert.equal(existsSync(path.join(copiedBundle, 'package.json')), true);
   assert.equal(existsSync(path.join(copiedBundle, '..', 'agent-runtime')), false);
@@ -166,7 +203,7 @@ try {
       VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT: repairFixtures,
       AGENT_RUNTIME_TEST_REPOSITORY_ROOT: undefined,
     },
-    300_000,
+    Infinity,
   );
   const receipt = {
     schema: 'VidaAgentPortableSmoke/v1',
@@ -197,5 +234,5 @@ try {
   });
   throw error;
 } finally {
-  rmSync(temporary, { recursive: true, force: true });
+  if (!childOutcomeUnknown) rmSync(temporary, { recursive: true, force: true });
 }

@@ -197,9 +197,11 @@ function resolveFsSafePackageRoot(): string {
   return root;
 }
 function fsSafeNativeTarget(): string {
-  const report = (process as NodeJS.Process & { report?: { getReport?: () => unknown } }).report?.getReport?.() as
-    | { header?: { glibcVersionRuntime?: string } }
-    | undefined;
+  const report = (
+    process.platform === 'linux'
+      ? (process as NodeJS.Process & { report?: { getReport?: () => unknown } }).report?.getReport?.()
+      : undefined
+  ) as { header?: { glibcVersionRuntime?: string } } | undefined;
   const libc = ['musl', 'gnu'][Number(Boolean(report?.header?.glibcVersionRuntime))]!;
   const targets: Readonly<Record<string, string>> = {
     'win32-x64': 'win32-x64-msvc',
@@ -236,7 +238,7 @@ const fsSafePackageAttested =
   fsSafePackageTreeHash(fsSafePackageRoot, fsSafePackageNativeTarget) ===
   fsSafePackageTreeSha256ByNativeTarget[fsSafePackageNativeTarget];
 function loadLinuxNativeBinding(): LinuxNativeBinding | undefined {
-  if (!fsSafePackageAttested) return undefined;
+  if (!fsSafePackageAttested || process.platform !== 'linux') return undefined;
   const nativeModule = moduleRequire(path.join(fsSafePackageRoot, 'dist', 'native.js')) as {
     getNativeBinding?: () => LinuxNativeBinding | undefined;
   };
@@ -2126,11 +2128,11 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     initialIdentity ??= identity;
   };
   const createHandle = async (): Promise<FsSafeRoot> => {
-    checkCreateCapability();
-    handle ??= createFsSafeRoot(root, { symlinks: 'reject', hardlinks: 'reject', mkdir: false, mode: 0o600 });
-    const opened = await handle;
-    checkCreateCapability();
-    return opened;
+    if (!handle) {
+      checkCreateCapability();
+      handle = createFsSafeRoot(root, { symlinks: 'reject', hardlinks: 'reject', mkdir: false, mode: 0o600 });
+    }
+    return handle;
   };
   const checkParents = (target: string, label: string): string => {
     const relative = fsSafeRelative(root, target, label);
@@ -2165,10 +2167,12 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     assertAvailable: () => undefined,
     prepareExclusiveCreation: async () => {
       await createHandle();
+      checkCreateCapability();
       return Object.freeze({
         ensureDirectory: async (target: string, label: string) => {
           const opened = await createHandle();
           const relative = checkParents(target, label);
+          checkCreateCapability();
           await opened.mkdir(relative);
           checkCreateCapability();
           fsSafeAssertDirectory(root, target, label);
@@ -2178,6 +2182,7 @@ function windowsAccess(root: string): SafeRepositoryAccess {
           const bytes = boundedContentBytes(contents, label);
           const opened = await createHandle();
           const relative = checkParents(target, label);
+          checkCreateCapability();
           await opened.create(relative, bytes, { mkdir: false, mode: 0o600 });
           checkCreateCapability();
         },
@@ -2198,11 +2203,19 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     writeExclusiveAsync: async (target, contents, label) => windowsWriteExclusive(root, target, contents, label),
     replaceAtomic: (target, expectedHash, contents, label) =>
       windowsReplaceAtomic(root, target, expectedHash, contents, label),
-    replaceAtomicAsync: async (target, expectedHash, contents, label) =>
-      windowsReplaceAtomicAsync(root, target, expectedHash, contents, label, await createHandle()),
+    replaceAtomicAsync: async (target, expectedHash, contents, label) => {
+      checkCreateCapability();
+      const opened = await createHandle();
+      checkCreateCapability();
+      return windowsReplaceAtomicAsync(root, target, expectedHash, contents, label, opened);
+    },
     withExclusiveLock: (target, label, operation) => windowsWithExclusiveLock(root, target, label, operation),
-    withExclusiveLockAsync: async (target, label, operation) =>
-      windowsWithExclusiveLockAsync(root, target, label, operation, await createHandle()),
+    withExclusiveLockAsync: async (target, label, operation) => {
+      checkCreateCapability();
+      const opened = await createHandle();
+      checkCreateCapability();
+      return windowsWithExclusiveLockAsync(root, target, label, operation, opened);
+    },
     compareReserveReplace: (target, expectedHash, contents, label) => {
       windowsReplaceAtomic(root, target, expectedHash, contents, label);
       return {

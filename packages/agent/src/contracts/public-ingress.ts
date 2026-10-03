@@ -78,9 +78,7 @@ interface CanonicalBudget {
 }
 
 function reject(conditions: readonly boolean[], message: string): void {
-  conditions.filter(Boolean).forEach(() => {
-    throw new Error(message);
-  });
+  if (conditions.some(Boolean)) throw new Error(message);
 }
 function defined<T>(values: readonly (T | undefined)[]): T {
   return values.find((value): value is T => value !== undefined) as T;
@@ -99,15 +97,9 @@ function arrayElementKey(key: PropertyKey): key is string {
 }
 
 export function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  const nonObject = [typeof value !== 'object', value === null, Array.isArray(value)].some(Boolean);
-  const checks = [
-    () => false,
-    () => {
-      const prototype = Object.getPrototypeOf(value);
-      return [prototype === Object.prototype, prototype === null].some(Boolean);
-    },
-  ];
-  return checks[Number(!nonObject)]!();
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 function hasUnsafeSerializationHook(value: Record<string, unknown>): boolean {
@@ -145,81 +137,107 @@ export function assertCanonicalJsonValue(
   budget.nodes += 1;
   reject([budget.nodes > MAX_CANONICAL_NODES], `canonical JSON node budget exceeded at ${pointer}`);
   reject([depth > MAX_CANONICAL_DEPTH], `canonical JSON depth budget exceeded at ${pointer}`);
-  const validPrimitive = [
-    value === null,
-    typeof value === 'boolean',
-    typeof value === 'number',
-    typeof value === 'string',
-  ].some(Boolean);
-  const primitive = (): void => {
-    reject([!validPrimitive], `non-canonical JSON value at ${pointer}`);
-  };
-  const number = (): void => {
-    const invalidUnsafeInteger = [!Number.isSafeInteger(value), Number.isInteger(value)].every(Boolean);
-    const valid = [Number.isFinite(value), !invalidUnsafeInteger, !Object.is(value, -0)].every(Boolean);
-    reject([!valid], `non-canonical JSON number at ${pointer}`);
-  };
-  const string = (): void => {
-    budget.bytes += Buffer.byteLength(value as string, 'utf8');
-    reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${pointer}`);
-  };
-  const array = (): void => {
-    const target = value as unknown[];
-    reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
-    reject(
-      [hasUnsafeSerializationHook(target as unknown as Record<string, unknown>)],
-      `serialization hook at ${pointer}`,
-    );
-    seen.add(target);
-    const ownKeys = Reflect.ownKeys(target);
-    reject(
-      [ownKeys.some((key) => arrayPropertyInvalid(key, target.length))],
-      `non-canonical array property at ${pointer}`,
-    );
-    reject([ownKeys.filter(arrayElementKey).length !== target.length], `sparse array at ${pointer}`);
-    ownKeys.filter(arrayElementKey).forEach((key) => {
-      const descriptor = Object.getOwnPropertyDescriptor(target, key);
-      reject(
-        [[!descriptor?.enumerable, descriptor?.get !== undefined, descriptor?.set !== undefined].some(Boolean)],
-        `non-canonical property descriptor at ${pointer}[${key}]`,
-      );
-    });
-    target
-      .map((_, index) => index)
-      .forEach((index) => {
-        reject([!Object.prototype.hasOwnProperty.call(target, index)], `sparse array at ${pointer}[${index}]`);
-        assertCanonicalJsonValue(target[index], `${pointer}[${index}]`, seen, depth + 1, budget);
-      });
-    seen.delete(target);
-  };
-  const object = (): void => {
-    const target = value as Record<string, unknown>;
-    reject([!isPlainRecord(target)], `non-canonical JSON object at ${pointer}`);
-    reject([hasUnsafeSerializationHook(target)], `serialization hook at ${pointer}`);
-    reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
-    seen.add(target);
-    Reflect.ownKeys(target).forEach((key) => {
-      reject([typeof key !== 'string'], `symbol property at ${pointer}`);
-      const descriptor = Object.getOwnPropertyDescriptor(target, key);
-      reject(
-        [[!descriptor?.enumerable, descriptor?.get !== undefined, descriptor?.set !== undefined].some(Boolean)],
-        `non-canonical property descriptor at ${pointer}.${String(key)}`,
-      );
-      budget.bytes += Buffer.byteLength(String(key), 'utf8');
-      reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${pointer}.${String(key)}`);
-      assertCanonicalJsonValue(descriptor?.value, `${pointer}.${String(key)}`, seen, depth + 1, budget);
-    });
-    seen.delete(target);
-  };
-  const objectLike = [typeof value === 'object', value !== null].every(Boolean);
-  const arrayLike = Array.isArray(value);
-  const numberLike = typeof value === 'number';
-  const stringLike = typeof value === 'string';
-  const handler = [primitive, number, string, object, array][
-    Number(numberLike) + Number(stringLike) * 2 + Number(objectLike) * 3 + Number(arrayLike)
-  ];
-  handler!();
+  if (value === null || typeof value === 'boolean') return;
+  const kind = Array.isArray(value) ? 'array' : typeof value;
+  const handler = canonicalValidators[kind];
+  reject([handler === undefined], `non-canonical JSON value at ${pointer}`);
+  handler!(value, pointer, seen, depth, budget);
 }
+
+type CanonicalValidator = (
+  value: unknown,
+  pointer: string,
+  seen: WeakSet<object>,
+  depth: number,
+  budget: CanonicalBudget,
+) => void;
+
+function canonicalNumber(value: unknown, pointer: string): void {
+  const unsafeInteger = Number.isInteger(value) && !Number.isSafeInteger(value);
+  reject([!Number.isFinite(value), unsafeInteger, Object.is(value, -0)], `non-canonical JSON number at ${pointer}`);
+}
+
+function canonicalString(
+  value: unknown,
+  pointer: string,
+  _seen: WeakSet<object>,
+  _depth: number,
+  budget: CanonicalBudget,
+): void {
+  budget.bytes += Buffer.byteLength(value as string, 'utf8');
+  reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${pointer}`);
+}
+
+function canonicalArray(
+  value: unknown,
+  pointer: string,
+  seen: WeakSet<object>,
+  depth: number,
+  budget: CanonicalBudget,
+): void {
+  const target = value as unknown[];
+  reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
+  reject(
+    [hasUnsafeSerializationHook(target as unknown as Record<string, unknown>)],
+    `serialization hook at ${pointer}`,
+  );
+  seen.add(target);
+  const ownKeys = Reflect.ownKeys(target);
+  reject(
+    [ownKeys.some((key) => arrayPropertyInvalid(key, target.length))],
+    `non-canonical array property at ${pointer}`,
+  );
+  const elements = ownKeys.filter(arrayElementKey);
+  reject([elements.length !== target.length], `sparse array at ${pointer}`);
+  // Validate every descriptor before any child is inspected; accessors never execute.
+  for (const key of elements) canonicalDescriptor(target, key, `${pointer}[${key}]`);
+  for (let index = 0; index < target.length; index += 1) {
+    reject([!Object.prototype.hasOwnProperty.call(target, index)], `sparse array at ${pointer}[${index}]`);
+    assertCanonicalJsonValue(target[index], `${pointer}[${index}]`, seen, depth + 1, budget);
+  }
+  seen.delete(target);
+}
+
+function canonicalDescriptor(target: object, key: PropertyKey, pointer: string): PropertyDescriptor {
+  const descriptor = Object.getOwnPropertyDescriptor(target, key);
+  reject(
+    [!descriptor?.enumerable, descriptor?.get !== undefined, descriptor?.set !== undefined],
+    `non-canonical property descriptor at ${pointer}`,
+  );
+  return descriptor!;
+}
+
+function canonicalObject(
+  value: unknown,
+  pointer: string,
+  seen: WeakSet<object>,
+  depth: number,
+  budget: CanonicalBudget,
+): void {
+  const target = value as Record<string, unknown>;
+  reject([!isPlainRecord(target)], `non-canonical JSON object at ${pointer}`);
+  reject([hasUnsafeSerializationHook(target)], `serialization hook at ${pointer}`);
+  reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
+  seen.add(target);
+  for (const key of Reflect.ownKeys(target)) {
+    reject([typeof key !== 'string'], `symbol property at ${pointer}`);
+    const childPointer = `${pointer}.${String(key)}`;
+    const descriptor = canonicalDescriptor(target, key, childPointer);
+    budget.bytes += Buffer.byteLength(String(key), 'utf8');
+    reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${childPointer}`);
+    assertCanonicalJsonValue(descriptor.value, childPointer, seen, depth + 1, budget);
+  }
+  seen.delete(target);
+}
+
+const canonicalValidators = Object.freeze(
+  Object.assign(Object.create(null) as Record<string, CanonicalValidator | undefined>, {
+    number: canonicalNumber,
+    string: canonicalString,
+    array: canonicalArray,
+    object: canonicalObject,
+  }),
+);
 function errorText(errors: ErrorObject[] | null | undefined): string {
   const rows = [errors, []].find((entry) => Array.isArray(entry)) as ErrorObject[];
   return rows.map((error) => `${defined([error.instancePath, '/'])} ${defined([error.message, 'invalid'])}`).join('; ');

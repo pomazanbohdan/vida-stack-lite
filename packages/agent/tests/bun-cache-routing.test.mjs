@@ -101,7 +101,24 @@ test('pinned launcher checks version then forwards one payload with unchanged ar
   assert.equal(calls[1].command, process.execPath);
   assert.deepEqual(calls[1].args, argv);
   assert.equal(calls[1].options.cwd, scratch);
-  assert.deepEqual(calls[1].options.env, pinnedEnvironment(process.execPath, env, root));
+  const {
+    VIDA_PINNED_COMMAND_BUDGET_MS: duration,
+    VIDA_PINNED_COMMAND_DEADLINE_MS: expiry,
+    VIDA_PIPELINE_DIAGNOSTICS: diagnostics,
+    ...forwardedEnvironment
+  } = calls[1].options.env;
+  assert.deepEqual(forwardedEnvironment, pinnedEnvironment(process.execPath, env, root));
+  if (duration === undefined) {
+    assert.equal(expiry, undefined);
+    assert.equal(Object.hasOwn(calls[1].options, 'timeout'), false);
+  } else {
+    assert.ok(Number.isSafeInteger(Number(duration)) && Number(duration) > 0);
+    assert.equal(Number(duration), calls[1].options.timeout);
+    assert.ok(Number.isSafeInteger(Number(expiry)) && Number(expiry) > 0);
+  }
+  if (expiry !== undefined && process.env.VIDA_PINNED_COMMAND_DEADLINE_MS !== undefined)
+    assert.ok(Number(expiry) <= Number(process.env.VIDA_PINNED_COMMAND_DEADLINE_MS));
+  assert.equal(diagnostics, undefined);
   assert.equal(calls[1].options.shell, undefined);
 });
 
