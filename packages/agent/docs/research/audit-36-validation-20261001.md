@@ -433,6 +433,40 @@ options. The install directory is created only after its containment and prior-
 install absence checks. Archive, entry and extracted-byte limits, exact package
 identity/asset comparisons and UNKNOWN/no-reissue controls remain unchanged.
 This is a caller-precondition repair; no dependency, parser or helper was added,
-and no throughput claim is made. The four approved/dispatched CI runs remain
+and no throughput claim is made. The five approved/dispatched CI runs remain
 failed; only a later successful CI receipt can establish native or install
 qualification.
+
+## 2026-10-04 — CI root-level exclusive leaf paths
+
+Run37220454501/attempt1/job111489588604 failed at native-build. The captured
+terminal record reports `GAP-VIDA-CI-DELIVERY-001`, `Local release: invalid
+relative path`, exit 1, and retained issued intent/bytes with no automatic
+cleanup or reissue; later delivery phases were skipped. The exact terminal and
+log are retained at
+`.tmp/core-windows-resume-20261002/approved-update01-archive-destination-ci-run-terminal.json`
+and `.tmp/core-windows-resume-20261002/approved-update01-archive-destination-ci-run-failed.log`.
+The captured log has no stack frame tying the message to the helper below. This
+failure provides no successful native or installed proof.
+
+Source review identifies the shared private `exclusive(root, relative, value)`
+caller issue: it passed `path.posix.dirname(relative)` unconditionally to
+`releaseDirectory` before `writeFileSync`. `nativeBuild` submits the
+root-level `candidate.json`; POSIX `dirname` returns `.` when a path has no
+separator. The existing strict `releaseRelative` validation rejects that dot
+parent, so the preparation call fails before the exclusive leaf write. This is a
+source-control-flow attribution of the known failure message, distinct from a
+captured stack or successful native result. The bounded correction skips parent
+creation only when the parent is `.`; `releasePath(root, relative, true)` and
+the `wx` write remain in place. Nested relative parents still use guarded
+`releaseDirectory`; relative/root/ancestor/leaf validation, exclusive creation
+and UNKNOWN custody remain unchanged for the helper's root-level and nested
+callers.
+
+The current [Node Path API](https://nodejs.org/api/path.html#pathdirnamepath)
+describes `dirname` as returning a path's directory name. The pinned [Node
+v24.19.0 POSIX implementation](https://raw.githubusercontent.com/nodejs/node/v24.19.0/lib/path.js)
+returns `.` when no separator or root is found. The Bun PlatformPath dirname
+reference could not be retrieved and remains an explicit research GAP; no Bun
+compatibility claim is inferred. No local helper or delivery probe was run.
+Successful native and installed proof remain outstanding.

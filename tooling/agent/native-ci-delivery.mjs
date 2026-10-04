@@ -124,7 +124,8 @@ function physical(root, relative, maximum = ciArchiveLimit) {
   return readFileSync(file);
 }
 function exclusive(root, relative, value) {
-  releaseDirectory(root, path.posix.dirname(relative));
+  const directory = path.posix.dirname(relative);
+  if (directory !== '.') releaseDirectory(root, directory);
   writeFileSync(releasePath(root, relative, true), Buffer.isBuffer(value) ? value : json(value), {
     flag: 'wx',
     mode: 0o600,

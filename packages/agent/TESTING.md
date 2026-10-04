@@ -73,16 +73,19 @@ current exact-asset receipts remain required and separate from local agent proof
 The repository-only workflow `agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
 phases and one result-emission step. The approved provider/profile was activated
-and dispatched four CI runs; all four failed, so no successful native build,
+and dispatched five CI runs; all five failed, so no successful native build,
 exact-asset qualification or installation is established. Run37216772330/attempt1
 passed Source guards, `ci:pinned` and npm pack, then native-build failed with an
-ENOENT lstat on its absent private package extraction destination. Source checks
-do not qualify native targets or installed behavior. Public route denials need
-actual terminal child observations and specific errors; prerequisite or UNKNOWN
-failures cannot count as valid denials. The Windows/current-asset same-version
-upgrade controls do not establish other target support or cross-version rollback.
-The provider/profile is active; applicable standalone requirements and separate
-target-specific evidence remain open.
+ENOENT lstat on its absent private package extraction destination. Following the
+archive-destination caller correction, run37220454501/attempt1/job111489588604
+failed at native-build with `Local release: invalid relative path`; later
+delivery phases were skipped. Source checks do not qualify native targets or
+installed behavior. Public route denials need actual terminal child observations
+and specific errors; prerequisite or UNKNOWN failures cannot count as valid
+denials. The Windows/current-asset same-version upgrade controls do not establish
+other target support or cross-version rollback. The provider/profile is active;
+applicable standalone requirements and separate target-specific evidence remain
+open.
 Broad dependency/tool and caller adaptation is last in 0.1.3, after P0 native
 UPDATE01/developer-unblocking and required installed checkpoints, before final
 0.1.3 delivery and acceptance. Reuse exact current qualified pins for P0 work;
@@ -439,7 +442,7 @@ the actual current operation; suite receipts belong outside this living contract
 
 ## Portable bundle verification
 
-Run `bun run verify` from the bundle root for the local agent subset. It neither installs dependencies nor copies or installs a bundle. `bun run ci` performs delivery preparation only; CI/CD owns exact artifact/build/install validation. The approved CI workflow and receipt path were activated and dispatched in four runs; all four failed. No successful native-build or installation receipt exists, so release qualification remains blocked. Local successful logs cannot substitute for CI/CD evidence or attributable installed user acceptance. Numeric coverage, CRAP and manual mutation proof remain separate local requirements.
+Run `bun run verify` from the bundle root for the local agent subset. It neither installs dependencies nor copies or installs a bundle. `bun run ci` performs delivery preparation only; CI/CD owns exact artifact/build/install validation. The approved CI workflow and receipt path were activated and dispatched in five runs; all five failed. No successful native-build or installation receipt exists, so release qualification remains blocked. Local successful logs cannot substitute for CI/CD evidence or attributable installed user acceptance. Numeric coverage, CRAP and manual mutation proof remain separate local requirements.
 
 ## Required integration evidence
 
@@ -534,7 +537,7 @@ The discovery view retains the exact maintained bunfig.toml used by the child la
 Source-only repair/recovery fixtures exclude the exact generated dist/standalone
 directory. They retain agent sources, schemas, instructions and current SDK
 outputs; the repository text-read limit stays unchanged. The approved CI/CD
-workflow/profile was activated and four runs were dispatched; all four failed.
+workflow/profile was activated and five runs were dispatched; all five failed.
 Those failure receipts do not establish native-build or installed qualification.
 Delivery qualification remains an explicit GAP.
 
