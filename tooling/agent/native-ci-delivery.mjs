@@ -319,10 +319,13 @@ async function nativeBuild(ctx, invoke) {
   const archive = physical(ctx.root, 'output/' + packed[0].filename);
   const require = createRequire(path.join(ctx.packageRoot, 'package.json'));
   const { extractArchive } = await import(pathToFileURL(require.resolve('@openclaw/fs-safe/archive')).href);
+  releaseDirectory(ctx.root, 'package');
   await extractArchive({
     archivePath: path.join(ctx.root, 'output', packed[0].filename),
     destDir: path.join(ctx.root, 'package'),
     kind: 'tar',
+    tarGzip: true,
+    timeoutMs: 0,
     stripComponents: 1,
     limits: { maxArchiveBytes: ciArchiveLimit, maxExtractedBytes: 512 * 1024 * 1024, maxEntryBytes: ciArchiveLimit },
   });
@@ -376,12 +379,15 @@ async function nativeInstall(ctx, candidate, invoke) {
     !existsSync(locations.installed_root) && !existsSync(locations.path_command),
     'prior install custody exists; no replay',
   );
+  releaseDirectory(ctx.root, path.relative(ctx.root, locations.installed_root).split(path.sep).join('/'));
   const require = createRequire(path.join(ctx.packageRoot, 'package.json'));
   const { extractArchive } = await import(pathToFileURL(require.resolve('@openclaw/fs-safe/archive')).href);
   await extractArchive({
     archivePath: path.join(ctx.root, 'output', candidate.pack_metadata[0].filename),
     destDir: locations.installed_root,
     kind: 'tar',
+    tarGzip: true,
+    timeoutMs: 0,
     stripComponents: 1,
     limits: { maxArchiveBytes: ciArchiveLimit, maxExtractedBytes: 512 * 1024 * 1024, maxEntryBytes: ciArchiveLimit },
   });

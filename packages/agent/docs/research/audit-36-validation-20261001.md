@@ -413,3 +413,26 @@ The official Mastra [workflow snapshots reference](https://mastra.ai/en/referenc
 describes persisted workflow state required for exact resume; it supplies only
 surrounding persistence context and does not define VIDA identity, authorization
 or CAS. No dependency adoption or scheduler is needed.
+
+## 2026-10-04 — CI archive destination contract
+
+Run37216772330/attempt1 passed Source guards, `ci:pinned` and npm pack, then
+native-build failed with ENOENT while inspecting the absent private package
+extraction destination. The package pins `@openclaw/fs-safe@0.5.6` in
+`packages/agent/package.json` and `packages/agent/bun.lock`; its
+`extractArchive` contract requires the destination directory to exist before
+extraction. The JS fallback needs `tarGzip: true` to decode the known npm
+`.tgz`; the native backend autodetects codecs. An explicit `timeoutMs: 0`
+keeps the archive-call timer disabled. The [official archive
+reference](https://fs-safe.io/archive.html) documents these caller options and
+preconditions.
+
+Both existing callers now create their operation-private extraction destination
+with the existing `releaseDirectory` guard and pass those explicit archive
+options. The install directory is created only after its containment and prior-
+install absence checks. Archive, entry and extracted-byte limits, exact package
+identity/asset comparisons and UNKNOWN/no-reissue controls remain unchanged.
+This is a caller-precondition repair; no dependency, parser or helper was added,
+and no throughput claim is made. The four approved/dispatched CI runs remain
+failed; only a later successful CI receipt can establish native or install
+qualification.
