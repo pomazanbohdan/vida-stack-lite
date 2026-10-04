@@ -1,4 +1,9 @@
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test, spyOn } from 'bun:test';
+import { Database } from 'bun:sqlite';
+import { HostStateStore, inspectHostWorkspaceDatabase } from '../src/host-state.ts';
+import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
+import { loadProjectSetContext } from '../src/config/project-context.ts';
+import { sessionBridgeRunId } from '../src/orchestration/mastra-session-bridge.ts';
 import {
   boundedSpawnSync,
   executionBudget,
@@ -33,6 +38,582 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// A interrupted admission fixture: real Host CAS, no Mastra producer or installation.
+function unpreparedRecoveryFixture() {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-unprepared-state-'));
+  const yaml = readFileSync(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
+    .replaceAll('{{REPOSITORY}}', 'recovery-repository')
+    .replaceAll('{{PROJECT}}', 'project')
+    .replaceAll('{{BUNDLE}}', 'vida-agent');
+  writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), yaml);
+  writeFileSync(path.join(root, 'baseline.yaml'), yaml);
+  writeFileSync(path.join(root, 'AGENTS.md'), 'Fixture policy');
+  writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Fixture sources');
+  mkdirSync(path.join(root, 'docs/agent-instructions'), { recursive: true });
+  writeFileSync(path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'), '{}');
+  const config = loadRuntimeConfig(root),
+    project = loadProjectSetContext(root, config, 'recovery-repository', ['project']);
+  const workspace = deriveWorkspaceId(project.repository_id, root),
+    identity = {
+      repository_id: project.repository_id,
+      project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest,
+      work_id: 'partial-preparation',
+    };
+  const source = 'a'.repeat(64),
+    resources = ['execution:' + identity.work_id],
+    now = new Date().toISOString(),
+    expiry = new Date(Date.now() + 3600000).toISOString(),
+    owner = 'fixture-owner';
+  const item = {
+    schema: 'WorkItem/v1',
+    id: identity.work_id,
+    canonical_kind: 'task',
+    intent: 'task_execution',
+    project_id: 'project',
+    title: 'Interrupted preparation',
+    description: 'No issued work',
+    risk_flags: [],
+    labels: [],
+    provider: 'local-project',
+    provider_type: 'local',
+  };
+  const intakePath = '.agent/work/' + identity.work_id + '/local-session-intake.v1.json',
+    intakeBytes = Buffer.from(
+      JSON.stringify({ schema: 'VidaLocalSessionIntake/v1', work_item: item, native_session_handle: owner }),
+    );
+  mkdirSync(path.dirname(path.join(root, intakePath)), { recursive: true });
+  writeFileSync(path.join(root, intakePath), intakeBytes);
+  const binding = {
+    ...identity,
+    team_id: 'default-development',
+    workflow_id: 'task_execution',
+    provider_work_item_id: identity.work_id,
+    lifecycle_work_id: identity.work_id,
+    work_item_digest: canonicalJsonDigest(item),
+    work_source_revision: source,
+    scope_id: 'scope-preparation',
+    scope_contract_digest: 'c'.repeat(64),
+    acceptance_manifest_digest: 'd'.repeat(64),
+    ac_ids: ['AC-PREPARATION'],
+    implementation_paths: ['task.ts'],
+    allowed_resources: ['file:task.ts', ...resources],
+    config_digest: runtimeConfigDigest(config),
+    runtime_source_revision: 'runtime-source',
+    schema_digest: 'f'.repeat(64),
+    runtime_code_digest: '0'.repeat(64),
+  };
+  delete binding.work_id;
+  const context = { work_id: identity.work_id, attempt: 1, scope_digest: source };
+  const work = {
+    schema: 'WorkState/v1',
+    workspace_id: workspace,
+    revision: 1,
+    binding,
+    contracts: {
+      scope: { schema: 'ImplementationScope/v1', path: '.agent/scope.json', sha256: binding.scope_contract_digest },
+      acceptance: {
+        schema: 'AcceptanceManifest/v1',
+        path: '.agent/acceptance.json',
+        sha256: binding.acceptance_manifest_digest,
+      },
+      decisions: [],
+    },
+    lease: { ticket_id: 'preparation-ticket', thread_id: owner, generation: 1 },
+    execution: {
+      run_id: sessionBridgeRunId(workspace, context, 'task_execution'),
+      input_digest: '1'.repeat(64),
+      phase: 'implementation',
+      status: 'active',
+      assignment_attempts: [],
+    },
+    lifecycle: {
+      schema: 'LifecycleState/v1',
+      revision: 1,
+      phase: 'INTAKE',
+      source_revision: source,
+      next_action: 'Trace the accepted request.',
+      route: 'R3',
+      risk: 'high',
+      change_kind: 'fix',
+      config_binding: {
+        config_digest: binding.config_digest,
+        schema_digest: binding.schema_digest,
+        runtime_code_digest: binding.runtime_code_digest,
+      },
+      scope: {
+        scope_id: binding.scope_id,
+        allowed_paths: ['task.ts'],
+        fingerprint_paths: ['task.ts'],
+        implementation_paths: ['task.ts'],
+        documentation_paths: [],
+      },
+      seal: null,
+      assurance: {
+        epoch: 'epoch-1',
+        review_generation: 0,
+        correction_count: 0,
+        review_failure_count: 0,
+        delivery_cycle_id: null,
+      },
+      references: [],
+    },
+    artifacts: [
+      {
+        artifact_id: 'local-session-intake',
+        schema: 'VidaLocalSessionIntake/v1',
+        path: intakePath,
+        sha256: createHash('sha256').update(intakeBytes).digest('hex'),
+        stage_id: 'intake',
+        source_revision: source,
+        scope_id: binding.scope_id,
+        ac_ids: binding.ac_ids,
+      },
+    ],
+  };
+  const ticket = {
+    schema: 'CoordinationTicket/v1',
+    ticket_id: work.lease.ticket_id,
+    ...identity,
+    thread_id: owner,
+    source_revision: source,
+    generation: 1,
+    sequence: 1,
+    contour_keys: resources,
+    exclusive_resources: resources,
+    status: 'active',
+    claim_ids: ['preparation-claim'],
+    expires_at: expiry,
+    active_resources: resources,
+    blocked_resources: [],
+    created_at: now,
+  };
+  const claim = {
+    schema: 'WorkstreamClaim/v1',
+    claim_id: 'preparation-claim',
+    ticket_id: ticket.ticket_id,
+    work_id: identity.work_id,
+    thread_id: owner,
+    generation: 1,
+    resources,
+    lease_expires_at: expiry,
+    status: 'active',
+    created_at: now,
+    renewed_at: now,
+  };
+  const ledger = {
+    schema: 'CoordinationLedger/v1',
+    workspace_id: workspace,
+    revision: 1,
+    open_generation: 1,
+    next_sequence: 2,
+    tickets: [ticket],
+    claims: [claim],
+    notices: [],
+    dispositions: [],
+    contours: [],
+    batches: [],
+    rebinds: [],
+    operations: [],
+    retirements: [],
+  };
+  const file = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+  mkdirSync(path.dirname(file), { recursive: true });
+  let db = new Database(file, { strict: true }),
+    store = new HostStateStore(db, workspace, undefined, undefined, undefined, undefined, root);
+  store.compareAndSwapHostState({ expectedWork: null, expectedLedger: null, nextWork: work, nextLedger: ledger });
+  const journalOwner = openConfiguredMastraSessionLedger(root);
+  journalOwner.close();
+  const engineFile = path.join(root, config.control.work_root, 'mastra-workflows.v1.sqlite'),
+    engine = new Database(engineFile);
+  engine.exec('CREATE TABLE mastra_workflow_snapshot (workflow_name TEXT,run_id TEXT,snapshot TEXT)');
+  engine.close();
+  const input = { identity, attempt: 1, operatorHandle: owner, decisionPointer: 'user:fixture-recovery', config };
+  const observed = () => inspectHostWorkspaceDatabase(file, workspace);
+  return {
+    root,
+    file,
+    engineFile,
+    identity,
+    workspace,
+    config,
+    input,
+    context,
+    observed,
+    get db() {
+      return db;
+    },
+    get store() {
+      return store;
+    },
+    reopen() {
+      db.close();
+      db = new Database(file, { strict: true });
+      store = new HostStateStore(db, workspace, undefined, undefined, undefined, undefined, root);
+    },
+    close() {
+      db.close();
+      rmSync(root, { recursive: true, force: true });
+    },
+  };
+}
+
+describe('unprepared recovery', () => {
+  test('held maintenance and pending FIFO ownership deny even with matching versions', () => {
+    for (const fault of ['maintenance', 'fifo']) {
+      const f = unpreparedRecoveryFixture();
+      try {
+        if (fault === 'maintenance') {
+          const digest = 'a'.repeat(64),
+            fence = {
+              schema: 'MaintenanceFence/v1',
+              workspace_id: f.workspace,
+              revision: 1,
+              generation: 1,
+              status: 'held',
+              token_digest: digest,
+              binding: {
+                schema: 'MaintenanceFenceBinding/v1',
+                project_ids: ['project'],
+                operation_id: 'fixture-maintenance',
+                manifest_digest: digest,
+                request_digest: digest,
+                bindings_digest: digest,
+                closure_digest: digest,
+                bundle_digest: digest,
+              },
+            };
+          f.db
+            .query('INSERT INTO agent_host_maintenance VALUES(?,?,?,?)')
+            .run(f.workspace, 1, JSON.stringify(fence), canonicalJsonDigest(fence));
+        } else {
+          const row = f.db.query("SELECT payload FROM agent_host_state WHERE kind='ledger'").get(),
+            ledger = JSON.parse(row.payload),
+            ticket = ledger.tickets[0];
+          ledger.revision++;
+          ledger.next_sequence = 3;
+          ticket.sequence = 2;
+          ledger.tickets.push({
+            ...ticket,
+            ticket_id: 'earlier-queue',
+            thread_id: 'foreign-owner',
+            sequence: 1,
+            status: 'queued',
+            claim_ids: [],
+            active_resources: [],
+            expires_at: null,
+          });
+          f.db
+            .query("UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE kind='ledger'")
+            .run(ledger.revision, JSON.stringify(ledger), canonicalJsonDigest(ledger));
+        }
+        const before = f.observed();
+        expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow(
+          fault === 'maintenance' ? /maintenance fence/ : /FIFO conflict/,
+        );
+        expect(f.observed()).toEqual(before);
+      } finally {
+        f.close();
+      }
+    }
+  });
+  test('failure between Work and Ledger publication rolls back and same request can retry', () => {
+    const f = unpreparedRecoveryFixture();
+    let spy;
+    try {
+      const request = f.store.inspectUnpreparedWorkRecovery(f.input),
+        before = f.observed(),
+        original = Database.prototype.query;
+      let updates = 0;
+      spy = spyOn(Database.prototype, 'query').mockImplementation(function (sql) {
+        if (sql.startsWith('UPDATE agent_host_state SET revision=') && ++updates === 2)
+          return {
+            run() {
+              throw Error('injected ledger publication failure');
+            },
+          };
+        return original.call(this, sql);
+      });
+      expect(() => f.store.releaseUnpreparedWork(f.input, request)).toThrow(/injected ledger publication/);
+      spy.mockRestore();
+      spy = undefined;
+      expect(f.observed()).toEqual(before);
+      expect(f.store.releaseUnpreparedWork(f.input, request).work.execution.status).toBe('suspended');
+    } finally {
+      spy?.mockRestore();
+      f.close();
+    }
+  });
+  test('read-only CLI exposes a retained request; release and lost-ack retry preserve original evidence', async () => {
+    const f = unpreparedRecoveryFixture();
+    try {
+      const before = f.observed(),
+        base = {
+          identity: f.identity,
+          attempt: 1,
+          baselinePath: 'baseline.yaml',
+          decisionPointer: f.input.decisionPointer,
+        };
+      writeFileSync(path.join(f.root, 'inspect.json'), JSON.stringify(base));
+      const args = [
+        '--recover-unprepared-work',
+        'true',
+        '--mode',
+        'inspect',
+        '--project-root',
+        f.root,
+        '--native-session-handle',
+        f.input.operatorHandle,
+        '--request',
+        'inspect.json',
+      ];
+      const inspected = await run(args);
+      expect(inspected.next_operation).toBe('release_unprepared_work');
+      expect(inspected.rights_granted).toBe(false);
+      expect(f.observed()).toEqual(before);
+      writeFileSync(path.join(f.root, 'apply.json'), JSON.stringify(inspected.request));
+      const apply = args.map((value, index) =>
+        args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
+      );
+      const released = await run(apply);
+      expect(released.status).toBe('unprepared_execution_released');
+      expect(released.rights_granted).toBe(false);
+      const after = f.observed(),
+        state = after.work.find((row) => row.identity.work_id === f.identity.work_id).state;
+      expect(state.lease).toBeNull();
+      expect(state.execution.status).toBe('suspended');
+      expect(state.artifacts).toEqual(before.work[0].state.artifacts);
+      expect(state.binding).toEqual(before.work[0].state.binding);
+      expect(state.execution.run_id).toBe(before.work[0].state.execution.run_id);
+      expect(after.journals).toEqual(before.journals);
+      f.reopen();
+      expect((await run(apply)).work_version).toEqual(released.work_version);
+      expect(f.observed()).toEqual(after);
+      writeFileSync(
+        path.join(f.root, 'changed.json'),
+        JSON.stringify({ ...inspected.request, decisionPointer: 'user:changed' }),
+      );
+      await expect(
+        run(apply.map((value, index) => (apply[index - 1] === '--request' ? 'changed.json' : value))),
+      ).rejects.toThrow();
+      expect(f.observed()).toEqual(after);
+    } finally {
+      f.close();
+    }
+  });
+  test('stale Work Ledger maintenance and foreign caller deny without changes', () => {
+    const f = unpreparedRecoveryFixture();
+    try {
+      const request = f.store.inspectUnpreparedWorkRecovery(f.input),
+        before = f.observed();
+      for (const change of [
+        { expectedWork: { ...request.expectedWork, revision: 99 } },
+        { expectedLedger: { ...request.expectedLedger, revision: 99 } },
+        { expectedMaintenanceGeneration: 99 },
+        { operatorHandle: 'foreign' },
+        { attempt: 2 },
+      ]) {
+        expect(() => f.store.releaseUnpreparedWork(f.input, { ...request, ...change })).toThrow();
+        expect(f.observed()).toEqual(before);
+      }
+      expect(() => f.store.inspectUnpreparedWorkRecovery({ ...f.input, operatorHandle: 'foreign' })).toThrow(
+        /same-owner/,
+      );
+      expect(f.observed()).toEqual(before);
+    } finally {
+      f.close();
+    }
+  });
+  test('missing engine journal and surviving base or unknown alias deny with custody intact', () => {
+    for (const fault of ['missing', 'journal', 'base', 'alias', 'malformed', 'correction']) {
+      const f = unpreparedRecoveryFixture();
+      try {
+        if (fault === 'missing') unlinkSync(f.engineFile);
+        else if (fault === 'journal') {
+          const retained = {
+            schema: 'MastraSessionLedger/v1',
+            workspace_id: f.workspace,
+            work_id: f.identity.work_id,
+            attempt: 1,
+            run_id: f.store.readHostStateSnapshot(f.identity).work.execution.run_id,
+            step_id: null,
+            items: [],
+            completed: [],
+          };
+          f.db
+            .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+            .run(f.workspace, f.identity.work_id, 1, 1, JSON.stringify(retained), canonicalJsonDigest(retained));
+        } else if (fault === 'correction') {
+          f.db.exec(
+            'CREATE TABLE agent_host_corrective_recovery (workspace_id TEXT,work_id TEXT,attempt INTEGER,generation INTEGER,payload TEXT,digest TEXT)',
+          );
+          f.db
+            .query('INSERT INTO agent_host_corrective_recovery VALUES(?,?,?,?,?,?)')
+            .run(f.workspace, f.identity.work_id, 1, 1, '{}', 'a'.repeat(64));
+        } else {
+          const engine = new Database(f.engineFile),
+            runId =
+              fault === 'base'
+                ? f.store.readHostStateSnapshot(f.identity).work.execution.run_id
+                : 'unknown-corrective-alias';
+          const state = {
+            work_id: f.identity.work_id,
+            attempt: 1,
+            workflow_id: 'task_execution',
+            scope_digest: f.context.scope_digest,
+            config_digest: runtimeConfigDigest(f.config),
+            selection: {
+              team: 'default-development',
+              kind: 'task',
+              intent: 'task_execution',
+              project: 'project',
+              risk_flags: [],
+              labels: [],
+            },
+            observations: [],
+          };
+          engine
+            .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,?)')
+            .run(
+              'task_execution',
+              runId,
+              fault === 'malformed' ? '{}' : JSON.stringify({ runId, status: 'suspended', context: { input: state } }),
+            );
+          engine.close();
+        }
+        const before = f.observed();
+        expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow();
+        expect(f.observed()).toEqual(before);
+      } finally {
+        f.close();
+      }
+    }
+  });
+  test('oversized engine snapshots deny before any payload census fetch', () => {
+    const f = unpreparedRecoveryFixture();
+    let guard;
+    try {
+      const engine = new Database(f.engineFile);
+      try {
+        engine
+          .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,?)')
+          .run('unrelated', 'unrelated', 'x'.repeat(8 * 1024 * 1024 + 1));
+      } finally {
+        engine.close();
+      }
+      const before = f.observed(),
+        query = Database.prototype.query;
+      let payloadFetches = 0;
+      guard = spyOn(Database.prototype, 'query').mockImplementation(function (sql) {
+        if (sql === 'SELECT workflow_name,run_id,snapshot FROM mastra_workflow_snapshot') payloadFetches++;
+        return query.call(this, sql);
+      });
+      expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow('census bytes exceed bound');
+      expect(payloadFetches).toBe(0);
+      expect(f.observed()).toEqual(before);
+    } finally {
+      guard?.mockRestore();
+      f.close();
+    }
+  });
+
+  test('pending and UNKNOWN producer markers block recovery and remain untouched', () => {
+    for (const status of ['reserved', 'commit_unknown']) {
+      const f = unpreparedRecoveryFixture();
+      try {
+        const marker = {
+          schema: 'OperationReservation/v1',
+          store_id: 'vida-session-producers',
+          operation_key: 'b'.repeat(64),
+          request_digest: 'c'.repeat(64),
+          revision: 1,
+          fencing_token: randomUUID(),
+          status,
+          created_at: new Date().toISOString(),
+          ...(status === 'commit_unknown' ? { terminal_revision: 2 } : {}),
+        };
+        const generation = randomUUID();
+        f.db.query('INSERT INTO agent_host_governance_stores VALUES(?,?,?,?)').run(
+          f.workspace,
+          marker.store_id,
+          generation,
+          canonicalJsonDigest({
+            workspace_id: f.workspace,
+            store_id: marker.store_id,
+            kind: 'store',
+            record_key: generation,
+            revision: 1,
+            payload: null,
+          }),
+        );
+        f.db.query('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)').run(
+          f.workspace,
+          marker.store_id,
+          'operation',
+          marker.operation_key,
+          status === 'reserved' ? 1 : 2,
+          JSON.stringify(marker),
+          canonicalJsonDigest({
+            workspace_id: f.workspace,
+            store_id: marker.store_id,
+            kind: 'operation',
+            record_key: marker.operation_key,
+            revision: status === 'reserved' ? 1 : 2,
+            payload: marker,
+          }),
+        );
+        const before = f.observed();
+        expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow(/pending or unknown/);
+        expect(f.observed()).toEqual(before);
+      } finally {
+        f.close();
+      }
+    }
+  });
+  test('producer reservation cannot race the engine census held by recovery apply', () => {
+    const f = unpreparedRecoveryFixture();
+    let peer, spy;
+    try {
+      const request = f.store.inspectUnpreparedWorkRecovery(f.input);
+      peer = openConfiguredMastraSessionLedger(f.root);
+      const original = Database.prototype.query;
+      let attempted = false;
+      spy = spyOn(Database.prototype, 'query').mockImplementation(function (sql) {
+        if (sql.startsWith('SELECT count(*) AS count,') && !attempted) {
+          attempted = true;
+          expect(() =>
+            peer.beginSessionProducer({
+              repositoryRoot: f.root,
+              config: f.config,
+              projectIds: ['project'],
+              selection: {
+                team: 'default-development',
+                kind: 'task',
+                intent: 'task_execution',
+                project: 'project',
+                risk_flags: [],
+                labels: [],
+              },
+              context: f.context,
+              workflowId: 'task_execution',
+              runId: request.originalWork.execution.run_id,
+              phase: 'start',
+            }),
+          ).toThrow(/locked|busy/i);
+        }
+        return original.call(this, sql);
+      });
+      f.store.releaseUnpreparedWork(f.input, request);
+      expect(attempted).toBe(true);
+      expect(f.observed().governance).toEqual([]);
+    } finally {
+      spy?.mockRestore();
+      peer?.close();
+      f.close();
+    }
+  });
+});
 const phaseBudget = executionBudget(undefined, 30_000);
 const copiedEntries = [
   'src',
@@ -85,6 +666,7 @@ function recoveryBundle() {
     cpSync(path.join(packageRoot, entry), path.join(sharedRecoveryBundle, entry), {
       recursive: true,
       dereference: false,
+      filter: (source) => path.resolve(source) !== path.join(packageRoot, 'dist', 'standalone'),
     });
   symlinkSync(
     path.join(packageRoot, 'node_modules'),
@@ -237,26 +819,6 @@ function invoke(args, env = {}) {
 }
 
 describe('vida-agent run entrypoint fast checks', () => {
-  test('loads the session Mastra bridge and trusted evidence authority from declared dependencies', async () => {
-    const build = await Bun.build({
-      entrypoints: [launcher],
-      target: 'bun',
-      packages: 'external',
-      write: false,
-    });
-    expect(build.success).toBe(true);
-    const bundle = await build.outputs[0].text();
-    expect(bundle).toMatch(/^\/\/ (?:[^\n]*\/)?src\/orchestration\/workflow-plan\.ts$/m);
-    // The boundary supplies authority-issued receipts; MastraSessionBridge owns stage progression.
-    expect(bundle).toMatch(/^\/\/ (?:[^\n]*\/)?src\/orchestration\/mastra-boundary\.ts$/m);
-    expect(bundle).toMatch(/^\/\/ (?:[^\n]*\/)?src\/orchestration\/mastra-session-bridge\.ts$/m);
-    expect(bundle).toContain('from "@mastra/');
-    const dependencies = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')).dependencies;
-    expect(dependencies['@mastra/core']).toBe('1.71.0');
-    expect(dependencies['@mastra/libsql']).toBe('1.23.3');
-    expect(dependencies.zod).toBe('4.4.3');
-  });
-
   test('blocks admission while the selected cutover still holds maintenance', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-maintenance-'));
     try {
@@ -888,7 +1450,11 @@ if (mutationMode || v8CoverageMode) {
         'bun.lock',
         '.bun-version',
       ])
-        cpSync(path.join(packageRoot, entry), path.join(fixtureBundle, entry), { recursive: true, dereference: false });
+        cpSync(path.join(packageRoot, entry), path.join(fixtureBundle, entry), {
+          recursive: true,
+          dereference: false,
+          filter: (source) => path.resolve(source) !== path.join(packageRoot, 'dist', 'standalone'),
+        });
       symlinkSync(
         path.join(packageRoot, 'node_modules'),
         path.join(fixtureBundle, 'node_modules'),

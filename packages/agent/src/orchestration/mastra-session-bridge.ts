@@ -204,6 +204,7 @@ export class MastraSessionBridge {
   readonly #ledger: MastraSessionLedger;
   readonly #projectIds: readonly string[];
   readonly #engineIdentity: { readonly dev: number; readonly ino: number };
+  readonly #correctiveExecution: CorrectiveExecution | undefined;
 
   private constructor(
     workflow: ReturnType<typeof createWorkflow>,
@@ -216,6 +217,7 @@ export class MastraSessionBridge {
     repositoryRoot: string,
     ledger: MastraSessionLedger,
     projectIds: readonly string[],
+    correctiveExecution?: CorrectiveExecution,
   ) {
     this.#workflow = workflow;
     this.#storage = storage;
@@ -224,6 +226,7 @@ export class MastraSessionBridge {
     this.#binding = { ...structuredClone({ repositoryRoot, selection, context, workflowId, runId }), config };
     this.#ledger = ledger;
     this.#projectIds = [...projectIds];
+    this.#correctiveExecution = correctiveExecution ? structuredClone(correctiveExecution) : undefined;
     const physical = lstatSync(sessionBridgeDatabasePath(repositoryRoot, config));
     requireBridge(
       physical.isFile() && !physical.isSymbolicLink() && physical.nlink === 1,
@@ -383,6 +386,7 @@ export class MastraSessionBridge {
         repositoryRoot,
         args.ledger,
         args.projectIds,
+        correctiveExecution,
       );
       args.ledger.hostState.settleSessionProducer(
         producer,
@@ -401,7 +405,7 @@ export class MastraSessionBridge {
 
   async snapshot(): Promise<SessionBridgeSnapshot | null> {
     this.#assertEngineFile();
-    const snapshot = readSessionEngineSnapshot(this.#binding);
+    const snapshot = readSessionEngineSnapshot({ ...this.#binding, correctiveExecution: this.#correctiveExecution });
     this.#assertEngineFile();
     return snapshot;
   }

@@ -64,7 +64,11 @@ import { snapshotDeclaredSources } from './orchestration/scoped-source-snapshot.
 import { loadRuntimeConfig, runtimeConfigDigest, selectWorkflow } from './config/runtime-config.js';
 import { loadProjectSetContext } from './config/project-context.js';
 import { MastraSessionLedger } from './orchestration/persistent-session-handoff.js';
-import { readSessionEngineSnapshot, type SessionEngineBinding } from './orchestration/session-engine-snapshot.js';
+import {
+  readSessionEngineSnapshot,
+  assertUnpreparedSessionEngineAbsent,
+  type SessionEngineBinding,
+} from './orchestration/session-engine-snapshot.js';
 import type { SessionBridgeObservation } from './orchestration/mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './orchestration/scoped-source-snapshot.js';
 
@@ -87,6 +91,26 @@ export interface RecoveryReviewBinding {
 }
 export interface RecoveryReviewHandle {
   readonly operation: OperationReservation;
+}
+
+export interface UnpreparedWorkRecoveryContext {
+  readonly identity: WorkIdentity;
+  readonly attempt: number;
+  readonly operatorHandle: string;
+  readonly decisionPointer: string;
+  readonly config: import('./config/runtime-config.js').AgentRuntimeConfig;
+}
+export interface UnpreparedWorkRecoveryRequest {
+  readonly identity: WorkIdentity;
+  readonly attempt: number;
+  readonly operatorHandle: string;
+  readonly decisionPointer: string;
+  readonly expectedWork: StateVersion;
+  readonly expectedLedger: StateVersion;
+  readonly expectedMaintenanceGeneration: number;
+  readonly originalWork: WorkState;
+  readonly originalTicket: CoordinationTicket;
+  readonly originalClaims: CoordinationLedger['claims'];
 }
 
 export interface SessionProducerHandle {
@@ -2769,6 +2793,285 @@ export class HostStateStore {
     });
   }
 
+  #assertUnpreparedWorkContext(input: UnpreparedWorkRecoveryContext, original: WorkState): void {
+    this.#assertReconciliationWritesAllowed();
+    requireState(
+      this.#repositoryRoot &&
+        input.operatorHandle.trim().length > 0 &&
+        input.operatorHandle.length <= 256 &&
+        !/\p{Cc}/u.test(input.operatorHandle) &&
+        input.decisionPointer.trim().length > 0 &&
+        input.decisionPointer.length <= 512 &&
+        Number.isSafeInteger(input.attempt) &&
+        input.attempt > 0,
+      'unprepared recovery caller or intent invalid',
+    );
+    const current = loadRuntimeConfig(this.#repositoryRoot);
+    const physical = lstatSync(this.#database.filename);
+    requireState(
+      physical.isFile() &&
+        !physical.isSymbolicLink() &&
+        physical.nlink === 1 &&
+        physical.dev === this.#producerDatabaseIdentity?.dev &&
+        physical.ino === this.#producerDatabaseIdentity?.ino &&
+        realpathSync.native(this.#database.filename) ===
+          realpathSync.native(path.join(this.#repositoryRoot, current.control.work_root, 'session-handoff.v1.sqlite')),
+      'unprepared recovery Host storage differs',
+    );
+    requireState(
+      current.control.work_root === input.config.control.work_root &&
+        runtimeConfigDigest(input.config) === original.binding.config_digest &&
+        deriveWorkspaceId(input.config.repository.repository_id, this.#repositoryRoot) === this.#workspaceId &&
+        original.workspace_id === this.#workspaceId &&
+        sameJson(workIdentity(original), input.identity),
+      'unprepared recovery original storage or identity differs',
+    );
+    const project = loadProjectSetContext(
+      this.#repositoryRoot,
+      input.config,
+      input.identity.repository_id,
+      input.identity.project_ids,
+    );
+    requireState(
+      project.integrations_digest === input.identity.integrations_digest &&
+        sameJson(project.project_ids, input.identity.project_ids),
+      'unprepared recovery project differs',
+    );
+    requireState(
+      original.lifecycle.phase === 'INTAKE' &&
+        original.lifecycle.seal === null &&
+        original.lifecycle.assurance.correction_count === 0 &&
+        original.execution.status === 'active' &&
+        original.execution.assignment_attempts.length === 0 &&
+        original.lease?.thread_id === input.operatorHandle,
+      'unprepared recovery requires original unstarted same-owner intake',
+    );
+    const intakeRef = original.artifacts.find(
+      (item) => item.artifact_id === 'local-session-intake' && item.schema === 'VidaLocalSessionIntake/v1',
+    );
+    requireState(intakeRef, 'unprepared recovery original intake missing');
+    const bytes = requireSafeRepositoryAccess(this.#repositoryRoot).readBytes(
+        intakeRef.path,
+        'unprepared original intake',
+      ),
+      intake = JSON.parse(bytes.toString('utf8'));
+    requireState(
+      bytes.length <= 32768 &&
+        createHash('sha256').update(bytes).digest('hex') === intakeRef.sha256 &&
+        intake.native_session_handle === input.operatorHandle &&
+        intake.work_item?.id === input.identity.work_id &&
+        canonicalJsonDigest(intake.work_item) === original.binding.work_item_digest,
+      'unprepared recovery original intake differs',
+    );
+    const context = {
+      work_id: input.identity.work_id,
+      attempt: input.attempt,
+      scope_digest: original.binding.work_source_revision,
+    };
+    requireState(
+      original.execution.run_id ===
+        'vida-' +
+          canonicalJsonDigest({ workspaceId: this.#workspaceId, context, workflowId: original.binding.workflow_id }),
+      'unprepared recovery original attempt differs',
+    );
+    requireState(
+      !this.#database
+        .query('SELECT 1 FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? LIMIT 1')
+        .get(this.#workspaceId, input.identity.work_id),
+      'unprepared recovery journal exists',
+    );
+    assertUnpreparedSessionEngineAbsent({
+      repositoryRoot: this.#repositoryRoot,
+      config: input.config,
+      hostDatabase: this.#database,
+      workspaceId: this.#workspaceId,
+      work: original,
+      attempt: input.attempt,
+    });
+  }
+
+  #unpreparedWorkOwner(input: UnpreparedWorkRecoveryContext, before: HostStateSnapshot) {
+    const work = before.work,
+      ledger = before.ledger;
+    requireState(work && ledger && work.lease, 'unprepared recovery owner missing');
+    this.#assertUnpreparedWorkContext(input, work);
+    const ticket = ledger.tickets.find((item) => item.ticket_id === work.lease!.ticket_id),
+      claims = ledger.claims.filter((item) => item.ticket_id === ticket?.ticket_id && item.status === 'active'),
+      resources = ['execution:' + input.identity.work_id];
+    requireState(
+      ticket?.status === 'active' &&
+        sameJson(ticketIdentity(ticket), input.identity) &&
+        ticket.thread_id === input.operatorHandle &&
+        ticket.generation === work.lease.generation &&
+        sameJson(ticket.exclusive_resources, resources) &&
+        sameJson(ticket.active_resources, resources) &&
+        ticket.blocked_resources.length === 0 &&
+        claims.length === 1 &&
+        sameJson(ticket.claim_ids, [claims[0]!.claim_id]) &&
+        claims[0]!.thread_id === input.operatorHandle &&
+        claims[0]!.generation === ticket.generation &&
+        sameJson(claims[0]!.resources, resources),
+      'unprepared recovery exact execution ownership differs',
+    );
+    requireState(
+      !ledger.tickets.some(
+        (item) =>
+          item.ticket_id !== ticket.ticket_id &&
+          ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(item.status) &&
+          (item.work_id === input.identity.work_id ||
+            (item.sequence < ticket.sequence &&
+              item.exclusive_resources.some((resource) => resources.includes(resource)))),
+      ),
+      'unprepared recovery pending ownership or FIFO conflict',
+    );
+    return { work, ledger, ticket, claims };
+  }
+
+  /** Read-only eligibility only. Apply rechecks under the existing immediate producer fence. */
+  inspectUnpreparedWorkRecovery(input: UnpreparedWorkRecoveryContext): UnpreparedWorkRecoveryRequest {
+    requireState(!this.#database.inTransaction, 'nested unprepared recovery inspection forbidden');
+    return this.#database
+      .transaction(() => {
+        const before = this.#read(input.identity),
+          owned = this.#unpreparedWorkOwner(input, before);
+        return snapshot({
+          identity: input.identity,
+          attempt: input.attempt,
+          operatorHandle: input.operatorHandle,
+          decisionPointer: input.decisionPointer,
+          expectedWork: before.workVersion!,
+          expectedLedger: before.ledgerVersion!,
+          expectedMaintenanceGeneration: before.maintenanceGeneration,
+          originalWork: owned.work,
+          originalTicket: owned.ticket,
+          originalClaims: owned.claims,
+        });
+      })
+      .deferred();
+  }
+
+  /** Finite no-journal disposal. This grants no new lease, Source rights or acceptance. */
+  releaseUnpreparedWork(
+    input: UnpreparedWorkRecoveryContext,
+    supplied: UnpreparedWorkRecoveryRequest,
+  ): HostStateSnapshot {
+    const request = snapshot(supplied),
+      operationId = 'unprepared-release-' + canonicalJsonDigest(request);
+    requireState(
+      !this.#database.inTransaction &&
+        sameJson(request.identity, input.identity) &&
+        request.attempt === input.attempt &&
+        request.operatorHandle === input.operatorHandle &&
+        request.decisionPointer === input.decisionPointer &&
+        sameJson(version(request.originalWork), request.expectedWork),
+      'unprepared recovery retained request differs',
+    );
+    return this.#transactionWithProducerFence(() => {
+      this.#assertMaintenanceAvailable();
+      this.#assertMaintenanceGeneration(request.expectedMaintenanceGeneration);
+      const before = this.#read(input.identity),
+        ledger = before.ledger;
+      requireState(before.work && ledger, 'unprepared recovery work unavailable');
+      const prior = ledger.operations.find((item) => item.operation_id === operationId),
+        now = prior?.created_at ?? new Date().toISOString();
+      const nextWork: WorkState = {
+        ...request.originalWork,
+        revision: request.originalWork.revision + 1,
+        lease: null,
+        execution: { ...request.originalWork.execution, status: 'suspended' },
+        lifecycle: {
+          ...request.originalWork.lifecycle,
+          revision: request.originalWork.revision + 1,
+          next_action:
+            'Preparation released; current admission is required. Original attempt and evidence remain preserved.',
+        },
+      };
+      const releasedTicket = {
+        ...request.originalTicket,
+        status: 'released' as const,
+        active_resources: [],
+        blocked_resources: [],
+        expires_at: null,
+      };
+      const releasedClaims = request.originalClaims.map((claim) => ({
+        ...claim,
+        status: 'released' as const,
+        renewed_at: now,
+      }));
+      if (prior) {
+        this.#assertUnpreparedWorkContext(input, request.originalWork);
+        requireState(
+          prior.kind === 'release' &&
+            prior.ticket_id === request.originalTicket.ticket_id &&
+            prior.work_id === input.identity.work_id &&
+            prior.thread_id === input.operatorHandle &&
+            prior.decision_pointer === input.decisionPointer &&
+            prior.from_ledger_revision === request.expectedLedger.revision &&
+            prior.to_ledger_revision === request.expectedLedger.revision + 1 &&
+            sameJson(before.work, nextWork) &&
+            sameJson(
+              ledger.tickets.find((item) => item.ticket_id === prior.ticket_id),
+              releasedTicket,
+            ) &&
+            sameJson(
+              ledger.claims.filter((item) => item.ticket_id === prior.ticket_id),
+              releasedClaims,
+            ),
+          'unprepared recovery retry postcondition differs',
+        );
+        return before;
+      }
+      matchesExpected(before.workVersion, request.expectedWork);
+      matchesExpected(before.ledgerVersion, request.expectedLedger);
+      const owned = this.#unpreparedWorkOwner(input, before);
+      requireState(
+        sameJson(owned.work, request.originalWork) &&
+          sameJson(owned.ticket, request.originalTicket) &&
+          sameJson(owned.claims, request.originalClaims),
+        'unprepared recovery retained owner changed',
+      );
+      const nextLedger: CoordinationLedger = {
+        ...ledger,
+        revision: ledger.revision + 1,
+        tickets: ledger.tickets.map((ticket) =>
+          ticket.ticket_id === owned.ticket.ticket_id ? releasedTicket : ticket,
+        ),
+        claims: ledger.claims.map(
+          (claim) => releasedClaims.find((released) => released.claim_id === claim.claim_id) ?? claim,
+        ),
+        operations: [
+          ...ledger.operations,
+          {
+            schema: 'CoordinationOperation/v1',
+            operation_id: operationId,
+            kind: 'release',
+            ticket_id: owned.ticket.ticket_id,
+            work_id: input.identity.work_id,
+            thread_id: input.operatorHandle,
+            source_revision: owned.ticket.source_revision,
+            resources: [...owned.ticket.exclusive_resources],
+            from_ledger_revision: ledger.revision,
+            to_ledger_revision: ledger.revision + 1,
+            decided_by: input.operatorHandle,
+            decision_pointer: input.decisionPointer,
+            created_at: now,
+          },
+        ],
+      };
+      return this.#commitHostState(
+        {
+          expectedWork: request.expectedWork,
+          expectedLedger: request.expectedLedger,
+          expectedMaintenanceGeneration: request.expectedMaintenanceGeneration,
+          nextWork,
+          nextLedger,
+        },
+        undefined,
+        true,
+      );
+    }).immediate();
+  }
+
   #assertSessionProducerContext(
     ledger: MastraSessionLedger,
     input: SessionProducerInput,
@@ -2964,8 +3267,12 @@ export class HostStateStore {
         this.#assertReconciliationWritesAllowed();
         this.assertSessionProducerWriteAllowed();
         const config = this.#assertSessionProducerContext(ledger, input, input.expectedJournal);
-        const engine = readSessionEngineSnapshot({ ...input, config });
         const journal = MastraSessionLedger.prototype.resume.call(ledger, input.context.work_id, input.context.attempt);
+        const engine = readSessionEngineSnapshot({
+          ...input,
+          config,
+          correctiveExecution: journal?.state.corrective_execution ?? undefined,
+        });
         if (input.phase === 'start') {
           requireState(
             !engine &&
@@ -3086,12 +3393,16 @@ export class HostStateStore {
         this.assertSessionProducerWriteAllowed(handle);
         const entry = this.#sessionProducers.get(handle)!;
         const config = this.#assertSessionProducerContext(entry.ledger, entry.input, expectedJournal);
-        const engine = readSessionEngineSnapshot({ ...entry.input, config });
         const journal = MastraSessionLedger.prototype.resume.call(
           entry.ledger,
           entry.input.context.work_id,
           entry.input.context.attempt,
         );
+        const engine = readSessionEngineSnapshot({
+          ...entry.input,
+          config,
+          correctiveExecution: journal?.state.corrective_execution ?? undefined,
+        });
         if (!engine)
           requireState(
             entry.input.phase === 'initialize' &&

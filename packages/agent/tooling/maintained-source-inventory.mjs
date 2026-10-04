@@ -88,8 +88,12 @@ export function maintainedSourceInventory(root, access) {
       ? access.readBytes('package.json', 'runtime inventory manifest')
       : readFileSync(path.join(root, 'package.json'), 'utf8'),
   );
-  if (!Array.isArray(packageJson.files) || !packageJson.bin || typeof packageJson.bin !== 'object')
-    throw new Error('Package source inventory requires files and bin declarations.');
+  if (
+    !Array.isArray(packageJson.files) ||
+    (packageJson.bin !== undefined &&
+      (packageJson.bin === null || typeof packageJson.bin !== 'object' || Array.isArray(packageJson.bin)))
+  )
+    throw new Error('Package inventory requires files and an optional CLI mapping.');
 
   const packagePatterns = packageJson.files.map((entry) => String(entry).replaceAll('\\', '/'));
   const allTypescriptSources = sourceFiles(path.join(root, 'src'), '.ts', root, [], access).sort();
@@ -97,7 +101,7 @@ export function maintainedSourceInventory(root, access) {
   const typescriptSources = allTypescriptSources.filter((file) => isPackedFile(file, packagePatterns));
   const binSources = allBinSources.filter((file) => isPackedFile(file, packagePatterns));
   const sourceFilesForMutation = [...typescriptSources, ...binSources].sort();
-  const publicBinSources = Object.values(packageJson.bin)
+  const publicBinSources = Object.values(packageJson.bin ?? {})
     .map((entry) => String(entry).replaceAll('\\', '/').replace(/^\.\//u, ''))
     .sort();
   const missingPublicBins = publicBinSources.filter(

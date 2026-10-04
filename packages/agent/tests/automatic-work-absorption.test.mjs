@@ -1,4 +1,5 @@
 import { test, expect } from 'bun:test';
+import { Database } from 'bun:sqlite';
 import {
   mkdtempSync,
   mkdirSync,
@@ -29,6 +30,8 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
 import { runWorkStateRepair } from '../bin/repair-work-state.mjs';
 import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
+import { readSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
+import { createStagedRuntimeWitness } from '../src/orchestration/staged-runtime-witness.ts';
 import { MastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
@@ -2002,11 +2005,11 @@ test.each(['started', 'completed'])('explicit correction-generation repair (%s r
   }
 });
 
-for (const scenario of ['validate', 'test', 'runtime-rebind'])
+for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
   test(
     'public same-work correction after real report resume sync ' + scenario,
     async () => {
-      const failureStage = scenario === 'runtime-rebind' ? 'validate' : scenario;
+      const failureStage = ['runtime-rebind', 'success'].includes(scenario) ? 'validate' : scenario;
       const f = fixture(true, true);
       let failure;
       const publicRun = (args) => {
@@ -2038,7 +2041,12 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
           input = f.prepare(id, 'user:current-correction');
         input.selection.kind = 'task';
         input.selection.intent = 'task_execution';
-        input.workItem = { ...input.workItem, canonical_kind: 'task', intent: 'task_execution', provider_type: 'Task' };
+        input.workItem = {
+          ...input.workItem,
+          canonical_kind: 'task',
+          intent: 'task_execution',
+          provider_type: 'Task',
+        };
         input.sourceAuthorizationPath = `.agent/work/${id}/authorization.json`;
         writeFileSync(
           path.join(f.root, input.sourceAuthorizationPath),
@@ -2450,7 +2458,9 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
             forwardOperationId: 'synthetic-forward-operation',
             parentManifestDigest: canonicalJsonDigest('synthetic-parent-manifest'),
             successorManifestDigest: canonicalJsonDigest('synthetic-successor-manifest'),
-            focusedFailureCorrection: { ownerCorrectionPointer: 'synthetic-owner:correct-known-terminal-failures' },
+            focusedFailureCorrection: {
+              ownerCorrectionPointer: 'synthetic-owner:correct-known-terminal-failures',
+            },
           };
           const oldAttempts = structuredClone(current.work.execution.assignment_attempts),
             oldJournal = structuredClone(ledger.resume(id, 1)),
@@ -2610,6 +2620,39 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
         const resumed = publicRun(args);
         expect(resumed.mastra_run_id).toBe(authorized.corrective_execution.engine_run_id);
         expect(resumed.next_actions.map((action) => action.request.stage_id)).toEqual(['develop_task']);
+        if (scenario === 'success') {
+          const current = ledger.resume(id, 1);
+          const engine = new Database(path.join(f.root, f.config.control.work_root, 'mastra-workflows.v1.sqlite'));
+          const originalSnapshot = engine
+            .query('SELECT snapshot,json(snapshot) AS parsed FROM mastra_workflow_snapshot WHERE run_id=?')
+            .get(current.state.run_id);
+          try {
+            const substituted = JSON.parse(originalSnapshot.parsed);
+            substituted.context[current.state.step_id].suspendPayload.requests[0].corrective_execution.stage_ids = [
+              'test_task',
+            ];
+            engine
+              .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+              .run(JSON.stringify(substituted), current.state.run_id);
+            expect(() =>
+              readSessionEngineSnapshot({
+                repositoryRoot: f.root,
+                config: f.config,
+                selection: input.selection,
+                context: input.context,
+                workflowId: 'task_execution',
+                runId: current.state.run_id,
+                correctiveExecution: current.state.corrective_execution,
+              }),
+            ).toThrow(/frontier requests/);
+            expect(ledger.resume(id, 1)).toEqual(current);
+          } finally {
+            engine
+              .query('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
+              .run(originalSnapshot.snapshot, current.state.run_id);
+            engine.close();
+          }
+        }
         const issued = publicRun([
           ...args,
           '--issue-wave',
@@ -2707,13 +2750,14 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
             journal.state.items[0],
             JSON.stringify({
               schema: 'VidaTesterVerdict/v1',
-              status: 'fail',
+              status: scenario === 'success' ? 'pass' : 'fail',
               evidence_refs: ['local://fixture/terminal'],
             }),
-            'reported_failed',
+            scenario === 'success' ? 'reported_complete' : 'reported_failed',
           );
           journal = ledger.resume(id, 1);
           expect(journal.resume_status).toBe('blocked');
+          if (scenario === 'success') expect(journal.state.step_id).toBeNull();
           expect(journal.state.attempt).toBe(1);
           expect(journal.state.work_id).toBe(id);
           expect(
@@ -2721,6 +2765,35 @@ for (const scenario of ['validate', 'test', 'runtime-rebind'])
               .flatMap((wave) => wave.items)
               .find((item) => item.request.stage_id === 'develop_task').observation.host_attempt_id,
           ).toBe(issued.issued_actions[0].host_attempt_id);
+          if (scenario === 'success') {
+            const binding = {
+              repositoryRoot: f.root,
+              config: f.config,
+              selection: input.selection,
+              context: input.context,
+              workflowId: 'task_execution',
+              runId: authorized.corrective_execution.engine_run_id,
+            };
+            expect(() => readSessionEngineSnapshot(binding)).toThrow(/execution prefix/);
+            const before = ledger.resume(id, 1);
+            expect(
+              readSessionEngineSnapshot({
+                ...binding,
+                correctiveExecution: authorized.corrective_execution,
+              }).status,
+            ).toBe('success');
+            const witness = await createStagedRuntimeWitness({
+              repositoryRoot: f.root,
+              payloadManifestSha256: canonicalJsonDigest({ fixture: 'corrective completion' }),
+              workId: id,
+              attempt: 1,
+              selection: input.selection,
+            });
+            expect(witness.mastra_status).toBe('success');
+            expect(witness.run_id).toBe(authorized.corrective_execution.engine_run_id);
+            expect(witness.ledger_state).toEqual(before.state);
+            expect(ledger.resume(id, 1)).toEqual(before);
+          }
         }
       } catch (error) {
         failure = error;

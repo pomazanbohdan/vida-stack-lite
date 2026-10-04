@@ -118,6 +118,10 @@ function boundMaintenance(root, config, plan, selectorBytes) {
 
 /** Bundle-owned narrow current-v1 reconciliation; no historical ledger or observation rewrite. */
 export async function runReconcileArtifacts(args, { onPhase } = {}) {
+  if (args.indexOf('--kind') >= 0 && args[args.indexOf('--kind') + 1] === 'release-retarget') {
+    const { runReleaseRetarget } = await import('./repair-release-retarget.mjs');
+    return runReleaseRetarget(args, { onPhase });
+  }
   if (args.includes('--kind') && args.includes('work-state')) return runWorkStateRepair(args);
   if (args.includes('--kind') && args.includes('documentation-policy'))
     return runDocumentationPolicyTransition(args, { onPhase });

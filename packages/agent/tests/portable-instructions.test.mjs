@@ -33,6 +33,7 @@ beforeAll(() => {
     cpSync(path.join(bundleRoot, 'instructions'), path.join(bundle, 'instructions'), { recursive: true });
     cpSync(path.join(bundleRoot, 'bin/vida-agent.mjs'), path.join(bundle, 'bin/vida-agent.mjs'));
     cpSync(path.join(bundleRoot, 'bin/bun.mjs'), path.join(bundle, 'bin/bun.mjs'));
+    cpSync(path.join(bundleRoot, 'bin/cli-metadata.mjs'), path.join(bundle, 'bin/cli-metadata.mjs'));
     cpSync(path.join(bundleRoot, 'package.json'), path.join(bundle, 'package.json'));
     const agents = readFileSync(path.join(bundleRoot, 'templates/AGENTS.template.md'), 'utf8').replaceAll(
       '{{BUNDLE}}',

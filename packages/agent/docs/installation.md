@@ -3,12 +3,15 @@
 Owner: agent maintainers. Class: derived installation guide.
 Sources: [system specification](system-specification.md), [package declarations](../package.json), [Bun pin](../.bun-version), [public command](../bin/vida-agent.mjs), [initializer](../bin/init.mjs).
 
-The target primary public installation is one qualified native `vida-agent` executable
+The only public agent installation is one qualified native `vida-agent` executable
 per supported OS/CPU with embedded Bun 1.4.2. Direct installation and first run
 require no external Node, npm or Bun and no runtime download. Native target
 claims require actual full VIDA/native/WASM/state checks; a minimal probe or
 cross-compiled asset is insufficient. npm `vida-agent` and existing public SDK
-exports remain separately maintained compatibility channels.
+exports remain maintained library interfaces. Their package qualification is
+not an alternative public agent delivery or a native installation checkpoint.
+Public agent CLI installation through npm is not supported; npm artifacts serve
+SDK library imports only.
 
 The exact native installation delivery manifest must declare asset, destination,
 PATH changes, prior-install preservation, rollback effects and post-install
@@ -62,12 +65,12 @@ candidate. Durable pending and successful publication receipts live under
 `.tmp/releases/OPERATION`. Removing scratch output does not reset successful
 version history. Preserve the durable receipts as project operational state.
 
-For the authorized update after each three verified engineering outcomes, use
+For the authorized update after each whole verified engineering outcome, use
 `npm run release:local -- --prepare-system-update` instead of normal preparation.
 It preserves the current successful Source manifest version and bytes, and
 allocates a new candidate operation after the prior operation completes. Exact
-Source and archive identity is verified later. Continue the same exact
-pack/assurance/install/status sequence below with that returned operation.
+Source and archive identity is verified later. Carry that returned operation
+through qualified native formation, assurance, installation and status.
 Preparation checks the successful operation journal before metadata effects;
 an outstanding incompatible patch or missing/mismatched baseline rejects.
 A matching unfinished update returns its actual journal status and installation-
@@ -80,10 +83,13 @@ SQLite admission exclusion does not make separate file saves atomic. Retain the
 final release/native objective and pause dependent work until the checkpoint
 passes; intermediate system updates do not authorize registry publication.
 
-Release tests, coverage and CRAP run locally only; CI/CD build/package automation
-contains no test or mutation steps. Mutation requires an explicit manual launch.
-Local checks, fresh reviews, reverse validation and CLEAR remain required; missing
-numeric evidence remains a GAP. Formatter/TypeScript 7 and pre-push coverage/CRAP
+Agent behavior tests, coverage and CRAP run locally. Build, packaging and
+installation checks belong to CI/CD and are not local agent test tasks. Do not
+create or run build/install test suites, compiler probes or copied-package
+installation harnesses. CI/CD may run these delivery checks, but not agent
+behavior tests, coverage, CRAP or mutation. Mutation requires an explicit manual
+launch. Missing local or CI/CD evidence remains a GAP, never a pass.
+Local fresh reviews, reverse validation and CLEAR remain required. Formatter/TypeScript 7 and pre-push coverage/CRAP
 hooks require discussion before any installation or activation.
 
 ## Source development controller
@@ -100,66 +106,29 @@ implemented public interface and qualification evidence rather than inventing
 command arguments from this guide. Drift or wrong package/pin/dependencies rejects
 execution; no controller readiness is established by this documentation.
 
-## npm and SDK compatibility channel
+## SDK library and Source tooling
 
-The current Source snapshot implements npm/SDK packaging. Ordinary `npm pack`
-runs the SDK payload verifier; it does not require or claim a native executable.
-Native build helpers and entrypoints are not present in this snapshot, so native
-asset formation remains explicitly unavailable until implemented and qualified.
-The native installation contract above is a target requirement, not a readiness
-claim or an executable installation procedure for this Source snapshot.
+SDK exports and declarations remain maintained for in-process integrations.
+Source build and package tools may use Node, npm and pinned Bun, but public
+agent installation uses only the qualified standalone executable. Do not install
+the SDK/npm archive as a substitute for that executable.
 
-The following sequence describes the maintained npm compatibility coordinator;
-it does not implement or qualify primary native installation. An explicit human
-request authorizes manual npm compatibility formation and system update while
-standalone-primary/CI work continues. Preserve the same pending operation and
-candidate version; run applicable checks/prepack and exact npm/SDK archive/CLI
-qualification, then fresh three blind reviews, reverse validation and current
-CLEAR. Apply the Source standing formation-success commit/push order and install
-the exact qualified archive. No publication or gate-bypass flag is implied. Keep
-native/CI gaps visible and unblock waiting developers only through the verified
-installed runtime and normal admission.
+The Source builder and verifier form and check the executable from current
+inputs. Full-product native qualification and installed checks remain open;
+the construction command alone does not establish readiness.
+Preserve pending archives and actual receipts. Use supported reconciliation for
+an uninstalled operation before changing its target assets; do not rewrite its
+journal or infer installed readiness from a version string.
 
-For a first release or normal patch release, use `--prepare` as the alternative
-preparation command. The system-update sequence uses `--prepare-system-update`.
-The session uses the returned operation ID throughout this sequence; no manual
-archive selection or integrity-value calculation is needed:
-
-```sh
-npm run release:local -- --prepare-system-update
-# Run applicable current checks and join actual test evidence for the operation.
-npm run release:local -- --pack-npm OPERATION
-npm run release:local -- --status OPERATION
-# Source only: after successful pack, the session commits/pushes its qualified payload.
-# Seal this exact archive, then join fresh real reviews, reverse validation and CLEAR.
-npm run release:local -- --operation OPERATION
-npm run release:local -- --status OPERATION
-```
-
-Packing and installation run asynchronously with one operation ID and worker
-PID. Status reports actual stages and elapsed execution time; early control
-return does not imply completion. npm prepack is the sole packaging build, and
-qualified installation reuses that archive without rebuilding. Installation
-uses npm's independently resolved global prefix and checks PATH selection,
-installed version, package-owned instruction discovery and pinned prerequisites
-from an unrelated cwd. A retry first compares the installed package with the
-exact pending artifact; an uncertain or different prior install blocks another
-installation until reconciled. The command performs no registry publication,
-commit, Git tag, push or consumer initialization. npm owns production dependency
-installation; source dependency setup and the installed read-only prerequisite
-check remain separate operations.
-
-```sh
-vida-agent version
-vida-agent instructions --path development-lifecycle
-vida-agent init --project-root /absolute/consumer --repository example-repository --project agent=products/agent --project plugin=products/plugin
-```
-
-Use native absolute paths on Windows. npm creates the PATH shims in its configured global prefix. A shell opened before a PATH update may need its process environment refreshed. Checked-in configuration and generated instructions contain no machine-specific install directory.
+The final native delivery manifest must bind the exact qualified asset, target,
+destination, PATH ordering, prior-install preservation, rollback and postchecks.
+Installation must run public commands, instruction discovery and prerequisite
+checks from an unrelated cwd without external Node/npm/Bun or first-run network.
+Consumer initialization remains a separate authorized effect.
 
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
-For npm/SDK compatibility only, Node and npm versions come from package engines. Bun comes only from the exact package pin and matching declarations. The pinned launcher first checks an absolute realpath PATH executable for the exact version and otherwise may fetch Bun through npm's cache and namespaces the transpiler cache outside the installed package. Explicit custom and disabled-cache settings remain supported. These operations are not an offline guarantee. The package installer checks npm-managed dependencies without running Bun installation in the global tree; embedded lock evidence is read without modifying that tree.
+For Source and SDK library tooling only, Node and npm versions come from package engines. Bun comes only from the exact package pin and matching declarations. The Source pinned launcher may resolve or fetch its build-time runtime and namespaces the transpiler cache outside the package. These development operations are not an offline guarantee or a public installation route. The delivered executable supplies its own pinned Bun and qualified resources.
 
 Neutral configuration uses local integration metadata for the explicit product set. Real provider, tenant, namespace, credentials and paths remain project-owned data. They do not select identity or grant authority.
 
@@ -179,7 +148,7 @@ is a checkout boundary: alternate spellings of the same canonical root reuse it,
 while another clone has a different value. Runtime state uses this bound
 workspace identity, not a caller-provided workspace value.
 
-A failed prerequisite or dependency installation never delegates initialization. Installation is not a transaction: downloads or node_modules changes can remain after failure, and a later initialization failure does not undo installed dependencies. Filesystem checks reject linked bundle ancestors and input files, but do not provide atomic containment against a concurrently hostile filesystem. Run only a trusted bundle in a workspace controlled by its owner, using a trusted Node/npm installation. The bundle does not attest system-toolchain integrity; Node-adjacent npm installation links are resolved by the existing bootstrap.
+For Source dependency tooling only, a failed prerequisite or dependency check never delegates initialization. Downloads or node_modules changes can remain after failure; a later initialization failure does not undo development dependencies. The Source bootstrap requires trusted Node/npm and does not attest that toolchain. These development prerequisites are not requirements for the standalone agent. Filesystem checks reject linked bundle ancestors and input files but do not provide atomic containment against a concurrently hostile filesystem. Run the owned payload in its owner-controlled workspace.
 
 Dependency installation alone does not switch the active runtime selector, launch a lifecycle, transfer unfinished tasks, grant write authority, replace project policy, or establish user Runtime acceptance. When a selector is present, the public run entrypoint verifies that it selects this installed bundle and has a complete cutover journal and cutoff witness before admitting new work. The orchestrating agent session invokes built-in collaboration tools and observes their results; the CLI does not invoke those tools or authenticate a caller-supplied report.
 
@@ -298,3 +267,49 @@ and installed version/readiness come from public local-release state and current
 operation evidence. Preserve
 existing consumers and unrelated files until that route and the installed package
 are qualified. SQL/filesystem atomicity and old-task migration are not promised.
+
+## Same-operation native retarget
+
+Use the packaged `vida-agent reconcile-artifacts --kind release-retarget
+--mode inspect --project-root /absolute/source --operation ORIGINAL_OP` to inspect
+the existing operation without effects. The Source caller first stages an already
+formed candidate with `release-local --stage-native-retarget ORIGINAL_OP
+--candidate RELATIVE_JSON`; the candidate contract binds schema
+`VidaNativeRetargetCandidate/v1`, operation_id, version, source_binding, archive
+and pack_metadata. It does not build or install.
+
+`--mode plan --actor STRING` freezes attribution, candidate, original pointers
+and custody. `--mode apply` or `--mode resume` uses that frozen plan with no new
+actor argument. Preserve the original awaiting_assurance operation/version and
+pending/successful pointer bytes or absence. An active worker, installation start,
+changed or incomplete staging and unknown effects deny. Inspect the exact blocker;
+do not allocate another operation, replace an orphan directory or repeat a build.
+A clean planning reservation may continue its frozen plan before the first
+custody directory exists. Exact preimages remain required. An existing partial
+custody directory is preserved and denied; missing staged bytes are not recreated.
+
+Retarget retains old SDK bytes and referenced failed/UNKNOWN evidence. Completion
+does not qualify or install the candidate. A real trusted CI/CD receipt path,
+current seal/reviews/reverse/CLEAR and attributable acceptance remain required;
+the repository has a portable Source consumer but no activated CI profile/pipeline
+or actual delivery receipt. An attributable trusted controller supplies the exact
+request and actual observation; saved JSON cannot authenticate its origin. The
+imported candidate comes from its sealed archive-owned asset, without a local
+build verifier. GitHub is an optional repository adapter, not an authentication
+prerequisite. Its ZIP reader and immutable workflow/job/check policy require
+separate qualification; missing support does not authorize installation.
+The specification owns the exact phase and recovery contract.
+
+## Source native construction
+
+In CI, `ci:pinned` runs the existing `build:pinned` then `prepack:pinned` once.
+The direct standalone command is `node bin/bun.mjs run build:standalone:pinned`
+after that SDK build. It reuses only a still-current verified output
+and refuses stale or conflicting output. It uses the existing frozen production
+dependencies, physical copies, embedded resources and pinned Bun bytecode with
+retained names. Source construction needs the declared development toolchain;
+consumer execution uses the executable itself.
+
+Local runtime resource checks use `node bin/bun.mjs run test:resources:pinned`.
+Build and installation checks belong to CI/CD. Missing current CI/CD receipts
+remain delivery GAPs; local resource proof does not establish installed acceptance.

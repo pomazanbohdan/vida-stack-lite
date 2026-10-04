@@ -38,15 +38,12 @@ export function sdkCompatibilityManifest({ root }) {
   const value = manifestAt(root);
   assert.equal(value.name, 'vida-agent');
   assert.ok(Array.isArray(value.files));
-  assert.ok(
-    value.files.every((entry) => !/standalone|release-notes|release-publish/.test(entry)),
-    'SDK manifest must not declare unavailable standalone package files',
-  );
-  assert.ok(
-    Object.keys(value.scripts).every((name) => !/standalone/.test(name)),
-    'SDK manifest must not advertise unavailable standalone commands',
-  );
+  value.files = value.files.filter((entry) => !/standalone|release-notes|release-publish/.test(entry));
+  for (const name of Object.keys(value.scripts))
+    if (/standalone|^test:resources/.test(name)) delete value.scripts[name];
+  delete value.bin;
   if (!value.files.includes('tooling/pack-sdk.mjs')) value.files.push('tooling/pack-sdk.mjs');
+  value.files.push('!tests/standalone.test.mjs');
   value.scripts.prepack = 'node bin/bun.mjs tooling/pack-sdk.mjs --verify';
   value.scripts['prepack:pinned'] = 'bun tooling/pack-sdk.mjs --verify';
   return { value, bytes: Buffer.from(JSON.stringify(value, null, 2) + '\n') };
@@ -101,7 +98,8 @@ export async function verifySdkPackage({ root }) {
   assertRuntimePackageExports(root);
   for (const relative of runtimeExecutableInventory(root, 'dist')) regular(root, relative);
   const targets = (value) => (typeof value === 'string' ? [value] : Object.values(value ?? {}).flatMap(targets));
-  for (const relative of [...targets(manifest.exports), manifest.main, manifest.types, ...targets(manifest.bin)]) {
+  assert.equal(manifest.bin, undefined, 'SDK libraries must not register public CLI commands');
+  for (const relative of [...targets(manifest.exports), manifest.main, manifest.types]) {
     assert.ok(regular(root, relative).length > 0, `SDK public target is empty: ${relative}`);
   }
   const declarations = new Set();
@@ -173,11 +171,6 @@ export async function verifySdkPackage({ root }) {
     'v' + manifest.engines.node,
     'SDK packaging requires pinned Node',
   );
-  assert.ok(
-    run(bun, ['bin/vida-agent.mjs', 'version'], root, env).includes(manifest.version),
-    'SDK CLI version differs',
-  );
-  run(bun, ['bin/vida-agent.mjs', 'instructions', '--path', 'development-lifecycle'], root, env);
 }
 
 export async function packSdkCompatibility({ root, destination }) {
@@ -211,7 +204,6 @@ export async function packSdkCompatibility({ root, destination }) {
       path.join(stage, 'node_modules'),
       process.platform === 'win32' ? 'junction' : 'dir',
     );
-    await verifySdkPackage({ root: stage });
     const { node, env } = tools(stage);
     const npm = findNpmCli(node);
     assert.equal(
@@ -222,7 +214,10 @@ export async function packSdkCompatibility({ root, destination }) {
     mkdirSync(destination, { recursive: true });
     const expected = path.join(destination, `vida-agent-${manifest.value.version}.tgz`);
     assert.ok(!existsSync(expected), 'SDK archive destination already exists');
-    const metadata = JSON.parse(run(node, [npm, 'pack', '--json', '--pack-destination', destination], stage, env));
+    // The owned prepack runs SDK verification once. Keep it explicitly enabled and verify the exact archive below.
+    const metadata = JSON.parse(
+      run(node, [npm, 'pack', '--json', '--ignore-scripts=false', '--pack-destination', destination], stage, env),
+    );
     assert.equal(metadata.length, 1);
     const entry = metadata[0];
     assert.equal(entry.name, manifest.value.name);

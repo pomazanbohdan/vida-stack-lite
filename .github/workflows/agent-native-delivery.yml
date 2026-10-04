@@ -1,0 +1,134 @@
+name: VIDA native delivery
+on:
+  workflow_dispatch:
+    inputs:
+      request:
+        description: Complete controller-issued VidaCIDeliveryRequest/v1 JSON
+        required: true
+        type: string
+      source_commit:
+        description: Controller-selected published commit
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: vida-native-${{ fromJSON(inputs.request).request_id }}-${{ fromJSON(inputs.request).target }}
+  cancel-in-progress: false
+jobs:
+  native-windows-x64:
+    name: native-windows-x64
+    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' }}
+    runs-on: windows-2025
+    env:
+      VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
+      CI_REQUEST: ${{ inputs.request }}
+      CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: selected-source
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:CI_SOURCE_COMMIT -cnotmatch '^[a-f0-9]{40}$' -or $env:CI_SOURCE_COMMIT -cne $env:GITHUB_SHA) { throw 'Selected published Source differs' }
+          if ($env:GITHUB_REPOSITORY -cne 'pomazanbohdan/vida-stack-lite' -or $env:GITHUB_REPOSITORY_ID -cne '1340911900') { throw 'Selected repository differs' }
+          git config --global core.autocrlf false
+          if ($LASTEXITCODE -ne 0) { throw 'Checkout byte policy unavailable' }
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 1
+          persist-credentials: false
+          submodules: false
+          lfs: false
+      - name: node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.19.0
+          package-manager-cache: false
+      - name: bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: 1.4.2
+      - name: isolated-source
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_RUN_ID -notmatch '^\d+$' -or $env:GITHUB_RUN_ATTEMPT -notmatch '^[1-9]\d*$') { throw 'Actual run identity unavailable' }
+          $mirror = Join-Path $env:RUNNER_TEMP ('vida-ci-source-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          if (Test-Path -LiteralPath $mirror) { throw 'Retained Source preparation; inspect UNKNOWN before replay' }
+          New-Item -ItemType Directory -Path $mirror | Out-Null
+          $excluded = @('node_modules','dist','coverage','.pack-inspect','.agent','.tmp','.git')
+          function Copy-SourceDirectory([string] $source, [string] $destination) {
+            New-Item -ItemType Directory -Path $destination | Out-Null
+            foreach ($entry in Get-ChildItem -LiteralPath $source -Force) {
+              if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked Source input' }
+              if ($entry.PSIsContainer -and $excluded -contains $entry.Name) { continue }
+              $target = Join-Path $destination $entry.Name
+              if ($entry.PSIsContainer) { Copy-SourceDirectory $entry.FullName $target }
+              else { Copy-Item -LiteralPath $entry.FullName -Destination $target }
+            }
+          }
+          New-Item -ItemType Directory -Path (Join-Path $mirror 'packages') | Out-Null
+          $package = Join-Path $mirror 'packages/agent'
+          Copy-SourceDirectory (Join-Path $env:GITHUB_WORKSPACE 'packages/agent') $package
+          # Install from the package's own lock before any parent workspace manifest exists.
+          Push-Location $package
+          try {
+            bun install --frozen-lockfile --ignore-scripts --linker=hoisted --backend=copyfile
+            if ($LASTEXITCODE -ne 0) { throw 'Frozen producer dependencies unavailable' }
+          } finally { Pop-Location }
+          $files = @('package.json','agent-runtime.config.v1.yaml','AGENT.sidecar.md',
+            'tooling/agent/release-local.mjs','tooling/agent/release-assurance.mjs',
+            'tooling/agent/release-ci-evidence.mjs','tooling/agent/native-ci-delivery.mjs',
+            'tooling/agent/controllers/forward-review-proof.mjs')
+          foreach ($file in $files) {
+            $source = Join-Path $env:GITHUB_WORKSPACE $file
+            $entry = Get-Item -LiteralPath $source
+            if ($entry.PSIsContainer -or $entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Non-regular declared Source' }
+            $target = Join-Path $mirror $file
+            [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target)) | Out-Null
+            [IO.File]::Copy($source, $target, $false)
+          }
+          $node = & node -p 'process.execPath'
+          if ($LASTEXITCODE -ne 0 -or -not [IO.Path]::IsPathFullyQualified($node)) { throw 'Pinned Node path unavailable' }
+          "VIDA_CI_SOURCE_ROOT=$mirror" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_NODE_EXECUTABLE=$node" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+      - id: native-build
+        name: native-build
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase native-build
+      - id: native-install
+        name: native-install
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase native-install
+      - id: public-routes
+        name: public-routes
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase public-routes
+      - id: offline-runtime
+        name: offline-runtime
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase offline-runtime
+      - id: native-dependencies
+        name: native-dependencies
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase native-dependencies
+      - id: state-preservation
+        name: state-preservation
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase state-preservation
+      - id: upgrade-recovery
+        name: upgrade-recovery
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase upgrade-recovery
+      - id: emit
+        name: emit-result
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase emit-result
+      - name: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ steps.emit.outputs.artifact_name }}
+          path: |
+            ${{ steps.emit.outputs.directory }}/result.json
+            ${{ steps.emit.outputs.directory }}/${{ steps.emit.outputs.archive_file }}
+          archive: true
+          compression-level: 0
+          overwrite: false
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 14

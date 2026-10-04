@@ -1740,6 +1740,127 @@ async function captureStoppedSource(args) {
   }
 }
 
+async function recoverUnpreparedWork(args) {
+  if (
+    args.length !== 8 ||
+    args[0] !== '--mode' ||
+    args[2] !== '--project-root' ||
+    args[4] !== '--native-session-handle' ||
+    args[6] !== '--request'
+  )
+    throw Error('Unprepared recovery requires mode, exact root, original owner handle and request');
+  const mode = args[1],
+    root = realpathSync(args[3]),
+    operatorHandle = args[5];
+  if (!['inspect', 'apply'].includes(mode)) throw Error('Unprepared recovery mode invalid');
+  const { Database } = await import('bun:sqlite');
+  const { loadRuntimeConfig, validateRuntimeConfigRepairTargetBytes } = await import('../src/config/runtime-config.ts');
+  const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+  const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+  const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { HostStateStore } = await import('../src/host-state.ts');
+  const access = requireSafeRepositoryAccess(root),
+    current = loadRuntimeConfig(root),
+    bytes = access.readBytes(args[7], 'unprepared recovery request');
+  if (!bytes.length || bytes.length > 262144) throw Error('Unprepared recovery request exceeds bound');
+  const input = JSON.parse(bytes.toString('utf8'));
+  if (
+    !exactKeys(
+      input,
+      mode === 'inspect'
+        ? ['identity', 'attempt', 'baselinePath', 'decisionPointer']
+        : ['identity', 'attempt', 'baselinePath', 'decisionPointer', 'request'],
+    ) ||
+    !exactKeys(input.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) ||
+    typeof input.baselinePath !== 'string' ||
+    typeof input.decisionPointer !== 'string'
+  )
+    throw Error('Unprepared recovery request shape differs');
+  if (
+    mode === 'apply' &&
+    !exactKeys(input.request, [
+      'identity',
+      'attempt',
+      'operatorHandle',
+      'decisionPointer',
+      'expectedWork',
+      'expectedLedger',
+      'expectedMaintenanceGeneration',
+      'originalWork',
+      'originalTicket',
+      'originalClaims',
+    ])
+  )
+    throw Error('Unprepared recovery retained request shape differs');
+  const original = validateRuntimeConfigRepairTargetBytes(
+    access.readBytes(input.baselinePath, 'unprepared original configuration'),
+    root,
+  );
+  const project = loadProjectSetContext(root, original, input.identity.repository_id, input.identity.project_ids);
+  if (
+    project.integrations_digest !== input.identity.integrations_digest ||
+    current.control.work_root !== original.control.work_root
+  )
+    throw Error('Unprepared recovery original project or storage differs');
+  const relative = current.control.work_root + '/session-handoff.v1.sqlite';
+  if (!access.fileExists(relative, 'existing unprepared Host')) throw Error('Unprepared recovery Host unavailable');
+  const file = sessionHandoffDatabasePath(root, current),
+    before = lstatSync(file);
+  if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1)
+    throw Error('Unprepared recovery Host path unsafe');
+  const database = new Database(file, { readonly: mode === 'inspect', strict: true });
+  try {
+    const store = new HostStateStore(
+      database,
+      deriveWorkspaceId(project.repository_id, root),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      root,
+    );
+    const context = {
+      identity: input.identity,
+      attempt: input.attempt,
+      operatorHandle,
+      decisionPointer: input.decisionPointer,
+      config: original,
+    };
+    if (mode === 'inspect') {
+      const request = store.inspectUnpreparedWorkRecovery(context);
+      return {
+        status: 'unprepared_recovery_inspected',
+        request: { ...input, request },
+        next_operation: 'release_unprepared_work',
+        rights_granted: false,
+        runtime_acceptance: false,
+      };
+    }
+    const result = store.releaseUnpreparedWork(context, input.request);
+    return {
+      status: 'unprepared_execution_released',
+      work_version: result.workVersion,
+      ledger_version: result.ledgerVersion,
+      next_operation: null,
+      gap: 'Current configuration admission and a fresh independently authorized Source context remain separate.',
+      rights_granted: false,
+      runtime_acceptance: false,
+    };
+  } finally {
+    database.close();
+    const after = lstatSync(file);
+    if (
+      !after.isFile() ||
+      after.isSymbolicLink() ||
+      after.nlink !== 1 ||
+      before.dev !== after.dev ||
+      before.ino !== after.ino
+    )
+      throw Error('Unprepared recovery Host substituted');
+  }
+}
+
 async function retireInterruptedSourceOwner(args) {
   if (
     args.length !== 8 ||
@@ -2512,6 +2633,11 @@ async function recoveryReview(args) {
 }
 
 export async function run(args = process.argv.slice(2)) {
+  if (args.includes('--recover-unprepared-work')) {
+    if (args[0] !== '--recover-unprepared-work' || args[1] !== 'true')
+      throw Error('Unprepared recovery requires its exact separate signal');
+    return recoverUnpreparedWork(args.slice(2));
+  }
   if (!isBunRuntime) {
     const { runPinnedBun } = await import('./bun.mjs');
     return runPinnedBun([fileURLToPath(import.meta.url), ...args], {
@@ -3128,6 +3254,30 @@ export async function run(args = process.argv.slice(2)) {
       workId: values.work_id,
       attempt: Number(values.attempt),
     });
+  }
+  {
+    const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+    const access = requireSafeRepositoryAccess(values.project_root);
+    if (access.fileExists(config.control.work_root + '/session-handoff.v1.sqlite', 'existing preparation inspection')) {
+      const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
+      const { loadProjectSetContext } = await import('../src/config/project-context.ts');
+      const project = loadProjectSetContext(values.project_root, config, config.repository.repository_id, [
+        pathProject.project_id,
+      ]);
+      const prior = inspectLocalSession({
+        repositoryRoot: values.project_root,
+        config,
+        projectIds: project.project_ids,
+        integrationsDigest: project.integrations_digest,
+        workId: values.work_id,
+        attempt: Number(values.attempt),
+      });
+      if (prior.work_version && !prior.journal_version && prior.lease)
+        fail(
+          'GAP-VIDA-RUN-PREPARATION-001',
+          'Existing preparation has no journal. Inspect --recover-unprepared-work before any new issue; producer and engine proof remain required.',
+        );
+    }
   }
   if (!values.issue_wave && !values.report && !values.correct && !values.prepare_assurance && !values.reconcile)
     await advanceCutoff(selector, values);

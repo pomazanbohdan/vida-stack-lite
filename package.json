@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/agent", "packages/plugin"],
+  "workspaces": [
+    "packages/agent",
+    "packages/plugin"
+  ],
   "scripts": {
     "agent:build": "npm --workspace vida-agent run build",
     "agent:test": "npm --workspace vida-agent test",
     "agent:pack": "npm --workspace vida-agent pack",
-    "release:local": "node tooling/agent/release-local.mjs",
-    "test:release-local": "node --test tests/agent/release-local.test.mjs"
+    "release:local": "node tooling/agent/release-local.mjs"
   }
 }

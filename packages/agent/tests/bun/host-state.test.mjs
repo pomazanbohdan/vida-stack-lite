@@ -1224,6 +1224,140 @@ test(
   },
 );
 
+test(
+  'session producer rejects missing and substituted completed wave chains before acquisition',
+  { timeout: 30_000 },
+  async () => {
+    const f = producerFixture('chain'),
+      bridge = await MastraSessionBridge.open(f.args);
+    const database = new Database(f.enginePath, { strict: true });
+    const persisted = (runId) =>
+      database
+        .query('SELECT snapshot,json(snapshot) AS parsed FROM mastra_workflow_snapshot WHERE run_id=?')
+        .get(runId);
+    const replace = (runId, value) =>
+      database
+        .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+        .run(JSON.stringify(value), runId);
+    const resume = async (engine) => {
+      let journal = f.ledger.resume('producer', 1);
+      journal = f.ledger.issueWave('producer', 1, journal.version);
+      for (const item of journal.state.items) {
+        const kind = f.args.config.workflows.task_execution.stages.find(
+          (stage) => stage.id === item.request.stage_id,
+        ).kind;
+        const summary =
+          kind === 'validate'
+            ? JSON.stringify({
+                schema: 'VidaValidatorVerdict/v1',
+                verdict: 'pass',
+                findings: [],
+                evidence_refs: ['local://chain'],
+              })
+            : kind === 'test'
+              ? JSON.stringify({
+                  schema: 'VidaTesterVerdict/v1',
+                  status: 'pass',
+                  evidence_refs: ['local://chain'],
+                })
+              : 'Actual chain fixture observation';
+        journal = f.ledger.report('producer', 1, journal.version, {
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          agent_id: 'fixture',
+          tool_call_ref: 'local:chain/' + item.issue_id,
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['local://chain'],
+        });
+      }
+      return await bridge.resume(
+        engine.step_id,
+        journal.state.items.map((item) => item.observation),
+      );
+    };
+    const rejects = async (engine, changes) => {
+      const original = persisted(engine.run_id),
+        rows = f.rows();
+      try {
+        for (const change of changes) {
+          const value = JSON.parse(original.parsed);
+          change(value);
+          replace(engine.run_id, value);
+          await expect(bridge.snapshot()).rejects.toThrow(/Session engine/);
+          await expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/Session engine/);
+          expect(f.rows()).toEqual(rows);
+        }
+      } finally {
+        database
+          .query('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
+          .run(original.snapshot, engine.run_id);
+      }
+      expect(await bridge.snapshot()).toEqual(engine);
+    };
+    try {
+      let engine = await resume(await bridge.start());
+      await rejects(engine, [
+        (s) => {
+          delete s.context['wave-0'];
+        },
+        (s) => {
+          s.context['wave-0'].status = 'failed';
+        },
+        (s) => {
+          s.context['wave-0'].payload.observations = s.context['wave-0'].output.observations;
+        },
+        (s) => {
+          s.context['wave-1'].payload.observations = [];
+        },
+        (s) => {
+          s.context['wave-0'].output.observations[0].summary = 'Substituted output';
+        },
+        (s) => {
+          s.context['wave-0'].output.observations[0].action_id = 'd'.repeat(64);
+          s.context['wave-1'].payload = structuredClone(s.context['wave-0'].output);
+        },
+        (s) => {
+          s.context['wave-999'] = structuredClone(s.context['wave-0']);
+        },
+        (s) => {
+          s.status = 'success';
+          s.suspendedPaths = {};
+          s.result = s.context['wave-1'].payload;
+          s.context = { input: s.context.input };
+        },
+      ]);
+      while (engine.status === 'suspended') engine = await resume(engine);
+      expect(engine.status).toBe('success');
+      await rejects(engine, [
+        (s) => {
+          delete s.context['wave-0'];
+        },
+        (s) => {
+          delete s.context['wave-4'];
+        },
+        (s) => {
+          s.context['wave-1'].payload.observations = [];
+        },
+        (s) => {
+          s.result.observations = [];
+        },
+        (s) => {
+          s.context['wave-0'].resumePayload.observations[0].agent_id = 'foreign';
+        },
+        (s) => {
+          s.context['wave-0'].status = 'failed';
+        },
+      ]);
+    } finally {
+      database.close();
+      await bridge.close();
+    }
+  },
+);
+
 for (const phase of ['before-init', 'before-start', 'before-resume', 'before-journal', 'before-settle']) {
   test('session producer process termination retains UNKNOWN at ' + phase, { timeout: 30_000 }, async () => {
     const f = producerFixture(phase),

@@ -3,6 +3,7 @@ import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type { AgentRuntimeConfig, WorkItemSelection } from '../config/runtime-config.js';
+import type { WorkState } from '../host-state.js';
 import { runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import {
@@ -14,6 +15,7 @@ import type { SessionHandoffContext } from './session-handoff.js';
 import { sessionActionsForWave } from './session-handoff.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { compileDevelopmentWorkflow } from './workflow-plan.js';
+import type { CorrectiveExecution } from './final-assurance.js';
 
 export interface SessionEngineBinding {
   readonly repositoryRoot: string;
@@ -22,6 +24,107 @@ export interface SessionEngineBinding {
   readonly context: SessionHandoffContext;
   readonly workflowId: string;
   readonly runId: string;
+  readonly correctiveExecution?: CorrectiveExecution | undefined;
+}
+
+/** Positive absence proof for unstarted preparation, called under the Host producer fence.
+ * A missing file, correction or unidentified row is not an absence proof.
+ */
+export function assertUnpreparedSessionEngineAbsent(input: {
+  readonly repositoryRoot: string;
+  readonly config: AgentRuntimeConfig;
+  readonly hostDatabase: Database;
+  readonly workspaceId: string;
+  readonly work: WorkState;
+  readonly attempt: number;
+}): void {
+  const { repositoryRoot, config, hostDatabase, workspaceId, work, attempt } = input;
+  const workId = work.binding.lifecycle_work_id;
+  requireEngine(Number.isSafeInteger(attempt) && attempt > 0, 'preparation attempt invalid');
+  const historyTable = hostDatabase
+    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_corrective_recovery'")
+    .get();
+  const history = historyTable
+    ? hostDatabase
+        .query('SELECT 1 FROM agent_host_corrective_recovery WHERE workspace_id=? AND work_id=? LIMIT 1')
+        .get(workspaceId, workId)
+    : null;
+  requireEngine(
+    !history && work.lifecycle.assurance.correction_count === 0,
+    'corrected preparation is outside recovery scope',
+  );
+  const access = requireSafeRepositoryAccess(repositoryRoot);
+  const relative = config.control.work_root + '/mastra-workflows.v1.sqlite';
+  requireEngine(access.fileExists(relative, 'existing preparation engine'), 'preparation engine unavailable');
+  const target = path.join(repositoryRoot, relative),
+    before = lstatSync(target);
+  requireEngine(before.isFile() && !before.isSymbolicLink() && before.nlink === 1, 'preparation engine path unsafe');
+  const database = new Database(target, { readonly: true, strict: true });
+  try {
+    requireEngine(
+      database
+        .query('PRAGMA quick_check')
+        .all()
+        .every((row) => Object.values(row as Record<string, unknown>)[0] === 'ok'),
+      'preparation engine corrupt',
+    );
+    const columns = database.query('PRAGMA table_info(mastra_workflow_snapshot)').all() as { name: string }[];
+    requireEngine(
+      ['workflow_name', 'run_id', 'snapshot'].every((name) => columns.some((column) => column.name === name)),
+      'preparation engine schema missing',
+    );
+    // ponytail: refuse histories above 256 rows/8 MiB; use a paged owner census if healthy history reaches this ceiling.
+    const count = database
+      .query(
+        'SELECT count(*) AS count, coalesce(sum(length(CAST(snapshot AS BLOB))),0) AS bytes FROM mastra_workflow_snapshot',
+      )
+      .get() as { count: number; bytes: number };
+    requireEngine(
+      Number.isSafeInteger(count.count) && count.count >= 0 && count.count <= 256,
+      'preparation engine census exceeds bound',
+    );
+    requireEngine(
+      Number.isSafeInteger(count.bytes) && count.bytes >= 0 && count.bytes <= 8 * 1024 * 1024,
+      'preparation engine census bytes exceed bound',
+    );
+    const rows = database.query('SELECT workflow_name,run_id,snapshot FROM mastra_workflow_snapshot').all() as {
+      workflow_name: string;
+      run_id: string;
+      snapshot: string;
+    }[];
+    let bytes = 0;
+    for (const row of rows) {
+      bytes += Buffer.byteLength(row.snapshot);
+      requireEngine(bytes <= 8 * 1024 * 1024, 'preparation engine census bytes exceed bound');
+      const persisted = JSON.parse(row.snapshot),
+        state = parseSessionBridgeRunState(persisted.context?.input);
+      requireEngine(
+        persisted.runId === row.run_id &&
+          ['success', 'failed', 'canceled', 'suspended'].includes(persisted.status) &&
+          state.workflow_id === row.workflow_name &&
+          Number.isSafeInteger(state.attempt) &&
+          state.attempt > 0 &&
+          typeof state.work_id === 'string' &&
+          state.work_id.length > 0,
+        'preparation engine row identity differs',
+      );
+      requireEngine(
+        row.run_id !== work.execution.run_id && state.work_id !== workId,
+        'preparation has a surviving engine run',
+      );
+    }
+  } finally {
+    database.close();
+    const after = lstatSync(target);
+    requireEngine(
+      after.isFile() &&
+        !after.isSymbolicLink() &&
+        after.nlink === 1 &&
+        after.dev === before.dev &&
+        after.ino === before.ino,
+      'preparation engine substituted',
+    );
+  }
 }
 
 function requireEngine(value: unknown, message: string): asserts value {
@@ -67,7 +170,8 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
       );
       return state;
     };
-    parseState(persisted.context.input);
+    const input = parseState(persisted.context.input);
+    requireEngine(input.observations.length === 0, 'initial observations are not empty');
     const suspended = Object.entries(persisted.context).filter(
       ([key, step]) => /^wave-\d+$/.test(key) && (step as { status?: string })?.status === 'suspended',
     );
@@ -110,16 +214,62 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
             Number.isSafeInteger(paths[step![0]][0]),
       'suspended path differs',
     );
-    if (step) {
-      const waveIndex = Number(step[0].slice(5)),
-        correction = requests[0]?.corrective_execution;
-      const executedWaves = [
-        ...compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags).waves.entries(),
-      ].filter(
-        ([, wave]) =>
-          (!correction || wave.some((stage) => correction.stage_ids.includes(stage.id))) &&
-          !wave.every((stage) => stage.assignments.length === 0),
+    const correction = binding.correctiveExecution;
+    const executedWaves = [
+      ...compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags).waves.entries(),
+    ].filter(
+      ([, wave]) =>
+        (!correction || wave.some((stage) => correction.stage_ids.includes(stage.id))) &&
+        !wave.every((stage) => stage.assignments.length === 0),
+    );
+    const waveIds = Object.keys(persisted.context).filter((key) => key.startsWith('wave-'));
+    const presentWaves = executedWaves.slice(0, waveIds.length);
+    requireEngine(
+      waveIds.length <= executedWaves.length && presentWaves.every(([index]) => waveIds.includes('wave-' + index)),
+      'configured execution prefix differs',
+    );
+    let prior = input;
+    let incomplete: string | null = null;
+    for (const [position, [waveIndex]] of presentWaves.entries()) {
+      const id = 'wave-' + waveIndex;
+      const recorded = persisted.context[id];
+      requireEngine(isDeepStrictEqual(parseState(recorded.payload), prior), 'wave payload chain differs');
+      if (recorded.status !== 'success') {
+        requireEngine(
+          position === presentWaves.length - 1 && recorded.status === persisted.status,
+          'prior wave is not successful',
+        );
+        incomplete = id;
+        continue;
+      }
+      const output = parseState(recorded.output);
+      const appended = output.observations.slice(prior.observations.length);
+      const actions = sessionActionsForWave(config, selection, context, workflowId, waveIndex, [], correction);
+      requireEngine(
+        isDeepStrictEqual(output.observations.slice(0, prior.observations.length), prior.observations) &&
+          appended.length === actions.length &&
+          new Set(appended.map((observation) => observation.action_id)).size === actions.length &&
+          actions.every((action) => appended.some((observation) => observation.action_id === action.action_id)) &&
+          appended.every(
+            (observation) =>
+              observation.status === 'reported_complete' &&
+              observation.output_digest === canonicalJsonDigest(observation.summary),
+          ) &&
+          isDeepStrictEqual(recorded.resumePayload?.observations, appended),
+        'completed wave observations differ',
       );
+      prior = output;
+    }
+    requireEngine(
+      persisted.status === 'success'
+        ? incomplete === null && waveIds.length === executedWaves.length && isDeepStrictEqual(state, prior)
+        : persisted.status === 'suspended'
+          ? incomplete === step![0] && isDeepStrictEqual(state, prior)
+          : incomplete !== null || waveIds.length === 0,
+      'terminal result or execution frontier differs',
+    );
+    if (step) {
+      const waveIndex = Number(step[0].slice(5));
       const executionIndex = executedWaves.findIndex(([index]) => index === waveIndex);
       requireEngine(
         executionIndex >= 0 && isDeepStrictEqual(paths[step[0]], [executionIndex]),

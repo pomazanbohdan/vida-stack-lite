@@ -83,7 +83,10 @@ function fixture() {
     writeFileSync(path.join(root, relative), readFileSync(path.join(repository, relative)));
   cpSync(bundle, copiedBundle, {
     recursive: true,
-    filter: (entry) => !['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'].includes(path.basename(entry)),
+    // Source repair runs physical JS/TS; native assets have their own qualification fixtures.
+    filter: (entry) =>
+      entry !== path.join(bundle, 'dist', 'standalone') &&
+      !['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'].includes(path.basename(entry)),
   });
   symlinkSync(path.join(bundle, 'node_modules'), path.join(copiedBundle, 'node_modules'), 'junction');
   cpSync(path.join(repository, 'packages/plugin'), path.join(root, 'packages/plugin'), { recursive: true });

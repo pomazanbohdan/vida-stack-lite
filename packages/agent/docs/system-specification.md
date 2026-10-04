@@ -2,7 +2,7 @@
 
 Owner: agent product maintainer. Class: canonical living system specification.
 Repository-only source trace (not an installed consumer dependency): the current attributable repository/distribution and developer
-unblocking decisions in `.agent/work/npm-agent-migration-20260930/WORK.md`.
+unblocking decisions in `.agent/work/core-cloud-continuation-20261002/WORK.md#native-only-public-delivery-decision`.
 This document defines the target behavior; its presence does not certify that
 the distribution, migration or Runtime acceptance gates have passed.
 
@@ -39,12 +39,13 @@ The source repository contains exactly `agent=packages/agent` and
 `plugin=packages/plugin`. Existing Git history and origin are preserved.
 Predecessor framework code is inactive provenance, never an active fallback.
 
-The primary distribution is one native `vida-agent` executable per qualified
+The only public agent distribution is one native `vida-agent` executable per qualified
 OS/CPU target, embedding Bun 1.4.2. Direct installation, public commands and first
 run require no external Node, npm or Bun executable and no first-run network
-bootstrap. npm `vida-agent` and every existing public SDK export remain separately
-maintained compatibility surfaces; an executable does not replace in-process
-imports or declarations. Source development/publication tools may have their own
+bootstrap. Every existing public SDK export remains a maintained library
+interface; an executable does not replace in-process imports or declarations.
+Public agent CLI installation through npm is not supported; npm artifacts serve
+SDK library imports only. Source development/publication tools may have their own
 prerequisites. Native target support follows actual full-product verification,
 not cross-compilation success or a minimal runtime probe.
 
@@ -61,7 +62,41 @@ ProjectContext, ownership/CAS, maintenance, Cedar, fs-safe and Mastra/LibSQL
 semantics remain unchanged. A convenience ABI or loader flag is not established
 as a supported mechanism without actual target qualification.
 
-The npm compatibility package derives its root from module location and validated
+Source native construction uses the pinned Bun compiler and a frozen production
+install into a private physical copy. It includes the existing package-owned
+code, schemas, instructions, templates and production native/WASM resources in
+one executable. The executable serves its own Bun child runtime. It creates no
+consumer dependency installation or first-run download. Native build outputs
+bind current source inputs and one actual target; their presence grants no
+release qualification. SDK packing derives a separate library manifest that
+excludes native assets and standalone scripts while preserving exports.
+
+Physical resource publication uses an exclusive per-payload lock, private sibling
+staging and a single rename. Concurrent callers reuse only the complete verified
+result. A bounded wait rejects an unfinished or uncertain publisher without
+stealing its lock. Failed private staging remains available for inspection.
+Before a command uses the materialized runtime, it checks the exact regular-file inventory and bytes; partial, changed,
+linked, hardlinked or foreign entries reject without replacement. Consumer state
+is outside the version/payload cache.
+The immutable cache is reconstructable executable data. The owned publication
+lock is flushed before file writes; cache files do not require individual
+persistence flushes. Namespace publication remains atomic and every launch
+verifies all bytes before using them, so an incomplete cache after interruption or power loss
+rejects. This policy does not alter database, source, approval or release-journal
+durability.
+Version and help use the same public CLI formatter with the immutable compiled
+manifest and do not materialize or read unused runtime resources. They grant no
+work, source-write or Runtime authority. Instructions and the exact read-only
+install --check route materialize one immutable discovery view: all instructions,
+the existing installer-protected inputs, maintained bunfig.toml and public CLI/formatter. They use
+the same lock, exact inventory and byte checks, with a view-specific payload
+identity; unused production dependencies are not materialized. Any runtime, initialization or other install route uses the complete payload in its separate immutable cache.
+The discovery view does not establish dependency, full-product or Runtime
+qualification. Runtime resource creation uses at most
+eight disjoint asynchronous file writes per batch and waits for every write to
+settle before any failure releases the ownership lock or permits publication.
+
+The SDK library package derives its root from module location and validated
 identity, owns dependencies and resources, and checks declared ESM entrypoints
 without loading dependency code. Import-only exports remain valid; absent
 entrypoints block initialization. It does not use consumer source or `NODE_PATH`,
@@ -263,7 +298,7 @@ archive, operation, current assurance or installed postchecks.
 Candidate preparation settles version and ownership before assurance. Applicable
 actual test outcomes bind their relevant executable inputs, allowing reuse when
 those inputs remain current. Each final target payload is formed once and
-identified by structured exact artifact metadata; npm compatibility formation
+identified by structured exact artifact metadata; SDK library archive formation
 uses prepack. A pending operation retains its candidate identity while its
 distribution implementation and qualification are reconciled. The final exact
 target archive is formed once, then the authorized Source commit/push order runs.
@@ -274,6 +309,156 @@ verifies consistency and currentness; the orchestrating session verifies native
 review provenance. Local JSON grants neither cryptographic tool-origin proof
 nor physical filesystem isolation. No caller skip or approval boolean bypasses
 the required joins.
+
+### Same-operation native retarget
+
+The packaged `reconcile-artifacts --kind release-retarget` command owns fixed
+`inspect`, `plan`, `apply` and `resume` operations for one existing uninstalled
+release. An isolated conversation/controller establishes the human directive;
+the CLI validates its frozen attribution and state consistency. No host,
+Desktop, provider or credential issuer selects that authority.
+
+Only an original `awaiting_assurance` SDK operation without `install_started`
+is eligible. Preserve its operation/version, pending pointer and successful
+pointer bytes or absence. Preserve every other current-v1 release field; only
+`pack_metadata`, `source_binding` and `tarball_sha256` may change. PID is retained
+metadata, not evidence of quiescence. Admission then operation SQLite exclusion
+uses the existing release database paths under either Node or embedded Bun.
+
+The fixed Source caller `release-local --stage-native-retarget OP --candidate
+RELATIVE_JSON` consumes an already formed native archive and exact metadata;
+it does not compile, execute or install it. Stage the bounded archive through
+the existing pinned fs-safe binary and archive APIs. Verify exact regular file
+inventory, packaged Source bytes, native manifest and asset bytes. Static
+staging never qualifies the executable or proves its compiled behavior.
+
+Reserve candidate and custody directories exclusively. Root copying may
+overwrite only files within that newly owned namespace. Preserve the old SDK
+archive, operation receipts and referenced logs, scope/review/reverse evidence
+and operational input evidence with exact seals before canonical replacement.
+An incomplete existing namespace, missing staged byte/seal, changed pointer,
+Source drift, busy worker or foreign/mixed effect denies without overwrite or
+reconstruction. Old failed and UNKNOWN evidence remains retained.
+
+Publish a fail-closed planning reservation under the lock pair before custody
+copying. Clean planning or a lost initial phase ACK can continue the same frozen
+plan only while the custody namespace is absent and candidate, Source, receipts
+and pointer preimages still match. Reserve its first custody directory under the
+same locks. Existing partial custody denies; missing previously staged bytes
+are never reconstructed. Completed custody with a lost phase ACK can resume
+only from its final valid seal, publication bytes and unchanged preimages.
+Extraction, copying and byte checks run outside the lock pair. Freeze Source
+bytes and physical observations in one scan; recheck those identities and exact
+pointer bytes under the same lock pair before bounded publication. Known phases
+are custody, archive publication, release publication and completion. A lost
+phase ACK recognizes only the exact frozen pre/post images and resumes the same
+plan. Pending and successful pointers are never published by retarget. This is
+recoverable staged publication, not a cross-file atomicity or hostile-writer
+isolation claim.
+
+An active or missing-phase repair blocks worker reuse and qualification. A
+completed repair permits ordinary status/PID progress while retaining its exact
+candidate binding. It grants no qualification, new admission or installation.
+Current trusted CI/CD delivery evidence, same-asset seal, three fresh blind
+reviews, reverse validation, CLEAR and attributable acceptance remain separate
+gates. Missing actual current CI evidence keeps delivery blocked.
+
+The repository-only evidence owner is `tooling/agent/release-ci-evidence.mjs`.
+Its portable boundary receives an actual attributable trusted session/controller
+observation and an already approved profile. It checks consistency; file JSON,
+saved success, a callback boolean or Git origin does not establish origin or
+authorization. No particular provider, machine, OS, Desktop or external issuer
+is required for runtime authorization/recovery/assurance. Replaceable adapters
+are separately qualified; target OS/CPU identifies compatibility, not human trust.
+
+`VidaCIDeliveryRequest/v1` binds original operation/version, repository/exact
+sorted projects, native target and current Source. The owner computes its opaque
+request ID and exclusively creates `ci/<request-id>/request.json` under that
+operation. Identical retry checks exact bytes. Partial/conflicting writes remain
+UNKNOWN without overwrite. An authorized Source edit selects a new proof request
+within the same operation and retains old evidence; it never reruns CI itself.
+No active release/tests/retarget/Host v1 fields change.
+
+The CI producer encodes `VidaCIDeliveryResult/v1` from actual observations and
+formed bytes. It binds request, run/attempt, archive, native manifest, embedded
+payload and executable. Post-upload artifact identity belongs to the controller
+observation, which binds retrieved result bytes to the actual artifact; the
+producer cannot know it before upload. Require native-build, native-install,
+public-routes, offline-runtime, native-dependencies, state-preservation and
+upgrade-recovery checks. Failed/skipped/missing/stale/UNKNOWN observations deny.
+CI uses existing `build:pinned` then `prepack:pinned`; local release qualification
+does not form its prerequisite candidate.
+
+The repository contains a prepared, unactivated manual-only Windows x64 workflow
+at `.github/workflows/agent-native-delivery.yml` and its single producer
+`tooling/agent/native-ci-delivery.mjs`. The explicit disabled repository-variable
+gate, exact selected published commit/repository/job and current request guard
+precede formation. The CI-only isolated package mirror preserves declared Source
+bytes and installs from its own frozen lock outside the parent workspace before
+restoring the parent manifest. Existing CI preparation and scripts-disabled native
+packing run once; no SDK-only projection or local agent delivery test is used.
+Sequential exclusive phase intents retain failed/UNKNOWN custody and forbid
+automatic reissue. Each terminal phase binds the same request/run/attempt/Source/
+archive; recheck prior observations and current bytes after child execution before
+emitting the existing result. A killed, missing or unresolved child is not an
+expected denial; require its actual terminal exit and specific rejection.
+
+The prepared phases exercise the actual asset, private user-bin and sibling
+release tree, shim/PATH observations, public valid/denied routes and aliases,
+effective consumer-process firewall isolation on the replaceable Windows runner,
+Cedar WASM, original native fs-safe guarded I/O, Mastra/LibSQL restart persistence,
+ProjectContext/CAS/maintenance, real open SQLite DB/WAL/SHM custody, resource
+tamper/link/conflict/concurrency/interruption, and exact observed-prior same-version
+publication/rollback controls. Missing target capability or unmet observation is
+a GAP and stops emission; Source inspection cannot qualify these phases. Other
+targets and cross-version rollback are not qualified by this Windows/current-asset
+implementation. Full standalone, numeric, sealed and installed assurance remains
+separate even after these minimum seven checks.
+
+The optional explicit downloader `downloadGitHubCIDelivery` binds the selected
+successful run/attempt/workflow/repository and exact artifact to its actual job's
+start/completion interval and selected published commit. It accepts only a
+qualified exact HTTPS storage host redirect, with no forwarded API credential,
+and reserves transport exclusively before fetching storage bytes. Stream, digest,
+failed and partial observations retain the file; existing custody refuses another
+download. Transport ZIP is bounded to256MiB, nested TGZ to240MiB and result JSON
+to8MiB. The observer reuses the existing fs-safe archive reader and exact Source
+lock bindings; unavailable or drifting optional jszip is a GAP, not an implicit
+installation or alternative parser. No current v1 request/result/release/Host
+schema changes. Broad latest-stable dependency/tool and caller adaptation is
+the last-priority 0.1.3 lane, after native UPDATE01/developer-unblocking work and
+required installed checkpoints, before final 0.1.3 delivery and acceptance.
+P0 work retains exact current qualified pins; metadata drift alone does not
+block every step. Actual required runtime/reader defects and missing target
+qualification still block their dependent effects. Prepared workflow pins do
+not establish latest qualified dependencies or an updated installed environment.
+
+The read-only retarget view validates sealed staged bytes and current published
+archive. Installation selects its archive-owned asset, never Source `dist` or a
+locally executed build verifier. CI joining checks Source once, then rechecks
+frozen physical observations and request bytes after the asynchronous boundary.
+The observer receives copies; its changes cannot replace the local bindings or
+approved profile snapshot. Install fencing, locks and UNKNOWN custody remain.
+The local assurance owner also freezes tests.json and the three lane logs,
+rechecks their bytes after CI observation and rechecks physical input identities.
+Identical input sets share one read; a changed operational input cannot reuse
+earlier local proof even when it is outside the declared Source binding.
+
+The optional GitHub adapter reads exact run attempt, immutable workflow definition,
+required job/steps and artifact metadata under explicit controller policy.
+Provider ZIP integrity is separate from nested archive/asset integrity. Reuse
+guarded archive APIs; missing optional ZIP support remains a qualification GAP
+without dependency installation or a custom parser. No provider profile/pipeline/
+credentials is activated and no real CI output exists. Source ingress/publication
+authority remains a separate decision under the Sidecar Git policy.
+
+After transport digest validation and before either archive-entry read, the
+observer runs the existing library ZIP preflight once on the bounded physical
+transport. Duplicate physical names or entries collapsed by ZIP parsing reject
+before selecting result/candidate bytes, including with an available native
+reader. Require both preflight and entry-read functions under the existing exact
+Source dependency guard. Preserve transport bytes on refusal and recheck them
+after successful entry reads. No backend is forced and no dependency is installed.
 
 A project owner's explicit scoped standing Git instruction may authorize the
 orchestrating session's commit/push between successful pack and final assurance;
@@ -292,9 +477,9 @@ qualified target asset. Its delivery manifest declares the destination, PATH
 change, ordering, prior-install preservation and supported rollback effects; npm
 global installation is not proof of native primary installation. Verify version,
 all public command routes, physical instruction discovery, native/WASM behavior
-and offline runtime independence from an unrelated cwd. npm compatibility
-installation resolves its global prefix independently and uses npm-managed
-production dependencies. Interrupted or failed verification inspects the exact installed
+and offline runtime independence from an unrelated cwd. SDK library dependency
+qualification remains separate from public agent installation. Interrupted or
+failed verification inspects the exact installed
 artifact before repeating effects. Registry publication, consumer initialization,
 configuration overwrite, commits, tags and push are outside this command.
 
@@ -320,27 +505,28 @@ registry or GitHub publication merely as a test.
 Standalone acceptance traces SA-CLI to public command/runtime independence,
 SA-RESOURCES to immutable resource/native provenance, SA-STATE to external
 consumer state and existing governance, SA-OPT to measured pinned compilation,
-SA-RELEASE to one operation and separate native/npm/SDK assets, SA-NOTES to
-current English product/version notes, SA-CI to native-runner build/artifact preparation with locally qualified tests
+SA-RELEASE to one operation and exact native assets, with separate SDK library evidence, SA-NOTES to
+current English product/version notes, SA-CI to native-runner build/artifact/install checks with separately qualified local agent behavior
 and prepared publication tooling, and SA-ASSURANCE to fresh final reviews, reverse
 validation, CLEAR and attributable delivery observation. The accepted trace is
 retained in `.agent/work/teamlead-standalone-release-20261001/WORK.md`.
 
-CI/CD owns build and package/release preparation, with no test, coverage, CRAP or
-mutation steps. Runtime qualification remains local under TESTING and the lifecycle
-self-development policy; mutation requires explicit manual launch. Missing local
-assurance or deferred numeric evidence remains a GAP, not release proof.
+Agent behavior tests, coverage and CRAP run locally. Build, packaging and
+installation checks belong to CI/CD and are not local agent test tasks. Do not
+create or run build/install test suites, compiler probes or copied-package
+installation harnesses. CI/CD may run these delivery checks, but not agent
+behavior tests, coverage, CRAP or mutation. Mutation requires an explicit manual
+launch. Missing local or CI/CD evidence remains a GAP, never a pass.
+Runtime qualification and attributable user acceptance remain separate from
+CI/CD delivery checks and local Static evidence.
 
-An explicit human request may authorize manual npm compatibility formation and
-system update while native-primary delivery and CI are unfinished. Reuse the
-current pending candidate and release operation under one authority. Qualify the
-exact npm/SDK archive and public CLI through applicable checks and prepack, three
-fresh blind reviews, reverse validation and current CLEAR; no validation bypass
-is introduced. Apply the Source standing commit/push rule after successful
-formation and install the exact qualified archive. This local delivery performs
-no registry publication and proves no native-primary readiness. Preserve native
-and CI acceptance goals with their actual gaps, then use the qualified installed
-compatibility runtime to unblock waiting developers through normal admission.
+Public agent installation and system updates require the qualified standalone
+asset with embedded pinned Bun. An SDK/npm archive is not a fallback delivery.
+Keep the current pending candidate identity and preserve any uninstalled archive
+and actual receipts. Retargeting uses supported bundle-owned reconciliation; no
+manual journal edit, invented successful installation or replay of UNKNOWN
+effects is permitted. Native and CI acceptance retain their actual GAPs. Only
+verified installed native behavior can establish developer readiness.
 
 ## Scoped source and lease continuity
 
@@ -513,6 +699,15 @@ settlement. Ordinary journal writes and Host ownership, correction, suspension,
 retirement and maintenance writes deny during reserved/UNKNOWN production.
 Initialization and each start/resume settle only after existing-file inspection
 proves actual engine/journal agreement and unchanged current CAS/config/owner.
+The read-only engine inspector validates a contiguous configured wave prefix,
+starting with empty observations. Each completed wave preserves its input and
+appends exactly its configured completed action observations; its output is the
+next wave's input. Suspended frontier payloads preserve this chain. Terminal
+success requires every configured executed wave and the exact last output as
+the result. Missing, future, foreign or inconsistent wave state denies before
+producer acquisition or settlement. Correction schedules come from the bridge's
+configured correction or the Host-bound journal, never from persisted request
+metadata. This inspection grants no recovery authority or Runtime acceptance.
 Separate database commits are not atomic. Termination, drift or failed settlement
 retains UNKNOWN; close, elapsed time, PID or restart cannot clear or replay it.
 Generic governance operations cannot create or settle this protected namespace.
@@ -574,12 +769,50 @@ flushes file contents but does not promise directory-entry survival after power
 loss where directory synchronization is unsupported. Missing retained evidence
 fails closed without reconstruction. Metadata retention does
 not close historical proof, artifact repair, engine or installed Runtime GAPs.
-Inert work without a journal,
-foreign/orphan ownership, uncertain writer/governance effects and unsupported
-corrective shapes remain blocked. Engine absence cannot be inferred from Host
-journal absence: engine persistence can precede the journal. A supported inert
-release requires qualified engine-owner lookup and producer exclusion/order
-across all retained base/corrective attempts and restart, not Host-only absence.
+Unprepared work without a journal has one finite release-only route:
+`run --recover-unprepared-work true --mode inspect|apply --project-root ABS
+--native-session-handle OWNER --request RELATIVE_JSON`. Inspection returns the
+retained apply request; apply consumes those exact returned versions and original
+Work/ticket/claims. The trusted isolated controller must hold attributable,
+target-specific disposition authority. A handle, JSON or inspection grants no
+authority. Source repair permission does not authorize live disposition.
+The existing cooperative boundary applies: the isolated local session/controller
+establishes actual human authority in its current conversation before invoking
+apply. The CLI checks the declared owner, original context, disposition pointer
+and current CAS; it does not authenticate the human directive or create another
+issuer, token, Desktop or machine-trust dependency.
+
+This route accepts only the exact same-owner unsealed INTAKE execution-only
+claim, with no assignments, journal across any retained attempt or corrective
+generation. It validates original intake/configuration/run identity and current
+storage mapping. The existing Host immediate producer fence rejects every
+pending or UNKNOWN producer, checks maintenance availability/generation and
+FIFO, then holds exclusion across the existing-file engine census and Work/Ledger
+CAS. The census requires the current engine file, schema, integrity and physical
+identity, rejects any corrective-history row, and rejects any surviving
+same-work base/corrective/unknown-alias snapshot. Missing, malformed, oversized,
+corrupt or incomplete evidence denies; journal absence and PID absence are not
+engine or no-effect proof. Corrected work remains outside this finite predicate.
+The census preflights row count and aggregate payload bytes in SQLite before
+fetching payloads. Its 256-row/8MiB ceiling can also deny a healthy engine with
+unrelated retained history. Such denial is an availability GAP, not evidence of
+target-run absence; a future paged owner census is required at that ceiling.
+
+Apply suspends only the original execution and releases its exact ticket/claim,
+co-committing one current `CoordinationOperation/v1` release row. Original binding,
+run/attempt, contracts, artifacts, FAIL/UNKNOWN and other owners remain unchanged.
+Exact lost-ack retry verifies the retained request and released postcondition;
+changed request, stale CAS or later same-work progress denies. Unrelated ledger
+progress is preserved. No new lease, Source rights, journal, Mastra run, configuration
+adoption, release qualification or Runtime acceptance is granted. Ordinary run
+recognizes the partial preparation before new issue/engine preparation and
+returns `GAP-VIDA-RUN-PREPARATION-001` with this inspection route. Current configuration
+admission remains separate. Host and Mastra commits are distinct; this fence does
+not claim a distributed transaction or physical isolation from hostile writers.
+
+Foreign/orphan ownership, uncertain writer/governance effects, surviving engine
+outcomes and unsupported corrective shapes remain blocked. Build/install evidence
+belongs to CI/CD; agent-state fault/CAS/retry checks belong to the local test lane.
 
 Delivered-configuration adoption is a separate repair-first requirement. Before
 changing strict `ConfigRebindOperation/v1`, qualify and ship one bundle-owned

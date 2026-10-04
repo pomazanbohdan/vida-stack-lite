@@ -227,7 +227,7 @@ test('reuses a supplied pinned executable, still verifies its version, and clean
   const cleaned = [];
   assert.throws(
     () =>
-      runPinnedBun(['install', '--frozen-lockfile'], {
+      runPinnedBun(['test', 'tests/smoke.test.mjs'], {
         root,
         executable,
         timeoutMs: 123,
@@ -599,7 +599,7 @@ test('every public developer script enters the pinned bootstrap without recursio
     assert.equal(
       manifest.scripts[task],
       task === 'test'
-        ? 'node bin/bun.mjs run test:pinned && node bin/bun.mjs run test:repair:pinned && node bin/bun.mjs run test:host-state:pinned && node bin/bun.mjs run test:package-boundary:pinned && node bin/bun.mjs run test:run-entrypoint:pinned'
+        ? 'node bin/bun.mjs run test:pinned && node bin/bun.mjs run test:repair:pinned && node bin/bun.mjs run test:host-state:pinned && node bin/bun.mjs run test:run-entrypoint:pinned'
         : `node bin/bun.mjs run ${task}:pinned`,
     );
     assert.ok(manifest.scripts[`${task}:pinned`]);
@@ -706,109 +706,3 @@ test('actual uncertain child output is rejected before parsing while completed f
   assert.deepEqual(JSON.parse(completed.stderr), { status: 'expected_denial' });
   assert.equal(commandOutcomeUnknown({ status: null }), true);
 }, 10_000);
-
-test('ordinary pinned phases preserve the complete disjoint test inventory and one build', () => {
-  const { scripts } = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../package.json'), 'utf8'));
-  const phases = [
-    'test:pinned',
-    'test:repair:pinned',
-    'test:host-state:pinned',
-    'test:package-boundary:pinned',
-    'test:run-entrypoint:pinned',
-  ];
-  const expected = [
-    'tests/admitted-development-packet.test.mjs',
-    'tests/admitted-synthesis-projection.test.mjs',
-    'tests/bun-cache-routing.test.mjs',
-    'tests/bun/host-state.test.mjs',
-    'tests/bun/lifecycle-state.test.mjs',
-    'tests/bun/persistent-session-handoff.test.mjs',
-    'tests/bun/runtime-initialization.test.mjs',
-    'tests/cedar-validation.test.mjs',
-    'tests/completed-readonly-capture.test.mjs',
-    'tests/documentation-policy-transition.test.mjs',
-    'tests/forward-candidate-admission.test.mjs',
-    'tests/forward-candidate-authority.test.mjs',
-    'tests/initialization.test.mjs',
-    'tests/install.test.mjs',
-    'tests/interrupted-source-retirement.test.mjs',
-    'tests/observed-research-result.test.mjs',
-    'tests/observed-testing.test.mjs',
-    'tests/package-boundary.test.mjs',
-    'tests/paused-replacement-entrypoint.test.mjs',
-    'tests/portable-instructions.test.mjs',
-    'tests/property.test.mjs',
-    'tests/read-only-dispatch-repair.test.mjs',
-    'tests/reconcile-readonly-dispatch.test.mjs',
-    'tests/repair-cli-behavior.test.mjs',
-    'tests/research-source-catalog.test.mjs',
-    'tests/run-entrypoint.test.mjs',
-    'tests/runtime-config-rebind.test.mjs',
-    'tests/runtime-config-repair-boundary.test.mjs',
-    'tests/runtime-config-yaml.test.mjs',
-    'tests/runtime-timing-output.test.mjs',
-    'tests/session-handoff.test.mjs',
-    'tests/smoke.test.mjs',
-  ];
-  const actual = phases.flatMap((phase) =>
-    [...scripts[phase].matchAll(/tests\/[\w/-]+\.test\.mjs/g)].map(([file]) => file),
-  );
-  assert.equal(
-    scripts['test:package-boundary:pinned'].split(' --test-name-pattern ')[1],
-    scripts['test:pinned'].split(' --test-name-pattern ')[1],
-  );
-  assert.equal(new Set(actual).size, actual.length, 'ordinary phases must not duplicate tests');
-  assert.deepEqual(actual.sort(), expected);
-  assert.equal(
-    phases.reduce((count, phase) => count + [...scripts[phase].matchAll(/run build:pinned/g)].length, 0),
-    1,
-  );
-  assert.equal(scripts.test, phases.map((phase) => 'node bin/bun.mjs run ' + phase).join(' && '));
-  assert.ok(scripts['ci:candidate:pinned'].includes(phases.map((phase) => 'bun run ' + phase).join(' && ')));
-});
-
-test('candidate qualification reuses one Source build and preserves every remaining phase and archive exception', () => {
-  const { scripts } = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../package.json'), 'utf8'));
-  const dependencies = (task) => [...scripts[task].matchAll(/\bbun run ([\w:-]+)/g)].map(([, name]) => name);
-  function buildCount(task, parents = []) {
-    assert.equal(parents.includes(task), false, 'candidate script graph must be acyclic');
-    assert.equal(typeof scripts[task], 'string', 'candidate dependency must exist: ' + task);
-    return (
-      (task === 'build:pinned' ? 1 : 0) +
-      dependencies(task).reduce((count, child) => count + buildCount(child, [...parents, task]), 0)
-    );
-  }
-  assert.equal(buildCount('ci:candidate:pinned'), 1, 'candidate must build Source once');
-  assert.deepEqual(dependencies('ci:candidate:pinned'), [
-    'test:toolchain:pinned',
-    'preflight:pinned',
-    'typecheck:pinned',
-    'test:pinned',
-    'test:repair:pinned',
-    'test:host-state:pinned',
-    'test:package-boundary:pinned',
-    'test:run-entrypoint:pinned',
-    'test:pack:built:pinned',
-    'test:fuzz:built:pinned',
-    'test:zombies:built:pinned',
-    'test:deep:built:pinned',
-    'quality:static:pinned',
-    'test:coverage:built:pinned',
-    'coverage:gate:pinned',
-    'crap:pinned',
-    'format:check:pinned',
-  ]);
-  for (const task of ['fuzz', 'zombies', 'deep', 'coverage']) {
-    const standalone = scripts[`test:${task}:pinned`];
-    assert.ok(standalone.startsWith('bun run build:pinned && '));
-    assert.equal(scripts[`test:${task}:built:pinned`], standalone.slice('bun run build:pinned && '.length));
-  }
-  const archiveCase = 'package archive is the complete portable vida-agent bundle with a clean production surface';
-  assert.equal(
-    scripts['test:pack:built:pinned'],
-    `bun test tests/runtime-config-yaml.test.mjs --test-name-pattern "^${archiveCase}$"`,
-  );
-  assert.ok(scripts['test:pinned'].includes(`^(?!${archiveCase}$)`), 'archive case stays separate from main tests');
-  assert.ok(scripts['test:pack:pinned'].startsWith('bun run build:pinned && '), 'standalone pack retains its build');
-  assert.equal(scripts['ci:candidate:pinned'].includes('test:mutation'), false);
-});

@@ -120,15 +120,13 @@ test('Bun coverage harness exercises the candidate decision/timing boundaries', 
   assert.equal(events[0].optimization_required, false);
 });
 
-test('V8 coverage excludes only the nested portable package harness without changing maintained sources', () => {
+test('V8 coverage retains current runtime sources and native counters', () => {
   const manifest = JSON.parse(readFileSync(path.join(candidateRoot, 'package.json'), 'utf8'));
   const inventory = maintainedSourceInventory(candidateRoot);
-  assert.match(manifest.scripts['test:coverage:pinned'], /--exclude tests\/package-boundary\.test\.mjs/);
   assert.match(manifest.scripts['test:coverage:pinned'], /--env-file=tooling\/v8-coverage\.env/);
   assert.match(manifest.scripts['test:coverage:pinned'], /--coverage/);
   assert.match(manifest.scripts['test:coverage:pinned'], /bun tooling\/run-bun-native-coverage\.mjs/);
   assert.doesNotMatch(manifest.scripts['test:coverage:pinned'], /bun --preload .* test tests\/bun\//);
-  assert.match(manifest.scripts['test:pack:pinned'], /tests\/package-boundary\.test\.mjs/);
   assert.ok(inventory.binSources.includes('bin/init-core.mjs'));
   assert.ok(!inventory.publicBinSources.includes('bin/init-core.mjs'));
   assert.deepEqual(
@@ -142,20 +140,11 @@ test('V8 coverage excludes only the nested portable package harness without chan
   );
 });
 
-test('V8 coverage marker bypasses only live frozen-install cases while keeping an in-process public initializer check', async () => {
+test('V8 coverage mode retains public initializer input rejection', async () => {
   assert.equal(
     readFileSync(path.join(candidateRoot, 'tooling/v8-coverage.env'), 'utf8'),
     'AGENT_RUNTIME_V8_COVERAGE=1\n',
   );
-  for (const [file, marker] of [
-    ['tests/initialization.test.mjs', 'const v8CoverageTest = v8CoverageMode ? test.skip : test;'],
-    [
-      'tests/install.test.mjs',
-      "const v8CoverageTest = process.env.AGENT_RUNTIME_V8_COVERAGE === '1' ? test.skip : test;",
-    ],
-    ['tests/run-entrypoint.test.mjs', 'const liveInstallTest = v8CoverageMode ? test.skip : test;'],
-  ])
-    assert.ok(readFileSync(path.join(candidateRoot, file), 'utf8').includes(marker));
   await assert.rejects(
     () =>
       initializeProject({

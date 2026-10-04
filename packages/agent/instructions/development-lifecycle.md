@@ -294,6 +294,17 @@ No PID/age deletion, power-loss or SQL/filesystem atomicity claim is implied.
 
 ## Self-development protocol
 
+Use the latest stable published version of every package and development tool.
+Before adoption, retrieve current official package metadata, release notes and
+API documentation. Adapt affected code to breaking or behavioral changes and
+use new capabilities when they improve the authorized task. Qualify the adapted
+behavior before adoption; do not preserve an obsolete version merely to avoid
+the necessary code correction. After qualification, retain exact version, lock
+and immutable action bindings for reproducible execution; floating `latest`
+references do not establish an up-to-date or qualified installation. Record
+available, prepared, qualified and installed versions separately, with explicit
+GAPs when the current environment or accepted Source has not been updated.
+
 Keep all reusable VIDA behavior host-independent. Never introduce a mandatory
 dependency on a particular machine, operating system, desktop application or
 provider for recovery, authentication, authorization, execution or assurance.
@@ -362,13 +373,20 @@ The main optimization target is fewer agent execution steps without loss of
 required quality. Remove repeated discovery, handoffs, state writes and test
 runs, while preserving each authorization, CAS boundary, failure state, review
 and evidence class. Batch mechanical host operations only when the same checks
-and recoverability remain observable. Run focused affected checks while editing
+and recoverability remain observable. Run only focused agent behavior checks while editing
 and run the full applicable current task suite once after its corrections are
 complete. Reuse that current evidence in the mandatory installation assurance
 wave; do not repeat the full suite after each subfix.
 Do not add a full candidate cycle solely to score an individual outcome or
 interrupt a long check already running. Reuse accepted evidence only while its
 inputs remain current; changed inputs invalidate their affected proof.
+
+For authorized agent execution optimization, use at most ten iterations.
+Find one evidenced bottleneck, apply its smallest portable correction, run its
+focused regression, then inspect the remaining path. Reuse existing execution
+logs; do not start a separate scoring lane. Stop when no safe useful correction
+remains, and record the remaining limits. Run the full applicable task suite once
+when the corrections are stable, then perform current final assurance.
 
 Select exact affected test files/cases and direct callers during development,
 including configuration/schema/filesystem/subprocess dependencies outside static
@@ -445,11 +463,12 @@ maintained template in the same authorized work, with attribution in the work
 record. Do not create a competing agent memory document or an additional
 schema version to avoid repairing current artifacts.
 
-Tests, coverage and CRAP execute locally only. CI/CD may automate builds and
-package/release preparation, but contains no test, coverage, CRAP or mutation
-steps. Mutation runs only on an explicit manual launch and is absent from
-aggregate automation. Preserve required local assurance and numeric quality
-criteria; missing or deferred evidence stays a GAP, never a pass. Tests and
+Agent behavior tests, coverage and CRAP run locally. Build, packaging and
+installation checks belong to CI/CD and are not local agent test tasks. Do not
+create or run build/install test suites, compiler probes or copied-package
+installation harnesses. CI/CD may run these delivery checks, but not agent
+behavior tests, coverage, CRAP or mutation. Mutation requires an explicit manual
+launch. Missing local or CI/CD evidence remains a GAP, never a pass. Tests and
 comments describe the current architecture and supported behavior, without
 narratives about absent legacy implementations. Formatter/TypeScript 7 hooks and
 pre-push coverage/CRAP remain proposals for discussion; do not install or activate
@@ -472,9 +491,12 @@ included bytes do not invalidate it. Changed included inputs invalidate their
 affected proof, without manual integrity replay. This changes no generic
 assurance or Runtime acceptance gate.
 
-For standalone primary delivery, preserve the generic runtime and all public
-commands/SDK compatibility while forming one native executable per qualified
-target with embedded pinned Bun. Direct installation/first run must require no
+Public agent delivery uses only one standalone native executable per qualified
+target with embedded pinned Bun. Preserve the generic runtime, public commands
+and every maintained SDK library export. An SDK/npm artifact is library evidence,
+not an alternative agent installation or a completed native checkpoint.
+Public agent CLI installation through npm is not supported; npm artifacts serve
+SDK library imports only. Direct installation/first run must require no
 external Node/npm/Bun or first-run download. Package-owned immutable resources
 use safe private version/payload-bound materialization when physical paths are
 needed; consumer configuration and DB/WAL/SHM stay external. Reject unsafe,
@@ -482,21 +504,21 @@ partial or tampered resources without weakening native attestation, Cedar,
 fs-safe, ProjectContext, CAS, maintenance or Mastra/LibSQL. Use actual full-product
 native target checks, not a thin probe or assumed loader ABI.
 
-Keep one pending version/operation while packaging changes are qualified. An
-explicit human request may authorize manual npm compatibility delivery before
-native-primary/CI completion. Qualify the exact npm/SDK archive and CLI with
-applicable checks/prepack, three fresh blind reviews, reverse validation and
-CLEAR; use the Source standing successful-formation commit/push order. Install
-only the exact qualified archive without publication or bypass flags. Preserve
-unfinished native/CI goals and separate evidence; npm delivery proves no native
-readiness. Afterwards unblock waiting developers through the qualified installed
-runtime and normal work admission.
+Keep one pending version/operation while packaging changes are qualified.
+Preserve any formed SDK/npm archive and its failed, partial or UNKNOWN receipts;
+never relabel it as a native executable or rewrite pending artifacts manually.
+Use supported bundle-owned repair/reconciliation before changing active artifact
+contracts or retargeting an uninstalled operation. Qualify the exact native asset
+with applicable checks, three fresh blind reviews, reverse validation and CLEAR;
+use the Source standing successful-formation commit/push order. Install only that
+qualified native asset without publication or bypass flags. Unblock waiting
+developers only through its verified installed behavior and normal admission.
 Use the approved native user-bin defaults declared by the system specification
 and installation guide, with sibling version/operation release trees. Preserve
 prior npm shims, use exclusive creation for a new entry and exact observed-prior
 CAS for upgrades. Observe/reconcile unknown outcomes before repeating effects.
 The final native manifest specifies target, destination, PATH, prior-install and
-rollback effects; npm global installation is compatibility evidence only.
+rollback effects; npm global installation cannot establish agent delivery.
 Maintain every public SDK export. Pinned deterministic compile/minify/bytecode,
 retained names and disabled ambient configuration need measured evidence for
 optimization claims. Prepared CI/release notes/publication scripts create no

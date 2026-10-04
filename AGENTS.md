@@ -481,7 +481,18 @@ This file is stack-managed and replaceable as a whole.
 
 ## 14. Portable runtime activation
 
-The reusable runtime is the installed `vida-agent` npm package on PATH;
+Reusable VIDA behavior must remain host-independent: never require a particular
+machine, OS, desktop application or provider for recovery, authentication,
+authorization, execution or assurance. Keep boundary adapters replaceable and
+separately qualified against portable contracts. In the human-given isolated
+agent environment, trusted internal session/controller and attributable human
+intent supply the recovery-review boundary; external issuer, OS, Desktop and
+provider attestation are not prerequisites. Preserve canonical CAS, readonly
+observation, same-thread body custody and UNKNOWN/no-reissue behavior. Review
+does not grant Source or Runtime rights. The single instruction owner is the installed
+development-lifecycle instruction's self-development protocol.
+
+The reusable runtime is the qualified standalone `vida-agent` executable on PATH;
 its lifecycle is the single owner of
 assurance sequencing. Read the focused instruction named by the active task:
 Resolve the focused instruction using `vida-agent instructions --path NAME`,
@@ -494,6 +505,12 @@ its reproducible ZOMBIES/property/concurrency/fault/schema/integration/security,
 coverage, CRAP, complexity and mutation gates are mandatory for that critical
 component. Product code uses the routed project test policy instead.
 
+Use the latest stable package/tool versions, retrieve official changes and
+adapt affected code for changed APIs and relevant new capabilities. Qualify
+before adoption, then retain exact reproducible pins and lock files. Available,
+prepared, qualified and installed versions are separate evidence. The single instruction
+owner is the development-lifecycle self-development protocol.
+
 Logical roles are not automatically separate agents. Work stays in the current
 session by default; perspective slots provide internal alternate views. Spawn a
 specialist only for a frozen bounded independent task with a defined join, use
@@ -501,6 +518,28 @@ parallel workers only with disjoint ownership, and use fresh single-use agents
 when a plan/review/security/architect gate requires real independence. One
 writer owns an overlapping path. The detailed owner is
 the installed agent-allocation instruction resolved through the public CLI.
+
+For authorized runtime self-development, use one prior qualitative estimate to
+select dependency-ready engineering work with the largest workflow/step/token
+benefit. Count verified engineering outcomes, not subfixes, tests or reports.
+After each whole verified outcome, perform the qualified local system update
+without changing
+the current semantic version; retain exact payload/operation identity, pending
+UNKNOWN custody and required installed proof before dependent next-batch effects.
+Use selected affected files/cases while developing and run the full applicable
+current task suite once after its corrections are complete. Reuse still-current
+evidence in mandatory assurance at the checkpoint. Build and installation
+checks belong to CI/CD; do not add or run them as local agent tests. Focus on
+agent defects and tasks. For agent execution optimization,
+use the lifecycle owner's bounded find/fix/check loop, up to ten iterations, and
+stop when no safe useful correction remains. SDK packages are library interfaces,
+not an alternative public agent installation. The launcher and ordinary
+test phases have no implicit total-duration limit; explicit caller/host and
+operation-specific case/probe/install/cleanup bounds remain. Do not create a
+separate achieved-savings/ROI/token-benchmark
+lane or a full candidate cycle solely to score a task. Functional/security/data/
+numeric gates and final release/native requirements remain. The detailed policy
+has one owner: the installed development-lifecycle self-development protocol.
 
 All sessions share one live worktree version. Before a tracked mutation, use
 the current configured trusted Host coordination inspector and supported typed
@@ -548,12 +587,28 @@ require a new attempt or a manual hash-check step.
 
 Active artifacts use only their strict current v1 contracts. Before any future current-v1 schema change, implement and ship one functional bundle-owned artifact repair command for affected artifacts and dependencies, including atomic application and recovery. Until it exists, stop before changing active artifacts. Runtime readers do not select older formats.
 
+Delivered configuration does not replace local initialization or historical
+work authority. Preserve original scope snapshots, issued requests, owners and
+FAIL/UNKNOWN evidence. Recovery control precedes ordinary current-execution
+admission and grants no new execution or acceptance. Apply the installed
+development-lifecycle owner's historical recovery, repair-first, caller-evidence
+and same-attempt continuity rules. Do not copy another host's operational state
+or infer engine absence from a missing Host journal. Existing attributable
+permission is retained within its accepted scope; reviews and fresh ownership
+remain required without repeating the same human permission question.
+
 Before asking the human, classify the gap and choose `ask`, `retrieve`, `infer`,
 `proceed` or `block`. A material question names one decision, exact conflict and
 evidence, why it is needed, consequences of mutually exclusive options, at most
 one evidence-backed recommendation, the unanswered disposition and a stable question ID.
 Preserve the attributable answer; ambiguity remains open. The
 detailed owner is the installed request-clarification instruction.
+Use the available host question tool when a human answer or decision is needed.
+Keep unanswered questions open without a response deadline, elapsed-time expiry,
+silence-as-consent or timed dependent default. Only an attributable answer or
+explicit withdrawal, supersession or waiver closes them. Independent authorized
+work may continue. The tool boundary is portable and requires no named provider,
+machine or Desktop application.
 
 Bootstrap-visible assurance invariant: R0 is read-only. Every tracked R1-R4
 mutation follows the canonical runtime lifecycle, including current tests,
@@ -685,7 +740,7 @@ or compensate for missing attributable user testing evidence. A correction to
 documentation invalidates CLEAR but does not replace the implementation
 fingerprint or Runtime evidence.
 
-The installed npm agent package owns the active DocFlow/CLEAR lifecycle and typed
+The installed VIDA runtime owns the active DocFlow/CLEAR lifecycle and typed
 contracts. Initialization generates this entry point from its bundle-owned
 template only when project integration outputs are absent; existing files are
 not overwritten. Any managed update must preserve this documentation contract

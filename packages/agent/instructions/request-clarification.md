@@ -5,6 +5,16 @@ rewrite the request, solve the task prematurely or require a universal field
 catalog. Current user decisions and sidecar-routed BR/SR/AC remain normative.
 The clarification record is derived work state with attributable provenance.
 
+When an answer or decision is needed from the human, use the available host
+question tool. Keep this boundary portable; no particular provider, Desktop or
+machine is required. A missing question-tool capability is an explicit GAP,
+not permission to fabricate an answer or create a replacement trust mechanism.
+
+Leave the question open until an attributable answer or the decision owner's
+explicit withdrawal, supersession or waiver. Do not set a response deadline,
+expire it because time passed, treat silence as consent or continue dependent
+work on a timed default. Independent authorized work may continue while waiting.
+
 ## Gap analysis
 
 Before asking, classify a material gap as `missing`, `ambiguous`, `conflicting`,
@@ -17,8 +27,8 @@ Choose one action:
 - `ask` for user-owned intent, business priority, materially different outcomes,
   sensitive policy, irreversible action or authoritative conflict;
 - `retrieve` for a verifiable project/public fact from an allowed source;
-- `infer` only for a reversible low-impact assumption, with provenance and an
-  expiry/confirmation mode;
+- `infer` only for a reversible low-impact assumption, with provenance and a
+  review/confirmation condition; that condition never expires a human question;
 - `proceed` when the missing value cannot affect current acceptance;
 - `block` when execution or evidence would otherwise be unsafe or fabricated.
 
@@ -40,6 +50,13 @@ Every material human question has one typed candidate with:
 - `allow_other` and `allow_cannot_answer` when the option space or knowledge is
   not closed;
 - status `open`, then attributable `answered`, `waived` or `expired`.
+
+`answered` requires an attributable decision. `waived` requires the decision
+owner's explicit attributable waiver or separately accepted safe disposition.
+`expired` records explicit withdrawal or supersession, never elapsed time.
+Silence, a timer and agent inference establish none of these terminal statuses.
+A material decision stays open without that attributable disposition and blocks
+only its dependent work. Existing status fields and schemas remain unchanged.
 
 The reserved selection `other` is accepted only when `allow_other=true` and its
 meaning is preserved in the attributable quote. `cannot_answer` and `defer`
@@ -71,7 +88,7 @@ A. <label> — <observable consequence>
 B. <label> — <observable consequence>
 C. Other — <constrained free text>, when applicable
 Recommendation: <one option or none> — <evidence-based rationale>
-If unanswered: <block, safe default, defer with GAP, or expiry>
+If unanswered: <keep open; block dependent work or defer it with GAP; continue independent authorized work>
 Reply: <option id plus optional correction>
 ```
 
@@ -91,8 +108,9 @@ inference. Recompute dependent questions and invalidate those made unnecessary.
 Clarification stops when blocking fields are resolved/retrieved/waived/not
 applicable, high-severity conflicts are absent, acceptance is executable and no
 remaining candidate has positive decision value. If the user cannot answer,
-offer an explicit safe default only when reversible; otherwise defer with an
-owner/evidence target or keep the work blocked.
+propose a safe alternative only when reversible. Apply it only after an explicit
+attributable acceptance or waiver; otherwise defer with an owner/evidence target
+and keep the question open. Elapsed time never selects that alternative.
 
 ## Adaptive implementation profile
 

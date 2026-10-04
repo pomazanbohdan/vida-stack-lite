@@ -1,6 +1,6 @@
 # Portable `vida-agent` runtime
 
-Owner: runtime maintainers. Verification requirements are in [TESTING.md](TESTING.md). The installed `vida-agent/` bundle is selected by the repository's active runtime selector after cutover; installation alone does not switch that selector.
+Owner: runtime maintainers. Verification requirements are in [TESTING.md](TESTING.md). Public agent delivery uses only a qualified standalone executable with embedded Bun 1.4.2; external Node, npm and Bun are not runtime prerequisites. SDK exports remain library interfaces. A formed SDK/npm archive is not native delivery. Source standalone construction uses the pinned build command; full-product native qualification, supported pending-release retarget and installed qualification remain open GAPs. Installation alone does not switch a consumer runtime selector.
 
 ## Target bundle and state
 
@@ -22,13 +22,12 @@ All five configured workflows use the same Mastra session bridge. A configured d
 
 ## Verification
 
-Run the installed-bundle check from the copied bundle directory with the declared Bun 1.4.2. It uses only shipped source, generic tests, tooling, configuration, and the frozen lockfile:
-
-```text
-bun run verify
-```
-
-`verify` copies the bundle to an unrelated temporary project, installs its frozen dependencies, initializes root files, and prepares a no-provider public-run action before running its portable static and generic test subset. Its final-payload result remains to be measured. `GAP-VIDA-PORTABLE-RELEASE-001` records the absent isolated installed-bundle evidence for aggregate 100% coverage/mutation and `CRAP < 5`. The user permits those numeric targets to remain measured, owned post-cutover GAPs for the first switch; they remain the ultimate quality targets. Differential and parity require the repository's old-runtime and contract corpora; the installer subprocess and Bun-native matrices remain candidate-development evidence, so those checks stay outside portable verification.
+Run focused agent behavior checks during development. At task end, use
+`bun run local:candidate` once for the full applicable local matrix. Current
+generated SDK outputs are reused; test commands do not build or install.
+Build, packaging and installation checks belong to CI/CD. No configured provider
+pipeline or current delivery receipt is implied by these commands. Missing
+coverage/mutation/CRAP or delivery evidence remains an explicit GAP.
 
 Run this full development matrix only from the candidate repository. `package.json` defines these checks; their presence is not a pass receipt.
 
@@ -36,7 +35,6 @@ Run this full development matrix only from the candidate repository. `package.js
 bun run preflight
 bun run typecheck
 bun run test
-bun run test:pack
 bun run test:differential
 bun run test:parity
 bun run test:coverage

@@ -1,3 +1,5 @@
+import { installerProtectedFiles } from './cli-metadata.mjs';
+export { installerProtectedFiles } from './cli-metadata.mjs';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync } from 'node:fs';
@@ -6,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { checkManifest, findNpmCli, readPin, runPinnedBun, standaloneRuntime } from './bun.mjs';
 
 const bundleRoot = fileURLToPath(new URL('../', import.meta.url));
-const protectedFiles = ['package.json', 'bun.lock', '.bun-version', 'bin/bun.mjs', 'bin/init.mjs', 'bin/install.mjs'];
+
 const stableVersion = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
 function packedLockfilePath(root) {
@@ -40,7 +42,7 @@ function directoryChain(directory) {
 
 function snapshot(root) {
   directoryChain(root);
-  return protectedFiles
+  return installerProtectedFiles
     .map((relative) => {
       const file = path.join(root, relative === 'bun.lock' ? packedLockfilePath(root) : relative);
       directoryChain(path.dirname(file));

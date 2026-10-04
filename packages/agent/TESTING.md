@@ -9,11 +9,12 @@ alone do not establish aggregate savings. Removing a deadline is not a speedup.
 
 ## Local execution policy
 
-Tests, coverage and CRAP execute locally only. CI/CD may automate builds and
-package/release preparation, but contains no test, coverage, CRAP or mutation
-steps. Mutation runs only on an explicit manual launch and is absent from
-aggregate automation. Preserve required local assurance and numeric quality
-criteria; missing or deferred evidence stays a GAP, never a pass. Tests and
+Agent behavior tests, coverage and CRAP run locally. Build, packaging and
+installation checks belong to CI/CD and are not local agent test tasks. Do not
+create or run build/install test suites, compiler probes or copied-package
+installation harnesses. CI/CD may run these delivery checks, but not agent
+behavior tests, coverage, CRAP or mutation. Mutation requires an explicit manual
+launch. Missing local or CI/CD evidence remains a GAP, never a pass. Tests and
 comments describe the current architecture and supported behavior, without
 narratives about absent legacy implementations. Formatter/TypeScript 7 hooks and
 pre-push coverage/CRAP remain proposals for discussion; do not install or activate
@@ -23,8 +24,8 @@ During development, run only selected affected test files/cases and the smallest
 regression controls for the current correction. Include callers, configuration,
 schemas and subprocess routes that import graphs cannot discover. Pass an exact
 file path together with a name filter so unrelated modules and expensive setup
-are not loaded. Build only when the selected checks need current generated
-outputs; reuse those outputs while their inputs remain unchanged. Do not run a
+are not loaded. Reuse current generated outputs while their inputs remain
+unchanged. Missing or stale outputs are a GAP; do not run a local build. Do not run a
 full suite after each subfix or repeat passing unchanged checks to score savings.
 
 After the engineering task's corrections are complete, run the full applicable
@@ -34,13 +35,9 @@ reusing it. A failure requires diagnosis, a scoped correction and its focused
 regression before the final affected completion check. Partial development
 results never establish full qualification or Runtime acceptance.
 
-Aggregate packaging and extracted portable-smoke wrappers have no implicit
-total-duration limit. Their ordinary multi-file suite runs without an aggregate
-watchdog; the Bun wrapper uses its native disabled timeout. Keep each individual
-case, packing, extraction, install and probe bound, and any explicit inherited
-caller deadline. Reserve 30 seconds for cleanup/reporting when a finite deadline
-applies. A failed or uncertain child retains its receipt and private roots;
-absence from a process list does not authorize replay or cleanup.
+Agent test commands have no implicit aggregate watchdog. Explicit caller and
+operation-specific bounds remain binding. Preserve failed and UNKNOWN receipts;
+process absence does not authorize replay or cleanup.
 
 The five parameterized `interrupted %s resumes one current operation without
 duplicate receipt effects` cases are serial restart/resume lifecycle wrappers,
@@ -57,6 +54,45 @@ SA-CI and SA-ASSURANCE criteria in the existing system specification to actual
 current evidence. Qualify each advertised native OS/CPU target on that target's
 runner, including Windows x64 and only actually supported Linux targets. A
 minimal executable probe or cross-compilation alone cannot qualify VIDA.
+
+Local `test:resources:pinned` checks runtime resource integrity, concurrency and
+interrupted publication with synthetic data. It does not build, pack or install.
+Native delivery/build/install checks in this section belong to CI/CD. Their
+current exact-asset receipts remain required and separate from local agent proof.
+
+The prepared repository-only workflow `agent-native-delivery.yml` and
+`tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
+phases and one result-emission step. They are dormant and unexecuted here; Source
+checks do not qualify the pipeline, firewall/native capability, exact asset or
+installation. Public route denials need actual terminal child observations and
+specific errors; prerequisite or UNKNOWN failures cannot count as valid denials.
+The Windows/current-asset same-version upgrade controls do not establish other
+target support or cross-version rollback. Qualify the approved provider/profile
+and applicable standalone requirements before their activation or delivery.
+Broad dependency/tool and caller adaptation is last in 0.1.3, after P0 native
+UPDATE01/developer-unblocking and required installed checkpoints, before final
+0.1.3 delivery and acceptance. Reuse exact current qualified pins for P0 work;
+metadata drift alone does not block it. Actual required runtime/reader defects
+and missing target evidence remain blockers for their dependent effects.
+
+Local `release-retarget-state.test.mjs` contains only inert synthetic state and
+provenance controls for CI dormancy, exact request/phase ordering, commit/attempt
+artifact identity, redirect/credential separation and retained partial bounded
+transport. Fetch is explicitly mocked; these controls never form, download from
+a provider, execute or install a delivery asset. Keep the existing optional
+ZIP-reader dependency-drift refusal separate from synthetic transport passes.
+
+The public-observer ZIP regression uses actual existing archive APIs and only
+mocked provider GETs. A valid synthetic ZIP must succeed; duplicate physical
+result names must refuse before a successful observation, with transport bytes
+preserved. `VIDA_CI_READER_ROOT` may explicitly name a prepared private dependency
+environment; otherwise the repository root is used. Its agent package.json and
+bun.lock must equal current Source bytes, and the unchanged production guard
+checks actual resolved versions. Missing or drifting capability fails as a GAP;
+tests never skip, copy or install dependencies. This verifies the local observer
+boundary, not the normal Source environment, real CI/native delivery or installed
+acceptance. Keep the exclusive transport fixture within the selected root and
+retain UNKNOWN custody rather than deleting an active fixture.
 
 Run every public command route and aliases from unrelated cwd with external
 Node/npm/Bun absent from PATH and first-run network unavailable. Verify actual
@@ -80,20 +116,20 @@ Verify deterministic pinned Bun 1.4.2 build inputs, retained diagnostic names,
 disabled ambient build configuration and actual minify/bytecode behavior. Measure
 comparable startup/control latency, memory and size before claiming optimization;
 short commands/control return target under two seconds. Preserve every maintained
-npm bin/SDK export and qualify compatibility artifacts separately. Build/package CI and English
+SDK export and qualify library artifacts separately. Build/package CI and English
 version/product release notes include actual changes, targets, prerequisites,
 evidence and GAPs; preparing publish scripts does not execute publication.
 
 Final source and exact native assets require current mandatory checks, three
 fresh blind reviews, reverse validation and CLEAR. Verify explicit installation
 manifest target/PATH/prior-install/rollback effects and actual installed behavior;
-npm global checks do not qualify primary native installation. When explicitly
-requested by the human, manual npm compatibility delivery may proceed while
-native-primary/CI are unfinished, using the same pending candidate/operation.
-Require applicable checks/prepack, exact npm/SDK archive and public CLI proof,
-three fresh blind reviews, reverse validation and current CLEAR before exact
-archive installation. Preserve native/CI gaps; no bypass flag or publication is
-allowed. Installed compatibility proof remains separate from native readiness.
+Public agent CLI installation through npm is not supported; npm artifacts serve
+SDK library imports only. Public agent delivery
+requires the standalone asset with embedded pinned Bun. Preserve SDK library
+proof separately; a formed SDK/npm archive cannot satisfy this delivery gate.
+Use the current pending identity and supported reconciliation for an uninstalled
+operation; preserve its archive, failed observations and UNKNOWN custody. Native
+and CI GAPs remain explicit; no bypass flag or publication is allowed.
 Actual implementation/readiness and test outcomes belong to current operation
 receipts; neither this checklist nor preparation establishes Runtime acceptance.
 
@@ -119,29 +155,14 @@ from construction; a copied tree or successful thin probe cannot close this gate
 
 ## Candidate repository verification
 
-The ordinary `npm test` command runs five required sequential pinned launcher
-invocations: `test:pinned`, `test:repair:pinned`, `test:host-state:pinned`,
-`test:package-boundary:pinned` and `test:run-entrypoint:pinned`. The launcher and
-ordinary phases have no implicit total-duration deadline. A caller-selected or
-inherited finite deadline remains binding, including through a custom child
-environment; malformed deadline values reject before a child starts. Unbounded
-commands omit native timeout and synthesized deadline metadata. The first phase
-builds once; subsequent phases reuse that
-build. The phases cover the complete ordinary inventory without duplication.
-For an isolated later-phase rerun, build the current package first. The local
-candidate aggregate includes all five phases. Only an explicitly selected or
-inherited finite aggregate deadline applies. This scheduling preserves every
-assertion and operation-specific bound; it
-makes no total execution-time improvement claim.
-
-The final local candidate command also builds Source once, through `test:pinned`.
-Its aggregate-only `test:*:built:pinned` entries reuse that current output for
-fuzz, zombies, deep properties and coverage while retaining the standalone
-commands' build guards. The exact archive case excluded from main tests runs
-once in `test:pack:built:pinned` and keeps its separate disposable copied-package
-build/install. Coverage start/stamp/source binding, all ordinary phases, CRAP
-and format gates remain. These internal entries require current generated
-outputs; do not invoke them after changing build inputs without rebuilding.
+The ordinary `npm test` command runs four disjoint agent phases: `test:pinned`,
+`test:repair:pinned`, `test:host-state:pinned` and `test:run-entrypoint:pinned`.
+These phases do not build or install. `local:candidate:pinned` is the final local
+agent matrix; `ci:pinned` performs delivery preparation only. Use focused checks
+during development and run the full applicable agent task suite once at task end.
+Reuse still-current evidence; source changes invalidate only affected proof.
+Selected tests that import generated SDK code need current outputs; refresh
+changed outputs explicitly, never rebuild automatically for each test command.
 
 When a caller selects a finite parent deadline, nested harness commands spend
 that parent's remaining allowance;
@@ -197,20 +218,15 @@ not mask an uncertain process outcome. Initializer cases pass one case-entry
 budget through every sequential child, including Node delegation, within each
 unchanged declared timeout and the phase ceiling. Retain their mutable package,
 consumer and linked external fixtures on uncertainty, including case-finally
-cleanup. The package parent retains archive/result staging on any abnormal or
-nonzero smoke exit because a completed smoke failure can carry an uncertain
-nested descendant. No failed phase becomes PASS through retention or diagnosis.
+cleanup. Retain private fixture staging when a completed parent failure can carry an
+uncertain nested descendant. No failed phase becomes PASS through retention or diagnosis.
 
-Relocation prepares each immutable layout once and checks all six instruction
-names through separate public CLI cases. Portable package verification extracts
-one exact archive, checks every packaged-file assertion in that extraction,
-installs its shipped frozen lock and executes the actual extracted repair and
-admission tests. Recovery shares copied immutable package bytes while each of
+Relocation prepares each immutable instruction layout once. Recovery shares copied immutable package bytes while each of
 the four workflows retains separate project/config/Host/journal/artifact roots,
 its actual work directory, and fresh CLI interruption/restart/CAS/report/replay
 boundaries. Assert external logical package/resource mapping and package bytes
-before and after each route. The recovery dependency junction does not qualify
-the independent extracted installation. Capture fixture and per-command stage
+before and after each route. The recovery dependency junction establishes only
+agent fixture setup, not delivery installation. Capture fixture and per-command stage
 times plus whole-command duration and cache/resource conditions; partial output
 or fewer setups alone is not a speedup or a passing phase.
 
@@ -256,17 +272,15 @@ control characters. Exercise a coherent expired lease and inactive matching
 claim, plus the existing claim-expiry projection denial and unchanged Host on
 invalid handle. A schema-valid lease alone does not establish live admission.
 
-Run the current-v1 candidate checks below with declared Bun 1.4.2 and the frozen lockfile. A different global Bun must not silently change the selected version. Build-generated output counts only when source and package fingerprints match. Any retained `ci:candidate` script is a local command name, not authorization to run tests in CI/CD. Local aggregate checks exclude mutation; launch it explicitly when requested. First-cutover approval uses the retained-behavior matrix and exact outcomes below. Aggregate 100% coverage/mutation and `CRAP < 5` remain measured, owned post-cutover GAPs, as authorized by the user.
+Run the current-v1 candidate checks below with declared Bun 1.4.2 and the frozen lockfile. A different global Bun must not silently change the selected version. Build-generated output counts only when source and package fingerprints match. `local:candidate` runs agent checks locally; `ci` is delivery preparation. Local aggregate checks exclude mutation; launch it explicitly when requested. First-cutover approval uses the retained-behavior matrix and exact outcomes below. Aggregate 100% coverage/mutation and `CRAP < 5` remain measured, owned post-cutover GAPs, as authorized by the user.
 
 ```text
-bun install --frozen-lockfile
-bun run ci:candidate
+bun run local:candidate
 bun run test:toolchain
 bun run preflight
 bun run typecheck
 bun run test:config
 bun run test
-bun run test:pack
 bun run test:fuzz
 bun run test:zombies
 bun run test:deep
@@ -283,7 +297,7 @@ Use focused checks while editing and record each final-fingerprint result. Re-ru
 
 | Retained behavior                                                  | Current-v1 executable evidence                                                                                                                                                                                                                                                                                                            |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Config, project identity, root integration and installed package   | `runtime-config-yaml`, `project-context-boundary`, `initialization`, `install`, `package-boundary`, `portable-instructions`; public init and installed portable smoke bind the final payload.                                                                                                                                             |
+| Config, project identity and root initialization                   | `runtime-config-yaml`, `project-context-boundary`, `initialization`, `portable-instructions`; delivery installation evidence is owned by CI/CD.                                                                                                                                                                                           |
 | Ingress, workflow routing, configured roles and failure no-write   | `configured-workflow`, `run-entrypoint`, `run-cli-main`, `edictum-workflow-completeness`, `runtime-kernel-boundary`, `cedar-validation`.                                                                                                                                                                                                  |
 | Authentication, reservation, replay, restart and uncertain effects | `host-state`, `runtime-kernel-boundary`, `persistent-session-handoff`, `scoped-source-snapshot`, `observed-research-result`.                                                                                                                                                                                                              |
 | Lifecycle reviews, reverse validation, status and delivery         | `lifecycle-state`, `observed-validation`, plus exactly three fresh blind final reviews and reverse receipts on one sealed fingerprint.                                                                                                                                                                                                    |
@@ -314,10 +328,8 @@ checks the active provider contract; `tests/windows-exclusive-create.test.mjs`
 checks portable exclusive creation and resource-lock behavior. Windows-native
 results require an actual Windows runner; Linux simulation is not native Windows
 evidence. `tests/bun-toolchain.test.mjs` verifies that a `.bin/bun` alias is used
-only when its realpath matches the pinned executable. `tooling/portable-smoke.mjs`
-checks the packed current bundle, frozen install and public initialization/run
-from an unrelated consumer directory. These focused checks provide Code/Static
-evidence and do not establish installed user acceptance or Runtime readiness.
+only when its realpath matches the pinned executable. These focused runtime checks provide Code/Static evidence and do not establish
+installed user acceptance or Runtime readiness.
 
 The Linux descriptor simulation runs its isolated Vitest child explicitly on
 Bun and exposes captured output for known nonzero failures before its original
@@ -413,7 +425,7 @@ the actual current operation; suite receipts belong outside this living contract
 
 ## Portable bundle verification
 
-Run `bun run verify` or `bun run ci` from the bundle root. Both install the frozen declared dependencies, copy the bundle into an unrelated temporary project, initialize its root integration files, prepare a no-provider public-run action, and run shipped generic tests and tooling. Their final-payload result remains to be measured. This portable check does not establish the ultimate numeric coverage, CRAP or mutation targets; their required local evidence remains separate. `GAP-VIDA-PORTABLE-RELEASE-001` remains open after the first cutover and blocks any claim that portable verification proves the ultimate numeric targets. A passing portable check does not close that GAP or replace installed-runtime user acceptance.
+Run `bun run verify` from the bundle root for the local agent subset. It neither installs dependencies nor copies or installs a bundle. `bun run ci` performs delivery preparation only; CI/CD owns exact artifact/build/install validation. The repository has no configured trusted CI/CD receipt path, so release qualification stays blocked on that evidence GAP. Local successful logs cannot substitute for CI/CD evidence or attributable installed user acceptance. Numeric coverage, CRAP and manual mutation proof remain separate local requirements.
 
 ## Required integration evidence
 
@@ -483,10 +495,60 @@ Fixture regressions use the maintained configured-test-context resolver and
 current lifecycle/assignment factories, retaining negative assertions. Verify
 source, extracted and unrelated-cwd fixture layout independently.
 
-Package checks use normal SDK `npm pack` with its verifier and extracted artifact
-smoke. Native primary output requires its own implemented builder and target
-qualification; no SDK archive closes that gap. Tester evidence tests distinguish
+CI/CD owns exact SDK/native artifact and installation validation. Local agent
+checks do not pack or install artifacts; no SDK archive closes native readiness. Tester evidence tests distinguish
 reported pass from executed-suite proof and deny caller-supplied proof classes.
 Research preparation tests must preserve issue identities on interruption and
 remain uncertain once dispatch exposure is possible, rather than replaying an
 unknown external effect.
+
+Resource interruption tests retain private staging and reject partial publication;
+cache write optimization preserves the flushed control lock and exact per-launch
+byte checks. Database and release-journal durability are unchanged.
+
+Native startup regressions require version/help to use the shared public CLI
+formatter without loading an absent payload. Runtime cache checks remain required
+before runtime use. Batched resource fault tests wait for every disjoint write
+before releasing the lock, retain partial staging and refuse publication. These
+focused checks do not qualify the product target or alter any caller deadline.
+
+Directory creation checks current lstat metadata once for an existing directory;
+missing creation and raced EEXIST still validate the resulting regular directory.
+
+The discovery view retains the exact maintained bunfig.toml used by the child launcher. Local run/init fixtures retain their complete owned runtime payload.
+
+Source-only repair/recovery fixtures exclude the exact generated dist/standalone
+directory. They retain agent sources, schemas, instructions and current SDK
+outputs; the repository text-read limit stays unchanged. The prepared CI/CD
+workflow remains dormant; no provider pipeline/profile is activated and no
+current build/install receipts exist. Delivery qualification remains an explicit GAP.
+
+`tests/release-retarget-state.test.mjs` verifies the local agent state boundary:
+same operation/version and three-field release changes; unchanged pending and
+successful pointers, including absence; sealed SDK/receipt/log custody; active,
+failed, UNKNOWN and installation-started denial; shared Node/Bun admission and
+worker exclusion; planning reservation during copies; Source/path/archive drift;
+exact known-phase interruption and
+lost-ACK recovery; completed repair followed by legitimate worker progress.
+Tiny inert archive bytes exercise state custody only. No compiler, package
+command, delivery executable or installation runs in these checks. Local logs
+still cannot replace trusted CI/CD delivery receipts. Development uses affected
+cases; task completion runs this whole applicable suite once after stabilization.
+
+The same agent-state suite covers portable CI requests and observations with
+synthetic records: exact context/source/target/run/archive/payload/check binding,
+exclusive retry and partial-write UNKNOWN, same-operation Source edits,
+archive-owned selection without local dist, missing/failing observer, boundary
+object mutation and Source drift during asynchronous observation. These checks
+run no network, compiler, package or installation command. They prove consistency
+controls, never real CI provenance or target qualification. The optional GitHub
+adapter needs an approved workflow/runners and qualified ZIP reader; missing
+optional support stays a GAP without installation.
+Separate asynchronous fault controls change each local lane log, tests.json or
+an operational input while CI observation is pending. Qualification must deny
+and preserve the release journal. No real provider or delivered executable runs.
+
+Review namespace and full exact-asset delivery proofs remain GAPs until actual
+current qualification evidence exists. Local HostState, CAS, workflow and
+recovery checks remain required. Do not treat deleted delivery tests as passing
+evidence or lower numeric quality targets.

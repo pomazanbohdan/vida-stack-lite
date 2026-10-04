@@ -199,6 +199,7 @@ export async function createStagedRuntimeWitness(input: {
       context: { work_id: workId, attempt, scope_digest: scopeDigest },
       workflowId,
       runId: snapshot.state.run_id,
+      correctiveExecution: snapshot.state.corrective_execution ?? undefined,
     });
     const journalObservations = observed.map((item) => item.observation);
     requireWitness(

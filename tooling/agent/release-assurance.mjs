@@ -1,47 +1,22 @@
+import {
+  releaseSourceBinding,
+  releaseSourceInputs as sources,
+  assertReleaseRetargetSettled,
+  releasePath,
+} from '../../packages/agent/bin/local-release-artifacts.mjs';
+export { releaseSourceBinding } from '../../packages/agent/bin/local-release-artifacts.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyForwardReviewSet } from './controllers/forward-review-proof.mjs';
 import { runCommand } from './release-local.mjs';
+import { verifyCIDeliveryEvidence } from './release-ci-evidence.mjs';
 
 const rootDefault = fileURLToPath(new URL('../../', import.meta.url));
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const read = (file) => JSON.parse(readFileSync(file, 'utf8'));
-const excluded = new Set(['node_modules', 'dist', 'coverage', '.pack-inspect']);
-const operationalScratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent']);
-function sources(root, relative) {
-  const file = path.join(root, relative),
-    stat = lstatSync(file);
-  if (stat.isSymbolicLink()) throw new Error('Assurance refuses linked source.');
-  if (stat.isFile()) return [{ path: relative, sha256: sha(readFileSync(file)) }];
-  if (!stat.isDirectory()) throw new Error('Assurance source is not a file or directory.');
-  if (operationalScratch.has(relative)) return [];
-  return readdirSync(file)
-    .sort()
-    .flatMap((name) => {
-      const child = path.join(file, name),
-        info = lstatSync(child);
-      if (info.isSymbolicLink()) throw new Error('Assurance refuses linked source.');
-      const childRelative = relative + '/' + name;
-      if (info.isDirectory() && (excluded.has(name) || operationalScratch.has(childRelative))) return [];
-      return sources(root, childRelative);
-    });
-}
-export function releaseSourceBinding(root = rootDefault) {
-  const entries = [
-    'package.json',
-    'agent-runtime.config.v1.yaml',
-    'AGENT.sidecar.md',
-    'packages/agent',
-    'tooling/agent/release-local.mjs',
-    'tooling/agent/release-assurance.mjs',
-    'tooling/agent/controllers/forward-review-proof.mjs',
-    'tests/agent/release-local.test.mjs',
-  ].flatMap((relative) => sources(root, relative));
-  return { source_binding: sha(JSON.stringify(entries)), entries };
-}
-export function testInputBinding(root, inputs) {
+export function testInputBinding(root, inputs, observations) {
   if (!Array.isArray(inputs) || !inputs.length || new Set(inputs).size !== inputs.length)
     throw new Error('Test inputs must be a nonempty exact set.');
   const entries = inputs
@@ -56,28 +31,17 @@ export function testInputBinding(root, inputs) {
         relative.split('/').some((part) => !part || part === '.' || part === '..' || part.includes(':'))
       )
         throw new Error('Test input path invalid.');
-      return sources(root, relative);
+      return sources(root, relative, observations);
     });
   return sha(JSON.stringify(entries));
 }
 function localFile(root, relative) {
-  if (
-    typeof relative !== 'string' ||
-    !relative ||
-    relative.includes('\\') ||
-    relative.startsWith('/') ||
-    relative.split('/').some((part) => !part || part === '.' || part === '..' || part.includes(':'))
-  )
-    throw new Error('Assurance evidence path must be repository-relative.');
-  let current = root;
-  for (const part of relative.split('/')) {
-    current = path.join(current, part);
-    if (lstatSync(current).isSymbolicLink()) throw new Error('Assurance evidence must not be linked.');
-  }
+  const current = releasePath(root, relative);
   if (!lstatSync(current).isFile()) throw new Error('Assurance evidence must be a regular file.');
   return current;
 }
 export function recordLocalTestEvidence({ root = rootDefault, operation, tests }) {
+  assertReleaseRetargetSettled(root, operation);
   const pending = read(path.join(root, '.agent/work/agent-local-release/pending.json'));
   if (pending.operation_id !== operation || !Array.isArray(tests)) throw new Error('Test evidence operation differs.');
   const recorded = tests.map(({ lane, path: relative, inputs }) => {
@@ -109,6 +73,7 @@ export function recordLocalAssurance({
   reviews,
 }) {
   const folder = path.join(root, '.agent/work/agent-local-release', operation);
+  assertReleaseRetargetSettled(root, operation);
   const seal = read(path.join(folder, 'source-seal.json'));
   const evidence = reviews.map(({ kind, path: relative, reverse_path }) => ({
     kind,
@@ -132,15 +97,21 @@ export function recordLocalAssurance({
   writeFileSync(path.join(folder, 'assurance.json'), JSON.stringify(record, null, 2) + '\n');
   return { operation_id: operation, status: 'joined' };
 }
-export async function verifyLocalReleaseTests({ root = rootDefault, operation, version }) {
+export async function verifyLocalReleaseTests({ root = rootDefault, operation, version, ci }) {
+  assertReleaseRetargetSettled(root, operation);
   const folder = path.join(root, '.agent/work/agent-local-release', operation);
   const proofFile = path.join(folder, 'tests.json');
   if (!existsSync(proofFile))
     throw new Error(
-      'awaiting_assurance: current actual retained-behavior, static and release-local test logs are required.',
+      'awaiting_assurance: current local retained-behavior/static logs and CI/CD build/install evidence in the release-local lane are required.',
     );
-  const proof = read(proofFile);
-  const binding = releaseSourceBinding(root);
+  const proofRelative = path.relative(root, proofFile).split(path.sep).join('/');
+  const proofBytes = readFileSync(localFile(root, proofRelative));
+  const proof = JSON.parse(proofBytes);
+  const observedEvidence = [{ path: proofRelative, bytes: proofBytes }];
+  const inputObservations = [],
+    bindings = new Map();
+
   if (proof.operation_id !== operation || proof.version !== version)
     throw new Error('Tests operation binding differs.');
   const required = ['retained-behavior', 'static', 'release-local'];
@@ -156,20 +127,32 @@ export async function verifyLocalReleaseTests({ root = rootDefault, operation, v
   for (const test of proof.tests) {
     const raw = readFileSync(localFile(root, test.path));
     const result = JSON.parse(raw);
+    const inputKey = JSON.stringify(test.inputs);
+    if (!bindings.has(inputKey)) bindings.set(inputKey, testInputBinding(root, test.inputs, inputObservations));
     if (
       sha(raw) !== test.sha256 ||
-      test.input_binding !== testInputBinding(root, test.inputs) ||
+      test.input_binding !== bindings.get(inputKey) ||
       result.exit_code !== 0 ||
       !result.command ||
       !result.started_at ||
       !result.completed_at
     )
       throw new Error('Test log is missing, failed or bound to other source.');
+    observedEvidence.push({ path: test.path, bytes: raw });
   }
-  return { source_binding: binding.source_binding };
+  const joined = await verifyCIDeliveryEvidence({ root, operation, version, ci });
+  for (const evidence of observedEvidence)
+    if (!readFileSync(localFile(root, evidence.path)).equals(evidence.bytes))
+      throw Error('Local test evidence changed during CI observation.');
+  for (const input of inputObservations) {
+    const stat = lstatSync(releasePath(root, input.path));
+    if (JSON.stringify([stat.dev, stat.ino, stat.size, stat.mtimeMs, stat.ctimeMs]) !== JSON.stringify(input.identity))
+      throw Error('Local test input changed during CI observation.');
+  }
+  return joined;
 }
-export async function verifyLocalReleaseAssurance({ root = rootDefault, operation, version }) {
-  const tested = await verifyLocalReleaseTests({ root, operation, version });
+export async function verifyLocalReleaseAssurance({ root = rootDefault, operation, version, ci }) {
+  const tested = await verifyLocalReleaseTests({ root, operation, version, ci });
   const folder = path.join(root, '.agent/work/agent-local-release', operation);
   const seal = read(path.join(folder, 'source-seal.json'));
   const proofFile = path.join(folder, 'assurance.json');
@@ -240,6 +223,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.log(JSON.stringify(seal));
     process.exit(0);
   }
+  assertReleaseRetargetSettled(rootDefault, operation);
   const release = read(path.join(rootDefault, '.agent/work/agent-local-release', operation, 'release.json'));
   const tarball = path.join(rootDefault, '.tmp/releases', operation, release.pack_metadata[0].filename);
   seal.tarball_sha256 = sha(readFileSync(tarball));

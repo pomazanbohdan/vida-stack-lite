@@ -4,37 +4,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { runPinnedBun, standaloneRuntime } from './bun.mjs';
+import { commands, cliMetadataResult, cliErrorResult } from './cli-metadata.mjs';
 
 const embedded = standaloneRuntime();
 const packageRoot = embedded?.root ?? realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));
 const manifest = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
 const [command, ...args] = process.argv.slice(2);
-const commands = new Set([
-  'run',
-  'init',
-  'install',
-  'reconcile-artifacts',
-  'documentation-clear',
-  'scope',
-  'development-controller',
-]);
 const output = (value) => process.stdout.write(`${JSON.stringify(value)}\n`);
 try {
-  if (command === '--help' || command === 'help') {
-    if (args.length) throw new Error('help accepts no arguments');
-    output({
-      schema: 'VidaAgentCommandResult/v1',
-      status: 'help',
-      commands: [...commands, 'instructions', 'version'],
-      run: 'run --project-root ABSOLUTE --repository ID --project ID --work-path RELATIVE --work-id ID --attempt NUMBER --team ID --kind KIND --intent INTENT --workflow ID [--scope-path RELATIVE ... | --scope-digest RETURNED_BINDING] [--intake ABSOLUTE_ACCEPTED_INTAKE_JSON]',
-      scope: 'scope --project-root ABSOLUTE --repository ID --project ID --path RELATIVE [--path RELATIVE]',
-      authority:
-        'Scope inspection derives evidence; intake requires actual attributed work, scope and acceptance. Neither grants approval or authenticates native observations.',
-    });
-  } else if (command === 'version') {
-    if (args.length) throw new Error('version accepts no arguments');
-    output({ schema: 'VidaAgentPackage/v1', name: manifest.name, version: manifest.version });
-  } else if (command === 'instructions') {
+  const metadata = cliMetadataResult([command, ...args], manifest);
+  if (metadata) output(metadata);
+  else if (command === 'instructions') {
     if (args[0] !== '--path' || args.length !== 2) throw new Error('instructions requires --path NAME');
     const name = args[1];
     if (!/^[a-z][a-z0-9-]*(?:\.md)?$/.test(name)) throw new Error('invalid instruction name');
@@ -73,8 +53,6 @@ try {
     );
   }
 } catch (error) {
-  process.stderr.write(
-    `${JSON.stringify({ schema: 'VidaAgentCommandResult/v1', status: 'blocked', code: 'GAP-VIDA-CLI-001', message: error.message })}\n`,
-  );
+  process.stderr.write(`${JSON.stringify(cliErrorResult(error))}\n`);
   process.exitCode = 1;
 }

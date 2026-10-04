@@ -135,11 +135,7 @@ const partitions = [
     name: 'bun-cli-public-entrypoints',
     environment: 'bun',
     sources: ['bin/repair-work-state.mjs', 'bin/scope.mjs', 'bin/vida-agent.mjs'],
-    tests: [
-      'tests/run-entrypoint.test.mjs',
-      'tests/automatic-work-absorption.test.mjs',
-      'tests/package-boundary.test.mjs',
-    ],
+    tests: ['tests/run-entrypoint.test.mjs', 'tests/automatic-work-absorption.test.mjs'],
     report: 'mutation-bun-cli-public-entrypoints.json',
   },
   {
@@ -155,13 +151,6 @@ const partitions = [
     sources: ['bin/init-core.mjs', 'bin/init.mjs'],
     tests: ['tests/initialization.test.mjs'],
     report: 'mutation-bun-cli-init.json',
-  },
-  {
-    name: 'bun-cli-install',
-    environment: 'bun',
-    sources: ['bin/install.mjs'],
-    tests: ['tests/install.test.mjs'],
-    report: 'mutation-bun-cli-install.json',
   },
   {
     name: 'bun-cli-run',

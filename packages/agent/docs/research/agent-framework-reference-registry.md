@@ -588,3 +588,172 @@ wrapper watchdog lets teardown follow actual callback settlement. Preserve
 existing lock settings, including an existing zero timeout, and explicit
 CLI/caller limits; the direct rebind API exposes no deadline option. This is
 fixture sequencing evidence, not a production deadline or Runtime acceptance.
+
+## Persisted workflow sequence inspection
+
+Checked 2026-10-04. The Mastra maintainers' [workflow state reader issue](https://github.com/mastra-ai/mastra/issues/16044) describes persisted recovery fields and per-step output/payload data. The snapshot documentation was discoverable by search, but its old direct URL could not be opened; that access remains a research GAP. The actual pinned local Mastra fixture records a successful wave's payload, resume observations and output, followed by a suspended wave whose payload is that output. These fields support read-only verification of the configured execution prefix. A single suspended frontier or terminal result alone does not prove earlier execution. This evidence supports the existing SQLite inspector; it does not authorize a framework upgrade or storage initialization during inspection.
+
+## Standalone build and installation primitives
+
+Checked 2026-10-04. Official [Bun executable documentation](https://bun.sh/docs/bundler/executables) describes compiled executables, embedded files, WASM and direct N-API addon inclusion. Setting BUN_BE_BUN=1 makes the same executable its Bun child runtime, so a second Bun executable is unnecessary. Compile options can disable ambient dotenv and bunfig loading. Verify these capabilities with pinned Bun 1.4.2; current online documentation alone proves no VIDA target readiness.
+
+[Bun Archive](https://bun.sh/docs/runtime/archive) provides archive creation and regular-file enumeration. Extraction can include links and overwrite files; use exact owned immutable payload checks and reject unsafe, conflicting or tampered materialization. Cedar loads its WASM from a package-relative path and LibSQL uses computed platform addon resolution, so a successful thin compiled probe cannot qualify their full resource closure.
+
+[Bun install](https://bun.sh/docs/pm/cli/install) documents warm-cache preference and platform backends. Preserve frozen dependencies and physical immutable controller custody; a hardlinked cache is not that custody. [npm config](https://docs.npmjs.com/cli/v11/using-npm/config/) defines prefer-offline as bypassing cache staleness requests while fetching missing data. This is a Source/library tooling fact, not an authorized public agent installation. [Node filesystem APIs](https://nodejs.org/docs/latest-v24.x/api/fs.html) offer standard file copies and renames; apply them only where ownership, exact bytes and failure recovery remain intact. No native timing or size improvement is established by these references.
+
+## Pinned native construction boundaries
+
+Checked 2026-10-04 against pinned Bun 1.4.2. The maintained builder uses Bun's
+[compiled executable API](https://bun.sh/docs/bundler/executables), embedded
+archive files and bytecode with retained diagnostic names. The same executable
+serves as its Bun child runtime. The [frozen production install](https://bun.sh/docs/pm/cli/install)
+uses the existing dependencies, `copyfile` backend and hoisted linker; no hand-written
+transitive resolver or additional runtime is introduced. Full native loader and
+resource behavior still requires actual product checks.
+
+A retained minimal probe with empty PATH and an invalid BUN_OPTIONS preload exits
+before application JavaScript. Bun documents standalone startup BUN_OPTIONS;
+compile autoload flags do not suppress this startup input. The entry can sanitize
+child environments only after it starts. This is a local trusted-caller/runtime
+boundary, not host-specific authentication or evidence of installed readiness.
+
+Pinned construction check: `--backend=copy` exited successfully but produced cache-hardlinked files. The documented flag is `--backend=copyfile`. The builder uses that exact flag and still rejects every non-regular or multiply linked dependency; it does not weaken resource custody to accept the failed staging tree. Failed private staging is retained.
+
+Pinned Bun 1.4.2 construction observations: static `file://` bootstrap imports
+failed resolution, while an absolute physical file import compiled successfully.
+Direct `Bun.write` of a gzip-configured Archive wrote an uncompressed tar; the
+explicit `Archive.bytes()` API returned gzip bytes. The builder verifies that
+envelope before exclusive publication. These observations refine the official
+[Bun bundler](https://bun.sh/docs/bundler) and [Archive](https://bun.sh/docs/runtime/archive)
+mechanics; a compiled private pilot is not native release qualification.
+
+A retained full-payload cold pilot reached its 30-second CLI bound during private
+resource materialization and left 5,190 payload files plus its uncertain lock.
+Its roots remain retained, and this outcome is not replay or cleanup authority.
+The cache is reconstructable data; eliminate per-file persistence flushes while
+retaining the flushed publication lock, atomic namespace, exact byte checks and
+partial/UNKNOWN refusal. This does not change transactional runtime durability.
+
+Demand-driven native discovery uses only the resources needed by existing public
+commands; full runtime routes retain the complete physical dependency closure.
+The installer-protected input contract is re-exported by install.mjs and declared
+in the pure cli-metadata.mjs module. Every
+selected view retains exact regular inventory, bytes and publication checks.
+[Node filesystem documentation](https://nodejs.org/api/fs.html#fslstatsyncpath-options)
+defines lstat with throwIfNoEntry=false; using that one current observation removes
+the preceding existence probe without caching filesystem authority. No aggregate
+savings or full native qualification is inferred from this correction.
+
+The existing [Bun Archive API](https://bun.sh/docs/runtime/archive#filtering-with-glob-patterns) supports positive pattern arrays for files(). Native discovery uses that API to return only its owned view rather than materializing all dependency blobs in memory. Exact selected inventory and byte checks still apply.
+
+The [Bun Runtime documentation](https://bun.sh/docs/runtime) and [bunfig configuration](https://bun.sh/docs/runtime/bunfig) document explicit --config loading. The existing runPinnedBun call supplies the maintained bundle bunfig.toml; the discovery view retains those exact bytes so the child keeps its configured environment and telemetry policy.
+
+### Native bootstrap import boundary
+
+Bun executable compilation bundles imported modules; its runtime has virtual
+embedded paths. The bootstrap imports only pure CLI metadata and resource code.
+The installer protected-input list is shared through the pure metadata module;
+physical installer/launcher modules execute only after resource materialization.
+The compiled version regression verifies that no imported installer entrypoint
+executes before bootstrap. This is a narrow construction check, not full target
+qualification. Official references: https://bun.sh/docs/bundler/executables and
+https://bun.sh/docs/runtime/module-resolution . Existing standalone entrypoint
+observation is the pin-specific evidence; no dependency upgrade is required.
+
+### Source-only recovery fixture boundary
+
+The official Node fs.cpSync filter returns false to omit a source directory and
+its descendants: https://nodejs.org/api/fs.html#fscpsyncsrc-dest-options . Source
+repair/recovery fixtures omit only generated dist/standalone. Agent JS/TS,
+schemas, instructions and current SDK output remain in the fixture. A binary
+release asset is not a text-source snapshot input; do not increase the guarded
+8MiB text-read limit to accommodate it. Build/install validation belongs to
+CI/CD, while actual agent recovery and UNKNOWN handling stay local. This is
+fixture scope evidence, not installed delivery or Runtime acceptance.
+
+### Unprepared execution recovery
+
+The existing Mastra persistence owner uses durable snapshots to restore an exact
+run and its suspended state: https://mastra.ai/docs/workflows/snapshots . A missing
+Host journal cannot prove engine absence. VIDA's finite preparation-release route
+therefore reads the existing engine and every applicable identity while the
+existing Host producer fence excludes new reservations. Missing engine storage,
+surviving snapshots, unknown producer markers and incomplete corrective history
+remain denial evidence; no snapshot or journal is synthesized.
+
+SQLite's immediate transaction excludes competing write transactions and may
+return SQLITE_BUSY: https://www.sqlite.org/lang_transaction.html . VIDA uses this
+existing Host transaction for producer exclusion, exact Work/Ledger CAS and its
+strict v1 release/retry row. The separate Mastra database is inspected read-only;
+the implementation does not claim atomic commit across the two databases. Exact
+retry checks the original same-work postcondition, while unrelated coordination
+progress is retained. This is Source architecture/mechanics evidence, not live
+disposition authority, installed qualification or Runtime acceptance.
+
+The isolated local controller establishes actual human authority before invoking
+the cooperative CLI; argument validation does not authenticate that directive or
+introduce another issuer. SQLite documents BLOB length in bytes and aggregate sum:
+https://www.sqlite.org/lang_corefunc.html and https://www.sqlite.org/lang_aggfunc.html .
+The engine census computes aggregate byte size before reading payloads into JS,
+then retains per-row validation. The bounded256-row/8MiB census can deny healthy
+unrelated history; that availability ceiling remains a GAP until a paged owner
+census is needed. Any corrective-history row denies this unstarted-only route
+without loading or interpreting its payload.
+
+### Same-operation release retarget mechanics
+
+Official fs-safe archive and binary store references are
+https://fs-safe.io/archive.html and https://fs-safe.io/file-store.html . The
+installed pin0.5.6 types/source own API applicability: guarded Root.copyIn,
+create/readBytes/move and extractArchive support private staging, rejected links,
+entry filtering and size/count/depth limits. Root.copyIn overwrites its destination;
+VIDA therefore reserves each candidate/custody namespace exclusively before copying.
+An incomplete or conflicting namespace is UNKNOWN, not permission to overwrite.
+Newer web API options are not assumed available in the installed pin. Archive
+timeout0 disables that library timer; structural limits remain. No compiler,
+runtime/dependency installation or host npm tar resolution is added.
+
+SQLite immediate exclusion uses the same existing admission and operation files:
+https://www.sqlite.org/lang_transaction.html . Expensive byte/extraction/copy work
+precedes short publication under admission-then-operation locks. A planning
+reservation blocks normal worker reuse before custody copying starts; incomplete
+copies remain UNKNOWN and are never reconstructed. A clean reservation before
+first custody creation can continue only the exact frozen plan and preimages;
+exclusive first-directory creation still occurs under the same locks. Source bytes and
+physical observations share one scan; under-lock identity rechecks preserve the
+cooperative boundary without another byte scan. Atomic file replacement does not
+make the archive, release journal and phase receipt one atomic transaction;
+exact known pre/post images supply forward recovery and lost-ACK continuity.
+
+https://bun.sh/docs/runtime/archive documents creation from inert in-memory
+members and gzip bytes, used only for local state/fault fixtures. Such synthetic
+archives prove custody/retry mechanics, not compiled native behavior or delivery.
+The fixed packaged repair preserves original pointers/version and every release
+field except candidate metadata/source/archive bindings. Stage, review and
+Source proof remain separate from current trusted CI/CD, installed and human
+Runtime acceptance; no actual current CI/CD receipt is present.
+
+### Portable CI delivery observations
+
+Checked 2026-10-04. Official GitHub [workflow-run API](https://docs.github.com/en/rest/actions/workflow-runs)
+supports exact run-attempt retrieval; [job API](https://docs.github.com/en/rest/actions/workflow-jobs)
+exposes actual required step observations. The [artifact API](https://docs.github.com/en/rest/actions/artifacts)
+provides repository/run ownership, expiry and transport digest. These corroborate
+an explicitly approved repository workflow, not local JSON or human authority.
+The artifact ID is available after upload, so it belongs to retrieved controller
+provenance rather than the producer's pre-upload result. Separate provider ZIP
+bytes from nested VIDA archive, manifest and executable bytes.
+
+Actual repository origin uses GitHub; no workflow/profile is activated, remote
+permissions/visibility were not queried and no run was issued. The portable
+Source consistency consumer accepts actual attributable isolated controller
+observations without a provider/host/Desktop attestation prerequisite. Optional
+GitHub retrieval uses exact attempt/job/artifact records under a separately
+approved policy, without history-wide scans or ambient credentials.
+
+Pinned fs-safe0.5.6 exposes guarded readArchiveEntry for ZIP members but its
+optional jszip dependency is absent here. No dependency was installed and no
+custom ZIP verifier was created. That adapter remains unqualified until an
+actual existing qualified boundary is available. Source ingress/publication,
+activated native checks, real CI receipts and installed proof remain GAPs.
+Synthetic local state tests establish request/retry/current-byte controls only.
