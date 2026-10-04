@@ -1797,7 +1797,7 @@ async function recoverUnpreparedWork(args) {
     access.readBytes(input.baselinePath, 'unprepared original configuration'),
     root,
   );
-  const project = loadProjectSetContext(root, original, input.identity.repository_id, input.identity.project_ids);
+  const project = loadProjectSetContext(root, current, input.identity.repository_id, input.identity.project_ids);
   if (
     project.integrations_digest !== input.identity.integrations_digest ||
     current.control.work_root !== original.control.work_root

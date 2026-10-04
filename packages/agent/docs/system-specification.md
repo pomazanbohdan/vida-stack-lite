@@ -793,10 +793,30 @@ identity, rejects any corrective-history row, and rejects any surviving
 same-work base/corrective/unknown-alias snapshot. Missing, malformed, oversized,
 corrupt or incomplete evidence denies; journal absence and PID absence are not
 engine or no-effect proof. Corrected work remains outside this finite predicate.
-The census preflights row count and aggregate payload bytes in SQLite before
-fetching payloads. Its 256-row/8MiB ceiling can also deny a healthy engine with
+The census preflights row count and aggregate physical bytes in SQLite, then
+strictly validates canonical JSON text or JSONB with `json_valid(snapshot,9)`
+and bounds decoded JSON bytes before fetching payloads. NULL, malformed BLOB
+and JSON5 values deny; guarded projection never decodes an invalid row. Valid
+storage is read through `json(snapshot)`, as in the existing snapshot reader
+and pinned Mastra/LibSQL adapter. No engine rewrite or parser is introduced.
+SQLite's [JSON functions contract](https://www.sqlite.org/json1.html) owns this
+storage decoding; VIDA retains the original identity and absence checks.
+Its 256-row/8MiB physical and decoded ceilings can also deny a healthy engine with
 unrelated retained history. Such denial is an availability GAP, not evidence of
 target-run absence; a future paged owner census is required at that ceiling.
+
+Recovery resolves the selected repository/projects through the current validated
+configuration and registry at both public inspection and Host apply/retry.
+The original baseline still binds the Work, intake, run and engine census;
+it is never passed as a current registry snapshot. A valid current configuration
+revision change alone does not deny this finite recovery. Changed repository or
+selected project IDs, integration mapping or original storage deny. Descriptor
+and path metadata with the same identity/mapping are validated by the current
+registry, not compared to an unsupported historical registry hash. This grants
+no configuration adoption or execution rights. The existing historical-context
+reader follows the same boundary. Mastra's
+[snapshot contract](https://mastra.ai/en/reference/workflows/snapshots) preserves
+workflow/run identity; it does not replace VIDA's owner, CAS or no-effect checks.
 
 Apply suspends only the original execution and releases its exact ticket/claim,
 co-committing one current `CoordinationOperation/v1` release row. Original binding,

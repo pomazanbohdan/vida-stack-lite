@@ -523,6 +523,26 @@ outputs; the repository text-read limit stays unchanged. The prepared CI/CD
 workflow remains dormant; no provider pipeline/profile is activated and no
 current build/install receipts exist. Delivery qualification remains an explicit GAP.
 
+The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`
+checks original-baseline recovery after a valid current configuration revision
+change, read-only inspect, exact apply/reopen/lost-ack retry and unchanged original
+Work binding/run/intake. Capture a public request before changing current selected
+project IDs, integration mapping or storage, then require both Host and public
+apply to deny without Host/engine/YAML changes or a new moved-root Host database.
+Current registry metadata is validated at recovery; no historical registry hash
+comparison or configuration adoption is implied. Use selected affected cases
+during development; after stabilization run this entire group and applicable
+`historical` cases in `tests/runtime-config-rebind.test.mjs` once. These local
+agent-state checks never compile, package or install the agent.
+
+The same group creates actual SQLite `jsonb(?)` snapshots: unrelated valid state
+permits finite recovery without changing engine bytes; matching run ID and
+same-work alias are independent denials. Malformed BLOB, NULL and JSON5 text
+refuse. A binary snapshot whose storage fits 8MiB but decoded JSON exceeds 8MiB
+must deny before the projected payload SELECT, with Host/engine unchanged.
+Keep physical/count preflight, strict native JSON validity and guarded decoding
+ahead of payload fetch; text-only fixtures do not cover the actual store codec.
+
 `tests/release-retarget-state.test.mjs` verifies the local agent state boundary:
 same operation/version and three-field release changes; unchanged pending and
 successful pointers, including absence; sealed SDK/receipt/log custody; active,

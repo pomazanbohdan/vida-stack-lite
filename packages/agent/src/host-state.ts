@@ -2828,7 +2828,7 @@ export class HostStateStore {
     );
     const project = loadProjectSetContext(
       this.#repositoryRoot,
-      input.config,
+      current,
       input.identity.repository_id,
       input.identity.project_ids,
     );

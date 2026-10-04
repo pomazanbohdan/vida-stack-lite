@@ -87,7 +87,21 @@ export function assertUnpreparedSessionEngineAbsent(input: {
       Number.isSafeInteger(count.bytes) && count.bytes >= 0 && count.bytes <= 8 * 1024 * 1024,
       'preparation engine census bytes exceed bound',
     );
-    const rows = database.query('SELECT workflow_name,run_id,snapshot FROM mastra_workflow_snapshot').all() as {
+    const decoded = database
+      .query(
+        'SELECT coalesce(sum(json_valid(snapshot,9) IS NOT 1),0) AS invalid, ' +
+          'coalesce(sum(length(CAST(CASE WHEN json_valid(snapshot,9)=1 THEN json(snapshot) END AS BLOB))),0) AS bytes ' +
+          'FROM mastra_workflow_snapshot',
+      )
+      .get() as { invalid: number; bytes: number };
+    requireEngine(decoded.invalid === 0, 'preparation engine snapshot encoding invalid');
+    requireEngine(
+      Number.isSafeInteger(decoded.bytes) && decoded.bytes >= 0 && decoded.bytes <= 8 * 1024 * 1024,
+      'preparation engine decoded census bytes exceed bound',
+    );
+    const rows = database
+      .query('SELECT workflow_name,run_id,json(snapshot) AS snapshot FROM mastra_workflow_snapshot')
+      .all() as {
       workflow_name: string;
       run_id: string;
       snapshot: string;

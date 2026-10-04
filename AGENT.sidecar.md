@@ -80,15 +80,29 @@ approval rules are unchanged. Attribution is retained in the current
 `.agent/work/audit-36-absorption-release-20261001/WORK.md`; this section is the
 Source-specific instruction owner.
 
+For separately authorized CI Source ingress, before creating a request and again
+immediately before dispatch, the repository controller must compare every
+declared physical Source input with the selected published commit's regular-file
+blob bytes, including Git-unchanged paths, and verify the approved workflow
+definition. Recheck that Source stayed unchanged across the comparison. A changed
+file list or Source binding alone does not prove committed-byte equality.
+Missing, linked, converted or different inputs deny dispatch. Reconcile only
+exact reviewed Source paths, honor existing Git attributes and preserve parsed
+configuration, historical baselines and operation custody; refresh affected
+byte-bound evidence. Do not change global Git settings, normalize the whole tree
+or weaken integrity bindings. This guard grants no publication, activation,
+native qualification or Runtime authority.
+
 ## Validation and safety
 
 Agent checks are owned by `packages/agent/TESTING.md` and its package scripts.
 Use the pinned Bun launcher for focused agent behavior and type/static/format
 checks. Build/package/install validation belongs to CI/CD; no such local test
 suite is authorized. The portable CI evidence consumer is implemented in Source;
-The fixed manual-only Windows x64 workflow and seven-phase producer are prepared
-in Source, dormant behind an explicit disabled repository-variable gate. No
-provider pipeline/profile is activated and no real CI receipt is present.
+The fixed manual-only Windows x64 workflow and seven-phase producer require a
+separately approved provider/profile and explicit repository-variable gate.
+Activation, a dispatched run and successful exact-asset build/install receipts
+are distinct evidence; a failed Source-validation run supplies no native proof.
 GitHub retrieval is a replaceable repository adapter, not a runtime prerequisite.
 Its approved workflow/repository/check policy and optional ZIP-reader capability
 require separate qualification; no ambient credential or provider is selected.

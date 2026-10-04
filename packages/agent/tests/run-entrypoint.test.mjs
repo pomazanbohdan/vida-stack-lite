@@ -348,6 +348,11 @@ describe('unprepared recovery', () => {
   test('read-only CLI exposes a retained request; release and lost-ack retry preserve original evidence', async () => {
     const f = unpreparedRecoveryFixture();
     try {
+      const baseline = readFileSync(path.join(f.root, 'baseline.yaml'));
+      const delivered = baseline.toString('utf8').replace('config_revision: 1', 'config_revision: 2');
+      writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), delivered);
+      expect(loadRuntimeConfig(f.root).config_revision).toBe(2);
+      expect(f.config.config_revision).toBe(1);
       const before = f.observed(),
         base = {
           identity: f.identity,
@@ -390,6 +395,8 @@ describe('unprepared recovery', () => {
       f.reopen();
       expect((await run(apply)).work_version).toEqual(released.work_version);
       expect(f.observed()).toEqual(after);
+      expect(readFileSync(path.join(f.root, 'baseline.yaml'))).toEqual(baseline);
+      expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(delivered);
       writeFileSync(
         path.join(f.root, 'changed.json'),
         JSON.stringify({ ...inspected.request, decisionPointer: 'user:changed' }),
@@ -400,6 +407,59 @@ describe('unprepared recovery', () => {
       expect(f.observed()).toEqual(after);
     } finally {
       f.close();
+    }
+  });
+  test('retained apply rejects current selected project integration and storage drift without effects', async () => {
+    for (const fault of ['project', 'integration', 'storage']) {
+      const f = unpreparedRecoveryFixture();
+      try {
+        const base = {
+          identity: f.identity,
+          attempt: 1,
+          baselinePath: 'baseline.yaml',
+          decisionPointer: f.input.decisionPointer,
+        };
+        writeFileSync(path.join(f.root, 'inspect.json'), JSON.stringify(base));
+        const args = [
+          '--recover-unprepared-work',
+          'true',
+          '--mode',
+          'inspect',
+          '--project-root',
+          f.root,
+          '--native-session-handle',
+          f.input.operatorHandle,
+          '--request',
+          'inspect.json',
+        ];
+        const inspected = await run(args);
+        writeFileSync(path.join(f.root, 'apply.json'), JSON.stringify(inspected.request));
+        const baseline = readFileSync(path.join(f.root, 'baseline.yaml'));
+        const current = baseline.toString('utf8').replace('config_revision: 1', 'config_revision: 2');
+        const delivered =
+          fault === 'project'
+            ? current.replaceAll('"project"', '"other"')
+            : fault === 'integration'
+              ? current.replace('tenant_id: local', 'tenant_id: changed')
+              : current.replaceAll('work_root: .agent/work', 'work_root: .agent/other');
+        writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), delivered);
+        expect(loadRuntimeConfig(f.root).config_revision).toBe(2);
+        const before = f.observed(),
+          engine = readFileSync(f.engineFile);
+        expect(() => f.store.releaseUnpreparedWork(f.input, inspected.request.request)).toThrow();
+        expect(f.observed()).toEqual(before);
+        const apply = args.map((value, index) =>
+          args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
+        );
+        await expect(run(apply)).rejects.toThrow();
+        expect(f.observed()).toEqual(before);
+        expect(readFileSync(f.engineFile)).toEqual(engine);
+        expect(readFileSync(path.join(f.root, 'baseline.yaml'))).toEqual(baseline);
+        expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(delivered);
+        expect(existsSync(path.join(f.root, '.agent/other/session-handoff.v1.sqlite'))).toBe(false);
+      } finally {
+        f.close();
+      }
     }
   });
   test('stale Work Ledger maintenance and foreign caller deny without changes', () => {
@@ -490,6 +550,78 @@ describe('unprepared recovery', () => {
       }
     }
   });
+  test.each(['unrelated', 'same-run', 'same-work', 'malformed', 'null', 'json5'])(
+    'binary snapshot %s preserves absence controls and engine custody',
+    (fault) => {
+      const f = unpreparedRecoveryFixture();
+      try {
+        const workId = fault === 'same-work' ? f.identity.work_id : 'unrelated-work';
+        const attempt = fault === 'same-work' ? 2 : 1;
+        const runId =
+          fault === 'same-run'
+            ? f.store.readHostStateSnapshot(f.identity).work.execution.run_id
+            : sessionBridgeRunId(f.workspace, { ...f.context, work_id: workId, attempt }, 'task_execution');
+        if (fault === 'same-work')
+          expect(runId).not.toBe(f.store.readHostStateSnapshot(f.identity).work.execution.run_id);
+        if (fault === 'same-run') expect(workId).not.toBe(f.identity.work_id);
+        const state = {
+          work_id: workId,
+          attempt,
+          workflow_id: 'task_execution',
+          scope_digest: f.context.scope_digest,
+          config_digest: runtimeConfigDigest(f.config),
+          selection: {
+            team: 'default-development',
+            kind: 'task',
+            intent: 'task_execution',
+            project: 'project',
+            risk_flags: [],
+            labels: [],
+          },
+          observations: [],
+        };
+        const snapshot = JSON.stringify({ runId, status: 'success', context: { input: state } });
+        const engine = new Database(f.engineFile);
+        try {
+          if (['malformed', 'null', 'json5'].includes(fault)) {
+            engine
+              .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,?)')
+              .run(
+                'task_execution',
+                runId,
+                fault === 'null'
+                  ? null
+                  : fault === 'malformed'
+                    ? Buffer.from([255, 238])
+                    : snapshot.replace('{', '{/* comment */'),
+              );
+          } else {
+            engine
+              .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,jsonb(?))')
+              .run('task_execution', runId, snapshot);
+            expect(engine.query('SELECT typeof(snapshot) AS kind FROM mastra_workflow_snapshot').get().kind).toBe(
+              'blob',
+            );
+          }
+        } finally {
+          engine.close();
+        }
+        const before = f.observed(),
+          bytes = readFileSync(f.engineFile);
+        if (fault === 'unrelated') {
+          const request = f.store.inspectUnpreparedWorkRecovery(f.input);
+          expect(f.observed()).toEqual(before);
+          expect(f.store.releaseUnpreparedWork(f.input, request).work.execution.status).toBe('suspended');
+        } else {
+          expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow();
+          expect(f.observed()).toEqual(before);
+        }
+        expect(readFileSync(f.engineFile)).toEqual(bytes);
+      } finally {
+        f.close();
+      }
+    },
+  );
   test('oversized engine snapshots deny before any payload census fetch', () => {
     const f = unpreparedRecoveryFixture();
     let guard;
@@ -506,12 +638,49 @@ describe('unprepared recovery', () => {
         query = Database.prototype.query;
       let payloadFetches = 0;
       guard = spyOn(Database.prototype, 'query').mockImplementation(function (sql) {
-        if (sql === 'SELECT workflow_name,run_id,snapshot FROM mastra_workflow_snapshot') payloadFetches++;
+        if (sql.startsWith('SELECT workflow_name,run_id,')) payloadFetches++;
         return query.call(this, sql);
       });
       expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow('census bytes exceed bound');
       expect(payloadFetches).toBe(0);
       expect(f.observed()).toEqual(before);
+    } finally {
+      guard?.mockRestore();
+      f.close();
+    }
+  });
+
+  test('decoded JSONB census bytes deny before fetching payloads even when storage fits', () => {
+    const f = unpreparedRecoveryFixture();
+    let guard;
+    try {
+      const engine = new Database(f.engineFile);
+      try {
+        engine
+          .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,jsonb(?))')
+          .run('unrelated', 'unrelated', JSON.stringify({ padding: Array(1800000).fill(null) }));
+        const size = engine
+          .query(
+            'SELECT length(CAST(snapshot AS BLOB)) AS stored, length(CAST(json(snapshot) AS BLOB)) AS decoded FROM mastra_workflow_snapshot',
+          )
+          .get();
+        expect(size.stored).toBeLessThan(8 * 1024 * 1024);
+        expect(size.decoded).toBeGreaterThan(8 * 1024 * 1024);
+      } finally {
+        engine.close();
+      }
+      const before = f.observed(),
+        bytes = readFileSync(f.engineFile),
+        query = Database.prototype.query;
+      let payloadFetches = 0;
+      guard = spyOn(Database.prototype, 'query').mockImplementation(function (sql) {
+        if (sql.startsWith('SELECT workflow_name,run_id,')) payloadFetches++;
+        return query.call(this, sql);
+      });
+      expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow('decoded census bytes exceed bound');
+      expect(payloadFetches).toBe(0);
+      expect(f.observed()).toEqual(before);
+      expect(readFileSync(f.engineFile)).toEqual(bytes);
     } finally {
       guard?.mockRestore();
       f.close();
