@@ -28,6 +28,7 @@ import {
   reserveReleaseWorker,
   claimReleaseWorker,
   withReleaseAdmission,
+  runCommand,
 } from '../../../tooling/agent/release-local.mjs';
 import { testInputBinding, verifyLocalReleaseTests } from '../../../tooling/agent/release-assurance.mjs';
 import {
@@ -100,49 +101,88 @@ function metadata(bytes, files) {
     },
   ];
 }
-test('ordinary command failures retain bounded stdout and stderr diagnostics with full terminal receipts', () => {
+test('ordinary command failures retain bounded stdout and stderr diagnostics with full terminal receipts', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-command-'));
   roots.add(root);
-  const observer = path.join(root, 'observe.mjs');
   const successArgs = [
     '--no-env-file',
     '--no-install',
     '-e',
     'process.stdout.write("  result  \\n");process.stderr.write("ordinary warning")',
   ];
-  writeFileSync(
-    observer,
-    [
-      "import fs from 'node:fs';",
-      `import {runCommand} from ${JSON.stringify(new URL('../../../tooling/agent/release-local.mjs', import.meta.url).href)};`,
-      "const failures=['stdout','stderr','both'].map(async mode => {",
-      "const script='const mode='+JSON.stringify(mode)+\";if(mode!=='stderr')process.stdout.write('x'.repeat(2050)+'stdout diagnostic');if(mode!=='stdout')process.stderr.write('y'.repeat(2050)+'stderr diagnostic');process.exit(2)\";",
-      "const args=['--no-env-file','--no-install','-e',script];let message=null;",
-      "try {await runCommand(process.execPath,args,{cwd:process.cwd(),log:mode+'.json'});} catch(error) {message=error.message;}",
-      "fs.writeFileSync(mode+'-observed.json',JSON.stringify({message,args}));});",
-      `const success=(async()=>{const value=await runCommand(process.execPath,${JSON.stringify(successArgs)},{cwd:process.cwd(),log:'success.json'});fs.writeFileSync('success-observed.json',JSON.stringify({value}));})();`,
-      "const results=await Promise.allSettled([...failures,success]);if(results.some(result=>result.status==='rejected'))throw Error('Incomplete ordinary observation');process.stdout.write('observed');",
-    ].join('\n'),
-  );
-  const child = spawnSync(process.execPath, ['--no-env-file', '--no-install', observer], {
-    cwd: root,
-    env: pinnedEnvironment(process.execPath),
-    encoding: 'utf8',
-    timeout: 4000,
+  const commands = [
+    ...['stdout', 'stderr', 'both'].map((mode) => {
+      const script = `const mode=${JSON.stringify(mode)};if(mode!=='stderr')process.stdout.write('x'.repeat(2050)+'stdout diagnostic');if(mode!=='stdout')process.stderr.write('y'.repeat(2050)+'stderr diagnostic');process.exit(2)`;
+      return { mode, args: ['--no-env-file', '--no-install', '-e', script] };
+    }),
+    { mode: 'success', args: successArgs },
+  ];
+  const started = process.hrtime.bigint();
+  let deadlineTimer;
+  const deadline = new Promise((resolve) => {
+    deadlineTimer = setTimeout(() => resolve({ kind: 'deadline' }), 4000);
   });
-  writeFileSync(
-    path.join(root, 'observer-result.json'),
-    json({
-      code: child.status,
-      signal: child.signal,
-      error: child.error?.message ?? null,
-      stdout: child.stdout,
-      stderr: child.stderr,
+  const observations = Promise.allSettled(
+    commands.map(async ({ mode, args }) => {
+      let value, message = null;
+      try {
+        value = await runCommand(process.execPath, args, {
+          cwd: root,
+          env: pinnedEnvironment(process.execPath),
+          log: path.resolve(root, mode + '.json'),
+        });
+      } catch (error) {
+        message = error.message;
+      }
+      writeFileSync(
+        path.resolve(root, mode + '-observed.json'),
+        json(mode === 'success' ? { value, message } : { message, args }),
+      );
     }),
   );
-  if (child.error || child.signal || child.status !== 0 || child.stdout !== 'observed') {
+  let joined;
+  try {
+    joined = await Promise.race([observations.then((results) => ({ kind: 'settled', results })), deadline]);
+  } finally {
+    clearTimeout(deadlineTimer);
+  }
+  const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
+  if (joined.kind !== 'settled' || elapsedMs > 4000) {
     outcomeUnknown = true;
-    assert.fail('UNKNOWN ordinary command observer; retain root and partial streams: ' + root);
+    assert.fail('UNKNOWN ordinary command observations exceeded the 4000ms deadline; retain root and partial streams: ' + root);
+  }
+  const receipts = {};
+  for (const { mode } of commands) {
+    const log = path.resolve(root, mode + '.json');
+    if (!existsSync(log)) {
+      outcomeUnknown = true;
+      assert.fail('UNKNOWN ordinary command close receipt missing; retain root and child state: ' + root);
+    }
+    let receipt;
+    try {
+      receipt = JSON.parse(readFileSync(log, 'utf8'));
+    } catch {
+      outcomeUnknown = true;
+      assert.fail('UNKNOWN ordinary command close receipt incomplete; retain root and child state: ' + root);
+    }
+    if (
+      !receipt ||
+      typeof receipt !== 'object' ||
+      typeof receipt.command !== 'string' ||
+      !Array.isArray(receipt.args) ||
+      !Number.isFinite(receipt.elapsed_ms) ||
+      typeof receipt.stdout !== 'string' ||
+      typeof receipt.stderr !== 'string' ||
+      (!(Number.isInteger(receipt.code) && receipt.signal === null) &&
+        !(receipt.code === null && typeof receipt.signal === 'string' && receipt.signal.length > 0))
+    ) {
+      outcomeUnknown = true;
+      assert.fail('UNKNOWN ordinary command close receipt partial; retain root and child state: ' + root);
+    }
+    receipts[mode] = receipt;
+  }
+  if (joined.results.some((result) => result.status !== 'fulfilled')) {
+    assert.fail('Ordinary command observation record could not be saved after terminal receipts: ' + root);
   }
   for (const mode of ['stdout', 'stderr', 'both']) {
     const script = `const mode=${JSON.stringify(mode)};if(mode!=='stderr')process.stdout.write('x'.repeat(2050)+'stdout diagnostic');if(mode!=='stdout')process.stderr.write('y'.repeat(2050)+'stderr diagnostic');process.exit(2)`;
@@ -154,7 +194,7 @@ test('ordinary command failures retain bounded stdout and stderr diagnostics wit
     assert.ok(body.includes('\nstdout:\n'), 'Output must be in the diagnostic body, not literal command arguments');
     assert.ok(body.includes('stderr:\n'));
     assert.ok(body.length <= 4096 + 32, 'Each diagnostic stream tail stays bounded');
-    const receipt = JSON.parse(readFileSync(path.join(root, mode + '.json'), 'utf8'));
+    const receipt = receipts[mode];
     assert.equal(receipt.code, 2);
     assert.equal(receipt.signal, null);
     assert.equal(receipt.command, process.execPath);
@@ -166,8 +206,11 @@ test('ordinary command failures retain bounded stdout and stderr diagnostics wit
     assert.equal(body, 'stderr:\n' + stderr.slice(-2048) + '\nstdout:\n' + stdout.slice(-2048));
   }
   assert.equal(JSON.parse(readFileSync(path.join(root, 'success-observed.json'), 'utf8')).value, 'result');
-  const success = JSON.parse(readFileSync(path.join(root, 'success.json'), 'utf8'));
+  const success = receipts.success;
+  assert.equal(success.command, process.execPath);
+  assert.deepEqual(success.args, successArgs);
   assert.equal(success.code, 0);
+  assert.equal(success.signal, null);
   assert.equal(success.stdout, '  result  \n');
   assert.equal(success.stderr, 'ordinary warning');
 });
@@ -1165,8 +1208,8 @@ test('mixed release effect before archive ACK and self-consistent forged field c
   }
 });
 
-test('planning reservation excludes workers and incomplete custody is never reconstructed', async () => {
-  for (const boundary of ['planning', 'custody_reserved', 'custody_ready']) {
+for (const boundary of ['planning', 'custody_reserved', 'custody_ready'])
+  test('planning reservation excludes workers and incomplete custody is never reconstructed (' + boundary + ')', async () => {
     const value = await fixture();
     await value.stage();
     let launches = 0;
@@ -1201,8 +1244,7 @@ test('planning reservation excludes workers and incomplete custody is never reco
       await assert.rejects(applyReleaseRetarget(value.input), /missing/);
       assert.equal(existsSync(path.join(value.root, folder + '/retarget/custody/seal.json')), false);
     } else assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
-  }
-});
+  });
 
 test('clean planning lost initial ACK resumes once with unchanged frozen inputs only', async () => {
   for (const drift of [false, true]) {

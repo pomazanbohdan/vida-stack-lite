@@ -470,3 +470,105 @@ returns `.` when no separator or root is found. The Bun PlatformPath dirname
 reference could not be retrieved and remains an explicit research GAP; no Bun
 compatibility claim is inferred. No local helper or delivery probe was run.
 Successful native and installed proof remain outstanding.
+
+## 2026-10-04 — CI init failure from omitted package knowledge resource
+
+Run37224368306/attempt1/job111500862047 passed the native-build and
+native-install workflow steps, then failed in public-routes during initialization
+with: safe repository access unavailable: configured package source fs-safe
+boundary rejected the target (path). The exact captured terminal record and
+failed log are .tmp/core-windows-resume-20261002/approved-update01-ci-root-leaf-ci-run-terminal.json
+and .tmp/core-windows-resume-20261002/approved-update01-ci-root-leaf-ci-run-failed.log.
+The job records the four later delivery phases, result emission and upload as
+skipped. The run failed overall. Its successful build/install steps are partial
+CI evidence and do not establish full native qualification, the local installed
+checkpoint or Runtime acceptance.
+
+The log contains the init command and fs-safe path error but no stack naming the
+missing resource. Source inspection identifies the required file and the
+omission: the maintained runtime template declares a package-local knowledge
+source at {{BUNDLE}}/TESTING.md; init-core.mjs resolves this configured local
+package source through packageAccess.readText during initialization. In
+tooling/build-standalone.mjs, sourceInputs omitted TESTING.md, and payload
+construction includes only declared inputs, so the standalone payload omitted
+that required package resource. This is a source-level control-flow explanation
+consistent with the captured error, not a file-specific stack trace from CI.
+
+The bounded source correction adds TESTING.md to the existing sourceInputs Set.
+It uses the existing resource reads, inventory, digest and materialization path;
+it adds no resource loader, validation rule or dependency. The package source
+reader checks a regular unlinked file and compares its descriptor identity and
+size with path observations around the read. Its readFileSync call has no
+explicit byte limit, so this correction claims no read bound and adds none.
+Existing strict package/consumer separation and all filesystem admission guards
+remain in place.
+
+The current official [Bun single-file executable documentation](https://bun.sh/docs/bundler/executables)
+describes compiling a standalone executable with bundled imports and a Bun
+runtime; this repository separately records package resource files in its
+declared payload inventory. The current [fs-safe advanced documentation](https://fs-safe.io/advanced.html)
+documents a symlinks policy and bounded descriptor helpers. These current online
+details can be newer than the package locked here. The local package remains
+pinned to @openclaw/fs-safe 0.5.6; its type surface uses rejectSymlinks and its
+checked-in dist/root-file.js and dist/pinned-open.js are the implementation
+evidence for that pin. Current online APIs are not proof that their exact
+surface is available in 0.5.6. The bounded helpers are not used by the project
+readResource call, which has no explicit byte limit. The earlier five-run notes
+above remain historical; all six dispatched runs now failed overall, with the
+partial native-build/native-install success in run37224368306 recorded here.
+
+## 2026-10-05 — ordinary command diagnostic observation
+
+### Verified local observations
+
+The 2026-10-04 pinned full43 run exited 1 (0 pass/43 fail). Its first randomized
+ordinary-command case exceeded the existing 4,000ms caller bound at 4,060.42ms.
+The retained `observer-result.json` records null code, `SIGTERM`, `ETIMEDOUT`
+and empty stdout/stderr for the nested observer. The suite-wide UNKNOWN guard
+then denied subsequent cases; these are not 42 independently diagnosed
+failures. The test root and all partial evidence remain retained.
+
+The bounded correction removes only that nested observer process. The test now
+invokes its already-loaded `runCommand` for the same four inert commands in
+parallel. It keeps `process.execPath`, pinned child environments, absolute log
+paths, the owned temporary working directory, the shared monotonic 4,000ms
+observation deadline, and all existing expected arguments, exit/signal, full
+stream, diagnostic-tail and success-trim assertions. Completion requires four
+actual close receipts; a late, missing or partial receipt sets UNKNOWN before
+failure and retains roots, late children and partial streams without cleanup.
+No process kill, retry, production helper, API, schema, dependency, timeout
+extension or test-bound relaxation was added.
+
+Under pinned Bun 1.4.2, the exact focused case passed (1 pass, 42 filtered, 0
+fail; 2,136.16ms case time and 2,337ms launcher time). The one current full43
+run passed (43 pass, 0 fail; 34,134ms launcher time). Both used the canonical
+`packages/agent` working directory, current `bunfig.toml` randomization seed
+20260817, the normal Source reader resolver and `VIDA_CI_READER_ROOT` removed.
+Receipts and complete streams are retained in
+`.tmp/core-windows-resume-20261002/ci-zip-lock-ordinary-focused-pinned-env-20261005-v1.*`
+and
+`.tmp/core-windows-resume-20261002/ci-zip-lock-full43-ordinary-observer-pinned-env-20261005-v1.*`.
+The earlier full43 FAIL/UNKNOWN receipt and all six overall failed CI runs,
+including CI6's partial native-build/native-install steps, remain historical
+evidence and are not replaced by these local passes.
+
+### Official mechanics and applicability
+
+The official Bun [Node-compatible `spawnSync` reference](https://bun.com/reference/node/child_process/spawnSync)
+says the synchronous call returns after the child has fully closed and, after a
+timeout signal, still waits for process exit. Node's [child-process documentation](https://nodejs.org/api/child_process.html)
+states synchronous spawn blocks the event loop and that `close` follows process
+termination and closure of stdio streams; the final code or signal is present.
+Bun's [child-process guide](https://bun.sh/docs/runtime/child-process)
+documents its asynchronous `spawn` result and exit observation. The local fix
+uses the existing Node-compatible `runCommand` and its `close`-based complete
+stream receipt; it does not adopt Bun's separate process API. No external agent
+workflow framework participates in these local subprocess checks, so its
+workflow-persistence references do not define this contract.
+
+These references explain synchronous versus asynchronous observation and the
+receipt boundary. They do not establish why the earlier inert observer crossed
+its bound, or attribute it to Bun, Windows, host load or dependencies. This is
+not a measured speed comparison and proves no production CI, native build,
+installation, installed readiness or Runtime acceptance. The existing CI and
+delivery evidence remains authoritative for those later gates.

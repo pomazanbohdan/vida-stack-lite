@@ -73,19 +73,23 @@ current exact-asset receipts remain required and separate from local agent proof
 The repository-only workflow `agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
 phases and one result-emission step. The approved provider/profile was activated
-and dispatched five CI runs; all five failed, so no successful native build,
-exact-asset qualification or installation is established. Run37216772330/attempt1
+and six CI runs were dispatched; all six failed overall. Run37216772330/attempt1
 passed Source guards, `ci:pinned` and npm pack, then native-build failed with an
 ENOENT lstat on its absent private package extraction destination. Following the
 archive-destination caller correction, run37220454501/attempt1/job111489588604
-failed at native-build with `Local release: invalid relative path`; later
-delivery phases were skipped. Source checks do not qualify native targets or
-installed behavior. Public route denials need actual terminal child observations
-and specific errors; prerequisite or UNKNOWN failures cannot count as valid
-denials. The Windows/current-asset same-version upgrade controls do not establish
-other target support or cross-version rollback. The provider/profile is active;
-applicable standalone requirements and separate target-specific evidence remain
-open.
+failed at native-build with Local release: invalid relative path. In
+run37224368306/attempt1/job111500862047, native-build and native-install passed,
+then public-routes failed during initialization with: safe repository access
+unavailable: configured package source fs-safe boundary rejected the target
+(path). The following four delivery phases and result emission and upload were
+skipped. These partial step successes establish neither full native
+qualification nor installed behavior or Runtime acceptance. Source checks do
+not qualify native targets. Public route denials need actual terminal child
+observations and specific errors; prerequisite or UNKNOWN failures cannot count
+as valid denials. The Windows/current-asset same-version upgrade controls do not
+establish other target support or cross-version rollback. The provider/profile is
+active; applicable standalone requirements and separate target-specific
+evidence remain open.
 Broad dependency/tool and caller adaptation is last in 0.1.3, after P0 native
 UPDATE01/developer-unblocking and required installed checkpoints, before final
 0.1.3 delivery and acceptance. Reuse exact current qualified pins for P0 work;
@@ -442,7 +446,17 @@ the actual current operation; suite receipts belong outside this living contract
 
 ## Portable bundle verification
 
-Run `bun run verify` from the bundle root for the local agent subset. It neither installs dependencies nor copies or installs a bundle. `bun run ci` performs delivery preparation only; CI/CD owns exact artifact/build/install validation. The approved CI workflow and receipt path were activated and dispatched in five runs; all five failed. No successful native-build or installation receipt exists, so release qualification remains blocked. Local successful logs cannot substitute for CI/CD evidence or attributable installed user acceptance. Numeric coverage, CRAP and manual mutation proof remain separate local requirements.
+Run `bun run verify` from the bundle root for the local agent subset. It neither
+installs dependencies nor copies or installs a bundle. `bun run ci` performs
+delivery preparation only; CI/CD owns exact artifact/build/install validation.
+Six CI runs were dispatched and all six failed overall. In run37224368306/attempt1/
+job111500862047, native-build and native-install passed, but public-routes failed
+during initialization; four remaining delivery phases and result emission/upload
+were skipped. Those partial CI steps do not establish a successful full native
+delivery, exact-asset qualification or installed acceptance. No local installed
+checkpoint is established. Local successful logs cannot substitute for CI/CD
+evidence or attributable installed user acceptance. Numeric coverage, CRAP and
+manual mutation proof remain separate local requirements.
 
 ## Required integration evidence
 
@@ -537,9 +551,12 @@ The discovery view retains the exact maintained bunfig.toml used by the child la
 Source-only repair/recovery fixtures exclude the exact generated dist/standalone
 directory. They retain agent sources, schemas, instructions and current SDK
 outputs; the repository text-read limit stays unchanged. The approved CI/CD
-workflow/profile was activated and five runs were dispatched; all five failed.
-Those failure receipts do not establish native-build or installed qualification.
-Delivery qualification remains an explicit GAP.
+workflow/profile was activated and six runs were dispatched; all six failed
+overall. In run37224368306/attempt1/job111500862047, native-build and
+native-install passed before public-routes failed during initialization; four
+remaining delivery phases and result emission/upload were skipped. These partial
+step results do not establish native target or installed qualification. Delivery
+qualification remains an explicit GAP.
 
 The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`
 checks original-baseline recovery after a valid current configuration revision
@@ -582,6 +599,31 @@ Tiny inert archive bytes exercise state custody only. No compiler, package
 command, delivery executable or installation runs in these checks. Local logs
 still cannot replace trusted CI/CD delivery receipts. Development uses affected
 cases; task completion runs this whole applicable suite once after stabilization.
+
+The ordinary command diagnostic regression directly observes the same four
+inert Bun commands through the already loaded `runCommand`: three expected
+nonzero exits and one success. Each receives the same pinned environment, the
+owned temporary root as its working directory and an absolute terminal-log
+path. A shared monotonic 4,000ms observation deadline starts before any child is
+invoked. The case accepts only complete `runCommand` close receipts containing
+the actual command, arguments, code or signal and full stdout/stderr. A deadline,
+missing receipt or partial receipt sets the case to UNKNOWN before failure and
+retains the owned root, late children and partial streams; the deadline does not
+terminate a child. Existing diagnostic-tail, exit/signal, stream and success
+trim assertions remain in force.
+
+The earlier 2026-10-04 full43 run remains a failed historical receipt: exit 1,
+0 passed/43 failed. Its first randomized ordinary-command observer exceeded the
+unchanged 4,000ms bound at 4,060.42ms; the retained observer result records
+`ETIMEDOUT`, `SIGTERM`, null code and empty streams. The suite-wide UNKNOWN guard
+then denied the remaining fixture cases, which is not evidence of 42 separate
+defects. After the direct-observation correction, the exact case passed 1/42
+filtered/0 failures (2,136.16ms case time; 2,337ms launcher time), and the full
+43-case file passed 43/0 failures (34,134ms launcher time) under Bun 1.4.2, the
+normal Source reader environment and `bunfig.toml` seed 20260817. The earlier
+failure and retained UNKNOWN root remain preserved. These local test results
+establish no cause in Bun, Windows or host load, and no delivery, native or
+installed qualification.
 
 The same agent-state suite covers portable CI requests and observations with
 synthetic records: exact context/source/target/run/archive/payload/check binding,

@@ -13,6 +13,7 @@ const manifestName = 'manifest.json';
 function sourceInputs(root) {
   const files = new Set([
     ...runtimeExecutableInventory(root, 'dist'),
+    'TESTING.md',
     '.bun-version',
     'bun.lock',
     'bunfig.toml',
