@@ -32,7 +32,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { advanceCutoff, assertNoActiveCutoverMaintenance, run, writeDurable } from '../bin/run.mjs';
 import { initializeProject } from '../bin/init.mjs';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, rfc3339TimestampMilliseconds } from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../src/index.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
@@ -392,8 +392,22 @@ describe('unprepared recovery', () => {
       expect(state.binding).toEqual(before.work[0].state.binding);
       expect(state.execution.run_id).toBe(before.work[0].state.execution.run_id);
       expect(after.journals).toEqual(before.journals);
+      const operation = after.ledger.operations.find(
+        (item) => item.kind === 'release' && item.ticket_id === inspected.request.request.originalTicket.ticket_id,
+      );
+      expect(operation).toBeDefined();
+      expect(typeof operation.created_at).toBe('string');
+      expect(rfc3339TimestampMilliseconds(operation.created_at)).not.toBeNull();
+      const releasedClaims = after.ledger.claims.filter((item) => item.ticket_id === operation.ticket_id);
+      expect(releasedClaims.length).toBe(inspected.request.request.originalClaims.length);
+      for (const claim of releasedClaims) {
+        expect(claim.status).toBe('released');
+        expect(claim.renewed_at).toBe(operation.created_at);
+      }
       f.reopen();
-      expect((await run(apply)).work_version).toEqual(released.work_version);
+      const retried = await run(apply);
+      expect(retried.work_version).toEqual(released.work_version);
+      expect(retried.ledger_version).toEqual(released.ledger_version);
       expect(f.observed()).toEqual(after);
       expect(readFileSync(path.join(f.root, 'baseline.yaml'))).toEqual(baseline);
       expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(delivered);
@@ -405,6 +419,31 @@ describe('unprepared recovery', () => {
         run(apply.map((value, index) => (apply[index - 1] === '--request' ? 'changed.json' : value))),
       ).rejects.toThrow();
       expect(f.observed()).toEqual(after);
+    } finally {
+      f.close();
+    }
+  });
+  test('shape-valid impossible retained timestamp denies exact retry without effects', () => {
+    const f = unpreparedRecoveryFixture();
+    try {
+      const request = f.store.inspectUnpreparedWorkRecovery(f.input);
+      f.store.releaseUnpreparedWork(f.input, request);
+      const row = f.db.query("SELECT payload FROM agent_host_state WHERE kind='ledger'").get();
+      const ledger = JSON.parse(row.payload);
+      const operation = ledger.operations.find(
+        (item) => item.kind === 'release' && item.ticket_id === request.originalTicket.ticket_id,
+      );
+      expect(operation).toBeDefined();
+      operation.created_at = '2026-02-31T00:00:00Z';
+      f.db
+        .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+        .run(JSON.stringify(ledger), canonicalJsonDigest(ledger));
+      f.reopen();
+      const before = f.observed();
+      expect(() => f.store.releaseUnpreparedWork(f.input, request)).toThrow(
+        'unprepared recovery operation timestamp invalid',
+      );
+      expect(f.observed()).toEqual(before);
     } finally {
       f.close();
     }

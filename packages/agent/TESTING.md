@@ -536,7 +536,17 @@ current build/install receipts exist. Delivery qualification remains an explicit
 The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`
 checks original-baseline recovery after a valid current configuration revision
 change, read-only inspect, exact apply/reopen/lost-ack retry and unchanged original
-Work binding/run/intake. Capture a public request before changing current selected
+Work binding/run/intake. Require a calendar-valid RFC3339 operation timestamp,
+exact equality with every released original claim's renewed_at, and unchanged
+durable state and versions after reopening and replaying the retained request.
+Also change only the retained operation created_at value to schema-shape-valid
+but calendar-impossible `2026-02-31T00:00:00Z`, update the fixture digest, reopen,
+and require the exact retry to fail with the exact message
+`unprepared recovery operation timestamp invalid` while complete Host state
+remains unchanged. Runtime narrowing uses the existing timestamp validator;
+actual CI/CD compiler qualification is separate. Upstream schema refusal does
+not prove the new guard was reached.
+Capture a public request before changing current selected
 project IDs, integration mapping or storage, then require both Host and public
 apply to deny without Host/engine/YAML changes or a new moved-root Host database.
 Current registry metadata is validated at recovery; no historical registry hash

@@ -389,3 +389,27 @@ bounded tails of both streams in the failure body. Keep success behavior, caller
 bounds, locks, original attempts and UNKNOWN custody unchanged. Inert ordinary
 command controls qualify this observation boundary; compile/build/install evidence
 still comes only from CI/CD and cannot be inferred from those controls.
+
+## 2026-10-04 — retained recovery timestamp boundary
+
+Actual run37211989636/attempt1 passed exact Source ingress, then CI/CD native-build
+reported TS2322: a retained unknown-valued operation created_at flowed into the
+string claim renewed_at. Existing CoordinationOperation/v1 schema requires the
+created_at timestamp string but checks its shape, not calendar validity;
+2026-02-31T00:00:00Z passes its pattern. Host now validates a string with the
+existing RFC3339 helper before constructing typed claims and preserves the exact
+prior time on lost-ACK retry. No cast, coercion, schema change or fresh-time
+fallback applies to an existing retained operation. The existing public
+reopen/retry control asserts time equality and unchanged complete state. A second
+fixture changes only stored created_at to shape-valid Feb 31 and updates the
+fixture digest; the exact retry must reach the new guard and leave full Host
+state unchanged. Local behavioral passes do not establish compiler success;
+that remains CI/CD evidence.
+
+[TypeScript narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
+documents typeof guards, control flow and assertion-function narrowing. This
+applies to the existing requireState assertion and unknown operation field.
+The official Mastra [workflow snapshots reference](https://mastra.ai/en/reference/workflows/snapshots)
+describes persisted workflow state required for exact resume; it supplies only
+surrounding persistence context and does not define VIDA identity, authorization
+or CAS. No dependency adoption or scheduler is needed.

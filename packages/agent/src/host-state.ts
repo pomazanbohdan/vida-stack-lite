@@ -2973,7 +2973,11 @@ export class HostStateStore {
         ledger = before.ledger;
       requireState(before.work && ledger, 'unprepared recovery work unavailable');
       const prior = ledger.operations.find((item) => item.operation_id === operationId),
-        now = prior?.created_at ?? new Date().toISOString();
+        now = prior ? prior.created_at : new Date().toISOString();
+      requireState(
+        typeof now === 'string' && rfc3339TimestampMilliseconds(now) !== null,
+        'unprepared recovery operation timestamp invalid',
+      );
       const nextWork: WorkState = {
         ...request.originalWork,
         revision: request.originalWork.revision + 1,

@@ -782,6 +782,18 @@ apply. The CLI checks the declared owner, original context, disposition pointer
 and current CAS; it does not authenticate the human directive or create another
 issuer, token, Desktop or machine-trust dependency.
 
+The first release records a calendar-valid RFC3339 timestamp in the operation's
+created_at field and uses exactly that same string for each released claim's
+renewed_at. An exact lost-ACK retry validates the retained operation value as a
+string and calendar-valid RFC3339 timestamp before constructing typed claims; it
+preserves that exact string and returns durable state without another release.
+Missing, non-string or invalid retained time is denied with
+`unprepared recovery operation timestamp invalid`, without a fresh-time fallback
+or state change. The current CoordinationOperation/v1 schema checks timestamp
+shape but admits impossible calendar dates; Host applies its existing RFC3339
+validator at this boundary. No schema relaxation, coercion or new artifact format
+is introduced.
+
 This route accepts only the exact same-owner unsealed INTAKE execution-only
 claim, with no assignments, journal across any retained attempt or corrective
 generation. It validates original intake/configuration/run identity and current
