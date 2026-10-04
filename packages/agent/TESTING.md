@@ -39,6 +39,16 @@ Agent test commands have no implicit aggregate watchdog. Explicit caller and
 operation-specific bounds remain binding. Preserve failed and UNKNOWN receipts;
 process absence does not authorize replay or cleanup.
 
+Generic command-failure controls use inert JavaScript output/exit children, never
+compiler, build or installation commands. Check stdout-only, stderr-only and
+both-stream nonzero failures: the diagnostic body separately labels each bounded
+2048-character tail, while the saved terminal receipt retains full streams,
+command identity, exit code and signal. Literal program arguments in the error
+header cannot satisfy this check. Preserve trimmed stdout on success. The existing
+retarget-state suite uses one pinned ordinary observer with its own shorter caller
+bound inside the unchanged case bound; incomplete observation retains UNKNOWN
+and owned fixture bytes without reissue or cleanup.
+
 The five parameterized `interrupted %s resumes one current operation without
 duplicate receipt effects` cases are serial restart/resume lifecycle wrappers,
 not latency checks. They use Bun's disabled case watchdog and await each operation

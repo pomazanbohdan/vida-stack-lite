@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { afterEach, test as baseTest } from 'bun:test';
+import { pinnedEnvironment } from '../bin/bun.mjs';
 import {
   releaseDigest as sha,
   releaseJSON as json,
@@ -99,6 +100,77 @@ function metadata(bytes, files) {
     },
   ];
 }
+test('ordinary command failures retain bounded stdout and stderr diagnostics with full terminal receipts', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-command-'));
+  roots.add(root);
+  const observer = path.join(root, 'observe.mjs');
+  const successArgs = [
+    '--no-env-file',
+    '--no-install',
+    '-e',
+    'process.stdout.write("  result  \\n");process.stderr.write("ordinary warning")',
+  ];
+  writeFileSync(
+    observer,
+    [
+      "import fs from 'node:fs';",
+      `import {runCommand} from ${JSON.stringify(new URL('../../../tooling/agent/release-local.mjs', import.meta.url).href)};`,
+      "const failures=['stdout','stderr','both'].map(async mode => {",
+      "const script='const mode='+JSON.stringify(mode)+\";if(mode!=='stderr')process.stdout.write('x'.repeat(2050)+'stdout diagnostic');if(mode!=='stdout')process.stderr.write('y'.repeat(2050)+'stderr diagnostic');process.exit(2)\";",
+      "const args=['--no-env-file','--no-install','-e',script];let message=null;",
+      "try {await runCommand(process.execPath,args,{cwd:process.cwd(),log:mode+'.json'});} catch(error) {message=error.message;}",
+      "fs.writeFileSync(mode+'-observed.json',JSON.stringify({message,args}));});",
+      `const success=(async()=>{const value=await runCommand(process.execPath,${JSON.stringify(successArgs)},{cwd:process.cwd(),log:'success.json'});fs.writeFileSync('success-observed.json',JSON.stringify({value}));})();`,
+      "const results=await Promise.allSettled([...failures,success]);if(results.some(result=>result.status==='rejected'))throw Error('Incomplete ordinary observation');process.stdout.write('observed');",
+    ].join('\n'),
+  );
+  const child = spawnSync(process.execPath, ['--no-env-file', '--no-install', observer], {
+    cwd: root,
+    env: pinnedEnvironment(process.execPath),
+    encoding: 'utf8',
+    timeout: 4000,
+  });
+  writeFileSync(
+    path.join(root, 'observer-result.json'),
+    json({
+      code: child.status,
+      signal: child.signal,
+      error: child.error?.message ?? null,
+      stdout: child.stdout,
+      stderr: child.stderr,
+    }),
+  );
+  if (child.error || child.signal || child.status !== 0 || child.stdout !== 'observed') {
+    outcomeUnknown = true;
+    assert.fail('UNKNOWN ordinary command observer; retain root and partial streams: ' + root);
+  }
+  for (const mode of ['stdout', 'stderr', 'both']) {
+    const script = `const mode=${JSON.stringify(mode)};if(mode!=='stderr')process.stdout.write('x'.repeat(2050)+'stdout diagnostic');if(mode!=='stdout')process.stderr.write('y'.repeat(2050)+'stderr diagnostic');process.exit(2)`;
+    const args = ['--no-env-file', '--no-install', '-e', script];
+    const observed = JSON.parse(readFileSync(path.join(root, mode + '-observed.json'), 'utf8'));
+    assert.equal(typeof observed.message, 'string', 'Nonzero command must reject');
+    assert.deepEqual(observed.args, args);
+    const body = observed.message.slice(observed.message.indexOf('\n') + 1);
+    assert.ok(body.includes('\nstdout:\n'), 'Output must be in the diagnostic body, not literal command arguments');
+    assert.ok(body.includes('stderr:\n'));
+    assert.ok(body.length <= 4096 + 32, 'Each diagnostic stream tail stays bounded');
+    const receipt = JSON.parse(readFileSync(path.join(root, mode + '.json'), 'utf8'));
+    assert.equal(receipt.code, 2);
+    assert.equal(receipt.signal, null);
+    assert.equal(receipt.command, process.execPath);
+    assert.deepEqual(receipt.args, args);
+    const stdout = mode === 'stderr' ? '' : 'x'.repeat(2050) + 'stdout diagnostic';
+    const stderr = mode === 'stdout' ? '' : 'y'.repeat(2050) + 'stderr diagnostic';
+    assert.equal(receipt.stdout, stdout, 'Full saved stdout is not truncated');
+    assert.equal(receipt.stderr, stderr, 'Full saved stderr is not truncated');
+    assert.equal(body, 'stderr:\n' + stderr.slice(-2048) + '\nstdout:\n' + stdout.slice(-2048));
+  }
+  assert.equal(JSON.parse(readFileSync(path.join(root, 'success-observed.json'), 'utf8')).value, 'result');
+  const success = JSON.parse(readFileSync(path.join(root, 'success.json'), 'utf8'));
+  assert.equal(success.code, 0);
+  assert.equal(success.stdout, '  result  \n');
+  assert.equal(success.stderr, 'ordinary warning');
+});
 // Tiny inert archive members are state-machine fixtures; no build, package command or installation is executed.
 async function fixture({ success = false } = {}) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-'));

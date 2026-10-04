@@ -343,19 +343,19 @@ are verified failure categories, not 28 production Code defects or repaired
 results. Core and helper writers are correcting them in the same `.2` operation;
 rerun evidence is pending.
 
-| Count | Verified category                                                                                         | Disposition and proof still needed                                                                                                                                                         |
-| ----: | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-|    10 | Repair CLI fixtures select the wrong repository root.                                                     | Fix fixture root bindings, then exercise the actual package-owned CLI.                                                                                                                     |
-|     3 | Copied fixtures omit required tooling.                                                                    | Complete only the declared fixture payload; rerun retained boundary checks.                                                                                                                |
-|     1 | Forward-payload dependency-symlink fixture uses wrong copy root.                                          | Correct fixture containment and retain the symlink denial invariant.                                                                                                                       |
-|     5 | Runtime-config cases inherit runner-global `AGENT_RUNTIME_TEST_REPOSITORY_ROOT` pointing at another consumer repository.       | Isolate test context; this runner pollution does not justify production identity relaxation.                                                                                               |
-|     2 | Read-only dispatch assertions describe an old refactoring.                                                | Reconcile current fixture expectations without weakening effect/ownership gates.                                                                                                           |
-|     1 | Property fixture uses old project identity.                                                               | Use the current configured identity, retaining foreign-project rejection.                                                                                                                  |
-|     2 | Read-only reconciliation fixtures reference retired docs/Creatio maps.                                    | Update fixture source maps; no consumer or retired-reader fallback is authorized.                                                                                                          |
-|     1 | Run-message assertion expects an old exact string.                                                        | Preserve the helpful current next action and absence of root leakage; adjust only the stale assertion.                                                                                     |
-|     1 | Production migration release verifier used canonicalized parsed JSON instead of stored raw payload bytes. | Source fixed; independent affected helper pass is 14/75. Full sweep remains to be rerun.                                                                                                   |
-|     1 | Production fresh Host lazy acquisition queries a missing Mastra journal table.                            | Core fix is pending verification; Source writer fix has one-test/eight-assertion evidence; bounded independent Core QA is recorded separately. Mere table absence cannot prove quiescence. |
-|     1 | Expired-recovery fixture seeds a file claim but expects execution-only semantics.                         | Ownership guard is correct; align the fixture with its actual resource class.                                                                                                              |
+| Count | Verified category                                                                                                        | Disposition and proof still needed                                                                                                                                                         |
+| ----: | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|    10 | Repair CLI fixtures select the wrong repository root.                                                                    | Fix fixture root bindings, then exercise the actual package-owned CLI.                                                                                                                     |
+|     3 | Copied fixtures omit required tooling.                                                                                   | Complete only the declared fixture payload; rerun retained boundary checks.                                                                                                                |
+|     1 | Forward-payload dependency-symlink fixture uses wrong copy root.                                                         | Correct fixture containment and retain the symlink denial invariant.                                                                                                                       |
+|     5 | Runtime-config cases inherit runner-global `AGENT_RUNTIME_TEST_REPOSITORY_ROOT` pointing at another consumer repository. | Isolate test context; this runner pollution does not justify production identity relaxation.                                                                                               |
+|     2 | Read-only dispatch assertions describe an old refactoring.                                                               | Reconcile current fixture expectations without weakening effect/ownership gates.                                                                                                           |
+|     1 | Property fixture uses old project identity.                                                                              | Use the current configured identity, retaining foreign-project rejection.                                                                                                                  |
+|     2 | Read-only reconciliation fixtures reference retired docs/Creatio maps.                                                   | Update fixture source maps; no consumer or retired-reader fallback is authorized.                                                                                                          |
+|     1 | Run-message assertion expects an old exact string.                                                                       | Preserve the helpful current next action and absence of root leakage; adjust only the stale assertion.                                                                                     |
+|     1 | Production migration release verifier used canonicalized parsed JSON instead of stored raw payload bytes.                | Source fixed; independent affected helper pass is 14/75. Full sweep remains to be rerun.                                                                                                   |
+|     1 | Production fresh Host lazy acquisition queries a missing Mastra journal table.                                           | Core fix is pending verification; Source writer fix has one-test/eight-assertion evidence; bounded independent Core QA is recorded separately. Mere table absence cannot prove quiescence. |
+|     1 | Expired-recovery fixture seeds a file claim but expects execution-only semantics.                                        | Ownership guard is correct; align the fixture with its actual resource class.                                                                                                              |
 
 After repair fixture paths were corrected, the Source fallback research-repair
 route exposed another actual production defect. Core is fixing it; acceptance
@@ -370,3 +370,22 @@ numeric quality/native matrix, three fresh blind reviews, reverse validation,
 CLEAR closeout, global candidate install and attributable Runtime acceptance
 remain explicit GAPs. Priority is developer unblocking, consumer migration,
 optimization, then new Plugin functionality.
+
+## 2026-10-04 — command failure diagnostic observation
+
+The real corrected native CI run37209062391 passed exact checkout/mirror Source
+validation and issued native-build, then its `ci:pinned` child exited2. The shared
+repository command runner saved both streams but its rejection message exposed
+only stderr, leaving command echoes without the compiler diagnostic. The exact
+compiler cause and native qualification remain open; a known failed run is not an
+UNKNOWN retry or an installed outcome.
+
+[Node child_process](https://nodejs.org/api/child_process.html) describes separate
+stdout/stderr pipes and terminal close/code/signal observation. The implementation
+uses `node:child_process`; [Bun Node compatibility](https://bun.sh/docs/runtime/nodejs-compat)
+is its applicable framework reference. Bun.spawn is a different API and is not
+introduced. Reuse the existing capture and full receipt, exposing only labeled
+bounded tails of both streams in the failure body. Keep success behavior, caller
+bounds, locks, original attempts and UNKNOWN custody unchanged. Inert ordinary
+command controls qualify this observation boundary; compile/build/install evidence
+still comes only from CI/CD and cannot be inferred from those controls.

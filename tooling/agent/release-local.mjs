@@ -230,7 +230,11 @@ export function runCommand(command, args, { cwd, env = process.env, log, windows
       };
       if (log) writeFileSync(log, json(result));
       if (code !== 0 || signal)
-        reject(new Error(`Command failed: ${args.join(' ')} (${code ?? signal})\n${stderr.slice(-2048)}`));
+        reject(
+          new Error(
+            `Command failed: ${args.join(' ')} (${code ?? signal})\nstderr:\n${stderr.slice(-2048)}\nstdout:\n${stdout.slice(-2048)}`,
+          ),
+        );
       else resolve(stdout.trim());
     });
   });
