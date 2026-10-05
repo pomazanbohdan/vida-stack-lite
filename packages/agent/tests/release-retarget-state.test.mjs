@@ -49,7 +49,12 @@ import {
   validateNativeCIReceipts,
   validateNativeCIDenial,
   validateNativeCIUnadmittedRun,
+  validateNativeCICommandDenialInventory,
+  nativeCIDenialDiagnostics,
+  createNativeCICommandRunner,
+  nativeCIUnadmittedWorkflowDenial,
 } from '../../../tooling/agent/native-ci-delivery.mjs';
+import { commands } from '../bin/cli-metadata.mjs';
 
 const roots = new Set(),
   operation = 'local-original',
@@ -124,7 +129,8 @@ test('ordinary command failures retain bounded stdout and stderr diagnostics wit
   });
   const observations = Promise.allSettled(
     commands.map(async ({ mode, args }) => {
-      let value, message = null;
+      let value,
+        message = null;
       try {
         value = await runCommand(process.execPath, args, {
           cwd: root,
@@ -149,7 +155,9 @@ test('ordinary command failures retain bounded stdout and stderr diagnostics wit
   const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
   if (joined.kind !== 'settled' || elapsedMs > 4000) {
     outcomeUnknown = true;
-    assert.fail('UNKNOWN ordinary command observations exceeded the 4000ms deadline; retain root and partial streams: ' + root);
+    assert.fail(
+      'UNKNOWN ordinary command observations exceeded the 4000ms deadline; retain root and partial streams: ' + root,
+    );
   }
   const receipts = {};
   for (const { mode } of commands) {
@@ -389,7 +397,22 @@ test('CI emission requires all seven exact ordered terminal receipts and known d
     change(changed[2]);
     assert.throws(() => validateNativeCIReceipts({ identity, candidate, receipts: changed }), /CI phase observation/);
   }
-  validateNativeCIDenial({ code: 1, signal: null, stderr: 'invalid argument' }, /invalid argument/);
+  const expectedLine = { kind: 'line', message: { exact: 'invalid argument' } };
+  validateNativeCIDenial({ code: 1, signal: null, stderr: 'invalid argument\n' }, expectedLine);
+  const commandDenials = validateNativeCICommandDenialInventory(commands, {
+    'vida-agent': './bin/vida-agent.mjs',
+    'vida-agent-run': './bin/run.mjs',
+    'vida-agent-documentation-clear': './bin/documentation-clear.mjs',
+  });
+  assert.strictEqual(commandDenials.get(path.basename('./bin/run.mjs', '.mjs')), commandDenials.get('run'));
+  assert.throws(
+    () => validateNativeCICommandDenialInventory(new Set([...commands, 'future-command']), {}),
+    /public command denial expectation inventory differs/,
+  );
+  assert.throws(
+    () => validateNativeCICommandDenialInventory(commands, { 'vida-agent-future': './bin/future.mjs' }),
+    /maintained alias lacks an explicit command denial expectation/,
+  );
   const blocked = {
     schema: 'VidaAgentRunResult/v1',
     status: 'blocked',
@@ -399,6 +422,83 @@ test('CI emission requires all seven exact ordered terminal receipts and known d
   };
   const denial = { code: 1, signal: null, stderr: JSON.stringify(blocked) };
   validateNativeCIUnadmittedRun(denial);
+
+  const stdoutText = 'child stdout start:' + 'o'.repeat(3000) + ':stdout end',
+    stderrText = 'child stderr start:' + 'e'.repeat(3000) + ':unexpected message',
+    originalCommandError = new Error('original-command-error-with-already-expanded-diagnostic-tails');
+  const outcomes = [
+    {
+      code: 1,
+      signal: null,
+      stdout: '',
+      stderr: JSON.stringify(blocked),
+      error: new Error('original unadmitted workflow denial'),
+    },
+    { code: 0, signal: null, stdout: 'unexpected success output', stderr: 'unexpected success stderr' },
+    { code: 1, signal: null, stdout: stdoutText, stderr: stderrText, error: originalCommandError },
+  ];
+  const runDenied = createNativeCICommandRunner(
+    { root: value.root },
+    'ci-denial-contract-runner',
+    async (command, args, options) => {
+      const outcome = outcomes.shift();
+      assert.ok(outcome, 'unexpected synthetic command');
+      assert.equal(options.cwd, value.root);
+      const receipt = { command, args, code: outcome.code, signal: outcome.signal, stdout: outcome.stdout, stderr: outcome.stderr };
+      writeFileSync(options.log, json(receipt), { flag: 'wx' });
+      if (outcome.error) throw outcome.error;
+      return receipt.stdout.trim();
+    },
+  );
+  const exactWorkflowDenial = await runDenied.denied(
+    'inert-unadmitted-child',
+    ['--workflow', 'ci-unadmitted'],
+    {},
+    nativeCIUnadmittedWorkflowDenial,
+  );
+  assert.equal(exactWorkflowDenial.code, 1);
+
+  let unexpectedSuccessError;
+  try {
+    await runDenied.denied('inert-success-child', ['--success'], {}, expectedLine);
+  } catch (error) {
+    unexpectedSuccessError = error;
+  }
+  assert.ok(unexpectedSuccessError, 'unexpected success must still be a denial failure');
+  assert.match(unexpectedSuccessError.message, /different integer exit; known FAIL/);
+  assert.match(unexpectedSuccessError.message, /exit code: 0\nsignal: null/);
+  assert.match(unexpectedSuccessError.message, /command: "inert-success-child"\nargs: \["--success"\]/);
+  assert.match(unexpectedSuccessError.message, /stdout tail:\nunexpected success output\nstderr tail:\nunexpected success stderr/);
+  const successReceipt = JSON.parse(readFileSync(path.join(value.root, 'logs/ci-denial-contract-runner/1.json'), 'utf8'));
+  assert.equal(successReceipt.command, 'inert-success-child');
+  assert.deepEqual(successReceipt.args, ['--success']);
+  assert.equal(successReceipt.code, 0, 'unexpected success must preserve its actual close receipt');
+
+  let mismatchError;
+  try {
+    await runDenied.denied('inert-mismatch-child', ['--mismatch'], {}, expectedLine);
+  } catch (error) {
+    mismatchError = error;
+  }
+  assert.ok(mismatchError, 'unexpected message must fail its denial contract');
+  assert.equal(mismatchError.cause, originalCommandError, 'original command error remains the cause');
+  assert.equal(
+    mismatchError.message.includes(originalCommandError.message),
+    false,
+    'already-expanded cause tails are not printed twice',
+  );
+  assert.match(mismatchError.message, /command: "inert-mismatch-child"\nargs: \["--mismatch"\]\nexit code: 1\nsignal: null/);
+  const tailMatch = mismatchError.message.match(/stdout tail:\n([\s\S]*?)\nstderr tail:\n([\s\S]*)$/);
+  assert.ok(tailMatch);
+  assert.equal(tailMatch[1].length, 2048);
+  assert.equal(tailMatch[2].length, 2048);
+  assert.equal((mismatchError.message.match(/^stdout tail:/gm) ?? []).length, 1);
+  assert.equal((mismatchError.message.match(/^stderr tail:/gm) ?? []).length, 1);
+  const mismatchReceipt = JSON.parse(readFileSync(path.join(value.root, 'logs/ci-denial-contract-runner/2.json'), 'utf8'));
+  assert.equal(mismatchReceipt.stdout, stdoutText, 'full stdout remains in the saved receipt');
+  assert.equal(mismatchReceipt.stderr, stderrText, 'full stderr remains in the saved receipt');
+  assert.equal(mismatchReceipt.signal, null);
+
   for (const change of [
     { code: 'GAP-VIDA-RUN-BUN-001' },
     { code: 'GAP-VIDA-RUN-EXECUTION-001' },
@@ -413,18 +513,78 @@ test('CI emission requires all seven exact ordered terminal receipts and known d
   assert.throws(() => validateNativeCIUnadmittedRun({ ...denial, stderr: 'other failure\n' + denial.stderr }));
   for (const record of [
     { code: null, signal: 'SIGTERM', stderr: 'invalid argument' },
-    { code: 1, signal: null, stderr: 'Cannot find native module' },
-    { code: 0, signal: null, stderr: 'invalid argument' },
+    { code: null, signal: null, stderr: 'invalid argument' },
   ])
-    assert.throws(() => validateNativeCIDenial(record, /invalid argument/), /FAIL\/UNKNOWN retained/);
+    assert.throws(() => validateNativeCIDenial(record, expectedLine), /FAIL\/UNKNOWN retained/);
+  assert.throws(
+    () => validateNativeCIDenial({ code: 0, signal: null, stderr: 'invalid argument' }, expectedLine),
+    /different integer exit; known FAIL/,
+  );
+  assert.throws(
+    () => validateNativeCIDenial({ code: 2, signal: null, stderr: 'invalid argument' }, expectedLine),
+    /different integer exit; known FAIL/,
+  );
+  assert.throws(
+    () => validateNativeCIDenial({ code: 1, signal: null, stderr: 'different message' }, expectedLine),
+    /message or structured contract did not match/,
+  );
+  assert.throws(
+    () =>
+      validateNativeCIDenial(
+        { code: 1, signal: null, stderr: "  3 | throw new Error('invalid argument')\n    |" },
+        expectedLine,
+      ),
+    /message or structured contract did not match/,
+  );
+  const structuredExpected = {
+    kind: 'json',
+    keys: ['status', 'code', 'message'],
+    fields: { status: 'blocked', code: 'GAP-TEST-001' },
+    message: { exact: 'known denial' },
+  };
+  validateNativeCIDenial(
+    {
+      code: 1,
+      signal: null,
+      stderr: JSON.stringify({ status: 'blocked', code: 'GAP-TEST-001', message: 'known denial' }),
+    },
+    structuredExpected,
+  );
+  assert.throws(
+    () =>
+      validateNativeCIDenial(
+        {
+          code: 1,
+          signal: null,
+          stderr: JSON.stringify({ status: 'blocked', code: 'GAP-OTHER-001', message: 'known denial' }),
+        },
+        structuredExpected,
+      ),
+    /message or structured contract did not match/,
+  );
   assert.throws(
     () =>
       validateNativeCIDenial(
         { code: 1, signal: null, stderr: 'invalid argument; Cannot find package native-runtime' },
-        /invalid argument/,
+        expectedLine,
       ),
     /prerequisite failure/,
   );
+  const diagnostics = nativeCIDenialDiagnostics({
+    command: 'inert-diagnostic-child',
+    args: ['--diagnostic'],
+    code: 1,
+    signal: null,
+    stdout: 'start' + 'o'.repeat(3000) + 'stdout-end',
+    stderr: 'start' + 'e'.repeat(3000) + 'stderr-end',
+  });
+  assert.match(diagnostics, /^command: "inert-diagnostic-child"\nargs: \["--diagnostic"\]\nexit code: 1\nsignal: null/);
+  const tails = diagnostics.match(/stdout tail:\n([\s\S]*?)\nstderr tail:\n([\s\S]*)$/);
+  assert.ok(tails);
+  assert.equal(tails[1].length, 2048);
+  assert.equal(tails[2].length, 2048);
+  assert.ok(tails[1].endsWith('stdout-end'));
+  assert.ok(tails[2].endsWith('stderr-end'));
 });
 
 function githubTransportFixture(request, bytes) {
@@ -1209,42 +1369,45 @@ test('mixed release effect before archive ACK and self-consistent forged field c
 });
 
 for (const boundary of ['planning', 'custody_reserved', 'custody_ready'])
-  test('planning reservation excludes workers and incomplete custody is never reconstructed (' + boundary + ')', async () => {
-    const value = await fixture();
-    await value.stage();
-    let launches = 0;
-    await assert.rejects(
-      planReleaseRetarget(
-        { ...value.input, actor: 'isolated human controller' },
-        {
-          onPhase: async (phase) => {
-            if (phase !== boundary) return;
-            await assert.rejects(
-              reserveReleaseWorker(value.root, operation, () => {
-                launches++;
-                return 11;
-              }),
-              /active/,
-            );
-            await assert.rejects(verifyLocalReleaseTests({ ...value.input, version }), /active/);
-            throw Error('planning fault');
+  test(
+    'planning reservation excludes workers and incomplete custody is never reconstructed (' + boundary + ')',
+    async () => {
+      const value = await fixture();
+      await value.stage();
+      let launches = 0;
+      await assert.rejects(
+        planReleaseRetarget(
+          { ...value.input, actor: 'isolated human controller' },
+          {
+            onPhase: async (phase) => {
+              if (phase !== boundary) return;
+              await assert.rejects(
+                reserveReleaseWorker(value.root, operation, () => {
+                  launches++;
+                  return 11;
+                }),
+                /active/,
+              );
+              await assert.rejects(verifyLocalReleaseTests({ ...value.input, version }), /active/);
+              throw Error('planning fault');
+            },
           },
-        },
-      ),
-      /planning fault/,
-    );
-    assert.equal(launches, 0);
-    assert.deepEqual(read(value.root, archive), value.oldBytes);
-    if (boundary === 'planning') {
-      assert.equal(existsSync(path.join(value.root, folder + '/retarget/custody')), false);
-      await plan(value);
-      assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
-    } else if (boundary === 'custody_reserved') {
-      await assert.rejects(plan(value), /partial custody/);
-      await assert.rejects(applyReleaseRetarget(value.input), /missing/);
-      assert.equal(existsSync(path.join(value.root, folder + '/retarget/custody/seal.json')), false);
-    } else assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
-  });
+        ),
+        /planning fault/,
+      );
+      assert.equal(launches, 0);
+      assert.deepEqual(read(value.root, archive), value.oldBytes);
+      if (boundary === 'planning') {
+        assert.equal(existsSync(path.join(value.root, folder + '/retarget/custody')), false);
+        await plan(value);
+        assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
+      } else if (boundary === 'custody_reserved') {
+        await assert.rejects(plan(value), /partial custody/);
+        await assert.rejects(applyReleaseRetarget(value.input), /missing/);
+        assert.equal(existsSync(path.join(value.root, folder + '/retarget/custody/seal.json')), false);
+      } else assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
+    },
+  );
 
 test('clean planning lost initial ACK resumes once with unchanged frozen inputs only', async () => {
   for (const drift of [false, true]) {

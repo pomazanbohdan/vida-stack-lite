@@ -572,3 +572,143 @@ its bound, or attribute it to Bun, Windows, host load or dependencies. This is
 not a measured speed comparison and proves no production CI, native build,
 installation, installed readiness or Runtime acceptance. The existing CI and
 delivery evidence remains authoritative for those later gates.
+
+## 2026-10-05 — CI7 public-route denial contract
+
+The earlier six-run statements above describe the evidence cut before CI7. The
+approved workflow run37239761231/attempt1/job111545933366 later completed with
+overall failure. Source selection, checkout, Node/Bun setup and isolated Source
+guards passed; `native-build` and `native-install` also passed. `public-routes`
+failed, while `offline-runtime`, `native-dependencies`, `state-preservation`,
+`upgrade-recovery`, `emit-result` and `upload` were skipped. The retained
+terminal/jobs and failed log are
+`.tmp/core-windows-resume-20261002/approved-update01-ci-zip-lock-ci-run-terminal.json`
+and `.tmp/core-windows-resume-20261002/approved-update01-ci-zip-lock-ci-run-failed.log`.
+The last phase message says `expected rejection lacks actual terminal
+observation; FAIL/UNKNOWN retained`, but the log does not identify the rejecting
+child, its status or stderr. Therefore the exact failing command and whether its
+terminal fields or message predicate failed remain unknown. Native build and
+install steps in this run are partial results, not native-target qualification,
+installed behavior or Runtime acceptance.
+
+The `gh run watch --exit-status` command returned 1 because the workflow
+completed unsuccessfully. The current [official GitHub CLI manual](https://cli.github.com/manual/gh_run_watch)
+defines that flag to return a non-zero status when the run fails; this is the
+expected watcher result and not an additional product failure. The [Node.js
+child-process reference](https://nodejs.org/api/child_process.html) documents
+that `close` occurs after process termination and stdio closure, that its code
+and signal distinguish exit from signal termination, and that `exit` can occur
+while stdio remains open. These mechanics support waiting for complete child
+receipts before parsing stdout. The current [LangGraph "Thinking in
+LangGraph" guide](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph)
+is a general agent-flow reference about decomposing steps and classifying
+errors; the native CI producer does not use LangGraph, so this guide supplies no
+runtime contract, dependency or cause attribution here.
+
+Static source audit showed that the old denial observer collapsed missing
+terminal evidence, non-1 exits and message mismatch into one terminal error and
+used generic public-command matchers. Current parser text for
+`documentation-clear` and `scope` did not match the generic invalid-option
+matcher; the documentation alias also did not match its alias matcher. This
+establishes an observer-contract mismatch, not the identity or cause of CI7's
+first failing child. The bounded correction gives each maintained public
+command an explicit parser-specific denial expectation, resolves aliases by
+their entry filename to the same expectation, and asserts inventory
+completeness. The observer now retains the full terminal record and command
+identity, distinguishes absent/failed terminal observation, prerequisite
+failure, unexpected completed integer exit and expected-message mismatch, and
+adds separately labeled stdout/stderr tails capped at 2048 characters each to
+diagnostics. It does not accept a broader exit set, arbitrary stderr, substring
+fallback, new timeout, retry, schema or public parser behavior.
+
+Specialized denials remain tied to their existing invocations and fixture
+fences: release-retarget requires the path-free `Local release: path missing`
+JSON while the exact guarded `ci-missing/release.json` first-read target is
+absent; development-controller checks the exact missing requested root and
+realpath error; documentation-clear accepts only its exact Windows reader text
+for the observed absent `ci-missing/scope.json`. Resource publication
+interruption preserves the pending tree/lock and awaits `close`; each existing
+tampered, partial, conflicting, hardlink and symlink resource denial is matched
+to its exact error while checking that the observed fault fixture remains
+unchanged. The publication race keeps both actual children, close receipts,
+one-winner byte identity and only the existing exact unowned-destination or
+destination-specific copyfile EEXIST result. Synchronous native-publication
+negative controls require their exact existing messages. These controls
+observe current behavior without adding a new CI route or delivery effect.
+
+### Local focused verification
+
+After the final source and test formatting correction, direct shell output under
+Bun 1.4.2 showed the exact synthetic case passing (1 pass, 42 filtered, 0 fail) with
+`bun --no-env-file --no-install test tests/release-retarget-state.test.mjs --test-name-pattern 'CI emission requires all seven exact ordered terminal receipts and known denials'`.
+One current full run of
+`bun --no-env-file --no-install test tests/release-retarget-state.test.mjs`
+then showed 43/43 tests and no failures (32.43 seconds); the shell reported exit
+0. Both ran from `packages/agent`, used the maintained `bunfig.toml` seed
+20260817 and normal reader resolution with `VIDA_CI_READER_ROOT` unset. Targeted
+`oxfmt --check` (0.64.0) and `oxlint` (1.79.0) on the two changed JavaScript
+files passed; `node --check` also passed under Node v24.19.0. The outer test
+commands were direct shell launches: they did not use the accepted
+`pinnedEnvironment` launcher or separately persist full stdout/stderr and a
+terminal child receipt. Their successful output remains a historical direct
+observation with that process-evidence GAP; it is not promoted to qualified
+launcher evidence. The later corrective full43 receipt below closes this gap
+only for its current source snapshot. No native executable, build, package,
+extraction, install, delivery or provider action was run.
+
+### Corrective current full43 receipt — 2026-10-05 local
+
+After the producer and test corrections were stable, one current full43 run
+used the existing launch discipline with `pinnedEnvironment`, a fresh five-path
+Source readiness receipt, canonical `packages/agent` cwd, package-pinned Bun
+1.4.2, the maintained `bunfig.toml` seed 20260817, and
+`VIDA_CI_READER_ROOT` removed. It ran the complete existing test file with no
+test-name filter. The process emitted distinct complete stdout and stderr
+files; its dedicated terminal receipt records the actual child `close`, exit
+code 0, null signal, and no spawn error. The output reports 43 pass and 0 fail
+in 30.397 seconds. The separate launch record preserves the command, cwd,
+environment summary, test seed, terminal fields, streams, and the guarded
+pre-run source snapshot. A second fresh readiness observation found identical
+five-path source snapshots, no exact conflicts, unchanged Host rows, and
+unchanged release custody.
+
+The exclusive run evidence is retained at
+`.tmp/core-windows-resume-20261002/ci-denial-contract-final-full43-pinned-env-20261005-v1.launch.json`,
+`.tmp/core-windows-resume-20261002/ci-denial-contract-final-full43-pinned-env-20261005-v1.terminal.json`,
+`.tmp/core-windows-resume-20261002/ci-denial-contract-final-full43-pinned-env-20261005-v1.stdout.txt`,
+and
+`.tmp/core-windows-resume-20261002/ci-denial-contract-final-full43-pinned-env-20261005-v1.stderr.txt`.
+Before/after ownership receipts are
+`.tmp/core-windows-resume-20261002/ci-denial-contract-ready-native-ci-final-full43.json`
+and
+`.tmp/core-windows-resume-20261002/ci-denial-contract-ready-native-ci-final-full43-after.json`.
+This qualified local run closes the current full-suite observation-process
+GAP. It does not retrospectively qualify the earlier direct shell outputs or
+identify CI7's first rejecting child, and it does not establish native build,
+installation, delivery, provider or Runtime acceptance.
+
+### Final corrected current full43 receipt — 2026-10-05 local
+
+After the final producer and synthetic-test bytes were stable, the exact
+CI-emission case passed under the same pinned Bun 1.4.2 environment (1 pass,
+42 filtered, 0 fail). One subsequent full run of
+`bun --no-env-file --no-install test tests/release-retarget-state.test.mjs`
+from `packages/agent` reported 43 pass and 0 fail in 34.11 seconds. The
+separate launcher record reports actual child `close`, exit code 0, null
+signal, no spawn error, and 34.208 seconds elapsed. Both runs used the
+maintained `bunfig.toml` seed 20260817 and normal reader resolution with
+`VIDA_CI_READER_ROOT` removed. Fresh readiness for the five frozen Source paths
+completed immediately before this run; the launcher retained that source
+snapshot with the command, cwd, environment summary and complete independent
+stdout/stderr files.
+
+The current receipts are
+`.tmp/core-windows-resume-20261002/ci-denial-amend-focused1-pinned-env-20261005-v1.launch.json`,
+`.tmp/core-windows-resume-20261002/ci-denial-amend-focused1-pinned-env-20261005-v1.terminal.json`,
+`.tmp/core-windows-resume-20261002/ci-denial-amend-full43-final-pinned-env-20261005-v1.launch.json`,
+`.tmp/core-windows-resume-20261002/ci-denial-amend-full43-final-pinned-env-20261005-v1.terminal.json`,
+and the matching `.stdout.txt` and `.stderr.txt` files. The full-run readiness
+is `.tmp/core-windows-resume-20261002/ci-denial-amend-ready-ci-denial-amend-full43-final.json`.
+This is current local source/test evidence only; it does not identify CI7's
+first rejecting child or establish native build, installation, delivery,
+provider or Runtime acceptance.

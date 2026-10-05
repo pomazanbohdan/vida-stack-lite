@@ -73,7 +73,7 @@ current exact-asset receipts remain required and separate from local agent proof
 The repository-only workflow `agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
 phases and one result-emission step. The approved provider/profile was activated
-and six CI runs were dispatched; all six failed overall. Run37216772330/attempt1
+and seven CI runs were dispatched; all seven failed overall. Run37216772330/attempt1
 passed Source guards, `ci:pinned` and npm pack, then native-build failed with an
 ENOENT lstat on its absent private package extraction destination. Following the
 archive-destination caller correction, run37220454501/attempt1/job111489588604
@@ -86,7 +86,13 @@ skipped. These partial step successes establish neither full native
 qualification nor installed behavior or Runtime acceptance. Source checks do
 not qualify native targets. Public route denials need actual terminal child
 observations and specific errors; prerequisite or UNKNOWN failures cannot count
-as valid denials. The Windows/current-asset same-version upgrade controls do not
+as valid denials. CI7 run37239761231/attempt1/job111545933366 passed
+native-build and native-install, then failed in public-routes. Its later
+offline-runtime, native-dependencies, state-preservation and upgrade-recovery
+phases, result emission and upload were skipped. The retained log says the
+expected rejection lacked an actual terminal observation, but does not identify
+the rejecting child, its status or stderr; the exact first failure remains
+unknown. The Windows/current-asset same-version upgrade controls do not
 establish other target support or cross-version rollback. The provider/profile is
 active; applicable standalone requirements and separate target-specific
 evidence remain open.
@@ -114,6 +120,24 @@ tests never skip, copy or install dependencies. This verifies the local observer
 boundary, not the normal Source environment, real CI/native delivery or installed
 acceptance. Keep the exclusive transport fixture within the selected root and
 retain UNKNOWN custody rather than deleting an active fixture.
+
+The same suite's synthetic CI-emission case checks exact seven-phase receipt
+ordering, complete terminal fields, known command-denial contracts, prerequisite
+refusal and separate bounded stdout/stderr tails. It uses inert values and does
+not invoke CI or perform native delivery.
+
+For the 2026-10-05 CI-denial correction, the exact synthetic case passed under
+the pinned Bun 1.4.2 launcher (1 pass, 42 filtered, 0 fail), followed by one
+stable full run of this file (43 pass, 0 fail; actual child close exit 0, null
+signal and no spawn error). Both used `--no-env-file --no-install`, the
+maintained seed 20260817 and normal reader resolution with
+`VIDA_CI_READER_ROOT` removed. Bun reported 34.11 seconds; the launch record
+measured 34.208 seconds through stdio closure. Its launch,
+terminal and complete stdout/stderr receipts, plus the fresh five-path
+pre-run observation, are retained under
+`.tmp/core-windows-resume-20261002/ci-denial-amend-full43-final-pinned-env-20261005-v1.*`
+and `.tmp/core-windows-resume-20261002/ci-denial-amend-ready-ci-denial-amend-full43-final.json`; focused receipts
+use the matching `ci-denial-amend-focused1-pinned-env-20261005-v1.*` prefix.
 
 Run every public command route and aliases from unrelated cwd with external
 Node/npm/Bun absent from PATH and first-run network unavailable. Verify actual
@@ -449,14 +473,20 @@ the actual current operation; suite receipts belong outside this living contract
 Run `bun run verify` from the bundle root for the local agent subset. It neither
 installs dependencies nor copies or installs a bundle. `bun run ci` performs
 delivery preparation only; CI/CD owns exact artifact/build/install validation.
-Six CI runs were dispatched and all six failed overall. In run37224368306/attempt1/
+Seven CI runs were dispatched and all seven failed overall. In run37224368306/attempt1/
 job111500862047, native-build and native-install passed, but public-routes failed
 during initialization; four remaining delivery phases and result emission/upload
 were skipped. Those partial CI steps do not establish a successful full native
 delivery, exact-asset qualification or installed acceptance. No local installed
 checkpoint is established. Local successful logs cannot substitute for CI/CD
 evidence or attributable installed user acceptance. Numeric coverage, CRAP and
-manual mutation proof remain separate local requirements.
+manual mutation proof remain separate local requirements. CI7
+run37239761231/attempt1/job111545933366 also passed native-build and
+native-install before public-routes failed; offline-runtime,
+native-dependencies, state-preservation and upgrade-recovery, result emission
+and upload were skipped. The retained log reports that the expected rejection
+lacked an actual terminal observation, but lacks the rejecting child identity,
+status and stderr, so its exact first failure remains unknown.
 
 ## Required integration evidence
 
@@ -551,12 +581,16 @@ The discovery view retains the exact maintained bunfig.toml used by the child la
 Source-only repair/recovery fixtures exclude the exact generated dist/standalone
 directory. They retain agent sources, schemas, instructions and current SDK
 outputs; the repository text-read limit stays unchanged. The approved CI/CD
-workflow/profile was activated and six runs were dispatched; all six failed
+workflow/profile was activated and seven runs were dispatched; all seven failed
 overall. In run37224368306/attempt1/job111500862047, native-build and
 native-install passed before public-routes failed during initialization; four
 remaining delivery phases and result emission/upload were skipped. These partial
-step results do not establish native target or installed qualification. Delivery
-qualification remains an explicit GAP.
+step results do not establish native target or installed qualification. CI7
+run37239761231/attempt1/job111545933366 also passed native-build and
+native-install before public-routes failed. The four remaining delivery phases,
+result emission and upload were skipped. Its retained log does not identify the
+rejecting child, status or stderr, so the exact first failure remains unknown.
+Delivery qualification remains an explicit GAP.
 
 The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`
 checks original-baseline recovery after a valid current configuration revision
