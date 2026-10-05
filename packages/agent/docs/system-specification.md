@@ -431,6 +431,28 @@ targets and cross-version rollback are not qualified by this Windows/current-ass
 implementation. Full standalone, numeric, sealed and installed assurance remains
 separate even after these minimum seven checks.
 
+The Windows firewall adapter may emit a bounded `offline-firewall` observation
+to its existing PowerShell stdout before an unchanged denial. The single-line
+JSON envelope is limited to 1536 UTF-16 code units and contains only the fixed
+record kind, stage, allowlisted observations and truncation flag. It reports
+profile `Name`/`Enabled` and ActiveStore rule `Enabled`, `Action`, `Direction`,
+`PrimaryStatus`, `StatusCode` and raw `EnforcementStatus` metadata. The rule
+projection appends the `enforcement_full` result used by the guard, or an
+unavailable observation when an earlier rule guard stops evaluation.
+`program_match` retains the raw Program shape/type/count and the same computed
+result used by the guard; Program path values remain omitted. Both boolean
+results survive metadata fallback. Command-local progress suppression and
+these diagnostics do not satisfy or relax isolation: the existing enabled-
+profile and enabled/block/outbound/PrimaryStatus `OK` gates remain, and success
+requires a nonempty one-dimensional EnforcementStatus array in one supported
+representation (all string values `Full`, or all UInt16 code `1` values). Program
+must be a nonempty scalar string exactly matching the asset path, or a nonempty
+one-dimensional array whose every entry is a string exactly matching that path
+case-sensitively. Missing, null, empty, invalid, nested, mixed, unsupported or
+different values deny. Each positive result is computed once and reused by its
+guard and diagnostic; Program path values remain withheld. No diagnostic
+authorizes retry or cleanup.
+
 The optional explicit downloader `downloadGitHubCIDelivery` binds the selected
 successful run/attempt/workflow/repository and exact artifact to its actual job's
 start/completion interval and selected published commit. It accepts only a

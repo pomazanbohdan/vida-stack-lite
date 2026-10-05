@@ -742,25 +742,163 @@ async function offlineRuntime(ctx, candidate, invoke) {
   const name = 'vida-ci-offline-' + ctx.run_id + '-' + ctx.run_attempt;
   requireCI(!existsSync(path.join(env.USERPROFILE, '.vida-agent')), 'offline first-run cache already exists');
   // A replaceable Windows CI adapter. An unavailable/enforced-off firewall is a GAP.
-  await powershell(
-    invoke,
-    'if(Get-NetFirewallRule -Name ' +
-      psLiteral(name) +
-      " -ErrorAction SilentlyContinue){throw 'Retained isolation intent'}; " +
-      "if(@(Get-NetFirewallProfile -PolicyStore ActiveStore | Where-Object {$_.Enabled -ne 'True'}).Count){throw 'Firewall policy is not enabled'}; " +
-      'New-NetFirewallRule -Name ' +
-      psLiteral(name) +
-      ' -DisplayName ' +
-      psLiteral(name) +
-      ' -Direction Outbound -Program ' +
-      psLiteral(asset.path) +
-      ' -Action Block -Profile Any -Enabled True | Out-Null; $rule=Get-NetFirewallRule -PolicyStore ActiveStore -Name ' +
-      psLiteral(name) +
-      "; if($rule.Enabled -ne 'True' -or $rule.Action -ne 'Block' -or $rule.Direction -ne 'Outbound' -or $rule.PrimaryStatus -ne 'OK' -or $rule.EnforcementStatus -ne 'Full'){throw 'Isolation rule is not fully enforced'}; " +
-      'if(($rule | Get-NetFirewallApplicationFilter).Program -cne ' +
-      psLiteral(asset.path) +
-      "){throw 'Isolation executable differs'}",
-  );
+  const firewallCommand = String.raw`
+$ProgressPreference='SilentlyContinue';
+$diagnosticTruncated=[ref]$false;
+$typeInfo={param($value,[int]$limit=64) $name=$value.GetType().FullName; $cut=$false; if($name.Length -gt $limit){$name=$name.Substring(0,$limit);$cut=$true;$diagnosticTruncated.Value=$true}; $result=New-Object 'System.Object[]' 2; $result[0]=$name; $result[1]=$cut; return ,$result};
+$newObservation={param($shape,$type,$count,$values,$flags) $result=New-Object 'System.Object[]' 5; $result[0]=$shape; $result[1]=$type; $result[2]=$count; $result[3]=[int]$flags; $result[4]=$values; return ,$result};
+$scalarObservation={param($value)
+  if($null -eq $value){return ,(& $newObservation 'n' $null $null $null 0)}
+  $type=& $typeInfo $value; $shown=$null; $flags=0; if($type[1]){$flags=$flags -bor 1};
+  if($value -is [string]){if($value.Length -gt 64){$shown=$value.Substring(0,64);$flags=$flags -bor 1;$diagnosticTruncated.Value=$true}else{$shown=$value}}
+  elseif($value -is [char]){$shown=[string]$value}
+  elseif($value -is [Enum]){$shown=[Convert]::ToInt64($value)}
+  elseif($value -is [bool] -or $value -is [byte] -or $value -is [sbyte] -or $value -is [int16] -or $value -is [uint16] -or $value -is [int32] -or $value -is [uint32] -or $value -is [int64] -or $value -is [uint64] -or $value -is [decimal]){$shown=$value}
+  elseif($value -is [single]){if([single]::IsNaN($value) -or [single]::IsInfinity($value)){$flags=$flags -bor 2}else{$shown=$value}}
+  elseif($value -is [double]){if([double]::IsNaN($value) -or [double]::IsInfinity($value)){$flags=$flags -bor 2}else{$shown=$value}}
+  else{$flags=$flags -bor 2}
+  return ,(& $newObservation 's' $type[0] 1 $shown $flags)
+};
+$valueObservation={param($value,[int]$limit=8)
+  if($null -eq $value){return ,(& $scalarObservation $null)}
+  if($value -is [array]){
+    $type=& $typeInfo $value; $items=New-Object 'System.Collections.Generic.List[object]'; $count=$value.Length; $take=[Math]::Min($count,$limit); $flags=0;
+    if($type[1]){$flags=$flags -bor 1}; if($count -gt $limit){$flags=$flags -bor 3;$diagnosticTruncated.Value=$true};
+    $elementType=$value.GetType().GetElementType();
+    $primitive=($elementType -eq [string] -or $elementType -eq [char] -or $elementType -eq [bool] -or $elementType -eq [byte] -or $elementType -eq [sbyte] -or $elementType -eq [int16] -or $elementType -eq [uint16] -or $elementType -eq [int32] -or $elementType -eq [uint32] -or $elementType -eq [int64] -or $elementType -eq [uint64] -or $elementType -eq [single] -or $elementType -eq [double] -or $elementType -eq [decimal]);
+    if($elementType -eq [single] -or $elementType -eq [double]){for($index=0;$index -lt $take;$index++){if([double]::IsNaN([double]$value[$index]) -or [double]::IsInfinity([double]$value[$index])){$primitive=$false;break}}}
+    for($index=0;$index -lt $take;$index++){
+      $itemValue=$value[$index];
+      if($primitive){
+        if($itemValue -is [string]){if($itemValue.Length -gt 64){$items.Add($itemValue.Substring(0,64));$flags=$flags -bor 1;$diagnosticTruncated.Value=$true}else{$items.Add($itemValue)}}
+        elseif($itemValue -is [char]){$items.Add([string]$itemValue)}
+        else{$items.Add($itemValue)}
+      }else{$items.Add((& $scalarObservation $itemValue)); if($items[$items.Count-1][3] -band 2){$flags=$flags -bor 2}}
+    };
+    $shownValues=$items.ToArray(); return ,(& $newObservation 'a' $type[0] $count $shownValues $flags)
+  }
+  return ,(& $scalarObservation $value)
+};
+$unavailableObservation={return ,(& $newObservation 'u' $null $null $null 0)};
+$propertyObservation={param($item,$propertyName,[int]$limit=8)
+  $property=$item.PSObject.Properties[$propertyName];
+  if($null -eq $property){return ,(& $newObservation 'p' $null $null $null 0)}
+  $observedValue=$property.Value; return ,(& $valueObservation $observedValue $limit)
+};
+$projectedObservation={param($value,[int]$limit,$project,$predicateValue=$null)
+  if($null -eq $value){return ,(& $scalarObservation $null)}
+  if($value -is [array]){
+    $type=& $typeInfo $value; $items=New-Object 'System.Collections.Generic.List[object]'; $count=$value.Length; $take=[Math]::Min($count,$limit); $flags=0;
+    if($type[1]){$flags=$flags -bor 1}; if($count -gt $limit){$flags=$flags -bor 3;$diagnosticTruncated.Value=$true};
+    for($index=0;$index -lt $take;$index++){$items.Add((& $project $value[$index] $predicateValue))};
+    $shownValues=$items.ToArray(); return ,(& $newObservation 'a' $type[0] $count $shownValues $flags)
+  }
+  $type=& $typeInfo $value; $projected=& $project $value $predicateValue; $flags=0; if($type[1]){$flags=1}; return ,(& $newObservation 's' $type[0] 1 $projected $flags)
+};
+$profileProject={param($item,$predicateValue)
+  if($null -eq $item){return ,(& $scalarObservation $null)};
+  $nameValue=& $propertyObservation $item 'Name' 8; $enabledValue=& $propertyObservation $item 'Enabled' 8;
+  $result=New-Object 'System.Object[]' 2; $result[0]=$nameValue; $result[1]=$enabledValue; return ,$result
+};
+$ruleProject={param($item,$enforcementFull)
+  if($null -eq $item){return ,(& $scalarObservation $null)};
+  $result=New-Object 'System.Object[]' 7; $result[0]=& $propertyObservation $item 'Enabled' 8; $result[1]=& $propertyObservation $item 'Action' 8; $result[2]=& $propertyObservation $item 'Direction' 8; $result[3]=& $propertyObservation $item 'PrimaryStatus' 8; $result[4]=& $propertyObservation $item 'StatusCode' 8; $result[5]=& $propertyObservation $item 'EnforcementStatus' 8; if($null -eq $enforcementFull){$result[6]=& $unavailableObservation}else{$result[6]=& $scalarObservation ([bool]$enforcementFull)}; return ,$result
+};
+$observationTuple={param($value) return ($value -is [array] -and $value.Length -eq 5 -and $value[0] -is [string] -and @('u','p','n','s','a') -contains $value[0])};
+$containsObservation={param($value)
+  if(& $observationTuple $value){return $true}
+  if($value -is [array]){foreach($item in $value){if(& $containsObservation $item){return $true}}}
+  return $false
+};
+$metadataOnly={param($value,[bool]$preserveProjection=$false)
+  if(& $observationTuple $value){
+    $result=New-Object 'System.Object[]' 5; $result[0]=$value[0]; $type=$value[1]; $typeCut=$false;
+    if($null -ne $type -and $type.Length -gt 32){$type=$type.Substring(0,32);$typeCut=$true}; $result[1]=$type; $result[2]=$value[2]; $flags=[int]$value[3]; if($typeCut){$flags=$flags -bor 1};
+    $observedValues=$value[4];
+    if($null -ne $observedValues -and (& $containsObservation $observedValues) -and $preserveProjection){$result[4]=& $metadataOnly $observedValues $false; $flags=$flags -bor 3}
+    elseif($null -ne $observedValues -and (& $containsObservation $observedValues)){$result[4]=$null;$flags=$flags -bor 3}
+    elseif($value[0] -eq 's' -and $type -eq 'System.Boolean' -and $value[2] -eq 1 -and $observedValues -is [bool]){$result[4]=$observedValues}
+    elseif(($value[0] -eq 's' -or $value[0] -eq 'a') -and $null -ne $value[2] -and ($value[0] -ne 'a' -or $value[2] -gt 0)){$result[4]=$null;$flags=$flags -bor 3}
+    else{$result[4]=$observedValues}
+    $result[3]=$flags; return ,$result
+  }
+  if($value -is [array]){$items=New-Object 'System.Collections.Generic.List[object]'; foreach($item in $value){$items.Add((& $metadataOnly $item $false))}; $array=$items.ToArray(); return ,$array}
+  return $value
+};
+$emitDiagnostic={param($stage,$observations)
+  $record=[ordered]@{kind='offline-firewall';stage=$stage;observations=$observations;truncated=[bool]$diagnosticTruncated.Value};
+  $text=ConvertTo-Json -InputObject $record -Depth 20 -Compress;
+  if($text.Length -gt 1536){
+    $metadata=[ordered]@{}; foreach($key in $observations.Keys){$metadata[$key]=& $metadataOnly $observations[$key] ($key -eq 'profiles' -or $key -eq 'rules')};
+    $record=[ordered]@{kind='offline-firewall';stage=$stage;observations=$metadata;truncated=$true};
+    $text=ConvertTo-Json -InputObject $record -Depth 20 -Compress;
+    if($text.Length -gt 1536){throw 'Offline firewall metadata diagnostic exceeded its statically bounded record size'}
+  }
+  [Console]::Out.WriteLine($text); [Console]::Out.Flush()
+};
+$emitObservedStage={param($stage,$profileValue,$profileRead,$ruleValue,$ruleRead,$programValue,$filterValue,$comparisonRead,$matched,$enforcementFull=$null)
+  if($profileRead){$profilesObservation=& $projectedObservation $profileValue 3 $profileProject}else{$profilesObservation=& $unavailableObservation};
+  if($ruleRead){$rulesObservation=& $projectedObservation $ruleValue 1 $ruleProject $enforcementFull}else{$rulesObservation=& $unavailableObservation};
+  if($comparisonRead){
+    $programObservation=& $valueObservation $programValue 8;
+    if($programObservation[0] -eq 's'){$programObservation[4]=$null;$programObservation[3]=([int]$programObservation[3] -bor 2)}
+    elseif($programObservation[0] -eq 'a'){
+      $redacted=New-Object 'System.Collections.Generic.List[object]'; foreach($entry in $programObservation[4]){if(& $observationTuple $entry){if($entry[0] -eq 'n' -or $entry[0] -eq 'p' -or $entry[0] -eq 'u'){$redacted.Add($entry)}else{$entry[4]=$null;$entry[3]=([int]$entry[3] -bor 2);$redacted.Add($entry)}}elseif($null -eq $entry){$redacted.Add($null)}else{$redacted.Add('<omitted>')}}; $programObservation[4]=$redacted.ToArray(); $programObservation[3]=([int]$programObservation[3] -bor 2)
+    }
+    $matchObservation=& $scalarObservation ([bool]$matched); $programMatchObservation=New-Object 'System.Object[]' 2; $programMatchObservation[0]=$programObservation; $programMatchObservation[1]=$matchObservation
+  }else{$programMatchObservation=New-Object 'System.Object[]' 2; $programMatchObservation[0]=& $unavailableObservation; $programMatchObservation[1]=& $unavailableObservation};
+  & $emitDiagnostic $stage ([ordered]@{profiles=$profilesObservation;rules=$rulesObservation;program_match=$programMatchObservation})
+};
+$emitFailureDiagnostic={param($stage,$profileValue,$profileRead,$ruleValue,$ruleRead,$programValue,$filterValue,$comparisonRead,$matched,$enforcementFull=$null)
+  try{& $emitObservedStage $stage $profileValue $profileRead $ruleValue $ruleRead $programValue $filterValue $comparisonRead $matched $enforcementFull}
+  catch{[Console]::Error.WriteLine('Offline firewall diagnostic emission failed');[Console]::Error.Flush()}
+};
+$ruleName=${psLiteral(name)};
+$assetPath=${psLiteral(asset.path)};
+try{$retained=Get-NetFirewallRule -Name $ruleName -ErrorAction SilentlyContinue}catch{& $emitFailureDiagnostic 'retained-rule-persistent-store-query-failure' $null $false $null $false $null $null $false $false;throw};
+if($retained){& $emitFailureDiagnostic 'retained-rule-persistent-store-rejection' $null $false $retained $true $null $null $false $false;throw 'Retained isolation intent'};
+try{$profiles=Get-NetFirewallProfile -PolicyStore ActiveStore}catch{& $emitFailureDiagnostic 'profile-query-failure' $null $false $null $false $null $null $false $false;throw};
+if(@($profiles | Where-Object {$_.Enabled -ne 'True'}).Count){& $emitFailureDiagnostic 'profile-policy-rejection' $profiles $true $null $false $null $null $false $false;throw 'Firewall policy is not enabled'};
+try{New-NetFirewallRule -Name $ruleName -DisplayName $ruleName -Direction Outbound -Program $assetPath -Action Block -Profile Any -Enabled True | Out-Null}catch{& $emitFailureDiagnostic 'rule-creation-failure' $profiles $true $null $false $null $null $false $false;throw};
+try{$rule=Get-NetFirewallRule -PolicyStore ActiveStore -Name $ruleName}catch{& $emitFailureDiagnostic 'rule-query-failure' $profiles $true $null $false $null $null $false $false;throw};
+$ruleBaseRejected=$rule.Enabled -ne 'True' -or $rule.Action -ne 'Block' -or $rule.Direction -ne 'Outbound' -or $rule.PrimaryStatus -ne 'OK';
+if($ruleBaseRejected){& $emitFailureDiagnostic 'active-store-rule-rejection' $profiles $true $rule $true $null $null $false $false;throw 'Isolation rule is not fully enforced'};
+$enforcementValues=$rule.EnforcementStatus; $enforcementFull=$false; $enforcementRepresentation=$null;
+if($enforcementValues -is [array] -and $enforcementValues.GetType().GetArrayRank() -eq 1){
+  if($enforcementValues.Length -gt 0){
+    $enforcementFull=$true;
+    foreach($statusValue in $enforcementValues){
+      if($statusValue -is [string]){
+        if($null -ne $enforcementRepresentation -and $enforcementRepresentation -ne 'name'){$enforcementFull=$false;break}; $enforcementRepresentation='name';
+        if($statusValue -ne 'Full'){$enforcementFull=$false;break}
+      }elseif($statusValue -is [uint16]){
+        if($null -ne $enforcementRepresentation -and $enforcementRepresentation -ne 'code'){$enforcementFull=$false;break}; $enforcementRepresentation='code';
+        if($statusValue -ne [uint16]1){$enforcementFull=$false;break}
+      }else{$enforcementFull=$false;break}
+    }
+  }
+};
+if(-not $enforcementFull){& $emitFailureDiagnostic 'active-store-rule-rejection' $profiles $true $rule $true $null $null $false $false $enforcementFull;throw 'Isolation rule is not fully enforced'};
+try{$applicationFilter=$rule | Get-NetFirewallApplicationFilter;$program=$applicationFilter.Program}catch{& $emitFailureDiagnostic 'application-filter-query-failure' $profiles $true $rule $true $null $null $false $false $enforcementFull;throw};
+$programMatchesAsset=$false;
+if($program -is [string]){
+  if($program.Length -gt 0){$programMatchesAsset=($program -ceq $assetPath)}
+}elseif($program -is [array] -and $program.GetType().GetArrayRank() -eq 1){
+  if($program.Length -gt 0){
+    $programMatchesAsset=$true;
+    foreach($programValue in $program){if($programValue -isnot [string] -or $programValue -cne $assetPath){$programMatchesAsset=$false;break}}
+  }
+};
+if(-not $programMatchesAsset){& $emitFailureDiagnostic 'application-filter-mismatch' $profiles $true $rule $true $program $applicationFilter $true $programMatchesAsset $enforcementFull;throw 'Isolation executable differs'};
+& $emitObservedStage 'isolation-guards-passed' $profiles $true $rule $true $program $applicationFilter $true $programMatchesAsset $enforcementFull;
+`;
+  const firewallOutput = await powershell(invoke, firewallCommand);
+  for (const line of firewallOutput.split(/\r?\n/)) {
+    try {
+      const record = JSON.parse(line);
+      if (record?.kind === 'offline-firewall') console.log(line);
+    } catch {}
+  }
   // Retain the owned rule/roots for inspection even if a child outcome is UNKNOWN.
   const consumer = await initializeConsumer(ctx, invoke, asset.path, env, 'offline-first-run');
   await invokeNative(invoke, asset.path, env, [

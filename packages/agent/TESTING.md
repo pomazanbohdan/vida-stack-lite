@@ -92,7 +92,7 @@ current exact-asset receipts remain required and separate from local agent proof
 The repository-only workflow `agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
 phases and one result-emission step. The approved provider/profile was activated
-and nine CI runs were dispatched; all nine failed overall. Run37216772330/attempt1
+and ten CI runs were dispatched; all ten failed overall. Run37216772330/attempt1
 passed Source guards, `ci:pinned` and npm pack, then native-build failed with an
 ENOENT lstat on its absent private package extraction destination. Following the
 archive-destination caller correction, run37220454501/attempt1/job111489588604
@@ -131,6 +131,42 @@ child exited 1 with null signal and empty stdout. Its blocked
 `GAP-DEVELOPMENT-CONTROLLER-001` output contained a path-bearing lstat
 `ENOENT`, so the expected exact public denial did not match. This is a
 diagnostic portability gap, not evidence of controller recovery or authority.
+CI10 run37264018839/attempt1/job111616925231 passed native-build, native-install
+and public-routes, then failed in offline-runtime; native-dependencies,
+state-preservation, upgrade-recovery, result emission and upload were skipped.
+The first offline PowerShell setup child passed the enabled-profile check and
+rule creation, then reached the existing composite rule predicate and denied
+with `Isolation rule is not fully enforced`. The observed field among Enabled,
+Action, Direction, PrimaryStatus and EnforcementStatus was not retained;
+CLIXML progress occupied much of bounded stderr. Offline consumer initialization
+was not reached. This does not identify a firewall, array-shape, network or
+specific status root cause and does not qualify native delivery.
+
+The offline adapter now suppresses progress only inside its existing firewall
+command and emits a fixed `offline-firewall` JSON record before the unchanged
+denial. Each record is one line with a 1536 UTF-16-code-unit ceiling and the
+fixed `kind`, `stage`, `observations`, `truncated` envelope. Observation tuples
+are `[shape,type,count,flags,values]`: `u` unavailable, `p` absent property,
+`n` null, `s` scalar and `a` array; flag bit 1 marks truncation and bit 2 marks
+omission. Null/unavailable/absent counts remain null; empty arrays report zero.
+Profile values are ordered Name then Enabled; rule values are ordered Enabled,
+Action, Direction, PrimaryStatus, StatusCode and EnforcementStatus. The
+`program_match` pair contains the program-source observation and actual boolean
+comparison observation. Program paths are withheld; null array entries remain
+null and other program elements use an explicit omission marker. Numeric and
+boolean values remain typed. Previews cap profiles at 3, rules at 1,
+enforcement entries at 8, and scalar text/type at 64 code units. If a complete
+preview exceeds the ceiling, the metadata-only record retains shape, bounded
+type preview, original count and explicit omission. The positive gates remain
+fail-closed: EnforcementStatus must be a nonempty one-dimensional array whose
+entries are all string `Full` values or all UInt16 code `1` values. Program
+must be a nonempty scalar string exactly matching the asset path or a nonempty
+one-dimensional array whose every entry is a string exactly matching that path
+case-sensitively. Missing, null, empty, nested, mixed, nonstring, unsupported
+or different values deny. Each result is computed once and reused in its
+denial and diagnostic; Program values stay withheld. These diagnostics and
+local inert tests do not establish PowerShell behavior or CI/native
+qualification.
 Broad dependency/tool and caller adaptation is last in 0.1.3, after P0 native
 UPDATE01/developer-unblocking and required installed checkpoints, before final
 0.1.3 delivery and acceptance. Reuse exact current qualified pins for P0 work;
@@ -568,7 +604,7 @@ the actual current operation; suite receipts belong outside this living contract
 Run `bun run verify` from the bundle root for the local agent subset. It neither
 installs dependencies nor copies or installs a bundle. `bun run ci` performs
 delivery preparation only; CI/CD owns exact artifact/build/install validation.
-Nine CI runs were dispatched and all nine failed overall. In run37224368306/attempt1/
+Ten CI runs were dispatched and all ten failed overall. In run37224368306/attempt1/
 job111500862047, native-build and native-install passed, but public-routes failed
 during initialization; four remaining delivery phases and result emission/upload
 were skipped. Those partial CI steps do not establish a successful full native
@@ -596,6 +632,16 @@ child exited 1 with null signal and empty stdout. Its blocked
 `GAP-DEVELOPMENT-CONTROLLER-001` output contained a path-bearing lstat
 `ENOENT`, so the expected exact public denial did not match. This is a
 diagnostic portability gap, not evidence of controller recovery or authority.
+CI10 run37264018839/attempt1/job111616925231 passed native-build, native-install
+and public-routes, then failed in offline-runtime; native-dependencies,
+state-preservation, upgrade-recovery, result emission and upload were skipped.
+The first offline PowerShell setup child passed the enabled-profile check and
+rule creation, then reached the existing composite rule predicate and denied
+with `Isolation rule is not fully enforced`. The observed field among Enabled,
+Action, Direction, PrimaryStatus and EnforcementStatus was not retained;
+CLIXML progress occupied much of bounded stderr. Offline consumer initialization
+was not reached. This does not identify a firewall, array-shape, network or
+specific status root cause and does not qualify native delivery.
 
 ## Required integration evidence
 
@@ -690,7 +736,7 @@ The discovery view retains the exact maintained bunfig.toml used by the child la
 Source-only repair/recovery fixtures exclude the exact generated dist/standalone
 directory. They retain agent sources, schemas, instructions and current SDK
 outputs; the repository text-read limit stays unchanged. The approved CI/CD
-workflow/profile was activated and nine runs were dispatched; all nine failed
+workflow/profile was activated and ten runs were dispatched; all ten failed
 overall. In run37224368306/attempt1/job111500862047, native-build and
 native-install passed before public-routes failed during initialization; four
 remaining delivery phases and result emission/upload were skipped. These partial
@@ -713,6 +759,16 @@ child exited 1 with null signal and empty stdout. Its blocked
 `GAP-DEVELOPMENT-CONTROLLER-001` output contained a path-bearing lstat
 `ENOENT`, so the expected exact public denial did not match. This is a
 diagnostic portability gap, not evidence of controller recovery or authority.
+CI10 run37264018839/attempt1/job111616925231 passed native-build, native-install
+and public-routes, then failed in offline-runtime; native-dependencies,
+state-preservation, upgrade-recovery, result emission and upload were skipped.
+The first offline PowerShell setup child passed the enabled-profile check and
+rule creation, then reached the existing composite rule predicate and denied
+with `Isolation rule is not fully enforced`. The observed field among Enabled,
+Action, Direction, PrimaryStatus and EnforcementStatus was not retained;
+CLIXML progress occupied much of bounded stderr. Offline consumer initialization
+was not reached. This does not identify a firewall, array-shape, network or
+specific status root cause and does not qualify native delivery.
 Delivery qualification remains an explicit GAP.
 
 The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`

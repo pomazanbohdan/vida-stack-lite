@@ -832,3 +832,93 @@ the final run readiness is
 `.tmp/core-windows-resume-20261002/controller-root-ready-controller-root-full1.json`.
 The earlier CI7 rejecting child remains unknown; CI9 does not retroactively
 qualify any prior failed CI run.
+
+### Offline firewall diagnostics — CI10 follow-up (2026-10-05)
+
+CI10 run37264018839/attempt1/job111616925231 completed with overall FAILURE.
+The watcher recorded child close, exit 1, null signal and no spawn error; the
+terminal collector completed0. Native-build, native-install and public-routes
+passed, but offline-runtime failed. Native-dependencies, state-preservation,
+upgrade-recovery, result emission and upload were skipped. No complete native
+qualification was established.
+
+The first offline PowerShell setup child passed the existing enabled-profile
+check and rule creation, then reached the composite ActiveStore predicate and
+reported `Isolation rule is not fully enforced`. The actual failing value among
+Enabled, Action, Direction, PrimaryStatus and EnforcementStatus was not
+retained. CLIXML progress occupied much of bounded stderr; offline consumer
+initialization was not reached. This evidence does not establish a disabled
+firewall, an array-shape issue, a network error, or any specific status root
+cause. The earlier CI7 rejecting child remains unknown; CI9 and CI8 are
+historical public-diagnostic failures and do not qualify this offline phase.
+
+The replaceable adapter change is limited to its existing offline firewall
+command. It suppresses progress locally before the same NetSecurity calls, uses
+the already-observed profile and rule values, and emits one allowlisted
+`offline-firewall` record immediately before each unchanged denial. Query,
+creation, guard and comparison order remain unchanged; no retry, cleanup, global
+firewall setting, extra query or enforcement exception is introduced. The
+enabled-profile and enabled/block/outbound/PrimaryStatus `OK` gates remain in
+force. EnforcementStatus passes only for a nonempty one-dimensional array whose
+entries are all string `Full` values or all UInt16 code `1` values; unsupported
+types, mixed representations and any other value deny. Program passes only as a
+nonempty scalar string exactly matching the asset path, or a nonempty
+one-dimensional array whose every entry is a string exactly matching that path
+with case-sensitive comparison. Empty-collection comparisons and the array-only
+Program assumption were static counterexamples; CI10 did not retain the
+rejecting value, so neither explains that failure. The existing positive
+booleans are reused for the guard and corresponding diagnostic, while raw
+shape/type/count/omission remains observable and program paths stay withheld.
+The adapter was not executed locally in PowerShell; the following inert suite
+cannot validate PowerShell collection behavior or qualify CI/native delivery.
+
+Each line is at most 1536 UTF-16 code units, below the existing 2048-character
+stderr/stdout error-tail limit. Its fixed envelope is
+`{kind,stage,observations,truncated}`. `profiles`, `rules` and `program_match`
+are the only observation keys. Tuples use
+`[shape,type,count,flags,values]`, with shape codes `u` unavailable, `p` absent
+property, `n` null, `s` scalar and `a` array; flag bits 1 and 2 mean truncated
+and omitted. Profile tuple values contain only Name/Enabled observations; rule
+tuple values contain Enabled, Action, Direction, PrimaryStatus, StatusCode and
+EnforcementStatus in that order. The program-match pair retains the source
+shape/type/count and actual boolean comparison, while path values remain
+withheld. Missing, null, empty, scalar and array states remain distinct; typed
+numeric and boolean values stay numeric and boolean. Preview bounds are three
+profiles, one rule, eight enforcement entries and 64 code units per text/type.
+If the normal record exceeds the ceiling, recursive metadata fallback shortens
+type previews to 32 code units, preserves true shape/type/count and marks value
+omission and truncation. A further serialization-size violation throws
+visibly; record emission is not silently skipped. On an existing failure or
+denial, a diagnostic-emission error produces a fixed stderr marker and the
+original failure/denial remains the result. On success, an emission error fails
+closed before offline consumer commands. The fixed fallback arity and preview
+caps were statically reviewed below the line bound; PowerShell serialization
+was not locally executed.
+
+Official material checked for applicability:
+
+- [MSFT_NetFirewallRule](https://learn.microsoft.com/en-us/windows/win32/fwp/wmi/wfascimprov/msft-netfirewallrule)
+  documents ActiveStore enforcement as typed state data, but does not provide
+  the values seen by this CI runner.
+- [MSFT_NetApplicationFilter](https://learn.microsoft.com/en-us/windows/win32/fwp/wmi/wfascimprov/msft-netapplicationfilter)
+  describes `AppPath` as a string, supporting the scalar compatibility shape
+  without supplying the Program value observed on this CI runner.
+- [Get-NetFirewallRule](https://learn.microsoft.com/en-us/powershell/module/netsecurity/get-netfirewallrule?view=windowsserver2025-ps)
+  describes effective firewall rule retrieval and separate application filters.
+- [MS-FASP enforcement states](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fasp/4767a26e-0687-4c4f-ad94-8de700e5cf83)
+  defines states; none authorizes accepting a non-Full result.
+- PowerShell [preference variables](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_preference_variables?view=powershell-7.5),
+  [ConvertTo-Json](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/convertto-json?view=powershell-7.5)
+  and [try/catch/finally](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_try_catch_finally?view=powershell-7.5)
+  describe command-local progress preference, compressed bounded-depth JSON
+  serialization and rethrow behavior. They support implementation mechanics,
+  not the missing CI status observation. The PowerShell 5.1 comparison-operator
+  reference retrieval gap remains open; it is not used to explain the CI10
+  failure.
+
+The existing local synthetic command-stream/tail and CI-receipt tests do not
+execute PowerShell or prove the adapter's serialization. CI10 remains failed.
+The next authorized CI run must expose the bounded record in complete terminal
+streams and the existing bounded tail or successful log, then complete all
+seven phases before any native qualification claim. Installation and Runtime
+acceptance remain separate.
