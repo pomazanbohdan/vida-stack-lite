@@ -247,7 +247,12 @@ export async function prepareDevelopmentController({ target, controllerRoot }) {
   return state;
 }
 export async function inspectDevelopmentController({ controllerRoot }) {
-  canonicalDirectory(controllerRoot);
+  try {
+    canonicalDirectory(controllerRoot);
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+    throw new Error('Development controller root is unavailable.', { cause: error });
+  }
   const state = JSON.parse(readFileSync(path.join(controllerRoot, 'controller.json')));
   const keys = [
     'schema',

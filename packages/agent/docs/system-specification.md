@@ -174,6 +174,16 @@ Opt-in bounded stage markers expose install and snapshot elapsed time. These
 changes do not claim a speed improvement without comparable measurement.
 No current controller or successful qualification is inferred from this contract.
 
+Initial controller-root inspection has a separate fail-closed diagnostic. If only
+the first `canonicalDirectory(controllerRoot)` call throws a typed `ENOENT`, the
+inspector retains the original filesystem error on `cause` and reports
+`Development controller root is unavailable.` The public CLI keeps its blocked
+`GAP-DEVELOPMENT-CONTROLLER-001` envelope and does not emit the filesystem path.
+This applies to absent and dangling roots; it does not create or recover a
+controller or grant execution rights. Later missing `controller.json`, malformed
+metadata, permission failures and other non-ENOENT errors retain their existing
+outcomes.
+
 The existing `reconcile-artifacts --kind runtime-config` operation accepts a
 schema-valid change limited to the executor model and reasoning. It does not
 select a model on the caller's behalf or reinterpret an issued invocation.

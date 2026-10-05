@@ -668,7 +668,7 @@ async function publicRoutes(ctx, candidate, invoke) {
     { env },
     jsonDenial(
       { status: 'blocked', code: 'GAP-DEVELOPMENT-CONTROLLER-001' },
-      { prefix: `ENOENT: no such file or directory, realpath '${missingController}'` },
+      { exact: 'Development controller root is unavailable.' },
     ),
   );
   absentProtectedPath(

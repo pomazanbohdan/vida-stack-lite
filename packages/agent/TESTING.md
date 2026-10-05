@@ -36,6 +36,17 @@ lease/CAS/source wording under recognized CLI codes with positive runtime/contex
 lease, CAS and source-diagnostic controls; these controls do not mutate lifecycle
 state or Source.
 
+The `development controller root diagnostics` group calls the real inspector with
+owned temporary fixtures. Six direct cases cover absent and dangling roots with
+the exact path-free message `Development controller root is unavailable.` and
+retained ENOENT cause, later missing `controller.json` with its original ENOENT,
+regular-file and existing-link/junction roots with the existing linked-directory
+denial, and a noncanonical path with its existing canonical-path denial. One
+separate test case invokes the real Source CLI once for the absent-root envelope
+and asserts blocked status, the exact code/message, exit 1, null signal, empty
+stdout and no root creation. These are read-only controller diagnostics; the tests
+do not prepare, verify, execute, install or copy a package.
+
 After the engineering task's corrections are complete, run the full applicable
 current task suite once. Reuse its still-current evidence in final mandatory
 assurance; source changes invalidate affected evidence rather than silently
@@ -81,7 +92,7 @@ current exact-asset receipts remain required and separate from local agent proof
 The repository-only workflow `agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
 phases and one result-emission step. The approved provider/profile was activated
-and eight CI runs were dispatched; all eight failed overall. Run37216772330/attempt1
+and nine CI runs were dispatched; all nine failed overall. Run37216772330/attempt1
 passed Source guards, `ci:pinned` and npm pack, then native-build failed with an
 ENOENT lstat on its absent private package extraction destination. Following the
 archive-destination caller correction, run37220454501/attempt1/job111489588604
@@ -112,6 +123,14 @@ without a signal and with empty stdout. The child returned
 `GAP-VIDA-RUN-CLI-001`, but its public message incorrectly described an expired
 lease because the unsupported-option usage text contains the recovery flag.
 This is a public message-precedence defect, not evidence of a real lease expiry.
+CI9 run37256627796/attempt1/job111594990063 passed native-build and
+native-install, then failed in public-routes; offline-runtime,
+native-dependencies, state-preservation, upgrade-recovery, result emission
+and upload were skipped. The absent-root `development-controller inspect`
+child exited 1 with null signal and empty stdout. Its blocked
+`GAP-DEVELOPMENT-CONTROLLER-001` output contained a path-bearing lstat
+`ENOENT`, so the expected exact public denial did not match. This is a
+diagnostic portability gap, not evidence of controller recovery or authority.
 Broad dependency/tool and caller adaptation is last in 0.1.3, after P0 native
 UPDATE01/developer-unblocking and required installed checkpoints, before final
 0.1.3 delivery and acceptance. Reuse exact current qualified pins for P0 work;
@@ -377,6 +396,53 @@ The full launch snapshot covers the pre-documentation bytes; the later spec,
 TESTING, research and lineage updates are reconciled separately, while the
 producer and test inputs remain the evidence-bound code/test pair.
 
+### Portable controller-root diagnostics — CI9 local evidence
+
+The six direct cases in `tests/run-cli-main.test.mjs` exercise absent root,
+dangling link, later missing metadata, regular-file root, noncanonical path, and
+existing link/junction behavior through `inspectDevelopmentController`. The absent
+and dangling roots map only the initial typed `ENOENT` to the exact path-free
+domain message and preserve the original cause. Later metadata errors remain
+unchanged. Regular files and linked roots retain the existing linked-directory
+denial; noncanonical input retains its existing canonical-path denial. One
+separate CLI-child test checks the absent-root blocked/code/message envelope, exit
+1, null signal, empty stdout and no creation. The name-filtered focused runs
+excluded that child test; the complete run executed the single CLI-child test
+once.
+
+The first focused launch preserved a test-only mismatch: six cases passed and the
+regular-file assertion expected the canonical-path message, while the real
+inspector returned `Controller path contains a linked directory.` The test
+expectation alone was corrected. The next pinned focused launch had an actual
+child close with exit 0 and raw output of 7 pass, 51 filtered and 0 fail,
+including the synthetic CI-emission contract case. Its launch summary checker
+incorrectly expected 36 filtered and therefore recorded
+`summary_check.passed: false`. The separate bounded verification joins the
+original terminal receipt, complete streams, fresh seven-path source observation
+and actual 7/51/0 summary without rewriting the original receipt or rerunning
+tests.
+
+One stable full launch of `tests/run-cli-main.test.mjs` and
+`tests/release-retarget-state.test.mjs` then reported 58 pass and 0 fail across
+two files. The absolute package-pinned Bun 1.4.2 process used
+`--no-env-file --no-install`, canonical `packages/agent` cwd, `pinnedEnvironment`,
+normal reader resolution with `VIDA_CI_READER_ROOT` removed and the maintained
+seed 20260817. The actual launcher child closed with exit 0, null signal and no
+spawn error; elapsed launch time was 37.466 seconds. The launch snapshot covers
+the stable producer/test bytes before the later documentation edits.
+
+The initial focused failure and corrected focus output remain at
+`.tmp/core-windows-resume-20261002/controller-root-focused1-pinned-20261005-v1.*`
+and
+`.tmp/core-windows-resume-20261002/controller-root-focused2-pinned-20261005-v1.*`;
+the additive summary join is
+`.tmp/core-windows-resume-20261002/controller-root-focused2-summary-verification.v1.json`.
+The final applicable run and readiness are
+`.tmp/core-windows-resume-20261002/controller-root-full1-pinned-20261005-v1.*` and
+`.tmp/core-windows-resume-20261002/controller-root-ready-controller-root-full1.json`.
+Full stdout/stderr are separate files. This is current local Source evidence, not
+native qualification, install proof or Runtime acceptance.
+
 Project-path regressions exercise equal-root membership for either selected
 member, deepest nested foreign exclusion, POSIX versus Windows case matching,
 outside-root paths through exact selected scope, unchanged `code_selectors`,
@@ -502,7 +568,7 @@ the actual current operation; suite receipts belong outside this living contract
 Run `bun run verify` from the bundle root for the local agent subset. It neither
 installs dependencies nor copies or installs a bundle. `bun run ci` performs
 delivery preparation only; CI/CD owns exact artifact/build/install validation.
-Eight CI runs were dispatched and all eight failed overall. In run37224368306/attempt1/
+Nine CI runs were dispatched and all nine failed overall. In run37224368306/attempt1/
 job111500862047, native-build and native-install passed, but public-routes failed
 during initialization; four remaining delivery phases and result emission/upload
 were skipped. Those partial CI steps do not establish a successful full native
@@ -522,6 +588,14 @@ and upload were skipped. The actual child was `run --invalid-ci-option`, exit 1,
 null signal and empty stdout. It returned the CLI argument code with a lease
 recovery message inferred from parser usage text, which is a diagnostic
 precedence defect rather than evidence of lease expiry.
+CI9 run37256627796/attempt1/job111594990063 passed native-build and
+native-install, then failed in public-routes; offline-runtime,
+native-dependencies, state-preservation, upgrade-recovery, result emission
+and upload were skipped. The absent-root `development-controller inspect`
+child exited 1 with null signal and empty stdout. Its blocked
+`GAP-DEVELOPMENT-CONTROLLER-001` output contained a path-bearing lstat
+`ENOENT`, so the expected exact public denial did not match. This is a
+diagnostic portability gap, not evidence of controller recovery or authority.
 
 ## Required integration evidence
 
@@ -616,7 +690,7 @@ The discovery view retains the exact maintained bunfig.toml used by the child la
 Source-only repair/recovery fixtures exclude the exact generated dist/standalone
 directory. They retain agent sources, schemas, instructions and current SDK
 outputs; the repository text-read limit stays unchanged. The approved CI/CD
-workflow/profile was activated and eight runs were dispatched; all eight failed
+workflow/profile was activated and nine runs were dispatched; all nine failed
 overall. In run37224368306/attempt1/job111500862047, native-build and
 native-install passed before public-routes failed during initialization; four
 remaining delivery phases and result emission/upload were skipped. These partial
@@ -631,6 +705,14 @@ result emission and upload were skipped. Its first child was `run
 --invalid-ci-option`, which exited 1 with null signal and empty stdout but
 reported the wrong lease-recovery message under `GAP-VIDA-RUN-CLI-001`; this is
 the public diagnostic code-precedence defect, not an actual lease result.
+CI9 run37256627796/attempt1/job111594990063 passed native-build and
+native-install, then failed in public-routes; offline-runtime,
+native-dependencies, state-preservation, upgrade-recovery, result emission
+and upload were skipped. The absent-root `development-controller inspect`
+child exited 1 with null signal and empty stdout. Its blocked
+`GAP-DEVELOPMENT-CONTROLLER-001` output contained a path-bearing lstat
+`ENOENT`, so the expected exact public denial did not match. This is a
+diagnostic portability gap, not evidence of controller recovery or authority.
 Delivery qualification remains an explicit GAP.
 
 The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`

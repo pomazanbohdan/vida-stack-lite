@@ -1,5 +1,39 @@
-import { describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { afterEach, describe, expect, test } from 'bun:test';
+import { inspectDevelopmentController } from '../bin/development-controller.mjs';
 import { main } from '../bin/run.mjs';
+const controllerRoots = new Set();
+const controllerUnavailable = 'Development controller root is unavailable.';
+
+function controllerRootFixture() {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-development-controller-'));
+  controllerRoots.add(root);
+  return root;
+}
+
+afterEach(() => {
+  for (const root of controllerRoots) {
+    expect(path.dirname(root)).toBe(path.resolve(tmpdir()));
+    expect(path.basename(root).startsWith('vida-development-controller-')).toBe(true);
+    rmSync(root, { recursive: true, force: true });
+  }
+  controllerRoots.clear();
+});
+
+async function controllerInspectionFailure(controllerRoot) {
+  let failure;
+  try {
+    await inspectDevelopmentController({ controllerRoot });
+  } catch (error) {
+    failure = error;
+  }
+  expect(failure).toBeInstanceOf(Error);
+  return failure;
+}
+
 
 function io() {
   const logs = [];
@@ -24,6 +58,100 @@ async function invokeMain(args = [], execute) {
 }
 
 const contractNextAction = 'Next action: inspect the exact work and check its issued contract before retrying.';
+
+
+describe('development controller root diagnostics', () => {
+  test('maps an absent physical root to a path-free domain error with ENOENT cause', async () => {
+    const parent = controllerRootFixture();
+    const root = path.join(parent, 'absent-root');
+    const failure = await controllerInspectionFailure(root);
+    expect(failure.message).toBe(controllerUnavailable);
+    expect(failure.cause).toBeInstanceOf(Error);
+    expect(failure.cause.code).toBe('ENOENT');
+    expect(existsSync(root)).toBe(false);
+  });
+
+  test('maps a dangling controller link to the same domain error with ENOENT cause', async () => {
+    const parent = controllerRootFixture();
+    const target = path.join(parent, 'dangling-target');
+    const root = path.join(parent, 'dangling-root');
+    mkdirSync(target);
+    symlinkSync(target, root, process.platform === 'win32' ? 'junction' : 'dir');
+    rmSync(target, { recursive: true, force: true });
+    expect(lstatSync(root).isSymbolicLink()).toBe(true);
+    const failure = await controllerInspectionFailure(root);
+    expect(failure.message).toBe(controllerUnavailable);
+    expect(failure.cause).toBeInstanceOf(Error);
+    expect(failure.cause.code).toBe('ENOENT');
+  });
+
+  test('keeps a later missing controller.json failure as its original ENOENT', async () => {
+    const parent = controllerRootFixture();
+    const root = path.join(parent, 'physical-controller-root');
+    mkdirSync(root);
+    const failure = await controllerInspectionFailure(root);
+    expect(failure.code).toBe('ENOENT');
+    expect(failure.message).not.toBe(controllerUnavailable);
+    expect(failure.cause).toBeUndefined();
+  });
+
+  test('keeps regular-file controller roots as fail-closed path denials', async () => {
+    const parent = controllerRootFixture();
+    const root = path.join(parent, 'controller-file');
+    writeFileSync(root, 'owned fixture');
+    expect(lstatSync(root).isFile()).toBe(true);
+    const failure = await controllerInspectionFailure(root);
+    expect(failure.message).toBe('Controller path contains a linked directory.');
+    expect(failure.code).toBeUndefined();
+    expect(failure.cause).toBeUndefined();
+  });
+
+  test('keeps noncanonical controller paths as fail-closed path denials', async () => {
+    const parent = controllerRootFixture();
+    const physicalRoot = path.join(parent, 'physical-controller-root');
+    mkdirSync(physicalRoot);
+    const root = physicalRoot + path.sep + '..' + path.sep + path.basename(physicalRoot);
+    expect(path.resolve(root)).not.toBe(root);
+    const failure = await controllerInspectionFailure(root);
+    expect(failure.message).toBe('Controller paths must be canonical absolute physical directories.');
+    expect(failure.code).toBeUndefined();
+    expect(failure.cause).toBeUndefined();
+  });
+
+  test('keeps an existing link or junction to a physical root as a fail-closed denial', async () => {
+    const parent = controllerRootFixture();
+    const target = path.join(parent, 'physical-target');
+    const root = path.join(parent, 'linked-controller-root');
+    mkdirSync(target);
+    symlinkSync(target, root, process.platform === 'win32' ? 'junction' : 'dir');
+    expect(lstatSync(root).isSymbolicLink()).toBe(true);
+    const failure = await controllerInspectionFailure(root);
+    expect(failure.message).toBe('Controller paths must be canonical absolute physical directories.');
+    expect(failure.code).toBeUndefined();
+    expect(failure.cause).toBeUndefined();
+  });
+
+  test('reports the exact blocked absent-root envelope through one Source CLI child', () => {
+    const parent = controllerRootFixture();
+    const root = path.join(parent, 'absent-cli-root');
+    const entrypoint = path.resolve(import.meta.dirname, '../bin/development-controller.mjs');
+    const result = spawnSync(
+      process.execPath,
+      ['--no-env-file', '--no-install', entrypoint, 'inspect', '--controller-root', root],
+      { cwd: path.resolve(import.meta.dirname, '..'), encoding: 'utf8' },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.signal).toBeNull();
+    expect(result.stdout).toBe('');
+    expect(JSON.parse(result.stderr.trim())).toEqual({
+      status: 'blocked',
+      code: 'GAP-DEVELOPMENT-CONTROLLER-001',
+      message: controllerUnavailable,
+    });
+    expect(existsSync(root)).toBe(false);
+  });
+});
 
 describe('vida-agent run CLI main', () => {
   test('does nothing when imported', async () => {

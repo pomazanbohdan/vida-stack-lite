@@ -766,3 +766,69 @@ workflow were retained; no dependency or runtime was adopted. The local test
 results establish current Source behavior, not native build, installation,
 delivery, provider or Runtime acceptance. Earlier CI7's first rejecting child
 remains unknown.
+
+### Portable development-controller root diagnostic — CI9 follow-up (2026-10-05)
+
+CI9 run37256627796/attempt1/job111594990063 completed with overall FAILURE.
+`native-build` and `native-install` passed; `public-routes` failed;
+`offline-runtime`, `native-dependencies`, `state-preservation`, `upgrade-recovery`,
+result emission and upload were skipped. The retained log identifies the actual
+denied child as `development-controller inspect --controller-root <absent root>`:
+exit 1, null signal and empty stdout. Its stderr JSON was blocked with
+`GAP-DEVELOPMENT-CONTROLLER-001`, but the message exposed the absolute temporary
+path through `ENOENT: no such file or directory, lstat ...`; the public-route
+exact-denial matcher failed. No controller was created and the event provides no
+evidence of recovery, execution rights or an actual lifecycle failure.
+
+The Source correction catches only typed `ENOENT` from the initial
+`canonicalDirectory(controllerRoot)` call in the shared inspector. It throws
+`Development controller root is unavailable.` with the original filesystem error
+retained as `cause`; the CLI keeps its existing blocked/code envelope and emits no
+path. Absent and dangling roots use this domain denial. Later missing
+`controller.json`, malformed metadata, permission failures and other non-ENOENT
+outcomes are unchanged. Only the specific `publicRoutes` missing-controller
+expected message changed; the generic command-denial inventory, terminal
+validation, state, leases, parser and delivery workflow remain unchanged. This
+closes the exact CI9 message contract gap in local Source expectations; the CI run
+itself remains failed and was not reissued.
+
+The regression matrix has six direct inspector cases for absent, dangling,
+later-missing-metadata, regular-file, noncanonical and existing link/junction
+roots, plus one separate read-only CLI child test for the absent-root public
+envelope. The child test checks exit 1, null signal, empty stdout and no creation.
+An initial focused launch had one failed assertion because the regular-file
+fixture correctly reached the existing
+`Controller path contains a linked directory.` denial; only that expected test
+message was corrected. The later pinned focused output was 7 pass, 51 filtered, 0
+fail with actual child close/exit 0. Its launcher summary checker had a stale
+expected filtered count of 36; an additive bounded receipt joins the captured
+terminal, streams and current source snapshot to the actual 7/51/0 output while
+preserving the original false summary record.
+
+One stable pinned full run of `tests/run-cli-main.test.mjs` and
+`tests/release-retarget-state.test.mjs` passed 58/58 with actual child close, exit
+0, null signal and no spawn error. The only test that starts the source CLI child
+was excluded by the focused filter and ran once in the complete suite. The full
+run used Bun 1.4.2, `--no-env-file --no-install`, `pinnedEnvironment`, canonical
+`packages/agent` cwd, normal reader resolution with `VIDA_CI_READER_ROOT` removed
+and seed 20260817. These local results verify Source behavior only; CI9 remains
+failed, and native qualification, installation and Runtime acceptance remain open.
+
+Official Node.js references checked for the existing APIs and typed boundary:
+[error codes](https://nodejs.org/api/errors.html#errorcode),
+[error causes](https://nodejs.org/api/errors.html#errorcause),
+[fs.realpathSync](https://nodejs.org/api/fs.html#fsrealpathsyncpath-options), and
+[fs.Stats.isDirectory](https://nodejs.org/api/fs.html#statsisdirectory). They
+document stable error codes, causal wrapping, canonical path resolution and
+directory-type checks. They informed the bounded diagnostic and test
+interpretation; no parser, framework, dependency or runtime migration was adopted.
+
+Local receipts are
+`.tmp/core-windows-resume-20261002/controller-root-focused1-pinned-20261005-v1.*`,
+`.tmp/core-windows-resume-20261002/controller-root-focused2-pinned-20261005-v1.*`,
+`.tmp/core-windows-resume-20261002/controller-root-focused2-summary-verification.v1.json`,
+and `.tmp/core-windows-resume-20261002/controller-root-full1-pinned-20261005-v1.*`;
+the final run readiness is
+`.tmp/core-windows-resume-20261002/controller-root-ready-controller-root-full1.json`.
+The earlier CI7 rejecting child remains unknown; CI9 does not retroactively
+qualify any prior failed CI run.
