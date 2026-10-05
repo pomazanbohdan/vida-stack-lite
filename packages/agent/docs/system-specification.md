@@ -62,6 +62,12 @@ ProjectContext, ownership/CAS, maintenance, Cedar, fs-safe and Mastra/LibSQL
 semantics remain unchanged. A convenience ABI or loader flag is not established
 as a supported mechanism without actual target qualification.
 
+Recognized `GAP-VIDA-RUN-CLI-*` failures retain their code-defined public message
+before phase/reason inference from parser text. This keeps unsupported-argument
+diagnostics stable when usage text contains lifecycle option names. The blocked
+JSON envelope, exit code 1, existing next-action suffix and runtime/context
+detail mapping remain unchanged; private parser text is not exposed.
+
 Source native construction uses the pinned Bun compiler and a frozen production
 install into a private physical copy. It includes the existing package-owned
 code, schemas, instructions, templates and production native/WASM resources in

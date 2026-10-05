@@ -1470,7 +1470,11 @@ function publicFailure(error) {
       'Inspect the exact work and conflicting resource ownership; do not repeat a source action.',
     ],
   ];
-  const reason = reasons.find(([pattern]) => pattern.test(typeof error?.message === 'string' ? error.message : ''));
+  // The CLI code owns malformed-argument output. Parser usage text can contain
+  // unrelated lease, revision or source flags and must not override that contract.
+  const reason = code.startsWith('GAP-VIDA-RUN-CLI-')
+    ? undefined
+    : reasons.find(([pattern]) => pattern.test(typeof error?.message === 'string' ? error.message : ''));
   return {
     schema: 'VidaAgentRunResult/v1',
     status: 'blocked',

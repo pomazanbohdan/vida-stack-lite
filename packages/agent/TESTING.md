@@ -28,6 +28,14 @@ are not loaded. Reuse current generated outputs while their inputs remain
 unchanged. Missing or stale outputs are a GAP; do not run a local build. Do not run a
 full suite after each subfix or repeat passing unchanged checks to score savings.
 
+The existing `tests/run-cli-main.test.mjs` suite observes the exported `main`
+boundary with captured stdout/error and exit state. Its unsupported-option case
+uses the default `run` parser. Keep exact public envelopes, empty stdout,
+exit 1, the next-action suffix and unknown-message redaction. Pair misleading
+lease/CAS/source wording under recognized CLI codes with positive runtime/context
+lease, CAS and source-diagnostic controls; these controls do not mutate lifecycle
+state or Source.
+
 After the engineering task's corrections are complete, run the full applicable
 current task suite once. Reuse its still-current evidence in final mandatory
 assurance; source changes invalidate affected evidence rather than silently
@@ -73,7 +81,7 @@ current exact-asset receipts remain required and separate from local agent proof
 The repository-only workflow `agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
 phases and one result-emission step. The approved provider/profile was activated
-and seven CI runs were dispatched; all seven failed overall. Run37216772330/attempt1
+and eight CI runs were dispatched; all eight failed overall. Run37216772330/attempt1
 passed Source guards, `ci:pinned` and npm pack, then native-build failed with an
 ENOENT lstat on its absent private package extraction destination. Following the
 archive-destination caller correction, run37220454501/attempt1/job111489588604
@@ -96,6 +104,14 @@ unknown. The Windows/current-asset same-version upgrade controls do not
 establish other target support or cross-version rollback. The provider/profile is
 active; applicable standalone requirements and separate target-specific
 evidence remain open.
+CI8 run37251111579/attempt1/job111578766768 passed native-build and
+native-install, then failed in public-routes; offline-runtime,
+native-dependencies, state-preservation, upgrade-recovery, result emission and
+upload were skipped. Its actual first child, `run --invalid-ci-option`, exited 1
+without a signal and with empty stdout. The child returned
+`GAP-VIDA-RUN-CLI-001`, but its public message incorrectly described an expired
+lease because the unsupported-option usage text contains the recovery flag.
+This is a public message-precedence defect, not evidence of a real lease expiry.
 Broad dependency/tool and caller adaptation is last in 0.1.3, after P0 native
 UPDATE01/developer-unblocking and required installed checkpoints, before final
 0.1.3 delivery and acceptance. Reuse exact current qualified pins for P0 work;
@@ -348,6 +364,19 @@ Use focused checks while editing and record each final-fingerprint result. Re-ru
 | Lifecycle reviews, reverse validation, status and delivery         | `lifecycle-state`, `observed-validation`, plus exactly three fresh blind final reviews and reverse receipts on one sealed fingerprint.                                                                                                                                                                                                    |
 | Documentation CLEAR                                                | Public `vida-agent-documentation-clear` baseline/closeout/verify in `documentation-clear.test.mjs`, typed deletion lineage and map denial, and real checkpoint revalidation at DELIVERY/COMPLETE in `bun/lifecycle-state.test.mjs`. The configured project policy is preserved as project data; old operational receipts remain inactive. |
 
+For the 2026-10-05 CLI diagnostic correction, three focused cases in
+`tests/run-cli-main.test.mjs` passed (3 pass, 5 filtered, 0 fail), then the
+complete file passed once (8 pass, 0 fail). Both used the absolute package-pinned
+Bun 1.4.2 executable with `--no-env-file --no-install`, canonical
+`packages/agent` cwd, seed 20260817, and normal reader resolution with
+`VIDA_CI_READER_ROOT` removed. Both child receipts recorded `close`, exit 0,
+null signal and no spawn error; complete stdout/stderr are retained under
+`.tmp/core-windows-resume-20261002/cli-code-precedence-focused1-pinned-20261005-v1.*`
+and `.tmp/core-windows-resume-20261002/cli-code-precedence-full1-pinned-20261005-v1.*`.
+The full launch snapshot covers the pre-documentation bytes; the later spec,
+TESTING, research and lineage updates are reconciled separately, while the
+producer and test inputs remain the evidence-bound code/test pair.
+
 Project-path regressions exercise equal-root membership for either selected
 member, deepest nested foreign exclusion, POSIX versus Windows case matching,
 outside-root paths through exact selected scope, unchanged `code_selectors`,
@@ -473,7 +502,7 @@ the actual current operation; suite receipts belong outside this living contract
 Run `bun run verify` from the bundle root for the local agent subset. It neither
 installs dependencies nor copies or installs a bundle. `bun run ci` performs
 delivery preparation only; CI/CD owns exact artifact/build/install validation.
-Seven CI runs were dispatched and all seven failed overall. In run37224368306/attempt1/
+Eight CI runs were dispatched and all eight failed overall. In run37224368306/attempt1/
 job111500862047, native-build and native-install passed, but public-routes failed
 during initialization; four remaining delivery phases and result emission/upload
 were skipped. Those partial CI steps do not establish a successful full native
@@ -487,6 +516,12 @@ native-dependencies, state-preservation and upgrade-recovery, result emission
 and upload were skipped. The retained log reports that the expected rejection
 lacked an actual terminal observation, but lacks the rejecting child identity,
 status and stderr, so its exact first failure remains unknown.
+CI8 run37251111579/attempt1/job111578766768 also passed native-build and
+native-install before public-routes failed; its later phases, result emission
+and upload were skipped. The actual child was `run --invalid-ci-option`, exit 1,
+null signal and empty stdout. It returned the CLI argument code with a lease
+recovery message inferred from parser usage text, which is a diagnostic
+precedence defect rather than evidence of lease expiry.
 
 ## Required integration evidence
 
@@ -581,7 +616,7 @@ The discovery view retains the exact maintained bunfig.toml used by the child la
 Source-only repair/recovery fixtures exclude the exact generated dist/standalone
 directory. They retain agent sources, schemas, instructions and current SDK
 outputs; the repository text-read limit stays unchanged. The approved CI/CD
-workflow/profile was activated and seven runs were dispatched; all seven failed
+workflow/profile was activated and eight runs were dispatched; all eight failed
 overall. In run37224368306/attempt1/job111500862047, native-build and
 native-install passed before public-routes failed during initialization; four
 remaining delivery phases and result emission/upload were skipped. These partial
@@ -590,6 +625,12 @@ run37239761231/attempt1/job111545933366 also passed native-build and
 native-install before public-routes failed. The four remaining delivery phases,
 result emission and upload were skipped. Its retained log does not identify the
 rejecting child, status or stderr, so the exact first failure remains unknown.
+CI8 run37251111579/attempt1/job111578766768 also passed native-build and
+native-install before public-routes failed. The four remaining delivery phases,
+result emission and upload were skipped. Its first child was `run
+--invalid-ci-option`, which exited 1 with null signal and empty stdout but
+reported the wrong lease-recovery message under `GAP-VIDA-RUN-CLI-001`; this is
+the public diagnostic code-precedence defect, not an actual lease result.
 Delivery qualification remains an explicit GAP.
 
 The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`

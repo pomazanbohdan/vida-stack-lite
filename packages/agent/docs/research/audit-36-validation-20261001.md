@@ -712,3 +712,57 @@ is `.tmp/core-windows-resume-20261002/ci-denial-amend-ready-ci-denial-amend-full
 This is current local source/test evidence only; it does not identify CI7's
 first rejecting child or establish native build, installation, delivery,
 provider or Runtime acceptance.
+
+### Public CLI diagnostic-code precedence — CI8 follow-up (2026-10-05)
+
+Run37251111579/attempt1/job111578766768 completed with overall FAILURE. The
+native-build and native-install phases passed; public-routes failed, and
+offline-runtime, native-dependencies, state-preservation, upgrade-recovery,
+result-emission and upload were skipped. Its actual first public child was
+`vida-agent-bun-windows-x64.exe run --invalid-ci-option`: exit 1, null signal,
+and empty stdout. The child returned `GAP-VIDA-RUN-CLI-001`, but the public
+result described lease recovery because unsupported-option usage text includes
+`--recover-expired-lease`. This is a public CLI diagnostic-precedence defect;
+it does not establish an actual expired lease, CAS or Source state change. The
+CI run was not reissued.
+
+The correction only makes the already-recognized `GAP-VIDA-RUN-CLI-*` code
+family take precedence over raw-message reason inference. It retains the
+existing code-to-message map, JSON schema and keys, blocked status, exit 1,
+private-detail redaction, and generic next-action suffix. Other runtime and
+context failures continue through the existing reason mapping. The current
+VIDA argument parser remains unchanged. The actual default `run` parser path
+is checked at `main` with an unsupported option and no state operation; four
+CLI codes are also paired with misleading lease/CAS/source wording. Positive
+controls retain the exact current lease, CAS and source-change diagnostics,
+and the private-error redaction assertion remains in place.
+
+The focused affected tests passed (3 pass, 5 filtered, 0 fail), then the one
+full applicable `tests/run-cli-main.test.mjs` run passed (8 pass, 0 fail).
+Both used package-pinned Bun 1.4.2, canonical `packages/agent` cwd,
+`--no-env-file --no-install`, `pinnedEnvironment`, normal reader resolution
+with `VIDA_CI_READER_ROOT` removed, and the maintained seed 20260817. Each
+launcher record confirms actual child close with exit 0, null signal and no
+spawn error. The full run reports 237ms in the test runner (303ms launcher).
+Receipts and separate stdout/stderr are
+`.tmp/core-windows-resume-20261002/cli-code-precedence-focused1-pinned-20261005-v1.launch.json`,
+`.tmp/core-windows-resume-20261002/cli-code-precedence-focused1-pinned-20261005-v1.terminal.json`,
+`.tmp/core-windows-resume-20261002/cli-code-precedence-focused1-pinned-20261005-v1.stdout.txt`,
+`.tmp/core-windows-resume-20261002/cli-code-precedence-focused1-pinned-20261005-v1.stderr.txt`,
+`.tmp/core-windows-resume-20261002/cli-code-precedence-full1-pinned-20261005-v1.launch.json`,
+`.tmp/core-windows-resume-20261002/cli-code-precedence-full1-pinned-20261005-v1.terminal.json`,
+`.tmp/core-windows-resume-20261002/cli-code-precedence-full1-pinned-20261005-v1.stdout.txt`,
+and `.tmp/core-windows-resume-20261002/cli-code-precedence-full1-pinned-20261005-v1.stderr.txt`.
+
+Official references read for this correction: Node.js documents `error.code`
+as the stable error identifier and `error.message` as volatile
+(https://nodejs.org/api/errors.html#errorcode); its `util.parseArgs` reference
+describes strict unsupported-option handling
+(https://nodejs.org/api/util.html#utilparseargsconfig); Mastra's workflow
+error-handling guidance describes retaining failed status and error details
+(https://mastra.ai/docs/workflows/error-handling). These are framework
+mechanics and design references only: the local VIDA parser, CLI envelope and
+workflow were retained; no dependency or runtime was adopted. The local test
+results establish current Source behavior, not native build, installation,
+delivery, provider or Runtime acceptance. Earlier CI7's first rejecting child
+remains unknown.
