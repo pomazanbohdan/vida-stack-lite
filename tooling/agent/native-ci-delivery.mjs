@@ -26,6 +26,7 @@ import { nativeInstallationPaths, publishNativeExecutable, runCommand, parsePack
 import { findNpmCli } from '../../packages/agent/bin/bun.mjs';
 import {
   ciArchiveLimit,
+  ciTransportLimit,
   nativeDeliveryChecks,
   validateCIDeliveryRequest,
   encodeCIDeliveryResult,
@@ -1543,6 +1544,80 @@ async function upgradeRecovery(ctx, candidate, invoke) {
   );
 }
 
+async function emitBuild(ctx) {
+  const phaseName = 'emit-build';
+  const intent = 'phases/' + phaseName + '.intent.json';
+  const outputDirectory = path.join(ctx.root, 'publication');
+  const artifactName = 'build-' + ctx.request.request_id + '-' + ctx.run_id + '-' + ctx.run_attempt;
+  requireCI(typeof process.env.GITHUB_OUTPUT === 'string' && !/[\r\n\0]/.test(process.env.GITHUB_OUTPUT), 'actual CI output boundary missing');
+  requireCI(!existsSync(releasePath(ctx.root, intent, true)), 'prior issued build publication retained; inspect UNKNOWN, no reissue');
+  requireCI(!existsSync(releasePath(ctx.root, 'publication', true)), 'prior build artifact directory retained; inspect UNKNOWN, no reissue');
+  requireCI(!/[\r\n\0]/.test(outputDirectory) && /^[A-Za-z0-9._-]{1,255}$/.test(artifactName), 'CI build artifact output identity is unsafe');
+  const candidateBytes = physical(ctx.root, 'candidate.json', 8 * 1024 * 1024);
+  const candidate = JSON.parse(candidateBytes.toString('utf8'));
+  const receiptBytes = physical(ctx.root, 'phases/native-build.result.json', 1024 * 1024);
+  const receipt = JSON.parse(receiptBytes.toString('utf8'));
+  validateNativeCIReceipts({ identity: ctx, candidate, receipts: [receipt], phases: ['native-build'] });
+  const pack = candidate.pack_metadata?.[0];
+  requireCI(Array.isArray(candidate.pack_metadata) && candidate.pack_metadata.length === 1 && pack?.name === 'vida-agent' && pack.version === ctx.request.version && pack.filename === 'vida-agent-' + ctx.request.version + '.tgz' && path.basename(pack.filename) === pack.filename, 'CI native build pack identity differs');
+  requireCI(candidate.manifest?.schema === 'VidaStandaloneBuild/v1' && candidate.manifest.version === ctx.request.version && candidate.manifest.target === ctx.request.target && candidate.manifest.pin === '1.4.2' && candidate.manifest.asset?.file === 'vida-agent-bun-windows-x64.exe', 'CI native build manifest identity differs');
+  const manifestBytes = physical(ctx.root, 'package/dist/standalone/manifest.json', 8 * 1024 * 1024);
+  const manifest = JSON.parse(manifestBytes.toString('utf8'));
+  const assetBytes = physical(ctx.root, 'package/dist/standalone/' + manifest.asset.file, ciArchiveLimit);
+  const archiveBytes = physical(ctx.root, 'output/' + pack.filename, ciArchiveLimit);
+  const installerBytes = physical(ctx.source, 'packages/agent/tooling/install-windows.ps1', 1024 * 1024);
+  requireCI(manifest.schema === 'VidaStandaloneBuild/v1' && manifest.version === ctx.request.version && manifest.target === ctx.request.target && manifest.pin === '1.4.2' && manifest.asset.file === 'vida-agent-bun-windows-x64.exe' && manifestBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/manifest.json', 8 * 1024 * 1024)) && assetBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/' + manifest.asset.file)), 'CI source and native bytes differ');
+  requireCI(candidate.archive_sha256 === sha(archiveBytes) && candidate.manifest_sha256 === sha(manifestBytes) && manifest.asset.sha256 === sha(assetBytes) && manifest.asset.bytes === assetBytes.length, 'CI build candidate binding differs');
+  const packedFiles = Array.isArray(pack.files) ? pack.files : [];
+  const packedManifest = packedFiles.filter((file) => file?.path === 'dist/standalone/manifest.json');
+  const packedAsset = packedFiles.filter((file) => file?.path === 'dist/standalone/' + manifest.asset.file);
+  requireCI(packedManifest.length === 1 && packedManifest[0].size === manifestBytes.length && packedAsset.length === 1 && packedAsset[0].size === assetBytes.length, 'CI native pack inventory differs');
+  const files = [
+    [pack.filename, archiveBytes, ciArchiveLimit],
+    [manifest.asset.file, assetBytes, ciArchiveLimit],
+    ['manifest.json', manifestBytes, 8 * 1024 * 1024],
+    ['candidate.json', candidateBytes, 8 * 1024 * 1024],
+    ['native-build.result.json', receiptBytes, 1024 * 1024],
+    ['install-windows.ps1', installerBytes, 1024 * 1024],
+  ];
+  const names = files.map(([name]) => name);
+  requireCI(names.length === 6 && new Set(names).size === 6 && names.every((name) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)), 'CI build artifact inventory differs');
+  const totalBytes = files.reduce((total, [, bytes, limit]) => { requireCI(bytes.length > 0 && bytes.length <= limit, 'CI build artifact member exceeds its bound'); return total + bytes.length; }, 0);
+  requireCI(totalBytes <= ciTransportLimit, 'CI build artifact exceeds transport bound');
+  exclusive(ctx.root, intent, {
+    request_id: ctx.request.request_id,
+    run_id: ctx.run_id,
+    run_attempt: ctx.run_attempt,
+    phase: phaseName,
+    status: 'issued',
+  });
+  console.log(json({ phase: phaseName, status: 'issued', request_id: ctx.request.request_id, run_id: ctx.run_id, run_attempt: ctx.run_attempt }).trim());
+  releaseDirectory(ctx.root, 'publication');
+  for (const [name, bytes, limit] of files) {
+    exclusive(ctx.root, 'publication/' + name, bytes);
+    requireCI(physical(ctx.root, 'publication/' + name, limit).equals(bytes), 'CI build artifact copy differs');
+  }
+  requireCI(json(readdirSync(outputDirectory).sort()) === json(names.slice().sort()), 'CI build artifact output is not the exact flat allowlist');
+  const afterContext = context();
+  const afterCandidateBytes = physical(afterContext.root, 'candidate.json', 8 * 1024 * 1024);
+  const afterReceiptBytes = physical(afterContext.root, 'phases/native-build.result.json', 1024 * 1024);
+  const afterArchiveBytes = physical(afterContext.root, 'output/' + pack.filename, ciArchiveLimit);
+  const afterManifestBytes = physical(afterContext.root, 'package/dist/standalone/manifest.json', 8 * 1024 * 1024);
+  const afterAssetBytes = physical(afterContext.root, 'package/dist/standalone/' + manifest.asset.file, ciArchiveLimit);
+  const afterInstallerBytes = physical(afterContext.source, 'packages/agent/tooling/install-windows.ps1', 1024 * 1024);
+  const afterCandidate = candidateFor(afterContext);
+  requireCI(afterCandidateBytes.equals(candidateBytes) && afterReceiptBytes.equals(receiptBytes) && afterArchiveBytes.equals(archiveBytes) && afterManifestBytes.equals(manifestBytes) && afterAssetBytes.equals(assetBytes) && afterInstallerBytes.equals(installerBytes) && json(afterCandidate) === json(candidate), 'CI build inputs changed during emission');
+  for (const [name, bytes, limit] of files) requireCI(physical(afterContext.root, 'publication/' + name, limit).equals(bytes), 'CI build output changed during emission');
+  requireCI(json(readdirSync(outputDirectory).sort()) === json(names.slice().sort()), 'CI build artifact output inventory changed during emission');
+  writeFileSync(process.env.GITHUB_OUTPUT,
+    'directory=' + outputDirectory + '\n' +
+      'artifact_name=' + artifactName + '\n' +
+      'archive_file=' + pack.filename + '\n' +
+      'asset_file=' + manifest.asset.file + '\n',
+    { flag: 'a' },
+  );
+  console.log(json({ phase: phaseName, status: 'passed', request_id: ctx.request.request_id, artifact_name: artifactName, files: names }).trim());
+}
 async function phase(ctx, name) {
   requireCI([...nativeDeliveryChecks, 'emit-result'].includes(name), 'unknown CI phase');
   const count = name === 'emit-result' ? nativeDeliveryChecks.length : nativeDeliveryChecks.indexOf(name);
@@ -1640,7 +1715,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   try {
     const ctx = context();
     const args = process.argv.slice(2);
-    if (args.length === 2 && args[0] === '--phase') await phase(ctx, args[1]);
+    if (args.length === 2 && args[0] === '--phase' && args[1] === 'emit-build') await emitBuild(ctx);
+    else if (args.length === 2 && args[0] === '--phase') await phase(ctx, args[1]);
     else if (args.length === 2 && args[0] === '--embedded-probe' && ['dependencies', 'state'].includes(args[1]))
       await embeddedProbe(ctx, candidateFor(ctx), args[1]);
     else if (args.length === 1 && args[0] === '--publish-race') {

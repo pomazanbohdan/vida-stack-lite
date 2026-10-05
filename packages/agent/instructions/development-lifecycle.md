@@ -504,6 +504,21 @@ partial or tampered resources without weakening native attestation, Cedar,
 fs-safe, ProjectContext, CAS, maintenance or Mastra/LibSQL. Use actual full-product
 native target checks, not a thin probe or assumed loader ABI.
 
+For the active original 0.1.2 Windows delivery continuation, keep the authorized
+order: first make the build-only native artifact and first-install adapter
+available; then establish applicable exact-asset native qualification and final
+assurance; then perform the requested same-operation system update through
+`tooling/agent/release-local.mjs#installNativeRelease` using its actual prior-
+native observation and installed postproof. Build-only receipts, artifact
+availability and first-install output do not satisfy the full current-v1
+qualification contract, prove an installed update or grant Runtime acceptance.
+Do not synthesize missing phase receipts, relax existing readers or install the
+artifact as a substitute for qualification. If no supported exact-asset
+qualification path is available, record that GAP and keep the system update
+open. Only after the qualified update and postproof may separate Luna
+local-testing-script work begin; GitLab runner setup stays pending its
+unanswered human target decision.
+
 Keep one pending version/operation while packaging changes are qualified.
 Preserve any formed SDK/npm archive and its failed, partial or UNKNOWN receipts;
 never relabel it as a native executable or rewrite pending artifacts manually.

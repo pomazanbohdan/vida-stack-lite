@@ -120,6 +120,29 @@ Preserve pending archives and actual receipts. Use supported reconciliation for
 an uninstalled operation before changing its target assets; do not rewrite its
 journal or infer installed readiness from a version string.
 
+When a build-only Windows x64 Actions artifact is available, it contains six
+flat files: the formed archive, standalone manifest, native executable,
+`candidate.json`, the actual successful `native-build` receipt and the exact
+Source `install-windows.ps1`. This is formation and artifact availability, not
+native qualification or installed acceptance. The first-install adapter consumes
+those adjacent files without network access or external Node/npm/Bun. It writes
+the retained `0.1.2-<operation_id>` release under the current user's
+`%LOCALAPPDATA%\Programs\vida-agent` and the executable under `bin\vida-agent.exe`.
+It rejects linked/unsafe files, prior destinations and collisions, does not
+replace or upgrade an existing installation, and leaves persistent user PATH
+unchanged. It prints the executable path and manual user-PATH instruction.
+
+The adapter runs bounded `vida-agent.exe version` and `--help` checks from a
+separate owned check directory and reports success only after both actual child
+processes complete successfully with the expected public results. Any failure
+after mutation is PARTIAL/UNKNOWN: retain created paths and inspect them before
+any retry; no automatic cleanup, rollback claim or Runtime acceptance follows.
+This first-install step does not qualify the target or perform the existing
+system update. Complete exact-asset native qualification and use
+`tooling/agent/release-local.mjs#installNativeRelease` for system activation and
+postproof. Do not infer update completion from artifact availability,
+first-install output or an observed global npm instruction version.
+
 The final native delivery manifest must bind the exact qualified asset, target,
 destination, PATH ordering, prior-install preservation, rollback and postchecks.
 Installation must run public commands, instruction discovery and prerequisite

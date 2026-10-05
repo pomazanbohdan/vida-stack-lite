@@ -541,6 +541,19 @@ lane or a full candidate cycle solely to score a task. Functional/security/data/
 numeric gates and final release/native requirements remain. The detailed policy
 has one owner: the installed development-lifecycle self-development protocol.
 
+For the active original 0.1.2 Windows delivery continuation, first make the
+build-only native artifact and first-install adapter available. Then establish
+applicable exact-asset native qualification and final assurance before the
+same-operation system update through the existing release-local owner, using its
+actual prior-native observation and installed postproof. Build-only receipts,
+artifact availability and first-install output do not satisfy the full current-v1
+qualification contract or establish an installed update or Runtime acceptance.
+Do not synthesize missing receipts, relax readers or use the adapter as a system
+update. If a supported qualification path is unavailable, keep the update open
+with an explicit GAP. Begin separate Luna local-testing-script work only after
+the qualified update and postproof; GitLab runner setup stays pending the
+unanswered human target decision.
+
 All sessions share one live worktree version. Before a tracked mutation, use
 the current configured trusted Host coordination inspector and supported typed
 operations to verify the active ProjectContext, exact path/contour owner, FIFO

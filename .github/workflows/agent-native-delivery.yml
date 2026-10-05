@@ -98,34 +98,20 @@ jobs:
       - id: native-build
         name: native-build
         run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase native-build
-      - id: native-install
-        name: native-install
-        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase native-install
-      - id: public-routes
-        name: public-routes
-        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase public-routes
-      - id: offline-runtime
-        name: offline-runtime
-        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase offline-runtime
-      - id: native-dependencies
-        name: native-dependencies
-        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase native-dependencies
-      - id: state-preservation
-        name: state-preservation
-        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase state-preservation
-      - id: upgrade-recovery
-        name: upgrade-recovery
-        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase upgrade-recovery
-      - id: emit
-        name: emit-result
-        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase emit-result
+      - id: emit-build
+        name: emit-build
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase emit-build
       - name: upload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ${{ steps.emit.outputs.artifact_name }}
+          name: ${{ steps.emit-build.outputs.artifact_name }}
           path: |
-            ${{ steps.emit.outputs.directory }}/result.json
-            ${{ steps.emit.outputs.directory }}/${{ steps.emit.outputs.archive_file }}
+            ${{ steps.emit-build.outputs.directory }}/${{ steps.emit-build.outputs.archive_file }}
+            ${{ steps.emit-build.outputs.directory }}/${{ steps.emit-build.outputs.asset_file }}
+            ${{ steps.emit-build.outputs.directory }}/manifest.json
+            ${{ steps.emit-build.outputs.directory }}/candidate.json
+            ${{ steps.emit-build.outputs.directory }}/native-build.result.json
+            ${{ steps.emit-build.outputs.directory }}/install-windows.ps1
           archive: true
           compression-level: 0
           overwrite: false

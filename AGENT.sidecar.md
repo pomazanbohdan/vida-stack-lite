@@ -20,7 +20,7 @@ portable runtime instruction owner. The repository has exactly two products:
 | Plugin code and verification                 | `packages/plugin/`, as declared by its current system specification                                                               | Plugin owner     |
 | Repository-only migration verification       | `tooling/agent/`, `tests/agent/`                                                                                                  | Agent maintainer |
 | Repository-only CI evidence join             | `tooling/agent/release-ci-evidence.mjs` and its trusted session/controller observation boundary                                   | Agent maintainer |
-| Repository-only dormant CI delivery producer | `.github/workflows/agent-native-delivery.yml`, `tooling/agent/native-ci-delivery.mjs`                                             | Agent maintainer |
+| Native build artifact and Windows first-install delivery | `.github/workflows/agent-native-delivery.yml`, `tooling/agent/native-ci-delivery.mjs`, `packages/agent/tooling/install-windows.ps1` | Agent maintainer |
 | Project registry and configuration           | Root `agent-runtime.config.v1.yaml` and bound documentation policy                                                                | Repository owner |
 
 Plugin canonical documents are filled by the Plugin owner under a fresh scope.
@@ -36,8 +36,10 @@ One writer owns overlapping shared root configuration and workspace files.
   public agent delivery. Existing public SDK exports remain library interfaces;
   Public agent CLI installation through npm is not supported; npm artifacts
   serve SDK library imports only.
-  Native target support requires actual full-product evidence; publication is
-  outside local preparation and qualification.
+  Native target support requires actual full-product evidence. The build-only
+  Windows artifact and first-install adapter provide formation and availability,
+  not native qualification, an existing system update, Runtime acceptance or a
+  public registry release.
 - Package-owned schemas, templates and instructions resolve from the installed
   package. Project YAML, products and operational state resolve from explicit
   consumer `--project-root`; consumers do not contain copied agent source.
@@ -80,6 +82,22 @@ approval rules are unchanged. Attribution is retained in the current
 `.agent/work/audit-36-absorption-release-20261001/WORK.md`; this section is the
 Source-specific instruction owner.
 
+For the original active 0.1.2 operation only, retained attributable human
+authorization permits the specifically scoped ordinary Source ingress and one
+build-only artifact dispatch before successful package formation, to make the
+requested build and first-installer available. The authorization and sequence
+are recorded in `.agent/work/core-cloud-continuation-20261002/WORK.md` and its
+current `RESUME-STATUS.md`; exact Source paths, workflow bytes, provider policy
+and ownership remain subject to their actual reviewed controls. This exception
+does not change the general successful-formation commit/push rule, authorize a
+public registry release, weaken the existing seven-check qualification
+contract, perform a system update or establish Runtime acceptance. After artifact
+availability, qualify the exact asset and use the existing release-local owner
+for the same-operation system update and postproof. If no supported
+qualification path is available, keep that update open with an explicit GAP.
+Start the separate Luna local-testing-script work only after a qualified update;
+the GitLab target question remains pending and does not authorize runner setup.
+
 For separately authorized CI Source ingress, before creating a request and again
 immediately before dispatch, the repository controller must compare every
 declared physical Source input with the selected published commit's regular-file
@@ -98,11 +116,14 @@ native qualification or Runtime authority.
 Agent checks are owned by `packages/agent/TESTING.md` and its package scripts.
 Use the pinned Bun launcher for focused agent behavior and type/static/format
 checks. Build/package/install validation belongs to CI/CD; no such local test
-suite is authorized. The portable CI evidence consumer is implemented in Source;
-The fixed manual-only Windows x64 workflow and seven-phase producer require a
-separately approved provider/profile and explicit repository-variable gate.
-Activation, a dispatched run and successful exact-asset build/install receipts
-are distinct evidence; a failed Source-validation run supplies no native proof.
+suite is authorized. The manual-only Windows x64 workflow now has a distinct
+build-only `native-build -> emit-build -> upload` path. It publishes formation
+files only and does not call or relax the separate seven-check current-v1
+qualification contract. The workflow and producer require the approved
+provider/profile and explicit repository-variable gate. Activation, a dispatched
+run, build artifact availability, successful exact-asset qualification and
+installed acceptance are distinct evidence; a failed Source-validation run
+supplies no native proof.
 GitHub retrieval is a replaceable repository adapter, not a runtime prerequisite.
 Its approved workflow/repository/check policy and optional ZIP-reader capability
 require separate qualification; no ambient credential or provider is selected.
@@ -117,8 +138,10 @@ qualified pins remain usable for P0 work; a version-drift list alone does not
 block it. An actual required runtime/reader defect and missing target evidence
 still block their dependent effects. Preparation is not evidence that an old
 Source pin is latest or that a native target passed.
-CI Source ingress and any pre-formation publication exception require a distinct
-reviewable decision. Design acceptance alone does not change the Git order above.
+The active 0.1.2 pre-formation exception above is the only current exception;
+future CI Source ingress or pre-formation publication requires its own
+attributable reviewable decision. Design acceptance alone does not change the Git
+order above.
 Numeric quality gaps remain explicit;
 Static evidence never grants Runtime acceptance. Plugin commands are declared
 by its owner after the product specification is present.

@@ -405,21 +405,49 @@ upgrade-recovery checks. Failed/skipped/missing/stale/UNKNOWN observations deny.
 CI uses existing `build:pinned` then `prepack:pinned`; local release qualification
 does not form its prerequisite candidate.
 
-The repository contains a prepared, unactivated manual-only Windows x64 workflow
-at `.github/workflows/agent-native-delivery.yml` and its single producer
-`tooling/agent/native-ci-delivery.mjs`. The explicit disabled repository-variable
+The current manual-only Windows x64 workflow at
+`.github/workflows/agent-native-delivery.yml` uses its single producer
+`tooling/agent/native-ci-delivery.mjs` for the distinct build-only path
+`native-build -> emit-build -> upload`. The explicit disabled repository-variable
 gate, exact selected published commit/repository/job and current request guard
 precede formation. The CI-only isolated package mirror preserves declared Source
 bytes and installs from its own frozen lock outside the parent workspace before
 restoring the parent manifest. Existing CI preparation and scripts-disabled native
 packing run once; no SDK-only projection or local agent delivery test is used.
-Sequential exclusive phase intents retain failed/UNKNOWN custody and forbid
-automatic reissue. Each terminal phase binds the same request/run/attempt/Source/
-archive; recheck prior observations and current bytes after child execution before
-emitting the existing result. A killed, missing or unresolved child is not an
-expected denial; require its actual terminal exit and specific rejection.
+`emit-build` accepts only the actual successful `native-build` receipt and stable
+Source/candidate/manifest/archive/native asset/installer bytes, then uploads the
+exact six-file flat build inventory. This path does not call the seven-check
+qualification chain, write `VidaCIDeliveryResult/v1`, fabricate absent phases or
+establish target qualification, installed state, a system update or Runtime
+acceptance. Build artifact availability and first-install output remain separate
+from the existing full qualification contract.
 
-The prepared phases exercise the actual asset, private user-bin and sibling
+The artifact's `packages/agent/tooling/install-windows.ps1` is a current-user
+Windows first-install adapter. It validates the adjacent candidate, manifest,
+successful build receipt, archive and native asset; exclusively creates the
+version/operation-bound retained release tree and `bin/vida-agent.exe`; leaves
+persistent user PATH unchanged; and runs bounded public `version` and `--help`
+postchecks from its owned check directory. It does not overwrite or upgrade a
+prior install. If a write or postcheck fails after mutation, it reports
+PARTIAL/UNKNOWN and retains the files for inspection without cleanup or retry.
+Installation through this adapter is not the existing system-update effect.
+After applicable exact-asset qualification and final assurance, only
+`tooling/agent/release-local.mjs#installNativeRelease` performs the requested
+same-operation system update, using an actual prior-native observation and its
+installed postproof. If a supported qualification path is unavailable, keep the
+system update open with an explicit GAP.
+
+The retained `VidaCIDeliveryResult/v1` qualification producer still requires the
+seven actual checks: native-build, native-install, public-routes, offline-runtime,
+native-dependencies, state-preservation and upgrade-recovery. Each exclusive
+phase intent retains failed/UNKNOWN custody and forbids automatic reissue. Every
+terminal check binds the same request/run/attempt/Source/archive; recheck prior
+observations and current bytes after child execution before emitting the existing
+result. A killed, missing or unresolved child is not an expected denial; require
+its actual terminal exit and specific rejection. The build-only workflow does not
+invoke this qualification chain.
+
+The retained qualification phases exercise the actual asset, private user-bin and sibling
 release tree, shim/PATH observations, public valid/denied routes and aliases,
 effective consumer-process firewall isolation on the replaceable Windows runner,
 Cedar WASM, original native fs-safe guarded I/O, Mastra/LibSQL restart persistence,

@@ -86,13 +86,17 @@ minimal executable probe or cross-compilation alone cannot qualify VIDA.
 
 Local `test:resources:pinned` checks runtime resource integrity, concurrency and
 interrupted publication with synthetic data. It does not build, pack or install.
-Native delivery/build/install checks in this section belong to CI/CD. Their
-current exact-asset receipts remain required and separate from local agent proof.
+Native build/artifact/install checks belong to CI/CD. The current build-only path
+is `native-build -> emit-build -> upload` and publishes formation files only; it
+does not run the full qualification chain or establish installed acceptance.
+The existing seven-check current-v1 qualification contract and exact-asset
+receipts remain separate from local agent proof.
 
 The repository-only workflow `agent-native-delivery.yml` and
-`tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
-phases and one result-emission step. The approved provider/profile was activated
-and eleven CI runs were dispatched; all eleven failed overall. Run37216772330/attempt1
+`tooling/agent/native-ci-delivery.mjs` now use the separate build-only
+`native-build -> emit-build -> upload` path. The approved provider/profile was
+activated and twelve full-qualification CI runs were dispatched; all twelve
+failed overall before this build-only workflow change. Run37216772330/attempt1
 passed Source guards, `ci:pinned` and npm pack, then native-build failed with an
 ENOENT lstat on its absent private package extraction destination. Following the
 archive-destination caller correction, run37220454501/attempt1/job111489588604
@@ -149,6 +153,17 @@ record was emitted; later delivery phases, result emission and upload were
 skipped. The expanded argv was not logged. A 37,368-code-unit `EncodedCommand`
 template size is static source evidence, not a captured child argument or an
 explanation for CI10's unknown firewall value.
+
+CI12 run37296524530/attempt1/job111718934684 passed native-build,
+native-install and public-routes, then failed in offline-runtime with
+`Isolation rule is not fully enforced`. Its bounded diagnostic showed the
+formatter-rendered `EnforcementStatus` labels `[ProfileInactive, Enforced]` and
+PowerShell 5.1 `{value,Count}` wrappers, not raw UInt16 CIM codes; the Program
+comparison was unavailable. Raw-CIM retrieval remains a proposed, unobserved
+repair. The exact rejecting predicate/root cause remains unknown;
+native-dependencies, state-preservation, upgrade-recovery, result emission and
+upload were skipped.
+This does not qualify native delivery.
 
 The offline adapter now suppresses progress only inside its existing firewall
 command and emits a fixed `offline-firewall` JSON record before the unchanged
@@ -621,7 +636,8 @@ the actual current operation; suite receipts belong outside this living contract
 Run `bun run verify` from the bundle root for the local agent subset. It neither
 installs dependencies nor copies or installs a bundle. `bun run ci` performs
 delivery preparation only; CI/CD owns exact artifact/build/install validation.
-Eleven CI runs were dispatched and all eleven failed overall. In run37224368306/attempt1/
+The twelve prior full-qualification CI runs all failed overall before the
+workflow changed to the build-only artifact path. In run37224368306/attempt1/
 job111500862047, native-build and native-install passed, but public-routes failed
 during initialization; four remaining delivery phases and result emission/upload
 were skipped. Those partial CI steps do not establish a successful full native
@@ -665,7 +681,15 @@ PowerShell launch with `ENAMETOOLONG: name too long, uv_spawn`. No firewall
 record was emitted; later delivery phases, result emission and upload were
 skipped. Its expanded argv was not logged; the static encoded-template size
 does not identify the exact launched command line or explain CI10's unknown
-firewall value.
+firewall value. CI12 run37296524530/attempt1/job111718934684 passed
+native-build, native-install and public-routes, then failed in offline-runtime
+with `Isolation rule is not fully enforced`. Its bounded diagnostic showed the
+formatter-rendered `EnforcementStatus` labels `[ProfileInactive, Enforced]` and
+PowerShell 5.1 `{value,Count}` wrappers, not raw UInt16 CIM codes; the Program
+comparison was unavailable. Raw-CIM retrieval remains a proposed, unobserved
+repair. The exact rejecting predicate/root cause remains unknown;
+native-dependencies, state-preservation, upgrade-recovery, result emission and
+upload were skipped.
 
 ## Required integration evidence
 
@@ -760,8 +784,9 @@ The discovery view retains the exact maintained bunfig.toml used by the child la
 Source-only repair/recovery fixtures exclude the exact generated dist/standalone
 directory. They retain agent sources, schemas, instructions and current SDK
 outputs; the repository text-read limit stays unchanged. The approved CI/CD
-workflow/profile was activated and eleven runs were dispatched; all eleven failed
-overall. In run37224368306/attempt1/job111500862047, native-build and
+workflow/profile was activated; twelve full-qualification runs were dispatched
+and all failed overall before the workflow changed to the build-only artifact
+path. In run37224368306/attempt1/job111500862047, native-build and
 native-install passed before public-routes failed during initialization; four
 remaining delivery phases and result emission/upload were skipped. These partial
 step results do not establish native target or installed qualification. CI7
@@ -799,7 +824,15 @@ PowerShell launch with `ENAMETOOLONG: name too long, uv_spawn`. No firewall
 record was emitted; later delivery phases, result emission and upload were
 skipped. The expanded argv was not logged; the static encoded-template size
 does not identify the exact launched command line or explain CI10's unknown
-firewall value.
+firewall value. CI12 run37296524530/attempt1/job111718934684 passed native-build,
+native-install and public-routes, then failed in offline-runtime with
+`Isolation rule is not fully enforced`. Its bounded diagnostic showed the
+formatter-rendered `EnforcementStatus` labels `[ProfileInactive, Enforced]` and
+PowerShell 5.1 `{value,Count}` wrappers, not raw UInt16 CIM codes; the Program
+comparison was unavailable. Raw-CIM retrieval remains a proposed, unobserved
+repair. The exact rejecting predicate/root cause remains unknown;
+native-dependencies, state-preservation, upgrade-recovery, result emission and
+upload were skipped.
 Delivery qualification remains an explicit GAP.
 
 The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`
