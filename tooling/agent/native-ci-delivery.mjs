@@ -406,18 +406,67 @@ function assetFor(ctx, candidate) {
   };
 }
 const psLiteral = (value) => "'" + value.replaceAll("'", "''") + "'";
-function powershell(invoke, script, options = {}) {
+const powershellCallers = new Map([
+  [
+    'native-install-path-observation',
+    {
+      relative: 'powershell/native-install-path-observation.ps1',
+      witness: 'VIDA-CI-POWERSHELL-COMPLETE:native-install-path-observation',
+    },
+  ],
+  [
+    'offline-runtime-isolation',
+    {
+      relative: 'powershell/offline-runtime-isolation.ps1',
+      witness: 'VIDA-CI-POWERSHELL-COMPLETE:offline-runtime-isolation',
+    },
+  ],
+]);
+async function powershell(ctx, caller, invoke, script, options = {}) {
+  const binding = powershellCallers.get(caller);
+  requireCI(binding, 'unsupported private PowerShell caller');
+  const scriptPath = releasePath(ctx.root, binding.relative, true);
+  const scriptBytes = Buffer.concat([
+    Buffer.from([0xef, 0xbb, 0xbf]),
+    Buffer.from("$ErrorActionPreference='Stop';\r\n" + script, 'utf8'),
+  ]);
+  exclusive(ctx.root, binding.relative, scriptBytes);
+  requireCI(
+    physical(ctx.root, binding.relative, 8 * 1024 * 1024).equals(scriptBytes),
+    'owned PowerShell script bytes differ before invocation',
+  );
   const program = path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe');
-  return invoke(
+  const bootstrap =
+    "$ErrorActionPreference='Stop'; try { & " +
+    psLiteral(scriptPath) +
+    ' } catch { throw }; [Console]::Out.WriteLine(); [Console]::Out.WriteLine(' +
+    psLiteral(binding.witness) +
+    '); [Console]::Out.Flush()';
+  const stdout = await invoke(
     program,
     [
       '-NoProfile',
       '-NonInteractive',
       '-EncodedCommand',
-      Buffer.from("$ErrorActionPreference='Stop'; " + script, 'utf16le').toString('base64'),
+      Buffer.from(bootstrap, 'utf16le').toString('base64'),
     ],
     options,
   );
+  requireCI(
+    physical(ctx.root, binding.relative, 8 * 1024 * 1024).equals(scriptBytes),
+    'owned PowerShell script bytes differ after successful invocation',
+  );
+  requireCI(typeof stdout === 'string', 'PowerShell runner stdout is unavailable');
+  const lines = stdout.split(/\r?\n/);
+  let lastNonempty = -1;
+  for (let index = 0; index < lines.length; index++) if (lines[index].trim()) lastNonempty = index;
+  requireCI(
+    lastNonempty >= 0 && lines[lastNonempty] === binding.witness,
+    'PowerShell caller completion witness is missing or nonfinal',
+  );
+  const witnessStart = stdout.lastIndexOf('\n') + 1;
+  requireCI(stdout.slice(witnessStart) === binding.witness, 'PowerShell completion line differs');
+  return stdout.slice(0, witnessStart).trim();
 }
 const invokeNative = (invoke, executable, env, args) => invoke(executable, args, { env });
 async function initializeConsumer(ctx, invoke, executable, env, name) {
@@ -564,6 +613,8 @@ async function nativeInstall(ctx, candidate, invoke) {
   );
   // Explicit CI sandbox PATH observation; no machine/user registry mutation.
   await powershell(
+    ctx,
+    'native-install-path-observation',
     invoke,
     "if(Get-Command node,npm,bun -ErrorAction SilentlyContinue){throw 'External toolchain remains available'}",
     { env },
@@ -892,7 +943,19 @@ if($program -is [string]){
 if(-not $programMatchesAsset){& $emitFailureDiagnostic 'application-filter-mismatch' $profiles $true $rule $true $program $applicationFilter $true $programMatchesAsset $enforcementFull;throw 'Isolation executable differs'};
 & $emitObservedStage 'isolation-guards-passed' $profiles $true $rule $true $program $applicationFilter $true $programMatchesAsset $enforcementFull;
 `;
-  const firewallOutput = await powershell(invoke, firewallCommand);
+  const firewallOutput = await powershell(ctx, 'offline-runtime-isolation', invoke, firewallCommand);
+  let successfulIsolationRecords = 0;
+  for (const line of firewallOutput.split(/\r?\n/)) {
+    try {
+      const record = JSON.parse(line);
+      if (record?.kind === 'offline-firewall' && record.stage === 'isolation-guards-passed')
+        successfulIsolationRecords++;
+    } catch {}
+  }
+  requireCI(
+    successfulIsolationRecords === 1,
+    'offline firewall success observation is missing or duplicated',
+  );
   for (const line of firewallOutput.split(/\r?\n/)) {
     try {
       const record = JSON.parse(line);

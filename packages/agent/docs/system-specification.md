@@ -453,6 +453,21 @@ different values deny. Each positive result is computed once and reused by its
 guard and diagnostic; Program path values remain withheld. No diagnostic
 authorizes retry or cleanup.
 
+The two private Windows PowerShell callers save their unchanged bodies as
+exclusive UTF-8-with-BOM scripts under the private CI operation root, with
+`$ErrorActionPreference='Stop'` and physical byte equality checked before
+invocation and after successful completion. `-EncodedCommand` carries only a
+short bootstrap that invokes the owned literal path with the call operator and
+rethrows failures. After the body returns, it writes a fixed caller-bound
+completion witness. A caller accepts only an actual successful terminal and
+that exact witness as the final nonempty stdout line, then removes only the
+witness from returned trimmed output; the runner log retains raw stdout,
+stderr and terminal data. Offline isolation also requires exactly one existing
+`isolation-guards-passed` record before consumer initialization. Missing or
+uncertain completion blocks later effects and retains the script and receipts.
+The adapter does not switch to `-File` or stdin, override execution policy,
+retry or clean up the script.
+
 The optional explicit downloader `downloadGitHubCIDelivery` binds the selected
 successful run/attempt/workflow/repository and exact artifact to its actual job's
 start/completion interval and selected published commit. It accepts only a

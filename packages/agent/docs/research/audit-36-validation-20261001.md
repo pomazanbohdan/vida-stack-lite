@@ -922,3 +922,50 @@ The next authorized CI run must expose the bounded record in complete terminal
 streams and the existing bounded tail or successful log, then complete all
 seven phases before any native qualification claim. Installation and Runtime
 acceptance remain separate.
+
+### PowerShell transport — CI11 follow-up (2026-10-05)
+
+CI11 run37287442618/attempt1/job111689602101 passed native-build,
+native-install and public-routes, then failed in offline-runtime before
+PowerShell launched with `ENAMETOOLONG: name too long, uv_spawn`. No firewall
+record was emitted. Native-dependencies, state-preservation, upgrade-recovery,
+result emission and upload were skipped. The earlier CI10 rule rejection remains
+unknown; CI11 does not identify its rejecting field or qualify native delivery.
+
+The shared source template's `-EncodedCommand` text was statically measured at
+37,368 UTF-16 code units. The failed run did not log its expanded argv, so the
+source measurement is not a captured command line or direct per-child length.
+The [CreateProcessW command-line limit](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw)
+is 32,767 characters including the terminating NUL; this supports the size
+concern but does not establish the exact CI11 spawn argument.
+
+The correction keeps `-NoProfile -NonInteractive -EncodedCommand` and the
+existing runner. It writes one exclusive UTF-8-BOM, Stop-guarded script per
+caller under the private operation root, verifies its physical bytes before
+and after successful completion, and encodes only a short call-operator
+bootstrap with catch/rethrow. Each caller requires its fixed caller-bound
+completion witness as the final nonempty stdout line after an actual successful
+terminal, then removes only that witness from returned trimmed stdout. The
+runner's raw stdout, stderr and terminal receipt remain intact; a missing or
+invalid witness prevents subsequent effects and retains issued artifacts and
+UNKNOWN custody. The offline caller additionally requires exactly one existing
+`offline-firewall` `isolation-guards-passed` record before consumer
+initialization. Scripts are not cleaned up, retried, or executed through
+`-File` or stdin, and no execution-policy override is added.
+
+Official mechanics references and limits:
+
+- [about_PowerShell.exe](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe?view=powershell-5.1)
+  documents UTF-16LE Base64 `-EncodedCommand` and distinct interruption behavior;
+  it supports retaining Command mode with an explicit completion witness rather
+  than changing to `-File`.
+- [about_Character_Encoding](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_character_encoding?view=powershell-5.1)
+  documents the UTF-8 BOM needed for non-ASCII Windows PowerShell script files.
+- [Node child_process.spawn](https://nodejs.org/api/child_process.html#child_processspawncommand-args-options)
+  documents argv, streams and child terminal events used by the current runner.
+
+These references support transport mechanics only. The local inert
+`release-retarget-state.test.mjs` suite does not execute Windows PowerShell or
+qualify UTF-8 file interpretation, command/error semantics, interruption
+behavior or native target delivery. CI10 remains failed with its original
+unknown rule value, and CI11 remains failed before PowerShell launch.

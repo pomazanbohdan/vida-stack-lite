@@ -92,7 +92,7 @@ current exact-asset receipts remain required and separate from local agent proof
 The repository-only workflow `agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs` contain seven sequential actual delivery
 phases and one result-emission step. The approved provider/profile was activated
-and ten CI runs were dispatched; all ten failed overall. Run37216772330/attempt1
+and eleven CI runs were dispatched; all eleven failed overall. Run37216772330/attempt1
 passed Source guards, `ci:pinned` and npm pack, then native-build failed with an
 ENOENT lstat on its absent private package extraction destination. Following the
 archive-destination caller correction, run37220454501/attempt1/job111489588604
@@ -142,6 +142,14 @@ CLIXML progress occupied much of bounded stderr. Offline consumer initialization
 was not reached. This does not identify a firewall, array-shape, network or
 specific status root cause and does not qualify native delivery.
 
+CI11 run37287442618/attempt1/job111689602101 passed native-build,
+native-install and public-routes, then failed in offline-runtime before
+PowerShell launch with `ENAMETOOLONG: name too long, uv_spawn`. No firewall
+record was emitted; later delivery phases, result emission and upload were
+skipped. The expanded argv was not logged. A 37,368-code-unit `EncodedCommand`
+template size is static source evidence, not a captured child argument or an
+explanation for CI10's unknown firewall value.
+
 The offline adapter now suppresses progress only inside its existing firewall
 command and emits a fixed `offline-firewall` JSON record before the unchanged
 denial. Each record is one line with a 1536 UTF-16-code-unit ceiling and the
@@ -167,6 +175,15 @@ or different values deny. Each result is computed once and reused in its
 denial and diagnostic; Program values stay withheld. These diagnostics and
 local inert tests do not establish PowerShell behavior or CI/native
 qualification.
+
+The shared PowerShell helper now writes one exclusive UTF-8-BOM Stop-guarded
+script per caller, invokes it through a short `-EncodedCommand` call-operator
+bootstrap, and requires the caller-specific completion witness after an actual
+successful terminal. It removes only that final witness from returned trimmed
+stdout; the existing command log retains the raw streams and terminal. Offline
+also requires exactly one guard-success record before consumer initialization.
+The local inert suite does not execute Windows PowerShell or verify its file
+encoding, command behavior, interruption semantics or native target.
 Broad dependency/tool and caller adaptation is last in 0.1.3, after P0 native
 UPDATE01/developer-unblocking and required installed checkpoints, before final
 0.1.3 delivery and acceptance. Reuse exact current qualified pins for P0 work;
@@ -604,7 +621,7 @@ the actual current operation; suite receipts belong outside this living contract
 Run `bun run verify` from the bundle root for the local agent subset. It neither
 installs dependencies nor copies or installs a bundle. `bun run ci` performs
 delivery preparation only; CI/CD owns exact artifact/build/install validation.
-Ten CI runs were dispatched and all ten failed overall. In run37224368306/attempt1/
+Eleven CI runs were dispatched and all eleven failed overall. In run37224368306/attempt1/
 job111500862047, native-build and native-install passed, but public-routes failed
 during initialization; four remaining delivery phases and result emission/upload
 were skipped. Those partial CI steps do not establish a successful full native
@@ -642,6 +659,13 @@ Action, Direction, PrimaryStatus and EnforcementStatus was not retained;
 CLIXML progress occupied much of bounded stderr. Offline consumer initialization
 was not reached. This does not identify a firewall, array-shape, network or
 specific status root cause and does not qualify native delivery.
+CI11 run37287442618/attempt1/job111689602101 passed native-build,
+native-install and public-routes, then failed in offline-runtime before
+PowerShell launch with `ENAMETOOLONG: name too long, uv_spawn`. No firewall
+record was emitted; later delivery phases, result emission and upload were
+skipped. Its expanded argv was not logged; the static encoded-template size
+does not identify the exact launched command line or explain CI10's unknown
+firewall value.
 
 ## Required integration evidence
 
@@ -736,7 +760,7 @@ The discovery view retains the exact maintained bunfig.toml used by the child la
 Source-only repair/recovery fixtures exclude the exact generated dist/standalone
 directory. They retain agent sources, schemas, instructions and current SDK
 outputs; the repository text-read limit stays unchanged. The approved CI/CD
-workflow/profile was activated and ten runs were dispatched; all ten failed
+workflow/profile was activated and eleven runs were dispatched; all eleven failed
 overall. In run37224368306/attempt1/job111500862047, native-build and
 native-install passed before public-routes failed during initialization; four
 remaining delivery phases and result emission/upload were skipped. These partial
@@ -769,6 +793,13 @@ Action, Direction, PrimaryStatus and EnforcementStatus was not retained;
 CLIXML progress occupied much of bounded stderr. Offline consumer initialization
 was not reached. This does not identify a firewall, array-shape, network or
 specific status root cause and does not qualify native delivery.
+CI11 run37287442618/attempt1/job111689602101 passed native-build,
+native-install and public-routes, then failed in offline-runtime before
+PowerShell launch with `ENAMETOOLONG: name too long, uv_spawn`. No firewall
+record was emitted; later delivery phases, result emission and upload were
+skipped. The expanded argv was not logged; the static encoded-template size
+does not identify the exact launched command line or explain CI10's unknown
+firewall value.
 Delivery qualification remains an explicit GAP.
 
 The complete `unprepared recovery` group in `tests/run-entrypoint.test.mjs`
