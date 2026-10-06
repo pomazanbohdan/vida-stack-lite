@@ -277,8 +277,8 @@ cache. An exact hit reuses the existing entry; it need not save another entry.
 Confirm `cache-hit` on a later required warm build. Keep missing or empty cache
 evidence explicit. Do not start a separate build solely to measure caching.
 
-Current installed build: run 37542722447, artifact 11449332368, version 0.1.2,
-embedded Bun 1.4.2. The system native file is 133316608 bytes. Exact
+Current installed build: run 37547983027, artifact 11450684665, version 0.1.2,
+embedded Bun 1.4.2. The system native file is 133317120 bytes. Exact
 bytes, current instructions and effective PATH are verified. Previous consumer
 native and transient previous files are removed. User Runtime acceptance is separate.
 This build restored the existing Bun cache: entry 8591281998, 80725852 bytes.
