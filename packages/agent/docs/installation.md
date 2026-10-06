@@ -255,8 +255,18 @@ remain delivery GAPs; local resource proof does not establish installed acceptan
 Build owner: `.github/workflows/agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs`. The workflow publishes the six build
 files. CI/CD forms and publishes the exact package and metadata. No tests run at formation or installation.
-Current installed build: run 37485002113, artifact 11423221207, version 0.1.2,
-embedded Bun 1.4.2. The system native file is 133304320 bytes. Exact
+
+The build job restores the Bun package cache before installing dependencies.
+Its key binds the runner OS/architecture, Bun version, package manifest and
+lockfile. A compatible cache may supply already downloaded packages; installation
+still uses `--frozen-lockfile --ignore-scripts --backend=copyfile`. Each run gets
+fresh `node_modules`. Source, compiled outputs, receipts and credentials are not
+cached. A cache miss downloads the locked dependencies normally. Cache hits do
+not qualify a build. See the [Bun cache contract](https://bun.sh/docs/pm/global-cache)
+and [GitHub cache action](https://github.com/actions/cache).
+
+Current installed build: run 37505488413, artifact 11431028847, version 0.1.2,
+embedded Bun 1.4.2. The system native file is 133303808 bytes. Exact
 bytes, current instructions and effective PATH are verified. Previous consumer
 native and transient previous files are removed. User Runtime acceptance is separate.
 The installer imports its own in-box Utility module through $PSHOME, so a Node/Bun

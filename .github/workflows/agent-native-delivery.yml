@@ -21,6 +21,7 @@ jobs:
     if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' }}
     runs-on: windows-2025
     env:
+      BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/vida-bun-install-cache
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
       CI_REQUEST: ${{ inputs.request }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
@@ -53,6 +54,13 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version: 1.4.2
+      - name: bun-dependency-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ env.BUN_INSTALL_CACHE_DIR }}
+          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-1.4.2-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
+          restore-keys: |
+            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-1.4.2-
       - name: isolated-source
         run: |
           $ErrorActionPreference = 'Stop'
