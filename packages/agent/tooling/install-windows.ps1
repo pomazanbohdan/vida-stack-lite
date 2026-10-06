@@ -5,6 +5,8 @@ param(
     [string] $Source
 )
 $ErrorActionPreference = 'Stop'
+# Use this PowerShell's built-ins even when a Node/Bun caller inherited PSModulePath.
+Import-Module (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1') -ErrorAction Stop
 $productRoot = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Programs\vida-agent'
 $binRoot = Join-Path $productRoot 'bin'
 $command = Join-Path $binRoot 'vida-agent.exe'

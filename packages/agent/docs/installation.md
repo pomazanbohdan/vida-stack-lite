@@ -255,9 +255,12 @@ remain delivery GAPs; local resource proof does not establish installed acceptan
 Build owner: `.github/workflows/agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.mjs`. The workflow publishes the six build
 files. CI/CD forms and publishes the exact package and metadata. No tests run at formation or installation.
-Current available build: run 37452713546, artifact 11407990445, version 0.1.2,
-embedded Bun 1.4.2. Its native file is 133303808 bytes. The observed system
-command is still 133299712 bytes. Its update and qualified acceptance are open.
+Current installed build: run 37485002113, artifact 11423221207, version 0.1.2,
+embedded Bun 1.4.2. The system native file is 133304320 bytes. Exact
+bytes, current instructions and effective PATH are verified. Previous consumer
+native and transient previous files are removed. User Runtime acceptance is separate.
+The installer imports its own in-box Utility module through $PSHOME, so a Node/Bun
+caller does not depend on an inherited PSModulePath.
 
 Run the maintained `packages/agent/tooling/install-windows.ps1`:
 
