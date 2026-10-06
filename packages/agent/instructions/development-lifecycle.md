@@ -285,14 +285,17 @@ preservation is checked against safe current configuration after selected
 bundle integrity validation. Retirement never authorizes filesystem deletion,
 template replacement or an arbitrary mutable-output exception.
 
-For a code-producing route, establish the smallest correct B/S/C trace, freeze
-scope, implement, run the applicable focused checks, then reconcile affected
-documentation. On one final sealed payload, run the required complete tests,
-local coverage and complexity/CRAP gates, explicitly manually launched mutation
-evidence when requested, three fresh independent reviews,
-reverse validation and CLEAR. A changed payload invalidates its bound
-assurance. Static checks and delivery cannot close Runtime acceptance; only
-attributable testing of the installed fingerprint can do that. Cutover rollback
+For a code-producing task, establish its B/S/C trace and exact scope. Run
+focused behavior checks while developing and the full applicable task suite
+once after corrections. Perform the independent reviews required by the
+changed risk once for that task. Keep security, data and explicitly required
+quality checks in this development lane. Reuse current evidence; invalidate
+only proof affected by changed inputs. Reconcile changed documentation once.
+Formation and installation do not rerun these tasks or require another review,
+coverage, mutation, reverse-validation or documentation cycle. Delivery cannot
+grant user Runtime acceptance.
+
+Cutover rollback
 closes when the durable cutoff witness records the first admitted new-work
 attempt before state writes. A later preparation failure does not reopen
 rollback; recover forward. The retained selector path now uses canonical SQLite
@@ -423,15 +426,35 @@ functional, security, data and mandatory numeric quality gate; increased
 timeouts, skipped checks and weakened verification do not establish improvement.
 
 After each whole verified engineering outcome, update the authorized local
-system agent without changing its current semantic version. Use the supported
-same-version preparation route, one returned operation and its exact qualified
-Source/archive payload. Version equality is not byte identity. An unfinished
-operation or uncertain installation retains its identity and effects; reconcile
-before retry. Required current checks, successful-formation Source Git order,
-three fresh blind reviews, reverse validation, CLEAR, installation and installed
-postchecks remain mandatory. Pause dependent next-batch effects until that
-checkpoint succeeds. Keep the separately authorized final release/native goal;
-an intermediate update grants neither registry publication nor Runtime acceptance.
+system agent with the selected exact artifact and current semantic version.
+Version equality is not byte identity. Preserve the original operation, failed
+or UNKNOWN effects and historical evidence. Reconcile uncertainty before retry.
+New dependent effects wait for the actual installed byte/version/PATH proof.
+This checkpoint does not grant user Runtime acceptance or registry publication.
+
+### Formation and installation policy
+
+This section is the single owner of this policy. Package qualification consists
+of actual successful formation provenance, declared Source and version, target
+platform, and exact archive/manifest/native byte integrity. The current CI result
+declares only native-build. This is delivery qualification, not evidence of
+functional testing. A supported historical profile that explicitly declares
+seven checks still requires all seven; never rewrite old claims as minimal proof.
+
+Do not run test suites when forming or installing a package. Do not require
+fresh task reviews, coverage, mutation, a new seal or CLEAR for every formation
+or installation. Those belong to the changed development task and are reused
+while current. An unchanged selected artifact needs no new build or Git effect
+solely to install it. Publish changed reviewed Source before its CI formation.
+
+Use one maintained platform installer. Windows uses install-windows.ps1 with
+the selected local EXE/ZIP or direct HTTPS address and install/update/uninstall.
+It checks the selected bytes and manifest platform, replaces the fixed command
+with a transient previous file, and observes installed version and bytes. The
+session confirms effective PATH once. Failure preserves recovery custody;
+conditional rollback never overwrites a drifted target. Remove the exact owned
+previous consumer binary only after verified success. Preserve project state.
+No prerequisite probes, installation test suite or permanent predecessor tree.
 
 Target short-command and control return below two seconds; retain existing
 elapsed/failure diagnostics without a separate optimization measurement lane.
@@ -522,34 +545,18 @@ partial or tampered resources without weakening native attestation, Cedar,
 fs-safe, ProjectContext, CAS, maintenance or Mastra/LibSQL. Use actual full-product
 native target checks, not a thin probe or assumed loader ABI.
 
-For the active original 0.1.2 Windows delivery continuation, keep the authorized
-order: first make the build-only native artifact and first-install adapter
-available; then establish applicable exact-asset native qualification and final
-assurance; then perform the requested same-operation system update through
-`tooling/agent/release-local.mjs#installNativeRelease` using its actual prior-
-native observation and installed postproof. Build-only receipts, artifact
-availability and first-install output do not satisfy the full current-v1
-qualification contract, prove an installed update or grant Runtime acceptance.
-Do not synthesize missing phase receipts, relax existing readers or install the
-artifact as a substitute for qualification. If no supported exact-asset
-qualification path is available, record that GAP and keep the system update
-open. Only after the qualified update and postproof may separate Luna
-local-testing-script work begin; GitLab runner setup stays pending its
-unanswered human target decision.
+Use the formation and installation policy above for the current delivery.
+Keep one pending operation/version and exact asset identity. Formation proof,
+physical installation and user Runtime acceptance are separate observations.
+Use supported bundle-owned repair before changing active artifact contracts or
+retargeting an uninstalled operation. Read historical explicit requirements as
+declared; a new minimum profile does not weaken an old seven-check profile.
+The maintained PowerShell adapter owns Windows physical install/update/removal.
+It preserves npm shims and consumer state, and keeps the prior binary only for
+the current recovery window. Qualification does not rerun task assurance.
+Unblock waiting developers only through actual installed behavior and normal
+admission. The GitLab runner target question remains separate and unanswered.
 
-Keep one pending version/operation while packaging changes are qualified.
-Preserve any formed SDK/npm archive and its failed, partial or UNKNOWN receipts;
-never relabel it as a native executable or rewrite pending artifacts manually.
-Use supported bundle-owned repair/reconciliation before changing active artifact
-contracts or retargeting an uninstalled operation. Qualify the exact native asset
-with applicable checks, three fresh blind reviews, reverse validation and CLEAR;
-use the Source standing successful-formation commit/push order. Install only that
-qualified native asset without publication or bypass flags. Unblock waiting
-developers only through its verified installed behavior and normal admission.
-Use the approved native user-bin defaults declared by the system specification
-and installation guide, with sibling version/operation release trees. Preserve
-prior npm shims, use exclusive creation for a new entry and exact observed-prior
-CAS for upgrades. Observe/reconcile unknown outcomes before repeating effects.
 The final native manifest specifies target, destination, PATH, prior-install and
 rollback effects; npm global installation cannot establish agent delivery.
 Maintain every public SDK export. Pinned deterministic compile/minify/bytecode,

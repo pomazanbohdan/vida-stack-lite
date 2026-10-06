@@ -1,17 +1,5 @@
 // Repository-owned CI producer. Importing this module never builds or installs.
-import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import {
-  existsSync,
-  linkSync,
-  lstatSync,
-  readFileSync,
-  readdirSync,
-  realpathSync,
-  unlinkSync,
-  watch,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -22,12 +10,13 @@ import {
   releaseDirectory,
   releaseSourceBinding,
 } from '../../packages/agent/bin/local-release-artifacts.mjs';
-import { nativeInstallationPaths, publishNativeExecutable, runCommand, parsePackOutput } from './release-local.mjs';
+import { runCommand, parsePackOutput } from './release-local.mjs';
 import { findNpmCli } from '../../packages/agent/bin/bun.mjs';
 import {
   ciArchiveLimit,
   ciTransportLimit,
   nativeDeliveryChecks,
+  minimumNativeDeliveryChecks,
   validateCIDeliveryRequest,
   encodeCIDeliveryResult,
 } from './release-ci-evidence.mjs';
@@ -40,7 +29,7 @@ const profileFor = (request) => ({
   repository_id: request.repository_id,
   project_ids: request.project_ids,
   target: request.target,
-  required_checks: [...nativeDeliveryChecks],
+  required_checks: [...minimumNativeDeliveryChecks],
 });
 
 /** Environment consistency is a local CI fence, never human authorization. */
@@ -178,37 +167,6 @@ function candidateFor(ctx) {
   );
   return candidate;
 }
-function nativeEnvironment(ctx, name) {
-  const home = path.join(ctx.root, 'homes', name);
-  releaseDirectory(ctx.root, 'homes/' + name);
-  const env = {
-    ...process.env,
-    HOME: home,
-    USERPROFILE: home,
-    LOCALAPPDATA: path.join(home, 'local'),
-    APPDATA: path.join(home, 'roaming'),
-  };
-  for (const key of Object.keys(env)) {
-    const upper = key.toUpperCase();
-    if (
-      [
-        'PATH',
-        'NODE_OPTIONS',
-        'BUN_OPTIONS',
-        'BUN_BE_BUN',
-        'VIDA_STANDALONE_ROOT',
-        'VIDA_STANDALONE_EXECUTABLE',
-        'GITHUB_TOKEN',
-      ].includes(upper) ||
-      upper.startsWith('ACTIONS_') ||
-      /(?:TOKEN|PASSWORD|SECRET|API_KEY)$/.test(upper)
-    )
-      delete env[key];
-  }
-  env.PATH = path.join(home, 'bin');
-  releaseDirectory(home, 'bin');
-  return env;
-}
 const nativePrerequisiteFailure =
   /Cannot find module|Cannot find package|ERR_MODULE_NOT_FOUND|ModuleNotFound|Error loading shared library|failed to load.*(?:\.node|dll)/i;
 
@@ -337,26 +295,6 @@ export const nativeCIUnadmittedWorkflowDenial = jsonDenial(
   },
 );
 
-function absentProtectedPath(root, relative, reason) {
-  const file = releasePath(root, relative, true);
-  requireCI(!lstatSync(file, { throwIfNoEntry: false }), reason);
-  return file;
-}
-
-function observeChildClose(child, command, args) {
-  let stdout = '',
-    stderr = '';
-  child.stdout.on('data', (bytes) => {
-    stdout += bytes;
-  });
-  child.stderr.on('data', (bytes) => {
-    stderr += bytes;
-  });
-  return new Promise((resolve, reject) => {
-    child.once('error', reject);
-    child.once('close', (code, signal) => resolve({ command, args, code, signal, stdout, stderr }));
-  });
-}
 export function validateNativeCIUnadmittedRun(record) {
   validateNativeCIDenial(record, nativeCIUnadmittedWorkflowDenial);
 }
@@ -399,93 +337,6 @@ export function createNativeCICommandRunner(ctx, phase, execute = runCommand) {
 function runner(ctx, phase) {
   return createNativeCICommandRunner(ctx, phase);
 }
-function assetFor(ctx, candidate) {
-  return {
-    ...candidate.manifest.asset,
-    target: candidate.manifest.target,
-    path: path.join(ctx.root, 'package/dist/standalone', candidate.manifest.asset.file),
-  };
-}
-const psLiteral = (value) => "'" + value.replaceAll("'", "''") + "'";
-const powershellCallers = new Map([
-  [
-    'native-install-path-observation',
-    {
-      relative: 'powershell/native-install-path-observation.ps1',
-      witness: 'VIDA-CI-POWERSHELL-COMPLETE:native-install-path-observation',
-    },
-  ],
-  [
-    'offline-runtime-isolation',
-    {
-      relative: 'powershell/offline-runtime-isolation.ps1',
-      witness: 'VIDA-CI-POWERSHELL-COMPLETE:offline-runtime-isolation',
-    },
-  ],
-]);
-async function powershell(ctx, caller, invoke, script, options = {}) {
-  const binding = powershellCallers.get(caller);
-  requireCI(binding, 'unsupported private PowerShell caller');
-  const scriptPath = releasePath(ctx.root, binding.relative, true);
-  const scriptBytes = Buffer.concat([
-    Buffer.from([0xef, 0xbb, 0xbf]),
-    Buffer.from("$ErrorActionPreference='Stop';\r\n" + script, 'utf8'),
-  ]);
-  exclusive(ctx.root, binding.relative, scriptBytes);
-  requireCI(
-    physical(ctx.root, binding.relative, 8 * 1024 * 1024).equals(scriptBytes),
-    'owned PowerShell script bytes differ before invocation',
-  );
-  const program = path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe');
-  const bootstrap =
-    "$ErrorActionPreference='Stop'; try { & " +
-    psLiteral(scriptPath) +
-    ' } catch { throw }; [Console]::Out.WriteLine(); [Console]::Out.WriteLine(' +
-    psLiteral(binding.witness) +
-    '); [Console]::Out.Flush()';
-  const stdout = await invoke(
-    program,
-    [
-      '-NoProfile',
-      '-NonInteractive',
-      '-EncodedCommand',
-      Buffer.from(bootstrap, 'utf16le').toString('base64'),
-    ],
-    options,
-  );
-  requireCI(
-    physical(ctx.root, binding.relative, 8 * 1024 * 1024).equals(scriptBytes),
-    'owned PowerShell script bytes differ after successful invocation',
-  );
-  requireCI(typeof stdout === 'string', 'PowerShell runner stdout is unavailable');
-  const lines = stdout.split(/\r?\n/);
-  let lastNonempty = -1;
-  for (let index = 0; index < lines.length; index++) if (lines[index].trim()) lastNonempty = index;
-  requireCI(
-    lastNonempty >= 0 && lines[lastNonempty] === binding.witness,
-    'PowerShell caller completion witness is missing or nonfinal',
-  );
-  const witnessStart = stdout.lastIndexOf('\n') + 1;
-  requireCI(stdout.slice(witnessStart) === binding.witness, 'PowerShell completion line differs');
-  return stdout.slice(0, witnessStart).trim();
-}
-const invokeNative = (invoke, executable, env, args) => invoke(executable, args, { env });
-async function initializeConsumer(ctx, invoke, executable, env, name) {
-  const consumer = path.join(ctx.root, 'consumers', name);
-  releaseDirectory(ctx.root, 'consumers/' + name);
-  exclusive(consumer, 'owner.txt', Buffer.from('CI-owned consumer value\n'));
-  await invokeNative(invoke, executable, env, [
-    'init',
-    '--project-root',
-    consumer,
-    '--repository',
-    'native-ci',
-    '--project',
-    'project=.',
-  ]);
-  return consumer;
-}
-
 async function nativeBuild(ctx, invoke) {
   const node = realpathSync(process.env.VIDA_CI_NODE_EXECUTABLE);
   requireCI((await invoke(node, ['--version'])).trim() === 'v' + ctx.manifest.engines.node, 'CI Node pin differs');
@@ -553,1025 +404,82 @@ async function nativeBuild(ctx, invoke) {
   });
 }
 
-async function nativeInstall(ctx, candidate, invoke) {
-  const env = nativeEnvironment(ctx, 'installed'),
-    asset = assetFor(ctx, candidate);
-  const locations = nativeInstallationPaths({
-    version: ctx.request.version,
-    operation: ctx.request.operation_id,
-    target: ctx.request.target,
-    env,
-  });
-  requireCI(
-    locations.path_command.startsWith(ctx.root + path.sep) && locations.installed_root.startsWith(ctx.root + path.sep),
-    'CI install escapes private destination',
-  );
-  requireCI(
-    !existsSync(locations.installed_root) && !existsSync(locations.path_command),
-    'prior install custody exists; no replay',
-  );
-  releaseDirectory(ctx.root, path.relative(ctx.root, locations.installed_root).split(path.sep).join('/'));
-  const require = createRequire(path.join(ctx.packageRoot, 'package.json'));
-  const { extractArchive } = await import(pathToFileURL(require.resolve('@openclaw/fs-safe/archive')).href);
-  await extractArchive({
-    archivePath: path.join(ctx.root, 'output', candidate.pack_metadata[0].filename),
-    destDir: locations.installed_root,
-    kind: 'tar',
-    tarGzip: true,
-    timeoutMs: 0,
-    stripComponents: 1,
-    limits: { maxArchiveBytes: ciArchiveLimit, maxExtractedBytes: 512 * 1024 * 1024, maxEntryBytes: ciArchiveLimit },
-  });
-  for (const file of candidate.pack_metadata[0].files)
-    requireCI(
-      physical(locations.installed_root, file.path).equals(physical(ctx.root, 'package/' + file.path)),
-      'installed release tree differs',
-    );
-  const installedAsset = { ...asset, path: releasePath(locations.installed_root, 'dist/standalone/' + asset.file) };
-  releaseDirectory(ctx.root, path.relative(ctx.root, locations.prefix).split(path.sep).join('/'));
-  const shim = path.join(locations.prefix, 'vida-agent.cmd');
-  exclusive(locations.prefix, 'vida-agent.cmd', Buffer.from('CI retained shim\n'));
-  publishNativeExecutable(installedAsset, locations.path_command);
-  const version = JSON.parse(await invokeNative(invoke, locations.path_command, env, ['version']));
-  requireCI(version.name === 'vida-agent' && version.version === ctx.request.version, 'installed version differs');
-  const instruction = JSON.parse(
-    await invokeNative(invoke, locations.path_command, env, ['instructions', '--path', 'development-lifecycle']),
-  );
-  requireCI(
-    instruction.path.startsWith(env.USERPROFILE + path.sep) &&
-      readFileSync(instruction.path).equals(physical(ctx.root, 'package/instructions/development-lifecycle.md')),
-    'installed instruction differs',
-  );
-  const check = JSON.parse(await invokeNative(invoke, locations.path_command, env, ['install', '--check']));
-  requireCI(
-    check.status === 'prerequisites_valid' && check.bun_pin === '1.4.2' && check.runtime === 'embedded',
-    'installed prerequisite result differs',
-  );
-  env.PATH = locations.prefix;
-  requireCI(
-    !readdirSync(locations.prefix).some((name) => /^(node|npm|bun)(\.|$)/i.test(name)),
-    'external runtime appeared on consumer PATH',
-  );
-  // Explicit CI sandbox PATH observation; no machine/user registry mutation.
-  await powershell(
-    ctx,
-    'native-install-path-observation',
-    invoke,
-    "if(Get-Command node,npm,bun -ErrorAction SilentlyContinue){throw 'External toolchain remains available'}",
-    { env },
-  );
-  requireCI(readFileSync(shim).equals(Buffer.from('CI retained shim\n')), 'native install changed sibling shim');
-  exclusive(ctx.root, 'installation.json', { env_home: env.USERPROFILE, locations, path: env.PATH });
-}
-
-async function publicRoutes(ctx, candidate, invoke) {
-  const asset = assetFor(ctx, candidate),
-    env = nativeEnvironment(ctx, 'routes');
-  const consumer = await initializeConsumer(ctx, invoke, asset.path, env, 'routes');
-  const help = JSON.parse(await invokeNative(invoke, asset.path, env, ['--help']));
-  const { commands } = await import(pathToFileURL(path.join(ctx.root, 'package/bin/cli-metadata.mjs')).href);
-  const commandDenials = validateNativeCICommandDenialInventory(commands, ctx.manifest.bin);
-  requireCI(json(help.commands) === json([...commands, 'instructions', 'version']), 'public route inventory differs');
-  for (const command of commands) {
-    await invoke.denied(asset.path, [command, '--invalid-ci-option'], { env }, commandDenials.get(command));
-  }
-  const scope = JSON.parse(
-    await invokeNative(invoke, asset.path, env, [
-      'scope',
-      '--project-root',
-      consumer,
-      '--repository',
-      'native-ci',
-      '--project',
-      'project',
-      '--path',
-      'owner.txt',
-    ]),
-  );
-  requireCI(
-    scope.entries.some(
-      (entry) => entry.path === 'owner.txt' && entry.sha256 === sha(readFileSync(path.join(consumer, 'owner.txt'))),
-    ),
-    'public scope did not inspect actual consumer',
-  );
-  for (const instruction of readdirSync(path.join(ctx.root, 'package/instructions')).filter((name) =>
-    name.endsWith('.md'),
-  )) {
-    const observed = JSON.parse(await invokeNative(invoke, asset.path, env, ['instructions', '--path', instruction]));
-    requireCI(
-      observed.version === ctx.request.version &&
-        observed.path.startsWith(env.USERPROFILE + path.sep) &&
-        readFileSync(observed.path).equals(physical(ctx.root, 'package/instructions/' + instruction)),
-      'physical instruction route differs',
-    );
-  }
-  // Package-owned aliases use this same embedded executable, with no external Node.
-  const materialized = path.join(
-    env.USERPROFILE,
-    '.vida-agent/runtime',
-    ctx.request.version + '-' + candidate.manifest.payloadId,
-  );
-  for (const [name, entry] of Object.entries(ctx.manifest.bin)) {
-    const file = path.resolve(materialized, entry);
-    requireCI(file.startsWith(materialized + path.sep) && existsSync(file), 'maintained alias is absent: ' + name);
-    if (name === 'vida-agent') continue;
-    await invoke.denied(
-      asset.path,
-      ['--no-env-file', '--no-install', file, '--invalid-ci-option'],
-      { env: { ...env, BUN_BE_BUN: '1', VIDA_STANDALONE_ROOT: materialized, VIDA_STANDALONE_EXECUTABLE: asset.path } },
-      commandDenials.get(path.basename(entry, path.extname(entry))),
-    );
-  }
-  await invoke.denied(
-    asset.path,
-    ['instructions', '--path', '../foreign'],
-    { env },
-    cliError('invalid instruction name'),
-  );
-  absentProtectedPath(
-    consumer,
-    '.agent/work/agent-local-release/ci-missing/release.json',
-    'expected release-retarget first-read journal is not absent',
-  );
-  await invoke.denied(
-    asset.path,
-    [
-      'reconcile-artifacts',
-      '--kind',
-      'release-retarget',
-      '--mode',
-      'inspect',
-      '--project-root',
-      consumer,
-      '--operation',
-      'ci-missing',
-    ],
-    { env },
-    jsonDenial({ status: 'blocked' }, { exact: 'Local release: path missing' }),
-  );
-  const missingController = absentProtectedPath(
-    ctx.root,
-    'missing-controller',
-    'expected development-controller root is not absent',
-  );
-  await invoke.denied(
-    asset.path,
-    ['development-controller', 'inspect', '--controller-root', missingController],
-    { env },
-    jsonDenial(
-      { status: 'blocked', code: 'GAP-DEVELOPMENT-CONTROLLER-001' },
-      { exact: 'Development controller root is unavailable.' },
-    ),
-  );
-  absentProtectedPath(
-    consumer,
-    '.agent/work/ci-missing/scope.json',
-    'expected documentation-clear accepted-work scope is not absent',
-  );
-  await invoke.denied(
-    asset.path,
-    [
-      'documentation-clear',
-      '--mode',
-      'verify',
-      '--project-root',
-      consumer,
-      '--repository',
-      'native-ci',
-      '--project',
-      'project',
-      '--work-id',
-      'ci-missing',
-      '--source-revision',
-      ctx.request.source_binding,
-    ],
-    { env },
-    {
-      kind: 'line',
-      message: {
-        exact: 'safe repository access unavailable: accepted work scope fs-safe boundary rejected the target (path)',
-      },
-    },
-  );
-  const before = physical(consumer, 'owner.txt');
-  const denied = await invoke.denied(
-    asset.path,
-    [
-      'run',
-      '--project-root',
-      consumer,
-      '--repository',
-      'native-ci',
-      '--project',
-      'project',
-      '--work-path',
-      '.agent/work/ci-unadmitted',
-      '--work-id',
-      'ci-unadmitted',
-      '--attempt',
-      '1',
-      '--team',
-      'default-development',
-      '--kind',
-      'task',
-      '--intent',
-      'task_execution',
-      '--workflow',
-      'ci-unadmitted',
-      '--scope-path',
-      'owner.txt',
-    ],
-    { env },
-    nativeCIUnadmittedWorkflowDenial,
-  );
-  validateNativeCIUnadmittedRun(denied);
-  requireCI(physical(consumer, 'owner.txt').equals(before), 'unadmitted public route did not preserve owner values');
-}
-
-async function offlineRuntime(ctx, candidate, invoke) {
-  const asset = assetFor(ctx, candidate),
-    env = nativeEnvironment(ctx, 'offline-first-run');
-  const name = 'vida-ci-offline-' + ctx.run_id + '-' + ctx.run_attempt;
-  requireCI(!existsSync(path.join(env.USERPROFILE, '.vida-agent')), 'offline first-run cache already exists');
-  // A replaceable Windows CI adapter. An unavailable/enforced-off firewall is a GAP.
-  const firewallCommand = String.raw`
-$ProgressPreference='SilentlyContinue';
-$diagnosticTruncated=[ref]$false;
-$typeInfo={param($value,[int]$limit=64) $name=$value.GetType().FullName; $cut=$false; if($name.Length -gt $limit){$name=$name.Substring(0,$limit);$cut=$true;$diagnosticTruncated.Value=$true}; $result=New-Object 'System.Object[]' 2; $result[0]=$name; $result[1]=$cut; return ,$result};
-$newObservation={param($shape,$type,$count,$values,$flags) $result=New-Object 'System.Object[]' 5; $result[0]=$shape; $result[1]=$type; $result[2]=$count; $result[3]=[int]$flags; $result[4]=$values; return ,$result};
-$scalarObservation={param($value)
-  if($null -eq $value){return ,(& $newObservation 'n' $null $null $null 0)}
-  $type=& $typeInfo $value; $shown=$null; $flags=0; if($type[1]){$flags=$flags -bor 1};
-  if($value -is [string]){if($value.Length -gt 64){$shown=$value.Substring(0,64);$flags=$flags -bor 1;$diagnosticTruncated.Value=$true}else{$shown=$value}}
-  elseif($value -is [char]){$shown=[string]$value}
-  elseif($value -is [Enum]){$shown=[Convert]::ToInt64($value)}
-  elseif($value -is [bool] -or $value -is [byte] -or $value -is [sbyte] -or $value -is [int16] -or $value -is [uint16] -or $value -is [int32] -or $value -is [uint32] -or $value -is [int64] -or $value -is [uint64] -or $value -is [decimal]){$shown=$value}
-  elseif($value -is [single]){if([single]::IsNaN($value) -or [single]::IsInfinity($value)){$flags=$flags -bor 2}else{$shown=$value}}
-  elseif($value -is [double]){if([double]::IsNaN($value) -or [double]::IsInfinity($value)){$flags=$flags -bor 2}else{$shown=$value}}
-  else{$flags=$flags -bor 2}
-  return ,(& $newObservation 's' $type[0] 1 $shown $flags)
-};
-$valueObservation={param($value,[int]$limit=8)
-  if($null -eq $value){return ,(& $scalarObservation $null)}
-  if($value -is [array]){
-    $type=& $typeInfo $value; $items=New-Object 'System.Collections.Generic.List[object]'; $count=$value.Length; $take=[Math]::Min($count,$limit); $flags=0;
-    if($type[1]){$flags=$flags -bor 1}; if($count -gt $limit){$flags=$flags -bor 3;$diagnosticTruncated.Value=$true};
-    $elementType=$value.GetType().GetElementType();
-    $primitive=($elementType -eq [string] -or $elementType -eq [char] -or $elementType -eq [bool] -or $elementType -eq [byte] -or $elementType -eq [sbyte] -or $elementType -eq [int16] -or $elementType -eq [uint16] -or $elementType -eq [int32] -or $elementType -eq [uint32] -or $elementType -eq [int64] -or $elementType -eq [uint64] -or $elementType -eq [single] -or $elementType -eq [double] -or $elementType -eq [decimal]);
-    if($elementType -eq [single] -or $elementType -eq [double]){for($index=0;$index -lt $take;$index++){if([double]::IsNaN([double]$value[$index]) -or [double]::IsInfinity([double]$value[$index])){$primitive=$false;break}}}
-    for($index=0;$index -lt $take;$index++){
-      $itemValue=$value[$index];
-      if($primitive){
-        if($itemValue -is [string]){if($itemValue.Length -gt 64){$items.Add($itemValue.Substring(0,64));$flags=$flags -bor 1;$diagnosticTruncated.Value=$true}else{$items.Add($itemValue)}}
-        elseif($itemValue -is [char]){$items.Add([string]$itemValue)}
-        else{$items.Add($itemValue)}
-      }else{$items.Add((& $scalarObservation $itemValue)); if($items[$items.Count-1][3] -band 2){$flags=$flags -bor 2}}
-    };
-    $shownValues=$items.ToArray(); return ,(& $newObservation 'a' $type[0] $count $shownValues $flags)
-  }
-  return ,(& $scalarObservation $value)
-};
-$unavailableObservation={return ,(& $newObservation 'u' $null $null $null 0)};
-$propertyObservation={param($item,$propertyName,[int]$limit=8)
-  $property=$item.PSObject.Properties[$propertyName];
-  if($null -eq $property){return ,(& $newObservation 'p' $null $null $null 0)}
-  $observedValue=$property.Value; return ,(& $valueObservation $observedValue $limit)
-};
-$projectedObservation={param($value,[int]$limit,$project,$predicateValue=$null)
-  if($null -eq $value){return ,(& $scalarObservation $null)}
-  if($value -is [array]){
-    $type=& $typeInfo $value; $items=New-Object 'System.Collections.Generic.List[object]'; $count=$value.Length; $take=[Math]::Min($count,$limit); $flags=0;
-    if($type[1]){$flags=$flags -bor 1}; if($count -gt $limit){$flags=$flags -bor 3;$diagnosticTruncated.Value=$true};
-    for($index=0;$index -lt $take;$index++){$items.Add((& $project $value[$index] $predicateValue))};
-    $shownValues=$items.ToArray(); return ,(& $newObservation 'a' $type[0] $count $shownValues $flags)
-  }
-  $type=& $typeInfo $value; $projected=& $project $value $predicateValue; $flags=0; if($type[1]){$flags=1}; return ,(& $newObservation 's' $type[0] 1 $projected $flags)
-};
-$profileProject={param($item,$predicateValue)
-  if($null -eq $item){return ,(& $scalarObservation $null)};
-  $nameValue=& $propertyObservation $item 'Name' 8; $enabledValue=& $propertyObservation $item 'Enabled' 8;
-  $result=New-Object 'System.Object[]' 2; $result[0]=$nameValue; $result[1]=$enabledValue; return ,$result
-};
-$ruleProject={param($item,$enforcementFull)
-  if($null -eq $item){return ,(& $scalarObservation $null)};
-  $result=New-Object 'System.Object[]' 7; $result[0]=& $propertyObservation $item 'Enabled' 8; $result[1]=& $propertyObservation $item 'Action' 8; $result[2]=& $propertyObservation $item 'Direction' 8; $result[3]=& $propertyObservation $item 'PrimaryStatus' 8; $result[4]=& $propertyObservation $item 'StatusCode' 8; $result[5]=& $propertyObservation $item 'EnforcementStatus' 8; if($null -eq $enforcementFull){$result[6]=& $unavailableObservation}else{$result[6]=& $scalarObservation ([bool]$enforcementFull)}; return ,$result
-};
-$observationTuple={param($value) return ($value -is [array] -and $value.Length -eq 5 -and $value[0] -is [string] -and @('u','p','n','s','a') -contains $value[0])};
-$containsObservation={param($value)
-  if(& $observationTuple $value){return $true}
-  if($value -is [array]){foreach($item in $value){if(& $containsObservation $item){return $true}}}
-  return $false
-};
-$metadataOnly={param($value,[bool]$preserveProjection=$false)
-  if(& $observationTuple $value){
-    $result=New-Object 'System.Object[]' 5; $result[0]=$value[0]; $type=$value[1]; $typeCut=$false;
-    if($null -ne $type -and $type.Length -gt 32){$type=$type.Substring(0,32);$typeCut=$true}; $result[1]=$type; $result[2]=$value[2]; $flags=[int]$value[3]; if($typeCut){$flags=$flags -bor 1};
-    $observedValues=$value[4];
-    if($null -ne $observedValues -and (& $containsObservation $observedValues) -and $preserveProjection){$result[4]=& $metadataOnly $observedValues $false; $flags=$flags -bor 3}
-    elseif($null -ne $observedValues -and (& $containsObservation $observedValues)){$result[4]=$null;$flags=$flags -bor 3}
-    elseif($value[0] -eq 's' -and $type -eq 'System.Boolean' -and $value[2] -eq 1 -and $observedValues -is [bool]){$result[4]=$observedValues}
-    elseif(($value[0] -eq 's' -or $value[0] -eq 'a') -and $null -ne $value[2] -and ($value[0] -ne 'a' -or $value[2] -gt 0)){$result[4]=$null;$flags=$flags -bor 3}
-    else{$result[4]=$observedValues}
-    $result[3]=$flags; return ,$result
-  }
-  if($value -is [array]){$items=New-Object 'System.Collections.Generic.List[object]'; foreach($item in $value){$items.Add((& $metadataOnly $item $false))}; $array=$items.ToArray(); return ,$array}
-  return $value
-};
-$emitDiagnostic={param($stage,$observations)
-  $record=[ordered]@{kind='offline-firewall';stage=$stage;observations=$observations;truncated=[bool]$diagnosticTruncated.Value};
-  $text=ConvertTo-Json -InputObject $record -Depth 20 -Compress;
-  if($text.Length -gt 1536){
-    $metadata=[ordered]@{}; foreach($key in $observations.Keys){$metadata[$key]=& $metadataOnly $observations[$key] ($key -eq 'profiles' -or $key -eq 'rules')};
-    $record=[ordered]@{kind='offline-firewall';stage=$stage;observations=$metadata;truncated=$true};
-    $text=ConvertTo-Json -InputObject $record -Depth 20 -Compress;
-    if($text.Length -gt 1536){throw 'Offline firewall metadata diagnostic exceeded its statically bounded record size'}
-  }
-  [Console]::Out.WriteLine($text); [Console]::Out.Flush()
-};
-$emitObservedStage={param($stage,$profileValue,$profileRead,$ruleValue,$ruleRead,$programValue,$filterValue,$comparisonRead,$matched,$enforcementFull=$null)
-  if($profileRead){$profilesObservation=& $projectedObservation $profileValue 3 $profileProject}else{$profilesObservation=& $unavailableObservation};
-  if($ruleRead){$rulesObservation=& $projectedObservation $ruleValue 1 $ruleProject $enforcementFull}else{$rulesObservation=& $unavailableObservation};
-  if($comparisonRead){
-    $programObservation=& $valueObservation $programValue 8;
-    if($programObservation[0] -eq 's'){$programObservation[4]=$null;$programObservation[3]=([int]$programObservation[3] -bor 2)}
-    elseif($programObservation[0] -eq 'a'){
-      $redacted=New-Object 'System.Collections.Generic.List[object]'; foreach($entry in $programObservation[4]){if(& $observationTuple $entry){if($entry[0] -eq 'n' -or $entry[0] -eq 'p' -or $entry[0] -eq 'u'){$redacted.Add($entry)}else{$entry[4]=$null;$entry[3]=([int]$entry[3] -bor 2);$redacted.Add($entry)}}elseif($null -eq $entry){$redacted.Add($null)}else{$redacted.Add('<omitted>')}}; $programObservation[4]=$redacted.ToArray(); $programObservation[3]=([int]$programObservation[3] -bor 2)
-    }
-    $matchObservation=& $scalarObservation ([bool]$matched); $programMatchObservation=New-Object 'System.Object[]' 2; $programMatchObservation[0]=$programObservation; $programMatchObservation[1]=$matchObservation
-  }else{$programMatchObservation=New-Object 'System.Object[]' 2; $programMatchObservation[0]=& $unavailableObservation; $programMatchObservation[1]=& $unavailableObservation};
-  & $emitDiagnostic $stage ([ordered]@{profiles=$profilesObservation;rules=$rulesObservation;program_match=$programMatchObservation})
-};
-$emitFailureDiagnostic={param($stage,$profileValue,$profileRead,$ruleValue,$ruleRead,$programValue,$filterValue,$comparisonRead,$matched,$enforcementFull=$null)
-  try{& $emitObservedStage $stage $profileValue $profileRead $ruleValue $ruleRead $programValue $filterValue $comparisonRead $matched $enforcementFull}
-  catch{[Console]::Error.WriteLine('Offline firewall diagnostic emission failed');[Console]::Error.Flush()}
-};
-$ruleName=${psLiteral(name)};
-$assetPath=${psLiteral(asset.path)};
-try{$retained=Get-NetFirewallRule -Name $ruleName -ErrorAction SilentlyContinue}catch{& $emitFailureDiagnostic 'retained-rule-persistent-store-query-failure' $null $false $null $false $null $null $false $false;throw};
-if($retained){& $emitFailureDiagnostic 'retained-rule-persistent-store-rejection' $null $false $retained $true $null $null $false $false;throw 'Retained isolation intent'};
-try{$profiles=Get-NetFirewallProfile -PolicyStore ActiveStore}catch{& $emitFailureDiagnostic 'profile-query-failure' $null $false $null $false $null $null $false $false;throw};
-if(@($profiles | Where-Object {$_.Enabled -ne 'True'}).Count){& $emitFailureDiagnostic 'profile-policy-rejection' $profiles $true $null $false $null $null $false $false;throw 'Firewall policy is not enabled'};
-try{New-NetFirewallRule -Name $ruleName -DisplayName $ruleName -Direction Outbound -Program $assetPath -Action Block -Profile Any -Enabled True | Out-Null}catch{& $emitFailureDiagnostic 'rule-creation-failure' $profiles $true $null $false $null $null $false $false;throw};
-try{$rule=Get-NetFirewallRule -PolicyStore ActiveStore -Name $ruleName}catch{& $emitFailureDiagnostic 'rule-query-failure' $profiles $true $null $false $null $null $false $false;throw};
-$ruleBaseRejected=$rule.Enabled -ne 'True' -or $rule.Action -ne 'Block' -or $rule.Direction -ne 'Outbound' -or $rule.PrimaryStatus -ne 'OK';
-if($ruleBaseRejected){& $emitFailureDiagnostic 'active-store-rule-rejection' $profiles $true $rule $true $null $null $false $false;throw 'Isolation rule is not fully enforced'};
-$enforcementValues=$rule.EnforcementStatus; $enforcementFull=$false; $enforcementRepresentation=$null;
-if($enforcementValues -is [array] -and $enforcementValues.GetType().GetArrayRank() -eq 1){
-  if($enforcementValues.Length -gt 0){
-    $enforcementFull=$true;
-    foreach($statusValue in $enforcementValues){
-      if($statusValue -is [string]){
-        if($null -ne $enforcementRepresentation -and $enforcementRepresentation -ne 'name'){$enforcementFull=$false;break}; $enforcementRepresentation='name';
-        if($statusValue -ne 'Full'){$enforcementFull=$false;break}
-      }elseif($statusValue -is [uint16]){
-        if($null -ne $enforcementRepresentation -and $enforcementRepresentation -ne 'code'){$enforcementFull=$false;break}; $enforcementRepresentation='code';
-        if($statusValue -ne [uint16]1){$enforcementFull=$false;break}
-      }else{$enforcementFull=$false;break}
-    }
-  }
-};
-if(-not $enforcementFull){& $emitFailureDiagnostic 'active-store-rule-rejection' $profiles $true $rule $true $null $null $false $false $enforcementFull;throw 'Isolation rule is not fully enforced'};
-try{$applicationFilter=$rule | Get-NetFirewallApplicationFilter;$program=$applicationFilter.Program}catch{& $emitFailureDiagnostic 'application-filter-query-failure' $profiles $true $rule $true $null $null $false $false $enforcementFull;throw};
-$programMatchesAsset=$false;
-if($program -is [string]){
-  if($program.Length -gt 0){$programMatchesAsset=($program -ceq $assetPath)}
-}elseif($program -is [array] -and $program.GetType().GetArrayRank() -eq 1){
-  if($program.Length -gt 0){
-    $programMatchesAsset=$true;
-    foreach($programValue in $program){if($programValue -isnot [string] -or $programValue -cne $assetPath){$programMatchesAsset=$false;break}}
-  }
-};
-if(-not $programMatchesAsset){& $emitFailureDiagnostic 'application-filter-mismatch' $profiles $true $rule $true $program $applicationFilter $true $programMatchesAsset $enforcementFull;throw 'Isolation executable differs'};
-& $emitObservedStage 'isolation-guards-passed' $profiles $true $rule $true $program $applicationFilter $true $programMatchesAsset $enforcementFull;
-`;
-  const firewallOutput = await powershell(ctx, 'offline-runtime-isolation', invoke, firewallCommand);
-  let successfulIsolationRecords = 0;
-  for (const line of firewallOutput.split(/\r?\n/)) {
-    try {
-      const record = JSON.parse(line);
-      if (record?.kind === 'offline-firewall' && record.stage === 'isolation-guards-passed')
-        successfulIsolationRecords++;
-    } catch {}
-  }
-  requireCI(
-    successfulIsolationRecords === 1,
-    'offline firewall success observation is missing or duplicated',
-  );
-  for (const line of firewallOutput.split(/\r?\n/)) {
-    try {
-      const record = JSON.parse(line);
-      if (record?.kind === 'offline-firewall') console.log(line);
-    } catch {}
-  }
-  // Retain the owned rule/roots for inspection even if a child outcome is UNKNOWN.
-  const consumer = await initializeConsumer(ctx, invoke, asset.path, env, 'offline-first-run');
-  await invokeNative(invoke, asset.path, env, [
-    'scope',
-    '--project-root',
-    consumer,
-    '--repository',
-    'native-ci',
-    '--project',
-    'project',
-    '--path',
-    'owner.txt',
-  ]);
-  await invokeNative(invoke, asset.path, env, ['install', '--check']);
-  exclusive(ctx.root, 'offline-rule.json', { name, executable: asset.path, status: 'observed-active-outbound-block' });
-}
-
-async function embeddedProbe(ctx, candidate, mode) {
-  const env = nativeEnvironment(ctx, mode === 'dependencies' ? 'dependencies' : 'state'),
-    cache = path.join(env.USERPROFILE, '.vida-agent/runtime', ctx.request.version + '-' + candidate.manifest.payloadId);
-  requireCI(
-    process.versions.bun === candidate.manifest.pin &&
-      realpathSync(process.execPath).startsWith(ctx.root + path.sep) &&
-      sha(readFileSync(process.execPath)) === candidate.manifest.asset.sha256,
-    'native probe does not execute the actual asset',
-  );
-  const require = createRequire(path.join(cache, 'package.json'));
-  const ownedImport = async (relative) => import(pathToFileURL(releasePath(cache, relative)).href);
-  const dependency = async (name) => {
-    const file = require.resolve(name);
-    requireCI(realpathSync(file).startsWith(cache + path.sep), 'native dependency escaped materialized payload');
-    return import(pathToFileURL(file).href);
-  };
-  const consumer = path.join(ctx.root, 'consumers', mode);
-  if (mode === 'dependencies') {
-    const cedar = await dependency('@cedar-policy/cedar-wasm/nodejs');
-    const call = {
-      principal: { type: 'User', id: 'ci' },
-      action: { type: 'Action', id: 'read' },
-      resource: { type: 'Project', id: 'ci' },
-      context: {},
-      entities: [],
-    };
-    for (const [policy, decision] of [
-      ['permit', 'allow'],
-      ['forbid', 'deny'],
-    ]) {
-      const result = cedar.isAuthorized({
-        ...call,
-        policies: { staticPolicies: policy + '(principal, action, resource);' },
-      });
-      requireCI(
-        result.type === 'success' && result.response.decision === decision,
-        'actual Cedar WASM evaluation differs',
-      );
-    }
-    const { requireSafeRepositoryAccess } = await ownedImport('src/config/safe-repository-access.ts');
-    const access = requireSafeRepositoryAccess(consumer);
-    requireCI(
-      access.attested && access.provider === 'fs-safe-windows',
-      'original native fs-safe attestation unavailable',
-    );
-    await access.writeExclusiveAsync('native-io.txt', 'actual native I/O', 'CI owned native dependency observation');
-    requireCI(access.readText('native-io.txt', 'CI native I/O') === 'actual native I/O', 'guarded native I/O differs');
-    const { LibSQLStore } = await dependency('@mastra/libsql');
-    const url = 'file:' + path.join(consumer, 'mastra-ci.db');
-    const snapshot = { status: 'suspended', value: ctx.request.request_id };
-    let store = new LibSQLStore({ id: 'native-ci', url });
-    try {
-      await store.init();
-      const workflows = await store.getStore('workflows');
-      requireCI(workflows, 'Mastra workflow storage unavailable');
-      await workflows.persistWorkflowSnapshot({ workflowName: 'native-ci', runId: ctx.run_id, snapshot });
-    } finally {
-      await store.close();
-    }
-    store = new LibSQLStore({ id: 'native-ci', url });
-    try {
-      await store.init();
-      const workflows = await store.getStore('workflows');
-      requireCI(
-        json(await workflows.loadWorkflowSnapshot({ workflowName: 'native-ci', runId: ctx.run_id })) === json(snapshot),
-        'Mastra/LibSQL restart persistence differs',
-      );
-    } finally {
-      await store.close();
-    }
-  } else {
-    const { loadRuntimeConfig } = await ownedImport('src/config/runtime-config.ts');
-    const { loadProjectSetContext } = await ownedImport('src/config/project-context.ts');
-    const { deriveWorkspaceId } = await ownedImport('src/workspace-identity.ts');
-    const { openHostStateDatabase, HostStateStore } = await ownedImport('src/host-state.ts');
-    const { canonicalJsonDigest } = await ownedImport('src/contracts/public-ingress.ts');
-    const config = loadRuntimeConfig(consumer),
-      project = loadProjectSetContext(consumer, config, 'native-ci', ['project']);
-    requireCI(
-      project.repository_id === 'native-ci' && json(project.project_ids) === json(['project']),
-      'actual ProjectContext differs',
-    );
-    const databasePath = path.join(consumer, 'native-host.sqlite'),
-      workspace = deriveWorkspaceId(project.repository_id, consumer);
-    let database = openHostStateDatabase(databasePath),
-      store;
-    const verifier = {
-      principal: 'ci:isolated-controller',
-      projectIds: ['project'],
-      verify: (fence) => ({
-        schema: 'MaintenanceReleaseAuthorization/v1',
-        principal: 'ci:isolated-controller',
-        fence_digest: canonicalJsonDigest(fence),
-        closure_digest: fence.binding.closure_digest,
-        bundle_digest: fence.binding.bundle_digest,
-      }),
-    };
-    const create = (handle) =>
-      new HostStateStore(handle, workspace, undefined, undefined, undefined, verifier, consumer);
-    try {
-      store = create(database);
-      const key = sha('native-ci-operation'),
-        binding = sha(ctx.request.request_id);
-      const operation = store.reserveOperation('native-ci', key, binding);
-      requireCI(operation, 'native operation reservation unavailable');
-      store.transitionOperation(operation, 'commit_unknown');
-      requireCI(
-        store.reserveOperation('native-ci', key, binding) === null &&
-          store.inspectOperation('native-ci', key).status === 'commit_unknown',
-        'UNKNOWN operation was reissued',
-      );
-      assert.throws(() =>
-        store.transitionOperation(
-          { ...operation, fencing_token: '00000000-0000-4000-8000-000000000000' },
-          'applied',
-          binding,
-        ),
-      );
-      store.transitionOperation(operation, 'applied', binding);
-      assert.throws(() => store.transitionOperation(operation, 'applied', sha('changed effect')));
-      const digest = sha(json(ctx.request));
-      const fence = store.acquireMaintenanceFence({
-        schema: 'MaintenanceFenceBinding/v1',
-        project_ids: ['project'],
-        operation_id: 'ci-native-maintenance',
-        manifest_digest: digest,
-        request_digest: digest,
-        bindings_digest: digest,
-        closure_digest: digest,
-        bundle_digest: digest,
-      });
-      assert.throws(() => store.reserveOperation('native-ci', sha('fenced'), binding));
-      await store.releaseMaintenanceFence(fence);
-      requireCI(store.inspectOperation('native-ci', key).status === 'applied', 'native operation settlement differs');
-      // Keep the actual SQLite connection open so real WAL/SHM custody is checked.
-      const files = [
-        'owner.txt',
-        'agent-runtime.config.v1.yaml',
-        'native-host.sqlite',
-        'native-host.sqlite-wal',
-        'native-host.sqlite-shm',
-      ];
-      const before = files.map((file) => physical(consumer, file));
-      const invoke = runner(ctx, 'open-native-state');
-      const asset = assetFor(ctx, candidate);
-      await invokeNative(invoke, asset.path, env, [
-        'init',
-        '--project-root',
-        consumer,
-        '--repository',
-        'native-ci',
-        '--project',
-        'project=.',
-        '--reconcile-existing',
-      ]);
-      await invokeNative(invoke, asset.path, env, ['install', '--check']);
-      absentProtectedPath(
-        consumer,
-        '.agent/work/agent-local-release/ci-missing/release.json',
-        'expected embedded release-retarget first-read journal is not absent',
-      );
-      await invoke.denied(
-        asset.path,
-        [
-          'reconcile-artifacts',
-          '--kind',
-          'release-retarget',
-          '--mode',
-          'inspect',
-          '--project-root',
-          consumer,
-          '--operation',
-          'ci-missing',
-        ],
-        { env },
-        jsonDenial({ status: 'blocked' }, { exact: 'Local release: path missing' }),
-      );
-      files.forEach((file, index) =>
-        requireCI(physical(consumer, file).equals(before[index]), 'live consumer DB/WAL/SHM or owner bytes changed'),
-      );
-    } finally {
-      database.close();
-    }
-    database = openHostStateDatabase(databasePath);
-    try {
-      store = create(database);
-      requireCI(
-        store.inspectOperation('native-ci', sha('native-ci-operation')).status === 'applied',
-        'native Host restart persistence differs',
-      );
-    } finally {
-      database.close();
-    }
-  }
-  exclusive(ctx.root, mode + '-native-observation.json', {
-    mode,
-    request_id: ctx.request.request_id,
-    status: 'passed',
-  });
-}
-
-async function nativeProbePhase(ctx, candidate, invoke, mode) {
-  const env = nativeEnvironment(ctx, mode === 'dependencies' ? 'dependencies' : 'state');
-  const asset = assetFor(ctx, candidate);
-  await initializeConsumer(ctx, invoke, asset.path, env, mode);
-  await invokeNative(invoke, asset.path, { ...env, BUN_BE_BUN: '1' }, [
-    '--no-env-file',
-    '--no-install',
-    fileURLToPath(import.meta.url),
-    '--embedded-probe',
-    mode,
-  ]);
-  const observation = JSON.parse(physical(ctx.root, mode + '-native-observation.json', 1024 * 1024));
-  requireCI(
-    observation.mode === mode && observation.request_id === ctx.request.request_id && observation.status === 'passed',
-    'actual native dependency/state observation unavailable',
-  );
-}
-
-async function concurrentResource(ctx, candidate) {
-  const env = nativeEnvironment(ctx, 'concurrent-resources'),
-    asset = assetFor(ctx, candidate),
-    args = ['instructions', '--path', 'development-lifecycle'];
-  const children = [0, 1].map(() => {
-    const child = spawn(asset.path, args, {
-      cwd: ctx.root,
-      env,
-      windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    return observeChildClose(child, asset.path, args);
-  });
-  const joined = await Promise.allSettled(children);
-  requireCI(
-    joined.every((result) => result.status === 'fulfilled'),
-    'concurrent native child outcome UNKNOWN; retain roots',
-  );
-  const results = joined.map((result) => result.value);
-  requireCI(
-    results.every(
-      (result) =>
-        result.command === asset.path &&
-        json(result.args) === json(args) &&
-        result.code === 0 &&
-        result.signal === null,
-    ),
-    'concurrent native resource outcome failed/UNKNOWN',
-  );
-  requireCI(
-    JSON.parse(results[0].stdout.trim()).path === JSON.parse(results[1].stdout.trim()).path,
-    'concurrent native resources diverged',
-  );
-}
-async function interruptedResource(ctx, candidate, invoke) {
-  const env = nativeEnvironment(ctx, 'interrupted-resources'),
-    asset = assetFor(ctx, candidate);
-  const cache = releaseDirectory(env.USERPROFILE, '.vida-agent/runtime');
-  const args = ['instructions', '--path', 'development-lifecycle'];
-  let pendingName = null;
-  const child = spawn(asset.path, args, {
-    cwd: ctx.root,
-    env,
-    windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  const terminalPromise = observeChildClose(child, asset.path, args);
-  const observation = watch(cache, (_event, filename) => {
-    if (String(filename).startsWith('.pending-') && readdirSync(cache).some((name) => name.endsWith('.lock'))) {
-      pendingName = String(filename);
-      child.kill();
-    }
-  });
-  let terminal;
-  try {
-    terminal = await terminalPromise;
-  } finally {
-    observation.close();
-  }
-  requireCI(
-    terminal.command === asset.path &&
-      json(terminal.args) === json(args) &&
-      pendingName?.startsWith('.pending-' + ctx.request.version + '-') &&
-      (terminal.signal !== null || terminal.code !== 0),
-    'interrupted native publication was not actually observed',
-  );
-  const locks = readdirSync(cache).filter((name) => name.endsWith('.lock'));
-  const expectedLock = ctx.request.version + '-' + candidate.manifest.payloadId + '.lock';
-  requireCI(locks.length === 1 && locks[0] === expectedLock, 'interrupted publication custody unavailable');
-  const pendingPath = releasePath(cache, pendingName, true),
-    pendingBefore = lstatSync(pendingPath, { throwIfNoEntry: false });
-  requireCI(pendingBefore?.isDirectory() && !pendingBefore.isSymbolicLink(), 'interrupted pending tree is unavailable');
-  const pendingEntries = readdirSync(pendingPath).sort(),
-    marker = physical(cache, expectedLock, 1024),
-    lockBefore = lstatSync(releasePath(cache, expectedLock));
-  await invoke.denied(
-    asset.path,
-    args,
-    { env },
-    cliError('Resource publication remains in progress or uncertain; retain it for inspection'),
-  );
-  const pendingAfter = lstatSync(pendingPath, { throwIfNoEntry: false }),
-    lockAfter = lstatSync(releasePath(cache, expectedLock));
-  requireCI(
-    pendingAfter?.isDirectory() &&
-      !pendingAfter.isSymbolicLink() &&
-      pendingBefore.dev === pendingAfter.dev &&
-      pendingBefore.ino === pendingAfter.ino &&
-      json(readdirSync(pendingPath).sort()) === json(pendingEntries) &&
-      lockBefore.dev === lockAfter.dev &&
-      lockBefore.ino === lockAfter.ino &&
-      physical(cache, expectedLock, 1024).equals(marker),
-    'UNKNOWN native resource publication custody changed',
-  );
-}
-
-async function statePreservation(ctx, candidate, invoke) {
-  await nativeProbePhase(ctx, candidate, invoke, 'state');
-  const consumer = path.join(ctx.root, 'consumers/state'),
-    env = nativeEnvironment(ctx, 'state'),
-    asset = assetFor(ctx, candidate);
-  const names = ['owner.txt', 'agent-runtime.config.v1.yaml', 'native-host.sqlite'];
-  const before = names.map((name) => physical(consumer, name));
-  await invokeNative(invoke, asset.path, env, [
-    'init',
-    '--project-root',
-    consumer,
-    '--repository',
-    'native-ci',
-    '--project',
-    'project=.',
-    '--reconcile-existing',
-  ]);
-  await invokeNative(invoke, asset.path, env, ['install', '--check']);
-  names.forEach((name, index) =>
-    requireCI(physical(consumer, name).equals(before[index]), 'consumer owner configuration/database changed'),
-  );
-  for (const kind of ['tampered', 'partial', 'conflicting', 'hardlink', 'symlink']) {
-    const faultEnv = nativeEnvironment(ctx, 'resources-' + kind);
-    const instruction = JSON.parse(
-      await invokeNative(invoke, asset.path, faultEnv, ['instructions', '--path', 'development-lifecycle']),
-    );
-    const resourceRoot = path.join(
-        faultEnv.USERPROFILE,
-        '.vida-agent/runtime',
-        ctx.request.version + '-' + candidate.manifest.payloadId,
-      ),
-      expectedInstruction = path.join(resourceRoot, 'instructions/development-lifecycle.md'),
-      folder = path.dirname(path.dirname(instruction.path));
-    requireCI(
-      instruction.path === expectedInstruction && folder === resourceRoot,
-      'selected instruction path differs from the owned resource fixture',
-    );
-    const instructionStat = lstatSync(instruction.path),
-      instructionBytes = readFileSync(instruction.path);
-    requireCI(
-      instructionStat.isFile() && !instructionStat.isSymbolicLink() && instructionStat.nlink === 1,
-      'selected instruction fixture is not a private regular file',
-    );
-    let foreign, expectedFaultBytes, expectedForeignStat;
-    if (kind === 'tampered') {
-      expectedFaultBytes = Buffer.from('changed CI resource');
-      writeFileSync(instruction.path, expectedFaultBytes);
-      const changed = lstatSync(instruction.path);
-      requireCI(
-        !readFileSync(instruction.path).equals(instructionBytes) &&
-          changed.dev === instructionStat.dev &&
-          changed.ino === instructionStat.ino,
-        'tampered resource bytes or targeted file identity did not remain observable',
-      );
-    }
-    if (kind === 'partial') {
-      unlinkSync(instruction.path);
-      requireCI(!lstatSync(instruction.path, { throwIfNoEntry: false }), 'partial resource target remains present');
-    }
-    if (kind === 'conflicting') {
-      foreign = path.join(folder, 'foreign.txt');
-      expectedFaultBytes = Buffer.from('conflict');
-      writeFileSync(foreign, expectedFaultBytes);
-      expectedForeignStat = lstatSync(foreign);
-      requireCI(readFileSync(foreign).equals(expectedFaultBytes), 'conflicting fixture bytes differ');
-    }
-    if (kind === 'hardlink') {
-      foreign = path.join(faultEnv.USERPROFILE, 'foreign-hardlink.md');
-      linkSync(instruction.path, foreign);
-      const linked = lstatSync(instruction.path),
-        foreignStat = lstatSync(foreign);
-      requireCI(
-        linked.nlink === 2 && linked.dev === foreignStat.dev && linked.ino === foreignStat.ino,
-        'hardlink fixture identity was not observed',
-      );
-      expectedForeignStat = foreignStat;
-      expectedFaultBytes = readFileSync(foreign);
-    }
-    if (kind === 'symlink') {
-      unlinkSync(instruction.path);
-      foreign = path.join(faultEnv.USERPROFILE, 'foreign-resource.md');
-      expectedFaultBytes = Buffer.from('foreign');
-      writeFileSync(foreign, expectedFaultBytes);
-      expectedForeignStat = lstatSync(foreign);
-      const { symlinkSync } = await import('node:fs');
-      symlinkSync(foreign, instruction.path);
-      requireCI(
-        lstatSync(instruction.path).isSymbolicLink() && realpathSync(instruction.path) === foreign,
-        'symlink fixture target was not observed',
-      );
-    }
-    const expectedMessage = {
-      tampered: 'Resource payload differs',
-      partial: 'Resource tree is partial',
-      conflicting: 'Resource tree contains an unknown file',
-      hardlink: 'Resource file must be regular and unlinked: instructions/development-lifecycle.md',
-      symlink: 'Resource tree contains a link',
-    }[kind];
-    await invoke.denied(
-      asset.path,
-      ['instructions', '--path', 'development-lifecycle'],
-      { env: faultEnv },
-      cliError(expectedMessage),
-    );
-    if (kind === 'tampered') {
-      const after = lstatSync(instruction.path);
-      requireCI(
-        after.isFile() &&
-          !after.isSymbolicLink() &&
-          after.nlink === 1 &&
-          after.dev === instructionStat.dev &&
-          after.ino === instructionStat.ino &&
-          readFileSync(instruction.path).equals(expectedFaultBytes),
-        'tampered resource changed after the denial observation',
-      );
-    } else if (kind === 'partial') {
-      requireCI(
-        !lstatSync(instruction.path, { throwIfNoEntry: false }),
-        'partial resource target changed after the denial observation',
-      );
-    } else if (kind === 'conflicting') {
-      const after = lstatSync(foreign);
-      requireCI(
-        after.isFile() &&
-          !after.isSymbolicLink() &&
-          after.dev === expectedForeignStat.dev &&
-          after.ino === expectedForeignStat.ino &&
-          readFileSync(foreign).equals(expectedFaultBytes),
-        'conflicting fixture changed after the denial observation',
-      );
-    } else if (kind === 'hardlink') {
-      const linked = lstatSync(instruction.path),
-        foreignStat = lstatSync(foreign);
-      requireCI(
-        linked.isFile() &&
-          !linked.isSymbolicLink() &&
-          linked.nlink === 2 &&
-          linked.dev === instructionStat.dev &&
-          linked.ino === instructionStat.ino &&
-          foreignStat.dev === expectedForeignStat.dev &&
-          foreignStat.ino === expectedForeignStat.ino &&
-          foreignStat.nlink === 2 &&
-          readFileSync(foreign).equals(expectedFaultBytes),
-        'hardlink target or foreign fixture changed after the denial observation',
-      );
-    } else {
-      const link = lstatSync(instruction.path),
-        foreignStat = lstatSync(foreign);
-      requireCI(
-        link.isSymbolicLink() &&
-          realpathSync(instruction.path) === foreign &&
-          foreignStat.isFile() &&
-          !foreignStat.isSymbolicLink() &&
-          foreignStat.dev === expectedForeignStat.dev &&
-          foreignStat.ino === expectedForeignStat.ino &&
-          readFileSync(foreign).equals(expectedFaultBytes),
-        'symlink target or foreign fixture changed after the denial observation',
-      );
-    }
-  }
-  await concurrentResource(ctx, candidate);
-  await interruptedResource(ctx, candidate, invoke);
-}
-
-async function upgradeRecovery(ctx, candidate, invoke) {
-  const asset = assetFor(ctx, candidate),
-    prefix = path.join(ctx.root, 'upgrade/bin'),
-    destination = path.join(prefix, 'vida-agent.exe');
-  releaseDirectory(ctx.root, 'upgrade/bin');
-  exclusive(prefix, 'vida-agent.cmd', Buffer.from('preserved CI prior shim\n'));
-  const shim = physical(prefix, 'vida-agent.cmd', 1024);
-  publishNativeExecutable(asset, destination);
-  assert.throws(() => publishNativeExecutable(asset, destination), {
-    message: 'Native destination has an unowned or linked prior artifact.',
-  });
-  const prior = { path: destination, bytes: asset.bytes, sha256: asset.sha256 };
-  assert.throws(() => publishNativeExecutable(asset, destination, { ...prior, sha256: sha('foreign prior') }), {
-    message: 'Prior native artifact differs.',
-  });
-  publishNativeExecutable(asset, destination, prior);
-  requireCI(
-    sha(physical(prefix, 'vida-agent.exe')) === asset.sha256 && physical(prefix, 'vida-agent.cmd', 1024).equals(shim),
-    'native upgrade changed asset/shim',
-  );
-  const env = nativeEnvironment(ctx, 'upgrade'),
-    consumer = await initializeConsumer(ctx, invoke, destination, env, 'upgrade');
-  const owner = physical(consumer, 'owner.txt'),
-    configuration = physical(consumer, 'agent-runtime.config.v1.yaml');
-  const rollback = path.join(ctx.root, 'upgrade/rollback/vida-agent.exe');
-  publishNativeExecutable(asset, rollback);
-  const version = JSON.parse(await invokeNative(invoke, rollback, env, ['version']));
-  requireCI(
-    version.version === ctx.request.version &&
-      physical(consumer, 'owner.txt').equals(owner) &&
-      physical(consumer, 'agent-runtime.config.v1.yaml').equals(configuration),
-    'declared same-version rollback changed consumer data',
-  );
-  // Actual concurrent first publication through the same production installer helper.
-  const raceDestination = path.join(ctx.root, 'upgrade/race/vida-agent.exe'),
-    raceArgs = [fileURLToPath(import.meta.url), '--publish-race'];
-  const joined = await Promise.allSettled(
-    [0, 1].map(async (index) => {
-      const invokeRace = runner(ctx, 'publication-race-' + index);
-      try {
-        await invokeRace(process.execPath, raceArgs);
-        return 'published';
-      } catch (commandError) {
-        const observed = JSON.parse(physical(ctx.root, 'logs/publication-race-' + index + '/0.json', 8 * 1024 * 1024));
-        try {
-          requireCI(
-            observed.command === process.execPath && json(observed.args) === json(raceArgs),
-            'concurrent publication rejection child differs',
-          );
-          validateNativeCIDenial(
-            observed,
-            jsonDenial(
-              {
-                status: 'blocked',
-                code: 'GAP-VIDA-CI-DELIVERY-001',
-                custody: 'retain issued intent and bytes; no automatic cleanup/reissue',
-              },
-              {
-                oneOf: [
-                  { exact: 'Native destination has an unowned or linked prior artifact.' },
-                  { prefix: 'EEXIST:', includes: ['copyfile', raceDestination] },
-                ],
-              },
-            ),
-          );
-        } catch (validationError) {
-          throw nativeCIDenialError(validationError.message, observed, commandError);
-        }
-        return 'denied';
-      }
-    }),
-  );
-  requireCI(
-    joined.every((result) => result.status === 'fulfilled'),
-    'native publication child outcome UNKNOWN; retain custody',
-  );
-  const results = joined.map((result) => result.value);
-  requireCI(
-    results.filter((status) => status === 'published').length === 1 &&
-      results.filter((status) => status === 'denied').length === 1 &&
-      sha(physical(ctx.root, 'upgrade/race/vida-agent.exe')) === asset.sha256,
-    'concurrent first native publication did not retain exclusivity',
-  );
-}
-
 async function emitBuild(ctx) {
   const phaseName = 'emit-build';
   const intent = 'phases/' + phaseName + '.intent.json';
   const outputDirectory = path.join(ctx.root, 'publication');
   const artifactName = 'build-' + ctx.request.request_id + '-' + ctx.run_id + '-' + ctx.run_attempt;
-  requireCI(typeof process.env.GITHUB_OUTPUT === 'string' && !/[\r\n\0]/.test(process.env.GITHUB_OUTPUT), 'actual CI output boundary missing');
-  requireCI(!existsSync(releasePath(ctx.root, intent, true)), 'prior issued build publication retained; inspect UNKNOWN, no reissue');
-  requireCI(!existsSync(releasePath(ctx.root, 'publication', true)), 'prior build artifact directory retained; inspect UNKNOWN, no reissue');
-  requireCI(!/[\r\n\0]/.test(outputDirectory) && /^[A-Za-z0-9._-]{1,255}$/.test(artifactName), 'CI build artifact output identity is unsafe');
+  requireCI(
+    typeof process.env.GITHUB_OUTPUT === 'string' && !/[\r\n\0]/.test(process.env.GITHUB_OUTPUT),
+    'actual CI output boundary missing',
+  );
+  requireCI(
+    !existsSync(releasePath(ctx.root, intent, true)),
+    'prior issued build publication retained; inspect UNKNOWN, no reissue',
+  );
+  requireCI(
+    !existsSync(releasePath(ctx.root, 'publication', true)),
+    'prior build artifact directory retained; inspect UNKNOWN, no reissue',
+  );
+  requireCI(
+    !/[\r\n\0]/.test(outputDirectory) && /^[A-Za-z0-9._-]{1,255}$/.test(artifactName),
+    'CI build artifact output identity is unsafe',
+  );
   const candidateBytes = physical(ctx.root, 'candidate.json', 8 * 1024 * 1024);
   const candidate = JSON.parse(candidateBytes.toString('utf8'));
   const receiptBytes = physical(ctx.root, 'phases/native-build.result.json', 1024 * 1024);
   const receipt = JSON.parse(receiptBytes.toString('utf8'));
   validateNativeCIReceipts({ identity: ctx, candidate, receipts: [receipt], phases: ['native-build'] });
   const pack = candidate.pack_metadata?.[0];
-  requireCI(Array.isArray(candidate.pack_metadata) && candidate.pack_metadata.length === 1 && pack?.name === 'vida-agent' && pack.version === ctx.request.version && pack.filename === 'vida-agent-' + ctx.request.version + '.tgz' && path.basename(pack.filename) === pack.filename, 'CI native build pack identity differs');
-  requireCI(candidate.manifest?.schema === 'VidaStandaloneBuild/v1' && candidate.manifest.version === ctx.request.version && candidate.manifest.target === ctx.request.target && candidate.manifest.pin === '1.4.2' && candidate.manifest.asset?.file === 'vida-agent-bun-windows-x64.exe', 'CI native build manifest identity differs');
+  requireCI(
+    Array.isArray(candidate.pack_metadata) &&
+      candidate.pack_metadata.length === 1 &&
+      pack?.name === 'vida-agent' &&
+      pack.version === ctx.request.version &&
+      pack.filename === 'vida-agent-' + ctx.request.version + '.tgz' &&
+      path.basename(pack.filename) === pack.filename,
+    'CI native build pack identity differs',
+  );
+  requireCI(
+    candidate.manifest?.schema === 'VidaStandaloneBuild/v1' &&
+      candidate.manifest.version === ctx.request.version &&
+      candidate.manifest.target === ctx.request.target &&
+      candidate.manifest.pin === '1.4.2' &&
+      candidate.manifest.asset?.file === 'vida-agent-bun-windows-x64.exe',
+    'CI native build manifest identity differs',
+  );
   const manifestBytes = physical(ctx.root, 'package/dist/standalone/manifest.json', 8 * 1024 * 1024);
   const manifest = JSON.parse(manifestBytes.toString('utf8'));
   const assetBytes = physical(ctx.root, 'package/dist/standalone/' + manifest.asset.file, ciArchiveLimit);
   const archiveBytes = physical(ctx.root, 'output/' + pack.filename, ciArchiveLimit);
   const installerBytes = physical(ctx.source, 'packages/agent/tooling/install-windows.ps1', 1024 * 1024);
-  requireCI(manifest.schema === 'VidaStandaloneBuild/v1' && manifest.version === ctx.request.version && manifest.target === ctx.request.target && manifest.pin === '1.4.2' && manifest.asset.file === 'vida-agent-bun-windows-x64.exe' && manifestBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/manifest.json', 8 * 1024 * 1024)) && assetBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/' + manifest.asset.file)), 'CI source and native bytes differ');
-  requireCI(candidate.archive_sha256 === sha(archiveBytes) && candidate.manifest_sha256 === sha(manifestBytes) && manifest.asset.sha256 === sha(assetBytes) && manifest.asset.bytes === assetBytes.length, 'CI build candidate binding differs');
+  requireCI(
+    manifest.schema === 'VidaStandaloneBuild/v1' &&
+      manifest.version === ctx.request.version &&
+      manifest.target === ctx.request.target &&
+      manifest.pin === '1.4.2' &&
+      manifest.asset.file === 'vida-agent-bun-windows-x64.exe' &&
+      manifestBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/manifest.json', 8 * 1024 * 1024)) &&
+      assetBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/' + manifest.asset.file)),
+    'CI source and native bytes differ',
+  );
+  requireCI(
+    candidate.archive_sha256 === sha(archiveBytes) &&
+      candidate.manifest_sha256 === sha(manifestBytes) &&
+      manifest.asset.sha256 === sha(assetBytes) &&
+      manifest.asset.bytes === assetBytes.length,
+    'CI build candidate binding differs',
+  );
   const packedFiles = Array.isArray(pack.files) ? pack.files : [];
   const packedManifest = packedFiles.filter((file) => file?.path === 'dist/standalone/manifest.json');
   const packedAsset = packedFiles.filter((file) => file?.path === 'dist/standalone/' + manifest.asset.file);
-  requireCI(packedManifest.length === 1 && packedManifest[0].size === manifestBytes.length && packedAsset.length === 1 && packedAsset[0].size === assetBytes.length, 'CI native pack inventory differs');
+  requireCI(
+    packedManifest.length === 1 &&
+      packedManifest[0].size === manifestBytes.length &&
+      packedAsset.length === 1 &&
+      packedAsset[0].size === assetBytes.length,
+    'CI native pack inventory differs',
+  );
   const files = [
     [pack.filename, archiveBytes, ciArchiveLimit],
     [manifest.asset.file, assetBytes, ciArchiveLimit],
@@ -1581,8 +489,14 @@ async function emitBuild(ctx) {
     ['install-windows.ps1', installerBytes, 1024 * 1024],
   ];
   const names = files.map(([name]) => name);
-  requireCI(names.length === 6 && new Set(names).size === 6 && names.every((name) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)), 'CI build artifact inventory differs');
-  const totalBytes = files.reduce((total, [, bytes, limit]) => { requireCI(bytes.length > 0 && bytes.length <= limit, 'CI build artifact member exceeds its bound'); return total + bytes.length; }, 0);
+  requireCI(
+    names.length === 6 && new Set(names).size === 6 && names.every((name) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)),
+    'CI build artifact inventory differs',
+  );
+  const totalBytes = files.reduce((total, [, bytes, limit]) => {
+    requireCI(bytes.length > 0 && bytes.length <= limit, 'CI build artifact member exceeds its bound');
+    return total + bytes.length;
+  }, 0);
   requireCI(totalBytes <= ciTransportLimit, 'CI build artifact exceeds transport bound');
   exclusive(ctx.root, intent, {
     request_id: ctx.request.request_id,
@@ -1591,13 +505,24 @@ async function emitBuild(ctx) {
     phase: phaseName,
     status: 'issued',
   });
-  console.log(json({ phase: phaseName, status: 'issued', request_id: ctx.request.request_id, run_id: ctx.run_id, run_attempt: ctx.run_attempt }).trim());
+  console.log(
+    json({
+      phase: phaseName,
+      status: 'issued',
+      request_id: ctx.request.request_id,
+      run_id: ctx.run_id,
+      run_attempt: ctx.run_attempt,
+    }).trim(),
+  );
   releaseDirectory(ctx.root, 'publication');
   for (const [name, bytes, limit] of files) {
     exclusive(ctx.root, 'publication/' + name, bytes);
     requireCI(physical(ctx.root, 'publication/' + name, limit).equals(bytes), 'CI build artifact copy differs');
   }
-  requireCI(json(readdirSync(outputDirectory).sort()) === json(names.slice().sort()), 'CI build artifact output is not the exact flat allowlist');
+  requireCI(
+    json(readdirSync(outputDirectory).sort()) === json(names.slice().sort()),
+    'CI build artifact output is not the exact flat allowlist',
+  );
   const afterContext = context();
   const afterCandidateBytes = physical(afterContext.root, 'candidate.json', 8 * 1024 * 1024);
   const afterReceiptBytes = physical(afterContext.root, 'phases/native-build.result.json', 1024 * 1024);
@@ -1606,31 +531,86 @@ async function emitBuild(ctx) {
   const afterAssetBytes = physical(afterContext.root, 'package/dist/standalone/' + manifest.asset.file, ciArchiveLimit);
   const afterInstallerBytes = physical(afterContext.source, 'packages/agent/tooling/install-windows.ps1', 1024 * 1024);
   const afterCandidate = candidateFor(afterContext);
-  requireCI(afterCandidateBytes.equals(candidateBytes) && afterReceiptBytes.equals(receiptBytes) && afterArchiveBytes.equals(archiveBytes) && afterManifestBytes.equals(manifestBytes) && afterAssetBytes.equals(assetBytes) && afterInstallerBytes.equals(installerBytes) && json(afterCandidate) === json(candidate), 'CI build inputs changed during emission');
-  for (const [name, bytes, limit] of files) requireCI(physical(afterContext.root, 'publication/' + name, limit).equals(bytes), 'CI build output changed during emission');
-  requireCI(json(readdirSync(outputDirectory).sort()) === json(names.slice().sort()), 'CI build artifact output inventory changed during emission');
-  writeFileSync(process.env.GITHUB_OUTPUT,
-    'directory=' + outputDirectory + '\n' +
-      'artifact_name=' + artifactName + '\n' +
-      'archive_file=' + pack.filename + '\n' +
-      'asset_file=' + manifest.asset.file + '\n',
+  requireCI(
+    afterCandidateBytes.equals(candidateBytes) &&
+      afterReceiptBytes.equals(receiptBytes) &&
+      afterArchiveBytes.equals(archiveBytes) &&
+      afterManifestBytes.equals(manifestBytes) &&
+      afterAssetBytes.equals(assetBytes) &&
+      afterInstallerBytes.equals(installerBytes) &&
+      json(afterCandidate) === json(candidate),
+    'CI build inputs changed during emission',
+  );
+  for (const [name, bytes, limit] of files)
+    requireCI(
+      physical(afterContext.root, 'publication/' + name, limit).equals(bytes),
+      'CI build output changed during emission',
+    );
+  requireCI(
+    json(readdirSync(outputDirectory).sort()) === json(names.slice().sort()),
+    'CI build artifact output inventory changed during emission',
+  );
+  writeFileSync(
+    process.env.GITHUB_OUTPUT,
+    'directory=' +
+      outputDirectory +
+      '\n' +
+      'artifact_name=' +
+      artifactName +
+      '\n' +
+      'archive_file=' +
+      pack.filename +
+      '\n' +
+      'asset_file=' +
+      manifest.asset.file +
+      '\n',
     { flag: 'a' },
   );
-  console.log(json({ phase: phaseName, status: 'passed', request_id: ctx.request.request_id, artifact_name: artifactName, files: names }).trim());
+  // This result records formation provenance and integrity; it runs no test phase.
+  const result = encodeCIDeliveryResult({
+    request: ctx.request,
+    candidate,
+    profile: profileFor(ctx.request),
+    observation: {
+      issuer: 'github-actions',
+      run_id: ctx.run_id,
+      run_attempt: ctx.run_attempt,
+      conclusion: 'success',
+      checks: minimumNativeDeliveryChecks.map((id) => ({ id, status: 'passed' })),
+    },
+  });
+  exclusive(ctx.root, 'output/result.json', result);
+  writeFileSync(
+    process.env.GITHUB_OUTPUT,
+    'formation_directory=' +
+      path.join(ctx.root, 'output') +
+      '\n' +
+      'formation_artifact_name=' +
+      ctx.request.request_id +
+      '-' +
+      ctx.run_attempt +
+      '\n' +
+      'formation_archive_file=' +
+      pack.filename +
+      '\n',
+    { flag: 'a' },
+  );
+  console.log(
+    json({
+      phase: phaseName,
+      status: 'passed',
+      request_id: ctx.request.request_id,
+      artifact_name: artifactName,
+      files: names,
+    }).trim(),
+  );
 }
 async function phase(ctx, name) {
-  requireCI([...nativeDeliveryChecks, 'emit-result'].includes(name), 'unknown CI phase');
-  const count = name === 'emit-result' ? nativeDeliveryChecks.length : nativeDeliveryChecks.indexOf(name);
-  const candidate = count === 0 ? null : candidateFor(ctx);
-  const receipts = nativeDeliveryChecks
-    .slice(0, count)
-    .map((id) => JSON.parse(physical(ctx.root, 'phases/' + id + '.result.json', 1024 * 1024)));
-  if (candidate)
-    validateNativeCIReceipts({ identity: ctx, candidate, receipts, phases: nativeDeliveryChecks.slice(0, count) });
-  const intent = 'phases/' + name + '.intent.json';
+  requireCI(name === 'native-build', 'only native formation is supported; tests belong to development tasks');
+  const intent = 'phases/native-build.intent.json';
   requireCI(
     !existsSync(releasePath(ctx.root, intent, true)),
-    'prior issued CI phase retained; inspect UNKNOWN, no reissue',
+    'prior issued formation retained; inspect UNKNOWN, no reissue',
   );
   exclusive(ctx.root, intent, {
     request_id: ctx.request.request_id,
@@ -1639,72 +619,17 @@ async function phase(ctx, name) {
     phase: name,
     status: 'issued',
   });
-  console.log(
-    json({
-      phase: name,
-      status: 'issued',
-      request_id: ctx.request.request_id,
-      run_id: ctx.run_id,
-      run_attempt: ctx.run_attempt,
-    }).trim(),
-  );
-  const invoke = runner(ctx, name);
-  if (name === 'native-build') await nativeBuild(ctx, invoke);
-  if (name === 'native-install') await nativeInstall(ctx, candidate, invoke);
-  if (name === 'public-routes') await publicRoutes(ctx, candidate, invoke);
-  if (name === 'offline-runtime') await offlineRuntime(ctx, candidate, invoke);
-  if (name === 'native-dependencies') await nativeProbePhase(ctx, candidate, invoke, 'dependencies');
-  if (name === 'state-preservation') await statePreservation(ctx, candidate, invoke);
-  if (name === 'upgrade-recovery') await upgradeRecovery(ctx, candidate, invoke);
+  console.log(json({ phase: name, status: 'issued', request_id: ctx.request.request_id }).trim());
+  await nativeBuild(ctx, runner(ctx, name));
   context();
-  const after = candidateFor(ctx);
-  if (candidate) requireCI(json(after) === json(candidate), 'candidate changed during native phase');
-  const currentReceipts = nativeDeliveryChecks
-    .slice(0, count)
-    .map((id) => JSON.parse(physical(ctx.root, 'phases/' + id + '.result.json', 1024 * 1024)));
-  requireCI(json(currentReceipts) === json(receipts), 'prior CI receipt changed during native phase');
-  validateNativeCIReceipts({
-    identity: ctx,
-    candidate: after,
-    receipts: currentReceipts,
-    phases: nativeDeliveryChecks.slice(0, count),
-  });
-  if (name === 'emit-result') {
-    const bytes = encodeCIDeliveryResult({
-      request: ctx.request,
-      candidate: after,
-      profile: profileFor(ctx.request),
-      observation: {
-        issuer: 'github-actions',
-        run_id: ctx.run_id,
-        run_attempt: ctx.run_attempt,
-        conclusion: 'success',
-        checks: nativeDeliveryChecks.map((id) => ({ id, status: 'passed' })),
-      },
-    });
-    exclusive(ctx.root, 'output/result.json', bytes);
-    requireCI(typeof process.env.GITHUB_OUTPUT === 'string', 'actual CI output boundary missing');
-    writeFileSync(
-      process.env.GITHUB_OUTPUT,
-      'directory=' +
-        path.join(ctx.root, 'output') +
-        '\nartifact_name=' +
-        ctx.request.request_id +
-        '-' +
-        ctx.run_attempt +
-        '\narchive_file=' +
-        after.pack_metadata[0].filename +
-        '\n',
-      { flag: 'a' },
-    );
-  }
-  exclusive(ctx.root, 'phases/' + name + '.result.json', {
+  const candidate = candidateFor(ctx);
+  exclusive(ctx.root, 'phases/native-build.result.json', {
     schema: 'VidaCIPhaseResult/v1',
     request_id: ctx.request.request_id,
     run_id: ctx.run_id,
     run_attempt: ctx.run_attempt,
     source_binding: ctx.request.source_binding,
-    archive_sha256: after.archive_sha256,
+    archive_sha256: candidate.archive_sha256,
     phase: name,
     status: 'passed',
   });
@@ -1717,12 +642,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const args = process.argv.slice(2);
     if (args.length === 2 && args[0] === '--phase' && args[1] === 'emit-build') await emitBuild(ctx);
     else if (args.length === 2 && args[0] === '--phase') await phase(ctx, args[1]);
-    else if (args.length === 2 && args[0] === '--embedded-probe' && ['dependencies', 'state'].includes(args[1]))
-      await embeddedProbe(ctx, candidateFor(ctx), args[1]);
-    else if (args.length === 1 && args[0] === '--publish-race') {
-      const asset = assetFor(ctx, candidateFor(ctx));
-      publishNativeExecutable(asset, path.join(ctx.root, 'upgrade/race/vida-agent.exe'));
-    } else throw Error('GAP-VIDA-CI-DELIVERY-001: fixed CI phase required');
+    else throw Error('GAP-VIDA-CI-DELIVERY-001: fixed formation phase required');
   } catch (error) {
     console.error(
       JSON.stringify({

@@ -46,8 +46,8 @@ bootstrap. Every existing public SDK export remains a maintained library
 interface; an executable does not replace in-process imports or declarations.
 Public agent CLI installation through npm is not supported; npm artifacts serve
 SDK library imports only. Source development/publication tools may have their own
-prerequisites. Native target support follows actual full-product verification,
-not cross-compilation success or a minimal runtime probe.
+prerequisites. Native delivery binds the complete selected artifact, declared target and successful
+formation provenance. Task behavior is verified in development, not at installation.
 
 The PATH command preserves supported public commands, aliases, arguments, exit
 behavior and `vida-agent instructions --path NAME`. Immutable embedded schemas,
@@ -397,9 +397,9 @@ isolation claim.
 An active or missing-phase repair blocks worker reuse and qualification. A
 completed repair permits ordinary status/PID progress while retaining its exact
 candidate binding. It grants no qualification, new admission or installation.
-Current trusted CI/CD delivery evidence, same-asset seal, three fresh blind
-reviews, reverse validation, CLEAR and attributable acceptance remain separate
-gates. Missing actual current CI evidence keeps delivery blocked.
+Current formation provenance and artifact integrity qualify the selected package
+for delivery. Development tests/reviews and user Runtime acceptance remain separate;
+formation and installation do not require new seals or repeated assurance cycles.
 
 The repository-only evidence owner is `tooling/agent/release-ci-evidence.mjs`.
 Its portable boundary receives an actual attributable trusted session/controller
@@ -427,96 +427,54 @@ upgrade-recovery checks. Failed/skipped/missing/stale/UNKNOWN observations deny.
 CI uses existing `build:pinned` then `prepack:pinned`; local release qualification
 does not form its prerequisite candidate.
 
-The current manual-only Windows x64 workflow at
-`.github/workflows/agent-native-delivery.yml` uses its single producer
-`tooling/agent/native-ci-delivery.mjs` for the distinct build-only path
-`native-build -> emit-build -> upload`. The explicit disabled repository-variable
-gate, exact selected published commit/repository/job and current request guard
-precede formation. The CI-only isolated package mirror preserves declared Source
-bytes and installs from its own frozen lock outside the parent workspace before
-restoring the parent manifest. Existing CI preparation and scripts-disabled native
-packing run once; no SDK-only projection or local agent delivery test is used.
-`emit-build` accepts only the actual successful `native-build` receipt and stable
-Source/candidate/manifest/archive/native asset/installer bytes, then uploads the
-exact six-file flat build inventory. This path does not call the seven-check
-qualification chain, write `VidaCIDeliveryResult/v1`, fabricate absent phases or
-establish target qualification, installed state, a system update or Runtime
-acceptance. Build artifact availability and first-install output remain separate
-from the existing full qualification contract.
+The manual Windows workflow uses tooling/agent/native-ci-delivery.mjs for
+native-build -> emit-build -> publication. Formation invokes no test suites.
+The isolated frozen package lock, declared current Source, platform and version
+are bound to one actual request/run/attempt. emit-build requires the successful
+build receipt and unchanged archive, manifest, native and installer bytes.
+It publishes the existing six formation files and a separate archive/result
+metadata artifact. The current result declares only native-build; it makes no
+functional-test or Runtime-acceptance claim. Current package qualification uses
+this provenance/platform/integrity evidence and no separate testing ladder.
 
-The artifact's `packages/agent/tooling/install-windows.ps1` is a current-user
-Windows first-install adapter. It validates the adjacent candidate, manifest,
-successful build receipt, archive and native asset; exclusively creates the
-version/operation-bound retained release tree and `bin/vida-agent.exe`; leaves
-persistent user PATH unchanged; and runs bounded public `version` and `--help`
-postchecks from its owned check directory. It does not overwrite or upgrade a
-prior install. If a write or postcheck fails after mutation, it reports
-PARTIAL/UNKNOWN and retains the files for inspection without cleanup or retry.
-Installation through this adapter is not the existing system-update effect.
-After applicable exact-asset qualification and final assurance, only
-`tooling/agent/release-local.mjs#installNativeRelease` performs the requested
-same-operation system update, using an actual prior-native observation and its
-installed postproof. If a supported qualification path is unavailable, keep the
-system update open with an explicit GAP.
+The reader accepts exactly the current native-build profile or the retained
+explicit seven-check profile. Every declared check must match actual successful
+observations. Historical profiles, failures and UNKNOWN remain unchanged.
+Issued formation retains exclusive custody and is not automatically reissued.
+The lifecycle instruction owns sequencing; this specification owns behavior.
 
-The retained `VidaCIDeliveryResult/v1` qualification producer still requires the
-seven actual checks: native-build, native-install, public-routes, offline-runtime,
-native-dependencies, state-preservation and upgrade-recovery. Each exclusive
-phase intent retains failed/UNKNOWN custody and forbids automatic reissue. Every
-terminal check binds the same request/run/attempt/Source/archive; recheck prior
-observations and current bytes after child execution before emitting the existing
-result. A killed, missing or unresolved child is not an expected denial; require
-its actual terminal exit and specific rejection. The build-only workflow does not
-invoke this qualification chain.
+The Windows delivery entry is `packages/agent/tooling/install-windows.ps1`.
+It accepts `-Action install|update|uninstall` and `-Source` with an explicitly
+selected local EXE/ZIP or a direct HTTPS URL. No Node, npm or external Bun is needed.
+It uses the current user's `%LOCALAPPDATA%\Programs\vida-agent\bin\vida-agent.exe`.
+ZIP input uses the standard single-disk release format: at most six flat files,
+member names up to 128 bytes, directory metadata up to 64 KiB and no archive
+comments or ZIP64. Preflight bounds metadata before .NET allocates entries.
+ZIP input is read without general extraction. Only the exact native executable
+is extracted; an included manifest binds its bytes and Windows x64 target.
+Embedded URL login credentials, ambient authorization, redirects, linked paths
+and non-flat ZIP members reject. Explicitly selected signed query URLs are
+allowed; their tokens remain private to the operator.
+Input and native sizes are bounded. A byte digest is not publisher authentication.
 
-The retained qualification phases exercise the actual asset, private user-bin and sibling
-release tree, shim/PATH observations, public valid/denied routes and aliases,
-effective consumer-process firewall isolation on the replaceable Windows runner,
-Cedar WASM, original native fs-safe guarded I/O, Mastra/LibSQL restart persistence,
-ProjectContext/CAS/maintenance, real open SQLite DB/WAL/SHM custody, resource
-tamper/link/conflict/concurrency/interruption, and exact observed-prior same-version
-publication/rollback controls. Missing target capability or unmet observation is
-a GAP and stops emission; Source inspection cannot qualify these phases. Other
-targets and cross-version rollback are not qualified by this Windows/current-asset
-implementation. Full standalone, numeric, sealed and installed assurance remains
-separate even after these minimum seven checks.
+Installer actions serialize with one file lock. Update stages the candidate next
+to the command and uses standard .NET File.Replace with a transient previous
+file. It verifies public version and installed bytes. It runs no test suite or prerequisite probe. Conditional
+rollback restores the observed previous bytes only if the target still matches
+the candidate. Failure or interruption retains recovery files for inspection;
+no automatic retry occurs. Success removes only installer-created staging and
+previous files. A small installer-owned receipt binds the native path, bytes
+and installer-added user PATH entry. Uninstall requires this matching receipt
+and removes only its native file and owned PATH entry. Project data, lifecycle
+state, npm shims and unrelated files are preserved. Existing legacy release
+payload cleanup is a separate exact-owner delivery action; no broad deletion.
 
-The Windows firewall adapter may emit a bounded `offline-firewall` observation
-to its existing PowerShell stdout before an unchanged denial. The single-line
-JSON envelope is limited to 1536 UTF-16 code units and contains only the fixed
-record kind, stage, allowlisted observations and truncation flag. It reports
-profile `Name`/`Enabled` and ActiveStore rule `Enabled`, `Action`, `Direction`,
-`PrimaryStatus`, `StatusCode` and raw `EnforcementStatus` metadata. The rule
-projection appends the `enforcement_full` result used by the guard, or an
-unavailable observation when an earlier rule guard stops evaluation.
-`program_match` retains the raw Program shape/type/count and the same computed
-result used by the guard; Program path values remain omitted. Both boolean
-results survive metadata fallback. Command-local progress suppression and
-these diagnostics do not satisfy or relax isolation: the existing enabled-
-profile and enabled/block/outbound/PrimaryStatus `OK` gates remain, and success
-requires a nonempty one-dimensional EnforcementStatus array in one supported
-representation (all string values `Full`, or all UInt16 code `1` values). Program
-must be a nonempty scalar string exactly matching the asset path, or a nonempty
-one-dimensional array whose every entry is a string exactly matching that path
-case-sensitively. Missing, null, empty, invalid, nested, mixed, unsupported or
-different values deny. Each positive result is computed once and reused by its
-guard and diagnostic; Program path values remain withheld. No diagnostic
-authorizes retry or cleanup.
-
-The two private Windows PowerShell callers save their unchanged bodies as
-exclusive UTF-8-with-BOM scripts under the private CI operation root, with
-`$ErrorActionPreference='Stop'` and physical byte equality checked before
-invocation and after successful completion. `-EncodedCommand` carries only a
-short bootstrap that invokes the owned literal path with the call operator and
-rethrows failures. After the body returns, it writes a fixed caller-bound
-completion witness. A caller accepts only an actual successful terminal and
-that exact witness as the final nonempty stdout line, then removes only the
-witness from returned trimmed output; the runner log retains raw stdout,
-stderr and terminal data. Offline isolation also requires exactly one existing
-`isolation-guards-passed` record before consumer initialization. Missing or
-uncertain completion blocks later effects and retains the script and receipts.
-The adapter does not switch to `-File` or stdin, override execution policy,
-retry or clean up the script.
+This adapter owns physical Windows delivery. It does not issue lifecycle or
+Source rights or grant user Runtime acceptance. Use exact current formation
+proof before delivery and actual installed byte/version/PATH proof afterward.
+Do not repeat development tests, reviews or documentation assurance at either
+boundary. Keep original release identity and historical failed/UNKNOWN custody.
+The future automatic Release-only consumer contract remains a separate task.
 
 The optional explicit downloader `downloadGitHubCIDelivery` binds the selected
 successful run/attempt/workflow/repository and exact artifact to its actual job's

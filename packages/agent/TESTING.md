@@ -13,7 +13,7 @@ Use short sentences and plain terms. Keep one main idea in each paragraph. Aim f
 | Public delivery | One native executable with embedded Bun 1.4.2. npm exports are SDK library interfaces. |
 | Build lane | `native-build -> emit-build -> upload`. It publishes formation files. It does not qualify the target. |
 | System command | Read actual installation and qualification status from the current release evidence and [installation owner](docs/installation.md). Keep user Runtime acceptance separate. |
-| Native qualification | OPEN. Require current evidence for all seven delivery checks and the exact asset. |
+| Package qualification | Successful formation provenance, target and exact artifact integrity. No test suite at formation or installation. |
 | Aggregate numeric evidence | GAP. The current policy retains owned post-cutover gaps for 100% coverage, 100% mutation and CRAP below 5. A missing report is not a pass. |
 | Mutation | A separate, explicitly authorized manual run. It is not part of an aggregate or CI/CD job. |
 | Provider and ZIP capability | Use the approved adapter and current locked reader. Missing or drifting capability is a GAP. |
@@ -26,7 +26,7 @@ This file contains current rules and required checks. Keep dated runs, failed lo
 
 Run agent behavior, property, ZOMBIES, concurrency, fault, schema, integration and security checks locally. Run coverage and CRAP locally.
 
-CI/CD owns build, packaging, exact artifact and installation checks. CI/CD must not run agent behavior tests, coverage, CRAP or mutation. Do not add or run delivery checks as local agent test suites. Do not run compiler probes or copied-package installation harnesses. Synthetic repair fixtures are agent-state checks. They do not prove delivery installation.
+CI/CD forms and publishes the exact package and its provenance/integrity metadata. Formation and installation run no test suites. Keep behavior, security, data, coverage, CRAP and mutation checks in development tasks. Do not add local delivery tests, compiler probes or copied-package installation harnesses. Synthetic artifact-state fixtures test their development task only.
 
 During development, select the affected test files and cases. Include direct callers and configuration, schema, filesystem and subprocess dependencies. Use an exact file path with a name filter. Do not load unrelated tests.
 
@@ -207,25 +207,25 @@ For orphan and rollback faults, substitute a foreign target after descriptor ver
 
 Keep the flushed control lock and per-launch byte checks during cache optimization. Do not weaken database or release-journal durability. Public version/help may use the shared formatter without loading an absent payload. Runtime use still requires cache validation.
 
-## Standalone and delivery evidence
+## Formation and installed evidence
 
-Trace SA-CLI, SA-RESOURCES, SA-STATE, SA-OPT, SA-RELEASE, SA-NOTES, SA-CI and SA-ASSURANCE to the current system specification. Qualify each advertised OS/CPU target on that target. A small probe, SDK archive or cross-compilation is insufficient.
+The development-lifecycle instruction owns formation and installation policy.
+No test suite, repeated review, coverage, mutation, seal or CLEAR runs at these
+boundaries. Development tasks retain their applicable behavior and risk checks;
+reuse current results after one stable completion run.
 
-Keep the seven checks separate: native build, native installation, public routes, offline runtime, native dependencies, state preservation and upgrade recovery. Require real current receipts with exact operation, version, Source, archive, target, request, run and attempt bindings. A formation-only result cannot supply missing passes.
+Formation proof binds the successful build, exact Source/version, target,
+request/run/attempt and archive/manifest/native bytes. The current profile is
+native-build only. The metadata reader still enforces all declared checks of a
+historical seven-check profile; it never fabricates missing passes.
 
-Use the approved workflow/repository/runner policy and current ZIP reader. Check credential separation, redirects, bounded transport, exact member names, duplicate members, unsafe paths, source drift and asynchronous input mutation. Retain partial or UNKNOWN transport. Synthetic provider records prove consistency controls only. They do not prove provider origin or native behavior.
+Installation is one platform adapter effect. Observe exact installed bytes,
+version and effective PATH, then remove only owned temporary previous files.
+These are operation receipts, not installation tests or user Runtime acceptance.
+Preserve credential separation, path/transport integrity, exclusive custody,
+rollback and UNKNOWN/no-reissue controls. Keep sensitive diagnostics private.
 
-The Windows first-install adapter must bind the exact asset, manifest, candidate and build receipt. Validate owned path and physical identity. Preserve user data and npm shims. Existing-root rejection is not upgrade support. Follow the declared qualified update and rollback owner.
-
-Delivery diagnostics must preserve typed values and hide sensitive paths or credentials. Positive isolation checks remain strict. `EnforcementStatus` is a nonempty one-dimensional array of all string `Full` values or all UInt16 code `1` values. `Program` is a nonempty scalar string or one-dimensional string array; every value must match the declared asset path case-sensitively. Missing, empty, nested, mixed or unsupported data is a denial. Compute each result once and reuse it for the gate and diagnostic.
-
-Preview at most 3 profiles, 1 rule, 8 enforcement entries and 64 code units of scalar text/type. Keep shape, original count and explicit omission when a complete preview exceeds the bound. Withhold Program values. Preview metadata does not replace the full validated value.
-
-PowerShell delivery transport uses an exclusive UTF-8-BOM script, short bootstrap, stop-on-error behavior and the actual caller completion witness. Missing completion retains UNKNOWN. Preserve full raw streams; remove only the final private witness from returned output. Local inert checks do not qualify PowerShell or a native target.
-
-Local resource tests use synthetic data. They do not build, package or install. Build and installation proof stays in CI/CD. Agent behavior and numeric proof stays local.
-
-## Development-controller qualification
+## Development-controller qualification## Development-controller qualification
 
 Use an immutable current-candidate controller outside editable Source. Verify prepare, inspect, verify and controlled execution. Bind the exact logical target, original repository/projects/request, Host work/scope/lease/CAS, target Source and controller code. Reject active-selector targets and alias, FIFO or predecessor escapes.
 

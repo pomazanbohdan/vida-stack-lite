@@ -16,7 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyForwardReviewSet } from './controllers/forward-review-proof.mjs';
 import { runCommand } from './release-local.mjs';
-import { verifyCIDeliveryEvidence } from './release-ci-evidence.mjs';
+import { verifyCIDeliveryEvidence, minimumNativeDeliveryChecks } from './release-ci-evidence.mjs';
 
 const rootDefault = fileURLToPath(new URL('../../', import.meta.url));
 const sha = (value) => createHash('sha256').update(value).digest('hex');
@@ -56,14 +56,25 @@ function withAssuranceWriteLocks(root, operation, action) {
     const pending = read(path.join(root, '.agent/work/agent-local-release/pending.json'));
     const current = releaseState(releasePath(root, '.agent/work/agent-local-release/' + operation + '/release.json'));
     const manifest = read(path.join(root, 'packages/agent/package.json'));
-    if (pending.operation_id !== operation || pending.version !== current.version || current.operation_id !== operation ||
-      current.version !== manifest.version || current.status !== 'awaiting_assurance' || current.install_started)
+    if (
+      pending.operation_id !== operation ||
+      pending.version !== current.version ||
+      current.operation_id !== operation ||
+      current.version !== manifest.version ||
+      current.status !== 'awaiting_assurance' ||
+      current.install_started
+    )
       throw new Error('Local release: current awaiting-assurance operation required.');
     const result = action();
-    if (result && typeof result.then === 'function') throw new Error('Local release: proof writer must be synchronous.');
+    if (result && typeof result.then === 'function')
+      throw new Error('Local release: proof writer must be synchronous.');
     return result;
   } finally {
-    try { worker?.close(); } finally { admission.close(); }
+    try {
+      worker?.close();
+    } finally {
+      admission.close();
+    }
   }
 }
 export function recordLocalTestEvidence({ root = rootDefault, operation, tests }) {
@@ -142,7 +153,12 @@ export function writeLocalSourceSeal({ root = rootDefault, operation }) {
     const folder = path.join(root, '.agent/work/agent-local-release', operation);
     // The orchestrating session supplies actual native provenance; this seal grants no approval.
     writeFileSync(path.join(folder, 'source-seal.json'), JSON.stringify(seal, null, 2) + '\n');
-    return { operation_id: operation, status: 'sealed_awaiting_assurance', source_binding: seal.source_binding, sealed_fingerprint: seal.sealed_fingerprint };
+    return {
+      operation_id: operation,
+      status: 'sealed_awaiting_assurance',
+      source_binding: seal.source_binding,
+      sealed_fingerprint: seal.sealed_fingerprint,
+    };
   });
 }
 export async function verifyLocalReleaseTests({ root = rootDefault, operation, version, ci }) {
@@ -200,6 +216,9 @@ export async function verifyLocalReleaseTests({ root = rootDefault, operation, v
   return joined;
 }
 export async function verifyLocalReleaseAssurance({ root = rootDefault, operation, version, ci }) {
+  if (JSON.stringify(ci?.profile?.required_checks) === JSON.stringify(minimumNativeDeliveryChecks)) {
+    return verifyCIDeliveryEvidence({ root, operation, version, ci });
+  }
   const tested = await verifyLocalReleaseTests({ root, operation, version, ci });
   const folder = path.join(root, '.agent/work/agent-local-release', operation);
   const seal = read(path.join(folder, 'source-seal.json'));

@@ -22,6 +22,8 @@ const id = /^[a-z0-9][a-z0-9-]{0,63}$/;
 // The existing archive reader stages ZIPs under its own 256 MiB ceiling.
 export const ciTransportLimit = 256 * 1024 * 1024;
 export const ciArchiveLimit = 240 * 1024 * 1024;
+export const minimumNativeDeliveryChecks = Object.freeze(['native-build']);
+// Retained for explicitly selected extended profiles and historical receipts.
 export const nativeDeliveryChecks = Object.freeze([
   'native-build',
   'native-install',
@@ -147,8 +149,9 @@ function profileMatches(request, profile) {
       profile.required_checks.length > 0 &&
       new Set(profile.required_checks).size === profile.required_checks.length &&
       profile.required_checks.every((value) => typeof value === 'string' && value.length > 0) &&
-      nativeDeliveryChecks.every((value) => profile.required_checks.includes(value)),
-    'approved full native controller profile required',
+      (equal(profile.required_checks, minimumNativeDeliveryChecks) ||
+        equal(profile.required_checks, nativeDeliveryChecks)),
+    'approved exact native build profile required',
   );
 }
 /** CI producer encoding. Actual observations are supplied by its qualified controller, not manufactured here. */

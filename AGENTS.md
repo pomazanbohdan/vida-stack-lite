@@ -3,7 +3,7 @@ managed-by: agent-runtime
 template-schema: v1
 orchestrator-schema: 1.0
 project-sidecar: AGENT.sidecar.md
-runtime-package: packages/agent
+runtime-package: {{BUNDLE}}
 update-policy: replace-this-file-wholesale
 project-specific-content: forbidden
 -->
@@ -541,6 +541,19 @@ lane or a full candidate cycle solely to score a task. Functional/security/data/
 numeric gates and final release/native requirements remain. The detailed policy
 has one owner: the installed development-lifecycle self-development protocol.
 
+Ordinary work uses the configured VIDA runtime lifecycle exclusively. When
+that lifecycle is blocked, repair its cause locally as an architectural Source
+code change, then immediately update the whole qualified runtime through its
+existing owner and resume the configured flow. This bounded exception does not
+authorize private-state edits, fabricated admission, replay of `UNKNOWN`
+effects, weaker controls, a new authorization framework or partial-agent
+delivery. Preserve current Source ownership, CAS, final assurance and native
+qualification requirements.
+
+Formation and installation follow only the installed development-lifecycle
+instruction's self-development policy. They do not run test suites or repeat
+development reviews. Do not duplicate package qualification rules here.
+
 All sessions share one live worktree version. Before a tracked mutation, use
 the current configured trusted Host coordination inspector and supported typed
 operations to verify the active ProjectContext, exact path/contour owner, FIFO
@@ -587,6 +600,8 @@ require a new attempt or a manual hash-check step.
 
 Active artifacts use only their strict current v1 contracts. Before any future current-v1 schema change, implement and ship one functional bundle-owned artifact repair command for affected artifacts and dependencies, including atomic application and recovery. Until it exists, stop before changing active artifacts. Runtime readers do not select older formats.
 
+The fixed `native-delivery-evidence` repair resets stale qualification joins only for the original uninstalled awaiting-assurance operation. It retains exact beforeimages and dependencies, uses the existing release locks and permits only exact resume. The synchronous local test, seal and assurance writers use the same lock order and deny an active or unknown repair. Synthetic repair evidence proves consistency only; it does not qualify, install or accept an artifact.
+
 Delivered configuration does not replace local initialization or historical
 work authority. Preserve original scope snapshots, issued requests, owners and
 FAIL/UNKNOWN evidence. Recovery control precedes ordinary current-execution
@@ -610,18 +625,15 @@ explicit withdrawal, supersession or waiver closes them. Independent authorized
 work may continue. The tool boundary is portable and requires no named provider,
 machine or Desktop application.
 
-Bootstrap-visible assurance invariant: R0 is read-only. Every tracked R1-R4
-mutation follows the canonical runtime lifecycle, including current tests,
-exactly three fresh history-isolated blind review receipts for one sealed
-fingerprint and reverse validation. Passing assurance automatically enters
-`DELIVERY` and presents a deployment manifest: created files, modified files,
-the exact environment payload/destination/order, repository-only files that
-must not be deployed, and post-deployment checks. It also presents behavior,
-evidence and Runtime GAPs; it never asks permission merely to deliver. Protocol
-v4 then waits for attributable user testing acceptance or feedback/log evidence;
-only the accepted current delivery can complete. A
-correction invalidates the prior review/verification set. The detailed and
-single normative owner is the installed development-lifecycle instruction.
+Bootstrap-visible assurance invariant: R0 is read-only. Source changes follow
+the canonical development lifecycle and applicable changed-risk checks. Reuse
+their current evidence during delivery; package formation and installation do
+not launch another test/review/DocFlow cycle. The single normative owner is the
+installed development-lifecycle instruction. Delivery presents exact files,
+payload, destination, rollback and installed observations. Only attributable
+user testing can establish Runtime acceptance; changed inputs invalidate only
+their affected proof.
+
 Commit follows current-version post-presentation acceptance; push requires the user's
 separate explicit command.
 

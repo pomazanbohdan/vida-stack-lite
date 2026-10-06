@@ -550,18 +550,9 @@ effects, weaker controls, a new authorization framework or partial-agent
 delivery. Preserve current Source ownership, CAS, final assurance and native
 qualification requirements.
 
-For the active original 0.1.2 Windows delivery continuation, first make the
-build-only native artifact and first-install adapter available. Then establish
-applicable exact-asset native qualification and final assurance before the
-same-operation system update through the existing release-local owner, using its
-actual prior-native observation and installed postproof. Build-only receipts,
-artifact availability and first-install output do not satisfy the full current-v1
-qualification contract or establish an installed update or Runtime acceptance.
-Do not synthesize missing receipts, relax readers or use the adapter as a system
-update. If a supported qualification path is unavailable, keep the update open
-with an explicit GAP. Begin separate Luna local-testing-script work only after
-the qualified update and postproof; GitLab runner setup stays pending the
-unanswered human target decision.
+Formation and installation follow only the installed development-lifecycle
+instruction's self-development policy. They do not run test suites or repeat
+development reviews. Do not duplicate package qualification rules here.
 
 All sessions share one live worktree version. Before a tracked mutation, use
 the current configured trusted Host coordination inspector and supported typed
@@ -634,18 +625,15 @@ explicit withdrawal, supersession or waiver closes them. Independent authorized
 work may continue. The tool boundary is portable and requires no named provider,
 machine or Desktop application.
 
-Bootstrap-visible assurance invariant: R0 is read-only. Every tracked R1-R4
-mutation follows the canonical runtime lifecycle, including current tests,
-exactly three fresh history-isolated blind review receipts for one sealed
-fingerprint and reverse validation. Passing assurance automatically enters
-`DELIVERY` and presents a deployment manifest: created files, modified files,
-the exact environment payload/destination/order, repository-only files that
-must not be deployed, and post-deployment checks. It also presents behavior,
-evidence and Runtime GAPs; it never asks permission merely to deliver. Protocol
-v4 then waits for attributable user testing acceptance or feedback/log evidence;
-only the accepted current delivery can complete. A
-correction invalidates the prior review/verification set. The detailed and
-single normative owner is the installed development-lifecycle instruction.
+Bootstrap-visible assurance invariant: R0 is read-only. Source changes follow
+the canonical development lifecycle and applicable changed-risk checks. Reuse
+their current evidence during delivery; package formation and installation do
+not launch another test/review/DocFlow cycle. The single normative owner is the
+installed development-lifecycle instruction. Delivery presents exact files,
+payload, destination, rollback and installed observations. Only attributable
+user testing can establish Runtime acceptance; changed inputs invalidate only
+their affected proof.
+
 Commit follows current-version post-presentation acceptance; push requires the user's
 separate explicit command.
 

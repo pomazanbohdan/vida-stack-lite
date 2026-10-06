@@ -119,3 +119,16 @@ jobs:
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 14
+      - name: upload-formation-proof
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ steps.emit-build.outputs.formation_artifact_name }}
+          path: |
+            ${{ steps.emit-build.outputs.formation_directory }}/${{ steps.emit-build.outputs.formation_archive_file }}
+            ${{ steps.emit-build.outputs.formation_directory }}/result.json
+          archive: true
+          compression-level: 0
+          overwrite: false
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 14

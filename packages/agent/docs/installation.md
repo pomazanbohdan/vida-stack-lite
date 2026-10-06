@@ -3,94 +3,25 @@
 Owner: agent maintainers. Class: derived installation guide.
 Sources: [system specification](system-specification.md), [package declarations](../package.json), [Bun pin](../.bun-version), [public command](../bin/vida-agent.mjs), [initializer](../bin/init.mjs).
 
-The only public agent installation is one qualified native `vida-agent` executable
-per supported OS/CPU with embedded Bun 1.4.2. Direct installation and first run
-require no external Node, npm or Bun and no runtime download. Native target
-claims require actual full VIDA/native/WASM/state checks; a minimal probe or
-cross-compiled asset is insufficient. npm `vida-agent` and existing public SDK
-exports remain maintained library interfaces. Their package qualification is
-not an alternative public agent delivery or a native installation checkpoint.
-Public agent CLI installation through npm is not supported; npm artifacts serve
-SDK library imports only.
+Public agent delivery is one native executable with embedded pinned Bun.
+No external Node/npm/Bun or first-run download is needed. SDK/npm packages
+remain library interfaces and are not an alternative CLI installation.
 
-The exact native installation delivery manifest must declare asset, destination,
-PATH changes, prior-install preservation, rollback effects and post-install
-checks. Do not substitute npm global installation for this evidence. Immutable
-package-owned resources may materialize into a private version/payload-bound
-cache; unsafe, partial or tampered state is rejected. Consumer YAML and DB/WAL/SHM
-stay external. Use only qualified delivery instructions: implementation and
-readiness are read from the actual release operation, not inferred from this
-guide. No new native installation command or ABI is invented here.
+The [development lifecycle](../instructions/development-lifecycle.md#formation-and-installation-policy)
+is the single owner of formation and installation policy. This guide supplies
+commands and destinations. There are no test suites, repeated development
+reviews or per-install documentation gates in this contour.
 
-The native default user-bin is `%LOCALAPPDATA%/Programs/vida-agent/bin` on
-Windows. On Unix it is `XDG_DATA_HOME/vida-agent/bin` when `XDG_DATA_HOME` is set,
-otherwise `~/.local/share/vida-agent/bin`. Version- and operation-bound release
-trees are siblings of `bin`. Preserve existing npm shims and explicitly declare
-PATH changes in the delivery manifest. First publication uses exclusive creation;
-an upgrade binds CAS to the exact observed prior entry. An unknown installation
-outcome requires observation and reconciliation before another effect, not blind
-replay. The manifest declares prior-install preservation and supported rollback;
-consumer configuration and DB/WAL/SHM remain external.
+For changed Source, publish the exact reviewed inputs before CI formation.
+Use the resulting build provenance, target and byte-integrity metadata for
+the selected artifact. An unchanged artifact needs no new build or Git effect
+solely for installation. Preserve original operation and failed/UNKNOWN history.
 
-Applicable current checks, exactly three fresh independent blind reviews,
-reverse validation and public documentation CLEAR bind the final source and
-assets before installation. Actual observations pass through the release
-assurance adapter; caller JSON proves local consistency, not review origin or
-user Runtime acceptance. Local asset preparation does not publish to a registry
-or GitHub.
-
-For this Source repository, the standing instruction in
-[`AGENT.sidecar.md#source-package-git-policy`](../../../AGENT.sidecar.md#source-package-git-policy)
-authorizes the orchestrating session to commit and push after EACH successful
-package formation. Finish Source changes and candidate preparation/checks,
-form the final exact assets once, commit the qualified Source payload and perform an ordinary
-non-force push, then seal the same operation's archive. Obtain three fresh blind
-reviews, reverse validation and CLEAR against those sealed bytes, record
-assurance, and install the exact qualified target assets. Qualification binds
-current declared source-file bytes and the archive; Git HEAD/commit metadata are
-excluded. An ordinary commit with unchanged included bytes needs no additional
-requalification. Changed included source inputs or archive bytes invalidate
-their affected proof; use public operation identities without manual integrity-
-value replay.
-Failed packing retains its pending operation and is not this Git trigger.
-Exact retries preserve the same archive/operation and avoid duplicate effects.
-This Source-only instruction does not authorize consumer Git operations or
-replace Runtime acceptance. The package CLI itself still performs no commit/push.
-
-The first normal release candidate is `0.1.0`. Each successful normal publication
-advances the next candidate patch to `0.1.1`, `0.1.2`, and so on. Preparation settles the version
-before assurance. Failed checks, failed packing and retries retain the pending
-candidate. Durable pending and successful publication receipts live under
-`.agent/work/agent-local-release`; archives and stage logs live under
-`.tmp/releases/OPERATION`. Removing scratch output does not reset successful
-version history. Preserve the durable receipts as project operational state.
-
-For the authorized update after each whole verified engineering outcome, use
-`npm run release:local -- --prepare-system-update` instead of normal preparation.
-It preserves the current successful Source manifest version and bytes, and
-allocates a new candidate operation after the prior operation completes. Exact
-Source and archive identity is verified later. Carry that returned operation
-through qualified native formation, assurance, installation and status.
-Preparation checks the successful operation journal before metadata effects;
-an outstanding incompatible patch or missing/mismatched baseline rejects.
-A matching unfinished update returns its actual journal status and installation-
-start marker, without replacing its pending pointer, journal or archive. The sole
-missing-success reconciliation uses existing exact completed archive/installed
-proof; it never assumes success from a version string. Exact installed precheck,
-current qualification and postchecks are still required. No installation is
-performed by preparation, and its metadata does not prove current installed bytes.
-SQLite admission exclusion does not make separate file saves atomic. Retain the
-final release/native objective and pause dependent work until the checkpoint
-passes; intermediate system updates do not authorize registry publication.
-
-Agent behavior tests, coverage and CRAP run locally. Build, packaging and
-installation checks belong to CI/CD and are not local agent test tasks. Do not
-create or run build/install test suites, compiler probes or copied-package
-installation harnesses. CI/CD may run these delivery checks, but not agent
-behavior tests, coverage, CRAP or mutation. Mutation requires an explicit manual
-launch. Missing local or CI/CD evidence remains a GAP, never a pass.
-Local fresh reviews, reverse validation and CLEAR remain required. Formatter/TypeScript 7 and pre-push coverage/CRAP
-hooks require discussion before any installation or activation.
+Windows uses one maintained PowerShell adapter and the fixed current-user
+Programs/vida-agent/bin command. It retains a previous binary only during the
+recovery window, then removes exact owned previous files after success. It
+preserves project configuration, DB/WAL/SHM and npm shims. Version/byte/PATH
+observations record installation; user Runtime acceptance is separate.
 
 ## Source development controller
 
@@ -114,40 +45,22 @@ agent installation uses only the qualified standalone executable. Do not install
 the SDK/npm archive as a substitute for that executable.
 
 The Source builder and verifier form and check the executable from current
-inputs. Full-product native qualification and installed checks remain open;
-the construction command alone does not establish readiness.
-Preserve pending archives and actual receipts. Use supported reconciliation for
-an uninstalled operation before changing its target assets; do not rewrite its
-journal or infer installed readiness from a version string.
+inputs. Package qualification is successful formation provenance, declared Source and
+version, target platform and exact artifact integrity. The lifecycle instruction
+owns this policy. Formation and installation do not run test suites or repeat
+development reviews. The Windows workflow publishes the six formation files and
+an archive/result metadata artifact with the native-build profile. A historical
+seven-check profile keeps its original declared requirements.
 
-When a build-only Windows x64 Actions artifact is available, it contains six
-flat files: the formed archive, standalone manifest, native executable,
-`candidate.json`, the actual successful `native-build` receipt and the exact
-Source `install-windows.ps1`. This is formation and artifact availability, not
-native qualification or installed acceptance. The first-install adapter consumes
-those adjacent files without network access or external Node/npm/Bun. It writes
-the retained `0.1.2-<operation_id>` release under the current user's
-`%LOCALAPPDATA%\Programs\vida-agent` and the executable under `bin\vida-agent.exe`.
-It rejects linked/unsafe files, prior destinations and collisions, does not
-replace or upgrade an existing installation, and leaves persistent user PATH
-unchanged. It prints the executable path and manual user-PATH instruction.
-
-The adapter runs bounded `vida-agent.exe version` and `--help` checks from a
-separate owned check directory and reports success only after both actual child
-processes complete successfully with the expected public results. Any failure
-after mutation is PARTIAL/UNKNOWN: retain created paths and inspect them before
-any retry; no automatic cleanup, rollback claim or Runtime acceptance follows.
-This first-install step does not qualify the target or perform the existing
-system update. Complete exact-asset native qualification and use
-`tooling/agent/release-local.mjs#installNativeRelease` for system activation and
-postproof. Do not infer update completion from artifact availability,
-first-install output or an observed global npm instruction version.
+Use the maintained PowerShell adapter for physical Windows delivery. It accepts
+the selected EXE/ZIP or direct HTTPS URL, checks manifest bytes when present and
+replaces the fixed command with a transient previous copy. Observe installed
+version/bytes and effective PATH. Preserve uncertainty before retry. Qualification
+and installation do not grant user Runtime acceptance or consumer initialization.
 
 The final native delivery manifest must bind the exact qualified asset, target,
 destination, PATH ordering, prior-install preservation, rollback and postchecks.
-Installation must run public commands, instruction discovery and prerequisite
-checks from an unrelated cwd without external Node/npm/Bun or first-run network.
-Consumer initialization remains a separate authorized effect.
+Installation records the selected installed bytes, version and effective PATH. No test suite or prerequisite probe runs.
 
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
@@ -339,45 +252,47 @@ remain delivery GAPs; local resource proof does not establish installed acceptan
 
 ## Quick Windows build and system-command reference
 
-The operator-installed native command was observed from artifact 11350491741, build run 37321931714/attempt1: version 0.1.2, embedded Bun 1.4.2. At the completed installation observation, the exact installed executable, retained executable, manifest and discovered instructions matched the selected artifact and then-current source. Later Source changes, including this guide, are not claimed inside that artifact. Old npm shims remain. This is actual physical command installation; full native release qualification, canonical UPDATE01 completion and Runtime acceptance remain separately open.
+Build owner: `.github/workflows/agent-native-delivery.yml` and
+`tooling/agent/native-ci-delivery.mjs`. The workflow publishes the six build
+files. CI/CD forms and publishes the exact package and metadata. No tests run at formation or installation.
+Current available build: run 37452713546, artifact 11407990445, version 0.1.2,
+embedded Bun 1.4.2. Its native file is 133303808 bytes. The observed system
+command is still 133299712 bytes. Its update and qualified acceptance are open.
 
-Build owner: `.github/workflows/agent-native-delivery.yml` invokes the pinned repository producer `tooling/agent/native-ci-delivery.mjs` through `native-build -> emit-build -> upload`. It emits the exact six-file artifact; it does not run qualification. Dispatch requires the current controller-issued request, approved workflow/provider and full current committed Source-byte checks. Do not manually calculate integrity values or re-run an old exclusive dispatch script. Use the supported current lifecycle/controller route for a fresh build; the reusable qualification/update wiring repair is still pending.
-
-The following command only inspects an already issued run; it is not a fresh-build or update command:
-
-```powershell
-gh run view RUN_ID --repo pomazanbohdan/vida-stack-lite --json status,conclusion,url
-```
-
-Download the exact selected artifact to a NEW directory via the Actions artifact link/current qualified retrieval controller. Require exactly: native exe, original manifest.json, original candidate.json, actual native-build.result.json, formed tgz and install-windows.ps1. Retain failed/UNKNOWN transport and operation custody; do not reuse a partial directory or automatically retry an uncertain effect.
-
-The completed installation used an absolute installer path. For a future explicitly authorized FIRST native installation on a destination without an existing product root, select the newly extracted, verified six-file artifact directory and use its absolute installer path. `EXTRACTED_ARTIFACT_DIRECTORY` below is that new directory, not the existing installed tree. This example is a first-install reference; do not run it again on the already-installed system:
+Run the maintained `packages/agent/tooling/install-windows.ps1`:
 
 ```powershell
-$artifactDirectory = (Resolve-Path -LiteralPath 'EXTRACTED_ARTIFACT_DIRECTORY').Path
-$installerPath = Join-Path $artifactDirectory 'install-windows.ps1'
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $installerPath
+.\install-windows.ps1 -Action install -Source 'C:\Downloads\vida-agent.zip'
+.\install-windows.ps1 -Action update -Source 'C:\Downloads\vida-agent.zip'
+.\install-windows.ps1 -Action update -Source 'https://example.org/vida-agent.exe'
+.\install-windows.ps1 -Action uninstall
 ```
 
-The execution-policy setting is process-scoped. The installer preserves user data/npm shims and leaves persistent PATH unchanged. It rejects an existing product root; DO NOT use it as an upgrade command for an existing native installation or delete that root to make it pass. The already-installed system now requires the supported qualified release owner for subsequent upgrades; its currently missing qualification/controller wiring remains a real gap.
+Use an actual selected package address in place of the examples. URL downloads
+require direct HTTPS without embedded login credentials, ambient authorization
+or redirects. Explicitly selected signed query URLs are allowed. For a local EXE, an
+adjacent manifest is used if present. ZIP input must contain the exact
+`vida-agent-bun-windows-x64.exe` member. Use a standard single-disk release ZIP
+with at most six flat files, names up to 128 bytes and no archive comments or ZIP64.
+The installer uses only standard
+PowerShell/.NET. It targets the current user and requires no elevation.
 
-The completed operator update explicitly published the native user-bin directory to User PATH. The installer itself does not do this. For reliable postchecks regardless of an existing terminal's inherited PATH, call the exact installed executable:
+Installation adds the user PATH entry if absent. Update preserves an existing
+entry. New terminals inherit User PATH; an existing terminal may need refresh.
+Uninstall requires a matching installer receipt. It preserves project data,
+configuration, lifecycle history and npm shims. No permanent previous binary is
+created. Incomplete pending/previous files block retry until inspected. A known
+legacy installed payload requires exact-owner cleanup after verified delivery.
+
+For actual installed postproof, use the exact command from another directory:
 
 ```powershell
 $nativeCommand = Join-Path $env:LOCALAPPDATA 'Programs\vida-agent\bin\vida-agent.exe'
 & $nativeCommand version
 & $nativeCommand instructions --path development-lifecycle
-& $nativeCommand install --check
+Get-Command vida-agent
 ```
 
-Expected primary command: `%LOCALAPPDATA%\Programs\vida-agent\bin\vida-agent.exe`. Installed prerequisite output must report `prerequisites_valid`, pin1.4.2 and `runtime=embedded`. After a declared PATH publication, refresh this terminal and assert which command wins; simply listing all commands does not prove native precedence:
-
-```powershell
-$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')
-$resolvedCommand = Get-Command vida-agent -ErrorAction Stop
-if ($resolvedCommand.CommandType -ne 'Application' -or $resolvedCommand.Source -ne $nativeCommand) { throw 'vida-agent does not resolve to the declared native executable.' }
-```
-
-New terminals pick up the published user PATH; existing parent processes may retain their old environment. These postchecks prove command/prerequisite behavior, not the six missing native qualification checks or full release acceptance. No general fresh-build or subsequent system-update command is established while lifecycle/controller wiring remains open.
-
-Canonical subsequent system update owner remains `tooling/agent/release-local.mjs#installNativeRelease` through actual qualified `executeRelease`/assurance, exact prior/candidate custody and effective PATH/postproof. Neither npm install nor a saved success flag is a supported substitute. The repair-first plan addresses distinct build/local-test origins before that route can be declared generally working.
+Require actual native PATH precedence, version and the selected binary bytes.
+These observations record installation; user Runtime acceptance remains separate. The Windows adapter does not rewrite release journals
+or consumer configuration. Formation and installation follow the single development-lifecycle policy. The future automatic Release-only consumer contract is unchanged.

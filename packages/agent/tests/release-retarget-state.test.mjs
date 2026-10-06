@@ -30,7 +30,11 @@ import {
   withReleaseAdmission,
   runCommand,
 } from '../../../tooling/agent/release-local.mjs';
-import { testInputBinding, verifyLocalReleaseTests } from '../../../tooling/agent/release-assurance.mjs';
+import {
+  testInputBinding,
+  verifyLocalReleaseTests,
+  verifyLocalReleaseAssurance,
+} from '../../../tooling/agent/release-assurance.mjs';
 import {
   recordCIDeliveryRequest,
   encodeCIDeliveryResult,
@@ -444,7 +448,14 @@ test('CI emission requires all seven exact ordered terminal receipts and known d
       const outcome = outcomes.shift();
       assert.ok(outcome, 'unexpected synthetic command');
       assert.equal(options.cwd, value.root);
-      const receipt = { command, args, code: outcome.code, signal: outcome.signal, stdout: outcome.stdout, stderr: outcome.stderr };
+      const receipt = {
+        command,
+        args,
+        code: outcome.code,
+        signal: outcome.signal,
+        stdout: outcome.stdout,
+        stderr: outcome.stderr,
+      };
       writeFileSync(options.log, json(receipt), { flag: 'wx' });
       if (outcome.error) throw outcome.error;
       return receipt.stdout.trim();
@@ -468,8 +479,13 @@ test('CI emission requires all seven exact ordered terminal receipts and known d
   assert.match(unexpectedSuccessError.message, /different integer exit; known FAIL/);
   assert.match(unexpectedSuccessError.message, /exit code: 0\nsignal: null/);
   assert.match(unexpectedSuccessError.message, /command: "inert-success-child"\nargs: \["--success"\]/);
-  assert.match(unexpectedSuccessError.message, /stdout tail:\nunexpected success output\nstderr tail:\nunexpected success stderr/);
-  const successReceipt = JSON.parse(readFileSync(path.join(value.root, 'logs/ci-denial-contract-runner/1.json'), 'utf8'));
+  assert.match(
+    unexpectedSuccessError.message,
+    /stdout tail:\nunexpected success output\nstderr tail:\nunexpected success stderr/,
+  );
+  const successReceipt = JSON.parse(
+    readFileSync(path.join(value.root, 'logs/ci-denial-contract-runner/1.json'), 'utf8'),
+  );
   assert.equal(successReceipt.command, 'inert-success-child');
   assert.deepEqual(successReceipt.args, ['--success']);
   assert.equal(successReceipt.code, 0, 'unexpected success must preserve its actual close receipt');
@@ -487,14 +503,19 @@ test('CI emission requires all seven exact ordered terminal receipts and known d
     false,
     'already-expanded cause tails are not printed twice',
   );
-  assert.match(mismatchError.message, /command: "inert-mismatch-child"\nargs: \["--mismatch"\]\nexit code: 1\nsignal: null/);
+  assert.match(
+    mismatchError.message,
+    /command: "inert-mismatch-child"\nargs: \["--mismatch"\]\nexit code: 1\nsignal: null/,
+  );
   const tailMatch = mismatchError.message.match(/stdout tail:\n([\s\S]*?)\nstderr tail:\n([\s\S]*)$/);
   assert.ok(tailMatch);
   assert.equal(tailMatch[1].length, 2048);
   assert.equal(tailMatch[2].length, 2048);
   assert.equal((mismatchError.message.match(/^stdout tail:/gm) ?? []).length, 1);
   assert.equal((mismatchError.message.match(/^stderr tail:/gm) ?? []).length, 1);
-  const mismatchReceipt = JSON.parse(readFileSync(path.join(value.root, 'logs/ci-denial-contract-runner/2.json'), 'utf8'));
+  const mismatchReceipt = JSON.parse(
+    readFileSync(path.join(value.root, 'logs/ci-denial-contract-runner/2.json'), 'utf8'),
+  );
   assert.equal(mismatchReceipt.stdout, stdoutText, 'full stdout remains in the saved receipt');
   assert.equal(mismatchReceipt.stderr, stderrText, 'full stderr remains in the saved receipt');
   assert.equal(mismatchReceipt.signal, null);
@@ -887,7 +908,7 @@ for (const kind of ['complete', 'partial', 'oversized', 'wrong-digest', 'wrong-c
       globalThis.fetch = priorFetch;
     }
   });
-function ciRecord(value) {
+function ciRecord(value, checks = nativeDeliveryChecks) {
   const request = recordCIDeliveryRequest({ ...value.input, context: ciContext, target: 'bun-linux-x64' });
   const candidate = readNativeRetargetCandidate(value.input);
   const profile = {
@@ -895,7 +916,7 @@ function ciRecord(value) {
     repository_id: ciContext.repository_id,
     project_ids: ciContext.project_ids,
     target: request.target,
-    required_checks: [...nativeDeliveryChecks],
+    required_checks: [...checks],
   };
   const observed = {
     schema: 'VidaCIDeliveryObservation/v1',
@@ -1030,7 +1051,7 @@ test('CI wrong issuer checks payload Source target and run bindings deny without
     () => validate({ observation: { ...proof.observation, checks: [{ id: 'native-build', status: 'passed' }] } }),
     /checks/,
   );
-  assert.throws(() => validate({ profile: { ...proof.profile, required_checks: ['native-build'] } }), /full native/);
+  assert.throws(() => validate({ profile: { ...proof.profile, required_checks: ['native-build'] } }), /checks/);
   for (const field of ['run_id', 'source_binding', 'archive_sha256', 'manifest_sha256', 'payload_id', 'target']) {
     const result = JSON.parse(proof.observation.result_bytes);
     result[field] = 'foreign';
@@ -1442,4 +1463,49 @@ test('clean planning lost initial ACK resumes once with unchanged frozen inputs 
       assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
     }
   }
+});
+
+test('formation profile validates build identity without installation tests and preserves extended requirements', async () => {
+  const value = await fixture();
+  await value.stage();
+  await plan(value);
+  await applyReleaseRetarget(value.input);
+  const proof = ciRecord(value, ['native-build']);
+  assert.equal(validateCIDeliveryObservation(proof).source_binding, proof.request.source_binding);
+  assert.equal(
+    (
+      await verifyLocalReleaseAssurance({
+        ...value.input,
+        version,
+        ci: { request_id: proof.request.request_id, profile: proof.profile, observe: async () => proof.observation },
+      })
+    ).source_binding,
+    proof.request.source_binding,
+  );
+  await assert.rejects(
+    verifyLocalReleaseAssurance({
+      ...value.input,
+      version,
+      ci: { request_id: proof.request.request_id, profile: proof.profile, observe: async () => true },
+    }),
+    /contract fields/,
+  );
+  for (const checks of [[], ['public-routes'], ['native-build', 'native-install'], ['native-build', 'unsupported']]) {
+    assert.throws(
+      () => validateCIDeliveryObservation({ ...proof, profile: { ...proof.profile, required_checks: checks } }),
+      /profile/,
+    );
+  }
+  const extended = ciRecord(value);
+  assert.throws(() => validateCIDeliveryObservation({ ...proof, profile: extended.profile }), /checks/);
+  const result = JSON.parse(proof.observation.result_bytes);
+  result.asset.sha256 = '0'.repeat(64);
+  assert.throws(
+    () =>
+      validateCIDeliveryObservation({
+        ...proof,
+        observation: { ...proof.observation, result_bytes: Buffer.from(json(result)) },
+      }),
+    /differs/,
+  );
 });
