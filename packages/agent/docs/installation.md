@@ -277,12 +277,18 @@ cache. An exact hit reuses the existing entry; it need not save another entry.
 Confirm `cache-hit` on a later required warm build. Keep missing or empty cache
 evidence explicit. Do not start a separate build solely to measure caching.
 
-Current installed build: run 37505488413, artifact 11431028847, version 0.1.2,
-embedded Bun 1.4.2. The system native file is 133303808 bytes. Exact
+Current installed build: run 37526512345, artifact 11442093926, version 0.1.2,
+embedded Bun 1.4.2. The system native file is 133313536 bytes. Exact
 bytes, current instructions and effective PATH are verified. Previous consumer
 native and transient previous files are removed. User Runtime acceptance is separate.
 The installer imports its own in-box Utility module through $PSHOME, so a Node/Bun
 caller does not depend on an inherited PSModulePath.
+
+Keep the installer result separate from later observations. If installation
+returns success and the selected bytes are installed, a failed observer needs
+only a corrected observation. Do not reinstall because that observer failed.
+Change file namespaces separately from public command names and `--kind`
+arguments. Keep those command identities as exact supported values.
 
 Run the maintained `packages/agent/tooling/install-windows.ps1`:
 
