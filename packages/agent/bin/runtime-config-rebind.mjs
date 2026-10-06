@@ -46,11 +46,25 @@ const receiptPath = '.agent/runtime-initialization.v1.json';
 const configPath = 'agent-runtime.config.v1.yaml';
 const selectorPath = '.agent/active-runtime-selector.v1.json';
 const operationName = 'runtime-config-rebind-operation.v1.json';
+const deliveryOperationName = 'runtime-config-delivery-operation.v1.json';
 const identifier = /^[a-z0-9][a-z0-9._-]{0,79}$/;
 const ajv = new Ajv2020({ strict: true, allErrors: true });
-const validateOperation = ajv.compile(
-  JSON.parse(readFileSync(new URL('../schemas/config-rebind-operation.v1.schema.json', import.meta.url))),
+const operationSchema = JSON.parse(
+  readFileSync(new URL('../schemas/config-rebind-operation.v1.schema.json', import.meta.url)),
 );
+const validateOperation = ajv.compile(operationSchema);
+const validateDeliveryOperation = ajv.compile({
+  ...operationSchema,
+  $id: 'https://agent-runtime.invalid/schemas/config-delivery-operation.v1.schema.json',
+  properties: { ...operationSchema.properties, schema: { const: 'SourceDeliveryConfigRebindOperation/v1' } },
+});
+const operationValidator = (delivery) => (delivery ? validateDeliveryOperation : validateOperation);
+const operationDigest = (operation) =>
+  canonicalJsonDigest(
+    operation.schema === 'SourceDeliveryConfigRebindOperation/v1'
+      ? { schema: operation.schema, plan: operation.plan }
+      : operation.plan,
+  );
 const validateReadonlyOwner = ajv.compile(workSchema);
 
 function hasExactKeys(value, keys) {
@@ -104,7 +118,8 @@ function expectedOriginalContextEntries(config, workflowId, stageId) {
   const sourceIds = stage.context_source_ids ?? [],
     skillRefs = stage.context_skill_refs ?? [];
   requireRebind(
-    Array.isArray(sourceIds) && Array.isArray(skillRefs) &&
+    Array.isArray(sourceIds) &&
+      Array.isArray(skillRefs) &&
       sourceIds.length + skillRefs.length > 0 &&
       sourceIds.length + skillRefs.length <= MAX_CONFIGURED_CONTEXT_REFERENCES,
     'original context selection is invalid',
@@ -182,7 +197,10 @@ function validateOriginalConfiguredContext(value, config, workflowId, stageId, w
       'original configured context local entry is invalid',
     );
     totalBytes += entry.bytes;
-    requireRebind(totalBytes <= MAX_CONFIGURED_CONTEXT_TOTAL_BYTES, 'original configured context exceeds aggregate limit');
+    requireRebind(
+      totalBytes <= MAX_CONFIGURED_CONTEXT_TOTAL_BYTES,
+      'original configured context exceeds aggregate limit',
+    );
     const encoded = Buffer.from(entry.content, 'utf8');
     requireRebind(encoded.toString('utf8') === entry.content, 'original configured context text is invalid UTF-8');
     if (!entry.truncated) {
@@ -207,9 +225,10 @@ function parse(args) {
   const base = ['--kind', '--mode', '--project-root', '--repair-id'];
   const planning = ['inspect', 'plan'].includes(values['--mode']);
   const keys = planning ? [...base, '--actor', '--timestamp', '--instruction-ref', '--target-config'] : base;
+  if (planning && values['--kind'] === 'runtime-config-delivery') keys.push('--baseline-config');
   requireRebind(
     Object.keys(values).sort().join('|') === keys.sort().join('|') &&
-      values['--kind'] === 'runtime-config' &&
+      ['runtime-config', 'runtime-config-delivery'].includes(values['--kind']) &&
       ['inspect', 'plan', 'apply', 'resume', 'restore'].includes(values['--mode']) &&
       path.isAbsolute(values['--project-root'] ?? '') &&
       path.resolve(values['--project-root']) === values['--project-root'] &&
@@ -400,13 +419,7 @@ export function inspectHistoricalOwnerContext(root, baselinePath, identity, atte
           );
           usedOriginalContextActions.add(action.action_id);
         } else {
-          configuredContext = configuredContextForStage(
-            root,
-            current,
-            input.workflow_id,
-            action.stage_id,
-            context,
-          );
+          configuredContext = configuredContextForStage(root, current, input.workflow_id, action.stage_id, context);
         }
         return buildSessionBridgeRequest({
           runId: state.run_id,
@@ -557,10 +570,19 @@ export function openInternalRecoveryReview(input) {
       root,
     );
     if (historicalInspection) {
-      const operationKey = canonicalJsonDigest({ identity: frozen.identity, attempt: frozen.attempt, action: 'recovery-review' });
+      const operationKey = canonicalJsonDigest({
+        identity: frozen.identity,
+        attempt: frozen.attempt,
+        action: 'recovery-review',
+      });
       const operation = store.inspectOperation('vida-recovery-reviews', operationKey);
-      requireRebind(operation && operation.request_digest === canonicalJsonDigest(frozen), 'recovery retained request differs');
-      const readonly = () => { throw new Error('vida runtime-config rebind: inspection grants no recovery effects'); };
+      requireRebind(
+        operation && operation.request_digest === canonicalJsonDigest(frozen),
+        'recovery retained request differs',
+      );
+      const readonly = () => {
+        throw new Error('vida runtime-config rebind: inspection grants no recovery effects');
+      };
       return Object.freeze({
         request: structuredClone(frozen),
         operation,
@@ -903,7 +925,15 @@ function runtimeBinding(access, config) {
 }
 
 function frozenPlan(values, root, config, access, db) {
+  const delivery = values['--kind'] === 'runtime-config-delivery';
+  const baselinePath = delivery ? values['--baseline-config'] : configPath;
+  const baselineBytes = access.readBytes(baselinePath, 'local accepted baseline YAML');
   const receipt = readReceipt(access, config);
+  if (delivery) {
+    sameIdentity(root, config, receipt.value);
+    config = validateRuntimeConfigRepairTargetBytes(baselineBytes, root);
+    requireRebind(values['--target-config'] === configPath, 'delivery target must be the current root YAML');
+  }
   const projects = sameIdentity(root, config, receipt.value);
   requireRebind(
     receipt.value.config_digest === runtimeConfigDigest(config),
@@ -925,7 +955,7 @@ function frozenPlan(values, root, config, access, db) {
     repository_id: config.repository.repository_id,
     project_ids: projects,
     workspace_id: receipt.value.workspace_id,
-    baseline_yaml: access.readBytes(configPath, 'baseline YAML').toString('utf8'),
+    baseline_yaml: baselineBytes.toString('utf8'),
     target_yaml: target.bytes.toString('utf8'),
     baseline_receipt: receipt.bytes.toString('utf8'),
     old_config_digest: runtimeConfigDigest(config),
@@ -936,26 +966,28 @@ function frozenPlan(values, root, config, access, db) {
     token: randomUUID(),
   };
   const operation = {
-    schema: 'ConfigRebindOperation/v1',
+    schema: delivery ? 'SourceDeliveryConfigRebindOperation/v1' : 'ConfigRebindOperation/v1',
     revision: 1,
     phase: 'planned',
     maintenance_released: false,
     plan,
-    plan_digest: canonicalJsonDigest(plan),
+    plan_digest: delivery
+      ? canonicalJsonDigest({ schema: 'SourceDeliveryConfigRebindOperation/v1', plan })
+      : canonicalJsonDigest(plan),
   };
-  requireRebind(validateOperation(operation), 'operation schema invalid');
+  requireRebind(operationValidator(delivery)(operation), 'operation schema invalid');
   return operation;
 }
 
-function readOperation(access, operationPath, id, root) {
+function readOperation(access, operationPath, id, root, delivery) {
   const bytes = access.readBytes(operationPath, 'config rebind operation');
   requireRebind(bytes.length <= 16 * 1024 * 1024, 'operation exceeds bound');
   const value = JSON.parse(bytes.toString('utf8'));
   requireRebind(
-    validateOperation(value) &&
+    operationValidator(delivery)(value) &&
       value.plan.operation_id === id &&
       value.plan.repository_root === root &&
-      value.plan_digest === canonicalJsonDigest(value.plan),
+      value.plan_digest === operationDigest(value),
     'frozen operation invalid or foreign',
   );
   return { bytes, value };
@@ -995,7 +1027,9 @@ function exactContext(access, root, config, operation, db) {
   );
   const currentYaml = access.readBytes(configPath, 'current authored YAML').toString('utf8');
   requireRebind(
-    currentYaml === plan.baseline_yaml || currentYaml === plan.target_yaml,
+    operation.schema === 'SourceDeliveryConfigRebindOperation/v1'
+      ? currentYaml === plan.target_yaml
+      : currentYaml === plan.baseline_yaml || currentYaml === plan.target_yaml,
     'authored YAML bytes differ from frozen target/baseline',
   );
   const nextReceipt = json({ ...JSON.parse(plan.baseline_receipt), config_digest: plan.target_config_digest });
@@ -1018,8 +1052,9 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
   const access = requireSafeRepositoryAccess(root),
     config = loadRuntimeConfig(root);
   const mode = values['--mode'],
-    id = values['--repair-id'];
-  const operationPath = `${config.control.work_root}/${id}/${operationName}`;
+    id = values['--repair-id'],
+    delivery = values['--kind'] === 'runtime-config-delivery';
+  const operationPath = `${config.control.work_root}/${id}/${delivery ? deliveryOperationName : operationName}`;
   const db = database(root, config, ['inspect', 'plan'].includes(mode));
   try {
     if (['inspect', 'plan'].includes(mode)) {
@@ -1037,7 +1072,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
       };
     }
     return await access.withExclusiveLockAsync(operationPath, 'config rebind operation', async () => {
-      let stored = readOperation(access, operationPath, id, root),
+      let stored = readOperation(access, operationPath, id, root, delivery),
         operation = stored.value;
       const plan = operation.plan,
         binding = fenceBinding(plan, operation.plan_digest);
@@ -1062,7 +1097,8 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
         verify: async (held) => {
           const current = context();
           const complete = operation.phase === 'applied' && !current.baseline && !current.oldReceipt;
-          const abandoned = operation.phase === 'abandoned_no_effect' && current.baseline && current.oldReceipt;
+          const abandoned =
+            operation.phase === 'abandoned_no_effect' && (delivery || current.baseline) && current.oldReceipt;
           if ((!complete && !abandoned) || canonicalJsonDigest(held.binding) !== canonicalJsonDigest(binding))
             return null;
           return {
@@ -1084,13 +1120,16 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
       };
       const current = context();
       if (mode === 'restore')
-        requireRebind(current.baseline && current.oldReceipt, 'actual rollback is forbidden; resume forward');
+        requireRebind(
+          (delivery || current.baseline) && current.oldReceipt,
+          'actual rollback is forbidden; resume forward',
+        );
       if (operation.maintenance_released) {
         requireRebind(['applied', 'abandoned_no_effect'].includes(operation.phase), 'terminal phase invalid');
         requireRebind(
           operation.phase === 'applied'
             ? !current.baseline && !current.oldReceipt
-            : current.baseline && current.oldReceipt,
+            : (delivery || current.baseline) && current.oldReceipt,
           'terminal operation differs from current config/receipt',
         );
         return { status: operation.phase, operation_id: id, rollback_performed: false };
@@ -1098,7 +1137,10 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
       let held = store.readMaintenanceFence();
       const own = held && canonicalJsonDigest(held.binding) === canonicalJsonDigest(binding);
       if (mode === 'restore') {
-        requireRebind(current.baseline && current.oldReceipt, 'actual rollback is forbidden; resume forward');
+        requireRebind(
+          (delivery || current.baseline) && current.oldReceipt,
+          'actual rollback is forbidden; resume forward',
+        );
         if (!held || (held.status === 'released' && !own)) {
           requireRebind(operation.phase === 'planned', 'own maintenance fence missing');
           await save('abandoned_no_effect', true);
@@ -1107,14 +1149,17 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
         requireRebind(own, 'foreign maintenance fence');
         await save('abandoned_no_effect');
       } else if (operation.phase === 'planned') {
-        requireRebind(current.baseline && current.oldReceipt, 'root YAML edit must wait for held maintenance fence');
+        requireRebind(
+          (delivery || current.baseline) && current.oldReceipt,
+          'root YAML edit must wait for held maintenance fence',
+        );
         const acquired = store.acquireMaintenanceFenceWithRecordedToken(binding, plan.token);
         held = acquired.fence;
         onPhase?.('fence_acquired');
         await save('fenced');
         onPhase?.('fenced');
         return {
-          status: 'author_config_required',
+          status: delivery ? 'receipt_rebind_ready' : 'author_config_required',
           operation_id: id,
           maintenance_held: true,
           target_config_digest: plan.target_config_digest,

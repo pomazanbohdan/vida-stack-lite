@@ -961,17 +961,28 @@ Foreign/orphan ownership, uncertain writer/governance effects, surviving engine
 outcomes and unsupported corrective shapes remain blocked. Build/install evidence
 belongs to CI/CD; agent-state fault/CAS/retry checks belong to the local test lane.
 
-Delivered-configuration adoption is a separate repair-first requirement. Before
-changing strict `ConfigRebindOperation/v1`, qualify and ship one bundle-owned
-artifact/dependency repair command with atomic application and recovery. The
-subsequent durable route must distinguish standard from source-delivery and bind
-the original local baseline/receipt, exact desired target, frozen global state
-and operation authority through plan/apply/resume/restore. No transient flag or
-target bytes convert a standard operation. Preserve pending receipt acceptance
-and old work history. Same-attempt correction then requires explicit current
-scope/configuration and base-to-corrective engine authority before new admission.
-Artifact repair, source-delivery adoption and historical corrective rebinding
-remain implementation/qualification GAPs; disposal alone cannot unblock execution.
+The explicit reconciliation kind `runtime-config-delivery` adopts an already
+delivered executor model/reasoning change. Inspect/plan require a bounded local
+`--baseline-config` that matches the initialization receipt and the current root
+YAML as `--target-config`. Repository, projects, storage, integrations and schema
+remain exact. It freezes the baseline, target, receipt, runtime and quiescent
+global state in a separate strict `SourceDeliveryConfigRebindOperation/v1` at
+`runtime-config-delivery-operation.v1.json`. The standard artifact and its schema
+remain unchanged. A reader never converts or resumes an artifact of another kind.
+The delivery digest binds its artifact kind and plan. A changed schema tag cannot
+reuse a standard operation's digest or maintenance fence.
+
+Apply holds the existing maintenance fence and returns `receipt_rebind_ready`.
+Resume changes only the receipt through atomic CAS after checking the frozen
+target and dependencies again. YAML and historical work are not written. Restore
+may abandon only before a receipt effect while the target and old receipt remain
+exact. After an effect, resume forward. Pending acceptance and FAIL/UNKNOWN remain.
+
+Before changing an active strict artifact schema, qualify and ship its supported
+artifact/dependency repair command. Same-attempt correction still requires current
+scope/configuration and base-to-corrective engine authority before admission.
+Historical corrective rebinding remains a GAP; receipt adoption and disposal
+alone do not authorize execution. Source implementation is not installed proof.
 
 Acceptance evidence: isolated historical predicate controls in
 `tests/runtime-config-rebind.test.mjs`, concurrent completed/failed journal

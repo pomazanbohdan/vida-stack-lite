@@ -130,7 +130,7 @@ export async function runReconcileArtifacts(args, { onPhase } = {}) {
   }
   if (kind === 'work-state') return runWorkStateRepair(args);
   if (kind === 'documentation-policy') return runDocumentationPolicyTransition(args, { onPhase });
-  if (kind === 'runtime-config') return runRuntimeConfigRebind(args, { onPhase });
+  if (['runtime-config', 'runtime-config-delivery'].includes(kind)) return runRuntimeConfigRebind(args, { onPhase });
   if (kind === 'synthesis-qualification') return runSynthesisQualificationRepair(args, { onPhase });
   if (kind === 'synthesis-observation-correction') return runSynthesisObservationCorrection(args);
   if (kind === 'runtime-code') return runRuntimeCodeRebind(args);
