@@ -1030,6 +1030,14 @@ current bytes over exactly their declared paths, including prior authorized
 in-scope corrections. `begin` and `complete` compare bytes to that prepared
 current snapshot. Current bytes never replace historical authority.
 
+`inspect` reads the retained reservation after a Source or runtime update. It
+requires the exact saved request, unchanged original configuration, engine,
+owner and current Work/Journal/ledger/maintenance bindings. The reservation
+must match the entire saved request. Changed current Source or runtime bytes
+do not hide a prior `reserved`, `commit_unknown` or `applied` status. This
+read-only path grants no effects. `begin` and `complete` still require the
+prepared current bytes and reject drift.
+
 The caller retains the full returned request and any required original-context
 collection in its same-thread history, then resupplies them unchanged for
 `inspect`, `begin`, `complete` and identical retries, including after restart.

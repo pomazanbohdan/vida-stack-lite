@@ -1618,6 +1618,12 @@ test('public recovery review retains UNKNOWN when original-context custody is lo
   await expect(call('begin', resumed)).rejects.toThrow(/reissue forbidden/);
   expect(databaseState(f)).toEqual(afterBegin);
   f.put(fixtureContextPath, readFileSync(localPath, 'utf8') + '\nConcurrent Source edit after prepare.\n');
+  const inspected = await call('inspect', resumed);
+  expect(inspected.status).toBe('commit_unknown');
+  expect(inspected.request).toEqual(prepared.request);
+  expect(inspected.rights_granted).toBe(false);
+  expect(inspected.runtime_acceptance).toBe(false);
+  expect(databaseState(f)).toEqual(afterBegin);
   await expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow(
     /retained recovery request changed|source scope changed/,
   );

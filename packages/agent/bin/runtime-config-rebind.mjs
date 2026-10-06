@@ -534,7 +534,16 @@ export function openInternalRecoveryReview(input) {
   };
   // Exact caller history is required on resume; never reconstruct a changed request.
   const request = input.request === undefined ? fresh : input.request;
-  requireRebind(canonicalJsonDigest(request) === canonicalJsonDigest(fresh), 'retained recovery request changed');
+  const historicalInspection = input.mode === 'inspect' && input.request !== undefined;
+  const inspectionIdentity = (value) => {
+    const { runtime, ...context } = value.context;
+    return { ...value, source: value.source.entries.map((entry) => entry.path), context };
+  };
+  requireRebind(
+    canonicalJsonDigest(historicalInspection ? inspectionIdentity(request) : request) ===
+      canonicalJsonDigest(historicalInspection ? inspectionIdentity(fresh) : fresh),
+    'retained recovery request changed',
+  );
   const frozen = JSON.parse(JSON.stringify(request));
   const db = database(root, inspected.current, input.mode === 'inspect');
   try {
@@ -547,6 +556,20 @@ export function openInternalRecoveryReview(input) {
       undefined,
       root,
     );
+    if (historicalInspection) {
+      const operationKey = canonicalJsonDigest({ identity: frozen.identity, attempt: frozen.attempt, action: 'recovery-review' });
+      const operation = store.inspectOperation('vida-recovery-reviews', operationKey);
+      requireRebind(operation && operation.request_digest === canonicalJsonDigest(frozen), 'recovery retained request differs');
+      const readonly = () => { throw new Error('vida runtime-config rebind: inspection grants no recovery effects'); };
+      return Object.freeze({
+        request: structuredClone(frozen),
+        operation,
+        inspect: () => store.inspectOperation('vida-recovery-reviews', operationKey),
+        begin: readonly,
+        complete: readonly,
+        close: () => db.close(),
+      });
+    }
     const handle = store.openRecoveryReview(
       frozen,
       () => {
