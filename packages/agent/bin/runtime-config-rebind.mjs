@@ -36,6 +36,11 @@ const requireRebind = (valid, message) => {
   if (!valid) throw new Error(`vida runtime-config rebind: ${message}`);
 };
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const MAX_ORIGINAL_CONTEXT_EXPORT_BYTES = 262144;
+const MAX_CONFIGURED_CONTEXT_REFERENCES = 16;
+const MAX_CONFIGURED_CONTEXT_FILE_BYTES = 65536;
+const MAX_CONFIGURED_CONTEXT_TOTAL_BYTES = 262144;
+const MAX_CONFIGURED_CONTEXT_EXCERPT_CHARS = 8192;
 const json = (value) => JSON.stringify(value, null, 2) + '\n';
 const receiptPath = '.agent/runtime-initialization.v1.json';
 const configPath = 'agent-runtime.config.v1.yaml';
@@ -47,6 +52,150 @@ const validateOperation = ajv.compile(
   JSON.parse(readFileSync(new URL('../schemas/config-rebind-operation.v1.schema.json', import.meta.url))),
 );
 const validateReadonlyOwner = ajv.compile(workSchema);
+
+function hasExactKeys(value, keys) {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).sort().join('|') === [...keys].sort().join('|')
+  );
+}
+
+function validateOriginalContextCollection(value) {
+  if (value === undefined) return new Map();
+  requireRebind(Array.isArray(value) && value.length > 0, 'original context collection must be a nonempty array');
+  let serialized;
+  try {
+    serialized = JSON.stringify(value);
+  } catch {
+    requireRebind(false, 'original context collection is not JSON data');
+  }
+  requireRebind(
+    Buffer.byteLength(serialized, 'utf8') <= MAX_ORIGINAL_CONTEXT_EXPORT_BYTES,
+    'original context collection exceeds bound',
+  );
+  const byAction = new Map();
+  for (const entry of value) {
+    requireRebind(
+      hasExactKeys(entry, ['action_id', 'wave_index', 'stage_id', 'work_id', 'attempt', 'context']) &&
+        typeof entry.action_id === 'string' &&
+        /^[a-f0-9]{64}$/.test(entry.action_id) &&
+        Number.isSafeInteger(entry.wave_index) &&
+        entry.wave_index >= 0 &&
+        typeof entry.stage_id === 'string' &&
+        entry.stage_id.length > 0 &&
+        entry.stage_id.length <= 128 &&
+        typeof entry.work_id === 'string' &&
+        /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(entry.work_id) &&
+        Number.isSafeInteger(entry.attempt) &&
+        entry.attempt >= 1,
+      'original context action binding invalid',
+    );
+    requireRebind(!byAction.has(entry.action_id), 'original context action is duplicated');
+    byAction.set(entry.action_id, entry);
+  }
+  return byAction;
+}
+
+function expectedOriginalContextEntries(config, workflowId, stageId) {
+  const stage = config.workflows[workflowId]?.stages.find((candidate) => candidate.id === stageId);
+  requireRebind(stage, 'original context stage is missing');
+  const sourceIds = stage.context_source_ids ?? [],
+    skillRefs = stage.context_skill_refs ?? [];
+  requireRebind(
+    Array.isArray(sourceIds) && Array.isArray(skillRefs) &&
+      sourceIds.length + skillRefs.length > 0 &&
+      sourceIds.length + skillRefs.length <= MAX_CONFIGURED_CONTEXT_REFERENCES,
+    'original context selection is invalid',
+  );
+  const expected = [];
+  for (const id of sourceIds) {
+    const matches = config.knowledge.sources.filter((candidate) => candidate.id === id);
+    requireRebind(matches.length === 1, 'original context source selection is not unique');
+    const source = matches[0];
+    expected.push({
+      id,
+      kind: source.kind,
+      location: source.location,
+      title: source.title,
+    });
+  }
+  for (const location of skillRefs) {
+    requireRebind(
+      typeof location === 'string' && /^\.codex\/skills\/[A-Za-z0-9._-]+\/SKILL\.md$/.test(location),
+      'original context skill selection is invalid',
+    );
+    expected.push({ id: location, kind: 'skill', location, title: path.basename(path.dirname(location)) });
+  }
+  return expected.sort((left, right) =>
+    left.kind < right.kind ? -1 : left.kind > right.kind ? 1 : left.id < right.id ? -1 : left.id > right.id ? 1 : 0,
+  );
+}
+
+function validateOriginalConfiguredContext(value, config, workflowId, stageId, workId, attempt) {
+  requireRebind(
+    hasExactKeys(value, ['schema', 'work_id', 'attempt', 'entries', 'digest']) &&
+      value.schema === 'ConfiguredContext/v1' &&
+      value.work_id === workId &&
+      value.attempt === attempt &&
+      Array.isArray(value.entries) &&
+      typeof value.digest === 'string' &&
+      /^[a-f0-9]{64}$/.test(value.digest),
+    'original configured context body shape or identity invalid',
+  );
+  const expected = expectedOriginalContextEntries(config, workflowId, stageId);
+  requireRebind(value.entries.length === expected.length, 'original configured context selection differs');
+  let totalBytes = 0;
+  for (let index = 0; index < expected.length; index++) {
+    const entry = value.entries[index],
+      selected = expected[index];
+    requireRebind(
+      hasExactKeys(entry, ['id', 'kind', 'location', 'title', 'status', 'sha256', 'bytes', 'content', 'truncated']) &&
+        entry.id === selected.id &&
+        entry.kind === selected.kind &&
+        entry.location === selected.location &&
+        entry.title === selected.title,
+      'original configured context entry selection differs',
+    );
+    if (selected.kind === 'official') {
+      requireRebind(
+        entry.status === 'unfetched_reference' &&
+          entry.sha256 === null &&
+          entry.bytes === null &&
+          entry.content === null &&
+          entry.truncated === false,
+        'original configured context official reference differs',
+      );
+      continue;
+    }
+    requireRebind(
+      entry.status === 'local_excerpt' &&
+        typeof entry.sha256 === 'string' &&
+        /^[a-f0-9]{64}$/.test(entry.sha256) &&
+        Number.isSafeInteger(entry.bytes) &&
+        entry.bytes >= 0 &&
+        entry.bytes <= MAX_CONFIGURED_CONTEXT_FILE_BYTES &&
+        typeof entry.content === 'string' &&
+        entry.content.length <= MAX_CONFIGURED_CONTEXT_EXCERPT_CHARS &&
+        typeof entry.truncated === 'boolean',
+      'original configured context local entry is invalid',
+    );
+    totalBytes += entry.bytes;
+    requireRebind(totalBytes <= MAX_CONFIGURED_CONTEXT_TOTAL_BYTES, 'original configured context exceeds aggregate limit');
+    const encoded = Buffer.from(entry.content, 'utf8');
+    requireRebind(encoded.toString('utf8') === entry.content, 'original configured context text is invalid UTF-8');
+    if (!entry.truncated) {
+      requireRebind(
+        encoded.length === entry.bytes && sha(encoded) === entry.sha256,
+        'original configured context complete source binding differs',
+      );
+    }
+  }
+  const { digest, ...body } = value;
+  requireRebind(digest === canonicalJsonDigest(body), 'original configured context self binding differs');
+  return structuredClone(value);
+}
 
 function parse(args) {
   requireRebind(args.length % 2 === 0, 'arguments must be paired');
@@ -111,7 +260,9 @@ function targetConfig(access, root, oldConfig, targetPath) {
 }
 
 /** Recovery reads historical authority without passing the ordinary current-execution gate. No initializer or engine producer runs here. */
-export function inspectHistoricalOwnerContext(root, baselinePath, identity, attempt) {
+export function inspectHistoricalOwnerContext(root, baselinePath, identity, attempt, originalContexts) {
+  const originalContextByAction = validateOriginalContextCollection(originalContexts),
+    usedOriginalContextActions = new Set();
   const access = requireSafeRepositoryAccess(root),
     current = loadRuntimeConfig(root);
   requireRebind(
@@ -228,18 +379,46 @@ export function inspectHistoricalOwnerContext(root, baselinePath, identity, atte
       // Current loader brands topology only after the executor-only delta was proved.
       // Historical requests and rights retain the original configuration binding.
       const actions = sessionActionsForWave(current, input.selection, context, input.workflow_id, index, []);
-      const requests = actions.map((action) =>
-        buildSessionBridgeRequest({
+      const requests = actions.map((action) => {
+        const retained = originalContextByAction.get(action.action_id);
+        let configuredContext;
+        if (retained) {
+          requireRebind(
+            retained.wave_index === index &&
+              retained.stage_id === action.stage_id &&
+              retained.work_id === state.work_id &&
+              retained.attempt === attempt,
+            'original configured context action slot differs',
+          );
+          configuredContext = validateOriginalConfiguredContext(
+            retained.context,
+            config,
+            input.workflow_id,
+            action.stage_id,
+            state.work_id,
+            attempt,
+          );
+          usedOriginalContextActions.add(action.action_id);
+        } else {
+          configuredContext = configuredContextForStage(
+            root,
+            current,
+            input.workflow_id,
+            action.stage_id,
+            context,
+          );
+        }
+        return buildSessionBridgeRequest({
           runId: state.run_id,
           workflowId: input.workflow_id,
           configDigest: input.config_digest,
           context,
           waveIndex: index,
           action,
-          configuredContext: configuredContextForStage(root, config, input.workflow_id, action.stage_id, context),
+          configuredContext,
           priorResults: prior.observations,
-        }),
-      );
+        });
+      });
       const items = allItems.filter((item) => item.request.wave_index === index);
       requireRebind(
         requests.length > 0 &&
@@ -283,6 +462,10 @@ export function inspectHistoricalOwnerContext(root, baselinePath, identity, atte
           'historical engine suspended requests differ',
         );
     }
+    requireRebind(
+      usedOriginalContextActions.size === originalContextByAction.size,
+      'original configured context collection contains an extra or foreign action',
+    );
     requireRebind(matched === allItems.length, 'historical journal has extra engine actions');
     for (const item of allItems) {
       if (item.observation) {
@@ -317,7 +500,9 @@ export function inspectHistoricalOwnerContext(root, baselinePath, identity, atte
 export function openInternalRecoveryReview(input) {
   const root = input.repositoryRoot;
   requireRebind(path.isAbsolute(root) && path.resolve(root) === root, 'recovery root invalid');
-  const historical = () => inspectHistoricalOwnerContext(root, input.baselinePath, input.identity, input.attempt);
+  const originalContexts = input.originalContexts === undefined ? undefined : structuredClone(input.originalContexts);
+  const historical = () =>
+    inspectHistoricalOwnerContext(root, input.baselinePath, input.identity, input.attempt, originalContexts);
   const contextBinding = (value) => ({
     baseline: value.baseline_binding,
     receipt: value.receipt_binding,

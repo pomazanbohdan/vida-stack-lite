@@ -541,6 +541,15 @@ lane or a full candidate cycle solely to score a task. Functional/security/data/
 numeric gates and final release/native requirements remain. The detailed policy
 has one owner: the installed development-lifecycle self-development protocol.
 
+Ordinary work uses the configured VIDA runtime lifecycle exclusively. When
+that lifecycle is blocked, repair its cause locally as an architectural Source
+code change, then immediately update the whole qualified runtime through its
+existing owner and resume the configured flow. This bounded exception does not
+authorize private-state edits, fabricated admission, replay of `UNKNOWN`
+effects, weaker controls, a new authorization framework or partial-agent
+delivery. Preserve current Source ownership, CAS, final assurance and native
+qualification requirements.
+
 For the active original 0.1.2 Windows delivery continuation, first make the
 build-only native artifact and first-install adapter available. Then establish
 applicable exact-asset native qualification and final assurance before the
@@ -599,6 +608,8 @@ only evidence and assurances bound to the prior bytes. It does not itself
 require a new attempt or a manual hash-check step.
 
 Active artifacts use only their strict current v1 contracts. Before any future current-v1 schema change, implement and ship one functional bundle-owned artifact repair command for affected artifacts and dependencies, including atomic application and recovery. Until it exists, stop before changing active artifacts. Runtime readers do not select older formats.
+
+The fixed `native-delivery-evidence` repair resets stale qualification joins only for the original uninstalled awaiting-assurance operation. It retains exact beforeimages and dependencies, uses the existing release locks and permits only exact resume. The synchronous local test, seal and assurance writers use the same lock order and deny an active or unknown repair. Synthetic repair evidence proves consistency only; it does not qualify, install or accept an artifact.
 
 Delivered configuration does not replace local initialization or historical
 work authority. Preserve original scope snapshots, issued requests, owners and

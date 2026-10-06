@@ -3,7 +3,12 @@ import {
   releaseSourceInputs as sources,
   assertReleaseRetargetSettled,
   releasePath,
+  releaseState,
+  admissionMutex,
+  operationMutex,
+  selectedTarball,
 } from '../../packages/agent/bin/local-release-artifacts.mjs';
+import { assertNativeDeliveryEvidenceRepairSettled } from '../../packages/agent/bin/repair-native-delivery-evidence.mjs';
 export { releaseSourceBinding } from '../../packages/agent/bin/local-release-artifacts.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync, writeFileSync } from 'node:fs';
@@ -40,28 +45,50 @@ function localFile(root, relative) {
   if (!lstatSync(current).isFile()) throw new Error('Assurance evidence must be a regular file.');
   return current;
 }
+function withAssuranceWriteLocks(root, operation, action) {
+  const admission = admissionMutex(root);
+  let worker;
+  try {
+    worker = operationMutex(root, operation);
+    if (!worker) throw new Error('Local release: operation busy.');
+    assertReleaseRetargetSettled(root, operation);
+    assertNativeDeliveryEvidenceRepairSettled(root, operation);
+    const pending = read(path.join(root, '.agent/work/agent-local-release/pending.json'));
+    const current = releaseState(releasePath(root, '.agent/work/agent-local-release/' + operation + '/release.json'));
+    const manifest = read(path.join(root, 'packages/agent/package.json'));
+    if (pending.operation_id !== operation || pending.version !== current.version || current.operation_id !== operation ||
+      current.version !== manifest.version || current.status !== 'awaiting_assurance' || current.install_started)
+      throw new Error('Local release: current awaiting-assurance operation required.');
+    const result = action();
+    if (result && typeof result.then === 'function') throw new Error('Local release: proof writer must be synchronous.');
+    return result;
+  } finally {
+    try { worker?.close(); } finally { admission.close(); }
+  }
+}
 export function recordLocalTestEvidence({ root = rootDefault, operation, tests }) {
-  assertReleaseRetargetSettled(root, operation);
-  const pending = read(path.join(root, '.agent/work/agent-local-release/pending.json'));
-  if (pending.operation_id !== operation || !Array.isArray(tests)) throw new Error('Test evidence operation differs.');
-  const recorded = tests.map(({ lane, path: relative, inputs }) => {
-    const raw = readFileSync(localFile(root, relative));
-    const log = JSON.parse(raw);
-    if (log.exit_code !== 0 || !log.command || !log.started_at || !log.completed_at)
-      throw new Error('Actual successful test log required.');
-    return { lane, path: relative, inputs, input_binding: testInputBinding(root, inputs), sha256: sha(raw) };
+  return withAssuranceWriteLocks(root, operation, () => {
+    if (!Array.isArray(tests)) throw new Error('Test evidence operation differs.');
+    const pending = read(path.join(root, '.agent/work/agent-local-release/pending.json'));
+    const recorded = tests.map(({ lane, path: relative, inputs }) => {
+      const raw = readFileSync(localFile(root, relative));
+      const log = JSON.parse(raw);
+      if (log.exit_code !== 0 || !log.command || !log.started_at || !log.completed_at)
+        throw new Error('Actual successful test log required.');
+      return { lane, path: relative, inputs, input_binding: testInputBinding(root, inputs), sha256: sha(raw) };
+    });
+    const record = {
+      schema: 'VidaLocalReleaseTests/v1',
+      operation_id: operation,
+      version: pending.version,
+      tests: recorded,
+    };
+    writeFileSync(
+      path.join(root, '.agent/work/agent-local-release', operation, 'tests.json'),
+      JSON.stringify(record, null, 2) + '\n',
+    );
+    return record;
   });
-  const record = {
-    schema: 'VidaLocalReleaseTests/v1',
-    operation_id: operation,
-    version: pending.version,
-    tests: recorded,
-  };
-  writeFileSync(
-    path.join(root, '.agent/work/agent-local-release', operation, 'tests.json'),
-    JSON.stringify(record, null, 2) + '\n',
-  );
-  return record;
 }
 export function recordLocalAssurance({
   root = rootDefault,
@@ -72,30 +99,51 @@ export function recordLocalAssurance({
   project_id,
   reviews,
 }) {
-  const folder = path.join(root, '.agent/work/agent-local-release', operation);
-  assertReleaseRetargetSettled(root, operation);
-  const seal = read(path.join(folder, 'source-seal.json'));
-  const evidence = reviews.map(({ kind, path: relative, reverse_path }) => ({
-    kind,
-    path: relative,
-    reverse_path,
-    sha256: sha(readFileSync(localFile(root, relative))),
-    reverse_sha256: sha(readFileSync(localFile(root, reverse_path))),
-    status: 'passed',
-  }));
-  verifyForwardReviewSet(root, operation, seal.sealed_fingerprint, evidence, '.agent/release-assurance');
-  const record = {
-    schema: 'VidaLocalReleaseAssurance/v1',
-    operation_id: operation,
-    sealed_fingerprint: seal.sealed_fingerprint,
-    scope_path,
-    clear_work_id,
-    repository_id,
-    project_id,
-    reviews: evidence,
-  };
-  writeFileSync(path.join(folder, 'assurance.json'), JSON.stringify(record, null, 2) + '\n');
-  return { operation_id: operation, status: 'joined' };
+  return withAssuranceWriteLocks(root, operation, () => {
+    const folder = path.join(root, '.agent/work/agent-local-release', operation);
+    const seal = read(path.join(folder, 'source-seal.json'));
+    const evidence = reviews.map(({ kind, path: relative, reverse_path }) => ({
+      kind,
+      path: relative,
+      reverse_path,
+      sha256: sha(readFileSync(localFile(root, relative))),
+      reverse_sha256: sha(readFileSync(localFile(root, reverse_path))),
+      status: 'passed',
+    }));
+    verifyForwardReviewSet(root, operation, seal.sealed_fingerprint, evidence, '.agent/release-assurance');
+    const record = {
+      schema: 'VidaLocalReleaseAssurance/v1',
+      operation_id: operation,
+      sealed_fingerprint: seal.sealed_fingerprint,
+      scope_path,
+      clear_work_id,
+      repository_id,
+      project_id,
+      reviews: evidence,
+    };
+    writeFileSync(path.join(folder, 'assurance.json'), JSON.stringify(record, null, 2) + '\n');
+    return { operation_id: operation, status: 'joined' };
+  });
+}
+
+export function writeLocalSourceSeal({ root = rootDefault, operation }) {
+  return withAssuranceWriteLocks(root, operation, () => {
+    const pending = read(path.join(root, '.agent/work/agent-local-release/pending.json'));
+    if (pending.operation_id !== operation) throw new Error('Pending release differs.');
+    const seal = { operation_id: operation, version: pending.version, ...releaseSourceBinding(root) };
+    const release = read(path.join(root, '.agent/work/agent-local-release', operation, 'release.json'));
+    const tarball = selectedTarball(
+      release.pack_metadata,
+      path.dirname(releasePath(root, '.tmp/releases/' + operation + '/' + release.pack_metadata[0].filename)),
+      release.version,
+    );
+    seal.tarball_sha256 = sha(readFileSync(tarball));
+    seal.sealed_fingerprint = sha(JSON.stringify([seal.source_binding, seal.tarball_sha256]));
+    const folder = path.join(root, '.agent/work/agent-local-release', operation);
+    // The orchestrating session supplies actual native provenance; this seal grants no approval.
+    writeFileSync(path.join(folder, 'source-seal.json'), JSON.stringify(seal, null, 2) + '\n');
+    return { operation_id: operation, status: 'sealed_awaiting_assurance', source_binding: seal.source_binding, sealed_fingerprint: seal.sealed_fingerprint };
+  });
 }
 export async function verifyLocalReleaseTests({ root = rootDefault, operation, version, ci }) {
   assertReleaseRetargetSettled(root, operation);
@@ -216,27 +264,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const [mode, operation] = process.argv.slice(2);
   if (!['--source', '--seal'].includes(mode) || !/^[a-z0-9][a-z0-9-]{0,95}$/.test(operation ?? ''))
     throw new Error('Usage: release-assurance.mjs --source OPERATION | --seal OPERATION');
-  const pending = read(path.join(rootDefault, '.agent/work/agent-local-release/pending.json'));
-  if (pending.operation_id !== operation) throw new Error('Pending release differs.');
-  const seal = { operation_id: operation, version: pending.version, ...releaseSourceBinding() };
   if (mode === '--source') {
-    console.log(JSON.stringify(seal));
+    const pending = read(path.join(rootDefault, '.agent/work/agent-local-release/pending.json'));
+    if (pending.operation_id !== operation) throw new Error('Pending release differs.');
+    console.log(JSON.stringify({ operation_id: operation, version: pending.version, ...releaseSourceBinding() }));
     process.exit(0);
   }
-  assertReleaseRetargetSettled(rootDefault, operation);
-  const release = read(path.join(rootDefault, '.agent/work/agent-local-release', operation, 'release.json'));
-  const tarball = path.join(rootDefault, '.tmp/releases', operation, release.pack_metadata[0].filename);
-  seal.tarball_sha256 = sha(readFileSync(tarball));
-  seal.sealed_fingerprint = sha(JSON.stringify([seal.source_binding, seal.tarball_sha256]));
-  const folder = path.join(rootDefault, '.agent/work/agent-local-release', operation);
-  // The orchestrating session supplies actual native provenance; this seal grants no approval.
-  writeFileSync(path.join(folder, 'source-seal.json'), JSON.stringify(seal, null, 2) + '\n');
-  console.log(
-    JSON.stringify({
-      operation_id: operation,
-      status: 'sealed_awaiting_assurance',
-      source_binding: seal.source_binding,
-      sealed_fingerprint: seal.sealed_fingerprint,
-    }),
-  );
+  console.log(JSON.stringify(writeLocalSourceSeal({ root: rootDefault, operation })));
 }

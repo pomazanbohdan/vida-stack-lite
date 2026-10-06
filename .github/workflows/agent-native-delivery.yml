@@ -24,6 +24,9 @@ jobs:
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
       CI_REQUEST: ${{ inputs.request }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
     defaults:
       run:
         shell: pwsh
@@ -33,8 +36,6 @@ jobs:
           $ErrorActionPreference = 'Stop'
           if ($env:CI_SOURCE_COMMIT -cnotmatch '^[a-f0-9]{40}$' -or $env:CI_SOURCE_COMMIT -cne $env:GITHUB_SHA) { throw 'Selected published Source differs' }
           if ($env:GITHUB_REPOSITORY -cne 'pomazanbohdan/vida-stack-lite' -or $env:GITHUB_REPOSITORY_ID -cne '1340911900') { throw 'Selected repository differs' }
-          git config --global core.autocrlf false
-          if ($LASTEXITCODE -ne 0) { throw 'Checkout byte policy unavailable' }
       - name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:

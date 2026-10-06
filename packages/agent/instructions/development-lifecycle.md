@@ -210,6 +210,15 @@ artifact repair command for all affected active files and dependencies,
 including atomic application and recovery. Until it exists, stop before
 changing active artifacts. Runtime readers accept only current v1; archived
 old state never becomes production input or a reader fallback.
+The fixed `native-delivery-evidence` repair resets only stale tests, source-seal
+and assurance joins for an original uninstalled `awaiting_assurance` operation.
+It preserves the current release formats, source inputs, requests, results,
+observations, review evidence and operation identity. It stores exact custody
+before removal, uses the release admission and operation locks, and resumes only
+from an exact beforeimage or absent postimage. The synchronous local test, seal
+and assurance writers use the same lock order and deny an active or unknown
+repair. Synthetic cases qualify Stage5; they do not qualify a payload or
+authorize an original-target effect.
 The public work-state repair is bounded to its declared optional transition
 field and dependency preimages. Qualify its public inspect/plan/apply/resume/
 restore behavior before live repair or a reader upgrade; it is not general
@@ -368,6 +377,15 @@ When changing the agent runtime, load the project sidecar, this section,
 source-bound context while its bytes and authority remain current. Keep one
 writer for overlapping paths. Use bounded independent agents for research and
 required review; do not create a separate agent for each helper or file.
+
+Ordinary work uses the configured VIDA runtime lifecycle exclusively. When
+that lifecycle is blocked, repair its cause locally as an architectural Source
+code change, then immediately update the whole qualified runtime through its
+existing owner and resume the configured flow. This bounded exception does not
+authorize private-state edits, fabricated admission, replay of `UNKNOWN`
+effects, weaker controls, a new authorization framework or partial-agent
+delivery. Preserve current Source ownership, CAS, final assurance and native
+qualification requirements.
 
 The main optimization target is fewer agent execution steps without loss of
 required quality. Remove repeated discovery, handoffs, state writes and test

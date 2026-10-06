@@ -13,8 +13,8 @@ import {
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
 import { resolvePinnedBun, runPinnedBun, readPin, checkManifest } from './bun.mjs';
+import { invokeObservedControllerChild } from './development-controller-observation.mjs';
 import { readPortableLock } from './install.mjs';
 import { assertRuntimePackageExports, runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
 
@@ -27,11 +27,19 @@ const entryArguments = (root) => [
   path.join(root, 'bin/development-controller.mjs'),
 ];
 const record = (value) => JSON.stringify(value) + '\n';
-function stageMarker(stage,event,started) {
-  if(process.env.VIDA_CONTROLLER_DIAGNOSTICS==='true') process.stderr.write(record({schema:'DevelopmentControllerStage/v1',stage,event,elapsed_ms:Date.now()-started}));
+function stageMarker(stage, event, started) {
+  if (process.env.VIDA_CONTROLLER_DIAGNOSTICS === 'true')
+    process.stderr.write(
+      record({ schema: 'DevelopmentControllerStage/v1', stage, event, elapsed_ms: Date.now() - started }),
+    );
 }
 
 const commands = new Set(['run', 'scope', 'init', 'documentation-clear', 'reconcile-artifacts']);
+const qualificationChildren = Object.freeze([
+  'qualifier-repair-inspect',
+  'qualifier-repair-plan',
+  'qualifier-repair-apply',
+]);
 function canonicalDirectory(value) {
   if (!path.isAbsolute(value ?? '') || path.resolve(value) !== value || realpathSync(value) !== value)
     throw new Error('Controller paths must be canonical absolute physical directories.');
@@ -76,7 +84,8 @@ function cleanEnvironment() {
     if (
       ['NODE_OPTIONS', 'BUN_OPTIONS', 'VIDA_STANDALONE_ROOT', 'VIDA_STANDALONE_EXECUTABLE', 'BUN_BE_BUN'].includes(
         key.toUpperCase(),
-      )
+      ) ||
+      key.toUpperCase().startsWith('VIDA_CONTROLLER_OBSERVATION_')
     )
       delete env[key];
   return env;
@@ -101,16 +110,33 @@ export function developmentControllerChildDiagnostic(result, elapsedMs) {
     outcome: 'child_failure_effects_unknown',
   };
 }
-function invoke(executable, root, args, cwd = root, additionalEnv = {}) {
+function invoke({
+  executable,
+  packageRoot,
+  args,
+  controllerRoot,
+  cwd = packageRoot,
+  additionalEnv = {},
+  nestedChildren = [],
+}) {
   const started = performance.now();
-  const result = spawnSync(
+  const result = invokeObservedControllerChild({
+    controllerRoot,
     executable,
-    ['--no-env-file', '--no-install', '--config=' + path.join(root, 'bunfig.toml'), ...args],
-    { cwd, env: { ...cleanEnvironment(), ...additionalEnv }, encoding: 'utf8', windowsHide: true, timeout: 120000, maxBuffer: 8 * 1024 * 1024 },
-  );
+    args: ['--no-env-file', '--no-install', '--config=' + path.join(packageRoot, 'bunfig.toml'), ...args],
+    cwd,
+    env: { ...cleanEnvironment(), ...additionalEnv },
+    timeout: 120000,
+    maxBuffer: 8 * 1024 * 1024,
+    nestedChildren,
+  });
   if (result.error || result.status !== 0)
-    throw new Error('Development controller child failed: ' + record(developmentControllerChildDiagnostic(result, performance.now() - started)).trim());
-  return result.stdout;
+    throw new Error(
+      'Development controller child failed: ' +
+        record(developmentControllerChildDiagnostic(result, performance.now() - started)).trim(),
+    );
+  if (!result.observation_complete) throw new Error('Development controller child observation is incomplete.');
+  return result.stdout.toString('utf8');
 }
 function fileEntries(root, relative, result = [], links = []) {
   const absolute = path.join(root, relative),
@@ -223,12 +249,20 @@ export async function prepareDevelopmentController({ target, controllerRoot }) {
   writeFileSync(path.join(root, 'bun.lock'), lockBytes);
   const engine = path.join(controllerRoot, process.platform === 'win32' ? 'bun.exe' : 'bun');
   copyFileSync(executable, engine);
-  const installStarted=Date.now();stageMarker('install','start',installStarted);
-  invoke(engine, root, ['install', '--frozen-lockfile', '--ignore-scripts', '--production', '--backend=copy']);
-  stageMarker('install','end',installStarted);
+  const installStarted = Date.now();
+  stageMarker('install', 'start', installStarted);
+  invoke({
+    executable: engine,
+    packageRoot: root,
+    args: ['install', '--frozen-lockfile', '--ignore-scripts', '--production', '--backend=copyfile'],
+    controllerRoot,
+  });
+  stageMarker('install', 'end', installStarted);
   if (!readPortableLock(root).equals(lockBytes)) throw new Error('Frozen controller lock changed during installation.');
-  const snapshotStarted=Date.now();stageMarker('snapshot','start',snapshotStarted);
-  const packageBinding=snapshot(root);stageMarker('snapshot','end',snapshotStarted);
+  const snapshotStarted = Date.now();
+  stageMarker('snapshot', 'start', snapshotStarted);
+  const packageBinding = snapshot(root);
+  stageMarker('snapshot', 'end', snapshotStarted);
   const state = {
     schema: 'VidaDevelopmentController/v1',
     controller_root: controllerRoot,
@@ -296,13 +330,18 @@ export async function inspectDevelopmentController({ controllerRoot }) {
 export async function verifyDevelopmentController({ controllerRoot }) {
   const started = Date.now(),
     state = await inspectDevelopmentController({ controllerRoot });
-  const output = invoke(
-    state.engine,
-    state.package_root,
-    [path.join(state.package_root, 'tooling/development-controller-qualification.mjs')],
+  const output = invoke({
+    executable: state.engine,
+    packageRoot: state.package_root,
+    args: [path.join(state.package_root, 'tooling/development-controller-qualification.mjs')],
     controllerRoot,
-    { VIDA_CONTROLLER_QUALIFICATION_TARGET: state.target, VIDA_CONTROLLER_QUALIFICATION_BINDING: state.package_binding.digest },
-  );
+    cwd: controllerRoot,
+    additionalEnv: {
+      VIDA_CONTROLLER_QUALIFICATION_TARGET: state.target,
+      VIDA_CONTROLLER_QUALIFICATION_BINDING: state.package_binding.digest,
+    },
+    nestedChildren: qualificationChildren,
+  });
   const qualification = JSON.parse(output.trim().split(/\r?\n/).at(-1));
   if (
     qualification.schema !== 'DevelopmentControllerQualification/v1' ||
@@ -334,12 +373,13 @@ export async function executeDevelopmentController({ controllerRoot, command, ar
   const roots = args.flatMap((value, index) => (value === '--project-root' ? [args[index + 1]] : []));
   if (roots.length !== 1 || roots[0] !== state.target)
     throw new Error('Controlled execution requires the exact original target.');
-  return invoke(
-    state.engine,
-    state.package_root,
-    [path.join(state.package_root, 'bin', command + '.mjs'), ...args],
-    state.target,
-  );
+  return invoke({
+    executable: state.engine,
+    packageRoot: state.package_root,
+    args: [path.join(state.package_root, 'bin', command + '.mjs'), ...args],
+    controllerRoot,
+    cwd: state.target,
+  });
 }
 export function developmentControllerBinding(root) {
   return snapshot(root).digest;
@@ -371,7 +411,18 @@ async function main(args) {
     inspect: inspectDevelopmentController,
     verify: verifyDevelopmentController,
   }[action](input);
-  process.stdout.write(record({schema:result.schema,status:result.status,controller_root:result.controller_root,target:result.target,next_action:result.status==='prepared'?'verify':'exec',qualification:result.qualification?{status:result.qualification.status,checks:result.qualification.checks}:undefined}));
+  process.stdout.write(
+    record({
+      schema: result.schema,
+      status: result.status,
+      controller_root: result.controller_root,
+      target: result.target,
+      next_action: result.status === 'prepared' ? 'verify' : 'exec',
+      qualification: result.qualification
+        ? { status: result.qualification.status, checks: result.qualification.checks }
+        : undefined,
+    }),
+  );
 }
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   if (typeof Bun === 'undefined')

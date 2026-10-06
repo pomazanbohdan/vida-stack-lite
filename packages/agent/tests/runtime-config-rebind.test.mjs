@@ -16,8 +16,8 @@ import {
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
-import { run } from '../bin/run.mjs';
+import { runReconcileArtifacts as reconcileEntrypoint } from '../bin/reconcile-artifacts.mjs';
+import { run as runEntrypoint } from '../bin/run.mjs';
 import { cooperativeReadonlyAssignments } from '../bin/runtime-config-rebind.mjs';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -36,15 +36,52 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
 const source = process.env.VIDA_CONFIG_REBIND_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '..');
+const fixtureContextPath = 'docs/project-context.md';
 const fixtureRoots = [];
+const pendingFixtureCalls = new Map();
+async function fixtureCall(entrypoint, args, options) {
+  const root = args[args.indexOf('--project-root') + 1];
+  pendingFixtureCalls.set(root, (pendingFixtureCalls.get(root) ?? 0) + 1);
+  try {
+    return await entrypoint(args, options);
+  } finally {
+    const remaining = pendingFixtureCalls.get(root) - 1;
+    if (remaining) pendingFixtureCalls.set(root, remaining);
+    else pendingFixtureCalls.delete(root);
+  }
+}
+const run = (args, options) => fixtureCall(runEntrypoint, args, options);
+const runReconcileArtifacts = (args, options) => fixtureCall(reconcileEntrypoint, args, options);
 afterEach(() => {
-  for (const root of fixtureRoots.splice(0)) rmSync(root, { recursive: true, force: true });
+  for (const root of fixtureRoots.splice(0)) {
+    if (pendingFixtureCalls.has(root)) console.warn(`Retained fixture with an unresolved operation: ${root}`);
+    else rmSync(root, { recursive: true, force: true });
+  }
 });
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const json = (v) => JSON.stringify(v, null, 2) + '\n';
+function expectMissingFixtureContextRead(error, label) {
+  expect(error).toBeInstanceOf(Error);
+  if (process.platform === 'win32') {
+    expect(error.message).toBe(
+      `safe repository access unavailable: ${label} fs-safe boundary rejected the target (path)`,
+    );
+  } else {
+    expect(error.code).toBe('ENOENT');
+    expect(
+      String(error.path ?? '')
+        .replaceAll('\\', '/')
+        .endsWith('/docs/project-context.md'),
+    ).toBe(true);
+  }
+}
 
-function recoveryFixture() {
-  const { f, request } = historicalFixture('unknown_readonly');
+function recoveryFixture({ configuredContext = false, markerlessExcerpt = false, aggregateContext = false } = {}) {
+  const { f, request, state, configuredContexts } = historicalFixture('unknown_readonly', {
+    configuredContext,
+    markerlessExcerpt,
+    aggregateContext,
+  });
   const input = {
     identity: request.identity,
     attempt: 1,
@@ -75,7 +112,33 @@ function recoveryFixture() {
     // Injected fixture observation; no actual native execution or Runtime proof.
     observation: { agent_id: 'fixture:reviewer', tool_call_ref: 'fixture:native-call', result: { findings: [] } },
   });
-  return { f, input, call, observation };
+  return { f, input, call, observation, state, configuredContexts };
+}
+
+function fixtureOriginalContexts(state, configuredContexts) {
+  const items = [...state.completed.flatMap((wave) => wave.items), ...state.items].filter(
+      (item) => item.request.configured_context_digest,
+    ),
+    entries = items.map((item) => {
+      const context = configuredContexts.find(
+        (candidate) => candidate.digest === item.request.configured_context_digest,
+      );
+      expect(context).toBeDefined();
+      return {
+        action_id: item.request.action_id,
+        wave_index: item.request.wave_index,
+        stage_id: item.request.stage_id,
+        work_id: state.work_id,
+        attempt: state.attempt,
+        context,
+      };
+    });
+  return entries;
+}
+
+function resignFixtureContext(context) {
+  const { digest: _digest, ...body } = context;
+  return { ...body, digest: canonicalJsonDigest(body) };
 }
 
 test.each(['PASS', 'FAIL'])(
@@ -1003,8 +1066,12 @@ function seedReadonlyUnknown(f, mutate = null, { writer = false, validateFixture
 }
 
 // Synthetic persisted engine observations are fixture setup, never external caller or Runtime evidence.
-function historicalFixture(predicate) {
+function historicalFixture(
+  predicate,
+  { configuredContext = false, markerlessExcerpt = false, aggregateContext = false } = {},
+) {
   const f = fixture({ sourceMode: true });
+  const extraContextIds = aggregateContext ? ['aggregate-context-one', 'aggregate-context-two'] : [];
   if (predicate === 'unknown_readonly') {
     f.oldYaml = f.oldYaml.replace(/(    researcher:[\s\S]*?      egress_policy:) official_docs/, '$1 none');
     f.target = f.oldYaml.replace(
@@ -1015,6 +1082,54 @@ function historicalFixture(predicate) {
     f.receipt.config_digest = runtimeConfigDigest(loadRuntimeConfig(f.root));
     f.put('.agent/runtime-initialization.v1.json', json(f.receipt));
   }
+  if (configuredContext) {
+    const newline = f.oldYaml.includes('\r\n') ? '\r\n' : '\n';
+    const withOwnedSource = f.oldYaml.replace(
+      /(    - id: project-context\r?\n      kind: local\r?\n      location: AGENT\.sidecar\.md\r?\n      title: Project-owned requirements and source map\r?\n)/,
+      (_, source) =>
+        source +
+        `    - id: fixture-context${newline}      kind: local${newline}      location: ${fixtureContextPath}${newline}      title: Fixture-owned project context${newline}` +
+        extraContextIds
+          .map(
+            (id) =>
+              `    - id: ${id}${newline}      kind: local${newline}      location: docs/${id}.md${newline}      title: ${id}${newline}`,
+          )
+          .join(''),
+    );
+    expect(withOwnedSource).not.toBe(f.oldYaml);
+    f.oldYaml = withOwnedSource;
+    const pattern =
+      /(^  task_execution:\r?\n[\s\S]*?^      - id: synthesize_task\r?\n        kind: synthesize\r?\n        mode: single\r?\n)/m;
+    const withContext = f.oldYaml.replace(
+      pattern,
+      (_, stage) =>
+        stage +
+        `        context_source_ids:${newline}          - project-context${newline}          - fixture-context${newline}` +
+        extraContextIds.map((id) => `          - ${id}${newline}`).join('') +
+        `        context_skill_refs:${newline}          - .codex/skills/historical-review/SKILL.md${newline}`,
+    );
+    expect(withContext).not.toBe(f.oldYaml);
+    f.oldYaml = withContext;
+    f.target = withContext.replace(
+      /(    executor:\r?\n      model: )[^\r\n]+(\r?\n      reasoning: )[^\r\n]+/,
+      '$1gpt-6-luna$2max',
+    );
+    expect(f.target).not.toBe(withContext);
+    f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+    f.put(
+      fixtureContextPath,
+      markerlessExcerpt
+        ? 'Original project context retained before suspension.\n'.repeat(400)
+        : '# Fixture project context\n\nThis repository-owned local source provides additional project behavior context for the original task.\n',
+    );
+    for (const id of extraContextIds) f.put(`docs/${id}.md`, `# ${id}\n\nAdditional declared context.\n`);
+    f.receipt.config_digest = runtimeConfigDigest(loadRuntimeConfig(f.root));
+    f.put('.agent/runtime-initialization.v1.json', json(f.receipt));
+    f.put(
+      '.codex/skills/historical-review/SKILL.md',
+      '# Historical review skill\n\nUse the declared project context to verify the original task before making a recovery recommendation.\n',
+    );
+  }
   f.put('baseline.yaml', f.oldYaml);
   const config = loadRuntimeConfig(f.root),
     { identity } = seedState(f, { lease: true });
@@ -1023,6 +1138,8 @@ function historicalFixture(predicate) {
     '.githooks/pre-push',
     'tests/agent/git-quality-hooks.test.mjs',
     'tooling/agent/git-quality-hooks.mjs',
+    ...(configuredContext ? [fixtureContextPath, '.codex/skills/historical-review/SKILL.md'] : []),
+    ...extraContextIds.map((id) => `docs/${id}.md`),
   ].sort();
   const preimage = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), paths);
   f.put('original-scope.json', json(preimage));
@@ -1102,12 +1219,21 @@ function historicalFixture(predicate) {
     observations: [],
   };
   const engineContext = { input: structuredClone(prior) },
-    completed = [];
+    completed = [],
+    configuredContexts = [];
   let frontierItems,
     postimage = preimage;
   for (let waveIndex = 0; waveIndex < (predicate === 'settled_writer_failed_validators' ? 3 : 1); waveIndex++) {
     const actions = sessionActionsForWave(config, selection, context, workflow, waveIndex, []);
     const items = actions.map((action) => {
+      let configuredContext = configuredContextForStage(f.root, config, workflow, action.stage_id, context);
+      if (configuredContext && markerlessExcerpt) {
+        const entry = configuredContext.entries.find((candidate) => candidate.id === 'fixture-context');
+        expect(entry.truncated).toBe(true);
+        entry.content = readFileSync(path.join(f.root, fixtureContextPath), 'utf8').slice(0, 8192);
+        configuredContext = resignFixtureContext(configuredContext);
+      }
+      if (configuredContext) configuredContexts.push(configuredContext);
       const request = buildSessionBridgeRequest({
         runId,
         workflowId: workflow,
@@ -1115,7 +1241,7 @@ function historicalFixture(predicate) {
         context,
         waveIndex,
         action,
-        configuredContext: configuredContextForStage(f.root, config, workflow, action.stage_id, context),
+        configuredContext,
         priorResults: prior.observations,
       });
       const summary =
@@ -1248,7 +1374,7 @@ function historicalFixture(predicate) {
     '--request',
     'release.json',
   ];
-  return { f, args, request, state };
+  return { f, args, request, state, configuredContexts };
 }
 
 test.each(['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators'])(
@@ -1293,6 +1419,550 @@ test('public historical inspect runs from unrelated cwd while the ordinary recei
   expect(JSON.parse(actual.stdout).status).toBe('historical_owner_release_inspected');
   expect(databaseState(f)).toEqual(before);
 }, 30000);
+
+test('public historical inspect rebuilds populated local source and repository skill context read-only', async () => {
+  const { f, args, state, configuredContexts } = historicalFixture('completed_readonly', { configuredContext: true });
+  expect(configuredContexts).toHaveLength(1);
+  expect(configuredContexts[0].entries.map((entry) => entry.kind)).toEqual(['local', 'local', 'skill']);
+  expect(configuredContexts[0].entries.find((entry) => entry.id === 'fixture-context')?.location).toBe(
+    fixtureContextPath,
+  );
+  expect(configuredContexts[0].entries.every((entry) => entry.content?.trim().length > 0)).toBe(true);
+  const before = databaseState(f),
+    enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+    engineBefore = readFileSync(enginePath),
+    protectedPaths = [
+      'agent-runtime.config.v1.yaml',
+      'baseline.yaml',
+      '.agent/runtime-initialization.v1.json',
+      'AGENT.sidecar.md',
+      fixtureContextPath,
+      '.codex/skills/historical-review/SKILL.md',
+      ...state.source_scope.entries.map((entry) => entry.path),
+    ],
+    fileSnapshots = new Map(
+      [...new Set(protectedPaths)].map((relative) => [
+        relative,
+        existsSync(path.join(f.root, relative)) ? readFileSync(path.join(f.root, relative)) : null,
+      ]),
+    );
+  const result = await run(args('inspect'));
+  expect(result.status).toBe('historical_owner_release_inspected');
+  expect(result.caller_identity_authenticated).toBe(false);
+  expect(databaseState(f)).toEqual(before);
+  expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+  for (const [relative, bytes] of fileSnapshots) {
+    const currentPath = path.join(f.root, relative);
+    expect(existsSync(currentPath)).toBe(bytes !== null);
+    if (bytes !== null) expect(readFileSync(currentPath).equals(bytes)).toBe(true);
+  }
+});
+
+test('public recovery-review prepare reserves only review for populated historical context', async () => {
+  const { f, call, state, configuredContexts } = recoveryFixture({ configuredContext: true });
+  expect(configuredContexts).toHaveLength(1);
+  expect(configuredContexts[0].entries.map((entry) => entry.kind)).toEqual(['local', 'local', 'skill']);
+  expect(configuredContexts[0].entries.find((entry) => entry.id === 'fixture-context')?.location).toBe(
+    fixtureContextPath,
+  );
+  expect(configuredContexts[0].entries.every((entry) => entry.content?.trim().length > 0)).toBe(true);
+  const before = databaseState(f),
+    enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+    engineBefore = readFileSync(enginePath),
+    protectedPaths = [
+      'agent-runtime.config.v1.yaml',
+      'baseline.yaml',
+      '.agent/runtime-initialization.v1.json',
+      'AGENT.sidecar.md',
+      fixtureContextPath,
+      '.codex/skills/historical-review/SKILL.md',
+      ...state.source_scope.entries.map((entry) => entry.path),
+    ],
+    fileSnapshots = new Map(
+      [...new Set(protectedPaths)].map((relative) => [
+        relative,
+        existsSync(path.join(f.root, relative)) ? readFileSync(path.join(f.root, relative)) : null,
+      ]),
+    );
+  const prepared = await call('prepare');
+  expect(prepared.status).toBe('reserved');
+  expect(prepared.operation.status).toBe('reserved');
+  expect(prepared.native_dispatch_performed).toBe(false);
+  expect(prepared.rights_granted).toBe(false);
+  expect(prepared.runtime_acceptance).toBe(false);
+  const after = databaseState(f),
+    reviewRows = after.agent_host_governance.filter(
+      (row) => row.store_id === 'vida-recovery-reviews' && row.kind === 'operation',
+    );
+  expect(after.agent_host_state).toEqual(before.agent_host_state);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(after.agent_host_governance.filter((row) => row.store_id !== 'vida-recovery-reviews')).toEqual(
+    before.agent_host_governance.filter((row) => row.store_id !== 'vida-recovery-reviews'),
+  );
+  expect(reviewRows).toHaveLength(1);
+  expect(JSON.parse(reviewRows[0].payload)).toMatchObject({
+    schema: 'OperationReservation/v1',
+    store_id: 'vida-recovery-reviews',
+    status: 'reserved',
+    operation_key: prepared.operation.operation_key,
+  });
+  expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+  for (const [relative, bytes] of fileSnapshots) {
+    const currentPath = path.join(f.root, relative);
+    expect(existsSync(currentPath)).toBe(bytes !== null);
+    if (bytes !== null) expect(readFileSync(currentPath).equals(bytes)).toBe(true);
+  }
+});
+
+test('public recovery review keeps original configured context in caller history and rechecks current Source', async () => {
+  const { f, input, call, observation, state, configuredContexts } = recoveryFixture({ configuredContext: true }),
+    originalContexts = fixtureOriginalContexts(state, configuredContexts);
+  expect(originalContexts).toHaveLength(1);
+  const originalBody = structuredClone(originalContexts[0].context),
+    originalText = originalBody.entries.find((entry) => entry.kind === 'local').content,
+    localPath = path.join(f.root, fixtureContextPath),
+    skillPath = path.join(f.root, '.codex/skills/historical-review/SKILL.md');
+  f.put(fixtureContextPath, readFileSync(localPath, 'utf8') + '\nCurrent Source edit before review preparation.\n');
+  f.put(
+    '.codex/skills/historical-review/SKILL.md',
+    readFileSync(skillPath, 'utf8') + '\nCurrent skill edit before review preparation.\n',
+  );
+  const currentSource = snapshotDeclaredSources(
+      requireSafeRepositoryAccess(f.root),
+      state.source_scope.entries.map((entry) => entry.path),
+    ),
+    before = databaseState(f),
+    enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+    engineBefore = readFileSync(enginePath),
+    prepared = await call('prepare', { ...input, originalContexts });
+  expect(prepared.status).toBe('reserved');
+  expect(prepared.native_dispatch_performed).toBe(false);
+  expect(prepared.rights_granted).toBe(false);
+  expect(prepared.runtime_acceptance).toBe(false);
+  expect(prepared.request.source).toEqual(currentSource);
+  expect(prepared.request).not.toHaveProperty('originalContexts');
+  expect(JSON.stringify(prepared.request)).not.toContain(originalText);
+  const resumed = { ...input, originalContexts, request: prepared.request };
+  expect((await call('begin', resumed)).status).toBe('commit_unknown');
+  const observed = observation(prepared.operation),
+    completed = await call('complete', { ...resumed, observation: observed });
+  expect(completed.status).toBe('applied');
+  expect(completed.native_dispatch_performed).toBe(false);
+  expect(completed.rights_granted).toBe(false);
+  expect(completed.runtime_acceptance).toBe(false);
+  expect((await call('complete', { ...resumed, observation: observed })).operation).toEqual(completed.operation);
+  const after = databaseState(f),
+    operations = after.agent_host_governance.filter(
+      (row) => row.store_id === 'vida-recovery-reviews' && row.kind === 'operation',
+    );
+  expect(after.agent_host_state).toEqual(before.agent_host_state);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(after.agent_host_governance.filter((row) => row.store_id !== 'vida-recovery-reviews')).toEqual(
+    before.agent_host_governance.filter((row) => row.store_id !== 'vida-recovery-reviews'),
+  );
+  expect(operations).toHaveLength(1);
+  expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+  expect(JSON.stringify(after)).not.toContain(originalText);
+}, 30000);
+
+test('public recovery review accepts a canonical markerless original excerpt and denies a substituted body', async () => {
+  const { f, input, call, state, configuredContexts } = recoveryFixture({
+      configuredContext: true,
+      markerlessExcerpt: true,
+    }),
+    originalContexts = fixtureOriginalContexts(state, configuredContexts),
+    entry = originalContexts[0].context.entries.find((candidate) => candidate.id === 'fixture-context');
+  expect(entry.truncated).toBe(true);
+  expect(entry.content).toHaveLength(8192);
+  expect(entry.content).not.toContain('[middle omitted; read source for complete content]');
+  f.put(fixtureContextPath, 'Current project context after the original request.\n');
+  const before = databaseState(f),
+    enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+    engineBefore = readFileSync(enginePath),
+    substituted = structuredClone(originalContexts);
+  substituted[0].context.entries.find((candidate) => candidate.id === 'fixture-context').content =
+    'Substituted excerpt';
+  substituted[0].context = resignFixtureContext(substituted[0].context);
+  await expect(call('prepare', { ...input, originalContexts: substituted })).rejects.toThrow(
+    'historical original configured requests differ',
+  );
+  expect(databaseState(f)).toEqual(before);
+  const prepared = await call('prepare', { ...input, originalContexts });
+  expect(prepared.status).toBe('reserved');
+  expect(prepared.rights_granted).toBe(false);
+  expect(prepared.request).not.toHaveProperty('originalContexts');
+  const after = databaseState(f);
+  expect(after.agent_host_state).toEqual(before.agent_host_state);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+  const changedRequest = structuredClone(prepared.request);
+  changedRequest.expectedWork += 1;
+  await expect(call('inspect', { ...input, originalContexts, request: changedRequest })).rejects.toThrow(
+    /retained recovery request changed/,
+  );
+  expect(databaseState(f)).toEqual(after);
+  expect((await call('inspect', { ...input, originalContexts, request: prepared.request })).status).toBe('reserved');
+}, 30000);
+
+test('public recovery review retains UNKNOWN when original-context custody is lost or current Source goes stale', async () => {
+  const { f, input, call, observation, state, configuredContexts } = recoveryFixture({ configuredContext: true }),
+    originalContexts = fixtureOriginalContexts(state, configuredContexts),
+    localPath = path.join(f.root, fixtureContextPath);
+  f.put(fixtureContextPath, readFileSync(localPath, 'utf8') + '\nCurrent Source edit before prepare.\n');
+  const prepared = await call('prepare', { ...input, originalContexts }),
+    resumed = { ...input, originalContexts, request: prepared.request };
+  expect((await call('begin', resumed)).status).toBe('commit_unknown');
+  const afterBegin = databaseState(f);
+  await expect(call('inspect', { ...input, request: prepared.request })).rejects.toThrow();
+  expect(databaseState(f)).toEqual(afterBegin);
+  await expect(call('begin', resumed)).rejects.toThrow(/reissue forbidden/);
+  expect(databaseState(f)).toEqual(afterBegin);
+  f.put(fixtureContextPath, readFileSync(localPath, 'utf8') + '\nConcurrent Source edit after prepare.\n');
+  await expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow(
+    /retained recovery request changed|source scope changed/,
+  );
+  expect(databaseState(f)).toEqual(afterBegin);
+}, 30000);
+
+test('public recovery review rejects current Source drift before begin after body-backed preparation', async () => {
+  const { f, input, call, state, configuredContexts } = recoveryFixture({ configuredContext: true }),
+    originalContexts = fixtureOriginalContexts(state, configuredContexts),
+    localPath = path.join(f.root, fixtureContextPath);
+  f.put(fixtureContextPath, readFileSync(localPath, 'utf8') + '\nCurrent Source edit before prepare.\n');
+  const prepared = await call('prepare', { ...input, originalContexts }),
+    resumed = { ...input, originalContexts, request: prepared.request },
+    afterPrepare = databaseState(f);
+  f.put(fixtureContextPath, readFileSync(localPath, 'utf8') + '\nConcurrent Source edit after prepare.\n');
+  await expect(call('begin', resumed)).rejects.toThrow(/retained recovery request changed|source scope changed/);
+  expect(databaseState(f)).toEqual(afterPrepare);
+}, 30000);
+
+test.each(
+  [
+    [
+      'complete-source content binding tamper',
+      (contexts) => (contexts[0].context.entries[0].content += '\nForged body.\n'),
+    ],
+    [
+      'stale context self digest',
+      (contexts) => {
+        const context = contexts[0].context,
+          before = structuredClone(context);
+        context.digest = canonicalJsonDigest({ fixture: 'different original-context self binding' });
+        expect(context.digest).not.toBe(before.digest);
+        expect({ ...context, digest: before.digest }).toEqual(before);
+      },
+      'original configured context self binding differs',
+    ],
+    [
+      'malformed UTF-8 text',
+      (contexts) => {
+        const context = contexts[0].context;
+        context.entries[0].content = '\uD800';
+        context.entries[0].truncated = true;
+      },
+      'original configured context text is invalid UTF-8',
+    ],
+    ['action substitution', (contexts) => (contexts[0].action_id = 'f'.repeat(64))],
+    ['wave substitution', (contexts) => (contexts[0].wave_index += 1)],
+    ['stage substitution', (contexts) => (contexts[0].stage_id = 'foreign-stage')],
+    ['work substitution', (contexts) => (contexts[0].work_id = 'foreign-work')],
+    ['attempt substitution', (contexts) => (contexts[0].attempt += 1)],
+    ['duplicate action entry', (contexts) => contexts.push(structuredClone(contexts[0]))],
+    [
+      'extra context entry',
+      (contexts) => {
+        const context = contexts[0].context;
+        context.entries.push(structuredClone(context.entries[0]));
+        contexts[0].context = resignFixtureContext(context);
+      },
+    ],
+    [
+      'per-file byte limit',
+      (contexts) => {
+        const context = contexts[0].context;
+        context.entries[0].bytes = 65537;
+        context.entries[0].truncated = true;
+        contexts[0].context = resignFixtureContext(context);
+      },
+    ],
+    [
+      'excerpt character limit',
+      (contexts) => {
+        const context = contexts[0].context;
+        context.entries[0].content = 'x'.repeat(8193);
+        contexts[0].context = resignFixtureContext(context);
+      },
+    ],
+    [
+      'oversized selection cardinality',
+      (contexts) => {
+        const context = contexts[0].context;
+        context.entries = Array.from({ length: 17 }, () => structuredClone(context.entries[0]));
+        contexts[0].context = resignFixtureContext(context);
+      },
+    ],
+  ].map(([name, mutate, reason]) => [name, mutate, reason ?? null]),
+)(
+  'public recovery review rejects original-context %s before reserving an operation',
+  async (_name, mutate, expectedReason) => {
+    const { f, input, call, state, configuredContexts } = recoveryFixture({ configuredContext: true }),
+      originalContexts = fixtureOriginalContexts(state, configuredContexts);
+    mutate(originalContexts);
+    const before = databaseState(f),
+      enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+      engineBefore = readFileSync(enginePath);
+    const denied = expect(call('prepare', { ...input, originalContexts })).rejects;
+    if (expectedReason) await denied.toThrow(expectedReason);
+    else await denied.toThrow();
+    expect(databaseState(f)).toEqual(before);
+    expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+  },
+);
+
+test('public recovery review rejects aggregate original-context bytes before reserving an operation', async () => {
+  const { f, input, call, state, configuredContexts } = recoveryFixture({
+      configuredContext: true,
+      aggregateContext: true,
+    }),
+    originalContexts = fixtureOriginalContexts(state, configuredContexts),
+    context = originalContexts[0].context;
+  expect(context.entries).toHaveLength(5);
+  for (const entry of context.entries) {
+    expect(['local', 'skill']).toContain(entry.kind);
+    entry.bytes = 65536;
+    entry.truncated = true;
+  }
+  originalContexts[0].context = resignFixtureContext(context);
+  const before = databaseState(f),
+    enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+    engineBefore = readFileSync(enginePath);
+  await expect(call('prepare', { ...input, originalContexts })).rejects.toThrow(
+    'original configured context exceeds aggregate limit',
+  );
+  expect(databaseState(f)).toEqual(before);
+  expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+});
+
+test('public recovery review rejects original-context export over the caller-history byte limit', async () => {
+  const { f, input, call, state, configuredContexts } = recoveryFixture({ configuredContext: true }),
+    originalContexts = fixtureOriginalContexts(state, configuredContexts),
+    oversized = { ...input, originalContexts, padding: 'x'.repeat(262145) },
+    before = databaseState(f);
+  await expect(call('prepare', oversized)).rejects.toThrow(/caller-history export exceeds bound/);
+  expect(databaseState(f)).toEqual(before);
+});
+
+test('original context body cannot authorize current topology drift or rewrite the retained request', async () => {
+  const { f, input, call, state, configuredContexts } = recoveryFixture({ configuredContext: true }),
+    originalContexts = fixtureOriginalContexts(state, configuredContexts);
+  f.put(
+    'agent-runtime.config.v1.yaml',
+    f.target.replace(
+      /(^        context_source_ids:\r?\n          - project-context\r?\n)          - fixture-context\r?\n/m,
+      '$1',
+    ),
+  );
+  const before = databaseState(f);
+  await expect(call('prepare', { ...input, originalContexts })).rejects.toThrow(
+    'vida runtime-config rebind: only requested executor model/reasoning may change',
+  );
+  expect(databaseState(f)).toEqual(before);
+});
+
+test('configured context reader rejects a missing declared local source after historical request construction', () => {
+  const { f, state, configuredContexts } = historicalFixture('completed_readonly', { configuredContext: true });
+  const request = state.items[0].request,
+    context = { work_id: state.work_id, attempt: state.attempt, scope_digest: request.scope_digest },
+    current = loadRuntimeConfig(f.root),
+    enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+    engineBefore = readFileSync(enginePath),
+    contextPath = path.join(f.root, fixtureContextPath),
+    originalContextBytes = readFileSync(contextPath),
+    before = databaseState(f),
+    receiptBefore = readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')),
+    protectedPaths = [
+      'agent-runtime.config.v1.yaml',
+      'baseline.yaml',
+      'AGENT.sidecar.md',
+      '.codex/skills/historical-review/SKILL.md',
+      'release.json',
+      ...state.source_scope.entries.map((entry) => entry.path).filter((relative) => relative !== fixtureContextPath),
+    ],
+    fileSnapshots = new Map(
+      [...new Set(protectedPaths)].map((relative) => [
+        relative,
+        existsSync(path.join(f.root, relative)) ? readFileSync(path.join(f.root, relative)) : null,
+      ]),
+    );
+  expect(configuredContexts[0].entries.find((entry) => entry.id === 'fixture-context')?.sha256).toBe(
+    sha(originalContextBytes),
+  );
+  expect(runtimeConfigDigest(current)).not.toBe(request.config_digest);
+  rmSync(contextPath);
+  let contextReadFailure;
+  try {
+    configuredContextForStage(f.root, current, request.workflow_id, request.stage_id, context);
+  } catch (error) {
+    contextReadFailure = error;
+  }
+  expectMissingFixtureContextRead(contextReadFailure, `configured context ${fixtureContextPath}`);
+  expect(databaseState(f)).toEqual(before);
+  expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+  expect(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')).equals(receiptBefore)).toBe(true);
+  expect(existsSync(contextPath)).toBe(false);
+  for (const [relative, bytes] of fileSnapshots) {
+    const currentPath = path.join(f.root, relative);
+    expect(existsSync(currentPath)).toBe(bytes !== null);
+    if (bytes !== null) expect(readFileSync(currentPath).equals(bytes)).toBe(true);
+  }
+});
+
+test.each([
+  ['owner inspect', 'local source', 'changed'],
+  ['owner inspect', 'local source', 'missing'],
+  ['owner inspect', 'repository skill', 'changed'],
+  ['owner inspect', 'repository skill', 'missing'],
+  ['review prepare', 'local source', 'changed'],
+  ['review prepare', 'local source', 'missing'],
+  ['review prepare', 'repository skill', 'changed'],
+  ['review prepare', 'repository skill', 'missing'],
+])(
+  'historical configured context denies %s after %s is %s without changing authoritative state',
+  async (route, kind, drift) => {
+    const historical =
+      route === 'owner inspect'
+        ? historicalFixture('completed_readonly', { configuredContext: true })
+        : recoveryFixture({ configuredContext: true });
+    const { f, state, configuredContexts } = historical;
+    expect(configuredContexts).toHaveLength(1);
+    expect(configuredContexts[0].entries.map((entry) => entry.kind)).toEqual(['local', 'local', 'skill']);
+    expect(configuredContexts[0].entries.every((entry) => entry.content?.trim().length > 0)).toBe(true);
+    const relative = kind === 'local source' ? fixtureContextPath : '.codex/skills/historical-review/SKILL.md';
+    const absolute = path.join(f.root, relative);
+    if (drift === 'changed')
+      f.put(relative, readFileSync(absolute, 'utf8') + '\nChanged after original request construction.\n');
+    else rmSync(absolute);
+    const before = databaseState(f),
+      enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+      engineBefore = readFileSync(enginePath),
+      protectedPaths = [
+        'agent-runtime.config.v1.yaml',
+        'baseline.yaml',
+        '.agent/runtime-initialization.v1.json',
+        'AGENT.sidecar.md',
+        fixtureContextPath,
+        '.codex/skills/historical-review/SKILL.md',
+        ...state.source_scope.entries.map((entry) => entry.path),
+      ],
+      fileSnapshots = new Map(
+        [...new Set(protectedPaths)].map((sourcePath) => [
+          sourcePath,
+          existsSync(path.join(f.root, sourcePath)) ? readFileSync(path.join(f.root, sourcePath)) : null,
+        ]),
+      );
+    const invoke = route === 'owner inspect' ? () => run(historical.args('inspect')) : () => historical.call('prepare');
+    if (drift === 'missing' && kind === 'local source') {
+      let missingReferenceFailure;
+      try {
+        await invoke();
+      } catch (error) {
+        missingReferenceFailure = error;
+      }
+      expectMissingFixtureContextRead(missingReferenceFailure, `required reference ${fixtureContextPath}`);
+    } else {
+      const expected =
+        drift === 'changed'
+          ? /historical original configured requests differ/
+          : /configured context \.codex\/skills\/historical-review\/SKILL\.md/;
+      await expect(invoke()).rejects.toThrow(expected);
+    }
+    expect(databaseState(f)).toEqual(before);
+    expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+    for (const [sourcePath, bytes] of fileSnapshots) {
+      const currentPath = path.join(f.root, sourcePath);
+      expect(existsSync(currentPath)).toBe(bytes !== null);
+      if (bytes !== null) expect(readFileSync(currentPath).equals(bytes)).toBe(true);
+    }
+  },
+  30000,
+);
+
+test.each([
+  ['owner inspect', 'context-source selection'],
+  ['review prepare', 'context-source selection'],
+  ['owner inspect', 'executor execution_mode'],
+  ['review prepare', 'executor execution_mode'],
+])(
+  'public historical %s rejects %s drift beyond executor-only delta without effects',
+  async (route, drift) => {
+    const subject =
+      route === 'owner inspect'
+        ? historicalFixture('completed_readonly', { configuredContext: true })
+        : recoveryFixture({ configuredContext: true });
+    const { f, state } = subject;
+    if (route === 'review prepare') f.put('.tmp/recovery-input.json', json(subject.input));
+    const changedConfig =
+      drift === 'context-source selection'
+        ? f.target.replace(
+            /(^        context_source_ids:\r?\n          - project-context\r?\n)          - fixture-context\r?\n/m,
+            '$1',
+          )
+        : f.target.replace(
+            /(^    executor:\r?\n      model: gpt-6-luna\r?\n      reasoning: max\r?\n      execution_mode: )standard/m,
+            '$1fast',
+          );
+    expect(changedConfig).not.toBe(f.target);
+    f.put('agent-runtime.config.v1.yaml', changedConfig);
+    const current = loadRuntimeConfig(f.root);
+    if (drift === 'context-source selection')
+      expect(
+        current.workflows.task_execution.stages.find((stage) => stage.id === 'synthesize_task')?.context_source_ids,
+      ).toEqual(['project-context']);
+    else expect(current.agents.profiles.executor.execution_mode).toBe('fast');
+    const intakePath = `.agent/work/${state.work_id}/intake.json`,
+      enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
+      engineBefore = readFileSync(enginePath),
+      before = databaseState(f),
+      reviewReservations = (snapshot) =>
+        snapshot.agent_host_governance.filter(
+          (row) => row.store_id === 'vida-recovery-reviews' && row.kind === 'operation',
+        ),
+      protectedPaths = [
+        'agent-runtime.config.v1.yaml',
+        'baseline.yaml',
+        '.agent/runtime-initialization.v1.json',
+        'AGENT.sidecar.md',
+        fixtureContextPath,
+        '.codex/skills/historical-review/SKILL.md',
+        'release.json',
+        intakePath,
+        ...(route === 'review prepare' ? ['.tmp/recovery-input.json'] : []),
+        ...state.source_scope.entries.map((entry) => entry.path),
+      ],
+      fileSnapshots = new Map(
+        [...new Set(protectedPaths)].map((relative) => [
+          relative,
+          existsSync(path.join(f.root, relative)) ? readFileSync(path.join(f.root, relative)) : null,
+        ]),
+      );
+    expect(reviewReservations(before)).toHaveLength(0);
+    const invoke = route === 'owner inspect' ? () => run(subject.args('inspect')) : () => subject.call('prepare');
+    await expect(invoke()).rejects.toThrow(
+      'vida runtime-config rebind: only requested executor model/reasoning may change',
+    );
+    const after = databaseState(f);
+    expect(after).toEqual(before);
+    expect(reviewReservations(after)).toHaveLength(0);
+    expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
+    for (const [relative, bytes] of fileSnapshots) {
+      const currentPath = path.join(f.root, relative);
+      expect(existsSync(currentPath)).toBe(bytes !== null);
+      if (bytes !== null) expect(readFileSync(currentPath).equals(bytes)).toBe(true);
+    }
+  },
+  30000,
+);
 
 test.each([
   'wrong owner',

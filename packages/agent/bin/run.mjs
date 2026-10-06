@@ -2609,6 +2609,7 @@ async function recoveryReview(args) {
   if (bytes.length > 262144) throw Error('Recovery caller-history export exceeds bound');
   const input = JSON.parse(bytes.toString('utf8'));
   const keys = ['identity', 'attempt', 'baselinePath', 'callerSession', 'controllerId', 'userInstructionRef'];
+  if (Object.hasOwn(input, 'originalContexts')) keys.push('originalContexts');
   if (mode !== 'prepare') keys.push('request');
   if (mode === 'complete') keys.push('observation');
   if (
@@ -2616,7 +2617,8 @@ async function recoveryReview(args) {
     Array.isArray(input) ||
     Object.keys(input).sort().join('|') !== keys.sort().join('|') ||
     (mode !== 'prepare' && !input.request) ||
-    (mode === 'complete' && !input.observation)
+    (mode === 'complete' && !input.observation) ||
+    (Object.hasOwn(input, 'originalContexts') && (!Array.isArray(input.originalContexts) || !input.originalContexts.length))
   )
     throw Error('Recovery caller-history export shape invalid');
   const route = openInternalRecoveryReview({ ...input, repositoryRoot: root, mode });

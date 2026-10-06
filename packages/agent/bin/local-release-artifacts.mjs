@@ -6,6 +6,7 @@ import {
   fsyncSync,
   lstatSync,
   mkdirSync,
+  opendirSync,
   openSync,
   readFileSync,
   readdirSync,
@@ -252,7 +253,166 @@ export function selectedTarball(metadata, folder, version) {
 
 const excluded = new Set(['node_modules', 'dist', 'coverage', '.pack-inspect']);
 const scratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent']);
-export function releaseSourceInputs(root, relative, observations) {
+const repairSourcePasses = new WeakMap();
+const repairSourceNodeLimit = 8192;
+const sourceIdentity = (info) => [info.dev, info.ino, info.size, info.mtimeMs, info.ctimeMs];
+function registerRepairSourceNode(state, relative, file, stat) {
+  releaseRelative(relative);
+  requireRelease(!stat.isSymbolicLink(), 'linked source');
+  requireRelease(stat.isFile() ? stat.nlink === 1 : stat.isDirectory(), 'source is not regular');
+  const physicalKey =
+    Number.isFinite(stat.ino) && stat.ino !== 0
+      ? JSON.stringify([stat.dev, stat.ino])
+      : process.platform === 'win32'
+        ? path.resolve(file).toLowerCase()
+        : path.resolve(file);
+  const previous = state.nodePaths.get(relative);
+  if (previous !== undefined) {
+    if (previous === physicalKey) return;
+    requireRelease(typeof previous === 'object', 'Source changed during scan');
+    state.physicalNodes.delete(previous);
+    if (!state.physicalNodes.has(physicalKey)) state.physicalNodes.add(physicalKey);
+    state.nodePaths.set(relative, physicalKey);
+    return;
+  }
+  if (state.physicalNodes.has(physicalKey)) {
+    state.nodePaths.set(relative, physicalKey);
+    return;
+  }
+  requireRelease(state.physicalNodes.size < repairSourceNodeLimit, 'Source enumeration exceeds bounded inventory');
+  state.physicalNodes.add(physicalKey);
+  state.nodePaths.set(relative, physicalKey);
+}
+function verifySourceDirectories(directories) {
+  for (const expected of directories) {
+    const current = lstatSync(expected.path);
+    requireRelease(!current.isSymbolicLink() && current.isDirectory(), 'linked source');
+    requireRelease(
+      releaseJSON(sourceIdentity(current)) === releaseJSON(expected.identity),
+      'Source directory changed during scan',
+    );
+  }
+}
+export function createRepairSourcePass() {
+  const pass = Object.freeze({});
+  repairSourcePasses.set(pass, {
+    root: null,
+    rootInput: null,
+    rootIdentity: null,
+    physicalNodes: new Set(),
+    nodePaths: new Map(),
+    paths: new Map(),
+  });
+  return pass;
+}
+export function registerRepairSourcePath(pass, relative) {
+  const state = repairSourcePasses.get(pass);
+  requireRelease(state, 'invalid repair Source enumeration pass');
+  const normalized = releaseRelative(relative),
+    key = path.posix.normalize(normalized);
+  if (state.nodePaths.has(key)) return;
+  requireRelease(
+    state.physicalNodes.size < repairSourceNodeLimit,
+    'native evidence dependency closure exceeds bounded inventory',
+  );
+  const marker = { path: key };
+  state.physicalNodes.add(marker);
+  state.nodePaths.set(key, marker);
+}
+function releaseSourceInputsForRepair(root, relative, observations, pass, suppliedStat, suppliedAncestors) {
+  const state = repairSourcePasses.get(pass);
+  requireRelease(state, 'invalid repair Source enumeration pass');
+  const inputRoot = path.resolve(root),
+    key = releaseRelative(relative);
+  if (!state.root) {
+    state.root = realpathSync(root);
+    state.rootInput = inputRoot;
+    const rootStat = lstatSync(state.root);
+    requireRelease(!rootStat.isSymbolicLink() && rootStat.isDirectory(), 'linked source');
+    state.rootIdentity = sourceIdentity(rootStat);
+  }
+  requireRelease(state.rootInput === inputRoot, 'repair Source enumeration root changed');
+  const cached = state.paths.get(key);
+  if (cached) {
+    if (observations && cached.observations) observations.push(...cached.observations);
+    return cached.entries.slice();
+  }
+  const file = suppliedStat ? path.join(state.root, ...key.split('/')) : releasePath(root, key),
+    stat = suppliedStat ?? lstatSync(file),
+    identity = sourceIdentity;
+  const ancestors =
+    suppliedAncestors ??
+    (() => {
+      const result = [{ path: state.root, identity: state.rootIdentity }];
+      let current = state.root;
+      for (const part of key.split('/').slice(0, -1)) {
+        current = path.join(current, part);
+        const info = lstatSync(current);
+        requireRelease(!info.isSymbolicLink() && info.isDirectory(), 'linked source');
+        result.push({ path: current, identity: identity(info) });
+      }
+      return result;
+    })();
+  if (stat.isDirectory() && scratch.has(relative)) {
+    state.paths.set(key, { entries: [], observations: [] });
+    return [];
+  }
+  registerRepairSourceNode(state, key, file, stat);
+  if (stat.isFile()) {
+    verifySourceDirectories(ancestors);
+    requireRelease(stat.nlink === 1, 'linked or non-regular path');
+    const before = identity(stat),
+      sha256 = releaseDigest(readFileSync(file));
+    requireRelease(releaseJSON(before) === releaseJSON(identity(lstatSync(file))), 'Source changed during read');
+    verifySourceDirectories(ancestors);
+    const entry = { path: relative, sha256 },
+      observed = { path: relative, sha256, identity: before },
+      result = { entries: [entry], observations: [observed] };
+    state.paths.set(key, result);
+    observations?.push(observed);
+    return [entry];
+  }
+  requireRelease(stat.isDirectory(), 'source is not regular');
+  const directoryChain = [...ancestors, { path: file, identity: identity(stat) }];
+  verifySourceDirectories(directoryChain);
+  const directory = opendirSync(file),
+    children = [];
+  try {
+    while (true) {
+      const entry = directory.readSync();
+      if (!entry) break;
+      const name = entry.name,
+        child = key + '/' + name;
+      const childFile = path.join(state.root, ...child.split('/')),
+        info = lstatSync(childFile);
+      requireRelease(!info.isSymbolicLink(), 'linked source');
+      if (info.isDirectory() && (excluded.has(name) || scratch.has(child))) continue;
+      registerRepairSourceNode(state, child, childFile, info);
+      children.push({ name, child, info });
+    }
+  } finally {
+    directory.closeSync();
+  }
+  verifySourceDirectories(directoryChain);
+  children.sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0));
+  const localObservations = [],
+    result = children.flatMap(({ child, info }) =>
+      releaseSourceInputsForRepair(root, child, localObservations, pass, info, directoryChain),
+    );
+  const before = identity(stat),
+    observed = { path: relative, kind: 'directory', identity: before };
+  verifySourceDirectories(directoryChain);
+  requireRelease(
+    releaseJSON(before) === releaseJSON(identity(lstatSync(file))),
+    'Source directory changed during scan',
+  );
+  localObservations.push(observed);
+  state.paths.set(key, { entries: result, observations: localObservations });
+  observations?.push(...localObservations);
+  return result.slice();
+}
+export function releaseSourceInputs(root, relative, observations, repairPass) {
+  if (repairPass) return releaseSourceInputsForRepair(root, relative, observations, repairPass);
   const file = releasePath(root, relative),
     stat = lstatSync(file);
   if (stat.isFile()) {
@@ -286,7 +446,7 @@ export function releaseSourceInputs(root, relative, observations) {
   return result;
 }
 
-export function releaseSourceBinding(root = releaseRootDefault, withObservations = false) {
+export function releaseSourceBinding(root = releaseRootDefault, withObservations = false, repairPass) {
   const observations = withObservations ? [] : undefined;
   const entries = [
     'package.json',
@@ -298,7 +458,7 @@ export function releaseSourceBinding(root = releaseRootDefault, withObservations
     'tooling/agent/release-ci-evidence.mjs',
     'tooling/agent/native-ci-delivery.mjs',
     'tooling/agent/controllers/forward-review-proof.mjs',
-  ].flatMap((relative) => releaseSourceInputs(root, relative, observations));
+  ].flatMap((relative) => releaseSourceInputs(root, relative, observations, repairPass));
   return { source_binding: releaseDigest(JSON.stringify(entries)), entries, ...(observations ? { observations } : {}) };
 }
 

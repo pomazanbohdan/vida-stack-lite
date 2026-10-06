@@ -118,20 +118,24 @@ function boundMaintenance(root, config, plan, selectorBytes) {
 
 /** Bundle-owned narrow current-v1 reconciliation; no historical ledger or observation rewrite. */
 export async function runReconcileArtifacts(args, { onPhase } = {}) {
-  if (args.indexOf('--kind') >= 0 && args[args.indexOf('--kind') + 1] === 'release-retarget') {
+  const kindIndex = args.indexOf('--kind'),
+    kind = kindIndex >= 0 ? args[kindIndex + 1] : undefined;
+  if (kind === 'native-delivery-evidence') {
+    const { runNativeDeliveryEvidenceRepair } = await import('./repair-native-delivery-evidence.mjs');
+    return runNativeDeliveryEvidenceRepair(args, { onPhase });
+  }
+  if (kind === 'release-retarget') {
     const { runReleaseRetarget } = await import('./repair-release-retarget.mjs');
     return runReleaseRetarget(args, { onPhase });
   }
-  if (args.includes('--kind') && args.includes('work-state')) return runWorkStateRepair(args);
-  if (args.includes('--kind') && args.includes('documentation-policy'))
-    return runDocumentationPolicyTransition(args, { onPhase });
-  if (args.includes('--kind') && args.includes('runtime-config')) return runRuntimeConfigRebind(args, { onPhase });
-  if (args.includes('--kind') && args.includes('synthesis-qualification'))
-    return runSynthesisQualificationRepair(args, { onPhase });
-  if (args.includes('--kind') && args.includes('synthesis-observation-correction'))
-    return runSynthesisObservationCorrection(args);
-  if (args.includes('--kind') && args.includes('runtime-code')) return runRuntimeCodeRebind(args);
-  if (args.includes('--kind')) return runReadOnlyDispatchRepair(args);
+  if (kind === 'work-state') return runWorkStateRepair(args);
+  if (kind === 'documentation-policy') return runDocumentationPolicyTransition(args, { onPhase });
+  if (kind === 'runtime-config') return runRuntimeConfigRebind(args, { onPhase });
+  if (kind === 'synthesis-qualification') return runSynthesisQualificationRepair(args, { onPhase });
+  if (kind === 'synthesis-observation-correction') return runSynthesisObservationCorrection(args);
+  if (kind === 'runtime-code') return runRuntimeCodeRebind(args);
+  if (kind === 'readonly-dispatch') return runReadOnlyDispatchRepair(args);
+  if (kind !== undefined) required(false, 'unsupported artifact repair kind');
   const values = parse(args);
   const root = path.resolve(values['--project-root']);
   const access = requireSafeRepositoryAccess(root);

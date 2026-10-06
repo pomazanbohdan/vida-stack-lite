@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { releaseDigest as sha } from '../bin/local-release-artifacts.mjs';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { invokeNestedObservedControllerChild } from '../bin/development-controller-observation.mjs';
 import { initializeProjectFromBundle } from '../bin/init-core.mjs';
 import { initializeProject } from '../bin/init.mjs';
 import { inspectScope } from '../bin/scope.mjs';
@@ -76,8 +79,8 @@ try {
     newPath,
   ]);
   const source = inspected.source ?? inspected.snapshot ?? inspected;
-  const digest = inspected.scope_digest ?? source.digest;
-  assert.match(digest, /^[a-f0-9]{64}$/);
+  const scopeDigest = inspected.scope_digest ?? source.digest;
+  assert.match(scopeDigest, /^[a-f0-9]{64}$/);
   const work = 'controller-qualified-task',
     session = 'controller-qualification-session',
     pointer = 'fixture:actual-controller-qualification';
@@ -86,7 +89,7 @@ try {
     schema: 'ImplementationScope/v1',
     scope_id: work + '-scope',
     work_id: work,
-    source_revision: digest,
+    source_revision: scopeDigest,
     ac_ids: ['AC-CONTROLLER'],
     allowed_paths: [newPath],
     implementation_paths: [newPath],
@@ -109,7 +112,7 @@ try {
     ac_ids: scope.ac_ids,
     source: 'fixture:controller',
     scope: scope.scope_id,
-    source_revision: digest,
+    source_revision: scopeDigest,
     contracts: [
       {
         id: 'AC-CONTROLLER',
@@ -125,7 +128,7 @@ try {
     user_instruction_ref: pointer,
     work_id: work,
     attempt: 1,
-    scope_digest: digest,
+    scope_digest: scopeDigest,
     config_digest: runtimeConfigDigest(config),
     workflow_id: 'task_execution',
     stage_ids: ['develop_task'],
@@ -172,7 +175,7 @@ try {
     '--attempt',
     '1',
     '--scope-digest',
-    digest,
+    scopeDigest,
     '--team',
     'default-development',
     '--kind',
@@ -251,6 +254,96 @@ try {
   assert.equal(loadRuntimeConfig(root).runtime.bundle, 'packages/agent');
   // Parent verifies the complete installed package before and after this child returns.
   assert.ok(existsSync(path.join(root, newPath)));
+
+  // Exercise the additive repair route from this immutable package against a
+  // separate synthetic target. It cannot touch the controller target or native installation.
+  const repairRoot = path.join(scratch, 'native-delivery-repair-target');
+  mkdirSync(repairRoot);
+  const repairSources = {
+    'package.json': JSON.stringify({ name: 'repair-fixture', version: '1.0.0' }) + '\n',
+    'AGENT.sidecar.md': '# Synthetic repair source\n',
+    'agent-runtime.config.v1.yaml': 'version: 1\n',
+    'tooling/agent/release-local.mjs': 'export const fixture = true;\n',
+    'tooling/agent/release-assurance.mjs': 'export const fixture = true;\n',
+    'tooling/agent/release-ci-evidence.mjs': 'export const fixture = true;\n',
+    'tooling/agent/native-ci-delivery.mjs': 'export const fixture = true;\n',
+    'tooling/agent/controllers/forward-review-proof.mjs': 'export const fixture = true;\n',
+    'packages/agent/package.json': JSON.stringify({ name: 'vida-agent', version: '0.1.2', private: true }) + '\n',
+  };
+  for (const [relative, contents] of Object.entries(repairSources)) {
+    const file = path.join(repairRoot, relative);
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, contents);
+  }
+  const repairOperation = 'controller-native-repair',
+    releaseRoot = `.agent/work/agent-local-release/${repairOperation}`,
+    version = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')).version,
+    archive = Buffer.from('synthetic immutable-controller repair archive'),
+    archivePath = path.join(repairRoot, '.tmp/releases', repairOperation, `vida-agent-${version}.tgz`),
+    archiveHash = sha(archive);
+  mkdirSync(path.dirname(archivePath), { recursive: true });
+  writeFileSync(archivePath, archive);
+  const pack = [
+    {
+      name: 'vida-agent',
+      version,
+      filename: `vida-agent-${version}.tgz`,
+      integrity: 'sha512-' + createHash('sha512').update(archive).digest('base64'),
+      files: [{ path: 'package/package.json' }],
+    },
+  ];
+  const oldEntries = [{ path: 'AGENT.sidecar.md', sha256: sha('older source') }],
+    oldBinding = sha(JSON.stringify(oldEntries)),
+    release = {
+      schema: 'VidaLocalReleaseState/v1',
+      operation_id: repairOperation,
+      version,
+      status: 'awaiting_assurance',
+      pid: 1,
+      elapsed_ms: 1,
+      source_binding: oldBinding,
+      pack_metadata: pack,
+      tarball_sha256: archiveHash,
+    };
+  save(path.join(repairRoot, releaseRoot, 'release.json'), release);
+  save(path.join(repairRoot, '.agent/work/agent-local-release/pending.json'), release);
+  save(path.join(repairRoot, releaseRoot, 'source-seal.json'), {
+    operation_id: repairOperation,
+    version,
+    source_binding: oldBinding,
+    entries: oldEntries,
+    tarball_sha256: archiveHash,
+    sealed_fingerprint: sha(JSON.stringify([oldBinding, archiveHash])),
+  });
+  const repairCommand = (mode) => {
+    const args = [
+      path.join(packageRoot, 'bin/reconcile-artifacts.mjs'),
+      '--kind',
+      'native-delivery-evidence',
+      '--mode',
+      mode,
+      '--project-root',
+      repairRoot,
+      '--operation',
+      repairOperation,
+    ];
+    if (mode === 'plan') args.push('--actor', 'immutable qualification fixture');
+    const result = invokeNestedObservedControllerChild({
+      role: `qualifier-repair-${mode}`,
+      executable: process.execPath,
+      args,
+      cwd: packageRoot,
+      timeout: 30_000,
+    });
+    assert.equal(result.error, undefined);
+    assert.equal(result.signal, null);
+    assert.equal(result.status, 0, result.stderr?.toString('utf8'));
+    return JSON.parse(result.stdout.toString('utf8'));
+  };
+  assert.equal(repairCommand('inspect').status, 'stale_qualification_repairable');
+  assert.equal(repairCommand('plan').status, 'planned');
+  assert.equal(repairCommand('apply').status, 'awaiting_new_qualification');
+  assert.equal(existsSync(path.join(repairRoot, releaseRoot, 'source-seal.json')), false);
   console.log(
     JSON.stringify({
       schema: 'DevelopmentControllerQualification/v1',
@@ -266,6 +359,7 @@ try {
         'authorization-denial',
         'actual-source-report',
         'unchanged-controller',
+        'native-delivery-evidence-repair-route',
       ],
       runtime_acceptance: false,
       fixture_root: scratch,

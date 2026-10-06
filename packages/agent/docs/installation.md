@@ -336,3 +336,48 @@ consumer execution uses the executable itself.
 Local runtime resource checks use `node bin/bun.mjs run test:resources:pinned`.
 Build and installation checks belong to CI/CD. Missing current CI/CD receipts
 remain delivery GAPs; local resource proof does not establish installed acceptance.
+
+## Quick Windows build and system-command reference
+
+The operator-installed native command was observed from artifact 11350491741, build run 37321931714/attempt1: version 0.1.2, embedded Bun 1.4.2. At the completed installation observation, the exact installed executable, retained executable, manifest and discovered instructions matched the selected artifact and then-current source. Later Source changes, including this guide, are not claimed inside that artifact. Old npm shims remain. This is actual physical command installation; full native release qualification, canonical UPDATE01 completion and Runtime acceptance remain separately open.
+
+Build owner: `.github/workflows/agent-native-delivery.yml` invokes the pinned repository producer `tooling/agent/native-ci-delivery.mjs` through `native-build -> emit-build -> upload`. It emits the exact six-file artifact; it does not run qualification. Dispatch requires the current controller-issued request, approved workflow/provider and full current committed Source-byte checks. Do not manually calculate integrity values or re-run an old exclusive dispatch script. Use the supported current lifecycle/controller route for a fresh build; the reusable qualification/update wiring repair is still pending.
+
+The following command only inspects an already issued run; it is not a fresh-build or update command:
+
+```powershell
+gh run view RUN_ID --repo pomazanbohdan/vida-stack-lite --json status,conclusion,url
+```
+
+Download the exact selected artifact to a NEW directory via the Actions artifact link/current qualified retrieval controller. Require exactly: native exe, original manifest.json, original candidate.json, actual native-build.result.json, formed tgz and install-windows.ps1. Retain failed/UNKNOWN transport and operation custody; do not reuse a partial directory or automatically retry an uncertain effect.
+
+The completed installation used an absolute installer path. For a future explicitly authorized FIRST native installation on a destination without an existing product root, select the newly extracted, verified six-file artifact directory and use its absolute installer path. `EXTRACTED_ARTIFACT_DIRECTORY` below is that new directory, not the existing installed tree. This example is a first-install reference; do not run it again on the already-installed system:
+
+```powershell
+$artifactDirectory = (Resolve-Path -LiteralPath 'EXTRACTED_ARTIFACT_DIRECTORY').Path
+$installerPath = Join-Path $artifactDirectory 'install-windows.ps1'
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $installerPath
+```
+
+The execution-policy setting is process-scoped. The installer preserves user data/npm shims and leaves persistent PATH unchanged. It rejects an existing product root; DO NOT use it as an upgrade command for an existing native installation or delete that root to make it pass. The already-installed system now requires the supported qualified release owner for subsequent upgrades; its currently missing qualification/controller wiring remains a real gap.
+
+The completed operator update explicitly published the native user-bin directory to User PATH. The installer itself does not do this. For reliable postchecks regardless of an existing terminal's inherited PATH, call the exact installed executable:
+
+```powershell
+$nativeCommand = Join-Path $env:LOCALAPPDATA 'Programs\vida-agent\bin\vida-agent.exe'
+& $nativeCommand version
+& $nativeCommand instructions --path development-lifecycle
+& $nativeCommand install --check
+```
+
+Expected primary command: `%LOCALAPPDATA%\Programs\vida-agent\bin\vida-agent.exe`. Installed prerequisite output must report `prerequisites_valid`, pin1.4.2 and `runtime=embedded`. After a declared PATH publication, refresh this terminal and assert which command wins; simply listing all commands does not prove native precedence:
+
+```powershell
+$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')
+$resolvedCommand = Get-Command vida-agent -ErrorAction Stop
+if ($resolvedCommand.CommandType -ne 'Application' -or $resolvedCommand.Source -ne $nativeCommand) { throw 'vida-agent does not resolve to the declared native executable.' }
+```
+
+New terminals pick up the published user PATH; existing parent processes may retain their old environment. These postchecks prove command/prerequisite behavior, not the six missing native qualification checks or full release acceptance. No general fresh-build or subsequent system-update command is established while lifecycle/controller wiring remains open.
+
+Canonical subsequent system update owner remains `tooling/agent/release-local.mjs#installNativeRelease` through actual qualified `executeRelease`/assurance, exact prior/candidate custody and effective PATH/postproof. Neither npm install nor a saved success flag is a supported substitute. The repair-first plan addresses distinct build/local-test origins before that route can be declared generally working.

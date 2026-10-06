@@ -174,6 +174,28 @@ Opt-in bounded stage markers expose install and snapshot elapsed time. These
 changes do not claim a speed improvement without comparable measurement.
 No current controller or successful qualification is inferred from this contract.
 
+Each controller child runs under one exclusive compound reservation at
+`<controllerRoot>/observations/`. The controller retains the exact executable
+and arguments, parent and child working directories, pinned runtime context,
+start and end times, terminal status, signal or spawn error, and the complete
+stdout and stderr bytes before returning, summarizing or throwing. These records
+are sensitive controller-owned operator evidence: the environment map and its
+values are not persisted, but captured arguments, paths or streams may contain
+sensitive text. The portable core does not define or enforce the host's
+filesystem authorization policy and makes no OS-principal confidentiality
+guarantee. The public CLI keeps its existing bounded, redacted diagnostics. The
+immutable qualification's three declared repair children are nested under the
+active parent reservation. The parent completes only after every declared child
+has a complete retained receipt. Completed observations remain after
+qualification-fixture cleanup. An incomplete or `UNKNOWN` child outcome, a
+collision, or failed receipt persistence retains the exclusive reservation
+across process restart and blocks every independent child launch. There is no
+implicit retry, alternate observation root or cleanup path; the existing
+lifecycle must establish a supported disposition. Controller and qualification
+child timeout and output bounds remain unchanged. These receipts are Source
+evidence and grant no admission, authorization, delivery, installation or
+Runtime acceptance.
+
 Initial controller-root inspection has a separate fail-closed diagnostic. If only
 the first `canonicalDirectory(controllerRoot)` call throws a typed `ENOENT`, the
 inspector retains the original filesystem error on `cause` and reports
@@ -524,6 +546,60 @@ The local assurance owner also freezes tests.json and the three lane logs,
 rechecks their bytes after CI observation and rechecks physical input identities.
 Identical input sets share one read; a changed operational input cannot reuse
 earlier local proof even when it is outside the declared Source binding.
+
+### Stale native qualification reset
+
+The packaged `reconcile-artifacts --kind native-delivery-evidence` command has
+one fixed repair: remove stale derived qualification joins from an existing
+uninstalled operation. It accepts only an `awaiting_assurance` operation whose
+pending pointer, journal, version and current package version agree, with no
+`install_started`. Its current six-field source seal must identify that same
+operation and version, bind the original release and archive, and name Source
+bytes that differ from current Source. A current seal, missing seal, malformed
+record, busy admission or operation lock, active installation or unknown
+effect blocks the repair.
+
+The command preserves the original operation, release, pending and successful
+pointers, archive, native manifest and installer, test inputs and logs, CI
+requests and observed results, retarget custody, review and reverse evidence,
+scope, CLEAR and operational state. Its complete dependency closure records
+physical file identity, bytes, directory membership and absences from the
+existing readers. Large binary inputs use bounded binary observations; missing
+results or observations remain GAPs.
+
+When the dependency closure reads a `VidaStandaloneBuild/v1` manifest, each
+`inputs` entry must contain exactly `path`, `bytes` and `sha256`. The byte count
+is a safe nonnegative integer and the digest is a lowercase SHA-256 value. The
+path resolves relative to the agent package through the existing strict
+reference boundary. Other `inputs` arrays remain string references, and
+`pack_metadata` retains its existing path context.
+
+`inspect` reads current state. `plan` freezes attribution, release identity,
+Source and dependency observations, and beforeimages or absences for the fixed
+`tests.json`, `source-seal.json` and `assurance.json` files. It reserves an
+operation-owned repair namespace and stores complete custody before removal.
+An incomplete or foreign namespace is UNKNOWN and is not reconstructed.
+`apply` and `resume` use the release admission and operation locks, recheck the
+frozen inputs under those locks, and durably record progress before each
+atomic file removal. A retry accepts only the exact beforeimage or expected
+absent postimage with intact custody and unchanged dependencies. Unexpected
+bytes or missing custody preserve UNKNOWN. The three removals are recoverable
+steps, not one filesystem transaction.
+
+The synchronous local test-evidence, source-seal and assurance writers acquire
+the same admission lock followed by the operation lock. They recheck pending
+operation and repair state under both locks. A writer is denied while a repair
+is active or UNKNOWN; after completion it may write only genuine current proof.
+
+Success requires all three derived joins to be absent, every original byte and
+absence to remain in custody, the protected closure and pending operation to
+remain unchanged, and the repair state to be complete. The result reports
+`awaiting_new_qualification` and explicit missing-evidence GAPs. This repairs
+consistency only. It does not qualify a payload, grant Source rights, install a
+native package, accept a Runtime, create missing results or observations, or
+change existing release artifact formats. Initial qualification uses synthetic
+fixtures; original-target execution remains inspect-only until separately
+admitted.
 
 The optional GitHub adapter reads exact run attempt, immutable workflow definition,
 required job/steps and artifact metadata under explicit controller policy.
@@ -972,6 +1048,15 @@ route with exact `--mode prepare|begin|complete|inspect`, `--project-root` and
 journal evidence despite the supported desired-configuration drift. Mixed
 ordinary execution flags deny. JSON input is a bounded export from the trusted
 caller's history, not an authentication token or another canonical artifact.
+When current configured sources no longer reproduce an original request, the
+caller may include its exact `originalContexts` collection. Each entry binds one
+expected action, wave, stage, work and attempt to a strict `ConfiguredContext/v1`
+body. The inspector validates its selected sources/skills, byte and excerpt
+limits, self digest, and complete context/file bindings against the canonical
+request retained in the journal and engine. Missing, duplicate, extra, foreign,
+or altered bodies deny; a truncated excerpt never proves the full source bytes.
+The collection remains in caller history and in-memory validation, and is
+excluded from the returned recovery request and persisted Host bindings.
 
 `prepare` freezes caller session/controller, attributable instruction reference,
 original repository/projects/work/attempt/historical owner, source scope,
@@ -987,16 +1072,20 @@ current bytes over exactly their declared paths, including prior authorized
 in-scope corrections. `begin` and `complete` compare bytes to that prepared
 current snapshot. Current bytes never replace historical authority.
 
-The caller retains the full returned request in its same-thread history.
-`begin` requires that exact body and records `commit_unknown` before the actual
-native read-only invocation. The active caller owns invocation and observation;
-Core does not dispatch tools. `complete` requires the matching action/session/
-controller, native agent/tool reference and full observed result. A matching
-terminal PASS or FAIL stores its result digest as `applied`. Identical completion
-retry is safe; altered results reject. Timeout, disconnect or missing observation
-leaves UNKNOWN and cannot authorize reissue. After restart, only the exact
-retained request body can recover inspection or settlement; missing custody
-does not permit reconstruction. Result bodies also stay in the caller history.
+The caller retains the full returned request and any required original-context
+collection in its same-thread history, then resupplies them unchanged for
+`inspect`, `begin`, `complete` and identical retries, including after restart.
+`begin` requires that exact request and records `commit_unknown` before the
+actual native read-only invocation. The active caller owns invocation and
+observation; Core does not dispatch tools. `complete` requires the matching
+action/session/controller, native agent/tool reference and full observed
+result. A matching terminal PASS or FAIL stores its result digest as `applied`.
+Identical completion retry is safe; altered results reject. Timeout, disconnect
+or missing observation leaves UNKNOWN and cannot authorize reissue. Lost
+original-context custody after begin also leaves UNKNOWN and does not permit
+reconstruction or reissue. Result and original-context bodies stay in caller
+history; current Source is independently snapshotted at prepare and checked
+again at begin/complete.
 
 These checks establish cooperative report consistency, not independent native
 tool-origin attestation or Runtime acceptance. Both PASS and FAIL grant no Source
