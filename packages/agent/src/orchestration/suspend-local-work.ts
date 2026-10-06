@@ -29,6 +29,7 @@ type SuspensionInput = {
   readonly requestIntent: 'linked_correction' | 'next_work';
   readonly documentationContext: DocumentationVerificationContext;
   readonly config?: AgentRuntimeConfig;
+  readonly expectedMaintenanceGeneration?: number;
 };
 
 export function suspendLocalWork(input: SuspensionInput): HostStateSnapshot {
@@ -66,7 +67,7 @@ function requireCompletedReadonly(input: SuspensionInput): void {
 
 type HistoricalSuspensionInput = SuspensionInput & {
   readonly config: AgentRuntimeConfig;
-  readonly predicate: 'completed_readonly' | 'unknown_readonly' | 'settled_writer_failed_validators';
+  readonly predicate: 'completed_readonly' | 'unknown_readonly' | 'settled_writer_failed_validators' | 'unissued_prepared';
   readonly expectedMaintenanceGeneration: number;
   readonly preimage?: ScopedSourceSnapshot;
 };
@@ -168,7 +169,15 @@ function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
       input.preimage === undefined && state.source_scope?.digest === work.binding.work_source_revision,
       'historical readonly scope differs',
     );
-    if (input.predicate === 'completed_readonly') requireCompletedReadonly(input);
+    if (input.predicate === 'unissued_prepared')
+      requireSuspension(
+        input.journal.resume_status === 'ready' && state.completed.length === 0 &&
+          state.step_id !== null && state.items.length > 0 && work.execution.assignment_attempts.length === 0 &&
+          state.items.every((item) => item.issue_id === null && item.observation === null &&
+            !item.host_reservation && !item.research_activation && !item.research_normalization),
+        'historical unissued owner has issued or reserved activity',
+      );
+    else if (input.predicate === 'completed_readonly') requireCompletedReadonly(input);
     else
       requireSuspension(
         input.predicate === 'unknown_readonly' &&
@@ -188,6 +197,8 @@ export function suspendHistoricalOwnerWork(input: HistoricalSuspensionInput): Ho
     input,
     input.predicate === 'completed_readonly',
     input.predicate === 'settled_writer_failed_validators',
+    false,
+    input.predicate === 'unissued_prepared',
   );
 }
 
@@ -198,6 +209,7 @@ export function inspectHistoricalOwnerWork(input: HistoricalSuspensionInput): Ho
     input.predicate === 'completed_readonly',
     input.predicate === 'settled_writer_failed_validators',
     true,
+    input.predicate === 'unissued_prepared',
   );
 }
 
@@ -206,6 +218,7 @@ function suspendLocalWorkCore(
   completedReadonly: boolean,
   settledWriter = false,
   inspectOnly = false,
+  unissuedPrepared = false,
 ): HostStateSnapshot {
   const {
     store,
@@ -231,6 +244,9 @@ function suspendLocalWorkCore(
     'native session or attributed request pointer is invalid',
   );
   const host = store.readHostStateSnapshot(identity);
+  requireSuspension(input.expectedMaintenanceGeneration === undefined ||
+    host.maintenanceGeneration === input.expectedMaintenanceGeneration,
+  'maintenance generation changed after inspection');
   requireSuspension(
     identity.project_ids.length === 1 &&
       documentationContext.repository_id === identity.repository_id &&
@@ -308,7 +324,7 @@ function suspendLocalWorkCore(
       ),
     'native action or host assignment is still active or uncertain',
   );
-  const operationId = `${settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
+  const operationId = `${unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
     {
       work_id: identity.work_id,
       nativeSessionHandle,
@@ -449,7 +465,9 @@ function suspendLocalWorkCore(
       ...work.lifecycle,
       revision: work.revision + 1,
       next_action:
-        requestIntent === 'linked_correction'
+        unissuedPrepared
+          ? 'The original unissued frontier remains inert; continuation needs normal admission.'
+          : requestIntent === 'linked_correction'
           ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
           : 'Prior work awaits user testing; new work must be admitted separately.',
     },
@@ -505,7 +523,7 @@ function suspendLocalWorkCore(
   return store.compareAndSwapHostState({
     expectedWork,
     expectedLedger,
-    expectedMaintenanceGeneration: host.maintenanceGeneration,
+    expectedMaintenanceGeneration: input.expectedMaintenanceGeneration ?? host.maintenanceGeneration,
     documentationContext,
     expectedSessionJournal: { attempt: journal.state.attempt, version: journal.version },
     nextWork,

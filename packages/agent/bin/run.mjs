@@ -2669,16 +2669,17 @@ async function releaseCompletedReadonly(args) {
   }
 }
 
-async function releaseHistoricalOwner(args) {
+async function releaseHistoricalOwner(args, unissuedOwner = false) {
   const values = {};
-  if (args.length !== 10) throw Error('Historical release requires mode, exact root, owner, baseline and request');
+  if (![10, 12].includes(args.length)) throw Error('Historical release requires mode, exact root, owner, baseline and request');
   for (let index = 0; index < args.length; index += 2) {
     if (Object.hasOwn(values, args[index]) || !args[index + 1]) throw Error('Historical release arguments invalid');
     values[args[index]] = args[index + 1];
   }
   if (
     Object.keys(values).sort().join('|') !==
-      ['--mode', '--project-root', '--native-session-handle', '--baseline-config', '--request'].sort().join('|') ||
+      ['--mode', '--project-root', '--native-session-handle', '--baseline-config', '--request',
+        ...(Object.hasOwn(values, '--context-history') ? ['--context-history'] : [])].sort().join('|') ||
     !['inspect', 'apply'].includes(values['--mode']) ||
     !path.isAbsolute(values['--project-root'])
   )
@@ -2688,7 +2689,9 @@ async function releaseHistoricalOwner(args) {
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { inspectHistoricalOwnerContext } = await import('./runtime-config-rebind.mjs');
-  const { HostStateStore } = await import('../src/host-state.ts');
+  const { HostStateStore, inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
+  const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
+  const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const { Database } = await import('bun:sqlite');
   const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
   const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
@@ -2716,13 +2719,37 @@ async function releaseHistoricalOwner(args) {
   if (writer) expectedKeys.push('preimage_ref');
   if (
     Object.keys(base).sort().join('|') !== expectedKeys.sort().join('|') ||
-    base.schema !== 'HistoricalOwnerReleaseRequest/v1' ||
-    !['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators'].includes(base.predicate) ||
+    base.schema !== (unissuedOwner ? 'UnissuedOwnerReleaseRequest/v1' : 'HistoricalOwnerReleaseRequest/v1') ||
+    !(unissuedOwner ? ['unissued_prepared'] : ['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators']).includes(base.predicate) ||
     !['next_work', 'linked_correction'].includes(base.requestIntent) ||
     (mode === 'inspect' ? suppliedInspection !== undefined : !suppliedInspection)
   )
     throw Error('Historical release request shape or predicate invalid');
-  const original = inspectHistoricalOwnerContext(root, values['--baseline-config'], base.identity, base.attempt);
+  const historyRef = values['--context-history'];
+  let historyBytes, originalContexts;
+  if (historyRef !== undefined) {
+    if (!relative(historyRef)) throw Error('Historical context history path differs');
+    historyBytes = access.readBytes(historyRef, 'original caller context export');
+    if (historyBytes.length > 1024 * 1024) throw Error('Historical context history exceeds bound');
+    const body = JSON.parse(historyBytes), current = loadRuntimeConfig(root);
+    if (body.schema !== 'VidaAgentRunResult/v1' || !Array.isArray(body.next_actions))
+      throw Error('Historical context history must be an original run result');
+    const host = inspectHostWorkspaceDatabase(sessionHandoffDatabasePath(root, current),
+      deriveWorkspaceId(current.repository.repository_id, root));
+    const journals = host.journals.filter((entry) => entry.work_id === base.identity.work_id && entry.attempt === base.attempt);
+    if (journals.length !== 1) throw Error('Historical context history Journal differs');
+    const state = journals[0].state, items = [...state.items, ...state.completed.flatMap((wave) => wave.items)];
+    const contexts = body.next_actions.map((action) => action.configured_context).filter((context) => context?.schema === 'ConfiguredContext/v1');
+    if (!contexts.length || contexts.length > 256) throw Error('Historical context history is missing or excessive');
+    originalContexts = contexts.map((context) => {
+      const matches = items.filter((item) => item.request.configured_context_digest === context.digest);
+      if (matches.length !== 1) throw Error('Historical context history action differs');
+      const request = matches[0].request;
+      return { action_id: request.action_id, wave_index: request.wave_index, stage_id: request.stage_id,
+        work_id: state.work_id, attempt: state.attempt, context };
+    });
+  }
+  const original = inspectHistoricalOwnerContext(root, values['--baseline-config'], base.identity, base.attempt, originalContexts);
   let preimage, preimageBytes;
   if (writer) {
     if (!relative(base.preimage_ref)) throw Error('Historical preimage reference invalid');
@@ -2791,7 +2818,7 @@ async function releaseHistoricalOwner(args) {
       journal: {
         state: original.journal.state,
         version: original.journal.version,
-        resume_status: pending.length ? 'issued_outcome_uncertain' : 'ready_to_resume',
+        resume_status: unissuedOwner ? 'ready' : pending.length ? 'issued_outcome_uncertain' : 'ready_to_resume',
       },
       expectedWork: mode === 'apply' ? suppliedInspection.expectedWork : inspection.expectedWork,
       expectedLedger: mode === 'apply' ? suppliedInspection.expectedLedger : inspection.expectedLedger,
@@ -2822,12 +2849,14 @@ async function releaseHistoricalOwner(args) {
     }
     if (
       !access.readBytes(requestPath, 'historical request stability').equals(requestBytes) ||
+      (historyBytes && !access.readBytes(historyRef, 'historical context stability').equals(historyBytes)) ||
       (writer && !access.readBytes(base.preimage_ref, 'original preimage stability').equals(preimageBytes))
     )
       throw Error('Historical frozen request/preimage changed before CAS');
-    const latest = inspectHistoricalOwnerContext(root, values['--baseline-config'], base.identity, base.attempt);
+    const latest = inspectHistoricalOwnerContext(root, values['--baseline-config'], base.identity, base.attempt, originalContexts);
     if (
       ['baseline_binding', 'receipt_binding', 'engine_binding'].some((key) => latest[key] !== original[key]) ||
+      latest.maintenanceGeneration !== inspection.expectedMaintenanceGeneration ||
       canonicalJsonDigest(latest.current) !== canonicalJsonDigest(original.current)
     )
       throw Error('Historical original authority changed before CAS');
@@ -2917,6 +2946,11 @@ export async function run(args = process.argv.slice(2)) {
     if (args[0] !== '--release-historical-owner' || args[1] !== 'true')
       throw Error('Historical release requires its exact separate signal');
     return releaseHistoricalOwner(args.slice(2));
+  }
+  if (args.includes('--release-unissued-owner')) {
+    if (args[0] !== '--release-unissued-owner' || args[1] !== 'true')
+      throw Error('Unissued owner release requires its exact separate signal');
+    return releaseHistoricalOwner(args.slice(2), true);
   }
   if (args.includes('--retire-interrupted-source-owner')) {
     if (

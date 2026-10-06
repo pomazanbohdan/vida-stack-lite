@@ -1159,6 +1159,24 @@ may release only bound unsealed INTAKE preparation with no completed wave,
 observation, issue, reservation, host assignment or effect. Preserve that attempt;
 admit successor work separately. Unknown issued readonly work is not this case.
 
+`run --release-unissued-owner true` exposes that finite case with
+`UnissuedOwnerReleaseRequest/v1` and the explicit `unissued_prepared` predicate.
+Inspect and apply use the original owner's handle, baseline engine, scope and
+Work/Ledger/Journal/maintenance versions. The existing release transaction keeps
+the whole unissued frontier inert. It grants no Source rights, new execution,
+configuration adoption or task acceptance. The historical request format and
+its completed/unknown predicates remain unchanged.
+
+Both historical owner routes may select `--context-history` with an existing
+retained `VidaAgentRunResult/v1` body. The caller's configured contexts bind to
+one canonical journal action each and pass the existing strict context and
+engine checks. The current documentation is not substituted for those retained
+bodies. Extra, foreign or changed bodies deny. The export remains cooperative
+evidence; it does not authenticate a caller or authorize lease disposal.
+This reuses [Mastra's retained workflow snapshots](https://mastra.ai/docs/workflows/snapshots)
+for state consistency. Host ownership and the existing SQLite transaction remain
+the authority for lease release; the engine snapshot is never rewritten.
+
 Reports of failed native research or synthesis remain durable terminal
 observations. They create no successful research artifact and cannot satisfy a
 success gate. An exact action, issue and observation retry must return the current
