@@ -23,6 +23,7 @@ import { suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-w
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.mjs';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { MastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
@@ -1279,12 +1280,12 @@ function historicalFixture(
   const preimage = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), paths);
   f.put('original-scope.json', json(preimage));
   const context = { work_id: identity.work_id, attempt: 1, scope_digest: preimage.digest },
-    workflow = 'task_execution';
+    workflow = predicate === 'settled_research' ? 'information_research_light' : 'task_execution';
   const runId = sessionBridgeRunId(f.workspace, context, workflow),
     selection = {
       team: 'default-development',
-      kind: 'task',
-      intent: 'task_execution',
+      kind: predicate === 'settled_research' ? 'research' : 'task',
+      intent: predicate === 'settled_research' ? 'information_research' : 'task_execution',
       project: 'agent',
       risk_flags: [],
       labels: [],
@@ -1391,20 +1392,19 @@ function historicalFixture(
       const item = {
         request,
         issue_id: predicate === 'unissued_prepared' ? null : randomUUID(),
-        observation:
-          ['unknown_readonly', 'unissued_prepared'].includes(predicate)
-            ? null
-            : {
-                schema: 'VidaSessionObservation/v1',
-                action_id: request.action_id,
-                issue_id: null,
-                agent_id: 'fixture-' + action.role,
-                tool_call_ref: 'fixture:' + action.action_id,
-                status: waveIndex === 2 ? 'reported_failed' : 'reported_complete',
-                summary,
-                output_digest: canonicalJsonDigest(summary),
-                evidence_refs: ['local://fixture/terminal'],
-              },
+        observation: ['unknown_readonly', 'unissued_prepared'].includes(predicate)
+          ? null
+          : {
+              schema: 'VidaSessionObservation/v1',
+              action_id: request.action_id,
+              issue_id: null,
+              agent_id: 'fixture-' + action.role,
+              tool_call_ref: 'fixture:' + action.action_id,
+              status: waveIndex === 2 ? 'reported_failed' : 'reported_complete',
+              summary,
+              output_digest: canonicalJsonDigest(summary),
+              evidence_refs: ['local://fixture/terminal'],
+            },
       };
       if (item.observation) item.observation.issue_id = item.issue_id;
       if (waveIndex === 1)
@@ -1486,7 +1486,12 @@ function historicalFixture(
   }
   f.put('agent-runtime.config.v1.yaml', f.target);
   const request = {
-    schema: predicate === 'unissued_prepared' ? 'UnissuedOwnerReleaseRequest/v1' : 'HistoricalOwnerReleaseRequest/v1',
+    schema:
+      predicate === 'settled_research'
+        ? 'SettledResearchOwnerReleaseRequest/v1'
+        : predicate === 'unissued_prepared'
+          ? 'UnissuedOwnerReleaseRequest/v1'
+          : 'HistoricalOwnerReleaseRequest/v1',
     identity,
     attempt: 1,
     userRequestPointer: 'fixture:human-owner-release',
@@ -1496,7 +1501,11 @@ function historicalFixture(
   };
   f.put('release.json', json(request));
   const args = (mode) => [
-    predicate === 'unissued_prepared' ? '--release-unissued-owner' : '--release-historical-owner',
+    predicate === 'settled_research'
+      ? '--release-settled-research-owner'
+      : predicate === 'unissued_prepared'
+        ? '--release-unissued-owner'
+        : '--release-historical-owner',
     'true',
     '--mode',
     mode,
@@ -1557,14 +1566,17 @@ test('public historical inspect runs from unrelated cwd while the ordinary recei
 
 test('public unissued owner release preserves its inert frontier and denies completed-readonly fiction', async () => {
   const { f, args, state, request } = historicalFixture('unissued_prepared'),
-    before = databaseState(f), engine = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+    before = databaseState(f),
+    engine = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
   const legacy = { ...request, schema: 'HistoricalOwnerReleaseRequest/v1', predicate: 'completed_readonly' };
   f.put('release.json', json(legacy));
-  const oldArgs = args('inspect'); oldArgs[0] = '--release-historical-owner';
+  const oldArgs = args('inspect');
+  oldArgs[0] = '--release-historical-owner';
   await expect(run(oldArgs)).rejects.toThrow('completed readonly');
   expect(databaseState(f)).toEqual(before);
   f.put('release.json', json(request));
-  const wrongOwner = args('inspect'); wrongOwner[7] = 'foreign-owner';
+  const wrongOwner = args('inspect');
+  wrongOwner[7] = 'foreign-owner';
   await expect(run(wrongOwner)).rejects.toThrow('original owner differs');
   const inspected = await run(args('inspect'));
   expect(inspected.status).toBe('historical_owner_release_inspected');
@@ -1572,28 +1584,45 @@ test('public unissued owner release preserves its inert frontier and denies comp
   f.put('release.json', json(inspected.request));
   const result = await run(args('apply'));
   expect(result.rights_granted).toBe(false);
-  const after = databaseState(f), work = JSON.parse(after.agent_host_state.find(row => row.kind === 'work').payload);
-  expect(work.lease).toBeNull();expect(work.execution.status).toBe('suspended');
+  const after = databaseState(f),
+    work = JSON.parse(after.agent_host_state.find((row) => row.kind === 'work').payload);
+  expect(work.lease).toBeNull();
+  expect(work.execution.status).toBe('suspended');
   expect(work.lifecycle.next_action).toContain('unissued frontier remains inert');
   expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
   expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite')).equals(engine)).toBe(true);
-  expect(state.items.every(item => item.issue_id === null && item.observation === null)).toBe(true);
+  expect(state.items.every((item) => item.issue_id === null && item.observation === null)).toBe(true);
   expect((await run(args('apply'))).work_version).toEqual(result.work_version);
 }, 30000);
 
 test('public historical context history uses retained context after mutable documentation changes', async () => {
   const { f, args, configuredContexts } = historicalFixture('completed_readonly', { configuredContext: true });
-  f.put('retained-run.json', json({ schema: 'VidaAgentRunResult/v1', next_actions: configuredContexts.map(context => ({ configured_context: context })) }));
+  f.put(
+    'retained-run.json',
+    json({
+      schema: 'VidaAgentRunResult/v1',
+      next_actions: configuredContexts.map((context) => ({ configured_context: context })),
+    }),
+  );
   f.put(fixtureContextPath, 'Current changed documentation');
   const before = databaseState(f);
   await expect(run(args('inspect'))).rejects.toThrow('original configured requests differ');
-  const withHistory = mode => [...args(mode), '--context-history', 'retained-run.json'];
+  const withHistory = (mode) => [...args(mode), '--context-history', 'retained-run.json'];
   const foreign = structuredClone(configuredContexts[0]);
   foreign.work_id = 'foreign-work';
-  f.put('retained-run.json', json({ schema: 'VidaAgentRunResult/v1', next_actions: [{ configured_context: foreign }] }));
+  f.put(
+    'retained-run.json',
+    json({ schema: 'VidaAgentRunResult/v1', next_actions: [{ configured_context: foreign }] }),
+  );
   await expect(run(withHistory('inspect'))).rejects.toThrow('identity invalid');
   expect(databaseState(f)).toEqual(before);
-  f.put('retained-run.json', json({ schema: 'VidaAgentRunResult/v1', next_actions: configuredContexts.map(context => ({ configured_context: context })) }));
+  f.put(
+    'retained-run.json',
+    json({
+      schema: 'VidaAgentRunResult/v1',
+      next_actions: configuredContexts.map((context) => ({ configured_context: context })),
+    }),
+  );
   const inspected = await run(withHistory('inspect'));
   expect(inspected.status).toBe('historical_owner_release_inspected');
   expect(databaseState(f)).toEqual(before);
@@ -1603,39 +1632,173 @@ test('public historical context history uses retained context after mutable docu
 }, 30000);
 
 test('public unissued owner release rejects an issued frontier without disposing its lease', async () => {
-  const { f, args, request } = historicalFixture('unknown_readonly'), before = databaseState(f);
+  const { f, args, request } = historicalFixture('unknown_readonly'),
+    before = databaseState(f);
   f.put('release.json', json({ ...request, schema: 'UnissuedOwnerReleaseRequest/v1', predicate: 'unissued_prepared' }));
-  const signal = args('inspect'); signal[0] = '--release-unissued-owner';
+  const signal = args('inspect');
+  signal[0] = '--release-unissued-owner';
   await expect(run(signal)).rejects.toThrow('issued or reserved activity');
   expect(databaseState(f)).toEqual(before);
 });
 
 test('historical owner release rejects maintenance drift between predicate and write preparation', () => {
-  const { f, request } = historicalFixture('unissued_prepared'), before = databaseState(f),
+  const { f, request } = historicalFixture('unissued_prepared'),
+    before = databaseState(f),
     original = inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, 1);
-  withDatabase(f, db => {
+  withDatabase(f, (db) => {
     const actual = new HostStateStore(db, f.workspace);
     let reads = 0;
-    const store = new Proxy(actual, { get(target, key) {
-      if (key === 'readHostStateSnapshot') return identity => {
-        const snapshot = target.readHostStateSnapshot(identity);
-        return ++reads === 2 ? { ...snapshot, maintenanceGeneration: snapshot.maintenanceGeneration + 1 } : snapshot;
-      };
-      const value = Reflect.get(target, key, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    } });
-    expect(() => suspendHistoricalOwnerWork({ store, identity: request.identity,
-      journal: { state: original.journal.state, version: original.journal.version, resume_status: 'ready' },
-      expectedWork: original.owner.version, expectedLedger: original.workspace.ledger_version,
-      expectedMaintenanceGeneration: original.maintenanceGeneration, nativeSessionHandle: 'fixture-thread',
-      userRequestPointer: request.userRequestPointer, requestIntent: request.requestIntent,
-      config: original.config, predicate: 'unissued_prepared',
-      documentationContext: { repository_root: f.root, repository_id: request.identity.repository_id,
-        project_id: request.identity.project_ids[0], work_id: request.identity.work_id },
-    })).toThrow('maintenance generation changed after inspection');
+    const store = new Proxy(actual, {
+      get(target, key) {
+        if (key === 'readHostStateSnapshot')
+          return (identity) => {
+            const snapshot = target.readHostStateSnapshot(identity);
+            return ++reads === 2
+              ? { ...snapshot, maintenanceGeneration: snapshot.maintenanceGeneration + 1 }
+              : snapshot;
+          };
+        const value = Reflect.get(target, key, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    expect(() =>
+      suspendHistoricalOwnerWork({
+        store,
+        identity: request.identity,
+        journal: { state: original.journal.state, version: original.journal.version, resume_status: 'ready' },
+        expectedWork: original.owner.version,
+        expectedLedger: original.workspace.ledger_version,
+        expectedMaintenanceGeneration: original.maintenanceGeneration,
+        nativeSessionHandle: 'fixture-thread',
+        userRequestPointer: request.userRequestPointer,
+        requestIntent: request.requestIntent,
+        config: original.config,
+        predicate: 'unissued_prepared',
+        documentationContext: {
+          repository_root: f.root,
+          repository_id: request.identity.repository_id,
+          project_id: request.identity.project_ids[0],
+          work_id: request.identity.work_id,
+        },
+      }),
+    ).toThrow('maintenance generation changed after inspection');
   });
   expect(databaseState(f)).toEqual(before);
 });
+
+test('public settled research releases admitted lineage and preserves observations on exact retry', async () => {
+  const { f, request, args, state } = historicalFixture('settled_research');
+  const original = inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, 1);
+  const work = structuredClone(original.owner.state);
+  let history = '',
+    changelog = '';
+  for (const [index, item] of state.items.entries()) {
+    const record = createHistoricalResearchFixture({
+      config: original.config,
+      feature: original.config.research_decision,
+      request: item.request,
+      topic: 'research-' + index,
+      binding: {
+        work_id: request.identity.work_id,
+        attempt: state.attempt,
+        run_id: state.run_id,
+        action_id: item.request.action_id,
+        issue_id: item.issue_id,
+        scope_id: work.binding.scope_id,
+        scope_digest: state.source_scope.digest,
+        source_revision: work.binding.work_source_revision,
+        source_scope_digest: state.source_scope.digest,
+        config_digest: work.binding.config_digest,
+        maintenance_generation: original.maintenanceGeneration,
+        lease_ticket_id: work.lease.ticket_id,
+        lease_thread_id: work.lease.thread_id,
+        lease_generation: work.lease.generation,
+      },
+    });
+    try {
+      const activation = {
+        ...record.activationPlan,
+        history_pre_sha256: history === '' ? null : sha(history),
+        history_sha256: sha(history + record.historyBytes),
+      };
+      delete activation.digest;
+      activation.digest = canonicalJsonDigest(activation);
+      const plan = {
+        ...record.plan,
+        changelog_pre_sha256: changelog === '' ? null : sha(changelog),
+        changelog_sha256: sha(changelog + record.changelogBytes),
+      };
+      delete plan.digest;
+      plan.digest = canonicalJsonDigest(plan);
+      history += record.historyBytes;
+      changelog += record.changelogBytes;
+      f.put(record.recordPath, record.recordBytes);
+      f.put(record.historyPath, history);
+      f.put(record.changelogPath, changelog);
+      item.observation = record.observation;
+      item.research_activation = { plan: activation, use: record.activationUse };
+      item.research_normalization = plan;
+      work.artifacts.push({
+        artifact_id: 'research-' + index,
+        schema: 'ResearchResult/v1',
+        path: plan.record_path,
+        sha256: plan.record_sha256,
+        stage_id: item.request.stage_id,
+        source_revision: work.binding.work_source_revision,
+        scope_id: work.binding.scope_id,
+        ac_ids: work.binding.ac_ids,
+      });
+    } finally {
+      record.dispose();
+    }
+  }
+  withDatabase(f, (db) => {
+    db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'").run(
+      json(work),
+      canonicalJsonDigest(work),
+    );
+    db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=?').run(
+      json(state),
+      canonicalJsonDigest(state),
+    );
+  });
+  const before = databaseState(f),
+    engine = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  const inspected = await run(args('inspect'));
+  expect(inspected.rights_granted).toBe(false);
+  expect(databaseState(f)).toEqual(before);
+  f.put('release.json', json(inspected.request));
+  const result = await run(args('apply'));
+  expect(result.rights_granted).toBe(false);
+  expect(result.runtime_acceptance).toBe(false);
+  const after = databaseState(f),
+    released = JSON.parse(after.agent_host_state.find((row) => row.kind === 'work').payload);
+  expect(released.lease).toBeNull();
+  expect(released.artifacts).toEqual(work.artifacts);
+  expect(released.lifecycle.phase).toBe(work.lifecycle.phase);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engine);
+  expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+}, 30000);
+
+test.each(['completed_readonly', 'unknown_readonly', 'unissued_prepared'])(
+  'settled research owner denies %s without admitted normalized research',
+  async (predicate) => {
+    const { f, request, args } = historicalFixture(predicate),
+      before = databaseState(f);
+    f.put(
+      'release.json',
+      json({ ...request, schema: 'SettledResearchOwnerReleaseRequest/v1', predicate: 'settled_research' }),
+    );
+    const control = args('inspect');
+    control[0] = '--release-settled-research-owner';
+    await expect(run(control)).rejects.toThrow(
+      predicate === 'unknown_readonly' ? /unfinished issued effects/ : /settled research/,
+    );
+    expect(databaseState(f)).toEqual(before);
+  },
+  30000,
+);
 
 test('public historical inspect rebuilds populated local source and repository skill context read-only', async () => {
   const { f, args, state, configuredContexts } = historicalFixture('completed_readonly', { configuredContext: true });

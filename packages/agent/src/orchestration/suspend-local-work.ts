@@ -6,6 +6,12 @@ import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.j
 import { type AgentRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { configuredReadonlyAssignment, settledSessionItems } from './final-assurance.js';
 import { parseObservedValidatorVerdict } from './observed-validation.js';
+import {
+  readHistoricalObservedResearchLineage,
+  validateObservedResearchRecordPlan,
+  validateObservedActivationUseWritePlan,
+  validateActivationUse,
+} from '../research-decision.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import {
   compareScopedSourceSnapshots,
@@ -67,7 +73,12 @@ function requireCompletedReadonly(input: SuspensionInput): void {
 
 type HistoricalSuspensionInput = SuspensionInput & {
   readonly config: AgentRuntimeConfig;
-  readonly predicate: 'completed_readonly' | 'unknown_readonly' | 'settled_writer_failed_validators' | 'unissued_prepared';
+  readonly predicate:
+    | 'completed_readonly'
+    | 'unknown_readonly'
+    | 'settled_writer_failed_validators'
+    | 'unissued_prepared'
+    | 'settled_research';
   readonly expectedMaintenanceGeneration: number;
   readonly preimage?: ScopedSourceSnapshot;
 };
@@ -169,12 +180,96 @@ function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
       input.preimage === undefined && state.source_scope?.digest === work.binding.work_source_revision,
       'historical readonly scope differs',
     );
-    if (input.predicate === 'unissued_prepared')
+    if (input.predicate === 'settled_research') {
+      const { observed, inert } = settledSessionItems(state);
       requireSuspension(
-        input.journal.resume_status === 'ready' && state.completed.length === 0 &&
-          state.step_id !== null && state.items.length > 0 && work.execution.assignment_attempts.length === 0 &&
-          state.items.every((item) => item.issue_id === null && item.observation === null &&
-            !item.host_reservation && !item.research_activation && !item.research_normalization),
+        observed.length > 0 &&
+          work.execution.assignment_attempts.length === 0 &&
+          inert.every(
+            (item) =>
+              item.issue_id === null &&
+              item.observation === null &&
+              !item.host_reservation &&
+              !item.research_activation &&
+              !item.research_normalization,
+          ),
+        'settled research has issued or reserved successor activity',
+      );
+      for (const item of observed) {
+        requireSuspension(
+          item.issue_id !== null &&
+            item.observation?.status === 'reported_complete' &&
+            !item.host_reservation &&
+            item.research_activation &&
+            item.research_normalization &&
+            configuredReadonlyAssignment(input.config, item.request),
+          'settled research observation is not normalized readonly activity',
+        );
+        const plan = validateObservedResearchRecordPlan(item.research_normalization),
+          activation = validateObservedActivationUseWritePlan(item.research_activation.plan),
+          use = validateActivationUse(item.research_activation.use),
+          binding = plan.binding;
+        const stage = input.config.workflows[work.binding.workflow_id]?.stages.find(
+          (stage) => stage.id === item.request.stage_id,
+        );
+        const schema = stage?.produces.includes('ResearchSynthesis/v1') ? 'ResearchSynthesis/v1' : 'ResearchResult/v1';
+        const ticket = host.ledger?.tickets.find((ticket) => ticket.ticket_id === binding.lease_ticket_id);
+        requireSuspension(
+          stage?.produces.includes(schema) &&
+            binding.work_id === work.binding.lifecycle_work_id &&
+            binding.attempt === state.attempt &&
+            binding.run_id === state.run_id &&
+            binding.action_id === item.request.action_id &&
+            binding.issue_id === item.issue_id &&
+            binding.config_digest === work.binding.config_digest &&
+            binding.scope_digest === state.source_scope!.digest &&
+            binding.source_scope_digest === state.source_scope!.digest &&
+            binding.source_revision === work.binding.work_source_revision &&
+            binding.scope_id === work.binding.scope_id &&
+            ticket?.work_id === work.binding.lifecycle_work_id &&
+            ticket.thread_id === input.nativeSessionHandle &&
+            binding.lease_thread_id === input.nativeSessionHandle &&
+            binding.lease_generation === ticket.generation &&
+            plan.observation_digest === canonicalJsonDigest(item.observation) &&
+            work.artifacts.some(
+              (artifact) =>
+                artifact.schema === schema &&
+                artifact.path === plan.record_path &&
+                artifact.sha256 === plan.record_sha256 &&
+                artifact.stage_id === item.request.stage_id,
+            ),
+          'settled research artifact or original binding differs',
+        );
+        const result = readHistoricalObservedResearchLineage({
+          root: input.documentationContext.repository_root,
+          feature: input.config.research_decision,
+          plan,
+          activation_plan: activation,
+          activation_use: use,
+        });
+        requireSuspension(
+          result.schema === schema &&
+            result.work_item_id === binding.work_id &&
+            result.scope_id === binding.scope_id &&
+            result.source_revision === binding.source_revision,
+          'settled research record scope differs',
+        );
+      }
+    } else if (input.predicate === 'unissued_prepared')
+      requireSuspension(
+        input.journal.resume_status === 'ready' &&
+          state.completed.length === 0 &&
+          state.step_id !== null &&
+          state.items.length > 0 &&
+          work.execution.assignment_attempts.length === 0 &&
+          state.items.every(
+            (item) =>
+              item.issue_id === null &&
+              item.observation === null &&
+              !item.host_reservation &&
+              !item.research_activation &&
+              !item.research_normalization,
+          ),
         'historical unissued owner has issued or reserved activity',
       );
     else if (input.predicate === 'completed_readonly') requireCompletedReadonly(input);
@@ -199,6 +294,7 @@ export function suspendHistoricalOwnerWork(input: HistoricalSuspensionInput): Ho
     input.predicate === 'settled_writer_failed_validators',
     false,
     input.predicate === 'unissued_prepared',
+    input.predicate === 'settled_research',
   );
 }
 
@@ -210,6 +306,7 @@ export function inspectHistoricalOwnerWork(input: HistoricalSuspensionInput): Ho
     input.predicate === 'settled_writer_failed_validators',
     true,
     input.predicate === 'unissued_prepared',
+    input.predicate === 'settled_research',
   );
 }
 
@@ -219,6 +316,7 @@ function suspendLocalWorkCore(
   settledWriter = false,
   inspectOnly = false,
   unissuedPrepared = false,
+  settledResearch = false,
 ): HostStateSnapshot {
   const {
     store,
@@ -244,9 +342,11 @@ function suspendLocalWorkCore(
     'native session or attributed request pointer is invalid',
   );
   const host = store.readHostStateSnapshot(identity);
-  requireSuspension(input.expectedMaintenanceGeneration === undefined ||
-    host.maintenanceGeneration === input.expectedMaintenanceGeneration,
-  'maintenance generation changed after inspection');
+  requireSuspension(
+    input.expectedMaintenanceGeneration === undefined ||
+      host.maintenanceGeneration === input.expectedMaintenanceGeneration,
+    'maintenance generation changed after inspection',
+  );
   requireSuspension(
     identity.project_ids.length === 1 &&
       documentationContext.repository_id === identity.repository_id &&
@@ -324,7 +424,7 @@ function suspendLocalWorkCore(
       ),
     'native action or host assignment is still active or uncertain',
   );
-  const operationId = `${unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
+  const operationId = `${settledResearch ? 'settled-research-release' : unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
     {
       work_id: identity.work_id,
       nativeSessionHandle,
@@ -409,6 +509,7 @@ function suspendLocalWorkCore(
       ticket.generation === lease.generation &&
       ticket.expires_at !== null &&
       (completedReadonly ||
+        settledResearch ||
         settledWriter ||
         expiredUnissued ||
         unknownReadonly ||
@@ -418,6 +519,7 @@ function suspendLocalWorkCore(
       claims[0]!.work_id === identity.work_id &&
       claims[0]!.generation === lease.generation &&
       (completedReadonly ||
+        settledResearch ||
         expiredUnissued ||
         unknownReadonly ||
         settledWriter ||
@@ -429,7 +531,7 @@ function suspendLocalWorkCore(
       !host.ledger.tickets.some(
         (other) =>
           other.ticket_id !== ticket.ticket_id &&
-          (completedReadonly || settledWriter || other.sequence < ticket.sequence) &&
+          (completedReadonly || settledResearch || settledWriter || other.sequence < ticket.sequence) &&
           ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(other.status) &&
           other.exclusive_resources.some((resource) => expectedResources.includes(resource)),
       ),
@@ -465,11 +567,11 @@ function suspendLocalWorkCore(
       ...work.lifecycle,
       revision: work.revision + 1,
       next_action:
-        unissuedPrepared
+        unissuedPrepared || settledResearch
           ? 'The original unissued frontier remains inert; continuation needs normal admission.'
           : requestIntent === 'linked_correction'
-          ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
-          : 'Prior work awaits user testing; new work must be admitted separately.',
+            ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
+            : 'Prior work awaits user testing; new work must be admitted separately.',
     },
   };
   const nextLedger = {

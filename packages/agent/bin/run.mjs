@@ -1866,13 +1866,20 @@ async function recoverUnpreparedWork(args) {
 }
 
 function retiredSourceEffects(root, items, sourcePaths) {
-  const scope = new Set(sourcePaths), effects = [], retained = [];
+  const scope = new Set(sourcePaths),
+    effects = [],
+    retained = [];
   const add = (event, sourcePath, kind, body, patchRef) => {
     const relative = path.isAbsolute(sourcePath) ? path.relative(root, sourcePath).replaceAll('\\', '/') : sourcePath;
     if (relative.startsWith('.tmp/') || relative.startsWith('.agent/')) return;
     if (!scope.has(relative)) throw Error('Retired-source mutation path is outside the original scope');
-    effects.push({ path: relative, event_ref: event.id, kind, evidence_sha256: digest(Buffer.from(body)),
-      ...(patchRef ? { patch_ref: patchRef } : {}) });
+    effects.push({
+      path: relative,
+      event_ref: event.id,
+      kind,
+      evidence_sha256: digest(Buffer.from(body)),
+      ...(patchRef ? { patch_ref: patchRef } : {}),
+    });
   };
   for (const event of items) {
     if (event.type === 'fileChange') {
@@ -1885,28 +1892,62 @@ function retiredSourceEffects(root, items, sourcePaths) {
       if (/--(?:check|stat|numstat|summary)\b/.test(match[1])) continue;
       const patchRefs = [...match[1].matchAll(/\.tmp\/[A-Za-z0-9_./-]+\.patch/g)].map((value) => value[0]);
       if (event.exitCode !== 0 || patchRefs.length !== 1) throw Error('Retired-source patch outcome is unresolved');
-      const patchRef = patchRefs[0], absolute = path.resolve(root, patchRef), metadata = lstatSync(absolute);
-      if (realpathSync(absolute) !== absolute || !metadata.isFile() || metadata.isSymbolicLink() || metadata.nlink !== 1 || metadata.size > 5 * 1024 * 1024)
+      const patchRef = patchRefs[0],
+        absolute = path.resolve(root, patchRef),
+        metadata = lstatSync(absolute);
+      if (
+        realpathSync(absolute) !== absolute ||
+        !metadata.isFile() ||
+        metadata.isSymbolicLink() ||
+        metadata.nlink !== 1 ||
+        metadata.size > 5 * 1024 * 1024
+      )
         throw Error('Retired-source referenced patch is unsafe');
-      const bytes = readFileSync(absolute), body = bytes.toString('utf8');
+      const bytes = readFileSync(absolute),
+        body = bytes.toString('utf8');
       const excluded = [...match[1].matchAll(/--exclude=['"]([^'"]+)['"]/g)].map((value) => value[1]);
       const paths = [...body.matchAll(/^diff --git a\/(\S+) b\/\1\r?$/gm)].map((value) => value[1]);
       if (!paths.length) throw Error('Retired-source patch paths are missing');
-      for (const value of paths.filter((value) => !excluded.includes(value))) add(event, value, 'patch', body, patchRef);
+      for (const value of paths.filter((value) => !excluded.includes(value)))
+        add(event, value, 'patch', body, patchRef);
       retained.push({ path: patchRef, sha256: digest(bytes) });
     }
-    if (!/\b(?:write_text|write_bytes|writeFileSync|Set-Content|Add-Content|Out-File)\b/.test(command) &&
-        !/\.open\(['"](?:a|w)/.test(command)) continue;
+    if (
+      !/\b(?:write_text|write_bytes|writeFileSync|Set-Content|Add-Content|Out-File)\b/.test(command) &&
+      !/\.open\(['"](?:a|w)/.test(command)
+    )
+      continue;
     const paths = [];
-    for (const match of command.matchAll(/\b(\w+)\s*=\s*Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)/g))
+    for (const match of command.matchAll(
+      /\b(\w+)\s*=\s*Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)/g,
+    ))
       if (new RegExp('\\b' + match[1] + '\\.(?:write_text|write_bytes)\\(').test(command)) paths.push(match[2]);
-    for (const match of command.matchAll(/with Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)\.open\(['"](?:a|w)/g)) paths.push(match[1]);
-    for (const match of command.matchAll(/Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)\.(?:write_text|write_bytes)\(/g)) paths.push(match[1]);
-    for (const match of command.matchAll(/with \(root\/['"]((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)['"]\)\.open\(['"](?:a|w)/g)) paths.push(match[1]);
-    if (/def edit\(file,transform\):/.test(command) && /p=root\/file/.test(command) && /p\.write_bytes\(/.test(command)) {
-      const declared = [...command.matchAll(/\bedit\(['"]((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)['"]/g)].map((match) => match[1]);
+    for (const match of command.matchAll(
+      /with Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)\.open\(['"](?:a|w)/g,
+    ))
+      paths.push(match[1]);
+    for (const match of command.matchAll(
+      /Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)\.(?:write_text|write_bytes)\(/g,
+    ))
+      paths.push(match[1]);
+    for (const match of command.matchAll(
+      /with \(root\/['"]((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)['"]\)\.open\(['"](?:a|w)/g,
+    ))
+      paths.push(match[1]);
+    if (
+      /def edit\(file,transform\):/.test(command) &&
+      /p=root\/file/.test(command) &&
+      /p\.write_bytes\(/.test(command)
+    ) {
+      const declared = [...command.matchAll(/\bedit\(['"]((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)['"]/g)].map(
+        (match) => match[1],
+      );
       let report;
-      try { report = JSON.parse(event.output?.text ?? ''); } catch { throw Error('Retired-source document edit result is unresolved'); }
+      try {
+        report = JSON.parse(event.output?.text ?? '');
+      } catch {
+        throw Error('Retired-source document edit result is unresolved');
+      }
       if (!Array.isArray(report.updated) || report.updated.some((value) => !declared.includes(value)))
         throw Error('Retired-source document edit paths differ from the recorded command');
       paths.push(...report.updated);
@@ -1923,94 +1964,188 @@ function retiredSourceEffects(root, items, sourcePaths) {
 function readRetiredSourceNativeTurn(root, reference, expected) {
   if (typeof reference !== 'string' || !reference.startsWith('.tmp/') || path.isAbsolute(reference))
     throw Error('Retired-source native evidence must reference a retained .tmp read');
-  const file = path.resolve(root, reference), relative = path.relative(root, file), before = lstatSync(file);
-  if (relative.startsWith('..') || path.isAbsolute(relative) || realpathSync(file) !== file ||
-      !before.isFile() || before.isSymbolicLink() || before.nlink !== 1)
+  const file = path.resolve(root, reference),
+    relative = path.relative(root, file),
+    before = lstatSync(file);
+  if (
+    relative.startsWith('..') ||
+    path.isAbsolute(relative) ||
+    realpathSync(file) !== file ||
+    !before.isFile() ||
+    before.isSymbolicLink() ||
+    before.nlink !== 1
+  )
     throw Error('Retired-source native evidence path differs');
-  const bytes = readFileSync(file), after = lstatSync(file);
-  if (bytes.length > 5 * 1024 * 1024 || !after.isFile() || after.isSymbolicLink() || after.nlink !== 1 ||
-      before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size)
+  const bytes = readFileSync(file),
+    after = lstatSync(file);
+  if (
+    bytes.length > 5 * 1024 * 1024 ||
+    !after.isFile() ||
+    after.isSymbolicLink() ||
+    after.nlink !== 1 ||
+    before.dev !== after.dev ||
+    before.ino !== after.ino ||
+    before.size !== after.size
+  )
     throw Error('Retired-source native evidence changed or exceeds its bound');
   const artifact = JSON.parse(bytes.toString('utf8'));
   const portable = exactKeys(artifact, ['schema', 'data']) && artifact.schema === 'RetiredSourceTurnRead/v1',
-    codexRead = exactKeys(artifact, ['schema', 'host', 'tool', 'max_output_chars_per_item', 'data']) &&
-      artifact.schema === 'CoreNativeIssuedTurnRead/v1' && typeof artifact.host === 'string' &&
+    codexRead =
+      exactKeys(artifact, ['schema', 'host', 'tool', 'max_output_chars_per_item', 'data']) &&
+      artifact.schema === 'CoreNativeIssuedTurnRead/v1' &&
+      typeof artifact.host === 'string' &&
       artifact.tool === 'mcp__codex_app__read_thread';
-  if ((!portable && !codexRead) || !artifact.data?.thread ||
-      !Array.isArray(artifact.data.turns) || artifact.data.turns.length !== 1)
+  if (
+    (!portable && !codexRead) ||
+    !artifact.data?.thread ||
+    !Array.isArray(artifact.data.turns) ||
+    artifact.data.turns.length !== 1
+  )
     throw Error('Retired-source native evidence contract differs');
-  const thread = artifact.data.thread, turn = artifact.data.turns[0], items = turn.items;
-  if (thread.id !== expected.sourceThreadId || typeof thread.status?.type !== 'string' || !thread.status.type ||
-      turn.id !== expected.sourceTurnId || turn.status !== 'interrupted' || !Array.isArray(items) || items.length > 4096 ||
-      items.some((item) => item.type === 'agentMessage' && item.phase === 'final'))
+  const thread = artifact.data.thread,
+    turn = artifact.data.turns[0],
+    items = turn.items;
+  if (
+    thread.id !== expected.sourceThreadId ||
+    typeof thread.status?.type !== 'string' ||
+    !thread.status.type ||
+    turn.id !== expected.sourceTurnId ||
+    turn.status !== 'interrupted' ||
+    !Array.isArray(items) ||
+    items.length > 4096 ||
+    items.some((item) => item.type === 'agentMessage' && item.phase === 'final')
+  )
     throw Error('Retired-source original thread or interrupted turn differs');
-  const issued = [], waves = [];
+  const issued = [],
+    waves = [];
   function collect(value, depth = 0) {
     if (depth > 5 || value === null || value === undefined) return;
     if (typeof value === 'string') {
       if (value.length <= 256 * 1024 && /^[\s]*[\[{]/.test(value)) {
-        try { collect(JSON.parse(value), depth + 1); } catch { /* command output need not be JSON */ }
+        try {
+          collect(JSON.parse(value), depth + 1);
+        } catch {
+          /* command output need not be JSON */
+        }
       }
       return;
     }
-    if (Array.isArray(value)) { for (const entry of value) collect(entry, depth + 1); return; }
+    if (Array.isArray(value)) {
+      for (const entry of value) collect(entry, depth + 1);
+      return;
+    }
     if (typeof value !== 'object') return;
-    if (value.schema === 'VidaAgentRunResult/v1' && Array.isArray(value.issued_actions)) issued.push(...value.issued_actions);
+    if (value.schema === 'VidaAgentRunResult/v1' && Array.isArray(value.issued_actions))
+      issued.push(...value.issued_actions);
     if (value.status === 'wave_issued' && typeof value.issue_id === 'string') waves.push(value);
     if (typeof value.stdout === 'string') collect(value.stdout, depth + 1);
   }
-  const commandIds = new Set(), commands = items.filter((item) => item.type === 'commandExecution').map((item) => {
-    if (typeof item.id !== 'string' || commandIds.has(item.id) || typeof item.command !== 'string' ||
-        !['completed', 'failed'].includes(item.status) || !Number.isSafeInteger(item.exitCode))
-      throw Error('Retired-source command inventory has a duplicate or unresolved outcome');
-    commandIds.add(item.id);
-    const present = item.output !== null && item.output !== undefined;
-    if (present && (typeof item.output.text !== 'string' || typeof item.output.truncated !== 'boolean'))
-      throw Error('Retired-source command output is incomplete');
-    const output = present ? item.output.text : '', truncated = present && item.output.truncated === true;
-    if (present) collect(output);
-    if (truncated && (!/\bGet-Content\b/i.test(item.command) ||
-        /\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|write_text|write_bytes|writeFileSync)\b/i.test(item.command)))
-      throw Error('Retired-source truncated command output could hide an effect');
-    return {
-      ref: item.id, status: item.status, exit_code: item.exitCode,
-      command_sha256: digest(Buffer.from(item.command, 'utf8')),
-      output_sha256: present ? digest(Buffer.from(output, 'utf8')) : null,
-      output_present: present, output_truncated: truncated,
-    };
-  });
+  const commandIds = new Set(),
+    commands = items
+      .filter((item) => item.type === 'commandExecution')
+      .map((item) => {
+        if (
+          typeof item.id !== 'string' ||
+          commandIds.has(item.id) ||
+          typeof item.command !== 'string' ||
+          !['completed', 'failed'].includes(item.status) ||
+          !Number.isSafeInteger(item.exitCode)
+        )
+          throw Error('Retired-source command inventory has a duplicate or unresolved outcome');
+        commandIds.add(item.id);
+        const present = item.output !== null && item.output !== undefined;
+        if (present && (typeof item.output.text !== 'string' || typeof item.output.truncated !== 'boolean'))
+          throw Error('Retired-source command output is incomplete');
+        const output = present ? item.output.text : '',
+          truncated = present && item.output.truncated === true;
+        if (present) collect(output);
+        if (
+          truncated &&
+          (!/\bGet-Content\b/i.test(item.command) ||
+            /\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|write_text|write_bytes|writeFileSync)\b/i.test(
+              item.command,
+            ))
+        )
+          throw Error('Retired-source truncated command output could hide an effect');
+        return {
+          ref: item.id,
+          status: item.status,
+          exit_code: item.exitCode,
+          command_sha256: digest(Buffer.from(item.command, 'utf8')),
+          output_sha256: present ? digest(Buffer.from(output, 'utf8')) : null,
+          output_present: present,
+          output_truncated: truncated,
+        };
+      });
   if (!commands.length || commands.length > 512) throw Error('Retired-source complete command inventory is absent');
-  const matches = issued.filter((entry) => entry?.request?.action_id === expected.actionId &&
-    entry?.action?.action_id === expected.actionId && entry.issue_id === expected.issueId &&
-    entry.host_attempt_id === expected.hostAttemptId),
-    direct = waves.filter((entry) => entry.issue_id === expected.issueId && entry.host_attempt_id === expected.hostAttemptId);
+  const matches = issued.filter(
+      (entry) =>
+        entry?.request?.action_id === expected.actionId &&
+        entry?.action?.action_id === expected.actionId &&
+        entry.issue_id === expected.issueId &&
+        entry.host_attempt_id === expected.hostAttemptId,
+    ),
+    direct = waves.filter(
+      (entry) => entry.issue_id === expected.issueId && entry.host_attempt_id === expected.hostAttemptId,
+    );
   if (matches.length !== 1 || direct.length !== 1) throw Error('Retired-source original issue mapping differs');
-  const action = matches[0].action, packet = matches[0].development_packet;
-  if (!packet || packet.schema !== 'DevelopmentTaskPacket/v1' || packet.work_item_id !== expected.workId ||
-      packet.attempt !== expected.attempt || packet.packet_id !== direct[0].packet_id ||
-      typeof packet.digest !== 'string' || !/^[a-f0-9]{64}$/.test(packet.digest) ||
-      action.stage_id !== matches[0].request.stage_id || action.scope_digest !== matches[0].request.scope_digest)
+  const action = matches[0].action,
+    packet = matches[0].development_packet;
+  if (
+    !packet ||
+    packet.schema !== 'DevelopmentTaskPacket/v1' ||
+    packet.work_item_id !== expected.workId ||
+    packet.attempt !== expected.attempt ||
+    packet.packet_id !== direct[0].packet_id ||
+    typeof packet.digest !== 'string' ||
+    !/^[a-f0-9]{64}$/.test(packet.digest) ||
+    action.stage_id !== matches[0].request.stage_id ||
+    action.scope_digest !== matches[0].request.scope_digest
+  )
     throw Error('Retired-source original issued packet binding differs');
-  const fileChanges = items.filter((item) => item.type === 'fileChange').map((item) => {
-    if (item.status !== 'completed' || !Array.isArray(item.changes)) throw Error('Retired-source file-change event is unresolved');
-    return { ref: item.id, paths: item.changes.map((change) => {
-      if (typeof change.path !== 'string' || typeof change.diff?.text !== 'string' || change.diff.truncated !== false)
-        throw Error('Retired-source file-change evidence is incomplete');
-      return path.relative(root, path.resolve(change.path)).replaceAll('\\', '/');
-    }) };
-  });
+  const fileChanges = items
+    .filter((item) => item.type === 'fileChange')
+    .map((item) => {
+      if (item.status !== 'completed' || !Array.isArray(item.changes))
+        throw Error('Retired-source file-change event is unresolved');
+      return {
+        ref: item.id,
+        paths: item.changes.map((change) => {
+          if (
+            typeof change.path !== 'string' ||
+            typeof change.diff?.text !== 'string' ||
+            change.diff.truncated !== false
+          )
+            throw Error('Retired-source file-change evidence is incomplete');
+          return path.relative(root, path.resolve(change.path)).replaceAll('\\', '/');
+        }),
+      };
+    });
   const issue = {
-    action_id: action.action_id, issue_id: matches[0].issue_id, host_attempt_id: matches[0].host_attempt_id,
-    packet_id: packet.packet_id, packet_digest: packet.digest, work_item_id: packet.work_item_id,
-    attempt: packet.attempt, stage_id: action.stage_id, scope_digest: action.scope_digest,
+    action_id: action.action_id,
+    issue_id: matches[0].issue_id,
+    host_attempt_id: matches[0].host_attempt_id,
+    packet_id: packet.packet_id,
+    packet_digest: packet.digest,
+    work_item_id: packet.work_item_id,
+    attempt: packet.attempt,
+    stage_id: action.stage_id,
+    scope_digest: action.scope_digest,
   };
   const sourceEffects = retiredSourceEffects(root, items, expected.sourcePaths);
   return {
     artifact_sha256: digest(bytes),
     nativeReadResult: {
-      schema: 'RetiredSourceNativeTurnEvidence/v1', artifact_ref: reference, artifact_sha256: digest(bytes),
-      thread_id: thread.id, thread_status: thread.status.type, turn_id: turn.id, turn_status: turn.status,
-      issue, command_refs: commands.map((entry) => entry.ref), file_change_refs: fileChanges.map((entry) => entry.ref),
+      schema: 'RetiredSourceNativeTurnEvidence/v1',
+      artifact_ref: reference,
+      artifact_sha256: digest(bytes),
+      thread_id: thread.id,
+      thread_status: thread.status.type,
+      turn_id: turn.id,
+      turn_status: turn.status,
+      issue,
+      command_refs: commands.map((entry) => entry.ref),
+      file_change_refs: fileChanges.map((entry) => entry.ref),
       source_effects: sourceEffects.effects,
     },
     observed_commands: commands,
@@ -2029,18 +2164,30 @@ async function captureRetiredSource(args) {
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
-  if (args.length !== 6 || args[0] !== '--project-root' || args[2] !== '--native-session-handle' || args[4] !== '--request')
+  if (
+    args.length !== 6 ||
+    args[0] !== '--project-root' ||
+    args[2] !== '--native-session-handle' ||
+    args[4] !== '--request'
+  )
     throw Error('Retired-source capture requires exact root, current owner handle and request');
-  const root = realpathSync(args[1]), operatorHandle = args[3], config = loadRuntimeConfig(root),
+  const root = realpathSync(args[1]),
+    operatorHandle = args[3],
+    config = loadRuntimeConfig(root),
     workspaceId = deriveWorkspaceId(config.repository.repository_id, root),
-    requestPath = path.resolve(root, args[5]), requestRelative = path.relative(root, requestPath);
+    requestPath = path.resolve(root, args[5]),
+    requestRelative = path.relative(root, requestPath);
   if (requestRelative.startsWith('..') || path.isAbsolute(requestRelative) || realpathSync(requestPath) !== requestPath)
     throw Error('Retired-source request path differs');
   const requestBytes = readFileSync(requestPath);
   if (requestBytes.length > 1048576) throw Error('Retired-source request exceeds bound');
   const input = JSON.parse(requestBytes);
-  if (input.schema !== 'RetiredSourceCapture/v1' || input.workspace_id !== workspaceId || input.operatorHandle !== operatorHandle ||
-      typeof input.nativeTurnEvidenceRef !== 'string')
+  if (
+    input.schema !== 'RetiredSourceCapture/v1' ||
+    input.workspace_id !== workspaceId ||
+    input.operatorHandle !== operatorHandle ||
+    typeof input.nativeTurnEvidenceRef !== 'string'
+  )
     throw Error('Retired-source request workspace or owner binding differs');
   const { workspace_id: _workspace, nativeTurnEvidenceRef, ...operation } = input,
     access = requireSafeRepositoryAccess(root),
@@ -2064,7 +2211,10 @@ async function captureRetiredSource(args) {
       host_attempt_id: readResult.issue.host_attempt_id,
       observed_commands: readResult.observed_commands,
     },
-    sourceFileChanges = readResult.nativeReadResult.source_effects.map((event) => ({ call_ref: event.event_ref, path: event.path })),
+    sourceFileChanges = readResult.nativeReadResult.source_effects.map((event) => ({
+      call_ref: event.event_ref,
+      path: event.path,
+    })),
     originalToolRecords = [...new Set(sourceFileChanges.map((entry) => entry.call_ref))].map((callRef) => ({
       call_ref: callRef,
       actor_id: terminalEvidence.original_actor_id,
@@ -2072,13 +2222,23 @@ async function captureRetiredSource(args) {
       issue_id: readResult.issue.issue_id,
       host_attempt_id: readResult.issue.host_attempt_id,
       status: 'completed',
-      changed_paths: [...new Set(sourceFileChanges.filter((entry) => entry.call_ref === callRef).map((entry) => entry.path))],
+      changed_paths: [
+        ...new Set(sourceFileChanges.filter((entry) => entry.call_ref === callRef).map((entry) => entry.path)),
+      ],
     })),
     terminalEvidenceWithRecords = { ...terminalEvidence, original_tool_records: originalToolRecords },
-    operationWithEvidence = { ...operation, nativeTurnEvidenceRef, nativeReadResult: readResult.nativeReadResult,
-      terminalEvidence: terminalEvidenceWithRecords, attributions: readResult.nativeReadResult.source_effects },
+    operationWithEvidence = {
+      ...operation,
+      nativeTurnEvidenceRef,
+      nativeReadResult: readResult.nativeReadResult,
+      terminalEvidence: terminalEvidenceWithRecords,
+      attributions: readResult.nativeReadResult.source_effects,
+    },
     verifyCurrent = () => {
-      if (!readFileSync(requestPath).equals(requestBytes) || runtimeConfigDigest(loadRuntimeConfig(root)) !== runtimeConfigDigest(config))
+      if (
+        !readFileSync(requestPath).equals(requestBytes) ||
+        runtimeConfigDigest(loadRuntimeConfig(root)) !== runtimeConfigDigest(config)
+      )
         throw Error('Retired-source request or configuration changed');
       const reread = readRetiredSourceNativeTurn(root, nativeTurnEvidenceRef, {
         sourceThreadId: terminalEvidence.source_thread_id,
@@ -2090,11 +2250,14 @@ async function captureRetiredSource(args) {
         attempt: operation.attempt,
         sourcePaths: operation.candidateSnapshot.entries.map((entry) => entry.path),
       });
-      if (reread.artifact_sha256 !== readResult.artifact_sha256 ||
-          !isDeepStrictEqual(reread.nativeReadResult.source_effects, readResult.nativeReadResult.source_effects))
+      if (
+        reread.artifact_sha256 !== readResult.artifact_sha256 ||
+        !isDeepStrictEqual(reread.nativeReadResult.source_effects, readResult.nativeReadResult.source_effects)
+      )
         throw Error('Retired-source native turn evidence changed');
       for (const entry of operation.candidateSnapshot.entries) {
-        const absolute = path.resolve(root, entry.path), relative = path.relative(root, absolute);
+        const absolute = path.resolve(root, entry.path),
+          relative = path.relative(root, absolute);
         if (relative.startsWith('..') || path.isAbsolute(relative) || realpathSync(absolute) !== absolute)
           throw Error('Retired-source candidate path differs');
         const bytes = access.readBytes(entry.path, 'retired-source candidate');
@@ -2669,17 +2832,26 @@ async function releaseCompletedReadonly(args) {
   }
 }
 
-async function releaseHistoricalOwner(args, unissuedOwner = false) {
+async function releaseHistoricalOwner(args, unissuedOwner = false, settledResearch = false) {
   const values = {};
-  if (![10, 12].includes(args.length)) throw Error('Historical release requires mode, exact root, owner, baseline and request');
+  if (![10, 12].includes(args.length))
+    throw Error('Historical release requires mode, exact root, owner, baseline and request');
   for (let index = 0; index < args.length; index += 2) {
     if (Object.hasOwn(values, args[index]) || !args[index + 1]) throw Error('Historical release arguments invalid');
     values[args[index]] = args[index + 1];
   }
   if (
     Object.keys(values).sort().join('|') !==
-      ['--mode', '--project-root', '--native-session-handle', '--baseline-config', '--request',
-        ...(Object.hasOwn(values, '--context-history') ? ['--context-history'] : [])].sort().join('|') ||
+      [
+        '--mode',
+        '--project-root',
+        '--native-session-handle',
+        '--baseline-config',
+        '--request',
+        ...(Object.hasOwn(values, '--context-history') ? ['--context-history'] : []),
+      ]
+        .sort()
+        .join('|') ||
     !['inspect', 'apply'].includes(values['--mode']) ||
     !path.isAbsolute(values['--project-root'])
   )
@@ -2719,8 +2891,19 @@ async function releaseHistoricalOwner(args, unissuedOwner = false) {
   if (writer) expectedKeys.push('preimage_ref');
   if (
     Object.keys(base).sort().join('|') !== expectedKeys.sort().join('|') ||
-    base.schema !== (unissuedOwner ? 'UnissuedOwnerReleaseRequest/v1' : 'HistoricalOwnerReleaseRequest/v1') ||
-    !(unissuedOwner ? ['unissued_prepared'] : ['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators']).includes(base.predicate) ||
+    base.schema !==
+      (settledResearch
+        ? 'SettledResearchOwnerReleaseRequest/v1'
+        : unissuedOwner
+          ? 'UnissuedOwnerReleaseRequest/v1'
+          : 'HistoricalOwnerReleaseRequest/v1') ||
+    !(
+      settledResearch
+        ? ['settled_research']
+        : unissuedOwner
+          ? ['unissued_prepared']
+          : ['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators']
+    ).includes(base.predicate) ||
     !['next_work', 'linked_correction'].includes(base.requestIntent) ||
     (mode === 'inspect' ? suppliedInspection !== undefined : !suppliedInspection)
   )
@@ -2731,25 +2914,45 @@ async function releaseHistoricalOwner(args, unissuedOwner = false) {
     if (!relative(historyRef)) throw Error('Historical context history path differs');
     historyBytes = access.readBytes(historyRef, 'original caller context export');
     if (historyBytes.length > 1024 * 1024) throw Error('Historical context history exceeds bound');
-    const body = JSON.parse(historyBytes), current = loadRuntimeConfig(root);
+    const body = JSON.parse(historyBytes),
+      current = loadRuntimeConfig(root);
     if (body.schema !== 'VidaAgentRunResult/v1' || !Array.isArray(body.next_actions))
       throw Error('Historical context history must be an original run result');
-    const host = inspectHostWorkspaceDatabase(sessionHandoffDatabasePath(root, current),
-      deriveWorkspaceId(current.repository.repository_id, root));
-    const journals = host.journals.filter((entry) => entry.work_id === base.identity.work_id && entry.attempt === base.attempt);
+    const host = inspectHostWorkspaceDatabase(
+      sessionHandoffDatabasePath(root, current),
+      deriveWorkspaceId(current.repository.repository_id, root),
+    );
+    const journals = host.journals.filter(
+      (entry) => entry.work_id === base.identity.work_id && entry.attempt === base.attempt,
+    );
     if (journals.length !== 1) throw Error('Historical context history Journal differs');
-    const state = journals[0].state, items = [...state.items, ...state.completed.flatMap((wave) => wave.items)];
-    const contexts = body.next_actions.map((action) => action.configured_context).filter((context) => context?.schema === 'ConfiguredContext/v1');
+    const state = journals[0].state,
+      items = [...state.items, ...state.completed.flatMap((wave) => wave.items)];
+    const contexts = body.next_actions
+      .map((action) => action.configured_context)
+      .filter((context) => context?.schema === 'ConfiguredContext/v1');
     if (!contexts.length || contexts.length > 256) throw Error('Historical context history is missing or excessive');
     originalContexts = contexts.map((context) => {
       const matches = items.filter((item) => item.request.configured_context_digest === context.digest);
       if (matches.length !== 1) throw Error('Historical context history action differs');
       const request = matches[0].request;
-      return { action_id: request.action_id, wave_index: request.wave_index, stage_id: request.stage_id,
-        work_id: state.work_id, attempt: state.attempt, context };
+      return {
+        action_id: request.action_id,
+        wave_index: request.wave_index,
+        stage_id: request.stage_id,
+        work_id: state.work_id,
+        attempt: state.attempt,
+        context,
+      };
     });
   }
-  const original = inspectHistoricalOwnerContext(root, values['--baseline-config'], base.identity, base.attempt, originalContexts);
+  const original = inspectHistoricalOwnerContext(
+    root,
+    values['--baseline-config'],
+    base.identity,
+    base.attempt,
+    originalContexts,
+  );
   let preimage, preimageBytes;
   if (writer) {
     if (!relative(base.preimage_ref)) throw Error('Historical preimage reference invalid');
@@ -2853,7 +3056,13 @@ async function releaseHistoricalOwner(args, unissuedOwner = false) {
       (writer && !access.readBytes(base.preimage_ref, 'original preimage stability').equals(preimageBytes))
     )
       throw Error('Historical frozen request/preimage changed before CAS');
-    const latest = inspectHistoricalOwnerContext(root, values['--baseline-config'], base.identity, base.attempt, originalContexts);
+    const latest = inspectHistoricalOwnerContext(
+      root,
+      values['--baseline-config'],
+      base.identity,
+      base.attempt,
+      originalContexts,
+    );
     if (
       ['baseline_binding', 'receipt_binding', 'engine_binding'].some((key) => latest[key] !== original[key]) ||
       latest.maintenanceGeneration !== inspection.expectedMaintenanceGeneration ||
@@ -2904,7 +3113,8 @@ async function recoveryReview(args) {
     Object.keys(input).sort().join('|') !== keys.sort().join('|') ||
     (mode !== 'prepare' && !input.request) ||
     (mode === 'complete' && !input.observation) ||
-    (Object.hasOwn(input, 'originalContexts') && (!Array.isArray(input.originalContexts) || !input.originalContexts.length))
+    (Object.hasOwn(input, 'originalContexts') &&
+      (!Array.isArray(input.originalContexts) || !input.originalContexts.length))
   )
     throw Error('Recovery caller-history export shape invalid');
   const route = openInternalRecoveryReview({ ...input, repositoryRoot: root, mode });
@@ -2951,6 +3161,11 @@ export async function run(args = process.argv.slice(2)) {
     if (args[0] !== '--release-unissued-owner' || args[1] !== 'true')
       throw Error('Unissued owner release requires its exact separate signal');
     return releaseHistoricalOwner(args.slice(2), true);
+  }
+  if (args.includes('--release-settled-research-owner')) {
+    if (args[0] !== '--release-settled-research-owner' || args[1] !== 'true')
+      throw Error('Settled research release requires its exact separate signal');
+    return releaseHistoricalOwner(args.slice(2), false, true);
   }
   if (args.includes('--retire-interrupted-source-owner')) {
     if (

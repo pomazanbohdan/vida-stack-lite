@@ -3979,6 +3979,75 @@ function observedResearchChangelogExtension(
     fail('research changelog does not extend its reserved preimage', 'GAP-RESEARCH-DECISION-CAS-001');
   return { eventLine, present };
 }
+/** Read an already admitted historical record; this proves lineage, never write authority or acceptance. */
+export function readHistoricalObservedResearchLineage(input: {
+  readonly root: string;
+  readonly feature: ResearchDecisionConfig;
+  readonly plan: ObservedResearchRecordPlan;
+  readonly activation_plan: ObservedActivationUseWritePlan;
+  readonly activation_use: ActivationUse;
+}): ResearchResult | ResearchSynthesis {
+  const plan = validateObservedResearchRecordPlan(input.plan),
+    activation = validateObservedActivationUseWritePlan(input.activation_plan),
+    use = validateActivationUse(input.activation_use),
+    root = requiredResearchRoot({ root: input.root }),
+    access = repositoryAccess(root);
+  if (
+    canonicalJsonDigest(plan.binding) !== canonicalJsonDigest(activation.binding) ||
+    activation.use_digest !== use.digest ||
+    activation.history_path !== activationHistoryRelative(input.feature, plan.binding.work_id) ||
+    plan.changelog_path !== input.feature.paths.changelog
+  )
+    fail('historical research activation binding differs', 'GAP-RESEARCH-DECISION-CAS-001');
+  const recordBytes = access.readText(plan.record_path, 'historical admitted research'),
+    historyBytes = access.readText(activation.history_path, 'historical activation history'),
+    changelogBytes = access.readText(plan.changelog_path, 'historical research lineage');
+  const history = readActivationHistory(root, input.feature, plan.binding.work_id),
+    lines = historyBytes.split('\n');
+  if (lines.at(-1) !== '' || lines.length - 1 !== history.length)
+    fail('historical activation history framing differs', 'GAP-RESEARCH-DECISION-CAS-001');
+  let offset = 0,
+    matched = 0;
+  for (let index = 0; index < history.length; index += 1) {
+    const prefix = historyBytes.slice(0, offset);
+    offset += lines[index]!.length + 1;
+    if (history[index]!.use_id !== use.use_id) continue;
+    if (
+      history[index]!.digest !== use.digest ||
+      (activation.history_pre_sha256 === null ? prefix !== '' : rawSha256(prefix) !== activation.history_pre_sha256) ||
+      rawSha256(historyBytes.slice(0, offset)) !== activation.history_sha256
+    )
+      fail('historical activation prefix differs', 'GAP-RESEARCH-DECISION-CAS-001');
+    matched += 1;
+  }
+  if (matched !== 1 || rawSha256(recordBytes) !== plan.record_sha256)
+    fail('historical admitted record or activation is missing', 'GAP-RESEARCH-DECISION-CAS-001');
+  const value = asRecord(JSON.parse(recordBytes), 'historical research record');
+  if (!observedResearchChangelogExtension(changelogBytes, plan, value).present)
+    fail('historical research reserved lineage is missing', 'GAP-RESEARCH-DECISION-CAS-001');
+  const options = {
+    root,
+    feature: input.feature,
+    authority_checkpoint_path: undefined,
+    current_record_path: plan.record_path,
+    activation_history_direct_read: true,
+  };
+  const result =
+    plan.schema === 'ObservedSynthesisRecordPlan/v1'
+      ? validateSynthesis(value, options)
+      : validateResult(value, options);
+  if (
+    result.digest !== plan.result_digest ||
+    (value.instruction_activation as RecordInstructionActivation).use_id !== use.use_id ||
+    rawSha256(access.readText(plan.record_path, 'historical record stability')) !== plan.record_sha256 ||
+    rawSha256(access.readText(activation.history_path, 'historical activation stability')) !==
+      rawSha256(historyBytes) ||
+    rawSha256(access.readText(plan.changelog_path, 'historical lineage stability')) !== rawSha256(changelogBytes)
+  )
+    fail('historical research record or lineage changed', 'GAP-RESEARCH-DECISION-CAS-001');
+  return result;
+}
+
 /** Apply a committed plan against its exact target and append-only changelog extension. */
 export async function recordObservedResearchResultAsync(
   input: ObservedResearchRecordInput & {

@@ -1167,7 +1167,24 @@ the whole unissued frontier inert. It grants no Source rights, new execution,
 configuration adoption or task acceptance. The historical request format and
 its completed/unknown predicates remain unchanged.
 
-Both historical owner routes may select `--context-history` with an existing
+`run --release-settled-research-owner true` provides a separate finite release
+with `SettledResearchOwnerReleaseRequest/v1` and `settled_research`. Each observed
+action must be a completed configured readonly assignment with an admitted
+research or synthesis artifact. Its normalization plan, activation use, original
+ticket, run, scope and observation must match. The retained record, activation
+history prefix and changelog event must pass the existing lineage validators.
+The reader uses the original research paths and checks their bytes again. It
+does not acquire a research write gate or adopt the current configuration.
+
+The successor frontier must be wholly unissued and unreserved. Pending or
+unknown effects, failed observations, a Host writer assignment, missing records
+or changed lineage deny release. The existing owner, FIFO, maintenance and
+Work/Ledger/Journal CAS checks still apply. Release retains all observations,
+artifacts, FAIL/GAP findings and the unissued successor. It grants no execution,
+configuration adoption or task acceptance. Exact retries return the same
+suspension; the prior historical and unissued request formats stay unchanged.
+
+The historical owner routes may select `--context-history` with an existing
 retained `VidaAgentRunResult/v1` body. The caller's configured contexts bind to
 one canonical journal action each and pass the existing strict context and
 engine checks. The current documentation is not substituted for those retained
@@ -1175,7 +1192,8 @@ bodies. Extra, foreign or changed bodies deny. The export remains cooperative
 evidence; it does not authenticate a caller or authorize lease disposal.
 This reuses [Mastra's retained workflow snapshots](https://mastra.ai/docs/workflows/snapshots)
 for state consistency. Host ownership and the existing SQLite transaction remain
-the authority for lease release; the engine snapshot is never rewritten.
+the authority for lease release; the engine snapshot is never rewritten. This
+also follows [SQLite's single-writer transaction boundary](https://www.sqlite.org/lang_transaction.html).
 
 Reports of failed native research or synthesis remain durable terminal
 observations. They create no successful research artifact and cannot satisfy a
