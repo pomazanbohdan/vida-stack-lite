@@ -8,6 +8,7 @@ import { configuredReadonlyAssignment, settledSessionItems } from './final-assur
 import { parseObservedValidatorVerdict } from './observed-validation.js';
 import {
   readHistoricalObservedResearchLineage,
+  readHistoricalObservedActivationUse,
   validateObservedResearchRecordPlan,
   validateObservedActivationUseWritePlan,
   validateActivationUse,
@@ -78,10 +79,122 @@ type HistoricalSuspensionInput = SuspensionInput & {
     | 'unknown_readonly'
     | 'settled_writer_failed_validators'
     | 'unissued_prepared'
-    | 'settled_research';
+    | 'settled_research'
+    | 'readonly_bookkeeping';
   readonly expectedMaintenanceGeneration: number;
   readonly preimage?: ScopedSourceSnapshot;
 };
+
+function requireReadonlyBookkeeping(input: HistoricalSuspensionInput, host: HostStateSnapshot): void {
+  const work = host.work,
+    ledger = host.ledger,
+    state = input.journal.state;
+  requireSuspension(
+    work && ledger && state.source_scope && work.execution.assignment_attempts.length === 0,
+    'readonly bookkeeping has writer history or missing scope',
+  );
+  const items = [...state.completed.flatMap((wave) => wave.items), ...state.items];
+  requireSuspension(
+    items.some((item) => item.research_activation) &&
+      items.filter((item) => item.issue_id !== null && item.observation === null).length <= 1,
+    'readonly bookkeeping requires committed activation and at most one pending issue',
+  );
+  for (const item of items) {
+    requireSuspension(
+      !item.host_reservation &&
+        item.request.run_id === state.run_id &&
+        item.request.workflow_id === work.binding.workflow_id &&
+        item.request.config_digest === work.binding.config_digest &&
+        item.request.scope_digest === state.source_scope.digest &&
+        configuredReadonlyAssignment(input.config, item.request),
+      'readonly bookkeeping assignment or original scope differs',
+    );
+    if (item.issue_id === null) {
+      requireSuspension(
+        item.observation === null && !item.research_activation && !item.research_normalization,
+        'readonly bookkeeping successor is not inert',
+      );
+      continue;
+    }
+    const stage = input.config.workflows[item.request.workflow_id]!.stages.find(
+      (stage) => stage.id === item.request.stage_id,
+    )!;
+    if (item.observation === null) {
+      const profile = input.config.agents.profiles[stage.assignments[item.request.assignment_index]!.profile]!;
+      requireSuspension(
+        input.config.agents.egress_policies[profile.egress_policy]!.allowed_hosts.length === 0 &&
+          !item.research_normalization,
+        'readonly bookkeeping pending issue has egress or normalization',
+      );
+    } else
+      requireSuspension(
+        item.observation.action_id === item.request.action_id &&
+          item.observation.issue_id === item.issue_id &&
+          ['reported_complete', 'reported_failed'].includes(item.observation.status),
+        'readonly bookkeeping observation is not terminal',
+      );
+    if (item.research_activation) {
+      const activation = validateObservedActivationUseWritePlan(item.research_activation.plan),
+        binding = activation.binding,
+        ticket = ledger.tickets.find((ticket) => ticket.ticket_id === binding.lease_ticket_id);
+      requireSuspension(
+        binding.work_id === work.binding.lifecycle_work_id &&
+          binding.attempt === state.attempt &&
+          binding.run_id === state.run_id &&
+          binding.action_id === item.request.action_id &&
+          binding.issue_id === item.issue_id &&
+          binding.config_digest === work.binding.config_digest &&
+          binding.scope_digest === state.source_scope.digest &&
+          binding.source_scope_digest === state.source_scope.digest &&
+          binding.source_revision === work.binding.work_source_revision &&
+          binding.scope_id === work.binding.scope_id &&
+          ticket?.work_id === work.binding.lifecycle_work_id &&
+          ticket.thread_id === input.nativeSessionHandle &&
+          binding.lease_thread_id === input.nativeSessionHandle &&
+          binding.lease_generation === ticket.generation &&
+          ticket.repository_id === input.identity.repository_id &&
+          canonicalJsonDigest(ticket.project_ids) === canonicalJsonDigest(input.identity.project_ids) &&
+          ticket.integrations_digest === input.identity.integrations_digest,
+        'readonly bookkeeping original activation binding differs',
+      );
+      readHistoricalObservedActivationUse({
+        root: input.documentationContext.repository_root,
+        feature: input.config.research_decision,
+        plan: activation,
+        use: item.research_activation.use,
+      });
+    }
+    if (item.research_normalization) {
+      requireSuspension(
+        item.research_activation && item.observation?.status === 'reported_complete',
+        'readonly bookkeeping normalization lacks activation or completion',
+      );
+      const plan = validateObservedResearchRecordPlan(item.research_normalization),
+        schema = plan.schema === 'ObservedSynthesisRecordPlan/v1' ? 'ResearchSynthesis/v1' : 'ResearchResult/v1';
+      requireSuspension(
+        canonicalJsonDigest(plan.binding) === canonicalJsonDigest(item.research_activation.plan.binding) &&
+          plan.observation_digest === canonicalJsonDigest(item.observation) &&
+          stage.produces.includes(schema) &&
+          work.artifacts
+            .filter((artifact) => artifact.path === plan.record_path)
+            .every(
+              (artifact) =>
+                artifact.schema === schema &&
+                artifact.sha256 === plan.record_sha256 &&
+                artifact.stage_id === item.request.stage_id,
+            ),
+        'readonly bookkeeping normalized artifact differs',
+      );
+      readHistoricalObservedResearchLineage({
+        root: input.documentationContext.repository_root,
+        feature: input.config.research_decision,
+        plan,
+        activation_plan: item.research_activation.plan,
+        activation_use: item.research_activation.use,
+      });
+    }
+  }
+}
 
 function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
   const host = input.store.readHostStateSnapshot(input.identity);
@@ -180,7 +293,8 @@ function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
       input.preimage === undefined && state.source_scope?.digest === work.binding.work_source_revision,
       'historical readonly scope differs',
     );
-    if (input.predicate === 'settled_research') {
+    if (input.predicate === 'readonly_bookkeeping') requireReadonlyBookkeeping(input, host);
+    else if (input.predicate === 'settled_research') {
       const { observed, inert } = settledSessionItems(state);
       requireSuspension(
         observed.length > 0 &&
@@ -295,6 +409,7 @@ export function suspendHistoricalOwnerWork(input: HistoricalSuspensionInput): Ho
     false,
     input.predicate === 'unissued_prepared',
     input.predicate === 'settled_research',
+    input.predicate === 'readonly_bookkeeping',
   );
 }
 
@@ -307,6 +422,7 @@ export function inspectHistoricalOwnerWork(input: HistoricalSuspensionInput): Ho
     true,
     input.predicate === 'unissued_prepared',
     input.predicate === 'settled_research',
+    input.predicate === 'readonly_bookkeeping',
   );
 }
 
@@ -317,6 +433,7 @@ function suspendLocalWorkCore(
   inspectOnly = false,
   unissuedPrepared = false,
   settledResearch = false,
+  readonlyBookkeeping = false,
 ): HostStateSnapshot {
   const {
     store,
@@ -418,13 +535,13 @@ function suspendLocalWorkCore(
     );
   }
   requireSuspension(
-    (unknownReadonly || pending.length === 0) &&
+    (readonlyBookkeeping || unknownReadonly || pending.length === 0) &&
       !work.execution.assignment_attempts.some(
         (attempt) => attempt.status === 'started' || attempt.status === 'uncertain',
       ),
     'native action or host assignment is still active or uncertain',
   );
-  const operationId = `${settledResearch ? 'settled-research-release' : unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
+  const operationId = `${readonlyBookkeeping ? 'readonly-bookkeeping-release' : settledResearch ? 'settled-research-release' : unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
     {
       work_id: identity.work_id,
       nativeSessionHandle,
@@ -509,6 +626,7 @@ function suspendLocalWorkCore(
       ticket.generation === lease.generation &&
       ticket.expires_at !== null &&
       (completedReadonly ||
+        readonlyBookkeeping ||
         settledResearch ||
         settledWriter ||
         expiredUnissued ||
@@ -519,6 +637,7 @@ function suspendLocalWorkCore(
       claims[0]!.work_id === identity.work_id &&
       claims[0]!.generation === lease.generation &&
       (completedReadonly ||
+        readonlyBookkeeping ||
         settledResearch ||
         expiredUnissued ||
         unknownReadonly ||
@@ -531,7 +650,11 @@ function suspendLocalWorkCore(
       !host.ledger.tickets.some(
         (other) =>
           other.ticket_id !== ticket.ticket_id &&
-          (completedReadonly || settledResearch || settledWriter || other.sequence < ticket.sequence) &&
+          (completedReadonly ||
+            readonlyBookkeeping ||
+            settledResearch ||
+            settledWriter ||
+            other.sequence < ticket.sequence) &&
           ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(other.status) &&
           other.exclusive_resources.some((resource) => expectedResources.includes(resource)),
       ),
@@ -566,8 +689,9 @@ function suspendLocalWorkCore(
     lifecycle: {
       ...work.lifecycle,
       revision: work.revision + 1,
-      next_action:
-        unissuedPrepared || settledResearch
+      next_action: readonlyBookkeeping
+        ? 'Readonly observations, canonical artifact GAPs and pending UNKNOWN remain frozen; continuation needs normal admission.'
+        : unissuedPrepared || settledResearch
           ? 'The original unissued frontier remains inert; continuation needs normal admission.'
           : requestIntent === 'linked_correction'
             ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'

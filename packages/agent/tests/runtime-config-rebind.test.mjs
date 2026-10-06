@@ -1280,12 +1280,16 @@ function historicalFixture(
   const preimage = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), paths);
   f.put('original-scope.json', json(preimage));
   const context = { work_id: identity.work_id, attempt: 1, scope_digest: preimage.digest },
-    workflow = predicate === 'settled_research' ? 'information_research_light' : 'task_execution';
+    workflow = ['settled_research', 'readonly_bookkeeping'].includes(predicate)
+      ? 'information_research_light'
+      : 'task_execution';
   const runId = sessionBridgeRunId(f.workspace, context, workflow),
     selection = {
       team: 'default-development',
-      kind: predicate === 'settled_research' ? 'research' : 'task',
-      intent: predicate === 'settled_research' ? 'information_research' : 'task_execution',
+      kind: ['settled_research', 'readonly_bookkeeping'].includes(predicate) ? 'research' : 'task',
+      intent: ['settled_research', 'readonly_bookkeeping'].includes(predicate)
+        ? 'information_research'
+        : 'task_execution',
       project: 'agent',
       risk_flags: [],
       labels: [],
@@ -1487,11 +1491,13 @@ function historicalFixture(
   f.put('agent-runtime.config.v1.yaml', f.target);
   const request = {
     schema:
-      predicate === 'settled_research'
-        ? 'SettledResearchOwnerReleaseRequest/v1'
-        : predicate === 'unissued_prepared'
-          ? 'UnissuedOwnerReleaseRequest/v1'
-          : 'HistoricalOwnerReleaseRequest/v1',
+      predicate === 'readonly_bookkeeping'
+        ? 'ReadonlyBookkeepingOwnerReleaseRequest/v1'
+        : predicate === 'settled_research'
+          ? 'SettledResearchOwnerReleaseRequest/v1'
+          : predicate === 'unissued_prepared'
+            ? 'UnissuedOwnerReleaseRequest/v1'
+            : 'HistoricalOwnerReleaseRequest/v1',
     identity,
     attempt: 1,
     userRequestPointer: 'fixture:human-owner-release',
@@ -1501,11 +1507,13 @@ function historicalFixture(
   };
   f.put('release.json', json(request));
   const args = (mode) => [
-    predicate === 'settled_research'
-      ? '--release-settled-research-owner'
-      : predicate === 'unissued_prepared'
-        ? '--release-unissued-owner'
-        : '--release-historical-owner',
+    predicate === 'readonly_bookkeeping'
+      ? '--release-readonly-bookkeeping-owner'
+      : predicate === 'settled_research'
+        ? '--release-settled-research-owner'
+        : predicate === 'unissued_prepared'
+          ? '--release-unissued-owner'
+          : '--release-historical-owner',
     'true',
     '--mode',
     mode,
@@ -1686,13 +1694,14 @@ test('historical owner release rejects maintenance drift between predicate and w
   expect(databaseState(f)).toEqual(before);
 });
 
-test('public settled research releases admitted lineage and preserves observations on exact retry', async () => {
-  const { f, request, args, state } = historicalFixture('settled_research');
+function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = -1, pendingIndex = -1 } = {}) {
   const original = inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, 1);
   const work = structuredClone(original.owner.state);
   let history = '',
     changelog = '';
   for (const [index, item] of state.items.entries()) {
+    const pending = index === pendingIndex,
+      normalized = index !== unnormalizedIndex && !pending;
     const record = createHistoricalResearchFixture({
       config: original.config,
       feature: original.config.research_decision,
@@ -1723,31 +1732,34 @@ test('public settled research releases admitted lineage and preserves observatio
       };
       delete activation.digest;
       activation.digest = canonicalJsonDigest(activation);
-      const plan = {
-        ...record.plan,
-        changelog_pre_sha256: changelog === '' ? null : sha(changelog),
-        changelog_sha256: sha(changelog + record.changelogBytes),
-      };
-      delete plan.digest;
-      plan.digest = canonicalJsonDigest(plan);
       history += record.historyBytes;
-      changelog += record.changelogBytes;
-      f.put(record.recordPath, record.recordBytes);
       f.put(record.historyPath, history);
-      f.put(record.changelogPath, changelog);
-      item.observation = record.observation;
       item.research_activation = { plan: activation, use: record.activationUse };
-      item.research_normalization = plan;
-      work.artifacts.push({
-        artifact_id: 'research-' + index,
-        schema: 'ResearchResult/v1',
-        path: plan.record_path,
-        sha256: plan.record_sha256,
-        stage_id: item.request.stage_id,
-        source_revision: work.binding.work_source_revision,
-        scope_id: work.binding.scope_id,
-        ac_ids: work.binding.ac_ids,
-      });
+      if (pending) item.observation = null;
+      if (normalized) {
+        const plan = {
+          ...record.plan,
+          changelog_pre_sha256: changelog === '' ? null : sha(changelog),
+          changelog_sha256: sha(changelog + record.changelogBytes),
+        };
+        delete plan.digest;
+        plan.digest = canonicalJsonDigest(plan);
+        changelog += record.changelogBytes;
+        f.put(record.recordPath, record.recordBytes);
+        f.put(record.changelogPath, changelog);
+        item.observation = record.observation;
+        item.research_normalization = plan;
+        work.artifacts.push({
+          artifact_id: 'research-' + index,
+          schema: 'ResearchResult/v1',
+          path: plan.record_path,
+          sha256: plan.record_sha256,
+          stage_id: item.request.stage_id,
+          source_revision: work.binding.work_source_revision,
+          scope_id: work.binding.scope_id,
+          ac_ids: work.binding.ac_ids,
+        });
+      } else delete item.research_normalization;
     } finally {
       record.dispose();
     }
@@ -1762,6 +1774,12 @@ test('public settled research releases admitted lineage and preserves observatio
       canonicalJsonDigest(state),
     );
   });
+  return { work };
+}
+
+test('public settled research releases admitted lineage and preserves observations on exact retry', async () => {
+  const { f, request, args, state } = historicalFixture('settled_research'),
+    { work } = seedHistoricalResearchLineage(f, request, state);
   const before = databaseState(f),
     engine = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
   const inspected = await run(args('inspect'));
@@ -1779,6 +1797,292 @@ test('public settled research releases admitted lineage and preserves observatio
   expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
   expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engine);
   expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+}, 30000);
+
+test('public readonly bookkeeping releases a completed observation without normalization', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping'),
+    unnormalizedIndex = 1,
+    { work } = seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex }),
+    unnormalized = state.items[unnormalizedIndex];
+  expect(unnormalized.observation.status).toBe('reported_complete');
+  expect(unnormalized.research_activation).toBeTruthy();
+  expect(unnormalized.research_normalization).toBeUndefined();
+  expect(work.artifacts.some((artifact) => artifact.artifact_id === 'research-' + unnormalizedIndex)).toBe(false);
+  const before = databaseState(f),
+    engine = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  const inspected = await run(args('inspect'));
+  expect(inspected.rights_granted).toBe(false);
+  expect(inspected.runtime_acceptance).toBe(false);
+  expect(databaseState(f)).toEqual(before);
+  f.put('release.json', json(inspected.request));
+  const result = await run(args('apply'));
+  expect(result.rights_granted).toBe(false);
+  expect(result.runtime_acceptance).toBe(false);
+  const after = databaseState(f),
+    released = JSON.parse(after.agent_host_state.find((row) => row.kind === 'work').payload);
+  expect(released.lease).toBeNull();
+  expect(released.artifacts).toEqual(work.artifacts);
+  expect(released.lifecycle.phase).toBe(work.lifecycle.phase);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engine);
+  expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+}, 30000);
+
+test('public readonly bookkeeping keeps committed normalized lineage without adding missing Work admission', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping'),
+    { work } = seedHistoricalResearchLineage(f, request, state),
+    normalized = state.items[0],
+    plan = normalized.research_normalization;
+  expect(existsSync(path.join(f.root, plan.record_path))).toBe(true);
+  work.artifacts = work.artifacts.filter((artifact) => artifact.path !== plan.record_path);
+  expect(work.artifacts.some((artifact) => artifact.path === plan.record_path)).toBe(false);
+  withDatabase(f, (db) =>
+    db
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
+      .run(json(work), canonicalJsonDigest(work)),
+  );
+  const before = databaseState(f),
+    engine = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  const inspected = await run(args('inspect'));
+  expect(inspected.rights_granted).toBe(false);
+  expect(inspected.runtime_acceptance).toBe(false);
+  expect(databaseState(f)).toEqual(before);
+  f.put('release.json', json(inspected.request));
+  const result = await run(args('apply'));
+  expect(result.rights_granted).toBe(false);
+  expect(result.runtime_acceptance).toBe(false);
+  const after = databaseState(f),
+    released = JSON.parse(after.agent_host_state.find((row) => row.kind === 'work').payload);
+  expect(released.lease).toBeNull();
+  expect(released.artifacts).toEqual(work.artifacts);
+  expect(released.artifacts.some((artifact) => artifact.path === plan.record_path)).toBe(false);
+  expect(released.lifecycle.next_action).toMatch(/canonical artifact GAPs/);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engine);
+  expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+}, 30000);
+
+test('public readonly bookkeeping preserves a pending no-egress code-researcher issue as UNKNOWN', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping'),
+    pendingIndex = 1,
+    { work } = seedHistoricalResearchLineage(f, request, state, { pendingIndex }),
+    pending = state.items[pendingIndex],
+    config = loadRuntimeConfig(f.root),
+    stage = config.workflows[pending.request.workflow_id].stages.find((entry) => entry.id === pending.request.stage_id),
+    profile = config.agents.profiles[stage.assignments[pending.request.assignment_index].profile];
+  expect(pending.request.role).toBe('code-researcher');
+  expect(config.agents.egress_policies[profile.egress_policy].allowed_hosts).toHaveLength(0);
+  expect(pending.issue_id).toBeTruthy();
+  expect(pending.observation).toBeNull();
+  expect(pending.research_activation).toBeTruthy();
+  expect(pending.research_normalization).toBeUndefined();
+  const before = databaseState(f),
+    engine = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  const inspected = await run(args('inspect'));
+  expect(inspected.rights_granted).toBe(false);
+  expect(inspected.runtime_acceptance).toBe(false);
+  expect(databaseState(f)).toEqual(before);
+  f.put('release.json', json(inspected.request));
+  const result = await run(args('apply'));
+  expect(result.rights_granted).toBe(false);
+  expect(result.runtime_acceptance).toBe(false);
+  const after = databaseState(f),
+    released = JSON.parse(after.agent_host_state.find((row) => row.kind === 'work').payload);
+  expect(released.lease).toBeNull();
+  expect(released.artifacts).toEqual(work.artifacts);
+  expect(released.execution.assignment_attempts).toEqual(work.execution.assignment_attempts);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engine);
+  expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+}, 30000);
+
+test('public readonly bookkeeping denies pending official-docs egress without changing state', async () => {
+  const { f, args, request, state } = historicalFixture('readonly_bookkeeping'),
+    pendingIndex = 0;
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex });
+  const pending = state.items[pendingIndex],
+    config = loadRuntimeConfig(f.root),
+    stage = config.workflows[pending.request.workflow_id].stages.find((entry) => entry.id === pending.request.stage_id),
+    profile = config.agents.profiles[stage.assignments[pending.request.assignment_index].profile];
+  expect(pending.request.role).toBe('documentation-researcher');
+  expect(config.agents.egress_policies[profile.egress_policy].allowed_hosts.length).toBeGreaterThan(0);
+  const before = databaseState(f);
+  await expect(run(args('inspect'))).rejects.toThrow(/egress/);
+  expect(databaseState(f)).toEqual(before);
+});
+
+test.each(['altered', 'missing'])(
+  'public readonly bookkeeping denies %s committed activation history without changing state',
+  async (change) => {
+    const { f, args, request, state } = historicalFixture('readonly_bookkeeping');
+    seedHistoricalResearchLineage(f, request, state);
+    const historyPath = state.items[0].research_activation.plan.history_path,
+      fullPath = path.join(f.root, historyPath);
+    if (change === 'altered') f.put(historyPath, readFileSync(fullPath, 'utf8') + '{}\n');
+    else rmSync(fullPath, { force: true });
+    const before = databaseState(f);
+    await expect(run(args('inspect'))).rejects.toThrow(/activation|history/i);
+    expect(databaseState(f)).toEqual(before);
+  },
+  30000,
+);
+
+test.each(['tampered', 'missing'])(
+  'public readonly bookkeeping denies a %s physical record with normalization without changing state',
+  async (change) => {
+    const { f, args, request, state } = historicalFixture('readonly_bookkeeping');
+    seedHistoricalResearchLineage(f, request, state);
+    const recordPath = state.items[0].research_normalization.record_path,
+      fullPath = path.join(f.root, recordPath);
+    if (change === 'tampered') f.put(recordPath, '{}\n');
+    else rmSync(fullPath, { force: true });
+    const before = databaseState(f);
+    await expect(run(args('inspect'))).rejects.toThrow(/record|research|digest/i);
+    expect(databaseState(f)).toEqual(before);
+  },
+  30000,
+);
+
+test('public readonly bookkeeping denies an existing mismatched artifact at a normalized record path', async () => {
+  const { f, args, request, state } = historicalFixture('readonly_bookkeeping'),
+    { work } = seedHistoricalResearchLineage(f, request, state),
+    plan = state.items[0].research_normalization,
+    artifact = work.artifacts.find((entry) => entry.path === plan.record_path);
+  expect(artifact).toBeTruthy();
+  artifact.sha256 = '0'.repeat(64);
+  withDatabase(f, (db) =>
+    db
+      .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
+      .run(json(work), canonicalJsonDigest(work)),
+  );
+  const before = databaseState(f);
+  await expect(run(args('inspect'))).rejects.toThrow(/artifact|lineage/i);
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('public readonly bookkeeping releases an exact expired owner once without renewing or granting rights', async () => {
+  const { f, args, request, state } = historicalFixture('readonly_bookkeeping'),
+    { work } = seedHistoricalResearchLineage(f, request, state),
+    expiry = '2026-10-01T00:00:00.000Z';
+  const original = withDatabase(f, (db) => {
+    const row = db.query("SELECT * FROM agent_host_state WHERE kind='ledger'").get(),
+      ledger = JSON.parse(row.payload),
+      ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease.ticket_id),
+      claim = ledger.claims.find((entry) => entry.ticket_id === work.lease.ticket_id);
+    expect(ticket.status).toBe('active');
+    expect(claim.status).toBe('active');
+    ticket.expires_at = expiry;
+    claim.lease_expires_at = expiry;
+    db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'").run(
+      json(ledger),
+      canonicalJsonDigest(ledger),
+    );
+    return { ticket: structuredClone(ticket), claim: structuredClone(claim) };
+  });
+  expect(original.ticket.expires_at).toBe(original.claim.lease_expires_at);
+  const before = databaseState(f),
+    engine = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  const inspected = await run(args('inspect'));
+  expect(inspected.rights_granted).toBe(false);
+  expect(inspected.runtime_acceptance).toBe(false);
+  expect(databaseState(f)).toEqual(before);
+  f.put('release.json', json(inspected.request));
+  const result = await run(args('apply'));
+  expect(result.status).toBe('historical_owner_released');
+  expect(result.rights_granted).toBe(false);
+  expect(result.runtime_acceptance).toBe(false);
+  const after = databaseState(f),
+    releasedWork = JSON.parse(after.agent_host_state.find((row) => row.kind === 'work').payload),
+    releasedLedger = JSON.parse(after.agent_host_state.find((row) => row.kind === 'ledger').payload),
+    releasedTicket = releasedLedger.tickets.find((entry) => entry.ticket_id === original.ticket.ticket_id),
+    releasedClaim = releasedLedger.claims.find((entry) => entry.ticket_id === original.claim.ticket_id);
+  expect(releasedWork.lease).toBeNull();
+  expect(releasedWork.lifecycle.phase).toBe(work.lifecycle.phase);
+  expect(releasedWork.execution.assignment_attempts).toEqual(work.execution.assignment_attempts);
+  expect(releasedWork.artifacts).toEqual(work.artifacts);
+  expect(releasedTicket.status).toBe('released');
+  expect(releasedTicket.sequence).toBe(original.ticket.sequence);
+  expect(releasedTicket.generation).toBe(original.ticket.generation);
+  expect(releasedTicket.exclusive_resources).toEqual(original.ticket.exclusive_resources);
+  expect(releasedTicket.active_resources).toEqual([]);
+  expect(releasedTicket.blocked_resources).toEqual([]);
+  expect(releasedTicket.expires_at).toBeNull();
+  expect(releasedClaim.status).toBe('released');
+  expect(releasedClaim.generation).toBe(original.claim.generation);
+  expect(releasedClaim.resources).toEqual(original.claim.resources);
+  expect(releasedClaim.lease_expires_at).toBe(expiry);
+  expect(
+    releasedLedger.operations.filter((operation) => operation.ticket_id === original.ticket.ticket_id),
+  ).toHaveLength(1);
+  expect(
+    releasedLedger.operations.find((operation) => operation.ticket_id === original.ticket.ticket_id).resources,
+  ).toEqual(original.ticket.exclusive_resources);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engine);
+  expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+  const retried = JSON.parse(databaseState(f).agent_host_state.find((row) => row.kind === 'ledger').payload);
+  expect(retried.operations.filter((operation) => operation.ticket_id === original.ticket.ticket_id)).toHaveLength(1);
+}, 30000);
+
+test('public readonly bookkeeping denies an earlier overlapping queued ticket without changing state', async () => {
+  const { f, args, request, state } = historicalFixture('readonly_bookkeeping'),
+    { work } = seedHistoricalResearchLineage(f, request, state);
+  const queued = withDatabase(f, (db) => {
+    const row = db.query("SELECT * FROM agent_host_state WHERE kind='ledger'").get(),
+      ledger = JSON.parse(row.payload),
+      owner = ledger.tickets.find((entry) => entry.ticket_id === work.lease.ticket_id),
+      earlier = {
+        ...structuredClone(owner),
+        ticket_id: 'earlier-fifo-ticket',
+        work_id: 'earlier-fifo-work',
+        thread_id: 'earlier-fifo-thread',
+        sequence: owner.sequence,
+        status: 'queued',
+        claim_ids: [],
+        active_resources: [],
+        blocked_resources: [...owner.exclusive_resources],
+        expires_at: null,
+      };
+    owner.sequence++;
+    ledger.tickets.unshift(earlier);
+    ledger.next_sequence = Math.max(ledger.next_sequence, owner.sequence + 1);
+    db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'").run(
+      json(ledger),
+      canonicalJsonDigest(ledger),
+    );
+    return { owner: structuredClone(owner), ticket: structuredClone(earlier) };
+  });
+  expect(queued.ticket.status).toBe('queued');
+  expect(queued.ticket.sequence).toBeLessThan(queued.owner.sequence);
+  expect(queued.ticket.blocked_resources.some((resource) => queued.owner.exclusive_resources.includes(resource))).toBe(
+    true,
+  );
+  const before = databaseState(f);
+  await expect(run(args('inspect'))).rejects.toThrow(/FIFO|resource activation/i);
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('public readonly bookkeeping rejects a foreign owner and stale inspection CAS', async () => {
+  const { f, args, request, state } = historicalFixture('readonly_bookkeeping');
+  seedHistoricalResearchLineage(f, request, state);
+  const before = databaseState(f),
+    foreignOwner = args('inspect');
+  foreignOwner[7] = 'foreign-owner';
+  await expect(run(foreignOwner)).rejects.toThrow(/original owner differs/);
+  expect(databaseState(f)).toEqual(before);
+  const inspected = await run(args('inspect'));
+  f.put(
+    'release.json',
+    json({
+      ...inspected.request,
+      inspection: {
+        ...inspected.request.inspection,
+        expectedMaintenanceGeneration: inspected.request.inspection.expectedMaintenanceGeneration + 1,
+      },
+    }),
+  );
+  await expect(run(args('apply'))).rejects.toThrow(/CAS changed/);
+  expect(databaseState(f)).toEqual(before);
 }, 30000);
 
 test.each(['completed_readonly', 'unknown_readonly', 'unissued_prepared'])(

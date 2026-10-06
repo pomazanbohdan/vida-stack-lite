@@ -2832,7 +2832,12 @@ async function releaseCompletedReadonly(args) {
   }
 }
 
-async function releaseHistoricalOwner(args, unissuedOwner = false, settledResearch = false) {
+async function releaseHistoricalOwner(
+  args,
+  unissuedOwner = false,
+  settledResearch = false,
+  readonlyBookkeeping = false,
+) {
   const values = {};
   if (![10, 12].includes(args.length))
     throw Error('Historical release requires mode, exact root, owner, baseline and request');
@@ -2892,17 +2897,21 @@ async function releaseHistoricalOwner(args, unissuedOwner = false, settledResear
   if (
     Object.keys(base).sort().join('|') !== expectedKeys.sort().join('|') ||
     base.schema !==
-      (settledResearch
-        ? 'SettledResearchOwnerReleaseRequest/v1'
-        : unissuedOwner
-          ? 'UnissuedOwnerReleaseRequest/v1'
-          : 'HistoricalOwnerReleaseRequest/v1') ||
+      (readonlyBookkeeping
+        ? 'ReadonlyBookkeepingOwnerReleaseRequest/v1'
+        : settledResearch
+          ? 'SettledResearchOwnerReleaseRequest/v1'
+          : unissuedOwner
+            ? 'UnissuedOwnerReleaseRequest/v1'
+            : 'HistoricalOwnerReleaseRequest/v1') ||
     !(
-      settledResearch
-        ? ['settled_research']
-        : unissuedOwner
-          ? ['unissued_prepared']
-          : ['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators']
+      readonlyBookkeeping
+        ? ['readonly_bookkeeping']
+        : settledResearch
+          ? ['settled_research']
+          : unissuedOwner
+            ? ['unissued_prepared']
+            : ['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators']
     ).includes(base.predicate) ||
     !['next_work', 'linked_correction'].includes(base.requestIntent) ||
     (mode === 'inspect' ? suppliedInspection !== undefined : !suppliedInspection)
@@ -3166,6 +3175,11 @@ export async function run(args = process.argv.slice(2)) {
     if (args[0] !== '--release-settled-research-owner' || args[1] !== 'true')
       throw Error('Settled research release requires its exact separate signal');
     return releaseHistoricalOwner(args.slice(2), false, true);
+  }
+  if (args.includes('--release-readonly-bookkeeping-owner')) {
+    if (args[0] !== '--release-readonly-bookkeeping-owner' || args[1] !== 'true')
+      throw Error('Readonly bookkeeping release requires its exact separate signal');
+    return releaseHistoricalOwner(args.slice(2), false, false, true);
   }
   if (args.includes('--retire-interrupted-source-owner')) {
     if (

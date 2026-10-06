@@ -3979,30 +3979,27 @@ function observedResearchChangelogExtension(
     fail('research changelog does not extend its reserved preimage', 'GAP-RESEARCH-DECISION-CAS-001');
   return { eventLine, present };
 }
-/** Read an already admitted historical record; this proves lineage, never write authority or acceptance. */
-export function readHistoricalObservedResearchLineage(input: {
+/** Read a committed activation prefix without granting write or execution rights. */
+export function readHistoricalObservedActivationUse(input: {
   readonly root: string;
   readonly feature: ResearchDecisionConfig;
-  readonly plan: ObservedResearchRecordPlan;
-  readonly activation_plan: ObservedActivationUseWritePlan;
-  readonly activation_use: ActivationUse;
-}): ResearchResult | ResearchSynthesis {
-  const plan = validateObservedResearchRecordPlan(input.plan),
-    activation = validateObservedActivationUseWritePlan(input.activation_plan),
-    use = validateActivationUse(input.activation_use),
+  readonly plan: ObservedActivationUseWritePlan;
+  readonly use: ActivationUse;
+}): ActivationUse {
+  const activation = validateObservedActivationUseWritePlan(input.plan),
+    use = validateActivationUse(input.use),
     root = requiredResearchRoot({ root: input.root }),
     access = repositoryAccess(root);
   if (
-    canonicalJsonDigest(plan.binding) !== canonicalJsonDigest(activation.binding) ||
     activation.use_digest !== use.digest ||
-    activation.history_path !== activationHistoryRelative(input.feature, plan.binding.work_id) ||
-    plan.changelog_path !== input.feature.paths.changelog
+    activation.history_path !== activationHistoryRelative(input.feature, activation.binding.work_id) ||
+    use.work_item_id !== activation.binding.work_id ||
+    use.scope_id !== activation.binding.scope_id ||
+    use.source_revision !== activation.binding.source_revision
   )
-    fail('historical research activation binding differs', 'GAP-RESEARCH-DECISION-CAS-001');
-  const recordBytes = access.readText(plan.record_path, 'historical admitted research'),
-    historyBytes = access.readText(activation.history_path, 'historical activation history'),
-    changelogBytes = access.readText(plan.changelog_path, 'historical research lineage');
-  const history = readActivationHistory(root, input.feature, plan.binding.work_id),
+    fail('historical activation binding differs', 'GAP-RESEARCH-DECISION-CAS-001');
+  const historyBytes = access.readText(activation.history_path, 'historical activation history');
+  const history = readActivationHistory(root, input.feature, activation.binding.work_id),
     lines = historyBytes.split('\n');
   if (lines.at(-1) !== '' || lines.length - 1 !== history.length)
     fail('historical activation history framing differs', 'GAP-RESEARCH-DECISION-CAS-001');
@@ -4020,8 +4017,42 @@ export function readHistoricalObservedResearchLineage(input: {
       fail('historical activation prefix differs', 'GAP-RESEARCH-DECISION-CAS-001');
     matched += 1;
   }
-  if (matched !== 1 || rawSha256(recordBytes) !== plan.record_sha256)
-    fail('historical admitted record or activation is missing', 'GAP-RESEARCH-DECISION-CAS-001');
+  if (
+    matched !== 1 ||
+    rawSha256(access.readText(activation.history_path, 'historical activation stability')) !== rawSha256(historyBytes)
+  )
+    fail('historical activation is missing or changed', 'GAP-RESEARCH-DECISION-CAS-001');
+  return use;
+}
+
+/** Read an already admitted historical record; this proves lineage, never write authority or acceptance. */
+export function readHistoricalObservedResearchLineage(input: {
+  readonly root: string;
+  readonly feature: ResearchDecisionConfig;
+  readonly plan: ObservedResearchRecordPlan;
+  readonly activation_plan: ObservedActivationUseWritePlan;
+  readonly activation_use: ActivationUse;
+}): ResearchResult | ResearchSynthesis {
+  const plan = validateObservedResearchRecordPlan(input.plan),
+    activation = validateObservedActivationUseWritePlan(input.activation_plan),
+    root = requiredResearchRoot({ root: input.root }),
+    access = repositoryAccess(root);
+  if (
+    canonicalJsonDigest(plan.binding) !== canonicalJsonDigest(activation.binding) ||
+    plan.changelog_path !== input.feature.paths.changelog
+  )
+    fail('historical research activation binding differs', 'GAP-RESEARCH-DECISION-CAS-001');
+  const historyBytes = access.readText(activation.history_path, 'historical activation history'),
+    use = readHistoricalObservedActivationUse({
+      root,
+      feature: input.feature,
+      plan: activation,
+      use: input.activation_use,
+    }),
+    recordBytes = access.readText(plan.record_path, 'historical admitted research'),
+    changelogBytes = access.readText(plan.changelog_path, 'historical research lineage');
+  if (rawSha256(recordBytes) !== plan.record_sha256)
+    fail('historical admitted record differs', 'GAP-RESEARCH-DECISION-CAS-001');
   const value = asRecord(JSON.parse(recordBytes), 'historical research record');
   if (!observedResearchChangelogExtension(changelogBytes, plan, value).present)
     fail('historical research reserved lineage is missing', 'GAP-RESEARCH-DECISION-CAS-001');

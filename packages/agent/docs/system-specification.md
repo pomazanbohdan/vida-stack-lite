@@ -1184,6 +1184,27 @@ artifacts, FAIL/GAP findings and the unissued successor. It grants no execution,
 configuration adoption or task acceptance. Exact retries return the same
 suspension; the prior historical and unissued request formats stay unchanged.
 
+`run --release-readonly-bookkeeping-owner true` uses the distinct
+`ReadonlyBookkeepingOwnerReleaseRequest/v1` and `readonly_bookkeeping` predicate.
+It releases only the original readonly owner. Every committed activation plan
+must bind to the original action, issue, ticket and scope, and its canonical
+history prefix must pass strict validation. Normalization plans require a
+matching completed observation and the committed physical record/changelog
+lineage. Every Work artifact at that path must match schema, stage and bytes.
+Absent canonical admission remains GAP; this route never admits an artifact or
+satisfies a produced contract. Missing or changed physical records deny release.
+
+There are no Host writer assignments or reservations. At most one issue may
+remain pending, with no egress rights and no normalization plan. Preserve that
+UNKNOWN and all terminal observations. An inert successor has no issued action
+or bookkeeping reservation. Original owner, Work/Ledger/Journal/maintenance CAS
+and overlapping FIFO checks remain. Release leaves the engine and all records
+unchanged and grants no execution, configuration adoption or acceptance.
+An exact expired lease may be disposed while its active ticket and claim still
+match owner, generation, resources and expiry. This is not renewal. Any other
+overlapping queued, active, ready-for-handoff or blocked ticket denies release.
+The prior historical, unissued and settled-research families remain strict.
+
 The historical owner routes may select `--context-history` with an existing
 retained `VidaAgentRunResult/v1` body. The caller's configured contexts bind to
 one canonical journal action each and pass the existing strict context and
