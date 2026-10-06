@@ -265,6 +265,11 @@ cached. A cache miss downloads the locked dependencies normally. Cache hits do
 not qualify a build. See the [Bun cache contract](https://bun.sh/docs/pm/global-cache)
 and [GitHub cache action](https://github.com/actions/cache).
 
+Save downloaded packages after dependency installation succeeds and before
+compilation. A later compilation failure therefore retains the reusable cache.
+Restore and save use the same key and directory. A cache-save failure remains
+visible and does not become a runtime qualification or admission prerequisite.
+
 After a required build, inspect the cache action's restore/save result and the
 repository cache entry. Record its exact key, ID, nonzero size and creation/access
 time against that run. A successful workflow alone does not prove a populated

@@ -7600,7 +7600,7 @@ export class HostStateStore {
           entry.action_id === input.actionId && entry.issue_id === input.issueId &&
           entry.host_attempt_id === observation?.host_attempt_id && typeof entry.call_ref === 'string' &&
           entry.call_ref.trim().length > 0 && Array.isArray(entry.changed_paths) &&
-          entry.changed_paths.every((value) => typeof value === 'string' && value.trim().length > 0),
+          entry.changed_paths.every((value: unknown) => typeof value === 'string' && value.trim().length > 0),
         ),
       'retired-source terminal caller evidence is incomplete or mismatched',
     );
