@@ -265,6 +265,13 @@ cached. A cache miss downloads the locked dependencies normally. Cache hits do
 not qualify a build. See the [Bun cache contract](https://bun.sh/docs/pm/global-cache)
 and [GitHub cache action](https://github.com/actions/cache).
 
+After a required build, inspect the cache action's restore/save result and the
+repository cache entry. Record its exact key, ID, nonzero size and creation/access
+time against that run. A successful workflow alone does not prove a populated
+cache. An exact hit reuses the existing entry; it need not save another entry.
+Confirm `cache-hit` on a later required warm build. Keep missing or empty cache
+evidence explicit. Do not start a separate build solely to measure caching.
+
 Current installed build: run 37505488413, artifact 11431028847, version 0.1.2,
 embedded Bun 1.4.2. The system native file is 133303808 bytes. Exact
 bytes, current instructions and effective PATH are verified. Previous consumer

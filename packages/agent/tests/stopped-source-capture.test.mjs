@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -27,28 +28,39 @@ import { run } from '../bin/run.mjs';
 import { containedControllerFixture } from './contained-controller-fixture.mjs';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const containedPackage = containedControllerFixture(bundle);
-const candidateBinding = containedPackage.binding;
+let containedPackage;
+let candidateBinding;
+const cleanupHookOptions = { timeout: 15000 };
 let caseBudget;
 let checkedAfterCase;
-function test(name, body, timeout) {
+function ensureContainedPackage() {
+  if (!containedPackage) {
+    containedPackage = containedControllerFixture(bundle);
+    candidateBinding = containedPackage.binding;
+    Object.assign(cleanupHookOptions, containedPackage.cleanupHookOptions);
+  }
+  return containedPackage;
+}
+function test(name, body, timeout, { sourceOnly = false } = {}) {
   bunTest(
     name,
     async () => {
-      caseBudget = containedPackage.caseBudget();
-      checkedAfterCase = false;
-      containedPackage.assertUnchanged();
-      caseBudget.remaining();
+      if (!sourceOnly) {
+        caseBudget = ensureContainedPackage().caseBudget();
+        checkedAfterCase = false;
+        containedPackage.assertUnchanged();
+        caseBudget.remaining();
+      }
       try {
         await body();
       } finally {
-        if (!checkedAfterCase) containedPackage.assertUnchanged();
+        if (!sourceOnly && !checkedAfterCase) containedPackage.assertUnchanged();
       }
     },
     timeout,
   );
 }
-afterAll(() => containedPackage.close(), containedPackage.cleanupHookOptions);
+afterAll(() => containedPackage?.close(), cleanupHookOptions);
 function copiedRun(args) {
   const result = containedPackage.run(args, caseBudget);
   if (result.status !== 0) throw new Error(result.payload.message);
@@ -295,13 +307,15 @@ async function fixture({ writer = true } = {}) {
     for (const extra of extraBridges) await extra.close();
     await bridge.close();
     ledger.close();
-    try {
-      containedPackage.assertUnchanged();
-      checkedAfterCase = true;
-    } catch (error) {
-      packageError = error;
+    if (containedPackage) {
+      try {
+        containedPackage.assertUnchanged();
+        checkedAfterCase = true;
+      } catch (error) {
+        packageError = error;
+      }
     }
-    if (containedPackage.retained) {
+    if (containedPackage?.retained) {
       console.warn('Consumer retained after package drift or unknown child outcome: ' + root);
       if (packageError) throw packageError;
       return;
@@ -476,6 +490,148 @@ async function fixture({ writer = true } = {}) {
         ]),
     };
   }
+  function retireOwner() {
+    const host = store.readHostStateSnapshot(identity), journal = ledger.resume('stopped', 1),
+      item = journal.state.items[0];
+    return store.retireInterruptedSourceOwner({
+      identity,
+      attempt: 1,
+      actionId: item.request.action_id,
+      issueId: item.issue_id,
+      expectedWork: host.workVersion,
+      expectedLedger: host.ledgerVersion,
+      expectedJournal: journal.version,
+      expectedMaintenanceGeneration: host.maintenanceGeneration,
+      authorization: reservation.authorization,
+      operatorHandle: input.nativeSessionHandle,
+      decisionPointer: 'synthetic:retired-source-capture-owner-release',
+      evidence: {
+        schema: 'InterruptedSourceRetirementEvidence/v1',
+        source_thread_id: 'synthetic-original-turn',
+        source_thread_status: 'interrupted',
+        read_thread_ref: 'synthetic:original-turn-interrupted',
+        list_agents_ref: 'synthetic:no-active-source-writers',
+        active_source_writer_ids: [],
+      },
+    });
+  }
+  function retiredCaptureInput(retirement) {
+    writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Synthetic partial candidate bytes');
+    const candidate = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']),
+      host = store.readHostStateSnapshot(identity), journal = ledger.resume('stopped', 1),
+      item = journal.state.items[0], summary = 'Synthetic original Source turn was interrupted after a partial write',
+      observation = {
+        schema: 'VidaSessionObservation/v1',
+        action_id: item.request.action_id,
+        issue_id: item.issue_id,
+        host_attempt_id: reservation.receipt.attempt.attempt_id,
+        agent_id: 'synthetic-native-writer',
+        tool_call_ref: 'local:synthetic-retired-source-write',
+        status: 'reported_failed',
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        changed_paths: ['AGENT.sidecar.md'],
+        evidence_refs: ['local:synthetic-retired-source-write'],
+      },
+      terminalEvidence = {
+        schema: 'RetiredSourceTerminalEvidence/v1',
+        source_thread_id: 'synthetic-native-source-thread',
+        source_thread_status: 'notLoaded',
+        source_turn_status: 'interrupted',
+        source_turn_id: 'synthetic-original-turn',
+        operator_thread_id: input.nativeSessionHandle,
+        original_actor_id: observation.agent_id,
+        final_message_id: null,
+        action_id: item.request.action_id,
+        issue_id: item.issue_id,
+        host_attempt_id: observation.host_attempt_id,
+        active_source_writer_ids: [],
+        observed_commands: [],
+        original_tool_records: [
+          {
+            call_ref: 'synthetic-file-change',
+            actor_id: observation.agent_id,
+            action_id: item.request.action_id,
+            issue_id: item.issue_id,
+            host_attempt_id: observation.host_attempt_id,
+            status: 'completed',
+            changed_paths: ['AGENT.sidecar.md'],
+          },
+        ],
+        later_grants: [],
+      },
+      candidateSnapshot = {
+        schema: 'UnverifiedSourceSnapshot/v1',
+        entries: candidate.entries.map((entry) => ({ path: entry.path, sha256: entry.sha256, size: entry.bytes })),
+      },
+      operation = {
+        schema: 'RetiredSourceCapture/v1',
+        identity,
+        attempt: 1,
+        actionId: item.request.action_id,
+        issueId: item.issue_id,
+        expectedWork: host.workVersion,
+        expectedLedger: host.ledgerVersion,
+        expectedJournal: journal.version,
+        expectedMaintenanceGeneration: host.maintenanceGeneration,
+        retirementOperationId: retirement.operation_id,
+        retirementClaimId: retirement.snapshot.ledger.claims.find(
+          (entry) => entry.ticket_id === reservation.receipt.attempt.lease.ticket_id,
+        ).claim_id,
+        operatorHandle: input.nativeSessionHandle,
+        observation,
+        terminalEvidence,
+        candidateSnapshot,
+        attributions: [],
+      };
+    const digest = (value) => createHash('sha256').update(value).digest('hex'),
+      packet = { schema: 'DevelopmentTaskPacket/v1', work_item_id: 'stopped', attempt: 1,
+        packet_id: 'synthetic-packet', digest: canonicalJsonDigest('synthetic-packet') },
+      issued = { request: item.request, action: { action_id: item.request.action_id,
+        stage_id: item.request.stage_id, scope_digest: item.request.scope_digest },
+        issue_id: item.issue_id, host_attempt_id: observation.host_attempt_id, development_packet: packet },
+      commands = [
+        { type: 'commandExecution', id: 'synthetic-issue', command: 'vida-agent run --issue-wave true',
+          status: 'completed', exitCode: 0, output: { truncated: false,
+            text: JSON.stringify({ schema: 'VidaAgentRunResult/v1', issued_actions: [issued] }) } },
+        { type: 'commandExecution', id: 'synthetic-wave', command: 'vida-agent inspect issued packet',
+          status: 'completed', exitCode: 0, output: { truncated: false,
+            text: JSON.stringify({ status: 'wave_issued', issue_id: item.issue_id,
+              host_attempt_id: observation.host_attempt_id, packet_id: packet.packet_id }) } },
+      ],
+      diff = '@@ -1 +1 @@\n-Synthetic source preimage\n+Synthetic partial candidate bytes\n',
+      artifact = { schema: 'CoreNativeIssuedTurnRead/v1', host: 'local', tool: 'mcp__codex_app__read_thread',
+        max_output_chars_per_item: 20000, data: {
+          thread: { id: terminalEvidence.source_thread_id, kind: 'codex', status: { type: 'notLoaded' } },
+          turns: [{ id: terminalEvidence.source_turn_id, status: 'interrupted', items: [...commands,
+            { type: 'fileChange', id: 'synthetic-file-change', status: 'completed', changes: [
+              { path: path.join(root, 'AGENT.sidecar.md'), kind: { type: 'update' }, diff: { text: diff, truncated: false } },
+            ] },
+          ] }],
+        } },
+      artifactRef = '.tmp/retired-source-native-read.json';
+    writeJson(root, artifactRef, artifact);
+    terminalEvidence.observed_commands = commands.map((entry) => ({ ref: entry.id, status: entry.status,
+      exit_code: entry.exitCode, command_sha256: digest(entry.command), output_sha256: digest(entry.output.text),
+      output_present: true, output_truncated: false }));
+    operation.attributions = [{ path: 'AGENT.sidecar.md', event_ref: 'synthetic-file-change',
+      kind: 'file_change', evidence_sha256: digest(diff) }];
+    operation.nativeTurnEvidenceRef = artifactRef;
+    operation.nativeReadResult = { schema: 'RetiredSourceNativeTurnEvidence/v1', artifact_ref: artifactRef,
+      artifact_sha256: digest(readFileSync(path.join(root, artifactRef))),
+      thread_id: terminalEvidence.source_thread_id, thread_status: 'notLoaded',
+      turn_id: terminalEvidence.source_turn_id, turn_status: 'interrupted',
+      issue: { action_id: item.request.action_id, issue_id: item.issue_id, host_attempt_id: observation.host_attempt_id,
+        packet_id: packet.packet_id, packet_digest: packet.digest, work_item_id: packet.work_item_id,
+        attempt: 1, stage_id: item.request.stage_id, scope_digest: item.request.scope_digest },
+      command_refs: commands.map((entry) => entry.id), file_change_refs: ['synthetic-file-change'],
+      source_effects: operation.attributions };
+    const verifyCurrent = () => {
+      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md'])).toEqual(candidate);
+      expect(loadRuntimeConfig(root)).toEqual(config);
+    };
+    return { operation, verifyCurrent };
+  }
   return {
     root,
     config,
@@ -491,10 +647,136 @@ async function fixture({ writer = true } = {}) {
     ddl,
     close,
     captureInput,
+    retireOwner,
+    retiredCaptureInput,
     admission,
     laterWriter,
   };
 }
+
+test('retired Source capture settles only the issued failure and retries through its separate public route', async () => {
+  const f = await fixture();
+  try {
+    const retirement = f.retireOwner(), c = f.retiredCaptureInput(retirement),
+      before = f.inspect(), ddl = f.ddl(), journalBefore = f.ledger.resume('stopped', 1),
+      incomplete = { ...c.operation, attributions: [] };
+    expect(() => f.store.captureRetiredSourceObservation({ ...incomplete, verifyCurrent: c.verifyCurrent })).toThrow(
+      'attribution is incomplete',
+    );
+    expect(() => f.store.captureRetiredSourceObservation({
+      ...c.operation,
+      verifyCurrent: c.verifyCurrent,
+      fault() { throw Error('synthetic retired-source post-write fault'); },
+    })).toThrow('synthetic retired-source post-write fault');
+    expect(f.inspect()).toEqual(before);
+    expect(f.ddl()).toEqual(ddl);
+    expect(f.ledger.resume('stopped', 1)).toEqual(journalBefore);
+
+    const requestRef = '.agent/work/stopped/retired-source-capture.json';
+    writeJson(f.root, requestRef, { workspace_id: f.workspace, ...c.operation });
+    const args = [
+      '--capture-retired-source', 'true', '--project-root', f.root,
+      '--native-session-handle', f.input.nativeSessionHandle, '--request', requestRef,
+    ];
+    const result = await run(args);
+    expect(result).toMatchObject({
+      schema: 'RetiredSourceCapture/v1',
+      status: 'captured_original_partial_source_failure',
+      rights_granted: false,
+      canonical_acceptance: false,
+      runtime_acceptance: false,
+    });
+    const after = f.store.readHostStateSnapshot(f.identity), journal = f.ledger.resume('stopped', 1);
+    expect(after.work.lease).toBeNull();
+    expect(after.work.execution.status).toBe('suspended');
+    expect(after.work.execution.assignment_attempts[0]).toMatchObject({
+      status: 'completed', result: c.operation.observation,
+    });
+    expect(journal.state.items[0].observation).toEqual(c.operation.observation);
+    expect(journal.state.source_scope).toEqual(f.source);
+    expect(after.ledger.tickets.find((entry) => entry.ticket_id === f.reservation.receipt.attempt.lease.ticket_id).status)
+      .toBe('released');
+    const retried = await run(args);
+    expect(retried.work_version).toEqual(result.work_version);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+    writeJson(f.root, requestRef, {
+      workspace_id: f.workspace,
+      ...c.operation,
+      terminalEvidence: { ...c.operation.terminalEvidence, source_turn_id: 'synthetic-changed-turn' },
+    });
+    await expect(run(args)).rejects.toThrow('original thread or interrupted turn differs');
+  } finally {
+    await f.close();
+  }
+}, 60000, { sourceOnly: true });
+
+test('retired Source capture rejects foreign retirement, stale CAS and an active overlapping writer', async () => {
+  const f = await fixture();
+  try {
+    const retirement = f.retireOwner(), c = f.retiredCaptureInput(retirement), before = f.inspect();
+    for (const change of [
+      { retirementOperationId: 'foreign-retirement-operation' },
+      { expectedWork: { ...c.operation.expectedWork, revision: c.operation.expectedWork.revision + 1 } },
+      { terminalEvidence: { ...c.operation.terminalEvidence, final_message_id: 'invented-final-message' } },
+    ])
+      expect(() => f.store.captureRetiredSourceObservation({
+        ...c.operation, ...change, verifyCurrent: c.verifyCurrent,
+      })).toThrow();
+    expect(f.inspect()).toEqual(before);
+    await f.laterWriter('later-overlap', 'AGENT.sidecar.md');
+    const current = f.store.readHostStateSnapshot(f.identity), overlapping = f.retiredCaptureInput(retirement);
+    expect(() => f.store.captureRetiredSourceObservation({
+      ...overlapping.operation,
+      expectedWork: current.workVersion,
+      expectedLedger: current.ledgerVersion,
+      verifyCurrent: overlapping.verifyCurrent,
+    })).toThrow('active Source ownership');
+  } finally {
+    await f.close();
+  }
+}, 60000, { sourceOnly: true });
+
+test('retired Source capture accounts command patches, exact exclusions and unresolved outcomes', async () => {
+  const f = await fixture();
+  try {
+    const retirement = f.retireOwner(), c = f.retiredCaptureInput(retirement), before = f.inspect(),
+      artifactPath = path.join(f.root, c.operation.nativeTurnEvidenceRef),
+      retainedArtifact = JSON.parse(readFileSync(artifactPath)),
+      artifact = { schema: 'RetiredSourceTurnRead/v1', data: retainedArtifact.data },
+      requestRef = '.agent/work/stopped/retired-command-capture.json',
+      args = ['--capture-retired-source', 'true', '--project-root', f.root,
+        '--native-session-handle', f.input.nativeSessionHandle, '--request', requestRef];
+    const event = { type: 'commandExecution', id: 'synthetic-command-patch', status: 'failed', exitCode: 1,
+      command: "git apply '.tmp/original.patch'", output: { text: '', truncated: false } };
+    artifact.data.turns[0].items.push(event);
+    writeJson(f.root, c.operation.nativeTurnEvidenceRef, artifact);
+    writeJson(f.root, requestRef, { workspace_id: f.workspace, ...c.operation });
+    await expect(run(args)).rejects.toThrow('patch outcome is unresolved');
+    expect(f.inspect()).toEqual(before);
+    mkdirSync(path.join(f.root, '.tmp'), { recursive: true });
+    writeFileSync(path.join(f.root, '.tmp/original.patch'),
+      'diff --git a/AGENT.sidecar.md b/AGENT.sidecar.md\n--- a/AGENT.sidecar.md\n+++ b/AGENT.sidecar.md\n@@ -1 +1 @@\n-old\n+new\n' +
+      'diff --git a/outside-source.txt b/outside-source.txt\n--- a/outside-source.txt\n+++ b/outside-source.txt\n@@ -1 +1 @@\n-old\n+new\n');
+    event.status = 'completed'; event.exitCode = 0;
+    event.command = "git apply --check '.tmp/not-retained.patch'; git apply --exclude='outside-source.txt' '.tmp/original.patch'";
+    const standalone = { type: 'commandExecution', id: 'synthetic-unscoped-write', status: 'completed', exitCode: 0,
+      command: "Path('packages/agent/src/outside.ts').write_text('unexpected')", output: { text: '', truncated: false } };
+    artifact.data.turns[0].items.push(standalone);
+    for (const command of [standalone.command, "with Path('docs/outside.md').open('a') as f: f.write('unexpected')"] ) {
+      standalone.command = command;
+      writeJson(f.root, c.operation.nativeTurnEvidenceRef, artifact);
+      await expect(run(args)).rejects.toThrow('outside the original scope');
+      expect(f.inspect()).toEqual(before);
+    }
+    artifact.data.turns[0].items.pop();
+    writeJson(f.root, c.operation.nativeTurnEvidenceRef, artifact);
+    expect(await run(args)).toMatchObject({ status: 'captured_original_partial_source_failure', rights_granted: false });
+    expect(f.ledger.resume('stopped', 1).state.items[0].observation.changed_paths).toEqual(['AGENT.sidecar.md']);
+    expect(f.store.readHostStateSnapshot(f.identity).work.execution.status).toBe('suspended');
+  } finally {
+    await f.close();
+  }
+}, 60000, { sourceOnly: true });
 
 test('public stopped capture preserves failure, rolls back all fields and DDL, then retries without new rights', async () => {
   const f = await fixture();

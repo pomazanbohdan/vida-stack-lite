@@ -236,6 +236,108 @@ export interface InterruptedSourceRetirementResult {
   readonly operation_id: string;
   readonly request_digest: string;
 }
+export interface RetiredSourceCaptureChange {
+  readonly path: string;
+  readonly event_ref: string;
+  readonly kind: 'command' | 'patch' | 'file_change';
+  readonly evidence_sha256: string;
+  readonly patch_ref?: string;
+}
+export interface RetiredSourceCaptureTerminalEvidence {
+  readonly schema: 'RetiredSourceTerminalEvidence/v1';
+  readonly source_thread_id: string;
+  readonly source_thread_status: string;
+  readonly source_turn_id: string;
+  readonly source_turn_status: 'interrupted';
+  readonly operator_thread_id: string;
+  readonly original_actor_id: string;
+  readonly final_message_id: null;
+  readonly action_id: string;
+  readonly issue_id: string;
+  readonly host_attempt_id: string;
+  readonly active_source_writer_ids: readonly string[];
+  readonly observed_commands: readonly {
+    readonly ref: string;
+    readonly status: 'completed' | 'failed';
+    readonly exit_code: number;
+    readonly command_sha256: string;
+    readonly output_sha256: string | null;
+    readonly output_present: boolean;
+    readonly output_truncated: boolean;
+  }[];
+  readonly original_tool_records: readonly {
+    readonly call_ref: string;
+    readonly actor_id: string;
+    readonly action_id: string;
+    readonly issue_id: string;
+    readonly host_attempt_id: string;
+    readonly status: 'completed';
+    readonly changed_paths: readonly string[];
+  }[];
+  readonly later_grants: readonly {
+    readonly work_id: string;
+    readonly ticket_id: string;
+    readonly claim_id: string;
+    readonly actor_id: string;
+    readonly action_id: string;
+    readonly issue_id: string;
+    readonly host_attempt_id: string;
+    readonly changed_paths: readonly string[];
+    readonly evidence_ref: string;
+  }[];
+}
+export interface RetiredSourceNativeReadResult {
+  readonly schema: 'RetiredSourceNativeTurnEvidence/v1';
+  readonly artifact_ref: string;
+  readonly artifact_sha256: string;
+  readonly thread_id: string;
+  readonly thread_status: string;
+  readonly turn_id: string;
+  readonly turn_status: 'interrupted';
+  readonly issue: {
+    readonly action_id: string;
+    readonly issue_id: string;
+    readonly host_attempt_id: string;
+    readonly packet_id: string;
+    readonly packet_digest: string;
+    readonly work_item_id: string;
+    readonly attempt: number;
+    readonly stage_id: string;
+    readonly scope_digest: string;
+  };
+  readonly command_refs: readonly string[];
+  readonly file_change_refs: readonly string[];
+  readonly source_effects: readonly RetiredSourceCaptureChange[];
+}
+export interface RetiredSourceCaptureRequest {
+  readonly schema: 'RetiredSourceCapture/v1';
+  readonly identity: WorkIdentity;
+  readonly attempt: number;
+  readonly actionId: string;
+  readonly issueId: string;
+  readonly expectedWork: StateVersion;
+  readonly expectedLedger: StateVersion;
+  readonly expectedJournal: StateVersion;
+  readonly expectedMaintenanceGeneration: number;
+  readonly retirementOperationId: string;
+  readonly retirementClaimId: string;
+  readonly operatorHandle: string;
+  readonly nativeTurnEvidenceRef: string;
+  readonly nativeReadResult: RetiredSourceNativeReadResult;
+  readonly observation: MastraSessionLedgerState['items'][number]['observation'];
+  readonly terminalEvidence: RetiredSourceCaptureTerminalEvidence;
+  readonly candidateSnapshot: {
+    readonly schema: 'UnverifiedSourceSnapshot/v1';
+    readonly entries: readonly { readonly path: string; readonly sha256: string; readonly size: number }[];
+  };
+  readonly attributions: readonly RetiredSourceCaptureChange[];
+  readonly verifyCurrent: () => void;
+  readonly fault?: () => void;
+}
+export interface RetiredSourceCaptureResult {
+  readonly snapshot: HostStateSnapshot;
+  readonly request_digest: string;
+}
 export interface WorkflowAttemptApprovalRequest {
   readonly schema: 'WorkflowAttemptApprovalRequest/v1';
   readonly store_id: string;
@@ -7445,6 +7547,283 @@ export class HostStateStore {
         );
       input.fault?.();
       return after;
+    }).immediate();
+  }
+
+  /** Settle only the original reported failure after its Source owner was retired. */
+  captureRetiredSourceObservation(input: RetiredSourceCaptureRequest): RetiredSourceCaptureResult {
+    const { verifyCurrent: _verify, fault: _fault, ...bounded } = input,
+      request = snapshot(bounded),
+      evidence = input.terminalEvidence,
+      observation = input.observation;
+    requireState(
+      Object.keys(request).length === 18 &&
+        request.schema === 'RetiredSourceCapture/v1' &&
+        Number.isSafeInteger(request.attempt) && request.attempt > 0 &&
+        Number.isSafeInteger(request.expectedMaintenanceGeneration) && request.expectedMaintenanceGeneration >= 0 &&
+        typeof input.verifyCurrent === 'function',
+      'retired-source capture request invalid',
+    );
+    requireState(
+      evidence?.schema === 'RetiredSourceTerminalEvidence/v1' &&
+        typeof evidence.source_thread_status === 'string' && evidence.source_thread_status.length > 0 &&
+        evidence.source_thread_status.length <= 256 && evidence.source_turn_status === 'interrupted' &&
+        evidence.final_message_id === null &&
+        typeof evidence.source_turn_id === 'string' && evidence.source_turn_id.trim().length > 0 &&
+        evidence.source_thread_id === input.nativeReadResult?.thread_id &&
+        evidence.source_thread_id !== input.operatorHandle && evidence.operator_thread_id === input.operatorHandle &&
+        evidence.original_actor_id === observation?.agent_id && evidence.original_actor_id !== input.operatorHandle &&
+        evidence.action_id === input.actionId && evidence.issue_id === input.issueId &&
+        evidence.host_attempt_id === observation?.host_attempt_id &&
+        input.nativeReadResult?.schema === 'RetiredSourceNativeTurnEvidence/v1' &&
+        input.nativeReadResult.thread_id === evidence.source_thread_id &&
+        input.nativeReadResult.thread_status === evidence.source_thread_status &&
+        input.nativeReadResult.turn_id === evidence.source_turn_id &&
+        input.nativeReadResult.turn_status === evidence.source_turn_status &&
+        input.nativeReadResult.issue.action_id === input.actionId &&
+        input.nativeReadResult.issue.issue_id === input.issueId &&
+        input.nativeReadResult.issue.host_attempt_id === evidence.host_attempt_id &&
+        Array.isArray(input.nativeReadResult.command_refs) &&
+        Array.isArray(input.nativeReadResult.file_change_refs) &&
+        evidence.active_source_writer_ids?.length === 0 &&
+        Array.isArray(evidence.observed_commands) && evidence.observed_commands.length > 0 &&
+        evidence.observed_commands.length <= 512 && evidence.observed_commands.every((entry) =>
+          typeof entry.ref === 'string' && entry.ref.trim().length > 0 && ['completed', 'failed'].includes(entry.status) &&
+          Number.isSafeInteger(entry.exit_code) && hashPattern.test(entry.command_sha256) &&
+          (entry.output_sha256 === null || hashPattern.test(entry.output_sha256)) &&
+          typeof entry.output_present === 'boolean' && typeof entry.output_truncated === 'boolean',
+        ) &&
+        sameJson(evidence.observed_commands.map((entry) => entry.ref), input.nativeReadResult.command_refs) &&
+        Array.isArray(evidence.original_tool_records) && evidence.original_tool_records.length > 0 &&
+        evidence.original_tool_records.length <= 256 && evidence.original_tool_records.every((entry) =>
+          entry.status === 'completed' && entry.actor_id === evidence.original_actor_id &&
+          entry.action_id === input.actionId && entry.issue_id === input.issueId &&
+          entry.host_attempt_id === observation?.host_attempt_id && typeof entry.call_ref === 'string' &&
+          entry.call_ref.trim().length > 0 && Array.isArray(entry.changed_paths) &&
+          entry.changed_paths.every((value) => typeof value === 'string' && value.trim().length > 0),
+        ),
+      'retired-source terminal caller evidence is incomplete or mismatched',
+    );
+    requireState(
+      observation?.schema === 'VidaSessionObservation/v1' && observation.status === 'reported_failed' &&
+        observation.action_id === input.actionId && observation.issue_id === input.issueId &&
+        observation.output_digest === canonicalJsonDigest(observation.summary) &&
+        Array.isArray(observation.changed_paths) && observation.evidence_refs.length > 0 &&
+        input.candidateSnapshot?.schema === 'UnverifiedSourceSnapshot/v1' &&
+        Array.isArray(input.candidateSnapshot.entries) && input.candidateSnapshot.entries.length <= 4096 &&
+        Array.isArray(input.attributions) && input.attributions.length <= 8192,
+      'retired-source partial observation or candidate inventory invalid',
+    );
+    const requestDigest = canonicalJsonDigest(request);
+    requireState(!this.#database.inTransaction, 'nested retired-source capture forbidden');
+    return this.#transactionWithProducerFence(() => {
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_retired_source_capture (workspace_id TEXT,work_id TEXT,attempt INTEGER,action_id TEXT,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt,action_id))',
+      );
+      this.#assertReconciliationWritesAllowed();
+      const existing = this.#database.query(
+        'SELECT payload,digest FROM agent_host_retired_source_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+      ).get(this.#workspaceId, input.identity.work_id, input.attempt, input.actionId) as { payload: string; digest: string } | null;
+      if (existing) {
+        const record = JSON.parse(existing.payload) as Record<string, unknown>, current = this.#read(input.identity),
+          journal = this.#database.query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          ).get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+            revision: number; payload: string; digest: string;
+          } | null;
+        requireState(canonicalJsonDigest(record) === existing.digest && record.request_digest === requestDigest,
+          'retired-source capture retry differs');
+        input.verifyCurrent();
+        requireState(current.work?.lease === null && current.work.execution.status === 'suspended' &&
+          sameJson(current.workVersion, record.work_version) && sameJson(current.ledgerVersion, record.ledger_version) &&
+          journal && sameJson({ revision: journal.revision, digest: journal.digest }, record.journal_version) &&
+          canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+        'retired-source capture retry follows dependent Host or Journal write');
+        return { snapshot: current, request_digest: requestDigest };
+      }
+      const before = this.#read(input.identity), work = before.work, ledger = before.ledger;
+      matchesExpected(before.workVersion, input.expectedWork);
+      matchesExpected(before.ledgerVersion, input.expectedLedger);
+      this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+      requireState(work && ledger && work.execution.status === 'suspended' && work.lease === null,
+        'retired-source capture requires suspended Work with no lease');
+      const attempt = input.terminalEvidence.host_attempt_id,
+        retiredAttempt = work.execution.assignment_attempts.find((entry) => entry.attempt_id === attempt),
+        ticketId = retiredAttempt?.lease.ticket_id,
+        ticket = ledger.tickets.find((entry) => entry.ticket_id === ticketId),
+        claim = ledger.claims.find((entry) => entry.claim_id === input.retirementClaimId),
+        release = ledger.operations.find((entry) => entry.operation_id === input.retirementOperationId) as Record<string, unknown> | undefined;
+      requireState(retiredAttempt && retiredAttempt.status === 'uncertain' && retiredAttempt.result === null &&
+        retiredAttempt.result_digest === null && retiredAttempt.lease.thread_id === input.operatorHandle &&
+        ticket?.status === 'released' && ticket.work_id === input.identity.work_id &&
+        ticket.thread_id === input.operatorHandle && ticket.generation === retiredAttempt.lease.generation &&
+        ticket.ticket_id === retiredAttempt.lease.ticket_id && ticket.claim_ids.includes(input.retirementClaimId) &&
+        claim?.ticket_id === ticket.ticket_id && claim.status === 'released' && claim.thread_id === input.operatorHandle &&
+        claim.generation === ticket.generation && release?.kind === 'release' && release.ticket_id === ticket.ticket_id &&
+        release.work_id === ticket.work_id && release.thread_id === ticket.thread_id &&
+        release.source_revision === ticket.source_revision && sameJson(release.resources, ticket.exclusive_resources) &&
+        release.decided_by === input.operatorHandle,
+      'exact original retired ticket, claim or release operation differs');
+      const row = this.#database.query(
+        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      ).get(this.#workspaceId, input.identity.work_id, input.attempt) as { revision: number; payload: string; digest: string } | null;
+      requireState(row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest &&
+        canonicalJsonDigest(JSON.parse(row.payload)) === row.digest, 'retired-source Journal CAS differs');
+      const state = JSON.parse(row.payload) as MastraSessionLedgerState,
+        allItems = [...state.items, ...state.completed.flatMap((wave) => wave.items)],
+        item = allItems.find((entry) => entry.request.action_id === input.actionId),
+        reservation = item?.host_reservation,
+        authorization = reservation?.authorization,
+        started = reservation?.receipt.attempt;
+      requireState(state.schema === 'MastraSessionLedger/v1' && state.work_id === input.identity.work_id &&
+        state.attempt === input.attempt && item?.issue_id === input.issueId && item.observation === null &&
+        reservation && reservation.approvalAction === 'source.write' &&
+        reservation.invocation.profile.mutation_scope === 'repository_source' &&
+        reservation.invocation.profile.egress_policy === 'none' && started?.attempt_id === attempt &&
+        started.status === 'started' && started.result === null && started.result_digest === null &&
+        started.lease.ticket_id === ticket.ticket_id && started.lease.thread_id === input.operatorHandle &&
+        sameJson(reservation.invocation.workContext.binding, work.binding) &&
+        reservation.request.workItemId === work.binding.lifecycle_work_id &&
+        reservation.request.configDigest === work.binding.config_digest &&
+        reservation.request.workflowId === work.binding.workflow_id &&
+        item.request.config_digest === work.binding.config_digest &&
+        item.request.scope_digest === state.source_scope?.digest &&
+        input.nativeReadResult.issue.work_item_id === work.binding.lifecycle_work_id &&
+        input.nativeReadResult.issue.attempt === input.attempt &&
+        input.nativeReadResult.issue.stage_id === item.request.stage_id &&
+        input.nativeReadResult.issue.scope_digest === item.request.scope_digest &&
+        state.source_scope?.digest === work.binding.work_source_revision &&
+        allItems.every((entry) => entry === item || entry.observation !== null ||
+          (entry.issue_id === null && !entry.host_reservation && !entry.research_activation && !entry.research_normalization)) &&
+        work.execution.assignment_attempts.every((entry) => entry.attempt_id === attempt || entry.status === 'completed' || entry.status === 'no_effect'),
+      'retired-source pending issue, protected reservation or scope differs');
+      const uncertain = { ...started!, status: 'uncertain' as const, result: null, result_digest: null };
+      requireState(sameJson(retiredAttempt, uncertain), 'retired Host attempt differs from original started receipt');
+      const approval = authorization?.approval,
+        stored = approval && this.#governanceRead(approval.store_id, 'approval', canonicalJsonDigest(approval.binding));
+      requireState(approval?.status === 'commit_unknown' && approval.attempt_id === attempt && stored &&
+        sameJson(stored.record, approval), 'retired-source commit-unknown approval fence differs');
+      const original = state.source_scope!, paths = original.entries.map((entry) => entry.path),
+        candidate = input.candidateSnapshot.entries,
+        byCandidate = new Map(candidate.map((entry) => [entry.path, entry]));
+      requireState(candidate.length === paths.length && byCandidate.size === paths.length &&
+        paths.every((value) => byCandidate.has(value)) && candidate.every((entry) =>
+          hashPattern.test(entry.sha256) && Number.isSafeInteger(entry.size) && entry.size >= 0),
+      'retired-source candidate snapshot is incomplete');
+      const originalPaths = [...new Set(evidence.original_tool_records.flatMap((entry) => [...entry.changed_paths]))].sort(),
+        later = evidence.later_grants,
+        overlap = (entry: CoordinationTicket) => entry.exclusive_resources.some((resource) => paths.some((value) => resource === 'file:' + value)),
+        releaseIndex = ledger.operations.findIndex((entry) => entry.operation_id === input.retirementOperationId),
+        retiredClaimIndex = ledger.claims.findIndex((entry) => entry.claim_id === claim.claim_id),
+        laterClaims = ledger.claims.filter((entry, index) => entry.ticket_id !== ticket.ticket_id &&
+          entry.resources.some((resource) => paths.some((value) => resource === 'file:' + value)) &&
+          (index > retiredClaimIndex || ledger.operations.some((operation, operationIndex) =>
+            operationIndex > releaseIndex && operation.kind === 'release' && operation.ticket_id === entry.ticket_id)) &&
+          ledger.tickets.some((grant) => grant.ticket_id === entry.ticket_id && grant.status !== 'read_only')),
+        laterTickets = laterClaims.map((entry) => ledger.tickets.find((grant) => grant.ticket_id === entry.ticket_id)!);
+      requireState(sameJson([...observation.changed_paths!].sort(), originalPaths) &&
+        releaseIndex >= 0 && retiredClaimIndex >= 0 &&
+        !ledger.tickets.some((entry) => overlap(entry) && ['active', 'ready_for_handoff'].includes(entry.status)) &&
+        !ledger.claims.some((entry) => entry.status === 'active' &&
+          entry.resources.some((resource) => paths.some((value) => resource === 'file:' + value))) &&
+        laterClaims.every((entry, index) => {
+          const grant = laterTickets[index]!,
+            released = ledger.operations.findIndex((operation, operationIndex) => operationIndex > releaseIndex &&
+              operation.kind === 'release' && operation.ticket_id === grant.ticket_id &&
+              operation.work_id === grant.work_id && operation.thread_id === grant.thread_id &&
+              sameJson([...(operation.resources as string[] ?? [])].sort(), [...grant.exclusive_resources].sort()));
+          return grant.status === 'released' && entry.status === 'released' && grant.claim_ids.includes(entry.claim_id) &&
+            released > releaseIndex;
+        }) &&
+        sameJson(later.map((entry) => ({ ticket_id: entry.ticket_id, claim_id: entry.claim_id })),
+          laterClaims.map((entry) => ({ ticket_id: entry.ticket_id, claim_id: entry.claim_id }))),
+      'original writes, later grants or active Source ownership are incomplete');
+      requireState(input.attributions.every((entry) => paths.includes(entry.path) &&
+        ['command', 'patch', 'file_change'].includes(entry.kind) && hashPattern.test(entry.evidence_sha256) &&
+        typeof entry.event_ref === 'string' && entry.event_ref.trim().length > 0 &&
+        (entry.kind === 'file_change' ? input.nativeReadResult.file_change_refs : input.nativeReadResult.command_refs)
+          .includes(entry.event_ref)),
+      'retired-source attribution entry invalid');
+      const attributedPaths = new Set(input.attributions.map((entry) => entry.path));
+      requireState(sameJson(input.attributions, input.nativeReadResult.source_effects) &&
+        sameJson([...attributedPaths].sort(), originalPaths),
+      'retired-source source-change attribution is incomplete');
+      const allWork = this.#database.query("SELECT payload FROM agent_host_state WHERE workspace_id=? AND kind='work'")
+        .all(this.#workspaceId) as { payload: string }[];
+      for (const grant of later) {
+        const claimRows = ledger.claims.filter((entry) => entry.ticket_id === grant.ticket_id);
+        requireState(claimRows.length === 1 && claimRows[0]!.claim_id === grant.claim_id &&
+          grant.actor_id.length > 0 && grant.action_id.length > 0 && grant.issue_id.length > 0 &&
+          grant.host_attempt_id.length > 0 && grant.evidence_ref.trim().length > 0 && Array.isArray(grant.changed_paths),
+        'later Source grant claim or terminal issue mapping differs');
+        const journalRows = this.#database.query(
+          'SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=?',
+        ).all(this.#workspaceId, grant.work_id) as { payload: string; digest: string }[],
+          witnessed = journalRows.flatMap((entry) => {
+            const journal = JSON.parse(entry.payload) as MastraSessionLedgerState;
+            if (canonicalJsonDigest(journal) !== entry.digest) return [];
+            return [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].filter((candidate) =>
+              candidate.request.action_id === grant.action_id && candidate.issue_id === grant.issue_id &&
+              candidate.host_reservation?.receipt.attempt.attempt_id === grant.host_attempt_id &&
+              candidate.host_reservation.receipt.attempt.lease.ticket_id === grant.ticket_id &&
+              candidate.host_reservation.approvalAction === 'source.write' &&
+              candidate.observation?.agent_id === grant.actor_id &&
+              candidate.observation?.host_attempt_id === grant.host_attempt_id &&
+              ['reported_complete', 'reported_failed'].includes(candidate.observation.status) &&
+              sameJson([...candidate.observation.changed_paths!].sort(), [...grant.changed_paths].sort()) &&
+              candidate.observation.evidence_refs.includes(grant.evidence_ref));
+          });
+        const matchingWork = allWork.map((entry) => JSON.parse(entry.payload) as WorkState).filter((entry) =>
+          entry.binding.lifecycle_work_id === grant.work_id),
+          completed = witnessed.length === 1 && matchingWork.length === 1 &&
+            matchingWork[0]!.execution.assignment_attempts.some((entry) =>
+              entry.attempt_id === grant.host_attempt_id && entry.lease.ticket_id === grant.ticket_id &&
+              entry.status === 'completed' && canonicalJsonDigest(entry.result) === canonicalJsonDigest(witnessed[0]!.observation));
+        requireState(completed, 'later Source grant lacks its exact terminal Host and Journal evidence');
+      }
+      const overlappingIds = new Set(ledger.tickets.filter(overlap).map((entry) => entry.ticket_id));
+      requireState(allWork.every((entry) => {
+        const other = JSON.parse(entry.payload) as WorkState;
+        return other.execution.assignment_attempts.every((value) => value.attempt_id === attempt ||
+          value.status !== 'uncertain' || !overlappingIds.has(value.lease.ticket_id));
+      }), 'another uncertain Source writer remains unresolved');
+      input.verifyCurrent();
+      const attempts = work.execution.assignment_attempts.map((entry) => entry.attempt_id === attempt
+        ? { ...started!, status: 'completed' as const, result: observation, result_digest: canonicalJsonDigest(observation) }
+        : entry),
+        staged = this.#writeAttempts(before, attempts),
+        applied = { ...approval!, status: 'applied' as const, terminal_at: new Date().toISOString() };
+      this.#governanceWrite('approval', canonicalJsonDigest(approval!.binding), applied, stored!);
+      const nextJournal = {
+        ...state,
+        items: state.items.map((entry) => entry === item ? { ...entry, observation } : entry),
+        completed: state.completed.map((wave) => ({
+          ...wave,
+          items: wave.items.map((entry) => entry === item ? { ...entry, observation } : entry),
+        })),
+      },
+        after = this.#commitHostState({
+          expectedWork: staged.workVersion!,
+          expectedLedger: before.ledgerVersion,
+          expectedMaintenanceGeneration: before.maintenanceGeneration,
+          expectedSessionJournal: { attempt: input.attempt, version: input.expectedJournal },
+          nextWork: { ...staged.work!, revision: staged.work!.revision + 1,
+            lifecycle: { ...staged.work!.lifecycle, revision: staged.work!.revision + 1 } },
+          nextLedger: { ...ledger, revision: ledger.revision + 1 },
+        }, { actionId: input.actionId, next: nextJournal, verifyCurrent: input.verifyCurrent, stoppedSource: true }, true);
+      const receipt = {
+        schema: 'RetiredSourceCapture/v1', request_digest: requestDigest, request,
+        retirement_operation: release, retirement_ticket: ticket, retirement_claim: claim,
+        terminal_evidence: evidence, attributions: input.attributions, candidate_snapshot: input.candidateSnapshot,
+        observation, work_version: after.workVersion, ledger_version: after.ledgerVersion,
+        journal_version: { revision: input.expectedJournal.revision + 1, digest: canonicalJsonDigest(nextJournal) },
+        rights_granted: false, runtime_acceptance: false, canonical_acceptance: false,
+      };
+      input.fault?.();
+      this.#database.query('INSERT INTO agent_host_retired_source_capture VALUES(?,?,?,?,?,?)').run(
+        this.#workspaceId, input.identity.work_id, input.attempt, input.actionId, canonicalJson(receipt), canonicalJsonDigest(receipt),
+      );
+      return { snapshot: after, request_digest: requestDigest };
     }).immediate();
   }
 

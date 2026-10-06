@@ -245,6 +245,49 @@ new overlapping grant even if that later grant has been released. Original
 expiry remains in recovery evidence; ordinary released-ticket normalization does
 not extend the old lease. Capture allocates no successor rights.
 
+### Partial Source accounting after owner retirement
+
+The distinct `run --capture-retired-source true` route uses
+`RetiredSourceCapture/v1` inputs and receipts. The active stopped-source route
+and its strict contracts remain unchanged. This route requires suspended Work
+with no lease, its exact prior retirement operation and released original
+ticket/claim, the original still-pending issue/reservation, an uncertain Host
+attempt with null result, and its stored `commit_unknown` approval.
+
+The trusted session retains the actual interrupted turn and original issue
+mapping. All observed commands must be terminal; no Source writer may remain
+active. An interrupted turn needs its attributable tool/turn records, not an
+invented final message. The operator and original actor remain distinct.
+`RetiredSourceTurnRead/v1` carries portable retained thread/turn records. A
+Codex read export is one optional input adapter; it does not require Codex,
+Desktop, a particular host or an external attestation. A historical child-agent
+read does not establish the current operator's custody of the observed result.
+Account for original mutation commands, referenced patches and file-change
+events at the path level. Account for every later overlapping grant or
+correction with its recorded terminal result. Order grants by ledger sequence
+or revision, including tickets queued before retirement and granted afterward.
+Missing attribution or unresolved competing effects deny application. Observed
+original changes and later authorized corrections remain separate. This failed
+result accounting does not require reconstruction of each historical file edit.
+The current candidate snapshot describes an unverified scope, not attribution
+of every current delta to the original actor.
+
+One existing Host transaction follows
+[SQLite transaction semantics](https://www.sqlite.org/lang_transaction.html).
+It rechecks Work/Journal/Ledger/maintenance CAS,
+records only `reported_failed` for the original issue, completes that Host
+invocation, and applies only its matching approval. It preserves the retired
+ownership, suspended Work, original scope, historical failures and attempt.
+No new lease, Source rights, execution, retry or Runtime acceptance is granted.
+Exact retries are idempotent; dependent writes and changed evidence deny retry.
+
+Required development regressions cover missing/foreign terminal evidence,
+wrong owner/issue/retirement, stale CAS, incomplete effect attribution,
+overlapping active or unresolved writers, preserved later corrections, atomic
+rollback and exact restart retry. The installed lifecycle owns final task
+assurance and the whole-system checkpoint before live accounting. This is a
+specified repair; installed availability and actual settlement need evidence.
+
 `run --release-completed-readonly true` releases an exact completed readonly
 owner without retroactive Source authorization. Accepted observations must match
 the original engine, issue, configured read-only tools and bounded configured
