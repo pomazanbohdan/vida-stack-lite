@@ -338,6 +338,66 @@ export interface RetiredSourceCaptureResult {
   readonly snapshot: HostStateSnapshot;
   readonly request_digest: string;
 }
+export interface HistoricalTerminalSynthesisProvenance {
+  readonly schema: 'HistoricalTerminalSynthesisProvenance/v1';
+  readonly body_ref: string;
+  readonly input_ref: string;
+  readonly report_ref: string;
+  readonly followup_ref: string;
+  readonly original_actor_id: string;
+  readonly denial_status: 'blocked';
+  readonly denial_code: string;
+  readonly denial_message: string;
+  readonly denial_reason_gap: 'GAP-VIDA-RUN-EXECUTION-001';
+  readonly input_bytes_base64: string;
+  readonly report_bytes_base64: string;
+  readonly predecessor_refs: readonly { readonly result_id: string; readonly digest: string }[];
+}
+export interface HistoricalTerminalSynthesisCaptureRequest {
+  readonly schema: 'HistoricalTerminalSynthesisCapture/v1';
+  readonly identity: WorkIdentity;
+  readonly attempt: number;
+  readonly actionId: string;
+  readonly issueId: string;
+  readonly nativeSessionHandle: string;
+  readonly userRequestPointer: string;
+  readonly requestIntent: 'next_work' | 'linked_correction';
+  readonly expectedWork: StateVersion;
+  readonly expectedLedger: StateVersion;
+  readonly expectedJournal: StateVersion;
+  readonly expectedMaintenanceGeneration: number;
+  readonly documentationContext: DocumentationVerificationContext;
+  readonly nextWork?: WorkState;
+  readonly nextLedger?: CoordinationLedger;
+  readonly bodyBytes: Uint8Array;
+  readonly provenance: HistoricalTerminalSynthesisProvenance;
+}
+export interface HistoricalTerminalSynthesisCaptureReceipt {
+  readonly schema: 'HistoricalTerminalSynthesisCustodyReceipt/v1';
+  readonly request_digest: string;
+  readonly request: Readonly<Record<string, unknown>>;
+  readonly identity: WorkIdentity;
+  readonly attempt: number;
+  readonly action_id: string;
+  readonly issue_id: string;
+  readonly terminal_status: 'known_terminal_unaccepted';
+  readonly task_status: 'unfinished';
+  readonly body_base64: string;
+  readonly body_sha256: string;
+  readonly body_byte_length: number;
+  readonly provenance: HistoricalTerminalSynthesisProvenance;
+  readonly work_version: StateVersion;
+  readonly ledger_version: StateVersion;
+  readonly journal_version: StateVersion;
+  readonly rights_granted: false;
+  readonly accepted_result: false;
+  readonly runtime_acceptance: false;
+}
+export interface HistoricalTerminalSynthesisCaptureResult {
+  readonly snapshot: HostStateSnapshot;
+  readonly request_digest: string;
+  readonly receipt: HistoricalTerminalSynthesisCaptureReceipt;
+}
 export interface WorkflowAttemptApprovalRequest {
   readonly schema: 'WorkflowAttemptApprovalRequest/v1';
   readonly store_id: string;
@@ -7432,6 +7492,7 @@ export class HostStateStore {
       const before = this.#read(input.identity),
         work = before.work,
         ledger = before.ledger;
+      requireState(input.nextWork && input.nextLedger, 'historical synthesis custody release proposal is missing');
       matchesExpected(before.workVersion, input.expectedWork);
       matchesExpected(before.ledgerVersion, input.expectedLedger);
       requireState(
@@ -9075,6 +9136,355 @@ export class HostStateStore {
     expectedSessionJournal?: { readonly attempt: number; readonly version: StateVersion };
   }): HostStateSnapshot {
     return this.#commitHostState(input);
+  }
+  /** Preserve one exact denied synthesis body while releasing only its original owner. */
+  captureHistoricalTerminalSynthesisAndRelease(
+    input: HistoricalTerminalSynthesisCaptureRequest,
+  ): HistoricalTerminalSynthesisCaptureResult {
+    requireState(
+      input.schema === 'HistoricalTerminalSynthesisCapture/v1' &&
+        Number.isSafeInteger(input.attempt) &&
+        input.attempt > 0 &&
+        input.actionId.length > 0 &&
+        input.actionId.length <= 256 &&
+        input.issueId.length > 0 &&
+        input.issueId.length <= 256 &&
+        input.nativeSessionHandle.length > 0 &&
+        input.nativeSessionHandle.length <= 256 &&
+        input.userRequestPointer.length > 0 &&
+        input.userRequestPointer.length <= 2048 &&
+        !/\p{Cc}/u.test(input.nativeSessionHandle + input.userRequestPointer) &&
+        input.bodyBytes instanceof Uint8Array &&
+        input.bodyBytes.byteLength > 0 &&
+        input.bodyBytes.byteLength <= 65536,
+      'historical synthesis custody request invalid',
+    );
+    const provenance = snapshot(input.provenance);
+    assertCanonicalJsonValue(provenance);
+    requireState(
+      provenance.schema === 'HistoricalTerminalSynthesisProvenance/v1' &&
+        [provenance.body_ref, provenance.input_ref, provenance.report_ref, provenance.followup_ref].every(
+          (value) => typeof value === 'string' && value.length > 0 && value.length <= 2048 && !/\p{Cc}/u.test(value),
+        ) &&
+        typeof provenance.original_actor_id === 'string' &&
+        provenance.original_actor_id.length > 0 &&
+        provenance.original_actor_id.length <= 256 &&
+        provenance.denial_status === 'blocked' &&
+        provenance.denial_code === 'GAP-VIDA-RUN-EXECUTION-001' &&
+        provenance.denial_message.length > 0 &&
+        provenance.denial_message.length <= 2048 &&
+        provenance.denial_reason_gap === 'GAP-VIDA-RUN-EXECUTION-001' &&
+        typeof provenance.input_bytes_base64 === 'string' &&
+        typeof provenance.report_bytes_base64 === 'string' &&
+        provenance.predecessor_refs.length === 2 &&
+        new Set(provenance.predecessor_refs.map((ref) => ref.result_id)).size === 2 &&
+        provenance.predecessor_refs.every(
+          (ref) =>
+            typeof ref.result_id === 'string' &&
+            ref.result_id.length > 0 &&
+            typeof ref.digest === 'string' &&
+            /^[a-f0-9]{64}$/.test(ref.digest),
+        ),
+      'historical synthesis provenance invalid',
+    );
+    const bodyBytes = Buffer.from(input.bodyBytes),
+      bodyBase64 = bodyBytes.toString('base64'),
+      request = snapshot({
+        schema: input.schema,
+        identity: input.identity,
+        attempt: input.attempt,
+        action_id: input.actionId,
+        issue_id: input.issueId,
+        native_session_handle: input.nativeSessionHandle,
+        user_request_pointer: input.userRequestPointer,
+        request_intent: input.requestIntent,
+        expected_work: input.expectedWork,
+        expected_ledger: input.expectedLedger,
+        expected_journal: input.expectedJournal,
+        expected_maintenance_generation: input.expectedMaintenanceGeneration,
+        body_base64: bodyBase64,
+        provenance,
+      }),
+      requestDigest = canonicalJsonDigest(request);
+    requireState(!this.#database.inTransaction, 'nested historical synthesis custody transaction forbidden');
+    return this.#transactionWithProducerFence(() => {
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_historical_terminal_synthesis_capture (workspace_id TEXT,work_id TEXT,attempt INTEGER,action_id TEXT,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt,action_id))',
+      );
+      this.#assertReconciliationWritesAllowed();
+      const existing = this.#database
+        .query(
+          'SELECT payload,digest FROM agent_host_historical_terminal_synthesis_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+        )
+        .get(this.#workspaceId, input.identity.work_id, input.attempt, input.actionId) as {
+        payload: string;
+        digest: string;
+      } | null;
+      if (existing) {
+        const receipt = JSON.parse(existing.payload) as HistoricalTerminalSynthesisCaptureReceipt,
+          current = this.#read(input.identity),
+          journal = this.#database
+            .query(
+              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+            )
+            .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+            revision: number;
+            payload: string;
+            digest: string;
+          } | null;
+        requireState(
+          canonicalJsonDigest(receipt) === existing.digest &&
+            receipt.request_digest === requestDigest &&
+            receipt.identity.work_id === input.identity.work_id &&
+            receipt.action_id === input.actionId &&
+            receipt.issue_id === input.issueId,
+          'historical synthesis custody exact retry differs',
+        );
+        this.#assertMaintenanceGeneration(receipt.request.expected_maintenance_generation);
+        requireState(
+          current.work?.lease === null &&
+            current.work.execution.status === 'suspended' &&
+            sameJson(current.workVersion, receipt.work_version) &&
+            sameJson(current.ledgerVersion, receipt.ledger_version) &&
+            journal &&
+            sameJson({ revision: journal.revision, digest: journal.digest }, receipt.journal_version) &&
+            canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+          'historical synthesis custody retry follows dependent Host or Journal write',
+        );
+        return { snapshot: current, request_digest: requestDigest, receipt: snapshot(receipt) };
+      }
+
+      const before = this.#read(input.identity),
+        work = before.work,
+        ledger = before.ledger;
+      matchesExpected(before.workVersion, input.expectedWork);
+      matchesExpected(before.ledgerVersion, input.expectedLedger);
+      this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+      requireState(
+        work && ledger &&
+          work.execution.status === 'active' &&
+          work.lease?.thread_id === input.nativeSessionHandle &&
+          work.lease.generation > 0 &&
+          input.nextWork.lease === null &&
+          input.nextWork.execution.status === 'suspended' &&
+          input.nextWork.revision === work.revision + 1 &&
+          input.nextLedger.revision === ledger.revision + 1 &&
+          sameJson(input.nextWork.binding, work.binding) &&
+          sameJson(input.nextWork.execution.assignment_attempts, work.execution.assignment_attempts) &&
+          sameJson(input.nextWork.artifacts, work.artifacts),
+        'historical synthesis custody requires one exact active original owner release',
+      );
+      const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id),
+        activeClaims = ledger.claims.filter(
+          (entry) => entry.ticket_id === work.lease!.ticket_id && entry.status === 'active',
+        ),
+        resources = [...(ticket?.exclusive_resources ?? [])].sort();
+      requireState(
+        ticket?.status === 'active' &&
+          ticket.thread_id === input.nativeSessionHandle &&
+          ticket.work_id === input.identity.work_id &&
+          ticket.generation === work.lease.generation &&
+          activeClaims.length === 1 &&
+          activeClaims[0]!.thread_id === input.nativeSessionHandle &&
+          activeClaims[0]!.work_id === input.identity.work_id &&
+          activeClaims[0]!.generation === work.lease.generation &&
+          canonicalJsonDigest([...activeClaims[0]!.resources].sort()) === canonicalJsonDigest(resources) &&
+          resources.length > 0 &&
+          !ledger.tickets.some(
+            (other) =>
+              other.ticket_id !== ticket.ticket_id &&
+              !(other.status === 'queued' &&
+                other.work_id === input.identity.work_id &&
+                other.thread_id === input.nativeSessionHandle &&
+                other.generation === work.lease!.generation &&
+                other.repository_id === input.identity.repository_id &&
+                sameJson(other.project_ids, input.identity.project_ids) &&
+                other.integrations_digest === input.identity.integrations_digest &&
+                other.source_revision === work.binding.work_source_revision) &&
+              ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(other.status) &&
+              other.exclusive_resources.some((resource) => resources.includes(resource)),
+          ),
+        'historical synthesis custody owner, claim or FIFO release differs',
+      );
+      const releasedTicket = input.nextLedger.tickets.find((entry) => entry.ticket_id === ticket.ticket_id),
+        releasedClaim = input.nextLedger.claims.find((entry) => entry.claim_id === activeClaims[0]!.claim_id),
+        releaseOperation = input.nextLedger.operations.at(-1);
+      requireState(
+        releasedTicket?.status === 'released' &&
+          releasedTicket.expires_at === null &&
+          releasedClaim?.status === 'released' &&
+          typeof releasedClaim.renewed_at === 'string' &&
+          Number.isFinite(Date.parse(releasedClaim.renewed_at)) &&
+          input.nextLedger.operations.length === ledger.operations.length + 1 &&
+          sameJson(input.nextLedger.operations.slice(0, -1), ledger.operations) &&
+          releaseOperation?.schema === 'CoordinationOperation/v1' &&
+          Object.keys(releaseOperation ?? {}).sort().join('|') ===
+            [
+              'created_at',
+              'decided_by',
+              'decision_pointer',
+              'from_ledger_revision',
+              'kind',
+              'operation_id',
+              'resources',
+              'schema',
+              'source_revision',
+              'thread_id',
+              'ticket_id',
+              'to_ledger_revision',
+              'work_id',
+            ]
+              .sort()
+              .join('|') &&
+          releaseOperation.operation_id.length > 0 &&
+          releaseOperation.kind === 'release' &&
+          releaseOperation.ticket_id === ticket.ticket_id &&
+          releaseOperation.work_id === input.identity.work_id &&
+          releaseOperation.thread_id === input.nativeSessionHandle &&
+          releaseOperation.source_revision === ticket.source_revision &&
+          sameJson(releaseOperation.resources, resources) &&
+          releaseOperation.decision_pointer === input.userRequestPointer &&
+          releaseOperation.decided_by === input.nativeSessionHandle &&
+          releaseOperation.from_ledger_revision === ledger.revision &&
+          releaseOperation.to_ledger_revision === ledger.revision + 1 &&
+          Number.isFinite(Date.parse(releaseOperation.created_at)) &&
+          sameJson(
+            input.nextLedger.tickets,
+            ledger.tickets.map((entry) =>
+              entry.ticket_id === ticket.ticket_id
+                ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
+                : entry,
+            ),
+          ) &&
+          sameJson(
+            input.nextLedger.claims,
+            ledger.claims.map((entry) =>
+              entry.claim_id === activeClaims[0]!.claim_id
+                ? { ...entry, status: 'released', renewed_at: releasedClaim.renewed_at }
+                : entry,
+            ),
+          ) &&
+          sameJson(
+            (() => {
+              const { revision: _revision, tickets: _tickets, claims: _claims, operations: _operations, ...rest } = input.nextLedger;
+              return rest;
+            })(),
+            (() => {
+              const { revision: _revision, tickets: _tickets, claims: _claims, operations: _operations, ...rest } = ledger;
+              return rest;
+            })(),
+          ) &&
+          sameJson(
+            input.nextWork,
+            {
+              ...work,
+              revision: work.revision + 1,
+              lease: null,
+              execution: { ...work.execution, phase: 'awaiting_followup', status: 'suspended' },
+              lifecycle: {
+                ...work.lifecycle,
+                revision: work.revision + 1,
+                next_action:
+                  'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.',
+              },
+            },
+          ),
+        'historical synthesis custody release operation is incomplete',
+      );
+      const journal = this.#database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null;
+      requireState(
+        journal &&
+          journal.revision === input.expectedJournal.revision &&
+          journal.digest === input.expectedJournal.digest &&
+          canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+        'historical synthesis custody Journal CAS differs',
+      );
+      const after = this.#commitHostState(
+        {
+          expectedWork: input.expectedWork,
+          expectedLedger: input.expectedLedger,
+          expectedMaintenanceGeneration: input.expectedMaintenanceGeneration,
+          documentationContext: input.documentationContext,
+          expectedSessionJournal: { attempt: input.attempt, version: input.expectedJournal },
+          nextWork: input.nextWork,
+          nextLedger: input.nextLedger,
+        },
+        undefined,
+        true,
+      );
+      const receipt: HistoricalTerminalSynthesisCaptureReceipt = {
+        schema: 'HistoricalTerminalSynthesisCustodyReceipt/v1',
+        request_digest: requestDigest,
+        request,
+        identity: input.identity,
+        attempt: input.attempt,
+        action_id: input.actionId,
+        issue_id: input.issueId,
+        terminal_status: 'known_terminal_unaccepted',
+        task_status: 'unfinished',
+        body_base64: bodyBase64,
+        body_sha256: createHash('sha256').update(bodyBytes).digest('hex'),
+        body_byte_length: bodyBytes.byteLength,
+        provenance,
+        work_version: after.workVersion!,
+        ledger_version: after.ledgerVersion!,
+        journal_version: input.expectedJournal,
+        rights_granted: false,
+        accepted_result: false,
+        runtime_acceptance: false,
+      };
+      this.#database
+        .query('INSERT INTO agent_host_historical_terminal_synthesis_capture VALUES(?,?,?,?,?,?)')
+        .run(
+          this.#workspaceId,
+          input.identity.work_id,
+          input.attempt,
+          input.actionId,
+          canonicalJson(receipt),
+          canonicalJsonDigest(receipt),
+        );
+      return { snapshot: after, request_digest: requestDigest, receipt: snapshot(receipt) };
+    }).immediate();
+  }
+  readHistoricalTerminalSynthesisCapture(
+    identity: WorkIdentity,
+    attempt: number,
+    actionId: string,
+  ): HistoricalTerminalSynthesisCaptureReceipt | null {
+    const table = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+      .get('agent_host_historical_terminal_synthesis_capture') as { name: string } | null;
+    if (!table) return null;
+    const row = this.#database
+      .query(
+        'SELECT payload,digest FROM agent_host_historical_terminal_synthesis_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+      )
+      .get(this.#workspaceId, identity.work_id, attempt, actionId) as { payload: string; digest: string } | null;
+    if (!row) return null;
+    const receipt = JSON.parse(row.payload) as HistoricalTerminalSynthesisCaptureReceipt;
+    requireState(
+        receipt.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
+        receipt.identity.work_id === identity.work_id &&
+        receipt.attempt === attempt &&
+        receipt.action_id === actionId &&
+        canonicalJsonDigest(receipt) === row.digest &&
+        canonicalJsonDigest(receipt.request) === receipt.request_digest &&
+        receipt.terminal_status === 'known_terminal_unaccepted' &&
+        receipt.task_status === 'unfinished' &&
+        receipt.accepted_result === false &&
+        receipt.rights_granted === false &&
+        receipt.runtime_acceptance === false,
+      'historical synthesis custody receipt is corrupt or foreign',
+    );
+    return snapshot(receipt);
   }
   /** The Host owns the new assurance journal; references in WorkState remain the lifecycle authority. */
   readFinalAssurance(identity: WorkIdentity, attempt: number): FinalAssuranceSnapshot | null {

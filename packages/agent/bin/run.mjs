@@ -3178,6 +3178,19 @@ export async function run(args = process.argv.slice(2)) {
     const { resumeHistoricalNormalization } = await import('./historical-normalization-resume.mjs');
     return resumeHistoricalNormalization(args.slice(2));
   }
+  if (args.includes('--capture-historical-terminal-synthesis')) {
+    if (
+      args[0] !== '--capture-historical-terminal-synthesis' ||
+      args[1] !== 'true' ||
+      args.includes('--report') ||
+      args.includes('--issue-wave') ||
+      args.includes('--capture-stopped-source') ||
+      args.includes('--release-completed-readonly')
+    )
+      throw Error('Historical terminal synthesis capture requires its exact separate signal');
+    const { captureHistoricalTerminalSynthesis } = await import('./historical-terminal-synthesis-capture.mjs');
+    return captureHistoricalTerminalSynthesis(args.slice(2));
+  }
   if (args.includes('--release-unissued-owner')) {
     if (args[0] !== '--release-unissued-owner' || args[1] !== 'true')
       throw Error('Unissued owner release requires its exact separate signal');

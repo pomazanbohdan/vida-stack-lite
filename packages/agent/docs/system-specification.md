@@ -245,6 +245,43 @@ new overlapping grant even if that later grant has been released. Original
 expiry remains in recovery evidence; ordinary released-ticket normalization does
 not extend the old lease. Capture allocates no successor rights.
 
+The public `run --capture-historical-terminal-synthesis true` route handles an
+exact `synthesize_task` issue whose terminal body was produced but whose report
+was denied and whose original Journal observation is still null. `inspect` is
+read-only. It checks the retained body, follow-up input, denied report and the
+complete parsed report body against the native observation, plus the original
+issue, current configured context, Host ownership, engine state and exactly two
+admitted predecessor results. The configured target stage must be a readonly
+synthesize_task that produces ResearchSynthesis/v1; later readers rebuild the
+two admitted predecessor identities and digests from the original Journal and
+canonical records before accepting the receipt as a frozen candidate. The apply
+call consumes the exact inspected bindings and rechecks Work, Ledger, Journal,
+maintenance and original-owner FIFO state. One immediate Host SQLite transaction
+stores an immutable receipt with the exact body bytes and provenance, releases
+only that owner's exact ticket, claim and lease, preserves same-owner queued
+tickets and prior ledger operations, and rejects unrelated proposed ledger
+changes. It leaves the Journal and engine snapshot unchanged. The result is
+known_terminal_unaccepted; the task remains unfinished. It grants no acceptance,
+execution rights, Source authority or new lease. A retry returns only the
+matching receipt after the Host verifies the current post-release Work/Ledger and
+unchanged Journal; that check performs no write. Changed evidence or dependent
+state denies. Resume requires that same exact prior receipt. Bounds, strict UTF-8,
+original report denial, predecessor identity and current CAS checks apply before
+the Host effect.
+
+An apply call has a trusted-caller precondition: the current active session or
+controller must still retain attributable human authorization for this exact
+work, attempt and action. If that caller evidence is missing or lost, stop
+before the Host effect. The installed CLI checks caller-provided handles,
+pointers, inspected bindings and Host consistency; those values and checks do
+not authenticate the human or grant authorization. A recovery review remains
+read-only and is not authorization to capture or release the owner. The current
+userRequestPointer identifies the current human intent and supplies the
+release decision pointer. Separately, inspection binds
+original_operation_reference to attribution.pointer in the exact accepted
+scope bytes and binds those bytes themselves. The historical reference is
+traceability evidence only; it is not caller identity or authority.
+
 ### Partial Source accounting after owner retirement
 
 The distinct `run --capture-retired-source true` route uses

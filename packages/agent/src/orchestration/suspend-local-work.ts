@@ -1,4 +1,10 @@
-import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity } from '../host-state.js';
+import type {
+  HistoricalTerminalSynthesisProvenance,
+  HostStateSnapshot,
+  HostStateStore,
+  StateVersion,
+  WorkIdentity,
+} from '../host-state.js';
 import { completedSourceJournalObservationMatches } from '../host-state.js';
 import type { DocumentationVerificationContext } from '../lifecycle/lifecycle-state.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
@@ -80,12 +86,28 @@ type HistoricalSuspensionInput = SuspensionInput & {
     | 'settled_writer_failed_validators'
     | 'unissued_prepared'
     | 'settled_research'
-    | 'readonly_bookkeeping';
+    | 'readonly_bookkeeping'
+    | 'terminal_synthesis_unaccepted';
   readonly expectedMaintenanceGeneration: number;
   readonly preimage?: ScopedSourceSnapshot;
+  readonly capture?: {
+    readonly actionId: string;
+    readonly issueId: string;
+    readonly bodyBytes: Uint8Array;
+    readonly provenance: HistoricalTerminalSynthesisProvenance;
+  };
 };
 
-function requireReadonlyBookkeeping(input: HistoricalSuspensionInput, host: HostStateSnapshot): void {
+type HistoricalTerminalSynthesisCaptureInput = HistoricalSuspensionInput & {
+  readonly predicate: 'terminal_synthesis_unaccepted';
+  readonly capture: NonNullable<HistoricalSuspensionInput['capture']>;
+};
+
+function requireReadonlyBookkeeping(
+  input: HistoricalSuspensionInput,
+  host: HostStateSnapshot,
+  terminalSynthesisTarget?: { readonly actionId: string; readonly issueId: string },
+): void {
   const work = host.work,
     ledger = host.ledger,
     state = input.journal.state;
@@ -121,8 +143,12 @@ function requireReadonlyBookkeeping(input: HistoricalSuspensionInput, host: Host
     )!;
     if (item.observation === null) {
       const profile = input.config.agents.profiles[stage.assignments[item.request.assignment_index]!.profile]!;
+  const exactTerminalTarget =
+    terminalSynthesisTarget !== undefined &&
+    terminalSynthesisTarget.actionId === item.request.action_id &&
+        terminalSynthesisTarget.issueId === item.issue_id;
       requireSuspension(
-        input.config.agents.egress_policies[profile.egress_policy]!.allowed_hosts.length === 0 &&
+        (exactTerminalTarget || input.config.agents.egress_policies[profile.egress_policy]!.allowed_hosts.length === 0) &&
           !item.research_normalization,
         'readonly bookkeeping pending issue has egress or normalization',
       );
@@ -197,6 +223,10 @@ function requireReadonlyBookkeeping(input: HistoricalSuspensionInput, host: Host
 }
 
 function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
+  requireSuspension(
+    input.predicate === 'terminal_synthesis_unaccepted' ? input.capture !== undefined : input.capture === undefined,
+    'historical terminal synthesis capture differs from predicate',
+  );
   const host = input.store.readHostStateSnapshot(input.identity);
   requireSuspension(
     host.work && host.maintenanceGeneration === input.expectedMaintenanceGeneration,
@@ -387,6 +417,35 @@ function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
         'historical unissued owner has issued or reserved activity',
       );
     else if (input.predicate === 'completed_readonly') requireCompletedReadonly(input);
+    else if (input.predicate === 'terminal_synthesis_unaccepted') {
+      const capture = input.capture;
+      requireSuspension(capture, 'historical terminal synthesis capture is missing');
+      const items = [...state.items, ...state.completed.flatMap((wave) => wave.items)],
+        pending = items.filter((item) => item.issue_id !== null && item.observation === null),
+        target = pending[0],
+        stage = target && input.config.workflows[target.request.workflow_id]?.stages.find(
+          (entry) => entry.id === target.request.stage_id,
+        );
+      requireSuspension(
+        pending.length === 1 &&
+          target &&
+          target.request.action_id === capture.actionId &&
+          target.issue_id === capture.issueId &&
+          target.request.stage_id === 'synthesize_task' &&
+          stage?.kind === 'synthesize' &&
+          stage.produces.includes('ResearchSynthesis/v1') &&
+          target.research_activation &&
+          !target.research_normalization &&
+          !target.host_reservation &&
+          state.source_scope?.digest === work.binding.work_source_revision &&
+          items.filter((item) => item !== target).every(
+            (item) => item.issue_id !== null && item.observation?.status === 'reported_complete',
+          ) &&
+          work.execution.assignment_attempts.length === 0,
+        'historical synthesis candidate is not one known-terminal unaccepted readonly action',
+      );
+      requireReadonlyBookkeeping(input, host, capture);
+    }
     else
       requireSuspension(
         input.predicate === 'unknown_readonly' &&
@@ -409,8 +468,16 @@ export function suspendHistoricalOwnerWork(input: HistoricalSuspensionInput): Ho
     false,
     input.predicate === 'unissued_prepared',
     input.predicate === 'settled_research',
-    input.predicate === 'readonly_bookkeeping',
+    input.predicate === 'readonly_bookkeeping' || input.predicate === 'terminal_synthesis_unaccepted',
   );
+}
+
+/** Capture one known-terminal unaccepted synthesis result and dispose only its original owner. */
+export function captureHistoricalTerminalSynthesisOwnerWork(
+  input: HistoricalTerminalSynthesisCaptureInput,
+): HostStateSnapshot {
+  requireHistoricalPredicate(input);
+  return suspendLocalWorkCore(input, false, false, false, false, false, true, input.capture);
 }
 
 export function inspectHistoricalOwnerWork(input: HistoricalSuspensionInput): HostStateSnapshot {
@@ -422,7 +489,7 @@ export function inspectHistoricalOwnerWork(input: HistoricalSuspensionInput): Ho
     true,
     input.predicate === 'unissued_prepared',
     input.predicate === 'settled_research',
-    input.predicate === 'readonly_bookkeeping',
+    input.predicate === 'readonly_bookkeeping' || input.predicate === 'terminal_synthesis_unaccepted',
   );
 }
 
@@ -434,6 +501,7 @@ function suspendLocalWorkCore(
   unissuedPrepared = false,
   settledResearch = false,
   readonlyBookkeeping = false,
+  terminalSynthesisCapture?: HistoricalTerminalSynthesisCaptureInput['capture'],
 ): HostStateSnapshot {
   const {
     store,
@@ -541,7 +609,7 @@ function suspendLocalWorkCore(
       ),
     'native action or host assignment is still active or uncertain',
   );
-  const operationId = `${readonlyBookkeeping ? 'readonly-bookkeeping-release' : settledResearch ? 'settled-research-release' : unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
+  const operationId = `${terminalSynthesisCapture ? 'historical-terminal-synthesis-capture' : readonlyBookkeeping ? 'readonly-bookkeeping-release' : settledResearch ? 'settled-research-release' : unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
     {
       work_id: identity.work_id,
       nativeSessionHandle,
@@ -650,6 +718,15 @@ function suspendLocalWorkCore(
       !host.ledger.tickets.some(
         (other) =>
           other.ticket_id !== ticket.ticket_id &&
+          !(terminalSynthesisCapture &&
+            other.status === 'queued' &&
+            other.work_id === identity.work_id &&
+            other.thread_id === nativeSessionHandle &&
+            other.generation === lease.generation &&
+            other.repository_id === identity.repository_id &&
+            canonicalJsonDigest(other.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+            other.integrations_digest === identity.integrations_digest &&
+            other.source_revision === work.binding.work_source_revision) &&
           (completedReadonly ||
             readonlyBookkeeping ||
             settledResearch ||
@@ -676,7 +753,10 @@ function suspendLocalWorkCore(
     ownedQueued.every((item) => item.active_resources.length === 0 && item.claim_ids.length === 0),
     'queued owner has ambiguous active effects',
   );
-  const releasedIds = new Set([ticket.ticket_id, ...ownedQueued.map((item) => item.ticket_id)]);
+  const releasedIds = new Set([
+    ticket.ticket_id,
+    ...(terminalSynthesisCapture ? [] : ownedQueued.map((item) => item.ticket_id)),
+  ]);
   const nextWork = {
     ...work,
     revision: work.revision + 1,
@@ -689,8 +769,10 @@ function suspendLocalWorkCore(
     lifecycle: {
       ...work.lifecycle,
       revision: work.revision + 1,
-      next_action: readonlyBookkeeping
-        ? 'Readonly observations, canonical artifact GAPs and pending UNKNOWN remain frozen; continuation needs normal admission.'
+      next_action: terminalSynthesisCapture
+        ? 'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.'
+        : readonlyBookkeeping
+          ? 'Readonly observations, canonical artifact GAPs and pending UNKNOWN remain frozen; continuation needs normal admission.'
         : unissuedPrepared || settledResearch
           ? 'The original unissued frontier remains inert; continuation needs normal admission.'
           : requestIntent === 'linked_correction'
@@ -728,25 +810,28 @@ function suspendLocalWorkCore(
         decision_pointer: userRequestPointer,
         created_at: now,
       },
-      ...ownedQueued.map((item) => ({
-        schema: 'CoordinationOperation/v1' as const,
-        operation_id: operationId + '-' + item.ticket_id,
-        kind: 'release' as const,
-        ticket_id: item.ticket_id,
-        work_id: item.work_id,
-        thread_id: item.thread_id,
-        source_revision: item.source_revision,
-        resources: item.exclusive_resources,
-        from_ledger_revision: host.ledger!.revision,
-        to_ledger_revision: host.ledger!.revision + 1,
-        decided_by: nativeSessionHandle,
-        decision_pointer: userRequestPointer,
-        created_at: now,
-      })),
+      ...(terminalSynthesisCapture
+        ? []
+        : ownedQueued.map((item) => ({
+            schema: 'CoordinationOperation/v1' as const,
+            operation_id: operationId + '-' + item.ticket_id,
+            kind: 'release' as const,
+            ticket_id: item.ticket_id,
+            work_id: item.work_id,
+            thread_id: item.thread_id,
+            source_revision: item.source_revision,
+            resources: item.exclusive_resources,
+            from_ledger_revision: host.ledger!.revision,
+            to_ledger_revision: host.ledger!.revision + 1,
+            decided_by: nativeSessionHandle,
+            decision_pointer: userRequestPointer,
+            created_at: now,
+          })),
+      ),
     ],
   };
   if (inspectOnly) return host;
-  return store.compareAndSwapHostState({
+  const stateChange = {
     expectedWork,
     expectedLedger,
     expectedMaintenanceGeneration: input.expectedMaintenanceGeneration ?? host.maintenanceGeneration,
@@ -754,5 +839,28 @@ function suspendLocalWorkCore(
     expectedSessionJournal: { attempt: journal.state.attempt, version: journal.version },
     nextWork,
     nextLedger,
-  });
+  };
+  if (terminalSynthesisCapture) {
+    const result = store.captureHistoricalTerminalSynthesisAndRelease({
+      schema: 'HistoricalTerminalSynthesisCapture/v1',
+      identity,
+      attempt: journal.state.attempt,
+      actionId: terminalSynthesisCapture.actionId,
+      issueId: terminalSynthesisCapture.issueId,
+      nativeSessionHandle,
+      userRequestPointer,
+      requestIntent,
+      expectedWork,
+      expectedLedger,
+      expectedJournal: journal.version,
+      expectedMaintenanceGeneration: input.expectedMaintenanceGeneration ?? host.maintenanceGeneration,
+      documentationContext,
+      nextWork,
+      nextLedger,
+      bodyBytes: terminalSynthesisCapture.bodyBytes,
+      provenance: terminalSynthesisCapture.provenance,
+    });
+    return result.snapshot;
+  }
+  return store.compareAndSwapHostState(stateChange);
 }

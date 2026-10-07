@@ -18,14 +18,18 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { runReconcileArtifacts as reconcileEntrypoint } from '../bin/reconcile-artifacts.mjs';
 import { run as runEntrypoint } from '../bin/run.mjs';
-import { cooperativeReadonlyAssignments, inspectHistoricalOwnerContext } from '../bin/runtime-config-rebind.mjs';
-import { suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
+import { cooperativeReadonlyAssignments, currentState, inspectHistoricalOwnerContext } from '../bin/runtime-config-rebind.mjs';
+import { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.mjs';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
+import {
+  admittedResearchResultsForSynthesis,
+  synthesisSourceCatalog,
+} from '../src/orchestration/observed-synthesis-result.ts';
 import { MastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import {
@@ -1204,11 +1208,11 @@ function seedReadonlyUnknown(f, mutate = null, { writer = false, validateFixture
 // Synthetic persisted engine observations are fixture setup, never external caller or Runtime evidence.
 function historicalFixture(
   predicate,
-  { configuredContext = false, markerlessExcerpt = false, aggregateContext = false } = {},
+  { configuredContext = false, markerlessExcerpt = false, aggregateContext = false, officialDocs = false } = {},
 ) {
   const f = fixture({ sourceMode: true });
   const extraContextIds = aggregateContext ? ['aggregate-context-one', 'aggregate-context-two'] : [];
-  if (predicate === 'unknown_readonly') {
+  if (predicate === 'unknown_readonly' && !officialDocs) {
     f.oldYaml = f.oldYaml.replace(/(    researcher:[\s\S]*?      egress_policy:) official_docs/, '$1 none');
     f.target = f.oldYaml.replace(
       /(    executor:\r?\n      model: )gpt-6-sol(\r?\n      reasoning: )high/,
@@ -1266,6 +1270,23 @@ function historicalFixture(
       '# Historical review skill\n\nUse the declared project context to verify the original task before making a recovery recommendation.\n',
     );
   }
+  if (predicate === 'terminal_synthesis_unaccepted') {
+    const twoResearchAssignments = `          - role: requirements-researcher\n            profile: researcher\n            contour: requirements\n          - role: documentation-researcher\n            profile: web-researcher\n            contour: documentation\n`,
+      twoPredecessorWorkflow = f.oldYaml.replace(
+        /(^  implementation_new:\r?\n[\s\S]*?^        assignments:\r?\n)[\s\S]*?(?=^        consumes:)/m,
+        `$1${twoResearchAssignments}`,
+      );
+    expect(twoPredecessorWorkflow).not.toBe(f.oldYaml);
+    f.oldYaml = twoPredecessorWorkflow;
+    f.target = twoPredecessorWorkflow.replace(
+      /(    executor:\r?\n      model: )[^\r\n]+(\r?\n      reasoning: )[^\r\n]+/,
+      '$1gpt-6-luna$2max',
+    );
+    expect(f.target).not.toBe(twoPredecessorWorkflow);
+    f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+    f.receipt.config_digest = runtimeConfigDigest(loadRuntimeConfig(f.root));
+    f.put('.agent/runtime-initialization.v1.json', json(f.receipt));
+  }
   f.put('baseline.yaml', f.oldYaml);
   const config = loadRuntimeConfig(f.root),
     { identity } = seedState(f, { lease: true });
@@ -1282,7 +1303,9 @@ function historicalFixture(
   const context = { work_id: identity.work_id, attempt: 1, scope_digest: preimage.digest },
     workflow = ['settled_research', 'readonly_bookkeeping'].includes(predicate)
       ? 'information_research_light'
-      : 'task_execution';
+      : predicate === 'terminal_synthesis_unaccepted'
+        ? 'implementation_new'
+        : 'task_execution';
   const runId = sessionBridgeRunId(f.workspace, context, workflow),
     selection = {
       team: 'default-development',
@@ -1363,7 +1386,15 @@ function historicalFixture(
     configuredContexts = [];
   let frontierItems,
     postimage = preimage;
-  for (let waveIndex = 0; waveIndex < (predicate === 'settled_writer_failed_validators' ? 3 : 1); waveIndex++) {
+  for (
+    let waveIndex = 0;
+    waveIndex <
+    (predicate === 'settled_writer_failed_validators' ? 3 : predicate === 'terminal_synthesis_unaccepted' ? 2 : 1);
+    waveIndex++
+  ) {
+    const frontier =
+      waveIndex ===
+      (predicate === 'settled_writer_failed_validators' ? 2 : predicate === 'terminal_synthesis_unaccepted' ? 1 : 0);
     const actions = sessionActionsForWave(config, selection, context, workflow, waveIndex, []);
     const items = actions.map((action) => {
       let configuredContext = configuredContextForStage(f.root, config, workflow, action.stage_id, context);
@@ -1396,9 +1427,12 @@ function historicalFixture(
       const item = {
         request,
         issue_id: predicate === 'unissued_prepared' ? null : randomUUID(),
-        observation: ['unknown_readonly', 'unissued_prepared'].includes(predicate)
-          ? null
-          : {
+        observation:
+          (['unknown_readonly', 'unissued_prepared'].includes(predicate) ||
+            predicate === 'terminal_synthesis_unaccepted') &&
+          frontier
+            ? null
+            : {
               schema: 'VidaSessionObservation/v1',
               action_id: request.action_id,
               issue_id: null,
@@ -1411,7 +1445,7 @@ function historicalFixture(
             },
       };
       if (item.observation) item.observation.issue_id = item.issue_id;
-      if (waveIndex === 1)
+      if (predicate === 'settled_writer_failed_validators' && waveIndex === 1)
         withDatabase(f, (db) => {
           const store = new HostStateStore(db, f.workspace),
             before = store.readHostStateSnapshot(identity);
@@ -1440,7 +1474,6 @@ function historicalFixture(
         });
       return item;
     });
-    const frontier = waveIndex === (predicate === 'settled_writer_failed_validators' ? 2 : 0);
     if (frontier) {
       frontierItems = items;
       engineContext['wave-' + waveIndex] = {
@@ -1528,6 +1561,20 @@ function historicalFixture(
   ];
   return { f, args, request, state, configuredContexts };
 }
+
+test('historical owner inspection preserves the default when context history is omitted and denies an empty export', () => {
+  const { f, request } = historicalFixture('unknown_readonly'),
+    before = databaseState(f),
+    engineBefore = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  expect(() =>
+    inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, request.attempt, undefined),
+  ).not.toThrow();
+  expect(() => inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, request.attempt, [])).toThrow(
+    /original context collection must be a nonempty array/,
+  );
+  expect(databaseState(f)).toEqual(before);
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engineBefore);
+});
 
 test.each(['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators'])(
   'historical %s releases only its original owner after config delivery and preserves all original evidence',
@@ -1694,13 +1741,578 @@ test('historical owner release rejects maintenance drift between predicate and w
   expect(databaseState(f)).toEqual(before);
 });
 
-function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = -1, pendingIndex = -1 } = {}) {
+function seedKnownTerminalSynthesisCustody(f, request, state, receiptMutation = undefined) {
+  return withDatabase(f, (db) => {
+    const journalRow = db
+        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(f.workspace, request.identity.work_id, request.attempt),
+      journal = JSON.parse(journalRow.payload),
+      candidate = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].find(
+        (item) => item.request.action_id === state.items[0].request.action_id,
+      );
+    expect(candidate.request.stage_id).toBe('synthesize_task');
+    expect(candidate.research_activation).toBeTruthy();
+    db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?').run(
+      json(journal),
+      canonicalJsonDigest(journal),
+      f.workspace,
+      request.identity.work_id,
+      request.attempt,
+    );
+    const store = new HostStateStore(db, f.workspace),
+      before = store.readHostStateSnapshot(request.identity),
+      work = before.work,
+      ledger = before.ledger,
+      ticket = ledger.tickets.find((entry) => entry.work_id === request.identity.work_id && entry.status === 'active'),
+      claim = ledger.claims.find((entry) => entry.ticket_id === ticket.ticket_id && entry.status === 'active'),
+      now = '2026-10-07T00:00:00.000Z',
+      nextWork = structuredClone(work),
+      nextLedger = structuredClone(ledger),
+      summary = JSON.stringify({
+        schema: 'VidaSynthesisObservationOutput/v1',
+        readiness: 'blocked',
+        completeness: { status: 'blocked', material_gaps: ['GAP-VIDA-RUN-EXECUTION-001'] },
+      }),
+      body = {
+        schema: 'VidaSessionObservation/v1',
+        action_id: candidate.request.action_id,
+        issue_id: candidate.issue_id,
+        agent_id: 'fixture:research-synthesizer',
+        tool_call_ref: 'fixture:followup',
+        status: 'reported_complete',
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        evidence_refs: [],
+      },
+      inputBytes = Buffer.from(json({ status: body.status, agent_id: body.agent_id, tool_call_ref: body.tool_call_ref })),
+      reportBytes = Buffer.from(
+        json({
+          exit_code: 1,
+          input_path: path.resolve(f.root, '.tmp/synthesis-input.json'),
+          command: ['vida-agent', '--report', path.resolve(f.root, '.tmp/synthesis-report-body.json')],
+          stderr: json({
+            schema: 'VidaAgentRunResult/v1',
+            status: 'blocked',
+            code: 'GAP-VIDA-RUN-EXECUTION-001',
+            message: 'The requested run was blocked by runtime validation.',
+          }).trim(),
+        }),
+      ),
+      bodyBytes = Buffer.from(json(body)),
+      original = inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, request.attempt),
+      admittedPredecessors = admittedResearchResultsForSynthesis({
+        repositoryRoot: f.root,
+        config: original.config,
+        journal: original.journal,
+        work: original.owner.state,
+        workflowId: candidate.request.workflow_id,
+      }),
+      provenance = {
+        schema: 'HistoricalTerminalSynthesisProvenance/v1',
+        body_ref: '.tmp/synthesis-body.json',
+        input_ref: '.tmp/synthesis-input.json',
+        report_ref: '.tmp/synthesis-report.json',
+        followup_ref: body.tool_call_ref,
+        original_actor_id: body.agent_id,
+        denial_status: 'blocked',
+        denial_code: 'GAP-VIDA-RUN-EXECUTION-001',
+        denial_message: 'The requested run was blocked by runtime validation.',
+        denial_reason_gap: 'GAP-VIDA-RUN-EXECUTION-001',
+        input_bytes_base64: inputBytes.toString('base64'),
+        report_bytes_base64: reportBytes.toString('base64'),
+        predecessor_refs: admittedPredecessors.map((result) => ({ result_id: result.result_id, digest: result.digest })),
+      };
+    expect(admittedPredecessors).toHaveLength(2);
+    nextWork.revision++;
+    nextWork.lease = null;
+    nextWork.execution.status = 'suspended';
+    nextWork.execution.phase = 'awaiting_followup';
+    nextWork.lifecycle.revision = nextWork.revision;
+    nextWork.lifecycle.next_action =
+      'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.';
+    nextLedger.revision++;
+    nextLedger.tickets = nextLedger.tickets.map((entry) =>
+      entry.ticket_id === ticket.ticket_id
+        ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
+        : entry,
+    );
+    nextLedger.claims = nextLedger.claims.map((entry) =>
+      entry.claim_id === claim.claim_id ? { ...entry, status: 'released', renewed_at: now } : entry,
+    );
+    nextLedger.operations.push({
+      schema: 'CoordinationOperation/v1',
+      operation_id: 'fixture-terminal-synthesis-release',
+      kind: 'release',
+      ticket_id: ticket.ticket_id,
+      work_id: request.identity.work_id,
+      thread_id: 'fixture-thread',
+      source_revision: ticket.source_revision,
+      resources: [...ticket.exclusive_resources],
+      from_ledger_revision: ledger.revision,
+      to_ledger_revision: nextLedger.revision,
+      decided_by: 'fixture-thread',
+      decision_pointer: request.userRequestPointer,
+      created_at: now,
+    });
+    const capture = {
+      schema: 'HistoricalTerminalSynthesisCapture/v1',
+      identity: request.identity,
+      attempt: request.attempt,
+      actionId: candidate.request.action_id,
+      issueId: candidate.issue_id,
+      nativeSessionHandle: 'fixture-thread',
+      userRequestPointer: request.userRequestPointer,
+      requestIntent: request.requestIntent,
+      expectedWork: before.workVersion,
+      expectedLedger: before.ledgerVersion,
+      expectedJournal: { revision: journalRow.revision, digest: canonicalJsonDigest(journal) },
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+      documentationContext: {
+        repository_root: f.root,
+        repository_id: request.identity.repository_id,
+        project_id: request.identity.project_ids[0],
+        work_id: request.identity.work_id,
+      },
+      nextWork,
+      nextLedger,
+      bodyBytes,
+      provenance,
+    };
+    const result = store.captureHistoricalTerminalSynthesisAndRelease(capture);
+    if (receiptMutation) return receiptMutation({ db, store, capture, before, journal, candidate, result });
+    return result;
+  });
+}
+
+test('known terminal synthesis custody is accepted by read-only config rebind with the original Journal still pending', async () => {
+  const { f, request, state } = historicalFixture('terminal_synthesis_unaccepted'),
+    completedResearch = state.completed.flatMap((wave) => wave.items),
+    pendingSynthesisIndex = completedResearch.length;
+  expect(completedResearch).toHaveLength(2);
+  seedHistoricalResearchLineage(f, request, state, {
+    includeCompleted: true,
+    pendingIndex: pendingSynthesisIndex,
+    activationOnlyIndex: pendingSynthesisIndex,
+  });
+  const before = databaseState(f),
+    capture = seedKnownTerminalSynthesisCustody(f, request, state);
+  expect(capture.receipt.terminal_status).toBe('known_terminal_unaccepted');
+  expect(capture.receipt.accepted_result).toBe(false);
+  expect(databaseState(f).agent_host_mastra_session_ledger[0].payload).toBe(before.agent_host_mastra_session_ledger[0].payload);
+  const captured = databaseState(f);
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  f.put('proposed.yaml', f.target);
+  const inspected = await runReconcileArtifacts(f.args('inspect'));
+  expect(inspected.status).toBe('inspect_ready_unauthorized');
+  expect(databaseState(f)).toEqual(captured);
+  const planned = await runReconcileArtifacts(f.args('plan'));
+  expect(planned.status).toBe('planned');
+  const journal = JSON.parse(captured.agent_host_mastra_session_ledger[0].payload);
+  expect(journal.items[0].observation).toBeNull();
+  const work = JSON.parse(captured.agent_host_state.find((row) => row.kind === 'work').payload);
+  expect(work.lifecycle.next_action).toContain('known terminal but unaccepted');
+  expect(work.artifacts.some((artifact) => artifact.schema === 'ResearchSynthesis/v1')).toBe(false);
+}, 30000);
+
+test('public capture CLI exact resume reuses the Host poststate fence without writes', async () => {
+  const { f, request, state } = historicalFixture('terminal_synthesis_unaccepted'),
+    pendingSynthesisIndex = state.completed.flatMap((wave) => wave.items).length;
+  seedHistoricalResearchLineage(f, request, state, {
+    includeCompleted: true,
+    pendingIndex: pendingSynthesisIndex,
+    activationOnlyIndex: pendingSynthesisIndex,
+  });
+  const original = inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, request.attempt),
+    item = original.journal.state.items[0],
+    predecessors = admittedResearchResultsForSynthesis({
+      repositoryRoot: f.root,
+      config: original.config,
+      journal: original.journal,
+      work: original.owner.state,
+      workflowId: item.request.workflow_id,
+    }),
+    sourceRef = synthesisSourceCatalog(predecessors).sources[0].key,
+    summary = json({
+      schema: 'VidaSynthesisObservationOutput/v1',
+      topic: 'Bounded terminal synthesis evidence',
+      findings: [
+        {
+          finding_id: 'synthesis-finding',
+          statement: 'The admitted sources support the scoped conclusion.',
+          source_refs: [sourceRef],
+          evidence_class: 'Static',
+          status: 'confirmed',
+        },
+      ],
+      uncertainties: [],
+      conflicts: [],
+      br_ids: ['BR-1'],
+      sr_ids: ['SR-1'],
+      ac_ids: ['AC-1'],
+      gap_ids: [],
+      options: [
+        {
+          option_id: 'option-evidence',
+          label: 'Use admitted evidence',
+          description: 'Keep the conclusion within the accepted sources.',
+          evidence_refs: [sourceRef],
+        },
+      ],
+      recommendation: {
+        option_id: 'option-evidence',
+        rationale: 'The admitted evidence supports the scoped conclusion.',
+        evidence_refs: [sourceRef],
+      },
+      completeness: {
+        status: 'blocked',
+        required_questions: [],
+        answered_questions: [],
+        missing_questions: [],
+        material_gaps: ['GAP-VIDA-RUN-EXECUTION-001'],
+        external_validation: {
+          required: true,
+          source_count: 2,
+          minimum_sources: 2,
+          status: 'blocked',
+          live_check: false,
+        },
+      },
+      readiness: 'blocked',
+    }),
+    body = {
+      schema: 'VidaSessionObservation/v1',
+      action_id: item.request.action_id,
+      issue_id: item.issue_id,
+      agent_id: 'fixture:research-synthesizer',
+      tool_call_ref: 'fixture:terminal-followup',
+      status: 'reported_complete',
+      summary,
+      output_digest: canonicalJsonDigest(summary),
+      evidence_refs: [sourceRef],
+    },
+    bodyRef = '.tmp/synthesis-body.json',
+    inputRef = '.tmp/synthesis-input.json',
+    reportRef = '.tmp/synthesis-report.json',
+    reportBodyRef = '.tmp/synthesis-report-body.json',
+    requestRef = '.tmp/terminal-synthesis-capture.json',
+    denial = {
+      schema: 'VidaAgentRunResult/v1',
+      status: 'blocked',
+      code: 'GAP-VIDA-RUN-EXECUTION-001',
+      message: 'The requested run was blocked by runtime validation.',
+    },
+    input = { status: body.status, agent_id: body.agent_id, tool_call_ref: body.tool_call_ref },
+    report = {
+      exit_code: 1,
+      input_path: path.resolve(f.root, inputRef),
+      command: ['vida-agent', '--report', path.resolve(f.root, reportBodyRef)],
+      stderr: json(denial).trim(),
+    },
+    base = {
+      schema: 'HistoricalTerminalSynthesisCaptureRequest/v1',
+      identity: request.identity,
+      attempt: request.attempt,
+      action_id: item.request.action_id,
+      issue_id: item.issue_id,
+      body_ref: bodyRef,
+      input_ref: inputRef,
+      report_ref: reportRef,
+      followup_ref: body.tool_call_ref,
+      userRequestPointer: request.userRequestPointer,
+      requestIntent: request.requestIntent,
+    };
+  f.put(bodyRef, json(body));
+  f.put(inputRef, json(input));
+  f.put(reportRef, json(report));
+  f.put(reportBodyRef, json(body));
+  f.put(requestRef, json(base));
+  const args = (mode) => [
+    '--capture-historical-terminal-synthesis',
+    'true',
+    '--mode',
+    mode,
+    '--project-root',
+    f.root,
+    '--native-session-handle',
+    'fixture-thread',
+    '--baseline-config',
+    'baseline.yaml',
+    '--request',
+    requestRef,
+  ];
+  const inspected = await run(args('inspect'));
+  expect(inspected.status).toBe('historical_terminal_synthesis_capture_inspected');
+  f.put(requestRef, json(inspected.request));
+  const applied = await run(args('apply'));
+  expect(applied.status).toBe('historical_terminal_synthesis_captured');
+  expect(applied.rights_granted).toBe(false);
+  expect(applied.accepted_result).toBe(false);
+  const beforeResume = databaseState(f),
+    engineBeforeResume = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  const resumed = await run(args('resume'));
+  expect(resumed.status).toBe('historical_terminal_synthesis_captured');
+  expect(resumed.receipt).toEqual(applied.receipt);
+  expect(resumed.rights_granted).toBe(false);
+  expect(resumed.caller_authorization_required).toBe(true);
+  expect(databaseState(f)).toEqual(beforeResume);
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engineBeforeResume);
+}, 30000);
+
+test('terminal synthesis predicate accepts only its exact known target with official-docs egress', () => {
+  const terminal = historicalFixture('terminal_synthesis_unaccepted');
+  const completedResearch = terminal.state.completed.flatMap((wave) => wave.items),
+    pendingSynthesisIndex = completedResearch.length;
+  expect(completedResearch).toHaveLength(2);
+  seedHistoricalResearchLineage(terminal.f, terminal.request, terminal.state, {
+    includeCompleted: true,
+    pendingIndex: pendingSynthesisIndex,
+    activationOnlyIndex: pendingSynthesisIndex,
+  });
+  const original = inspectHistoricalOwnerContext(
+    terminal.f.root,
+    'baseline.yaml',
+    terminal.request.identity,
+    terminal.request.attempt,
+  );
+  const target = original.journal.state.items.find((item) => item.issue_id !== null && item.observation === null);
+  expect(target).toBeTruthy();
+  const stage = original.config.workflows[target.request.workflow_id].stages.find(
+      (entry) => entry.id === target.request.stage_id,
+    ),
+    profile = original.config.agents.profiles[stage.assignments[target.request.assignment_index].profile];
+  expect(stage.id).toBe('synthesize_task');
+  expect(original.config.agents.egress_policies[profile.egress_policy].allowed_hosts.length).toBeGreaterThan(0);
+  const capture = {
+    actionId: target.request.action_id,
+    issueId: target.issue_id,
+    bodyBytes: Buffer.from(
+      json({
+        schema: 'VidaSessionObservation/v1',
+        action_id: target.request.action_id,
+        issue_id: target.issue_id,
+        status: 'reported_complete',
+        agent_id: 'fixture:research-synthesizer',
+        tool_call_ref: 'fixture:terminal-body',
+        summary: 'Known terminal synthesis fixture',
+        output_digest: '0'.repeat(64),
+        evidence_refs: [],
+      }),
+    ),
+    provenance: {
+      schema: 'HistoricalTerminalSynthesisProvenance/v1',
+      body_ref: '.tmp/synthesis-body.json',
+      input_ref: '.tmp/synthesis-input.json',
+      report_ref: '.tmp/synthesis-report.json',
+      followup_ref: 'fixture:terminal-body',
+      original_actor_id: 'fixture:research-synthesizer',
+      denial_status: 'blocked',
+      denial_code: 'GAP-VIDA-RUN-EXECUTION-001',
+      denial_message: 'The requested run was blocked by runtime validation.',
+      denial_reason_gap: 'GAP-VIDA-RUN-EXECUTION-001',
+      input_bytes_base64: '',
+      report_bytes_base64: '',
+      predecessor_refs: [
+        { result_id: 'result-one', digest: 'a'.repeat(64) },
+        { result_id: 'result-two', digest: 'b'.repeat(64) },
+      ],
+    },
+  };
+  const terminalInput = {
+    identity: terminal.request.identity,
+    journal: { state: original.journal.state, version: original.journal.version, resume_status: 'issued_outcome_uncertain' },
+    expectedWork: original.owner.version,
+    expectedLedger: original.workspace.ledger_version,
+    expectedMaintenanceGeneration: original.maintenanceGeneration,
+    nativeSessionHandle: 'fixture-thread',
+    userRequestPointer: terminal.request.userRequestPointer,
+    requestIntent: terminal.request.requestIntent,
+    config: original.config,
+    predicate: 'terminal_synthesis_unaccepted',
+    capture,
+    documentationContext: {
+      repository_root: terminal.f.root,
+      repository_id: terminal.request.identity.repository_id,
+      project_id: terminal.request.identity.project_ids[0],
+      work_id: terminal.request.identity.work_id,
+    },
+  };
+  const terminalBefore = databaseState(terminal.f),
+    terminalEngine = readFileSync(path.join(terminal.f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  withDatabase(terminal.f, (db) =>
+    expect(() =>
+      inspectHistoricalOwnerWork({ store: new HostStateStore(db, terminal.f.workspace), ...terminalInput }),
+    ).not.toThrow(),
+  );
+  expect(databaseState(terminal.f)).toEqual(terminalBefore);
+  expect(readFileSync(path.join(terminal.f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(terminalEngine);
+
+  const wrongStage = structuredClone(terminalInput.journal.state);
+  wrongStage.items[0].request.stage_id = 'develop_change';
+  const wrongStageInput = {
+    ...terminalInput,
+    journal: {
+      ...terminalInput.journal,
+      state: wrongStage,
+      version: { ...terminalInput.journal.version, digest: canonicalJsonDigest(wrongStage) },
+    },
+  };
+  withDatabase(terminal.f, (db) =>
+    expect(() =>
+      inspectHistoricalOwnerWork({ store: new HostStateStore(db, terminal.f.workspace), ...wrongStageInput }),
+    ).toThrow(/historical synthesis candidate is not one known-terminal/),
+  );
+  expect(databaseState(terminal.f)).toEqual(terminalBefore);
+
+  const unknown = historicalFixture('unknown_readonly', { officialDocs: true }),
+    unknownOriginal = inspectHistoricalOwnerContext(
+      unknown.f.root,
+      'baseline.yaml',
+      unknown.request.identity,
+      unknown.request.attempt,
+    ),
+    unknownTarget = unknownOriginal.journal.state.items[0],
+    unknownStage = unknownOriginal.config.workflows[unknownTarget.request.workflow_id].stages.find(
+      (entry) => entry.id === unknownTarget.request.stage_id,
+    ),
+    unknownProfile = unknownOriginal.config.agents.profiles[unknownStage.assignments[unknownTarget.request.assignment_index].profile];
+  expect(unknownOriginal.config.agents.egress_policies[unknownProfile.egress_policy].allowed_hosts.length).toBeGreaterThan(0);
+  const unknownBefore = databaseState(unknown.f),
+    unknownEngine = readFileSync(path.join(unknown.f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  withDatabase(unknown.f, (db) =>
+    expect(() =>
+      inspectHistoricalOwnerWork({
+        store: new HostStateStore(db, unknown.f.workspace),
+        identity: unknown.request.identity,
+        journal: {
+          state: unknownOriginal.journal.state,
+          version: unknownOriginal.journal.version,
+          resume_status: 'issued_outcome_uncertain',
+        },
+        expectedWork: unknownOriginal.owner.version,
+        expectedLedger: unknownOriginal.workspace.ledger_version,
+        expectedMaintenanceGeneration: unknownOriginal.maintenanceGeneration,
+        nativeSessionHandle: 'fixture-thread',
+        userRequestPointer: unknown.request.userRequestPointer,
+        requestIntent: unknown.request.requestIntent,
+        config: unknownOriginal.config,
+        predicate: 'unknown_readonly',
+        documentationContext: {
+          repository_root: unknown.f.root,
+          repository_id: unknown.request.identity.repository_id,
+          project_id: unknown.request.identity.project_ids[0],
+          work_id: unknown.request.identity.work_id,
+        },
+      }),
+    ).toThrow(/native action or host assignment is still active or uncertain/),
+  );
+  expect(databaseState(unknown.f)).toEqual(unknownBefore);
+  expect(readFileSync(path.join(unknown.f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(unknownEngine);
+});
+
+test.each([
+  'missing receipt',
+  'tampered receipt',
+  'denial provenance',
+  'invalid UTF-8 body',
+  'predecessor references',
+])(
+  'known terminal synthesis config rebind denies %s without effects',
+  async (change) => {
+    const { f, request, state } = historicalFixture('terminal_synthesis_unaccepted'),
+      completedResearch = state.completed.flatMap((wave) => wave.items),
+      pendingSynthesisIndex = completedResearch.length;
+    expect(completedResearch).toHaveLength(2);
+    seedHistoricalResearchLineage(f, request, state, {
+      includeCompleted: true,
+      pendingIndex: pendingSynthesisIndex,
+      activationOnlyIndex: pendingSynthesisIndex,
+    });
+    seedKnownTerminalSynthesisCustody(f, request, state, ({ db, capture, before, journal, candidate }) => {
+      const receipt = new HostStateStore(db, f.workspace).readHistoricalTerminalSynthesisCapture(
+        request.identity,
+        request.attempt,
+        candidate.request.action_id,
+      );
+      expect(receipt).toBeTruthy();
+      if (change === 'missing receipt') {
+        db.query(
+          'DELETE FROM agent_host_historical_terminal_synthesis_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+        ).run(f.workspace, request.identity.work_id, request.attempt, candidate.request.action_id);
+      } else {
+        const altered = structuredClone(receipt);
+        if (change === 'tampered receipt') altered.body_base64 = Buffer.from('tampered').toString('base64');
+        else if (change === 'denial provenance') {
+          altered.provenance.denial_message = 'foreign denial';
+          altered.request.provenance.denial_message = 'foreign denial';
+          altered.request_digest = canonicalJsonDigest(altered.request);
+        } else if (change === 'predecessor references') {
+          altered.provenance.predecessor_refs[0].digest = 'f'.repeat(64);
+          altered.request.provenance = structuredClone(altered.provenance);
+          altered.request_digest = canonicalJsonDigest(altered.request);
+        } else {
+          altered.body_base64 = Buffer.from([0xff]).toString('base64');
+          altered.body_byte_length = 1;
+          altered.body_sha256 = sha(Buffer.from([0xff]));
+          altered.request.body_base64 = altered.body_base64;
+          altered.request_digest = canonicalJsonDigest(altered.request);
+        }
+        db.query(
+          'UPDATE agent_host_historical_terminal_synthesis_capture SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+        ).run(
+          json(altered),
+          canonicalJsonDigest(altered),
+          f.workspace,
+          request.identity.work_id,
+          request.attempt,
+          candidate.request.action_id,
+        );
+      }
+      return { before, journal };
+    });
+    f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+    f.put('proposed.yaml', f.target);
+    const beforeInspect = databaseState(f);
+    await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown|custody|denial|UTF-8|digest/i);
+    expect(databaseState(f)).toEqual(beforeInspect);
+  },
+  30000,
+);
+
+test('known terminal reader denies a synthesis stage whose configured output schema changed', () => {
+  const { f, request, state } = historicalFixture('terminal_synthesis_unaccepted'),
+    completedResearch = state.completed.flatMap((wave) => wave.items),
+    pendingSynthesisIndex = completedResearch.length;
+  seedHistoricalResearchLineage(f, request, state, {
+    includeCompleted: true,
+    pendingIndex: pendingSynthesisIndex,
+    activationOnlyIndex: pendingSynthesisIndex,
+  });
+  seedKnownTerminalSynthesisCustody(f, request, state);
+  const before = databaseState(f),
+    config = structuredClone(loadRuntimeConfig(f.root)),
+    stage = config.workflows.implementation_new.stages.find((entry) => entry.id === 'synthesize_task');
+  stage.produces = stage.produces.filter((schema) => schema !== 'ResearchSynthesis/v1');
+  withDatabase(f, (db) =>
+    expect(() => currentState(db, f.workspace, f.root, config)).toThrow(
+      /original stage or configured readonly role differs/,
+    ),
+  );
+  expect(databaseState(f)).toEqual(before);
+});
+
+function seedHistoricalResearchLineage(
+  f,
+  request,
+  state,
+  { unnormalizedIndex = -1, pendingIndex = -1, activationOnlyIndex = -1, includeCompleted = false } = {},
+) {
   const original = inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, 1);
   const work = structuredClone(original.owner.state);
+  const lineageItems = includeCompleted ? [...state.completed.flatMap((wave) => wave.items), ...state.items] : state.items;
   const materials = [];
   let history = '',
     changelog = '';
-  for (const [index, item] of state.items.entries()) {
+  for (const [index, item] of lineageItems.entries()) {
     const pending = index === pendingIndex,
       normalized = index !== unnormalizedIndex && !pending;
     const record = createHistoricalResearchFixture({
@@ -1724,7 +2336,32 @@ function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = 
         lease_thread_id: work.lease.thread_id,
         lease_generation: work.lease.generation,
       },
+      ...(index === activationOnlyIndex
+        ? {
+            result: {
+              topic: 'terminal-synthesis-fixture',
+              work_item_id: request.identity.work_id,
+              scope_id: work.binding.scope_id,
+              source_revision: work.binding.work_source_revision,
+              result_id: 'terminal-synthesis-fixture-result',
+              digest: 'c'.repeat(64),
+              actor: 'fixture-owner',
+              pointer: 'WORK.md',
+              updated_at: new Date().toISOString(),
+            },
+          }
+        : {}),
     });
+    if (index === activationOnlyIndex) {
+      const synthesisUse = { ...record.activationUse, phase: 'plan', lane: 'synthesizer' };
+      delete synthesisUse.digest;
+      synthesisUse.digest = canonicalJsonDigest(synthesisUse);
+      record.activationUse = synthesisUse;
+      record.historyBytes = canonicalJson(synthesisUse) + '\n';
+      const activationBody = { ...record.activationPlan, use_digest: synthesisUse.digest };
+      delete activationBody.digest;
+      record.activationPlan = { ...activationBody, digest: canonicalJsonDigest(activationBody) };
+    }
     try {
       materials.push({
         scopeBytes: record.scopeBytes,
@@ -1756,7 +2393,7 @@ function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = 
         item.observation = record.observation;
         item.research_normalization = plan;
         work.artifacts.push({
-          artifact_id: 'research-' + index,
+          artifact_id: includeCompleted ? record.result.result_id : 'research-' + index,
           schema: 'ResearchResult/v1',
           path: plan.record_path,
           sha256: plan.record_sha256,
@@ -1798,6 +2435,67 @@ function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = 
       canonicalJsonDigest(state),
     );
   });
+  if (includeCompleted) {
+    const engine = new Database(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'), { strict: true });
+    try {
+      const row = engine
+        .query('SELECT json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?')
+        .get(state.run_id);
+      const snapshot = JSON.parse(row.snapshot),
+        currentConfig = loadRuntimeConfig(f.root),
+        context = { work_id: state.work_id, attempt: state.attempt, scope_digest: state.source_scope.digest };
+      let prior = structuredClone(snapshot.context.input);
+      for (const wave of state.completed) {
+        const retained = snapshot.context[wave.step_id],
+          observations = wave.items.map((item) => item.observation);
+        retained.payload = structuredClone(prior);
+        retained.resumePayload = { observations };
+        retained.output = { ...prior, observations: [...prior.observations, ...observations] };
+        prior = retained.output;
+      }
+      const pendingWaveIndex = state.items[0].request.wave_index,
+        actions = sessionActionsForWave(
+          currentConfig,
+          snapshot.context.input.selection,
+          context,
+          state.items[0].request.workflow_id,
+          pendingWaveIndex,
+          [],
+        ),
+        requests = actions.map((action) =>
+          buildSessionBridgeRequest({
+            runId: state.run_id,
+            workflowId: state.items[0].request.workflow_id,
+            configDigest: runtimeConfigDigest(original.config),
+            context,
+            waveIndex: pendingWaveIndex,
+            action,
+            configuredContext: configuredContextForStage(
+              f.root,
+              currentConfig,
+              state.items[0].request.workflow_id,
+              action.stage_id,
+              context,
+            ),
+            priorResults: prior.observations,
+          }),
+        );
+      expect(requests).toHaveLength(state.items.length);
+      state.items = state.items.map((item, index) => ({ ...item, request: requests[index] }));
+      const pendingWave = snapshot.context['wave-' + pendingWaveIndex];
+      pendingWave.payload = structuredClone(prior);
+      pendingWave.suspendPayload = { requests };
+      engine.query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?').run(json(snapshot), state.run_id);
+    } finally {
+      engine.close();
+    }
+    withDatabase(f, (db) =>
+      db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=?').run(
+        json(state),
+        canonicalJsonDigest(state),
+      ),
+    );
+  }
   return { work, materials };
 }
 

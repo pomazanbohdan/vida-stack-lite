@@ -409,6 +409,15 @@ its inspected public surfaces; local handles and test capabilities do not supply
 native caller proof. Authenticated UNKNOWN recovery remains an integration GAP, separate
 from the system-update allocator and current human-authorized Source work.
 
+## Historical terminal synthesis custody
+
+Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
+Checked2026-10-07 from the official [SQLite transaction contract](https://sqlite.org/lang_transaction.html): SQLite permits one simultaneous write transaction, and `BEGIN IMMEDIATE` starts that write transaction immediately. This supports the Host operation's Work/Ledger update and immutable custody receipt being committed together with CAS under one Host database transaction. It does not establish atomicity with retained files or the separate Mastra engine store.
+
+Direct retrieval of the official [Mastra suspend/resume documentation](https://mastra.ai/docs/workflows/suspend-and-resume) succeeded on 2026-10-07. The page says suspension saves a workflow snapshot in configured storage and resume restores the captured state from a step. It makes no claim that a Mastra snapshot and VIDA's separate Host transaction commit atomically. The terminal-custody route therefore preserves the original engine snapshot and Journal while recording the exact denied terminal body and releasing the original Host owner; runtime/engine facts still come from the current configured readers.
+
+The official [Ajv API reference](https://ajv.js.org/api.html) states that validation errors describe the last validation call and are overwritten by the next call. A diagnostic that needs to inspect multiple failures must copy the error list immediately after each validation. The terminal-custody Host method uses its current typed Host validation and does not add an Ajv dependency or validator layer. The earlier reported Host fixture failure did not reproduce on the current source snapshot: the focused three-case Host check passed before any fixture edit, so no WorkState schema change was justified. The earlier failure remains historical evidence and is not reclassified as passing.
+
 ## Shared deterministic processing and qualification callers
 
 Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.

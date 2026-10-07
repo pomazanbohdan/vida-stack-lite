@@ -31,6 +31,7 @@ import {
   configuredContextForStage,
 } from '../src/orchestration/mastra-session-bridge.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
+import { admittedResearchResultsForSynthesis } from '../src/orchestration/observed-synthesis-result.ts';
 
 const requireRebind = (valid, message) => {
   if (!valid) throw new Error(`vida runtime-config rebind: ${message}`);
@@ -821,7 +822,319 @@ function readonlyUnknown(root, config, row, item, host) {
   }
 }
 
-export function currentState(db, workspace, root, config) {
+function storedBase64(value, label, maximumBytes) {
+  requireRebind(typeof value === 'string' && value.length > 0 && value.length <= Math.ceil(maximumBytes * 4 / 3) + 4, `${label} base64 invalid`);
+  const bytes = Buffer.from(value, 'base64');
+  requireRebind(bytes.length <= maximumBytes && bytes.toString('base64') === value, `${label} base64 invalid`);
+  let text;
+  try {
+    text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    requireRebind(false, `${label} is not valid UTF-8`);
+  }
+  requireRebind(Buffer.from(text, 'utf8').equals(bytes), `${label} UTF-8 bytes are not canonical`);
+  try {
+    return { bytes, value: JSON.parse(text) };
+  } catch {
+    requireRebind(false, `${label} is not JSON`);
+  }
+}
+
+/** Read an immutable terminal synthesis custody receipt without accepting its result. */
+function readonlyKnownTerminal(db, root, config, row, item, host, store) {
+  const state = row.value,
+    receipt = store.readHistoricalTerminalSynthesisCapture(
+      { work_id: state.work_id },
+      state.attempt,
+      item.request.action_id,
+    );
+  if (!receipt) return null;
+
+  const provenanceKeys = [
+      'schema',
+      'body_ref',
+      'input_ref',
+      'report_ref',
+      'followup_ref',
+      'original_actor_id',
+      'denial_status',
+      'denial_code',
+      'denial_message',
+      'denial_reason_gap',
+      'input_bytes_base64',
+      'report_bytes_base64',
+      'predecessor_refs',
+    ],
+    requestKeys = [
+      'schema',
+      'identity',
+      'attempt',
+      'action_id',
+      'issue_id',
+      'native_session_handle',
+      'user_request_pointer',
+      'request_intent',
+      'expected_work',
+      'expected_ledger',
+      'expected_journal',
+      'expected_maintenance_generation',
+      'body_base64',
+      'provenance',
+    ],
+    receiptKeys = [
+      'schema',
+      'request_digest',
+      'request',
+      'identity',
+      'attempt',
+      'action_id',
+      'issue_id',
+      'terminal_status',
+      'task_status',
+      'body_base64',
+      'body_sha256',
+      'body_byte_length',
+      'provenance',
+      'work_version',
+      'ledger_version',
+      'journal_version',
+      'rights_granted',
+      'accepted_result',
+      'runtime_acceptance',
+    ];
+  requireRebind(
+    hasExactKeys(receipt, receiptKeys) &&
+      hasExactKeys(receipt.request, requestKeys) &&
+      hasExactKeys(receipt.provenance, provenanceKeys) &&
+      receipt.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
+      receipt.terminal_status === 'known_terminal_unaccepted' &&
+      receipt.task_status === 'unfinished' &&
+      receipt.rights_granted === false &&
+      receipt.accepted_result === false &&
+      receipt.runtime_acceptance === false &&
+      receipt.request_digest === canonicalJsonDigest(receipt.request) &&
+      receipt.request.schema === 'HistoricalTerminalSynthesisCapture/v1' &&
+      canonicalJsonDigest(receipt.request.provenance) === canonicalJsonDigest(receipt.provenance) &&
+      receipt.request.body_base64 === receipt.body_base64 &&
+      receipt.identity.work_id === state.work_id &&
+      canonicalJsonDigest(receipt.identity) === canonicalJsonDigest(receipt.request.identity) &&
+      receipt.attempt === state.attempt &&
+      receipt.action_id === item.request.action_id &&
+      receipt.issue_id === item.issue_id &&
+      item.issue_id !== null &&
+      item.observation === null &&
+      item.research_activation &&
+      !item.research_normalization &&
+      !item.host_reservation,
+    'known terminal synthesis custody identity or status differs',
+  );
+
+  const ownerRows = host.filter(
+      (entry) => entry.kind === 'work' && entry.value.binding?.lifecycle_work_id === state.work_id,
+    ),
+    ledgerRows = host.filter((entry) => entry.kind === 'ledger');
+  requireRebind(
+    ownerRows.length === 1 && ledgerRows.length === 1 &&
+      validateReadonlyOwner(ownerRows[0].value) &&
+      ownerRows[0].workspace_id === state.workspace_id &&
+      ownerRows[0].value.binding.repository_id === receipt.identity.repository_id &&
+      canonicalJsonDigest(ownerRows[0].value.binding.project_ids) === canonicalJsonDigest(receipt.identity.project_ids) &&
+      ownerRows[0].value.binding.integrations_digest === receipt.identity.integrations_digest &&
+      ownerRows[0].value.lease === null &&
+      ownerRows[0].value.execution.status === 'suspended' &&
+      ownerRows[0].value.lifecycle.next_action ===
+        'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' &&
+      !ownerRows[0].value.artifacts.some((artifact) => artifact.schema === 'ResearchSynthesis/v1') &&
+      receipt.request.expected_work.revision + 1 === ownerRows[0].revision &&
+      receipt.request.expected_ledger.revision + 1 === ledgerRows[0].revision &&
+      receipt.work_version.revision === ownerRows[0].revision &&
+      receipt.work_version.digest === ownerRows[0].digest &&
+      receipt.ledger_version.revision === ledgerRows[0].revision &&
+      receipt.ledger_version.digest === ledgerRows[0].digest &&
+      receipt.journal_version.revision === row.revision &&
+      receipt.journal_version.digest === row.digest &&
+      receipt.request.expected_journal.revision === row.revision &&
+      receipt.request.expected_journal.digest === row.digest &&
+      receipt.request.expected_maintenance_generation === store.readHostStateSnapshot(receipt.identity).maintenanceGeneration,
+    'known terminal synthesis Host versions, owner or maintenance binding differs',
+  );
+
+  const owner = ownerRows[0].value,
+    synthesisStage = config.workflows[item.request.workflow_id]?.stages.find(
+      (stage) => stage.id === item.request.stage_id,
+    );
+  requireRebind(
+    item.request.workflow_id === owner.binding.workflow_id &&
+      item.request.stage_id === 'synthesize_task' &&
+      synthesisStage?.kind === 'synthesize' &&
+      synthesisStage.produces.includes('ResearchSynthesis/v1') &&
+      synthesisStage.assignments[item.request.assignment_index]?.role === 'research-synthesizer' &&
+      cooperativeReadonlyAssignments(config, item.request),
+    'known terminal synthesis original stage or configured readonly role differs',
+  );
+
+  const ledger = ledgerRows[0].value,
+    request = receipt.request,
+    releaseOperations = ledger.operations.filter(
+      (operation) =>
+        operation.kind === 'release' &&
+        operation.work_id === state.work_id &&
+        operation.thread_id === request.native_session_handle &&
+        operation.decided_by === request.native_session_handle &&
+        operation.decision_pointer === request.user_request_pointer &&
+        operation.from_ledger_revision === request.expected_ledger.revision &&
+        operation.to_ledger_revision === receipt.ledger_version.revision,
+    );
+  requireRebind(releaseOperations.length === 1, 'known terminal synthesis release operation differs');
+  const release = releaseOperations[0],
+    tickets = ledger.tickets.filter((entry) => entry.ticket_id === release.ticket_id),
+    claims = ledger.claims.filter((entry) => entry.ticket_id === release.ticket_id);
+  requireRebind(
+    tickets.length === 1 &&
+      tickets[0].status === 'released' &&
+      tickets[0].work_id === state.work_id &&
+      tickets[0].thread_id === request.native_session_handle &&
+      tickets[0].source_revision === ownerRows[0].value.binding.work_source_revision &&
+      tickets[0].generation > 0 &&
+      tickets[0].expires_at === null &&
+      tickets[0].active_resources.length === 0 &&
+      tickets[0].blocked_resources.length === 0 &&
+      claims.length > 0 &&
+      claims.every(
+        (claim) =>
+          claim.status === 'released' &&
+          claim.work_id === state.work_id &&
+          claim.thread_id === request.native_session_handle &&
+          claim.generation === tickets[0].generation,
+      ) &&
+      canonicalJsonDigest([...release.resources].sort()) ===
+        canonicalJsonDigest([...tickets[0].exclusive_resources].sort()),
+    'known terminal synthesis original owner claim is not released exactly',
+  );
+
+  const bodyBytes = Buffer.from(receipt.body_base64, 'base64');
+  requireRebind(
+    receipt.body_base64.length > 0 &&
+      bodyBytes.toString('base64') === receipt.body_base64 &&
+      bodyBytes.length === receipt.body_byte_length &&
+      sha(bodyBytes) === receipt.body_sha256,
+    'known terminal synthesis body custody digest differs',
+  );
+  let body;
+  try {
+    body = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bodyBytes));
+  } catch {
+    requireRebind(false, 'known terminal synthesis body custody is not valid JSON');
+  }
+  const provenance = receipt.provenance,
+    input = storedBase64(provenance.input_bytes_base64, 'synthesis input', 65536).value,
+    report = storedBase64(provenance.report_bytes_base64, 'synthesis report', 262144).value,
+    summary = typeof body.summary === 'string' ? JSON.parse(body.summary) : null;
+  requireRebind(
+    provenance.schema === 'HistoricalTerminalSynthesisProvenance/v1' &&
+      [provenance.body_ref, provenance.input_ref, provenance.report_ref].every(
+        (value) =>
+          typeof value === 'string' &&
+          value.length > 0 &&
+          value.length <= 2048 &&
+          !value.includes('\\') &&
+          !value.startsWith('/') &&
+          !/^[A-Za-z]:/.test(value) &&
+          !/\p{Cc}/u.test(value) &&
+          value.split('/').every((part) => part && part !== '.' && part !== '..'),
+      ) &&
+      typeof provenance.followup_ref === 'string' &&
+      provenance.followup_ref.length > 0 &&
+      provenance.followup_ref.length <= 2048 &&
+      !/\p{Cc}/u.test(provenance.followup_ref) &&
+      provenance.denial_status === 'blocked' &&
+      provenance.denial_code === 'GAP-VIDA-RUN-EXECUTION-001' &&
+      provenance.denial_reason_gap === 'GAP-VIDA-RUN-EXECUTION-001' &&
+      typeof provenance.denial_message === 'string' &&
+      provenance.denial_message.length > 0 &&
+      provenance.denial_message.length <= 2048 &&
+      typeof provenance.original_actor_id === 'string' &&
+      provenance.original_actor_id === body.agent_id &&
+      body.schema === 'VidaSessionObservation/v1' &&
+      body.status === 'reported_complete' &&
+      body.action_id === item.request.action_id &&
+      body.issue_id === item.issue_id &&
+      body.tool_call_ref === provenance.followup_ref &&
+      body.output_digest === canonicalJsonDigest(body.summary) &&
+      input.status === body.status &&
+      input.agent_id === body.agent_id &&
+      input.tool_call_ref === body.tool_call_ref &&
+      report.exit_code === 1 &&
+      typeof report.input_path === 'string' &&
+      path.resolve(root, provenance.input_ref) === report.input_path &&
+      Array.isArray(report.command) &&
+      typeof report.stderr === 'string' &&
+      summary?.schema === 'VidaSynthesisObservationOutput/v1' &&
+      summary.readiness === 'blocked' &&
+      summary.completeness?.status === 'blocked' &&
+      (Array.isArray(summary.material_gaps) || Array.isArray(summary.completeness?.material_gaps)) &&
+      Array.isArray(provenance.predecessor_refs) &&
+      provenance.predecessor_refs.length === 2 &&
+      new Set(provenance.predecessor_refs.map((ref) => ref.result_id)).size === 2 &&
+      provenance.predecessor_refs.every(
+        (ref) =>
+          hasExactKeys(ref, ['result_id', 'digest']) &&
+          typeof ref.result_id === 'string' &&
+          ref.result_id.length > 0 &&
+          /^[a-f0-9]{64}$/.test(ref.digest),
+      ),
+    'known terminal synthesis denial or provenance differs',
+  );
+  const predecessors = admittedResearchResultsForSynthesis({
+      repositoryRoot: root,
+      config,
+      journal: {
+        state,
+        version: { revision: row.revision, digest: row.digest },
+        resume_status: 'issued_outcome_uncertain',
+      },
+      work: owner,
+      workflowId: item.request.workflow_id,
+    }),
+    predecessorRefs = predecessors
+      .map((result) => ({ result_id: result.result_id, digest: result.digest }))
+      .sort((left, right) => left.result_id.localeCompare(right.result_id));
+  requireRebind(
+    predecessors.length === 2 &&
+      canonicalJsonDigest(provenance.predecessor_refs) === canonicalJsonDigest(predecessorRefs),
+    'known terminal synthesis predecessor references differ from admitted Journal results',
+  );
+  let denial;
+  try {
+    denial = JSON.parse(report.stderr);
+  } catch {
+    requireRebind(false, 'known terminal synthesis denial is not JSON');
+  }
+  requireRebind(
+    denial.schema === 'VidaAgentRunResult/v1' &&
+      denial.status === provenance.denial_status &&
+      denial.code === provenance.denial_code &&
+      denial.message === provenance.denial_message,
+    'known terminal synthesis denial provenance differs',
+  );
+
+  // Reuse the existing readonly frozen-engine verifier with only the pre-capture
+  // research activation fields projected away; no journal bytes are rewritten.
+  const engine = readonlyUnknown(
+      root,
+      config,
+      row,
+      { ...item, research_activation: undefined, research_normalization: undefined, host_reservation: undefined },
+      host,
+    );
+  return {
+    ...engine,
+    terminal_status: 'known_terminal_unaccepted',
+    custody_binding: canonicalJsonDigest(receipt),
+  };
+}
+
+export function currentState(db, workspace, root, config, existingStore) {
   const host = checkedRows(db, 'agent_host_state', workspace);
   for (const row of host) {
     if (row.kind === 'work')
@@ -842,12 +1155,21 @@ export function currentState(db, workspace, root, config) {
   }
   const mastra = checkedRows(db, 'agent_host_mastra_session_ledger', workspace);
   const frozen = [];
+  let terminalReceiptStore = existingStore;
   for (const row of mastra) {
     requireRebind(Array.isArray(row.value.items), 'issued native outcome is pending/unknown');
     for (const item of row.value.items)
       if (item.issue_id !== null && item.observation === null) {
         try {
-          frozen.push(readonlyUnknown(root, config, row, item, host));
+          terminalReceiptStore ??= new HostStateStore(db, workspace);
+          requireRebind(
+            HostStateStore.isHostStateStore(terminalReceiptStore) && terminalReceiptStore.workspaceId === workspace,
+            'terminal synthesis reader Host workspace differs',
+          );
+          frozen.push(
+            readonlyKnownTerminal(db, root, config, row, item, host, terminalReceiptStore) ??
+              readonlyUnknown(root, config, row, item, host),
+          );
         } catch (error) {
           requireRebind(false, `issued native outcome is pending/unknown: ${error.message}`);
         }
@@ -1090,6 +1412,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
                 plan.workspace_id,
                 root,
                 validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
+                store,
               ) === plan.state_digest,
             'current maintenance/global state differs from plan',
           );
