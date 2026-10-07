@@ -9260,18 +9260,24 @@ export class HostStateStore {
       matchesExpected(before.workVersion, input.expectedWork);
       matchesExpected(before.ledgerVersion, input.expectedLedger);
       this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+      const nextWork = input.nextWork,
+        nextLedger = input.nextLedger;
+      requireState(
+        nextWork !== undefined && nextWork !== null && nextLedger !== undefined && nextLedger !== null,
+        'historical synthesis custody requires one exact active original owner release',
+      );
       requireState(
         work && ledger &&
           work.execution.status === 'active' &&
           work.lease?.thread_id === input.nativeSessionHandle &&
           work.lease.generation > 0 &&
-          input.nextWork.lease === null &&
-          input.nextWork.execution.status === 'suspended' &&
-          input.nextWork.revision === work.revision + 1 &&
-          input.nextLedger.revision === ledger.revision + 1 &&
-          sameJson(input.nextWork.binding, work.binding) &&
-          sameJson(input.nextWork.execution.assignment_attempts, work.execution.assignment_attempts) &&
-          sameJson(input.nextWork.artifacts, work.artifacts),
+          nextWork.lease === null &&
+          nextWork.execution.status === 'suspended' &&
+          nextWork.revision === work.revision + 1 &&
+          nextLedger.revision === ledger.revision + 1 &&
+          sameJson(nextWork.binding, work.binding) &&
+          sameJson(nextWork.execution.assignment_attempts, work.execution.assignment_attempts) &&
+          sameJson(nextWork.artifacts, work.artifacts),
         'historical synthesis custody requires one exact active original owner release',
       );
       const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id),
@@ -9306,19 +9312,22 @@ export class HostStateStore {
           ),
         'historical synthesis custody owner, claim or FIFO release differs',
       );
-      const releasedTicket = input.nextLedger.tickets.find((entry) => entry.ticket_id === ticket.ticket_id),
-        releasedClaim = input.nextLedger.claims.find((entry) => entry.claim_id === activeClaims[0]!.claim_id),
-        releaseOperation = input.nextLedger.operations.at(-1);
+      const releasedTicket = nextLedger.tickets.find((entry) => entry.ticket_id === ticket.ticket_id),
+        releasedClaim = nextLedger.claims.find((entry) => entry.claim_id === activeClaims[0]!.claim_id),
+        releaseOperation = nextLedger.operations.at(-1);
       requireState(
         releasedTicket?.status === 'released' &&
           releasedTicket.expires_at === null &&
           releasedClaim?.status === 'released' &&
           typeof releasedClaim.renewed_at === 'string' &&
           Number.isFinite(Date.parse(releasedClaim.renewed_at)) &&
-          input.nextLedger.operations.length === ledger.operations.length + 1 &&
-          sameJson(input.nextLedger.operations.slice(0, -1), ledger.operations) &&
-          releaseOperation?.schema === 'CoordinationOperation/v1' &&
-          Object.keys(releaseOperation ?? {}).sort().join('|') ===
+          nextLedger.operations.length === ledger.operations.length + 1 &&
+          sameJson(nextLedger.operations.slice(0, -1), ledger.operations) &&
+          releaseOperation !== undefined &&
+          releaseOperation.schema === 'CoordinationOperation/v1' &&
+          typeof releaseOperation.operation_id === 'string' &&
+          typeof releaseOperation.created_at === 'string' &&
+          Object.keys(releaseOperation).sort().join('|') ===
             [
               'created_at',
               'decided_by',
@@ -9349,7 +9358,7 @@ export class HostStateStore {
           releaseOperation.to_ledger_revision === ledger.revision + 1 &&
           Number.isFinite(Date.parse(releaseOperation.created_at)) &&
           sameJson(
-            input.nextLedger.tickets,
+            nextLedger.tickets,
             ledger.tickets.map((entry) =>
               entry.ticket_id === ticket.ticket_id
                 ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
@@ -9357,7 +9366,7 @@ export class HostStateStore {
             ),
           ) &&
           sameJson(
-            input.nextLedger.claims,
+            nextLedger.claims,
             ledger.claims.map((entry) =>
               entry.claim_id === activeClaims[0]!.claim_id
                 ? { ...entry, status: 'released', renewed_at: releasedClaim.renewed_at }
@@ -9366,7 +9375,7 @@ export class HostStateStore {
           ) &&
           sameJson(
             (() => {
-              const { revision: _revision, tickets: _tickets, claims: _claims, operations: _operations, ...rest } = input.nextLedger;
+              const { revision: _revision, tickets: _tickets, claims: _claims, operations: _operations, ...rest } = nextLedger;
               return rest;
             })(),
             (() => {
@@ -9375,7 +9384,7 @@ export class HostStateStore {
             })(),
           ) &&
           sameJson(
-            input.nextWork,
+            nextWork,
             {
               ...work,
               revision: work.revision + 1,
@@ -9414,8 +9423,8 @@ export class HostStateStore {
           expectedMaintenanceGeneration: input.expectedMaintenanceGeneration,
           documentationContext: input.documentationContext,
           expectedSessionJournal: { attempt: input.attempt, version: input.expectedJournal },
-          nextWork: input.nextWork,
-          nextLedger: input.nextLedger,
+          nextWork,
+          nextLedger,
         },
         undefined,
         true,
