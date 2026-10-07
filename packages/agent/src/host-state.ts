@@ -8418,9 +8418,8 @@ export class HostStateStore {
       transition_digest: input.sourceTransition.transition_digest,
       action_digest: canonicalJsonDigest(input.action),
     };
-    const authorization = snapshot(await this.#verifyDeliveredWorkContinuation(input, first));
-    contract.validateDeliveredWorkContinuationAuthorization(
-      authorization,
+    const authorization = contract.validateDeliveredWorkContinuationAuthorization(
+      snapshot(await this.#verifyDeliveredWorkContinuation(input, first)),
       input,
       this.deliveredWorkContinuationPrincipal!,
     );
@@ -8517,7 +8516,7 @@ export class HostStateStore {
               : []),
           ],
         },
-        nextWork = {
+        nextWork: WorkState = {
           ...work,
           revision: work.revision + 1,
           binding: nextBinding,

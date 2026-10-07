@@ -342,7 +342,14 @@ async function nativeBuild(ctx, invoke) {
   requireCI((await invoke(node, ['--version'])).trim() === 'v' + ctx.manifest.engines.node, 'CI Node pin differs');
   const npm = findNpmCli(node);
   requireCI((await invoke(node, [npm, '--version'])).trim() === '11.17.0', 'CI npm pin differs');
-  await invoke(process.execPath, ['run', 'ci:pinned'], { cwd: ctx.packageRoot });
+  try {
+    await invoke(process.execPath, ['run', 'ci:pinned'], { cwd: ctx.packageRoot });
+  } catch (error) {
+    const diagnostics = JSON.parse(physical(ctx.root, 'logs/native-build/2.json', 8 * 1024 * 1024));
+    process.stdout.write(diagnostics.stdout);
+    process.stderr.write(diagnostics.stderr);
+    throw error;
+  }
   releaseDirectory(ctx.root, 'output');
   const packed = parsePackOutput(
     await invoke(

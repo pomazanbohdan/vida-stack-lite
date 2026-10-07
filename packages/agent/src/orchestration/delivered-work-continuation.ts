@@ -188,7 +188,7 @@ export function validateCurrentSourceScopeBridge(input: {
     'original, current or authorized Source scope is invalid',
   );
   const authorized = new Map<string, ScopedSourceChange>();
-  for (const change of input.authorizedChanges) {
+  for (const change of input.authorizedChanges as readonly ScopedSourceChange[]) {
     requireContinuation(
       exactKeys(change, ['path', 'kind', 'before', 'after']) &&
         typeof change.path === 'string' &&

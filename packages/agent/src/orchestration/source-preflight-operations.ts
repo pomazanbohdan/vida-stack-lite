@@ -636,7 +636,7 @@ function attachPreparationArtifact(input: {
       input.access.readBytes(input.artifact.reference.path, 'prewriter preparation retry').equals(input.artifact.bytes),
       'prewriter preparation retry bytes differ',
     );
-  else input.access.writeExclusive(input.artifact.reference.path, input.artifact.bytes.toString('utf8'), 'prewriter preparation');
+  else input.access.writeExclusive(input.artifact.reference.path, Buffer.from(input.artifact.bytes).toString('utf8'), 'prewriter preparation');
   const nextWork: WorkState = {
     ...work,
     revision: work.revision + 1,
