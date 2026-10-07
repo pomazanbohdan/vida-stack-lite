@@ -1254,7 +1254,7 @@ function validateTaskSourceJournalScope(candidate: unknown): ScopedSourceSnapsho
         return typeof entry.path === 'string' && entry.path.length > 0 && entry.path.length <= 512 &&
           !entry.path.includes('\\') && !entry.path.startsWith('/') && !entry.path.endsWith('/') &&
           !/^[A-Za-z]:/.test(entry.path) && !/[\u0000-\u001f\u007f]/.test(entry.path) &&
-          entry.path.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..') &&
+          entry.path.split('/').every((part: string) => part.length > 0 && part !== '.' && part !== '..') &&
           (prior === undefined || prior.path < entry.path) &&
           (entry.exists
             ? typeof entry.exists === 'boolean' && Number.isSafeInteger(entry.bytes) && entry.bytes! >= 0 &&
@@ -1749,7 +1749,7 @@ function checkedStoredWork(
   }
   if (pendingReceipt) {
     records.push(
-      'binding_history' in pendingReceipt
+      pendingReceipt.schema === 'VidaRuntimeCodeRebindAuthorization/v1'
         ? { kind: 'runtime', receipt: pendingReceipt }
         : { kind: 'continuation', receipt: pendingReceipt },
     );
@@ -1799,6 +1799,7 @@ function checkedStoredWork(
           journal.attempt === request.attempt &&
           canonicalJsonDigest(journal) === receipt.prior_journal_version.digest &&
           capture.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
+          action?.kind === 'historical_terminal_review' &&
           canonicalJsonDigest(capture) === action?.capture?.receipt_digest &&
           capture.identity.work_id === request.identity.work_id &&
           capture.attempt === request.attempt &&
@@ -8226,13 +8227,14 @@ export class HostStateStore {
   async continueDeliveredWork(request: DeliveredWorkContinuationRequest): Promise<DeliveredWorkContinuationResult> {
     requireState(this.#verifyDeliveredWorkContinuation, 'trusted delivered-work continuation verifier required');
     const contract = await import('./orchestration/delivered-work-continuation.js'),
-      input = snapshot(contract.validateDeliveredWorkContinuationRequest(request));
+      input = snapshot(contract.validateDeliveredWorkContinuationRequest(request)),
+      action = input.action;
     requireState(
-      input.action.kind === 'historical_terminal_review' &&
+      action.kind === 'historical_terminal_review' &&
         input.expectedMaintenanceGeneration === input.sourceTransition.transition.fence.generation,
       'only the source-proven historical terminal review is supported by this finite continuation',
     );
-    const actionId = input.action.capture.action_id,
+    const actionId = action.capture.action_id,
       lookupExisting = (): DeliveredWorkContinuationReceipt | null => {
         const table = this.#database
           .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'")
@@ -8317,12 +8319,12 @@ export class HostStateStore {
           capture.body_byte_length > 0 &&
           Buffer.from(capture.body_base64, 'base64').byteLength === capture.body_byte_length &&
           createHash('sha256').update(Buffer.from(capture.body_base64, 'base64')).digest('hex') === capture.body_sha256 &&
-          actionId === input.action.capture.action_id &&
-          input.action.capture.issue_id === capture.issue_id &&
-          input.action.capture.receipt_digest === canonicalJsonDigest(capture) &&
-          input.action.capture.body_sha256 === capture.body_sha256 &&
-          input.action.capture.body_ref === capture.provenance.body_ref &&
-          input.action.original_request_pointer === capture.request.user_request_pointer &&
+          actionId === action.capture.action_id &&
+          action.capture.issue_id === capture.issue_id &&
+          action.capture.receipt_digest === canonicalJsonDigest(capture) &&
+          action.capture.body_sha256 === capture.body_sha256 &&
+          action.capture.body_ref === capture.provenance.body_ref &&
+          action.original_request_pointer === capture.request.user_request_pointer &&
           journal.schema === 'MastraSessionLedger/v1' &&
           journal.workspace_id === this.#workspaceId &&
           journal.work_id === input.identity.work_id &&
@@ -8386,6 +8388,7 @@ export class HostStateStore {
           release.thread_id === input.nativeSessionHandle &&
           release.source_revision === work.binding.work_source_revision &&
           release.decision_pointer === input.originalRequestPointer &&
+          validGateVersion(capture.request.expected_ledger) &&
           release.from_ledger_revision === capture.request.expected_ledger.revision &&
           release.to_ledger_revision === input.expectedLedger.revision &&
           !ledger.tickets.some(
@@ -8641,7 +8644,7 @@ export class HostStateStore {
           canonicalJsonDigest(nextJournal) === journalVersion.digest,
         'delivered-work continuation did not persist its exact successor state',
       );
-      return snapshot({ status: 'continued', snapshot: saved, receipt, action: input.action });
+      return snapshot({ status: 'continued' as const, snapshot: saved, receipt, action: input.action });
     }).immediate();
   }
   /** Read the one current terminal-review continuation for this original Work attempt. */
