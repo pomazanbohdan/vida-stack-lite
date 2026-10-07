@@ -845,3 +845,12 @@ removal and custody cleanup at the byte boundary. Native Linux proof remains
 a separate GAP. TypeScript [tuple types](https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types)
 bind the matcher candidates to exactly two strings; the annotation preserves
 behavior while allowing strict indexed-access checking.
+
+### Continuation repair package closure
+
+The installed continuation repair route requires its dynamically imported module
+in the executable payload. The maintained inventory selects modules through the
+package manifest's [files field](https://docs.npmjs.com/cli/configuring-npm/package-json/#files).
+The repair module is explicitly included there. Source presence and a successful
+build alone do not establish an available installed command; original-work
+inspection must use the delivered route.

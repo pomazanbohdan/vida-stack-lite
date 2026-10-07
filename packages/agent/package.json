@@ -33,6 +33,7 @@
     "bin/local-release-artifacts.mjs",
     "bin/repair-release-retarget.mjs",
     "bin/repair-native-delivery-evidence.mjs",
+    "bin/repair-delivered-work-continuation.mjs",
     "bin/reconcile-readonly-dispatch.mjs",
     "bin/reconcile-synthesis-qualification.mjs",
     "bin/synthesis-observation-correction.mjs",
