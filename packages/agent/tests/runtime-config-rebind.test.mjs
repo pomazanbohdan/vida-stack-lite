@@ -752,7 +752,10 @@ test('public source repair freezes original beforeimages, prior update and held-
   expect(inspected.authorized_changed_paths).toEqual(authorizedPaths);
   expect(databaseState(f)).toEqual(beforeRepair);
 
-  const planned = await runReconcileArtifacts(repairArgs('repair-plan')),
+  const publishedOperation = 'local-already-qualified-source-correction';
+  const planned = await runReconcileArtifacts([
+      ...repairArgs('repair-plan'), '--publish-operation', publishedOperation,
+    ]),
     sidecar = JSON.parse(readFileSync(path.join(f.root, planned.sidecar_path), 'utf8'));
   expect(planned.status).toBe('planned');
   expect(sidecar.status).toBe('requested');
@@ -766,6 +769,19 @@ test('public source repair freezes original beforeimages, prior update and held-
   expect(sidecar.request.new_source_manifest.version).toBe(targetVersion);
   expect(sidecar.request.publish_operation_id).not.toBe(sidecar.request.operation_id);
   expect(sidecar.request.publish_operation_id).not.toBe(sidecar.request.prior_system_update.operation_id);
+  expect(sidecar.request.publish_operation_id).toBe(publishedOperation);
+  const frozenSidecarBytes = readFileSync(path.join(f.root, planned.sidecar_path));
+  expect((await runReconcileArtifacts(repairArgs('repair-plan'))).request_id).toBe(planned.request_id);
+  expect((await runReconcileArtifacts([
+    ...repairArgs('repair-plan'), '--publish-operation', publishedOperation,
+  ])).request_id).toBe(planned.request_id);
+  await expect(runReconcileArtifacts([
+    ...repairArgs('repair-plan'), '--publish-operation', 'local-different-publication',
+  ])).rejects.toThrow(/repair inputs differ/);
+  await expect(runReconcileArtifacts([
+    ...repairArgs('repair-inspect'), '--publish-operation', '../invalid-operation',
+  ])).rejects.toThrow(/published operation identity is invalid/);
+  expect(readFileSync(path.join(f.root, planned.sidecar_path))).toEqual(frozenSidecarBytes);
   expect(sidecar.request.new_source.digest).not.toBe(sidecar.request.old_source.digest);
   expect(databaseState(f)).toEqual(beforeRepair);
 

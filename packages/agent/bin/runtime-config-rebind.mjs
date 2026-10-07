@@ -2212,7 +2212,8 @@ function parseSourceCorrectionArgs(args) {
     planning = ['repair-inspect', 'repair-plan'].includes(mode),
     base = ['--kind', '--mode', '--project-root', '--repair-id'],
     expected = planning
-      ? [...base, '--source-beforeimages', '--authorized-paths', '--prior-system-update']
+      ? [...base, '--source-beforeimages', '--authorized-paths', '--prior-system-update',
+          ...(Object.hasOwn(values, '--publish-operation') ? ['--publish-operation'] : [])]
       : mode === 'repair-apply'
         ? [...base, '--report']
         : base;
@@ -2234,6 +2235,10 @@ function parseSourceCorrectionArgs(args) {
   );
   let authorizedPaths;
   if (planning) {
+    requireRebind(
+      values['--publish-operation'] === undefined || identifier.test(values['--publish-operation']),
+      'published operation identity is invalid',
+    );
     try {
       authorizedPaths = JSON.parse(values['--authorized-paths']);
     } catch {
@@ -2462,6 +2467,7 @@ function sourceCorrectionRequest({
   beforeimagePath,
   priorSystemUpdatePath,
   authorizedPaths,
+  publishOperationId,
   frozenRequest,
   allowForwardReceipt = false,
 }) {
@@ -2576,7 +2582,7 @@ function sourceCorrectionRequest({
     schema: 'RuntimeConfigSourceCorrectionRequest/v1',
     request_id: frozenRequest?.request_id ?? randomUUID(),
     operation_id: id,
-    publish_operation_id: frozenRequest?.publish_operation_id ?? randomUUID(),
+    publish_operation_id: frozenRequest?.publish_operation_id ?? publishOperationId ?? randomUUID(),
     original_operation: {
       path: operationPath,
       sha256: sha(operationBytes),
@@ -2942,6 +2948,8 @@ function sourceCorrectionWithCompletion(artifact, completion) {
 function correctionRequestForInputs({ values, access, root, config, db, operationPath, stored, frozenRequest }) {
   if (frozenRequest) {
     requireRebind(
+      (values['--publish-operation'] === undefined ||
+        values['--publish-operation'] === frozenRequest.publish_operation_id) &&
       projectRelativeExternalPath(root, values['--source-beforeimages'], 'retained source custody') ===
           frozenRequest.source_beforeimages.path &&
         projectRelativeExternalPath(root, values['--prior-system-update'], 'prior system update receipt') ===
@@ -2973,6 +2981,7 @@ function correctionRequestForInputs({ values, access, root, config, db, operatio
     beforeimagePath: values['--source-beforeimages'],
     priorSystemUpdatePath: values['--prior-system-update'],
     authorizedPaths: values.authorized_changed_paths,
+    publishOperationId: values['--publish-operation'],
   });
 }
 

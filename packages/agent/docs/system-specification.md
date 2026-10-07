@@ -1228,6 +1228,10 @@ the original operation and fence, Source beforeimages and exact authorized
 changed paths. Repair apply accepts a bounded report of the new whole package's
 formation, native integrity and actual installed observations. The trusted
 session owns those observations; report JSON supplies consistency and CAS only.
+Planning may use `--publish-operation` to bind an existing qualified publication.
+This is correlation only; its CI, Source and installed-native proof still must
+match during apply. A frozen request retains that ID, and a different explicit
+ID denies retry. Do not form or install another package solely to align IDs.
 The repair writes only its sidecar. It neither rewrites the original plan nor
 releases maintenance, changes historical work or grants execution rights.
 

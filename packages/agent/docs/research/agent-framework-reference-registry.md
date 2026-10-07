@@ -252,6 +252,14 @@ read-only; membership does not change `code_selectors` or current-v1 schemas.
 
 ## Historical recovery and delivered configuration
 
+The current [Mastra durable-workflow pattern](https://mastra.ai/blog/what-are-durable-ai-agents)
+reopens the same persisted run ID and resumes its retained state. VIDA applies
+the same identity-continuity principle to publication correlation: source repair
+planning can name an already-qualified publication operation. Workflow, repair
+and publication identities remain distinct. An explicit changed ID denies a
+frozen repair retry; actual Source, CI and installed-native joins still apply.
+This avoids another formation solely to match a freshly generated correlation ID.
+
 Owner: Agent/Core. Behavior owner:
 [recovery across delivered configuration](../system-specification.md#recovery-across-delivered-configuration).
 Work: `core-cloud-continuation-20261002`.
