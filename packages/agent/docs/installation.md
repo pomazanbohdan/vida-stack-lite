@@ -277,8 +277,8 @@ cache. An exact hit reuses the existing entry; it need not save another entry.
 Confirm `cache-hit` on a later required warm build. Keep missing or empty cache
 evidence explicit. Do not start a separate build solely to measure caching.
 
-Current installed build: run 37567252887, artifact 11459550723, version 0.1.2,
-embedded Bun 1.4.2. The system native file is 133338624 bytes. Exact
+Current installed build: run 37579199535, artifact 11463399267, version 0.1.2,
+embedded Bun 1.4.2. The system native file is 133342720 bytes. Exact
 bytes, current instructions and effective PATH are verified. Previous consumer
 native and transient previous files are removed. User Runtime acceptance is separate.
 This build restored the exact Bun cache entry 8603759153,
@@ -291,6 +291,15 @@ returns success and the selected bytes are installed, a failed observer needs
 only a corrected observation. Do not reinstall because that observer failed.
 Change file namespaces separately from public command names and `--kind`
 arguments. Keep those command identities as exact supported values.
+
+For a public command's `--timestamp`, use UTC with three fractional digits:
+
+```powershell
+$timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'")
+```
+
+Pass that value to the command. The PowerShell round-trip `o` format has seven
+fractional digits and does not match the current operation contract.
 
 Run the maintained `packages/agent/tooling/install-windows.ps1`:
 
