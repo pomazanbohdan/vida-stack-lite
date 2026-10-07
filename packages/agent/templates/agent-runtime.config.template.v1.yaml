@@ -320,6 +320,30 @@ agents:
       rules:
         - Review security and data constraints without changing source.
         - Return a fingerprint-bound pass or actionable findings.
+    source-planner:
+      description: Read-only source planner for the current development packet, scoped Source, acceptance criteria, verification, and rollback.
+      consumes:
+        - DevelopmentTaskPacket/v1
+      produces:
+        - LifecyclePreparationObservation/v1
+      rules:
+        - Inspect the actual current DevelopmentTaskPacket, scoped Source, and acceptance evidence before any Source writer is issued.
+        - Report a genuine LifecyclePreparationObservation/v1 with kind source_plan and actual evidence_refs.
+        - Include scope_acceptance_trace and verification_rollback observations, each tied to actual evidence.
+        - Do not infer a plan from the task packet alone and do not mutate Source, the packet, policy, lifecycle state, or Host state.
+        - Report a GAP for every unverified mechanic; never infer PASS from a plan or configuration.
+    security-prewriter:
+      description: Read-only independent security review of high-risk Source work before a Source writer is issued.
+      consumes:
+        - DevelopmentTaskPacket/v1
+      produces:
+        - LifecyclePreparationObservation/v1
+      rules:
+        - Inspect the actual current DevelopmentTaskPacket, scoped Source evidence, and applicable security or data-loss controls.
+        - Report a genuine LifecyclePreparationObservation/v1 with kind implementation_policy and actual evidence_refs.
+        - Include root_cause_owner, affected_callers, existing_primitives, and prewriter_security_gate observations, each tied to actual evidence.
+        - Do not mutate Source, the packet, policy, lifecycle state, or Host state.
+        - Report a GAP for every unverified mechanic; never infer PASS from a plan or configuration.
     tester:
       description: Configured test role.
       consumes:
@@ -370,6 +394,8 @@ teams:
       regression-validator: reviewer-correctness
       requirements-validator: reviewer-requirements
       security-data-validator: reviewer-security
+      source-planner: architect
+      security-prewriter: reviewer-security
       tester: tester
       delivery-agent: delivery
     stage_overrides: {}
@@ -542,6 +568,25 @@ workflows:
         produces:
           - ImplementationResult/v1
         required_after:
+          - review_source_prewrite
+      - id: review_source_prewrite
+        kind: validate
+        mode: parallel
+        assignments:
+          - role: source-planner
+            profile: architect
+          - role: security-prewriter
+            profile: reviewer-security
+            risk_flags:
+              - security
+              - data_loss
+              - migration
+              - high
+        consumes:
+          - DevelopmentTaskPacket/v1
+        produces:
+          - LifecyclePreparationObservation/v1
+        required_after:
           - synthesize_task
       - id: validate_parallel
         kind: validate
@@ -598,6 +643,8 @@ workflows:
       - - research_parallel
         - synthesize_task
       - - synthesize_task
+        - review_source_prewrite
+      - - review_source_prewrite
         - develop_change
       - - develop_change
         - validate_parallel
@@ -662,6 +709,25 @@ workflows:
         produces:
           - ImplementationResult/v1
         required_after:
+          - review_source_prewrite
+      - id: review_source_prewrite
+        kind: validate
+        mode: parallel
+        assignments:
+          - role: source-planner
+            profile: architect
+          - role: security-prewriter
+            profile: reviewer-security
+            risk_flags:
+              - security
+              - data_loss
+              - migration
+              - high
+        consumes:
+          - DevelopmentTaskPacket/v1
+        produces:
+          - LifecyclePreparationObservation/v1
+        required_after:
           - synthesize_task
       - id: validate_parallel
         kind: validate
@@ -720,6 +786,8 @@ workflows:
       - - research_parallel
         - synthesize_task
       - - synthesize_task
+        - review_source_prewrite
+      - - review_source_prewrite
         - develop_change
       - - develop_change
         - validate_parallel
@@ -779,6 +847,25 @@ workflows:
         produces:
           - ImplementationResult/v1
         required_after:
+          - review_source_prewrite
+      - id: review_source_prewrite
+        kind: validate
+        mode: parallel
+        assignments:
+          - role: source-planner
+            profile: architect
+          - role: security-prewriter
+            profile: reviewer-security
+            risk_flags:
+              - security
+              - data_loss
+              - migration
+              - high
+        consumes:
+          - DevelopmentTaskPacket/v1
+        produces:
+          - LifecyclePreparationObservation/v1
+        required_after:
           - synthesize_task
       - id: test_regression
         kind: test
@@ -835,6 +922,8 @@ workflows:
       - - research_bug
         - synthesize_task
       - - synthesize_task
+        - review_source_prewrite
+      - - review_source_prewrite
         - develop_fix
       - - develop_fix
         - test_regression
@@ -870,6 +959,25 @@ workflows:
           - DevelopmentTaskPacket/v1
         produces:
           - ImplementationResult/v1
+        required_after:
+          - review_source_prewrite
+      - id: review_source_prewrite
+        kind: validate
+        mode: parallel
+        assignments:
+          - role: source-planner
+            profile: architect
+          - role: security-prewriter
+            profile: reviewer-security
+            risk_flags:
+              - security
+              - data_loss
+              - migration
+              - high
+        consumes:
+          - DevelopmentTaskPacket/v1
+        produces:
+          - LifecyclePreparationObservation/v1
         required_after:
           - synthesize_task
       - id: validate_focused
@@ -919,6 +1027,8 @@ workflows:
           - test_task
     edges:
       - - synthesize_task
+        - review_source_prewrite
+      - - review_source_prewrite
         - develop_task
       - - develop_task
         - validate_focused
@@ -1043,6 +1153,24 @@ artifact_contracts:
       - source_revision
       - lease_expires_at
       - digest
+  LifecyclePreparationObservation/v1:
+    schema: LifecyclePreparationObservation/v1
+    required_fields:
+      - schema
+      - record_id
+      - kind
+      - work_id
+      - attempt
+      - source_revision
+      - scope_id
+      - config_digest
+      - ac_ids
+      - observed_at
+      - observer_id
+      - status
+      - evidence_refs
+      - observations
+      - gaps
   ImplementationResult/v1:
     schema: ImplementationResult/v1
     required_fields:

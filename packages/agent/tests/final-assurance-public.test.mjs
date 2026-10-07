@@ -14,6 +14,7 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
 import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
+import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 function fixture(sourceWriter = false, publicStore = false) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-absorption-'));
@@ -299,7 +300,10 @@ test('public final assurance commits three synthetic review reverse pairs at a r
 
     // Synthetic focused history is a fixture precondition, not an observation of native workers.
     const source = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), work.lifecycle.scope.allowed_paths);
-    const makeItem = (stage, wave, index = 0) => {
+    const waves = compileDevelopmentWorkflow(f.config, input.selection.team, 'task_execution', []).waves;
+    const makeItem = (stage, index = 0) => {
+      const wave = waves.findIndex((stages) => stages.some((value) => value.id === stage));
+      expect(wave).toBeGreaterThanOrEqual(0);
       const action = sessionActionsForWave(f.config, input.selection, input.context, 'task_execution', wave, []).find(
         (action) => action.stage_id === stage && action.assignment_index === index,
       );
@@ -317,7 +321,29 @@ test('public final assurance commits three synthetic review reverse pairs at a r
         bindings_manifest_ref: '3'.repeat(64),
       };
       const summary =
-        stage === 'validate_focused'
+        stage === 'review_source_prewrite'
+          ? JSON.stringify({
+              schema: 'LifecyclePreparationObservation/v1',
+              record_id: 'synthetic-source-plan',
+              kind: 'source_plan',
+              work_id: id,
+              attempt: 1,
+              source_revision: work.binding.work_source_revision,
+              scope_id: work.binding.scope_id,
+              config_digest: work.binding.config_digest,
+              ac_ids: work.binding.ac_ids,
+              observed_at: new Date().toISOString(),
+              observer_id: 'synthetic-source-planner',
+              status: 'pass',
+              evidence_refs: ['local://synthetic-fixture/focused'],
+              observations: ['scope_acceptance_trace', 'verification_rollback'].map((mechanic) => ({
+                mechanic,
+                actual: 'Explicit synthetic prerequisite fixture',
+                evidence_ref: 'local://synthetic-fixture/focused',
+              })),
+              gaps: [],
+            })
+          : stage === 'validate_focused'
           ? JSON.stringify({
               schema: 'VidaValidatorVerdict/v1',
               verdict: 'pass',
@@ -346,10 +372,10 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       return { request, issue_id: observation.issue_id, observation };
     };
     const focused = [
-      makeItem('develop_task', 1),
-      makeItem('validate_focused', 2, 0),
-      makeItem('validate_focused', 2, 1),
-      makeItem('test_task', 3),
+      makeItem('develop_task'),
+      makeItem('validate_focused', 0),
+      makeItem('validate_focused', 1),
+      makeItem('test_task'),
     ];
     f.store.completeWorkflowAttempt(claimed, focused[0].observation);
     focused[0].host_reservation = {
@@ -366,7 +392,9 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       source_scope: source,
       step_id: null,
       items: [],
-      completed: focused.map((item, index) => ({ step_id: 'synthetic-focused-' + index, items: [item] })),
+      completed: [makeItem('review_source_prewrite'), ...focused].map((item, index) => ({
+        step_id: 'synthetic-focused-' + index, items: [item],
+      })),
     };
     f.database
       .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
@@ -482,11 +510,15 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     let response = publicRun(withVersion(originalVersion, '--prepare-assurance', preparation));
     expect(response.assurance_status).toBe('ready');
     expect(response.next_actions).toHaveLength(3);
+    expect(f.store.readHostStateSnapshot(identity).work.lifecycle.references.filter(
+      (item) => item.kind === 'validation_receipt',
+    )).toHaveLength(2);
     response = publicRun(withVersion(response.state_version, '--issue-wave', 'true'));
     expect(response.issued_actions).toHaveLength(3);
     const initialAssuranceVersion = response.state_version,
       packet = response.issued_actions[0].packet,
       reviews = [];
+    expect(packet.role).toBe('correctness-validator');
     const checks = { scope_and_trace: 'pass', tests_security_rollback: 'pass', evidence_invalidation_binding: 'pass' };
     const reportFile = path.join(f.root, '.agent/work/' + id + '/synthetic-assurance-report.json');
     const report = (value, version = response.state_version) => {

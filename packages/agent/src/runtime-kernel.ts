@@ -18,17 +18,22 @@ import {
   requireHostGovernanceCapability,
   createCompositionRootControlKernel,
   createFileWorkflowHostCapabilityWithProof,
+  createConfiguredEdictumWorkflow,
   createGovernanceGuard,
   createWorkflowHostAuthenticationProofForCompositionRoot as issueWorkflowHostProof,
   evaluateGovernance,
   loadConfiguredEdictumGovernancePolicy,
   runGovernedWrite,
+  type ConfiguredEdictumWorkflow,
   type GovernanceBindings,
   type GovernedWriteCommitContext,
   type WorkflowHostCapability,
   type HostGovernanceCapability,
 } from './governance/edictum-boundary.js';
-import { createConfiguredProjectAuthorizer } from './authorization/cedar-boundary.js';
+import {
+  createConfiguredProjectAuthorizer,
+  type ProjectAuthorizer,
+} from './authorization/cedar-boundary.js';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -556,6 +561,48 @@ async function createGovernanceBindings(
     governancePolicy: loadConfiguredEdictumGovernancePolicy(root, initial),
   };
 }
+
+/**
+ * Internal policy session for the pre-reservation Source boundary. It reuses
+ * the configured Cedar authorizer and Edictum workflow with the active Host's
+ * opaque approval capability. Callers evaluate the workflow gate only; Host
+ * remains the sole approval consumer for Source attempts.
+ */
+export interface RuntimeKernelSourcePreflightPolicySession {
+  readonly config: AgentRuntimeConfig;
+  readonly authorizeProject: ProjectAuthorizer;
+  readonly workflow: ConfiguredEdictumWorkflow;
+  readonly assertCurrent: () => void;
+}
+
+export function createRuntimeKernelSourcePreflightPolicySession(
+  repositoryRoot: string,
+  expectedConfigDigest: string,
+  sessionId: string,
+  workflowHostCapability: WorkflowHostCapability,
+): RuntimeKernelSourcePreflightPolicySession {
+  const root = requireAbsoluteRepositoryRoot(repositoryRoot);
+  const config = loadRuntimeConfig(root);
+  requireCondition(
+    runtimeConfigDigest(config) === expectedConfigDigest,
+    'source preflight configuration differs from the current Host request',
+  );
+  const authorizeProject = createConfiguredProjectAuthorizer(root, config);
+  const governancePolicy = loadConfiguredEdictumGovernancePolicy(root, config);
+  requireCondition(
+    governancePolicy.tools['runtime.write']?.side_effect === 'write',
+    'configured Edictum runtime.write policy is unavailable',
+  );
+  const workflow = createConfiguredEdictumWorkflow(root, sessionId, workflowHostCapability);
+  requireCondition(
+    workflow.config_digest === expectedConfigDigest,
+    'configured Edictum workflow differs from the current Host request',
+  );
+  const assertCurrent = (): void =>
+    assertRuntimeConfigUnchanged(loadRuntimeConfig(root), expectedConfigDigest);
+  return Object.freeze({ config, authorizeProject, workflow, assertCurrent });
+}
+
 function hostTimingFor(host: RuntimeKernelHost): RuntimeTimingOptions {
   const bindings = hostBindings.get(host as object)!;
   return { clock: bindings.clock ?? defaultRuntimeClock(), sink: bindings.timingSink ?? defaultRuntimeTimingSink() };

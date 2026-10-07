@@ -30,7 +30,19 @@ CI/CD forms and publishes the exact package and its provenance/integrity metadat
 
 During development, select the affected test files and cases. Include direct callers and configuration, schema, filesystem and subprocess dependencies. Use an exact file path with a name filter. Do not load unrelated tests.
 
-After the task corrections are complete, run the full applicable task suite once. Reuse evidence while its inputs remain current. After a new failure, fix the cause, run its focused regression, then run the affected completion check. Do not repeat an unchanged passing full suite.
+After the task corrections are complete, run the full applicable task suite once. Reuse evidence while its inputs remain current. After a new failure, fix the cause and run one affected completion check that includes its regression. Do not repeat an unchanged passing full suite.
+
+Collect terminal failures and review findings into one correction batch. Join
+parallel writers before running its checks. One selected completion run can
+prove the regression and affected callers together; do not repeat the same
+cases as a second completion command. Workers do not launch duplicate suites.
+After a failed full run, retain that result and recheck only affected behavior.
+
+Pass exact file paths with name filters. A name filter alone may still load
+unrelated files; see the official [Vitest filtering guide](https://vitest.dev/guide/filtering.html)
+and [Bun test runner guide](https://bun.sh/docs/test).
+
+Run the final applicable behavior check before numeric checks on stable Source. Keep one writer for coverage, CRAP and mutation outputs. For a case timeout during concurrent heavy runs, inspect its child outcome and run that exact case alone before changing its bound. Preserve the original failed or UNKNOWN result.
 
 Use current generated SDK outputs only when their inputs match. Missing or stale output is a GAP. Do not start a local build to make a test command pass.
 
@@ -74,6 +86,14 @@ Use the current scripts for the applicable completion checks:
 Launch `test:mutation:pinned` only with its separate manual authorization. An inventory check does not prove that mutants ran or were killed.
 
 Run Vitest suites that import Bun-only state under the pinned Bun host. A Node import failure executes no tests. Use the package's configured test resolver, fixture factories and maintained `bunfig.toml`.
+
+Test the public CLI through the existing pinned child-process helper. Assert
+terminal status, signal, spawn error, public JSON envelope and persisted state
+before normal owned cleanup. Keep separate implementation-seam tests when they
+protect an invariant that cannot be observed across processes. Imported `run()`
+is not a declared public SDK export. Current LibSQL 0.5.29 can retain native
+statement handles until process exit; do not hide EBUSY or claim that CLI proof
+fixes in-process SDK disposal. Retain earlier uncertain cleanup roots.
 
 ## Evidence and quality gates
 

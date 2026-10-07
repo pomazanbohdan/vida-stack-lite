@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import type { SafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
+import type { HostStateSnapshot, HostStateStore, WorkIdentity } from '../host-state.js';
 
 type SourceReader = Pick<SafeRepositoryAccess, 'fileExists' | 'readBytes'>;
 
@@ -42,6 +44,34 @@ export interface ScopedSourceChange {
   readonly kind: 'changed' | 'appeared' | 'disappeared';
   readonly before: ScopedSourceEntry;
   readonly after: ScopedSourceEntry;
+}
+
+/** Re-read declared task files through the Host-validated current TaskSource binding. */
+export function snapshotAdmittedTaskSources(input: {
+  readonly store: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'>;
+  readonly host: HostStateSnapshot;
+  readonly canonicalHostRoot: string;
+  readonly paths: readonly string[];
+  readonly attempt: number;
+}): ScopedSourceSnapshot {
+  const work = input.host.work;
+  requireSnapshot(
+    work !== null && work !== undefined && work.lease !== null,
+    'current Host lease is required for task source files',
+  );
+  const identity: WorkIdentity = {
+    repository_id: work.binding.repository_id,
+    project_ids: work.binding.project_ids,
+    integrations_digest: work.binding.integrations_digest,
+    work_id: work.binding.lifecycle_work_id,
+  };
+  try {
+    return input.store.snapshotCurrentTaskSourceSources(identity, work.lease.thread_id, input.paths, input.attempt);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'task source snapshot requires a configured canonical Host root')
+      return snapshotDeclaredSources(requireSafeRepositoryAccess(input.canonicalHostRoot), input.paths);
+    throw error;
+  }
 }
 
 function requireSnapshot(condition: unknown, message: string): asserts condition {

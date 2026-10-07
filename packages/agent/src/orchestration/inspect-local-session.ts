@@ -109,6 +109,6 @@ export function inspectLocalSession(input: {
         pending.length > 0 || Boolean(lease && (!ticket?.expires_at || Date.parse(ticket.expires_at) <= Date.now())),
     };
   } finally {
-    db.close();
+    db.close(true);
   }
 }

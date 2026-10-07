@@ -1410,26 +1410,40 @@ for (const phase of ['before-init', 'before-start', 'before-resume', 'before-jou
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    let output = '',
-      terminal = false;
+    let stdout = '',
+      stderr = '',
+      terminal = false,
+      exitStatus = null;
     child.stdout.on('data', (chunk) => {
-      output += chunk;
+      stdout += chunk;
     });
     child.stderr.on('data', (chunk) => {
-      output += chunk;
+      stderr += chunk;
     });
     const exited = new Promise((resolve, reject) => {
       child.once('error', reject);
       child.once('exit', (code, signal) => {
         terminal = true;
-        resolve({ code, signal });
+        exitStatus = { code, signal };
+        resolve(exitStatus);
       });
     });
     try {
-      const deadline = Date.now() + 12_000;
+      const startedAt = Date.now(),
+        deadline = startedAt + 12_000;
       while (!existsSync(marker) && !terminal && Date.now() < deadline)
         await new Promise((resolve) => setTimeout(resolve, 25));
-      expect(existsSync(marker), output).toBe(true);
+      if (!existsSync(marker))
+        throw new Error(
+          'Session producer child missed its barrier before the 12s deadline: ' +
+            JSON.stringify({
+              elapsed_ms: Date.now() - startedAt,
+              child_exit: exitStatus,
+              still_running: !terminal,
+              stdout_tail: stdout.slice(-4000),
+              stderr_tail: stderr.slice(-4000),
+            }),
+        );
       const retained = f.rows();
       expect(JSON.parse(retained.at(-1).payload).status).toBe('commit_unknown');
       await expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/producer is pending or unknown/);

@@ -60,7 +60,7 @@ import {
   type FinalAssuranceSnapshot,
 } from './orchestration/final-assurance.js';
 import { requireSafeRepositoryAccess } from './config/safe-repository-access.js';
-import { snapshotDeclaredSources } from './orchestration/scoped-source-snapshot.js';
+import { compareScopedSourceSnapshots, snapshotDeclaredSources } from './orchestration/scoped-source-snapshot.js';
 import { loadRuntimeConfig, runtimeConfigDigest, selectWorkflow } from './config/runtime-config.js';
 import { loadProjectSetContext } from './config/project-context.js';
 import { MastraSessionLedger } from './orchestration/persistent-session-handoff.js';
@@ -71,6 +71,27 @@ import {
 } from './orchestration/session-engine-snapshot.js';
 import type { SessionBridgeObservation } from './orchestration/mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './orchestration/scoped-source-snapshot.js';
+import {
+  createTaskSourceBinding,
+  parseTaskSourceGitObservation,
+  resolveTaskSourceRoot,
+  taskSourceGitArgv,
+  validateTaskSourceBindingExchange,
+  validateTaskSourceBinding,
+  validateTaskSourceBindingRequest,
+  type TaskSourceBindingReport,
+  type TaskSourceBinding,
+  type TaskSourceBindingRequest,
+} from './orchestration/task-source-binding.js';
+import type {
+  TaskSourceMutationPolicyDecision,
+  TaskSourceMutationPolicyRequest,
+} from './orchestration/source-preflight-operations.js';
+import type {
+  DeliveredWorkContinuationAuthorization,
+  DeliveredWorkContinuationRequest,
+  DeliveredWorkContinuationVerifier,
+} from './orchestration/delivered-work-continuation.js';
 
 const sessionProducerStore = 'vida-session-producers';
 const recoveryReviewStore = 'vida-recovery-reviews';
@@ -413,6 +434,97 @@ export interface WorkflowAttemptApprovalRequest {
   readonly lease: NonNullable<WorkState['lease']>;
   readonly operation_hash: string;
 }
+/** Host-local source permission bound to the exact Host-created pending request. */
+export interface CanonicalHostSourceWriteApproval {
+  readonly schema: 'CanonicalHostSourceWriteApproval/v1';
+  readonly principal: string;
+  readonly request: WorkflowAttemptApprovalRequest;
+  readonly receipt: EdictumWorkflowApprovalReceipt;
+}
+
+/** Keep local human permission distinct from the configured Edictum policy evaluation. */
+export function canonicalHostSourceWriteApproval(
+  requestCandidate: WorkflowAttemptApprovalRequest,
+  principalCandidate: string,
+  receiptCandidate: EdictumWorkflowApprovalReceipt,
+): CanonicalHostSourceWriteApproval {
+  const request = snapshot(requestCandidate),
+    principal = principalCandidate,
+    receipt = snapshot(receiptCandidate),
+    requestKeys = [
+      'schema',
+      'store_id',
+      'action',
+      'identity',
+      'config_digest',
+      'workflow_id',
+      'stage_id',
+      'assignment_id',
+      'assignment_index',
+      'request_digest',
+      'attempt_id',
+      'lease',
+      'operation_hash',
+    ],
+    receiptKeys = [
+      'schema',
+      'stage_id',
+      'approval_id',
+      'approver',
+      'operation_hash',
+      'tenant',
+      'project',
+      'approved_at',
+      'expires_at',
+      'evidence_digest',
+    ];
+  requireState(
+    Object.keys(request).length === requestKeys.length && requestKeys.every((key) => Object.hasOwn(request, key)) &&
+      request.schema === 'WorkflowAttemptApprovalRequest/v1' &&
+      request.action === 'source.write' &&
+      typeof request.store_id === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(request.store_id) &&
+      request.identity !== null && typeof request.identity === 'object' &&
+      typeof request.config_digest === 'string' && hashPattern.test(request.config_digest) &&
+      typeof request.workflow_id === 'string' && request.workflow_id.length > 0 &&
+      typeof request.stage_id === 'string' && request.stage_id.length > 0 &&
+      typeof request.assignment_id === 'string' && hashPattern.test(request.assignment_id) &&
+      Number.isSafeInteger(request.assignment_index) && request.assignment_index >= 0 &&
+      typeof request.request_digest === 'string' && hashPattern.test(request.request_digest) &&
+      typeof request.attempt_id === 'string' && hashPattern.test(request.attempt_id) &&
+      typeof request.operation_hash === 'string' && hashPattern.test(request.operation_hash) &&
+      typeof principal === 'string' && principal.trim().length > 0 && principal.length <= 256 && !/\p{Cc}/u.test(principal),
+    'canonical Host source-write request or principal invalid',
+  );
+  requireState(
+    Object.keys(receipt).length === receiptKeys.length && receiptKeys.every((key) => Object.hasOwn(receipt, key)) &&
+      receipt.schema === 'EdictumWorkflowApproval/v1' &&
+      receipt.stage_id === request.stage_id &&
+      receipt.approver === principal &&
+      receipt.operation_hash === request.operation_hash &&
+      receipt.tenant === request.identity.repository_id &&
+      request.identity.project_ids.includes(receipt.project) &&
+      timestamp(receipt.approved_at) <= Date.now() &&
+      timestamp(receipt.expires_at) > Date.now() &&
+      receipt.evidence_digest === computeEdictumWorkflowApprovalEvidenceDigest({
+        schema: receipt.schema,
+        stage_id: receipt.stage_id,
+        approval_id: receipt.approval_id,
+        approver: receipt.approver,
+        operation_hash: receipt.operation_hash,
+        tenant: receipt.tenant,
+        project: receipt.project,
+        approved_at: receipt.approved_at,
+        expires_at: receipt.expires_at,
+      }),
+    'canonical Host source-write receipt differs from its pending request',
+  );
+  return snapshot({
+    schema: 'CanonicalHostSourceWriteApproval/v1' as const,
+    principal,
+    request,
+    receipt,
+  });
+}
 export interface WorkflowAttemptApprovalVerifier {
   readonly principal: string;
   readonly verify: (
@@ -491,6 +603,49 @@ export interface RuntimeCodeRebindVerifier {
     request: RuntimeCodeRebindRequest,
     state: HostStateSnapshot,
   ) => RuntimeCodeRebindAuthorization | null | Promise<RuntimeCodeRebindAuthorization | null>;
+}
+export interface DeliveredWorkContinuationReceipt {
+  readonly schema: 'DeliveredWorkContinuationReceipt/v1';
+  readonly continuation_id: string;
+  readonly attempt: number;
+  readonly request_digest: string;
+  readonly authorization: DeliveredWorkContinuationAuthorization;
+  readonly request: DeliveredWorkContinuationRequest;
+  readonly prior_work: WorkState;
+  readonly prior_ledger: CoordinationLedger;
+  readonly prior_journal: MastraSessionLedgerState;
+  readonly prior_work_version: StateVersion;
+  readonly prior_ledger_version: StateVersion;
+  readonly prior_journal_version: StateVersion;
+  readonly historical_capture: HistoricalTerminalSynthesisCaptureReceipt;
+  readonly successor_work: WorkState;
+  readonly successor_ledger: CoordinationLedger;
+  readonly successor_binding: WorkState['binding'];
+  readonly successor_journal: MastraSessionLedgerState;
+  readonly work_version: StateVersion;
+  readonly ledger_version: StateVersion;
+  readonly journal_version: StateVersion;
+  readonly rights_granted: false;
+  readonly accepted_result: false;
+  readonly runtime_acceptance: false;
+  readonly status: 'action_ready';
+}
+export interface DeliveredWorkContinuationResult {
+  readonly status: 'continued' | 'already_continued';
+  readonly snapshot: HostStateSnapshot;
+  readonly receipt: DeliveredWorkContinuationReceipt;
+  /** Present only on the first successful CAS; retries never reissue this action. */
+  readonly action: DeliveredWorkContinuationRequest['action'] | null;
+}
+export interface DeliveredWorkContinuationLookup {
+  readonly receipt: DeliveredWorkContinuationReceipt;
+  readonly snapshot: HostStateSnapshot;
+  readonly journal: {
+    readonly version: StateVersion;
+    readonly state: MastraSessionLedgerState;
+  };
+  readonly item: MastraSessionLedgerState['items'][number];
+  readonly action_status: 'unissued' | 'issued' | 'reported';
 }
 export interface WorkCheckpointMigrationLineage {
   readonly schema: 'WorkMigrationLineage/v1';
@@ -595,6 +750,97 @@ export interface HostStateSnapshot {
   readonly workVersion: StateVersion | null;
   readonly ledgerVersion: StateVersion | null;
   readonly maintenanceGeneration: number;
+}
+
+export interface TaskSourceMutationPolicyVerifier {
+  verify(input: {
+    readonly repositoryRoot: string;
+    readonly request: TaskSourceMutationPolicyRequest;
+    readonly operation: Readonly<Record<string, unknown>>;
+    readonly stateVersion: StateVersion;
+    readonly hostSnapshot: HostStateSnapshot;
+  }): Promise<TaskSourceMutationPolicyDecision>;
+}
+
+/** Host-created policy input for the one permitted TaskSource create effect. */
+export function createTaskSourceMutationPolicyRequest(input: {
+  readonly repositoryRoot: string;
+  readonly operation: Readonly<Record<string, unknown>>;
+  readonly preparedStateVersion: StateVersion;
+  readonly hostSnapshot: HostStateSnapshot;
+}): TaskSourceMutationPolicyRequest {
+  const { repositoryRoot, operation, preparedStateVersion, hostSnapshot } = input;
+  requireState(
+    path.isAbsolute(repositoryRoot) && path.resolve(repositoryRoot) === repositoryRoot &&
+      operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
+      operation.request !== null && typeof operation.request === 'object' && !Array.isArray(operation.request),
+    'task source mutation policy requires a canonical Host root and prepared operation',
+  );
+  const request = validateTaskSourceBindingRequest(operation.request),
+    work = hostSnapshot.work,
+    lease = work?.lease,
+    stateVersion = operation.revision === preparedStateVersion.revision &&
+      typeof preparedStateVersion.digest === 'string' && hashPattern.test(preparedStateVersion.digest)
+      ? preparedStateVersion
+      : null;
+  const reservationTicket = work && hostSnapshot.ledger && request.operation !== 'inspect'
+    ? hostSnapshot.ledger.tickets.find((ticket) => ticket.ticket_id === taskSourceTicketId(request)) ?? null
+    : null;
+  let reservationMatches = false;
+  if (work && hostSnapshot.ledger && reservationTicket) {
+    const prior = taskSourcePriorTicket(hostSnapshot.ledger, work, request);
+    if (prior) {
+      const reservation = taskSourceReservationResources(repositoryRoot, request, work, prior);
+      taskSourceTicketMatches(hostSnapshot.ledger, work, request, reservation.resources);
+      reservationMatches = taskSourceExpectedWorkMatches(
+        work,
+        hostSnapshot.ledger,
+        request,
+        reservation.resources,
+        reservation.added,
+        reservationTicket,
+      );
+    }
+  }
+  const expectedWorkMatches = hostSnapshot.workVersion?.revision === request.expected_host.work.revision &&
+    hostSnapshot.workVersion.digest === request.expected_host.work.digest || reservationMatches;
+  const expectedLedgerMatches = hostSnapshot.ledgerVersion?.revision === request.expected_host.ledger.revision &&
+    hostSnapshot.ledgerVersion.digest === request.expected_host.ledger.digest || reservationMatches;
+  requireState(
+    stateVersion !== null && request.operation === 'propose-create' && request.canonical_host_root === repositoryRoot &&
+      work !== null && work !== undefined && lease !== null && lease !== undefined &&
+      hostSnapshot.workVersion !== null && hostSnapshot.workVersion !== undefined &&
+      hostSnapshot.ledgerVersion !== null && hostSnapshot.ledgerVersion !== undefined &&
+      expectedWorkMatches && expectedLedgerMatches &&
+      hostSnapshot.maintenanceGeneration === request.expected_host.maintenance_generation &&
+      work.execution.status === 'active' && lease.thread_id === request.thread_id &&
+      work.binding.lifecycle_work_id === request.work_id &&
+      work.binding.config_digest === request.config_digest &&
+      request.source_root !== undefined && resolveTaskSourceRoot(repositoryRoot, request.source_root) !== repositoryRoot &&
+      request.branch_ref !== undefined,
+    'task source mutation request is stale, same-root, or not a create proposal',
+  );
+  const sourceRoot = resolveTaskSourceRoot(repositoryRoot, request.source_root),
+    branchName = request.branch_ref.slice('refs/heads/'.length),
+    unsigned = {
+      schema: 'TaskSourceMutationPolicyRequest/v1' as const,
+      action: 'source.write' as const,
+      operation_id: request.operation_id,
+      request_id: request.request_id,
+      work_id: request.work_id,
+      thread_id: request.thread_id,
+      scope_digest: work.binding.work_source_revision,
+      config_digest: work.binding.config_digest,
+      lease,
+      branch_ref: request.branch_ref,
+      source_root: sourceRoot,
+      proposed_argv: Object.freeze(['git', '-C', repositoryRoot, 'worktree', 'add', '--branch', branchName, sourceRoot]),
+      prepared_record_cas: Object.freeze({
+        operation_id: request.operation_id,
+        state_version: Object.freeze({ revision: stateVersion.revision, digest: stateVersion.digest }),
+      }),
+    };
+  return Object.freeze({ ...unsigned, operation_hash: canonicalJsonDigest(unsigned) });
 }
 
 /** Historical Source success is settled only when the authoritative host retained this exact result. */
@@ -945,6 +1191,280 @@ function coordinationResourceKey(resource: string): string {
   requireState(safeHistoricalWorkflowOwnedPath(resource.slice(5)), 'resource file path is unsafe');
   return resource.toLowerCase();
 }
+function taskSourceReservationResources(
+  repositoryRoot: string,
+  request: TaskSourceBindingRequest,
+  work: WorkState,
+  prior: CoordinationTicket,
+): { readonly sourceRoot: string; readonly added: readonly string[]; readonly resources: readonly string[] } {
+  requireState(
+    request.operation !== 'inspect' && request.source_root !== undefined && request.branch_ref !== undefined,
+    'TaskSource resource reservation requires an explicit branch and Source root',
+  );
+  const sourceRoot = resolveTaskSourceRoot(repositoryRoot, request.source_root),
+    rootKey = process.platform === 'win32' ? sourceRoot.toLocaleLowerCase('en-US') : sourceRoot,
+    added = [`branch:${request.branch_ref}`, `worktree:${rootKey}`].sort(),
+    logical = work.binding.implementation_paths.map((relative) => `file:${relative}`),
+    retained = prior.exclusive_resources.filter(
+      (resource) => !resource.startsWith('file:') && !added.includes(resource),
+    ),
+    resources = [...new Set([...logical, ...retained, ...added])].sort();
+  requireState(
+    logical.every((resource) => work.binding.allowed_resources.includes(resource)) &&
+      retained.every((resource) => work.binding.allowed_resources.includes(resource)),
+    'TaskSource request exceeds the current Work resource scope',
+  );
+  return { sourceRoot, added, resources };
+}
+function taskSourceTicketId(request: TaskSourceBindingRequest): string {
+  return `task-source-ticket:${request.work_id}:${request.attempt}:${request.operation_id}`;
+}
+function taskSourceClaimId(request: TaskSourceBindingRequest): string {
+  return `task-source-claim:${request.work_id}:${request.attempt}:${request.operation_id}`;
+}
+type TaskSourceOperationRow = {
+  readonly operation_id: string;
+  readonly revision: number;
+  readonly payload: string;
+  readonly digest: string;
+  readonly request_id: string;
+  readonly request_digest: string;
+};
+type TaskSourceActionRow = {
+  readonly operation_id: string;
+  readonly request_id: string;
+  readonly revision: number;
+  readonly payload: string;
+  readonly digest: string;
+};
+function validateTaskSourceJournalScope(candidate: unknown): ScopedSourceSnapshot {
+  requireState(
+    candidate !== null && typeof candidate === 'object' && !Array.isArray(candidate) &&
+      Object.keys(candidate).sort().join(',') === 'digest,entries,schema',
+    'task source journal scope shape is invalid',
+  );
+  const scope = candidate as unknown as ScopedSourceSnapshot;
+  requireState(
+    scope.schema === 'ScopedSourceSnapshot/v1' && Array.isArray(scope.entries) &&
+      scope.entries.length > 0 && scope.entries.length <= 512 &&
+      scope.entries.every((entry, index) => {
+        if (entry === null || typeof entry !== 'object' || Array.isArray(entry) ||
+            Object.keys(entry).sort().join(',') !== 'bytes,exists,path,sha256') return false;
+        const prior = scope.entries[index - 1];
+        return typeof entry.path === 'string' && entry.path.length > 0 && entry.path.length <= 512 &&
+          !entry.path.includes('\\') && !entry.path.startsWith('/') && !entry.path.endsWith('/') &&
+          !/^[A-Za-z]:/.test(entry.path) && !/[\u0000-\u001f\u007f]/.test(entry.path) &&
+          entry.path.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..') &&
+          (prior === undefined || prior.path < entry.path) &&
+          (entry.exists
+            ? typeof entry.exists === 'boolean' && Number.isSafeInteger(entry.bytes) && entry.bytes! >= 0 &&
+              typeof entry.sha256 === 'string' && hashPattern.test(entry.sha256)
+            : entry.exists === false && entry.bytes === null && entry.sha256 === null);
+      }),
+    'task source journal scope entries are invalid',
+  );
+  compareScopedSourceSnapshots(scope, scope);
+  return scope;
+}
+function assertTaskSourceJournalScopeWithinWork(scope: ScopedSourceSnapshot, work: WorkState): void {
+  const allowedPaths = [...new Set([
+    ...work.lifecycle.scope.allowed_paths,
+    ...work.lifecycle.scope.implementation_paths,
+  ])];
+  requireState(scope.entries.every((entry) =>
+    allowedPaths.some((allowed) => entry.path === allowed || entry.path.startsWith(allowed.replace(/\/$/, '') + '/')),
+  ), 'task source current journal scope exceeds the active Work scope');
+}
+function validateTaskSourceActionPair(
+  operationRow: TaskSourceOperationRow,
+  actionRow: TaskSourceActionRow,
+  expectedRequest?: TaskSourceBindingRequest,
+): { readonly operation: Readonly<Record<string, unknown>>; readonly request: TaskSourceBindingRequest; readonly action: Readonly<Record<string, unknown>> } {
+  const operation = JSON.parse(operationRow.payload) as Record<string, unknown>;
+  requireState(
+    Object.keys(operation).sort().join(',') ===
+      'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+      operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
+      typeof operation.created_at === 'string' && Number.isFinite(Date.parse(operation.created_at)) &&
+      operation.operation_id === operationRow.operation_id && operation.revision === operationRow.revision &&
+      operation.request_id === operationRow.request_id && operation.request_digest === operationRow.request_digest &&
+      canonicalJsonDigest(operation) === operationRow.digest,
+    'task source action preparation integrity differs',
+  );
+  const request = validateTaskSourceBindingRequest(operation.request);
+  requireState(
+    request.operation_id === operationRow.operation_id && request.request_id === operationRow.request_id &&
+      canonicalJsonDigest(request) === operationRow.request_digest && sameJson(operation.request, request) &&
+      (expectedRequest === undefined || sameJson(request, validateTaskSourceBindingRequest(expectedRequest))),
+    'task source action request identity or digest differs from its preparation row',
+  );
+  const action = JSON.parse(actionRow.payload) as Record<string, unknown>;
+  requireState(
+    Object.keys(action).sort().join(',') ===
+      'command_argv,created_at,issue_id,operation_digest,operation_id,policy_decision,prepared_state_version,recovery_report,recovery_report_digest,report,report_digest,request_id,revision,schema,status,updated_at' &&
+      action.schema === 'TaskSourceBindingAction/v1' && action.operation_id === operationRow.operation_id &&
+      actionRow.operation_id === operationRow.operation_id && action.request_id === operationRow.request_id &&
+      actionRow.request_id === operationRow.request_id && action.revision === actionRow.revision &&
+      canonicalJsonDigest(action) === actionRow.digest && action.operation_digest === operationRow.digest &&
+      sameJson(action.prepared_state_version, { revision: operationRow.revision, digest: operationRow.digest }) &&
+      typeof action.issue_id === 'string' && action.issue_id.length > 0 &&
+      typeof action.created_at === 'string' && Number.isFinite(Date.parse(action.created_at)) &&
+      (action.updated_at === null || (typeof action.updated_at === 'string' && Number.isFinite(Date.parse(action.updated_at)))) &&
+      ['issued', 'reported', 'unknown'].includes(String(action.status)),
+    'task source action/preparation row binding differs',
+  );
+  const checkedReport = (candidate: unknown, digest: unknown) => {
+    if (candidate === null) {
+      requireState(digest === null, 'task source action has a digest without its report');
+      return null;
+    }
+    const report = validateTaskSourceBindingExchange(request, candidate);
+    requireState(digest === canonicalJsonDigest(report), 'task source action report integrity differs');
+    return report;
+  };
+  const report = checkedReport(action.report, action.report_digest),
+    recoveryReport = checkedReport(action.recovery_report, action.recovery_report_digest);
+  requireState(
+    action.status === 'issued'
+      ? report === null && recoveryReport === null && action.updated_at === null
+      : action.status === 'unknown'
+        ? report !== null && report.status !== 'observed' && recoveryReport === null
+        : recoveryReport !== null
+          ? report?.status === 'unknown' && recoveryReport.status === 'observed'
+          : report?.status === 'observed',
+    'task source action status differs from its retained report pair',
+  );
+  return { operation, request, action };
+}
+function taskSourcePriorTicket(
+  ledger: CoordinationLedger,
+  work: WorkState,
+  request: TaskSourceBindingRequest,
+): CoordinationTicket | null {
+  const ownId = taskSourceTicketId(request);
+  if (work.lease?.ticket_id !== ownId) {
+    return ledger.tickets.find((ticket) => ticket.ticket_id === work.lease?.ticket_id) ?? null;
+  }
+  const own = ledger.tickets.find((ticket) => ticket.ticket_id === ownId);
+  if (!own) return null;
+  const prior = ledger.tickets
+    .filter(
+      (ticket) =>
+        ticket.ticket_id !== ownId &&
+        ticket.status === 'released' &&
+        identityKey(ticketIdentity(ticket)) === identityKey(workIdentity(work)) &&
+        ticket.thread_id === request.thread_id &&
+        ticket.source_revision === work.binding.work_source_revision &&
+        ticket.generation === own.generation &&
+        ticket.sequence < own.sequence,
+    )
+    .sort((left, right) => right.sequence - left.sequence);
+  return prior[0] ?? null;
+}
+function taskSourceTicketMatches(
+  ledger: CoordinationLedger,
+  work: WorkState,
+  request: TaskSourceBindingRequest,
+  resources: readonly string[],
+): CoordinationTicket | null {
+  const ticket = ledger.tickets.find((entry) => entry.ticket_id === taskSourceTicketId(request));
+  if (!ticket) return null;
+  requireState(
+    identityKey(ticketIdentity(ticket)) === identityKey(workIdentity(work)) &&
+      ticket.thread_id === request.thread_id &&
+      ticket.source_revision === work.binding.work_source_revision &&
+      ticket.generation === ledger.open_generation &&
+      sameJson(ticket.exclusive_resources, resources) &&
+      resources.every((resource) => ticket.contour_keys.includes(resource)),
+    'TaskSource coordination ticket differs from its exact request',
+  );
+  if (ticket.status === 'queued')
+    requireState(
+      ticket.claim_ids.length === 0 && ticket.active_resources.length === 0 && ticket.expires_at === null &&
+        sameJson(ticket.blocked_resources, resources) &&
+        !ledger.claims.some((claim) => claim.ticket_id === ticket.ticket_id && claim.status === 'active'),
+      'queued TaskSource ticket has active or incomplete ownership',
+    );
+  else if (ticket.status === 'active') {
+    const claims = ledger.claims.filter((claim) => claim.ticket_id === ticket.ticket_id && claim.status === 'active');
+    requireState(
+      work.lease?.ticket_id === ticket.ticket_id && work.lease.thread_id === ticket.thread_id &&
+        work.lease.generation === ticket.generation && ticket.blocked_resources.length === 0 &&
+        sameJson(ticket.active_resources, resources) && claims.length === 1 &&
+        ticket.claim_ids.includes(claims[0]!.claim_id) &&
+        claims[0]!.work_id === ticket.work_id && claims[0]!.thread_id === ticket.thread_id &&
+        claims[0]!.generation === ticket.generation && sameJson(claims[0]!.resources, resources) &&
+        ticket.expires_at !== null && claims[0]!.lease_expires_at === ticket.expires_at &&
+        timestamp(claims[0]!.lease_expires_at) > Date.now(),
+      'active TaskSource ticket or claim is stale',
+    );
+  } else requireState(false, 'TaskSource ticket is terminal or not ready for issue');
+  return ticket;
+}
+function taskSourceExpectedWorkMatches(
+  work: WorkState,
+  ledger: CoordinationLedger,
+  request: TaskSourceBindingRequest,
+  resources: readonly string[],
+  addedResources: readonly string[],
+  ticket: CoordinationTicket,
+): boolean {
+  const expected = request.expected_host.work;
+  if (work.revision === expected.revision && canonicalJsonDigest(work) === expected.digest) return true;
+  const revisionDelta = work.revision - expected.revision;
+  if (ticket.status === 'queued' ? revisionDelta !== 1 : revisionDelta < 1 || revisionDelta > 2) return false;
+  const prior = taskSourcePriorTicket(ledger, work, request);
+  if (!prior) return false;
+  const expectedLease = ticket.status === 'queued'
+    ? work.lease
+    : { ticket_id: prior.ticket_id, thread_id: prior.thread_id, generation: prior.generation };
+  if (!expectedLease) return false;
+  const subsets = [
+    [],
+    ...addedResources.map((resource) => [resource]),
+    [...addedResources],
+  ];
+  const uniqueSubsets = new Map(subsets.map((subset) => [canonicalJsonDigest(subset), subset]));
+  for (const removed of uniqueSubsets.values()) {
+    if (!removed.every((resource) => work.binding.allowed_resources.includes(resource))) continue;
+    const baseline = {
+      ...work,
+      revision: expected.revision,
+      binding: {
+        ...work.binding,
+        allowed_resources: work.binding.allowed_resources.filter((resource) => !removed.includes(resource)),
+      },
+      lease: expectedLease,
+      lifecycle: { ...work.lifecycle, revision: work.lifecycle.revision - revisionDelta },
+    };
+    if (baseline.lifecycle.revision > 0 && canonicalJsonDigest(baseline) === expected.digest) return true;
+  }
+  return false;
+}
+function taskSourceReservationForRequest(
+  repositoryRoot: string,
+  host: HostStateSnapshot,
+  request: TaskSourceBindingRequest,
+): {
+  readonly prior: CoordinationTicket;
+  readonly ticket: CoordinationTicket;
+  readonly resources: ReturnType<typeof taskSourceReservationResources>;
+} | null {
+  if (request.operation === 'inspect' || !host.work || !host.ledger) return null;
+  const prior = taskSourcePriorTicket(host.ledger, host.work, request);
+  if (!prior) return null;
+  const resources = taskSourceReservationResources(repositoryRoot, request, host.work, prior),
+    ticket = taskSourceTicketMatches(host.ledger, host.work, request, resources.resources);
+  if (!ticket || !taskSourceExpectedWorkMatches(
+    host.work,
+    host.ledger,
+    request,
+    resources.resources,
+    resources.added,
+    ticket,
+  )) return null;
+  return { prior, ticket, resources };
+}
 function validateReferences(refs: readonly ContractReference[]): void {
   for (const ref of refs) requireState(safeWorkflowOwnedPath(ref.path), 'artifact reference path is unsafe');
   unique(
@@ -1169,14 +1689,17 @@ function checkedStoredWork(
   database: Database,
   workspaceId: string,
   value: unknown,
-  pendingReceipt?: RuntimeCodeRebindReceipt,
+  pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt,
 ): WorkState {
   const candidate = value as WorkState,
-    bindings = new Map<string, WorkState['binding']>();
+    bindings = new Map<string, WorkState['binding']>(),
+    records: ({ readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt } | {
+      readonly kind: 'continuation';
+      readonly receipt: DeliveredWorkContinuationReceipt;
+    })[] = [];
   const table = database
     .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_runtime_code_rebind'")
     .get();
-  const records: RuntimeCodeRebindReceipt[] = [];
   if (table) {
     const rows = database
       .query(
@@ -1196,14 +1719,161 @@ function checkedStoredWork(
           receipt.action_id === row.action_id && receipt.attempt === row.attempt,
           'runtime binding history row identity differs',
         );
-        records.push(receipt);
+        records.push({ kind: 'runtime', receipt });
       }
     }
   }
-  if (pendingReceipt) records.push(pendingReceipt);
-  records.sort((a, b) => b.prior_work_version.revision - a.prior_work_version.revision);
+  const continuationTable = database
+    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'")
+    .get();
+  if (continuationTable) {
+    const rows = database
+      .query('SELECT payload,digest,action_id,attempt FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=?')
+      .all(workspaceId, candidate.binding?.lifecycle_work_id) as {
+      payload: string;
+      digest: string;
+      action_id: string;
+      attempt: number;
+    }[];
+    for (const row of rows) {
+      const receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
+      requireState(
+        canonicalJsonDigest(receipt) === row.digest &&
+          receipt.request?.action?.kind === 'historical_terminal_review' &&
+          receipt.request.action.capture.action_id === row.action_id &&
+          receipt.attempt === row.attempt,
+        'delivered-work continuation history receipt checksum or identity differs',
+      );
+      records.push({ kind: 'continuation', receipt });
+    }
+  }
+  if (pendingReceipt) {
+    records.push(
+      'binding_history' in pendingReceipt
+        ? { kind: 'runtime', receipt: pendingReceipt }
+        : { kind: 'continuation', receipt: pendingReceipt },
+    );
+  }
+  records.sort((a, b) => {
+    const revision = (record: (typeof records)[number]) =>
+      record.kind === 'runtime' ? record.receipt.prior_work_version.revision : record.receipt.request.expectedWork.revision;
+    return revision(b) - revision(a);
+  });
   let expected = candidate.binding;
-  for (const receipt of records) {
+  for (const record of records) {
+    if (record.kind === 'continuation') {
+      const receipt = record.receipt,
+        request = receipt.request,
+        original = receipt.prior_work,
+        successorWork = receipt.successor_work,
+        successor = receipt.successor_binding,
+        journal = receipt.prior_journal,
+        successorJournal = receipt.successor_journal,
+        capture = receipt.historical_capture,
+        action = request?.action;
+      const scopedChanges =
+        journal?.source_scope && request?.currentSourceScope
+          ? compareScopedSourceSnapshots(journal.source_scope, request.currentSourceScope)
+          : null;
+      requireState(
+        receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
+          receipt.status === 'action_ready' &&
+          receipt.rights_granted === false &&
+          receipt.accepted_result === false &&
+          receipt.runtime_acceptance === false &&
+          receipt.request_digest === canonicalJsonDigest(request) &&
+          request.schema === 'DeliveredWorkContinuationRequest/v1' &&
+          sameJson(request.identity, workIdentity(candidate)) &&
+          request.attempt === receipt.attempt &&
+          sameJson(request.expectedWork, receipt.prior_work_version) &&
+          receipt.prior_ledger.revision === request.expectedLedger.revision &&
+          canonicalJsonDigest(receipt.prior_ledger) === request.expectedLedger.digest &&
+          receipt.prior_journal_version.revision === request.expectedJournal.revision &&
+          canonicalJsonDigest(receipt.prior_journal) === request.expectedJournal.digest &&
+          receipt.prior_work_version.revision === original.revision &&
+          canonicalJsonDigest(original) === receipt.prior_work_version.digest &&
+          receipt.prior_ledger.revision === receipt.prior_ledger_version.revision &&
+          canonicalJsonDigest(receipt.prior_ledger) === receipt.prior_ledger_version.digest &&
+          journal.workspace_id === workspaceId &&
+          journal.work_id === request.identity.work_id &&
+          journal.attempt === request.attempt &&
+          canonicalJsonDigest(journal) === receipt.prior_journal_version.digest &&
+          capture.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
+          canonicalJsonDigest(capture) === action?.capture?.receipt_digest &&
+          capture.identity.work_id === request.identity.work_id &&
+          capture.attempt === request.attempt &&
+          capture.action_id === action?.capture?.action_id &&
+          capture.issue_id === action?.capture?.issue_id &&
+          capture.terminal_status === 'known_terminal_unaccepted' &&
+          capture.task_status === 'unfinished' &&
+          capture.accepted_result === false &&
+          capture.rights_granted === false &&
+          capture.runtime_acceptance === false &&
+          typeof capture.body_base64 === 'string' &&
+          Buffer.from(capture.body_base64, 'base64').byteLength === capture.body_byte_length &&
+          createHash('sha256').update(Buffer.from(capture.body_base64, 'base64')).digest('hex') === capture.body_sha256 &&
+          action?.kind === 'historical_terminal_review' &&
+          action.original_request_pointer === capture.request.user_request_pointer &&
+          action.capture.body_sha256 === capture.body_sha256 &&
+          action.capture.body_ref === capture.provenance.body_ref &&
+          action.request.config_digest === request.targetConfigDigest &&
+          action.request.scope_digest === request.currentSourceScope.digest &&
+          successorJournal.workspace_id === workspaceId &&
+          successorJournal.work_id === request.identity.work_id &&
+          successorJournal.attempt === request.attempt &&
+          successorJournal.run_id === original.execution.run_id &&
+          successorJournal.step_id === action.request.stage_id &&
+          successorJournal.source_scope?.digest === request.currentSourceScope.digest &&
+          successorJournal.items.length === 1 &&
+          canonicalJsonDigest(successorJournal.items[0]?.request) === canonicalJsonDigest(action.request) &&
+          successorJournal.items[0]?.issue_id === null &&
+          successorJournal.items[0]?.observation === null &&
+          receipt.journal_version.revision === request.expectedJournal.revision + 1 &&
+          canonicalJsonDigest(successorJournal) === receipt.journal_version.digest &&
+          receipt.work_version.revision === receipt.prior_work_version.revision + 1 &&
+          successorWork.revision === receipt.work_version.revision &&
+          successorWork.lifecycle.revision === successorWork.revision &&
+          canonicalJsonDigest(successorWork) === receipt.work_version.digest &&
+          receipt.ledger_version.revision === request.expectedLedger.revision + 1 &&
+          receipt.successor_ledger.revision === receipt.ledger_version.revision &&
+          canonicalJsonDigest(receipt.successor_ledger) === receipt.ledger_version.digest &&
+          successorWork.binding &&
+          sameJson(successorWork.binding, successor) &&
+          sameJson(successor, expected) &&
+          sameJson(successor, {
+            ...original.binding,
+            config_digest: request.targetConfigDigest,
+            work_source_revision: request.currentSourceScope.digest,
+            runtime_source_revision: request.targetRuntimeCodeDigest,
+            runtime_code_digest: request.targetRuntimeCodeDigest,
+            schema_digest: request.targetSchemaDigest,
+          }) &&
+          original.binding.config_digest === request.priorConfigDigest &&
+          original.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
+          original.execution.status === 'suspended' &&
+          original.lease === null &&
+          original.execution.assignment_attempts.every((attempt) => ['completed', 'no_effect'].includes(attempt.status)) &&
+          successorWork.execution.assignment_attempts.length === original.execution.assignment_attempts.length &&
+          sameJson(successorWork.execution.assignment_attempts, original.execution.assignment_attempts) &&
+          scopedChanges !== null &&
+          sameJson(scopedChanges, request.authorizedSourceChanges) &&
+          receipt.authorization.schema === 'VidaDeliveredWorkContinuationAuthorization/v1' &&
+          receipt.authorization.request_digest === receipt.request_digest &&
+          receipt.authorization.transition_digest === request.sourceTransition.transition_digest &&
+          receipt.authorization.action_digest === canonicalJsonDigest(action) &&
+          typeof receipt.authorization.principal === 'string' &&
+          receipt.authorization.principal.trim().length > 0,
+        'delivered-work continuation binding history is not continuous',
+      );
+      for (const attempt of original.execution.assignment_attempts) {
+        const current = candidate.execution.assignment_attempts.find((entry) => entry.attempt_id === attempt.attempt_id);
+        requireState(current && sameJson(current, attempt), 'delivered-work terminal assignment result changed');
+        bindings.set(attempt.attempt_id, original.binding);
+      }
+      expected = original.binding;
+      continue;
+    }
+    const receipt = record.receipt;
     const history = receipt.binding_history;
     requireState(
       history?.schema === 'RuntimeCodeRebindHistory/v1' &&
@@ -1530,6 +2200,7 @@ function validateProgress(
   work: WorkState,
   ledger: CoordinationLedger,
   documentationContext?: DocumentationVerificationContext,
+  taskSourceResourceAdditions: readonly string[] = [],
 ): void {
   requireState(
     work.revision === (before.work?.revision ?? 0) + 1 && ledger.revision === (before.ledger?.revision ?? 0) + 1,
@@ -1542,7 +2213,23 @@ function validateProgress(
       sameJson(old.execution.assignment_attempts, work.execution.assignment_attempts),
       'attempt history requires its dedicated transaction',
     );
-    requireState(sameJson(old.binding, work.binding), 'work authority changed; explicit rebind required');
+    const bindingMatches = taskSourceResourceAdditions.length === 0
+      ? sameJson(old.binding, work.binding)
+      : (() => {
+          const additions = [...taskSourceResourceAdditions].sort();
+          return new Set(additions).size === additions.length &&
+            additions.every(
+              (resource) =>
+                (resource.startsWith('branch:') || resource.startsWith('worktree:')) &&
+                !old.binding.allowed_resources.includes(resource) &&
+                work.binding.allowed_resources.includes(resource),
+            ) &&
+            sameJson(old.binding, {
+              ...work.binding,
+              allowed_resources: work.binding.allowed_resources.filter((resource) => !additions.includes(resource)),
+            });
+        })();
+    requireState(bindingMatches, 'work authority changed; explicit rebind required');
     requireState(
       sameJson(old.contracts.scope, work.contracts.scope) &&
         sameJson(old.contracts.acceptance, work.contracts.acceptance),
@@ -2111,7 +2798,7 @@ export function inspectHostWorkspaceDatabase(
       })
       .deferred();
   } finally {
-    database.close();
+    database.close(true);
   }
 }
 
@@ -2128,7 +2815,7 @@ export function openHostStateDatabase(databasePath: string): Database {
     database.exec('PRAGMA busy_timeout=1000');
     return database;
   } catch (error) {
-    database.close();
+    database.close(true);
     throw error;
   }
 }
@@ -2162,7 +2849,7 @@ export function withHostStateExclusiveTransaction<T>(databasePath: string, opera
   try {
     return database.transaction(operation).immediate();
   } finally {
-    database.close();
+    database.close(true);
   }
 }
 
@@ -2212,7 +2899,7 @@ export async function runConsumerMigrationState<T>(
     try {
       assertConsumerAdmissionMetadata(probe, workspaceId);
     } finally {
-      probe.close();
+      probe.close(true);
     }
   }
   const database = openHostStateDatabase(databasePath);
@@ -2315,7 +3002,7 @@ export async function runConsumerMigrationState<T>(
             'consumer workflow run remains unknown or inflight',
           );
         } finally {
-          workflow.close();
+          workflow.close(true);
         }
         for (const file of before) {
           const present = access.fileExists(file.relative, 'consumer workflow triplet stability');
@@ -2347,7 +3034,7 @@ export async function runConsumerMigrationState<T>(
     await store.releaseMaintenanceFence(receipt);
     return result;
   } finally {
-    database.close();
+    database.close(true);
   }
 }
 
@@ -2367,6 +3054,8 @@ export class HostStateStore {
   readonly #verifyReconciliation: WorkflowAttemptReconciliationVerifier['verify'] | undefined;
   readonly #verifyMigrationRebind: MigrationRebindVerifier['verify'] | undefined;
   readonly #verifyRuntimeCodeRebind: RuntimeCodeRebindVerifier['verify'] | undefined;
+  readonly #verifyTaskSourceMutation: TaskSourceMutationPolicyVerifier['verify'] | undefined;
+  readonly #verifyDeliveredWorkContinuation: DeliveredWorkContinuationVerifier['verify'] | undefined;
   readonly #verifyWorkflowApproval: WorkflowAttemptApprovalVerifier['verify'] | undefined;
   readonly #verifyMaintenanceRelease: MaintenanceReleaseVerifier['verify'] | undefined;
   readonly #verifyMaintenanceAcquisition: MaintenanceReleaseVerifier['verifyAcquisition'];
@@ -2378,6 +3067,7 @@ export class HostStateStore {
   readonly reconciliationPrincipal: string | undefined;
   readonly migrationRebindPrincipal: string | undefined;
   readonly runtimeCodeRebindPrincipal: string | undefined;
+  readonly deliveredWorkContinuationPrincipal: string | undefined;
   readonly governanceCapability: HostGovernanceCapability;
   get workspaceId(): string {
     return this.#workspaceId;
@@ -2394,6 +3084,8 @@ export class HostStateStore {
     verifyMaintenanceRelease?: MaintenanceReleaseVerifier,
     repositoryRoot?: string,
     verifyRuntimeCodeRebind?: RuntimeCodeRebindVerifier,
+    verifyTaskSourceMutation?: TaskSourceMutationPolicyVerifier,
+    verifyDeliveredWorkContinuation?: DeliveredWorkContinuationVerifier,
   ) {
     requireState(
       database instanceof Database && hashPattern.test(workspaceId),
@@ -2449,8 +3141,34 @@ export class HostStateStore {
       'trusted runtime-code rebind verifier invalid',
     );
     this.#verifyRuntimeCodeRebind = verifyRuntimeCodeRebind?.verify.bind(verifyRuntimeCodeRebind);
+    requireState(
+      verifyTaskSourceMutation === undefined ||
+        (verifyTaskSourceMutation !== null &&
+          typeof verifyTaskSourceMutation === 'object' &&
+          Object.keys(verifyTaskSourceMutation).length === 1 &&
+          typeof verifyTaskSourceMutation.verify === 'function'),
+      'trusted task source policy verifier invalid',
+    );
+    this.#verifyTaskSourceMutation = verifyTaskSourceMutation?.verify.bind(verifyTaskSourceMutation);
+    requireState(
+      verifyDeliveredWorkContinuation === undefined ||
+        (verifyDeliveredWorkContinuation !== null &&
+          typeof verifyDeliveredWorkContinuation === 'object' &&
+          Object.keys(verifyDeliveredWorkContinuation).length === 2 &&
+          typeof verifyDeliveredWorkContinuation.principal === 'string' &&
+          verifyDeliveredWorkContinuation.principal.trim().length > 0 &&
+          verifyDeliveredWorkContinuation.principal === verifyDeliveredWorkContinuation.principal.trim() &&
+          !/\p{Cc}/u.test(verifyDeliveredWorkContinuation.principal) &&
+          typeof verifyDeliveredWorkContinuation.verify === 'function'),
+      'trusted delivered-work continuation verifier invalid',
+    );
+    this.#verifyDeliveredWorkContinuation = verifyDeliveredWorkContinuation?.verify.bind(
+      verifyDeliveredWorkContinuation,
+    );
     this.runtimeCodeRebindPrincipal = verifyRuntimeCodeRebind?.principal;
     Object.defineProperty(this, 'runtimeCodeRebindPrincipal', { writable: false, configurable: false });
+    this.deliveredWorkContinuationPrincipal = verifyDeliveredWorkContinuation?.principal;
+    Object.defineProperty(this, 'deliveredWorkContinuationPrincipal', { writable: false, configurable: false });
     requireState(
       verifyWorkflowApproval === undefined ||
         (verifyWorkflowApproval !== null &&
@@ -4659,7 +5377,7 @@ export class HostStateStore {
     };
     this.#writeReconciliationGate(next, gate);
   }
-  #checkedWork(value: unknown, pendingReceipt?: RuntimeCodeRebindReceipt): WorkState {
+  #checkedWork(value: unknown, pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt): WorkState {
     return checkedStoredWork(this.#database, this.#workspaceId, value, pendingReceipt);
   }
   #load(kind: 'work' | 'ledger', id: string): WorkState | CoordinationLedger | null {
@@ -4801,6 +5519,1166 @@ export class HostStateStore {
         return snapshot({ attempt: row.attempt, version: { revision: row.revision, digest: row.digest }, state });
       })
       .deferred();
+  }
+
+  /** Revalidate the live Source owner against the canonical Host journal and ticket queue. */
+  #assertLiveTaskSourceOwner(
+    host: HostStateSnapshot,
+    request: TaskSourceBindingRequest,
+    identity: WorkIdentity,
+    journal: { readonly attempt: number; readonly state: Readonly<Record<string, unknown>> },
+  ): CoordinationTicket {
+    const work = host.work,
+      ledger = host.ledger;
+    requireState(
+      work && ledger && host.workVersion && host.ledgerVersion &&
+        work.execution.status === 'active' && work.lease &&
+        work.lease.thread_id === request.thread_id && work.lease.ticket_id.length > 0 &&
+        journal.attempt === request.attempt &&
+        work.binding.lifecycle_work_id === request.work_id &&
+        work.binding.repository_id === identity.repository_id &&
+        sameJson(work.binding.project_ids, identity.project_ids) &&
+        work.binding.config_digest === request.config_digest,
+      'task source preparation has no matching active Host owner',
+    );
+    const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id),
+      claims = ledger.claims.filter(
+        (entry) => entry.ticket_id === work.lease!.ticket_id && entry.status === 'active',
+      ),
+      journalScope = validateTaskSourceJournalScope(
+        (journal.state as { source_scope?: unknown }).source_scope,
+      ),
+      now = Date.now();
+    assertTaskSourceJournalScopeWithinWork(journalScope, work);
+    requireState(
+      ticket &&
+        ticket.status === 'active' &&
+        ticket.work_id === identity.work_id &&
+        ticket.thread_id === request.thread_id &&
+        ticket.generation === work.lease.generation &&
+        ticket.repository_id === identity.repository_id &&
+        sameJson(ticket.project_ids, identity.project_ids) &&
+        ticket.expires_at !== null &&
+        timestamp(ticket.expires_at) > now &&
+        claims.length === 1 &&
+        ticket.claim_ids.includes(claims[0]!.claim_id) &&
+        claims[0]!.work_id === identity.work_id &&
+        claims[0]!.thread_id === request.thread_id &&
+        claims[0]!.generation === work.lease.generation &&
+        timestamp(claims[0]!.lease_expires_at) > now &&
+        sameJson(claims[0]!.resources, ticket.active_resources) &&
+        journalScope.digest.length === 64,
+      'task source owner ticket, claim, lease expiry or journal scope is stale',
+    );
+    this.#assertNoOverlappingActiveSourceOwner(ledger, ticket);
+    requireState(
+      !ledger.tickets.some(
+        (candidate) =>
+          candidate.status === 'queued' &&
+          candidate.sequence < ticket.sequence &&
+          candidate.exclusive_resources.some((resource) => ticket.exclusive_resources.includes(resource)),
+      ),
+      'earlier FIFO Source owner is waiting for the resource',
+    );
+    return ticket;
+  }
+
+  /** Persist preparation metadata only after the current Host owner and CAS are verified. */
+  prepareTaskSourceBindingOperation(input: {
+    readonly request: TaskSourceBindingRequest;
+    readonly identity: WorkIdentity;
+    readonly verifyCurrent: (context: {
+      readonly work: WorkState;
+      readonly ledger: CoordinationLedger;
+      readonly journal: Readonly<Record<string, unknown>>;
+    }) => { readonly source_authorization_sha256: string; readonly source_scope_digest: string };
+  }): Readonly<Record<string, unknown>> {
+    requireState(
+      input !== null &&
+        typeof input === 'object' &&
+        Object.keys(input).sort().join(',') === 'identity,request,verifyCurrent' &&
+        typeof input.verifyCurrent === 'function' &&
+        input.verifyCurrent.constructor.name !== 'AsyncFunction',
+      'task source preparation input invalid',
+    );
+    const request = validateTaskSourceBindingRequest(input.request),
+      identity = snapshot(input.identity);
+    requireState(
+      request.work_id === identity.work_id &&
+        request.repository_id === identity.repository_id &&
+        sameJson(request.project_ids, identity.project_ids),
+      'task source request identity differs from the Host identity',
+    );
+    const readJournal = (work: WorkState): {
+      attempt: number;
+      version: StateVersion;
+      state: Readonly<Record<string, unknown>>;
+    } => {
+      const row = this.#database
+        .query(
+          'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+        )
+        .get(this.#workspaceId, identity.work_id) as {
+        attempt: number;
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null;
+      requireState(row, 'task source preparation requires the current Host journal');
+      const state = JSON.parse(row.payload) as Record<string, unknown>;
+      validateWorkSessionBinding(work, state as unknown as MastraSessionLedgerState, this.#repositoryRoot);
+      requireState(
+        state.schema === 'MastraSessionLedger/v1' &&
+          state.workspace_id === this.#workspaceId &&
+          state.work_id === identity.work_id &&
+          state.attempt === row.attempt &&
+          canonicalJsonDigest(state) === row.digest,
+        'task source preparation journal integrity differs',
+      );
+      return snapshot({ attempt: row.attempt, version: { revision: row.revision, digest: row.digest }, state });
+    };
+    const tableExists = (): boolean =>
+      Boolean(
+        this.#database
+          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'")
+          .get(),
+      );
+    const readRecord = (operationId: string) => {
+      if (!tableExists()) return null;
+      const row = this.#database
+        .query(
+          'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(this.#workspaceId, operationId) as {
+        revision: number;
+        payload: string;
+        digest: string;
+        request_id: string;
+        request_digest: string;
+      } | null;
+      if (!row) return null;
+      const operation = JSON.parse(row.payload) as Record<string, unknown>;
+      requireState(
+        Object.keys(operation).sort().join(',') ===
+          'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+          operation.schema === 'TaskSourceBindingOperation/v1' &&
+          operation.status === 'prepared' &&
+          typeof operation.created_at === 'string' &&
+          Number.isFinite(Date.parse(operation.created_at)) &&
+          operation.revision === row.revision &&
+          operation.operation_id === operationId &&
+          operation.request_id === row.request_id &&
+          operation.request_digest === row.request_digest &&
+          canonicalJsonDigest(operation) === row.digest,
+        'task source operation record integrity differs',
+      );
+      return { operation, state_version: { revision: row.revision, digest: row.digest } };
+    };
+    const checkOwnerAndAuthority = (before: HostStateSnapshot, journal: ReturnType<typeof readJournal>) => {
+      const work = before.work,
+        ledger = before.ledger;
+      requireState(work && ledger, 'task source preparation Host work or ledger is missing');
+      this.#assertLiveTaskSourceOwner(before, request, identity, journal);
+      const journalScope = validateTaskSourceJournalScope(
+        (journal.state as { source_scope?: unknown }).source_scope,
+      );
+      requireState(
+        journalScope.digest.length === 64,
+        'task source preparation current journal scope is invalid',
+      );
+      const checked = input.verifyCurrent({
+        work,
+        ledger,
+        journal: journal.state,
+      });
+      requireState(
+        checked !== null &&
+          typeof checked === 'object' &&
+          Object.keys(checked).sort().join(',') === 'source_authorization_sha256,source_scope_digest' &&
+          hashPattern.test(checked.source_authorization_sha256) &&
+          checked.source_scope_digest === work.binding.work_source_revision,
+        'task source preparation authorization is invalid',
+      );
+      return checked;
+    };
+    const createResult = (
+      status: 'prepared' | 'inspected' | 'not_found',
+      stored: ReturnType<typeof readRecord>,
+    ) =>
+      snapshot({
+        schema: 'TaskSourceBindingOperationResult/v1',
+        status,
+        operation_id: request.operation_id,
+        request_id: request.request_id,
+        operation: stored?.operation ?? null,
+        state_version: stored?.state_version ?? null,
+      });
+
+    return this.#transactionWithProducerFence(() => {
+      this.#assertReconciliationWritesAllowed();
+      const before = this.#read(identity);
+      requireState(before.work, 'task source preparation Host work is missing');
+      const journal = readJournal(before.work),
+        authority = checkOwnerAndAuthority(before, journal),
+        stored = readRecord(request.operation_id),
+        requestDigest = canonicalJsonDigest(request);
+      if (stored) {
+        requireState(
+          stored.operation.request_id === request.request_id &&
+            stored.operation.request_digest === requestDigest &&
+            sameJson(stored.operation.request, request) &&
+            sameJson(stored.operation.authority, authority),
+          'task source operation retry changed or its current authority differs',
+        );
+        return createResult('prepared', stored);
+      }
+      if (tableExists()) {
+        const priorRequest = this.#database
+          .query(
+            'SELECT operation_id FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND request_id=?',
+          )
+          .get(this.#workspaceId, request.request_id) as { operation_id: string } | null;
+        requireState(!priorRequest, 'task source request ID is already bound to another operation');
+      }
+      matchesExpected(before.workVersion, request.expected_host.work);
+      matchesExpected(before.ledgerVersion, request.expected_host.ledger);
+      requireState(
+        journal.attempt === request.expected_host.journal.attempt &&
+          journal.version.revision === request.expected_host.journal.version.revision &&
+          journal.version.digest === request.expected_host.journal.version.digest &&
+          before.maintenanceGeneration === request.expected_host.maintenance_generation,
+        'task source preparation Host journal or maintenance CAS changed',
+      );
+      const operation = snapshot({
+        schema: 'TaskSourceBindingOperation/v1',
+        operation_id: request.operation_id,
+        request_id: request.request_id,
+        request_digest: requestDigest,
+        request,
+        authority,
+        status: 'prepared' as const,
+        revision: 1,
+        created_at: new Date().toISOString(),
+      });
+      const payload = canonicalJson(operation), operationDigest = canonicalJsonDigest(operation);
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_task_source_binding_operation (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,request_digest TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
+      );
+      this.#database
+        .query(
+          'INSERT INTO agent_host_task_source_binding_operation (workspace_id,operation_id,request_id,request_digest,revision,payload,digest) VALUES(?,?,?,?,?,?,?)',
+        )
+        .run(
+          this.#workspaceId,
+          request.operation_id,
+          request.request_id,
+          requestDigest,
+          operation.revision,
+          payload,
+          operationDigest,
+        );
+      return createResult('prepared', {
+        operation,
+        state_version: { revision: operation.revision, digest: operationDigest },
+      });
+    }).immediate();
+  }
+
+  /** Read a prepared task source operation without creating its lazy operation table. */
+  inspectTaskSourceBindingOperation(input: {
+    readonly request: TaskSourceBindingRequest;
+    readonly identity: WorkIdentity;
+    readonly verifyCurrent: (context: {
+      readonly work: WorkState;
+      readonly ledger: CoordinationLedger;
+      readonly journal: Readonly<Record<string, unknown>>;
+    }) => { readonly source_authorization_sha256: string; readonly source_scope_digest: string };
+  }): Readonly<Record<string, unknown>> {
+    requireState(
+      input !== null &&
+        typeof input === 'object' &&
+        Object.keys(input).sort().join(',') === 'identity,request,verifyCurrent' &&
+        typeof input.verifyCurrent === 'function' &&
+        input.verifyCurrent.constructor.name !== 'AsyncFunction',
+      'task source inspection input invalid',
+    );
+    const request = validateTaskSourceBindingRequest(input.request),
+      identity = snapshot(input.identity);
+    requireState(
+      request.work_id === identity.work_id &&
+        request.repository_id === identity.repository_id &&
+        sameJson(request.project_ids, identity.project_ids),
+      'task source request identity differs from the Host identity',
+    );
+    requireState(!this.#database.inTransaction, 'nested task source operation inspection forbidden');
+    return this.#database
+      .transaction(() => {
+        this.#assertMaintenanceAvailable();
+        const before = this.#read(identity);
+        requireState(before.work, 'task source inspection Host work is missing');
+        const journalRow = this.#database
+          .query(
+            'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+          )
+          .get(this.#workspaceId, identity.work_id) as {
+          attempt: number;
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
+        requireState(journalRow, 'task source inspection requires the current Host journal');
+        const journalState = JSON.parse(journalRow.payload) as Record<string, unknown>;
+        validateWorkSessionBinding(before.work, journalState as unknown as MastraSessionLedgerState, this.#repositoryRoot);
+        requireState(
+          journalState.schema === 'MastraSessionLedger/v1' &&
+            journalState.workspace_id === this.#workspaceId &&
+            journalState.work_id === identity.work_id &&
+            journalState.attempt === journalRow.attempt &&
+            canonicalJsonDigest(journalState) === journalRow.digest,
+          'task source inspection journal integrity differs',
+        );
+        const journal = snapshot({
+          attempt: journalRow.attempt,
+          version: { revision: journalRow.revision, digest: journalRow.digest },
+          state: journalState,
+        });
+        const work = before.work,
+          ledger = before.ledger;
+        requireState(
+          ledger &&
+            before.workVersion &&
+            before.ledgerVersion &&
+            work.execution.status === 'active' &&
+            work.lease &&
+            work.lease.thread_id === request.thread_id &&
+            journal.attempt === request.attempt &&
+            work.binding.lifecycle_work_id === request.work_id &&
+            work.binding.repository_id === request.repository_id &&
+            sameJson(work.binding.project_ids, request.project_ids),
+          'task source inspection has no matching active Host owner',
+        );
+        const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id),
+          claims = ledger.claims.filter(
+            (entry) => entry.ticket_id === work.lease!.ticket_id && entry.status === 'active',
+          ),
+          journalScope = validateTaskSourceJournalScope(
+            (journal.state as { source_scope?: unknown }).source_scope,
+          );
+        assertTaskSourceJournalScopeWithinWork(journalScope, work);
+        requireState(
+          ticket?.status === 'active' &&
+            ticket.work_id === identity.work_id &&
+            ticket.thread_id === request.thread_id &&
+            ticket.generation === work.lease.generation &&
+            ticket.repository_id === identity.repository_id &&
+            sameJson(ticket.project_ids, identity.project_ids) &&
+            ticket.expires_at !== null &&
+            timestamp(ticket.expires_at) > Date.now() &&
+            claims.length === 1 &&
+            claims[0]!.ticket_id === work.lease.ticket_id &&
+            claims[0]!.thread_id === request.thread_id &&
+            claims[0]!.generation === work.lease.generation &&
+            timestamp(claims[0]!.lease_expires_at) > Date.now() &&
+            journalScope.digest.length === 64,
+          'task source inspection owner, lease or current scope differs',
+        );
+        const authority = input.verifyCurrent({
+          work,
+          ledger,
+          journal: journal.state,
+        });
+        requireState(
+          authority !== null &&
+            typeof authority === 'object' &&
+            Object.keys(authority).sort().join(',') === 'source_authorization_sha256,source_scope_digest' &&
+            hashPattern.test(authority.source_authorization_sha256) &&
+            authority.source_scope_digest === work.binding.work_source_revision,
+          'task source inspection authorization is invalid',
+        );
+        const table = this.#database
+          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'")
+          .get();
+        if (!table)
+          return snapshot({
+            schema: 'TaskSourceBindingOperationResult/v1',
+            status: 'not_found' as const,
+            operation_id: request.operation_id,
+            request_id: request.request_id,
+            operation: null,
+            state_version: null,
+          });
+        const row = this.#database
+          .query(
+            'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+          )
+          .get(this.#workspaceId, request.operation_id) as {
+          revision: number;
+          payload: string;
+          digest: string;
+          request_id: string;
+          request_digest: string;
+        } | null;
+        if (!row)
+          return snapshot({
+            schema: 'TaskSourceBindingOperationResult/v1',
+            status: 'not_found' as const,
+            operation_id: request.operation_id,
+            request_id: request.request_id,
+            operation: null,
+            state_version: null,
+          });
+        const operation = JSON.parse(row.payload) as Record<string, unknown>;
+        requireState(
+          Object.keys(operation).sort().join(',') ===
+            'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+            operation.schema === 'TaskSourceBindingOperation/v1' &&
+            operation.status === 'prepared' &&
+            typeof operation.created_at === 'string' &&
+            Number.isFinite(Date.parse(operation.created_at)) &&
+            operation.revision === row.revision &&
+            operation.operation_id === request.operation_id &&
+            operation.request_id === row.request_id &&
+            operation.request_digest === row.request_digest &&
+            canonicalJsonDigest(operation) === row.digest &&
+            operation.request_digest === canonicalJsonDigest(request) &&
+            sameJson(operation.request, request) &&
+            sameJson(operation.authority, authority),
+          'task source inspection request or current authority differs',
+        );
+        return snapshot({
+          schema: 'TaskSourceBindingOperationResult/v1',
+          status: 'inspected' as const,
+          operation_id: request.operation_id,
+          request_id: request.request_id,
+          operation,
+          state_version: { revision: row.revision, digest: row.digest },
+        });
+      })
+      .deferred();
+  }
+
+  /** Recovery observation is read-only and never returns an issued argv for replay. */
+  inspectTaskSourceBindingAction(input: {
+    readonly request: TaskSourceBindingRequest;
+    readonly identity: WorkIdentity;
+    readonly verifyCurrent: Parameters<HostStateStore['inspectTaskSourceBindingOperation']>[0]['verifyCurrent'];
+  }): Readonly<Record<string, unknown>> {
+    const prepared = this.inspectTaskSourceBindingOperation(input);
+    if (prepared.status === 'not_found') return snapshot({
+      schema: 'TaskSourceBindingActionResult/v1', status: 'not_found',
+      operation_id: input.request.operation_id, request_id: input.request.request_id,
+      action: null, state_version: null, command_argv: null,
+    });
+    const table = this.#database.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
+    ).get();
+    if (!table) return snapshot({
+      schema: 'TaskSourceBindingActionResult/v1', status: 'prepared',
+      operation_id: input.request.operation_id, request_id: input.request.request_id,
+      action: null, state_version: null, command_argv: null,
+    });
+    const actionRow = this.#database.query(
+      'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+    ).get(this.#workspaceId, input.request.operation_id) as TaskSourceActionRow | null;
+    if (!actionRow) return snapshot({
+      schema: 'TaskSourceBindingActionResult/v1', status: 'prepared',
+      operation_id: input.request.operation_id, request_id: input.request.request_id,
+      action: null, state_version: null, command_argv: null,
+    });
+    const operationRow = this.#database.query(
+      'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+    ).get(this.#workspaceId, input.request.operation_id) as TaskSourceOperationRow | null;
+    requireState(operationRow, 'task source recovery action has no prepared operation');
+    const pair = validateTaskSourceActionPair(operationRow, actionRow as TaskSourceActionRow, input.request),
+      action = pair.action;
+    return snapshot({
+      schema: 'TaskSourceBindingActionResult/v1', status: action.status,
+      operation_id: input.request.operation_id, request_id: input.request.request_id,
+      action, state_version: { revision: actionRow.revision, digest: actionRow.digest }, command_argv: null,
+    });
+  }
+
+  /** Resolve only a reported current binding; absence keeps the original Host root. */
+  readCurrentTaskSourceBinding(
+    identity: WorkIdentity,
+    threadId: string,
+    attempt?: number,
+  ): TaskSourceBinding | null {
+    const repositoryRoot = this.#repositoryRoot;
+    requireState(repositoryRoot !== undefined &&
+      (attempt === undefined || (Number.isSafeInteger(attempt) && attempt > 0)) &&
+      typeof threadId === 'string' && threadId.length > 0, 'task source binding read context is invalid');
+    requireState(!this.#database.inTransaction, 'nested task source binding read forbidden');
+    return this.#database.transaction(() => {
+      this.#assertMaintenanceAvailable();
+      const current = this.#read(identity), work = current.work;
+      requireState(work && work.execution.status === 'active' && work.lease?.thread_id === threadId &&
+        work.binding.lifecycle_work_id === identity.work_id && work.binding.repository_id === identity.repository_id &&
+        sameJson(work.binding.project_ids, identity.project_ids), 'task source binding has no matching current Host owner');
+      const config = loadRuntimeConfig(repositoryRoot),
+        projectContext = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids);
+      requireState(work.binding.config_digest === runtimeConfigDigest(config),
+        'task source binding runtime configuration differs from current Host Work');
+      const operationsTable = this.#database.query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
+      ).get();
+      const actionsTable = this.#database.query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
+      ).get();
+      requireState(!actionsTable || operationsTable, 'task source action has no preparation storage');
+      if (actionsTable) requireState(!this.#database.query(
+        'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
+      ).get(this.#workspaceId), 'orphan task source action prevents Source root resolution');
+      const reservedTickets = current.ledger?.tickets.filter((ticket) =>
+        ticket.work_id === identity.work_id && ticket.ticket_id.startsWith('task-source-ticket:') && ticket.status !== 'queued',
+      ) ?? [];
+      requireState(reservedTickets.length === 0 || operationsTable && actionsTable,
+        'reserved task source ticket has no effect storage');
+      if (!operationsTable || !actionsTable) return null;
+      const rows = this.#database.query(
+        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=?',
+      ).all(this.#workspaceId) as { operation_id: string; revision: number; payload: string; digest: string; request_id: string; request_digest: string }[];
+      const workRows = rows.filter((row) => {
+        const operation = JSON.parse(row.payload) as Record<string, unknown>;
+        const request = validateTaskSourceBindingRequest(operation.request);
+        return request.work_id === identity.work_id;
+      });
+      requireState(reservedTickets.every((ticket) => workRows.some((row) =>
+        taskSourceTicketId(validateTaskSourceBindingRequest(JSON.parse(row.payload).request)) === ticket.ticket_id &&
+        this.#database.query('SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?')
+          .get(this.#workspaceId, row.operation_id),
+      )), 'reserved task source ticket has no retained effect record');
+      if (!workRows.some((row) => this.#database.query(
+        'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+      ).get(this.#workspaceId, row.operation_id))) return null;
+      const journalRow = this.#database.query(
+        'SELECT attempt,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+      ).get(this.#workspaceId, identity.work_id) as { attempt: number; payload: string; digest: string } | null;
+      requireState(journalRow && (attempt === undefined || journalRow.attempt === attempt),
+        'task source binding Host journal attempt differs');
+      const currentAttempt = journalRow.attempt;
+      const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
+        durableSourceScope = validateTaskSourceJournalScope(journal.source_scope);
+      assertTaskSourceJournalScopeWithinWork(durableSourceScope, work);
+      requireState(
+        canonicalJsonDigest(journal) === journalRow.digest,
+        'task source binding Host journal or Source scope integrity differs',
+      );
+      let binding: TaskSourceBinding | null = null;
+      let uncertain = false;
+      for (const row of workRows) {
+        const operationRow = row as TaskSourceOperationRow,
+          operation = JSON.parse(row.payload) as Record<string, unknown>,
+          request = validateTaskSourceBindingRequest(operation.request);
+        requireState(sameJson(request.project_ids, identity.project_ids),
+          'task source prepared operation identity differs during binding read');
+        const actionRow = this.#database.query(
+          'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+        ).get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
+        if (!actionRow) continue;
+        const pair = validateTaskSourceActionPair(operationRow, actionRow),
+          action = pair.action;
+        if (request.operation === 'inspect') continue;
+        if (action.status === 'issued' || action.status === 'unknown') {
+          uncertain = true;
+          continue;
+        }
+        requireState(action.status === 'reported', 'task source action status is invalid');
+        const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
+        requireState(report.status === 'observed' && report.binding !== null,
+          'reported task source binding has no valid retained observed result');
+        if (request.attempt !== currentAttempt || request.thread_id !== threadId) continue;
+        const next = report.binding;
+        const authority = operation.authority as { source_authorization_sha256?: unknown; source_scope_digest?: unknown };
+        requireState(next.work_id === identity.work_id && next.attempt === currentAttempt && next.thread_id === threadId &&
+          next.canonical_host_root === this.#repositoryRoot && next.repository_id === identity.repository_id &&
+          sameJson(next.project_ids, identity.project_ids) && next.config_digest === work.binding.config_digest &&
+          next.source_scope.digest === work.binding.work_source_revision &&
+          authority.source_scope_digest === work.binding.work_source_revision &&
+          typeof authority.source_authorization_sha256 === 'string' && hashPattern.test(authority.source_authorization_sha256) &&
+          next.project_context_digest === projectContext.project_context_digest &&
+          next.common_dir === next.canonical_host_common_dir,
+          'reported task source binding differs from current Host identity, configuration or scope');
+        requireState(binding === null, 'multiple current task source bindings are ambiguous');
+        const stats = lstatSync(next.source_root);
+        requireState(stats.isDirectory() && !stats.isSymbolicLink() && realpathSync.native(next.source_root) === next.source_root,
+          'reported task source root is not a physical canonical directory');
+        binding = validateTaskSourceBinding(next);
+      }
+      requireState(!uncertain, 'task source action outcome remains unknown; Source root resolution is blocked');
+      const sourceRoot = binding?.source_root ?? repositoryRoot,
+        currentSource = snapshotDeclaredSources(
+          requireSafeRepositoryAccess(sourceRoot),
+          durableSourceScope!.entries.map((entry) => entry.path),
+        );
+      requireState(
+        compareScopedSourceSnapshots(durableSourceScope!, currentSource).length === 0,
+        'current task Source bytes differ from the durable Host journal scope',
+      );
+      return binding;
+    }).deferred();
+  }
+
+  /** Read original scoped bytes for historical release; this grants no current execution rights. */
+  snapshotHistoricalTaskSourceSources(input: {
+    identity: WorkIdentity;
+    threadId: string;
+    attempt: number;
+    canonicalHostRoot: string;
+    paths: readonly string[];
+  }): ScopedSourceSnapshot {
+    requireState(!this.#database.inTransaction && Number.isSafeInteger(input.attempt) && input.attempt > 0,
+      'historical task source read context is invalid');
+    const access = requireSafeRepositoryAccess(input.canonicalHostRoot);
+    requireState(deriveWorkspaceId(input.identity.repository_id, input.canonicalHostRoot) === this.#workspaceId &&
+      (this.#repositoryRoot === undefined || this.#repositoryRoot === input.canonicalHostRoot),
+      'historical task source canonical Host root differs');
+    return this.#database.transaction(() => {
+      const host = this.#read(input.identity), work = host.work;
+      requireState(work && host.ledger && work.binding.lifecycle_work_id === input.identity.work_id &&
+        work.binding.repository_id === input.identity.repository_id && sameJson(work.binding.project_ids, input.identity.project_ids) &&
+        (work.lease?.thread_id === input.threadId || work.lease === null && host.ledger.operations.some((operation) =>
+          operation.kind === 'release' && operation.work_id === input.identity.work_id && operation.thread_id === input.threadId)),
+        'historical task source original owner differs');
+      requireState(sameJson([...input.paths].sort(), [...work.lifecycle.scope.fingerprint_paths].sort()),
+        'historical task source paths differ from original fingerprint scope');
+      const journal = this.#database.query(
+        'SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      ).get(this.#workspaceId, input.identity.work_id, input.attempt) as { payload: string; digest: string } | null;
+      const journalState = journal ? JSON.parse(journal.payload) as Record<string, unknown> : null;
+      requireState(journal && journalState?.schema === 'MastraSessionLedger/v1' &&
+        journalState.workspace_id === this.#workspaceId && journalState.work_id === input.identity.work_id &&
+        journalState.attempt === input.attempt && canonicalJsonDigest(journalState) === journal.digest,
+        'historical task source original journal is missing or changed');
+      const tables = this.#database.query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('agent_host_task_source_binding_operation','agent_host_task_source_binding_action')",
+      ).all() as { name: string }[];
+      requireState(!tables.some((table) => table.name === 'agent_host_task_source_binding_action') || tables.length === 2,
+        'historical task source action has no preparation storage');
+      if (tables.length === 2) requireState(!this.#database.query(
+        'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
+      ).get(this.#workspaceId), 'orphan historical task source action prevents Source root resolution');
+      const reservedTickets = host.ledger.tickets.filter((ticket) =>
+        ticket.work_id === input.identity.work_id && ticket.ticket_id.startsWith('task-source-ticket:') && ticket.status !== 'queued',
+      );
+      requireState(reservedTickets.length === 0 || tables.length === 2,
+        'historical reserved task source ticket has no effect storage');
+      let sourceRoot: string | null = null;
+      if (tables.length === 2) {
+        const pairs = this.#database.query(
+          'SELECT p.operation_id,p.revision,p.payload,p.digest,p.request_id,p.request_digest,a.revision AS action_revision,a.payload AS action_payload,a.digest AS action_digest FROM agent_host_task_source_binding_operation p LEFT JOIN agent_host_task_source_binding_action a ON a.workspace_id=p.workspace_id AND a.operation_id=p.operation_id WHERE p.workspace_id=?',
+        ).all(this.#workspaceId) as {
+          operation_id: string; revision: number; payload: string; digest: string; request_id: string; request_digest: string;
+          action_revision: number | null; action_payload: string | null; action_digest: string | null;
+        }[];
+        requireState(reservedTickets.every((ticket) => pairs.some((pair) =>
+          taskSourceTicketId(validateTaskSourceBindingRequest(JSON.parse(pair.payload).request)) === ticket.ticket_id &&
+          pair.action_payload !== null,
+        )), 'historical reserved task source ticket has no retained effect record');
+        for (const pair of pairs) {
+          const operation = JSON.parse(pair.payload) as Record<string, unknown>;
+          const request = validateTaskSourceBindingRequest(operation.request);
+          if (request.work_id !== input.identity.work_id || pair.action_payload === null) continue;
+          const action = JSON.parse(pair.action_payload) as Record<string, unknown>;
+          requireState(Object.keys(operation).sort().join(',') ===
+              'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+            operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
+            operation.operation_id === pair.operation_id && operation.revision === pair.revision &&
+            operation.request_id === pair.request_id && operation.request_digest === pair.request_digest &&
+            canonicalJsonDigest(operation) === pair.digest && canonicalJsonDigest(request) === pair.request_digest &&
+            request.operation_id === pair.operation_id && request.request_id === pair.request_id &&
+            Object.keys(action).sort().join(',') ===
+              'command_argv,created_at,issue_id,operation_digest,operation_id,policy_decision,prepared_state_version,recovery_report,recovery_report_digest,report,report_digest,request_id,revision,schema,status,updated_at' &&
+            action.schema === 'TaskSourceBindingAction/v1' && action.operation_id === pair.operation_id &&
+            action.request_id === pair.request_id && action.revision === pair.action_revision &&
+            canonicalJsonDigest(action) === pair.action_digest && action.operation_digest === pair.digest &&
+            sameJson(action.prepared_state_version, { revision: pair.revision, digest: pair.digest }),
+            'historical task source action/preparation integrity differs');
+          if (request.operation === 'inspect') continue;
+          requireState(action.status === 'reported', 'historical task source effect remains issued or unknown');
+          const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
+          requireState(report.status === 'observed' && report.binding !== null && canonicalJsonDigest(report) ===
+            (action.recovery_report !== null ? action.recovery_report_digest : action.report_digest),
+            'historical task source has no valid retained observed result');
+          if (request.attempt !== input.attempt) continue;
+          const binding = report.binding;
+          requireState(sourceRoot === null && request.thread_id === input.threadId &&
+            binding.thread_id === input.threadId && binding.work_id === input.identity.work_id && binding.attempt === input.attempt &&
+            binding.repository_id === input.identity.repository_id && sameJson(binding.project_ids, input.identity.project_ids) &&
+            binding.canonical_host_root === input.canonicalHostRoot && binding.config_digest === work.binding.config_digest &&
+            binding.source_scope.digest === work.binding.work_source_revision &&
+            (operation.authority as { source_scope_digest?: unknown })?.source_scope_digest === work.binding.work_source_revision &&
+            binding.project_context_digest === request.project_context_digest && binding.common_dir === binding.canonical_host_common_dir,
+            'historical task source retained binding is foreign or ambiguous');
+          sourceRoot = binding.source_root;
+        }
+      }
+      return snapshotDeclaredSources(sourceRoot === null ? access : requireSafeRepositoryAccess(sourceRoot), input.paths);
+    }).deferred();
+  }
+
+  /** Snapshot only the Work-declared source files from its current bound tree. */
+  snapshotCurrentTaskSourceSources(
+    identity: WorkIdentity,
+    threadId: string,
+    paths: readonly string[],
+    attempt?: number,
+  ): ScopedSourceSnapshot {
+    requireState(this.#repositoryRoot !== undefined, 'task source snapshot requires a configured canonical Host root');
+    const binding = this.readCurrentTaskSourceBinding(identity, threadId, attempt),
+      work = this.readHostStateSnapshot(identity).work;
+    requireState(work, 'task source snapshot Work is missing');
+    const allowedPaths = new Set([...work.lifecycle.scope.allowed_paths, ...work.lifecycle.scope.implementation_paths]);
+    requireState(Array.isArray(paths) && paths.length > 0 && paths.every((relative) =>
+      typeof relative === 'string' && [...allowedPaths].some((allowed) =>
+        relative === allowed || relative.startsWith(allowed.replace(/\/$/, '') + '/'))),
+      'task source snapshot paths exceed current Work scope');
+    const sourceRoot = binding?.source_root ?? this.#repositoryRoot;
+    return snapshotDeclaredSources(requireSafeRepositoryAccess(sourceRoot), paths);
+  }
+
+  /** Consume current TaskSource policy evidence and issue one durable fixed Git action. */
+  async issueTaskSourceBindingOperation(input: {
+    readonly request: TaskSourceBindingRequest;
+    readonly identity: WorkIdentity;
+  }): Promise<Readonly<Record<string, unknown>>> {
+    requireState(input !== null && typeof input === 'object' &&
+      Object.keys(input).sort().join(',') === 'identity,request', 'task source issue input invalid');
+    const request = validateTaskSourceBindingRequest(input.request), identity = snapshot(input.identity);
+    requireState(this.#repositoryRoot !== undefined &&
+      (request.operation !== 'propose-create' || this.#verifyTaskSourceMutation !== undefined),
+      'trusted task source mutation policy verifier is unavailable');
+    requireState(request.work_id === identity.work_id && request.repository_id === identity.repository_id &&
+      sameJson(request.project_ids, identity.project_ids), 'task source request identity differs from the Host identity');
+    const tableExists = (): boolean => Boolean(this.#database.query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
+    ).get());
+    const readAction = (operationId: string) => {
+      if (!tableExists()) return null;
+      const actionRow = this.#database.query(
+        'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+      ).get(this.#workspaceId, operationId) as TaskSourceActionRow | null;
+      if (!actionRow) return null;
+      const operationRow = this.#database.query(
+        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+      ).get(this.#workspaceId, operationId) as TaskSourceOperationRow | null;
+      requireState(operationRow, 'task source action has no prepared operation');
+      const pair = validateTaskSourceActionPair(operationRow, actionRow);
+      return { action: pair.action, state_version: { revision: actionRow.revision, digest: actionRow.digest } };
+    };
+    const result = (status: string, stored: ReturnType<typeof readAction>, argv: unknown = null) => snapshot({
+      schema: 'TaskSourceBindingActionResult/v1', status, operation_id: request.operation_id,
+      request_id: request.request_id, action: stored?.action ?? null,
+      state_version: stored?.state_version ?? null, command_argv: argv,
+    });
+    const existing = this.#database.transaction(() => {
+      this.#assertMaintenanceAvailable();
+      const action = readAction(request.operation_id);
+      if (!action) return null;
+      const row = this.#database.query(
+        'SELECT payload,digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+      ).get(this.#workspaceId, request.operation_id) as { payload: string; digest: string } | null;
+      requireState(row, 'issued task source operation preparation is missing');
+      const prepared = JSON.parse(row.payload) as Record<string, unknown>;
+      requireState(prepared.request_id === request.request_id && sameJson(prepared.request, request) &&
+        (action.action as { operation_digest?: unknown }).operation_digest === row.digest,
+        'task source action retry changed its prepared request');
+      return action;
+    }).deferred();
+    if (existing) return result('already_issued', existing);
+
+    const prepared = this.#database.transaction(() => {
+      this.#assertMaintenanceAvailable();
+      const row = this.#database.query(
+        'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+      ).get(this.#workspaceId, request.operation_id) as {
+        revision: number; payload: string; digest: string; request_id: string; request_digest: string;
+      } | null;
+      requireState(row, 'task source operation must be prepared before issue');
+      const operation = JSON.parse(row.payload) as Record<string, unknown>;
+      requireState(Object.keys(operation).sort().join(',') ===
+        'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+        operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
+        operation.revision === row.revision && operation.operation_id === request.operation_id &&
+        operation.request_id === row.request_id && operation.request_digest === row.request_digest &&
+        canonicalJsonDigest(operation) === row.digest && row.request_digest === canonicalJsonDigest(request) &&
+        sameJson(operation.request, request), 'task source prepared operation is stale or changed');
+      const before = this.#read(identity);
+      requireState(before.work && before.ledger && before.workVersion && before.ledgerVersion &&
+        before.work.execution.status === 'active' && before.work.lease?.thread_id === request.thread_id &&
+        before.work.binding.lifecycle_work_id === request.work_id &&
+        before.work.binding.config_digest === request.config_digest &&
+        before.work.binding.work_source_revision === (operation.authority as { source_scope_digest?: unknown }).source_scope_digest,
+        'task source issue has no matching active Host owner or scope');
+      const reservation = taskSourceReservationForRequest(this.#repositoryRoot!, before, request),
+        exactHostCas = before.workVersion.revision === request.expected_host.work.revision &&
+          before.workVersion.digest === request.expected_host.work.digest &&
+          before.ledgerVersion.revision === request.expected_host.ledger.revision &&
+          before.ledgerVersion.digest === request.expected_host.ledger.digest;
+      requireState(exactHostCas || reservation !== null,
+        'task source issue Host compare-and-swap changed outside its canonical reservation');
+      requireState(before.maintenanceGeneration === request.expected_host.maintenance_generation,
+        'task source issue maintenance generation changed');
+      const journalRow = this.#database.query(
+        'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+      ).get(this.#workspaceId, request.work_id) as { attempt: number; revision: number; payload: string; digest: string } | null;
+      requireState(journalRow && journalRow.attempt === request.expected_host.journal.attempt &&
+        journalRow.revision === request.expected_host.journal.version.revision &&
+        journalRow.digest === request.expected_host.journal.version.digest,
+        'task source issue journal compare-and-swap changed');
+      const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
+        journalScope = validateTaskSourceJournalScope(journal.source_scope);
+      requireState(canonicalJsonDigest(journal) === journalRow.digest && journalScope.digest.length === 64,
+        'task source issue journal or current scope integrity differs');
+      return { operation, state_version: { revision: row.revision, digest: row.digest }, hostSnapshot: before };
+    }).deferred();
+
+    let decision: TaskSourceMutationPolicyDecision | null = null;
+    let policyRequest: TaskSourceMutationPolicyRequest | null = null;
+    if (request.operation === 'propose-create') {
+      policyRequest = createTaskSourceMutationPolicyRequest({
+        repositoryRoot: this.#repositoryRoot,
+        operation: prepared.operation,
+        preparedStateVersion: prepared.state_version,
+        hostSnapshot: prepared.hostSnapshot,
+      });
+      decision = await this.#verifyTaskSourceMutation!({
+        repositoryRoot: this.#repositoryRoot,
+        request: policyRequest,
+        operation: prepared.operation,
+        stateVersion: prepared.state_version,
+        hostSnapshot: prepared.hostSnapshot,
+      });
+      requireState(decision !== null && typeof decision === 'object' &&
+        Object.keys(decision).sort().join(',') ===
+          'authorization,edictum_evaluation,edictum_operation,operation_hash,operation_id,preflight_evidence_digest,prepared_record_cas,request_id,source_authorization_reference,source_authorization_sha256' &&
+        decision.operation_id === policyRequest.operation_id && decision.request_id === policyRequest.request_id &&
+        decision.operation_hash === policyRequest.operation_hash && decision.authorization?.decision === 'allow' &&
+        decision.edictum_operation?.operation_hash === policyRequest.operation_hash &&
+        decision.edictum_evaluation?.action === 'pending_approval' &&
+        canonicalJsonDigest(decision.prepared_record_cas) === canonicalJsonDigest(policyRequest.prepared_record_cas) &&
+        hashPattern.test(decision.preflight_evidence_digest) && hashPattern.test(decision.source_authorization_sha256) &&
+        decision.source_authorization_sha256 ===
+          (prepared.operation.authority as { source_authorization_sha256?: unknown }).source_authorization_sha256,
+        'task source mutation policy evidence is invalid or denied');
+    }
+
+    const commandArgv = policyRequest
+      ? [policyRequest.proposed_argv.slice(1)]
+      : taskSourceGitArgv(resolveTaskSourceRoot(this.#repositoryRoot, request.source_root));
+    const committed = this.#transactionWithProducerFence(() => {
+      this.#assertReconciliationWritesAllowed();
+      const current = this.#read(identity);
+      requireState(current.work && current.workVersion && current.ledgerVersion,
+        'task source owner changed during policy evaluation');
+      const journalRow = this.#database.query(
+        'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+      ).get(this.#workspaceId, request.work_id) as {
+        attempt: number; revision: number; payload: string; digest: string;
+      } | null;
+      requireState(journalRow, 'task source issue requires the current Host journal');
+      const currentJournal = JSON.parse(journalRow.payload) as Record<string, unknown>;
+      requireState(
+        journalRow.attempt === request.attempt && canonicalJsonDigest(currentJournal) === journalRow.digest,
+        'task source issue journal integrity differs during policy evaluation',
+      );
+      this.#assertLiveTaskSourceOwner(current, request, identity, {
+        attempt: journalRow.attempt,
+        state: currentJournal,
+      });
+      const reservation = taskSourceReservationForRequest(this.#repositoryRoot!, current, request),
+        exactHostCas = current.workVersion.revision === request.expected_host.work.revision &&
+          current.workVersion.digest === request.expected_host.work.digest &&
+          current.ledgerVersion.revision === request.expected_host.ledger.revision &&
+          current.ledgerVersion.digest === request.expected_host.ledger.digest;
+      requireState(exactHostCas || reservation !== null,
+        'task source Host compare-and-swap changed outside its canonical reservation');
+      requireState(current.maintenanceGeneration === request.expected_host.maintenance_generation,
+        'task source maintenance generation changed during policy evaluation');
+      const row = this.#database.query(
+        'SELECT revision,payload,digest,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+      ).get(this.#workspaceId, request.operation_id) as { revision: number; payload: string; digest: string; request_digest: string } | null;
+      requireState(row && row.digest === prepared.state_version.digest && row.revision === prepared.state_version.revision &&
+        row.request_digest === canonicalJsonDigest(request), 'task source prepared record changed during policy evaluation');
+      if (request.operation !== 'inspect') {
+        const previousActions = tableExists() ? this.#database.query(
+          'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id<>?',
+        ).all(this.#workspaceId, request.operation_id) as { operation_id: string }[] : [];
+        for (const previous of previousActions) {
+          const action = readAction(previous.operation_id)!.action;
+          const priorRow = this.#database.query(
+            'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+          ).get(this.#workspaceId, previous.operation_id) as {
+            revision: number; payload: string; digest: string; request_id: string; request_digest: string;
+          } | null;
+          requireState(priorRow, 'pending TaskSource action preparation is missing');
+          const operation = JSON.parse(priorRow.payload) as Record<string, unknown>;
+          requireState(
+            Object.keys(operation).sort().join(',') ===
+              'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+              operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
+              typeof operation.created_at === 'string' && Number.isFinite(Date.parse(operation.created_at)) &&
+              operation.revision === priorRow.revision && operation.operation_id === previous.operation_id &&
+              operation.request_id === priorRow.request_id && operation.request_digest === priorRow.request_digest &&
+              canonicalJsonDigest(operation) === priorRow.digest &&
+              action.operation_digest === priorRow.digest && action.request_id === priorRow.request_id &&
+              sameJson(action.prepared_state_version, { revision: priorRow.revision, digest: priorRow.digest }),
+            'pending TaskSource action preparation integrity differs',
+          );
+          const priorRequest = validateTaskSourceBindingRequest(operation.request);
+          requireState(priorRequest.operation_id === previous.operation_id &&
+            priorRequest.request_id === priorRow.request_id && canonicalJsonDigest(priorRequest) === priorRow.request_digest,
+            'pending TaskSource request integrity differs');
+          if (action.status === 'reported') {
+            requireState(action.recovery_report !== null || action.report !== null,
+              'reported TaskSource action has no retained observed result');
+            const report = validateTaskSourceBindingExchange(priorRequest, action.recovery_report ?? action.report);
+            requireState(report.status === 'observed' && canonicalJsonDigest(report) ===
+              (action.recovery_report !== null ? action.recovery_report_digest : action.report_digest),
+              'reported TaskSource action lacks a valid retained observed result');
+            requireState(
+              priorRequest.operation === 'inspect' || priorRequest.work_id !== request.work_id ||
+                priorRequest.attempt !== request.attempt || priorRequest.thread_id !== request.thread_id,
+              'this TaskSource attempt already has a reported observed binding',
+            );
+            continue;
+          }
+          requireState(priorRequest.operation === 'inspect' || priorRequest.work_id !== request.work_id,
+            'TaskSource resources are already claimed by an issued or unknown operation for this Work');
+        }
+        const prior = taskSourcePriorTicket(current.ledger!, current.work, request);
+        requireState(prior && prior.status === 'active' && prior.expires_at !== null &&
+          timestamp(prior.expires_at) > Date.now() && current.work.lease?.ticket_id === prior.ticket_id,
+          'TaskSource reservation has no current active predecessor ticket');
+        const reservation = taskSourceReservationResources(this.#repositoryRoot!, request, current.work, prior),
+          ownId = taskSourceTicketId(request),
+          existingTicket = current.ledger!.tickets.find((ticket) => ticket.ticket_id === ownId) ?? null,
+          sequence = existingTicket?.sequence ?? current.ledger!.next_sequence,
+          resourceKeys = new Set(reservation.resources.map(coordinationResourceKey)),
+          conflicts = current.ledger!.tickets.some((candidate) =>
+            candidate.ticket_id !== ownId && candidate.ticket_id !== prior.ticket_id &&
+            (['active', 'ready_for_handoff', 'blocked'].includes(candidate.status) ||
+              (candidate.status === 'queued' && candidate.sequence < sequence)) &&
+            candidate.exclusive_resources.some((resource) => resourceKeys.has(coordinationResourceKey(resource))),
+          );
+        if (existingTicket) {
+          taskSourceTicketMatches(current.ledger!, current.work, request, reservation.resources);
+          requireState(taskSourceExpectedWorkMatches(
+            current.work,
+            current.ledger!,
+            request,
+            reservation.resources,
+            reservation.added,
+            existingTicket,
+          ), 'TaskSource reservation is not a continuation of its original Work scope');
+        }
+        if (conflicts && existingTicket?.status === 'queued')
+          return { status: 'queued' as const, action: null, state_version: null };
+
+        const queued = conflicts,
+          now = new Date().toISOString(),
+          expiry = queued ? null : new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          ticketId = ownId,
+          claimId = taskSourceClaimId(request),
+          generation = existingTicket?.generation ?? current.ledger!.open_generation,
+          sourceTicket: CoordinationTicket = {
+            ...prior,
+            ticket_id: ticketId,
+            sequence,
+            generation,
+            contour_keys: [...new Set([...prior.contour_keys, ...reservation.resources])].sort(),
+            exclusive_resources: [...reservation.resources],
+            status: queued ? 'queued' : 'active',
+            claim_ids: queued ? [] : [claimId],
+            expires_at: expiry,
+            active_resources: queued ? [] : [...reservation.resources],
+            blocked_resources: queued ? [...reservation.resources] : [],
+            created_at: existingTicket?.created_at ?? now,
+          },
+          additions = reservation.added.filter((resource) => !current.work!.binding.allowed_resources.includes(resource)),
+          nextWork = {
+            ...current.work!,
+            revision: current.work!.revision + 1,
+            binding: {
+              ...current.work!.binding,
+              allowed_resources: [...new Set([...current.work!.binding.allowed_resources, ...reservation.added])].sort(),
+            },
+            lifecycle: { ...current.work!.lifecycle, revision: current.work!.lifecycle.revision + 1 },
+            lease: queued ? current.work!.lease : { ticket_id: ticketId, thread_id: request.thread_id, generation },
+          };
+        const releasedPrior: CoordinationTicket = {
+          ...prior,
+          status: 'released',
+          active_resources: [],
+          blocked_resources: [],
+          expires_at: null,
+        };
+        const nextTickets = current.ledger!.tickets.map((ticket) =>
+          ticket.ticket_id === ticketId ? sourceTicket :
+            !queued && ticket.ticket_id === prior.ticket_id ? releasedPrior : ticket,
+        );
+        if (!existingTicket) nextTickets.push(sourceTicket);
+        const nextClaims = current.ledger!.claims.map((claim) =>
+          !queued && claim.ticket_id === prior.ticket_id && claim.status === 'active'
+            ? { ...claim, status: 'released' as const, renewed_at: now }
+            : claim,
+        );
+        if (!queued) nextClaims.push({
+          schema: 'WorkstreamClaim/v1',
+          claim_id: claimId,
+          ticket_id: ticketId,
+          work_id: request.work_id,
+          thread_id: request.thread_id,
+          generation,
+          resources: [...reservation.resources],
+          lease_expires_at: expiry!,
+          status: 'active',
+          created_at: now,
+          renewed_at: now,
+        });
+        const nextOperations = !queued
+          ? [...current.ledger!.operations, {
+              schema: 'CoordinationOperation/v1',
+              operation_id: 'task-source-release-' + ticketId,
+              kind: 'release',
+              ticket_id: prior.ticket_id,
+              work_id: prior.work_id,
+              thread_id: prior.thread_id,
+              source_revision: prior.source_revision,
+              resources: [...prior.exclusive_resources],
+              from_ledger_revision: current.ledger!.revision,
+              to_ledger_revision: current.ledger!.revision + 1,
+              decided_by: request.thread_id,
+              decision_pointer: request.source_root!,
+              created_at: now,
+            }]
+          : current.ledger!.operations;
+        const nextLedger = checkedLedger({
+          ...current.ledger!,
+          revision: current.ledger!.revision + 1,
+          next_sequence: current.ledger!.next_sequence + Number(!existingTicket),
+          tickets: nextTickets,
+          claims: nextClaims,
+          operations: nextOperations,
+        });
+        this.#commitHostState({
+          expectedWork: current.workVersion,
+          expectedLedger: current.ledgerVersion,
+          expectedMaintenanceGeneration: current.maintenanceGeneration,
+          nextWork,
+          nextLedger,
+        }, undefined, true, additions);
+        if (queued) return { status: 'queued' as const, action: null, state_version: null };
+      }
+      const action = snapshot({
+        schema: 'TaskSourceBindingAction/v1', operation_id: request.operation_id, request_id: request.request_id,
+        operation_digest: row.digest, prepared_state_version: prepared.state_version, issue_id: randomUUID(),
+        command_argv: commandArgv, policy_decision: request.operation === 'propose-create' ? decision : null,
+        status: 'issued' as const, report: null, report_digest: null,
+        recovery_report: null, recovery_report_digest: null, revision: 1,
+        created_at: new Date().toISOString(), updated_at: null,
+      });
+      const payload = canonicalJson(action), digest = canonicalJsonDigest(action);
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_task_source_binding_action (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
+      );
+      this.#database.query(
+        'INSERT INTO agent_host_task_source_binding_action (workspace_id,operation_id,request_id,revision,payload,digest) VALUES(?,?,?,?,?,?)',
+      ).run(this.#workspaceId, request.operation_id, request.request_id, action.revision, payload, digest);
+      return { status: 'issued' as const, action, state_version: { revision: action.revision, digest } };
+    }).immediate();
+    return committed.status === 'queued'
+      ? result('queued', null)
+      : result('issued', committed, commandArgv);
+  }
+
+  /** Persist one exact cooperative report; uncertain outcomes remain inspect-only and keep their claims. */
+  reportTaskSourceBindingOperation(input: {
+    readonly request: TaskSourceBindingRequest;
+    readonly identity: WorkIdentity;
+    readonly expectedActionStateVersion: StateVersion;
+    readonly report: TaskSourceBindingReport;
+  }): Readonly<Record<string, unknown>> {
+    requireState(input !== null && typeof input === 'object' &&
+      Object.keys(input).sort().join(',') === 'expectedActionStateVersion,identity,report,request',
+      'task source report input invalid');
+    const request = validateTaskSourceBindingRequest(input.request), identity = snapshot(input.identity),
+      report = validateTaskSourceBindingExchange(request, input.report);
+    requireState(request.work_id === identity.work_id && request.repository_id === identity.repository_id &&
+      sameJson(request.project_ids, identity.project_ids), 'task source report identity differs from the Host');
+    const stored = this.#transactionWithProducerFence(() => {
+      this.#assertMaintenanceAvailable();
+      const actionRow = this.#database.query(
+        'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+      ).get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
+      requireState(actionRow, 'task source report has no issued Host action');
+      const operationRow = this.#database.query(
+        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+      ).get(this.#workspaceId, request.operation_id) as TaskSourceOperationRow | null;
+      requireState(operationRow, 'task source report has no prepared operation');
+      const action = validateTaskSourceActionPair(operationRow, actionRow, request).action,
+        reportDigest = canonicalJsonDigest(report);
+      if (action.status === 'reported' && action.report_digest === reportDigest ||
+          action.status === 'reported' && action.recovery_report_digest === reportDigest) {
+        return { action, state_version: { revision: actionRow.revision, digest: actionRow.digest } };
+      }
+      const recoveringUnknown = action.status === 'unknown';
+      if (recoveringUnknown) {
+        requireState(action.recovery_report === null && action.recovery_report_digest === null && report.status === 'observed',
+          'uncertain task source action accepts only one later observed recovery report');
+      } else requireState(action.status === 'issued', 'task source action is not awaiting its first report');
+      requireState(actionRow.revision === input.expectedActionStateVersion.revision &&
+        actionRow.digest === input.expectedActionStateVersion.digest, 'task source report action CAS is stale or already settled');
+      if (report.status === 'observed') {
+        const current = this.#read(identity);
+        requireState(current.work && current.workVersion && current.ledgerVersion &&
+          current.work.execution.status === 'active' && current.work.lease?.thread_id === request.thread_id,
+          'observed task source report has no current Host owner');
+        if (request.operation === 'inspect') {
+          matchesExpected(current.workVersion, request.expected_host.work);
+          matchesExpected(current.ledgerVersion, request.expected_host.ledger);
+        } else {
+          const reservation = taskSourceReservationForRequest(this.#repositoryRoot!, current, request);
+          requireState(reservation?.ticket.status === 'active',
+            'observed TaskSource report has no exact active canonical reservation');
+        }
+        requireState(current.maintenanceGeneration === request.expected_host.maintenance_generation,
+          'observed task source report maintenance CAS changed');
+        const journalRow = this.#database.query(
+          'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+        ).get(this.#workspaceId, request.work_id) as { attempt: number; revision: number; payload: string; digest: string } | null;
+        requireState(journalRow && journalRow.attempt === request.expected_host.journal.attempt &&
+          journalRow.revision === request.expected_host.journal.version.revision &&
+          journalRow.digest === request.expected_host.journal.version.digest,
+          'observed task source report journal CAS changed');
+        const currentJournal = JSON.parse(journalRow.payload) as { source_scope?: unknown };
+        const currentJournalScope = validateTaskSourceJournalScope(currentJournal.source_scope);
+        assertTaskSourceJournalScopeWithinWork(currentJournalScope, current.work);
+        if (request.operation !== 'inspect') this.#assertLiveTaskSourceOwner(current, request, identity, {
+          attempt: journalRow.attempt,
+          state: currentJournal,
+        });
+        const binding = report.binding;
+        requireState(binding && binding.source_scope.digest === current.work.binding.work_source_revision &&
+          binding.source_scope.digest !== undefined && currentJournalScope.digest.length === 64 &&
+          binding.cwd === binding.source_root,
+          'observed task source binding differs from its original Work authorization or working root');
+      }
+      const next = snapshot(recoveringUnknown
+        ? { ...action, status: 'reported', recovery_report: report, recovery_report_digest: reportDigest,
+            revision: actionRow.revision + 1, updated_at: new Date().toISOString() }
+        : { ...action, status: report.status === 'observed' ? 'reported' : 'unknown',
+            report, report_digest: reportDigest, revision: actionRow.revision + 1, updated_at: new Date().toISOString() });
+      const payload = canonicalJson(next), digest = canonicalJsonDigest(next);
+      const update = this.#database.query(
+        'UPDATE agent_host_task_source_binding_action SET revision=?,payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND revision=? AND digest=?',
+      ).run(next.revision, payload, digest, this.#workspaceId, request.operation_id, actionRow.revision, actionRow.digest);
+      requireState(update.changes === 1, 'task source report compare-and-swap conflict');
+      return { action: next, state_version: { revision: next.revision, digest } };
+    }).immediate();
+    return snapshot({ schema: 'TaskSourceBindingActionResult/v1', status: stored.action.status,
+      operation_id: request.operation_id, request_id: request.request_id, action: stored.action,
+      state_version: stored.state_version, command_argv: null });
   }
 
   /** Bundle-owned current-v1 normalization with one atomic operation record and exact recovery preimages. */
@@ -6343,6 +8221,554 @@ export class HostStateStore {
       this.#onReconciledWorkWrite(input.identity, current.workVersion, version(next)!);
       return this.#read(input.identity);
     }).immediate();
+  }
+  /** Continue one captured known-terminal body under the same original owner and task attempt. */
+  async continueDeliveredWork(request: DeliveredWorkContinuationRequest): Promise<DeliveredWorkContinuationResult> {
+    requireState(this.#verifyDeliveredWorkContinuation, 'trusted delivered-work continuation verifier required');
+    const contract = await import('./orchestration/delivered-work-continuation.js'),
+      input = snapshot(contract.validateDeliveredWorkContinuationRequest(request));
+    requireState(
+      input.action.kind === 'historical_terminal_review' &&
+        input.expectedMaintenanceGeneration === input.sourceTransition.transition.fence.generation,
+      'only the source-proven historical terminal review is supported by this finite continuation',
+    );
+    const actionId = input.action.capture.action_id,
+      lookupExisting = (): DeliveredWorkContinuationReceipt | null => {
+        const table = this.#database
+          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'")
+          .get();
+        if (!table) return null;
+        const row = this.#database
+          .query(
+            'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+          )
+          .get(this.#workspaceId, input.identity.work_id, input.attempt, actionId) as {
+          payload: string;
+          digest: string;
+        } | null;
+        if (!row) return null;
+        const receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
+        requireState(
+          canonicalJsonDigest(receipt) === row.digest &&
+            receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
+            receipt.request_digest === canonicalJsonDigest(input) &&
+            receipt.continuation_id === canonicalJsonDigest({
+              identity: input.identity,
+              attempt: input.attempt,
+              action_id: actionId,
+              transition_digest: input.sourceTransition.transition_digest,
+            }),
+          'delivered-work continuation exact retry differs from its retained receipt',
+        );
+        return snapshot(receipt);
+      },
+      existing = lookupExisting();
+    if (existing) {
+      const current = this.readHostStateSnapshot(input.identity);
+      return snapshot({ status: 'already_continued', snapshot: current, receipt: existing, action: null });
+    }
+
+    const inspect = (
+      current: HostStateSnapshot,
+      capture: HistoricalTerminalSynthesisCaptureReceipt | null,
+      journal: MastraSessionLedgerState | null,
+      journalVersion: StateVersion | null,
+    ): void => {
+      const work = current.work,
+        ledger = current.ledger,
+        selected = actionId;
+      requireState(
+        work && ledger && current.workVersion && current.ledgerVersion && capture && journal && journalVersion &&
+          sameJson(current.workVersion, input.expectedWork) &&
+          sameJson(current.ledgerVersion, input.expectedLedger) &&
+          sameJson(journalVersion, input.expectedJournal) &&
+          sameJson(capture.work_version, input.expectedWork) &&
+          sameJson(capture.ledger_version, input.expectedLedger) &&
+          sameJson(capture.journal_version, input.expectedJournal) &&
+          sameJson(workIdentity(work), input.identity) &&
+          work.execution.status === 'suspended' &&
+          work.execution.phase === 'awaiting_followup' &&
+          work.lease === null &&
+          work.lifecycle.phase === 'INTAKE' &&
+          work.lifecycle.seal === null &&
+          work.lifecycle.assurance.review_generation === 0 &&
+          work.lifecycle.assurance.delivery_cycle_id === null &&
+          work.lifecycle.next_action ===
+            'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' &&
+          work.binding.config_digest === input.priorConfigDigest &&
+          work.binding.runtime_code_digest === input.priorRuntimeCodeDigest &&
+          input.sourceTransition.transition.fence.workspace_id === this.#workspaceId &&
+          input.sourceTransition.transition.fence.binding.operation_id === input.forwardOperationId &&
+          sameJson(input.sourceTransition.transition.fence.binding.project_ids, input.identity.project_ids) &&
+          work.binding.work_source_revision === journal.source_scope?.digest &&
+          work.execution.run_id === journal.run_id &&
+          !work.execution.assignment_attempts.some((attempt) => attempt.status === 'started' || attempt.status === 'uncertain') &&
+          capture.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
+          capture.identity.work_id === input.identity.work_id &&
+          capture.attempt === input.attempt &&
+          capture.action_id === selected &&
+          capture.terminal_status === 'known_terminal_unaccepted' &&
+          capture.task_status === 'unfinished' &&
+          capture.accepted_result === false &&
+          capture.rights_granted === false &&
+          capture.runtime_acceptance === false &&
+          capture.request.native_session_handle === input.nativeSessionHandle &&
+          capture.request.user_request_pointer === input.originalRequestPointer &&
+          capture.body_byte_length > 0 &&
+          Buffer.from(capture.body_base64, 'base64').byteLength === capture.body_byte_length &&
+          createHash('sha256').update(Buffer.from(capture.body_base64, 'base64')).digest('hex') === capture.body_sha256 &&
+          actionId === input.action.capture.action_id &&
+          input.action.capture.issue_id === capture.issue_id &&
+          input.action.capture.receipt_digest === canonicalJsonDigest(capture) &&
+          input.action.capture.body_sha256 === capture.body_sha256 &&
+          input.action.capture.body_ref === capture.provenance.body_ref &&
+          input.action.original_request_pointer === capture.request.user_request_pointer &&
+          journal.schema === 'MastraSessionLedger/v1' &&
+          journal.workspace_id === this.#workspaceId &&
+          journal.work_id === input.identity.work_id &&
+          journal.attempt === input.attempt &&
+          journal.run_id === work.execution.run_id &&
+          journal.source_scope?.digest === work.binding.work_source_revision &&
+          journal.corrective_execution == null &&
+          journal.research_wave_exposure === undefined &&
+          input.action.workflow_id === work.binding.workflow_id &&
+          input.action.request.workflow_id === work.binding.workflow_id &&
+          input.action.request.run_id === work.execution.run_id &&
+          input.action.request.config_digest === input.targetConfigDigest &&
+          input.action.request.scope_digest === input.currentSourceScope.digest &&
+          input.action.request.stage_id === 'validate_parallel' &&
+          input.action.request.role === 'correctness-validator' &&
+          input.action.request.assignment_index === 0 &&
+          input.action.request.corrective_execution === undefined,
+        'original known-terminal work, captured body, owner or current review action changed',
+      );
+      requireState(
+        sameJson(input.currentSourceScope.entries.map((entry) => entry.path), [...work.lifecycle.scope.allowed_paths].sort()) &&
+          sameJson(
+            contract.validateCurrentSourceScopeBridge({
+              original: journal.source_scope!,
+              current: input.currentSourceScope,
+              authorizedChanges: input.authorizedSourceChanges,
+            }),
+            input.currentSourceScope,
+          ),
+        'current task Source scope is not the exact authorized beforeimage bridge',
+      );
+      const unresolved = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].some(
+        (item) =>
+          (item.issue_id !== null && item.observation === null) ||
+          item.host_reservation !== undefined ||
+          item.research_activation !== undefined ||
+          item.research_normalization !== undefined,
+      );
+      requireState(!unresolved, 'issued or reserved action has an unresolved outcome and cannot be reissued');
+      const release = ledger.operations.at(-1),
+        priorTicket = release && ledger.tickets.find((entry) => entry.ticket_id === release.ticket_id),
+        priorClaims = priorTicket && ledger.claims.filter((entry) => entry.ticket_id === priorTicket.ticket_id);
+      requireState(
+        priorTicket?.status === 'released' &&
+          priorTicket.work_id === input.identity.work_id &&
+          priorTicket.repository_id === input.identity.repository_id &&
+          sameJson(priorTicket.project_ids, input.identity.project_ids) &&
+          priorTicket.integrations_digest === input.identity.integrations_digest &&
+          priorTicket.thread_id === input.nativeSessionHandle &&
+          priorTicket.source_revision === work.binding.work_source_revision &&
+          priorTicket.exclusive_resources.length === 1 &&
+          priorTicket.exclusive_resources[0] === 'execution:' + input.identity.work_id &&
+          priorTicket.expires_at === null &&
+          priorClaims?.length === 1 &&
+          priorClaims[0]!.status === 'released' &&
+          priorClaims[0]!.thread_id === input.nativeSessionHandle &&
+          priorClaims[0]!.work_id === input.identity.work_id &&
+          release?.kind === 'release' &&
+          release.ticket_id === priorTicket.ticket_id &&
+          release.work_id === input.identity.work_id &&
+          release.thread_id === input.nativeSessionHandle &&
+          release.source_revision === work.binding.work_source_revision &&
+          release.decision_pointer === input.originalRequestPointer &&
+          release.from_ledger_revision === capture.request.expected_ledger.revision &&
+          release.to_ledger_revision === input.expectedLedger.revision &&
+          !ledger.tickets.some(
+            (ticket) =>
+              ticket.ticket_id !== priorTicket.ticket_id &&
+              ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(ticket.status) &&
+              ticket.exclusive_resources.some((resource) => priorTicket.exclusive_resources.includes(resource)),
+          ),
+        'original execution owner release or FIFO position changed',
+      );
+    };
+
+    const first = this.readHostStateSnapshot(input.identity),
+      capture = this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId),
+      journalRow = this.#database
+        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null,
+      firstJournal = journalRow ? (JSON.parse(journalRow.payload) as MastraSessionLedgerState) : null,
+      firstJournalVersion = journalRow ? { revision: journalRow.revision, digest: journalRow.digest } : null;
+    this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+    inspect(first, capture, firstJournal, firstJournalVersion);
+    const expectedAuthorization = {
+      schema: 'VidaDeliveredWorkContinuationAuthorization/v1' as const,
+      request_digest: canonicalJsonDigest(input),
+      principal: this.deliveredWorkContinuationPrincipal!,
+      transition_digest: input.sourceTransition.transition_digest,
+      action_digest: canonicalJsonDigest(input.action),
+    };
+    const authorization = snapshot(await this.#verifyDeliveredWorkContinuation(input, first));
+    contract.validateDeliveredWorkContinuationAuthorization(
+      authorization,
+      input,
+      this.deliveredWorkContinuationPrincipal!,
+    );
+    requireState(
+      canonicalJsonDigest(authorization) === canonicalJsonDigest(expectedAuthorization),
+      'trusted Source continuation authorization differs from the accepted transition',
+    );
+
+    requireState(!this.#database.inTransaction, 'nested delivered-work continuation transaction forbidden');
+    return this.#transactionWithProducerFence(() => {
+      this.assertSessionProducerWriteAllowed();
+      this.#assertMaintenanceAvailable();
+      this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+      const current = this.#read(input.identity),
+        currentCapture = this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId),
+        currentJournalRow = this.#database
+          .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+          .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null,
+        currentJournal = currentJournalRow ? (JSON.parse(currentJournalRow.payload) as MastraSessionLedgerState) : null,
+        currentJournalVersion = currentJournalRow
+          ? { revision: currentJournalRow.revision, digest: currentJournalRow.digest }
+          : null;
+      inspect(current, currentCapture, currentJournal, currentJournalVersion);
+      const work = current.work!,
+        ledger = current.ledger!,
+        priorTicket = ledger.tickets.find((ticket) => ticket.status === 'released' && ticket.thread_id === input.nativeSessionHandle && ticket.source_revision === work.binding.work_source_revision && ticket.exclusive_resources.length === 1 && ticket.exclusive_resources[0] === 'execution:' + input.identity.work_id)!,
+        priorClaim = ledger.claims.find((claim) => claim.ticket_id === priorTicket.ticket_id && claim.status === 'released')!,
+        sequence = ledger.next_sequence,
+        generation = ledger.open_generation,
+        ticketId = 'ticket-' + canonicalJsonDigest({
+          identity: input.identity,
+          nativeSessionHandle: input.nativeSessionHandle,
+          sequence,
+          generation,
+          continuation: input.sourceTransition.transition_digest,
+        }).slice(0, 40),
+        claimId = 'claim-' + canonicalJsonDigest({ ticket_id: ticketId, source: input.currentSourceScope.digest }).slice(0, 40),
+        now = new Date().toISOString(),
+        expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        resources = [...priorTicket.exclusive_resources],
+        ticket = {
+          ...priorTicket,
+          ticket_id: ticketId,
+          generation,
+          sequence,
+          source_revision: input.currentSourceScope.digest,
+          status: 'active' as const,
+          claim_ids: [claimId],
+          expires_at: expiresAt,
+          active_resources: resources,
+          blocked_resources: [],
+          created_at: now,
+        },
+        claim = {
+          ...priorClaim,
+          claim_id: claimId,
+          ticket_id: ticketId,
+          generation,
+          status: 'active' as const,
+          lease_expires_at: expiresAt,
+          created_at: now,
+          renewed_at: now,
+        },
+        nextLedger = checkedLedger({
+          ...ledger,
+          revision: ledger.revision + 1,
+          next_sequence: sequence + 1,
+          tickets: [...ledger.tickets, ticket],
+          claims: [...ledger.claims, claim],
+        }),
+        sourceChanged = work.binding.work_source_revision !== input.currentSourceScope.digest,
+        nextBinding = {
+          ...work.binding,
+          config_digest: input.targetConfigDigest,
+          work_source_revision: input.currentSourceScope.digest,
+          runtime_source_revision: input.targetRuntimeCodeDigest,
+          runtime_code_digest: input.targetRuntimeCodeDigest,
+          schema_digest: input.targetSchemaDigest,
+        },
+        nextJournal: MastraSessionLedgerState = {
+          ...currentJournal!,
+          step_id: input.action.request.stage_id,
+          source_scope: input.currentSourceScope,
+          items: [{ request: input.action.request, issue_id: null, observation: null }],
+          completed: [
+            ...currentJournal!.completed,
+            ...(currentJournal!.items.length > 0 && currentJournal!.step_id
+              ? [{ step_id: currentJournal!.step_id, items: currentJournal!.items }]
+              : []),
+          ],
+        },
+        nextWork = {
+          ...work,
+          revision: work.revision + 1,
+          binding: nextBinding,
+          lease: { ticket_id: ticketId, thread_id: input.nativeSessionHandle, generation },
+          execution: { ...work.execution, phase: 'review', status: 'active' },
+          lifecycle: {
+            ...work.lifecycle,
+            revision: work.revision + 1,
+            source_revision: input.currentSourceScope.digest,
+            next_action:
+              'Review the retained known-terminal body against the current Source/configuration; the body remains unaccepted and the work remains unfinished.',
+            config_binding: {
+              config_digest: input.targetConfigDigest,
+              schema_digest: input.targetSchemaDigest,
+              runtime_code_digest: input.targetRuntimeCodeDigest,
+            },
+            ...(sourceChanged
+              ? {
+                  references: work.lifecycle.references.map((reference) => ({
+                    ...reference,
+                    source_revision: input.currentSourceScope.digest,
+                    disposition: 'retired' as const,
+                  })),
+                }
+              : {}),
+          },
+        };
+      const journalVersion = {
+          revision: currentJournalVersion!.revision + 1,
+          digest: canonicalJsonDigest(nextJournal),
+        },
+        priorWorkVersion = current.workVersion!,
+        priorLedgerVersion = current.ledgerVersion!,
+        workVersion = version(nextWork)!,
+        ledgerVersion = version(nextLedger)!;
+      const receipt: DeliveredWorkContinuationReceipt = {
+        schema: 'DeliveredWorkContinuationReceipt/v1',
+        continuation_id: canonicalJsonDigest({
+          identity: input.identity,
+          attempt: input.attempt,
+          action_id: actionId,
+          transition_digest: input.sourceTransition.transition_digest,
+        }),
+        attempt: input.attempt,
+        request_digest: canonicalJsonDigest(input),
+        authorization,
+        request: input,
+        prior_work: work,
+        prior_ledger: ledger,
+        prior_journal: currentJournal!,
+        prior_work_version: priorWorkVersion,
+        prior_ledger_version: priorLedgerVersion,
+        prior_journal_version: currentJournalVersion!,
+        historical_capture: currentCapture!,
+        successor_work: nextWork,
+        successor_ledger: nextLedger,
+        successor_binding: nextBinding,
+        successor_journal: nextJournal,
+        work_version: workVersion,
+        ledger_version: ledgerVersion,
+        journal_version: journalVersion,
+        rights_granted: false,
+        accepted_result: false,
+        runtime_acceptance: false,
+        status: 'action_ready',
+      };
+      requireState(
+        receipt.work_version.revision === priorWorkVersion.revision + 1 &&
+          receipt.ledger_version.revision === priorLedgerVersion.revision + 1 &&
+          sameJson(this.#checkedWork(nextWork, receipt), nextWork),
+        'delivered-work successor state is invalid',
+      );
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_delivered_work_continuation (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,action_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,action_id))',
+      );
+      this.#database
+        .query('INSERT INTO agent_host_delivered_work_continuation VALUES(?,?,?,?,?,?)')
+        .run(
+          this.#workspaceId,
+          input.identity.work_id,
+          input.attempt,
+          actionId,
+          canonicalJson(receipt),
+          canonicalJsonDigest(receipt),
+        );
+      for (const [kind, id, value, expected] of [
+        ['work', identityKey(input.identity), nextWork, priorWorkVersion],
+        ['ledger', 'shared', nextLedger, priorLedgerVersion],
+      ] as const) {
+        const changed = this.#database
+          .query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?')
+          .run(
+            value.revision,
+            canonicalJson(value),
+            canonicalJsonDigest(value),
+            this.#workspaceId,
+            kind,
+            id,
+            expected.revision,
+            expected.digest,
+          );
+        requireState(changed.changes === 1, `delivered-work ${kind} CAS conflict`);
+      }
+      const journalChanged = this.#database
+        .query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?')
+        .run(
+          journalVersion.revision,
+          canonicalJson(nextJournal),
+          journalVersion.digest,
+          this.#workspaceId,
+          input.identity.work_id,
+          input.attempt,
+          input.expectedJournal.revision,
+          input.expectedJournal.digest,
+        );
+      requireState(journalChanged.changes === 1, 'delivered-work Journal CAS conflict');
+      this.#onReconciledWorkWrite(input.identity, current.workVersion, workVersion);
+      const saved = this.#read(input.identity);
+      requireState(
+        sameJson(saved.workVersion, workVersion) &&
+          sameJson(saved.ledgerVersion, ledgerVersion) &&
+          canonicalJsonDigest(nextJournal) === journalVersion.digest,
+        'delivered-work continuation did not persist its exact successor state',
+      );
+      return snapshot({ status: 'continued', snapshot: saved, receipt, action: input.action });
+    }).immediate();
+  }
+  /** Read the one current terminal-review continuation for this original Work attempt. */
+  readDeliveredWorkContinuation(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationLookup | null {
+    requireState(Number.isSafeInteger(attempt) && attempt > 0, 'delivered-work continuation attempt is invalid');
+    requireState(!this.#database.inTransaction, 'nested delivered-work continuation inspection forbidden');
+    const current = this.readHostStateSnapshot(identity);
+    if (!current.work || !current.workVersion) return null;
+    const table = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'")
+      .get();
+    if (!table) return null;
+    const rows = this.#database
+      .query(
+        'SELECT payload,digest,action_id FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .all(this.#workspaceId, identity.work_id, attempt) as { payload: string; digest: string; action_id: string }[];
+    requireState(rows.length <= 1, 'delivered-work continuation lookup is ambiguous for this attempt');
+    if (rows.length === 0) return null;
+    const row = rows[0]!,
+      receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
+    requireState(
+      canonicalJsonDigest(receipt) === row.digest &&
+        receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
+        receipt.status === 'action_ready' &&
+        receipt.request_digest === canonicalJsonDigest(receipt.request) &&
+        receipt.attempt === attempt &&
+        sameJson(receipt.request.identity, identity) &&
+        receipt.request.action.kind === 'historical_terminal_review' &&
+        receipt.request.action.capture.action_id === row.action_id &&
+        receipt.request.action.request.action_id !== row.action_id &&
+        current.work.binding &&
+        sameJson(current.work.binding, receipt.successor_binding),
+      'delivered-work continuation lookup receipt or current Work binding differs',
+    );
+    const work = current.work!,
+      ledger = current.ledger,
+      lease = work.lease,
+      executionResource = `execution:${identity.work_id}`,
+      ticket = lease && ledger?.tickets.find((entry) => entry.ticket_id === lease.ticket_id),
+      claims = ticket && ledger ? ledger.claims.filter((entry) => entry.ticket_id === ticket.ticket_id) : [],
+      now = Date.now();
+    requireState(
+      ledger &&
+        work.execution.status === 'active' &&
+        work.execution.phase === 'review' &&
+        work.lifecycle.phase === 'INTAKE' &&
+        work.lifecycle.seal === null &&
+        lease?.thread_id === receipt.request.nativeSessionHandle &&
+        ticket?.status === 'active' &&
+        ticket.work_id === identity.work_id &&
+        ticket.thread_id === receipt.request.nativeSessionHandle &&
+        ticket.source_revision === receipt.request.currentSourceScope.digest &&
+        ticket.exclusive_resources.length === 1 &&
+        ticket.exclusive_resources[0] === executionResource &&
+        ticket.active_resources.length === 1 &&
+        ticket.active_resources[0] === executionResource &&
+        ticket.expires_at !== null &&
+        Date.parse(ticket.expires_at) > now &&
+        claims.length === 1 &&
+        claims[0]!.status === 'active' &&
+        claims[0]!.thread_id === receipt.request.nativeSessionHandle &&
+        claims[0]!.work_id === identity.work_id &&
+        Date.parse(claims[0]!.lease_expires_at) > now &&
+        !ledger.tickets.some(
+          (candidate) =>
+            candidate.ticket_id !== ticket.ticket_id &&
+            candidate.sequence < ticket.sequence &&
+            ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(candidate.status) &&
+            candidate.exclusive_resources.includes(executionResource),
+        ),
+      'delivered-work continuation original owner lease or FIFO position is no longer current',
+    );
+    const journalRow = this.#database
+      .query(
+        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .get(this.#workspaceId, identity.work_id, attempt) as {
+      revision: number;
+      payload: string;
+      digest: string;
+    } | null;
+    requireState(journalRow, 'delivered-work continuation has no retained original-attempt Journal');
+    const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState,
+      version = { revision: journalRow.revision, digest: journalRow.digest };
+    validateWorkSessionBinding(current.work, journal, this.#repositoryRoot);
+    requireState(
+      Number.isSafeInteger(journalRow.revision) &&
+        journalRow.revision > 0 &&
+        journal.schema === 'MastraSessionLedger/v1' &&
+        journal.workspace_id === this.#workspaceId &&
+        journal.work_id === identity.work_id &&
+        journal.attempt === attempt &&
+        journal.run_id === current.work.execution.run_id &&
+        canonicalJsonDigest(journal) === journalRow.digest,
+      'delivered-work continuation Journal identity or digest differs',
+    );
+    const matches = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].filter(
+      (item) => item.request.action_id === receipt.request.action.request.action_id,
+    );
+    requireState(
+      matches.length === 1 &&
+        sameJson(matches[0]!.request, receipt.request.action.request) &&
+        matches[0]!.host_reservation === undefined &&
+        matches[0]!.research_activation === undefined &&
+        matches[0]!.research_normalization === undefined,
+      'delivered-work continuation review action is missing, duplicated or reserved',
+    );
+    const item = matches[0]!;
+    requireState(
+      item.issue_id === null
+        ? item.observation === null
+        : typeof item.issue_id === 'string' &&
+          item.issue_id.length > 0 &&
+          (item.observation === null ||
+            (item.observation.action_id === receipt.request.action.request.action_id &&
+              item.observation.issue_id === item.issue_id)),
+      'delivered-work continuation review issuance is malformed',
+    );
+    return snapshot({
+      receipt,
+      snapshot: current,
+      journal: { version, state: journal },
+      item,
+      action_status: item.observation ? 'reported' : item.issue_id ? 'issued' : 'unissued',
+    });
   }
   claimWorkflowAttempt(request: WorkflowAttemptRequest): WorkflowAttemptReceipt {
     const input = snapshot(request);
@@ -9781,6 +12207,7 @@ export class HostStateStore {
       readonly stoppedSource?: boolean;
     },
     internalTransaction = false,
+    taskSourceResourceAdditions: readonly string[] = [],
   ): HostStateSnapshot {
     const { documentationContext, expectedSessionJournal, ...stateInput } = input;
     const data = snapshot(stateInput);
@@ -9862,7 +12289,7 @@ export class HostStateStore {
           terminalJournal.verifyCurrent();
         }
       }
-      validateProgress(before, work, ledger, documentationContext);
+      validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions);
       if (work.lease) {
         const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id)!;
         requireState(

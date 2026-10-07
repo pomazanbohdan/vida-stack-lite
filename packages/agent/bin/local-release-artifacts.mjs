@@ -20,6 +20,14 @@ import { fileURLToPath } from 'node:url';
 export const releaseIdPattern = /^[a-z0-9][a-z0-9-]{0,95}$/;
 export const releaseJSON = (value) => JSON.stringify(value, null, 2) + '\n';
 export const releaseDigest = (bytes) => createHash('sha256').update(bytes).digest('hex');
+export function parseReleaseVersion(value) {
+  const match = typeof value === 'string' && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
+  if (!match) return null;
+  const components = match.slice(1).map(Number);
+  return components.every(Number.isSafeInteger)
+    ? { major: components[0], minor: components[1], patch: components[2] }
+    : null;
+}
 export const requireRelease = (value, message) => {
   if (!value) throw Error('Local release: ' + message);
 };
@@ -110,7 +118,7 @@ export function parseReleaseState(value) {
     value &&
       value.schema === 'VidaLocalReleaseState/v1' &&
       releaseIdPattern.test(value.operation_id ?? '') &&
-      /^0\.1\.(0|[1-9]\d*)$/.test(value.version ?? '') &&
+      parseReleaseVersion(value.version) !== null &&
       [
         'awaiting_assurance',
         'running',
@@ -235,7 +243,8 @@ export function selectedTarball(metadata, folder, version) {
       item.version === version &&
       typeof item.filename === 'string' &&
       path.basename(item.filename) === item.filename &&
-      /^vida-agent-0\.1\.\d+\.tgz$/.test(item.filename) &&
+      parseReleaseVersion(version) !== null &&
+      item.filename === 'vida-agent-' + version + '.tgz' &&
       Array.isArray(item.files) &&
       item.files.length > 0,
     'archive identity differs',

@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "TaskSourceBinding/v1",
+  "title": "TaskSourceBinding/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "operation_id",
+    "request_id",
+    "expected_host",
+    "work_id",
+    "attempt",
+    "thread_id",
+    "repository_id",
+    "project_ids",
+    "canonical_host_root",
+    "source_root",
+    "config_digest",
+    "project_context_digest",
+    "source_scope",
+    "branch",
+    "canonical_host_common_dir",
+    "common_dir",
+    "head",
+    "cwd"
+  ],
+  "allOf": [
+    {
+      "if": { "properties": { "operation": { "enum": ["propose-create", "propose-adopt"] } } },
+      "then": { "required": ["branch_ref"] }
+    }
+  ],
+  "properties": {
+    "schema": { "const": "TaskSourceBinding/v1" },
+    "operation": { "enum": ["inspect", "propose-create", "propose-adopt"] },
+    "operation_id": { "$ref": "#/$defs/operationId" },
+    "request_id": { "$ref": "#/$defs/operationId" },
+    "branch_ref": { "$ref": "#/$defs/branchRef" },
+    "expected_host": { "$ref": "#/$defs/expectedHost" },
+    "work_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "thread_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "repository_id": { "$ref": "#/$defs/repositoryId" },
+    "project_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/projectId" }
+    },
+    "canonical_host_root": { "$ref": "#/$defs/absolutePath" },
+    "source_root": { "$ref": "#/$defs/absolutePath" },
+    "config_digest": { "$ref": "#/$defs/digest" },
+    "project_context_digest": { "$ref": "#/$defs/digest" },
+    "source_scope": { "$ref": "#/$defs/sourceScope" },
+    "branch": { "type": ["string", "null"], "minLength": 1 },
+    "canonical_host_common_dir": { "$ref": "#/$defs/absolutePath" },
+    "common_dir": { "$ref": "#/$defs/absolutePath" },
+    "head": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" },
+    "cwd": { "$ref": "#/$defs/absolutePath" }
+  },
+  "$defs": {
+    "operationId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
+    "branchRef": { "type": "string", "minLength": 12, "maxLength": 1024, "pattern": "^refs/heads/.+$" },
+    "repositoryId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$" },
+    "projectId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+    "absolutePath": { "type": "string", "minLength": 1 },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "stateVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "digest"],
+      "properties": {
+        "revision": { "type": "integer", "minimum": 1 },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "expectedHost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["work", "ledger", "journal", "maintenance_generation"],
+      "properties": {
+        "work": { "$ref": "#/$defs/stateVersion" },
+        "ledger": { "$ref": "#/$defs/stateVersion" },
+        "journal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["attempt", "version"],
+          "properties": {
+            "attempt": { "type": "integer", "minimum": 1 },
+            "version": { "$ref": "#/$defs/stateVersion" }
+          }
+        },
+        "maintenance_generation": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "sourceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "exists", "bytes", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "exists": { "type": "boolean" },
+        "bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "exists": { "const": true } } },
+          "then": {
+            "properties": {
+              "bytes": { "type": "integer", "minimum": 0 },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+            }
+          },
+          "else": {
+            "properties": { "bytes": { "type": "null" }, "sha256": { "type": "null" } }
+          }
+        }
+      ]
+    },
+    "sourceScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "entries", "digest"],
+      "properties": {
+        "schema": { "const": "ScopedSourceSnapshot/v1" },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 512,
+          "items": { "$ref": "#/$defs/sourceEntry" }
+        },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "taskSourceBinding": { "$ref": "#" },
+    "taskSourceRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "operation",
+        "operation_id",
+        "request_id",
+        "expected_host",
+        "canonical_host_root",
+        "work_id",
+        "attempt",
+        "thread_id",
+        "repository_id",
+        "project_ids",
+        "config_digest",
+        "project_context_digest"
+      ],
+      "properties": {
+        "schema": { "const": "TaskSourceBindingRequest/v1" },
+        "operation": { "enum": ["inspect", "propose-create", "propose-adopt"] },
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "request_id": { "$ref": "#/$defs/operationId" },
+        "branch_ref": { "$ref": "#/$defs/branchRef" },
+        "expected_host": { "$ref": "#/$defs/expectedHost" },
+        "canonical_host_root": { "$ref": "#/$defs/absolutePath" },
+        "source_root": { "$ref": "#/$defs/absolutePath" },
+        "work_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "thread_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "repository_id": { "$ref": "#/$defs/repositoryId" },
+        "project_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/projectId" }
+        },
+        "config_digest": { "$ref": "#/$defs/digest" },
+        "project_context_digest": { "$ref": "#/$defs/digest" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "operation": { "enum": ["propose-create", "propose-adopt"] } } },
+          "then": { "required": ["branch_ref"] }
+        }
+      ]
+    },
+    "taskSourceReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "operation", "operation_id", "request_id", "report_id", "expected_host", "status", "binding"],
+      "properties": {
+        "schema": { "const": "TaskSourceBindingReport/v1" },
+        "operation": { "enum": ["inspect", "propose-create", "propose-adopt"] },
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "request_id": { "$ref": "#/$defs/operationId" },
+        "report_id": { "$ref": "#/$defs/operationId" },
+        "expected_host": { "$ref": "#/$defs/expectedHost" },
+        "status": { "enum": ["observed", "proposed", "denied", "unknown"] },
+        "binding": { "anyOf": [{ "$ref": "#/$defs/taskSourceBinding" }, { "type": "null" }] },
+        "reason": { "type": "string", "maxLength": 512 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "observed" } } },
+          "then": { "properties": { "binding": { "$ref": "#/$defs/taskSourceBinding" } } },
+          "else": { "properties": { "binding": { "type": "null" } } }
+        }
+      ]
+    }
+  }
+}

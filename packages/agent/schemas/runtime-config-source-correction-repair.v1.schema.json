@@ -1,0 +1,441 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.invalid/schemas/runtime-config-source-correction-repair.v1.schema.json",
+  "title": "Runtime config source correction repair v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "revision", "operation_id", "request", "digest"],
+  "properties": {
+    "schema": { "const": "RuntimeConfigSourceCorrectionRepair/v1" },
+    "status": { "enum": ["requested", "applied"] },
+    "revision": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "operation_id": { "$ref": "#/$defs/operationId" },
+    "request": { "$ref": "#/$defs/request" },
+    "report": { "$ref": "#/$defs/report" },
+    "completion": { "$ref": "#/$defs/completion" },
+    "digest": { "$ref": "#/$defs/hash" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "requested" } }, "required": ["status"] },
+      "then": { "properties": { "revision": { "const": 1 } }, "not": { "properties": { "report": {} }, "required": ["report"] } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "applied" } }, "required": ["status"] },
+      "then": { "properties": { "revision": { "enum": [2, 3] } }, "required": ["report"] }
+    },
+    {
+      "if": { "properties": { "revision": { "const": 3 } }, "required": ["revision"] },
+      "then": { "properties": { "status": { "const": "applied" }, "completion": { "$ref": "#/$defs/completion" } }, "required": ["report", "completion"] }
+    },
+    {
+      "if": { "properties": { "revision": { "const": 2 } }, "required": ["revision"] },
+      "then": { "not": { "properties": { "completion": {} }, "required": ["completion"] } }
+    }
+  ],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "uuid": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "operationId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
+    "sourceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "exists", "bytes", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "exists": { "type": "boolean" },
+        "bytes": { "anyOf": [{ "type": "integer", "minimum": 0, "maximum": 8388608 }, { "type": "null" }] },
+        "sha256": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "exists": { "const": true } }, "required": ["exists"] },
+          "then": { "properties": { "bytes": { "type": "integer" }, "sha256": { "$ref": "#/$defs/hash" } } }
+        },
+        {
+          "if": { "properties": { "exists": { "const": false } }, "required": ["exists"] },
+          "then": { "properties": { "bytes": { "const": null }, "sha256": { "const": null } } }
+        }
+      ]
+    },
+    "sourceSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "entries", "digest"],
+      "properties": {
+        "schema": { "const": "ScopedSourceSnapshot/v1" },
+        "entries": { "type": "array", "minItems": 1, "maxItems": 512, "items": { "$ref": "#/$defs/sourceEntry" } },
+        "digest": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "sourceChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind", "before", "after"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "kind": { "enum": ["changed", "appeared", "disappeared"] },
+        "before": { "$ref": "#/$defs/sourceEntry" },
+        "after": { "$ref": "#/$defs/sourceEntry" }
+      }
+    },
+    "projectIds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+    },
+    "fenceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "project_ids", "operation_id", "manifest_digest", "request_digest", "bindings_digest", "closure_digest", "bundle_digest"],
+      "properties": {
+        "schema": { "const": "MaintenanceFenceBinding/v1" },
+        "project_ids": { "$ref": "#/$defs/projectIds" },
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "manifest_digest": { "$ref": "#/$defs/hash" },
+        "request_digest": { "$ref": "#/$defs/hash" },
+        "bindings_digest": { "$ref": "#/$defs/hash" },
+        "closure_digest": { "$ref": "#/$defs/hash" },
+        "bundle_digest": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "fence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "workspace_id", "revision", "generation", "status", "binding", "token_digest"],
+      "properties": {
+        "schema": { "const": "MaintenanceFence/v1" },
+        "workspace_id": { "$ref": "#/$defs/hash" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "generation": { "type": "integer", "minimum": 1 },
+        "status": { "const": "held" },
+        "binding": { "$ref": "#/$defs/fenceBinding" },
+        "token_digest": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "releasedFence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "workspace_id", "revision", "generation", "status", "binding", "token_digest"],
+      "properties": {
+        "schema": { "const": "MaintenanceFence/v1" },
+        "workspace_id": { "$ref": "#/$defs/hash" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "generation": { "type": "integer", "minimum": 1 },
+        "status": { "const": "released" },
+        "binding": { "$ref": "#/$defs/fenceBinding" },
+        "token_digest": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "operation_path", "operation_sha256", "operation_plan_digest", "request_id", "request_digest", "report_digest", "source_snapshot_digest", "target_config_digest", "target_yaml_sha256", "receipt_path", "receipt_sha256", "fence", "native_self_attestation_digest", "runtime_accepted"],
+      "properties": {
+        "schema": { "const": "RuntimeConfigDeliveryTransition/v1" },
+        "operation_path": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "operation_sha256": { "$ref": "#/$defs/hash" },
+        "operation_plan_digest": { "$ref": "#/$defs/hash" },
+        "request_id": { "$ref": "#/$defs/uuid" },
+        "request_digest": { "$ref": "#/$defs/hash" },
+        "report_digest": { "$ref": "#/$defs/hash" },
+        "source_snapshot_digest": { "$ref": "#/$defs/hash" },
+        "target_config_digest": { "$ref": "#/$defs/hash" },
+        "target_yaml_sha256": { "$ref": "#/$defs/hash" },
+        "receipt_path": { "type": "string", "const": ".agent/runtime-initialization.v1.json" },
+        "receipt_sha256": { "$ref": "#/$defs/hash" },
+        "fence": { "$ref": "#/$defs/releasedFence" },
+        "native_self_attestation_digest": { "$ref": "#/$defs/hash" },
+        "runtime_accepted": { "const": false }
+      }
+    },
+    "originalOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "plan_digest", "revision", "phase", "maintenance_released"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "plan_digest": { "$ref": "#/$defs/hash" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "phase": { "const": "fenced" },
+        "maintenance_released": { "const": false }
+      }
+    },
+    "configBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "baseline_config_digest", "target_config_digest", "current_yaml_sha256", "yaml_state", "receipt_sha256", "baseline_receipt_sha256", "initialization_schema_digest"],
+      "properties": {
+        "schema": { "const": "RuntimeConfigSourceCorrectionConfig/v1" },
+        "baseline_config_digest": { "$ref": "#/$defs/hash" },
+        "target_config_digest": { "$ref": "#/$defs/hash" },
+        "current_yaml_sha256": { "$ref": "#/$defs/hash" },
+        "yaml_state": { "enum": ["baseline", "target"] },
+        "receipt_sha256": { "$ref": "#/$defs/hash" },
+        "baseline_receipt_sha256": { "$ref": "#/$defs/hash" },
+        "initialization_schema_digest": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "custody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "work_id", "attempt", "action_id", "issue_id", "receipt_digest", "journal_revision", "journal_digest", "expected_maintenance_generation"],
+      "properties": {
+        "schema": { "const": "KnownTerminalCustodyBinding/v1" },
+        "work_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "action_id": { "$ref": "#/$defs/hash" },
+        "issue_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "receipt_digest": { "$ref": "#/$defs/hash" },
+        "journal_revision": { "type": "integer", "minimum": 1 },
+        "journal_digest": { "$ref": "#/$defs/hash" },
+        "expected_maintenance_generation": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "sourceBeforeimageBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "path", "bytes", "sha256", "snapshot_digest"],
+      "properties": {
+        "schema": { "const": "SourceBeforeimageBinding/v1" },
+        "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 100663296 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "snapshot_digest": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "sourcePackageBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "path", "bytes", "sha256", "package_name", "version"],
+      "properties": {
+        "schema": { "const": "RuntimeConfigSourcePackageBinding/v1" },
+        "path": { "const": "packages/agent/package.json" },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1048576 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "package_name": { "const": "vida-agent" },
+        "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" }
+      }
+    },
+    "priorSystemUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "path", "bytes", "sha256", "status", "operation_id", "version", "entry", "run_id", "artifact_id", "installed_bytes", "prior_bytes", "delta_bytes", "configuration_inspection", "tests_invoked", "reinstallation", "runtime_accepted", "developer_unblocked"],
+      "properties": {
+        "schema": { "const": "PriorSystemUpdateBinding/v1" },
+        "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1048576 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "status": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+        "entry": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "run_id": { "type": "string", "pattern": "^[1-9][0-9]{0,31}$" },
+        "artifact_id": { "type": "string", "pattern": "^[1-9][0-9]{0,31}$" },
+        "installed_bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "prior_bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "delta_bytes": { "type": "integer", "minimum": -1073741824, "maximum": 1073741824 },
+        "configuration_inspection": { "type": "string", "maxLength": 128 },
+        "tests_invoked": { "const": false },
+        "reinstallation": { "const": false },
+        "runtime_accepted": { "const": false },
+        "developer_unblocked": { "const": false }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "request_id", "operation_id", "publish_operation_id", "original_operation", "repository_root", "repository_id", "project_ids", "source_project_ids", "workspace_id", "state_digest", "config", "fence", "custody", "old_source", "source_beforeimages", "prior_system_update", "new_source", "new_source_manifest", "source_changes", "authorized_changed_paths"],
+      "properties": {
+        "schema": { "const": "RuntimeConfigSourceCorrectionRequest/v1" },
+        "request_id": { "$ref": "#/$defs/uuid" },
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "publish_operation_id": { "$ref": "#/$defs/operationId" },
+        "original_operation": { "$ref": "#/$defs/originalOperation" },
+        "repository_root": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "repository_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "project_ids": { "$ref": "#/$defs/projectIds" },
+        "source_project_ids": { "$ref": "#/$defs/projectIds" },
+        "workspace_id": { "$ref": "#/$defs/hash" },
+        "state_digest": { "$ref": "#/$defs/hash" },
+        "config": { "$ref": "#/$defs/configBinding" },
+        "fence": { "$ref": "#/$defs/fence" },
+        "custody": { "type": "array", "minItems": 1, "maxItems": 128, "items": { "$ref": "#/$defs/custody" } },
+        "old_source": { "$ref": "#/$defs/sourceSnapshot" },
+        "source_beforeimages": { "$ref": "#/$defs/sourceBeforeimageBinding" },
+        "prior_system_update": { "$ref": "#/$defs/priorSystemUpdate" },
+        "new_source": { "$ref": "#/$defs/sourceSnapshot" },
+        "new_source_manifest": { "$ref": "#/$defs/sourcePackageBinding" },
+        "source_changes": { "type": "array", "minItems": 1, "maxItems": 512, "items": { "$ref": "#/$defs/sourceChange" } },
+        "authorized_changed_paths": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 512 } }
+      }
+    },
+    "nativeSelfAttestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "executable_path", "executable_bytes", "executable_sha256", "package_name", "package_version", "package_manifest_sha256", "bun_version", "runtime_root", "resource_payload_id"],
+      "properties": {
+        "schema": { "const": "VidaAgentNativeSelfAttestation/v1" },
+        "executable_path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "executable_bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "executable_sha256": { "$ref": "#/$defs/hash" },
+        "package_name": { "const": "vida-agent" },
+        "package_version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+        "package_manifest_sha256": { "$ref": "#/$defs/hash" },
+        "bun_version": { "const": "1.4.2" },
+        "runtime_root": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "resource_payload_id": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "manifestInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "bytes": { "type": "integer", "minimum": 0, "maximum": 8388608 },
+        "sha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "buildManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "version", "pin", "target", "inputs", "payloadId", "asset"],
+      "properties": {
+        "schema": { "const": "VidaStandaloneBuild/v1" },
+        "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+        "pin": { "const": "1.4.2" },
+        "target": { "type": "string", "pattern": "^bun-[a-z0-9-]+$" },
+        "inputs": { "type": "array", "minItems": 1, "maxItems": 2048, "items": { "$ref": "#/$defs/manifestInput" } },
+        "payloadId": { "$ref": "#/$defs/hash" },
+        "asset": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "bytes", "sha256"],
+          "properties": {
+            "file": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+            "sha256": { "$ref": "#/$defs/hash" }
+          }
+        }
+      }
+    },
+    "ciCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": { "const": "native-build" },
+        "status": { "const": "passed" }
+      }
+    },
+    "ciResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "request_id", "operation_id", "version", "repository_id", "project_ids", "target", "source_binding", "archive_sha256", "manifest_sha256", "payload_id", "asset", "issuer", "run_id", "run_attempt", "checks"],
+      "properties": {
+        "schema": { "const": "VidaCIDeliveryResult/v1" },
+        "request_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+        "repository_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "project_ids": { "$ref": "#/$defs/projectIds" },
+        "target": { "type": "string", "pattern": "^bun-[a-z0-9-]+$" },
+        "source_binding": { "$ref": "#/$defs/hash" },
+        "archive_sha256": { "$ref": "#/$defs/hash" },
+        "manifest_sha256": { "$ref": "#/$defs/hash" },
+        "payload_id": { "$ref": "#/$defs/hash" },
+        "asset": { "$ref": "#/$defs/asset" },
+        "issuer": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "run_id": { "type": "string", "pattern": "^[1-9][0-9]{0,31}$" },
+        "run_attempt": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "checks": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/ciCheck" } }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "bytes", "sha256"],
+      "properties": {
+        "file": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "sha256": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "ciDelivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "profile", "request_id", "operation_id", "source_binding", "run_id", "run_attempt", "artifact_id", "result_sha256", "checks", "conclusion", "result"],
+      "properties": {
+        "schema": { "const": "RuntimeConfigSourceCorrectionCIDelivery/v1" },
+        "profile": { "const": "native-build" },
+        "request_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "source_binding": { "$ref": "#/$defs/hash" },
+        "run_id": { "type": "string", "pattern": "^[1-9][0-9]{0,31}$" },
+        "run_attempt": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "artifact_id": { "type": "string", "pattern": "^[1-9][0-9]{0,31}$" },
+        "result_sha256": { "$ref": "#/$defs/hash" },
+        "checks": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/ciCheck" } },
+        "conclusion": { "const": "success" },
+        "result": { "$ref": "#/$defs/ciResult" }
+      }
+    },
+    "installationReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["installer", "action", "exit_code", "signal", "source_path", "source_sha256", "prior_bytes", "selected_bytes", "path", "sha256", "path_added", "tests_invoked", "reinstallation"],
+      "properties": {
+        "installer": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "action": { "const": "update" },
+        "exit_code": { "const": 0 },
+        "signal": { "type": ["string", "null"], "maxLength": 128 },
+        "source_path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "source_sha256": { "$ref": "#/$defs/hash" },
+        "prior_bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "selected_bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "path_added": { "type": "boolean" },
+        "tests_invoked": { "const": false },
+        "reinstallation": { "const": false }
+      }
+    },
+    "effectivePath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_path", "bytes", "sha256", "package_name", "version", "target"],
+      "properties": {
+        "command_path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "package_name": { "const": "vida-agent" },
+        "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+        "target": { "type": "string", "pattern": "^bun-[a-z0-9-]+$" }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "request_id", "operation_id", "publish_operation_id", "original_operation_sha256", "original_plan_digest", "source_snapshot_digest", "build_manifest_sha256", "build_manifest", "ci_delivery", "installation_receipt", "effective_path", "native_self_attestation"],
+      "properties": {
+        "schema": { "const": "RuntimeConfigSourceCorrectionReport/v1" },
+        "request_id": { "$ref": "#/$defs/uuid" },
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "publish_operation_id": { "$ref": "#/$defs/operationId" },
+        "original_operation_sha256": { "$ref": "#/$defs/hash" },
+        "original_plan_digest": { "$ref": "#/$defs/hash" },
+        "source_snapshot_digest": { "$ref": "#/$defs/hash" },
+        "build_manifest_sha256": { "$ref": "#/$defs/hash" },
+        "build_manifest": { "$ref": "#/$defs/buildManifest" },
+        "ci_delivery": { "$ref": "#/$defs/ciDelivery" },
+        "installation_receipt": { "$ref": "#/$defs/installationReceipt" },
+        "effective_path": { "$ref": "#/$defs/effectivePath" },
+        "native_self_attestation": { "$ref": "#/$defs/nativeSelfAttestation" }
+      }
+    }
+  }
+}

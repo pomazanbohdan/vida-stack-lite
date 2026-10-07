@@ -390,6 +390,12 @@ effects, weaker controls, a new authorization framework or partial-agent
 delivery. Preserve current Source ownership, CAS, final assurance and native
 qualification requirements.
 
+For an admitted task with a separate Source root, inspect its current task-source
+operation before Source tool calls. Use the returned `SourceExecutionContext/v1`
+working directory for those calls. Keep configuration, intake and operational
+state in the canonical Host root. The projection does not grant Source rights;
+current ownership and policy checks still apply at the effect boundary.
+
 The main optimization target is fewer agent execution steps without loss of
 required quality. Remove repeated discovery, handoffs, state writes and test
 runs, while preserving each authorization, CAS boundary, failure state, review
@@ -398,6 +404,12 @@ and recoverability remain observable. Run only focused agent behavior checks whi
 and run the full applicable current task suite once after its corrections are
 complete. Reuse that current evidence in the mandatory installation assurance
 wave; do not repeat the full suite after each subfix.
+Collect terminal failures and review findings before starting a correction batch.
+Join disjoint writers before checking the batch. Workers do not each launch the
+same checks. One selected completion run may also serve as the regression check;
+do not run the same cases again under another command name. After a failed full
+run, recheck changed behavior and its direct callers only. Retain the failed run
+and reuse passing evidence only where its affected inputs remain current.
 Do not add a full candidate cycle solely to score an individual outcome or
 interrupt a long check already running. Reuse accepted evidence only while its
 inputs remain current; changed inputs invalidate their affected proof.
@@ -426,13 +438,41 @@ functional, security, data and mandatory numeric quality gate; increased
 timeouts, skipped checks and weakened verification do not establish improvement.
 
 After each whole verified engineering outcome, update the authorized local
-system agent with the selected exact artifact and current semantic version.
+system agent with the selected exact artifact and its declared version.
 Version equality is not byte identity. Preserve the original operation, failed
 or UNKNOWN effects and historical evidence. Reconcile uncertainty before retry.
 New dependent effects wait for the actual installed byte/version/PATH proof.
 This checkpoint does not grant user Runtime acceptance or registry publication.
 
 ### Formation and installation policy
+
+Each new successful build advances the product version. The release owner
+selects the next version before Source publication and formation. Default to
+the last confirmed successful build's PATCH plus one. An explicit human request
+may select the next MINOR or MAJOR version, or a specific higher version. MINOR
+resets PATCH to zero; MAJOR resets MINOR and PATCH to zero. Keep package,
+request, manifest, native executable and formation result versions equal.
+
+Confirm the new baseline only after successful formation and artifact
+publication. A failed or UNKNOWN build does not confirm or consume its version.
+Resume its exact pending operation instead of allocating another version.
+An exact completed retry returns the existing artifact; it does not form another
+package with the same version. Serialize version selection through the existing
+release owner. Preserve historical operations and receipts. Installing an
+already selected artifact does not advance its version or require a new build.
+
+Persist each current CI terminal result and published artifact before closing
+its release operation and confirming the version baseline. Use the existing
+owner locks and CAS. Normal next-build selection reads the current operation
+and confirmed baseline only. Do not census historical CI requests on that path.
+Historical unresolved work uses an explicit supported recovery command;
+preserve its FAIL/UNKNOWN custody and return one actionable next step.
+
+The Source release tool exposes `--prepare-after-disposition --proposal REL`
+for that one-time recovery. It reads a bounded local consistency proposal and
+revalidates it under the existing owner lock before version preparation. The
+proposal grants no Source or Runtime rights. Normal `--prepare` uses the current
+operation and confirmed baseline; it does not discover historical requests.
 
 This section is the single owner of this policy. Package qualification consists
 of actual successful formation provenance, declared Source and version, target
@@ -446,6 +486,15 @@ fresh task reviews, coverage, mutation, a new seal or CLEAR for every formation
 or installation. Those belong to the changed development task and are reused
 while current. An unchanged selected artifact needs no new build or Git effect
 solely to install it. Publish changed reviewed Source before its CI formation.
+
+Use four delivery steps: publish changed reviewed Source, issue one cached CI
+build, retrieve and qualify its exact artifact, then run the maintained installer.
+Keep one current operation and its confirmed baseline. Reuse the selected run,
+download and current task evidence; do not rediscover them at every step. Observe
+cache restore/save in that run. Cache absence is not an installation gate.
+No extra candidate cycle, prerequisite probe, repeated review, numeric run or
+documentation closeout belongs to delivery. Recovery runs only after a real
+failure or uncertain effect and resumes that exact operation.
 
 Use one maintained platform installer. Windows uses install-windows.ps1 with
 the selected local EXE/ZIP or direct HTTPS address and install/update/uninstall.
@@ -503,6 +552,12 @@ A user directive updates its existing instruction owner and
 maintained template in the same authorized work, with attribution in the work
 record. Do not create a competing agent memory document or an additional
 schema version to avoid repairing current artifacts.
+
+Run the final applicable behavior check and numeric checks sequentially on
+stable Source. Keep one writer for coverage, CRAP and mutation outputs. If
+concurrent heavy runs caused a case timeout, inspect its child outcome and run
+the exact affected case in isolation before changing its declared bound.
+Retain failed and UNKNOWN evidence; an isolated pass does not erase either.
 
 Agent behavior tests, coverage and CRAP run locally. Build, packaging and
 installation checks belong to CI/CD and are not local agent test tasks. Do not

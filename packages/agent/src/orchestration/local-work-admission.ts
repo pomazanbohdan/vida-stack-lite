@@ -30,6 +30,7 @@ import { type SessionHandoffContext } from './session-handoff.js';
 import { sessionBridgeRunId } from './mastra-session-bridge.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { readLocalSourceWriteAuthorization } from './local-source-authorization.js';
+import { resolveCurrentTaskSourceFileRoot } from './task-source-binding.js';
 import {
   validateObservedResearchRecordPlan,
   validateResearchResult,
@@ -132,6 +133,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     attribution: { thread_id: string; pointer: string };
   };
   const acceptance = JSON.parse(acceptanceBytes.toString('utf8')) as {
+    id: string;
     ac_ids: string[];
     source_revision: string;
     scope: string;
@@ -278,7 +280,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       access.readBytes(sourcePath, 'existing same-attempt admission preparation').equals(sourceBytes),
       'admission source preparation differs',
     );
-  else access.writeExclusive(sourcePath, sourceBytes, 'retain complete original admission source');
+  else access.writeExclusive(sourcePath, sourceBytes.toString('utf8'), 'retain complete original admission source');
   if (canonicalIntakePath !== null && intakeBytes !== null) {
     access.ensureDirectory(`.agent/work/${context.work_id}`, 'canonical intake directory');
     if (access.fileExists(canonicalIntakePath, 'canonical intake existence'))
@@ -411,8 +413,26 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         review_failure_count: 0,
         delivery_cycle_id: null,
       },
-      references:
-        sourceAuthorization === null
+      references: [
+        ...[
+          { kind: 'implementation_scope' as const, artifact_schema: 'ImplementationScope/v1',
+            record_id: scope.scope_id, path: input.scopePath, sha256: binding.scope_contract_digest },
+          { kind: 'acceptance_manifest' as const, artifact_schema: 'AcceptanceManifest/v1',
+            record_id: acceptance.id, path: input.acceptancePath, sha256: binding.acceptance_manifest_digest },
+        ].map((reference) => ({
+          schema: 'LifecycleArtifactReference/v1' as const,
+          ...reference,
+          source_revision: sourceRevision,
+          scope_id: scope.scope_id,
+          ac_ids: scope.ac_ids,
+          generation: null,
+          implementation_fingerprint: null,
+          delivery_cycle_id: null,
+          principal: null,
+          decision: null,
+          disposition: 'current' as const,
+        })),
+        ...(sourceAuthorization === null
           ? []
           : [
               {
@@ -432,7 +452,8 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
                 decision: 'approved' as const,
                 disposition: 'current' as const,
               },
-            ],
+            ]),
+      ],
     },
     artifacts: [
       sourceReference,
@@ -694,10 +715,15 @@ export function acquireLocalSourceWriterLease(input: {
       work.lease.thread_id === input.nativeSessionHandle,
     'source writer configuration or owner changed',
   );
-  const source = snapshotDeclaredSources(
-    requireSafeRepositoryAccess(input.repositoryRoot),
-    work.lifecycle.scope.allowed_paths,
-  );
+  const sourceAttempt = input.expectedSessionJournal?.attempt;
+  const sourceRoot = resolveCurrentTaskSourceFileRoot({
+      store: input.store,
+      host: before,
+      canonicalHostRoot: input.repositoryRoot,
+      ...(sourceAttempt === undefined ? {} : { attempt: sourceAttempt }),
+    }),
+    sourceAccess = requireSafeRepositoryAccess(sourceRoot),
+    source = snapshotDeclaredSources(sourceAccess, work.lifecycle.scope.allowed_paths);
   const correctiveJournal =
     work.lifecycle.assurance.correction_count > 0 ? input.store.readWorkSessionJournal(input.identity) : null;
   const correctiveState = correctiveJournal?.state as unknown as MastraSessionLedgerState | undefined;
@@ -719,8 +745,7 @@ export function acquireLocalSourceWriterLease(input: {
     verifyCurrent: () =>
       requireAdmission(
         runtimeConfigDigest(input.config) === work.binding.config_digest &&
-          snapshotDeclaredSources(requireSafeRepositoryAccess(input.repositoryRoot), work.lifecycle.scope.allowed_paths)
-            .digest === source.digest,
+          snapshotDeclaredSources(sourceAccess, work.lifecycle.scope.allowed_paths).digest === source.digest,
         'completed source ownership changed before reconciliation',
       ),
   });

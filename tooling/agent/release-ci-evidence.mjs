@@ -7,9 +7,12 @@ import {
   releaseJSON as json,
   releasePath,
   releaseDirectory,
+  saveReleaseState as saveReceipt,
+  withReleaseAdmission,
   releaseIdPattern,
   releaseState,
   releaseSourceBinding,
+  parseReleaseVersion,
 } from '../../packages/agent/bin/local-release-artifacts.mjs';
 import {
   readNativeRetargetCandidate,
@@ -97,6 +100,165 @@ function requestPath(operation, requestId) {
   check(releaseIdPattern.test(operation) && hex.test(requestId), 'request identity invalid');
   return '.agent/work/agent-local-release/' + operation + '/ci/' + requestId + '/request.json';
 }
+function formationPath() {
+  return '.agent/work/agent-local-release/formed.json';
+}
+function resultPath(operation, requestId) {
+  check(releaseIdPattern.test(operation) && hex.test(requestId), 'formation identity invalid');
+  return '.agent/work/agent-local-release/' + operation + '/ci/' + requestId + '/result.json';
+}
+function compareReleaseVersions(left, right) {
+  const a = parseReleaseVersion(left),
+    b = parseReleaseVersion(right);
+  check(a && b, 'formation version invalid');
+  for (const component of ['major', 'minor', 'patch']) {
+    if (a[component] !== b[component]) return a[component] < b[component] ? -1 : 1;
+  }
+  return 0;
+}
+function validatePersistedResult(request, result) {
+  validateRequest(request);
+  exact(result, [
+    'schema',
+    'request_id',
+    'operation_id',
+    'version',
+    'repository_id',
+    'project_ids',
+    'target',
+    'source_binding',
+    'archive_sha256',
+    'manifest_sha256',
+    'payload_id',
+    'asset',
+    'issuer',
+    'run_id',
+    'run_attempt',
+    'checks',
+  ]);
+  for (const field of ['request_id', 'operation_id', 'version', 'repository_id', 'project_ids', 'target', 'source_binding'])
+    check(equal(result[field], request[field]), 'formation result request differs: ' + field);
+  const profile = {
+    issuer: result.issuer,
+    repository_id: request.repository_id,
+    project_ids: request.project_ids,
+    target: request.target,
+    required_checks: Array.isArray(result.checks) ? result.checks.map((item) => item?.id) : [],
+  };
+  profileMatches(request, profile);
+  validateChecks(result.checks, profile);
+  exact(result.asset, ['file', 'bytes', 'sha256']);
+  check(
+    result.schema === 'VidaCIDeliveryResult/v1' &&
+      typeof result.run_id === 'string' && result.run_id.length > 0 &&
+      Number.isSafeInteger(result.run_attempt) && result.run_attempt > 0 &&
+      hex.test(result.archive_sha256) && hex.test(result.manifest_sha256) && hex.test(result.payload_id) &&
+      typeof result.asset.file === 'string' && result.asset.file.length > 0 &&
+      Number.isSafeInteger(result.asset.bytes) && result.asset.bytes > 0 && hex.test(result.asset.sha256),
+    'formation result identity or asset differs',
+  );
+}
+/** Reads the release owner's latest formed build pointer. It is a consistency receipt, not install or acceptance proof. */
+export function readConfirmedCIDeliveryFormation(root) {
+  const relative = formationPath();
+  const file = releasePath(root, relative, true);
+  if (!existsSync(file)) return null;
+  const pointer = JSON.parse(regularBytes(root, relative).toString('utf8'));
+  exact(pointer, [
+    'schema',
+    'authority',
+    'operation_id',
+    'request_id',
+    'version',
+    'source_binding',
+    'run_id',
+    'run_attempt',
+    'artifact_id',
+    'result_sha256',
+    'digest',
+  ]);
+  const { digest, ...body } = pointer;
+  check(
+    pointer.schema === 'VidaLocalReleaseFormation/v1' &&
+      pointer.authority === 'local_consistency_only' &&
+      releaseIdPattern.test(pointer.operation_id) &&
+      hex.test(pointer.request_id) &&
+      parseReleaseVersion(pointer.version) !== null &&
+      hex.test(pointer.source_binding) &&
+      typeof pointer.run_id === 'string' && pointer.run_id.length > 0 &&
+      Number.isSafeInteger(pointer.run_attempt) && pointer.run_attempt > 0 &&
+      typeof pointer.artifact_id === 'string' && pointer.artifact_id.length > 0 &&
+      hex.test(pointer.result_sha256) && digest === sha(json(body)),
+    'formed build pointer is invalid',
+  );
+  const journal = releaseState(
+    releasePath(root, '.agent/work/agent-local-release/' + pointer.operation_id + '/release.json'),
+  );
+  const request = JSON.parse(regularBytes(root, requestPath(pointer.operation_id, pointer.request_id)).toString('utf8'));
+  validateRequest(request);
+  check(
+    journal.operation_id === pointer.operation_id &&
+      journal.version === pointer.version &&
+      request.operation_id === pointer.operation_id &&
+      request.request_id === pointer.request_id &&
+      request.version === pointer.version &&
+      request.source_binding === pointer.source_binding,
+    'formed build pointer differs from its operation or request',
+  );
+  const resultBytes = regularBytes(root, resultPath(pointer.operation_id, pointer.request_id), 8 * 1024 * 1024);
+  check(sha(resultBytes) === pointer.result_sha256, 'formed build result receipt changed');
+  const result = JSON.parse(resultBytes.toString('utf8'));
+  validatePersistedResult(request, result);
+  check(
+    result.run_id === pointer.run_id && result.run_attempt === pointer.run_attempt,
+    'formed build pointer differs from its exact result',
+  );
+  return pointer;
+}
+
+function persistCIDeliveryFormation(root, { request, observation }) {
+  const resultRelative = resultPath(request.operation_id, request.request_id);
+  const resultFile = releasePath(root, resultRelative, true);
+  const resultBytes = Buffer.from(observation.result_bytes);
+  if (existsSync(resultFile)) {
+    check(regularBytes(root, resultRelative).equals(resultBytes), 'formed result already exists with different bytes');
+  } else {
+    releaseDirectory(root, path.posix.dirname(resultRelative));
+    const descriptor = openSync(resultFile, 'wx', 0o600);
+    try {
+      writeFileSync(descriptor, resultBytes);
+      fsyncSync(descriptor);
+    } finally {
+      closeSync(descriptor);
+    }
+  }
+  const body = {
+    schema: 'VidaLocalReleaseFormation/v1',
+    authority: 'local_consistency_only',
+    operation_id: request.operation_id,
+    request_id: request.request_id,
+    version: request.version,
+    source_binding: request.source_binding,
+    run_id: observation.run_id,
+    run_attempt: observation.run_attempt,
+    artifact_id: observation.artifact_id,
+    result_sha256: sha(resultBytes),
+  };
+  const pointer = { ...body, digest: sha(json(body)) };
+  const current = readConfirmedCIDeliveryFormation(root);
+  if (current) {
+    if (current.operation_id === pointer.operation_id) {
+      check(equal(current, pointer), 'formed operation already has a different successful result');
+      return current;
+    }
+    check(
+      compareReleaseVersions(pointer.version, current.version) > 0,
+      'formation baseline cannot regress or reuse an existing version',
+    );
+  }
+  saveReceipt(releasePath(root, formationPath(), true), pointer);
+  return pointer;
+}
 /** Exclusive request producer. Expected Source edits retain the operation and prior request custody. */
 export function recordCIDeliveryRequest({ root, operation, context, target }) {
   const body = requestBody({ root, operation, context, target });
@@ -128,7 +290,7 @@ export function validateCIDeliveryRequest(request) {
   check(
     request.schema === 'VidaCIDeliveryRequest/v1' &&
       releaseIdPattern.test(request.operation_id) &&
-      /^0\.1\.(0|[1-9]\d*)$/.test(request.version) &&
+      parseReleaseVersion(request.version) !== null &&
       id.test(request.repository_id) &&
       targetPattern.test(request.target) &&
       hex.test(request.source_binding) &&
@@ -289,6 +451,315 @@ export function validateCIDeliveryObservation({ request, candidate, profile, obs
     check(equal(result[field], observation[field]), 'result observation differs: ' + field);
   return { source_binding: request.source_binding, request_id: request.request_id, operation_id: request.operation_id };
 }
+
+function formationArtifactMembers(root, request, profile, provider) {
+  exact(provider, ['run', 'job', 'artifact', 'workflow_bytes', 'transport_path']);
+  const { run, job, artifact } = provider;
+  const policy = profile.github;
+  check(
+    profile.issuer === 'github-actions' &&
+      equal(profile.required_checks, minimumNativeDeliveryChecks) &&
+      policy &&
+      /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(policy.repository) &&
+      Number.isSafeInteger(policy.repository_id) && policy.repository_id > 0 &&
+      Number.isSafeInteger(policy.workflow_id) && policy.workflow_id > 0 &&
+      /^[a-f0-9]{40}$/.test(policy.source_commit) &&
+      /^\.github\/workflows\/[A-Za-z0-9_.-]+\.ya?ml$/.test(policy.workflow_path) &&
+      hex.test(policy.workflow_sha256) &&
+      typeof policy.job === 'string' &&
+      Array.isArray(policy.steps) && policy.steps.length === 1 &&
+      policy.steps[0]?.id === 'native-build' &&
+      typeof policy.steps[0]?.name === 'string' && policy.steps[0].name.length > 0,
+    'minimum native-build profile required for fresh formation',
+  );
+  const runId = String(run?.id),
+    runAttempt = run?.run_attempt;
+  check(
+    /^\d+$/.test(runId) && Number.isSafeInteger(Number(runId)) && Number(runId) > 0 &&
+      Number.isSafeInteger(runAttempt) && runAttempt > 0 &&
+      run.id === Number(runId) &&
+      run.workflow_id === policy.workflow_id &&
+      run.path === policy.workflow_path &&
+      run.event === 'workflow_dispatch' &&
+      run.status === 'completed' &&
+      run.conclusion === 'success' &&
+      run.head_sha === policy.source_commit &&
+      run.repository?.id === policy.repository_id &&
+      run.head_repository?.id === policy.repository_id &&
+      run.repository?.full_name === policy.repository,
+    'actual successful provider workflow run required',
+  );
+  const matches = Array.isArray(job?.steps)
+    ? job.steps.filter((step) => step?.name === policy.steps[0].name)
+    : [];
+  check(
+    job.name === policy.job &&
+      job.run_id === run.id &&
+      job.run_attempt === runAttempt &&
+      job.status === 'completed' &&
+      job.conclusion === 'success' &&
+      matches.length === 1 &&
+      matches[0].status === 'completed' &&
+      matches[0].conclusion === 'success',
+    'actual successful native-build job and step required',
+  );
+  check(
+    artifact?.id === Number(artifact.id) && Number.isSafeInteger(artifact.id) && artifact.id > 0 &&
+      artifact.name === 'build-' + request.request_id + '-' + runId + '-' + runAttempt &&
+      artifact.expired === false &&
+      /^sha256:[a-f0-9]{64}$/.test(artifact.digest) &&
+      artifact.workflow_run?.id === run.id &&
+      artifact.workflow_run?.repository_id === policy.repository_id &&
+      artifact.workflow_run?.head_repository_id === policy.repository_id &&
+      artifact.workflow_run?.head_sha === policy.source_commit,
+    'actual six-member CI build artifact identity required',
+  );
+  const start = Date.parse(job.started_at),
+    end = Date.parse(job.completed_at),
+    created = Date.parse(artifact.created_at);
+  check([start, end, created].every(Number.isFinite) && start <= created && created <= end,
+    'CI build artifact is outside the selected job interval');
+  check(
+    Buffer.isBuffer(provider.workflow_bytes) && sha(provider.workflow_bytes) === policy.workflow_sha256,
+    'selected Source workflow definition differs',
+  );
+  const relative = '.tmp/ci-delivery/' + request.request_id + '/' + runId + '-' + runAttempt + '-' + artifact.id + '.zip';
+  check(provider.transport_path === relative, 'selected CI build ZIP path differs');
+  const transport = regularBytes(root, relative, ciTransportLimit);
+  check('sha256:' + sha(transport) === artifact.digest, 'CI build ZIP digest differs');
+  return { policy, run, run_id: runId, run_attempt: runAttempt, job, artifact, transport, zip: releasePath(root, relative) };
+}
+
+function safeFormationMemberPath(value) {
+  return typeof value === 'string' && value.length > 0 && value.length <= 1024 &&
+    !value.includes('\\') && !value.startsWith('/') &&
+    value.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..');
+}
+
+function parseFormationJSON(bytes, label, limit) {
+  check(Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= limit, label + ' bytes invalid');
+  try {
+    return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  } catch {
+    throw Error('GAP-VIDA-CI-DELIVERY-001: ' + label + ' JSON invalid');
+  }
+}
+
+export function validateCIDeliveryFormationMembers({ request, members, providerObservation, profile }) {
+  const candidate = parseFormationJSON(members.candidate_bytes, 'candidate', 8 * 1024 * 1024);
+  exact(candidate, [
+    'operation_id',
+    'version',
+    'source_binding',
+    'pack_metadata',
+    'archive_sha256',
+    'manifest_sha256',
+    'manifest',
+  ]);
+  const manifest = parseFormationJSON(members.manifest_bytes, 'manifest', 8 * 1024 * 1024);
+  exact(manifest, ['schema', 'version', 'pin', 'target', 'inputs', 'payloadId', 'asset']);
+  exact(manifest.asset, ['file', 'bytes', 'sha256']);
+  check(
+    candidate.operation_id === request.operation_id &&
+      candidate.version === request.version &&
+      candidate.source_binding === request.source_binding &&
+      equal(candidate.manifest, manifest) &&
+      manifest.schema === 'VidaStandaloneBuild/v1' &&
+      manifest.version === request.version &&
+      manifest.pin === '1.4.2' &&
+      manifest.target === request.target &&
+      hex.test(manifest.payloadId) &&
+      Array.isArray(manifest.inputs) && manifest.inputs.length > 0 && manifest.inputs.length <= 100000 &&
+      hex.test(candidate.archive_sha256) && hex.test(candidate.manifest_sha256) &&
+      sha(members.archive_bytes) === candidate.archive_sha256 &&
+      sha(members.manifest_bytes) === candidate.manifest_sha256,
+    'CI candidate, manifest, archive or request differs',
+  );
+  const inputPaths = new Set();
+  for (const input of manifest.inputs) {
+    exact(input, ['path', 'bytes', 'sha256']);
+    check(
+      safeFormationMemberPath(input.path) && !inputPaths.has(input.path) &&
+        Number.isSafeInteger(input.bytes) && input.bytes > 0 && hex.test(input.sha256),
+      'native manifest input inventory invalid',
+    );
+    inputPaths.add(input.path);
+  }
+  check(
+    safeFormationMemberPath(manifest.asset.file) && !manifest.asset.file.includes('/') &&
+      Number.isSafeInteger(manifest.asset.bytes) && manifest.asset.bytes > 0 && hex.test(manifest.asset.sha256) &&
+      Buffer.isBuffer(members.archive_bytes) && members.archive_bytes.length > 0 && members.archive_bytes.length <= ciArchiveLimit &&
+      Buffer.isBuffer(members.asset_bytes) && members.asset_bytes.length === manifest.asset.bytes &&
+      sha(members.asset_bytes) === manifest.asset.sha256 &&
+      Buffer.isBuffer(members.installer_bytes) && members.installer_bytes.length > 0 && members.installer_bytes.length <= 1024 * 1024,
+    'native archive, asset or installer bytes invalid',
+  );
+  check(
+    Array.isArray(candidate.pack_metadata) && candidate.pack_metadata.length === 1,
+    'exact one CI package archive required',
+  );
+  const pack = candidate.pack_metadata[0];
+  check(
+    pack?.name === 'vida-agent' &&
+      pack.version === request.version &&
+      pack.filename === 'vida-agent-' + request.version + '.tgz' &&
+      Array.isArray(pack.files) && pack.files.length > 0 && pack.files.length <= 100000,
+    'CI package archive metadata differs',
+  );
+  const packPaths = new Set();
+  for (const file of pack.files) {
+    check(
+      file && safeFormationMemberPath(file.path) && !packPaths.has(file.path) &&
+        Number.isSafeInteger(file.size) && file.size >= 0,
+      'CI package file inventory invalid',
+    );
+    packPaths.add(file.path);
+  }
+  const manifestFiles = pack.files.filter((file) => file.path === 'dist/standalone/manifest.json');
+  const assetFiles = pack.files.filter((file) => file.path === 'dist/standalone/' + manifest.asset.file);
+  check(
+    manifestFiles.length === 1 && manifestFiles[0].size === members.manifest_bytes.length &&
+      assetFiles.length === 1 && assetFiles[0].size === members.asset_bytes.length,
+    'CI package inventory differs from actual native manifest and asset',
+  );
+  const receipt = parseFormationJSON(members.native_build_result_bytes, 'native-build result', 1024 * 1024);
+  exact(receipt, [
+    'schema',
+    'request_id',
+    'run_id',
+    'run_attempt',
+    'source_binding',
+    'archive_sha256',
+    'phase',
+    'status',
+  ]);
+  check(
+    receipt.schema === 'VidaCIPhaseResult/v1' &&
+      receipt.request_id === request.request_id &&
+      receipt.run_id === providerObservation.run_id &&
+      receipt.run_attempt === providerObservation.run_attempt &&
+      receipt.source_binding === request.source_binding &&
+      receipt.archive_sha256 === candidate.archive_sha256 &&
+      receipt.phase === 'native-build' && receipt.status === 'passed',
+    'native-build result differs from the selected request and provider run',
+  );
+  const checks = [{ id: 'native-build', status: 'passed' }];
+  const result_bytes = encodeCIDeliveryResult({
+    request,
+    candidate,
+    profile,
+    observation: {
+      issuer: providerObservation.issuer,
+      run_id: providerObservation.run_id,
+      run_attempt: providerObservation.run_attempt,
+      conclusion: 'success',
+      checks,
+    },
+  });
+  return {
+    candidate,
+    checks,
+    observation: {
+      schema: 'VidaCIDeliveryObservation/v1',
+      issuer: providerObservation.issuer,
+      run_id: providerObservation.run_id,
+      run_attempt: providerObservation.run_attempt,
+      artifact_id: providerObservation.artifact_id,
+      conclusion: 'success',
+      checks,
+      result_bytes,
+    },
+  };
+}
+
+/**
+ * Confirms a fresh pending operation from the current trusted CI controller.
+ * `ci.observe({ request })` returns the exact provider run, native job, build artifact,
+ * workflow bytes and ZIP transport path; the controller does not submit a success JSON.
+ * This owner reads and validates the six ZIP members, derives the canonical v1 result
+ * from the successful native-build step, then stores that result and the formation pointer.
+ * The caller is the release worker and therefore already owns the operation mutex.
+ */
+export async function confirmCIDeliveryFormation({ root, operation, version, ci }) {
+  check(ci && typeof ci.observe === 'function' && hex.test(ci.request_id), 'trusted native formation controller required');
+  const stateRelative = '.agent/work/agent-local-release/' + operation + '/release.json';
+  let state = releaseState(releasePath(root, stateRelative));
+  let pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+  const requestRelative = requestPath(operation, ci.request_id);
+  const requestBytes = regularBytes(root, requestRelative, 8 * 1024 * 1024);
+  const request = JSON.parse(requestBytes.toString('utf8'));
+  validateRequest(request);
+  check(
+    releaseIdPattern.test(operation) && request.request_id === ci.request_id &&
+      request.operation_id === operation && request.version === version &&
+      state.operation_id === operation && state.version === version && state.status === 'awaiting_assurance' &&
+      pending.operation_id === operation && pending.version === version && pending.status === 'awaiting_assurance' &&
+      !state.install_started && !pending.install_started &&
+      releaseSourceBinding(root).source_binding === request.source_binding,
+    'fresh same-source uninstalled pending release required',
+  );
+  const profile = structuredClone(ci.profile);
+  profileMatches(request, profile);
+  check(equal(profile.required_checks, minimumNativeDeliveryChecks), 'minimum native-build profile required');
+  const provider = await ci.observe({ request: structuredClone(request) });
+  const selected = formationArtifactMembers(root, request, profile, provider);
+  const { readArchiveEntry, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root);
+  let members;
+  try {
+    const inventory = await loadZipArchiveWithPreflight(selected.transport, { maxArchiveBytes: ciTransportLimit });
+    const candidate_bytes = await readArchiveEntry(selected.zip, 'candidate.json', { kind: 'zip', maxBytes: 8 * 1024 * 1024 });
+    const candidate = parseFormationJSON(candidate_bytes, 'candidate', 8 * 1024 * 1024);
+    const pack = candidate.pack_metadata?.[0];
+    const manifest_bytes = await readArchiveEntry(selected.zip, 'manifest.json', { kind: 'zip', maxBytes: 8 * 1024 * 1024 });
+    const manifest = parseFormationJSON(manifest_bytes, 'manifest', 8 * 1024 * 1024);
+    const expectedNames = [
+      pack?.filename,
+      manifest.asset?.file,
+      'manifest.json',
+      'candidate.json',
+      'native-build.result.json',
+      'install-windows.ps1',
+    ].sort((left, right) => left.localeCompare(right));
+    const actualNames = Object.keys(inventory.files).filter((name) => !inventory.files[name].dir).sort((left, right) => left.localeCompare(right));
+    check(
+      expectedNames.length === 6 && expectedNames.every((name) => typeof name === 'string') &&
+        new Set(expectedNames).size === 6 && equal(actualNames, expectedNames),
+      'CI build ZIP inventory differs from its exact six-member allowlist',
+    );
+    members = {
+      candidate_bytes,
+      archive_bytes: await readArchiveEntry(selected.zip, pack.filename, { kind: 'zip', maxBytes: ciArchiveLimit }),
+      manifest_bytes,
+      asset_bytes: await readArchiveEntry(selected.zip, manifest.asset.file, { kind: 'zip', maxBytes: ciArchiveLimit }),
+      native_build_result_bytes: await readArchiveEntry(selected.zip, 'native-build.result.json', { kind: 'zip', maxBytes: 1024 * 1024 }),
+      installer_bytes: await readArchiveEntry(selected.zip, 'install-windows.ps1', { kind: 'zip', maxBytes: 1024 * 1024 }),
+    };
+  } catch (error) {
+    throw Error('GAP-VIDA-CI-DELIVERY-001: qualified build ZIP read or inventory validation failed; retain exact operation and artifact');
+  }
+  const providerObservation = {
+    issuer: profile.issuer,
+    run_id: selected.run_id,
+    run_attempt: selected.run_attempt,
+    artifact_id: String(selected.artifact.id),
+  };
+  const validated = validateCIDeliveryFormationMembers({ request, members, providerObservation, profile });
+  await withReleaseAdmission(root, () => {
+    state = releaseState(releasePath(root, stateRelative));
+    pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+    check(
+      state.operation_id === operation && state.version === version && state.status === 'awaiting_assurance' &&
+        pending.operation_id === operation && pending.version === version && pending.status === 'awaiting_assurance' &&
+        !state.install_started && !pending.install_started &&
+        regularBytes(root, requestRelative, 8 * 1024 * 1024).equals(requestBytes) &&
+        releaseSourceBinding(root).source_binding === request.source_binding,
+      'release request, Source or pending operation changed during formation observation',
+    );
+    persistCIDeliveryFormation(root, { request, observation: validated.observation });
+  });
+  return readConfirmedCIDeliveryFormation(root);
+}
+
 export async function verifyCIDeliveryEvidence({ root, operation, version, ci }) {
   check(
     ci && typeof ci.observe === 'function',
@@ -315,7 +786,21 @@ export async function verifyCIDeliveryEvidence({ root, operation, version, ci })
     regularBytes(root, requestPath(operation, ci.request_id)).equals(Buffer.from(json(request))),
     'request changed during observation',
   );
-  return validateCIDeliveryObservation({ request, candidate, profile, observation });
+  const validated = validateCIDeliveryObservation({ request, candidate, profile, observation });
+  await withReleaseAdmission(root, () => {
+    const currentPending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+    check(
+      currentPending.operation_id === operation &&
+        currentPending.version === version &&
+        !currentPending.install_started &&
+        regularBytes(root, requestPath(operation, ci.request_id)).equals(Buffer.from(json(request))),
+      'pending release or CI request changed during result publication',
+    );
+    // The release worker already owns the operation mutex; admission serializes this result with new reservations.
+    recheckNativeRetargetCandidate(root, candidate);
+    persistCIDeliveryFormation(root, { request, observation });
+  });
+  return validated;
 }
 
 async function responseBytes(response, limit) {

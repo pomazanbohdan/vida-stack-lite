@@ -7,7 +7,7 @@ import z from 'zod';
 import { type AgentRuntimeConfig, type WorkItemSelection, runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import { compileDevelopmentWorkflow } from './workflow-plan.js';
+import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
 import { buildConfiguredContext, type ConfiguredContext } from './configured-context.js';
 import { parseObservedValidatorVerdict } from './observed-validation.js';
 import { parseObservedTesterVerdict } from './observed-testing.js';
@@ -217,13 +217,18 @@ export class MastraSessionBridge {
     repositoryRoot: string,
     ledger: MastraSessionLedger,
     projectIds: readonly string[],
+    lifecycleRisk?: WorkflowLifecycleRisk,
     correctiveExecution?: CorrectiveExecution,
   ) {
     this.#workflow = workflow;
     this.#storage = storage;
     this.#context = structuredClone(context);
     this.#runId = runId;
-    this.#binding = { ...structuredClone({ repositoryRoot, selection, context, workflowId, runId }), config };
+    this.#binding = {
+      ...structuredClone({ repositoryRoot, selection, context, workflowId, runId }),
+      ...(lifecycleRisk === undefined ? {} : { lifecycleRisk }),
+      config,
+    };
     this.#ledger = ledger;
     this.#projectIds = [...projectIds];
     this.#correctiveExecution = correctiveExecution ? structuredClone(correctiveExecution) : undefined;
@@ -244,6 +249,7 @@ export class MastraSessionBridge {
     workspaceId: string;
     ledger: MastraSessionLedger;
     projectIds: readonly string[];
+    lifecycleRisk?: WorkflowLifecycleRisk;
     correctiveExecution?: CorrectiveExecution;
   }): Promise<MastraSessionBridge> {
     const { repositoryRoot, config, selection, context, workflowId, workspaceId } = args;
@@ -255,7 +261,7 @@ export class MastraSessionBridge {
         runtimeConfigDigest(bound.config) === runtimeConfigDigest(config),
       'Producer ledger binding differs',
     );
-    const plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags);
+    const plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags, args.lifecycleRisk);
     const correctiveExecution = args.correctiveExecution
       ? correctiveExecutionSchema.parse(args.correctiveExecution)
       : undefined;
@@ -289,6 +295,7 @@ export class MastraSessionBridge {
               waveIndex,
               [],
               correctiveExecution,
+              args.lifecycleRisk,
             );
             requireBridge(actions.length > 0, 'Mastra wave has no executable assignments');
             const requests = actions.map((action) =>
@@ -322,7 +329,9 @@ export class MastraSessionBridge {
               resumeData.observations.every((entry) => entry.output_digest === canonicalJsonDigest(entry.summary)),
               'Mastra wave observation digest differs',
             );
-            for (const action of actions.filter((entry) => entry.stage_kind === 'validate')) {
+            for (const action of actions.filter(
+              (entry) => entry.stage_kind === 'validate' && entry.produces.includes('ValidationReceipt/v1'),
+            )) {
               const observed = resumeData.observations.find((entry) => entry.action_id === action.action_id);
               requireBridge(observed, 'Mastra validator observation is missing');
               parseObservedValidatorVerdict(observed);
@@ -386,6 +395,7 @@ export class MastraSessionBridge {
         repositoryRoot,
         args.ledger,
         args.projectIds,
+        args.lifecycleRisk,
         correctiveExecution,
       );
       args.ledger.hostState.settleSessionProducer(

@@ -1,10 +1,10 @@
 import { type AgentRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import type { HostStateSnapshot } from '../host-state.js';
+import type { HostStateSnapshot, HostStateStore } from '../host-state.js';
 import { buildImplementationResult, type DevelopmentTaskPacket, type ImplementationResult } from './mastra-boundary.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
-import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { snapshotAdmittedTaskSources, snapshotDeclaredSources } from './scoped-source-snapshot.js';
 import { sessionActionsForWave } from './session-handoff.js';
 import { validateWorkSessionBinding } from './final-assurance.js';
 
@@ -18,6 +18,7 @@ export function buildAdmittedImplementationResult(input: {
   config: AgentRuntimeConfig;
   packet: DevelopmentTaskPacket;
   host: HostStateSnapshot;
+  sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'>;
   ledger: MastraSessionLedgerSnapshot;
 }): ImplementationResult {
   const { repositoryRoot, config, packet, host, ledger } = input;
@@ -33,7 +34,15 @@ export function buildAdmittedImplementationResult(input: {
     'admitted work or persisted run differs from packet',
   );
   validateWorkSessionBinding(work, ledger.state, repositoryRoot);
-  const source = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
+  const source = input.sourceStore
+    ? snapshotAdmittedTaskSources({
+      store: input.sourceStore,
+      host,
+      canonicalHostRoot: repositoryRoot,
+      paths: packet.owned_paths,
+        attempt: ledger.state.attempt,
+      })
+    : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireResult(
     ledger.state.source_scope?.digest === source.digest,
     'current source differs from the last recorded scope snapshot',

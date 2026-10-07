@@ -1,11 +1,12 @@
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
-import { readFileSync, lstatSync } from 'node:fs';
+import { closeSync, constants, fstatSync, openSync, readFileSync, readSync, lstatSync } from 'node:fs';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { canonicalJsonDigest, MAX_CANONICAL_BYTES } from '../src/contracts/public-ingress.ts';
 import {
   loadRuntimeConfig,
+  parseRuntimeConfigYaml,
   runtimeConfigDigest,
   runtimePackageAccess,
   validateRuntimeConfigRepairTargetBytes,
@@ -24,7 +25,7 @@ import {
 } from '../src/orchestration/mastra-session-bridge.ts';
 import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
 import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
-import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
+import { compareScopedSourceSnapshots, snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { inspectHostWorkspaceDatabase } from '../src/host-state.ts';
 import {
   parseSessionBridgeObservation,
@@ -34,6 +35,7 @@ import {
 } from '../src/orchestration/mastra-session-bridge.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import { admittedResearchResultsForSynthesis } from '../src/orchestration/observed-synthesis-result.ts';
+import { standaloneRuntime } from './bun.mjs';
 
 const requireRebind = (valid, message) => {
   if (!valid) throw new Error(`vida runtime-config rebind: ${message}`);
@@ -50,10 +52,15 @@ const configPath = 'agent-runtime.config.v1.yaml';
 const selectorPath = '.agent/active-runtime-selector.v1.json';
 const operationName = 'runtime-config-rebind-operation.v1.json';
 const deliveryOperationName = 'runtime-config-delivery-operation.v1.json';
+const sourceCorrectionName = 'runtime-config-source-correction-repair.v1.json';
 const identifier = /^[a-z0-9][a-z0-9._-]{0,79}$/;
+const stableVersion = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/;
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 const operationSchema = JSON.parse(
   readFileSync(new URL('../schemas/config-rebind-operation.v1.schema.json', import.meta.url)),
+);
+const sourceCorrectionSchema = JSON.parse(
+  readFileSync(new URL('../schemas/runtime-config-source-correction-repair.v1.schema.json', import.meta.url)),
 );
 const validateOperation = ajv.compile(operationSchema);
 const validateDeliveryOperation = ajv.compile({
@@ -62,6 +69,15 @@ const validateDeliveryOperation = ajv.compile({
   properties: { ...operationSchema.properties, schema: { const: 'SourceDeliveryConfigRebindOperation/v1' } },
 });
 const operationValidator = (delivery) => (delivery ? validateDeliveryOperation : validateOperation);
+const validateSourceCorrection = ajv.compile(sourceCorrectionSchema);
+const externalSourceCorrectionReportSchema = structuredClone(sourceCorrectionSchema.$defs.report);
+externalSourceCorrectionReportSchema.required = externalSourceCorrectionReportSchema.required.filter(
+  (field) => field !== 'native_self_attestation',
+);
+delete externalSourceCorrectionReportSchema.properties.native_self_attestation;
+externalSourceCorrectionReportSchema.$schema = sourceCorrectionSchema.$schema;
+externalSourceCorrectionReportSchema.$defs = sourceCorrectionSchema.$defs;
+const validateExternalSourceCorrectionReport = ajv.compile(externalSourceCorrectionReportSchema);
 const operationDigest = (operation) =>
   canonicalJsonDigest(
     operation.schema === 'SourceDeliveryConfigRebindOperation/v1'
@@ -77,6 +93,21 @@ function hasExactKeys(value, keys) {
     !Array.isArray(value) &&
     Object.keys(value).sort().join('|') === [...keys].sort().join('|')
   );
+}
+
+function stableVersionParts(value) {
+  if (typeof value !== 'string' || !stableVersion.test(value)) return null;
+  const parts = value.split('.').map(Number);
+  return parts.every(Number.isSafeInteger) ? parts : null;
+}
+
+function isLaterStableVersion(candidate, baseline) {
+  const left = stableVersionParts(candidate), right = stableVersionParts(baseline);
+  if (!left || !right) return false;
+  for (let index = 0; index < left.length; index++) {
+    if (left[index] !== right[index]) return left[index] > right[index];
+  }
+  return false;
 }
 
 function validateOriginalContextCollection(value) {
@@ -267,6 +298,131 @@ function sameIdentity(root, config, receipt) {
   return projects;
 }
 
+const prewriterWorkflows = [
+  ['implementation_new', 'develop_change'],
+  ['implementation_change', 'develop_change'],
+  ['bug_fix', 'develop_fix'],
+  ['task_execution', 'develop_task'],
+];
+const prewriterRoles = ['source-planner', 'security-prewriter'];
+
+function sameJson(left, right) {
+  return canonicalJsonDigest(left) === canonicalJsonDigest(right);
+}
+
+function normalizedWorkflowEdges(edges) {
+  return [...edges].sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+}
+
+function exactPrewriterTemplateDelta(oldConfig, target) {
+  if (
+    oldConfig.runtime.bundle !== 'packages/agent' ||
+    target.runtime.bundle !== 'packages/agent' ||
+    oldConfig.projects.length !== 1 ||
+    oldConfig.projects[0].project_id !== 'agent' ||
+    target.agents.profiles.executor.model !== oldConfig.agents.profiles.executor.model ||
+    target.agents.profiles.executor.reasoning !== oldConfig.agents.profiles.executor.reasoning ||
+    prewriterRoles.some(
+      (role) =>
+        Object.hasOwn(oldConfig.agents.role_instructions, role) ||
+        Object.hasOwn(oldConfig.teams['default-development'].roles, role),
+    ) ||
+    Object.hasOwn(oldConfig.artifact_contracts, 'LifecyclePreparationObservation/v1')
+  )
+    return false;
+
+  let maintainedTemplate;
+  try {
+    const projectId = oldConfig.projects[0].project_id,
+      templateYaml = runtimePackageAccess()
+        .readBytes('templates/agent-runtime.config.template.v1.yaml', 'maintained prewriter workflow template')
+        .toString('utf8')
+        .replaceAll('{{REPOSITORY}}', oldConfig.repository.repository_id)
+        .replaceAll('{{PROJECT}}', projectId)
+        .replaceAll('{{BUNDLE}}', oldConfig.runtime.bundle);
+    maintainedTemplate = parseRuntimeConfigYaml(templateYaml);
+  } catch {
+    return false;
+  }
+  const expectedArtifact = maintainedTemplate.artifact_contracts['LifecyclePreparationObservation/v1'];
+  if (!expectedArtifact || !sameJson(target.artifact_contracts['LifecyclePreparationObservation/v1'], expectedArtifact))
+    return false;
+  for (const role of prewriterRoles) {
+    const expectedRole = maintainedTemplate.agents.role_instructions[role],
+      expectedMapping = maintainedTemplate.teams['default-development'].roles[role];
+    if (
+      !expectedRole ||
+      !expectedMapping ||
+      !sameJson(target.agents.role_instructions[role], expectedRole) ||
+      target.teams['default-development'].roles[role] !== expectedMapping
+    )
+      return false;
+  }
+
+  const normalized = structuredClone(target);
+  for (const role of prewriterRoles) {
+    delete normalized.agents.role_instructions[role];
+    delete normalized.teams['default-development'].roles[role];
+  }
+  delete normalized.artifact_contracts['LifecyclePreparationObservation/v1'];
+
+  for (const [workflowId, developerId] of prewriterWorkflows) {
+    const original = oldConfig.workflows[workflowId],
+      candidate = normalized.workflows[workflowId],
+      beforeReview = target.workflows[workflowId],
+      originalDeveloper = original?.stages.find((stage) => stage.id === developerId),
+      developer = candidate?.stages.find((stage) => stage.id === developerId),
+      reviewStages = beforeReview?.stages.filter((stage) => stage.id === 'review_source_prewrite'),
+      review = reviewStages?.[0],
+      expectedReview = maintainedTemplate.workflows[workflowId]?.stages.find(
+        (stage) => stage.id === 'review_source_prewrite',
+      ),
+      stageIndex = beforeReview?.stages.findIndex((stage) => stage.id === 'review_source_prewrite'),
+      expectedStageIndex = maintainedTemplate.workflows[workflowId]?.stages.findIndex(
+        (stage) => stage.id === 'review_source_prewrite',
+      );
+    if (
+      !original ||
+      !candidate ||
+      !originalDeveloper ||
+      !developer ||
+      !expectedReview ||
+      !review ||
+      reviewStages.length !== 1 ||
+      original.stages.some((stage) => stage.id === 'review_source_prewrite') ||
+      !sameJson(originalDeveloper.required_after, ['synthesize_task']) ||
+      !sameJson(developer.required_after, ['review_source_prewrite']) ||
+      !sameJson(review, expectedReview) ||
+      stageIndex !== expectedStageIndex
+    )
+      return false;
+
+    const synthesizedEdge = ['synthesize_task', 'review_source_prewrite'],
+      reviewEdge = ['review_source_prewrite', developerId],
+      originalEdge = ['synthesize_task', developerId],
+      reviewEdges = beforeReview.edges.filter((edge) => edge.includes('review_source_prewrite'));
+    if (
+      !sameJson(reviewEdges, [synthesizedEdge, reviewEdge]) ||
+      beforeReview.edges.some((edge) => sameJson(edge, originalEdge)) ||
+      !original.edges.some((edge) => sameJson(edge, originalEdge))
+    )
+      return false;
+
+    candidate.stages = candidate.stages.filter((stage) => stage.id !== 'review_source_prewrite');
+    developer.required_after = ['synthesize_task'];
+    candidate.edges = normalizedWorkflowEdges([
+      ...candidate.edges.filter((edge) => !edge.includes('review_source_prewrite')),
+      originalEdge,
+    ]);
+  }
+
+  const baseline = structuredClone(oldConfig);
+  for (const [workflowId] of prewriterWorkflows) {
+    baseline.workflows[workflowId].edges = normalizedWorkflowEdges(baseline.workflows[workflowId].edges);
+  }
+  return sameJson(normalized, baseline);
+}
+
 function targetConfig(access, root, oldConfig, targetPath) {
   const bytes = access.readBytes(targetPath, 'authored target YAML');
   const target = validateRuntimeConfigRepairTargetBytes(bytes, root);
@@ -274,9 +430,9 @@ function targetConfig(access, root, oldConfig, targetPath) {
   unchanged.agents.profiles.executor.model = oldConfig.agents.profiles.executor.model;
   unchanged.agents.profiles.executor.reasoning = oldConfig.agents.profiles.executor.reasoning;
   requireRebind(
-    canonicalJsonDigest(unchanged) === canonicalJsonDigest(oldConfig) &&
-      runtimeConfigDigest(target) !== runtimeConfigDigest(oldConfig),
-    'only requested executor model/reasoning may change',
+    (sameJson(unchanged, oldConfig) && runtimeConfigDigest(target) !== runtimeConfigDigest(oldConfig)) ||
+      exactPrewriterTemplateDelta(oldConfig, target),
+    'only requested executor model/reasoning or the approved prewriter workflow template delta may change',
   );
   return { bytes, config: target };
 }
@@ -1114,7 +1270,7 @@ function storedBase64(value, label, maximumBytes) {
 }
 
 /** Read an immutable terminal synthesis custody receipt without accepting its result. */
-function readonlyKnownTerminal(db, root, config, row, item, host, store) {
+function readonlyKnownTerminal(db, root, config, row, item, host, store, maintenanceReceipt) {
   const state = row.value,
     receipt = store.readHistoricalTerminalSynthesisCapture(
       { work_id: state.work_id },
@@ -1206,7 +1362,23 @@ function readonlyKnownTerminal(db, root, config, row, item, host, store) {
       (entry) => entry.kind === 'work' && entry.value.binding?.lifecycle_work_id === state.work_id,
     ),
     ledgerRows = host.filter((entry) => entry.kind === 'ledger');
+  const expectedMaintenanceGeneration = receipt.request.expected_maintenance_generation,
+    currentMaintenanceGeneration = store.readHostStateSnapshot(receipt.identity).maintenanceGeneration,
+    heldMaintenanceFence = maintenanceReceipt?.fence,
+    verifiedUnfencedStatus =
+      maintenanceReceipt?.unfenced === true && db.inTransaction
+        ? maintenanceReceipt.prior?.status ?? null
+        : !db.inTransaction
+          ? store.readMaintenanceFence()?.status ?? null
+          : 'unverified';
   requireRebind(
+    (heldMaintenanceFence
+      ? heldMaintenanceFence.status === 'held' &&
+        expectedMaintenanceGeneration + 1 === heldMaintenanceFence.generation &&
+        heldMaintenanceFence.generation === currentMaintenanceGeneration
+      : verifiedUnfencedStatus !== 'held' &&
+        verifiedUnfencedStatus !== 'unverified' &&
+        expectedMaintenanceGeneration === currentMaintenanceGeneration) &&
     ownerRows.length === 1 && ledgerRows.length === 1 &&
       validateReadonlyOwner(ownerRows[0].value) &&
       ownerRows[0].workspace_id === state.workspace_id &&
@@ -1227,8 +1399,7 @@ function readonlyKnownTerminal(db, root, config, row, item, host, store) {
       receipt.journal_version.revision === row.revision &&
       receipt.journal_version.digest === row.digest &&
       receipt.request.expected_journal.revision === row.revision &&
-      receipt.request.expected_journal.digest === row.digest &&
-      receipt.request.expected_maintenance_generation === store.readHostStateSnapshot(receipt.identity).maintenanceGeneration,
+      receipt.request.expected_journal.digest === row.digest,
     'known terminal synthesis Host versions, owner or maintenance binding differs',
   );
 
@@ -1407,7 +1578,7 @@ function readonlyKnownTerminal(db, root, config, row, item, host, store) {
   };
 }
 
-export function currentState(db, workspace, root, config, existingStore) {
+export function currentState(db, workspace, root, config, existingStore, maintenanceReceipt) {
   const hostRows = checkedRows(db, 'agent_host_state', workspace);
   for (const row of hostRows) {
     if (row.kind === 'work')
@@ -1440,7 +1611,7 @@ export function currentState(db, workspace, root, config, existingStore) {
             'terminal synthesis reader Host workspace differs',
           );
           const recognized =
-            readonlyKnownTerminal(db, root, config, row, item, hostRows, terminalReceiptStore) ??
+            readonlyKnownTerminal(db, root, config, row, item, hostRows, terminalReceiptStore, maintenanceReceipt) ??
             readonlyBookkeepingUnknown(root, config, row, item, hostRows, terminalReceiptStore);
           if (recognized) {
             frozen.push(recognized);
@@ -1609,6 +1780,1401 @@ function readOperation(access, operationPath, id, root, delivery) {
   return { bytes, value };
 }
 
+function readExternalBytes(file, maximum, label) {
+  requireRebind(
+    typeof file === 'string' &&
+      file.length > 0 &&
+      file.length <= 4096 &&
+      path.isAbsolute(file) &&
+      path.resolve(file) === file &&
+      !/[\0\r\n]/.test(file),
+    `${label} path invalid`,
+  );
+  const flags = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0),
+    fd = openSync(file, flags);
+  try {
+    const before = fstatSync(fd),
+      namedBefore = lstatSync(file);
+    requireRebind(
+      before.isFile() &&
+        namedBefore.isFile() &&
+        !namedBefore.isSymbolicLink() &&
+        before.nlink === 1 &&
+        namedBefore.nlink === 1 &&
+        before.dev === namedBefore.dev &&
+        before.ino === namedBefore.ino &&
+        before.size === namedBefore.size &&
+        before.size <= maximum,
+      `${label} is not a bounded regular file`,
+    );
+    const bytes = Buffer.alloc(before.size);
+    let offset = 0;
+    while (offset < bytes.length) {
+      const count = readSync(fd, bytes, offset, bytes.length - offset, offset);
+      requireRebind(count > 0, `${label} ended during read`);
+      offset += count;
+    }
+    const after = fstatSync(fd),
+      namedAfter = lstatSync(file),
+      extra = Buffer.alloc(1);
+    requireRebind(
+      after.isFile() &&
+        namedAfter.isFile() &&
+        !namedAfter.isSymbolicLink() &&
+        after.nlink === 1 &&
+        namedAfter.nlink === 1 &&
+        before.dev === after.dev &&
+        before.ino === after.ino &&
+        before.size === after.size &&
+        before.mtimeMs === after.mtimeMs &&
+        before.ctimeMs === after.ctimeMs &&
+        after.dev === namedAfter.dev &&
+        after.ino === namedAfter.ino &&
+        after.size === namedAfter.size &&
+        readSync(fd, extra, 0, 1, bytes.length) === 0,
+      `${label} changed during read`,
+    );
+    return bytes;
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function parseExternalJson(file, maximum, label) {
+  try {
+    return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(readExternalBytes(file, maximum, label)));
+  } catch (error) {
+    requireRebind(false, `${label} is not bounded UTF-8 JSON: ${error.message}`);
+  }
+}
+
+function validSourceSnapshot(value) {
+  requireRebind(
+    hasExactKeys(value, ['schema', 'entries', 'digest']) &&
+      value.schema === 'ScopedSourceSnapshot/v1' &&
+      Array.isArray(value.entries) &&
+      value.entries.length > 0 &&
+      value.entries.length <= 512 &&
+      /^[a-f0-9]{64}$/.test(value.digest) &&
+      value.digest === canonicalJsonDigest({ schema: value.schema, entries: value.entries }),
+    'source snapshot shape or digest differs',
+  );
+  let prior = '';
+  for (const entry of value.entries) {
+    requireRebind(
+      hasExactKeys(entry, ['path', 'exists', 'bytes', 'sha256']) &&
+        typeof entry.path === 'string' &&
+        entry.path.length > 0 &&
+        entry.path.length <= 512 &&
+        !entry.path.includes('\\') &&
+        !entry.path.startsWith('/') &&
+        !/^[A-Za-z]:/.test(entry.path) &&
+        !/[\u0000-\u001f]/.test(entry.path) &&
+        entry.path.split('/').every((part) => part && part !== '.' && part !== '..') &&
+        entry.path > prior &&
+        typeof entry.exists === 'boolean' &&
+        (entry.exists
+          ? Number.isSafeInteger(entry.bytes) && entry.bytes >= 0 && entry.bytes <= 8 * 1024 * 1024 &&
+            typeof entry.sha256 === 'string' && /^[a-f0-9]{64}$/.test(entry.sha256)
+          : entry.bytes === null && entry.sha256 === null),
+      'source snapshot entry is invalid or unsorted',
+    );
+    prior = entry.path;
+  }
+  return value;
+}
+
+function sourceBeforeimageSnapshot(value, operationId, operationPath, operationBytes) {
+  requireRebind(
+    hasExactKeys(value, [
+      'purpose',
+      'operation_id',
+      'operation_ref',
+      'operation_bytes_base64',
+      'source',
+      'beforeimages',
+      'recorded_at',
+      'effects_issued',
+    ]) &&
+      value.purpose === 'inactive custody only; not an active repair artifact or admission' &&
+      value.operation_id === operationId &&
+      value.operation_ref === operationPath &&
+      value.effects_issued === false &&
+      typeof value.recorded_at === 'string' &&
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value.recorded_at) &&
+      Number.isFinite(Date.parse(value.recorded_at)),
+    'retained source custody identity differs',
+  );
+  requireRebind(
+    typeof value.operation_bytes_base64 === 'string' &&
+      value.operation_bytes_base64.length <= 2 * 1024 * 1024,
+    'retained source custody operation bytes are invalid',
+  );
+  const originalBytes = Buffer.from(value.operation_bytes_base64, 'base64');
+  requireRebind(
+      originalBytes.toString('base64') === value.operation_bytes_base64 &&
+      originalBytes.equals(operationBytes),
+    'retained source custody operation bytes differ',
+  );
+  const recorded = validSourceSnapshot(value.source);
+  requireRebind(
+    recorded.entries.every((entry) => entry.exists) &&
+      Array.isArray(value.beforeimages) &&
+      value.beforeimages.length === recorded.entries.length,
+    'retained source custody inventory differs',
+  );
+  const beforeimages = new Map();
+  let total = 0;
+  for (let index = 0; index < recorded.entries.length; index += 1) {
+    const entry = recorded.entries[index],
+      beforeimage = value.beforeimages[index];
+    requireRebind(
+      hasExactKeys(beforeimage, ['path', 'bytes_base64']) &&
+        beforeimage.path === entry.path &&
+        typeof beforeimage.bytes_base64 === 'string' &&
+        beforeimage.bytes_base64.length <= 12 * 1024 * 1024,
+      'retained source beforeimage order or shape differs',
+    );
+    const bytes = Buffer.from(beforeimage.bytes_base64, 'base64');
+    requireRebind(
+      bytes.toString('base64') === beforeimage.bytes_base64 &&
+        bytes.length === entry.bytes &&
+        sha(bytes) === entry.sha256,
+      'retained source beforeimage bytes differ',
+    );
+    total += bytes.length;
+    requireRebind(total <= 64 * 1024 * 1024, 'retained source beforeimages exceed the source bound');
+    beforeimages.set(entry.path, bytes);
+  }
+  const recomputed = snapshotDeclaredSources(
+    {
+      fileExists: (relative) => beforeimages.has(relative),
+      readBytes: (relative) => beforeimages.get(relative),
+    },
+    recorded.entries.map((entry) => entry.path),
+  );
+  requireRebind(recomputed.digest === recorded.digest, 'retained source snapshot does not match its beforeimages');
+  return recomputed;
+}
+
+function sourceSnapshotChanges(before, after) {
+  const beforeEntries = new Map(before.entries.map((entry) => [entry.path, entry])),
+    afterEntries = new Map(after.entries.map((entry) => [entry.path, entry])),
+    paths = [...new Set([...beforeEntries.keys(), ...afterEntries.keys()])].sort(),
+    normalize = (entries) => {
+      const projected = paths.map((relative) => entries.get(relative) ?? { path: relative, exists: false, bytes: null, sha256: null }),
+        body = { schema: 'ScopedSourceSnapshot/v1', entries: projected };
+      return { ...body, digest: canonicalJsonDigest(body) };
+    };
+  return compareScopedSourceSnapshots(normalize(beforeEntries), normalize(afterEntries));
+}
+
+function canonicalChangedPaths(value) {
+  requireRebind(Array.isArray(value) && value.length > 0 && value.length <= 64, 'authorized source path set invalid');
+  const result = [...value].sort();
+  requireRebind(
+    result.length === new Set(result).size &&
+      result.every(
+        (relative) =>
+          typeof relative === 'string' &&
+          relative.length > 0 &&
+          relative.length <= 512 &&
+          relative.startsWith('packages/agent/') &&
+          !relative.includes('\\') &&
+          !relative.startsWith('/') &&
+          !/^[A-Za-z]:/.test(relative) &&
+          !/[\u0000-\u001f]/.test(relative) &&
+          relative.split('/').every((part) => part && part !== '.' && part !== '..'),
+      ),
+    'authorized source paths must be canonical package paths',
+  );
+  return result;
+}
+
+function currentNativeSelfAttestation() {
+  const runtime = standaloneRuntime();
+  if (!runtime) return null;
+  requireRebind(
+    process.versions.bun === '1.4.2' &&
+      path.isAbsolute(runtime.root) &&
+      path.resolve(runtime.root) === runtime.root &&
+      path.isAbsolute(runtime.executable) &&
+      path.resolve(runtime.executable) === runtime.executable,
+    'native self-attestation runtime identity differs',
+  );
+  const stat = lstatSync(runtime.executable);
+  requireRebind(
+    stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1 && stat.size > 0 && stat.size <= 512 * 1024 * 1024,
+    'native executable is not a bounded regular file',
+  );
+  const packageBytes = readFileSync(path.join(runtime.root, 'package.json')),
+    packageManifest = JSON.parse(packageBytes.toString('utf8')),
+    pin = readFileSync(path.join(runtime.root, '.bun-version'), 'utf8').trim(),
+    executableBytes = readFileSync(runtime.executable),
+    payloadPrefix = packageManifest.version + '-',
+    basename = path.basename(runtime.root),
+    payloadId = basename.startsWith(payloadPrefix) ? basename.slice(payloadPrefix.length) : '';
+  requireRebind(
+    packageManifest.name === 'vida-agent' &&
+      stableVersionParts(packageManifest.version) !== null &&
+      pin === '1.4.2' &&
+      executableBytes.length === stat.size &&
+      /^[a-f0-9]{64}$/.test(payloadId),
+    'native executable, package, pin or resource payload identity differs',
+  );
+  return {
+    schema: 'VidaAgentNativeSelfAttestation/v1',
+    executable_path: runtime.executable,
+    executable_bytes: executableBytes.length,
+    executable_sha256: sha(executableBytes),
+    package_name: packageManifest.name,
+    package_version: packageManifest.version,
+    package_manifest_sha256: sha(packageBytes),
+    bun_version: pin,
+    runtime_root: runtime.root,
+    resource_payload_id: payloadId,
+  };
+}
+
+function samePath(left, right) {
+  const a = path.resolve(left), b = path.resolve(right);
+  return process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+function requireEffectivePath(executable) {
+  const directory = path.dirname(executable),
+    entries = String(process.env.PATH ?? '').split(path.delimiter).filter(Boolean);
+  requireRebind(entries.some((entry) => samePath(entry, directory)), 'installed command directory is absent from effective PATH');
+}
+
+function validateSourceCorrectionReport(report, request, access, selfAttestation) {
+  requireRebind(validateExternalSourceCorrectionReport(report), 'external source correction report schema invalid');
+  const completeReport = { ...report, native_self_attestation: selfAttestation };
+  const artifact = {
+    schema: 'RuntimeConfigSourceCorrectionRepair/v1',
+    status: 'applied',
+    revision: 2,
+    operation_id: request.operation_id,
+    request,
+    report: completeReport,
+  };
+  artifact.digest = canonicalJsonDigest(artifact);
+  requireRebind(validateSourceCorrection(artifact), 'source correction report or request schema invalid');
+  const manifest = completeReport.build_manifest,
+    ci = completeReport.ci_delivery,
+    result = ci.result,
+    expectedChecks = [{ id: 'native-build', status: 'passed' }],
+    target = `bun-${process.platform.replace('win32', 'windows')}-${process.arch}`;
+  requireRebind(
+      selfAttestation &&
+      manifest.version === request.new_source_manifest.version &&
+      completeReport.request_id === request.request_id &&
+      completeReport.operation_id === request.operation_id &&
+      completeReport.publish_operation_id === request.publish_operation_id &&
+      completeReport.original_operation_sha256 === request.original_operation.sha256 &&
+      completeReport.original_plan_digest === request.original_operation.plan_digest &&
+      completeReport.source_snapshot_digest === request.new_source.digest &&
+      manifest.version === selfAttestation.package_version &&
+      manifest.pin === '1.4.2' &&
+      manifest.target === target &&
+      manifest.payloadId === selfAttestation.resource_payload_id &&
+      manifest.asset.file === `vida-agent-${target}${process.platform === 'win32' ? '.exe' : ''}` &&
+      manifest.asset.bytes === selfAttestation.executable_bytes &&
+      manifest.asset.sha256 === selfAttestation.executable_sha256 &&
+      completeReport.build_manifest_sha256 === sha(Buffer.from(json(manifest))) &&
+      ci.profile === 'native-build' &&
+      ci.conclusion === 'success' &&
+      ci.operation_id === request.publish_operation_id &&
+      canonicalJsonDigest(ci.checks) === canonicalJsonDigest(expectedChecks) &&
+      canonicalJsonDigest(result.checks) === canonicalJsonDigest(expectedChecks) &&
+      ci.request_id === result.request_id &&
+      ci.operation_id === result.operation_id &&
+      ci.source_binding === result.source_binding &&
+      ci.run_id === result.run_id &&
+      ci.run_attempt === result.run_attempt &&
+      result.run_id !== request.prior_system_update.run_id &&
+      ci.artifact_id !== request.prior_system_update.artifact_id &&
+      ci.result_sha256 === sha(Buffer.from(json(result))) &&
+      result.repository_id === request.repository_id &&
+      canonicalJsonDigest(result.project_ids) === canonicalJsonDigest(request.source_project_ids) &&
+      result.version === manifest.version &&
+      result.operation_id === request.publish_operation_id &&
+      result.target === manifest.target &&
+      result.manifest_sha256 === completeReport.build_manifest_sha256 &&
+      result.payload_id === manifest.payloadId &&
+      canonicalJsonDigest(result.asset) === canonicalJsonDigest(manifest.asset),
+    'source correction report does not bind the current package-native build and CI result',
+  );
+  const inputByPath = new Map();
+  let totalInputBytes = 0,
+    previous = '';
+  for (const input of manifest.inputs) {
+    requireRebind(
+      input.path > previous &&
+        !input.path.includes('\\') &&
+        !input.path.startsWith('/') &&
+        !/^[A-Za-z]:/.test(input.path) &&
+        !/[\u0000-\u001f:]/.test(input.path) &&
+        input.path.split('/').every((part) => part && part !== '.' && part !== '..') &&
+        !input.path.startsWith('node_modules/'),
+      'native manifest inputs are not canonical and sorted',
+    );
+    const fullPath = 'packages/agent/' + input.path;
+    requireRebind(access.fileExists(fullPath, 'native manifest source input'), 'native manifest input is absent from current Source');
+    const bytes = access.readBytes(fullPath, 'native manifest source input');
+    requireRebind(bytes.length === input.bytes && sha(bytes) === input.sha256, 'native manifest input differs from current Source');
+    totalInputBytes += bytes.length;
+    requireRebind(totalInputBytes <= 256 * 1024 * 1024, 'native manifest inputs exceed the validation bound');
+    inputByPath.set(input.path, input);
+    previous = input.path;
+  }
+  for (const entry of request.new_source.entries) {
+    requireRebind(entry.exists && entry.path.startsWith('packages/agent/'), 'current runtime Source inventory is incomplete');
+    const relative = entry.path.slice('packages/agent/'.length),
+      input = inputByPath.get(relative);
+    requireRebind(
+      input && input.bytes === entry.bytes && input.sha256 === entry.sha256,
+      'native manifest omits or changes a current runtime Source input',
+    );
+  }
+  const currentPath = selfAttestation.executable_path;
+  requireEffectivePath(currentPath);
+  const installation = completeReport.installation_receipt,
+    sourcePath = installation.source_path;
+  requireRebind(
+    typeof sourcePath === 'string' &&
+      !sourcePath.includes('\\') &&
+      !sourcePath.startsWith('/') &&
+      !/^[A-Za-z]:/.test(sourcePath) &&
+      sourcePath.split('/').every((part) => part && part !== '.' && part !== '..') &&
+      access.fileExists(sourcePath, 'native installation source asset'),
+    'installed source asset path is not a current project file',
+  );
+  const sourceAssetBytes = access.readBytes(sourcePath, 'native installation source asset');
+  requireRebind(
+    sourceAssetBytes.length === manifest.asset.bytes &&
+      sha(sourceAssetBytes) === manifest.asset.sha256 &&
+      installation.source_sha256 === manifest.asset.sha256 &&
+      installation.prior_bytes === request.prior_system_update.installed_bytes &&
+      installation.selected_bytes === selfAttestation.executable_bytes &&
+      installation.action === 'update' &&
+      installation.exit_code === 0 &&
+      installation.signal === null &&
+      installation.tests_invoked === false &&
+      installation.reinstallation === false &&
+      samePath(installation.path, currentPath) &&
+      installation.sha256 === selfAttestation.executable_sha256 &&
+      samePath(completeReport.effective_path.command_path, currentPath) &&
+      completeReport.effective_path.bytes === selfAttestation.executable_bytes &&
+      completeReport.effective_path.sha256 === selfAttestation.executable_sha256 &&
+      completeReport.effective_path.package_name === selfAttestation.package_name &&
+      completeReport.effective_path.version === selfAttestation.package_version &&
+      completeReport.effective_path.target === target,
+    'installed receipt, command PATH or native executable differs',
+  );
+  return artifact;
+}
+
+function validateSourceCorrectionArtifact(value) {
+  requireRebind(validateSourceCorrection(value), 'source correction sidecar schema invalid');
+  const { digest, ...body } = value;
+  requireRebind(digest === canonicalJsonDigest(body) && value.request.operation_id === value.operation_id, 'source correction sidecar digest or identity differs');
+  validSourceSnapshot(value.request.old_source);
+  validSourceSnapshot(value.request.new_source);
+  const manifestEntry = value.request.new_source.entries.find(
+    (entry) => entry.path === value.request.new_source_manifest.path,
+  );
+  requireRebind(
+    value.request.publish_operation_id !== value.request.operation_id &&
+      value.request.publish_operation_id !== value.request.prior_system_update.operation_id &&
+      value.request.new_source_manifest.path === 'packages/agent/package.json' &&
+      value.request.new_source_manifest.package_name === 'vida-agent' &&
+      isLaterStableVersion(value.request.new_source_manifest.version, value.request.prior_system_update.version) &&
+      manifestEntry?.exists === true &&
+      manifestEntry.bytes === value.request.new_source_manifest.bytes &&
+      manifestEntry.sha256 === value.request.new_source_manifest.sha256,
+    'Source package release version or publication identity differs from its frozen Source snapshot',
+  );
+  return value;
+}
+
+function parseSourceCorrectionArgs(args) {
+  requireRebind(args.length % 2 === 0, 'source correction arguments must be paired');
+  const values = {};
+  for (let index = 0; index < args.length; index += 2) {
+    requireRebind(
+      args[index]?.startsWith('--') && args[index + 1] && !Object.hasOwn(values, args[index]),
+      'source correction arguments invalid',
+    );
+    values[args[index]] = args[index + 1];
+  }
+  const mode = values['--mode'],
+    planning = ['repair-inspect', 'repair-plan'].includes(mode),
+    base = ['--kind', '--mode', '--project-root', '--repair-id'],
+    expected = planning
+      ? [...base, '--source-beforeimages', '--authorized-paths', '--prior-system-update']
+      : mode === 'repair-apply'
+        ? [...base, '--report']
+        : base;
+  requireRebind(
+    Object.keys(values).sort().join('|') === expected.sort().join('|') &&
+      values['--kind'] === 'runtime-config-delivery' &&
+      ['repair-inspect', 'repair-plan', 'repair-apply', 'repair-resume', 'repair-transition'].includes(mode) &&
+      path.isAbsolute(values['--project-root'] ?? '') &&
+      path.resolve(values['--project-root']) === values['--project-root'] &&
+      identifier.test(values['--repair-id']) &&
+      (planning
+        ? ['--source-beforeimages', '--prior-system-update'].every(
+            (key) => path.isAbsolute(values[key] ?? '') && path.resolve(values[key]) === values[key],
+          )
+        : mode === 'repair-apply'
+          ? path.isAbsolute(values['--report'] ?? '') && path.resolve(values['--report']) === values['--report']
+          : true),
+    'source correction mode, root, identity or argument set invalid',
+  );
+  let authorizedPaths;
+  if (planning) {
+    try {
+      authorizedPaths = JSON.parse(values['--authorized-paths']);
+    } catch {
+      requireRebind(false, 'authorized source path set is not JSON');
+    }
+    values.authorized_changed_paths = canonicalChangedPaths(authorizedPaths);
+    requireRebind(
+      path.resolve(values['--source-beforeimages']) === values['--source-beforeimages'] &&
+        !/[\0\r\n]/.test(values['--source-beforeimages']) &&
+        !/[\0\r\n]/.test(values['--prior-system-update']) &&
+        Buffer.byteLength(values['--authorized-paths'], 'utf8') <= 32768,
+      'retained source custody or prior update path invalid',
+    );
+  } else if (mode === 'repair-apply') {
+    requireRebind(
+      path.resolve(values['--report']) === values['--report'] && !/[\0\r\n]/.test(values['--report']),
+      'source correction report path invalid',
+    );
+  }
+  return values;
+}
+
+function projectRelativeExternalPath(root, absolutePath, label) {
+  requireRebind(
+    typeof absolutePath === 'string' &&
+      path.isAbsolute(absolutePath) &&
+      path.resolve(absolutePath) === absolutePath &&
+      !/[\0\r\n]/.test(absolutePath),
+    `${label} path invalid`,
+  );
+  const relative = path.relative(root, absolutePath).split(path.sep).join('/');
+  requireRebind(
+    relative.length > 0 &&
+      relative !== '..' &&
+      !relative.startsWith('../') &&
+      !path.isAbsolute(relative) &&
+      relative.split('/').every((part) => part && part !== '.' && part !== '..'),
+    `${label} must remain inside the project root`,
+  );
+  return relative;
+}
+
+function sourceBeforeimageBinding({ access, root, beforeimagePath, operationId, operationPath, operationBytes, frozen }) {
+  const relative = frozen?.path ?? projectRelativeExternalPath(root, beforeimagePath, 'retained source custody');
+  requireRebind(
+    typeof relative === 'string' &&
+      !relative.includes('\\') &&
+      !relative.startsWith('/') &&
+      !/^[A-Za-z]:/.test(relative) &&
+      relative.split('/').every((part) => part && part !== '.' && part !== '..'),
+    'retained source custody path is not canonical',
+  );
+  const bytes = frozen
+    ? access.readBytes(relative, 'retained source custody')
+    : readExternalBytes(beforeimagePath, 96 * 1024 * 1024, 'retained source custody');
+  requireRebind(
+    bytes.length <= 96 * 1024 * 1024 &&
+      (!frozen || (bytes.length === frozen.bytes && sha(bytes) === frozen.sha256)),
+    'retained source custody bytes changed',
+  );
+  let value;
+  try {
+    value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  } catch {
+    requireRebind(false, 'retained source custody is not bounded UTF-8 JSON');
+  }
+  const snapshot = sourceBeforeimageSnapshot(value, operationId, operationPath, operationBytes),
+    binding = {
+      schema: 'SourceBeforeimageBinding/v1',
+      path: relative,
+      bytes: bytes.length,
+      sha256: sha(bytes),
+      snapshot_digest: snapshot.digest,
+    };
+  requireRebind(
+    !frozen || canonicalJsonDigest(binding) === canonicalJsonDigest(frozen),
+    'retained source custody binding differs from the frozen request',
+  );
+  return { snapshot, binding };
+}
+
+function priorSystemUpdateBinding({ access, root, priorSystemUpdatePath, frozen }) {
+  const relative = frozen?.path ?? projectRelativeExternalPath(root, priorSystemUpdatePath, 'prior system update receipt');
+  requireRebind(
+    typeof relative === 'string' &&
+      !relative.includes('\\') &&
+      !relative.startsWith('/') &&
+      !/^[A-Za-z]:/.test(relative) &&
+      relative.split('/').every((part) => part && part !== '.' && part !== '..'),
+    'prior system update receipt path is not canonical',
+  );
+  const bytes = frozen
+    ? access.readBytes(relative, 'prior system update receipt')
+    : readExternalBytes(priorSystemUpdatePath, 1024 * 1024, 'prior system update receipt');
+  requireRebind(
+    bytes.length <= 1024 * 1024 &&
+      (!frozen || (bytes.length === frozen.bytes && sha(bytes) === frozen.sha256)),
+    'prior system update receipt bytes changed',
+  );
+  let value;
+  try {
+    value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  } catch {
+    requireRebind(false, 'prior system update receipt is not bounded UTF-8 JSON');
+  }
+  requireRebind(
+    value &&
+      typeof value.status === 'string' && value.status.length > 0 && value.status.length <= 128 &&
+      typeof value.operation_id === 'string' && identifier.test(value.operation_id) &&
+      typeof value.version === 'string' && stableVersionParts(value.version) !== null &&
+      typeof value.entry === 'string' && path.isAbsolute(value.entry) &&
+      typeof value.run_id === 'string' && /^[1-9][0-9]{0,31}$/.test(value.run_id) &&
+      typeof value.artifact_id === 'string' && /^[1-9][0-9]{0,31}$/.test(value.artifact_id) &&
+      Number.isSafeInteger(value.installed_bytes) && value.installed_bytes > 0 &&
+      Number.isSafeInteger(value.prior_bytes) && value.prior_bytes > 0 &&
+      Number.isSafeInteger(value.delta_bytes) && value.installed_bytes - value.prior_bytes === value.delta_bytes &&
+      typeof value.configuration_inspection === 'string' && value.configuration_inspection.length <= 128 &&
+      value.tests_invoked === false && value.reinstallation === false &&
+      value.runtime_accepted === false && value.developer_unblocked === false,
+    'prior system update receipt is not a bounded, non-acceptance update observation',
+  );
+  const binding = {
+    schema: 'PriorSystemUpdateBinding/v1',
+    path: relative,
+    bytes: bytes.length,
+    sha256: sha(bytes),
+    status: value.status,
+    operation_id: value.operation_id,
+    version: value.version,
+    entry: value.entry,
+    run_id: value.run_id,
+    artifact_id: value.artifact_id,
+    installed_bytes: value.installed_bytes,
+    prior_bytes: value.prior_bytes,
+    delta_bytes: value.delta_bytes,
+    configuration_inspection: value.configuration_inspection,
+    tests_invoked: value.tests_invoked,
+    reinstallation: value.reinstallation,
+    runtime_accepted: value.runtime_accepted,
+    developer_unblocked: value.developer_unblocked,
+  };
+  requireRebind(!frozen || canonicalJsonDigest(binding) === canonicalJsonDigest(frozen), 'prior system update binding differs');
+  return binding;
+}
+
+function sourcePackageManifestBinding({ access, bundle, source, priorVersion }) {
+  const relative = `${bundle}/package.json`,
+    bytes = access.readBytes(relative, 'current Source package manifest'),
+    entry = source.entries.find((candidate) => candidate.path === relative);
+  requireRebind(
+    bytes.length > 0 &&
+      bytes.length <= 1024 * 1024 &&
+      entry?.exists === true &&
+      entry.bytes === bytes.length &&
+      entry.sha256 === sha(bytes),
+    'current Source package manifest is not bound by the new Source snapshot',
+  );
+  let manifest;
+  try {
+    manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  } catch {
+    requireRebind(false, 'current Source package manifest is not bounded UTF-8 JSON');
+  }
+  requireRebind(
+    manifest?.name === 'vida-agent' &&
+      stableVersionParts(manifest.version) !== null &&
+      isLaterStableVersion(manifest.version, priorVersion),
+    'current Source package version must be a valid release newer than the prior installed version',
+  );
+  return {
+    schema: 'RuntimeConfigSourcePackageBinding/v1',
+    path: relative,
+    bytes: bytes.length,
+    sha256: sha(bytes),
+    package_name: manifest.name,
+    version: manifest.version,
+  };
+}
+
+function sourceCorrectionCustody(db, workspace, store) {
+  const rows = checkedRows(db, 'agent_host_mastra_session_ledger', workspace),
+    custody = [];
+  for (const row of rows) {
+    requireRebind(Array.isArray(row.value.items), 'source correction Journal items invalid');
+    for (const item of row.value.items) {
+      if (item.issue_id === null || item.observation !== null) continue;
+      const receipt = store.readHistoricalTerminalSynthesisCapture(
+        { work_id: row.value.work_id },
+        row.value.attempt,
+        item.request.action_id,
+      );
+      if (!receipt) continue;
+      custody.push({
+        schema: 'KnownTerminalCustodyBinding/v1',
+        work_id: row.value.work_id,
+        attempt: row.value.attempt,
+        action_id: item.request.action_id,
+        issue_id: item.issue_id,
+        receipt_digest: canonicalJsonDigest(receipt),
+        journal_revision: row.revision,
+        journal_digest: row.digest,
+        expected_maintenance_generation: receipt.request.expected_maintenance_generation,
+      });
+    }
+  }
+  custody.sort((left, right) =>
+    left.work_id < right.work_id
+      ? -1
+      : left.work_id > right.work_id
+        ? 1
+        : left.attempt - right.attempt || left.action_id.localeCompare(right.action_id),
+  );
+  requireRebind(custody.length > 0, 'known-terminal source correction custody is missing');
+  return custody;
+}
+
+function sourceCorrectionRequest({
+  access,
+  root,
+  config,
+  db,
+  id,
+  operationPath,
+  operationBytes,
+  operation,
+  beforeimagePath,
+  priorSystemUpdatePath,
+  authorizedPaths,
+  frozenRequest,
+  allowForwardReceipt = false,
+}) {
+  requireRebind(
+    operation.schema === 'SourceDeliveryConfigRebindOperation/v1' &&
+      operation.revision === 2 &&
+      operation.phase === 'fenced' &&
+      operation.maintenance_released === false &&
+      operation.plan.operation_id === id,
+    'source correction requires the original fenced delivery operation',
+  );
+  const plan = operation.plan,
+    baseline = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
+    target = targetConfig({ readBytes: () => Buffer.from(plan.target_yaml) }, root, baseline, configPath).config,
+    baselineReceipt = JSON.parse(plan.baseline_receipt),
+    projectIds = sameIdentity(root, baseline, baselineReceipt),
+    currentReceipt = readReceipt(access, config),
+    currentYamlBytes = access.readBytes(configPath, 'current authored configuration'),
+    currentYaml = currentYamlBytes.toString('utf8'),
+    yamlState = currentYaml === plan.baseline_yaml ? 'baseline' : currentYaml === plan.target_yaml ? 'target' : null;
+  requireRebind(
+    baseline.runtime.bundle === 'packages/agent' &&
+      target.runtime.bundle === baseline.runtime.bundle &&
+      config.repository.repository_id === plan.repository_id &&
+      canonicalJsonDigest(projectIds) === canonicalJsonDigest(plan.project_ids) &&
+      (yamlState === 'baseline' || yamlState === 'target') &&
+      (currentReceipt.bytes.toString('utf8') === plan.baseline_receipt ||
+        (allowForwardReceipt &&
+          currentReceipt.bytes.toString('utf8') ===
+            json({ ...baselineReceipt, config_digest: plan.target_config_digest }))),
+    'source correction configuration or receipt differs from the frozen operation',
+  );
+  const initSchema = runtimePackageAccess().readBytes(
+      'schemas/runtime-initialization.v1.schema.json',
+      'initialization schema',
+    ),
+    binding = runtimeBinding(access, baseline),
+    sourceInventory = runtimeExecutableInventory(
+      path.join(root, baseline.runtime.bundle),
+      'source',
+      requireSafeRepositoryAccess(path.join(root, baseline.runtime.bundle)),
+    ),
+    newSource = snapshotDeclaredSources(access, sourceInventory.map((file) => baseline.runtime.bundle + '/' + file)),
+    beforeimages = sourceBeforeimageBinding({
+      access,
+      root,
+      beforeimagePath,
+      operationId: id,
+      operationPath,
+      operationBytes,
+      frozen: frozenRequest?.source_beforeimages,
+    }),
+    oldSource = beforeimages.snapshot,
+    priorSystemUpdate = priorSystemUpdateBinding({
+      access,
+      root,
+      priorSystemUpdatePath,
+      frozen: frozenRequest?.prior_system_update,
+    }),
+    newSourceManifest = sourcePackageManifestBinding({
+      access,
+      bundle: baseline.runtime.bundle,
+      source: newSource,
+      priorVersion: priorSystemUpdate.version,
+    }),
+    changes = sourceSnapshotChanges(oldSource, newSource),
+    scopePaths = frozenRequest?.authorized_changed_paths ?? authorizedPaths,
+    sourceProjectIds = config.projects
+      .filter((project) => path.resolve(root, project.project_root) === path.resolve(root, baseline.runtime.bundle))
+      .map((project) => project.project_id)
+      .sort();
+  requireRebind(
+    sha(initSchema) === plan.initialization_schema_digest &&
+      binding.selector_digest === plan.selector_digest &&
+      binding.bundle_digest === newSource.digest &&
+      oldSource.digest === plan.bundle_digest &&
+      changes.length > 0 &&
+      changes.every((change) => change.kind !== 'disappeared' && scopePaths.includes(change.path)) &&
+      sourceProjectIds.length === 1 &&
+      sourceProjectIds[0] === 'agent' &&
+      scopePaths.every((relative) => access.fileExists(relative, 'authorized Source path presence')),
+    'Source changes, initialization schema or source scope differ from the original operation',
+  );
+  requireRebind(
+    !frozenRequest ||
+      canonicalJsonDigest(authorizedPaths ?? scopePaths) === canonicalJsonDigest(scopePaths),
+    'authorized Source path set differs from the frozen repair scope',
+  );
+  const workspaceId = deriveWorkspaceId(plan.repository_id, root),
+    readOnlyMaintenanceInspection = {
+      principal: 'vida-agent-runtime-config-source-correction',
+      projectIds: plan.project_ids,
+      verify: async () => null,
+    },
+    store = new HostStateStore(db, workspaceId, undefined, undefined, undefined, readOnlyMaintenanceInspection, root),
+    expectedBinding = fenceBinding(plan, operation.plan_digest),
+    fence = store.readMaintenanceFence();
+  requireRebind(
+    workspaceId === plan.workspace_id &&
+      fence?.status === 'held' &&
+      fence.workspace_id === workspaceId &&
+      canonicalJsonDigest(fence.binding) === canonicalJsonDigest(expectedBinding),
+    'source correction requires the original held maintenance fence',
+  );
+  const maintenanceReceipt = { fence, token: plan.token },
+    stateDigest = store.withMaintenanceInspection(maintenanceReceipt, () =>
+      currentState(db, workspaceId, root, baseline, store, maintenanceReceipt),
+    );
+  requireRebind(stateDigest === plan.state_digest, 'source correction Host, Journal or state CAS differs');
+  const custody = sourceCorrectionCustody(db, workspaceId, store);
+  return {
+    schema: 'RuntimeConfigSourceCorrectionRequest/v1',
+    request_id: frozenRequest?.request_id ?? randomUUID(),
+    operation_id: id,
+    publish_operation_id: frozenRequest?.publish_operation_id ?? randomUUID(),
+    original_operation: {
+      path: operationPath,
+      sha256: sha(operationBytes),
+      plan_digest: operation.plan_digest,
+      revision: operation.revision,
+      phase: operation.phase,
+      maintenance_released: operation.maintenance_released,
+    },
+    repository_root: root,
+    repository_id: plan.repository_id,
+    project_ids: projectIds,
+    source_project_ids: sourceProjectIds,
+    workspace_id: workspaceId,
+    state_digest: stateDigest,
+    config: {
+      schema: 'RuntimeConfigSourceCorrectionConfig/v1',
+      baseline_config_digest: plan.old_config_digest,
+      target_config_digest: plan.target_config_digest,
+      current_yaml_sha256: sha(currentYamlBytes),
+      yaml_state: yamlState,
+      receipt_sha256: sha(currentReceipt.bytes),
+      baseline_receipt_sha256: sha(Buffer.from(plan.baseline_receipt)),
+      initialization_schema_digest: plan.initialization_schema_digest,
+    },
+    fence: structuredClone(fence),
+    custody,
+    old_source: oldSource,
+    source_beforeimages: beforeimages.binding,
+    prior_system_update: priorSystemUpdate,
+    new_source: newSource,
+    new_source_manifest: newSourceManifest,
+    source_changes: changes.map((change) => structuredClone(change)),
+    authorized_changed_paths: scopePaths,
+  };
+}
+
+function sealSourceCorrection(status, operationId, request, report) {
+  const artifact = {
+    schema: 'RuntimeConfigSourceCorrectionRepair/v1',
+    status,
+    revision: status === 'requested' ? 1 : 2,
+    operation_id: operationId,
+    request,
+    ...(report ? { report } : {}),
+  };
+  artifact.digest = canonicalJsonDigest(artifact);
+  validateSourceCorrectionArtifact(artifact);
+  return artifact;
+}
+
+function readSourceCorrectionArtifact(access, relative) {
+  const bytes = access.readBytes(relative, 'source correction repair');
+  requireRebind(bytes.length <= 16 * 1024 * 1024, 'source correction repair exceeds bound');
+  let value;
+  try {
+    value = JSON.parse(bytes.toString('utf8'));
+  } catch {
+    requireRebind(false, 'source correction repair is not valid JSON');
+  }
+  return { bytes, value: validateSourceCorrectionArtifact(value) };
+}
+
+function sourceCorrectionCurrentRequest({
+  access,
+  root,
+  config,
+  db,
+  operationPath,
+  operationBytes,
+  operation,
+  request,
+  allowForwardReceipt = false,
+}) {
+  const retainedOriginal =
+      operation.revision === 2 && operation.phase === 'fenced' && operation.maintenance_released === false
+        ? { bytes: operationBytes, value: operation }
+        : originalSourceDeliveryOperation({ access, operationPath, operation, request }),
+    sourceOperation = retainedOriginal.value,
+    sourceOperationBytes = retainedOriginal.bytes,
+    plan = sourceOperation.plan;
+  requireRebind(
+    sourceOperation.schema === 'SourceDeliveryConfigRebindOperation/v1' &&
+      sourceOperation.revision === 2 &&
+      sourceOperation.phase === 'fenced' &&
+      sourceOperation.maintenance_released === false &&
+      request.operation_id === sourceOperation.plan.operation_id &&
+      request.original_operation.path === operationPath &&
+      request.original_operation.sha256 === sha(sourceOperationBytes) &&
+      request.original_operation.plan_digest === sourceOperation.plan_digest &&
+      request.original_operation.revision === sourceOperation.revision &&
+      request.original_operation.phase === sourceOperation.phase &&
+      request.original_operation.maintenance_released === sourceOperation.maintenance_released &&
+      request.repository_root === root &&
+      request.repository_id === plan.repository_id &&
+      canonicalJsonDigest(request.project_ids) === canonicalJsonDigest(plan.project_ids) &&
+      request.workspace_id === plan.workspace_id &&
+      request.state_digest === plan.state_digest &&
+      request.config.baseline_config_digest === plan.old_config_digest &&
+      request.config.target_config_digest === plan.target_config_digest &&
+      request.config.baseline_receipt_sha256 === sha(Buffer.from(plan.baseline_receipt)) &&
+      request.config.receipt_sha256 === request.config.baseline_receipt_sha256 &&
+      request.config.current_yaml_sha256 ===
+        sha(Buffer.from(request.config.yaml_state === 'baseline' ? plan.baseline_yaml : plan.target_yaml)) &&
+      request.config.initialization_schema_digest === plan.initialization_schema_digest &&
+      request.old_source.digest === plan.bundle_digest &&
+      request.source_beforeimages.snapshot_digest === request.old_source.digest,
+    'source correction request does not bind the original frozen delivery operation',
+  );
+  const current = sourceCorrectionRequest({
+      access,
+      root,
+      config,
+      db,
+      id: request.operation_id,
+      operationPath,
+      operationBytes: sourceOperationBytes,
+      operation: sourceOperation,
+      authorizedPaths: request.authorized_changed_paths,
+      frozenRequest: request,
+    allowForwardReceipt,
+    }),
+    stable = (value) => {
+      const copy = structuredClone(value);
+      delete copy.config.current_yaml_sha256;
+      delete copy.config.yaml_state;
+      delete copy.config.receipt_sha256;
+      return copy;
+    };
+  requireRebind(
+    canonicalJsonDigest(stable(current)) === canonicalJsonDigest(stable(request)) &&
+      [
+        sha(Buffer.from(plan.baseline_receipt)),
+        sha(Buffer.from(json({ ...JSON.parse(plan.baseline_receipt), config_digest: plan.target_config_digest }))),
+      ].includes(current.config.receipt_sha256),
+    'source correction config, fence, state, custody or Source snapshot drifted',
+  );
+  return current;
+}
+
+function validateSourceCorrectionBridge({
+  access,
+  root,
+  config,
+  db,
+  operationPath,
+  operationBytes,
+  operation,
+  artifact,
+}) {
+  validateSourceCorrectionArtifact(artifact);
+  requireRebind(artifact.status === 'applied', 'source correction is not applied');
+  const request = artifact.request;
+  sourceCorrectionCurrentRequest({
+    access,
+    root,
+    config,
+    db,
+    operationPath,
+    operationBytes,
+    operation,
+    request,
+    allowForwardReceipt: true,
+  });
+  const selfAttestation = currentNativeSelfAttestation();
+  requireRebind(selfAttestation, 'source correction resume requires the installed native package');
+  const { native_self_attestation: recordedSelf, ...externalReport } = artifact.report,
+    validated = validateSourceCorrectionReport(externalReport, request, access, selfAttestation);
+  requireRebind(
+    canonicalJsonDigest(recordedSelf) === canonicalJsonDigest(selfAttestation) &&
+      canonicalJsonDigest(validated.report) === canonicalJsonDigest(artifact.report),
+    'source correction installed evidence changed or is not exact',
+  );
+  return true;
+}
+
+function originalSourceDeliveryOperation({ access, operationPath, operation, request }) {
+  const beforeimageBytes = access.readBytes(request.source_beforeimages.path, 'retained source custody');
+  requireRebind(
+    beforeimageBytes.length === request.source_beforeimages.bytes &&
+      sha(beforeimageBytes) === request.source_beforeimages.sha256,
+    'retained source custody bytes changed after source repair',
+  );
+  let beforeimage;
+  try {
+    beforeimage = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(beforeimageBytes));
+  } catch {
+    requireRebind(false, 'retained source custody is not bounded UTF-8 JSON');
+  }
+  requireRebind(
+    typeof beforeimage.operation_bytes_base64 === 'string',
+    'retained source custody omitted original delivery bytes',
+  );
+  const operationBytes = Buffer.from(beforeimage.operation_bytes_base64, 'base64');
+  requireRebind(
+    operationBytes.toString('base64') === beforeimage.operation_bytes_base64 &&
+      operationBytes.length > 0 &&
+      operationBytes.length <= 2 * 1024 * 1024,
+    'retained source custody original delivery bytes are invalid',
+  );
+  const originalSnapshot = sourceBeforeimageSnapshot(
+    beforeimage,
+    request.operation_id,
+    operationPath,
+    operationBytes,
+  );
+  let original;
+  try {
+    original = JSON.parse(operationBytes.toString('utf8'));
+  } catch {
+    requireRebind(false, 'retained original delivery operation is not JSON');
+  }
+  requireRebind(
+    operationValidator(true)(original) &&
+      original.schema === 'SourceDeliveryConfigRebindOperation/v1' &&
+      original.revision === 2 &&
+      original.phase === 'fenced' &&
+      original.maintenance_released === false &&
+      original.plan.operation_id === request.operation_id &&
+      original.plan.repository_root === request.repository_root &&
+      original.plan_digest === operationDigest(original) &&
+      sha(operationBytes) === request.original_operation.sha256 &&
+      request.original_operation.path === operationPath &&
+      request.original_operation.plan_digest === original.plan_digest &&
+      request.original_operation.revision === original.revision &&
+      request.original_operation.phase === original.phase &&
+      request.original_operation.maintenance_released === original.maintenance_released &&
+      originalSnapshot.digest === request.old_source.digest &&
+      request.source_beforeimages.snapshot_digest === originalSnapshot.digest &&
+      operationValidator(true)(operation) &&
+      operation.schema === 'SourceDeliveryConfigRebindOperation/v1' &&
+      operation.phase === 'applied' &&
+      ((operation.revision === 3 && operation.maintenance_released === false) ||
+        (operation.revision === 4 && operation.maintenance_released === true)) &&
+      operation.plan_digest === original.plan_digest &&
+      canonicalJsonDigest(operation.plan) === canonicalJsonDigest(original.plan),
+    'source delivery close operation differs from its retained original bytes',
+  );
+  return { bytes: operationBytes, value: original };
+}
+
+/**
+ * Read-only consistency proof for the finite delivered-config transition.
+ * It deliberately does not compare the frozen pre-delivery Host digest with
+ * later owner state; callers must perform their own fresh owner CAS check.
+ */
+function closedSourceDeliveryTransition({
+  access,
+  root,
+  config,
+  db,
+  operationPath,
+  operationBytes,
+  operation,
+  artifact,
+  store,
+}) {
+  validateSourceCorrectionArtifact(artifact);
+  requireRebind(artifact.status === 'applied', 'source correction is not applied');
+  const request = artifact.request,
+    original = originalSourceDeliveryOperation({ access, operationPath, operation, request }),
+    originalOperation = original.value,
+    plan = operation.plan,
+    expectedBinding = fenceBinding(plan, operation.plan_digest),
+    heldFence = request.fence,
+    releasedFence = store.readMaintenanceFence(),
+    currentYamlBytes = access.readBytes(configPath, 'current authored YAML'),
+    currentConfig = loadRuntimeConfig(root),
+    currentReceipt = readReceipt(access, currentConfig),
+    baseline = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
+    target = targetConfig({ readBytes: () => Buffer.from(plan.target_yaml) }, root, baseline, configPath).config,
+    nextReceipt = json({ ...JSON.parse(plan.baseline_receipt), config_digest: plan.target_config_digest });
+  requireRebind(
+    operationBytes.length > 0 &&
+      sha(operationBytes) === sha(access.readBytes(operationPath, 'closed delivery operation')) &&
+      originalOperation.plan_digest === request.original_operation.plan_digest &&
+      request.repository_root === root &&
+      request.operation_id === operation.plan.operation_id &&
+      request.repository_id === operation.plan.repository_id &&
+      request.workspace_id === operation.plan.workspace_id &&
+      request.config.target_config_digest === operation.plan.target_config_digest &&
+      canonicalJsonDigest(heldFence.binding) === canonicalJsonDigest(expectedBinding) &&
+      heldFence.workspace_id === operation.plan.workspace_id &&
+      heldFence.status === 'held' &&
+      releasedFence?.status === 'released' &&
+      releasedFence.workspace_id === operation.plan.workspace_id &&
+      canonicalJsonDigest(releasedFence.binding) === canonicalJsonDigest(expectedBinding) &&
+      releasedFence.generation === heldFence.generation &&
+      releasedFence.token_digest === heldFence.token_digest &&
+      request.custody.every(
+        (entry) => entry.expected_maintenance_generation + 1 === releasedFence.generation,
+      ) &&
+      currentYamlBytes.toString('utf8') === plan.target_yaml &&
+      runtimeConfigDigest(currentConfig) === plan.target_config_digest &&
+      runtimeConfigDigest(target) === plan.target_config_digest &&
+      currentReceipt.bytes.toString('utf8') === nextReceipt &&
+      sameIdentity(root, target, currentReceipt.value),
+    'closed source delivery configuration or released fence differs from its finite transition',
+  );
+  const currentBinding = runtimeBinding(access, baseline),
+    sourceInventory = runtimeExecutableInventory(
+      path.join(root, baseline.runtime.bundle),
+      'source',
+      requireSafeRepositoryAccess(path.join(root, baseline.runtime.bundle)),
+    ),
+    currentSource = snapshotDeclaredSources(access, sourceInventory.map((file) => baseline.runtime.bundle + '/' + file));
+  requireRebind(
+    currentBinding.selector_digest === plan.selector_digest &&
+      currentBinding.bundle_digest === request.new_source.digest &&
+      currentSource.digest === request.new_source.digest,
+    'closed source delivery current Source differs from its retained repair snapshot',
+  );
+  const selfAttestation = currentNativeSelfAttestation();
+  requireRebind(selfAttestation, 'closed source delivery proof requires the current installed native package');
+  const { native_self_attestation: recordedSelf, ...externalReport } = artifact.report,
+    validated = validateSourceCorrectionReport(externalReport, request, access, selfAttestation);
+  requireRebind(
+    canonicalJsonDigest(recordedSelf) === canonicalJsonDigest(selfAttestation) &&
+      canonicalJsonDigest(validated.report) === canonicalJsonDigest(artifact.report),
+    'closed source delivery report differs from the current installed native package',
+  );
+  const completion = {
+    schema: 'RuntimeConfigDeliveryTransition/v1',
+    operation_path: operationPath,
+    operation_sha256: sha(operationBytes),
+    operation_plan_digest: operation.plan_digest,
+    request_id: request.request_id,
+    request_digest: canonicalJsonDigest(request),
+    report_digest: canonicalJsonDigest(artifact.report),
+    source_snapshot_digest: currentSource.digest,
+    target_config_digest: plan.target_config_digest,
+    target_yaml_sha256: sha(currentYamlBytes),
+    receipt_path: receiptPath,
+    receipt_sha256: sha(currentReceipt.bytes),
+    fence: structuredClone(releasedFence),
+    native_self_attestation_digest: canonicalJsonDigest(selfAttestation),
+    runtime_accepted: false,
+  };
+  requireRebind(
+    !artifact.completion || canonicalJsonDigest(artifact.completion) === canonicalJsonDigest(completion),
+    'retained closed source delivery transition differs from current postconditions',
+  );
+  return {
+    completion,
+    baseline_config_digest: originalOperation.plan.old_config_digest,
+  };
+}
+
+function sourceCorrectionWithCompletion(artifact, completion) {
+  if (artifact.completion) {
+    requireRebind(
+      canonicalJsonDigest(artifact.completion) === canonicalJsonDigest(completion),
+      'source correction completion changed after capture',
+    );
+    return artifact;
+  }
+  const { digest: _digest, ...body } = artifact,
+    completed = { ...body, revision: 3, completion };
+  completed.digest = canonicalJsonDigest(completed);
+  validateSourceCorrectionArtifact(completed);
+  return completed;
+}
+
+function correctionRequestForInputs({ values, access, root, config, db, operationPath, stored, frozenRequest }) {
+  if (frozenRequest) {
+    requireRebind(
+      projectRelativeExternalPath(root, values['--source-beforeimages'], 'retained source custody') ===
+          frozenRequest.source_beforeimages.path &&
+        projectRelativeExternalPath(root, values['--prior-system-update'], 'prior system update receipt') ===
+          frozenRequest.prior_system_update.path &&
+        canonicalJsonDigest(values.authorized_changed_paths) ===
+          canonicalJsonDigest(frozenRequest.authorized_changed_paths),
+      'repair inputs differ from the frozen source custody, prior update or scope',
+    );
+    return sourceCorrectionCurrentRequest({
+      access,
+      root,
+      config,
+      db,
+      operationPath,
+      operationBytes: stored.bytes,
+      operation: stored.value,
+      request: frozenRequest,
+    });
+  }
+  return sourceCorrectionRequest({
+    access,
+    root,
+    config,
+    db,
+    id: values['--repair-id'],
+    operationPath,
+    operationBytes: stored.bytes,
+    operation: stored.value,
+    beforeimagePath: values['--source-beforeimages'],
+    priorSystemUpdatePath: values['--prior-system-update'],
+    authorizedPaths: values.authorized_changed_paths,
+  });
+}
+
+async function runSourceCorrectionRepair(args, { onPhase } = {}) {
+  const values = parseSourceCorrectionArgs(args),
+    root = values['--project-root'],
+    id = values['--repair-id'],
+    mode = values['--mode'],
+    access = requireSafeRepositoryAccess(root),
+    config = loadRuntimeConfig(root),
+    operationPath = `${config.control.work_root}/${id}/${deliveryOperationName}`,
+    sidecarPath = `${config.control.work_root}/${id}/${sourceCorrectionName}`,
+    db = database(root, config, true);
+  try {
+    const run = async () => {
+      const stored = readOperation(access, operationPath, id, root, true),
+        requireSidecar = () => {
+          requireRebind(access.fileExists(sidecarPath, 'source correction repair presence'), 'source correction repair sidecar is missing');
+          return readSourceCorrectionArtifact(access, sidecarPath);
+        };
+      if (mode === 'repair-transition') {
+        return await access.withExclusiveLockAsync(operationPath, 'config rebind operation', async () => {
+          const latest = readOperation(access, operationPath, id, root, true),
+            artifact = requireSidecar(),
+            currentConfig = loadRuntimeConfig(root),
+            workspaceId = deriveWorkspaceId(latest.value.plan.repository_id, root),
+            store = new HostStateStore(db, workspaceId);
+          requireRebind(artifact.value.status === 'applied', 'source correction is not applied');
+          const proof = closedSourceDeliveryTransition({
+            access,
+            root,
+            config: currentConfig,
+            db,
+            operationPath,
+            operationBytes: latest.bytes,
+            operation: latest.value,
+            artifact: artifact.value,
+            store,
+          });
+          return {
+            status: 'closed_config_transition_proven',
+            operation_id: id,
+            baseline_config_digest: proof.baseline_config_digest,
+            transition: proof.completion,
+            transition_digest: canonicalJsonDigest(proof.completion),
+            caller_owner_cas_required: true,
+            runtime_accepted: false,
+            writes_host_state: false,
+          };
+        });
+      }
+      if (mode === 'repair-inspect') {
+        if (access.fileExists(sidecarPath, 'source correction repair presence')) {
+          const artifact = readSourceCorrectionArtifact(access, sidecarPath).value,
+            current = correctionRequestForInputs({
+              values,
+              access,
+              root,
+              config,
+              db,
+              operationPath,
+              stored,
+              frozenRequest: artifact.request,
+            });
+          if (artifact.status === 'applied')
+            validateSourceCorrectionBridge({ access, root, config, db, operationPath, operationBytes: stored.bytes, operation: stored.value, artifact });
+          return {
+            status: artifact.status === 'applied' ? 'applied' : 'repair_apply_required',
+            operation_id: id,
+            request_id: artifact.request.request_id,
+            request_digest: canonicalJsonDigest(current),
+            sidecar_path: sidecarPath,
+            writes_host_state: false,
+          };
+        }
+        const request = correctionRequestForInputs({ values, access, root, config, db, operationPath, stored });
+        return {
+          status: 'inspect_ready_unauthorized',
+          operation_id: id,
+          request_id: request.request_id,
+          request_digest: canonicalJsonDigest(request),
+          source_change_count: request.source_changes.length,
+          authorized_changed_paths: request.authorized_changed_paths,
+          writes_host_state: false,
+        };
+      }
+
+      if (mode === 'repair-plan') {
+        return await access.withExclusiveLockAsync(operationPath, 'config rebind operation', async () => {
+          const latest = readOperation(access, operationPath, id, root, true);
+          if (access.fileExists(sidecarPath, 'source correction repair presence')) {
+            const existing = readSourceCorrectionArtifact(access, sidecarPath),
+              current = correctionRequestForInputs({
+                values,
+                access,
+                root,
+                config: loadRuntimeConfig(root),
+                db,
+                operationPath,
+                stored: latest,
+                frozenRequest: existing.value.request,
+              });
+            if (existing.value.status === 'applied') {
+              validateSourceCorrectionBridge({ access, root, config: loadRuntimeConfig(root), db, operationPath, operationBytes: latest.bytes, operation: latest.value, artifact: existing.value });
+              return { status: 'applied', operation_id: id, request_id: current.request_id, sidecar_path: sidecarPath, writes_host_state: false };
+            }
+            return {
+              status: 'planned',
+              operation_id: id,
+              request_id: current.request_id,
+              request_digest: canonicalJsonDigest(current),
+              sidecar_path: sidecarPath,
+              writes_host_state: false,
+            };
+          }
+          const currentConfig = loadRuntimeConfig(root),
+            request = correctionRequestForInputs({ values, access, root, config: currentConfig, db, operationPath, stored: latest }),
+            artifact = sealSourceCorrection('requested', id, request);
+          await access.writeExclusive(sidecarPath, json(artifact), 'source correction repair request');
+          onPhase?.('planned');
+          return {
+            status: 'planned',
+            operation_id: id,
+            request_id: request.request_id,
+            request_digest: canonicalJsonDigest(request),
+            sidecar_path: sidecarPath,
+            writes_host_state: false,
+          };
+        });
+      }
+
+      return await access.withExclusiveLockAsync(operationPath, 'config rebind operation', async () => {
+        const latest = readOperation(access, operationPath, id, root, true),
+          existing = requireSidecar();
+        requireRebind(sha(latest.bytes) === sha(stored.bytes), 'original delivery operation changed before source correction');
+        if (mode === 'repair-resume') {
+          const current = sourceCorrectionCurrentRequest({
+            access,
+            root,
+            config,
+            db,
+            operationPath,
+            operationBytes: stored.bytes,
+            operation: stored.value,
+            request: existing.value.request,
+          });
+          if (existing.value.status === 'applied')
+            validateSourceCorrectionBridge({ access, root, config, db, operationPath, operationBytes: stored.bytes, operation: stored.value, artifact: existing.value });
+          return {
+            status: existing.value.status === 'applied' ? 'applied' : 'repair_apply_required',
+            operation_id: id,
+            request_id: current.request_id,
+            request_digest: canonicalJsonDigest(current),
+            sidecar_path: sidecarPath,
+            writes_host_state: false,
+          };
+        }
+
+        requireRebind(mode === 'repair-apply', 'unsupported source correction mode');
+        const current = sourceCorrectionCurrentRequest({
+            access,
+            root,
+            config,
+            db,
+            operationPath,
+            operationBytes: stored.bytes,
+            operation: stored.value,
+            request: existing.value.request,
+          }),
+          report = parseExternalJson(values['--report'], 16 * 1024 * 1024, 'source correction report'),
+          selfAttestation = currentNativeSelfAttestation(),
+          completed = validateSourceCorrectionReport(report, current, access, selfAttestation);
+        if (existing.value.status === 'applied') {
+          requireRebind(
+            canonicalJsonDigest(completed) === canonicalJsonDigest(existing.value),
+            'source correction is already applied with different evidence; resume the exact operation',
+          );
+          return { status: 'applied', operation_id: id, request_id: current.request_id, sidecar_path: sidecarPath, writes_host_state: false };
+        }
+        await access.replaceAtomicAsync(
+          sidecarPath,
+          sha(existing.bytes),
+          json(completed),
+          'source correction repair application',
+        );
+        onPhase?.('applied');
+        return {
+          status: 'applied',
+          operation_id: id,
+          request_id: current.request_id,
+          sidecar_path: sidecarPath,
+          source_snapshot_digest: current.new_source.digest,
+          writes_host_state: false,
+        };
+      });
+    };
+    return await run();
+  } finally {
+    db.close();
+  }
+}
+
 function fenceBinding(plan, planDigest) {
   return {
     schema: 'MaintenanceFenceBinding/v1',
@@ -1622,7 +3188,7 @@ function fenceBinding(plan, planDigest) {
   };
 }
 
-function exactContext(access, root, config, operation, db, hostStore, maintenanceReceipt) {
+function exactContext(access, root, config, operation, db, hostStore, maintenanceReceipt, operationPath, operationBytes) {
   const plan = operation.plan;
   const old = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root);
   const target = targetConfig({ readBytes: () => Buffer.from(plan.target_yaml) }, root, old, configPath).config;
@@ -1630,20 +3196,45 @@ function exactContext(access, root, config, operation, db, hostStore, maintenanc
   sameIdentity(root, old, JSON.parse(plan.baseline_receipt));
   sameIdentity(root, target, receipt.value);
   const binding = runtimeBinding(access, old);
-  const verifyCurrentState = () => currentState(db, plan.workspace_id, root, old, hostStore);
+  const verifyCurrentState = () => currentState(db, plan.workspace_id, root, old, hostStore, maintenanceReceipt);
+  const currentStateDigest = maintenanceReceipt
+    ? hostStore.withMaintenanceInspection(maintenanceReceipt, verifyCurrentState)
+    : verifyCurrentState();
   requireRebind(
     runtimeConfigDigest(old) === plan.old_config_digest &&
       runtimeConfigDigest(target) === plan.target_config_digest &&
       binding.selector_digest === plan.selector_digest &&
-      binding.bundle_digest === plan.bundle_digest &&
       sha(
         runtimePackageAccess().readBytes('schemas/runtime-initialization.v1.schema.json', 'initialization schema'),
       ) === plan.initialization_schema_digest &&
-      (maintenanceReceipt
-        ? hostStore.withMaintenanceInspection(maintenanceReceipt, verifyCurrentState)
-        : verifyCurrentState()) === plan.state_digest,
+      currentStateDigest === plan.state_digest,
     'current selector/schema/global state differs from plan',
   );
+  if (binding.bundle_digest !== plan.bundle_digest) {
+    requireRebind(
+      operation.schema === 'SourceDeliveryConfigRebindOperation/v1' &&
+        ((operation.phase === 'fenced' && operation.revision === 2 && !operation.maintenance_released) ||
+          (operation.phase === 'applied' && operation.revision === 3 && !operation.maintenance_released)) &&
+        maintenanceReceipt,
+      'Source drift requires the applied same-operation source correction under its original fence',
+    );
+    const sidecarPath = `${config.control.work_root}/${plan.operation_id}/${sourceCorrectionName}`,
+      correction = readSourceCorrectionArtifact(access, sidecarPath);
+    validateSourceCorrectionBridge({
+      access,
+      root,
+      config,
+      db,
+      operationPath,
+      operationBytes,
+      operation,
+      artifact: correction.value,
+    });
+    requireRebind(
+      correction.value.request.new_source.digest === binding.bundle_digest,
+      'source correction does not bridge the current runtime Source inventory',
+    );
+  }
   const currentYaml = access.readBytes(configPath, 'current authored YAML').toString('utf8');
   requireRebind(
     operation.schema === 'SourceDeliveryConfigRebindOperation/v1'
@@ -1666,6 +3257,8 @@ function exactContext(access, root, config, operation, db, hostStore, maintenanc
 
 /** Only the existing initialization receipt is rebound; caller-owned YAML is never written. */
 export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
+  if (['repair-inspect', 'repair-plan', 'repair-apply', 'repair-resume', 'repair-transition'].includes(args[args.indexOf('--mode') + 1]))
+    return runSourceCorrectionRepair(args, { onPhase });
   const values = parse(args),
     root = values['--project-root'];
   const access = requireSafeRepositoryAccess(root),
@@ -1700,12 +3293,16 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
           ? { fence, token: plan.token }
           : undefined;
       const context = (fence) =>
-        exactContext(access, root, loadRuntimeConfig(root), operation, db, store, receiptFor(fence));
+        exactContext(access, root, loadRuntimeConfig(root), operation, db, store, receiptFor(fence), operationPath, stored.bytes);
       const verifier = {
         principal: 'vida-agent-project-config-rebind',
         projectIds: plan.project_ids,
         verifyAcquisition: (requested, prior) => {
           requireRebind(db.inTransaction, 'maintenance acquisition must verify inside the Host transaction');
+          const acquisitionReceipt =
+            prior?.status === 'held'
+              ? { fence: prior, token: plan.token }
+              : { fence: null, unfenced: true, prior };
           requireRebind(
             canonicalJsonDigest(requested) === canonicalJsonDigest(binding) &&
               canonicalJsonDigest(prior) === canonicalJsonDigest(observedMaintenance) &&
@@ -1715,6 +3312,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
                 root,
                 validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
                 store,
+                acquisitionReceipt,
               ) === plan.state_digest,
             'current maintenance/global state differs from plan',
           );
@@ -1829,6 +3427,32 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
         );
       onPhase?.('released');
       await save(operation.phase, true);
+      if (delivery && access.fileExists(`${config.control.work_root}/${id}/${sourceCorrectionName}`, 'source correction repair presence')) {
+        const sidecar = readSourceCorrectionArtifact(
+            access,
+            `${config.control.work_root}/${id}/${sourceCorrectionName}`,
+          ),
+          completion = closedSourceDeliveryTransition({
+            access,
+            root,
+            config: loadRuntimeConfig(root),
+            db,
+            operationPath,
+            operationBytes: stored.bytes,
+            operation,
+            artifact: sidecar.value,
+            store,
+          }).completion,
+          completed = sourceCorrectionWithCompletion(sidecar.value, completion);
+        if (completed !== sidecar.value)
+          await access.replaceAtomicAsync(
+            `${config.control.work_root}/${id}/${sourceCorrectionName}`,
+            sha(sidecar.bytes),
+            json(completed),
+            'source correction closed transition capture',
+          );
+        onPhase?.('transition_captured');
+      }
       return { status: operation.phase, operation_id: id, rollback_performed: false, writes_yaml: false };
     });
   } finally {

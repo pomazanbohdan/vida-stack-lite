@@ -7,7 +7,7 @@ import {
   type WorkItemSelection,
 } from '../config/runtime-config.js';
 import { assertCanonicalJsonValue, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
-import { compileDevelopmentWorkflow } from './workflow-plan.js';
+import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
 import type { CorrectiveExecution } from './final-assurance.js';
 
 /** A serialized instruction for the orchestrating session. This module never issues an agent tool call. */
@@ -199,8 +199,9 @@ export function sessionActionsForWave(
   waveIndex: number,
   outcomes: readonly SessionAgentOutcome[],
   correctiveExecution?: CorrectiveExecution,
+  lifecycleRisk?: WorkflowLifecycleRisk,
 ): readonly SessionAgentAction[] {
-  const compiled = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags);
+  const compiled = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags, lifecycleRisk);
   const wave = compiled.waves[waveIndex];
   requireCondition(wave !== undefined, 'session handoff wave is unavailable');
   const selectedWave = correctiveExecution

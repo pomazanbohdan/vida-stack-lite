@@ -2,10 +2,10 @@ import z from 'zod';
 import { type AgentRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { snapshotAdmittedTaskSources, snapshotDeclaredSources } from './scoped-source-snapshot.js';
 import { sessionActionsForWave } from './session-handoff.js';
 import { validateWorkSessionBinding } from './final-assurance.js';
-import type { HostStateSnapshot } from '../host-state.js';
+import type { HostStateSnapshot, HostStateStore } from '../host-state.js';
 import {
   validateImplementationResult,
   type DeliveryEvidenceAuthority,
@@ -62,6 +62,7 @@ export function issueObservedValidationReceipt(input: {
   actionId: string;
   authority: DeliveryEvidenceAuthority;
   host?: HostStateSnapshot;
+  sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'>;
 }): ValidationReceipt {
   const { repositoryRoot, config, packet, implementationResult, journal, actionId, authority } = input;
   if (journal.state.corrective_execution) {
@@ -88,7 +89,15 @@ export function issueObservedValidationReceipt(input: {
     'packet binding differs',
   );
   validateImplementationResult(packet, implementationResult);
-  const source = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
+  const source = input.sourceStore && input.host
+    ? snapshotAdmittedTaskSources({
+        store: input.sourceStore,
+        host: input.host,
+        canonicalHostRoot: repositoryRoot,
+        paths: packet.owned_paths,
+        attempt: journal.state.attempt,
+      })
+    : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireValidation(
     source.digest === implementationResult.implementation_fingerprint,
     'source changed after implementation evidence',
@@ -106,6 +115,7 @@ export function issueObservedValidationReceipt(input: {
   const action = actions.find((item) => item.action_id === request.action_id);
   requireValidation(
     action?.stage_kind === 'validate' &&
+      action.produces.includes('ValidationReceipt/v1') &&
       action.stage_id === request.stage_id &&
       action.assignment_index === request.assignment_index &&
       action.role === request.role &&

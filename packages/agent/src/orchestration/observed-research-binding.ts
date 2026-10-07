@@ -1,7 +1,6 @@
 import type { WorkIdentity } from '../host-state.js';
-import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import type { ObservedResearchBinding } from '../research-decision.js';
-import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { snapshotAdmittedTaskSources } from './scoped-source-snapshot.js';
 import type { MastraSessionLedger } from './persistent-session-handoff.js';
 
 function requireBinding(condition: unknown, message: string): asserts condition {
@@ -51,10 +50,13 @@ export function currentObservedResearchBinding(input: {
       item.request.scope_digest === journal.state.source_scope.digest,
     'issued action, admitted state or lease is stale',
   );
-  const source = snapshotDeclaredSources(
-    requireSafeRepositoryAccess(input.repositoryRoot),
-    journal.state.source_scope.entries.map((entry) => entry.path),
-  );
+  const source = snapshotAdmittedTaskSources({
+    store: input.ledger.hostState,
+    host,
+    canonicalHostRoot: input.repositoryRoot,
+    paths: journal.state.source_scope.entries.map((entry) => entry.path),
+    attempt: input.attempt,
+  });
   requireBinding(
     source.digest === journal.state.source_scope.digest,
     'declared source changed before research evidence use',

@@ -19,10 +19,8 @@ import {
   validateObservedActivationUseWritePlan,
   validateActivationUse,
 } from '../research-decision.js';
-import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import {
   compareScopedSourceSnapshots,
-  snapshotDeclaredSources,
   type ScopedSourceSnapshot,
 } from './scoped-source-snapshot.js';
 
@@ -311,10 +309,13 @@ function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
         canonicalJsonDigest(changed) === canonicalJsonDigest([...(writer.observation?.changed_paths ?? [])].sort()) &&
         compareScopedSourceSnapshots(
           state.source_scope,
-          snapshotDeclaredSources(
-            requireSafeRepositoryAccess(input.documentationContext.repository_root),
-            state.source_scope.entries.map((entry) => entry.path),
-          ),
+          input.store.snapshotHistoricalTaskSourceSources({
+            identity: input.identity,
+            threadId: input.nativeSessionHandle,
+            canonicalHostRoot: input.documentationContext.repository_root,
+            paths: state.source_scope.entries.map((entry) => entry.path),
+            attempt: state.attempt,
+          }),
         ).length === 0,
       'historical full preimage/postimage/current transition differs',
     );

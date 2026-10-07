@@ -21,7 +21,7 @@ afterAll(() => {
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let fixtureNumber = 0;
 
-function admitted(intent = 'task_execution') {
+function admitted(intent = 'task_execution', lifecycleRisk = 'medium') {
   const directory = path.join(fixture, String(++fixtureNumber));
   mkdirSync(directory);
   const relative = (name) => path.relative(root, path.join(directory, name)).replaceAll('\\', '/');
@@ -117,7 +117,7 @@ function admitted(intent = 'task_execution') {
       contracts: { scope: { path: scopePath }, acceptance: { path: acceptancePath } },
       lease: { ticket_id: 'packet-test-ticket', thread_id: 'packet-test-thread', generation: 1 },
       execution: { run_id: 'packet-test-run' },
-      lifecycle: { assurance: { correction_count: 0 } },
+      lifecycle: { risk: lifecycleRisk, assurance: { correction_count: 0 } },
       artifacts: [],
     },
     ledger: {
@@ -505,6 +505,17 @@ describe('admitted development packet', () => {
     expect(first.documentation_refs).toEqual([]);
     expect(first.acceptance).toEqual(['AC-1: The scoped file is created.']);
     expect(first.expected_tests).toEqual(['Run the focused acceptance check.']);
+  });
+
+  test('keeps high lifecycle risk separate from raw WorkItem and packet risk flags', () => {
+    const input = admitted('task_execution', 'high');
+    const packet = buildAdmittedDevelopmentPacket(input);
+
+    expect(input.host.work.lifecycle.risk).toBe('high');
+    expect(input.workItem.intent).toBe('task_execution');
+    expect(input.workItem.risk_flags).toEqual([]);
+    expect(packet.work_item).toMatchObject({ intent: 'task_execution', risk_flags: [] });
+    expect(packet.risk_flags).toEqual([]);
   });
 
   test('projects a digest-bound task synthesis observation into the next packet', () => {

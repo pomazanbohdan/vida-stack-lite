@@ -17,6 +17,12 @@ Use the resulting build provenance, target and byte-integrity metadata for
 the selected artifact. An unchanged artifact needs no new build or Git effect
 solely for installation. Preserve original operation and failed/UNKNOWN history.
 
+The delivery sequence is: publish changed reviewed Source, run one cached CI
+build, obtain its exact qualified artifact, then install or update with the
+maintained PowerShell script. Reuse the current run and download. Development
+tests, numeric reports and reviews stay in their task. They are not rerun during
+delivery. Record version, installed bytes and effective PATH once after update.
+
 Windows uses one maintained PowerShell adapter and the fixed current-user
 Programs/vida-agent/bin command. It retains a previous binary only during the
 recovery window, then removes exact owned previous files after success. It

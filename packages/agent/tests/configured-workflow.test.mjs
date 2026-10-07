@@ -8,11 +8,13 @@ import { fileURLToPath } from 'node:url';
 import { parse, stringify } from 'yaml';
 import { randomUUID } from 'node:crypto';
 import { selectCorrectiveEvidence } from '../src/orchestration/final-assurance.ts';
+import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
+import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 
 const correctiveEvidenceWorkflow = {
   stages: [
-    { id: 'validator', kind: 'validate' },
-    { id: 'tester', kind: 'test' },
+    { id: 'validator', kind: 'validate', produces: ['ValidationReceipt/v1'] },
+    { id: 'tester', kind: 'test', produces: ['TestReceipt/v1'] },
   ],
 };
 function correctiveFailure(stage = 'validator') {
@@ -1825,7 +1827,13 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       expect(result.workflowId).toBe(workflowId);
       expect(result.failedAssignments).toEqual([]);
       for (const stage of config.workflows[workflowId].stages) {
-        const expected = stage.assignments.filter((a) => !a.risk_flags?.length);
+        const stageMatchesRisk =
+          !stage.risk_flags?.length || stage.risk_flags.some((risk) => workItem.risk_flags.includes(risk));
+        const expected = stageMatchesRisk
+          ? stage.assignments.filter(
+              (assignment) => !assignment.risk_flags?.length || assignment.risk_flags.some((risk) => workItem.risk_flags.includes(risk)),
+            )
+          : [];
         expect(result.stageOutputs[stage.id].map((value) => value.role)).toEqual(expected.map((a) => a.role));
         for (const call of calls.filter((value) => value.stage.id === stage.id)) {
           for (const prior of stage.required_after)
@@ -1837,6 +1845,276 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       expect(calls.length).toBe(Object.values(result.stageOutputs).flat().length);
     },
   );
+
+  test('always runs the read-only source plan and keeps security review risk-filtered', async () => {
+    workItem = {
+      ...workItem,
+      provider: 'azure',
+      provider_type: 'Feature',
+      canonical_kind: 'feature',
+      intent: 'implementation_new',
+      risk_flags: [],
+    };
+    const compiled = compileDevelopmentWorkflow(config, 'default-development', 'implementation_new', []);
+    const prewriter = compiled.waves.flat().find((stage) => stage.id === 'review_source_prewrite');
+    expect(prewriter?.mode).toBe('parallel');
+    expect(prewriter?.assignments).toEqual([expect.objectContaining({ role: 'source-planner', profile: 'architect' })]);
+    expect(prewriter?.required_after).toEqual(['synthesize_task']);
+
+    const result = await configuredGraph(await compose()).dispatch(workItem.id);
+    expect(result.failedAssignments).toEqual([]);
+    expect(result.stageOutputs.review_source_prewrite.map((value) => value.role)).toEqual(['source-planner']);
+    expect(calls.filter((call) => call.stage.id === 'review_source_prewrite').map((call) => call.assignment.role)).toEqual([
+      'source-planner',
+    ]);
+    const developer = calls.find((call) => call.stage.kind === 'develop');
+    expect(developer?.input.stage_outputs.review_source_prewrite.map((value) => value.role)).toEqual(['source-planner']);
+    expect(calls.some((call) => call.stage.kind === 'validate')).toBe(true);
+  });
+
+  test.each(['implementation_new', 'implementation_change', 'bug_fix', 'task_execution'])(
+    'keeps the planner at low risk and enables the security assignment only for protected risks in %s',
+    (workflowId) => {
+      const stageFor = (riskFlags) =>
+        compileDevelopmentWorkflow(config, 'default-development', workflowId, riskFlags)
+          .waves.flat()
+          .find((stage) => stage.id === 'review_source_prewrite');
+      expect(stageFor([])?.assignments.map((assignment) => assignment.role)).toEqual(['source-planner']);
+      for (const risk of ['security', 'data_loss', 'migration', 'high']) {
+        expect(stageFor([risk])?.assignments.map((assignment) => assignment.role)).toEqual([
+          'source-planner',
+          'security-prewriter',
+        ]);
+      }
+    },
+  );
+
+  test('high lifecycle risk enables the source prewriter with empty packet flags and keeps canonical action ids', () => {
+    const riskFlags = [];
+    const selection = {
+      team: 'default-development',
+      kind: 'feature',
+      intent: 'implementation_new',
+      project: 'example-project',
+      risk_flags: riskFlags,
+      labels: [],
+    };
+    const context = { work_id: 'fixture-work', attempt: 1, scope_digest: 'a'.repeat(64) };
+    const low = compileDevelopmentWorkflow(config, selection.team, selection.intent, riskFlags, 'low');
+    const high = compileDevelopmentWorkflow(config, selection.team, selection.intent, riskFlags, 'high');
+    const lowPrewriter = low.waves.flat().find((stage) => stage.id === 'review_source_prewrite');
+    const highWaveIndex = high.waves.findIndex((wave) => wave.some((stage) => stage.id === 'review_source_prewrite'));
+    const highPrewriter = high.waves[highWaveIndex]?.find((stage) => stage.id === 'review_source_prewrite');
+    const actions = sessionActionsForWave(
+      config,
+      selection,
+      context,
+      selection.intent,
+      highWaveIndex,
+      [],
+      undefined,
+      'high',
+    );
+
+    expect(lowPrewriter?.assignments.map((assignment) => assignment.role)).toEqual(['source-planner']);
+    expect(highPrewriter?.assignments.map((assignment) => assignment.role)).toEqual([
+      'source-planner',
+      'security-prewriter',
+    ]);
+    expect(actions.map((action) => action.role)).toEqual(['source-planner', 'security-prewriter']);
+    expect(actions.map((action) => action.action_id)).toEqual(
+      [0, 1].map((assignment_index) =>
+        canonicalJsonDigest({
+          context,
+          workflow_id: selection.intent,
+          wave_index: highWaveIndex,
+          stage_id: 'review_source_prewrite',
+          assignment_index,
+        }),
+      ),
+    );
+    expect(riskFlags).toEqual([]);
+  });
+
+  test('runs the configured read-only prewriter for high-risk Source work', async () => {
+    workItem = {
+      ...workItem,
+      provider: 'azure',
+      provider_type: 'Feature',
+      canonical_kind: 'feature',
+      intent: 'implementation_new',
+      risk_flags: ['high'],
+    };
+    for (const risk of ['security', 'data_loss', 'migration', 'high']) {
+      const compiled = compileDevelopmentWorkflow(config, 'default-development', 'implementation_new', [risk]);
+      expect(
+        compiled.waves.flat().find((stage) => stage.id === 'review_source_prewrite')?.assignments.map((assignment) => assignment.role),
+      ).toEqual(['source-planner', 'security-prewriter']);
+    }
+
+    await configuredGraph(await compose()).dispatch(workItem.id);
+    const prewriterCalls = calls.filter((call) => call.stage.id === 'review_source_prewrite');
+    expect(prewriterCalls.map((call) => call.assignment.role)).toEqual(['source-planner', 'security-prewriter']);
+    expect(prewriterCalls[0]?.assignment).toMatchObject({ role: 'source-planner', profile: 'architect' });
+    expect(prewriterCalls[1]?.assignment).toMatchObject({ role: 'security-prewriter', profile: 'reviewer-security' });
+    expect(prewriterCalls.every((call) => call.input.stage_outputs.synthesize_task !== undefined)).toBe(true);
+    const developer = calls.find((call) => call.stage.kind === 'develop');
+    expect(developer?.input.stage_outputs.review_source_prewrite.map((value) => value.role)).toEqual([
+      'source-planner',
+      'security-prewriter',
+    ]);
+  });
+
+  test('loads and compiles legacy workflow configuration without the new prewrite stage for read-only inspection', async () => {
+    const fixture = parse(yaml);
+    const workflowIds = ['implementation_new', 'implementation_change', 'bug_fix', 'task_execution'];
+    for (const workflowId of workflowIds) {
+      const workflow = fixture.workflows[workflowId];
+      const developer = workflow.stages.find((stage) => stage.kind === 'develop');
+      workflow.stages = workflow.stages.filter((stage) => stage.id !== 'review_source_prewrite');
+      workflow.edges = workflow.edges.filter(
+        ([from, to]) => from !== 'review_source_prewrite' && to !== 'review_source_prewrite',
+      );
+      developer.required_after = ['synthesize_task'];
+      workflow.edges.push(['synthesize_task', developer.id]);
+    }
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
+    const legacyConfig = loadRuntimeConfig(root);
+    for (const workflowId of workflowIds) {
+      for (const risks of [[], ['high']]) {
+        const compiled = compileDevelopmentWorkflow(legacyConfig, 'default-development', workflowId, risks);
+        expect(compiled.waves.flat().some((stage) => stage.id === 'review_source_prewrite')).toBe(false);
+      }
+    }
+    expect(calls).toHaveLength(0);
+  });
+
+  test('rejects a foreign prewrite stage for low and high-risk Source workflows', async () => {
+    const fixture = parse(yaml);
+    const workflow = fixture.workflows.implementation_new;
+    const prewriter = workflow.stages.find((stage) => stage.id === 'review_source_prewrite');
+    const developer = workflow.stages.find((stage) => stage.kind === 'develop');
+    prewriter.id = 'foreign_source_prewrite';
+    developer.required_after = ['foreign_source_prewrite'];
+    workflow.edges = workflow.edges.map(([from, to]) => [
+      from === 'review_source_prewrite' ? 'foreign_source_prewrite' : from,
+      to === 'review_source_prewrite' ? 'foreign_source_prewrite' : to,
+    ]);
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
+    expect(() => loadRuntimeConfig(root)).toThrow(
+      /permits only the exact configured read-only source planner and risk-filtered security prewriter/,
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  test.each([
+    ['planner absent', (stage) => (stage.assignments = stage.assignments.filter((assignment) => assignment.role !== 'source-planner'))],
+    [
+      'planner replaced by another read-only role',
+      (stage) => {
+        const planner = stage.assignments.find((assignment) => assignment.role === 'source-planner');
+        planner.role = 'correctness-validator';
+        planner.profile = 'reviewer-correctness';
+      },
+    ],
+    [
+      'planner risk-filtered',
+      (stage) => {
+        stage.assignments.find((assignment) => assignment.role === 'source-planner').risk_flags = ['high'];
+      },
+    ],
+    ['whole stage risk-filtered', (stage) => (stage.risk_flags = ['high'])],
+    [
+      'security filter moved to the whole stage',
+      (stage) => {
+        stage.risk_flags = ['security', 'data_loss', 'migration', 'high'];
+        delete stage.assignments.find((assignment) => assignment.role === 'security-prewriter').risk_flags;
+      },
+    ],
+    ['planner and security made serial', (stage) => (stage.mode = 'single')],
+    ['planner moved after the security assignment', (stage) => stage.assignments.reverse()],
+  ])('rejects a read-only bypass shape when %s', async (_name, changeStage) => {
+    const fixture = parse(yaml);
+    const stage = fixture.workflows.implementation_new.stages.find((value) => value.id === 'review_source_prewrite');
+    changeStage(stage);
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
+    expect(() => loadRuntimeConfig(root)).toThrow(
+      /permits only the exact configured read-only source planner|cannot produce its stage artifacts/,
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  test('rejects a pre-development validator that produces ValidationReceipt/v1', async () => {
+    const fixture = parse(yaml);
+    const stage = fixture.workflows.implementation_new.stages.find(
+      (value) => value.id === 'review_source_prewrite',
+    );
+    stage.assignments[0].role = 'security-data-validator';
+    stage.produces = ['ValidationReceipt/v1'];
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
+    expect(() => loadRuntimeConfig(root)).toThrow(/cannot produce its stage artifacts|requires the configured read-only source planner/);
+    expect(calls).toHaveLength(0);
+  });
+
+  test('rejects a source writer that precedes the configured prewriter', async () => {
+    const fixture = parse(yaml);
+    const workflow = fixture.workflows.implementation_new;
+    const prewriter = workflow.stages.find((stage) => stage.id === 'review_source_prewrite');
+    const developer = workflow.stages.find((stage) => stage.kind === 'develop');
+    prewriter.required_after = ['develop_change'];
+    developer.required_after = ['synthesize_task'];
+    workflow.edges = workflow.edges
+      .filter(
+        ([from, to]) =>
+          !(from === 'synthesize_task' && to === 'review_source_prewrite') &&
+          !(from === 'review_source_prewrite' && to === 'develop_change'),
+      )
+      .concat([
+        ['synthesize_task', 'develop_change'],
+        ['develop_change', 'review_source_prewrite'],
+      ]);
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
+    expect(() => loadRuntimeConfig(root)).toThrow(
+      /permits only the exact configured read-only source planner and risk-filtered security prewriter before development/,
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  test('rejects missing post-write validation even when the prewriter is configured', async () => {
+    const fixture = parse(yaml);
+    const workflow = fixture.workflows.implementation_new;
+    workflow.stages = workflow.stages.filter((stage) => stage.id !== 'validate_parallel');
+    workflow.edges = workflow.edges.filter(([from, to]) => from !== 'validate_parallel' && to !== 'validate_parallel');
+    const tester = workflow.stages.find((stage) => stage.kind === 'test');
+    const delivery = workflow.stages.find((stage) => stage.kind === 'deliver');
+    tester.required_after = ['develop_change'];
+    tester.consumes = tester.consumes.filter((artifact) => artifact !== 'ValidationReceipt/v1');
+    delivery.consumes = delivery.consumes.filter((artifact) => artifact !== 'ValidationReceipt/v1');
+    workflow.edges.push(['develop_change', tester.id]);
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
+    expect(() => loadRuntimeConfig(root)).toThrow(/must include post-write validation, test, and delivery stages/);
+    expect(calls).toHaveLength(0);
+  });
+
+  test.each([
+    ['research_parallel', 'implementation_new'],
+    ['develop_change', 'implementation_new'],
+  ])('continues to reject an arbitrary empty required %s stage', async (stageId, workflowId) => {
+    const fixture = parse(yaml);
+    const workflow = fixture.workflows[workflowId];
+    const stage = workflow.stages.find((value) => value.id === stageId);
+    if (stage.kind === 'research') {
+      stage.assignments = stage.assignments.map((assignment) => ({ ...assignment, risk_flags: ['high'] }));
+    } else {
+      stage.risk_flags = ['high'];
+    }
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
+    config = loadRuntimeConfig(root);
+    expect(() => compileDevelopmentWorkflow(config, 'default-development', workflowId, [])).toThrow(
+      /missing a required stage after risk filters|without an effective producer|requires effective terminal stage/,
+    );
+    expect(calls).toHaveLength(0);
+  });
 
   test('requires an actual execution capability even when preview compilation succeeded', async () => {
     await expect(createConfiguredMastra(root).dispatch(workItem.id)).rejects.toThrow(/opaque host capability/);

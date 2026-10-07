@@ -14,6 +14,7 @@ import { validateResearchJournalItem, type MastraSessionLedgerState } from './pe
 import { correctiveExecutionSchema } from './final-assurance.js';
 import { parseSessionBridgeRequest, parseSessionBridgeObservation } from './mastra-session-bridge.js';
 import { readSessionEngineSnapshot } from './session-engine-snapshot.js';
+import type { WorkflowLifecycleRisk } from './workflow-plan.js';
 import { withHostStateExclusiveTransaction } from '../host-state.js';
 import { validateHostOperationReservation } from '../governance/edictum-boundary.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
@@ -46,9 +47,10 @@ export async function createStagedRuntimeWitness(input: {
   readonly payloadManifestSha256: string;
   readonly workId: string;
   readonly attempt: number;
+  readonly lifecycleRisk: WorkflowLifecycleRisk;
   readonly selection: WorkItemSelection;
 }): Promise<StagedRuntimeWitness> {
-  const { repositoryRoot, payloadManifestSha256, workId, attempt, selection } = input;
+  const { repositoryRoot, payloadManifestSha256, workId, attempt, lifecycleRisk, selection } = input;
   requireWitness(/^[a-f0-9]{64}$/.test(payloadManifestSha256), 'payload digest is invalid');
   requireWitness(
     typeof workId === 'string' && workId.length > 0 && Number.isSafeInteger(attempt) && attempt >= 1,
@@ -158,7 +160,7 @@ export async function createStagedRuntimeWitness(input: {
         resume_status: state.step_id === null ? 'complete' : 'ready',
       };
     } finally {
-      database.close();
+      database.close(true);
     }
     requireWitness(
       snapshot !== null &&
@@ -199,6 +201,7 @@ export async function createStagedRuntimeWitness(input: {
       context: { work_id: workId, attempt, scope_digest: scopeDigest },
       workflowId,
       runId: snapshot.state.run_id,
+      lifecycleRisk,
       correctiveExecution: snapshot.state.corrective_execution ?? undefined,
     });
     const journalObservations = observed.map((item) => item.observation);

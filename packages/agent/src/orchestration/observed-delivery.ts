@@ -15,7 +15,8 @@ import {
 } from './mastra-boundary.js';
 import type { SessionBridgeObservation } from './mastra-session-bridge.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
-import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { snapshotAdmittedTaskSources, snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import type { HostStateSnapshot, HostStateStore } from '../host-state.js';
 import { sessionActionsForWave } from './session-handoff.js';
 
 const proposalSchema = z
@@ -63,6 +64,8 @@ export function prepareObservedDeliveryInstruction(input: {
   testerInstruction: TesterInstruction;
   testReceipt: TestReceipt;
   authority: DeliveryEvidenceAuthority;
+  host?: HostStateSnapshot;
+  sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'>;
 }): DeliveryInstruction {
   const {
     repositoryRoot,
@@ -76,7 +79,15 @@ export function prepareObservedDeliveryInstruction(input: {
     authority,
   } = input;
   validateImplementationResult(packet, implementationResult);
-  const source = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
+  const source = input.sourceStore && input.host
+    ? snapshotAdmittedTaskSources({
+        store: input.sourceStore,
+        host: input.host,
+        canonicalHostRoot: repositoryRoot,
+        paths: packet.owned_paths,
+        attempt: journal.state.attempt,
+      })
+    : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireDelivery(
     source.digest === implementationResult.implementation_fingerprint &&
       journal.state.source_scope?.digest === source.digest &&

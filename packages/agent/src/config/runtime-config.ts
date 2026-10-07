@@ -1183,16 +1183,65 @@ function assertWorkflowReferences(config: AgentRuntimeConfig): void {
     if (workflow.assurance_profile !== 'research_light') {
       const position = (kind: WorkflowStageKind): number => ordered.findIndex((stage) => stage.kind === kind);
       const develop = position('develop');
-      const validate = position('validate');
       const test = position('test');
       const deliver = position('deliver');
+      const configuredPrewriter = ordered.find((stage) => stage.id === 'review_source_prewrite');
+      const developer = ordered[develop];
+      const prewriterRiskFlags = ['security', 'data_loss', 'migration', 'high'];
+      const isReadOnlyPrewriter = (stage: WorkflowStage): boolean => {
+        const sourcePlanner = stage.assignments.find((assignment) => assignment.role === 'source-planner');
+        const securityPrewriter = stage.assignments.find((assignment) => assignment.role === 'security-prewriter');
+        const stageRiskFlags = stage.risk_flags ?? [];
+        const securityRiskFlags = securityPrewriter?.risk_flags ?? [];
+        return [
+          stage.kind === 'validate',
+          stage.mode === 'parallel',
+          stage.id === 'review_source_prewrite',
+          stage.required_after.length === 1 && stage.required_after[0] === 'synthesize_task',
+          stageRiskFlags.length === 0,
+          stage.assignments.length === 2,
+          stage.assignments[0]?.role === 'source-planner' &&
+            stage.assignments[1]?.role === 'security-prewriter',
+          sourcePlanner?.profile === 'architect' && !sourcePlanner.risk_flags?.length,
+          securityPrewriter?.profile === 'reviewer-security',
+          securityRiskFlags.length === prewriterRiskFlags.length &&
+            prewriterRiskFlags.every((risk) => securityRiskFlags.includes(risk)),
+          stage.consumes.length === 1 && stage.consumes[0] === 'DevelopmentTaskPacket/v1',
+          stage.produces.length === 1 && stage.produces[0] === 'LifecyclePreparationObservation/v1',
+          config.agents.profiles.architect?.mutation_scope === 'none',
+          config.agents.profiles.architect?.tools_policy === 'read_only',
+          config.agents.profiles['reviewer-security']?.mutation_scope === 'none',
+          Boolean(developer?.required_after.length === 1 && developer.required_after[0] === stage.id),
+        ].every(Boolean);
+      };
+      const preDevelopmentValidators = ordered.filter((stage, index) => index < develop && stage.kind === 'validate');
+      const postWriteValidate = ordered.findIndex(
+        (stage, index) =>
+          index > develop &&
+          stage.kind === 'validate' &&
+          stage.consumes.includes('DevelopmentTaskPacket/v1') &&
+          stage.consumes.includes('ImplementationResult/v1') &&
+          stage.produces.includes('ValidationReceipt/v1'),
+      );
+      const preDevelopmentValidatorsValid = configuredPrewriter
+        ? preDevelopmentValidators.length === 1 &&
+          preDevelopmentValidators[0] === configuredPrewriter &&
+          isReadOnlyPrewriter(configuredPrewriter)
+        : preDevelopmentValidators.length === 0;
       assertCondition(
-        validate >= 0 && test >= 0 && deliver >= 0,
-        'code workflow ' + workflowId + ' must include validate, test, and deliver stages',
+        preDevelopmentValidatorsValid,
+        'code workflow ' + workflowId + ' permits only the exact configured read-only source planner and risk-filtered security prewriter before development',
       );
       assertCondition(
-        develop < validate && develop < test && validate < deliver && test < deliver,
-        'code workflow ' + workflowId + ' must preserve develop -> validate/test -> deliver ordering',
+        postWriteValidate >= 0 && test >= 0 && deliver >= 0,
+        'code workflow ' + workflowId + ' must include post-write validation, test, and delivery stages',
+      );
+      assertCondition(
+        develop < postWriteValidate &&
+          develop < test &&
+          postWriteValidate < deliver &&
+          test < deliver,
+        'code workflow ' + workflowId + ' must preserve post-write validation/test before delivery',
       );
       const stageMap = new Map(workflow.stages.map((stage) => [stage.id, stage]));
       assertCondition(

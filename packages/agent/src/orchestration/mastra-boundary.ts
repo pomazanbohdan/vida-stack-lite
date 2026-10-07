@@ -1321,7 +1321,7 @@ export function prepareDeliveryInstruction(
   const requiredValidators = new Set(
     compiled.waves
       .flat()
-      .filter((stage) => stage.kind === 'validate')
+      .filter((stage) => stage.kind === 'validate' && stage.produces.includes('ValidationReceipt/v1'))
       .flatMap((stage) => stage.assignments.map((assignment) => assignment.role)),
   );
   assert(Array.isArray(validationReceipts), 'delivery validation receipts are invalid');

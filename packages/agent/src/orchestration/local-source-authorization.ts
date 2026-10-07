@@ -4,8 +4,16 @@ import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { computeEdictumWorkflowApprovalEvidenceDigest } from '../governance/edictum-boundary.js';
-import type { HostStateStore, WorkflowAttemptApprovalVerifier } from '../host-state.js';
+import {
+  canonicalHostSourceWriteApproval,
+  type HostStateStore,
+  type WorkflowAttemptApprovalVerifier,
+} from '../host-state.js';
 import { sessionBridgeRunId } from './mastra-session-bridge.js';
+import {
+  produceSourceWritePreflightApproval,
+  type SourceWritePreflightContextResolver,
+} from './source-preflight-operations.js';
 
 const authorizationSchema = z
   .object({
@@ -44,10 +52,12 @@ export function readLocalSourceWriteAuthorization(
 export function createLocalSourceWriteApprovalVerifier(
   repositoryRoot: string,
   getStore: () => HostStateStore,
+  resolvePreflightContext?: SourceWritePreflightContextResolver,
 ): WorkflowAttemptApprovalVerifier {
+  const principal = 'trusted-local-session-source-write';
   return {
-    principal: 'trusted-local-session-source-write',
-    verify: (request) => {
+    principal,
+    verify: async (request) => {
       if (request.action !== 'source.write') return null;
       const store = getStore();
       const current = store.readHostStateSnapshot(request.identity);
@@ -128,6 +138,7 @@ export function createLocalSourceWriteApprovalVerifier(
       );
       if (!ticket || ticket.status !== 'active' || !claim || !Number.isFinite(expiresAt) || expiresAt <= Date.now())
         return null;
+      if (!resolvePreflightContext) return null;
       const unsigned = {
         schema: 'EdictumWorkflowApproval/v1' as const,
         stage_id: request.stage_id,
@@ -139,7 +150,24 @@ export function createLocalSourceWriteApprovalVerifier(
         approved_at: new Date().toISOString(),
         expires_at: new Date(expiresAt).toISOString(),
       };
-      return { ...unsigned, evidence_digest: computeEdictumWorkflowApprovalEvidenceDigest(unsigned) };
+      const receipt = { ...unsigned, evidence_digest: computeEdictumWorkflowApprovalEvidenceDigest(unsigned) };
+      const hostApproval = canonicalHostSourceWriteApproval(request, principal, receipt);
+      try {
+        const context = await resolvePreflightContext(request, current);
+        if (!context || canonicalJsonDigest(context.hostSnapshot) !== canonicalJsonDigest(current)) return null;
+        await produceSourceWritePreflightApproval({
+          repositoryRoot,
+          context,
+          request,
+          hostApprovalPrincipal: principal,
+          hostApproval,
+        });
+        const latest = store.readHostStateSnapshot(request.identity);
+        if (canonicalJsonDigest(latest) !== canonicalJsonDigest(current)) return null;
+        return receipt;
+      } catch {
+        return null;
+      }
     },
   };
 }

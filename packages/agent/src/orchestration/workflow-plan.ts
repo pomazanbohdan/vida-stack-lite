@@ -5,6 +5,21 @@ import {
   type WorkflowStage,
 } from '../config/runtime-config.js';
 
+const sourceWritingWorkflowIds = new Set(['implementation_new', 'implementation_change', 'bug_fix', 'task_execution']);
+const sourcePrewriterId = 'review_source_prewrite';
+const sourcePrewriterRiskFlags = ['security', 'data_loss', 'migration', 'high'] as const;
+
+export type WorkflowLifecycleRisk = 'low' | 'medium' | 'high';
+
+/** Add lifecycle high risk only to the private inputs used to compile configured assignments. */
+export function effectiveWorkflowRiskFlags(
+  riskFlags: readonly string[] | undefined,
+  lifecycleRisk?: WorkflowLifecycleRisk,
+): readonly string[] {
+  const flags = riskFlags ?? [];
+  return lifecycleRisk === 'high' && !flags.includes('high') ? [...flags, 'high'] : flags;
+}
+
 export interface CompiledDevelopmentWorkflow {
   readonly schema: 'CompiledDevelopmentWorkflow/v1';
   readonly team_id: string;
@@ -58,11 +73,55 @@ function assignmentMatchesRisk(
   return actions[Number(Boolean(assignmentRisks))]!();
 }
 
+function configuredReadOnlySourcePrewriter(
+  config: AgentRuntimeConfig,
+  team: NonNullable<AgentRuntimeConfig['teams'][string]>,
+  workflowId: string,
+  workflow: WorkflowDefinition,
+): boolean {
+  if (!sourceWritingWorkflowIds.has(workflowId)) return false;
+  const stage = workflow.stages.find((value) => value.id === sourcePrewriterId);
+  const sourcePlanner = stage?.assignments.find((assignment) => assignment.role === 'source-planner');
+  const securityPrewriter = stage?.assignments.find((assignment) => assignment.role === 'security-prewriter');
+  const developerStages = workflow.stages.filter((value) => value.kind === 'develop');
+  const stageRiskFlags = stage?.risk_flags ?? [];
+  const securityRiskFlags = securityPrewriter?.risk_flags ?? [];
+  return Boolean(
+    stage &&
+      stage.kind === 'validate' &&
+      stage.mode === 'parallel' &&
+      stage.required_after.length === 1 &&
+      stage.required_after[0] === 'synthesize_task' &&
+      stageRiskFlags.length === 0 &&
+      stage.assignments.length === 2 &&
+      stage.assignments[0]?.role === 'source-planner' &&
+      stage.assignments[1]?.role === 'security-prewriter' &&
+      sourcePlanner?.profile === 'architect' &&
+      !sourcePlanner.risk_flags?.length &&
+      securityPrewriter?.profile === 'reviewer-security' &&
+      securityRiskFlags.length === sourcePrewriterRiskFlags.length &&
+      sourcePrewriterRiskFlags.every((risk) => securityRiskFlags.includes(risk)) &&
+      stage.consumes.length === 1 &&
+      stage.consumes[0] === 'DevelopmentTaskPacket/v1' &&
+      stage.produces.length === 1 &&
+      stage.produces[0] === 'LifecyclePreparationObservation/v1' &&
+      team.roles['source-planner'] === 'architect' &&
+      team.roles['security-prewriter'] === 'reviewer-security' &&
+      config.agents.profiles.architect?.mutation_scope === 'none' &&
+      config.agents.profiles.architect?.tools_policy === 'read_only' &&
+      config.agents.profiles['reviewer-security']?.mutation_scope === 'none' &&
+      developerStages.length === 1 &&
+      developerStages[0]!.required_after.length === 1 &&
+      developerStages[0]!.required_after[0] === sourcePrewriterId,
+  );
+}
+
 export function compileDevelopmentWorkflow(
   config: AgentRuntimeConfig,
   teamId: string,
   workflowId: string,
   riskFlags?: readonly string[],
+  lifecycleRisk?: WorkflowLifecycleRisk,
 ): CompiledDevelopmentWorkflow {
   assertLoadedRuntimeConfig(config);
   const team = config.teams[teamId];
@@ -72,11 +131,26 @@ export function compileDevelopmentWorkflow(
   workflow!.stages.forEach((stage) =>
     stage.assignments.forEach((assignment) => configuredProfileMatches(team!, teamId, workflowId, stage, assignment)),
   );
+  const configuredPrewriterStage = workflow!.stages.find((stage) => stage.id === sourcePrewriterId);
+  const sourcePrewriterConfigured = configuredReadOnlySourcePrewriter(config, team!, workflowId, workflow!);
+  assert(
+    !configuredPrewriterStage || sourcePrewriterConfigured,
+    'workflow ' + workflowId + ' has a malformed configured read-only source planner/security prewriter stage',
+  );
+  const effectiveRiskFlags = effectiveWorkflowRiskFlags(riskFlags, lifecycleRisk);
+  const requiresSecurityPrewriter =
+    sourceWritingWorkflowIds.has(workflowId) &&
+    Boolean(
+      effectiveRiskFlags.some((risk) =>
+        sourcePrewriterRiskFlags.includes(risk as (typeof sourcePrewriterRiskFlags)[number]),
+      ),
+    );
   const waves = workflowWaves(workflow!).map((wave) =>
     wave.map((stage) => ({
       ...stage,
       assignments: stage.assignments.filter(
-        (assignment) => assignmentMatchesRisk(stage, riskFlags) && assignmentMatchesRisk(assignment, riskFlags),
+        (assignment) =>
+          assignmentMatchesRisk(stage, effectiveRiskFlags) && assignmentMatchesRisk(assignment, effectiveRiskFlags),
       ),
     })),
   );
@@ -87,6 +161,18 @@ export function compileDevelopmentWorkflow(
   );
   const effectiveStageIds = new Set(
     effectiveStages.filter((stage) => stage.assignments.length > 0).map((stage) => stage.id),
+  );
+  assert(
+    !configuredPrewriterStage || effectiveStageIds.has(sourcePrewriterId),
+    'workflow ' + workflowId + ' configured source prewriter stage has no effective source planner after risk filters',
+  );
+  assert(
+    !configuredPrewriterStage ||
+      !requiresSecurityPrewriter ||
+      effectiveStages
+        .find((stage) => stage.id === sourcePrewriterId)
+        ?.assignments.some((assignment) => assignment.role === 'security-prewriter'),
+    'workflow ' + workflowId + ' high-risk Source writing requires the configured risk-filtered security prewriter',
   );
   for (const stage of effectiveStages) {
     if (stage.assignments.length === 0) continue;

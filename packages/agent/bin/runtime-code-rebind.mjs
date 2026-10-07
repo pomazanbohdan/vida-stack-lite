@@ -9,6 +9,7 @@ import {
   runtimeConfigDigest,
   runtimePackageAccess,
   runtimePackageCodePaths,
+  selectWorkflow,
 } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { selectCorrectiveEvidence,validateWorkSessionBinding } from '../src/orchestration/final-assurance.ts';
@@ -16,8 +17,23 @@ import { HostStateStore } from '../src/host-state.ts';
 import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { resumePausedLocalWork } from '../src/orchestration/resume-paused-local-work.ts';
-import { snapshotDeclaredSources, snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
+import {
+  compareScopedSourceSnapshots,
+  snapshotDeclaredSources,
+  snapshotRuntimePackageSources,
+} from '../src/orchestration/scoped-source-snapshot.ts';
+import {
+  buildSessionBridgeRequest,
+  configuredContextForStage,
+} from '../src/orchestration/mastra-session-bridge.ts';
+import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
+import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
+import {
+  projectHistoricalTerminalReviewAction,
+  validateDeliveredWorkContinuationRequest,
+} from '../src/orchestration/delivered-work-continuation.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import { runRuntimeConfigRebind } from './runtime-config-rebind.mjs';
 
 const requireRebind = (ok, message) => {
   if (!ok) throw new Error(`vida runtime-code rebind: ${message}`);
@@ -41,12 +57,14 @@ const planningKeys = [
   '--forward-operation-id',
   '--owner-no-call-ref',
 ];
+const deliveredContinuationPlanningKeys = planningKeys.concat(['--basis', '--source-transition-id']);
 const synthesisPlanningKeys = planningKeys
   .filter((key) => key !== '--owner-no-call-ref')
   .concat(['--basis', '--correction-id', '--owner-correction-ref']);
 const focusedPlanningKeys=planningKeys.filter(key=>key!=='--owner-no-call-ref').concat(['--basis','--owner-correction-ref']);
 const applyingKeys = ['--kind', '--mode', '--project-root', '--repair-id'];
 const planPath = (id) => `.agent/work/${id}/runtime-code-rebind-plan.v1.json`;
+const deliveredContinuationPlanPath = (id) => `.agent/work/${id}/delivered-work-continuation-plan.v1.json`;
 
 function parse(args) {
   requireRebind(args.length % 2 === 0, 'arguments must be paired');
@@ -67,9 +85,11 @@ function parse(args) {
     'kind, mode, root or repair ID invalid',
   );
   const expected = ['inspect', 'plan'].includes(values['--mode'])
-    ? values['--basis'] === 'known-terminal-verify' ? focusedPlanningKeys : values['--basis'] === 'synthesis-correction'
-      ? synthesisPlanningKeys
-      : planningKeys
+    ? values['--basis'] === 'delivered-config-continuation'
+      ? deliveredContinuationPlanningKeys
+      : values['--basis'] === 'known-terminal-verify' ? focusedPlanningKeys : values['--basis'] === 'synthesis-correction'
+        ? synthesisPlanningKeys
+        : planningKeys
     : applyingKeys;
   requireRebind(
     JSON.stringify(Object.keys(values).sort()) === JSON.stringify([...expected].sort()),
@@ -484,6 +504,320 @@ function writePlan(root, repairId, plan) {
   }
 }
 
+function readDeliveredContinuationPlan(root, repairId) {
+  const file = path.join(root, deliveredContinuationPlanPath(repairId));
+  const stat = lstatSync(file);
+  requireRebind(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'delivered continuation plan path unsafe');
+  const plan = JSON.parse(readFileSync(file, 'utf8')),
+    { digest, ...body } = plan;
+  requireRebind(
+    plan.schema === 'VidaDeliveredWorkContinuationPlan/v1' &&
+      plan.repair_id === repairId &&
+      digest === canonicalJsonDigest(body),
+    'delivered continuation plan digest invalid',
+  );
+  validateDeliveredWorkContinuationRequest(plan.request);
+  return plan;
+}
+
+function writeDeliveredContinuationPlan(root, repairId, plan) {
+  const access = requireSafeRepositoryAccess(root);
+  access.ensureDirectory(`.agent/work/${repairId}`, 'delivered continuation evidence');
+  const file = path.join(root, deliveredContinuationPlanPath(repairId));
+  const fd = openSync(file, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY, 0o600);
+  try {
+    writeFileSync(fd, Buffer.from(`${JSON.stringify(plan, null, 2)}\n`));
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function sourceTransitionAuthorizedPaths(root, config, transitionId, proof) {
+  const access = requireSafeRepositoryAccess(root),
+    sidecarPath = `${config.control.work_root}/${transitionId}/runtime-config-source-correction-repair.v1.json`,
+    artifact = validatedJson(access, sidecarPath, 'closed Source correction artifact').value,
+    { digest, ...body } = artifact;
+  requireRebind(
+    artifact.schema === 'RuntimeConfigSourceCorrectionRepair/v1' &&
+      artifact.operation_id === transitionId &&
+      artifact.status === 'applied' &&
+      digest === canonicalJsonDigest(body) &&
+      artifact.request?.operation_id === transitionId &&
+      artifact.completion &&
+      proof.transition.operation_path ===
+        `${config.control.work_root}/${transitionId}/runtime-config-delivery-operation.v1.json` &&
+      canonicalJsonDigest(artifact.completion) === proof.transition_digest &&
+      Array.isArray(artifact.request.authorized_changed_paths),
+    'retained Source correction artifact differs from its closed transition proof',
+  );
+  return [...artifact.request.authorized_changed_paths].sort();
+}
+
+async function planDeliveredWorkContinuation({
+  database,
+  root,
+  config,
+  workspaceId,
+  projectIds,
+  workId,
+  attempt,
+  actionId,
+  issueId,
+  nativeHandle,
+  repairId,
+  actor,
+  timestamp,
+  forwardOperationId,
+  sourceTransitionId,
+  ownerNoCallPointer,
+}) {
+  requireRebind(
+    identifier.test(repairId) &&
+      identifier.test(sourceTransitionId) &&
+      Number.isSafeInteger(attempt) && attempt > 0 && hash.test(actionId) &&
+      typeof issueId === 'string' && issueId.length > 0 && issueId.length <= 256 &&
+      typeof nativeHandle === 'string' && nativeHandle.length > 0 && nativeHandle.length <= 256 &&
+      typeof actor === 'string' && actor.trim() === actor && actor.length > 0 &&
+      typeof timestamp === 'string' && !Number.isNaN(Date.parse(timestamp)) &&
+      typeof ownerNoCallPointer === 'string' && ownerNoCallPointer.trim() === ownerNoCallPointer &&
+      ownerNoCallPointer.length > 0 && ownerNoCallPointer.length <= 2048 && !/\p{Cc}/u.test(ownerNoCallPointer),
+    'delivered continuation attribution or identity is invalid',
+  );
+  const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds),
+    identity = {
+      repository_id: project.repository_id,
+      project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest,
+      work_id: workId,
+    },
+    store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+    state = store.readHostStateSnapshot(identity),
+    work = state.work,
+    journalRow = checkedRow(database, 'agent_host_mastra_session_ledger', 'workspace_id=? AND work_id=? AND attempt=?', [
+      workspaceId,
+      workId,
+      attempt,
+    ]),
+    journal = journalRow.value;
+  requireRebind(
+    work && state.workVersion && state.ledgerVersion &&
+      work.execution.status === 'suspended' && work.execution.phase === 'awaiting_followup' && work.lease === null &&
+      work.lifecycle.phase === 'INTAKE' && work.lifecycle.seal === null &&
+      work.binding.config_digest !== runtimeConfigDigest(config) &&
+      work.binding.lifecycle_work_id === workId && work.binding.repository_id === identity.repository_id &&
+      canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+      work.binding.integrations_digest === identity.integrations_digest &&
+      work.execution.run_id === journal.run_id && journal.workspace_id === workspaceId &&
+      journal.work_id === workId && journal.attempt === attempt &&
+      journal.source_scope?.digest === work.binding.work_source_revision &&
+      !work.execution.assignment_attempts.some((entry) => entry.status === 'started' || entry.status === 'uncertain'),
+    'original unfinished owner or journal no longer matches the continuation basis',
+  );
+
+  const capture = store.readHistoricalTerminalSynthesisCapture(identity, attempt, actionId);
+  requireRebind(
+    capture?.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
+      capture.issue_id === issueId && capture.request.native_session_handle === nativeHandle &&
+      capture.request.user_request_pointer === ownerNoCallPointer &&
+      capture.terminal_status === 'known_terminal_unaccepted' && capture.task_status === 'unfinished' &&
+      capture.accepted_result === false && capture.rights_granted === false && capture.runtime_acceptance === false,
+    'exact retained terminal body, owner or original request pointer is unavailable',
+  );
+  const sourceTransition = await runRuntimeConfigRebind([
+    '--kind', 'runtime-config-delivery',
+    '--mode', 'repair-transition',
+    '--project-root', root,
+    '--repair-id', sourceTransitionId,
+  ]);
+  requireRebind(sourceTransition.status === 'closed_config_transition_proven', 'Source transition did not close');
+  const sourceChangedPaths = sourceTransitionAuthorizedPaths(root, config, sourceTransitionId, sourceTransition),
+    sourceAccess = requireSafeRepositoryAccess(root),
+    intakeRef = work.artifacts.find((ref) => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1');
+  requireRebind(intakeRef, 'original local session intake is missing');
+  const intakeBytes = sourceAccess.readBytes(intakeRef.path, 'original local session intake'),
+    intake = JSON.parse(intakeBytes.toString('utf8'));
+  requireRebind(
+    sha(intakeBytes) === intakeRef.sha256 &&
+      intake.schema === 'VidaLocalSessionIntake/v1' &&
+      intake.native_session_handle === nativeHandle &&
+      Array.isArray(intake.runtime_code_paths) &&
+      canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest,
+    'original intake bytes or owner binding changed',
+  );
+  const runtimePaths = runtimePackageCodePaths(config.runtime.bundle);
+  requireRebind(
+    runtimePaths.length > 0 && canonicalJsonDigest(intake.runtime_code_paths) === canonicalJsonDigest(runtimePaths),
+    'original intake runtime inventory differs from the current canonical bundle',
+  );
+  const targetRuntimeCode = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, runtimePaths),
+    targetConfigDigest = runtimeConfigDigest(config);
+  requireRebind(
+    targetConfigDigest === sourceTransition.transition.target_config_digest &&
+      targetRuntimeCode.digest === sourceTransition.transition.source_snapshot_digest &&
+      targetRuntimeCode.digest !== work.binding.runtime_code_digest,
+    'current installed configuration or runtime bytes differ from the accepted Source transition',
+  );
+  const lineage = forwardLineage(root, forwardOperationId, runtimePaths, work.binding.runtime_code_digest, targetRuntimeCode.digest),
+    allowedScopePaths = [...work.lifecycle.scope.allowed_paths].sort(),
+    currentSourceScope = snapshotDeclaredSources(sourceAccess, allowedScopePaths);
+  requireRebind(
+    allowedScopePaths.length > 0 &&
+      canonicalJsonDigest(currentSourceScope.entries.map((entry) => entry.path)) ===
+        canonicalJsonDigest(journal.source_scope.entries.map((entry) => entry.path)),
+    'current Source snapshot no longer covers the exact original Work scope',
+  );
+  const authorizedSourceChanges = compareScopedSourceSnapshots(journal.source_scope, currentSourceScope);
+  requireRebind(
+    authorizedSourceChanges.every((change) => sourceChangedPaths.includes(change.path)),
+    'current Work source drift is outside the accepted Source beforeimage paths',
+  );
+  const selection = {
+    team: work.binding.team_id,
+    kind: intake.work_item?.canonical_kind,
+    intent: intake.work_item?.intent,
+    project: intake.work_item?.project_id,
+    risk_flags: intake.work_item?.risk_flags,
+    labels: intake.work_item?.labels,
+  };
+  requireRebind(
+    project.project_ids.includes(intake.work_item.project_id) &&
+      selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
+    'current config no longer selects the original Work workflow and project',
+  );
+  const workflow = config.workflows[work.binding.workflow_id],
+    reviewStage = workflow?.stages.find((stage) => stage.id === 'validate_parallel'),
+    reviewAssignment = reviewStage?.assignments[0],
+    reviewProfile = reviewAssignment && config.agents.profiles[reviewAssignment.profile],
+    reviewTools = reviewProfile && config.agents.tool_policies[reviewProfile.tools_policy];
+  requireRebind(
+    reviewStage?.kind === 'validate' && reviewStage.mode === 'parallel' &&
+      reviewAssignment?.role === 'correctness-validator' && reviewProfile?.mutation_scope === 'none' &&
+      reviewProfile.tools_policy === 'read_only' && reviewTools?.source_write === false,
+    'current configured first review is not the read-only Core correctness validator',
+  );
+  const compiled = compileDevelopmentWorkflow(config, selection.team, work.binding.workflow_id, selection.risk_flags),
+    reviewWaveIndex = compiled.waves.findIndex((wave) => wave.some((stage) => stage.id === reviewStage.id));
+  requireRebind(reviewWaveIndex >= 0, 'current review stage is not in the configured workflow');
+  const context = { work_id: workId, attempt, scope_digest: currentSourceScope.digest },
+    reviewActions = sessionActionsForWave(config, selection, context, work.binding.workflow_id, reviewWaveIndex, []),
+    reviewAction = reviewActions.find((action) => action.stage_id === reviewStage.id && action.assignment_index === 0);
+  requireRebind(reviewAction, 'current review assignment did not produce a workflow action');
+  const configuredContext = configuredContextForStage(root, config, work.binding.workflow_id, reviewStage.id, context),
+    sessionRequest = buildSessionBridgeRequest({
+      runId: journal.run_id,
+      workflowId: work.binding.workflow_id,
+      configDigest: targetConfigDigest,
+      context,
+      waveIndex: reviewWaveIndex,
+      action: reviewAction,
+      configuredContext,
+      priorResults: [],
+    }),
+    action = projectHistoricalTerminalReviewAction({
+      workflowId: work.binding.workflow_id,
+      sourceScopeDigest: currentSourceScope.digest,
+      targetConfigDigest,
+      capture: {
+        action_id: capture.action_id,
+        issue_id: capture.issue_id,
+        receipt_digest: canonicalJsonDigest(capture),
+        body_sha256: capture.body_sha256,
+        body_ref: capture.provenance.body_ref,
+      },
+      originalRequestPointer: ownerNoCallPointer,
+      request: sessionRequest,
+    });
+  const request = validateDeliveredWorkContinuationRequest({
+    schema: 'DeliveredWorkContinuationRequest/v1',
+    identity,
+    attempt,
+    nativeSessionHandle: nativeHandle,
+    expectedWork: state.workVersion,
+    expectedLedger: state.ledgerVersion,
+    expectedJournal: journalRow.version,
+    expectedMaintenanceGeneration: state.maintenanceGeneration,
+    priorConfigDigest: work.binding.config_digest,
+    targetConfigDigest,
+    targetSchemaDigest: sha(runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current config schema')),
+    targetProjectContextDigest: project.project_context_digest,
+    priorRuntimeCodeDigest: work.binding.runtime_code_digest,
+    targetRuntimeCodeDigest: targetRuntimeCode.digest,
+    forwardOperationId,
+    parentManifestDigest: lineage.parentManifestDigest,
+    successorManifestDigest: lineage.successorManifestDigest,
+    currentSourceScope,
+    authorizedSourceChanges,
+    sourceTransition,
+    action,
+    originalRequestPointer: ownerNoCallPointer,
+  });
+  const body = {
+    schema: 'VidaDeliveredWorkContinuationPlan/v1',
+    repair_id: repairId,
+    actor,
+    timestamp,
+    source_transition_id: sourceTransitionId,
+    runtime_code_paths: runtimePaths,
+    request,
+  };
+  return { ...body, digest: canonicalJsonDigest(body) };
+}
+
+/** Apply one frozen delivered-work plan through the Host owner/CAS boundary. */
+export async function applyDeliveredWorkContinuationPlan({ database, root, workspaceId, plan, rebuildPlan }) {
+  requireRebind(
+    plan?.schema === 'VidaDeliveredWorkContinuationPlan/v1' &&
+      typeof rebuildPlan === 'function' &&
+      canonicalJsonDigest({
+        schema: plan.schema,
+        repair_id: plan.repair_id,
+        actor: plan.actor,
+        timestamp: plan.timestamp,
+        source_transition_id: plan.source_transition_id,
+        runtime_code_paths: plan.runtime_code_paths,
+        request: plan.request,
+      }) === plan.digest,
+    'frozen delivered continuation plan is invalid',
+  );
+  const verifier = {
+    principal: 'vida-agent-delivered-work-continuation',
+    verify: async (request, snapshot) => {
+      const current = await rebuildPlan();
+      requireRebind(
+        current.digest === plan.digest &&
+          canonicalJsonDigest(current.request) === canonicalJsonDigest(request) &&
+          snapshot.workVersion?.revision === request.expectedWork.revision &&
+          snapshot.workVersion?.digest === request.expectedWork.digest &&
+          snapshot.ledgerVersion?.revision === request.expectedLedger.revision &&
+          snapshot.ledgerVersion?.digest === request.expectedLedger.digest &&
+          snapshot.maintenanceGeneration === request.expectedMaintenanceGeneration,
+        'delivered continuation plan, owner CAS or current Source proof changed',
+      );
+      return {
+        schema: 'VidaDeliveredWorkContinuationAuthorization/v1',
+        request_digest: canonicalJsonDigest(request),
+        principal: verifier.principal,
+        transition_digest: request.sourceTransition.transition_digest,
+        action_digest: canonicalJsonDigest(request.action),
+      };
+    },
+  };
+  const store = new HostStateStore(
+    database,
+    workspaceId,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    root,
+    undefined,
+    undefined,
+    verifier,
+  );
+  return store.continueDeliveredWork(plan.request);
+}
+
 function sameRepairIntent(left, right) {
   const stable = (plan) => {
     const { expectedWork, expectedLedger, expectedMaintenanceGeneration, ...request } = plan.request;
@@ -531,6 +865,36 @@ export async function runRuntimeCodeRebind(args) {
   const database = trustedDatabase(root, config, ['inspect', 'plan'].includes(values['--mode']));
   try {
     if (['inspect', 'plan'].includes(values['--mode'])) {
+      if (values['--basis'] === 'delivered-config-continuation') {
+        const plan = await planDeliveredWorkContinuation({
+          database,
+          root,
+          config,
+          workspaceId,
+          projectIds: values['--projects'].split(','),
+          workId: values['--work-id'],
+          attempt: Number(values['--attempt']),
+          actionId: values['--action-id'],
+          issueId: values['--issue-id'],
+          nativeHandle: values['--native-handle'],
+          repairId: values['--repair-id'],
+          actor: values['--actor'],
+          timestamp: values['--timestamp'],
+          forwardOperationId: values['--forward-operation-id'],
+          sourceTransitionId: values['--source-transition-id'],
+          ownerNoCallPointer: values['--owner-no-call-ref'],
+        });
+        if (values['--mode'] === 'plan') writeDeliveredContinuationPlan(root, plan.repair_id, plan);
+        return {
+          status: values['--mode'] === 'plan' ? 'planned' : 'continuation_ready',
+          repair_id: plan.repair_id,
+          plan_digest: plan.digest,
+          retained_issue_id: plan.request.action.capture.issue_id,
+          action: plan.request.action,
+          runtime_accepted: false,
+          accepted_result: false,
+        };
+      }
       const plan = planRuntimeCodeRebind({
         database,
         root,
@@ -560,6 +924,50 @@ export async function runRuntimeCodeRebind(args) {
         new_runtime_code_digest: plan.request.newRuntimeCodeDigest,
         retained_issue_id: plan.request.issueId,
       };
+    }
+    if (['apply', 'resume'].includes(values['--mode'])) {
+      const access = requireSafeRepositoryAccess(root),
+        deliveredPlanRelative = deliveredContinuationPlanPath(values['--repair-id']);
+      if (access.fileExists(deliveredPlanRelative, 'delivered continuation plan presence')) {
+        const plan = readDeliveredContinuationPlan(root, values['--repair-id']),
+          sourceArgs = {
+            database,
+            root,
+            config,
+            workspaceId,
+            projectIds: plan.request.identity.project_ids,
+            workId: plan.request.identity.work_id,
+            attempt: plan.request.attempt,
+            actionId: plan.request.action.capture.action_id,
+            issueId: plan.request.action.capture.issue_id,
+            nativeHandle: plan.request.nativeSessionHandle,
+            repairId: plan.repair_id,
+            actor: plan.actor,
+            timestamp: plan.timestamp,
+            forwardOperationId: plan.request.forwardOperationId,
+            sourceTransitionId: plan.source_transition_id,
+            ownerNoCallPointer: plan.request.originalRequestPointer,
+          },
+          result = await applyDeliveredWorkContinuationPlan({
+            database,
+            root,
+            workspaceId,
+            plan,
+            rebuildPlan: () => planDeliveredWorkContinuation(sourceArgs),
+          });
+        return {
+          status: result.status,
+          repair_id: plan.repair_id,
+          plan_digest: plan.digest,
+          retained_issue_id: plan.request.action.capture.issue_id,
+          continuation_id: result.receipt.continuation_id,
+          action: result.action,
+          work_version: result.snapshot.workVersion,
+          ledger_version: result.snapshot.ledgerVersion,
+          runtime_accepted: result.receipt.runtime_acceptance,
+          accepted_result: result.receipt.accepted_result,
+        };
+      }
     }
     const plan = readPlan(root, values['--repair-id']);
     const receiptTable = database

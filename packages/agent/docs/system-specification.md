@@ -136,6 +136,41 @@ The same rule applies wherever text is supplied to the packet, so selecting a
 different field cannot bypass it. Supporting rationale and official reference
 applicability are recorded in the [packet-text screening applicability](research/agent-framework-reference-registry.md#packet-text-screening-applicability).
 
+## Build version selection
+
+The existing release owner selects one version for each new build operation.
+Default to PATCH plus one from the last confirmed successful build. A requested
+MINOR increment resets PATCH to zero. A MAJOR increment resets MINOR and PATCH
+to zero. An explicit version must be valid
+and higher than that baseline. The controller fixes the version before reviewed
+Source publication; CI forms exactly that declared Source and version.
+
+Successful formation and artifact publication confirm the baseline. Failed or
+UNKNOWN attempts leave it unchanged and retain their pending operation. An exact
+completed retry returns the existing result. A new successful build must not
+reuse a completed version. Concurrent requests serialize through the existing
+release owner; they do not create a second version ledger. Package metadata,
+native version, archive, manifest and CI result must agree. Installation preserves
+the selected version and does not create another build.
+
+The release owner persists the actual CI terminal result and selected published
+artifact against the current request. It then closes that operation or records
+its exact failed or UNKNOWN state under the existing release locks and CAS.
+An acknowledged completion has one durable result and one confirmed-version
+pointer. Lost acknowledgement retries return that result without another build.
+An observed failed CI conclusion is a failure, not an unknown outcome.
+
+Ordinary selection reads only the current operation and confirmed build
+baseline. It does not enumerate earlier request directories or query their
+runs. A historical unresolved operation uses a separate supported recovery
+command once; its retained history does not become a routine build gate.
+Recovery preserves previous requests, results, FAIL and UNKNOWN evidence.
+
+The version has the normal MAJOR.MINOR.PATCH form defined by
+[Semantic Versioning](https://semver.org/). This product uses automatic PATCH
+increments by human policy; a version number alone grants no qualification or
+Runtime acceptance.
+
 ## Source development controller
 
 The bundle-owned development-controller seam provides prepare, inspect, verify
@@ -387,10 +422,14 @@ configured assignment-index reinterpretation follows a runtime rebind.
 After authorized source corrections, the orchestrating session forms exact
 local native target assets and separately maintained npm/SDK artifacts through
 the repository-owned release workflow. This is an authorized delivery effect, not user Runtime
-acceptance. The initial package version is `0.1.0`; only a fully verified
-successful local publication advances the next candidate patch. Failed checks,
-packing or installation and recovery of the same pending operation do not
-consume a version. Durable publication state is project-owned under
+acceptance. The initial package version is `0.1.0`. A verified successful CI
+build advances the baseline for the next new build. Each new build selects the
+next patch by default; the caller can request minor, major or a higher exact
+version. A failed or unknown build does not advance that baseline. Recovery of
+the same pending operation retains its operation and version, including after
+formation; it does not allocate another version. Installation has its own outcome
+and does not repeat version selection. A new delivery follows the existing
+supported disposition of its predecessor. Durable publication state is project-owned under
 `.agent/work/agent-local-release`, independently of scratch archive retention.
 The pending, per-operation and successful receipts use the strict current
 `VidaLocalReleaseState/v1` contract: package version, operation identity and
@@ -832,6 +871,113 @@ observations and unknown outcome. Replacement, admission and writer acquisition
 still require fresh source bindings. Unknown writer effects remain blocked;
 late original replies cannot satisfy a replacement generation.
 
+### Optional task source in one Host
+
+The canonical Host root owns configuration, project context, work artifacts,
+SQLite and the shared coordination ledger. An absent task-source binding keeps
+the existing same-root behavior. A typed request explicitly opts into another
+source checkout. It does not initialize a second Host or grant Source rights.
+
+`TaskSourceBinding/v1` binds the original work, attempt, thread, repository,
+sorted projects, configuration, project context, scope and acceptance to both
+roots. It retains the observed Git common directory, branch, HEAD and CWD.
+Trusted integration checks physical paths and aliases. Matching Git metadata
+alone does not establish Host authority.
+
+The existing Host reserves branch, worktree and logical file resources through
+FIFO and CAS before issuing a create or adopt action. The session executes the
+fixed Git arguments and reports the actual result. An uncertain result retains
+the same operation for inspection without automatic reissue. Missing Host state
+denies before creating a directory, branch, worktree or task-local database.
+Before transferring claims or issuing another mutation, the final Host
+transaction checks retained action/preparation pairs. An issued or unknown
+mutation for the same Work blocks a distinct mutation, including a later
+attempt. Exact retries return no command. Inspection and outcome reporting
+remain available; another Work uses the existing resource FIFO.
+A reported binding also blocks a distinct binding mutation for the same attempt.
+There is one observed Source root per attempt. Current read, inspection and
+report paths verify the action's exact preparation revision and digest as well
+as its operation identity. A mismatched pair grants no root or effect.
+Git's [worktree contract](https://git-scm.com/docs/git-worktree) supplies checkout
+mechanics; VIDA retains scope, ownership and outcome authority.
+
+Root resolution denies incomplete effect storage, orphan actions and reserved
+non-queued tickets without retained effect records. A missing first journal
+does not select another root: fresh admission uses the canonical root only when
+inspection proves no TaskSource action exists for this Work.
+
+The finite historical settled-writer release reads the exact original attempt's
+reported root without requiring a current execution lease or current config.
+It verifies protected action/preparation/report pairs, original owner or release,
+workspace and scope. Uncertain or ambiguous bindings deny. The existing caller
+still compares current scoped bytes with the retained postimage before release
+and exact retry. This read grants no current execution or Source rights.
+
+Public inspection returns a separate `SourceExecutionContext/v1` projection.
+It supplies the canonical Host root, validated Source root, tool working
+directory and current binding reference. The controller uses that working
+directory for Source tools. Scoped source reads and fingerprints use the same
+binding; configuration, intake, artifacts and SQLite remain in the Host root.
+The binding retains its original authorization scope. An accepted writer report
+may advance the journal's current scoped Source bytes without replacing that
+root binding. Later reads verify both identities and retain the original root;
+they do not require current bytes to equal the pre-write scope.
+The projection grants no rights and changes no existing persisted v1 contract.
+
+### Required checks before a Source effect
+
+The Host validates applicable current plan and independent security evidence
+before reserving a Source attempt. It uses the genuine Host-created request,
+current work and journal, scope and acceptance bytes, task packet and configured
+project identity. Actual Cedar and Edictum decisions remain required alongside
+the attributable scoped human permission. A locally formatted approval receipt
+does not substitute for a policy decision.
+
+Admission registers the exact validated implementation scope and acceptance
+contracts as current lifecycle references in the same Host Work. Metadata-only
+preparation grants no native execution; issuing a wave requires actual admission.
+Prewriter stages receive the task packet before implementation exists. Stages
+consume implementation results only when their configured contracts require it.
+
+The existing `review_source_prewrite` wave contains a read-only source planner
+for all Source work and a security reviewer for high-risk work. The planner
+reports actual scope-to-acceptance trace, verification and rollback. The Host
+attaches its accepted `source_plan` in TRACE, then advances to PLAN. Security
+policy attaches in PLAN. A security report that arrives first remains in the
+journal until the plan is attached; an exact retry finishes attachment without
+running either reviewer again. Both use `LifecyclePreparationObservation/v1`.
+Post-write validation is identified by the configured `ValidationReceipt/v1`
+output contract. Delivery and final assurance consume only those validator
+results. A prewriter plan is not a validator verdict or validation receipt and
+cannot satisfy the required post-write stage. Both gates remain required.
+
+Configuration loading and pure graph inspection remain available for valid
+historical configurations. Missing current plan or required prewriter evidence
+still denies a Source effect. A post-write security validator cannot satisfy
+the configured prewriter gate.
+
+Apply the same high-risk rule in workflow compilation and both Source gates:
+high lifecycle risk, or a packet flag of `high`, `security`, `data_loss` or
+`migration`. A low lifecycle label cannot cancel a high-risk packet flag.
+Preserve the raw packet flags. Use the effective lifecycle risk consistently
+when compiling requests, reconstructing engine state and exporting its witness.
+
+Missing, stale or foreign required evidence denies before attempt and effect
+markers and before a Source action is issued. High-risk work requires its
+configured independent prewriter review and actual observed journal result.
+Final assurance remains after development; it cannot supply a missing prewriter
+review. Exact completed retries retain their existing idempotency. Changed
+source or context invalidates the affected evidence. Cedar's
+[authorization contract](https://docs.cedarpolicy.com/auth/authorization.html)
+defines policy evaluation; the Host binds its result to the protected operation.
+
+Edictum evaluates the actual configured tool call before its effect. Record read
+evidence only after a successful read; a dry-run decision is not execution proof.
+The configured prewriter result must be persisted and attached before writer
+issuance. The result cannot be supplied later by final assurance. This follows
+Edictum's [workflow gates](https://github.com/edictum-ai/edictum#workflow-gates)
+and [execution pipeline](https://docs.edictum.ai/docs/concepts/how-it-works).
+
 ### Recovery across delivered configuration
 
 Owner: Agent/Core. Business intent: delivering Source or changing the requested
@@ -1074,6 +1220,56 @@ Resume changes only the receipt through atomic CAS after checking the frozen
 target and dependencies again. YAML and historical work are not written. Restore
 may abandon only before a receipt effect while the target and old receipt remain
 exact. After an effect, resume forward. Pending acceptance and FAIL/UNKNOWN remain.
+
+A Source correction during that held operation uses the same public
+`runtime-config-delivery` owner and one additive
+`RuntimeConfigSourceCorrectionRepair/v1` sidecar. Repair inspect and plan freeze
+the original operation and fence, Source beforeimages and exact authorized
+changed paths. Repair apply accepts a bounded report of the new whole package's
+formation, native integrity and actual installed observations. The trusted
+session owns those observations; report JSON supplies consistency and CAS only.
+The repair writes only its sidecar. It neither rewrites the original plan nor
+releases maintenance, changes historical work or grants execution rights.
+
+The applied bridge is checked again during normal resume and its supported
+postconditions. Lost acknowledgements continue the exact operation. Foreign
+fences, intervening maintenance generations, changed custody or stale package
+proof deny. A historical terminal capture may cross its own maintenance
+acquisition only when the verified held receipt binds capture generation plus
+one to the held and current generation. Unfenced checks retain exact equality.
+
+Original-task continuation remains separate from receipt adoption. It binds
+the accepted configuration and installed-runtime transition through fresh
+Work, Ledger, Journal and maintenance CAS. It preserves the original owner,
+attempt, scope, acceptance and history. Only the exact original released
+resources can be reacquired after contention checks. The configured runtime
+returns a real unfinished action; known terminal and UNKNOWN actions are not
+automatically reissued. Actual original-owner continuation is required evidence
+after delivery, not a consequence of Source checks or physical installation.
+
+The runtime-code reconciliation owner supports a finite continuation of the
+same suspended work after a proven delivered configuration transition. The
+old Work configuration must match the transition's verified baseline; the
+target must match the accepted current initialization and executing bundle.
+The Host commits the current binding and same-owner resource reacquisition in
+one immediate transaction under fresh Work, Ledger, Journal and maintenance CAS.
+It preserves the original attempt, contracts, request pointer and history.
+
+A captured known terminal synthesis returns a historical-terminal review action
+over its exact retained receipt and body. It does not reissue synthesis or invent
+an observation. A persisted unissued frontier may return its exact configured
+session request. Current uncertain writer or governance effects deny execution;
+retained disposed read-only UNKNOWN history remains unchanged. The Mastra
+frontier projection and Host transaction are separate boundaries. A returned
+review action grants no Source write or Runtime acceptance.
+
+For a retained terminal engine run, the public consumer retrieves the one
+current read-only review from its Host continuation receipt before ordinary
+engine lookup. It issues and reports that action through the existing journal
+CAS. It preserves the old terminal snapshot and calls neither engine start nor
+resume. Lost issuance acknowledgement retains the same issue and UNKNOWN;
+an exact report retry returns the persisted result. Unsupported frontier
+continuations remain an explicit GAP and cannot start a replacement workflow.
 
 Before changing an active strict artifact schema, qualify and ship its supported
 artifact/dependency repair command. Same-attempt correction still requires current

@@ -5,9 +5,9 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import yaml from 'yaml';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
+import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -21,6 +21,7 @@ test('public writer issue acquires file ownership after execution-only intake an
       'src',
       'dist',
       'bin',
+      'tooling',
       'schemas',
       'instructions',
       'templates',
@@ -35,30 +36,8 @@ test('public writer issue acquires file ownership after execution-only intake an
       path.join(bundle, 'node_modules'),
       process.platform === 'win32' ? 'junction' : 'dir',
     );
-    // Test setup: one configured source-first workflow isolates the actual public writer boundary.
-    const template = path.join(bundle, 'templates', 'agent-runtime.config.template.v1.yaml');
-    const authored = yaml.parse(readFileSync(template, 'utf8'));
-    const developer = authored.workflows.bug_fix.stages.find((stage) => stage.id === 'develop_fix');
-    developer.required_after = [];
-    developer.consumes = ['WorkItem/v1'];
-    authored.agents.role_instructions['developer-orchestrator'].consumes.push('WorkItem/v1');
-    authored.workflows.bug_fix.entry_stage = 'develop_fix';
-    const tester = authored.workflows.bug_fix.stages.find((stage) => stage.id === 'test_regression');
-    tester.consumes = ['ImplementationResult/v1'];
-    const validator = authored.workflows.bug_fix.stages.find((stage) => stage.id === 'validate_parallel');
-    const delivery = authored.workflows.bug_fix.stages.find((stage) => stage.id === 'prepare_delivery');
-    for (const stage of [validator, delivery])
-      stage.consumes = stage.consumes.filter((artifact) => artifact !== 'DevelopmentTaskPacket/v1');
-    authored.workflows.bug_fix.terminal_stages = ['prepare_delivery'];
-    authored.workflows.bug_fix.stages = [developer, tester, validator, delivery];
-    authored.workflows.bug_fix.edges = [
-      ['develop_fix', 'test_regression'],
-      ['test_regression', 'validate_parallel'],
-      ['validate_parallel', 'prepare_delivery'],
-    ];
-    writeFileSync(template, yaml.stringify(authored));
     const invoke = (entry, args) =>
-      spawnSync('bun', [path.join(bundle, 'bin', entry), ...args], {
+      spawnSync(process.execPath, [path.join(bundle, 'bin', entry), ...args], {
         cwd: bundle,
         encoding: 'utf8',
         windowsHide: true,
@@ -119,8 +98,8 @@ test('public writer issue acquires file ownership after execution-only intake an
       attempt: 1,
       scope_digest: source.digest,
       config_digest: runtimeConfigDigest(config),
-      workflow_id: 'bug_fix',
-      stage_ids: ['develop_fix'],
+      workflow_id: 'task_execution',
+      stage_ids: ['develop_task'],
       implementation_paths: ['src/task.ts'],
       native_session_handle: 'writer-thread',
     });
@@ -131,21 +110,21 @@ test('public writer issue acquires file ownership after execution-only intake an
         schema: 'WorkItem/v1',
         id: 'writer-work',
         provider: 'local',
-        provider_type: 'Bug',
-        canonical_kind: 'bug',
-        intent: 'bug_fix',
+        provider_type: 'Task',
+        canonical_kind: 'task',
+        intent: 'task_execution',
         project_id: 'writer-project',
         title: 'Public writer boundary fixture',
         description: 'Issue the configured writer.',
         labels: [],
-        risk_flags: [],
+        risk_flags: ['high'],
       },
       scope_path: relative('scope.json'),
       acceptance_path: relative('acceptance.json'),
       source_authorization_path: relative('source-authorization.json'),
       runtime_code_paths: ['tools/agents/bin/run.mjs'],
-      route: 'R2',
-      risk: 'low',
+      route: 'R3',
+      risk: 'high',
       change_kind: 'fix',
     });
     const args = [
@@ -156,7 +135,7 @@ test('public writer issue acquires file ownership after execution-only intake an
       '--project',
       'writer-project',
       '--work-path',
-      'src',
+      'src/task.ts',
       '--work-id',
       'writer-work',
       '--attempt',
@@ -166,11 +145,11 @@ test('public writer issue acquires file ownership after execution-only intake an
       '--team',
       'default-development',
       '--kind',
-      'bug',
+      'task',
       '--intent',
-      'bug_fix',
+      'task_execution',
       '--workflow',
-      'bug_fix',
+      'task_execution',
     ];
     const parse = (result) => ({
       ...result,
@@ -194,33 +173,164 @@ test('public writer issue acquires file ownership after execution-only intake an
     expect(priorLedger.claims.filter((claim) => claim.status === 'active')[0].resources).toEqual([
       'execution:writer-work',
     ]);
-    const version = prepared.payload.state_version;
-    const stale = parse(
-      invoke('run.mjs', [
-        ...args,
-        '--issue-wave',
-        'true',
-        '--expected-revision',
-        String(version.revision + 1),
-        '--expected-digest',
-        version.digest,
-      ]),
-    );
-    expect(stale.status).toBe(1);
-    expect(rows().find((row) => row.kind === 'ledger').value).toEqual(priorLedger);
-    const issued = parse(
-      invoke('run.mjs', [
-        ...args,
-        '--issue-wave',
-        'true',
+    const expected = (version) => [
         '--expected-revision',
         String(version.revision),
         '--expected-digest',
         version.digest,
-      ]),
+      ],
+      call = (extra) => parse(invoke('run.mjs', [...args, ...extra])),
+      synthesisIssue = call(['--issue-wave', 'true', ...expected(prepared.payload.state_version)]);
+    expect(synthesisIssue.status, synthesisIssue.stderr).toBe(0);
+    expect(synthesisIssue.payload.issued_actions[0].request.stage_id).toBe('synthesize_task');
+    const synthesis = synthesisIssue.payload.issued_actions[0],
+      synthesisSummary = 'The accepted task and scope are ready for current Source planning.',
+      synthesisReportPath = path.join(workDir, 'synthesis-report.json');
+    writeFileSync(
+      synthesisReportPath,
+      JSON.stringify({
+        schema: 'VidaSessionObservation/v1',
+        action_id: synthesis.request.action_id,
+        issue_id: synthesis.issue_id,
+        agent_id: 'fixture:research-synthesizer',
+        tool_call_ref: 'fixture:task-synthesis',
+        status: 'reported_complete',
+        summary: synthesisSummary,
+        output_digest: canonicalJsonDigest(synthesisSummary),
+        evidence_refs: [],
+      }),
     );
+    const synthesisReport = call([...expected(synthesisIssue.payload.state_version), '--report', synthesisReportPath]);
+    expect(synthesisReport.status, synthesisReport.stderr).toBe(0);
+
+    const prewriterIssue = call(['--issue-wave', 'true', ...expected(synthesisReport.payload.state_version)]);
+    expect(prewriterIssue.status, prewriterIssue.stderr).toBe(0);
+    expect(prewriterIssue.payload.issued_actions.map((item) => item.request.role).sort()).toEqual([
+      'security-prewriter',
+      'source-planner',
+    ]);
+    const preparationRecord = (item, kind) => {
+        const evidence = kind === 'source_plan' ? 'source-plan.md' : 'security-review.md';
+        return {
+          schema: 'LifecyclePreparationObservation/v1',
+          record_id: 'writer-' + kind + '-' + item.request.action_id,
+          kind,
+          work_id: 'writer-work',
+          attempt: 1,
+          source_revision: source.digest,
+          scope_id: 'writer-scope',
+          config_digest: runtimeConfigDigest(config),
+          ac_ids: ['AC-WRITER-1'],
+          observed_at: new Date().toISOString(),
+          observer_id: 'fixture:' + item.request.role,
+          status: 'pass',
+          evidence_refs: [evidence],
+          observations:
+            kind === 'source_plan'
+              ? [
+                  {
+                    mechanic: 'scope_acceptance_trace',
+                    actual: 'The current file scope and AC-WRITER-1 trace to the accepted contract.',
+                    evidence_ref: evidence,
+                  },
+                  {
+                    mechanic: 'verification_rollback',
+                    actual: 'The focused check and source restoration path are identified.',
+                    evidence_ref: evidence,
+                  },
+                ]
+              : [
+                  {
+                    mechanic: 'root_cause_owner',
+                    actual: 'The source owner and cause are identified.',
+                    evidence_ref: evidence,
+                  },
+                  {
+                    mechanic: 'affected_callers',
+                    actual: 'The affected writer entrypoint is identified.',
+                    evidence_ref: evidence,
+                  },
+                  {
+                    mechanic: 'existing_primitives',
+                    actual: 'The current Host and filesystem coordination primitives are retained.',
+                    evidence_ref: evidence,
+                  },
+                  {
+                    mechanic: 'prewriter_security_gate',
+                    actual: 'The exact scoped write and its pre-effect gates are preserved.',
+                    evidence_ref: evidence,
+                  },
+                ],
+          gaps: [],
+        };
+      },
+      reportPreparation = (item, kind, version) => {
+        const record = preparationRecord(item, kind),
+          summary = JSON.stringify(record),
+          reportPath = path.join(workDir, kind + '-report.json');
+        writeFileSync(
+          reportPath,
+          JSON.stringify({
+            schema: 'VidaSessionObservation/v1',
+            action_id: item.request.action_id,
+            issue_id: item.issue_id,
+            agent_id: record.observer_id,
+            tool_call_ref: 'fixture:' + kind,
+            status: 'reported_complete',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: record.evidence_refs,
+          }),
+        );
+        return call([...expected(version), '--report', reportPath]);
+      },
+      planAction = prewriterIssue.payload.issued_actions.find((item) => item.request.role === 'source-planner'),
+      securityAction = prewriterIssue.payload.issued_actions.find((item) => item.request.role === 'security-prewriter'),
+      planReport = reportPreparation(planAction, 'source_plan', prewriterIssue.payload.state_version);
+    expect(planReport.status, planReport.stderr).toBe(0);
+    const planRows = rows(),
+      plannedWork = planRows.find((row) => row.kind === 'work').value,
+      planReference = plannedWork.lifecycle.references.find((reference) => reference.kind === 'source_plan');
+    expect(plannedWork.lifecycle.phase).toBe('PLAN');
+    expect(plannedWork.execution.assignment_attempts).toHaveLength(0);
+    expect(
+      plannedWork.lifecycle.references.filter((reference) => reference.kind === 'implementation_policy'),
+    ).toHaveLength(0);
+    expect(
+      planRows.find((row) => row.kind === 'ledger').value.claims.filter((claim) => claim.status === 'active')[0]
+        .resources,
+    ).toEqual(['execution:writer-work']);
+    expect(planReference).toMatchObject({
+      kind: 'source_plan',
+      disposition: 'current',
+      source_revision: source.digest,
+    });
+    expect(JSON.parse(readFileSync(path.join(root, planReference.path), 'utf8'))).toMatchObject({
+      kind: 'source_plan',
+      status: 'pass',
+      observer_id: 'fixture:source-planner',
+    });
+    const policyReport = reportPreparation(securityAction, 'implementation_policy', planReport.payload.state_version);
+    expect(policyReport.status, policyReport.stderr).toBe(0);
+    const prewriteRows = rows(),
+      prewriteWork = prewriteRows.find((row) => row.kind === 'work').value;
+    expect(
+      prewriteWork.lifecycle.references.filter((reference) => reference.kind === 'implementation_policy'),
+    ).toHaveLength(1);
+    expect(prewriteWork.execution.assignment_attempts).toHaveLength(0);
+    expect(
+      prewriteRows.find((row) => row.kind === 'ledger').value.claims.filter((claim) => claim.status === 'active')[0]
+        .resources,
+    ).toEqual(['execution:writer-work']);
+    const beforeStale = rows().find((row) => row.kind === 'ledger').value,
+      stale = call(['--issue-wave', 'true', ...expected(prepared.payload.state_version)]);
+    expect(stale.status).toBe(1);
+    expect(stale.payload.code).toBe('GAP-VIDA-RUN-CONTEXT-001');
+    expect(rows().find((row) => row.kind === 'ledger').value).toEqual(beforeStale);
+    const issued = call(['--issue-wave', 'true', ...expected(policyReport.payload.state_version)]);
     expect(issued.status, issued.stderr).toBe(0);
     expect(issued.payload.status).toBe('wave_issued');
+    expect(issued.payload.issued_actions[0].request.stage_id).toBe('develop_task');
     expect(issued.payload.issued_actions[0].host_attempt_id).toBeDefined();
     const final = rows();
     const ledger = final.find((row) => row.kind === 'ledger').value;

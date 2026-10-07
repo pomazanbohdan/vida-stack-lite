@@ -6,7 +6,7 @@ import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import type { HostStateStore, WorkState, WorkIdentity, StateVersion, HostStateSnapshot } from '../host-state.js';
 import { transitionLifecycleState, type LifecycleArtifactReference } from '../lifecycle/lifecycle-state.js';
-import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { snapshotAdmittedTaskSources } from './scoped-source-snapshot.js';
 import type { MastraSessionLedgerSnapshot, MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { parseObservedValidatorVerdict } from './observed-validation.js';
 import { parseObservedTesterVerdict } from './observed-testing.js';
@@ -225,8 +225,10 @@ export function selectCorrectiveEvidence(
   const failed = observed.filter((item) => item.observation!.status === 'reported_failed');
   requireAssurance(failed.length > 0, 'corrective operation requires accepted focused negative findings');
   for (const item of failed) {
-    const kind = workflow.stages.find((stage) => stage.id === item.request.stage_id)?.kind;
-    requireAssurance(kind === 'validate' || kind === 'test', 'corrective failure is not a focused verdict');
+    const stage = workflow.stages.find((stage) => stage.id === item.request.stage_id);
+    const kind = stage?.kind;
+    requireAssurance(kind === 'test' || kind === 'validate' && stage?.produces.includes('ValidationReceipt/v1'),
+      'corrective failure is not a focused verdict');
     if (kind === 'validate')
       requireAssurance(
         parseObservedValidatorVerdict(item.observation!).verdict === 'fail',
@@ -727,14 +729,18 @@ function prepareLifecycleAssurance(
       ),
     'focused workflow has failed or unknown outcomes',
   );
-  const kinds = completed.map((item) => workflow.stages.find((stage) => stage.id === item.request.stage_id)?.kind);
+  const stages = completed.map((item) => workflow.stages.find((stage) => stage.id === item.request.stage_id));
+  const kinds = stages.map((stage) => stage?.kind);
   requireAssurance(
-    kinds.includes('develop') && kinds.includes('validate') && (goal === 'correction' || kinds.includes('test')),
+    kinds.includes('develop') &&
+      stages.some((stage) => stage?.kind === 'validate' && stage.produces.includes('ValidationReceipt/v1')) &&
+      (goal === 'correction' || kinds.includes('test')),
     'accepted writer and required focused stages are missing',
   );
   for (const item of completed) {
-    const kind = workflow.stages.find((stage) => stage.id === item.request.stage_id)?.kind;
-    if (kind === 'validate') {
+    const stage = workflow.stages.find((stage) => stage.id === item.request.stage_id);
+    const kind = stage?.kind;
+    if (kind === 'validate' && stage?.produces.includes('ValidationReceipt/v1')) {
       const verdict = parseObservedValidatorVerdict(item.observation!);
       requireAssurance(goal === 'correction' || verdict.verdict === 'pass', 'focused validator failed');
     }
@@ -743,7 +749,13 @@ function prepareLifecycleAssurance(
       requireAssurance(goal === 'correction' || verdict.status === 'pass', 'focused tester failed');
     }
   }
-  const source = snapshotDeclaredSources(access, work.lifecycle.scope.allowed_paths);
+  const source = snapshotAdmittedTaskSources({
+    store,
+    host,
+    canonicalHostRoot: root,
+    paths: work.lifecycle.scope.allowed_paths,
+    attempt: journal.state.attempt,
+  });
   requireAssurance(
     source.digest === journal.state.source_scope?.digest,
     'current source differs from accepted focused evidence',
@@ -975,7 +987,7 @@ function prepareLifecycleAssurance(
   }
   const generation = work!.lifecycle.assurance.review_generation + 1;
   const assignment = workflow.stages
-    .filter((stage) => stage.kind === 'validate')
+    .filter((stage) => stage.kind === 'validate' && stage.produces.includes('ValidationReceipt/v1'))
     .flatMap((stage) => stage.assignments)
     .find((entry) => config.agents.profiles[entry.profile]?.mutation_scope === 'none');
   requireAssurance(assignment, 'configured readonly validator profile missing');
@@ -1012,7 +1024,7 @@ function prepareLifecycleAssurance(
   };
   const receipts = completed.flatMap((item, index) => {
     const kind = kinds[index];
-    if (kind !== 'validate' && kind !== 'test') return [];
+    if (kind !== 'test' && !(kind === 'validate' && stages[index]?.produces.includes('ValidationReceipt/v1'))) return [];
     const file = base + '-focused-' + item.request.action_id + '.json',
       bytes = publish(root, file, item.observation);
     return [

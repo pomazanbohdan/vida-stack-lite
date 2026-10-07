@@ -25,7 +25,7 @@ export function cliMetadataResult(argv, manifest) {
       schema: 'VidaAgentCommandResult/v1',
       status: 'help',
       commands: [...commands, 'instructions', 'version'],
-      run: 'run --project-root ABSOLUTE --repository ID --project ID --work-path RELATIVE --work-id ID --attempt NUMBER --team ID --kind KIND --intent INTENT --workflow ID [--scope-path RELATIVE ... | --scope-digest RETURNED_BINDING] [--intake ABSOLUTE_ACCEPTED_INTAKE_JSON]',
+      run: 'run --project-root ABSOLUTE --repository ID --project ID --work-path RELATIVE --work-id ID --attempt NUMBER --team ID --kind KIND --intent INTENT --workflow ID [--scope-path RELATIVE ... | --scope-digest RETURNED_BINDING] [--intake ABSOLUTE_ACCEPTED_INTAKE_JSON]; task source: run --project-root ABSOLUTE --task-source-operation prepare|inspect|issue|report|recover --task-source-request RELATIVE [--task-source-report RELATIVE (report only)]',
       scope: 'scope --project-root ABSOLUTE --repository ID --project ID --path RELATIVE [--path RELATIVE]',
       authority:
         'Scope inspection derives evidence; intake requires actual attributed work, scope and acceptance. Neither grants approval or authenticates native observations.',

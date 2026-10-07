@@ -12,10 +12,10 @@ import {
   type TesterInstruction,
 } from './mastra-boundary.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
-import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { snapshotAdmittedTaskSources, snapshotDeclaredSources } from './scoped-source-snapshot.js';
 import { sessionActionsForWave } from './session-handoff.js';
 import { validateWorkSessionBinding } from './final-assurance.js';
-import type { HostStateSnapshot } from '../host-state.js';
+import type { HostStateSnapshot, HostStateStore } from '../host-state.js';
 import type { SessionBridgeObservation } from './mastra-session-bridge.js';
 import { observedReceiptEvidenceReference, validateObservedEvidenceReferences } from './observed-receipt-evidence.js';
 
@@ -86,6 +86,7 @@ export function issueObservedTestReceipt(input: {
   journal: MastraSessionLedgerSnapshot;
   authority: DeliveryEvidenceAuthority;
   host?: HostStateSnapshot;
+  sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'>;
 }): {
   instruction: TesterInstruction;
   receipt: TestReceipt;
@@ -103,7 +104,15 @@ export function issueObservedTestReceipt(input: {
     validateWorkSessionBinding(input.host.work, journal.state, repositoryRoot);
   }
   validateImplementationResult(packet, implementationResult);
-  const source = snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
+  const source = input.sourceStore && input.host
+    ? snapshotAdmittedTaskSources({
+        store: input.sourceStore,
+        host: input.host,
+        canonicalHostRoot: repositoryRoot,
+        paths: packet.owned_paths,
+        attempt: journal.state.attempt,
+      })
+    : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireTest(
     source.digest === implementationResult.implementation_fingerprint &&
       journal.state.source_scope?.digest === source.digest &&

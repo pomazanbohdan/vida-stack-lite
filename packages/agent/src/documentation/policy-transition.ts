@@ -231,7 +231,7 @@ export function documentationPolicyTransitionPreimages(
       'maintenance status differs',
     );
   } finally {
-    db.close();
+    db.close(true);
   }
   return entries;
 }

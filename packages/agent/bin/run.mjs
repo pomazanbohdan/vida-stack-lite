@@ -1268,6 +1268,9 @@ function parseArgs(args) {
     '--payload-manifest-sha256',
     '--expected-revision',
     '--expected-digest',
+    '--task-source-operation',
+    '--task-source-request',
+    '--task-source-report',
   ]);
   const values = { projects: [], scope_paths: [] };
   for (let index = 0; index < args.length; index += 2) {
@@ -1287,6 +1290,32 @@ function parseArgs(args) {
     else
       values[key.slice(2).replaceAll('-', '_')] =
         key === '--project-root' && path.isAbsolute(value) ? path.resolve(value) : value;
+  }
+  if (values.task_source_operation !== undefined || values.task_source_request !== undefined) {
+    const unrelated = Object.keys(values).filter(
+      (key) => !['projects', 'scope_paths', 'project_root', 'task_source_operation', 'task_source_request', 'task_source_report'].includes(key),
+    );
+    if (
+      unrelated.length > 0 ||
+      values.projects.length > 0 ||
+      values.scope_paths.length > 0 ||
+      !values.project_root ||
+      !path.isAbsolute(values.project_root) ||
+      path.resolve(values.project_root) !== values.project_root ||
+      !['prepare', 'inspect', 'issue', 'report', 'recover'].includes(values.task_source_operation ?? '') ||
+      !values.task_source_request ||
+      (values.task_source_operation === 'report' ? !values.task_source_report : values.task_source_report !== undefined)
+    )
+      fail(
+        'GAP-VIDA-RUN-CLI-001',
+        'Task source operations require --project-root ABSOLUTE_PATH, --task-source-operation prepare|inspect|issue|report|recover and --task-source-request RELATIVE_PATH; report also requires --task-source-report RELATIVE_PATH.',
+      );
+    return Object.freeze({
+      project_root: values.project_root,
+      task_source_operation: values.task_source_operation,
+      task_source_request: values.task_source_request,
+      ...(values.task_source_report ? { task_source_report: values.task_source_report } : {}),
+    });
   }
   const required = [
     'project_root',
@@ -1425,6 +1454,7 @@ const publicMessages = Object.freeze({
   'GAP-VIDA-RUN-SELECTOR-001': 'The active runtime selector or cutover journal is invalid.',
   'GAP-VIDA-RUN-CUTOFF-001': 'The new-work cutoff witness could not be recorded.',
   'GAP-VIDA-RUN-REPORT-001': 'The session report is missing, unsafe, oversized, or invalid JSON.',
+  'GAP-VIDA-RUN-TASK-SOURCE-001': 'The task source operation could not be prepared or inspected.',
 });
 const publicCodes = new Set(Object.keys(publicMessages));
 
@@ -1739,7 +1769,7 @@ async function captureStoppedSource(args) {
         canonical_acceptance: false,
       };
     } finally {
-      database.close();
+      database.close(true);
     }
   }
 }
@@ -1852,7 +1882,7 @@ async function recoverUnpreparedWork(args) {
       runtime_acceptance: false,
     };
   } finally {
-    database.close();
+    database.close(true);
     const after = lstatSync(file);
     if (
       !after.isFile() ||
@@ -2281,7 +2311,7 @@ async function captureRetiredSource(args) {
       runtime_acceptance: false,
     };
   } finally {
-    database.close();
+    database.close(true);
   }
 }
 
@@ -2670,6 +2700,7 @@ async function releaseCompletedReadonly(args) {
         waveIndex,
         [],
         correctiveExecution,
+        work.lifecycle.risk,
       );
       const expectedRequests = actions.map((action) =>
         buildSessionBridgeRequest({
@@ -2728,6 +2759,7 @@ async function releaseCompletedReadonly(args) {
       frontier.waveIndex,
       [],
       correctiveExecution,
+      work.lifecycle.risk,
     );
     const expectedFrontier = frontierActions.map((action) =>
       buildSessionBridgeRequest({
@@ -2762,7 +2794,7 @@ async function releaseCompletedReadonly(args) {
     )
       throw Error('Readonly release actual engine frontier differs');
   } finally {
-    engine.close();
+    engine.close(true);
   }
   const planPath = path.join(
     path.dirname(path.resolve(root, args[5])),
@@ -2828,7 +2860,7 @@ async function releaseCompletedReadonly(args) {
       runtime_acceptance: false,
     };
   } finally {
-    database.close();
+    database.close(true);
   }
 }
 
@@ -3089,7 +3121,7 @@ async function releaseHistoricalOwner(
       runtime_acceptance: false,
     };
   } finally {
-    db.close();
+    db.close(true);
   }
 }
 async function recoveryReview(args) {
@@ -3267,7 +3299,7 @@ export async function run(args = process.argv.slice(2)) {
   checkManifest(bundleRoot, pin);
   if (Bun.version !== pin) fail('GAP-VIDA-RUN-BUN-001', `Pinned Bun ${pin} is required; running ${Bun.version}.`);
   const config = loadRuntimeConfig(values.project_root);
-  if (!values.scope_digest) {
+  if (!values.scope_digest && !values.task_source_operation) {
     const { inspectScope } = await import('./scope.mjs');
     const snapshot = await inspectScope([
       '--project-root',
@@ -3295,7 +3327,7 @@ export async function run(args = process.argv.slice(2)) {
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization status is invalid.');
   if (
     initialization.repository_id !== config.repository.repository_id ||
-    initialization.repository_id !== values.repository
+    (!values.task_source_operation && initialization.repository_id !== values.repository)
   )
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization repository identity is stale.');
   const configuredProjectIds = [...config.projects.map((entry) => entry.project_id)].sort();
@@ -3317,6 +3349,20 @@ export async function run(args = process.argv.slice(2)) {
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization schema is stale.');
   const { assertRuntimePackageExports } = await import('../tooling/maintained-source-inventory.mjs');
   assertRuntimePackageExports(runtimePackageAccess().repository_root);
+  if (values.task_source_operation) {
+    const { executeTaskSourceBindingOperation } = await import('../src/orchestration/task-source-binding-operations.ts');
+    return {
+      schema: 'VidaAgentRunResult/v1',
+      status: `task_source_${values.task_source_operation}`,
+      operation: await executeTaskSourceBindingOperation({
+        repositoryRoot: values.project_root,
+        mode: values.task_source_operation,
+        requestPath: values.task_source_request,
+        ...(values.task_source_report ? { reportPath: values.task_source_report } : {}),
+      }),
+      initialization_status: initialization.workspace_binding_status,
+    };
+  }
   if (values.projects.some((id) => !config.projects.some((project) => project.project_id === id)))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The project context is not bound to the requested identity.');
   let pathProject;
@@ -3374,12 +3420,32 @@ export async function run(args = process.argv.slice(2)) {
     fail('GAP-VIDA-RUN-WORKFLOW-001', 'The requested workflow is not the configured workflow for this selection.');
   if (values.export_staged_witness) {
     const { createStagedRuntimeWitness } = await import('../src/orchestration/staged-runtime-witness.ts');
+    const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+    const { inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
+    const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
+    const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+    const project = loadProjectSetContext(values.project_root, config, config.repository.repository_id, values.projects);
+    const workspace = inspectHostWorkspaceDatabase(
+      sessionHandoffDatabasePath(values.project_root, config),
+      deriveWorkspaceId(project.repository_id, values.project_root),
+    );
+    const work = workspace.work.find(
+      (entry) =>
+        entry.identity.work_id === values.work_id &&
+        entry.identity.repository_id === project.repository_id &&
+        entry.identity.integrations_digest === project.integrations_digest &&
+        JSON.stringify(entry.identity.project_ids) === JSON.stringify(project.project_ids),
+    )?.state;
+    const lifecycleRisk = work?.lifecycle.risk;
+    if (!lifecycleRisk || !['low', 'medium', 'high'].includes(lifecycleRisk))
+      fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted Work lifecycle risk is unavailable.');
     const witness = await createStagedRuntimeWitness({
       repositoryRoot: values.project_root,
       payloadManifestSha256: values.payload_manifest_sha256,
       workId: values.work_id,
       attempt: Number(values.attempt),
+      lifecycleRisk,
       selection: {
         team: values.team,
         kind: values.kind,
@@ -3804,21 +3870,6 @@ export async function run(args = process.argv.slice(2)) {
       ledger.close();
     }
   }
-  if (values.inspect) {
-    const { loadProjectSetContext } = await import('../src/config/project-context.ts');
-    const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
-    const project = loadProjectSetContext(values.project_root, config, config.repository.repository_id, [
-      pathProject.project_id,
-    ]);
-    return inspectLocalSession({
-      repositoryRoot: values.project_root,
-      config,
-      projectIds: project.project_ids,
-      integrationsDigest: project.integrations_digest,
-      workId: values.work_id,
-      attempt: Number(values.attempt),
-    });
-  }
   {
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
     const access = requireSafeRepositoryAccess(values.project_root);
@@ -3851,7 +3902,7 @@ export async function run(args = process.argv.slice(2)) {
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-    const { snapshotDeclaredSources, snapshotRuntimePackageSources } =
+    const { snapshotAdmittedTaskSources, snapshotDeclaredSources, snapshotRuntimePackageSources } =
       await import('../src/orchestration/scoped-source-snapshot.ts');
     const context = {
       work_id: values.work_id,
@@ -3949,6 +4000,216 @@ export async function run(args = process.argv.slice(2)) {
     } catch (error) {
       ledger.close();
       throw error;
+    }
+    const continuationLookup = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+    if (continuationLookup) {
+      const actionRequest = continuationLookup.receipt.request.action.request;
+      if (
+        !admissionHost.work ||
+        admissionHost.work.binding.workflow_id !== values.workflow ||
+        admissionHost.work.binding.config_digest !== configDigest ||
+        admissionHost.work.binding.work_source_revision !== context.scope_digest ||
+        actionRequest.workflow_id !== values.workflow ||
+        actionRequest.run_id !== continuationLookup.journal.state.run_id ||
+        actionRequest.scope_digest !== context.scope_digest ||
+        actionRequest.config_digest !== configDigest ||
+        actionRequest.action_id !== continuationLookup.item.request.action_id ||
+        continuationLookup.journal.state.items.length !== 1 ||
+        continuationLookup.journal.state.step_id !== actionRequest.stage_id
+      ) {
+        ledger.close();
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work review differs from the current Work, Journal or workflow.');
+      }
+      const candidates = sessionActionsForWave(
+        config,
+        selection,
+        context,
+        values.workflow,
+        actionRequest.wave_index,
+        [],
+        continuationLookup.journal.state.corrective_execution,
+        admissionHost.work.lifecycle.risk,
+      ).filter((action) => action.action_id === actionRequest.action_id);
+      const configuredContext = configuredContextForStage(
+        values.project_root,
+        config,
+        values.workflow,
+        actionRequest.stage_id,
+        context,
+      );
+      const configuredFiles = configuredContext
+        ? configuredContext.entries
+            .filter((entry) => entry.sha256 !== null)
+            .map((entry) => ({ path: entry.location, sha256: entry.sha256 }))
+        : [];
+      if (
+        candidates.length !== 1 ||
+        candidates[0].stage_id !== actionRequest.stage_id ||
+        candidates[0].assignment_index !== actionRequest.assignment_index ||
+        candidates[0].role !== actionRequest.role ||
+        (configuredContext?.digest ?? undefined) !== actionRequest.configured_context_digest ||
+        canonicalJsonDigest(configuredFiles) !== canonicalJsonDigest(actionRequest.configured_context_files ?? [])
+      ) {
+        ledger.close();
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work review action or configured context is stale.');
+      }
+      if (
+        continuationLookup.action_status !== 'reported' &&
+        (values.prepare_assurance || values.correct)
+      ) {
+        ledger.close();
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'The retained-source review must be reported before final assurance or correction.');
+      }
+      if (values.reconcile) {
+        ledger.close();
+        fail('GAP-VIDA-RUN-EXECUTION-001', 'Delivered-work review does not permit native-attempt reconciliation.');
+      }
+      if (
+        values.issue_wave ||
+        values.report ||
+        values.inspect ||
+        !(values.prepare_assurance || values.correct)
+      ) {
+        try {
+          let reviewLookup = continuationLookup,
+            reviewStatus = 'continuation_review_ready';
+          const expected = { revision: Number(values.expected_revision), digest: values.expected_digest };
+          if (values.issue_wave || values.report) {
+            if (
+              reviewLookup.journal.version.revision !== expected.revision ||
+              reviewLookup.journal.version.digest !== expected.digest
+            )
+              fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work review Journal version is stale.');
+          }
+          if (values.report) {
+            const observation = parseSessionBridgeObservation(readBoundedReport(values.report));
+            if (
+              reviewLookup.action_status === 'unissued' ||
+              observation.action_id !== actionRequest.action_id ||
+              observation.issue_id !== reviewLookup.item.issue_id
+            )
+              fail('GAP-VIDA-RUN-CONTEXT-001', 'Review report does not match the persisted delivered-work issuance.');
+            const sourcePaths = continuationLookup.receipt.request.currentSourceScope.entries.map((entry) => entry.path);
+            const leaseThread = admissionHost.work?.lease?.thread_id;
+            if (!leaseThread)
+              fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work review has no current Host execution lease.');
+            const currentSourceScope = ledger.hostState.snapshotCurrentTaskSourceSources(
+              admissionIdentity,
+              leaseThread,
+              sourcePaths,
+              context.attempt,
+            );
+            if (currentSourceScope.digest !== continuationLookup.receipt.request.currentSourceScope.digest)
+              fail('GAP-VIDA-RUN-CONTEXT-001', 'Current Source changed after delivered-work review preparation.');
+            ledger.report(context.work_id, context.attempt, expected, observation, currentSourceScope);
+            reviewLookup = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+            reviewStatus = 'continuation_review_reported';
+          } else if (values.issue_wave && reviewLookup.action_status === 'unissued') {
+            const issuedJournal = ledger.issueWave(context.work_id, context.attempt, expected);
+            if (issuedJournal.state.items.length !== 1)
+              fail('GAP-VIDA-RUN-EXECUTION-001', 'Delivered-work review did not issue exactly one action.');
+            reviewLookup = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+            reviewStatus = 'issued';
+          } else if (reviewLookup.action_status === 'issued') {
+            reviewStatus = 'wave_retrieved';
+          } else if (reviewLookup.action_status === 'reported') {
+            reviewStatus = 'continuation_review_reported';
+          }
+          const currentRequest = reviewLookup.item.request;
+          const reviewAction = candidates[0];
+          const capture = reviewLookup.receipt.historical_capture;
+          const captureBytes = Buffer.from(capture.body_base64, 'base64');
+          if (
+            captureBytes.byteLength !== capture.body_byte_length ||
+            digest(captureBytes) !== capture.body_sha256 ||
+            capture.body_sha256 !== reviewLookup.receipt.request.action.capture.body_sha256 ||
+            reviewLookup.receipt.request.action.original_request_pointer !== capture.request.user_request_pointer
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Retained review body bytes differ from Host custody.');
+          const historicalReviewInput = {
+            body_base64: capture.body_base64,
+            body_sha256: capture.body_sha256,
+            body_byte_length: capture.body_byte_length,
+            body_ref: reviewLookup.receipt.request.action.capture.body_ref,
+            original_request_pointer: reviewLookup.receipt.request.action.original_request_pointer,
+          };
+          const currentJournal = ledger.resume(context.work_id, context.attempt);
+          if (
+            !currentJournal ||
+            currentJournal.version.revision !== reviewLookup.journal.version.revision ||
+            currentJournal.version.digest !== reviewLookup.journal.version.digest
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work review changed before response construction.');
+          const currentItem = reviewLookup.item;
+          const issued = currentItem.issue_id
+            ? [{
+                request: currentRequest,
+                issue_id: currentItem.issue_id,
+                logical_action_id: currentRequest.action_id,
+                action: reviewAction,
+                configured_context: configuredContext,
+                historical_review_input: historicalReviewInput,
+                ...(reviewLookup.action_status === 'issued' ? { prior_issue_outcome: 'unknown' } : {}),
+              }]
+            : [];
+          const completedObservations = [
+            ...currentJournal.state.completed.flatMap((wave) => wave.items.map((item) => item.observation)),
+            ...(currentItem.observation ? [currentItem.observation] : []),
+          ];
+          const response = {
+            schema: 'VidaAgentRunResult/v1',
+            status: reviewStatus,
+            workflow: values.workflow,
+            mastra_run_id: currentJournal.state.run_id,
+            mastra_step_id: currentJournal.state.step_id,
+            execution_status: 'historical_review',
+            resume_status: currentJournal.resume_status,
+            reconciliation_required: false,
+            source_snapshot_digest: reviewLookup.receipt.request.currentSourceScope.digest,
+            state_version: reviewLookup.journal.version,
+            continuation_id: reviewLookup.receipt.continuation_id,
+            continuation_review: {
+              action_id: currentRequest.action_id,
+              status: reviewLookup.action_status,
+              ...(reviewLookup.action_status === 'issued' ? { prior_issue_outcome: 'unknown' } : {}),
+              accepted_result: false,
+              runtime_accepted: false,
+            },
+            next_actions:
+              reviewLookup.action_status === 'unissued'
+                ? [{ request: currentRequest, action: reviewAction, configured_context: configuredContext, historical_review_input: historicalReviewInput }]
+                : [],
+            issued_actions: issued,
+            action_statuses: [{
+              action_id: currentRequest.action_id,
+              status:
+                reviewLookup.action_status === 'issued'
+                  ? 'issued_outcome_uncertain'
+                  : reviewLookup.action_status,
+            }],
+            completed_observations: completedObservations,
+            reported_observation: currentItem.observation,
+            accepted_result: false,
+            runtime_accepted: false,
+            initialization_status: initialization.workspace_binding_status,
+          };
+          return response;
+        } finally {
+          ledger.close();
+        }
+      }
+    }
+    if (values.inspect) {
+      ledger.close();
+      const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
+      return inspectLocalSession({
+        repositoryRoot: values.project_root,
+        config,
+        projectIds: admissionProject.project_ids,
+        integrationsDigest: admissionProject.integrations_digest,
+        workId: values.work_id,
+        attempt: Number(values.attempt),
+      });
     }
     let finalJournal = ledger.hostState.readFinalAssurance(admissionIdentity, context.attempt);
     if (values.prepare_assurance || (finalJournal && !values.correct)) {
@@ -4257,6 +4518,7 @@ export async function run(args = process.argv.slice(2)) {
         repositoryRoot: values.project_root,
         config,
         host,
+        sourceStore: ledger.hostState,
         ledger: currentJournal,
         workItem: execution.workItem,
         selection,
@@ -4270,6 +4532,7 @@ export async function run(args = process.argv.slice(2)) {
             config,
             packet,
             host,
+            sourceStore: ledger.hostState,
             ledger: currentJournal,
           })
         : undefined;
@@ -4284,9 +4547,16 @@ export async function run(args = process.argv.slice(2)) {
       const { issueObservedValidationReceipt } = await import('../src/orchestration/observed-validation.ts');
       const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
       const { compileDevelopmentWorkflow } = await import('../src/orchestration/workflow-plan.ts');
-      const compiled = compileDevelopmentWorkflow(config, values.team, values.workflow, selection.risk_flags);
+      const currentLifecycleRisk = evidence.host.work.lifecycle.risk;
+      const compiled = compileDevelopmentWorkflow(
+        config,
+        values.team,
+        values.workflow,
+        selection.risk_flags,
+        currentLifecycleRisk,
+      );
       const expected = compiled.waves.flatMap((wave, index) =>
-        wave.some((stage) => stage.kind === 'validate')
+        wave.some((stage) => stage.kind === 'validate' && stage.produces.includes('ValidationReceipt/v1'))
           ? sessionActionsForWave(
               config,
               selection,
@@ -4295,7 +4565,8 @@ export async function run(args = process.argv.slice(2)) {
               index,
               [],
               currentJournal.state.corrective_execution,
-            ).filter((action) => action.stage_kind === 'validate')
+              currentLifecycleRisk,
+            ).filter((action) => action.stage_kind === 'validate' && action.produces.includes('ValidationReceipt/v1'))
           : [],
       );
       const receipts = expected.map((action) =>
@@ -4308,6 +4579,7 @@ export async function run(args = process.argv.slice(2)) {
           actionId: action.action_id,
           authority: evidence.authority,
           host: evidence.host,
+          sourceStore: ledger.hostState,
         }),
       );
       if (
@@ -4333,6 +4605,7 @@ export async function run(args = process.argv.slice(2)) {
         journal: evidenceJournal,
         authority: evidence.authority,
         host: evidence.host,
+        sourceStore: ledger.hostState,
       });
       const { prepareObservedDeliveryInstruction } = await import('../src/orchestration/observed-delivery.ts');
       const instruction = await prepareObservedDeliveryInstruction({
@@ -4345,6 +4618,8 @@ export async function run(args = process.argv.slice(2)) {
         testerInstruction,
         testReceipt,
         authority: evidence.authority,
+        host: evidence.host,
+        sourceStore: ledger.hostState,
       });
       return { instruction, evidence: testerEvidence };
     };
@@ -4899,9 +5174,22 @@ export async function run(args = process.argv.slice(2)) {
           : (admittedSource?.entries.map((entry) => entry.path) ??
             storedScope?.entries.map((entry) => entry.path) ??
             []);
+      const workflowHost = ledger.hostState.readHostStateSnapshot(admissionIdentity);
+      if (workflowHost.work && !['low', 'medium', 'high'].includes(workflowHost.work.lifecycle.risk))
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted Work lifecycle risk is unavailable.');
+      const lifecycleRisk = workflowHost.work?.lifecycle.risk;
+      const scopeHost = scopePaths.length > 0 ? workflowHost : null;
       const sourceSnapshot =
         scopePaths.length > 0
-          ? snapshotDeclaredSources(requireSafeRepositoryAccess(values.project_root), scopePaths)
+          ? scopeHost?.work
+            ? snapshotAdmittedTaskSources({
+                store: ledger.hostState,
+                host: scopeHost,
+                canonicalHostRoot: values.project_root,
+                paths: scopePaths,
+                attempt: context.attempt,
+              })
+            : snapshotDeclaredSources(requireSafeRepositoryAccess(values.project_root), scopePaths)
           : null;
       if (admittedSource && sourceSnapshot?.digest !== admittedSource.digest)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Accepted source scope changed before workflow start.');
@@ -4914,15 +5202,19 @@ export async function run(args = process.argv.slice(2)) {
         context,
         workflowId: values.workflow,
         workspaceId: initialization.workspace_id,
+        lifecycleRisk,
         correctiveExecution: ledger.resume(context.work_id, context.attempt)?.state.corrective_execution,
       };
       const openBridge = async () => (bridge ??= await MastraSessionBridge.open(bridgeArgs));
       const { readSessionEngineSnapshot } = await import('../src/orchestration/session-engine-snapshot.ts');
+      const expectedRunId = bridgeArgs.correctiveExecution?.engine_run_id ??
+        sessionBridgeRunId(initialization.workspace_id, context, values.workflow);
+      const persistedJournal = ledger.resume(context.work_id, context.attempt);
+      if (persistedJournal && persistedJournal.state.run_id !== expectedRunId)
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'The persisted attempt differs from the current launcher context.');
       let workflowSnapshot = readSessionEngineSnapshot({
         ...bridgeArgs,
-        runId:
-          bridgeArgs.correctiveExecution?.engine_run_id ??
-          sessionBridgeRunId(initialization.workspace_id, context, values.workflow),
+        runId: expectedRunId,
       });
       const created = !workflowSnapshot;
       if (!workflowSnapshot) {
@@ -5028,7 +5320,10 @@ export async function run(args = process.argv.slice(2)) {
             );
             issuedEvidence = await admittedEvidence(journal, false, developerRequest);
           }
-          if (issueKinds.has('validate') || issueKinds.has('test') || issueKinds.has('deliver')) {
+          if (!issuedEvidence && issuedStages.some((stage) =>
+            stage?.consumes.includes('DevelopmentTaskPacket/v1') && !stage.consumes.includes('ImplementationResult/v1'),
+          )) issuedEvidence = await admittedEvidence(journal, false);
+          if (issuedStages.some((stage) => stage?.consumes.includes('ImplementationResult/v1'))) {
             issuedEvidence = await admittedEvidence(journal);
             if (
               issueKinds.has('deliver') ||
@@ -5056,6 +5351,7 @@ export async function run(args = process.argv.slice(2)) {
                 journal,
                 authority: issuedEvidence.authority,
                 host: issuedEvidence.host,
+                sourceStore: ledger.hostState,
               }));
               if (testReceipt.status !== 'pass')
                 fail('GAP-VIDA-RUN-EXECUTION-001', 'Configured tester receipt is not passing.');
@@ -5157,6 +5453,7 @@ export async function run(args = process.argv.slice(2)) {
                     waveIndex,
                     [],
                     journal.state.corrective_execution,
+                    lifecycleRisk,
                   );
             const writers = waveActions.filter((action) => action.mutation_scope === 'repository_source');
             let reservations = {};
@@ -5288,10 +5585,11 @@ export async function run(args = process.argv.slice(2)) {
         } else {
           const observation = parseSessionBridgeObservation(readBoundedReport(values.report));
           const issued = journal.state.items.find((item) => item.request.action_id === observation.action_id);
+          const reportedStage = issued && config.workflows[values.workflow].stages.find(
+            (stage) => stage.id === issued.request.stage_id,
+          );
           if (
-            issued &&
-            config.workflows[values.workflow].stages.find((stage) => stage.id === issued.request.stage_id)?.kind ===
-              'validate'
+            reportedStage?.kind === 'validate' && reportedStage.produces.includes('ValidationReceipt/v1')
           ) {
             const { parseObservedValidatorVerdict } = await import('../src/orchestration/observed-validation.ts');
             parseObservedValidatorVerdict(observation);
@@ -5544,6 +5842,7 @@ export async function run(args = process.argv.slice(2)) {
               actionWave,
               [],
               journal.state.corrective_execution,
+              lifecycleRisk,
             );
       const actionById = new Map(actions.map((action) => [action.action_id, action]));
       const { researchObservationOutputContract } = await import('../src/orchestration/observed-research-result.ts');
@@ -5698,8 +5997,11 @@ export async function run(args = process.argv.slice(2)) {
       }
       return result;
     } finally {
-      ledger.close();
-      if (bridge) await bridge.close();
+      try {
+        ledger.close();
+      } finally {
+        if (bridge) await bridge.close();
+      }
     }
   }
 }

@@ -523,8 +523,9 @@ For authorized runtime self-development, use one prior qualitative estimate to
 select dependency-ready engineering work with the largest workflow/step/token
 benefit. Count verified engineering outcomes, not subfixes, tests or reports.
 After each whole verified outcome, perform the qualified local system update
-without changing
-the current semantic version; retain exact payload/operation identity, pending
+with the selected artifact's version. New successful builds advance PATCH by
+default, or MINOR/MAJOR/a specific higher version on explicit request, through the
+lifecycle owner's release policy. Retain exact payload/operation identity, pending
 UNKNOWN custody and required installed proof before dependent next-batch effects.
 Use selected affected files/cases while developing and run the full applicable
 current task suite once after its corrections are complete. Reuse still-current

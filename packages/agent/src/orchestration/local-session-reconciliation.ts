@@ -9,7 +9,7 @@ import type {
   WorkflowAttemptReconciliationRequest,
 } from '../host-state.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
-import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { snapshotAdmittedTaskSources } from './scoped-source-snapshot.js';
 
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const proofSchema = z
@@ -228,10 +228,13 @@ export async function reconcileUnissuedLocalSessionAction(input: {
   const scoped = input.journal.state.source_scope;
   if (
     !scoped ||
-    snapshotDeclaredSources(
-      requireSafeRepositoryAccess(input.root),
-      scoped.entries.map((entry) => entry.path),
-    ).digest !== scoped.digest
+    snapshotAdmittedTaskSources({
+      store: input.store,
+      host,
+      canonicalHostRoot: input.root,
+      paths: scoped.entries.map((entry) => entry.path),
+      attempt: input.journal.state.attempt,
+    }).digest !== scoped.digest
   )
     throw new Error('source scope changed before local no-effect reconciliation');
   if (attempt.status !== 'started' && attempt.status !== 'uncertain' && attempt.status !== 'no_effect')

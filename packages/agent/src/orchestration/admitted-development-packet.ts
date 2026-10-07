@@ -11,7 +11,7 @@ import {
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import type { HostStateSnapshot } from '../host-state.js';
+import type { HostStateSnapshot, HostStateStore } from '../host-state.js';
 import {
   validateResearchResult,
   validateResearchSynthesis,
@@ -23,7 +23,7 @@ import type { LocalWorkAdmissionInput } from './local-work-admission.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { buildConfiguredContext, type ConfiguredContext } from './configured-context.js';
 import { buildDevelopmentTaskPacket, type DevelopmentTaskPacket } from './mastra-boundary.js';
-import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
+import { snapshotAdmittedTaskSources, snapshotDeclaredSources } from './scoped-source-snapshot.js';
 import {
   validateWorkSessionBinding,
   readCorrectivePlanningJournal,
@@ -71,6 +71,7 @@ export interface AdmittedDevelopmentPacketInput {
   readonly repositoryRoot: string;
   readonly config: AgentRuntimeConfig;
   readonly host: HostStateSnapshot;
+  readonly sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'>;
   readonly ledger: MastraSessionLedgerSnapshot;
   readonly workItem: LocalWorkAdmissionInput['workItem'];
   readonly selection: WorkItemSelection;
@@ -150,9 +151,10 @@ export function correctivePacketEvidence(
   const securityConstraints: string[] = [];
   for (const item of failed) {
     const observation = item.observation!;
-    const kind = workflow.stages.find((stage) => stage.id === item.request.stage_id)?.kind;
+    const stage = workflow.stages.find((stage) => stage.id === item.request.stage_id);
+    const kind = stage?.kind;
     const logRef = observedReceiptEvidenceReference(snapshot, item.request.action_id, observation.output_digest);
-    if (kind === 'validate') {
+    if (kind === 'validate' && stage?.produces.includes('ValidationReceipt/v1')) {
       const verdict = parseObservedValidatorVerdict(observation);
       for (const finding of verdict.findings) {
         requirePacket(Buffer.byteLength(finding, 'utf8') <= 1024, 'corrective validator finding exceeds packet budget');
@@ -263,7 +265,15 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       acceptance.source_revision === binding.work_source_revision,
     'scope, acceptance or thread binding differs from admitted work',
   );
-  const source = snapshotDeclaredSources(access, scope.allowed_paths);
+  const source = input.sourceStore
+      ? snapshotAdmittedTaskSources({
+        store: input.sourceStore,
+        host,
+        canonicalHostRoot: root,
+        paths: scope.allowed_paths,
+        attempt: ledger.state.attempt,
+      })
+    : snapshotDeclaredSources(access, scope.allowed_paths);
   requirePacket(
     ledger.state.schema === 'MastraSessionLedger/v1' &&
       ledger.version.digest === canonicalJsonDigest(ledger.state) &&

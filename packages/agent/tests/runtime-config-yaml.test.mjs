@@ -20,7 +20,7 @@ import {
   selectWorkflow,
   validateDevelopmentStagePacket,
   validateRuntimeConfig,
-} from '../dist/src/index.js';
+} from '../src/index.ts';
 import {
   buildDeliveryReceipt as buildDeliveryReceiptSource,
   buildDevelopmentTaskPacket as buildDevelopmentTaskPacketSource,

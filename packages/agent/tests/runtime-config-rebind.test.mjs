@@ -1,7 +1,8 @@
-import { afterEach, test, expect } from 'bun:test';
+import { afterEach, test, expect, mock } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
+import { stringify as stringifyYaml } from 'yaml';
 import {
   mkdirSync,
   mkdtempSync,
@@ -20,7 +21,7 @@ import { runReconcileArtifacts as reconcileEntrypoint } from '../bin/reconcile-a
 import { run as runEntrypoint } from '../bin/run.mjs';
 import { cooperativeReadonlyAssignments, currentState, inspectHistoricalOwnerContext } from '../bin/runtime-config-rebind.mjs';
 import { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
-import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
+import { loadRuntimeConfig, parseRuntimeConfigYaml, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { canonicalJson, canonicalJsonDigest, MAX_CANONICAL_BYTES } from '../src/contracts/public-ingress.ts';
 import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.mjs';
@@ -45,6 +46,12 @@ const source = process.env.VIDA_CONFIG_REBIND_TEST_BUNDLE ?? path.resolve(import
 const fixtureContextPath = 'docs/project-context.md';
 const fixtureRoots = [];
 const pendingFixtureCalls = new Map();
+const sourceCorrectionNativeRuntime = { value: null, mocked: false, previousPath: undefined };
+const sourceCorrectionPriorVersion = '0.1.2';
+const sourceCorrectionNextVersion = (version) => {
+  const [major, minor, patch] = version.split('.').map(Number);
+  return `${major}.${minor}.${patch + 1}`;
+};
 async function fixtureCall(entrypoint, args, options) {
   const root = args[args.indexOf('--project-root') + 1];
   pendingFixtureCalls.set(root, (pendingFixtureCalls.get(root) ?? 0) + 1);
@@ -59,6 +66,11 @@ async function fixtureCall(entrypoint, args, options) {
 const run = (args, options) => fixtureCall(runEntrypoint, args, options);
 const runReconcileArtifacts = (args, options) => fixtureCall(reconcileEntrypoint, args, options);
 afterEach(() => {
+  sourceCorrectionNativeRuntime.value = null;
+  if (sourceCorrectionNativeRuntime.previousPath !== undefined) {
+    process.env.PATH = sourceCorrectionNativeRuntime.previousPath;
+    sourceCorrectionNativeRuntime.previousPath = undefined;
+  }
   for (const root of fixtureRoots.splice(0)) {
     if (pendingFixtureCalls.has(root)) console.warn(`Retained fixture with an unresolved operation: ${root}`);
     else rmSync(root, { recursive: true, force: true });
@@ -398,6 +410,472 @@ function deliveryFixture() {
   };
   return { ...f, deliveryArgs: args };
 }
+
+function withoutPrewriterTemplateDelta(config) {
+  const baseline = structuredClone(config),
+    roles = ['source-planner', 'security-prewriter'],
+    workflows = [
+      ['implementation_new', 'develop_change'],
+      ['implementation_change', 'develop_change'],
+      ['bug_fix', 'develop_fix'],
+      ['task_execution', 'develop_task'],
+    ];
+  if (!Object.hasOwn(baseline.agents.role_instructions, 'security-prewriter')) return baseline;
+  for (const role of roles) {
+    delete baseline.agents.role_instructions[role];
+    delete baseline.teams['default-development'].roles[role];
+  }
+  delete baseline.artifact_contracts['LifecyclePreparationObservation/v1'];
+  for (const [workflowId, developerId] of workflows) {
+    const workflow = baseline.workflows[workflowId];
+    workflow.stages = workflow.stages.filter((stage) => stage.id !== 'review_source_prewrite');
+    workflow.stages.find((stage) => stage.id === developerId).required_after = ['synthesize_task'];
+    workflow.edges = workflow.edges.filter((edge) => !edge.includes('review_source_prewrite'));
+    workflow.edges.push(['synthesize_task', developerId]);
+  }
+  return baseline;
+}
+
+function sourceCorrectionFixture() {
+  const { f, request, state } = historicalFixture('terminal_synthesis_unaccepted'),
+    completedResearch = state.completed.flatMap((wave) => wave.items),
+    pendingSynthesisIndex = completedResearch.length;
+  seedHistoricalResearchLineage(f, request, state, {
+    includeCompleted: true,
+    pendingIndex: pendingSynthesisIndex,
+    activationOnlyIndex: pendingSynthesisIndex,
+  });
+  seedKnownTerminalSynthesisCustody(f, request, state);
+  f.put('accepted-baseline.yaml', f.oldYaml);
+  f.put('agent-runtime.config.v1.yaml', f.target);
+  const deliveryArgs = (mode) => {
+      const args = f.args(mode);
+      args[args.indexOf('--kind') + 1] = 'runtime-config-delivery';
+      if (['inspect', 'plan'].includes(mode)) {
+        args[args.indexOf('--target-config') + 1] = 'agent-runtime.config.v1.yaml';
+        args.push('--baseline-config', 'accepted-baseline.yaml');
+      }
+      return args;
+    },
+    sourceBeforeimagesPath = path.join(f.root, '.tmp/original-source-beforeimages.json'),
+    priorSystemUpdatePath = path.join(f.root, '.tmp/prior-system-update.json'),
+    changedPath = 'packages/agent/bin/runtime-config-rebind.mjs';
+  const sourceManifestPath = 'packages/agent/package.json',
+    authorizedPaths = [changedPath, sourceManifestPath].sort();
+  const repairArgs = (mode) => [
+    '--kind',
+    'runtime-config-delivery',
+    '--mode',
+    mode,
+    '--project-root',
+    f.root,
+    '--repair-id',
+    'fixture-rebind',
+    ...(mode === 'repair-inspect' || mode === 'repair-plan'
+      ? [
+          '--source-beforeimages',
+          sourceBeforeimagesPath,
+          '--authorized-paths',
+          JSON.stringify(authorizedPaths),
+          '--prior-system-update',
+          priorSystemUpdatePath,
+        ]
+      : []),
+  ];
+  return {
+    f,
+    request,
+    state,
+    deliveryArgs,
+    repairArgs,
+    sourceBeforeimagesPath,
+    priorSystemUpdatePath,
+    changedPath,
+    sourceManifestPath,
+    authorizedPaths,
+    targetVersion: sourceCorrectionNextVersion(sourceCorrectionPriorVersion),
+  };
+}
+
+function applySourceCorrectionBatch(f, changedPath, sourceManifestPath, targetVersion) {
+  const manifestPath = path.join(f.root, sourceManifestPath),
+    manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  manifest.version = targetVersion;
+  f.put(sourceManifestPath, json(manifest));
+  f.put(changedPath, readFileSync(path.join(f.root, changedPath), 'utf8') + '\n// scoped source repair fixture\n');
+}
+
+async function sourceCorrectionRebindWithNative(runtime) {
+  if (sourceCorrectionNativeRuntime.previousPath === undefined) {
+    sourceCorrectionNativeRuntime.previousPath = process.env.PATH ?? '';
+    process.env.PATH = [path.dirname(runtime.executable), sourceCorrectionNativeRuntime.previousPath]
+      .filter(Boolean)
+      .join(path.delimiter);
+  }
+  const bunPath = new URL('../bin/bun.mjs', import.meta.url).href;
+  if (!sourceCorrectionNativeRuntime.mocked) {
+    const original = await import(bunPath);
+    mock.module(bunPath, () => ({
+      ...original,
+      standaloneRuntime: (env) => sourceCorrectionNativeRuntime.value ?? original.standaloneRuntime(env),
+    }));
+    sourceCorrectionNativeRuntime.mocked = true;
+  }
+  sourceCorrectionNativeRuntime.value = runtime;
+  const modulePath = new URL('../bin/runtime-config-rebind.mjs', import.meta.url).href;
+  return await import(`${modulePath}?source-correction-test=${randomUUID()}`);
+}
+
+function sourceCorrectionNativeFixture(f, version) {
+  const payloadId = sha(Buffer.from(randomUUID())),
+    packageRelative = `.tmp/native-test/${version}-${payloadId}`,
+    executableRelative = `${packageRelative}/vida-agent.exe`,
+    executable = path.join(f.root, executableRelative),
+    runtimeRoot = path.join(f.root, packageRelative),
+    executableBytes = Buffer.from('synthetic native executable for consistency test');
+  f.put(`${packageRelative}/package.json`, json({
+    name: 'vida-agent',
+    version,
+    packageManager: 'bun@1.4.2',
+    engines: { bun: '1.4.2' },
+  }));
+  f.put(`${packageRelative}/.bun-version`, '1.4.2\n');
+  f.put(executableRelative, executableBytes);
+  return {
+    runtime: { root: runtimeRoot, executable },
+    executableRelative,
+    executableBytes,
+    payloadId,
+  };
+}
+
+function sourceCorrectionExternalReport(f, request, native) {
+  const target = `bun-${process.platform.replace('win32', 'windows')}-${process.arch}`,
+    asset = {
+      file: `vida-agent-${target}${process.platform === 'win32' ? '.exe' : ''}`,
+      bytes: native.executableBytes.length,
+      sha256: sha(native.executableBytes),
+    },
+    manifest = {
+      schema: 'VidaStandaloneBuild/v1',
+      version: request.new_source_manifest.version,
+      pin: '1.4.2',
+      target,
+      inputs: request.new_source.entries.map((entry) => ({
+        path: entry.path.slice('packages/agent/'.length),
+        bytes: entry.bytes,
+        sha256: entry.sha256,
+      })).sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0),
+      payloadId: native.payloadId,
+      asset,
+    },
+    manifestSha = sha(Buffer.from(json(manifest))),
+    result = {
+      schema: 'VidaCIDeliveryResult/v1',
+      request_id: request.request_id,
+      operation_id: request.publish_operation_id,
+      version: manifest.version,
+      repository_id: request.repository_id,
+      project_ids: request.source_project_ids,
+      target,
+      source_binding: request.new_source.digest,
+      archive_sha256: sha(Buffer.from('synthetic-source-archive')),
+      manifest_sha256: manifestSha,
+      payload_id: manifest.payloadId,
+      asset,
+      issuer: 'synthetic-test-only',
+      run_id: '50000123456',
+      run_attempt: 1,
+      checks: [{ id: 'native-build', status: 'passed' }],
+    },
+    checks = [{ id: 'native-build', status: 'passed' }],
+    executablePath = native.runtime.executable,
+    sourcePath = native.executableRelative;
+  const report = {
+    schema: 'RuntimeConfigSourceCorrectionReport/v1',
+    request_id: request.request_id,
+    operation_id: request.operation_id,
+    publish_operation_id: request.publish_operation_id,
+    original_operation_sha256: request.original_operation.sha256,
+    original_plan_digest: request.original_operation.plan_digest,
+    source_snapshot_digest: request.new_source.digest,
+    build_manifest_sha256: manifestSha,
+    build_manifest: manifest,
+    ci_delivery: {
+      schema: 'RuntimeConfigSourceCorrectionCIDelivery/v1',
+      profile: 'native-build',
+      request_id: request.request_id,
+      operation_id: request.publish_operation_id,
+      source_binding: request.new_source.digest,
+      run_id: result.run_id,
+      run_attempt: result.run_attempt,
+      artifact_id: '12001',
+      result_sha256: sha(Buffer.from(json(result))),
+      checks,
+      conclusion: 'success',
+      result,
+    },
+    installation_receipt: {
+      installer: 'synthetic-test-only',
+      action: 'update',
+      exit_code: 0,
+      signal: null,
+      source_path: sourcePath,
+      source_sha256: asset.sha256,
+      prior_bytes: request.prior_system_update.installed_bytes,
+      selected_bytes: native.executableBytes.length,
+      path: executablePath,
+      sha256: sha(native.executableBytes),
+      path_added: false,
+      tests_invoked: false,
+      reinstallation: false,
+    },
+    effective_path: {
+      command_path: executablePath,
+      bytes: native.executableBytes.length,
+      sha256: sha(native.executableBytes),
+      package_name: 'vida-agent',
+      version: manifest.version,
+      target,
+    },
+  };
+  return report;
+}
+
+async function prepareSourceCorrectionRepair(rebind, fixtureContext = sourceCorrectionFixture()) {
+  const { f, deliveryArgs, repairArgs, changedPath } = fixtureContext,
+    originalPlan = await rebind.runRuntimeConfigRebind(deliveryArgs('plan')),
+    packageRoot = path.join(f.root, 'packages/agent'),
+    inventory = runtimeExecutableInventory(packageRoot, 'source', requireSafeRepositoryAccess(packageRoot)),
+    access = requireSafeRepositoryAccess(f.root),
+    sourceSnapshot = snapshotDeclaredSources(access, inventory.map((file) => `packages/agent/${file}`)),
+    priorUpdate = {
+      status: 'CURRENT_SYSTEM_BOOKKEEPING_UNKNOWN_UPDATED',
+      operation_id: 'local-46c2f01d-8541-46ce-8e31-30e467799538',
+      version: sourceCorrectionPriorVersion,
+      entry: path.join(tmpdir(), 'vida-agent.exe'),
+      run_id: '37579199535',
+      artifact_id: '11463399267',
+      installed_bytes: 133342720,
+      prior_bytes: 133338624,
+      delta_bytes: 4096,
+      configuration_inspection: 'inspect_ready_unauthorized',
+      tests_invoked: false,
+      reinstallation: false,
+      runtime_accepted: false,
+      developer_unblocked: false,
+    };
+  f.put('.tmp/prior-system-update.json', json(priorUpdate));
+  expect((await rebind.runRuntimeConfigRebind(deliveryArgs('apply'))).status).toBe('receipt_rebind_ready');
+  const operationBytes = readFileSync(path.join(f.root, originalPlan.operation_path)),
+    beforeimage = {
+      purpose: 'inactive custody only; not an active repair artifact or admission',
+      operation_id: 'fixture-rebind',
+      operation_ref: originalPlan.operation_path,
+      operation_bytes_base64: operationBytes.toString('base64'),
+      source: sourceSnapshot,
+      beforeimages: sourceSnapshot.entries.map((entry) => ({
+        path: entry.path,
+        bytes_base64: access.readBytes(entry.path, 'test beforeimage').toString('base64'),
+      })),
+      recorded_at: '2026-10-07T00:00:00.000Z',
+      effects_issued: false,
+    };
+  f.put('.tmp/original-source-beforeimages.json', json(beforeimage));
+  applySourceCorrectionBatch(f, changedPath, fixtureContext.sourceManifestPath, fixtureContext.targetVersion);
+  expect((await rebind.runRuntimeConfigRebind(repairArgs('repair-plan'))).status).toBe('planned');
+  return {
+    f,
+    deliveryArgs,
+    repairArgs,
+    changedPath,
+    sourceManifestPath: fixtureContext.sourceManifestPath,
+    authorizedPaths: fixtureContext.authorizedPaths,
+    targetVersion: fixtureContext.targetVersion,
+    sidecarPath: path.join(f.root, '.agent/work/fixture-rebind/runtime-config-source-correction-repair.v1.json'),
+  };
+}
+
+test('public source repair freezes original beforeimages, prior update and held-fence scope without Host writes', async () => {
+  const { f, deliveryArgs, repairArgs, changedPath, sourceManifestPath, authorizedPaths, targetVersion } =
+    sourceCorrectionFixture();
+  const originalPlan = await runReconcileArtifacts(deliveryArgs('plan')),
+    packageRoot = path.join(f.root, 'packages/agent'),
+    inventory = runtimeExecutableInventory(packageRoot, 'source', requireSafeRepositoryAccess(packageRoot)),
+    access = requireSafeRepositoryAccess(f.root),
+    source = snapshotDeclaredSources(access, inventory.map((file) => `packages/agent/${file}`)),
+    priorUpdate = {
+      status: 'CURRENT_SYSTEM_BOOKKEEPING_UNKNOWN_UPDATED',
+      operation_id: 'local-46c2f01d-8541-46ce-8e31-30e467799538',
+      version: sourceCorrectionPriorVersion,
+      entry: path.join(tmpdir(), 'vida-agent.exe'),
+      run_id: '37579199535',
+      artifact_id: '11463399267',
+      installed_bytes: 133342720,
+      prior_bytes: 133338624,
+      delta_bytes: 4096,
+      configuration_inspection: 'inspect_ready_unauthorized',
+      tests_invoked: false,
+      reinstallation: false,
+      runtime_accepted: false,
+      developer_unblocked: false,
+    };
+  f.put('.tmp/prior-system-update.json', json(priorUpdate));
+  expect((await runReconcileArtifacts(deliveryArgs('apply'))).status).toBe('receipt_rebind_ready');
+  const operationBytes = readFileSync(path.join(f.root, originalPlan.operation_path)),
+    beforeimage = {
+      purpose: 'inactive custody only; not an active repair artifact or admission',
+      operation_id: 'fixture-rebind',
+      operation_ref: originalPlan.operation_path,
+      operation_bytes_base64: operationBytes.toString('base64'),
+      source,
+      beforeimages: source.entries.map((entry) => ({
+        path: entry.path,
+        bytes_base64: access.readBytes(entry.path, 'test beforeimage').toString('base64'),
+      })),
+      recorded_at: '2026-10-07T00:00:00.000Z',
+      effects_issued: false,
+    };
+  f.put('.tmp/original-source-beforeimages.json', json(beforeimage));
+  applySourceCorrectionBatch(f, changedPath, sourceManifestPath, targetVersion);
+
+  const sourceManifest = JSON.parse(readFileSync(path.join(f.root, sourceManifestPath), 'utf8'));
+  f.put(sourceManifestPath, json({ ...sourceManifest, version: priorUpdate.version }));
+  const beforeStaleVersionInspect = databaseState(f);
+  await expect(runReconcileArtifacts(repairArgs('repair-inspect'))).rejects.toThrow(/newer than the prior installed version/);
+  expect(databaseState(f)).toEqual(beforeStaleVersionInspect);
+  f.put(sourceManifestPath, json(sourceManifest));
+
+  const beforeRepair = databaseState(f),
+    inspected = await runReconcileArtifacts(repairArgs('repair-inspect'));
+  expect(inspected.status).toBe('inspect_ready_unauthorized');
+  expect(inspected.authorized_changed_paths).toEqual(authorizedPaths);
+  expect(databaseState(f)).toEqual(beforeRepair);
+
+  const planned = await runReconcileArtifacts(repairArgs('repair-plan')),
+    sidecar = JSON.parse(readFileSync(path.join(f.root, planned.sidecar_path), 'utf8'));
+  expect(planned.status).toBe('planned');
+  expect(sidecar.status).toBe('requested');
+  expect(sidecar.request.source_beforeimages.path).toBe('.tmp/original-source-beforeimages.json');
+  expect(sidecar.request.source_beforeimages.sha256).toBe(sha(Buffer.from(json(beforeimage))));
+  expect(sidecar.request.source_beforeimages.snapshot_digest).toBe(sidecar.request.old_source.digest);
+  expect(sidecar.request.prior_system_update.run_id).toBe(priorUpdate.run_id);
+  expect(sidecar.request.prior_system_update.artifact_id).toBe(priorUpdate.artifact_id);
+  expect(sidecar.request.authorized_changed_paths).toEqual(authorizedPaths);
+  expect(sidecar.request.source_changes.map((change) => change.path)).toEqual([changedPath]);
+  expect(sidecar.request.new_source_manifest.version).toBe(targetVersion);
+  expect(sidecar.request.publish_operation_id).not.toBe(sidecar.request.operation_id);
+  expect(sidecar.request.publish_operation_id).not.toBe(sidecar.request.prior_system_update.operation_id);
+  expect(sidecar.request.new_source.digest).not.toBe(sidecar.request.old_source.digest);
+  expect(databaseState(f)).toEqual(beforeRepair);
+
+  expect((await runReconcileArtifacts(repairArgs('repair-resume'))).status).toBe('repair_apply_required');
+  await expect(runReconcileArtifacts(deliveryArgs('resume'))).rejects.toThrow('source correction is not applied');
+  expect(databaseState(f)).toEqual(beforeRepair);
+}, 30000);
+
+test('source repair captures a closed config transition and reads it after later owner CAS progress', async () => {
+  const fixtureContext = sourceCorrectionFixture(),
+    native = sourceCorrectionNativeFixture(fixtureContext.f, fixtureContext.targetVersion),
+    rebind = await sourceCorrectionRebindWithNative(native.runtime),
+    { f, deliveryArgs, repairArgs, changedPath, sidecarPath } = await prepareSourceCorrectionRepair(rebind, fixtureContext),
+    run = (args, options) => fixtureCall(rebind.runRuntimeConfigRebind, args, options),
+    sidecar = JSON.parse(readFileSync(sidecarPath, 'utf8')),
+    reportPath = path.join(f.root, '.tmp/source-correction-report.json');
+  const report = sourceCorrectionExternalReport(f, sidecar.request, native),
+    staleVersionReport = structuredClone(report);
+  staleVersionReport.build_manifest.version = sidecar.request.prior_system_update.version;
+  f.put('.tmp/source-correction-report.json', json(staleVersionReport));
+  const applyArgs = [...repairArgs('repair-apply'), '--report', reportPath],
+    beforeApply = databaseState(f),
+    reusedOperationIdReport = structuredClone(report);
+  reusedOperationIdReport.publish_operation_id = sidecar.request.operation_id;
+  f.put('.tmp/source-correction-report.json', json(reusedOperationIdReport));
+  await expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result');
+  expect(databaseState(f)).toEqual(beforeApply);
+  expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('requested');
+  f.put('.tmp/source-correction-report.json', json(staleVersionReport));
+  await expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result');
+  expect(databaseState(f)).toEqual(beforeApply);
+  expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('requested');
+  f.put('.tmp/source-correction-report.json', json(report));
+  await expect(
+    run(applyArgs, { onPhase: (phase) => { if (phase === 'applied') throw new Error('lost repair apply acknowledgement'); } }),
+  ).rejects.toThrow('lost repair apply acknowledgement');
+  expect(databaseState(f)).toEqual(beforeApply);
+  expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('applied');
+  expect((await run(applyArgs)).status).toBe('applied');
+  expect((await run(repairArgs('repair-resume'))).status).toBe('applied');
+  expect(JSON.parse(readFileSync(path.join(f.root, '.agent/work/fixture-rebind/runtime-config-delivery-operation.v1.json'), 'utf8')))
+    .toMatchObject({ revision: 2, phase: 'fenced', maintenance_released: false });
+  const heldFence = fence(f),
+    fencedOperation = JSON.parse(readFileSync(path.join(f.root, '.agent/work/fixture-rebind/runtime-config-delivery-operation.v1.json'), 'utf8')),
+    plan = fencedOperation.plan;
+  expect(heldFence?.status).toBe('held');
+  expect(heldFence?.binding).toEqual({
+    schema: 'MaintenanceFenceBinding/v1',
+    project_ids: plan.project_ids,
+    operation_id: plan.operation_id,
+    manifest_digest: fencedOperation.plan_digest,
+    request_digest: fencedOperation.plan_digest,
+    bindings_digest: canonicalJsonDigest({ selector: plan.selector_digest, state: plan.state_digest }),
+    closure_digest: canonicalJsonDigest({ old_receipt: plan.baseline_receipt, target: plan.target_config_digest }),
+    bundle_digest: plan.bundle_digest,
+  });
+
+  await expect(
+    run(deliveryArgs('resume'), {
+      onPhase: (phase) => { if (phase === 'transition_captured') throw new Error('lost transition acknowledgement'); },
+    }),
+  ).rejects.toThrow('lost transition acknowledgement');
+  const completedOperation = JSON.parse(
+      readFileSync(path.join(f.root, '.agent/work/fixture-rebind/runtime-config-delivery-operation.v1.json'), 'utf8'),
+    ),
+    completedSidecar = JSON.parse(readFileSync(sidecarPath, 'utf8')),
+    completedReceiptBytes = readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'));
+  expect(completedOperation).toMatchObject({ revision: 4, phase: 'applied', maintenance_released: true });
+  expect(completedSidecar).toMatchObject({ status: 'applied', revision: 3 });
+  expect(completedSidecar.completion).toMatchObject({
+    schema: 'RuntimeConfigDeliveryTransition/v1',
+    operation_sha256: sha(readFileSync(path.join(f.root, '.agent/work/fixture-rebind/runtime-config-delivery-operation.v1.json'))),
+    receipt_sha256: sha(completedReceiptBytes),
+    runtime_accepted: false,
+  });
+  const initialProof = await run(repairArgs('repair-transition'));
+  expect(initialProof.status).toBe('closed_config_transition_proven');
+  expect(initialProof.baseline_config_digest).toBe(plan.old_config_digest);
+  expect(initialProof.caller_owner_cas_required).toBe(true);
+  expect(initialProof.runtime_accepted).toBe(false);
+  expect(initialProof.writes_host_state).toBe(false);
+
+  withDatabase(f, (db) => {
+    const store = new HostStateStore(db, f.workspace),
+      before = store.readHostStateSnapshot(fixtureContext.request.identity),
+      nextWork = structuredClone(before.work),
+      nextLedger = structuredClone(before.ledger);
+    nextWork.revision += 1;
+    nextWork.lifecycle.revision += 1;
+    nextLedger.revision += 1;
+    store.compareAndSwapHostState({
+      expectedWork: before.workVersion,
+      expectedLedger: before.ledgerVersion,
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+      nextWork,
+      nextLedger,
+    });
+  });
+  const afterFreshOwnerCas = await run(repairArgs('repair-transition'));
+  expect(afterFreshOwnerCas.transition_digest).toBe(initialProof.transition_digest);
+
+  f.put('.agent/runtime-initialization.v1.json', json({
+    ...JSON.parse(completedReceiptBytes.toString('utf8')),
+    config_digest: sha(Buffer.from('foreign postimage')),
+  }));
+  await expect(run(repairArgs('repair-transition'))).rejects.toThrow('closed source delivery configuration');
+  f.put('.agent/runtime-initialization.v1.json', completedReceiptBytes);
+  f.put(changedPath, readFileSync(path.join(f.root, changedPath), 'utf8') + '\n// post-delivery Source drift\n');
+  await expect(run(repairArgs('repair-transition'))).rejects.toThrow('closed source delivery current Source differs');
+}, 60000);
 
 test('delivered configuration adopts only its receipt under the original fence and preserves history', async () => {
   const f = deliveryFixture(),
@@ -1085,7 +1563,10 @@ test.each(['source bytes', 'inventory addition', 'selector appearance', 'workspa
           payload_manifest_sha256: sha('foreign'),
         }),
       );
-    await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(/differs|differ|rejects an active selector/);
+    const expectedDenial = ['source bytes', 'inventory addition'].includes(change)
+      ? 'vida runtime-config rebind: Source drift requires the applied same-operation source correction under its original fence'
+      : /differs|differ|rejects an active selector/;
+    await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(expectedDenial);
     expect(databaseState(f)).toEqual(before);
     expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(f.oldYaml);
   },
@@ -1160,6 +1641,108 @@ test('reasoning-only targets are accepted while invalid reasoning and unrelated 
   expect(databaseState(f)).toEqual(before);
 });
 
+test('a new normal config operation adopts only the approved prewriter delta after delivery closes', async () => {
+  const f = deliveryFixture(),
+    baseline = withoutPrewriterTemplateDelta(parseRuntimeConfigYaml(f.oldYaml)),
+    deliveryTarget = withoutPrewriterTemplateDelta(parseRuntimeConfigYaml(f.target)),
+    prewriterTarget = parseRuntimeConfigYaml(f.target),
+    receipt = JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'), 'utf8')),
+    deliveryOperationPath = path.join(
+      f.root,
+      '.agent/work/fixture-rebind/runtime-config-delivery-operation.v1.json',
+    );
+  f.put('accepted-baseline.yaml', json(baseline));
+  f.put('agent-runtime.config.v1.yaml', json(deliveryTarget));
+  f.put('.agent/runtime-initialization.v1.json', json({ ...receipt, config_digest: runtimeConfigDigest(baseline) }));
+
+  expect((await runReconcileArtifacts(f.deliveryArgs('plan'))).status).toBe('planned');
+  expect((await runReconcileArtifacts(f.deliveryArgs('apply'))).status).toBe('receipt_rebind_ready');
+  expect((await runReconcileArtifacts(f.deliveryArgs('resume'))).status).toBe('applied');
+  const frozenDeliveryOperation = readFileSync(deliveryOperationPath),
+    frozenDeliveryValue = JSON.parse(frozenDeliveryOperation.toString('utf8')),
+    normalOperationPath = path.join(
+      f.root,
+      '.agent/work/fixture-rebind/runtime-config-rebind-operation.v1.json',
+    ),
+    normalArgs = (mode) => {
+      const args = f.args(mode);
+      const instructionRefIndex = args.indexOf('--instruction-ref');
+      if (instructionRefIndex >= 0)
+        args[instructionRefIndex + 1] =
+          'TEST SETUP: adopt approved prewriter workflow template after prior delivery closure';
+      return args;
+    },
+    beforeRejectedTarget = databaseState(f),
+    authoredBaseline = readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'));
+  expect(frozenDeliveryValue.phase).toBe('applied');
+  expect(frozenDeliveryValue.maintenance_released).toBe(true);
+
+  const unrelatedTarget = structuredClone(prewriterTarget);
+  unrelatedTarget.agents.profiles.architect.reasoning = 'high';
+  f.put('proposed.yaml', json(unrelatedTarget));
+  await expect(runReconcileArtifacts(normalArgs('inspect'))).rejects.toThrow(
+    /approved prewriter workflow template delta/,
+  );
+  expect(databaseState(f)).toEqual(beforeRejectedTarget);
+  expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'))).toEqual(authoredBaseline);
+  expect(readFileSync(deliveryOperationPath)).toEqual(frozenDeliveryOperation);
+  expect(existsSync(normalOperationPath)).toBe(false);
+
+  f.put('proposed.yaml', json(prewriterTarget));
+  expect((await runReconcileArtifacts(normalArgs('inspect'))).status).toBe('inspect_ready_unauthorized');
+  expect((await runReconcileArtifacts(normalArgs('plan'))).status).toBe('planned');
+  expect((await runReconcileArtifacts(normalArgs('apply'))).status).toBe('author_config_required');
+  f.put('agent-runtime.config.v1.yaml', json(prewriterTarget));
+  expect((await runReconcileArtifacts(normalArgs('resume'))).status).toBe('applied');
+
+  const adopted = loadRuntimeConfig(f.root),
+    completedNormalOperation = JSON.parse(readFileSync(normalOperationPath, 'utf8'));
+  for (const role of ['source-planner', 'security-prewriter']) {
+    expect(adopted.agents.role_instructions[role]).toEqual(prewriterTarget.agents.role_instructions[role]);
+    expect(adopted.teams['default-development'].roles[role]).toBe(
+      prewriterTarget.teams['default-development'].roles[role],
+    );
+  }
+  expect(adopted.artifact_contracts['LifecyclePreparationObservation/v1'].required_fields).toEqual([
+    'schema',
+    'record_id',
+    'kind',
+    'work_id',
+    'attempt',
+    'source_revision',
+    'scope_id',
+    'config_digest',
+    'ac_ids',
+    'observed_at',
+    'observer_id',
+    'status',
+    'evidence_refs',
+    'observations',
+    'gaps',
+  ]);
+  for (const [workflowId, developerId] of [
+    ['implementation_new', 'develop_change'],
+    ['implementation_change', 'develop_change'],
+    ['bug_fix', 'develop_fix'],
+    ['task_execution', 'develop_task'],
+  ]) {
+    const workflow = adopted.workflows[workflowId],
+      review = workflow.stages.find((stage) => stage.id === 'review_source_prewrite');
+    expect(review).toEqual(
+      prewriterTarget.workflows[workflowId].stages.find((stage) => stage.id === 'review_source_prewrite'),
+    );
+    expect(review.required_after).toEqual(['synthesize_task']);
+    expect(workflow.stages.find((stage) => stage.id === developerId).required_after).toEqual([
+      'review_source_prewrite',
+    ]);
+  }
+  expect(completedNormalOperation.schema).toBe('ConfigRebindOperation/v1');
+  expect(completedNormalOperation.phase).toBe('applied');
+  expect(completedNormalOperation.maintenance_released).toBe(true);
+  expect(readFileSync(deliveryOperationPath)).toEqual(frozenDeliveryOperation);
+  expect(JSON.parse(readFileSync(deliveryOperationPath, 'utf8'))).toEqual(frozenDeliveryValue);
+}, 120_000);
+
 test.each(['source bytes', 'selector appearance'])(
   'Source rebind preserves its fence after post-authoring %s drift',
   async (change) => {
@@ -1170,7 +1753,11 @@ test.each(['source bytes', 'selector appearance'])(
     f.put('agent-runtime.config.v1.yaml', f.target);
     if (change === 'source bytes') f.put(f.bundle + '/bin/run.mjs', '// changed Source');
     else f.put('.agent/active-runtime-selector.v1.json', json({ schema: 'ActiveRuntimeSelector/v1' }));
-    await expect(runReconcileArtifacts(f.args('resume'))).rejects.toThrow(/differs|differ|rejects an active selector/);
+    const expectedDenial =
+      change === 'source bytes'
+        ? 'vida runtime-config rebind: Source drift requires the applied same-operation source correction under its original fence'
+        : /differs|differ|rejects an active selector/;
+    await expect(runReconcileArtifacts(f.args('resume'))).rejects.toThrow(expectedDenial);
     expect(fence(f)).toEqual(held);
     expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual(f.receipt);
   },
@@ -1455,6 +2042,17 @@ function historicalFixture(
     );
     f.put('agent-runtime.config.v1.yaml', f.oldYaml);
     f.receipt.config_digest = runtimeConfigDigest(loadRuntimeConfig(f.root));
+    f.put('.agent/runtime-initialization.v1.json', json(f.receipt));
+  }
+  if (predicate === 'settled_writer_failed_validators') {
+    const legacyConfig = withoutPrewriterTemplateDelta(parseRuntimeConfigYaml(f.oldYaml)),
+      legacyTarget = structuredClone(legacyConfig);
+    legacyTarget.agents.profiles.executor.model = 'gpt-6-luna';
+    legacyTarget.agents.profiles.executor.reasoning = 'max';
+    f.oldYaml = stringifyYaml(legacyConfig);
+    f.target = stringifyYaml(legacyTarget);
+    f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+    f.receipt.config_digest = runtimeConfigDigest(legacyConfig);
     f.put('.agent/runtime-initialization.v1.json', json(f.receipt));
   }
   if (configuredContext) {
@@ -3935,7 +4533,7 @@ test('original context body cannot authorize current topology drift or rewrite t
   );
   const before = databaseState(f);
   await expect(call('prepare', { ...input, originalContexts })).rejects.toThrow(
-    'vida runtime-config rebind: only requested executor model/reasoning may change',
+    'vida runtime-config rebind: only requested executor model/reasoning or the approved prewriter workflow template delta may change',
   );
   expect(databaseState(f)).toEqual(before);
 });
@@ -4119,7 +4717,7 @@ test.each([
     expect(reviewReservations(before)).toHaveLength(0);
     const invoke = route === 'owner inspect' ? () => run(subject.args('inspect')) : () => subject.call('prepare');
     await expect(invoke()).rejects.toThrow(
-      'vida runtime-config rebind: only requested executor model/reasoning may change',
+      'vida runtime-config rebind: only requested executor model/reasoning or the approved prewriter workflow template delta may change',
     );
     const after = databaseState(f);
     expect(after).toEqual(before);

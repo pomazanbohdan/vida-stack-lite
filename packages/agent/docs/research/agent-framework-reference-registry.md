@@ -47,6 +47,41 @@ Work trace: `.agent/work/vida-final-assurance-finish-20261001/WORK.md`.
 
 ## Current defect applicability
 
+### Current Source tests and configured workflow waves
+
+The [Mastra workflow contract](https://mastra.ai/docs/workflows/overview)
+defines steps through their inputs and outputs. VIDA therefore classifies a
+post-write validator by `ValidationReceipt/v1`, including verdict parsing,
+required stages, profile selection and receipt publication. The prewriter's
+`LifecyclePreparationObservation/v1` stays with its existing Host attachment.
+It does not substitute for post-write validation or become a validation receipt.
+
+[Temporal's activity guidance](https://github.com/temporalio/documentation/blob/main/docs/encyclopedia/activities/activity-definition.mdx)
+explains idempotent effects and retry behavior. VIDA keeps its stricter
+UNKNOWN/no-reissue contract: changing an operation ID cannot bypass a pending
+effect in the same Work. The existing final
+[Bun SQLite transaction](https://bun.com/docs/runtime/sqlite) verifies protected
+action/preparation pairs before transferring claims or issuing another command.
+These references inform the fix; no new workflow framework is adopted.
+
+The pinned Bun runner can execute TypeScript directly. Its
+[module resolution](https://bun.com/docs/runtime/module-resolution) also maps
+JavaScript import suffixes to matching TypeScript sources. Development behavior
+tests therefore import current Source when generated SDK bytes are stale. They
+do not build an SDK to satisfy a test prerequisite. Generated export inventory
+and actual delivery evidence remain separate checks.
+
+Synthetic workflow history resolves each stage through the existing
+`compileDevelopmentWorkflow` owner. Hardcoded wave positions become stale when
+the configured graph adds a prerequisite. This correction preserves the declared
+graph and the synthetic evidence classification; it supplies no worker execution
+or admission evidence. Behavior owner:
+[Source preparation](../system-specification.md#required-checks-before-a-source-effect).
+
+The official [Vitest assertion API](https://vitest.dev/api/expect.html)
+documents `toBeTypeOf('string')`. Runtime type assertions use supported matchers
+or a plain `typeof` assertion, without adding an assertion extension.
+
 ### Source configuration and explicit model selection
 
 Owner: agent maintainer. Work: `npm-process-correction-20261002`. Behavior
@@ -498,16 +533,18 @@ repository. Setup/install/snapshot stage diagnostics explain cost; they do not
 establish measured savings. Failed observations stay failed, and uncertain
 private roots are never replayed or cleaned from PID absence.
 
-Read-only Luna/max phase audit found candidate suite writes in private copies or
-coverage/cache outputs, without a required Source dist rebuild between phases.
-Current candidate scripts reuse one Source build, retain every required phase,
-and run the exact separately withheld archive case with its actual private-copy
-build/install. Standalone commands keep their build guards; coverage start/stamps
-and current-source bindings remain. Focused script-graph controls verify that
-sequencing and alias-body equivalence. This is code/static evidence; aggregate
-wall-time improvement and complete candidate qualification remain unproved.
-Do not add a build-counter benchmark during development; final qualification
-must still observe every required phase against current inputs.
+The current development lane runs behavior checks without a local build or
+installation harness. CI/CD owns formation and installation checks. Combine
+terminal failures and independent review findings into one correction batch.
+One selected completion run includes its regressions and direct callers; do
+not repeat those cases as a separate completion command. Keep the failed full
+result and reuse passing evidence only for unchanged affected inputs.
+
+Rechecked the official [Vitest filtering guide](https://vitest.dev/guide/filtering.html)
+and [Bun runner guide](https://bun.sh/docs/test) on 2026-10-07. File paths plus
+name filters avoid unrelated discovery. Static import selection alone does not
+cover this runtime's configuration, filesystem or subprocess dependencies.
+This changes selection and sequencing; measured time savings remain unproved.
 
 ## Host-independent recovery-review ingress
 
