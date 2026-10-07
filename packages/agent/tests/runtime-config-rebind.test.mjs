@@ -2968,6 +2968,45 @@ test('known terminal synthesis custody is accepted by read-only config rebind wi
   expect(work.artifacts.some((artifact) => artifact.schema === 'ResearchSynthesis/v1')).toBe(false);
 }, 30000);
 
+test('terminal synthesis custody survives unrelated ledger progress and subsequent config repairs', async () => {
+  const { f, request, state } = historicalFixture('terminal_synthesis_unaccepted');
+  seedHistoricalResearchLineage(f, request, state, {
+    includeCompleted: true,
+    pendingIndex: state.completed.flatMap((wave) => wave.items).length,
+    activationOnlyIndex: state.completed.flatMap((wave) => wave.items).length,
+  });
+  seedKnownTerminalSynthesisCustody(f, request, state);
+  withDatabase(f, (db) => {
+    const row = db.query("SELECT rowid,payload FROM agent_host_state WHERE workspace_id=? AND kind='ledger'").get(f.workspace);
+    const ledger = JSON.parse(row.payload);
+    ledger.revision += 1;
+    db.query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE rowid=?').run(ledger.revision, json(ledger), canonicalJsonDigest(ledger), row.rowid);
+  });
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  f.put('proposed.yaml', f.target);
+  const before = databaseState(f);
+  await runReconcileArtifacts(f.args('plan'));
+  expect((await runReconcileArtifacts(f.args('apply'))).status).toBe('author_config_required');
+  f.put('agent-runtime.config.v1.yaml', f.target);
+  expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
+  const next = structuredClone(parseRuntimeConfigYaml(f.target));
+  next.agents.profiles.executor.reasoning = 'high';
+  f.put('proposed.yaml', json(next));
+  const nextArgs = (mode) => {
+    const values = f.args(mode);
+    values[values.indexOf('--repair-id') + 1] = 'fixture-terminal-next';
+    return values;
+  };
+  expect((await runReconcileArtifacts(nextArgs('plan'))).status).toBe('planned');
+  expect((await runReconcileArtifacts(nextArgs('apply'))).status).toBe('author_config_required');
+  f.put('agent-runtime.config.v1.yaml', json(next));
+  expect((await runReconcileArtifacts(nextArgs('resume'))).status).toBe('applied');
+  const after = databaseState(f);
+  expect(after.agent_host_state).toEqual(before.agent_host_state);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(after.agent_host_historical_terminal_synthesis_capture).toEqual(before.agent_host_historical_terminal_synthesis_capture);
+}, 90_000);
+
 test('public capture CLI exact resume reuses the Host poststate fence without writes', async () => {
   const { f, request, state } = historicalFixture('terminal_synthesis_unaccepted'),
     pendingSynthesisIndex = state.completed.flatMap((wave) => wave.items).length;
@@ -3890,6 +3929,56 @@ test('released readonly bookkeeping UNKNOWN remains frozen through config rebind
   expect(afterJournal.items[pendingIndex].research_normalization).toBeUndefined();
   expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engineBefore);
 }, 30000);
+
+test('released UNKNOWN uses its bound historical config through a second repair without replay', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping');
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex: 1 });
+  const inspected = await run(args('inspect'));
+  f.put('release.json', json(inspected.request));
+  await run(args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  f.put('proposed.yaml', f.target);
+  await runReconcileArtifacts(f.args('plan'));
+  await runReconcileArtifacts(f.args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.target);
+  await runReconcileArtifacts(f.args('resume'));
+  const before = databaseState(f);
+  const target = structuredClone(parseRuntimeConfigYaml(f.target));
+  target.agents.profiles.executor.reasoning = 'high';
+  f.put('proposed.yaml', json(target));
+  const nextArgs = (mode) => {
+    const values = f.args(mode);
+    values[values.indexOf('--repair-id') + 1] = 'fixture-rebind-next';
+    return values;
+  };
+  const priorPath = '.agent/work/fixture-rebind/runtime-config-rebind-operation.v1.json';
+  const priorBytes = readFileSync(path.join(f.root, priorPath));
+  const unclosed = JSON.parse(priorBytes.toString('utf8'));
+  unclosed.phase = 'planned';
+  unclosed.maintenance_released = false;
+  f.put(priorPath, json(unclosed));
+  await expect(runReconcileArtifacts(nextArgs('inspect'))).rejects.toThrow(/original configuration is unavailable/);
+  expect(databaseState(f)).toEqual(before);
+  f.put(priorPath, priorBytes);
+  const tampered = JSON.parse(priorBytes.toString('utf8'));
+  const wrongConfig = structuredClone(parseRuntimeConfigYaml(tampered.plan.baseline_yaml));
+  wrongConfig.agents.profiles.executor.reasoning = 'max';
+  tampered.plan.baseline_yaml = json(wrongConfig);
+  tampered.plan_digest = canonicalJsonDigest(tampered.plan);
+  f.put(priorPath, json(tampered));
+  await expect(runReconcileArtifacts(nextArgs('inspect'))).rejects.toThrow(/historical config bytes differ/);
+  expect(databaseState(f)).toEqual(before);
+  f.put(priorPath, priorBytes);
+  expect((await runReconcileArtifacts(nextArgs('inspect'))).status).toBe('inspect_ready_unauthorized');
+  expect((await runReconcileArtifacts(nextArgs('plan'))).status).toBe('planned');
+  expect((await runReconcileArtifacts(nextArgs('apply'))).status).toBe('author_config_required');
+  f.put('agent-runtime.config.v1.yaml', json(target));
+  expect((await runReconcileArtifacts(nextArgs('resume'))).status).toBe('applied');
+  const after = databaseState(f);
+  expect(after.agent_host_state).toEqual(before.agent_host_state);
+  expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+  expect(JSON.parse(after.agent_host_mastra_session_ledger[0].payload).items[1].observation).toBeNull();
+}, 60_000);
 
 test('readonly bookkeeping config rebind rejects a changed retained release operation', async () => {
   const { f, request, args, state } = historicalFixture('readonly_bookkeeping');

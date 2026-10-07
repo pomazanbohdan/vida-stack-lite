@@ -983,6 +983,23 @@ and [execution pipeline](https://docs.edictum.ai/docs/concepts/how-it-works).
 
 ### Recovery across delivered configuration
 
+Global configuration repair validates disposed historical outcomes under the
+configuration digest retained by each protected Work. Current YAML does not
+replace original read-only rights. If the digest differs, the reader resolves
+current-v1 beforeimages from bounded, applied and released configuration
+operations in the configured work root. It verifies operation integrity,
+workspace/repository identity and configuration bytes against the stored
+digest. Missing or changed original bytes deny; no arbitrary YAML fallback or
+execution grant is created.
+
+Terminal synthesis custody retains its capture-time ledger and maintenance
+versions. Later unrelated ledger changes and configuration repairs do not erase
+custody. The current revision/generation must not precede the capture; equal
+ledger revisions require the exact digest. Original Work, Journal, body,
+release, ticket and claim bindings remain exact. Active or UNKNOWN effects and
+current ownership still block global repair. Recognition never accepts the
+synthesis or reissues UNKNOWN work.
+
 Owner: Agent/Core. Business intent: delivering Source or changing the requested
 executor must preserve accepted local work and leave a supported recovery path.
 The desired repository configuration, the configuration accepted by the local

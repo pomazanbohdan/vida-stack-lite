@@ -866,3 +866,20 @@ registry, integrations and all unrelated settings. Remove the project-count
 restriction while retaining that comparison and the exact maintained role,
 stage, edge and artifact contracts. The regression adopts the four prewriter
 stages with two projects and rejects registry and unrelated profile changes.
+
+### Historical configuration and terminal custody across later repairs
+
+The installed global config planner passed current YAML into the original-owner
+predicate. A read-only comparison of actual released records showed that current
+config denied both historical bindings. The retained applied baseline validated
+the repository-scope linked-correction release without granting rights. The
+reader now resolves only bound configuration bytes from validated current-v1,
+applied and released operations, once per inspection.
+
+Terminal custody also compared its old global ledger revision and maintenance
+generation with current values as if they were current execution authority.
+The repair preserves exact capture/Work/Journal/release evidence and checks
+monotonic shared state instead. Mastra workflow snapshots preserve run identity
+and suspended context; their retained bytes remain the frozen engine boundary.
+The production read-only state inspection passes with both disposed outcomes;
+native installation and live config application remain separate evidence.

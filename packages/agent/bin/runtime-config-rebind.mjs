@@ -1374,11 +1374,11 @@ function readonlyKnownTerminal(db, root, config, row, item, host, store, mainten
   requireRebind(
     (heldMaintenanceFence
       ? heldMaintenanceFence.status === 'held' &&
-        expectedMaintenanceGeneration + 1 === heldMaintenanceFence.generation &&
+        expectedMaintenanceGeneration < heldMaintenanceFence.generation &&
         heldMaintenanceFence.generation === currentMaintenanceGeneration
       : verifiedUnfencedStatus !== 'held' &&
         verifiedUnfencedStatus !== 'unverified' &&
-        expectedMaintenanceGeneration === currentMaintenanceGeneration) &&
+        expectedMaintenanceGeneration <= currentMaintenanceGeneration) &&
     ownerRows.length === 1 && ledgerRows.length === 1 &&
       validateReadonlyOwner(ownerRows[0].value) &&
       ownerRows[0].workspace_id === state.workspace_id &&
@@ -1391,11 +1391,12 @@ function readonlyKnownTerminal(db, root, config, row, item, host, store, mainten
         'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' &&
       !ownerRows[0].value.artifacts.some((artifact) => artifact.schema === 'ResearchSynthesis/v1') &&
       receipt.request.expected_work.revision + 1 === ownerRows[0].revision &&
-      receipt.request.expected_ledger.revision + 1 === ledgerRows[0].revision &&
+      receipt.request.expected_ledger.revision + 1 === receipt.ledger_version.revision &&
       receipt.work_version.revision === ownerRows[0].revision &&
       receipt.work_version.digest === ownerRows[0].digest &&
-      receipt.ledger_version.revision === ledgerRows[0].revision &&
-      receipt.ledger_version.digest === ledgerRows[0].digest &&
+      receipt.ledger_version.revision <= ledgerRows[0].revision &&
+      (receipt.ledger_version.revision < ledgerRows[0].revision ||
+        receipt.ledger_version.digest === ledgerRows[0].digest) &&
       receipt.journal_version.revision === row.revision &&
       receipt.journal_version.digest === row.digest &&
       receipt.request.expected_journal.revision === row.revision &&
@@ -1578,6 +1579,51 @@ function readonlyKnownTerminal(db, root, config, row, item, host, store, mainten
   };
 }
 
+/** Historical rights come from the protected Work binding, never current YAML. */
+function historicalConfigResolver(root, config, workspace) {
+  const configurations = new Map([[runtimeConfigDigest(config), config]]);
+  let loaded = false;
+  return (expectedDigest) => {
+    if (configurations.has(expectedDigest)) return configurations.get(expectedDigest);
+    if (!loaded) {
+      loaded = true;
+      const access = requireSafeRepositoryAccess(root);
+      const directories = access.listFiles(config.control.work_root, 'retained config operation directories');
+      requireRebind(directories.length <= 512, 'retained config operation directory bound exceeded');
+      for (const id of directories) {
+        if (!identifier.test(id)) continue;
+        const directory = path.posix.join(config.control.work_root, id);
+        const info = lstatSync(path.join(root, directory));
+        if (!info.isDirectory() || info.isSymbolicLink()) continue;
+        access.assertDirectory(directory, 'retained config operation directory');
+        for (const [name, delivery] of [[operationName, false], [deliveryOperationName, true]]) {
+          const reference = path.posix.join(directory, name);
+          if (!access.fileExists(reference, 'retained config operation')) continue;
+          const { value } = readOperation(access, reference, id, root, delivery);
+          if (value.phase !== 'applied' || value.maintenance_released !== true) continue;
+          requireRebind(
+            value.plan.workspace_id === workspace && value.plan.repository_id === config.repository.repository_id,
+            'retained historical config operation belongs to another workspace',
+          );
+          for (const [yaml, digest] of [
+            [value.plan.baseline_yaml, value.plan.old_config_digest],
+            [value.plan.target_yaml, value.plan.target_config_digest],
+          ]) {
+            const original = validateRuntimeConfigRepairTargetBytes(Buffer.from(yaml), root);
+            requireRebind(
+              runtimeConfigDigest(original) === digest && original.repository.repository_id === config.repository.repository_id,
+              'retained historical config bytes differ from their binding',
+            );
+            configurations.set(digest, original);
+          }
+        }
+      }
+    }
+    requireRebind(configurations.has(expectedDigest), 'bound original configuration is unavailable');
+    return configurations.get(expectedDigest);
+  };
+}
+
 export function currentState(db, workspace, root, config, existingStore, maintenanceReceipt) {
   const hostRows = checkedRows(db, 'agent_host_state', workspace);
   for (const row of hostRows) {
@@ -1599,6 +1645,7 @@ export function currentState(db, workspace, root, config, existingStore, mainten
   }
   const mastraRows = checkedRows(db, 'agent_host_mastra_session_ledger', workspace);
   const frozen = [];
+  const originalConfig = historicalConfigResolver(root, config, workspace);
   let terminalReceiptStore = existingStore;
   for (const row of mastraRows) {
     requireRebind(Array.isArray(row.value.items), 'issued native outcome is pending/unknown');
@@ -1610,9 +1657,12 @@ export function currentState(db, workspace, root, config, existingStore, mainten
             HostStateStore.isHostStateStore(terminalReceiptStore) && terminalReceiptStore.workspaceId === workspace,
             'terminal synthesis reader Host workspace differs',
           );
+          const owners = hostRows.filter((entry) => entry.kind === 'work' && entry.value.binding?.lifecycle_work_id === row.work_id);
+          requireRebind(owners.length === 1 && validateReadonlyOwner(owners[0].value), 'historical UNKNOWN Work is missing or ambiguous');
+          const boundConfig = originalConfig(owners[0].value.binding.config_digest);
           const recognized =
-            readonlyKnownTerminal(db, root, config, row, item, hostRows, terminalReceiptStore, maintenanceReceipt) ??
-            readonlyBookkeepingUnknown(root, config, row, item, hostRows, terminalReceiptStore);
+            readonlyKnownTerminal(db, root, boundConfig, row, item, hostRows, terminalReceiptStore, maintenanceReceipt) ??
+            readonlyBookkeepingUnknown(root, boundConfig, row, item, hostRows, terminalReceiptStore);
           if (recognized) {
             frozen.push(recognized);
             continue;
@@ -1629,7 +1679,7 @@ export function currentState(db, workspace, root, config, existingStore, mainten
               ),
             'generic readonly UNKNOWN requires activation-free Journal history',
           );
-          frozen.push(readonlyUnknown(root, config, row, item, hostRows));
+          frozen.push(readonlyUnknown(root, boundConfig, row, item, hostRows));
         } catch (error) {
           requireRebind(false, `issued native outcome is pending/unknown: ${error.message}`);
         }
