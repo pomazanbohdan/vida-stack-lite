@@ -1000,7 +1000,7 @@ function linuxCasSiblingStem(targetName: string): string {
 }
 function linuxOrphanBackupNames(parentFd: number, targetName: string): string[] {
   const siblingStem = linuxCasSiblingStem(targetName);
-  const candidates = [[targetName, 'cas-old']];
+  const candidates: Array<readonly [string, string]> = [[targetName, 'cas-old']];
   if (siblingStem !== targetName) candidates.push([siblingStem, 'cas-old-hashed']);
   const patterns = candidates.map(([stem, suffix]) => {
     const escaped = stem.replace(/[\^$.*+?()[\]{}|]/g, '\\$&');

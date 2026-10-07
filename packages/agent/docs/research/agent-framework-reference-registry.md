@@ -842,4 +842,6 @@ ambiguity. Quarantine names also remain bounded for existing original backups.
 The descriptor
 simulation enforces the rename component limit and checks replacement, reread,
 removal and custody cleanup at the byte boundary. Native Linux proof remains
-a separate GAP.
+a separate GAP. TypeScript [tuple types](https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types)
+bind the matcher candidates to exactly two strings; the annotation preserves
+behavior while allowing strict indexed-access checking.
