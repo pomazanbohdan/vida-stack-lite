@@ -7492,7 +7492,6 @@ export class HostStateStore {
       const before = this.#read(input.identity),
         work = before.work,
         ledger = before.ledger;
-      requireState(input.nextWork && input.nextLedger, 'historical synthesis custody release proposal is missing');
       matchesExpected(before.workVersion, input.expectedWork);
       matchesExpected(before.ledgerVersion, input.expectedLedger);
       requireState(
@@ -9240,7 +9239,14 @@ export class HostStateStore {
             receipt.issue_id === input.issueId,
           'historical synthesis custody exact retry differs',
         );
-        this.#assertMaintenanceGeneration(receipt.request.expected_maintenance_generation);
+        const expectedMaintenanceGeneration = receipt.request.expected_maintenance_generation;
+        requireState(
+          typeof expectedMaintenanceGeneration === 'number' &&
+            Number.isSafeInteger(expectedMaintenanceGeneration) &&
+            expectedMaintenanceGeneration >= 0,
+          'historical synthesis custody retry maintenance generation invalid',
+        );
+        this.#assertMaintenanceGeneration(expectedMaintenanceGeneration);
         requireState(
           current.work?.lease === null &&
             current.work.execution.status === 'suspended' &&

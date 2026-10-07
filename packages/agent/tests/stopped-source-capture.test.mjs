@@ -778,6 +778,35 @@ test('retired Source capture accounts command patches, exact exclusions and unre
   }
 }, 60000, { sourceOnly: true });
 
+test('direct stopped Source capture succeeds without synthesis proposal fields', async () => {
+  const f = await fixture();
+  try {
+    const c = f.captureInput(),
+      beforeJournal = f.ledger.resume('stopped', 1);
+    expect(Object.hasOwn(c.operation, 'nextWork')).toBe(false);
+    expect(Object.hasOwn(c.operation, 'nextLedger')).toBe(false);
+    const settled = f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent }),
+      afterJournal = f.ledger.resume('stopped', 1),
+      expectedJournal = structuredClone(beforeJournal.state);
+    expectedJournal.items[0].observation = c.operation.observation;
+    expect(settled.work.lease).toBeNull();
+    expect(settled.work.execution.status).toBe('suspended');
+    expect(settled.work.execution.assignment_attempts[0]).toMatchObject({
+      status: 'completed',
+      result: { status: 'reported_failed', changed_paths: ['AGENT.sidecar.md'] },
+    });
+    expect(
+      settled.ledger.tickets.find((entry) => entry.ticket_id === f.reservation.receipt.attempt.lease.ticket_id)?.status,
+    ).toBe('released');
+    expect(afterJournal.state).toEqual(expectedJournal);
+    expect(afterJournal.state.source_scope).toEqual(f.source);
+    expect(f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent })).toEqual(settled);
+    expect(f.ledger.resume('stopped', 1).state).toEqual(afterJournal.state);
+  } finally {
+    await f.close();
+  }
+}, 60000, { sourceOnly: true });
+
 test('public stopped capture preserves failure, rolls back all fields and DDL, then retries without new rights', async () => {
   const f = await fixture();
   try {
