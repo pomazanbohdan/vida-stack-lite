@@ -1232,6 +1232,14 @@ Planning may use `--publish-operation` to bind an existing qualified publication
 This is correlation only; its CI, Source and installed-native proof still must
 match during apply. A frozen request retains that ID, and a different explicit
 ID denies retry. Do not form or install another package solely to align IDs.
+An engineering checkpoint may keep the current semantic version and pending
+publication operation. Version rollback denies. Apply still requires a fresh
+CI run and artifact, exact Source/native inputs and the actual prior installation
+bytes. The original fenced configuration operation stays distinct.
+The formation owner may advance that operation's current pointer only for a
+different Source request, Source binding, run and artifact at the same version.
+It retains the prior validated pointer with its immutable request/result before
+atomic advancement. A conflicting result for the same request still denies.
 The repair writes only its sidecar. It neither rewrites the original plan nor
 releases maintenance, changes historical work or grants execution rights.
 

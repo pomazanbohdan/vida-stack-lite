@@ -248,13 +248,34 @@ function persistCIDeliveryFormation(root, { request, observation }) {
   const current = readConfirmedCIDeliveryFormation(root);
   if (current) {
     if (current.operation_id === pointer.operation_id) {
-      check(equal(current, pointer), 'formed operation already has a different successful result');
-      return current;
+      if (equal(current, pointer)) return current;
+      check(
+        current.version === pointer.version &&
+          current.request_id !== pointer.request_id &&
+          current.source_binding !== pointer.source_binding &&
+          current.run_id !== pointer.run_id &&
+          current.artifact_id !== pointer.artifact_id,
+        'formed operation correction must retain version and bind a fresh Source request, run and artifact',
+      );
+      const historyRelative = path.posix.dirname(resultPath(current.operation_id, current.request_id)) + '/formation.json';
+      const historyFile = releasePath(root, historyRelative, true), historyBytes = json(current);
+      if (existsSync(historyFile)) {
+        check(regularBytes(root, historyRelative).equals(historyBytes), 'retained formation history differs');
+      } else {
+        const descriptor = openSync(historyFile, 'wx', 0o600);
+        try {
+          writeFileSync(descriptor, historyBytes);
+          fsyncSync(descriptor);
+        } finally {
+          closeSync(descriptor);
+        }
+      }
+    } else {
+      check(
+        compareReleaseVersions(pointer.version, current.version) > 0,
+        'formation baseline cannot regress or reuse an existing version',
+      );
     }
-    check(
-      compareReleaseVersions(pointer.version, current.version) > 0,
-      'formation baseline cannot regress or reuse an existing version',
-    );
   }
   saveReceipt(releasePath(root, formationPath(), true), pointer);
   return pointer;

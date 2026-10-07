@@ -683,7 +683,12 @@ async function prepareSourceCorrectionRepair(rebind, fixtureContext = sourceCorr
     };
   f.put('.tmp/original-source-beforeimages.json', json(beforeimage));
   applySourceCorrectionBatch(f, changedPath, fixtureContext.sourceManifestPath, fixtureContext.targetVersion);
-  expect((await rebind.runRuntimeConfigRebind(repairArgs('repair-plan'))).status).toBe('planned');
+  expect((await rebind.runRuntimeConfigRebind([
+    ...repairArgs('repair-plan'),
+    ...(fixtureContext.publicationOperationId
+      ? ['--publish-operation', fixtureContext.publicationOperationId]
+      : []),
+  ])).status).toBe('planned');
   return {
     f,
     deliveryArgs,
@@ -737,12 +742,12 @@ test('public source repair freezes original beforeimages, prior update and held-
       effects_issued: false,
     };
   f.put('.tmp/original-source-beforeimages.json', json(beforeimage));
-  applySourceCorrectionBatch(f, changedPath, sourceManifestPath, targetVersion);
+  applySourceCorrectionBatch(f, changedPath, sourceManifestPath, priorUpdate.version);
 
   const sourceManifest = JSON.parse(readFileSync(path.join(f.root, sourceManifestPath), 'utf8'));
-  f.put(sourceManifestPath, json({ ...sourceManifest, version: priorUpdate.version }));
+  f.put(sourceManifestPath, json({ ...sourceManifest, version: '0.0.0' }));
   const beforeStaleVersionInspect = databaseState(f);
-  await expect(runReconcileArtifacts(repairArgs('repair-inspect'))).rejects.toThrow(/newer than the prior installed version/);
+  await expect(runReconcileArtifacts(repairArgs('repair-inspect'))).rejects.toThrow(/at or after the prior installed version/);
   expect(databaseState(f)).toEqual(beforeStaleVersionInspect);
   f.put(sourceManifestPath, json(sourceManifest));
 
@@ -752,7 +757,7 @@ test('public source repair freezes original beforeimages, prior update and held-
   expect(inspected.authorized_changed_paths).toEqual(authorizedPaths);
   expect(databaseState(f)).toEqual(beforeRepair);
 
-  const publishedOperation = 'local-already-qualified-source-correction';
+  const publishedOperation = priorUpdate.operation_id;
   const planned = await runReconcileArtifacts([
       ...repairArgs('repair-plan'), '--publish-operation', publishedOperation,
     ]),
@@ -765,10 +770,10 @@ test('public source repair freezes original beforeimages, prior update and held-
   expect(sidecar.request.prior_system_update.run_id).toBe(priorUpdate.run_id);
   expect(sidecar.request.prior_system_update.artifact_id).toBe(priorUpdate.artifact_id);
   expect(sidecar.request.authorized_changed_paths).toEqual(authorizedPaths);
-  expect(sidecar.request.source_changes.map((change) => change.path)).toEqual([changedPath]);
-  expect(sidecar.request.new_source_manifest.version).toBe(targetVersion);
+  expect(sidecar.request.source_changes.map((change) => change.path)).toEqual(authorizedPaths);
+  expect(sidecar.request.new_source_manifest.version).toBe(priorUpdate.version);
   expect(sidecar.request.publish_operation_id).not.toBe(sidecar.request.operation_id);
-  expect(sidecar.request.publish_operation_id).not.toBe(sidecar.request.prior_system_update.operation_id);
+  expect(sidecar.request.publish_operation_id).toBe(sidecar.request.prior_system_update.operation_id);
   expect(sidecar.request.publish_operation_id).toBe(publishedOperation);
   const frozenSidecarBytes = readFileSync(path.join(f.root, planned.sidecar_path));
   expect((await runReconcileArtifacts(repairArgs('repair-plan'))).request_id).toBe(planned.request_id);
@@ -791,7 +796,10 @@ test('public source repair freezes original beforeimages, prior update and held-
 }, 30000);
 
 test('source repair captures a closed config transition and reads it after later owner CAS progress', async () => {
-  const fixtureContext = sourceCorrectionFixture(),
+  const fixtureContext = Object.assign(sourceCorrectionFixture(), {
+      targetVersion: sourceCorrectionPriorVersion,
+      publicationOperationId: 'local-46c2f01d-8541-46ce-8e31-30e467799538',
+    }),
     native = sourceCorrectionNativeFixture(fixtureContext.f, fixtureContext.targetVersion),
     rebind = await sourceCorrectionRebindWithNative(native.runtime),
     { f, deliveryArgs, repairArgs, changedPath, sidecarPath } = await prepareSourceCorrectionRepair(rebind, fixtureContext),
@@ -800,7 +808,7 @@ test('source repair captures a closed config transition and reads it after later
     reportPath = path.join(f.root, '.tmp/source-correction-report.json');
   const report = sourceCorrectionExternalReport(f, sidecar.request, native),
     staleVersionReport = structuredClone(report);
-  staleVersionReport.build_manifest.version = sidecar.request.prior_system_update.version;
+  staleVersionReport.build_manifest.version = '0.0.0';
   f.put('.tmp/source-correction-report.json', json(staleVersionReport));
   const applyArgs = [...repairArgs('repair-apply'), '--report', reportPath],
     beforeApply = databaseState(f),
@@ -814,6 +822,14 @@ test('source repair captures a closed config transition and reads it after later
   await expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result');
   expect(databaseState(f)).toEqual(beforeApply);
   expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('requested');
+  for (const field of ['run_id', 'artifact_id']) {
+    const staleCIReport = structuredClone(report);
+    staleCIReport.ci_delivery[field] = sidecar.request.prior_system_update[field];
+    if (field === 'run_id') staleCIReport.ci_delivery.result.run_id = staleCIReport.ci_delivery.run_id;
+    f.put('.tmp/source-correction-report.json', json(staleCIReport));
+    await expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result');
+    expect(databaseState(f)).toEqual(beforeApply);
+  }
   f.put('.tmp/source-correction-report.json', json(report));
   await expect(
     run(applyArgs, { onPhase: (phase) => { if (phase === 'applied') throw new Error('lost repair apply acknowledgement'); } }),

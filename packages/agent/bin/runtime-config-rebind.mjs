@@ -101,13 +101,13 @@ function stableVersionParts(value) {
   return parts.every(Number.isSafeInteger) ? parts : null;
 }
 
-function isLaterStableVersion(candidate, baseline) {
+function isCurrentOrLaterStableVersion(candidate, baseline) {
   const left = stableVersionParts(candidate), right = stableVersionParts(baseline);
   if (!left || !right) return false;
   for (let index = 0; index < left.length; index++) {
     if (left[index] !== right[index]) return left[index] > right[index];
   }
-  return false;
+  return true;
 }
 
 function validateOriginalContextCollection(value) {
@@ -2186,10 +2186,9 @@ function validateSourceCorrectionArtifact(value) {
   );
   requireRebind(
     value.request.publish_operation_id !== value.request.operation_id &&
-      value.request.publish_operation_id !== value.request.prior_system_update.operation_id &&
       value.request.new_source_manifest.path === 'packages/agent/package.json' &&
       value.request.new_source_manifest.package_name === 'vida-agent' &&
-      isLaterStableVersion(value.request.new_source_manifest.version, value.request.prior_system_update.version) &&
+      isCurrentOrLaterStableVersion(value.request.new_source_manifest.version, value.request.prior_system_update.version) &&
       manifestEntry?.exists === true &&
       manifestEntry.bytes === value.request.new_source_manifest.bytes &&
       manifestEntry.sha256 === value.request.new_source_manifest.sha256,
@@ -2405,8 +2404,8 @@ function sourcePackageManifestBinding({ access, bundle, source, priorVersion }) 
   requireRebind(
     manifest?.name === 'vida-agent' &&
       stableVersionParts(manifest.version) !== null &&
-      isLaterStableVersion(manifest.version, priorVersion),
-    'current Source package version must be a valid release newer than the prior installed version',
+      isCurrentOrLaterStableVersion(manifest.version, priorVersion),
+    'current Source package version must be a valid release at or after the prior installed version',
   );
   return {
     schema: 'RuntimeConfigSourcePackageBinding/v1',
