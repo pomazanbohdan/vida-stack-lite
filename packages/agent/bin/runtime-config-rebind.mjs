@@ -320,8 +320,6 @@ function exactPrewriterTemplateDelta(oldConfig, target) {
   if (
     oldConfig.runtime.bundle !== 'packages/agent' ||
     target.runtime.bundle !== 'packages/agent' ||
-    oldConfig.projects.length !== 1 ||
-    oldConfig.projects[0].project_id !== 'agent' ||
     target.agents.profiles.executor.model !== oldConfig.agents.profiles.executor.model ||
     target.agents.profiles.executor.reasoning !== oldConfig.agents.profiles.executor.reasoning ||
     prewriterRoles.some(

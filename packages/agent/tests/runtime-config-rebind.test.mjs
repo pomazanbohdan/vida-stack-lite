@@ -267,7 +267,7 @@ test('internal recovery denies mixed execution flags and missing original contex
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
-function fixture({ sourceMode = false } = {}) {
+function fixture({ sourceMode = false, extraProject = false } = {}) {
   const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? tmpdir();
   const root = mkdtempSync(path.join(fixtureRoot, 'fixture-'));
   fixtureRoots.push(root);
@@ -313,6 +313,30 @@ function fixture({ sourceMode = false } = {}) {
     ),
   );
   cpSync(path.join(source, 'schemas'), path.join(root, bundle, 'schemas'), { recursive: true });
+  if (extraProject) {
+    const values = structuredClone(
+      parseRuntimeConfigYaml(readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8')),
+    );
+    values.projects.push({
+      ...structuredClone(values.projects[0]),
+      project_id: 'plugin',
+      title: 'plugin',
+      project_root: 'packages/plugin',
+      code_selectors: ['packages/plugin/**'],
+      delivery_group: 'plugin',
+    });
+    values.integrations.providers.push({
+      id: 'fixture-plugin',
+      provider: 'local',
+      project_id: 'plugin',
+      tenant_id: 'local',
+      namespace: 'plugin',
+    });
+    values.teams['default-development'].allowed_projects.push('plugin');
+    values.repository.code_selectors.push('packages/plugin/**');
+    put('packages/plugin/.keep', 'fixture project');
+    put('agent-runtime.config.v1.yaml', stringifyYaml(values));
+  }
   const config = loadRuntimeConfig(root),
     workspace = deriveWorkspaceId(config.repository.repository_id, root);
   const schemaSha = sha(readFileSync(path.join(root, bundle, 'schemas/runtime-initialization.v1.schema.json')));
@@ -1798,6 +1822,45 @@ test('reasoning-only targets are accepted while invalid reasoning and unrelated 
   await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/only requested executor/);
   expect(databaseState(f)).toEqual(before);
 });
+
+test('prewriter template adoption preserves a multi-project registry and rejects unrelated changes', async () => {
+  const f = fixture({ sourceMode: true, extraProject: true });
+  const target = parseRuntimeConfigYaml(f.oldYaml);
+  const baseline = withoutPrewriterTemplateDelta(target);
+  f.put('agent-runtime.config.v1.yaml', json(baseline));
+  f.put('.agent/runtime-initialization.v1.json', json({ ...f.receipt, config_digest: runtimeConfigDigest(baseline) }));
+  f.put('proposed.yaml', json(target));
+  const before = databaseState(f);
+  expect((await runReconcileArtifacts(f.args('inspect'))).status).toBe('inspect_ready_unauthorized');
+  expect(databaseState(f)).toEqual(before);
+  for (const mutate of [
+    (value) => {
+      value.projects[1].title = 'foreign project change';
+    },
+    (value) => {
+      value.projects.pop();
+    },
+    (value) => {
+      value.agents.profiles.architect.reasoning = 'low';
+    },
+  ]) {
+    const changed = structuredClone(target);
+    mutate(changed);
+    f.put('proposed.yaml', json(changed));
+    await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow();
+    expect(databaseState(f)).toEqual(before);
+  }
+  f.put('proposed.yaml', json(target));
+  expect((await runReconcileArtifacts(f.args('plan'))).status).toBe('planned');
+  expect((await runReconcileArtifacts(f.args('apply'))).status).toBe('author_config_required');
+  f.put('agent-runtime.config.v1.yaml', json(target));
+  expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
+  const adopted = loadRuntimeConfig(f.root);
+  expect(adopted.projects).toEqual(baseline.projects);
+  expect(adopted.integrations).toEqual(baseline.integrations);
+  for (const id of ['implementation_new', 'implementation_change', 'bug_fix', 'task_execution'])
+    expect(adopted.workflows[id].stages.some((stage) => stage.id === 'review_source_prewrite')).toBe(true);
+}, 120_000);
 
 test('a new normal config operation adopts only the approved prewriter delta after delivery closes', async () => {
   const f = deliveryFixture(),

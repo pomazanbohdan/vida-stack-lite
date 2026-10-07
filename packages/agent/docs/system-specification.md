@@ -242,7 +242,10 @@ metadata, permission failures and other non-ENOENT errors retain their existing
 outcomes.
 
 The existing `reconcile-artifacts --kind runtime-config` operation accepts a
-schema-valid change limited to the executor model and reasoning. It does not
+schema-valid change limited to the executor model and reasoning, or the exact
+maintained prewriter workflow delta. Prewriter adoption supports multiple
+configured projects and preserves their registry, integrations and other
+settings exactly. It does not
 select a model on the caller's behalf or reinterpret an issued invocation.
 Selected consumer installations retain their selector binding. Source without a
 selector requires the `agent` project at `packages/agent`, a private workspace

@@ -854,3 +854,15 @@ package manifest's [files field](https://docs.npmjs.com/cli/configuring-npm/pack
 The repair module is explicitly included there. Source presence and a successful
 build alone do not establish an available installed command; original-work
 inspection must use the delivered route.
+
+### Prewriter adoption with multiple configured projects
+
+The current Source repository configures both agent and plugin. Its admitted
+writer lacks a source plan because the project YAML lacks review_source_prewrite.
+The installed runtime-config inspector rejects the exact maintained template
+delta due to a single-project qualifier. That qualifier is unnecessary: the
+existing final normalized comparison already preserves the complete project
+registry, integrations and all unrelated settings. Remove the project-count
+restriction while retaining that comparison and the exact maintained role,
+stage, edge and artifact contracts. The regression adopts the four prewriter
+stages with two projects and rejects registry and unrelated profile changes.
