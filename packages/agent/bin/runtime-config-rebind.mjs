@@ -3,7 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync, lstatSync } from 'node:fs';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, MAX_CANONICAL_BYTES } from '../src/contracts/public-ingress.ts';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -14,6 +14,8 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { inspectHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
+import { readAdmittedSessionIntake } from '../src/orchestration/admitted-session-execution.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import {
   parseSessionBridgeRequest,
@@ -645,28 +647,64 @@ function database(root, config, readonly) {
 }
 
 function checkedRows(db, table, workspace) {
-  const present = db.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table);
-  if (!present) return [];
-  const rows = db.query(`SELECT * FROM ${table} WHERE workspace_id=? ORDER BY payload`).all(workspace);
-  return rows.map((row) => {
-    const value = JSON.parse(row.payload);
-    const integrityValue =
-      table === 'agent_host_governance'
-        ? {
-            workspace_id: row.workspace_id,
-            store_id: row.store_id,
-            kind: row.kind,
-            record_key: row.record_key,
-            revision: row.revision,
-            payload: value,
-          }
-        : value;
-    requireRebind(
-      row.digest === canonicalJsonDigest(integrityValue) && Number.isSafeInteger(row.revision) && row.revision > 0,
-      `${table} row integrity differs`,
-    );
-    return { ...row, value };
-  });
+  const read = () => {
+    const present = db.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table);
+    if (!present) return [];
+    const oversized = db
+      .query(
+        `SELECT 1 AS oversized FROM ${table} WHERE workspace_id=? AND length(CAST(payload AS BLOB))>? LIMIT 1`,
+      )
+      .get(workspace, MAX_CANONICAL_BYTES);
+    requireRebind(!oversized, `${table} row payload exceeds canonical byte budget`);
+    const rows = db
+      .query(`SELECT *, CAST(payload AS BLOB) AS raw_payload_bytes FROM ${table} WHERE workspace_id=? ORDER BY payload`)
+      .all(workspace);
+    return rows.map((row) => {
+      const { raw_payload_bytes: payloadBytes, ...columns } = row;
+      requireRebind(
+        (Buffer.isBuffer(payloadBytes) || payloadBytes instanceof Uint8Array) &&
+          payloadBytes.byteLength <= MAX_CANONICAL_BYTES,
+        `${table} row payload bytes are invalid or exceed canonical byte budget`,
+      );
+      let payload;
+      try {
+        payload = new TextDecoder('utf-8', { fatal: true }).decode(payloadBytes);
+      } catch {
+        requireRebind(false, `${table} row payload UTF-8 is invalid`);
+      }
+      requireRebind(
+        typeof row.payload === 'string' &&
+          row.payload === payload &&
+          Buffer.from(payload, 'utf8').equals(Buffer.from(payloadBytes)),
+        `${table} row payload bytes differ from text`,
+      );
+      const value = JSON.parse(payload);
+      const integrityValue =
+        table === 'agent_host_governance'
+          ? {
+              workspace_id: row.workspace_id,
+              store_id: row.store_id,
+              kind: row.kind,
+              record_key: row.record_key,
+              revision: row.revision,
+              payload: value,
+            }
+          : value;
+      requireRebind(
+        row.digest === canonicalJsonDigest(integrityValue) && Number.isSafeInteger(row.revision) && row.revision > 0,
+        `${table} row integrity differs`,
+      );
+      return { ...columns, payloadBytes, value };
+    });
+  };
+  return db.inTransaction ? read() : db.transaction(read).deferred();
+}
+
+function checkedRowBindings(rows) {
+  return rows.map(({ payload, payloadBytes, value: _value, ...metadata }) => ({
+    ...metadata,
+    payload_sha256: sha(payloadBytes),
+  }));
 }
 
 /** Issued indexes follow risk filtering; absent original risk selection requires all possible profiles to be readonly. */
@@ -713,6 +751,23 @@ function readonlyUnknown(root, config, row, item, host) {
       item.host_reservation === undefined &&
       item.research_activation === undefined &&
       item.research_normalization === undefined,
+    'issued native outcome is pending/unknown: original journal authority invalid',
+  );
+  return readonlyUnknownFrozenEngine(root, config, row, item, host);
+}
+
+/** Read the original suspended engine state after a caller has proved its Journal authority. */
+function readonlyUnknownFrozenEngine(root, config, row, item, host) {
+  const state = row.value,
+    request = parseSessionBridgeRequest(item.request);
+  requireRebind(
+    state.schema === 'MastraSessionLedger/v1' &&
+      state.workspace_id === row.workspace_id &&
+      state.work_id === row.work_id &&
+      state.attempt === row.attempt &&
+      Number.isSafeInteger(state.attempt) &&
+      state.attempt > 0 &&
+      request.run_id === state.run_id,
     'issued native outcome is pending/unknown: original journal authority invalid',
   );
   requireRebind(
@@ -820,6 +875,224 @@ function readonlyUnknown(root, config, row, item, host) {
   } finally {
     original.close();
   }
+}
+
+function readonlyBookkeepingUnknown(root, config, row, item, host, store) {
+  if (!item.research_activation) return null;
+  const state = row.value,
+    ownerRows = host.filter(
+      (entry) => entry.kind === 'work' && entry.value.binding?.lifecycle_work_id === state.work_id,
+    ),
+    ledgerRows = host.filter((entry) => entry.kind === 'ledger');
+  requireRebind(
+    item.issue_id !== null &&
+      item.observation === null &&
+      !item.host_reservation &&
+      !item.research_normalization &&
+      ownerRows.length === 1 &&
+      ledgerRows.length === 1 &&
+      validateReadonlyOwner(ownerRows[0].value) &&
+      ownerRows[0].workspace_id === row.workspace_id &&
+      ownerRows[0].value.lease === null &&
+      ownerRows[0].value.execution.status === 'suspended',
+    'readonly bookkeeping UNKNOWN owner or Journal differs',
+  );
+  const ownerEntry = ownerRows[0],
+    ledgerEntry = ledgerRows[0],
+    owner = ownerEntry.value,
+    identity = {
+      repository_id: owner.binding.repository_id,
+      project_ids: owner.binding.project_ids,
+      integrations_digest: owner.binding.integrations_digest,
+      work_id: state.work_id,
+    };
+  requireRebind(
+    HostStateStore.isHostStateStore(store) &&
+      store.workspaceId === row.workspace_id,
+    'readonly bookkeeping inspector Host workspace differs',
+  );
+  const snapshot = store.readHostStateSnapshot(identity);
+  requireRebind(
+    snapshot.work &&
+      snapshot.ledger &&
+      canonicalJsonDigest(snapshot.work) === canonicalJsonDigest(owner) &&
+      canonicalJsonDigest(snapshot.workVersion) ===
+        canonicalJsonDigest({ revision: ownerEntry.revision, digest: ownerEntry.digest }) &&
+      canonicalJsonDigest(snapshot.ledgerVersion) ===
+        canonicalJsonDigest({ revision: ledgerEntry.revision, digest: ledgerEntry.digest }),
+    'readonly bookkeeping current Host snapshot differs',
+  );
+  const intake = readAdmittedSessionIntake(root, store, identity),
+    nativeSessionHandle = intake.native_session_handle,
+    requestIntents = ['next_work', 'linked_correction'],
+    currentReleaseCandidates = snapshot.ledger.operations.flatMap((operation) => {
+      if (
+        operation.kind !== 'release' ||
+        operation.work_id !== state.work_id ||
+        operation.thread_id !== nativeSessionHandle ||
+        operation.decided_by !== nativeSessionHandle ||
+        typeof operation.operation_id !== 'string' ||
+        typeof operation.decision_pointer !== 'string' ||
+        operation.decision_pointer.length === 0 ||
+        operation.decision_pointer.length > 2048 ||
+        /\p{Cc}/u.test(operation.decision_pointer)
+      )
+        return [];
+      const matchingIntents = requestIntents.filter(
+        (requestIntent) =>
+          operation.operation_id ===
+          'readonly-bookkeeping-release-' +
+            canonicalJsonDigest({
+              work_id: state.work_id,
+              nativeSessionHandle,
+              userRequestPointer: operation.decision_pointer,
+              requestIntent,
+              journal: row.digest,
+            }).slice(0, 40),
+      );
+      return matchingIntents.length > 0 ? [{ operation, matchingIntents }] : [];
+    });
+  requireRebind(
+    currentReleaseCandidates.length === 1,
+    'readonly bookkeeping original current release operation is missing or ambiguous',
+  );
+  const [{ operation: release, matchingIntents }] = currentReleaseCandidates;
+  requireRebind(matchingIntents.length === 1, 'readonly bookkeeping original release intent is ambiguous');
+  const releaseKeys = [
+      'schema',
+      'operation_id',
+      'kind',
+      'ticket_id',
+      'work_id',
+      'thread_id',
+      'source_revision',
+      'resources',
+      'from_ledger_revision',
+      'to_ledger_revision',
+      'decided_by',
+      'decision_pointer',
+      'created_at',
+    ],
+    validPointer =
+      typeof release.decision_pointer === 'string' &&
+      release.decision_pointer.length > 0 &&
+      release.decision_pointer.length <= 2048 &&
+      !/\p{Cc}/u.test(release.decision_pointer);
+  requireRebind(
+    hasExactKeys(release, releaseKeys) &&
+      release.schema === 'CoordinationOperation/v1' &&
+      release.kind === 'release' &&
+      typeof release.operation_id === 'string' &&
+      release.source_revision === owner.binding.work_source_revision &&
+      release.thread_id === nativeSessionHandle &&
+      release.decided_by === nativeSessionHandle &&
+      validPointer &&
+      Number.isSafeInteger(release.from_ledger_revision) &&
+      release.from_ledger_revision > 0 &&
+      release.to_ledger_revision === release.from_ledger_revision + 1 &&
+      snapshot.ledgerVersion.revision >= release.to_ledger_revision &&
+      Array.isArray(release.resources) &&
+      release.resources.length > 0 &&
+      Number.isFinite(Date.parse(release.created_at)),
+    'readonly bookkeeping original release operation differs',
+  );
+  const ticketRows = snapshot.ledger.tickets.filter((ticket) => ticket.ticket_id === release.ticket_id),
+    claimRows = snapshot.ledger.claims.filter((claim) => claim.ticket_id === release.ticket_id);
+  requireRebind(
+    ticketRows.length === 1 && claimRows.length === 1,
+    'readonly bookkeeping original released ticket or claim is missing or ambiguous',
+  );
+  const ticket = ticketRows[0],
+    claim = claimRows[0],
+    activationBinding = item.research_activation.plan?.binding,
+    resources = [...(ticket.exclusive_resources ?? [])].sort();
+  requireRebind(
+    activationBinding &&
+      ticket.status === 'released' &&
+      release.ticket_id === activationBinding.lease_ticket_id &&
+      ticket.work_id === state.work_id &&
+      ticket.thread_id === nativeSessionHandle &&
+      ticket.source_revision === owner.binding.work_source_revision &&
+      ticket.repository_id === identity.repository_id &&
+      canonicalJsonDigest(ticket.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+      ticket.integrations_digest === identity.integrations_digest &&
+      ticket.generation === activationBinding.lease_generation &&
+      ticket.expires_at === null &&
+      ticket.active_resources.length === 0 &&
+      ticket.blocked_resources.length === 0 &&
+      ticket.claim_ids.length === 1 &&
+      ticket.claim_ids[0] === claim.claim_id &&
+      claim.status === 'released' &&
+      claim.work_id === state.work_id &&
+      claim.thread_id === nativeSessionHandle &&
+      claim.generation === ticket.generation &&
+      typeof claim.lease_expires_at === 'string' &&
+      Number.isFinite(Date.parse(claim.lease_expires_at)) &&
+      canonicalJsonDigest([...claim.resources].sort()) === canonicalJsonDigest(resources) &&
+      canonicalJsonDigest([...release.resources].sort()) === canonicalJsonDigest(resources),
+    'readonly bookkeeping exact released ticket or claim differs from activation',
+  );
+  const inspections = [];
+  for (const requestIntent of requestIntents) {
+    try {
+      const inspected = inspectHistoricalOwnerWork({
+        store,
+        identity,
+        journal: {
+          state,
+          version: { revision: row.revision, digest: row.digest },
+          resume_status: 'issued_outcome_uncertain',
+        },
+        expectedWork: snapshot.workVersion,
+        expectedLedger: snapshot.ledgerVersion,
+        expectedMaintenanceGeneration: snapshot.maintenanceGeneration,
+        nativeSessionHandle,
+        userRequestPointer: release.decision_pointer,
+        requestIntent,
+        config,
+        predicate: 'readonly_bookkeeping',
+        documentationContext: {
+          repository_root: root,
+          repository_id: identity.repository_id,
+          project_id: identity.project_ids[0],
+          work_id: identity.work_id,
+        },
+      });
+      if (
+        canonicalJsonDigest(inspected.workVersion) === canonicalJsonDigest(snapshot.workVersion) &&
+        canonicalJsonDigest(inspected.ledgerVersion) === canonicalJsonDigest(snapshot.ledgerVersion)
+      )
+        inspections.push(requestIntent);
+    } catch {
+      // A failed bounded predicate inspection is not evidence for either intent.
+    }
+  }
+  requireRebind(
+    inspections.length === 1 && inspections[0] === matchingIntents[0],
+    'readonly bookkeeping predicate inspection did not uniquely validate the retained release',
+  );
+  const overlapping = snapshot.ledger.tickets.filter(
+    (other) =>
+      other.ticket_id !== ticket.ticket_id &&
+      ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(other.status) &&
+      other.exclusive_resources.some((resource) => resources.includes(resource)),
+  );
+  requireRebind(overlapping.length === 0, 'readonly bookkeeping scope has a current overlapping owner');
+  const engine = readonlyUnknownFrozenEngine(root, config, row, item, host);
+  return {
+    ...engine,
+    outcome: 'UNKNOWN',
+    custody_binding: canonicalJsonDigest({
+      journal: { revision: row.revision, digest: row.digest },
+      action_id: item.request.action_id,
+      issue_id: item.issue_id,
+      activation: item.research_activation,
+      release,
+      ticket,
+      claim,
+      request_intent: inspections[0],
+    }),
+  };
 }
 
 function storedBase64(value, label, maximumBytes) {
@@ -1135,8 +1408,8 @@ function readonlyKnownTerminal(db, root, config, row, item, host, store) {
 }
 
 export function currentState(db, workspace, root, config, existingStore) {
-  const host = checkedRows(db, 'agent_host_state', workspace);
-  for (const row of host) {
+  const hostRows = checkedRows(db, 'agent_host_state', workspace);
+  for (const row of hostRows) {
     if (row.kind === 'work')
       requireRebind(
         row.value.lease === null &&
@@ -1153,10 +1426,10 @@ export function currentState(db, workspace, root, config, existingStore) {
         'queued/active ownership blocks rebind',
       );
   }
-  const mastra = checkedRows(db, 'agent_host_mastra_session_ledger', workspace);
+  const mastraRows = checkedRows(db, 'agent_host_mastra_session_ledger', workspace);
   const frozen = [];
   let terminalReceiptStore = existingStore;
-  for (const row of mastra) {
+  for (const row of mastraRows) {
     requireRebind(Array.isArray(row.value.items), 'issued native outcome is pending/unknown');
     for (const item of row.value.items)
       if (item.issue_id !== null && item.observation === null) {
@@ -1166,21 +1439,42 @@ export function currentState(db, workspace, root, config, existingStore) {
             HostStateStore.isHostStateStore(terminalReceiptStore) && terminalReceiptStore.workspaceId === workspace,
             'terminal synthesis reader Host workspace differs',
           );
-          frozen.push(
-            readonlyKnownTerminal(db, root, config, row, item, host, terminalReceiptStore) ??
-              readonlyUnknown(root, config, row, item, host),
+          const recognized =
+            readonlyKnownTerminal(db, root, config, row, item, hostRows, terminalReceiptStore) ??
+            readonlyBookkeepingUnknown(root, config, row, item, hostRows, terminalReceiptStore);
+          if (recognized) {
+            frozen.push(recognized);
+            continue;
+          }
+          const completed = row.value.completed,
+            completedItems = Array.isArray(completed)
+              ? completed.flatMap((wave) => (Array.isArray(wave.items) ? wave.items : []))
+              : [];
+          requireRebind(
+            Array.isArray(completed) &&
+              completed.every((wave) => Array.isArray(wave.items)) &&
+              [...completedItems, ...row.value.items].every(
+                (entry) => entry.research_activation === undefined && entry.research_normalization === undefined,
+              ),
+            'generic readonly UNKNOWN requires activation-free Journal history',
           );
+          frozen.push(readonlyUnknown(root, config, row, item, hostRows));
         } catch (error) {
           requireRebind(false, `issued native outcome is pending/unknown: ${error.message}`);
         }
       }
   }
-  const governance = checkedRows(db, 'agent_host_governance', workspace);
+  const governanceRows = checkedRows(db, 'agent_host_governance', workspace);
   requireRebind(
-    governance.every((row) => !['reserved', 'commit_unknown'].includes(row.value.status)),
+    governanceRows.every((row) => !['reserved', 'commit_unknown'].includes(row.value.status)),
     'governance effect pending/unknown',
   );
-  return canonicalJsonDigest({ host, mastra, governance, frozen });
+  return canonicalJsonDigest({
+    host: checkedRowBindings(hostRows),
+    mastra: checkedRowBindings(mastraRows),
+    governance: checkedRowBindings(governanceRows),
+    frozen,
+  });
 }
 
 function selector(access) {
@@ -1328,7 +1622,7 @@ function fenceBinding(plan, planDigest) {
   };
 }
 
-function exactContext(access, root, config, operation, db) {
+function exactContext(access, root, config, operation, db, hostStore, maintenanceReceipt) {
   const plan = operation.plan;
   const old = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root);
   const target = targetConfig({ readBytes: () => Buffer.from(plan.target_yaml) }, root, old, configPath).config;
@@ -1336,6 +1630,7 @@ function exactContext(access, root, config, operation, db) {
   sameIdentity(root, old, JSON.parse(plan.baseline_receipt));
   sameIdentity(root, target, receipt.value);
   const binding = runtimeBinding(access, old);
+  const verifyCurrentState = () => currentState(db, plan.workspace_id, root, old, hostStore);
   requireRebind(
     runtimeConfigDigest(old) === plan.old_config_digest &&
       runtimeConfigDigest(target) === plan.target_config_digest &&
@@ -1344,7 +1639,9 @@ function exactContext(access, root, config, operation, db) {
       sha(
         runtimePackageAccess().readBytes('schemas/runtime-initialization.v1.schema.json', 'initialization schema'),
       ) === plan.initialization_schema_digest &&
-      currentState(db, plan.workspace_id, root, old) === plan.state_digest,
+      (maintenanceReceipt
+        ? hostStore.withMaintenanceInspection(maintenanceReceipt, verifyCurrentState)
+        : verifyCurrentState()) === plan.state_digest,
     'current selector/schema/global state differs from plan',
   );
   const currentYaml = access.readBytes(configPath, 'current authored YAML').toString('utf8');
@@ -1398,7 +1695,12 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
         operation = stored.value;
       const plan = operation.plan,
         binding = fenceBinding(plan, operation.plan_digest);
-      const context = () => exactContext(access, root, loadRuntimeConfig(root), operation, db);
+      const receiptFor = (fence) =>
+        fence?.status === 'held' && canonicalJsonDigest(fence.binding) === canonicalJsonDigest(binding)
+          ? { fence, token: plan.token }
+          : undefined;
+      const context = (fence) =>
+        exactContext(access, root, loadRuntimeConfig(root), operation, db, store, receiptFor(fence));
       const verifier = {
         principal: 'vida-agent-project-config-rebind',
         projectIds: plan.project_ids,
@@ -1418,7 +1720,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
           );
         },
         verify: async (held) => {
-          const current = context();
+          const current = context(held);
           const complete = operation.phase === 'applied' && !current.baseline && !current.oldReceipt;
           const abandoned =
             operation.phase === 'abandoned_no_effect' && (delivery || current.baseline) && current.oldReceipt;
@@ -1441,7 +1743,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
         stored = { bytes: Buffer.from(json(next)), value: next };
         operation = next;
       };
-      const current = context();
+      const current = context(observedMaintenance);
       if (mode === 'restore')
         requireRebind(
           (delivery || current.baseline) && current.oldReceipt,
@@ -1457,7 +1759,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
         );
         return { status: operation.phase, operation_id: id, rollback_performed: false };
       }
-      let held = store.readMaintenanceFence();
+      let held = observedMaintenance;
       const own = held && canonicalJsonDigest(held.binding) === canonicalJsonDigest(binding);
       if (mode === 'restore') {
         requireRebind(
@@ -1504,7 +1806,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
         if (current.oldReceipt) {
           requireRebind(operation.phase === 'fenced' && held.status === 'held', 'receipt write needs fenced phase');
           await access.withExclusiveLockAsync(receiptPath, 'configuration receipt rebind', async () => {
-            const latest = context();
+            const latest = context(held);
             requireRebind(!latest.baseline && latest.oldReceipt, 'receipt/configuration changed before CAS');
             await access.replaceAtomicAsync(
               receiptPath,
@@ -1515,7 +1817,7 @@ export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
           });
           onPhase?.('receipt_rebound');
         }
-        requireRebind(!context().oldReceipt, 'rebound receipt not observed');
+        requireRebind(!context(held).oldReceipt, 'rebound receipt not observed');
         if (operation.phase !== 'applied') await save('applied');
         onPhase?.('applied');
       }

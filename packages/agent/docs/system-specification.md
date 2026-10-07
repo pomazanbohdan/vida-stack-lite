@@ -222,6 +222,11 @@ checks and global quiescence remain mandatory. An expired active owner or an
 unknown effect still blocks applying a new configuration. Only the public
 operation updates the initialization receipt after the authorized YAML edit.
 
+The frozen global-state digest includes each checked row's scalar metadata and
+the SHA-256 digest of its exact stored payload bytes. Row parsing, integrity and
+quiescence checks still run before aggregation; the aggregate omits duplicate
+parsed values and raw payload text while preserving deterministic row order.
+
 ## Terminal observations and exact owner release
 
 Task outcome, effect certainty and lease ownership are independent. A known
@@ -878,6 +883,18 @@ evidence remains unchanged. Exact held-operation/token retries preserve the fenc
 Host and Mastra databases and filesystem receipts form recoverable sequences;
 they do not establish cross-store atomicity.
 
+Because SQLite transactions do not nest, acquisition-verifier Host snapshot
+reads use the existing immediate transaction and connection. A private
+synchronous scope also permits a receipt-checked maintenance inspection to read
+through a deferred transaction on that same connection. In both cases, only the
+snapshot reader skips the ordinary held-fence availability check; database
+support, receipt/project checks, stored-row checksums and identity, Work/Ledger
+pair validation and maintenance-generation observation remain active. The
+scope is cleared in `finally`, rejects asynchronous callbacks, and does not
+relax nested Host mutation checks. See the
+[SQLite transaction documentation](https://www.sqlite.org/lang_transaction.html#transactions)
+for its transaction and nesting behavior.
+
 The configured Mastra engine has one Host-owned producer exclusion. Before
 storage initialization, start or resume, the actual configured journal and its
 bound Host acquire the protected governance reservation in an immediate Host
@@ -1241,6 +1258,20 @@ An exact expired lease may be disposed while its active ticket and claim still
 match owner, generation, resources and expiry. This is not renewal. Any other
 overlapping queued, active, ready-for-handoff or blocked ticket denies release.
 The prior historical, unissued and settled-research families remain strict.
+
+A config-rebind read may retain a pending activated UNKNOWN from this predicate
+only when the original release operation is still exact. The persisted
+decision pointer and admitted native session must reproduce exactly one of the
+two supported original request intents. The released ticket, its single
+released claim, activation ticket and generation, source scope and current
+quiescent resource scope must all match. The existing readonly-bookkeeping
+inspection revalidates the original activation history. A later global ledger
+revision is allowed when that scoped release proof remains exact and no current
+ticket overlaps its resources. Rebind preserves the original pending Journal
+item and engine snapshot and binds the activation and release evidence into its
+state digest. It does not infer an effect outcome, settle or replay the issue,
+normalize a result, admit an artifact, or grant Source, Runtime or acceptance
+rights.
 
 The historical owner routes may select `--context-history` with an existing
 retained `VidaAgentRunResult/v1` body. The caller's configured contexts bind to

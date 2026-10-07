@@ -1860,6 +1860,121 @@ describe('host-owned durable maintenance fence', () => {
       expect(checked.readMaintenanceFence()).toBeNull();
     }
   });
+  test('acquisition verifier reads the same Host transaction on first acquire and held-fence retry', () => {
+    let checked;
+    const maintenanceGenerations = [];
+    checked = new HostStateStore(database, workspace, undefined, undefined, undefined, {
+      ...maintenanceVerifier,
+      verifyAcquisition: () => {
+        expect(database.inTransaction).toBe(true);
+        const observed = checked.readHostStateSnapshot(identity);
+        expect(observed.work).toEqual(seed.nextWork);
+        maintenanceGenerations.push(observed.maintenanceGeneration);
+        expect(() => checked.reserveOperation('operations', operationKey, requestDigest)).toThrow(
+          /nested host state transaction forbidden/,
+        );
+      },
+    });
+    const seed = fixture();
+    quiesceImportedState([seed.nextWork], seed.nextLedger);
+    checked.compareAndSwapHostState(seed);
+
+    const first = checked.acquireMaintenanceFence(maintenanceBinding());
+    const retry = checked.acquireMaintenanceFenceWithRecordedToken(maintenanceBinding(), first.token);
+
+    expect(retry).toEqual(first);
+    expect(maintenanceGenerations).toEqual([0, 1]);
+    expect(database.query('SELECT count(*) AS count FROM agent_host_governance').get().count).toBe(0);
+  });
+  test('ordinary nested Host reads remain denied and a throwing verifier clears its scoped read context', () => {
+    let checked;
+    let fail = true;
+    checked = new HostStateStore(database, workspace, undefined, undefined, undefined, {
+      ...maintenanceVerifier,
+      verifyAcquisition: () => {
+        if (fail) throw Error('frozen global state changed');
+        expect(checked.readHostStateSnapshot(identity).work).toEqual(seed.nextWork);
+      },
+    });
+    const seed = fixture();
+    quiesceImportedState([seed.nextWork], seed.nextLedger);
+    checked.compareAndSwapHostState(seed);
+    expect(() => checked.acquireMaintenanceFence(maintenanceBinding())).toThrow('frozen global state changed');
+    expect(checked.readMaintenanceFence()).toBeNull();
+    database.transaction(() => {
+      expect(() => checked.readHostStateSnapshot(identity)).toThrow(/nested host state transaction forbidden/);
+    })();
+
+    fail = false;
+    const receipt = checked.acquireMaintenanceFence(maintenanceBinding());
+    expect(receipt.fence.status).toBe('held');
+  });
+  test('held-fence inspection reads with the exact receipt and keeps nested Host mutations denied', async () => {
+    const checked = maintenanceStore();
+    const seed = fixture();
+    quiesceImportedState([seed.nextWork], seed.nextLedger);
+    const saved = checked.compareAndSwapHostState(seed);
+    const receipt = checked.acquireMaintenanceFence(maintenanceBinding());
+
+    const observed = checked.withMaintenanceInspection(receipt, () => {
+      expect(database.inTransaction).toBe(true);
+      const current = checked.readHostStateSnapshot(identity);
+      expect(current.work).toEqual(seed.nextWork);
+      expect(current.maintenanceGeneration).toBe(receipt.fence.generation);
+      expect(() => checked.reserveOperation('operations', operationKey, requestDigest)).toThrow(
+        /nested host state transaction forbidden/,
+      );
+      return current.workVersion;
+    });
+
+    expect(observed).toEqual(saved.workVersion);
+    expect(database.query('SELECT count(*) AS count FROM agent_host_governance').get().count).toBe(0);
+    await checked.releaseMaintenanceFence(receipt);
+  });
+  test('held-fence inspection rejects foreign or stale receipts and always clears a failed scope', async () => {
+    const checked = maintenanceStore();
+    const seed = fixture();
+    quiesceImportedState([seed.nextWork], seed.nextLedger);
+    checked.compareAndSwapHostState(seed);
+    const receipt = checked.acquireMaintenanceFence(maintenanceBinding());
+    const foreign = new HostStateStore(
+      database,
+      deriveWorkspaceId('foreign-maintenance-repository', root),
+      undefined,
+      undefined,
+      undefined,
+      maintenanceVerifier,
+      root,
+    );
+
+    expect(() => foreign.withMaintenanceInspection(receipt, () => undefined)).toThrow(/stale or forged/);
+    expect(() => checked.withMaintenanceInspection({ ...receipt, token: randomUUID() }, () => undefined)).toThrow(
+      /stale or forged/,
+    );
+    expect(() =>
+      checked.withMaintenanceInspection(receipt, () => {
+        throw Error('inspection failed');
+      }),
+    ).toThrow('inspection failed');
+    database.transaction(() => {
+      expect(() => checked.readHostStateSnapshot(identity)).toThrow(/nested host state transaction forbidden/);
+      expect(() => checked.reserveOperation('operations', operationKey, requestDigest)).toThrow(
+        /nested host state transaction forbidden/,
+      );
+    })();
+    let asyncCallbackEntered = false;
+    const asyncInspection = async () => {
+      asyncCallbackEntered = true;
+    };
+    expect(() => checked.withMaintenanceInspection(receipt, asyncInspection)).toThrow(/must be synchronous/);
+    expect(asyncCallbackEntered).toBe(false);
+    expect(() =>
+      checked.withMaintenanceInspection(receipt, () => checked.readHostStateSnapshot(identity).workVersion),
+    ).not.toThrow();
+
+    await checked.releaseMaintenanceFence(receipt);
+    expect(() => checked.withMaintenanceInspection(receipt, () => undefined)).toThrow(/stale or forged/);
+  });
   const seedQuiescentWork = (id, projectIds, workspaceId = workspace, repositoryId = 'project-repository') => {
     const work = fixture(id).nextWork;
     work.workspace_id = workspaceId;

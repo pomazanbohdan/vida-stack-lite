@@ -71,7 +71,7 @@ const governedWriteIntentValidator = new Ajv2020Constructor({ allErrors: true })
 const governedWriteValidator = new Ajv2020Constructor({ allErrors: true }).compile(governedWriteSchema as object);
 const MAX_CANONICAL_DEPTH = 64;
 const MAX_CANONICAL_NODES = 10_000;
-const MAX_CANONICAL_BYTES = 8_388_608;
+export const MAX_CANONICAL_BYTES = 8_388_608;
 interface CanonicalBudget {
   nodes: number;
   bytes: number;

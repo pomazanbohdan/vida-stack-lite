@@ -22,7 +22,7 @@ import { cooperativeReadonlyAssignments, currentState, inspectHistoricalOwnerCon
 import { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
-import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJson, canonicalJsonDigest, MAX_CANONICAL_BYTES } from '../src/contracts/public-ingress.ts';
 import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.mjs';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
@@ -66,6 +66,12 @@ afterEach(() => {
 });
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const json = (v) => JSON.stringify(v, null, 2) + '\n';
+function jsonNodeCount(value) {
+  if (Array.isArray(value)) return 1 + value.reduce((total, item) => total + jsonNodeCount(item), 0);
+  if (value && typeof value === 'object')
+    return 1 + Object.values(value).reduce((total, item) => total + jsonNodeCount(item), 0);
+  return 1;
+}
 function expectMissingFixtureContextRead(error, label) {
   expect(error).toBeInstanceOf(Error);
   if (process.platform === 'win32') {
@@ -777,6 +783,235 @@ function seedState(
   });
   return { work, identity };
 }
+
+function seedManyReadonlyWorks(f, count) {
+  const { work: base } = seedState(f);
+  return withDatabase(f, (db) => {
+    const insert = db.query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)');
+    const identities = [];
+    db.transaction(() => {
+      for (let index = 0; index < count; index++) {
+        const work = structuredClone(base);
+        const workId = `readonly-work-${index}`;
+        const scopeId = `readonly-scope-${index}`;
+        work.binding.lifecycle_work_id = workId;
+        work.binding.provider_work_item_id = `readonly-provider-item-${index}`;
+        work.binding.scope_id = scopeId;
+        work.lifecycle.scope.scope_id = scopeId;
+        work.execution.run_id = `readonly-run-${index}`;
+        const identity = {
+          repository_id: work.binding.repository_id,
+          project_ids: work.binding.project_ids,
+          integrations_digest: work.binding.integrations_digest,
+          work_id: workId,
+        };
+        const key = JSON.stringify([
+          identity.repository_id,
+          identity.project_ids,
+          identity.integrations_digest,
+          identity.work_id,
+        ]);
+        const payload = json(work);
+        insert.run(f.workspace, 'work', key, work.revision, payload, canonicalJsonDigest(work));
+        identities.push(identity);
+      }
+    })();
+    const workspace = new HostStateStore(db, f.workspace).readWorkspaceSnapshot();
+    expect(workspace.work).toHaveLength(count + 1);
+    expect(
+      workspace.work.every(
+        ({ work }) => work.lease === null && work.execution.assignment_attempts.length === 0,
+      ),
+    ).toBe(true);
+    const rows = db
+      .query("SELECT * FROM agent_host_state WHERE workspace_id=? ORDER BY payload")
+      .all(f.workspace);
+    const priorAggregate = {
+      host: rows.map((row) => ({ ...row, value: JSON.parse(row.payload) })),
+      mastra: [],
+      governance: [],
+      frozen: [],
+    };
+    expect(jsonNodeCount(priorAggregate)).toBeGreaterThan(10_000);
+    return identities;
+  });
+}
+
+test('compact config binding handles over ten thousand readonly row nodes and rejects raw-payload-only plan drift', async () => {
+  const f = fixture({ sourceMode: true });
+  const identities = seedManyReadonlyWorks(f, 128);
+  const config = loadRuntimeConfig(f.root);
+  const originalDigest = withDatabase(f, (db) => currentState(db, f.workspace, f.root, config));
+  expect(originalDigest).toMatch(/^[a-f0-9]{64}$/);
+  expect((await runReconcileArtifacts(f.args('plan'))).status).toBe('planned');
+  const beforeDrift = databaseState(f);
+  const changedRow = withDatabase(f, (db) => {
+    const row = db
+      .query("SELECT * FROM agent_host_state WHERE workspace_id=? AND kind='work' AND id=?")
+      .get(f.workspace, JSON.stringify([
+        identities[0].repository_id,
+        identities[0].project_ids,
+        identities[0].integrations_digest,
+        identities[0].work_id,
+      ]));
+    const payload = row.payload + '\n';
+    expect(JSON.parse(payload)).toEqual(JSON.parse(row.payload));
+    expect(
+      db
+        .query('UPDATE agent_host_state SET payload=? WHERE workspace_id=? AND kind=? AND id=?')
+        .run(payload, f.workspace, 'work', row.id).changes,
+    ).toBe(1);
+    return { ...row, payload };
+  });
+  expect(changedRow.digest).toBe(beforeDrift.agent_host_state.find((row) => row.id === changedRow.id).digest);
+  const driftDigest = withDatabase(f, (db) => currentState(db, f.workspace, f.root, config));
+  expect(driftDigest).not.toBe(originalDigest);
+  const driftedState = databaseState(f);
+  await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(
+    /current selector\/schema\/global state differs from plan/,
+  );
+  expect(databaseState(f)).toEqual(driftedState);
+  expect(fence(f)).toBeNull();
+});
+
+test('compact config binding includes row metadata and retains per-row digest denial', async () => {
+  const metadataFixture = fixture({ sourceMode: true });
+  seedState(metadataFixture);
+  const metadataConfig = loadRuntimeConfig(metadataFixture.root);
+  const metadataDigest = withDatabase(metadataFixture, (db) =>
+    currentState(db, metadataFixture.workspace, metadataFixture.root, metadataConfig),
+  );
+  await runReconcileArtifacts(metadataFixture.args('plan'));
+  withDatabase(metadataFixture, (db) => {
+    db.query("UPDATE agent_host_state SET revision=revision+1 WHERE workspace_id=? AND kind='work'").run(
+      metadataFixture.workspace,
+    );
+  });
+  const metadataDriftDigest = withDatabase(metadataFixture, (db) =>
+    currentState(db, metadataFixture.workspace, metadataFixture.root, metadataConfig),
+  );
+  expect(metadataDriftDigest).not.toBe(metadataDigest);
+  const metadataDrift = databaseState(metadataFixture);
+  await expect(runReconcileArtifacts(metadataFixture.args('apply'))).rejects.toThrow(
+    /current selector\/schema\/global state differs from plan/,
+  );
+  expect(databaseState(metadataFixture)).toEqual(metadataDrift);
+  expect(fence(metadataFixture)).toBeNull();
+
+  const digestFixture = fixture({ sourceMode: true });
+  seedState(digestFixture);
+  await runReconcileArtifacts(digestFixture.args('plan'));
+  withDatabase(digestFixture, (db) => {
+    db.query("UPDATE agent_host_state SET digest=? WHERE workspace_id=? AND kind='work'").run(
+      '0'.repeat(64),
+      digestFixture.workspace,
+    );
+  });
+  const digestDrift = databaseState(digestFixture);
+  await expect(runReconcileArtifacts(digestFixture.args('apply'))).rejects.toThrow(
+    /agent_host_state row integrity differs/,
+  );
+  expect(databaseState(digestFixture)).toEqual(digestDrift);
+  expect(fence(digestFixture)).toBeNull();
+});
+
+test('compact config binding rejects malformed UTF-8 payload bytes with unchanged decoded text', () => {
+  const f = fixture({ sourceMode: true });
+  seedState(f);
+  const config = loadRuntimeConfig(f.root);
+  withDatabase(f, (db) => {
+    const row = db.query("SELECT rowid,payload FROM agent_host_state WHERE workspace_id=? AND kind='work'").get(
+        f.workspace,
+      ),
+      work = JSON.parse(row.payload),
+      replacement = String.fromCharCode(0xfffd);
+    work.lifecycle.next_action = `Trace ${replacement} the accepted work request.`;
+    const payload = json(work),
+      validBytes = Buffer.from(payload, 'utf8'),
+      replacementBytes = Buffer.from(replacement, 'utf8'),
+      replacementIndex = validBytes.indexOf(replacementBytes);
+    expect(replacementIndex).toBeGreaterThanOrEqual(0);
+    const malformedBytes = Buffer.concat([
+      validBytes.subarray(0, replacementIndex),
+      Buffer.from([0xff]),
+      validBytes.subarray(replacementIndex + replacementBytes.length),
+    ]);
+    expect(malformedBytes.toString('utf8')).toBe(payload);
+    db.query('UPDATE agent_host_state SET payload=CAST(? AS TEXT),digest=? WHERE rowid=?').run(
+      malformedBytes,
+      canonicalJsonDigest(work),
+      row.rowid,
+    );
+    const stored = db
+      .query('SELECT payload,CAST(payload AS BLOB) AS raw_payload_bytes FROM agent_host_state WHERE rowid=?')
+      .get(row.rowid);
+    expect(stored.payload).toBe(payload);
+    expect(Buffer.from(stored.raw_payload_bytes)).toEqual(malformedBytes);
+    expect(Buffer.from(stored.payload, 'utf8')).not.toEqual(malformedBytes);
+  });
+  const before = databaseState(f);
+  withDatabase(f, (db) =>
+    expect(() => currentState(db, f.workspace, f.root, config)).toThrow(/payload UTF-8 is invalid/),
+  );
+  expect(databaseState(f)).toEqual(before);
+});
+
+test('compact config binding accepts a row just below the canonical byte budget', () => {
+  const f = fixture({ sourceMode: true });
+  seedState(f);
+  const config = loadRuntimeConfig(f.root);
+  withDatabase(f, (db) => {
+    const row = db.query("SELECT rowid,payload FROM agent_host_state WHERE workspace_id=? AND kind='work'").get(
+        f.workspace,
+      ),
+      work = JSON.parse(row.payload);
+    work.lifecycle.next_action = '';
+    const targetBytes = MAX_CANONICAL_BYTES - 1024,
+      baseBytes = Buffer.byteLength(json(work), 'utf8');
+    work.lifecycle.next_action = 'x'.repeat(targetBytes - baseBytes);
+    const payload = json(work),
+      payloadBytes = Buffer.byteLength(payload, 'utf8');
+    expect(payloadBytes).toBeGreaterThan(MAX_CANONICAL_BYTES - 2048);
+    expect(payloadBytes).toBeLessThanOrEqual(MAX_CANONICAL_BYTES);
+    db.query('UPDATE agent_host_state SET payload=?,digest=? WHERE rowid=?').run(
+      payload,
+      canonicalJsonDigest(work),
+      row.rowid,
+    );
+  });
+  const digest = withDatabase(f, (db) => currentState(db, f.workspace, f.root, config));
+  expect(digest).toMatch(/^[a-f0-9]{64}$/);
+});
+
+test('compact config binding rejects an oversized row before fetching its payload', () => {
+  const f = fixture({ sourceMode: true });
+  seedState(f);
+  const config = loadRuntimeConfig(f.root),
+    observedQueries = [];
+  withDatabase(f, (db) => {
+    const row = db.query("SELECT rowid FROM agent_host_state WHERE workspace_id=? AND kind='work'").get(f.workspace);
+    db.query('UPDATE agent_host_state SET payload=zeroblob(?) WHERE rowid=?').run(
+      MAX_CANONICAL_BYTES + 1,
+      row.rowid,
+    );
+    const observedDatabase = {
+      get inTransaction() {
+        return db.inTransaction;
+      },
+      query(sql) {
+        observedQueries.push(sql);
+        return db.query(sql);
+      },
+      transaction(callback) {
+        return db.transaction(callback);
+      },
+    };
+    expect(() => currentState(observedDatabase, f.workspace, f.root, config)).toThrow(
+      /row payload exceeds canonical byte budget/,
+    );
+    expect(observedQueries.some((sql) => sql.includes('SELECT *, CAST(payload AS BLOB)'))).toBe(false);
+  });
+});
 
 test('inspect/plan are read-only for YAML/receipt/database; fenced apply precedes authored edit and resume preserves provenance', async () => {
   const f = fixture();
@@ -2790,6 +3025,354 @@ test('public readonly bookkeeping preserves a pending no-egress code-researcher 
   expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
   expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engine);
   expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+}, 30000);
+
+test('released readonly bookkeeping UNKNOWN remains frozen through config rebind', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping'),
+    pendingIndex = 1,
+    { work } = seedHistoricalResearchLineage(f, request, state, { pendingIndex }),
+    pending = state.items[pendingIndex],
+    engineBefore = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  const releaseInspection = await run(args('inspect'));
+  f.put('release.json', json(releaseInspection.request));
+  const release = await run(args('apply'));
+  expect(release.rights_granted).toBe(false);
+  expect(release.runtime_acceptance).toBe(false);
+  const releasedState = databaseState(f),
+    releasedWork = JSON.parse(releasedState.agent_host_state.find((row) => row.kind === 'work').payload),
+    retainedJournal = JSON.parse(releasedState.agent_host_mastra_session_ledger[0].payload);
+  expect(releasedWork.lease).toBeNull();
+  expect(releasedWork.artifacts).toEqual(work.artifacts);
+  expect(releasedWork.artifacts.some((artifact) => artifact.artifact_id === 'research-' + pendingIndex)).toBe(false);
+  expect(retainedJournal.items[pendingIndex].issue_id).toBe(pending.issue_id);
+  expect(retainedJournal.items[pendingIndex].observation).toBeNull();
+  expect(retainedJournal.items[pendingIndex].research_activation).toEqual(pending.research_activation);
+  expect(retainedJournal.items[pendingIndex].research_normalization).toBeUndefined();
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engineBefore);
+
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  f.put('proposed.yaml', f.target);
+  const inspected = await runReconcileArtifacts(f.args('inspect'));
+  expect(inspected.status).toBe('inspect_ready_unauthorized');
+  expect(databaseState(f).agent_host_mastra_session_ledger).toEqual(releasedState.agent_host_mastra_session_ledger);
+  const planned = await runReconcileArtifacts(f.args('plan'));
+  expect(planned.status).toBe('planned');
+  expect(databaseState(f).agent_host_mastra_session_ledger).toEqual(releasedState.agent_host_mastra_session_ledger);
+  expect((await runReconcileArtifacts(f.args('apply'))).status).toBe('author_config_required');
+  f.put('agent-runtime.config.v1.yaml', f.target);
+  expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
+  expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
+  const after = databaseState(f),
+    afterJournal = JSON.parse(after.agent_host_mastra_session_ledger[0].payload);
+  expect(after.agent_host_state).toEqual(releasedState.agent_host_state);
+  expect(after.agent_host_mastra_session_ledger).toEqual(releasedState.agent_host_mastra_session_ledger);
+  expect(afterJournal.items[pendingIndex].observation).toBeNull();
+  expect(afterJournal.items[pendingIndex].research_activation).toEqual(pending.research_activation);
+  expect(afterJournal.items[pendingIndex].research_normalization).toBeUndefined();
+  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engineBefore);
+}, 30000);
+
+test('readonly bookkeeping config rebind rejects a changed retained release operation', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping');
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex: 1 });
+  const inspection = await run(args('inspect'));
+  f.put('release.json', json(inspection.request));
+  await run(args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  withDatabase(f, (db) => {
+    const row = db.query("SELECT rowid,payload FROM agent_host_state WHERE kind='ledger'").get(),
+      ledger = JSON.parse(row.payload),
+      release = ledger.operations.find((operation) => operation.work_id === request.identity.work_id);
+    release.decision_pointer = 'fixture:foreign-release';
+    db.query('UPDATE agent_host_state SET payload=?,digest=? WHERE rowid=?').run(
+      json(ledger),
+      canonicalJsonDigest(ledger),
+      row.rowid,
+    );
+  });
+  const before = databaseState(f);
+  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown/);
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('readonly bookkeeping config rebind rejects retained release source revision drift', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping');
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex: 1 });
+  const inspection = await run(args('inspect'));
+  f.put('release.json', json(inspection.request));
+  await run(args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  withDatabase(f, (db) => {
+    const row = db.query("SELECT rowid,payload FROM agent_host_state WHERE kind='ledger'").get(),
+      ledger = JSON.parse(row.payload),
+      release = ledger.operations.find((operation) => operation.work_id === request.identity.work_id);
+    release.source_revision = 'fixture:foreign-source-revision';
+    const payload = json(ledger);
+    db.query('UPDATE agent_host_state SET payload=?,digest=? WHERE rowid=?').run(
+      payload,
+      canonicalJsonDigest(ledger),
+      row.rowid,
+    );
+    expect(canonicalJsonDigest(JSON.parse(payload))).toBe(canonicalJsonDigest(ledger));
+  });
+  const before = databaseState(f);
+  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown/);
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('readonly bookkeeping config rebind rejects a coherent distinct released ticket', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping');
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex: 1 });
+  const inspection = await run(args('inspect'));
+  f.put('release.json', json(inspection.request));
+  await run(args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  f.put('proposed.yaml', f.target);
+  withDatabase(f, (db) => {
+    const row = db.query("SELECT rowid,payload FROM agent_host_state WHERE kind='ledger'").get(),
+      ledger = JSON.parse(row.payload),
+      activationBinding = state.items[1].research_activation.plan.binding,
+      ticket = ledger.tickets.find((entry) => entry.ticket_id === activationBinding.lease_ticket_id),
+      claim = ledger.claims.find((entry) => entry.ticket_id === ticket.ticket_id),
+      release = ledger.operations.find(
+        (entry) => entry.kind === 'release' && entry.work_id === request.identity.work_id,
+      ),
+      distinctTicketId = randomUUID(),
+      distinctClaimId = randomUUID(),
+      distinctTicket = { ...structuredClone(ticket), ticket_id: distinctTicketId, claim_ids: [distinctClaimId] },
+      distinctClaim = { ...structuredClone(claim), claim_id: distinctClaimId, ticket_id: distinctTicketId };
+    expect(ticket.status).toBe('released');
+    expect(claim.status).toBe('released');
+    expect(distinctTicketId).not.toBe(activationBinding.lease_ticket_id);
+    ledger.tickets.push(distinctTicket);
+    ledger.claims.push(distinctClaim);
+    release.ticket_id = distinctTicketId;
+    const payload = json(ledger),
+      digest = canonicalJsonDigest(ledger);
+    db.query('UPDATE agent_host_state SET payload=?,digest=? WHERE rowid=?').run(payload, digest, row.rowid);
+    expect(db.query('SELECT digest FROM agent_host_state WHERE rowid=?').get(row.rowid).digest).toBe(digest);
+  });
+  const config = loadRuntimeConfig(f.root),
+    before = databaseState(f);
+  withDatabase(f, (db) =>
+    expect(() => currentState(db, f.workspace, f.root, config)).toThrow(/pending\/unknown/),
+  );
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('readonly bookkeeping config rebind selects the current release with coherent older release history', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping'),
+    priorJournal = structuredClone(state);
+  const priorJournalDigest = withDatabase(f, (db) =>
+    db
+      .query('SELECT digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+      .get(f.workspace, request.identity.work_id, request.attempt).digest,
+  );
+  expect(priorJournalDigest).toBe(canonicalJsonDigest(priorJournal));
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex: 1 });
+  withDatabase(f, (db) => {
+    const ledgerRow = db.query("SELECT rowid,revision,payload FROM agent_host_state WHERE kind='ledger'").get(),
+      ledger = JSON.parse(ledgerRow.payload),
+      activationBinding = state.items[1].research_activation.plan.binding,
+      ticket = ledger.tickets.find((entry) => entry.ticket_id === activationBinding.lease_ticket_id),
+      claim = ledger.claims.find((entry) => entry.ticket_id === ticket.ticket_id),
+      oldTicketId = randomUUID(),
+      oldClaimId = randomUUID(),
+      oldPointer = 'fixture:older-release',
+      oldCreatedAt = new Date(Date.parse(ticket.created_at) - 1000).toISOString(),
+      oldTicket = {
+        ...structuredClone(ticket),
+        ticket_id: oldTicketId,
+        sequence: ticket.sequence,
+        claim_ids: [oldClaimId],
+        status: 'released',
+        expires_at: null,
+        active_resources: [],
+        blocked_resources: [],
+        created_at: oldCreatedAt,
+      },
+      oldClaim = {
+        ...structuredClone(claim),
+        claim_id: oldClaimId,
+        ticket_id: oldTicketId,
+        status: 'released',
+        created_at: oldCreatedAt,
+        renewed_at: oldCreatedAt,
+      },
+      oldRelease = {
+        schema: 'CoordinationOperation/v1',
+        kind: 'release',
+        ticket_id: oldTicketId,
+        work_id: request.identity.work_id,
+        thread_id: ticket.thread_id,
+        source_revision: ticket.source_revision,
+        resources: [...ticket.exclusive_resources],
+        operation_id:
+          'readonly-bookkeeping-release-' +
+          canonicalJsonDigest({
+            work_id: request.identity.work_id,
+            nativeSessionHandle: ticket.thread_id,
+            userRequestPointer: oldPointer,
+            requestIntent: 'next_work',
+            journal: priorJournalDigest,
+          }).slice(0, 40),
+        from_ledger_revision: 1,
+        to_ledger_revision: 2,
+        decided_by: ticket.thread_id,
+        decision_pointer: oldPointer,
+        created_at: oldCreatedAt,
+      };
+    expect(ledgerRow.revision).toBe(1);
+    expect(ledger.revision).toBe(1);
+    expect(ticket.sequence).toBe(1);
+    expect(ticket.status).toBe('active');
+    expect(claim.status).toBe('active');
+    ticket.sequence = 2;
+    ledger.tickets.unshift(oldTicket);
+    ledger.claims.unshift(oldClaim);
+    ledger.next_sequence = 3;
+    ledger.revision = 2;
+    ledger.operations.push(oldRelease);
+    const payload = json(ledger), digest = canonicalJsonDigest(ledger);
+    db.query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE rowid=?').run(
+      ledger.revision,
+      payload,
+      digest,
+      ledgerRow.rowid,
+    );
+    const snapshot = new HostStateStore(db, f.workspace).readHostStateSnapshot(request.identity);
+    expect(snapshot.ledgerVersion.revision).toBe(2);
+    expect(snapshot.ledger).toEqual(ledger);
+    expect(snapshot.ledger.tickets.map((entry) => [entry.ticket_id, entry.sequence, entry.status])).toEqual([
+      [oldTicketId, 1, 'released'],
+      [activationBinding.lease_ticket_id, 2, 'active'],
+    ]);
+    expect(snapshot.ledger.operations).toEqual([oldRelease]);
+  });
+  const inspection = await run(args('inspect'));
+  f.put('release.json', json(inspection.request));
+  await run(args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  f.put('proposed.yaml', f.target);
+  withDatabase(f, (db) => {
+    const ledgerRow = db.query("SELECT revision,payload FROM agent_host_state WHERE kind='ledger'").get(),
+      journalRow = db
+        .query('SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(f.workspace, request.identity.work_id, request.attempt),
+      ledger = JSON.parse(ledgerRow.payload),
+      current = ledger.operations.find(
+        (entry) => entry.kind === 'release' && entry.work_id === request.identity.work_id && entry.to_ledger_revision === 3,
+      );
+    expect(ledgerRow.revision).toBe(3);
+    expect(ledger.revision).toBe(3);
+    expect(current.from_ledger_revision).toBe(2);
+    expect(current.to_ledger_revision).toBe(3);
+    expect(JSON.parse(journalRow.payload).items[1].research_activation).toBeTruthy();
+  });
+  const config = loadRuntimeConfig(f.root),
+    before = databaseState(f);
+  const digest = withDatabase(f, (db) => currentState(db, f.workspace, f.root, config));
+  expect(digest).toMatch(/^[a-f0-9]{64}$/);
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('readonly bookkeeping config rebind rejects two current release candidates', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping');
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex: 1 });
+  const inspection = await run(args('inspect'));
+  f.put('release.json', json(inspection.request));
+  await run(args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  f.put('proposed.yaml', f.target);
+  withDatabase(f, (db) => {
+    const ledgerRow = db.query("SELECT rowid,payload FROM agent_host_state WHERE kind='ledger'").get(),
+      journalRow = db
+        .query('SELECT digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(f.workspace, request.identity.work_id, request.attempt),
+      ledger = JSON.parse(ledgerRow.payload),
+      current = ledger.operations.find(
+        (entry) => entry.kind === 'release' && entry.work_id === request.identity.work_id,
+      ),
+      secondPointer = 'fixture:second-current-release',
+      second = {
+        ...structuredClone(current),
+        operation_id:
+          'readonly-bookkeeping-release-' +
+          canonicalJsonDigest({
+            work_id: request.identity.work_id,
+            nativeSessionHandle: current.thread_id,
+            userRequestPointer: secondPointer,
+            requestIntent: 'linked_correction',
+            journal: journalRow.digest,
+          }).slice(0, 40),
+        decision_pointer: secondPointer,
+      };
+    ledger.operations.push(second);
+    db.query('UPDATE agent_host_state SET payload=?,digest=? WHERE rowid=?').run(
+      json(ledger),
+      canonicalJsonDigest(ledger),
+      ledgerRow.rowid,
+    );
+  });
+  const config = loadRuntimeConfig(f.root),
+    before = databaseState(f);
+  withDatabase(f, (db) =>
+    expect(() => currentState(db, f.workspace, f.root, config)).toThrow(/pending\/unknown/),
+  );
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('generic readonly UNKNOWN rejects an unactivated pending item when Journal history has activation', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping'),
+    pendingIndex = 1;
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex });
+  const releaseInspection = await run(args('inspect'));
+  f.put('release.json', json(releaseInspection.request));
+  await run(args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  f.put('proposed.yaml', f.target);
+  withDatabase(f, (db) => {
+    const row = db
+        .query('SELECT rowid,payload FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(f.workspace, request.identity.work_id, request.attempt),
+      journal = JSON.parse(row.payload);
+    expect(journal.items[0].research_activation).toBeTruthy();
+    expect(journal.items[pendingIndex].research_activation).toBeTruthy();
+    delete journal.items[pendingIndex].research_activation;
+    delete journal.items[pendingIndex].research_normalization;
+    const payload = json(journal);
+    db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE rowid=?').run(
+      payload,
+      canonicalJsonDigest(journal),
+      row.rowid,
+    );
+  });
+  const config = loadRuntimeConfig(f.root),
+    before = databaseState(f);
+  withDatabase(f, (db) =>
+    expect(() => currentState(db, f.workspace, f.root, config)).toThrow(/pending\/unknown/),
+  );
+  expect(databaseState(f)).toEqual(before);
+}, 30000);
+
+test('readonly bookkeeping proof drift after config plan denies apply without changing Host state', async () => {
+  const { f, request, args, state } = historicalFixture('readonly_bookkeeping'),
+    pendingIndex = 1;
+  seedHistoricalResearchLineage(f, request, state, { pendingIndex });
+  const pending = state.items[pendingIndex],
+    inspection = await run(args('inspect'));
+  f.put('release.json', json(inspection.request));
+  await run(args('apply'));
+  f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+  const planned = await runReconcileArtifacts(f.args('plan'));
+  expect(planned.status).toBe('planned');
+  const activationPath = pending.research_activation.plan.history_path,
+    activationBytes = readFileSync(path.join(f.root, activationPath), 'utf8');
+  f.put(activationPath, activationBytes + '{}\n');
+  const beforeDeniedApply = databaseState(f);
+  await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(/pending\/unknown|activation|history/i);
+  expect(databaseState(f)).toEqual(beforeDeniedApply);
+  expect(readFileSync(path.join(f.root, activationPath), 'utf8')).toBe(activationBytes + '{}\n');
 }, 30000);
 
 test('public readonly bookkeeping denies pending official-docs egress without changing state', async () => {

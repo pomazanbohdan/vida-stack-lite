@@ -2370,6 +2370,7 @@ export class HostStateStore {
   readonly #verifyWorkflowApproval: WorkflowAttemptApprovalVerifier['verify'] | undefined;
   readonly #verifyMaintenanceRelease: MaintenanceReleaseVerifier['verify'] | undefined;
   readonly #verifyMaintenanceAcquisition: MaintenanceReleaseVerifier['verifyAcquisition'];
+  #maintenanceSnapshotReadScopeActive = false;
   readonly #maintenancePrincipal: string | undefined;
   readonly #maintenanceProjectIds: readonly string[] | undefined;
   readonly #workflowApprovalPrincipal: string | undefined;
@@ -4078,11 +4079,33 @@ export class HostStateStore {
     requireState(result.changes === 1, 'maintenance fence compare-and-swap conflict');
   }
   #assertMaintenanceAcquisition(binding: MaintenanceFenceBinding, prior: MaintenanceFence | null): void {
-    if (this.#verifyMaintenanceAcquisition)
-      requireState(
-        this.#verifyMaintenanceAcquisition(snapshot(binding), snapshot(prior)) === undefined,
-        'maintenance acquisition verifier must be synchronous and throw on drift',
+    if (this.#verifyMaintenanceAcquisition) {
+      this.#withMaintenanceSnapshotReadScope(() =>
+        requireState(
+          this.#verifyMaintenanceAcquisition!(snapshot(binding), snapshot(prior)) === undefined,
+          'maintenance acquisition verifier must be synchronous and throw on drift',
+        ),
       );
+    }
+  }
+  #withMaintenanceSnapshotReadScope<T>(callback: () => T): T {
+    requireState(
+      !this.#maintenanceSnapshotReadScopeActive,
+      'maintenance snapshot read scope cannot be re-entered',
+    );
+    this.#maintenanceSnapshotReadScopeActive = true;
+    try {
+      const result = callback();
+      requireState(
+        result === null ||
+          (typeof result !== 'object' && typeof result !== 'function') ||
+          typeof (result as { then?: unknown }).then !== 'function',
+        'maintenance snapshot read callback must be synchronous',
+      );
+      return result;
+    } finally {
+      this.#maintenanceSnapshotReadScopeActive = false;
+    }
   }
   acquireMaintenanceFence(binding: MaintenanceFenceBinding): MaintenanceFenceReceipt {
     const input = checkedMaintenanceBinding(snapshot(binding));
@@ -4656,9 +4679,13 @@ export class HostStateStore {
     if (kind === 'work') requireState(identityKey(workIdentity(value as WorkState)) === id, 'stored work key mismatch');
     return value;
   }
-  #read(identity: WorkIdentity): HostStateSnapshot {
+  #read(identity: WorkIdentity, allowHeldMaintenance = false): HostStateSnapshot {
+    requireState(
+      !allowHeldMaintenance || (this.#database.inTransaction && this.#maintenanceSnapshotReadScopeActive),
+      'held maintenance read is limited to maintenance snapshot inspection',
+    );
     this.#assertDatabaseSupport();
-    this.#assertMaintenanceAvailable();
+    if (!allowHeldMaintenance) this.#assertMaintenanceAvailable();
     const work = this.#load('work', identityKey(identity)) as WorkState | null;
     const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
     requireState(
@@ -4675,8 +4702,24 @@ export class HostStateStore {
     });
   }
   readHostStateSnapshot(identity: WorkIdentity): HostStateSnapshot {
+    if (this.#database.inTransaction && this.#maintenanceSnapshotReadScopeActive) return this.#read(identity, true);
     requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
     return this.#database.transaction(() => this.#read(identity)).deferred();
+  }
+  withMaintenanceInspection<T>(receipt: MaintenanceFenceReceipt, inspect: () => T): T {
+    requireState(
+      typeof inspect === 'function' && inspect.constructor.name !== 'AsyncFunction',
+      'maintenance snapshot inspection callback must be synchronous',
+    );
+    const input = snapshot(receipt);
+    requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
+    return this.#database
+      .transaction(() => {
+        const held = this.#assertMaintenanceReceipt(input);
+        this.#assertMaintenanceProjects(held.binding);
+        return this.#withMaintenanceSnapshotReadScope(inspect);
+      })
+      .deferred();
   }
   /** One transaction reads the existing authoritative rows; it grants no admission or completion. */
   readWorkspaceSnapshot(): {
