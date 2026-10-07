@@ -269,8 +269,7 @@ try {
     Assert-SafePath $stage
     Remove-Item -LiteralPath $stage -Recurse -Force
     $stage = $null
-    Write-Output "Installed vida-agent $($version.version)."
-    Write-Output 'Physical installation complete. Release qualification and Runtime acceptance remain separate.'
+    Write-Output (@{ schema='VidaNativeInstallationResult/v1'; action=$Action; path=$command; version=$version.version; bytes=(Get-Item -LiteralPath $command).Length; sha256=$candidateHash; path_added=[bool]$pathAdded; cleanup_complete=$true; runtime_accepted=$false } | ConvertTo-Json -Compress)
 } catch {
     $failure = $_
     if ($committed) { Write-Warning 'Native operation committed; cleanup is incomplete. Retain files and inspect before retry.' }

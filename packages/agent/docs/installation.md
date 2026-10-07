@@ -283,19 +283,23 @@ cache. An exact hit reuses the existing entry; it need not save another entry.
 Confirm `cache-hit` on a later required warm build. Keep missing or empty cache
 evidence explicit. Do not start a separate build solely to measure caching.
 
-Current installed build: run 37655774482, artifact 11497724929, version 0.1.3,
-embedded Bun 1.4.2. The system native file is 133492224 bytes. Exact
+Current installed build: run 37662333157, artifact 11500942811, version 0.1.3,
+embedded Bun 1.4.2. The system native file is 133490688 bytes. Exact
 bytes, current instructions and effective PATH are verified. Previous consumer
 native and transient previous files are removed. User Runtime acceptance is separate.
 This build restored the exact Bun cache entry 8634894372,
-80704784 bytes. The exact hit required no new cache save. The native file grew
-by 149504 bytes (146 KiB) from the previous installed payload.
+80704784 bytes. The exact hit required no new cache save. The native file shrank
+by 1536 bytes (1.5 KiB) from the previous installed payload.
 The installer imports its own in-box Utility module through $PSHOME, so a Node/Bun
 caller does not depend on an inherited PSModulePath.
 
 Keep the installer result separate from later observations. If installation
 returns success and the selected bytes are installed, a failed observer needs
 only a corrected observation. Do not reinstall because that observer failed.
+Reuse `VidaNativeInstallationResult/v1` for the installer's actual version,
+byte-integrity and cleanup result. Confirm effective PATH once. Do not repeat
+native version/hash reads or project recovery inspection during installation.
+Project readiness is a separate supported work operation.
 Change file namespaces separately from public command names and `--kind`
 arguments. Keep those command identities as exact supported values.
 

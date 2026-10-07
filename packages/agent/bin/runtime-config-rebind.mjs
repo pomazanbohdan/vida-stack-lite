@@ -3,6 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { closeSync, constants, fstatSync, openSync, readFileSync, readSync, lstatSync } from 'node:fs';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
+import { openRootFileSync, sameFileIdentity } from '@openclaw/fs-safe/advanced';
 import { canonicalJsonDigest, MAX_CANONICAL_BYTES } from '../src/contracts/public-ingress.ts';
 import {
   loadRuntimeConfig,
@@ -46,6 +47,7 @@ const MAX_CONFIGURED_CONTEXT_REFERENCES = 16;
 const MAX_CONFIGURED_CONTEXT_FILE_BYTES = 65536;
 const MAX_CONFIGURED_CONTEXT_TOTAL_BYTES = 262144;
 const MAX_CONFIGURED_CONTEXT_EXCERPT_CHARS = 8192;
+const MAX_NATIVE_ASSET_BYTES = 1024 * 1024 * 1024;
 const json = (value) => JSON.stringify(value, null, 2) + '\n';
 const receiptPath = '.agent/runtime-initialization.v1.json';
 const configPath = 'agent-runtime.config.v1.yaml';
@@ -2047,6 +2049,67 @@ function requireEffectivePath(executable) {
   requireRebind(entries.some((entry) => samePath(entry, directory)), 'installed command directory is absent from effective PATH');
 }
 
+function streamedNativeAssetDigest(access, relative, expectedBytes) {
+  requireRebind(
+    Number.isSafeInteger(expectedBytes) && expectedBytes > 0 && expectedBytes <= MAX_NATIVE_ASSET_BYTES,
+    'native installation source asset exceeds its bounded size',
+  );
+  const absolutePath = path.join(access.repository_root, ...relative.split('/')),
+    opened = openRootFileSync({
+      absolutePath,
+      rootPath: access.repository_root,
+      boundaryLabel: 'native installation source asset',
+      maxBytes: expectedBytes,
+      rejectHardlinks: true,
+      rejectSymlinks: true,
+      allowedType: 'file',
+    });
+  requireRebind(opened.ok, 'native installation source asset is unsafe');
+  try {
+    const initialDescriptor = fstatSync(opened.fd),
+      initialName = lstatSync(absolutePath),
+      sameVersion = (left, right) =>
+        sameFileIdentity(left, right) &&
+        left.isFile() &&
+        right.isFile() &&
+        !left.isSymbolicLink() &&
+        !right.isSymbolicLink() &&
+        left.nlink === 1 &&
+        right.nlink === 1 &&
+        left.size === right.size &&
+        left.mtimeMs === right.mtimeMs &&
+        left.ctimeMs === right.ctimeMs;
+    requireRebind(
+      sameVersion(opened.stat, initialDescriptor) &&
+        sameVersion(initialDescriptor, initialName) &&
+        initialDescriptor.size === expectedBytes,
+      'native installation source asset changed before read',
+    );
+    const hash = createHash('sha256'),
+      chunk = Buffer.alloc(1024 * 1024);
+    let bytesRead = 0;
+    for (;;) {
+      const length = Math.min(chunk.length, expectedBytes - bytesRead + 1),
+        count = readSync(opened.fd, chunk, 0, length, bytesRead);
+      if (count === 0) break;
+      bytesRead += count;
+      requireRebind(bytesRead <= expectedBytes, 'native installation source asset grew beyond its declared size');
+      hash.update(chunk.subarray(0, count));
+    }
+    const finalDescriptor = fstatSync(opened.fd),
+      finalName = lstatSync(absolutePath);
+    requireRebind(
+      bytesRead === expectedBytes &&
+        sameVersion(initialDescriptor, finalDescriptor) &&
+        sameVersion(finalDescriptor, finalName),
+      'native installation source asset changed during read',
+    );
+    return hash.digest('hex');
+  } finally {
+    closeSync(opened.fd);
+  }
+}
+
 function validateSourceCorrectionReport(report, request, access, selfAttestation) {
   requireRebind(validateExternalSourceCorrectionReport(report), 'external source correction report schema invalid');
   const completeReport = { ...report, native_self_attestation: selfAttestation };
@@ -2146,14 +2209,14 @@ function validateSourceCorrectionReport(report, request, access, selfAttestation
       !sourcePath.includes('\\') &&
       !sourcePath.startsWith('/') &&
       !/^[A-Za-z]:/.test(sourcePath) &&
+      !/[\u0000-\u001f:]/.test(sourcePath) &&
       sourcePath.split('/').every((part) => part && part !== '.' && part !== '..') &&
       access.fileExists(sourcePath, 'native installation source asset'),
     'installed source asset path is not a current project file',
   );
-  const sourceAssetBytes = access.readBytes(sourcePath, 'native installation source asset');
+  const sourceAssetSha256 = streamedNativeAssetDigest(access, sourcePath, manifest.asset.bytes);
   requireRebind(
-    sourceAssetBytes.length === manifest.asset.bytes &&
-      sha(sourceAssetBytes) === manifest.asset.sha256 &&
+    sourceAssetSha256 === manifest.asset.sha256 &&
       installation.source_sha256 === manifest.asset.sha256 &&
       installation.prior_bytes === request.prior_system_update.installed_bytes &&
       installation.selected_bytes === selfAttestation.executable_bytes &&
@@ -2215,14 +2278,27 @@ function parseSourceCorrectionArgs(args) {
           ...(Object.hasOwn(values, '--publish-operation') ? ['--publish-operation'] : [])]
       : mode === 'repair-apply'
         ? [...base, '--report']
-        : base;
+        : mode === 'repair-withdraw'
+          ? [...base, '--expected-request']
+          : base;
   requireRebind(
     Object.keys(values).sort().join('|') === expected.sort().join('|') &&
       values['--kind'] === 'runtime-config-delivery' &&
-      ['repair-inspect', 'repair-plan', 'repair-apply', 'repair-resume', 'repair-transition'].includes(mode) &&
+      [
+        'repair-inspect',
+        'repair-plan',
+        'repair-apply',
+        'repair-resume',
+        'repair-transition',
+        'repair-withdraw',
+      ].includes(mode) &&
       path.isAbsolute(values['--project-root'] ?? '') &&
       path.resolve(values['--project-root']) === values['--project-root'] &&
       identifier.test(values['--repair-id']) &&
+      (mode !== 'repair-withdraw' ||
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(
+          values['--expected-request'] ?? '',
+        )) &&
       (planning
         ? ['--source-beforeimages', '--prior-system-update'].every(
             (key) => path.isAbsolute(values[key] ?? '') && path.resolve(values[key]) === values[key],
@@ -2721,6 +2797,142 @@ function sourceCorrectionCurrentRequest({
   return current;
 }
 
+function validateSourceCorrectionWithdrawal({
+  access,
+  root,
+  config,
+  db,
+  operationPath,
+  operationBytes,
+  operation,
+  artifact,
+  expectedRequest,
+}) {
+  validateSourceCorrectionArtifact(artifact);
+  requireRebind(
+    artifact.status === 'requested' &&
+      artifact.revision === 1 &&
+      !Object.hasOwn(artifact, 'report') &&
+      !Object.hasOwn(artifact, 'completion'),
+    'only an unapplied source correction request can be withdrawn',
+  );
+  const request = artifact.request,
+    plan = operation.plan;
+  requireRebind(
+    request.request_id === expectedRequest &&
+      operation.schema === 'SourceDeliveryConfigRebindOperation/v1' &&
+      operation.revision === 2 &&
+      operation.phase === 'fenced' &&
+      operation.maintenance_released === false &&
+      request.operation_id === plan.operation_id &&
+      request.original_operation.path === operationPath &&
+      request.original_operation.sha256 === sha(operationBytes) &&
+      request.original_operation.plan_digest === operation.plan_digest &&
+      request.original_operation.revision === operation.revision &&
+      request.original_operation.phase === operation.phase &&
+      request.original_operation.maintenance_released === operation.maintenance_released &&
+      request.repository_root === root &&
+      request.repository_id === plan.repository_id &&
+      canonicalJsonDigest(request.project_ids) === canonicalJsonDigest(plan.project_ids) &&
+      request.workspace_id === plan.workspace_id &&
+      request.state_digest === plan.state_digest &&
+      request.config.baseline_config_digest === plan.old_config_digest &&
+      request.config.target_config_digest === plan.target_config_digest &&
+      request.config.baseline_receipt_sha256 === sha(Buffer.from(plan.baseline_receipt)) &&
+      request.config.initialization_schema_digest === plan.initialization_schema_digest &&
+      request.old_source.digest === plan.bundle_digest &&
+      request.source_beforeimages.snapshot_digest === request.old_source.digest,
+    'source correction request does not bind the original fenced delivery operation',
+  );
+
+  const baseline = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
+    target = targetConfig({ readBytes: () => Buffer.from(plan.target_yaml) }, root, baseline, configPath).config,
+    baselineReceipt = JSON.parse(plan.baseline_receipt),
+    projectIds = sameIdentity(root, baseline, baselineReceipt),
+    currentReceipt = readReceipt(access, config),
+    currentYamlBytes = access.readBytes(configPath, 'current authored configuration'),
+    currentYaml = currentYamlBytes.toString('utf8'),
+    yamlState = currentYaml === plan.baseline_yaml ? 'baseline' : currentYaml === plan.target_yaml ? 'target' : null,
+    schemaBytes = runtimePackageAccess().readBytes(
+      'schemas/runtime-initialization.v1.schema.json',
+      'initialization schema',
+    ),
+    sourceProjectIds = config.projects
+      .filter((project) => path.resolve(root, project.project_root) === path.resolve(root, baseline.runtime.bundle))
+      .map((project) => project.project_id)
+      .sort(),
+    selection = snapshotDeclaredSources(access, [selectorPath, 'package.json']);
+  requireRebind(
+    baseline.runtime.bundle === 'packages/agent' &&
+      target.runtime.bundle === baseline.runtime.bundle &&
+      config.repository.repository_id === plan.repository_id &&
+      canonicalJsonDigest(sameIdentity(root, config, currentReceipt.value)) === canonicalJsonDigest(projectIds) &&
+      canonicalJsonDigest(projectIds) === canonicalJsonDigest(plan.project_ids) &&
+      sourceProjectIds.length === 1 &&
+      sourceProjectIds[0] === 'agent' &&
+      !selection.entries.find((entry) => entry.path === selectorPath)?.exists &&
+      selection.digest === plan.selector_digest &&
+      (currentYamlBytes.toString('utf8') === plan.baseline_yaml ||
+        currentYamlBytes.toString('utf8') === plan.target_yaml),
+    'source correction withdrawal configuration differs from the original operation',
+  );
+  requireRebind(
+    yamlState !== null &&
+      request.config.yaml_state === yamlState &&
+      request.config.current_yaml_sha256 === sha(currentYamlBytes) &&
+      currentReceipt.bytes.toString('utf8') === plan.baseline_receipt &&
+      request.config.receipt_sha256 === sha(currentReceipt.bytes) &&
+      request.config.receipt_sha256 === request.config.baseline_receipt_sha256 &&
+      sha(schemaBytes) === plan.initialization_schema_digest,
+    'source correction withdrawal YAML, receipt or initialization schema changed',
+  );
+
+  const beforeimages = sourceBeforeimageBinding({
+      access,
+      root,
+      operationId: request.operation_id,
+      operationPath,
+      operationBytes,
+      frozen: request.source_beforeimages,
+    }),
+    priorSystemUpdate = priorSystemUpdateBinding({
+      access,
+      root,
+      frozen: request.prior_system_update,
+    }),
+    workspaceId = deriveWorkspaceId(plan.repository_id, root),
+    inspection = {
+      principal: 'vida-agent-runtime-config-source-correction',
+      projectIds: plan.project_ids,
+      verify: async () => null,
+    },
+    store = new HostStateStore(db, workspaceId, undefined, undefined, undefined, inspection, root),
+    expectedBinding = fenceBinding(plan, operation.plan_digest),
+    fence = store.readMaintenanceFence();
+  requireRebind(
+    workspaceId === plan.workspace_id &&
+      canonicalJsonDigest(beforeimages.snapshot) === canonicalJsonDigest(request.old_source) &&
+      canonicalJsonDigest(beforeimages.binding) === canonicalJsonDigest(request.source_beforeimages) &&
+      canonicalJsonDigest(priorSystemUpdate) === canonicalJsonDigest(request.prior_system_update) &&
+      fence?.status === 'held' &&
+      fence.workspace_id === workspaceId &&
+      canonicalJsonDigest(fence.binding) === canonicalJsonDigest(expectedBinding) &&
+      canonicalJsonDigest(request.fence) === canonicalJsonDigest(fence),
+    'source correction withdrawal fence or immutable custody binding changed',
+  );
+  const maintenanceReceipt = { fence, token: plan.token },
+    stateDigest = store.withMaintenanceInspection(maintenanceReceipt, () =>
+      currentState(db, workspaceId, root, baseline, store, maintenanceReceipt),
+    ),
+    custody = sourceCorrectionCustody(db, workspaceId, store);
+  requireRebind(
+    stateDigest === plan.state_digest &&
+      stateDigest === request.state_digest &&
+      canonicalJsonDigest(custody) === canonicalJsonDigest(request.custody),
+    'source correction withdrawal Host state or custody CAS changed',
+  );
+}
+
 function validateSourceCorrectionBridge({
   access,
   root,
@@ -3001,6 +3213,72 @@ async function runSourceCorrectionRepair(args, { onPhase } = {}) {
           requireRebind(access.fileExists(sidecarPath, 'source correction repair presence'), 'source correction repair sidecar is missing');
           return readSourceCorrectionArtifact(access, sidecarPath);
         };
+      if (mode === 'repair-withdraw') {
+        return await access.withExclusiveLockAsync(operationPath, 'config rebind operation', async () => {
+          const latest = readOperation(access, operationPath, id, root, true),
+            expectedRequest = values['--expected-request'],
+            historyDirectory = `${config.control.work_root}/${id}/source-correction-request-history`,
+            historyPath = `${historyDirectory}/${expectedRequest}.json`;
+          requireRebind(latest.bytes.equals(stored.bytes), 'original delivery operation changed before source correction withdrawal');
+          const validate = (candidate) =>
+              validateSourceCorrectionWithdrawal({
+                access,
+                root,
+                config: loadRuntimeConfig(root),
+                db,
+                operationPath,
+                operationBytes: latest.bytes,
+                operation: latest.value,
+                artifact: candidate.value,
+                expectedRequest,
+              }),
+            active = access.fileExists(sidecarPath, 'source correction repair presence');
+          if (active) {
+            const observed = readSourceCorrectionArtifact(access, sidecarPath);
+            validate(observed);
+            access.ensureDirectory(historyDirectory, 'source correction request history');
+            requireRebind(
+              !access.fileExists(historyPath, 'source correction request history presence'),
+              'source correction request history entry already exists while the request is active',
+            );
+            const currentOperation = readOperation(access, operationPath, id, root, true),
+              current = readSourceCorrectionArtifact(access, sidecarPath);
+            requireRebind(
+              currentOperation.bytes.equals(latest.bytes) && current.bytes.equals(observed.bytes),
+              'source correction request or original operation changed before withdrawal',
+            );
+            validate(current);
+            await access.moveNoReplaceAsync(
+              sidecarPath,
+              historyPath,
+              sha(current.bytes),
+              'source correction request withdrawal',
+            );
+            requireRebind(
+              !access.fileExists(sidecarPath, 'source correction repair presence'),
+              'source correction request remains active after withdrawal',
+            );
+            const archived = readSourceCorrectionArtifact(access, historyPath);
+            requireRebind(archived.bytes.equals(current.bytes), 'archived source correction request bytes differ');
+            validate(archived);
+            onPhase?.('withdrawn');
+          } else {
+            requireRebind(
+              access.fileExists(historyPath, 'source correction request history presence'),
+              'source correction request is neither active nor archived',
+            );
+            const archived = readSourceCorrectionArtifact(access, historyPath);
+            validate(archived);
+          }
+          return {
+            status: 'withdrawn',
+            operation_id: id,
+            request_id: expectedRequest,
+            history_path: historyPath,
+            writes_host_state: false,
+          };
+        });
+      }
       if (mode === 'repair-transition') {
         return await access.withExclusiveLockAsync(operationPath, 'config rebind operation', async () => {
           const latest = readOperation(access, operationPath, id, root, true),
@@ -3265,7 +3543,11 @@ function exactContext(access, root, config, operation, db, hostStore, maintenanc
 
 /** Only the existing initialization receipt is rebound; caller-owned YAML is never written. */
 export async function runRuntimeConfigRebind(args, { onPhase } = {}) {
-  if (['repair-inspect', 'repair-plan', 'repair-apply', 'repair-resume', 'repair-transition'].includes(args[args.indexOf('--mode') + 1]))
+  if (
+    ['repair-inspect', 'repair-plan', 'repair-apply', 'repair-resume', 'repair-transition', 'repair-withdraw'].includes(
+      args[args.indexOf('--mode') + 1],
+    )
+  )
     return runSourceCorrectionRepair(args, { onPhase });
   const values = parse(args),
     root = values['--project-root'];

@@ -1236,10 +1236,25 @@ An engineering checkpoint may keep the current semantic version and pending
 publication operation. Version rollback denies. Apply still requires a fresh
 CI run and artifact, exact Source/native inputs and the actual prior installation
 bytes. The original fenced configuration operation stays distinct.
+The installer performs one version/byte postcheck and returns its structured
+result. The caller reuses it and confirms PATH once. Project recovery and
+admission are separate from installation; their failure does not repeat it.
 The formation owner may advance that operation's current pointer only for a
 different Source request, Source binding, run and artifact at the same version.
 It retains the prior validated pointer with its immutable request/result before
 atomic advancement. A conflicting result for the same request still denies.
+Native installation evidence uses a separate root-confined, descriptor-pinned
+streaming checksum bounded by the manifest asset size. It rejects links and
+identity, size or timestamp drift. Ordinary Source-read limits stay unchanged.
+
+`repair-withdraw --expected-request` may withdraw only the exact revision-1
+requested sidecar with no report or completion. It validates the original
+fenced operation, fence, state CAS and immutable custody, then archives exact
+sidecar bytes before removing that sidecar under the existing owner locks.
+An exact absent retry confirms the archive; a different active request denies.
+This permits corrected Source to be planned again under the original operation.
+It changes no Host, YAML, initialization, original operation, fence or UNKNOWN
+outcome and grants no execution or acceptance rights.
 The repair writes only its sidecar. It neither rewrites the original plan nor
 releases maintenance, changes historical work or grants execution rights.
 

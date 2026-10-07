@@ -505,6 +505,12 @@ conditional rollback never overwrites a drifted target. Remove the exact owned
 previous consumer binary only after verified success. Preserve project state.
 No prerequisite probes, installation test suite or permanent predecessor tree.
 
+Use the installer's successful structured result for its version and byte
+postcheck. Do not repeat those same reads or CLI launches in a second observer.
+Project configuration, recovery and work-admission inspection are separate
+operations, started only when the current task needs them. They are not
+installation postchecks or reasons to reinstall a successfully updated asset.
+
 Target short-command and control return below two seconds; retain existing
 elapsed/failure diagnostics without a separate optimization measurement lane.
 Start long tests, builds and installs asynchronously and return control early;

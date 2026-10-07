@@ -13,6 +13,8 @@ import {
   rmSync,
   renameSync,
   symlinkSync,
+  copyFileSync,
+  linkSync,
 } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -526,13 +528,16 @@ async function sourceCorrectionRebindWithNative(runtime) {
   return await import(`${modulePath}?source-correction-test=${randomUUID()}`);
 }
 
-function sourceCorrectionNativeFixture(f, version) {
+function sourceCorrectionNativeFixture(
+  f,
+  version,
+  executableBytes = Buffer.from('synthetic native executable for consistency test'),
+) {
   const payloadId = sha(Buffer.from(randomUUID())),
     packageRelative = `.tmp/native-test/${version}-${payloadId}`,
     executableRelative = `${packageRelative}/vida-agent.exe`,
     executable = path.join(f.root, executableRelative),
-    runtimeRoot = path.join(f.root, packageRelative),
-    executableBytes = Buffer.from('synthetic native executable for consistency test');
+    runtimeRoot = path.join(f.root, packageRelative);
   f.put(`${packageRelative}/package.json`, json({
     name: 'vida-agent',
     version,
@@ -795,6 +800,111 @@ test('public source repair freezes original beforeimages, prior update and held-
   expect(databaseState(f)).toEqual(beforeRepair);
 }, 30000);
 
+test('source correction withdrawal archives the exact request, accepts Source drift and confirms exact retry', async () => {
+  const fixtureContext = sourceCorrectionFixture(),
+    prepared = await prepareSourceCorrectionRepair(
+      { runRuntimeConfigRebind: runReconcileArtifacts },
+      fixtureContext,
+    ),
+    { f, repairArgs, changedPath, sidecarPath } = prepared,
+    sidecarBytes = readFileSync(sidecarPath),
+    request = JSON.parse(sidecarBytes.toString('utf8')).request,
+    operationPath = path.join(f.root, '.agent/work/fixture-rebind/runtime-config-delivery-operation.v1.json'),
+    historyPath = path.join(
+      f.root,
+      `.agent/work/fixture-rebind/source-correction-request-history/${request.request_id}.json`,
+    ),
+    baseline = {
+      host: databaseState(f),
+      operation: readFileSync(operationPath),
+      receipt: readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')),
+      yaml: readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml')),
+      beforeimages: readFileSync(fixtureContext.sourceBeforeimagesPath),
+      priorUpdate: readFileSync(fixtureContext.priorSystemUpdatePath),
+      fence: fence(f),
+    },
+    withdrawArgs = (expectedRequest) => [
+      ...repairArgs('repair-withdraw'),
+      '--expected-request',
+      expectedRequest,
+    ];
+  await expect(runReconcileArtifacts(withdrawArgs(randomUUID()))).rejects.toThrow(
+    'source correction request does not bind the original fenced delivery operation',
+  );
+  expect(readFileSync(sidecarPath)).toEqual(sidecarBytes);
+  expect(databaseState(f)).toEqual(baseline.host);
+  expect(existsSync(historyPath)).toBe(false);
+
+  f.put(changedPath, readFileSync(path.join(f.root, changedPath), 'utf8') + '\n// Source changed after the request was frozen.\n');
+  const driftedSource = readFileSync(path.join(f.root, changedPath)),
+    withdrawn = await runReconcileArtifacts(withdrawArgs(request.request_id));
+  expect(withdrawn).toMatchObject({
+    status: 'withdrawn',
+    operation_id: 'fixture-rebind',
+    request_id: request.request_id,
+    history_path: `.agent/work/fixture-rebind/source-correction-request-history/${request.request_id}.json`,
+    writes_host_state: false,
+  });
+  expect(existsSync(sidecarPath)).toBe(false);
+  expect(readFileSync(historyPath)).toEqual(sidecarBytes);
+  expect(databaseState(f)).toEqual(baseline.host);
+  expect(readFileSync(operationPath)).toEqual(baseline.operation);
+  expect(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'))).toEqual(baseline.receipt);
+  expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'))).toEqual(baseline.yaml);
+  expect(readFileSync(fixtureContext.sourceBeforeimagesPath)).toEqual(baseline.beforeimages);
+  expect(readFileSync(fixtureContext.priorSystemUpdatePath)).toEqual(baseline.priorUpdate);
+  expect(fence(f)).toEqual(baseline.fence);
+  expect(readFileSync(path.join(f.root, changedPath))).toEqual(driftedSource);
+
+  expect(await runReconcileArtifacts(withdrawArgs(request.request_id))).toEqual(withdrawn);
+  expect(readFileSync(historyPath)).toEqual(sidecarBytes);
+  expect(databaseState(f)).toEqual(baseline.host);
+  expect(readFileSync(operationPath)).toEqual(baseline.operation);
+  expect(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'))).toEqual(baseline.receipt);
+  expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'))).toEqual(baseline.yaml);
+  expect(readFileSync(path.join(f.root, changedPath))).toEqual(driftedSource);
+}, 30000);
+
+test('source correction streams inert native assets above the generic read cap and rejects size, digest and hardlink changes', async () => {
+  const fixtureContext = sourceCorrectionFixture(),
+    largeAsset = Buffer.alloc(64 * 1024 * 1024 + 1, 0x5a),
+    native = sourceCorrectionNativeFixture(fixtureContext.f, fixtureContext.targetVersion, largeAsset),
+    rebind = await sourceCorrectionRebindWithNative(native.runtime),
+    prepared = await prepareSourceCorrectionRepair(rebind, fixtureContext),
+    { f, repairArgs, sidecarPath } = prepared,
+    sidecar = JSON.parse(readFileSync(sidecarPath, 'utf8')),
+    report = sourceCorrectionExternalReport(f, sidecar.request, native),
+    sourcePath = report.installation_receipt.source_path,
+    sourceAbsolute = path.join(f.root, sourcePath),
+    sourceDirectory = path.dirname(sourceAbsolute),
+    copiedPath = path.relative(f.root, path.join(sourceDirectory, 'asset-copy.exe')).split(path.sep).join('/'),
+    mismatchedPath = path.relative(f.root, path.join(sourceDirectory, 'asset-mismatch.exe')).split(path.sep).join('/'),
+    linkedPath = path.relative(f.root, path.join(sourceDirectory, 'asset-hardlink.exe')).split(path.sep).join('/'),
+    shortPath = path.relative(f.root, path.join(sourceDirectory, 'asset-short.exe')).split(path.sep).join('/'),
+    reportPath = path.join(f.root, '.tmp/source-correction-report.json'),
+    applyArgs = [...repairArgs('repair-apply'), '--report', reportPath];
+  copyFileSync(sourceAbsolute, path.join(f.root, copiedPath));
+  copyFileSync(sourceAbsolute, path.join(f.root, mismatchedPath));
+  writeFileSync(path.join(f.root, mismatchedPath), Buffer.from([largeAsset[0] ^ 0xff]), { flag: 'r+' });
+  linkSync(path.join(f.root, copiedPath), path.join(f.root, linkedPath));
+  f.put(shortPath, Buffer.from([1, 2, 3]));
+  const before = databaseState(f),
+    denyAssetPath = async (pathValue) => {
+      const candidate = structuredClone(report);
+      candidate.installation_receipt.source_path = pathValue;
+      f.put('.tmp/source-correction-report.json', json(candidate));
+      await expect(runReconcileArtifacts(applyArgs)).rejects.toThrow();
+      expect(databaseState(f)).toEqual(before);
+      expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('requested');
+    };
+  await denyAssetPath(linkedPath);
+  await denyAssetPath(shortPath);
+  await denyAssetPath(mismatchedPath);
+  f.put('.tmp/source-correction-report.json', json(report));
+  expect((await runReconcileArtifacts(applyArgs)).status).toBe('applied');
+  expect(databaseState(f)).toEqual(before);
+}, 60000);
+
 test('source repair captures a closed config transition and reads it after later owner CAS progress', async () => {
   const fixtureContext = Object.assign(sourceCorrectionFixture(), {
       targetVersion: sourceCorrectionPriorVersion,
@@ -873,6 +983,22 @@ test('source repair captures a closed config transition and reads it after later
     receipt_sha256: sha(completedReceiptBytes),
     runtime_accepted: false,
   });
+  const appliedSidecarBytes = readFileSync(sidecarPath),
+    beforeAppliedWithdrawal = databaseState(f),
+    appliedHistoryPath = path.join(
+      f.root,
+      `.agent/work/fixture-rebind/source-correction-request-history/${completedSidecar.request.request_id}.json`,
+    );
+  await expect(
+    run([
+      ...repairArgs('repair-withdraw'),
+      '--expected-request',
+      completedSidecar.request.request_id,
+    ]),
+  ).rejects.toThrow('only an unapplied source correction request can be withdrawn');
+  expect(readFileSync(sidecarPath)).toEqual(appliedSidecarBytes);
+  expect(existsSync(appliedHistoryPath)).toBe(false);
+  expect(databaseState(f)).toEqual(beforeAppliedWithdrawal);
   const initialProof = await run(repairArgs('repair-transition'));
   expect(initialProof.status).toBe('closed_config_transition_proven');
   expect(initialProof.baseline_config_digest).toBe(plan.old_config_digest);
