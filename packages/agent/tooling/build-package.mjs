@@ -5,35 +5,10 @@ import { expectedJavascriptFiles } from './maintained-source-inventory.mjs';
 const candidateRoot = path.resolve(import.meta.dirname, '..');
 const distRoot = path.join(candidateRoot, 'dist');
 const distSourceRoot = path.join(distRoot, 'src');
-const schemaNames = [
-  'acceptance-manifest.v1.schema.json',
-  'agent-runtime-config.v1.schema.json',
-  'authorization-request.v1.schema.json',
-  'coordination-ledger.v1.schema.json',
-  'decision-record.v1.schema.json',
-  'documentation-policy.v1.schema.json',
-  'documentation-change-event.v1.schema.json',
-  'documentation-clear-checkpoint.v1.schema.json',
-  'governed-write-intent.v1.schema.json',
-  'governed-write.v1.schema.json',
-  'implementation-scope.v1.schema.json',
-  'persistent-session-handoff-state.v1.schema.json',
-  'instruction-activation-use.v1.schema.json',
-  'instruction-registry.v1.schema.json',
-  'research-result.v1.schema.json',
-  'research-synthesis.v1.schema.json',
-  'runtime-config-repair-inspection.v1.schema.json',
-  'config-rebind-operation.v1.schema.json',
-  'documentation-policy-transition.v1.schema.json',
-  'runtime-envelope.v1.schema.json',
-  'runtime-initialization.v1.schema.json',
-  'work-state.v1.schema.json',
-  'final-assurance-packet.v1.schema.json',
-  'final-assurance-review.v1.schema.json',
-  'final-assurance-reverse.v1.schema.json',
-  'final-assurance-state.v1.schema.json',
-  'workflow-attempt-recovery-decision.v1.schema.json',
-];
+const packageManifest = JSON.parse(await readFile(path.join(candidateRoot, 'package.json'), 'utf8'));
+const schemaNames = packageManifest.files
+  .filter((file) => file.startsWith('dist/schemas/') && file.endsWith('.schema.json'))
+  .map((file) => file.slice('dist/schemas/'.length));
 const forbiddenTestIssuers = [
   'createTestRuntimeKernelHost',
   'createTestWorkflowHostCapability',
