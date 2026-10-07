@@ -28,7 +28,7 @@ export function createHistoricalResearchFixture(overrides = {}) {
     scopeId = overrides.binding?.scope_id ?? 'scope-1',
     threadId = overrides.binding?.lease_thread_id ?? 'thread-1',
     workflowId = overrides.request?.workflow_id ?? 'information_research_light';
-  const workItem = {
+  const workItem = overrides.workItem ?? {
     schema: 'WorkItem/v1',
     id: workId,
     canonical_kind: 'research',
@@ -69,8 +69,10 @@ export function createHistoricalResearchFixture(overrides = {}) {
     source_revision: sourceRevision,
     contracts: [{ id: 'AC-1', definition: 'Answer the research question.', sr: 'SR-1', evidence: ['source audit'] }],
   };
-  const scopeBytes = Buffer.from(JSON.stringify(scope)),
-    acceptanceBytes = Buffer.from(JSON.stringify(acceptance));
+  const scopeBytes = overrides.scopeBytes ? Buffer.from(overrides.scopeBytes) : Buffer.from(JSON.stringify(scope)),
+    acceptanceBytes = overrides.acceptanceBytes
+      ? Buffer.from(overrides.acceptanceBytes)
+      : Buffer.from(JSON.stringify(acceptance));
   const binding = {
     work_id: workId,
     attempt: 1,
@@ -340,6 +342,9 @@ export function createHistoricalResearchFixture(overrides = {}) {
     result,
     plan,
     activationPlan,
+    scopeBytes,
+    acceptanceBytes,
+    workItem,
     recordPath,
     recordBytes,
     historyPath,

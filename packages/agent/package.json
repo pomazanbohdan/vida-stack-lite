@@ -39,6 +39,7 @@
     "bin/read-only-dispatch-repair.mjs",
     "bin/runtime-code-rebind.mjs",
     "bin/runtime-config-rebind.mjs",
+    "bin/historical-normalization-resume.mjs",
     "bin/documentation-policy-transition.mjs",
     "bin/forward-candidate-admission.mjs",
     "bin/capture-completed-readonly.mjs",

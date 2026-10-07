@@ -1422,6 +1422,35 @@ admission. Changed original prefix, target record or own event, duplicate own
 event and uncertain partial effects remain conflicts. Recovery of a known
 record-first partial write uses the same persisted observation and plan.
 
+`run --resume-historical-normalization true` is a separate original-owner
+continuation for one completed research observation with an already-reserved
+`ObservedResearchRecordPlan/v1`. `inspect` returns machine-computed bindings for
+the accepted baseline and receipt, original engine, original owner, action,
+plan, observation, activation, source scope, and current Work/Ledger/Journal/
+maintenance versions and raw target-byte bindings. The inspect and result
+envelopes state `caller_identity_authenticated: false` and
+`caller_authorization_required: true`. Inspection also binds
+`original_operation_reference` to the retained accepted scope's
+`attribution.pointer`; apply and resume compare that pointer with the inspected
+request. It is a trace reference, not caller authentication or authorization.
+`apply` requires that exact inspected request; `resume` uses the same request to
+retry only an exact record-first or complete pair publication. The route reads
+the original accepted configuration and engine through
+`inspectHistoricalOwnerContext`, then acquires the existing changelog and
+activation-history locks before the immediate Host transaction. That transaction
+rechecks the original Work/Ledger/Journal/maintenance CAS and the producer fence
+before safe asynchronous atomic writes. It compares raw bytes and rejects invalid
+UTF-8. On failure, an existing beforeimage is conditionally restored only while
+the current bytes still match the exact candidate. Newly created exact reserved
+candidate bytes remain as resumable custody when the safe repository interface
+cannot remove them; the route reports failure and does not claim that the
+beforeimage was restored. A plan with an existing record beforeimage and no
+changelog beforeimage is denied before publication because its mixed partial
+state cannot be resumed safely. It does not update Work, Journal, lease,
+artifacts or configuration, and grants no execution, owner disposition,
+artifact credit or Runtime acceptance. Foreign bytes, altered lineage, changed
+bindings and event-without-record state remain denied.
+
 The pinned Bun launcher validates package metadata and the exact pin before
 checking an absolute realpath executable from PATH. Only an exact version is
 used; absent, malformed or mismatched PATH candidates fall back to the existing

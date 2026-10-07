@@ -22,7 +22,7 @@ import { cooperativeReadonlyAssignments, inspectHistoricalOwnerContext } from '.
 import { suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.mjs';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
@@ -1697,6 +1697,7 @@ test('historical owner release rejects maintenance drift between predicate and w
 function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = -1, pendingIndex = -1 } = {}) {
   const original = inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, 1);
   const work = structuredClone(original.owner.state);
+  const materials = [];
   let history = '',
     changelog = '';
   for (const [index, item] of state.items.entries()) {
@@ -1725,6 +1726,11 @@ function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = 
       },
     });
     try {
+      materials.push({
+        scopeBytes: record.scopeBytes,
+        acceptanceBytes: record.acceptanceBytes,
+        workItem: record.workItem,
+      });
       const activation = {
         ...record.activationPlan,
         history_pre_sha256: history === '' ? null : sha(history),
@@ -1764,6 +1770,24 @@ function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = 
       record.dispose();
     }
   }
+  if (materials.length) {
+    const material = materials[0];
+    f.put(work.contracts.scope.path, material.scopeBytes);
+    f.put(work.contracts.acceptance.path, material.acceptanceBytes);
+    work.contracts.scope.sha256 = sha(material.scopeBytes);
+    work.contracts.acceptance.sha256 = sha(material.acceptanceBytes);
+    work.binding.scope_contract_digest = sha(material.scopeBytes);
+    work.binding.acceptance_manifest_digest = sha(material.acceptanceBytes);
+    work.binding.provider_work_item_id = material.workItem.id;
+    work.binding.work_item_digest = canonicalJsonDigest(material.workItem);
+    const intakePath = '.agent/work/' + request.identity.work_id + '/intake.json';
+    const intake = JSON.parse(readFileSync(path.join(f.root, intakePath), 'utf8'));
+    intake.work_item = material.workItem;
+    const intakeBytes = json(intake);
+    f.put(intakePath, intakeBytes);
+    const intakeArtifact = work.artifacts.find((artifact) => artifact.path === intakePath);
+    if (intakeArtifact) intakeArtifact.sha256 = sha(Buffer.from(intakeBytes));
+  }
   withDatabase(f, (db) => {
     db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'").run(
       json(work),
@@ -1774,7 +1798,7 @@ function seedHistoricalResearchLineage(f, request, state, { unnormalizedIndex = 
       canonicalJsonDigest(state),
     );
   });
-  return { work };
+  return { work, materials };
 }
 
 test('public settled research releases admitted lineage and preserves observations on exact retry', async () => {
@@ -1797,6 +1821,180 @@ test('public settled research releases admitted lineage and preserves observatio
   expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
   expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engine);
   expect((await run(args('apply'))).work_version).toEqual(result.work_version);
+}, 30000);
+
+test('public historical normalization resumes the original record-first request and exact replay under Host CAS', async () => {
+  const { f, request, state } = historicalFixture('settled_research'),
+    { work, materials } = seedHistoricalResearchLineage(f, request, state),
+    item = [...state.items].reverse().find((entry) => entry.research_normalization);
+  expect(item).toBeTruthy();
+  const plan = item.research_normalization,
+    recordBefore = readFileSync(path.join(f.root, plan.record_path), 'utf8'),
+    changelogBefore = readFileSync(path.join(f.root, plan.changelog_path), 'utf8'),
+    priorEvents = changelogBefore
+      .split('\n')
+      .filter(Boolean)
+      .filter((line) => JSON.parse(line).path_after !== plan.record_path),
+    partialChangelog = priorEvents.length ? priorEvents.join('\n') + '\n' : '';
+  expect(changelogBefore.split('\n').filter(Boolean).length).toBeGreaterThan(priorEvents.length);
+  f.put(plan.changelog_path, partialChangelog);
+  f.put('.githooks/pre-commit', 'Current source changed after the original reservation.\n');
+  const resumeRequest = {
+      schema: 'HistoricalNormalizationResumeRequest/v1',
+      identity: request.identity,
+      attempt: 1,
+      action_id: item.request.action_id,
+    },
+    requestPath = '.tmp/historical-normalization-resume.json';
+  f.put(requestPath, json(resumeRequest));
+  const resumeArgs = (mode) => [
+    '--resume-historical-normalization',
+    'true',
+    '--mode',
+    mode,
+    '--project-root',
+    f.root,
+    '--native-session-handle',
+    'fixture-thread',
+    '--baseline-config',
+    'baseline.yaml',
+    '--request',
+    requestPath,
+  ];
+  const beforeInspect = databaseState(f),
+    inspected = await run(resumeArgs('inspect'));
+  const originalOperationReference = JSON.parse(materials[0].scopeBytes.toString('utf8')).attribution.pointer;
+  expect(inspected.status).toBe('historical_normalization_resume_inspected');
+  expect(inspected.record_missing).toBe(false);
+  expect(inspected.caller_identity_authenticated).toBe(false);
+  expect(inspected.caller_authorization_required).toBe(true);
+  expect(inspected.request.inspection.original_operation_reference).toBe(originalOperationReference);
+  expect(inspected.rights_granted).toBe(false);
+  expect(inspected.runtime_acceptance).toBe(false);
+  expect(databaseState(f)).toEqual(beforeInspect);
+  f.put(requestPath, json(inspected.request));
+  const frozenRequest = readFileSync(path.join(f.root, requestPath), 'utf8'),
+    applied = await run(resumeArgs('apply'));
+  expect(applied.status).toBe('historical_normalization_resumed');
+  expect(applied.replay).toBe(false);
+  expect(applied.caller_identity_authenticated).toBe(false);
+  expect(applied.caller_authorization_required).toBe(true);
+  expect(applied.original_operation_reference).toBe(originalOperationReference);
+  expect(applied.rights_granted).toBe(false);
+  expect(applied.runtime_acceptance).toBe(false);
+  expect(readFileSync(path.join(f.root, plan.record_path), 'utf8')).toBe(recordBefore);
+  expect(readFileSync(path.join(f.root, plan.changelog_path), 'utf8')).toBe(changelogBefore);
+  expect(databaseState(f)).toEqual(beforeInspect);
+  f.put(requestPath, frozenRequest);
+  const replayed = await run(resumeArgs('resume'));
+  expect(replayed.status).toBe('historical_normalization_resumed');
+  expect(replayed.replay).toBe(true);
+  expect(databaseState(f)).toEqual(beforeInspect);
+
+  const afterReplay = databaseState(f),
+    maintenanceBinding = {
+      schema: 'MaintenanceFenceBinding/v1',
+      project_ids: request.identity.project_ids,
+      operation_id: 'historical-resume-fixture',
+      manifest_digest: 'a'.repeat(64),
+      request_digest: 'b'.repeat(64),
+      bindings_digest: 'c'.repeat(64),
+      closure_digest: 'd'.repeat(64),
+      bundle_digest: 'e'.repeat(64),
+    },
+    maintenanceFence = {
+      schema: 'MaintenanceFence/v1',
+      workspace_id: f.workspace,
+      revision: 1,
+      generation: 1,
+      status: 'released',
+      binding: maintenanceBinding,
+      token_digest: 'f'.repeat(64),
+    };
+  withDatabase(f, (db) =>
+    db
+      .query('INSERT INTO agent_host_maintenance VALUES(?,?,?,?)')
+      .run(f.workspace, 1, json(maintenanceFence), canonicalJsonDigest(maintenanceFence)),
+  );
+  const afterMaintenance = databaseState(f);
+  await expect(run(resumeArgs('resume'))).rejects.toThrow(/maintenance|original|reserved/);
+  expect(databaseState(f)).toEqual(afterMaintenance);
+}, 30000);
+
+test('public historical normalization rejects foreign requests and stale Host CAS before file effects', async () => {
+  const { f, request, state } = historicalFixture('settled_research'),
+    { work } = seedHistoricalResearchLineage(f, request, state),
+    item = [...state.items].reverse().find((entry) => entry.research_normalization);
+  expect(item).toBeTruthy();
+  const plan = item.research_normalization,
+    recordPath = path.join(f.root, plan.record_path),
+    changelogPath = path.join(f.root, plan.changelog_path),
+    changelog = readFileSync(changelogPath, 'utf8'),
+    priorEvents = changelog
+      .split('\n')
+      .filter(Boolean)
+      .filter((line) => JSON.parse(line).path_after !== plan.record_path);
+  f.put(plan.changelog_path, priorEvents.length ? priorEvents.join('\n') + '\n' : '');
+  const requestPath = '.tmp/historical-normalization-stale.json',
+    requestBody = {
+      schema: 'HistoricalNormalizationResumeRequest/v1',
+      identity: request.identity,
+      attempt: 1,
+      action_id: item.request.action_id,
+    };
+  f.put(requestPath, json(requestBody));
+  const resumeArgs = (mode) => [
+    '--resume-historical-normalization',
+    'true',
+    '--mode',
+    mode,
+    '--project-root',
+    f.root,
+    '--native-session-handle',
+    'fixture-thread',
+    '--baseline-config',
+    'baseline.yaml',
+    '--request',
+    requestPath,
+  ];
+  const inspected = await run(resumeArgs('inspect'));
+  f.put(requestPath, json(inspected.request));
+  const beforeForeign = {
+    database: databaseState(f),
+    record: readFileSync(recordPath, 'utf8'),
+    changelog: readFileSync(changelogPath, 'utf8'),
+  };
+  f.put(requestPath, json({ ...inspected.request, action_id: 'foreign-action' }));
+  await expect(run(resumeArgs('apply'))).rejects.toThrow(/original|inspection|action/i);
+  expect(readFileSync(recordPath, 'utf8')).toBe(beforeForeign.record);
+  expect(readFileSync(changelogPath, 'utf8')).toBe(beforeForeign.changelog);
+  expect(databaseState(f)).toEqual(beforeForeign.database);
+
+  f.put(requestPath, json(inspected.request));
+  const staleDatabase = databaseState(f);
+  withDatabase(f, (db) => {
+    const store = new HostStateStore(db, f.workspace),
+      before = store.readHostStateSnapshot(request.identity),
+      nextWork = structuredClone(before.work),
+      nextLedger = structuredClone(before.ledger);
+    nextWork.revision += 1;
+    nextWork.lifecycle.revision += 1;
+    nextLedger.revision += 1;
+    store.compareAndSwapHostState({
+      expectedWork: before.workVersion,
+      expectedLedger: before.ledgerVersion,
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+      nextWork,
+      nextLedger,
+    });
+  });
+  const changedHost = databaseState(f),
+    beforeStale = { record: readFileSync(recordPath, 'utf8'), changelog: readFileSync(changelogPath, 'utf8') };
+  await expect(run(resumeArgs('apply'))).rejects.toThrow(/changed|CAS|state|maintenance/i);
+  expect(readFileSync(recordPath, 'utf8')).toBe(beforeStale.record);
+  expect(readFileSync(changelogPath, 'utf8')).toBe(beforeStale.changelog);
+  expect(databaseState(f)).toEqual(changedHost);
+  expect(changedHost).not.toEqual(staleDatabase);
 }, 30000);
 
 test('public readonly bookkeeping releases a completed observation without normalization', async () => {

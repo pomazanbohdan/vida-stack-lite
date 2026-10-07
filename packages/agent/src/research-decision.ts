@@ -20,7 +20,7 @@ import {
   type ResearchDecisionInstruction,
 } from './config/runtime-config.js';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './config/safe-repository-access.js';
-import { HostStateStore } from './host-state.js';
+import { HostStateStore, type StateVersion, type WorkIdentity } from './host-state.js';
 import { qualifiedResearchSourceCatalog, resolveQualifiedResearchSource } from './research-source-catalog.js';
 import { parseSessionBridgeObservation, type SessionBridgeObservation } from './orchestration/mastra-session-bridge.js';
 import {
@@ -4155,6 +4155,209 @@ export async function recordObservedResearchResultAsync(
       };
     });
   });
+}
+
+/** Resume one reserved historical record under its changelog/history locks and exact Host CAS. */
+export async function resumeHistoricalObservedResearchResult(input: {
+  readonly root: string;
+  readonly feature: ResearchDecisionConfig;
+  readonly result: ResearchResult;
+  readonly observation: SessionBridgeObservation;
+  readonly binding: ObservedResearchBinding;
+  readonly activation_use: ActivationUse;
+  readonly activation_plan: ObservedActivationUseWritePlan;
+  readonly plan: ObservedResearchRecordPlan;
+  readonly host_state: HostStateStore;
+  readonly identity: WorkIdentity;
+  readonly attempt: number;
+  readonly expectedWork: StateVersion;
+  readonly expectedLedger: StateVersion;
+  readonly expectedJournal: StateVersion;
+  readonly expectedMaintenanceGeneration: number;
+}): Promise<{
+  readonly recordPath: string;
+  readonly recordSha256: string;
+  readonly changelogPath: string;
+  readonly changelogSha256: string;
+  readonly replay: boolean;
+}> {
+  const root = requiredResearchRoot({ root: input.root });
+  const plan = validateObservedResearchRecordPlan(input.plan);
+  if (!HostStateStore.isHostStateStore(input.host_state))
+    fail('trusted HostStateStore required for historical publication', 'GAP-RESEARCH-DECISION-HOST-001');
+  try {
+    input.host_state.assertWorkingRepositoryRoot(root);
+  } catch {
+    fail('historical publication HostStateStore is bound to another repository', 'GAP-RESEARCH-DECISION-HOST-001');
+  }
+  const activation = validateObservedActivationUseWritePlan(input.activation_plan);
+  const use = validateActivationUse(input.activation_use);
+  const observation = parseSessionBridgeObservation(input.observation);
+  const binding = validateObservedBinding(input.binding);
+  const value = asRecord(input.result, 'historical observed research result');
+  if (
+    plan.schema !== 'ObservedResearchRecordPlan/v1' ||
+    value.schema !== 'ResearchResult/v1' ||
+    canonicalJsonDigest(plan.binding) !== canonicalJsonDigest(binding) ||
+    canonicalJsonDigest(activation.binding) !== canonicalJsonDigest(binding) ||
+    plan.observation_digest !== canonicalJsonDigest(observation) ||
+    plan.result_digest !== input.result.digest ||
+    activation.use_digest !== use.digest ||
+    plan.changelog_path !== input.feature.paths.changelog ||
+    observation.action_id !== binding.action_id ||
+    observation.issue_id !== binding.issue_id ||
+    observation.status !== 'reported_complete' ||
+    observation.output_digest !== canonicalJsonDigest(observation.summary) ||
+    value.work_item_id !== binding.work_id ||
+    value.scope_id !== binding.scope_id ||
+    value.source_revision !== binding.source_revision ||
+    use.work_item_id !== binding.work_id ||
+    use.scope_id !== binding.scope_id ||
+    use.source_revision !== binding.source_revision
+  )
+    fail('historical research reservation or original binding differs', 'GAP-RESEARCH-DECISION-CAS-001');
+  if (plan.record_pre_sha256 !== null && plan.changelog_pre_sha256 === null)
+    fail(
+      'historical research existing-record publication without a changelog beforeimage is unsupported',
+      'GAP-RESEARCH-DECISION-CAS-001',
+    );
+  const feature = input.feature;
+  const access = repositoryAccess(root);
+  const relative = plan.record_path;
+  const validateOriginal = (): ResearchResult => {
+    let target = recordPath(feature, 'research', value);
+    const occupying = existingRecord(root, target);
+    if (occupying && occupying.topic !== value.topic) target = researchCollisionPath(feature, value);
+    if (target !== relative) fail('historical research target path differs', 'GAP-RESEARCH-DECISION-CAS-001');
+    const validation = {
+      root,
+      feature,
+      authority_checkpoint_path: undefined,
+      current_record_path: relative,
+      activation_history_direct_read: true,
+    };
+    const validated = validateStoredRecord(value, 'research', validation) as ResearchResult;
+    validateResearchIdentity(root, feature, value, relative);
+    if ((value.instruction_activation as RecordInstructionActivation).use_id !== use.use_id)
+      fail('historical research activation use differs', 'GAP-RESEARCH-DECISION-CAS-001');
+    readHistoricalObservedActivationUse({ root, feature, plan: activation, use });
+    return validated;
+  };
+  validateOriginal();
+  ensureDirectory(root, path.posix.dirname(feature.paths.changelog));
+  ensureDirectory(root, path.posix.dirname(relative));
+  const history = activationHistoryRelative(feature, binding.work_id);
+  const decodeUtf8Exact = (bytes: Buffer, label: string): string => {
+    const decoded = bytes.toString('utf8');
+    if (!Buffer.from(decoded, 'utf8').equals(bytes))
+      fail(`historical research ${label} is not exact UTF-8`, 'GAP-RESEARCH-DECISION-CAS-001');
+    return decoded;
+  };
+  const restoreExact = async (file: string, before: string | null, candidate: string, label: string): Promise<void> => {
+    const current = access.fileExists(file, label) ? access.readBytes(file, label) : null;
+    const currentHash = current === null ? null : rawSha256(current);
+    const beforeBytes = before === null ? null : Buffer.from(before, 'utf8');
+    const beforeHash = beforeBytes === null ? null : rawSha256(beforeBytes);
+    const candidateHash = rawSha256(Buffer.from(candidate, 'utf8'));
+    if (currentHash === beforeHash) return;
+    if (currentHash !== candidateHash)
+      fail('historical research rollback found unexpected bytes', 'GAP-RESEARCH-DECISION-CAS-001');
+    // A new exact candidate remains resumable custody; the portable access API has no safe delete on Windows.
+    if (before !== null) await access.replaceAtomicAsync(file, candidateHash, before, label);
+  };
+  let result:
+    | {
+        recordPath: string;
+        recordSha256: string;
+        changelogPath: string;
+        changelogSha256: string;
+        replay: boolean;
+      }
+    | undefined;
+  let undo = async (): Promise<void> => undefined;
+  const publish = async (): Promise<void> => {
+    const validated = validateOriginal();
+    const recordBeforeBytes = access.fileExists(relative, 'research record')
+      ? access.readBytes(relative, 'research record')
+      : null;
+    const changelogBeforeBytes = access.fileExists(feature.paths.changelog, 'research changelog')
+      ? access.readBytes(feature.paths.changelog, 'research changelog')
+      : null;
+    const recordBefore = recordBeforeBytes === null ? null : decodeUtf8Exact(recordBeforeBytes, 'research record');
+    const changelogBefore =
+      changelogBeforeBytes === null ? null : decodeUtf8Exact(changelogBeforeBytes, 'research changelog');
+    const recordHash = recordBeforeBytes === null ? null : rawSha256(recordBeforeBytes);
+    const changelogHash = changelogBeforeBytes === null ? null : rawSha256(changelogBeforeBytes);
+    const extension = observedResearchChangelogExtension(changelogBefore, plan, validated as unknown as JsonRecord);
+    const replay = recordHash === plan.record_sha256 && extension.present;
+    const recordAfter = JSON.stringify(JSON.parse(canonicalJson(validated)), null, 2) + '\n';
+    if (
+      rawSha256(recordAfter) !== plan.record_sha256 ||
+      Buffer.byteLength(recordAfter, 'utf8') > MAX_JSON_BYTES ||
+      (recordHash !== plan.record_pre_sha256 && recordHash !== plan.record_sha256) ||
+      (!replay && extension.present)
+    )
+      fail('historical research target differs from its reserved beforeimage', 'GAP-RESEARCH-DECISION-CAS-001');
+    const changelogAfter = changelogBefore === null ? extension.eventLine : changelogBefore + extension.eventLine;
+    if (
+      Buffer.byteLength(changelogAfter, 'utf8') > MAX_JSON_BYTES ||
+      changelogAfter.split('\n').length - 1 > MAX_CHANGELOG_EVENTS
+    )
+      fail('research changelog exceeds bound', 'GAP-RESEARCH-DECISION-CHANGELOG-BOUND-001');
+    undo = async () => {
+      await restoreExact(feature.paths.changelog, changelogBefore, changelogAfter, 'research changelog');
+      await restoreExact(relative, recordBefore, recordAfter, 'research record');
+    };
+    if (!replay) {
+      if (recordHash !== plan.record_sha256) {
+        if (recordBefore === null) await access.writeExclusiveAsync(relative, recordAfter, 'research record');
+        else await access.replaceAtomicAsync(relative, recordHash!, recordAfter, 'research record');
+      }
+      if (!extension.present) {
+        if (changelogBefore === null)
+          await access.writeExclusiveAsync(feature.paths.changelog, changelogAfter, 'research changelog');
+        else
+          await access.replaceAtomicAsync(
+            feature.paths.changelog,
+            changelogHash!,
+            changelogAfter,
+            'research changelog',
+          );
+      }
+    }
+    const persistedLogBytes = access.readBytes(feature.paths.changelog, 'research changelog');
+    const persistedRecordBytes = access.readBytes(relative, 'research record');
+    const persistedLog = decodeUtf8Exact(persistedLogBytes, 'research changelog');
+    if (
+      rawSha256(persistedRecordBytes) !== plan.record_sha256 ||
+      !observedResearchChangelogExtension(persistedLog, plan, validated as unknown as JsonRecord).present
+    )
+      fail('historical research record/event pair changed after publication', 'GAP-RESEARCH-DECISION-CAS-001');
+    result = {
+      recordPath: relative,
+      recordSha256: plan.record_sha256,
+      changelogPath: feature.paths.changelog,
+      changelogSha256: rawSha256(persistedLogBytes),
+      replay,
+    };
+  };
+  await access.withExclusiveLockAsync(feature.paths.changelog + '.lock', 'research record lock', async () =>
+    access.withExclusiveLockAsync(history + '.lock', 'research activation history lock', async () =>
+      input.host_state.withHistoricalNormalizationMutation({
+        repositoryRoot: root,
+        identity: input.identity,
+        attempt: input.attempt,
+        expectedWork: input.expectedWork,
+        expectedLedger: input.expectedLedger,
+        expectedJournal: input.expectedJournal,
+        expectedMaintenanceGeneration: input.expectedMaintenanceGeneration,
+        action: publish,
+        rollback: undo,
+      }),
+    ),
+  );
+  if (!result) fail('historical research publication did not complete', 'GAP-RESEARCH-DECISION-CAS-001');
+  return result;
 }
 
 /** Read a completed observed pair through its current host binding and exact durable byte plan. */

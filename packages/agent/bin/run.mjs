@@ -3166,6 +3166,18 @@ export async function run(args = process.argv.slice(2)) {
       throw Error('Historical release requires its exact separate signal');
     return releaseHistoricalOwner(args.slice(2));
   }
+  if (args.includes('--resume-historical-normalization')) {
+    if (
+      args[0] !== '--resume-historical-normalization' ||
+      args[1] !== 'true' ||
+      args.includes('--report') ||
+      args.includes('--issue-wave') ||
+      args.includes('--capture-stopped-source')
+    )
+      throw Error('Historical normalization resume requires its exact separate signal');
+    const { resumeHistoricalNormalization } = await import('./historical-normalization-resume.mjs');
+    return resumeHistoricalNormalization(args.slice(2));
+  }
   if (args.includes('--release-unissued-owner')) {
     if (args[0] !== '--release-unissued-owner' || args[1] !== 'true')
       throw Error('Unissued owner release requires its exact separate signal');
