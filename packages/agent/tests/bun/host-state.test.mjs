@@ -27,7 +27,15 @@ import { acquireLocalSourceWriterLease } from '../../src/orchestration/local-wor
 import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
 import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
-import { MastraSessionBridge, sessionBridgeRunId } from '../../src/orchestration/mastra-session-bridge.ts';
+import {
+  createLocalSessionReconciliationVerifier,
+  reconcileUnissuedLocalSessionAction,
+} from '../../src/orchestration/local-session-reconciliation.ts';
+import {
+  MastraSessionBridge,
+  sessionBridgeDatabasePath,
+  sessionBridgeRunId,
+} from '../../src/orchestration/mastra-session-bridge.ts';
 import {
   MastraSessionLedger,
   openConfiguredMastraSessionLedger,
@@ -928,6 +936,151 @@ function reconciliationRequest(receipt, outcome = 'completed') {
         : null,
   };
 }
+async function prepareLocalNoEffectRetryFixture({ loseFinalAcknowledgement = false } = {}) {
+  const evidenceRoot = path.join(root, 'local-no-effect-retry');
+  mkdirSync(path.join(evidenceRoot, 'src'), { recursive: true });
+  mkdirSync(path.join(evidenceRoot, '.agent'), { recursive: true });
+  writeFileSync(path.join(evidenceRoot, 'src', 'task.ts'), 'export const task = true;\n');
+  const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(evidenceRoot), ['src/task.ts']);
+  const initial = fixture();
+  const sourceRevision = '6'.repeat(64);
+  initial.nextWork.binding.work_source_revision = sourceRevision;
+  initial.nextWork.lifecycle.source_revision = sourceRevision;
+  initial.nextLedger.tickets[0].source_revision = sourceRevision;
+  store.compareAndSwapHostState(initial);
+
+  const verifier = createLocalSessionReconciliationVerifier(evidenceRoot);
+  const calls = { compareAndSwapHostState: 0, reconcileWorkflowAttempt: 0, verify: 0 };
+  const countedVerifier = {
+    principal: verifier.principal,
+    verify: (request, state) => {
+      calls.verify++;
+      return verifier.verify(request, state);
+    },
+  };
+  const hostStore = new HostStateStore(database, workspace, countedVerifier);
+  const started = hostStore.claimWorkflowAttempt(attemptRequest(hostStore.readHostStateSnapshot(identity)));
+  const proofPath = '.agent/local-no-effect.json';
+  const decisionPath = '.agent/local-no-effect-decision.json';
+  const actionId = '7'.repeat(64);
+  const proof = {
+    schema: 'LocalSessionNoEffectEvidence/v1',
+    work_id: identity.work_id,
+    attempt: 1,
+    action_id: actionId,
+    host_attempt_id: started.attempt.attempt_id,
+    request_digest: started.attempt.request_digest,
+    workflow_id: initial.nextWork.binding.workflow_id,
+    config_digest: initial.nextWork.binding.config_digest,
+    scope_digest: sourceRevision,
+    source_snapshot_digest: sourceScope.digest,
+    native_session_handle: started.attempt.lease.thread_id,
+    successor_session_handle: 'recovery',
+    ticket_id: started.attempt.lease.ticket_id,
+    lease_generation: started.attempt.lease.generation,
+    native_inspection_ref: 'local-inspection#1',
+    decision_path: decisionPath,
+    inspected_by: started.attempt.lease.thread_id,
+    inspected_at: new Date().toISOString(),
+    finding: 'confirmed_not_invoked_and_quiescent',
+  };
+  const proofBytes = Buffer.from(JSON.stringify(proof));
+  const providerEvidence = {
+    schema: proof.schema,
+    path: proofPath,
+    sha256: createHash('sha256').update(proofBytes).digest('hex'),
+  };
+  const decision = {
+    schema: 'WorkflowAttemptRecoveryDecision/v1',
+    work_id: identity.work_id,
+    work_item_id: initial.nextWork.binding.provider_work_item_id,
+    source_revision: sourceRevision,
+    scope_id: initial.nextWork.binding.scope_id,
+    ac_ids: [...initial.nextWork.binding.ac_ids],
+    action_id: actionId,
+    host_attempt_id: started.attempt.attempt_id,
+    provider_evidence: providerEvidence,
+    outcome: 'no_effect',
+    retry_lease: {
+      ticket_id: started.attempt.lease.ticket_id,
+      thread_id: proof.successor_session_handle,
+      generation: started.attempt.lease.generation + 1,
+    },
+    decided_by: proof.inspected_by,
+    decided_at: proof.inspected_at,
+    reason: 'The native session confirms the action was never issued and is quiescent.',
+  };
+  const writeJson = (relativePath, value) =>
+    writeFileSync(path.join(evidenceRoot, relativePath), JSON.stringify(value));
+  writeFileSync(path.join(evidenceRoot, proofPath), proofBytes);
+  writeJson(decisionPath, decision);
+  const journal = {
+    version: { revision: 1, digest: '8'.repeat(64) },
+    state: {
+      schema: 'MastraSessionLedger/v1',
+      workspace_id: workspace,
+      work_id: identity.work_id,
+      attempt: 1,
+      run_id: 'run-work',
+      source_scope: sourceScope,
+      step_id: 'wave0',
+      items: [
+        {
+          request: { action_id: actionId, stage_id: started.attempt.stage_id, assignment_index: 0 },
+          issue_id: null,
+          observation: null,
+        },
+      ],
+      completed: [],
+    },
+    resume_status: 'ready',
+  };
+  const input = {
+    root: evidenceRoot,
+    proofPath,
+    store: null,
+    identity,
+    journal,
+    configDigest: initial.nextWork.binding.config_digest,
+  };
+  let loseAcknowledgement = loseFinalAcknowledgement;
+  const operationStore = {
+    readHostStateSnapshot: hostStore.readHostStateSnapshot.bind(hostStore),
+    snapshotCurrentTaskSourceSources: hostStore.snapshotCurrentTaskSourceSources.bind(hostStore),
+    compareAndSwapHostState(request) {
+      calls.compareAndSwapHostState++;
+      const saved = hostStore.compareAndSwapHostState(request);
+      if (
+        loseAcknowledgement &&
+        request.nextWork.lease.thread_id === proof.successor_session_handle &&
+        request.nextWork.lease.generation === started.attempt.lease.generation + 1
+      ) {
+        loseAcknowledgement = false;
+        throw new Error('simulated lost retry-fence acknowledgement');
+      }
+      return saved;
+    },
+    reconcileWorkflowAttempt(request) {
+      calls.reconcileWorkflowAttempt++;
+      return hostStore.reconcileWorkflowAttempt(request);
+    },
+  };
+  input.store = operationStore;
+  return {
+    calls,
+    decision,
+    decisionPath,
+    evidenceRoot,
+    hostStore,
+    input,
+    journal,
+    operationStore,
+    proof,
+    proofPath,
+    started,
+    writeJson,
+  };
+}
 // Unit host verifier fixture, not a production provider attestation adapter.
 function verifyingStore(handle, verify) {
   return new HostStateStore(handle, workspace, { principal: 'runtime:test-verifier', verify });
@@ -1058,6 +1211,36 @@ test('session producer requires the actual configured ledger before any engine e
   expect(f.rows()).toHaveLength(0);
   expect(existsSync(f.enginePath)).toBe(false);
 });
+
+for (const rootName of ['literal%20', 'standalone%', 'fragment#', 'space path', 'unicode-é東京']) {
+  test(
+    `session producer opens physical engine database at configured path for ${JSON.stringify(rootName)}`,
+    { timeout: 30_000 },
+    async () => {
+      const f = producerFixture(rootName);
+      let bridge;
+      try {
+        const enginePath = sessionBridgeDatabasePath(f.args.repositoryRoot, f.args.config);
+        expect(f.enginePath).toBe(enginePath);
+        bridge = await MastraSessionBridge.open(f.args);
+        const engine = await bridge.start();
+        expect(existsSync(enginePath)).toBe(true);
+        const physical = new Database(enginePath, { strict: true });
+        try {
+          expect(
+            physical
+              .query('SELECT run_id FROM mastra_workflow_snapshot WHERE run_id=?')
+              .get(engine.run_id),
+          ).toEqual({ run_id: engine.run_id });
+        } finally {
+          physical.close(true);
+        }
+      } finally {
+        if (bridge) await bridge.close();
+      }
+    },
+  );
+}
 
 test('session producer acquisition rejects stale CAS, maintenance and selection without reservation', async () => {
   const f = producerFixture();
@@ -3478,6 +3661,81 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       expect(reopened.readHostStateSnapshot(identity)).toEqual(persisted);
     }
   });
+
+  test('local no-effect helper replays the exact completed retry fence after a lost acknowledgement', async () => {
+    const prepared = await prepareLocalNoEffectRetryFixture({ loseFinalAcknowledgement: true });
+    await expect(reconcileUnissuedLocalSessionAction(prepared.input)).rejects.toThrow(
+      'simulated lost retry-fence acknowledgement',
+    );
+    const persisted = prepared.hostStore.readHostStateSnapshot(identity);
+    const journalBeforeReplay = clone(prepared.journal);
+    const callsBeforeReplay = { ...prepared.calls };
+    expect(prepared.calls).toEqual({
+      compareAndSwapHostState: 2,
+      reconcileWorkflowAttempt: 1,
+      verify: 1,
+    });
+
+    const retry = await reconcileUnissuedLocalSessionAction(prepared.input);
+
+    expect(retry).toEqual(persisted);
+    expect(retry.work).toEqual(persisted.work);
+    expect(retry.ledger).toEqual(persisted.ledger);
+    expect(retry.workVersion).toEqual(persisted.workVersion);
+    expect(retry.ledgerVersion).toEqual(persisted.ledgerVersion);
+    expect(prepared.journal).toEqual(journalBeforeReplay);
+    expect(prepared.calls).toEqual(callsBeforeReplay);
+  });
+
+  test.each(['proof', 'decision', 'successor', 'current lease'])(
+    'local no-effect helper rejects changed %s metadata without mutation',
+    async (changed) => {
+      const prepared = await prepareLocalNoEffectRetryFixture();
+      await reconcileUnissuedLocalSessionAction(prepared.input);
+      const before = prepared.hostStore.readHostStateSnapshot(identity);
+      const callsBefore = { ...prepared.calls };
+      if (changed === 'proof') {
+        prepared.writeJson(prepared.proofPath, {
+          ...prepared.proof,
+          native_inspection_ref: 'local-inspection#changed',
+        });
+      } else if (changed === 'decision') {
+        prepared.writeJson(prepared.decisionPath, {
+          ...prepared.decision,
+          reason: 'A different recovery decision.',
+        });
+      } else if (changed === 'successor') {
+        const changedProof = { ...prepared.proof, successor_session_handle: 'other-successor' };
+        const changedProofBytes = Buffer.from(JSON.stringify(changedProof));
+        writeFileSync(path.join(prepared.evidenceRoot, prepared.proofPath), changedProofBytes);
+        prepared.writeJson(prepared.decisionPath, {
+          ...prepared.decision,
+          provider_evidence: {
+            ...prepared.decision.provider_evidence,
+            sha256: createHash('sha256').update(changedProofBytes).digest('hex'),
+          },
+          retry_lease: { ...prepared.decision.retry_lease, thread_id: 'other-successor' },
+        });
+      } else {
+        const readCurrent = prepared.operationStore.readHostStateSnapshot;
+        prepared.operationStore.readHostStateSnapshot = (requestIdentity) => {
+          const current = readCurrent(requestIdentity);
+          return {
+            ...current,
+            work: {
+              ...current.work,
+              lease: { ...current.work.lease, thread_id: 'foreign-successor', generation: 3 },
+            },
+          };
+        };
+      }
+
+      await expect(reconcileUnissuedLocalSessionAction(prepared.input)).rejects.toThrow();
+
+      expect(prepared.hostStore.readHostStateSnapshot(identity)).toEqual(before);
+      expect(prepared.calls).toEqual(callsBefore);
+    },
+  );
 
   test.each(['principal', 'attempt_id', 'request_digest', 'work_binding_digest', 'result_digest'])(
     'rejects foreign authorization %s without mutation',

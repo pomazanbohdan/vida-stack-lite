@@ -124,6 +124,10 @@ export async function runReconcileArtifacts(args, { onPhase } = {}) {
     const { runNativeDeliveryEvidenceRepair } = await import('./repair-native-delivery-evidence.mjs');
     return runNativeDeliveryEvidenceRepair(args, { onPhase });
   }
+  if (kind === 'delivered-work-continuation') {
+    const { runDeliveredWorkContinuationRepair } = await import('./repair-delivered-work-continuation.mjs');
+    return runDeliveredWorkContinuationRepair(args);
+  }
   if (kind === 'release-retarget') {
     const { runReleaseRetarget } = await import('./repair-release-retarget.mjs');
     return runReleaseRetarget(args, { onPhase });

@@ -221,8 +221,7 @@ export async function reconcileUnissuedLocalSessionAction(input: {
     decision.source_revision !== work.binding.work_source_revision ||
     decision.scope_id !== work.binding.scope_id ||
     canonicalJsonDigest([...decision.ac_ids].sort()) !== canonicalJsonDigest([...work.binding.ac_ids].sort()) ||
-    proof.inspected_by !== proof.native_session_handle ||
-    canonicalJsonDigest(work.lease) !== canonicalJsonDigest(attempt.lease)
+    proof.inspected_by !== proof.native_session_handle
   )
     throw new Error('local no-effect evidence does not bind the unissued host attempt');
   const scoped = input.journal.state.source_scope;
@@ -239,6 +238,55 @@ export async function reconcileUnissuedLocalSessionAction(input: {
     throw new Error('source scope changed before local no-effect reconciliation');
   if (attempt.status !== 'started' && attempt.status !== 'uncertain' && attempt.status !== 'no_effect')
     throw new Error('host attempt is not eligible for no-effect reconciliation');
+
+  const retryLease = {
+    ...attempt.lease,
+    thread_id: proof.successor_session_handle,
+    generation: attempt.lease.generation + 1,
+  };
+  const isOriginalLease = canonicalJsonDigest(work.lease) === canonicalJsonDigest(attempt.lease);
+  const isRetryLease = canonicalJsonDigest(work.lease) === canonicalJsonDigest(retryLease);
+  if (attempt.status === 'no_effect') {
+    const reconciliation = attempt.reconciliation;
+    if (
+      !reconciliation ||
+      attempt.result !== null ||
+      attempt.result_digest !== null ||
+      reconciliation.principal !== 'trusted-local-session-no-effect' ||
+      reconciliation.attempt_id !== attempt.attempt_id ||
+      reconciliation.request_digest !== attempt.request_digest ||
+      reconciliation.outcome !== 'no_effect' ||
+      reconciliation.result_digest !== null ||
+      reconciliation.work_binding_digest !== canonicalJsonDigest(work.binding) ||
+      canonicalJsonDigest(reconciliation.provider_evidence) !== canonicalJsonDigest(ref) ||
+      canonicalJsonDigest(reconciliation.decision) !== canonicalJsonDigest(decisionRef) ||
+      canonicalJsonDigest(reconciliation.retry_lease) !== canonicalJsonDigest(retryLease)
+    )
+      throw new Error('no-effect attempt was reconciled using different evidence');
+    const storedDecision = work.contracts.decisions.find((entry) => entry.path === decisionRef.path);
+    if (!storedDecision || canonicalJsonDigest(storedDecision) !== canonicalJsonDigest(decisionRef))
+      throw new Error('no-effect attempt decision differs from persisted evidence');
+    if (!isOriginalLease && !isRetryLease)
+      throw new Error('cooperative lease changed before retry fence renewal');
+    if (isRetryLease) {
+      const ticket = host.ledger!.tickets.find((entry) => entry.ticket_id === retryLease.ticket_id);
+      const claim = host.ledger!.claims.find(
+        (entry) => entry.ticket_id === retryLease.ticket_id && entry.status === 'active',
+      );
+      if (
+        !ticket ||
+        !claim ||
+        ticket.status !== 'active' ||
+        ticket.thread_id !== retryLease.thread_id ||
+        ticket.generation !== retryLease.generation ||
+        claim.thread_id !== retryLease.thread_id ||
+        claim.generation !== retryLease.generation
+      )
+        throw new Error('cooperative lease differs from completed retry fence');
+      return host;
+    }
+  } else if (!isOriginalLease)
+    throw new Error('cooperative lease changed before local no-effect reconciliation');
   if (!work.contracts.decisions.some((entry) => entry.path === decisionRef.path)) {
     const nextWork = {
       ...work,
@@ -255,11 +303,7 @@ export async function reconcileUnissuedLocalSessionAction(input: {
     });
   } else if (!work.contracts.decisions.some((entry) => canonicalJsonDigest(entry) === canonicalJsonDigest(decisionRef)))
     throw new Error('local reconciliation decision path already binds different evidence');
-  const retryLease = {
-    ...attempt.lease,
-    thread_id: proof.successor_session_handle,
-    generation: attempt.lease.generation + 1,
-  };
+
   if (attempt.status !== 'no_effect') {
     await input.store.reconcileWorkflowAttempt({
       identity: input.identity,
@@ -274,8 +318,8 @@ export async function reconcileUnissuedLocalSessionAction(input: {
       retryLease,
     });
     host = input.store.readHostStateSnapshot(input.identity);
-  } else if (canonicalJsonDigest(attempt.reconciliation?.provider_evidence) !== canonicalJsonDigest(ref))
-    throw new Error('no-effect attempt was reconciled using different evidence');
+  }
+
   if (canonicalJsonDigest(host.work!.lease) === canonicalJsonDigest(retryLease)) return host;
   const ticket = host.ledger!.tickets.find((entry) => entry.ticket_id === retryLease.ticket_id);
   const claim = host.ledger!.claims.find(

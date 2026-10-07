@@ -11,7 +11,6 @@ import {
   readdirSync,
   writeFileSync,
   existsSync,
-  renameSync,
   unlinkSync,
   rmdirSync,
   realpathSync,
@@ -29,6 +28,12 @@ import { FsSafeError } from '@openclaw/fs-safe/errors';
 type LinuxNativeBinding = {
   readonly cloneFileExclusive: (sourceFd: number, targetRootFd: number, targetRelPath: string) => number;
   readonly renameNoReplace: (
+    sourceRootFd: number,
+    sourceRelPath: string,
+    targetRootFd: number,
+    targetRelPath: string,
+  ) => void;
+  readonly renameReplace: (
     sourceRootFd: number,
     sourceRelPath: string,
     targetRootFd: number,
@@ -251,6 +256,7 @@ function loadLinuxNativeBinding(): LinuxNativeBinding | undefined {
     packageStillAttested,
     typeof binding?.cloneFileExclusive === 'function',
     typeof binding?.renameNoReplace === 'function',
+    typeof binding?.renameReplace === 'function',
   );
   return [undefined, binding][Number(available)];
 }
@@ -643,7 +649,10 @@ function moveAndRemovePinnedLock(
 ): boolean {
   const native = linuxNativeBinding;
   reject(!native, label + ' requires the bundled Linux no-replace rename primitive');
-  const quarantineName = '.' + name + '.' + randomUUID() + '.reclaimed';
+  const quarantineStem = Buffer.byteLength(name, 'utf8') <= 207
+    ? name
+    : 'vida-quarantine-' + createHash('sha256').update(name, 'utf8').digest('hex');
+  const quarantineName = '.' + quarantineStem + '.' + randomUUID() + '.reclaimed';
   let moved = false;
   let removed = false;
   try {
@@ -903,15 +912,36 @@ function childPath(fd: number, segment: string): string {
 }
 function openParent(root: string, segments: readonly string[], label: string): { fd: number; name: string } {
   reject(segments.length < 1, `${label} target is empty`);
-  const fd = segments.slice(0, -1).reduce(
-    (current, segment) => {
-      const next = openSync(childPath(current, segment), fsConstants.O_RDONLY | directoryFlag | noFollow);
-      closeQuietly(current);
-      return next;
-    },
-    directoryHandle(root, label),
+  const fd = walkDirectories(root, segments.slice(0, -1), label, (parentFd, segment) =>
+    openSync(childPath(parentFd, segment), fsConstants.O_RDONLY | directoryFlag | noFollow),
   );
   return { fd, name: segments.at(-1)! };
+}
+function walkDirectories(
+  root: string,
+  segments: readonly string[],
+  label: string,
+  openNext: (parentFd: number, segment: string) => number,
+): number {
+  let currentFd = directoryHandle(root, label);
+  try {
+    for (const segment of segments) {
+      let nextFd = -1;
+      try {
+        nextFd = openNext(currentFd, segment);
+        closeQuietly(currentFd);
+      } catch (error) {
+        if (nextFd >= 0) closeQuietly(nextFd);
+        throw error;
+      }
+      currentFd = nextFd;
+    }
+    const result = currentFd;
+    currentFd = -1;
+    return result;
+  } finally {
+    if (currentFd >= 0) closeQuietly(currentFd);
+  }
 }
 function openFile(
   root: string,
@@ -935,7 +965,7 @@ function openFile(
     );
   }
 }
-function readText(root: string, target: string, label: string): string {
+function readTextUnlocked(root: string, target: string, label: string): string {
   const opened = openFile(root, safeRelative(root, target, label), label, fsConstants.O_RDONLY, undefined, true);
   try {
     const stats = fstatSync(opened.fd);
@@ -947,7 +977,7 @@ function readText(root: string, target: string, label: string): string {
     closeQuietly(opened.parentFd);
   }
 }
-function readBytes(root: string, target: string, label: string): Buffer {
+function readBytesUnlocked(root: string, target: string, label: string): Buffer {
   const opened = openFile(root, safeRelative(root, target, label), label, fsConstants.O_RDONLY, undefined, true);
   try {
     const stats = fstatSync(opened.fd);
@@ -958,6 +988,101 @@ function readBytes(root: string, target: string, label: string): Buffer {
     closeQuietly(opened.fd);
     closeQuietly(opened.parentFd);
   }
+}
+function linuxCasLockName(targetName: string): string {
+  return resourceLockName('.' + targetName + '.cas');
+}
+function linuxCasSiblingStem(targetName: string): string {
+  // Reserve UUID, suffix and the longest cleanup quarantine component.
+  return Buffer.byteLength(targetName, 'utf8') <= 153
+    ? targetName
+    : 'vida-cas-' + createHash('sha256').update(targetName, 'utf8').digest('hex');
+}
+function linuxOrphanBackupNames(parentFd: number, targetName: string): string[] {
+  const siblingStem = linuxCasSiblingStem(targetName);
+  const candidates = [[targetName, 'cas-old']];
+  if (siblingStem !== targetName) candidates.push([siblingStem, 'cas-old-hashed']);
+  const patterns = candidates.map(([stem, suffix]) => {
+    const escaped = stem.replace(/[\^$.*+?()[\]{}|]/g, '\\$&');
+    return new RegExp('^[.]' + escaped + '[.][0-9a-f-]{36}[.]' + suffix + '$');
+  });
+  return readdirSync(childPath(parentFd, '.')).filter((name) => patterns.some((pattern) => pattern.test(name)));
+}
+function rejectLinuxOrphanBackups(parentFd: number, targetName: string, label: string): void {
+  reject(
+    linuxOrphanBackupNames(parentFd, targetName).length > 0,
+    label + ' is blocked by an unresolved private backup; target recovery is required',
+  );
+}
+type LinuxCasLock = { readonly parentFd: number; readonly name: string; readonly lockName: string; readonly lockFd: number };
+function acquireLinuxCasLock(root: string, target: string, label: string): LinuxCasLock {
+  const parent = openParent(root, safeRelative(root, target, label), label);
+  try {
+    const lockName = linuxCasLockName(parent.name);
+    const lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
+    try {
+      fsyncSync(lockFd);
+      return { parentFd: parent.fd, name: parent.name, lockName, lockFd };
+    } catch (error) {
+      try {
+        releaseExclusiveLock(parent.fd, lockName, lockFd);
+      } finally {
+        closeQuietly(lockFd);
+      }
+      throw error;
+    }
+  } catch (error) {
+    closeQuietly(parent.fd);
+    throw error;
+  }
+}
+function releaseLinuxCasLock(lock: LinuxCasLock, release: boolean): void {
+  try {
+    if (release) releaseExclusiveLock(lock.parentFd, lock.lockName, lock.lockFd);
+  } finally {
+    try {
+      closeQuietly(lock.lockFd);
+    } finally {
+      closeQuietly(lock.parentFd);
+    }
+  }
+}
+function withLinuxCasLocks<T>(
+  root: string,
+  targets: readonly { readonly target: string; readonly label: string }[],
+  operation: () => T,
+): T {
+  const ordered = targets
+    .map((item) => ({ ...item, key: safeRelative(root, item.target, item.label).join('/') }))
+    .sort((left, right) => left.key.localeCompare(right.key));
+  const locks: LinuxCasLock[] = [];
+  const lockKeys = new Set<string>();
+  try {
+    for (const item of ordered) {
+      if (lockKeys.has(item.key)) continue;
+      const lock = acquireLinuxCasLock(root, item.target, item.label);
+      locks.push(lock);
+      lockKeys.add(item.key);
+      rejectLinuxOrphanBackups(lock.parentFd, lock.name, item.label);
+    }
+    return operation();
+  } finally {
+    let releaseError: unknown;
+    for (const lock of locks.reverse()) {
+      try {
+        releaseLinuxCasLock(lock, true);
+      } catch (error) {
+        releaseError ??= error;
+      }
+    }
+    if (releaseError !== undefined) throw releaseError;
+  }
+}
+function readText(root: string, target: string, label: string): string {
+  return withLinuxCasLocks(root, [{ target, label }], () => readTextUnlocked(root, target, label));
+}
+function readBytes(root: string, target: string, label: string): Buffer {
+  return withLinuxCasLocks(root, [{ target, label }], () => readBytesUnlocked(root, target, label));
 }
 function openOrCreateDirectoryAt(parentFd: number, segment: string): number {
   const target = childPath(parentFd, segment);
@@ -977,26 +1102,14 @@ function openOrCreateDirectoryAt(parentFd: number, segment: string): number {
 function ensureDirectory(root: string, target: string, label: string): string {
   reject(!linuxHandleProvider, label + ' requires a native directory-handle no-follow provider');
   const segments = safeRelative(root, target, label);
-  const fd = segments.reduce(
-    (current, segment) => {
-      const next = openOrCreateDirectoryAt(current, segment);
-      closeQuietly(current);
-      return next;
-    },
-    directoryHandle(root, label),
-  );
+  const fd = walkDirectories(root, segments, label, openOrCreateDirectoryAt);
   closeQuietly(fd);
   return path.resolve(root, target);
 }
 function openDirectory(root: string, target: string, label: string): number {
   const segments = target === '.' ? [] : safeRelative(root, target, label);
-  return segments.reduce(
-    (current, segment) => {
-      const next = openSync(childPath(current, segment), fsConstants.O_RDONLY | directoryFlag | noFollow);
-      closeQuietly(current);
-      return next;
-    },
-    directoryHandle(root, label),
+  return walkDirectories(root, segments, label, (parentFd, segment) =>
+    openSync(childPath(parentFd, segment), fsConstants.O_RDONLY | directoryFlag | noFollow),
   );
 }
 function linuxDirectoryIdentity(root: string, target: string, label: string): string {
@@ -1047,7 +1160,7 @@ function boundedContentBytes(contents: string, label: string): Buffer {
   );
   return bytes;
 }
-function writeExclusive(root: string, target: string, contents: string, label: string): void {
+function writeExclusiveUnlocked(root: string, target: string, contents: string, label: string): void {
   const bytes = boundedContentBytes(contents, label);
   const opened = openFile(
     root,
@@ -1064,6 +1177,9 @@ function writeExclusive(root: string, target: string, contents: string, label: s
     closeQuietly(opened.fd);
     closeQuietly(opened.parentFd);
   }
+}
+function writeExclusive(root: string, target: string, contents: string, label: string): void {
+  withLinuxCasLocks(root, [{ target, label }], () => writeExclusiveUnlocked(root, target, contents, label));
 }
 function withExclusiveLock<T>(root: string, target: string, label: string, operation: () => T): T {
   const opened = openExclusiveLock(root, target, label);
@@ -1223,123 +1339,150 @@ function verifyLinuxTargetPath(
 }
 function replaceAtomicLinux(root: string, target: string, expectedHash: string, contents: string, label: string): void {
   const native = linuxNativeBinding;
-  reject(!native, label + ' requires the bundled Linux descriptor-bound copy primitive');
+  reject(!native, label + ' requires the attested Linux descriptor-bound replacement primitive');
   const desiredBytes = boundedContentBytes(contents, label);
+  const desiredHash = rawHash(desiredBytes);
   const parent = openParent(root, safeRelative(root, target, label), label);
   const name = parent.name;
-  const lockName = '.' + name + '.cas.lock';
-  const tempName = '.' + name + '.' + randomUUID() + '.tmp';
-  const backupName = '.' + name + '.' + randomUUID() + '.cas-old';
+  const lockName = linuxCasLockName(name);
+  const siblingStem = linuxCasSiblingStem(name);
+  const tempName = '.' + siblingStem + '.' + randomUUID() + '.tmp';
+  const backupName = '.' + siblingStem + '.' + randomUUID() + (siblingStem === name ? '.cas-old' : '.cas-old-hashed');
   let tempFd = -1;
+  let tempIdentity: Stats | undefined;
+  let backupIdentity: Stats | undefined;
   let lockFd = -1;
-  let committedIdentity: Stats | undefined;
-  let backupMoved = false;
   try {
     lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
+    fsyncSync(lockFd);
+    recoverLinuxOrphanBackup(native as LinuxNativeBinding, parent.fd, name, expectedHash, desiredHash, label);
+    const currentFd = openSync(childPath(parent.fd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+    const initialStats = fstatSync(currentFd);
     try {
-      fsyncSync(lockFd);
-      recoverLinuxOrphanBackup(
-        native as LinuxNativeBinding,
-        parent.fd,
-        name,
-        expectedHash,
-        rawHash(desiredBytes),
-        label,
-      );
-      const currentFd = openSync(childPath(parent.fd, name), fsConstants.O_RDONLY | noFollow);
-      const initialStats = fstatSync(currentFd);
-      let current: Buffer;
+      const stats = fstatSync(currentFd);
+      regularFile(stats, label);
+      reject(stats.size > maxRepositoryReadBytes, label + ' exceeds the bounded repository read size');
+      reject(rawHash(readBoundedBuffer(currentFd, label)) !== expectedHash, label + ' expected content hash is stale');
+      const backupFd = cloneOrCopyExclusive(native as LinuxNativeBinding, currentFd, parent.fd, backupName, label);
       try {
-        const stats = fstatSync(currentFd);
-        regularFile(stats, label);
-        reject(stats.size > maxRepositoryReadBytes, label + ' exceeds the bounded repository read size');
-        current = readBoundedBuffer(currentFd, label);
-      } finally {
-        closeQuietly(currentFd);
-      }
-      reject(rawHash(current) !== expectedHash, label + ' expected content hash is stale');
-      tempFd = openSync(
-        childPath(parent.fd, tempName),
-        fsConstants.O_RDWR | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow,
-        0o600,
-      );
-      writeFileSync(tempFd, desiredBytes);
-      fsyncSync(tempFd);
-      renameSync(childPath(parent.fd, name), childPath(parent.fd, backupName));
-      backupMoved = true;
-      const backupFd = openSync(childPath(parent.fd, backupName), fsConstants.O_RDONLY | noFollow);
-      try {
-        const backupStats = fstatSync(backupFd);
-        regularFile(backupStats, label);
-        reject(
-          any(
-            backupStats.size > maxRepositoryReadBytes,
-            any(backupStats.dev !== initialStats.dev, backupStats.ino !== initialStats.ino),
-          ),
-          label + ' commit-time compare-and-swap failed',
-        );
+        backupIdentity = fstatSync(backupFd);
+        regularFile(backupIdentity, label + ' private backup');
         reject(
           rawHash(readBoundedBuffer(backupFd, label)) !== expectedHash,
-          label + ' commit-time compare-and-swap failed',
+          label + ' private backup content differs from the expected original',
         );
-        const committedFd = cloneOrCopyExclusive(native!, tempFd, parent.fd, name, label);
-        try {
-          fsyncSync(committedFd);
-          const committedStats = fstatSync(committedFd);
-          committedIdentity = committedStats;
-          regularFile(committedStats, label);
-          reject(
-            rawHash(readBoundedBuffer(committedFd, label)) !== rawHash(desiredBytes),
-            label + ' commit-time content verification failed',
-          );
-        } finally {
-          closeQuietly(committedFd);
-        }
       } finally {
         closeQuietly(backupFd);
       }
-      unlinkSync(childPath(parent.fd, tempName));
-      closeQuietly(tempFd);
-      tempFd = -1;
       fsyncSync(parent.fd);
-      const afterFd = openSync(childPath(parent.fd, name), fsConstants.O_RDONLY | noFollow);
-      try {
-        const afterStats = fstatSync(afterFd);
-        regularFile(afterStats, label);
-        reject(
-          !sameFileIdentity(committedIdentity as Stats, afterStats),
-          label + ' post-commit identity or hash verification failed',
-        );
-        reject(
-          rawHash(readBoundedBuffer(afterFd, label)) !== rawHash(desiredBytes),
-          label + ' post-commit identity or hash verification failed',
-        );
-      } finally {
-        closeQuietly(afterFd);
-      }
-      unlinkSync(childPath(parent.fd, backupName));
-      fsyncSync(parent.fd);
-      backupMoved = false;
     } finally {
-      releaseExclusiveLock(parent.fd, lockName, lockFd);
-      closeQuietly(lockFd);
-      lockFd = -1;
+      closeQuietly(currentFd);
     }
-  } finally {
-    choose(
-      tempFd >= 0,
-      () => {
-        closeQuietly(tempFd);
-        choose(
-          existsSync(childPath(parent.fd, tempName)),
-          () => unlinkSync(childPath(parent.fd, tempName)),
-          () => undefined,
-        );
-      },
-      () => undefined,
+    tempFd = openSync(
+      childPath(parent.fd, tempName),
+      fsConstants.O_RDWR | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow,
+      0o600,
     );
-    restoreLinuxBackup(native as LinuxNativeBinding, parent.fd, name, backupName, backupMoved, expectedHash, label);
-    closeQuietly(parent.fd);
+    tempIdentity = fstatSync(tempFd);
+    regularFile(tempIdentity, label + ' staged replacement');
+    writeFileSync(tempFd, desiredBytes);
+    fsyncSync(tempFd);
+    reject(!tempIdentity, label + ' staged replacement identity is unavailable');
+    verifyLinuxTargetPath(parent.fd, name, label, [expectedHash], initialStats);
+    verifyLinuxTargetPath(parent.fd, tempName, label + ' staged replacement', [desiredHash], tempIdentity);
+    (native as LinuxNativeBinding).renameReplace(parent.fd, tempName, parent.fd, name);
+    closeQuietly(tempFd);
+    tempFd = -1;
+    fsyncSync(parent.fd);
+    const afterFd = openSync(childPath(parent.fd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+    try {
+      const afterStats = fstatSync(afterFd);
+      regularFile(afterStats, label);
+      reject(
+        !sameFileIdentity(tempIdentity, afterStats),
+        label + ' post-commit identity or hash verification failed',
+      );
+      reject(
+        rawHash(readBoundedBuffer(afterFd, label)) !== desiredHash,
+        label + ' post-commit identity or hash verification failed',
+      );
+    } finally {
+      closeQuietly(afterFd);
+    }
+    reject(
+      !backupIdentity ||
+        !moveAndRemovePinnedLock(
+          parent.fd,
+          backupName,
+          label + ' private backup cleanup',
+          backupIdentity,
+          (stats) => all(stats.isFile(), stats.nlink === 1),
+          false,
+        ),
+      label + ' private backup identity changed before cleanup',
+    );
+    fsyncSync(parent.fd);
+  } finally {
+    let recoveryComplete = lockFd < 0;
+    let recoveryError: unknown;
+    if (lockFd >= 0) {
+      try {
+        if (tempFd >= 0) {
+          try {
+            if (existsSync(childPath(parent.fd, tempName))) {
+              reject(
+                !tempIdentity ||
+                  !moveAndRemovePinnedLock(
+                    parent.fd,
+                    tempName,
+                    label + ' staged replacement recovery cleanup',
+                    tempIdentity,
+                    (stats) => all(stats.isFile(), stats.nlink === 1),
+                    false,
+                  ),
+                label + ' staged replacement identity is unknown or changed during recovery',
+              );
+            }
+          } catch (error) {
+            recoveryError = error;
+          } finally {
+            closeQuietly(tempFd);
+            tempFd = -1;
+          }
+        }
+        if (linuxOrphanBackupNames(parent.fd, name).length > 0) {
+          try {
+            recoverLinuxOrphanBackup(
+              native as LinuxNativeBinding,
+              parent.fd,
+              name,
+              expectedHash,
+              desiredHash,
+              label,
+            );
+          } catch (error) {
+            recoveryError ??= error;
+          }
+        }
+        recoveryComplete =
+          recoveryError === undefined &&
+          linuxOrphanBackupNames(parent.fd, name).length === 0 &&
+          !existsSync(childPath(parent.fd, tempName));
+      } finally {
+        try {
+          if (recoveryComplete) releaseExclusiveLock(parent.fd, lockName, lockFd);
+        } finally {
+          try {
+            closeQuietly(lockFd);
+          } finally {
+            closeQuietly(parent.fd);
+          }
+        }
+      }
+    } else {
+      closeQuietly(parent.fd);
+    }
+    if (recoveryError !== undefined) throw recoveryError;
   }
 }
 function recoverLinuxOrphanBackup(
@@ -1351,17 +1494,14 @@ function recoverLinuxOrphanBackup(
   label: string,
 ): void {
   let restoredTargetIdentity: Stats | undefined;
-  const escaped = targetName.replace(/[\^$.*+?()[\]{}|]/g, '\\$&');
-  const names = readdirSync(childPath(parentFd, '.')).filter((name) =>
-    new RegExp('^[.]' + escaped + '[.][0-9a-f-]{36}[.]cas-old$').test(name),
-  );
+  const names = linuxOrphanBackupNames(parentFd, targetName);
   choose(
     names.length === 0,
     () => undefined,
     () => {
       reject(names.length > 1, label + ' has multiple private backups and recovery is ambiguous');
       const backupName = names[0]!;
-      const backupFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow);
+      const backupFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
       try {
         const backupIdentity = fstatSync(backupFd);
         regularFile(backupIdentity, label + ' private backup');
@@ -1369,7 +1509,7 @@ function recoverLinuxOrphanBackup(
           backupIdentity.size > maxRepositoryReadBytes,
           label + ' private backup exceeds the bounded repository read size',
         );
-        const checkFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow);
+        const checkFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
         try {
           reject(
             any(
@@ -1383,7 +1523,7 @@ function recoverLinuxOrphanBackup(
         }
         const targetHash = Result.fromThrowable(
           () => {
-            const targetFd = openSync(childPath(parentFd, targetName), fsConstants.O_RDONLY | noFollow);
+            const targetFd = openSync(childPath(parentFd, targetName), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
             try {
               const targetStats = fstatSync(targetFd);
               regularFile(targetStats, label);
@@ -1428,14 +1568,27 @@ function recoverLinuxOrphanBackup(
           },
           () => undefined,
         );
-        const currentBackupFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow);
+        const currentBackupFd = openSync(
+          childPath(parentFd, backupName),
+          fsConstants.O_RDONLY | noFollow | nonBlockingFlag,
+        );
         try {
           reject(
             !sameFileIdentity(backupIdentity, fstatSync(currentBackupFd)),
             label + ' private backup identity changed during recovery',
           );
           verifyLinuxTargetPath(parentFd, targetName, label, [expectedHash, desiredHash], restoredTargetIdentity);
-          unlinkSync(childPath(parentFd, backupName));
+          reject(
+            !moveAndRemovePinnedLock(
+              parentFd,
+              backupName,
+              label + ' private backup recovery cleanup',
+              backupIdentity,
+              (stats) => all(stats.isFile(), stats.nlink === 1),
+              false,
+            ),
+            label + ' private backup identity changed before recovery cleanup',
+          );
           fsyncSync(parentFd);
         } finally {
           closeQuietly(currentBackupFd);
@@ -1443,61 +1596,6 @@ function recoverLinuxOrphanBackup(
       } finally {
         closeQuietly(backupFd);
       }
-    },
-  );
-}
-function restoreLinuxBackup(
-  native: LinuxNativeBinding,
-  parentFd: number,
-  targetName: string,
-  backupName: string,
-  moved: boolean,
-  expectedHash: string,
-  label: string,
-): void {
-  Result.fromThrowable(
-    () => {
-      choose(
-        moved,
-        () =>
-          choose(
-            existsSync(childPath(parentFd, targetName)),
-            () => undefined,
-            () => {
-              const backupFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow);
-              try {
-                const backupIdentity = fstatSync(backupFd);
-                const restoredFd = cloneOrCopyExclusive(native, backupFd, parentFd, targetName, label);
-                let restoredIdentity: Stats;
-                try {
-                  fsyncSync(restoredFd);
-                  restoredIdentity = fstatSync(restoredFd);
-                  regularFile(restoredIdentity, label);
-                  reject(
-                    rawHash(readBoundedBuffer(restoredFd, label)) !== expectedHash,
-                    label + ' orphan backup restore content verification failed',
-                  );
-                  fsyncSync(parentFd);
-                } finally {
-                  closeQuietly(restoredFd);
-                }
-                verifyLinuxTargetPath(parentFd, targetName, label, [expectedHash], restoredIdentity);
-                verifyLinuxTargetPath(parentFd, backupName, label, [expectedHash], backupIdentity);
-                unlinkSync(childPath(parentFd, backupName));
-                fsyncSync(parentFd);
-              } finally {
-                closeQuietly(backupFd);
-              }
-            },
-          ),
-        () => undefined,
-      );
-    },
-    (error) => error,
-  )().match(
-    () => undefined,
-    (error) => {
-      throw new Error(label + ' failed; the original private backup was preserved for recovery', { cause: error });
     },
   );
 }
@@ -1945,7 +2043,7 @@ function fsSafeListFiles(root: string, target: string, label: string): readonly 
   reject(any(!stats.isDirectory(), stats.isSymbolicLink()), label + ' must be a real directory');
   return readdirSync(absolutePath);
 }
-function linuxFileExists(root: string, target: string, label: string): boolean {
+function linuxFileExistsUnlocked(root: string, target: string, label: string): boolean {
   const absolute = path.resolve(root, target);
   const relative = path.relative(root, absolute);
   const segments = relative.toLowerCase() === '.git' ? ['.git'] : safeRelative(root, target, label);
@@ -1955,7 +2053,7 @@ function linuxFileExists(root: string, target: string, label: string): boolean {
     parentFd = parent.fd;
     let fd = -1;
     try {
-      fd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | noFollow);
+      fd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
       return true;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
@@ -1968,6 +2066,14 @@ function linuxFileExists(root: string, target: string, label: string): boolean {
     throw error;
   } finally {
     if (parentFd >= 0) closeQuietly(parentFd);
+  }
+}
+function linuxFileExists(root: string, target: string, label: string): boolean {
+  try {
+    return withLinuxCasLocks(root, [{ target, label }], () => linuxFileExistsUnlocked(root, target, label));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
   }
 }
 function linuxListFiles(root: string, target: string, label: string): readonly string[] {
@@ -1988,14 +2094,15 @@ function linuxRemoveFile(root: string, target: string, label: string): void {
   try {
     const parent = openParent(root, segments, label);
     parentFd = parent.fd;
-    const lockName = '.' + parent.name + '.cas.lock';
+    const lockName = linuxCasLockName(parent.name);
     let lockFd = -1;
     try {
       lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
       fsyncSync(lockFd);
+      rejectLinuxOrphanBackups(parent.fd, parent.name, label);
       let targetFd = -1;
       try {
-        targetFd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | noFollow);
+        targetFd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
         const stats = fstatSync(targetFd);
         regularFile(stats, label + ' remove target');
         reject(
@@ -2038,9 +2145,16 @@ async function linuxMoveNoReplaceAsync(
   const sourceSegments = safeRelative(root, source, label + ' source');
   const targetSegments = safeRelative(root, target, label + ' target');
   reject(sourceSegments.join('/') === targetSegments.join('/'), label + ' source and target must differ');
+  return withLinuxCasLocks(
+    root,
+    [
+      { target: source, label: label + ' source' },
+      { target, label: label + ' target' },
+    ],
+    () => {
   const probe = (candidate: string): string | null => {
-    if (!linuxFileExists(root, candidate, label + ' hash probe')) return null;
-    return rawHash(readBytes(root, candidate, label + ' hash probe'));
+    if (!linuxFileExistsUnlocked(root, candidate, label + ' hash probe')) return null;
+    return rawHash(readBytesUnlocked(root, candidate, label + ' hash probe'));
   };
   const sourceBefore = probe(source);
   const targetBefore = probe(target);
@@ -2115,6 +2229,8 @@ async function linuxMoveNoReplaceAsync(
     closeQuietly(from.fd);
     closeQuietly(to.fd);
   }
+    },
+  );
 }
 
 function windowsAccess(root: string): SafeRepositoryAccess {
@@ -2267,6 +2383,11 @@ function linuxAccess(root: string): SafeRepositoryAccess {
     attested: true,
     ancestor_binding: 'directory-handle',
     atomic_replace: 'fsync-temp-rename',
+    residual_risks: [
+      'Linux readText, readBytes, fileExists, writeExclusive, replaceAtomic, removeFile, and moveNoReplaceAsync coordinate through the target .cas.lock; listFiles remains advisory.',
+      'The attested descriptor-relative renameReplace publishes a synced sibling temp atomically, so raw readers see complete old or new bytes on successful replacement; they do not wait for recovery and may see private siblings in directory listings.',
+      'The pinned native binding has no conditional replace keyed to the displaced inode; target compare-and-swap therefore requires cooperative .cas.lock writers, and uncooperative same-privilege mutation between the final identity check and rename is outside that guarantee.',
+    ],
     assertAvailable: () => undefined,
     prepareExclusiveCreation: async () => {
       linuxDirectoryIdentity(root, '.', 'exclusive-create root');

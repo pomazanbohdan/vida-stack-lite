@@ -95,6 +95,38 @@ import type {
 
 const sessionProducerStore = 'vida-session-producers';
 const recoveryReviewStore = 'vida-recovery-reviews';
+const deliveredContinuationRepairStore = 'vida-delivered-continuation-repairs';
+interface DeliveredContinuationRepairDigestOverlay {
+  readonly work_id: string;
+  readonly attempt: number;
+  readonly action_id: string;
+  readonly before_digest: string;
+  readonly after_digest: string;
+}
+interface DeliveredContinuationRepairInspection {
+  readonly schema: 'DeliveredWorkContinuationRepairInspection/v1';
+  readonly workspace_id: string;
+  readonly identity: WorkIdentity;
+  readonly attempt: number;
+  readonly action_id: string;
+  readonly row: { readonly payload: string; readonly before_digest: string; readonly after_digest: string };
+  readonly work: WorkState;
+  readonly work_version: StateVersion;
+  readonly ledger: CoordinationLedger;
+  readonly ledger_version: StateVersion;
+  readonly journal: { readonly revision: number; readonly payload: string; readonly digest: string; readonly state: MastraSessionLedgerState };
+  readonly maintenance_generation: number;
+  readonly transition_digest: string;
+}
+interface DeliveredContinuationRepairPlan {
+  readonly schema: 'DeliveredWorkContinuationIntegrityRepairPlan/v1';
+  readonly branch: 'historical_terminal_review' | 'configured_frontier';
+  readonly repair_id: string;
+  readonly actor: string;
+  readonly timestamp: string;
+  readonly inspection: DeliveredContinuationRepairInspection;
+  readonly digest: string;
+}
 /** Internal trusted-caller consistency; no native attestation or write authority. */
 export interface RecoveryReviewBinding {
   readonly identity: WorkIdentity;
@@ -1690,9 +1722,11 @@ function checkedStoredWork(
   workspaceId: string,
   value: unknown,
   pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt,
+  continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
 ): WorkState {
   const candidate = value as WorkState,
     bindings = new Map<string, WorkState['binding']>(),
+    continuationRepairOverlayUsed = { value: false },
     records: ({ readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt } | {
       readonly kind: 'continuation';
       readonly receipt: DeliveredWorkContinuationReceipt;
@@ -1737,8 +1771,23 @@ function checkedStoredWork(
     }[];
     for (const row of rows) {
       const receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
+      const repairOverlayMatches =
+        continuationRepairOverlay?.work_id === candidate.binding?.lifecycle_work_id &&
+        continuationRepairOverlay.attempt === row.attempt &&
+        continuationRepairOverlay.action_id === row.action_id;
+      if (repairOverlayMatches) {
+        requireState(
+          !continuationRepairOverlayUsed.value &&
+            hashPattern.test(row.digest) &&
+            row.digest === continuationRepairOverlay.before_digest &&
+            continuationRepairOverlay.after_digest === canonicalJsonDigest(receipt),
+          'delivered-work continuation repair digest beforeimage differs',
+        );
+        continuationRepairOverlayUsed.value = true;
+      }
+      const storedDigest = repairOverlayMatches ? continuationRepairOverlay!.after_digest : row.digest;
       requireState(
-        canonicalJsonDigest(receipt) === row.digest &&
+        canonicalJsonDigest(receipt) === storedDigest &&
           receipt.request?.action?.kind === 'historical_terminal_review' &&
           receipt.request.action.capture.action_id === row.action_id &&
           receipt.attempt === row.attempt,
@@ -1747,6 +1796,8 @@ function checkedStoredWork(
       records.push({ kind: 'continuation', receipt });
     }
   }
+  if (continuationRepairOverlay)
+    requireState(continuationRepairOverlayUsed.value, 'delivered-work continuation repair row is missing');
   if (pendingReceipt) {
     records.push(
       pendingReceipt.schema === 'VidaRuntimeCodeRebindAuthorization/v1'
@@ -2068,6 +2119,10 @@ function validatePair(work: WorkState | null, ledger: CoordinationLedger | null)
 }
 function sameJson(left: unknown, right: unknown): boolean {
   return canonicalJson(left) === canonicalJson(right);
+}
+function exactJsonKeys(value: unknown, keys: readonly string[]): boolean {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) &&
+    sameJson(Object.keys(value as Record<string, unknown>).sort(), [...keys].sort());
 }
 function appendOnly<T>(before: readonly T[], after: readonly T[], id: (value: T) => string, label: string): void {
   const next = new Map(after.map((value) => [id(value), canonicalJson(value)]));
@@ -3087,6 +3142,7 @@ export class HostStateStore {
     verifyRuntimeCodeRebind?: RuntimeCodeRebindVerifier,
     verifyTaskSourceMutation?: TaskSourceMutationPolicyVerifier,
     verifyDeliveredWorkContinuation?: DeliveredWorkContinuationVerifier,
+    readOnlyInspection = false,
   ) {
     requireState(
       database instanceof Database && hashPattern.test(workspaceId),
@@ -3218,27 +3274,43 @@ export class HostStateStore {
       (entry) => entry.name === 'main',
     );
     requireState(main?.file, 'host state requires a file-backed database');
-    database.exec('PRAGMA synchronous=FULL');
+    if (readOnlyInspection) {
+      const requiredTables = [
+        'agent_host_state',
+        'agent_host_governance',
+        'agent_host_governance_stores',
+        'agent_host_reconciliation',
+        'agent_host_maintenance',
+        'agent_host_admission_attempt',
+        'agent_host_final_assurance',
+      ];
+      requireState(
+        requiredTables.every((table) =>
+          database.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table),
+        ),
+        'read-only Host inspection requires the existing current schema',
+      );
+    } else database.exec('PRAGMA synchronous=FULL');
     this.#assertDatabaseSupport();
-    database.exec(
+    if (!readOnlyInspection) database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_state (workspace_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY (workspace_id, kind, id))',
     );
-    database.exec(
+    if (!readOnlyInspection) database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_governance (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, kind TEXT NOT NULL, record_key TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id,kind,record_key))',
     );
-    database.exec(
+    if (!readOnlyInspection) database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_governance_stores (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, generation TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id))',
     );
-    database.exec(
+    if (!readOnlyInspection) database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_reconciliation (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
     );
-    database.exec(
+    if (!readOnlyInspection) database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_maintenance (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
     );
-    database.exec(
+    if (!readOnlyInspection) database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_admission_attempt (workspace_id TEXT NOT NULL,generation INTEGER NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_digest TEXT NOT NULL,PRIMARY KEY(workspace_id,generation,work_id,attempt))',
     );
-    database.exec(
+    if (!readOnlyInspection) database.exec(
       'CREATE TABLE IF NOT EXISTS agent_host_final_assurance (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,generation INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,generation))',
     );
     this.governanceCapability = issueHostGovernanceCapability({
@@ -3656,8 +3728,38 @@ export class HostStateStore {
       requireState(result.changes === 1, 'governance compare-and-swap conflict');
     }
   }
+  #assertNoPendingSessionProducer(): void {
+    const rows = this.#database
+      .query("SELECT record_key FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind='operation'")
+      .all(this.#workspaceId, sessionProducerStore) as { record_key: string }[];
+    const pending = rows
+      .map(
+        (row) =>
+          this.#governanceRead(sessionProducerStore, 'operation', row.record_key)!.record as OperationReservation,
+      )
+      .filter((record) => record.status === 'reserved' || record.status === 'commit_unknown');
+    requireState(pending.length === 0, 'session producer is pending or unknown');
+  }
+  #assertNoPendingDeliveredContinuationRepair(exceptOperationKey?: string): void {
+    const rows = this.#database
+      .query("SELECT record_key FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind='operation'")
+      .all(this.#workspaceId, deliveredContinuationRepairStore) as { record_key: string }[];
+    const pending = rows
+      .map(
+        (row) =>
+          this.#governanceRead(deliveredContinuationRepairStore, 'operation', row.record_key)!
+            .record as OperationReservation,
+      )
+      .filter(
+        (record) =>
+          record.operation_key !== exceptOperationKey &&
+          (record.status === 'reserved' || record.status === 'commit_unknown'),
+      );
+    requireState(pending.length === 0, 'delivered-work continuation repair is pending or unknown');
+  }
   /** All producers share the one configured engine file; UNKNOWN never expires. */
   assertSessionProducerWriteAllowed(handle?: SessionProducerHandle): void {
+    this.#assertNoPendingDeliveredContinuationRepair();
     const rows = this.#database
       .query("SELECT record_key FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind='operation'")
       .all(this.#workspaceId, sessionProducerStore) as { record_key: string }[];
@@ -5378,17 +5480,25 @@ export class HostStateStore {
     };
     this.#writeReconciliationGate(next, gate);
   }
-  #checkedWork(value: unknown, pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt): WorkState {
-    return checkedStoredWork(this.#database, this.#workspaceId, value, pendingReceipt);
+  #checkedWork(
+    value: unknown,
+    pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt,
+    continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  ): WorkState {
+    return checkedStoredWork(this.#database, this.#workspaceId, value, pendingReceipt, continuationRepairOverlay);
   }
-  #load(kind: 'work' | 'ledger', id: string): WorkState | CoordinationLedger | null {
+  #load(
+    kind: 'work' | 'ledger',
+    id: string,
+    continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  ): WorkState | CoordinationLedger | null {
     const row = this.#database
       .query('SELECT revision, payload, digest FROM agent_host_state WHERE workspace_id=? AND kind=? AND id=?')
       .get(this.#workspaceId, kind, id) as { revision: number; payload: string; digest: string } | null;
     if (!row) return null;
     const parsed: unknown = JSON.parse(row.payload);
     assertCanonicalJsonValue(parsed, '$');
-    const value = kind === 'work' ? this.#checkedWork(parsed) : checkedLedger(parsed);
+    const value = kind === 'work' ? this.#checkedWork(parsed, undefined, continuationRepairOverlay) : checkedLedger(parsed);
     requireState(
       value.workspace_id === this.#workspaceId &&
         value.revision === row.revision &&
@@ -5398,14 +5508,18 @@ export class HostStateStore {
     if (kind === 'work') requireState(identityKey(workIdentity(value as WorkState)) === id, 'stored work key mismatch');
     return value;
   }
-  #read(identity: WorkIdentity, allowHeldMaintenance = false): HostStateSnapshot {
+  #read(
+    identity: WorkIdentity,
+    allowHeldMaintenance = false,
+    continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  ): HostStateSnapshot {
     requireState(
       !allowHeldMaintenance || (this.#database.inTransaction && this.#maintenanceSnapshotReadScopeActive),
       'held maintenance read is limited to maintenance snapshot inspection',
     );
     this.#assertDatabaseSupport();
     if (!allowHeldMaintenance) this.#assertMaintenanceAvailable();
-    const work = this.#load('work', identityKey(identity)) as WorkState | null;
+    const work = this.#load('work', identityKey(identity), continuationRepairOverlay) as WorkState | null;
     const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
     requireState(
       work || !ledger?.tickets.some((ticket) => identityKey(ticketIdentity(ticket)) === identityKey(identity)),
@@ -8647,10 +8761,290 @@ export class HostStateStore {
       return snapshot({ status: 'continued' as const, snapshot: saved, receipt, action: input.action });
     }).immediate();
   }
+  #inspectDeliveredWorkContinuationRepairInTransaction(
+    identity: WorkIdentity,
+    attempt: number,
+    actionId: string,
+  ): DeliveredContinuationRepairInspection {
+    requireState(
+      Number.isSafeInteger(attempt) && attempt > 0 && hashPattern.test(actionId),
+      'delivered-work continuation repair identity invalid',
+    );
+    const table = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'")
+      .get();
+    requireState(table, 'delivered-work continuation repair row is missing');
+    const row = this.#database
+      .query(
+        'SELECT payload,digest,action_id,attempt FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+      )
+      .get(this.#workspaceId, identity.work_id, attempt, actionId) as {
+      payload: string;
+      digest: string;
+      action_id: string;
+      attempt: number;
+    } | null;
+    requireState(
+      row && row.action_id === actionId && row.attempt === attempt && hashPattern.test(row.digest),
+      'delivered-work continuation repair row identity or digest invalid',
+    );
+    const receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
+    assertCanonicalJsonValue(receipt, '$.continuationRepair');
+    const afterDigest = canonicalJsonDigest(receipt);
+    requireState(
+      row.payload === canonicalJson(receipt) && row.digest !== afterDigest,
+      'delivered-work continuation repair is limited to a stale stored digest',
+    );
+    const overlay: DeliveredContinuationRepairDigestOverlay = {
+      work_id: identity.work_id,
+      attempt,
+      action_id: actionId,
+      before_digest: row.digest,
+      after_digest: afterDigest,
+    };
+    const current = this.#read(identity, false, overlay);
+    const journalRow = this.#database
+      .query(
+        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .get(this.#workspaceId, identity.work_id, attempt) as {
+      revision: number;
+      payload: string;
+      digest: string;
+    } | null;
+    requireState(journalRow, 'delivered-work continuation repair Journal is missing');
+    const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState;
+    assertCanonicalJsonValue(journal, '$.continuationRepair.journal');
+    requireState(
+      journalRow.payload === canonicalJson(journal) &&
+        journalRow.digest === canonicalJsonDigest(journal) &&
+        receipt.request.action.kind === 'historical_terminal_review' &&
+        receipt.request.action.capture.action_id === actionId &&
+        receipt.attempt === attempt &&
+        current.work && current.ledger && current.workVersion && current.ledgerVersion &&
+        sameJson(current.work, receipt.successor_work) &&
+        sameJson(current.ledger, receipt.successor_ledger) &&
+        sameJson(current.workVersion, receipt.work_version) &&
+        sameJson(current.ledgerVersion, receipt.ledger_version) &&
+        journalRow.revision === receipt.journal_version.revision &&
+        journalRow.digest === receipt.journal_version.digest &&
+        sameJson(journal, receipt.successor_journal) &&
+        journal.corrective_execution == null &&
+        journal.research_wave_exposure === undefined &&
+        journal.items.length === 1 &&
+        journal.items[0]?.request.action_id === receipt.request.action.request.action_id &&
+        journal.items[0]?.issue_id === null &&
+        journal.items[0]?.observation === null &&
+        journal.items[0]?.host_reservation === undefined &&
+        journal.items[0]?.research_activation === undefined &&
+        journal.items[0]?.research_normalization === undefined &&
+        receipt.request.action.request.corrective_execution === undefined &&
+        current.work.execution.assignment_attempts.every((attempt) => !['started', 'uncertain'].includes(attempt.status)) &&
+        typeof receipt.request.sourceTransition?.transition_digest === 'string' &&
+        hashPattern.test(receipt.request.sourceTransition.transition_digest) &&
+        receipt.authorization.transition_digest === receipt.request.sourceTransition.transition_digest,
+      'delivered-work continuation repair dependency, transition or unissued action differs',
+    );
+    return snapshot({
+      schema: 'DeliveredWorkContinuationRepairInspection/v1' as const,
+      workspace_id: this.#workspaceId,
+      identity,
+      attempt,
+      action_id: actionId,
+      row: { payload: row.payload, before_digest: row.digest, after_digest: afterDigest },
+      work: current.work,
+      work_version: current.workVersion,
+      ledger: current.ledger,
+      ledger_version: current.ledgerVersion,
+      journal: { revision: journalRow.revision, payload: journalRow.payload, digest: journalRow.digest, state: journal },
+      maintenance_generation: current.maintenanceGeneration,
+      transition_digest: receipt.request.sourceTransition.transition_digest,
+    });
+  }
+  inspectDeliveredWorkContinuationRepair(
+    identity: WorkIdentity,
+    attempt: number,
+    actionId: string,
+  ): DeliveredContinuationRepairInspection {
+    requireState(!this.#database.inTransaction, 'nested delivered-work continuation repair inspection forbidden');
+    return this.#database
+      .transaction(() => this.#inspectDeliveredWorkContinuationRepairInTransaction(identity, attempt, actionId))
+      .deferred();
+  }
+  #validateDeliveredContinuationRepairPlan(value: unknown): DeliveredContinuationRepairPlan {
+    requireState(value !== null && typeof value === 'object' && !Array.isArray(value), 'repair plan object required');
+    const plan = value as DeliveredContinuationRepairPlan,
+      { digest, ...body } = plan;
+    requireState(
+      exactJsonKeys(plan, ['schema', 'branch', 'repair_id', 'actor', 'timestamp', 'inspection', 'digest']) &&
+        exactJsonKeys(plan.inspection, [
+          'schema', 'workspace_id', 'identity', 'attempt', 'action_id', 'row', 'work', 'work_version',
+          'ledger', 'ledger_version', 'journal', 'maintenance_generation', 'transition_digest',
+        ]) &&
+        exactJsonKeys(plan.inspection.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) &&
+        exactJsonKeys(plan.inspection.row, ['payload', 'before_digest', 'after_digest']) &&
+        exactJsonKeys(plan.inspection.work_version, ['revision', 'digest']) &&
+        exactJsonKeys(plan.inspection.ledger_version, ['revision', 'digest']) &&
+        exactJsonKeys(plan.inspection.journal, ['revision', 'payload', 'digest', 'state']) &&
+        plan.schema === 'DeliveredWorkContinuationIntegrityRepairPlan/v1' &&
+        plan.branch === 'historical_terminal_review' &&
+        typeof plan.repair_id === 'string' && /^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.repair_id) &&
+        typeof plan.actor === 'string' && plan.actor.trim().length > 0 && plan.actor === plan.actor.trim() &&
+        plan.actor.length <= 256 && !/\p{Cc}/u.test(plan.actor) &&
+        rfc3339TimestampMilliseconds(plan.timestamp) !== null &&
+        plan.inspection?.schema === 'DeliveredWorkContinuationRepairInspection/v1' &&
+        plan.inspection.workspace_id === this.#workspaceId &&
+        typeof digest === 'string' && hashPattern.test(digest) && canonicalJsonDigest(body) === digest,
+      'delivered-work continuation repair plan is malformed or changed',
+    );
+    return plan;
+  }
+  #deliveredContinuationRepairOperationKey(plan: DeliveredContinuationRepairPlan): string {
+    return canonicalJsonDigest({
+      repair_id: plan.repair_id,
+      workspace_id: plan.inspection.workspace_id,
+      work_id: plan.inspection.identity.work_id,
+      attempt: plan.inspection.attempt,
+      action_id: plan.inspection.action_id,
+    });
+  }
+  reserveDeliveredWorkContinuationRepair(value: unknown): OperationReservation {
+    const plan = this.#validateDeliveredContinuationRepairPlan(value),
+      operationKey = this.#deliveredContinuationRepairOperationKey(plan);
+    requireState(!this.#database.inTransaction, 'nested delivered-work continuation repair reservation forbidden');
+    // Exact own-operation retries are resolved before the shared producer gate observes this repair's
+    // RESERVED/UNKNOWN marker. The check is read-only and permits no other pending repair or producer.
+    const ownRetry = this.#database
+      .transaction(() => {
+        const existing = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
+        if (!existing) return null;
+        const operation = existing.record as OperationReservation;
+        requireState(operation.request_digest === plan.digest, 'delivered-work continuation repair retry differs');
+        this.#assertNoPendingSessionProducer();
+        this.#assertNoPendingDeliveredContinuationRepair(operationKey);
+        return snapshot(operation);
+      })
+      .deferred();
+    if (ownRetry) return ownRetry;
+    return this.#transactionWithProducerFence(() => {
+      this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceGeneration(plan.inspection.maintenance_generation);
+      // The shared immediate writer gate serializes this reservation with every producer.
+      // Recheck explicitly before recording RESERVED so an active/UNKNOWN producer cannot race it.
+      this.#assertNoPendingSessionProducer();
+      const current = this.#inspectDeliveredWorkContinuationRepairInTransaction(
+        plan.inspection.identity,
+        plan.inspection.attempt,
+        plan.inspection.action_id,
+      );
+      requireState(sameJson(current, plan.inspection), 'delivered-work continuation repair beforeimage changed');
+      const existing = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
+      if (existing) {
+        const operation = existing.record as OperationReservation;
+        requireState(operation.request_digest === plan.digest, 'delivered-work continuation repair retry differs');
+        requireState(operation.status === 'applied', 'repair is already reserved or UNKNOWN; resume that exact plan');
+        return snapshot(operation);
+      }
+      this.#governanceGeneration(deliveredContinuationRepairStore, true);
+      const record: OperationReservation = {
+        schema: 'OperationReservation/v1',
+        store_id: deliveredContinuationRepairStore,
+        operation_key: operationKey,
+        revision: 1,
+        fencing_token: randomUUID(),
+        status: 'reserved',
+        created_at: new Date().toISOString(),
+        request_digest: plan.digest,
+      };
+      this.#governanceWrite('operation', operationKey, record, null);
+      return snapshot(record);
+    }).immediate();
+  }
+  applyDeliveredWorkContinuationRepair(value: unknown): { readonly status: 'applied' | 'already_applied'; readonly digest: string } {
+    const plan = this.#validateDeliveredContinuationRepairPlan(value),
+      operationKey = this.#deliveredContinuationRepairOperationKey(plan),
+      { identity, attempt, action_id: actionId } = plan.inspection;
+    requireState(!this.#database.inTransaction, 'nested delivered-work continuation repair apply forbidden');
+    // Persist UNKNOWN in its own transaction before the only row effect. A restart resumes this exact plan.
+    this.#database.transaction(() => {
+      this.#assertNoPendingSessionProducer();
+      const stored = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
+      requireState(stored, 'delivered-work continuation repair reservation is missing');
+      const current = stored.record as OperationReservation;
+      requireState(current.request_digest === plan.digest, 'delivered-work continuation repair plan changed');
+      if (current.status === 'reserved')
+        this.#governanceWrite(
+          'operation',
+          operationKey,
+          { ...current, status: 'commit_unknown', terminal_revision: 2 },
+          stored,
+        );
+      else requireState(current.status === 'commit_unknown' || current.status === 'applied', 'repair operation is terminally denied');
+    }).immediate();
+    return this.#database.transaction(() => {
+      this.#assertNoPendingSessionProducer();
+      const stored = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
+      requireState(stored, 'delivered-work continuation repair reservation is missing');
+      const operation = stored.record as OperationReservation;
+      requireState(operation.request_digest === plan.digest, 'delivered-work continuation repair plan changed');
+      if (operation.status === 'applied') {
+        const row = this.#database
+          .query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
+          .get(this.#workspaceId, identity.work_id, attempt, actionId) as { payload: string; digest: string } | null;
+        const current = this.#read(identity),
+          journal = this.#database
+            .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+            .get(this.#workspaceId, identity.work_id, attempt) as { revision: number; payload: string; digest: string } | null;
+        requireState(
+          row && row.payload === plan.inspection.row.payload && row.digest === plan.inspection.row.after_digest &&
+            operation.result_digest === canonicalJsonDigest({ payload: row.payload, digest: row.digest }) &&
+            current.work && current.ledger &&
+            sameJson(current.work, plan.inspection.work) && sameJson(current.ledger, plan.inspection.ledger) &&
+            sameJson(current.workVersion, plan.inspection.work_version) &&
+            sameJson(current.ledgerVersion, plan.inspection.ledger_version) &&
+            current.maintenanceGeneration === plan.inspection.maintenance_generation &&
+            journal?.revision === plan.inspection.journal.revision &&
+            journal.payload === plan.inspection.journal.payload &&
+            journal.digest === plan.inspection.journal.digest,
+          'applied delivered-work continuation repair afterimage differs',
+        );
+        return { status: 'already_applied' as const, digest: row.digest };
+      }
+      requireState(operation.status === 'commit_unknown', 'delivered-work continuation repair is not UNKNOWN');
+      const current = this.#inspectDeliveredWorkContinuationRepairInTransaction(identity, attempt, actionId);
+      requireState(sameJson(current, plan.inspection), 'delivered-work continuation repair dependency CAS changed');
+      const changed = this.#database
+        .query('UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=? AND payload=? AND digest=?')
+        .run(
+          plan.inspection.row.after_digest,
+          this.#workspaceId,
+          identity.work_id,
+          attempt,
+          actionId,
+          plan.inspection.row.payload,
+          plan.inspection.row.before_digest,
+        );
+      requireState(changed.changes === 1, 'delivered-work continuation repair row CAS changed');
+      const after = this.#read(identity);
+      requireState(
+        after.work && after.ledger && sameJson(after.work, plan.inspection.work) && sameJson(after.ledger, plan.inspection.ledger),
+        'delivered-work continuation repair changed linked state',
+      );
+      const resultDigest = canonicalJsonDigest({ payload: plan.inspection.row.payload, digest: plan.inspection.row.after_digest });
+      this.#governanceWrite(
+        'operation',
+        operationKey,
+        { ...operation, status: 'applied', terminal_revision: 3, result_digest: resultDigest },
+        stored,
+      );
+      return { status: 'applied' as const, digest: plan.inspection.row.after_digest };
+    }).immediate();
+  }
   /** Read the one current terminal-review continuation for this original Work attempt. */
   readDeliveredWorkContinuation(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationLookup | null {
     requireState(Number.isSafeInteger(attempt) && attempt > 0, 'delivered-work continuation attempt is invalid');
     requireState(!this.#database.inTransaction, 'nested delivered-work continuation inspection forbidden');
+    this.#assertNoPendingDeliveredContinuationRepair();
     const current = this.readHostStateSnapshot(identity);
     if (!current.work || !current.workVersion) return null;
     const table = this.#database

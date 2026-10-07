@@ -1,5 +1,6 @@
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
@@ -371,7 +372,7 @@ export class MastraSessionBridge {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
-    const storage = new LibSQLStore({ id: 'vida-workflow-state', url: 'file:' + databasePath });
+    const storage = new LibSQLStore({ id: 'vida-workflow-state', url: pathToFileURL(databasePath).href });
     try {
       args.ledger.hostState.assertSessionProducerCurrent(producer);
       await storage.init();

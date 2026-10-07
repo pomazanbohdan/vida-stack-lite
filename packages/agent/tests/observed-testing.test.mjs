@@ -139,3 +139,39 @@ test('caller-supplied evidence classification claims are rejected', () => {
     }),
   ).toThrow(/classification is runtime-derived/);
 });
+
+test('the full delivery caller uses Host-bound Source and still rejects drift and unknown fields', () => {
+  const host = {
+    work: {
+      binding: {
+        repository_id: config.repository.repository_id,
+        project_ids: [selection.project],
+        integrations_digest: 'c'.repeat(64),
+        lifecycle_work_id: workId,
+      },
+      lease: { thread_id: 'delivery-caller', ticket_id: 'delivery-ticket', generation: 1 },
+    },
+  };
+  let sourceCalls = 0;
+  const sourceStore = {
+    snapshotCurrentTaskSourceSources(identity, owner, paths, attempt) {
+      sourceCalls++;
+      expect(identity.work_id).toBe(workId);
+      expect(owner).toBe(host.work.lease.thread_id);
+      expect(paths).toEqual(packet.owned_paths);
+      expect(attempt).toBe(journal.state.attempt);
+      return snapshotDeclaredSources(requireSafeRepositoryAccess(root), paths);
+    },
+  };
+  const fullCaller = { ...receiptInput, host, sourceStore };
+  const result = issueObservedTestReceipt(fullCaller);
+  expect(sourceCalls).toBe(1);
+  expect(result.receipt.status).toBe('pass');
+  expect(result.evidence.test_execution_verified).toBe(false);
+  expect(() => issueObservedTestReceipt({ ...fullCaller, unexpected: true })).toThrow(/caller fields are closed/);
+  expect(sourceCalls).toBe(1);
+  expect(() => issueObservedTestReceipt({
+    ...fullCaller,
+    sourceStore: { snapshotCurrentTaskSourceSources: () => ({ ...source, digest: 'd'.repeat(64) }) },
+  })).toThrow(/source or work changed/);
+});

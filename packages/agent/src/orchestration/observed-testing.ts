@@ -95,7 +95,7 @@ export function issueObservedTestReceipt(input: {
   const { repositoryRoot, config, packet, implementationResult, journal, authority } = input;
   requireTest(
     Object.keys(input).every((key) =>
-      ['repositoryRoot', 'config', 'packet', 'implementationResult', 'journal', 'authority', 'host'].includes(key),
+      ['repositoryRoot', 'config', 'packet', 'implementationResult', 'journal', 'authority', 'host', 'sourceStore'].includes(key),
     ),
     'test evidence classification is runtime-derived and caller fields are closed',
   );

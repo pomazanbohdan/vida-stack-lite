@@ -1298,6 +1298,25 @@ resume. Lost issuance acknowledgement retains the same issue and UNKNOWN;
 an exact report retry returns the persisted result. Unsupported frontier
 continuations remain an explicit GAP and cannot start a replacement workflow.
 
+The artifact reconciliation owner provides `--kind delivered-work-continuation`
+with `inspect`, `plan`, `apply` and `resume` for a stale stored receipt digest.
+The receipt payload must satisfy its current contract and exactly match the
+linked Work, Ledger and Journal. Repair preserves their bytes, the owner lease,
+rights, outcomes and acceptance. It changes only the stored digest and its own
+repair operation. Plan retains exact beforeimages and dependency CAS.
+
+Repair reservation shares session-producer exclusion. An active or UNKNOWN
+producer denies reservation. A reserved or UNKNOWN repair denies new producers
+and continuation reads. Application and repair completion commit atomically;
+exact resume checks the dependency tuple and afterimage. Changed payload,
+state, owner or dependency denies. This is consistency evidence, not package
+qualification or Runtime acceptance.
+
+The future configured-frontier validator requires immutable engine snapshot
+bytes bound to the action and completed prefix. It is isolated: frontier apply
+and resume remain disabled until the normal reader is adopted. Historical
+reader and receipt semantics stay unchanged.
+
 Before changing an active strict artifact schema, qualify and ship its supported
 artifact/dependency repair command. Same-attempt correction still requires current
 scope/configuration and base-to-corrective engine authority before admission.
@@ -1772,17 +1791,40 @@ lock namespace change requires quiescence while upgrading cooperating writers;
 it does not promise coordination with older processes still using the prior
 in-place lock name.
 
-Linux compare-and-swap replacement uses the native exclusive clone when the
-filesystem supports it. For known clone-unavailable errors (`EINVAL`, `ENOSYS`,
-`ENOTSUP`, `EOPNOTSUPP`, `EPERM` or `EXDEV`), it falls back to a bounded,
-explicit-offset copy between already-open regular-file descriptors. The copy
-target is created exclusively without following links; partial writes are
-completed, and cleanup/recovery verifies the created file identity before
-removal or replacement. Other errors and ambiguous targets remain failures.
+Linux replacement stages and synchronizes complete bytes in a private sibling.
+The attested descriptor-relative `renameReplace` publishes that file atomically;
+raw readers see complete old or new bytes on successful publication. The
+expected target identity and content are checked under the same `.cas.lock` as
+cooperating writers. This is cooperative CAS, not a kernel conditional rename
+against arbitrary same-privilege namespace changes. Directory listings remain
+advisory and can include private siblings.
+
+CAS locks use the same byte-bounded resource-lock naming rule. Private staging
+and backup names reserve room for cleanup quarantine suffixes. Long target
+basenames use a deterministic bounded sibling stem and a distinct backup suffix.
+Recovery recognizes original and bounded backup names without confusing a
+literal target basename with another target's bounded stem. Cleanup quarantine
+names are also byte-bounded. Ambiguous custody remains fenced.
+
+Private backup creation may use the native exclusive clone or, for supported
+clone-unavailable errors, a bounded descriptor-to-descriptor copy. Copy fallback
+never publishes partial bytes under the final target name. Writer exclusion
+continues through owned staging cleanup and recovery; unresolved identity or
+backup custody keeps the operation fenced. Shared directory traversal closes
+owned descriptors on every component failure. FIFO existence probes are
+nonblocking, while non-regular content reads still deny.
 Before retiring an original backup, recovery reopens and verifies the restored
 pathname against its descriptor identity and expected content; ambiguous or
 substituted targets retain the original backup. These checks do not provide
 physical fencing against noncooperating writers or a power-loss guarantee.
+
+The Mastra adapter converts the exact physical database path with
+`pathToFileURL`. Literal percent signs, fragments, spaces and Unicode therefore
+resolve to the file checked by its existing inode fence. Tester evidence accepts
+the declared Host-bound `sourceStore` input and still rejects unknown caller
+fields or stale Source. A confirmed no-effect recovery retry checks the stored
+proof, decision and renewed lease before returning unchanged state; it does not
+consume another verifier, generation or CAS. UNKNOWN work is never reissued.
 
 ## Host integration direction
 

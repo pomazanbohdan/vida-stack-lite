@@ -1,4 +1,5 @@
 import { afterEach, test, expect } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -26,6 +27,10 @@ import {
   validateDeliveredWorkContinuationRequest,
 } from '../src/orchestration/delivered-work-continuation.ts';
 import { applyDeliveredWorkContinuationPlan } from '../bin/runtime-code-rebind.mjs';
+import {
+  assertApplicableRepairBranch,
+  validateConfiguredFrontierRepairReceipt,
+} from '../bin/repair-delivered-work-continuation.mjs';
 
 afterEach(() => cleanupContinuationFixtures());
 test('a configured frontier is offered only when its exact persisted request is wholly unissued', () => {
@@ -456,6 +461,229 @@ test('Host denies a fresh overlapping FIFO owner before any continuation write',
         .get(fixtureWorkspace, f.identity.work_id, 1),
     ).toEqual(journalBefore);
   } finally {}
+});
+
+test('stale continuation digest repair fences producers and changes only the row binding', async () => {
+  const f = await continuationFixture();
+  try {
+    const request = continuationRequestFor(f),
+      body = {
+        schema: 'VidaDeliveredWorkContinuationPlan/v1',
+        repair_id: 'continuation-integrity-20261007',
+        actor: 'fixture-owner',
+        timestamp: '2026-10-07T00:00:00.000Z',
+        source_transition_id: request.sourceTransition.operation_id,
+        runtime_code_paths: ['packages/agent/src/runtime-kernel.ts'],
+        request,
+      },
+      continuation = await applyDeliveredWorkContinuationPlan({
+        database: f.db,
+        root: f.root,
+        workspaceId: f.workspaceId,
+        plan: { ...body, digest: canonicalJsonDigest(body) },
+        rebuildPlan: async () => ({ ...body, digest: canonicalJsonDigest(body) }),
+      }),
+      before = continuation.snapshot,
+      journalBefore = f.db
+        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(f.workspaceId, f.identity.work_id, 1),
+      rowBefore = f.db
+        .query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
+        .get(f.workspaceId, f.identity.work_id, 1, request.action.capture.action_id);
+    expect(continuation.status).toBe('continued');
+    f.db
+      .query('UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
+      .run('0'.repeat(64), f.workspaceId, f.identity.work_id, 1, request.action.capture.action_id);
+    const inspection = f.store.inspectDeliveredWorkContinuationRepair(
+        f.identity,
+        1,
+        request.action.capture.action_id,
+      ),
+      planBody = {
+        schema: 'DeliveredWorkContinuationIntegrityRepairPlan/v1',
+        branch: 'historical_terminal_review',
+        repair_id: 'continuation-integrity-20261007',
+        actor: 'fixture-owner',
+        timestamp: '2026-10-07T00:00:00.000Z',
+        inspection,
+      },
+      plan = { ...planBody, digest: canonicalJsonDigest(planBody) };
+    f.store.reserveDeliveredWorkContinuationRepair(plan);
+    expect(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).toThrow(/repair is pending or unknown/);
+    expect(() => f.store.assertSessionProducerWriteAllowed()).toThrow(/repair is pending or unknown/);
+    f.db.exec(`CREATE TRIGGER interrupt_continuation_repair
+      BEFORE UPDATE OF digest ON agent_host_delivered_work_continuation
+      BEGIN SELECT RAISE(ABORT, 'continuation repair interrupted'); END`);
+    expect(() => f.store.applyDeliveredWorkContinuationRepair(plan)).toThrow(/repair interrupted/);
+    expect(() => f.store.assertSessionProducerWriteAllowed()).toThrow(/repair is pending or unknown/);
+    expect(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).toThrow(/repair is pending or unknown/);
+    const interruptedRow = f.db
+      .query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
+      .get(f.workspaceId, f.identity.work_id, 1, request.action.capture.action_id);
+    expect(interruptedRow.payload).toBe(rowBefore.payload);
+    expect(interruptedRow.digest).toBe('0'.repeat(64));
+    f.db.exec('DROP TRIGGER interrupt_continuation_repair');
+    expect(f.store.applyDeliveredWorkContinuationRepair(plan).status).toBe('applied');
+    const repaired = f.store.readHostStateSnapshot(f.identity),
+      rowAfter = f.db
+        .query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
+        .get(f.workspaceId, f.identity.work_id, 1, request.action.capture.action_id),
+      journalAfter = f.db
+        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(f.workspaceId, f.identity.work_id, 1);
+    expect(rowAfter.payload).toBe(rowBefore.payload);
+    expect(rowAfter.digest).toBe(canonicalJsonDigest(JSON.parse(rowBefore.payload)));
+    expect(repaired).toEqual(before);
+    expect(journalAfter).toEqual(journalBefore);
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1).action_status).toBe('unissued');
+    expect(f.store.applyDeliveredWorkContinuationRepair(plan)).toEqual({
+      status: 'already_applied',
+      digest: rowAfter.digest,
+    });
+    f.db
+      .query('UPDATE agent_host_mastra_session_ledger SET revision=revision+1 WHERE workspace_id=? AND work_id=? AND attempt=?')
+      .run(f.workspaceId, f.identity.work_id, 1);
+    expect(() => f.store.applyDeliveredWorkContinuationRepair(plan)).toThrow(/afterimage differs/);
+  } finally {}
+});
+
+test('future configured-frontier snapshot validation remains isolated from apply', () => {
+  const requestBase = requestFixture(),
+    source = requestBase.currentSourceScope,
+    priorJournal = {
+      schema: 'MastraSessionLedger/v1',
+      workspace_id: fixtureWorkspace,
+      work_id: requestBase.identity.work_id,
+      attempt: requestBase.attempt,
+      run_id: requestBase.action.run_id,
+      source_scope: source,
+      step_id: requestBase.action.step_id,
+      items: [{ request: requestBase.action.request, issue_id: null, observation: null }],
+      completed: [],
+    },
+    engine = {
+      run_id: requestBase.action.run_id,
+      status: 'suspended',
+      step_id: requestBase.action.step_id,
+      requests: [requestBase.action.request],
+      observations: [],
+    },
+    action = projectConfiguredFrontierContinuationAction({
+      engine,
+      journal: priorJournal,
+      targetConfigDigest: requestBase.targetConfigDigest,
+      currentSourceScope: source,
+    }),
+    priorWork = {
+      schema: 'WorkState/v1', workspace_id: fixtureWorkspace, revision: 10,
+      binding: {
+        lifecycle_work_id: requestBase.identity.work_id,
+        config_digest: requestBase.priorConfigDigest,
+        runtime_code_digest: requestBase.priorRuntimeCodeDigest,
+        work_source_revision: source.digest,
+      },
+      lease: null,
+      execution: { status: 'suspended', phase: 'awaiting_followup', assignment_attempts: [] },
+      lifecycle: { phase: 'INTAKE', seal: null },
+    },
+    resource = 'execution:' + requestBase.identity.work_id,
+    priorTicket = {
+      schema: 'CoordinationTicket/v1', ticket_id: 'prior-ticket', repository_id: requestBase.identity.repository_id,
+      project_ids: requestBase.identity.project_ids, integrations_digest: requestBase.identity.integrations_digest,
+      work_id: requestBase.identity.work_id, thread_id: requestBase.nativeSessionHandle, source_revision: source.digest,
+      generation: 1, sequence: 1, contour_keys: [], exclusive_resources: [resource], status: 'released',
+      claim_ids: ['prior-claim'], expires_at: null, active_resources: [], blocked_resources: [],
+      created_at: '2026-10-07T00:00:00.000Z',
+    },
+    priorClaim = {
+      schema: 'WorkstreamClaim/v1', claim_id: 'prior-claim', ticket_id: 'prior-ticket',
+      work_id: requestBase.identity.work_id, thread_id: requestBase.nativeSessionHandle, generation: 1,
+      resources: [resource], lease_expires_at: '2026-10-07T00:00:00.000Z', status: 'released',
+      created_at: '2026-10-07T00:00:00.000Z', renewed_at: '2026-10-07T00:00:00.000Z',
+    },
+    priorRelease = {
+      schema: 'CoordinationOperation/v1', operation_id: 'prior-release', kind: 'release',
+      ticket_id: 'prior-ticket', work_id: requestBase.identity.work_id,
+      thread_id: requestBase.nativeSessionHandle, source_revision: source.digest, resources: [resource],
+      from_ledger_revision: 94, to_ledger_revision: 95, decided_by: 'fixture-owner',
+      decision_pointer: requestBase.originalRequestPointer, created_at: '2026-10-07T00:00:00.000Z',
+    },
+    priorLedger = {
+      schema: 'CoordinationLedger/v1', workspace_id: fixtureWorkspace, revision: 95,
+      open_generation: 1, next_sequence: 2, tickets: [priorTicket], claims: [priorClaim],
+      notices: [], dispositions: [], contours: [], batches: [], rebinds: [],
+      operations: [priorRelease], retirements: [],
+    },
+    priorWorkVersion = { revision: priorWork.revision, digest: canonicalJsonDigest(priorWork) },
+    priorLedgerVersion = { revision: priorLedger.revision, digest: canonicalJsonDigest(priorLedger) },
+    priorJournalVersion = { revision: 11, digest: canonicalJsonDigest(priorJournal) },
+    request = {
+      ...requestBase,
+      expectedWork: priorWorkVersion,
+      expectedLedger: priorLedgerVersion,
+      expectedJournal: priorJournalVersion,
+      action,
+    },
+    successorWork = {
+      ...priorWork,
+      revision: 11,
+      binding: { ...priorWork.binding, config_digest: request.targetConfigDigest, runtime_code_digest: request.targetRuntimeCodeDigest },
+      lease: { ticket_id: 'repair-ticket', thread_id: request.nativeSessionHandle, generation: 1 },
+      execution: { status: 'active', phase: 'review', assignment_attempts: [] },
+    },
+    successorJournal = priorJournal,
+    expiresAt = new Date(Date.now() + 60_000).toISOString(),
+    successorLedger = {
+      ...priorLedger,
+      revision: 96,
+      next_sequence: 3,
+      tickets: [priorTicket, {
+        ...priorTicket, ticket_id: 'repair-ticket', sequence: 2, status: 'active',
+        claim_ids: ['repair-claim'], expires_at: expiresAt, active_resources: [resource],
+        created_at: '2026-10-07T00:00:01.000Z',
+      }],
+      claims: [priorClaim, {
+        ...priorClaim, claim_id: 'repair-claim', ticket_id: 'repair-ticket', status: 'active',
+        lease_expires_at: expiresAt, created_at: '2026-10-07T00:00:01.000Z', renewed_at: '2026-10-07T00:00:01.000Z',
+      }],
+    },
+    snapshotBytes = Buffer.from(canonicalJson(engine)),
+    workVersion = { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) },
+    ledgerVersion = { revision: successorLedger.revision, digest: canonicalJsonDigest(successorLedger) },
+    journalVersion = { revision: priorJournalVersion.revision + 1, digest: canonicalJsonDigest(successorJournal) },
+    requestDigest = canonicalJsonDigest(request),
+    receipt = {
+      schema: 'DeliveredWorkContinuationReceipt/v1',
+      continuation_id: canonicalJsonDigest({
+        identity: request.identity, attempt: request.attempt, action_id: action.request.action_id,
+        transition_digest: request.sourceTransition.transition_digest,
+      }),
+      attempt: request.attempt, request_digest: requestDigest,
+      authorization: {
+        schema: 'VidaDeliveredWorkContinuationAuthorization/v1', request_digest: requestDigest,
+        principal: 'fixture-owner', transition_digest: request.sourceTransition.transition_digest,
+        action_digest: canonicalJsonDigest(action),
+      },
+      request, prior_work: priorWork, prior_ledger: priorLedger, prior_journal: priorJournal,
+      prior_work_version: priorWorkVersion, prior_ledger_version: priorLedgerVersion, prior_journal_version: priorJournalVersion,
+      historical_capture: null,
+      frontier_snapshot: {
+        snapshot_bytes_base64: snapshotBytes.toString('base64'),
+        snapshot_sha256: createHash('sha256').update(snapshotBytes).digest('hex'),
+      },
+      successor_work: successorWork, successor_ledger: successorLedger, successor_binding: successorWork.binding,
+      successor_journal: successorJournal, work_version: workVersion, ledger_version: ledgerVersion, journal_version: journalVersion,
+      rights_granted: false, accepted_result: false, runtime_acceptance: false, status: 'action_ready',
+    },
+    current = {
+      work: successorWork, work_version: workVersion, ledger: successorLedger, ledger_version: ledgerVersion,
+      journal: successorJournal, journal_version: journalVersion,
+    };
+  expect(validateConfiguredFrontierRepairReceipt({ receipt, current }).branch).toBe('configured_frontier');
+  expect(() => assertApplicableRepairBranch('configured_frontier')).toThrow(/validation-only/);
+  const altered = structuredClone(receipt);
+  altered.frontier_snapshot.snapshot_bytes_base64 = Buffer.from('changed').toString('base64');
+  expect(() => validateConfiguredFrontierRepairReceipt({ receipt: altered, current })).toThrow();
 });
 
 test('Host preserves an issued UNKNOWN journal action and denies continuation without reissue', async () => {

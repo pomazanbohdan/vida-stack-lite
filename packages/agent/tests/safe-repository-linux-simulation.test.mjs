@@ -1,8 +1,9 @@
 import { afterAll, afterEach, describe, expect, test, vi } from 'vitest';
 import { createHash } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
+import { once } from 'node:events';
 const isolated = process.env.LINUX_SIMULATION_ISOLATED === '1';
 const underStryker = process.env.STRYKER_MUTATOR_WORKER !== undefined;
 if (!isolated && !underStryker) {
@@ -29,7 +30,7 @@ if (!isolated && !underStryker) {
       console.error(`${child.stdout}\n${child.stderr}`);
     expect(child.error).toBeUndefined();
     expect(child.status).toBe(0);
-    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+12 passed/);
+    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+17 passed/);
   }, 180_000);
 } else {
   const realFs = await vi.importActual('node:fs');
@@ -49,15 +50,27 @@ if (!isolated && !underStryker) {
   let copyWriteFault;
   let copyCleanupFault = false;
   let substituteRestoredTarget = false;
+  let substituteTargetBeforePublication;
   let replaceCloneTargetAfterSuccess = false;
-  let removeCloneSourceBeforeFailure = false;
-  let createCloneTargetBeforeFailure = false;
+  let failRecoveryCloneAfterRenameFailure = false;
   let rootIdentityMismatchRemaining = 0;
   let casLockOpenCount = 0;
   let removeRaceAccess;
   let removeRaceActive = false;
   let removeRaceAttempted = false;
   let removeRaceError;
+  let traversalRecoveryAccess;
+  let traversalRecoveryActive = false;
+  let traversalRecoveryAttempted = false;
+  let traversalRecoveryError;
+  let cooperatingReaderAccess;
+  let cooperatingReaderTarget;
+  let cooperatingReaderAttempted = false;
+  let cooperatingReaderError;
+  let renameReplaceFailureMode;
+  let publicationPauseBeforeAtomicRenameMs = 0;
+  let publicationPauseAfterAtomicRenameMs = 0;
+  let publicationPauseBeforeCopyMs = 0;
 
   function translatedPath(value) {
     if (typeof value !== 'string') return value;
@@ -169,6 +182,12 @@ if (!isolated && !underStryker) {
       return;
     }
     realFs.fsyncSync(fd);
+    if (substituteTargetBeforePublication && file && path.basename(file).endsWith('.tmp')) {
+      const target = substituteTargetBeforePublication;
+      substituteTargetBeforePublication = undefined;
+      realFs.renameSync(target, target + '.displaced');
+      realFs.writeFileSync(target, 'foreign');
+    }
   }
 
   const fakeFs = {
@@ -178,7 +197,12 @@ if (!isolated && !underStryker) {
     closeSync: trackedClose,
     writeSync(fd, buffer, offset, length, position) {
       const file = fdPaths.get(fd);
-      if (file && path.basename(file) === 'fallback.txt') {
+      if (file && path.basename(file).includes('fallback.txt') && path.basename(file).endsWith('.cas-old')) {
+        if (publicationPauseBeforeCopyMs > 0) {
+          const pause = publicationPauseBeforeCopyMs;
+          publicationPauseBeforeCopyMs = 0;
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, pause);
+        }
         if (copyWriteFault) {
           const mode = copyWriteFault;
           copyWriteFault = undefined;
@@ -218,7 +242,10 @@ if (!isolated && !underStryker) {
       return realFs.readdirSync(translatedPath(value), options);
     },
     renameSync(from, to) {
-      return realFs.renameSync(translatedPath(from), translatedPath(to));
+      const source = translatedPath(from);
+      const target = translatedPath(to);
+      const result = realFs.renameSync(source, target);
+      return result;
     },
     unlinkSync(value) {
       return realFs.unlinkSync(translatedPath(value));
@@ -239,9 +266,25 @@ if (!isolated && !underStryker) {
     }
     if (cloneFailuresRemaining > 0) {
       cloneFailuresRemaining -= 1;
-      if (removeCloneSourceBeforeFailure) realFs.unlinkSync(source);
-      if (createCloneTargetBeforeFailure) realFs.copyFileSync(source, target, realFs.constants.COPYFILE_EXCL);
       throw Object.assign(new Error('simulated clone failure'), { code: 'EIO' });
+    }
+    if (
+      traversalRecoveryActive &&
+      !traversalRecoveryAttempted &&
+      path.basename(source).endsWith('.cas-old')
+    ) {
+      traversalRecoveryAttempted = true;
+      traversalRecoveryActive = false;
+      try {
+        traversalRecoveryAccess.replaceAtomic(
+          'data/recovery.txt',
+          createHash('sha256').update('before').digest('hex'),
+          'second-writer',
+          'recovery contender',
+        );
+      } catch (error) {
+        traversalRecoveryError = error;
+      }
     }
     const writeFd = trackedOpen(
       target,
@@ -260,11 +303,13 @@ if (!isolated && !underStryker) {
   }
 
   function renameNoReplace(sourceRootFd, sourceRelPath, targetRootFd, targetRelPath) {
+    if ([sourceRelPath, targetRelPath].some((value) => value.split('/').some((part) => Buffer.byteLength(part, 'utf8') > 255)))
+      throw Object.assign(new Error('simulated Linux component exceeds NAME_MAX'), { code: 'ENAMETOOLONG' });
     const sourceRoot = fdPaths.get(sourceRootFd);
     const targetRoot = fdPaths.get(targetRootFd);
     if (!sourceRoot || !targetRoot)
       throw Object.assign(new Error('unknown simulated rename descriptor'), { code: 'EBADF' });
-    if (copyCleanupFault && sourceRelPath === 'fallback.txt' && targetRelPath.endsWith('.reclaimed')) {
+    if (copyCleanupFault && sourceRelPath.includes('fallback.txt') && targetRelPath.endsWith('.reclaimed')) {
       copyCleanupFault = false;
       throw Object.assign(new Error('simulated copy cleanup failure'), { code: 'EIO' });
     }
@@ -275,9 +320,49 @@ if (!isolated && !underStryker) {
     realFs.renameSync(source, target);
   }
 
+  function renameReplace(sourceRootFd, sourceRelPath, targetRootFd, targetRelPath) {
+    const sourceRoot = fdPaths.get(sourceRootFd);
+    const targetRoot = fdPaths.get(targetRootFd);
+    if (!sourceRoot || !targetRoot)
+      throw Object.assign(new Error('unknown simulated replacement descriptor'), { code: 'EBADF' });
+    const source = path.join(sourceRoot, ...sourceRelPath.split('/'));
+    const target = path.join(targetRoot, ...targetRelPath.split('/'));
+    if (cooperatingReaderAccess && !cooperatingReaderAttempted) {
+      cooperatingReaderAttempted = true;
+      try {
+        cooperatingReaderAccess.readBytes(cooperatingReaderTarget, 'cooperating reader during publication');
+      } catch (error) {
+        cooperatingReaderError = error;
+      }
+    }
+    if (publicationPauseBeforeAtomicRenameMs > 0) {
+      const pause = publicationPauseBeforeAtomicRenameMs;
+      publicationPauseBeforeAtomicRenameMs = 0;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, pause);
+    }
+    const failureMode = renameReplaceFailureMode;
+    renameReplaceFailureMode = undefined;
+    if (failureMode === 'remove-target') {
+      realFs.unlinkSync(target);
+      if (failRecoveryCloneAfterRenameFailure) {
+        failRecoveryCloneAfterRenameFailure = false;
+        cloneFailuresRemaining = 1;
+      }
+      throw Object.assign(new Error('simulated native replacement failure'), { code: 'EIO' });
+    }
+    realFs.renameSync(source, target);
+    if (publicationPauseAfterAtomicRenameMs > 0) {
+      const pause = publicationPauseAfterAtomicRenameMs;
+      publicationPauseAfterAtomicRenameMs = 0;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, pause);
+    }
+    if (failureMode === 'after-effect')
+      throw Object.assign(new Error('simulated native replacement outcome unknown'), { code: 'EIO' });
+  }
+
   function fakeRequire(specifier) {
     if (typeof specifier === 'string' && /[\\/]native[.]js$/.test(specifier)) {
-      return { getNativeBinding: () => ({ cloneFileExclusive, renameNoReplace }) };
+      return { getNativeBinding: () => ({ cloneFileExclusive, renameNoReplace, renameReplace }) };
     }
     return realRequire(specifier);
   }
@@ -330,15 +415,27 @@ if (!isolated && !underStryker) {
     copyWriteFault = undefined;
     copyCleanupFault = false;
     substituteRestoredTarget = false;
+    substituteTargetBeforePublication = undefined;
     replaceCloneTargetAfterSuccess = false;
-    removeCloneSourceBeforeFailure = false;
-    createCloneTargetBeforeFailure = false;
+    failRecoveryCloneAfterRenameFailure = false;
     rootIdentityMismatchRemaining = 0;
     casLockOpenCount = 0;
     removeRaceAccess = undefined;
     removeRaceActive = false;
     removeRaceAttempted = false;
     removeRaceError = undefined;
+    traversalRecoveryAccess = undefined;
+    traversalRecoveryActive = false;
+    traversalRecoveryAttempted = false;
+    traversalRecoveryError = undefined;
+    cooperatingReaderAccess = undefined;
+    cooperatingReaderTarget = undefined;
+    cooperatingReaderAttempted = false;
+    cooperatingReaderError = undefined;
+    renameReplaceFailureMode = undefined;
+    publicationPauseBeforeAtomicRenameMs = 0;
+    publicationPauseAfterAtomicRenameMs = 0;
+    publicationPauseBeforeCopyMs = 0;
   });
 
   afterAll(() => {
@@ -352,6 +449,204 @@ if (!isolated && !underStryker) {
   });
 
   describe('Linux descriptor-bound safe repository simulation', () => {
+    test('releases CAS locks at the filename byte boundary without stranding custody', () => {
+      const repositoryRoot = temporaryRoot();
+      const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      access.ensureDirectory('data', 'data directory');
+      const data = path.join(repositoryRoot, 'data');
+      for (const name of ['a'.repeat(190), 'b'.repeat(191), 'я'.repeat(95) + 'c']) {
+        const target = 'data/' + name;
+        access.writeExclusive(target, 'before', 'long filename');
+        expect(realFs.readdirSync(data).sort()).toEqual([name]);
+        expect(access.readText(target, 'long filename read')).toBe('before');
+        access.replaceAtomic(target, hash('before'), 'after', 'long filename replacement');
+        expect(access.fileExists(target, 'long filename existence')).toBe(true);
+        expect(access.readText(target, 'long filename reread')).toBe('after');
+        expect(realFs.readdirSync(data).sort()).toEqual([name]);
+        const originalBackup = '.' + name + '.11111111-1111-4111-8111-111111111111.cas-old';
+        realFs.writeFileSync(path.join(data, originalBackup), 'after');
+        realFs.unlinkSync(path.join(data, name));
+        access.replaceAtomic(target, hash('after'), 'recovered', 'original long backup recovery');
+        expect(access.readText(target, 'recovered long filename')).toBe('recovered');
+        expect(realFs.readdirSync(data).sort()).toEqual([name]);
+        access.removeFile(target, 'long filename removal');
+        expect(realFs.readdirSync(data)).toEqual([]);
+      }
+      const longName = 'd'.repeat(191);
+      const shortName = 'vida-cas-' + hash(longName);
+      const longBackup = '.' + shortName + '.11111111-1111-4111-8111-111111111111.cas-old-hashed';
+      realFs.writeFileSync(path.join(data, longBackup), 'before');
+      access.writeExclusive('data/' + shortName, 'before', 'colliding short target');
+      access.replaceAtomic('data/' + shortName, hash('before'), 'short-after', 'short target replacement');
+      expect(realFs.readFileSync(path.join(data, longBackup), 'utf8')).toBe('before');
+      access.replaceAtomic('data/' + longName, hash('before'), 'long-after', 'bounded backup recovery');
+      expect(access.readText('data/' + longName, 'long recovered target')).toBe('long-after');
+      expect(access.readText('data/' + shortName, 'short preserved target')).toBe('short-after');
+      expect(realFs.readdirSync(data).sort()).toEqual([longName, shortName].sort());
+    });
+
+    test('closes every owned descriptor after repeated traversal open and create faults', () => {
+      const repositoryRoot = temporaryRoot();
+      const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      access.ensureDirectory('data', 'data directory');
+      realFs.writeFileSync(path.join(repositoryRoot, 'data', 'blocker'), 'not a directory');
+
+      for (const fail of [
+        () => access.readBytes('missing/target.txt', 'root traversal fault'),
+        () => access.readBytes('data/missing/target.txt', 'missing traversal fault'),
+        () => access.ensureDirectory('data/blocker/child', 'create traversal fault'),
+        () => access.directoryIdentity('data/missing', 'identity traversal fault'),
+      ]) {
+        const ownedBefore = new Set(fdPaths.keys());
+        for (let attempt = 0; attempt < 25; attempt += 1) expect(fail).toThrow();
+        const leaked = [...fdPaths.keys()].filter((fd) => !ownedBefore.has(fd));
+        for (const fd of leaked) trackedClose(fd);
+        expect(leaked).toHaveLength(0);
+      }
+
+      const ownedBefore = new Set(fdPaths.keys());
+      for (let attempt = 0; attempt < 25; attempt += 1)
+        expect(access.fileExists('data/missing/target.txt', 'existence traversal fault')).toBe(false);
+      const leaked = [...fdPaths.keys()].filter((fd) => !ownedBefore.has(fd));
+      for (const fd of leaked) trackedClose(fd);
+      expect(leaked).toHaveLength(0);
+    });
+
+    test('publishes complete old or new bytes to raw readers through forced copy fallback', async () => {
+      const repositoryRoot = temporaryRoot();
+      const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      access.ensureDirectory('data', 'data directory');
+      const target = path.join(repositoryRoot, 'data', 'fallback.txt');
+      const before = 'complete-old';
+      const after = 'complete-new-'.repeat(1024);
+      access.writeExclusive('data/fallback.txt', before, 'copy source');
+      cloneUnavailableRemaining = 1;
+      publicationPauseBeforeCopyMs = 75;
+      publicationPauseBeforeAtomicRenameMs = 75;
+      publicationPauseAfterAtomicRenameMs = 75;
+      cooperatingReaderAccess = access;
+      cooperatingReaderTarget = 'data/fallback.txt';
+      const readerSource = `
+        const fs = require('node:fs');
+        const target = ${JSON.stringify(target)};
+        const oldBytes = ${JSON.stringify(before)};
+        const newBytes = ${JSON.stringify(after)};
+        const observed = { missing: 0, partial: 0, old: 0, next: 0 };
+        const timer = setInterval(() => {
+          try {
+            const value = fs.readFileSync(target, 'utf8');
+            if (value === oldBytes) observed.old += 1;
+            else if (value === newBytes) observed.next += 1;
+            else observed.partial += 1;
+          } catch (error) {
+            if (error.code === 'ENOENT') observed.missing += 1;
+            else throw error;
+          }
+        }, 1);
+        process.stdin.on('end', () => {
+          clearInterval(timer);
+          process.stdout.write(JSON.stringify(observed));
+        });
+        process.stdin.resume();
+      `;
+      const reader = spawn(process.execPath, ['--eval', readerSource], {
+        cwd: process.cwd(),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      let output = '';
+      let stderr = '';
+      reader.stdout.setEncoding('utf8').on('data', (chunk) => (output += chunk));
+      reader.stderr.setEncoding('utf8').on('data', (chunk) => (stderr += chunk));
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      try {
+        access.replaceAtomic('data/fallback.txt', hash(before), after, 'fallback reader race');
+      } finally {
+        reader.stdin.end();
+      }
+      const [code, signal] = await once(reader, 'close');
+      expect({ code, signal, stderr }).toMatchObject({ code: 0, signal: null, stderr: '' });
+      expect(JSON.parse(output)).toMatchObject({ missing: 0, partial: 0 });
+      expect(JSON.parse(output).old).toBeGreaterThan(0);
+      expect(JSON.parse(output).next).toBeGreaterThan(0);
+      expect(cooperatingReaderAttempted).toBe(true);
+      expect(cooperatingReaderError).toBeInstanceOf(Error);
+      expect(cooperatingReaderError.message).toMatch(/lock/);
+      expect(access.readText('data/fallback.txt', 'completed replacement')).toBe(after);
+    });
+
+    test('denies a second writer until failed replacement recovery completes', () => {
+      const repositoryRoot = temporaryRoot();
+      const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      access.ensureDirectory('data', 'data directory');
+      access.writeExclusive('data/recovery.txt', 'before', 'recovery source');
+      traversalRecoveryAccess = access;
+      traversalRecoveryActive = true;
+      renameReplaceFailureMode = 'remove-target';
+
+      expect(() => access.replaceAtomic('data/recovery.txt', hash('before'), 'first-writer', 'failed replacement')).toThrow(
+        /failed|simulated/,
+      );
+      expect(traversalRecoveryAttempted).toBe(true);
+      expect(traversalRecoveryError).toBeInstanceOf(Error);
+      expect(traversalRecoveryError.message).toMatch(/lock/);
+      expect(access.readText('data/recovery.txt', 'recovered original')).toBe('before');
+    });
+
+    test('real Linux FIFO and repeated traversal faults stay prompt and leak-free', () => {
+      if (originalPlatform.value !== 'linux') return;
+      const script = `
+        const fs = require('node:fs');
+        const os = require('node:os');
+        const path = require('node:path');
+        const { spawnSync } = require('node:child_process');
+        const { requireSafeRepositoryAccess } = require('./src/config/safe-repository-access.ts');
+        const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-fifo-root-')));
+        try {
+          const access = requireSafeRepositoryAccess(root);
+          access.ensureDirectory('data', 'data directory');
+          fs.writeFileSync(path.join(root, 'blocked'), 'not a directory');
+          const countFds = () => fs.readdirSync('/proc/self/fd').length;
+          const before = countFds();
+          for (let attempt = 0; attempt < 25; attempt += 1) {
+            for (const fail of [
+              () => access.readBytes('missing/target.txt', 'root traversal fault'),
+              () => access.readBytes('data/missing/target.txt', 'nested traversal fault'),
+              () => access.ensureDirectory('blocked/child', 'create traversal fault'),
+              () => access.directoryIdentity('data/missing', 'identity traversal fault'),
+            ]) {
+              try { fail(); throw new Error('faulting traversal unexpectedly succeeded'); }
+              catch (error) { if (error.message === 'faulting traversal unexpectedly succeeded') throw error; }
+            }
+            if (access.fileExists('data/missing/target.txt', 'existence traversal fault'))
+              throw new Error('missing target unexpectedly exists');
+          }
+          const after = countFds();
+          if (after !== before) throw new Error('directory traversal leaked descriptors: ' + before + ' -> ' + after);
+
+          const fifo = path.join(root, 'no-writer.fifo');
+          const made = spawnSync('mkfifo', [fifo], { encoding: 'utf8' });
+          if (made.status !== 0) throw new Error(made.stderr || 'mkfifo failed');
+          if (!access.fileExists('no-writer.fifo', 'FIFO existence')) throw new Error('FIFO was not found');
+          try {
+            access.readBytes('no-writer.fifo', 'FIFO read');
+            throw new Error('FIFO read unexpectedly succeeded');
+          } catch (error) {
+            if (!/regular single-link file/.test(error.message)) throw error;
+          }
+        } finally {
+          fs.rmSync(root, { recursive: true, force: true });
+        }
+      `;
+      const child = spawnSync(process.execPath, ['--eval', script], {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+        timeout: 5_000,
+      });
+      expect(child.error).toBeUndefined();
+      expect(child.signal).toBeNull();
+      expect(child.status).toBe(0);
+    });
+
     test('performs descriptor-bound reads, creates, locks, and compare-reserve-replace', async () => {
       const repositoryRoot = temporaryRoot();
       const flushPath = path.join(repositoryRoot, 'flush-probe.txt'),
@@ -667,18 +962,19 @@ if (!isolated && !underStryker) {
       expect(realFs.existsSync(path.join(repositoryRoot, 'data', 'unsafe.lock.lock'))).toBe(false);
     });
 
-    test('rejects native clone inode substitution without overwriting its replacement', () => {
+    test('rejects private backup inode substitution without overwriting the target', () => {
       const repositoryRoot = temporaryRoot();
       const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
       access.ensureDirectory('data', 'data directory');
       access.writeExclusive('data/clone.txt', 'before', 'clone source');
       replaceCloneTargetAfterSuccess = true;
       expect(() => access.replaceAtomic('data/clone.txt', hash('before'), 'after', 'clone')).toThrow(
-        /identity changed/,
+        /identity changed|private backup content is not the expected original/,
       );
-      expect(access.readText('data/clone.txt', 'foreign clone target')).toBe('foreign');
+      expect(realFs.readFileSync(path.join(repositoryRoot, 'data', 'clone.txt'), 'utf8')).toBe('before');
       const backup = realFs.readdirSync(path.join(repositoryRoot, 'data')).find((name) => name.endsWith('.cas-old'));
-      expect(realFs.readFileSync(path.join(repositoryRoot, 'data', backup), 'utf8')).toBe('before');
+      expect(realFs.readFileSync(path.join(repositoryRoot, 'data', backup), 'utf8')).toBe('foreign');
+      expect(() => access.readText('data/clone.txt', 'unresolved clone backup')).toThrow();
     });
 
     for (const recovery of ['orphan', 'rollback']) {
@@ -694,7 +990,7 @@ if (!isolated && !underStryker) {
             path.join(data, '.fallback.txt.11111111-1111-4111-8111-111111111111.cas-old'),
           );
         } else {
-          copyWriteFault = 'zero';
+          renameReplaceFailureMode = 'remove-target';
         }
         cloneUnavailableRemaining = 3;
         substituteRestoredTarget = true;
@@ -704,6 +1000,7 @@ if (!isolated && !underStryker) {
         const backups = realFs.readdirSync(data).filter((name) => name.endsWith('.cas-old'));
         expect(backups).toHaveLength(1);
         expect(realFs.readFileSync(path.join(data, backups[0]), 'utf8')).toBe('before');
+        expect(() => access.readText('data/fallback.txt', 'unresolved recovery backup')).toThrow();
       });
     }
 
@@ -745,18 +1042,16 @@ if (!isolated && !underStryker) {
           expect(access.readText('data/fallback.txt', 'restored copy')).toBe('before');
           expect(realFs.readdirSync(path.join(repositoryRoot, 'data'))).toEqual(['fallback.txt']);
         } else {
-          expect(access.readText('data/fallback.txt', 'uncertain target')).toBe(mode === 'foreign' ? 'foreign' : '');
+          expect(realFs.readFileSync(path.join(repositoryRoot, 'data', 'fallback.txt'), 'utf8')).toBe('before');
+          expect(() => access.readText('data/fallback.txt', 'unresolved private backup')).toThrow();
           const backup = realFs
             .readdirSync(path.join(repositoryRoot, 'data'))
             .find((name) => name.endsWith('.cas-old'));
           expect(backup).toBeDefined();
-          expect(realFs.readFileSync(path.join(repositoryRoot, 'data', backup), 'utf8')).toBe('before');
-          expect(() =>
-            access.replaceAtomic('data/fallback.txt', hash('before'), 'after', 'uncertain recovery'),
-          ).toThrow(/ambiguous/);
-          expect(access.readText('data/fallback.txt', 'preserved uncertain target')).toBe(
+          expect(realFs.readFileSync(path.join(repositoryRoot, 'data', backup), 'utf8')).toBe(
             mode === 'foreign' ? 'foreign' : '',
           );
+          expect(() => access.replaceAtomic('data/fallback.txt', hash('before'), 'after', 'uncertain recovery')).toThrow();
         }
       }
     });
@@ -803,29 +1098,35 @@ if (!isolated && !underStryker) {
       );
       expect(access.readText('data/restored.txt', 'restored')).toBe('before');
 
-      access.writeExclusive('data/unlinked-temp.txt', 'before', 'unlinked temp');
-      cloneFailuresRemaining = 1;
-      removeCloneSourceBeforeFailure = true;
-      expect(() => access.replaceAtomic('data/unlinked-temp.txt', hash('before'), 'after', 'unlinked temp')).toThrow(
-        /failed|simulated/,
-      );
-      removeCloneSourceBeforeFailure = false;
-      expect(access.readText('data/unlinked-temp.txt', 'unlinked temp')).toBe('before');
+      access.writeExclusive('data/unlinked-temp.txt', 'before', 'prepublication substitution');
+      substituteTargetBeforePublication = path.join(data, 'unlinked-temp.txt');
+      expect(() => access.replaceAtomic('data/unlinked-temp.txt', hash('before'), 'after', 'prepublication substitution'))
+        .toThrow(/path or content changed|orphan backup recovery is ambiguous/);
+      expect(realFs.readFileSync(path.join(data, 'unlinked-temp.txt'), 'utf8')).toBe('foreign');
+      expect(() => access.readText('data/unlinked-temp.txt', 'unresolved prepublication backup')).toThrow();
+      const preservedBackup = realFs
+        .readdirSync(data)
+        .find((name) => name.startsWith('.unlinked-temp.txt.') && name.endsWith('.cas-old'));
+      expect(realFs.readFileSync(path.join(data, preservedBackup), 'utf8')).toBe('before');
 
       access.writeExclusive('data/committed-before-error.txt', 'before', 'committed before error');
-      cloneFailuresRemaining = 1;
-      createCloneTargetBeforeFailure = true;
+      renameReplaceFailureMode = 'after-effect';
       expect(() =>
         access.replaceAtomic('data/committed-before-error.txt', hash('before'), 'after', 'committed before error'),
       ).toThrow(/failed|simulated/);
-      createCloneTargetBeforeFailure = false;
       expect(access.readText('data/committed-before-error.txt', 'committed before error')).toBe('after');
 
       access.writeExclusive('data/restore-fails.txt', 'before', 'restore fails');
-      cloneFailuresRemaining = 2;
+      failRecoveryCloneAfterRenameFailure = true;
+      renameReplaceFailureMode = 'remove-target';
       expect(() => access.replaceAtomic('data/restore-fails.txt', hash('before'), 'after', 'restore fails')).toThrow(
-        /preserved for recovery/,
+        /simulated/,
       );
+      expect(() => access.readText('data/restore-fails.txt', 'unresolved failed recovery')).toThrow();
+      const failedRecoveryBackup = realFs
+        .readdirSync(data)
+        .find((name) => name.startsWith('.restore-fails.txt.') && name.endsWith('.cas-old'));
+      expect(realFs.readFileSync(path.join(data, failedRecoveryBackup), 'utf8')).toBe('before');
 
       realFs.mkdirSync(path.join(data, 'wrong-type.txt'));
       realFs.writeFileSync(path.join(data, '.wrong-type.txt.55555555-5555-4555-8555-555555555555.cas-old'), 'before');

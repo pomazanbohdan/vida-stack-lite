@@ -811,3 +811,35 @@ custom ZIP verifier was created. That adapter remains unqualified until an
 actual existing qualified boundary is available. Source ingress/publication,
 activated native checks, real CI receipts and installed proof remain GAPs.
 Synthetic local state tests establish request/retry/current-byte controls only.
+
+### Continuation receipt integrity repair
+
+The current receipt decoder rejects a stale stored digest before it can read
+the linked Work. A repair-only overlay validates the exact payload through the
+existing decoder; normal readers keep their checks. The Host repair uses its
+existing immediate transaction and session-producer fence. Reserve rejects
+active or UNKNOWN producers, and later producers wait for exact repair closure.
+Repair changes the digest and its own operation only, with dependency CAS.
+
+Mastra [snapshots](https://mastra.ai/en/reference/workflows/snapshots) retain
+workflow/run identity and suspended state. Future frontier receipts therefore
+need immutable snapshot bytes: the live snapshot changes after resume. SQLite
+[transactions](https://www.sqlite.org/lang_transaction.html) provide immediate
+writer exclusion. These mechanisms support consistency; they grant no VIDA
+rights, qualification or Runtime acceptance. Frontier repair is validation-only
+until its normal reader is adopted.
+
+### Linux CAS lock filename limit
+
+POSIX [rename](https://pubs.opengroup.org/onlinepubs/9799919799/functions/rename.html)
+rejects a pathname component longer than NAME_MAX. CAS lock cleanup adds a
+quarantine suffix, so the resource-lock helper reserves space for that suffix
+and bounds the name by UTF-8 bytes. CAS uses the same helper. Short lock names
+retain their namespace; long names use its deterministic digest. Private CAS
+siblings also reserve cleanup space; recovery recognizes both original and
+bounded sibling names with distinct suffixes, avoiding cross-target ownership
+ambiguity. Quarantine names also remain bounded for existing original backups.
+The descriptor
+simulation enforces the rename component limit and checks replacement, reread,
+removal and custody cleanup at the byte boundary. Native Linux proof remains
+a separate GAP.
