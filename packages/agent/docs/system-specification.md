@@ -2193,6 +2193,31 @@ The future OpenAI/SDK/Codex adapters and per-product directory extensions are
 separate planned work. The old executor-only repair does not prove general
 configuration or storage relocation.
 
+## Initial unissued Source continuation
+
+An original attempt can need current Source before its first read-only wave.
+Use a separate strict continuation contract for this case. Do not widen issued
+runtime-code recovery or reinterpret an existing configuration-change proof.
+The attempt must be unsealed INTAKE with no completed wave, issued action,
+observation, reservation, Source attempt or unknown effect. Its initial wave
+must remain read-only. Configuration, intake, Scope, Acceptance, allowed paths
+and original attributable permission remain unchanged.
+
+The runtime verifies the same owner and exact Work, Ledger, Journal and
+maintenance versions. An expired execution-only claim needs a truthful
+same-owner recovery in that atomic transition. A foreign or uncertain claim
+blocks it. Current changes must stay within the accepted documentation paths.
+Bind the actual qualified installed runtime and current scoped Source; caller
+JSON does not establish qualification or authority.
+
+Keep the original run, attempt, protected contracts and permission bytes. Retain
+complete beforeimages in the continuation receipt. Project only the unissued
+initial request against current Source. The first resume must validate the
+retained engine boundary before consuming current observations. Later Source
+preflight verifies original permission lineage and current Source and ownership
+independently. Continuation grants no Source execution or Runtime acceptance.
+This is target behavior; an installed public result must prove availability.
+
 ## Distribution, recovery and evidence boundaries
 
 Verification subprocesses consume any finite enclosing caller/host/case budget,

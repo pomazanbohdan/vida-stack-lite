@@ -64,18 +64,41 @@ import {
 } from './orchestration/final-assurance.js';
 import { requireSafeRepositoryAccess } from './config/safe-repository-access.js';
 import { compareScopedSourceSnapshots, snapshotDeclaredSources } from './orchestration/scoped-source-snapshot.js';
-import { loadRuntimeConfig, runtimeConfigDigest, selectWorkflow, type WorkItemSelection } from './config/runtime-config.js';
+import {
+  loadRuntimeConfig,
+  runtimeConfigDigest,
+  selectWorkflow,
+  type WorkItemSelection,
+} from './config/runtime-config.js';
 import { loadProjectSetContext } from './config/project-context.js';
 import { MastraSessionLedger } from './orchestration/persistent-session-handoff.js';
 import {
   readSessionEngineSnapshot,
   readRetainedUnissuedSessionEngineSnapshot,
   readConfiguredContinuationSessionEngineSnapshot,
+  readInitialSourceContinuationSessionEngineSnapshot,
   assertUnpreparedSessionEngineAbsent,
   type SessionEngineBinding,
 } from './orchestration/session-engine-snapshot.js';
-import { parseSessionBridgeRequest, parseSessionBridgeObservation, type SessionBridgeObservation, type SessionBridgeSnapshot, type SessionBridgeRequest } from './orchestration/mastra-session-bridge.js';
+import {
+  parseSessionBridgeRequest,
+  parseSessionBridgeObservation,
+  type SessionBridgeObservation,
+  type SessionBridgeSnapshot,
+  type SessionBridgeRequest,
+} from './orchestration/mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './orchestration/scoped-source-snapshot.js';
+import {
+  initialSourceContinuationRecord,
+  readInitialSourceContinuationRecord,
+  snapshotInitialSourceContinuationReceipt,
+  validateInitialSourceContinuationReceipt,
+  validateInitialSourceContinuationRequest,
+  type InitialSourceContinuationReceipt,
+  type InitialSourceContinuationRequest,
+  type InitialSourceContinuationState,
+  type InitialSourceContinuationVerifiedCurrent,
+} from './orchestration/initial-source-continuation.js';
 import {
   resolveTaskSourceRoot,
   taskSourceGitArgv,
@@ -96,11 +119,17 @@ import type {
   DeliveredWorkContinuationVerifier,
 } from './orchestration/delivered-work-continuation.js';
 import { projectConfiguredPrewriterContinuationRequests } from './orchestration/delivered-work-continuation.js';
+import { validateInitialSourceContinuationLineage } from './orchestration/admitted-development-packet.js';
 import { validateFailedPrewriterRecoveryBasis } from './orchestration/failed-prewriter-recovery.js';
-import { validateFailedPrewriterRecoveryReceipt, validateFailedPrewriterTransitionRequest,
-  failedPrewriterRecoveryRecord, snapshotFailedPrewriterRecoveryReceipt,
+import {
+  validateFailedPrewriterRecoveryReceipt,
+  validateFailedPrewriterTransitionRequest,
+  failedPrewriterRecoveryRecord,
+  snapshotFailedPrewriterRecoveryReceipt,
   type FailedPrewriterRecoveryReceipt,
-  type FailedPrewriterTransitionRequest, type ConfiguredFrontierRecoveryView } from './orchestration/failed-prewriter-transition.js';
+  type FailedPrewriterTransitionRequest,
+  type ConfiguredFrontierRecoveryView,
+} from './orchestration/failed-prewriter-transition.js';
 import {
   validateConfiguredFrontierReceiptStructure,
   validateConfiguredFrontierRepairReceipt,
@@ -128,7 +157,12 @@ interface DeliveredContinuationRepairInspection {
   readonly work_version: StateVersion;
   readonly ledger: CoordinationLedger;
   readonly ledger_version: StateVersion;
-  readonly journal: { readonly revision: number; readonly payload: string; readonly digest: string; readonly state: MastraSessionLedgerState };
+  readonly journal: {
+    readonly revision: number;
+    readonly payload: string;
+    readonly digest: string;
+    readonly state: MastraSessionLedgerState;
+  };
   readonly maintenance_generation: number;
   readonly transition_digest: string;
 }
@@ -229,9 +263,14 @@ type WorkRepairPreimage = Omit<WorkState, 'execution'> & {
   };
 };
 type ReceiptRepairPreimage = Omit<WorkflowAttemptReceipt, 'attempt'> & { readonly attempt: AssignmentRepairPreimage };
-type ReservationRepairPreimage = Omit<NonNullable<MastraLedgerItem['host_reservation']>, 'receipt' | 'authorization'> & {
+type ReservationRepairPreimage = Omit<
+  NonNullable<MastraLedgerItem['host_reservation']>,
+  'receipt' | 'authorization'
+> & {
   readonly receipt: ReceiptRepairPreimage;
-  readonly authorization: (Omit<WorkflowAttemptApprovalAuthorization, 'receipt'> & { readonly receipt: ReceiptRepairPreimage }) | null;
+  readonly authorization:
+    | (Omit<WorkflowAttemptApprovalAuthorization, 'receipt'> & { readonly receipt: ReceiptRepairPreimage })
+    | null;
 };
 type JournalItemRepairPreimage = Omit<MastraLedgerItem, 'host_reservation'> & {
   readonly host_reservation?: ReservationRepairPreimage;
@@ -544,24 +583,39 @@ export function canonicalHostSourceWriteApproval(
       'evidence_digest',
     ];
   requireState(
-    Object.keys(request).length === requestKeys.length && requestKeys.every((key) => Object.hasOwn(request, key)) &&
+    Object.keys(request).length === requestKeys.length &&
+      requestKeys.every((key) => Object.hasOwn(request, key)) &&
       request.schema === 'WorkflowAttemptApprovalRequest/v1' &&
       request.action === 'source.write' &&
-      typeof request.store_id === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(request.store_id) &&
-      request.identity !== null && typeof request.identity === 'object' &&
-      typeof request.config_digest === 'string' && hashPattern.test(request.config_digest) &&
-      typeof request.workflow_id === 'string' && request.workflow_id.length > 0 &&
-      typeof request.stage_id === 'string' && request.stage_id.length > 0 &&
-      typeof request.assignment_id === 'string' && hashPattern.test(request.assignment_id) &&
-      Number.isSafeInteger(request.assignment_index) && request.assignment_index >= 0 &&
-      typeof request.request_digest === 'string' && hashPattern.test(request.request_digest) &&
-      typeof request.attempt_id === 'string' && hashPattern.test(request.attempt_id) &&
-      typeof request.operation_hash === 'string' && hashPattern.test(request.operation_hash) &&
-      typeof principal === 'string' && principal.trim().length > 0 && principal.length <= 256 && !/\p{Cc}/u.test(principal),
+      typeof request.store_id === 'string' &&
+      /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(request.store_id) &&
+      request.identity !== null &&
+      typeof request.identity === 'object' &&
+      typeof request.config_digest === 'string' &&
+      hashPattern.test(request.config_digest) &&
+      typeof request.workflow_id === 'string' &&
+      request.workflow_id.length > 0 &&
+      typeof request.stage_id === 'string' &&
+      request.stage_id.length > 0 &&
+      typeof request.assignment_id === 'string' &&
+      hashPattern.test(request.assignment_id) &&
+      Number.isSafeInteger(request.assignment_index) &&
+      request.assignment_index >= 0 &&
+      typeof request.request_digest === 'string' &&
+      hashPattern.test(request.request_digest) &&
+      typeof request.attempt_id === 'string' &&
+      hashPattern.test(request.attempt_id) &&
+      typeof request.operation_hash === 'string' &&
+      hashPattern.test(request.operation_hash) &&
+      typeof principal === 'string' &&
+      principal.trim().length > 0 &&
+      principal.length <= 256 &&
+      !/\p{Cc}/u.test(principal),
     'canonical Host source-write request or principal invalid',
   );
   requireState(
-    Object.keys(receipt).length === receiptKeys.length && receiptKeys.every((key) => Object.hasOwn(receipt, key)) &&
+    Object.keys(receipt).length === receiptKeys.length &&
+      receiptKeys.every((key) => Object.hasOwn(receipt, key)) &&
       receipt.schema === 'EdictumWorkflowApproval/v1' &&
       receipt.stage_id === request.stage_id &&
       receipt.approver === principal &&
@@ -570,17 +624,18 @@ export function canonicalHostSourceWriteApproval(
       request.identity.project_ids.includes(receipt.project) &&
       timestamp(receipt.approved_at) <= Date.now() &&
       timestamp(receipt.expires_at) > Date.now() &&
-      receipt.evidence_digest === computeEdictumWorkflowApprovalEvidenceDigest({
-        schema: receipt.schema,
-        stage_id: receipt.stage_id,
-        approval_id: receipt.approval_id,
-        approver: receipt.approver,
-        operation_hash: receipt.operation_hash,
-        tenant: receipt.tenant,
-        project: receipt.project,
-        approved_at: receipt.approved_at,
-        expires_at: receipt.expires_at,
-      }),
+      receipt.evidence_digest ===
+        computeEdictumWorkflowApprovalEvidenceDigest({
+          schema: receipt.schema,
+          stage_id: receipt.stage_id,
+          approval_id: receipt.approval_id,
+          approver: receipt.approver,
+          operation_hash: receipt.operation_hash,
+          tenant: receipt.tenant,
+          project: receipt.project,
+          approved_at: receipt.approved_at,
+          expires_at: receipt.expires_at,
+        }),
     'canonical Host source-write receipt differs from its pending request',
   );
   return snapshot({
@@ -840,21 +895,28 @@ export function createTaskSourceMutationPolicyRequest(input: {
 }): TaskSourceMutationPolicyRequest {
   const { repositoryRoot, operation, preparedStateVersion, hostSnapshot } = input;
   requireState(
-    path.isAbsolute(repositoryRoot) && path.resolve(repositoryRoot) === repositoryRoot &&
-      operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
-      operation.request !== null && typeof operation.request === 'object' && !Array.isArray(operation.request),
+    path.isAbsolute(repositoryRoot) &&
+      path.resolve(repositoryRoot) === repositoryRoot &&
+      operation.schema === 'TaskSourceBindingOperation/v1' &&
+      operation.status === 'prepared' &&
+      operation.request !== null &&
+      typeof operation.request === 'object' &&
+      !Array.isArray(operation.request),
     'task source mutation policy requires a canonical Host root and prepared operation',
   );
   const request = validateTaskSourceBindingRequest(operation.request),
     work = hostSnapshot.work,
     lease = work?.lease,
-    stateVersion = operation.revision === preparedStateVersion.revision &&
-      typeof preparedStateVersion.digest === 'string' && hashPattern.test(preparedStateVersion.digest)
-      ? preparedStateVersion
+    stateVersion =
+      operation.revision === preparedStateVersion.revision &&
+      typeof preparedStateVersion.digest === 'string' &&
+      hashPattern.test(preparedStateVersion.digest)
+        ? preparedStateVersion
+        : null;
+  const reservationTicket =
+    work && hostSnapshot.ledger && request.operation !== 'inspect'
+      ? (hostSnapshot.ledger.tickets.find((ticket) => ticket.ticket_id === taskSourceTicketId(request)) ?? null)
       : null;
-  const reservationTicket = work && hostSnapshot.ledger && request.operation !== 'inspect'
-    ? hostSnapshot.ledger.tickets.find((ticket) => ticket.ticket_id === taskSourceTicketId(request)) ?? null
-    : null;
   let reservationMatches = false;
   if (work && hostSnapshot.ledger && reservationTicket) {
     const prior = taskSourcePriorTicket(hostSnapshot.ledger, work, request);
@@ -871,21 +933,35 @@ export function createTaskSourceMutationPolicyRequest(input: {
       );
     }
   }
-  const expectedWorkMatches = hostSnapshot.workVersion?.revision === request.expected_host.work.revision &&
-    hostSnapshot.workVersion.digest === request.expected_host.work.digest || reservationMatches;
-  const expectedLedgerMatches = hostSnapshot.ledgerVersion?.revision === request.expected_host.ledger.revision &&
-    hostSnapshot.ledgerVersion.digest === request.expected_host.ledger.digest || reservationMatches;
+  const expectedWorkMatches =
+    (hostSnapshot.workVersion?.revision === request.expected_host.work.revision &&
+      hostSnapshot.workVersion.digest === request.expected_host.work.digest) ||
+    reservationMatches;
+  const expectedLedgerMatches =
+    (hostSnapshot.ledgerVersion?.revision === request.expected_host.ledger.revision &&
+      hostSnapshot.ledgerVersion.digest === request.expected_host.ledger.digest) ||
+    reservationMatches;
   requireState(
-    stateVersion !== null && request.operation === 'propose-create' && request.canonical_host_root === repositoryRoot &&
-      work !== null && work !== undefined && lease !== null && lease !== undefined &&
-      hostSnapshot.workVersion !== null && hostSnapshot.workVersion !== undefined &&
-      hostSnapshot.ledgerVersion !== null && hostSnapshot.ledgerVersion !== undefined &&
-      expectedWorkMatches && expectedLedgerMatches &&
+    stateVersion !== null &&
+      request.operation === 'propose-create' &&
+      request.canonical_host_root === repositoryRoot &&
+      work !== null &&
+      work !== undefined &&
+      lease !== null &&
+      lease !== undefined &&
+      hostSnapshot.workVersion !== null &&
+      hostSnapshot.workVersion !== undefined &&
+      hostSnapshot.ledgerVersion !== null &&
+      hostSnapshot.ledgerVersion !== undefined &&
+      expectedWorkMatches &&
+      expectedLedgerMatches &&
       hostSnapshot.maintenanceGeneration === request.expected_host.maintenance_generation &&
-      work.execution.status === 'active' && lease.thread_id === request.thread_id &&
+      work.execution.status === 'active' &&
+      lease.thread_id === request.thread_id &&
       work.binding.lifecycle_work_id === request.work_id &&
       work.binding.config_digest === request.config_digest &&
-      request.source_root !== undefined && resolveTaskSourceRoot(repositoryRoot, request.source_root) !== repositoryRoot &&
+      request.source_root !== undefined &&
+      resolveTaskSourceRoot(repositoryRoot, request.source_root) !== repositoryRoot &&
       request.branch_ref !== undefined,
     'task source mutation request is stale, same-root, or not a create proposal',
   );
@@ -903,7 +979,16 @@ export function createTaskSourceMutationPolicyRequest(input: {
       lease,
       branch_ref: request.branch_ref,
       source_root: sourceRoot,
-      proposed_argv: Object.freeze(['git', '-C', repositoryRoot, 'worktree', 'add', '--branch', branchName, sourceRoot]),
+      proposed_argv: Object.freeze([
+        'git',
+        '-C',
+        repositoryRoot,
+        'worktree',
+        'add',
+        '--branch',
+        branchName,
+        sourceRoot,
+      ]),
       prepared_record_cas: Object.freeze({
         operation_id: request.operation_id,
         state_version: Object.freeze({ revision: stateVersion.revision, digest: stateVersion.digest }),
@@ -1313,27 +1398,48 @@ type TaskSourceActionRow = {
 };
 function validateTaskSourceJournalScope(candidate: unknown): ScopedSourceSnapshot {
   requireState(
-    candidate !== null && typeof candidate === 'object' && !Array.isArray(candidate) &&
+    candidate !== null &&
+      typeof candidate === 'object' &&
+      !Array.isArray(candidate) &&
       Object.keys(candidate).sort().join(',') === 'digest,entries,schema',
     'task source journal scope shape is invalid',
   );
   const scope = candidate as unknown as ScopedSourceSnapshot;
   requireState(
-    scope.schema === 'ScopedSourceSnapshot/v1' && Boolean(Array.isArray(scope.entries)) &&
-      scope.entries.length > 0 && scope.entries.length <= 512 &&
+    scope.schema === 'ScopedSourceSnapshot/v1' &&
+      Boolean(Array.isArray(scope.entries)) &&
+      scope.entries.length > 0 &&
+      scope.entries.length <= 512 &&
       scope.entries.every((entry, index) => {
-        if (entry === null || typeof entry !== 'object' || Array.isArray(entry) ||
-            Object.keys(entry).sort().join(',') !== 'bytes,exists,path,sha256') return false;
+        if (
+          entry === null ||
+          typeof entry !== 'object' ||
+          Array.isArray(entry) ||
+          Object.keys(entry).sort().join(',') !== 'bytes,exists,path,sha256'
+        )
+          return false;
         const prior = scope.entries[index - 1];
-        return typeof entry.path === 'string' && entry.path.length > 0 && entry.path.length <= 512 &&
-          !entry.path.includes('\\') && !entry.path.startsWith('/') && !entry.path.endsWith('/') &&
-          !/^[A-Za-z]:/.test(entry.path) && !Array.from(entry.path).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) &&
+        return (
+          typeof entry.path === 'string' &&
+          entry.path.length > 0 &&
+          entry.path.length <= 512 &&
+          !entry.path.includes('\\') &&
+          !entry.path.startsWith('/') &&
+          !entry.path.endsWith('/') &&
+          !/^[A-Za-z]:/.test(entry.path) &&
+          !Array.from(entry.path).some(
+            (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
+          ) &&
           entry.path.split('/').every((part: string) => part.length > 0 && part !== '.' && part !== '..') &&
           (prior === undefined || prior.path < entry.path) &&
           (entry.exists
-            ? typeof entry.exists === 'boolean' && Number.isSafeInteger(entry.bytes) && entry.bytes! >= 0 &&
-              typeof entry.sha256 === 'string' && hashPattern.test(entry.sha256)
-            : entry.exists === false && entry.bytes === null && entry.sha256 === null);
+            ? typeof entry.exists === 'boolean' &&
+              Number.isSafeInteger(entry.bytes) &&
+              entry.bytes! >= 0 &&
+              typeof entry.sha256 === 'string' &&
+              hashPattern.test(entry.sha256)
+            : entry.exists === false && entry.bytes === null && entry.sha256 === null)
+        );
       }),
     'task source journal scope entries are invalid',
   );
@@ -1341,34 +1447,46 @@ function validateTaskSourceJournalScope(candidate: unknown): ScopedSourceSnapsho
   return scope;
 }
 function assertTaskSourceJournalScopeWithinWork(scope: ScopedSourceSnapshot, work: WorkState): void {
-  const allowedPaths = [...new Set([
-    ...work.lifecycle.scope.allowed_paths,
-    ...work.lifecycle.scope.implementation_paths,
-  ])];
-  requireState(scope.entries.every((entry) =>
-    allowedPaths.some((allowed) => entry.path === allowed || entry.path.startsWith(allowed.replace(/\/$/, '') + '/')),
-  ), 'task source current journal scope exceeds the active Work scope');
+  const allowedPaths = [
+    ...new Set([...work.lifecycle.scope.allowed_paths, ...work.lifecycle.scope.implementation_paths]),
+  ];
+  requireState(
+    scope.entries.every((entry) =>
+      allowedPaths.some((allowed) => entry.path === allowed || entry.path.startsWith(allowed.replace(/\/$/, '') + '/')),
+    ),
+    'task source current journal scope exceeds the active Work scope',
+  );
 }
 function validateTaskSourceActionPair(
   operationRow: TaskSourceOperationRow,
   actionRow: TaskSourceActionRow,
   expectedRequest?: TaskSourceBindingRequest,
-): { readonly operation: Readonly<Record<string, unknown>>; readonly request: TaskSourceBindingRequest; readonly action: Readonly<Record<string, unknown>> } {
+): {
+  readonly operation: Readonly<Record<string, unknown>>;
+  readonly request: TaskSourceBindingRequest;
+  readonly action: Readonly<Record<string, unknown>>;
+} {
   const operation = JSON.parse(operationRow.payload) as Record<string, unknown>;
   requireState(
     Object.keys(operation).sort().join(',') ===
       'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
-      operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
-      typeof operation.created_at === 'string' && Number.isFinite(Date.parse(operation.created_at)) &&
-      operation.operation_id === operationRow.operation_id && operation.revision === operationRow.revision &&
-      operation.request_id === operationRow.request_id && operation.request_digest === operationRow.request_digest &&
+      operation.schema === 'TaskSourceBindingOperation/v1' &&
+      operation.status === 'prepared' &&
+      typeof operation.created_at === 'string' &&
+      Number.isFinite(Date.parse(operation.created_at)) &&
+      operation.operation_id === operationRow.operation_id &&
+      operation.revision === operationRow.revision &&
+      operation.request_id === operationRow.request_id &&
+      operation.request_digest === operationRow.request_digest &&
       canonicalJsonDigest(operation) === operationRow.digest,
     'task source action preparation integrity differs',
   );
   const request = validateTaskSourceBindingRequest(operation.request);
   requireState(
-    request.operation_id === operationRow.operation_id && request.request_id === operationRow.request_id &&
-      canonicalJsonDigest(request) === operationRow.request_digest && sameJson(operation.request, request) &&
+    request.operation_id === operationRow.operation_id &&
+      request.request_id === operationRow.request_id &&
+      canonicalJsonDigest(request) === operationRow.request_digest &&
+      sameJson(operation.request, request) &&
       (expectedRequest === undefined || sameJson(request, validateTaskSourceBindingRequest(expectedRequest))),
     'task source action request identity or digest differs from its preparation row',
   );
@@ -1376,14 +1494,21 @@ function validateTaskSourceActionPair(
   requireState(
     Object.keys(action).sort().join(',') ===
       'command_argv,created_at,issue_id,operation_digest,operation_id,policy_decision,prepared_state_version,recovery_report,recovery_report_digest,report,report_digest,request_id,revision,schema,status,updated_at' &&
-      action.schema === 'TaskSourceBindingAction/v1' && action.operation_id === operationRow.operation_id &&
-      actionRow.operation_id === operationRow.operation_id && action.request_id === operationRow.request_id &&
-      actionRow.request_id === operationRow.request_id && action.revision === actionRow.revision &&
-      canonicalJsonDigest(action) === actionRow.digest && action.operation_digest === operationRow.digest &&
+      action.schema === 'TaskSourceBindingAction/v1' &&
+      action.operation_id === operationRow.operation_id &&
+      actionRow.operation_id === operationRow.operation_id &&
+      action.request_id === operationRow.request_id &&
+      actionRow.request_id === operationRow.request_id &&
+      action.revision === actionRow.revision &&
+      canonicalJsonDigest(action) === actionRow.digest &&
+      action.operation_digest === operationRow.digest &&
       sameJson(action.prepared_state_version, { revision: operationRow.revision, digest: operationRow.digest }) &&
-      typeof action.issue_id === 'string' && action.issue_id.length > 0 &&
-      typeof action.created_at === 'string' && Number.isFinite(Date.parse(action.created_at)) &&
-      (action.updated_at === null || (typeof action.updated_at === 'string' && Number.isFinite(Date.parse(action.updated_at)))) &&
+      typeof action.issue_id === 'string' &&
+      action.issue_id.length > 0 &&
+      typeof action.created_at === 'string' &&
+      Number.isFinite(Date.parse(action.created_at)) &&
+      (action.updated_at === null ||
+        (typeof action.updated_at === 'string' && Number.isFinite(Date.parse(action.updated_at)))) &&
       ['issued', 'reported', 'unknown'].includes(String(action.status)),
     'task source action/preparation row binding differs',
   );
@@ -1454,7 +1579,9 @@ function taskSourceTicketMatches(
   );
   if (ticket.status === 'queued')
     requireState(
-      ticket.claim_ids.length === 0 && ticket.active_resources.length === 0 && ticket.expires_at === null &&
+      ticket.claim_ids.length === 0 &&
+        ticket.active_resources.length === 0 &&
+        ticket.expires_at === null &&
         sameJson(ticket.blocked_resources, resources) &&
         !ledger.claims.some((claim) => claim.ticket_id === ticket.ticket_id && claim.status === 'active'),
       'queued TaskSource ticket has active or incomplete ownership',
@@ -1462,13 +1589,19 @@ function taskSourceTicketMatches(
   else if (ticket.status === 'active') {
     const claims = ledger.claims.filter((claim) => claim.ticket_id === ticket.ticket_id && claim.status === 'active');
     requireState(
-      work.lease?.ticket_id === ticket.ticket_id && work.lease.thread_id === ticket.thread_id &&
-        work.lease.generation === ticket.generation && ticket.blocked_resources.length === 0 &&
-        sameJson(ticket.active_resources, resources) && claims.length === 1 &&
+      work.lease?.ticket_id === ticket.ticket_id &&
+        work.lease.thread_id === ticket.thread_id &&
+        work.lease.generation === ticket.generation &&
+        ticket.blocked_resources.length === 0 &&
+        sameJson(ticket.active_resources, resources) &&
+        claims.length === 1 &&
         ticket.claim_ids.includes(claims[0]!.claim_id) &&
-        claims[0]!.work_id === ticket.work_id && claims[0]!.thread_id === ticket.thread_id &&
-        claims[0]!.generation === ticket.generation && sameJson(claims[0]!.resources, resources) &&
-        ticket.expires_at !== null && claims[0]!.lease_expires_at === ticket.expires_at &&
+        claims[0]!.work_id === ticket.work_id &&
+        claims[0]!.thread_id === ticket.thread_id &&
+        claims[0]!.generation === ticket.generation &&
+        sameJson(claims[0]!.resources, resources) &&
+        ticket.expires_at !== null &&
+        claims[0]!.lease_expires_at === ticket.expires_at &&
         timestamp(claims[0]!.lease_expires_at) > Date.now(),
       'active TaskSource ticket or claim is stale',
     );
@@ -1489,15 +1622,12 @@ function taskSourceExpectedWorkMatches(
   if (ticket.status === 'queued' ? revisionDelta !== 1 : revisionDelta < 1 || revisionDelta > 2) return false;
   const prior = taskSourcePriorTicket(ledger, work, request);
   if (!prior) return false;
-  const expectedLease = ticket.status === 'queued'
-    ? work.lease
-    : { ticket_id: prior.ticket_id, thread_id: prior.thread_id, generation: prior.generation };
+  const expectedLease =
+    ticket.status === 'queued'
+      ? work.lease
+      : { ticket_id: prior.ticket_id, thread_id: prior.thread_id, generation: prior.generation };
   if (!expectedLease) return false;
-  const subsets = [
-    [],
-    ...addedResources.map((resource) => [resource]),
-    [...addedResources],
-  ];
+  const subsets = [[], ...addedResources.map((resource) => [resource]), [...addedResources]];
   const uniqueSubsets = new Map(subsets.map((subset) => [canonicalJsonDigest(subset), subset]));
   for (const removed of uniqueSubsets.values()) {
     if (!removed.every((resource) => work.binding.allowed_resources.includes(resource))) continue;
@@ -1529,14 +1659,11 @@ function taskSourceReservationForRequest(
   if (!prior) return null;
   const resources = taskSourceReservationResources(repositoryRoot, request, host.work, prior),
     ticket = taskSourceTicketMatches(host.ledger, host.work, request, resources.resources);
-  if (!ticket || !taskSourceExpectedWorkMatches(
-    host.work,
-    host.ledger,
-    request,
-    resources.resources,
-    resources.added,
-    ticket,
-  )) return null;
+  if (
+    !ticket ||
+    !taskSourceExpectedWorkMatches(host.work, host.ledger, request, resources.resources, resources.added, ticket)
+  )
+    return null;
   return { prior, ticket, resources };
 }
 function validateReferences(refs: readonly ContractReference[]): void {
@@ -1654,7 +1781,8 @@ function checkedWork(
   );
   for (const ref of work.artifacts)
     requireState(
-      (ref.source_revision === binding.work_source_revision || admissionHistory.artifacts.some(original => sameJson(original, ref))) &&
+      (ref.source_revision === binding.work_source_revision ||
+        admissionHistory.artifacts.some((original) => sameJson(original, ref))) &&
         ref.scope_id === binding.scope_id &&
         ref.ac_ids.every((id) => binding.ac_ids.includes(id)),
       'artifact reference has foreign authority binding',
@@ -1769,7 +1897,11 @@ function checkedStoredWork(
   database: Database,
   workspaceId: string,
   value: unknown,
-  pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt | FailedPrewriterRecoveryReceipt,
+  pendingReceipt?:
+    | RuntimeCodeRebindReceipt
+    | DeliveredWorkContinuationReceipt
+    | FailedPrewriterRecoveryReceipt
+    | InitialSourceContinuationReceipt,
   continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
   observeAdmissionHistory?: (history: ContinuationAdmissionHistory) => void,
 ): WorkState {
@@ -1778,12 +1910,21 @@ function checkedStoredWork(
     admissionReferences: LifecycleArtifactReference[] = [],
     admissionArtifacts: WorkArtifactReference[] = [],
     continuationRepairOverlayUsed = { value: false },
-    records: ({ readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt } | {
-      readonly kind: 'failed-prewriter'; readonly receipt: FailedPrewriterRecoveryReceipt;
-    } | {
-      readonly kind: 'continuation';
-      readonly receipt: DeliveredWorkContinuationReceipt;
-    })[] = [];
+    records: (
+      | { readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt }
+      | {
+          readonly kind: 'failed-prewriter';
+          readonly receipt: FailedPrewriterRecoveryReceipt;
+        }
+      | {
+          readonly kind: 'continuation';
+          readonly receipt: DeliveredWorkContinuationReceipt;
+        }
+      | {
+          readonly kind: 'initial-source';
+          readonly receipt: InitialSourceContinuationReceipt;
+        }
+    )[] = [];
   const table = database
     .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_runtime_code_rebind'")
     .get();
@@ -1815,7 +1956,9 @@ function checkedStoredWork(
     .get();
   if (continuationTable) {
     const rows = database
-      .query('SELECT payload,digest,action_id,attempt FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=?')
+      .query(
+        'SELECT payload,digest,action_id,attempt FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=?',
+      )
       .all(workspaceId, candidate.binding?.lifecycle_work_id) as {
       payload: string;
       digest: string;
@@ -1843,8 +1986,8 @@ function checkedStoredWork(
         canonicalJsonDigest(receipt) === storedDigest &&
           ((receipt.request?.action?.kind === 'historical_terminal_review' &&
             receipt.request.action.capture.action_id === row.action_id) ||
-           (receipt.request?.action?.kind === 'configured_frontier' &&
-            receipt.request.action.request.action_id === row.action_id)) &&
+            (receipt.request?.action?.kind === 'configured_frontier' &&
+              receipt.request.action.request.action_id === row.action_id)) &&
           receipt.attempt === row.attempt,
         'delivered-work continuation history receipt checksum or identity differs',
       );
@@ -1853,15 +1996,39 @@ function checkedStoredWork(
   }
   if (continuationRepairOverlay)
     requireState(continuationRepairOverlayUsed.value, 'delivered-work continuation repair row is missing');
-  const recoveryTable = database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'").get();
+  const initialTable = database
+    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_initial_source_continuation'")
+    .get();
+  if (initialTable) {
+    const rows = database
+      .query(
+        'SELECT payload,digest,attempt FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=?',
+      )
+      .all(workspaceId, candidate.binding?.lifecycle_work_id) as { payload: string; digest: string; attempt: number }[];
+    for (const row of rows) {
+      const receipt = readInitialSourceContinuationRecord(row.payload, row.digest);
+      requireState(
+        receipt.request.identity.work_id === candidate.binding?.lifecycle_work_id &&
+          receipt.request.attempt === row.attempt,
+        'initial Source continuation history row checksum or identity differs',
+      );
+      records.push({ kind: 'initial-source', receipt });
+    }
+  }
+  const recoveryTable = database
+    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'")
+    .get();
   if (recoveryTable) {
-    const rows = database.query('SELECT payload,digest FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=?')
+    const rows = database
+      .query('SELECT payload,digest FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=?')
       .all(workspaceId, candidate.binding?.lifecycle_work_id) as { payload: string; digest: string }[];
     for (const row of rows) {
       const receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
       const encoded = failedPrewriterRecoveryRecord(receipt);
-      requireState(row.payload === encoded.payload && row.digest === encoded.digest,
-        'failed prewriter recovery history checksum differs');
+      requireState(
+        row.payload === encoded.payload && row.digest === encoded.digest,
+        'failed prewriter recovery history checksum differs',
+      );
       records.push({ kind: 'failed-prewriter', receipt });
     }
   }
@@ -1870,30 +2037,117 @@ function checkedStoredWork(
       pendingReceipt.schema === 'FailedPrewriterRecoveryReceipt/v1'
         ? { kind: 'failed-prewriter', receipt: pendingReceipt }
         : pendingReceipt.schema === 'VidaRuntimeCodeRebindAuthorization/v1'
-        ? { kind: 'runtime', receipt: pendingReceipt }
-        : { kind: 'continuation', receipt: pendingReceipt },
+          ? { kind: 'runtime', receipt: pendingReceipt }
+          : pendingReceipt.schema === 'InitialSourceContinuationReceipt/v1'
+            ? { kind: 'initial-source', receipt: pendingReceipt }
+            : { kind: 'continuation', receipt: pendingReceipt },
     );
   }
   records.sort((a, b) => {
     const revision = (record: (typeof records)[number]) =>
-      record.kind === 'continuation' ? record.receipt.request.expectedWork.revision : record.receipt.prior_work_version.revision;
+      record.kind === 'continuation'
+        ? record.receipt.request.expectedWork.revision
+        : record.receipt.prior_work_version.revision;
     return revision(b) - revision(a);
   });
   let expected = candidate.binding;
   for (const record of records) {
     if (record.kind === 'failed-prewriter') {
       const receipt = validateFailedPrewriterRecoveryReceipt(record.receipt);
-      const original = database.query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
-        .get(workspaceId, receipt.request.identity.work_id, receipt.request.attempt,
-          receipt.original.request.action.request.action_id) as { payload: string; digest: string } | null;
-      requireState(original && original.payload === canonicalJson(receipt.original) &&
-        original.digest === receipt.request.original_receipt_digest &&
-        sameJson(receipt.request.identity, workIdentity(candidate)) &&
-        sameJson(receipt.successor_work.binding, expected) &&
-        sameJson(candidate.contracts, receipt.prior_work.contracts) &&
-        sameJson(candidate.execution.assignment_attempts.slice(0, receipt.prior_work.execution.assignment_attempts.length),
-          receipt.prior_work.execution.assignment_attempts), 'failed prewriter binding history is not continuous');
+      const original = database
+        .query(
+          'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+        )
+        .get(
+          workspaceId,
+          receipt.request.identity.work_id,
+          receipt.request.attempt,
+          receipt.original.request.action.request.action_id,
+        ) as { payload: string; digest: string } | null;
+      requireState(
+        original &&
+          original.payload === canonicalJson(receipt.original) &&
+          original.digest === receipt.request.original_receipt_digest &&
+          sameJson(receipt.request.identity, workIdentity(candidate)) &&
+          sameJson(receipt.successor_work.binding, expected) &&
+          sameJson(candidate.contracts, receipt.prior_work.contracts) &&
+          sameJson(
+            candidate.execution.assignment_attempts.slice(0, receipt.prior_work.execution.assignment_attempts.length),
+            receipt.prior_work.execution.assignment_attempts,
+          ),
+        'failed prewriter binding history is not continuous',
+      );
       expected = receipt.prior_work.binding;
+      continue;
+    }
+    if (record.kind === 'initial-source') {
+      const receipt = validateInitialSourceContinuationReceipt(record.receipt),
+        request = receipt.request,
+        original = receipt.prior_work,
+        successor = receipt.successor_work;
+      requireState(
+        sameJson(request.identity, workIdentity(candidate)) &&
+          request.attempt === receipt.prior_journal.attempt &&
+          sameJson(request.expectedWork, receipt.prior_work_version) &&
+          sameJson(request.expectedLedger, receipt.prior_ledger_version) &&
+          sameJson(request.expectedJournal, receipt.prior_journal_version) &&
+          receipt.request_digest === canonicalJsonDigest(request) &&
+          original.revision === receipt.prior_work_version.revision &&
+          canonicalJsonDigest(original) === receipt.prior_work_version.digest &&
+          receipt.prior_ledger.revision === receipt.prior_ledger_version.revision &&
+          canonicalJsonDigest(receipt.prior_ledger) === receipt.prior_ledger_version.digest &&
+          sameJson(successor.binding, expected) &&
+          sameJson(successor.binding, {
+            ...original.binding,
+            work_source_revision: request.currentSourceScope.digest,
+            runtime_code_digest: request.currentRuntimeCodeDigest,
+            runtime_source_revision: request.currentRuntimeCodeDigest,
+          }) &&
+          original.binding.config_digest === request.configDigest &&
+          original.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
+          successor.binding.config_digest === original.binding.config_digest &&
+          sameJson(successor.contracts, original.contracts) &&
+          sameJson(successor.lifecycle.scope, original.lifecycle.scope) &&
+          sameJson(successor.lifecycle.references, original.lifecycle.references) &&
+          sameJson(successor.artifacts, original.artifacts) &&
+          successor.execution.run_id === original.execution.run_id &&
+          successor.execution.input_digest === original.execution.input_digest &&
+          sameJson(successor.execution.assignment_attempts, original.execution.assignment_attempts),
+        'initial Source continuation binding history is not continuous',
+      );
+      for (const reference of original.lifecycle.references) {
+        const schema = {
+          implementation_scope: 'ImplementationScope/v1',
+          acceptance_manifest: 'AcceptanceManifest/v1',
+          execution_approval: 'LocalSourceWriteAuthorization/v1',
+        }[reference.kind as 'implementation_scope' | 'acceptance_manifest' | 'execution_approval'];
+        if (
+          schema &&
+          reference.artifact_schema === schema &&
+          reference.source_revision === original.binding.work_source_revision &&
+          reference.scope_id === original.binding.scope_id &&
+          reference.ac_ids.every((id) => original.binding.ac_ids.includes(id)) &&
+          !admissionReferences.some((entry) => sameJson(entry, reference))
+        )
+          admissionReferences.push(reference);
+      }
+      for (const artifact of original.artifacts) {
+        const schema = {
+          'admission-source-snapshot': 'ScopedSourceSnapshot/v1',
+          'local-session-intake': 'VidaLocalSessionIntake/v1',
+        }[artifact.artifact_id as 'admission-source-snapshot' | 'local-session-intake'];
+        if (
+          schema &&
+          artifact.schema === schema &&
+          artifact.stage_id === 'intake' &&
+          artifact.source_revision === original.binding.work_source_revision &&
+          artifact.scope_id === original.binding.scope_id &&
+          artifact.ac_ids.every((id) => original.binding.ac_ids.includes(id)) &&
+          !admissionArtifacts.some((entry) => sameJson(entry, artifact))
+        )
+          admissionArtifacts.push(artifact);
+      }
+      expected = original.binding;
       continue;
     }
     if (record.kind === 'continuation') {
@@ -1911,8 +2165,10 @@ function checkedStoredWork(
           ? compareScopedSourceSnapshots(journal.source_scope, request.currentSourceScope)
           : null;
       if (action?.kind === 'configured_frontier') {
-        requireState(receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
-          'configured-frontier history snapshot is missing');
+        requireState(
+          receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
+          'configured-frontier history snapshot is missing',
+        );
         validateConfiguredFrontierReceiptStructure({ receipt: receipt as ConfiguredFrontierReceipt });
         requireState(
           sameJson(request.identity, workIdentity(candidate)) &&
@@ -1934,29 +2190,49 @@ function checkedStoredWork(
           'configured-frontier binding history is not continuous',
         );
         for (const reference of original.lifecycle.references) {
-          const schema = { implementation_scope: 'ImplementationScope/v1', acceptance_manifest: 'AcceptanceManifest/v1',
-            execution_approval: 'LocalSourceWriteAuthorization/v1' }[reference.kind as 'implementation_scope' | 'acceptance_manifest' | 'execution_approval'];
-          if (schema && reference.artifact_schema === schema && reference.source_revision === original.binding.work_source_revision &&
-              reference.scope_id === original.binding.scope_id && reference.ac_ids.every(id => original.binding.ac_ids.includes(id)))
+          const schema = {
+            implementation_scope: 'ImplementationScope/v1',
+            acceptance_manifest: 'AcceptanceManifest/v1',
+            execution_approval: 'LocalSourceWriteAuthorization/v1',
+          }[reference.kind as 'implementation_scope' | 'acceptance_manifest' | 'execution_approval'];
+          if (
+            schema &&
+            reference.artifact_schema === schema &&
+            reference.source_revision === original.binding.work_source_revision &&
+            reference.scope_id === original.binding.scope_id &&
+            reference.ac_ids.every((id) => original.binding.ac_ids.includes(id))
+          )
             admissionReferences.push(reference);
         }
         for (const artifact of original.artifacts) {
-          const schema = { 'admission-source-snapshot': 'ScopedSourceSnapshot/v1', 'local-session-intake': 'VidaLocalSessionIntake/v1' }[
-            artifact.artifact_id as 'admission-source-snapshot' | 'local-session-intake'];
-          if (schema && artifact.schema === schema && artifact.stage_id === 'intake' &&
-              artifact.source_revision === original.binding.work_source_revision && artifact.scope_id === original.binding.scope_id &&
-              artifact.ac_ids.every(id => original.binding.ac_ids.includes(id))) admissionArtifacts.push(artifact);
+          const schema = {
+            'admission-source-snapshot': 'ScopedSourceSnapshot/v1',
+            'local-session-intake': 'VidaLocalSessionIntake/v1',
+          }[artifact.artifact_id as 'admission-source-snapshot' | 'local-session-intake'];
+          if (
+            schema &&
+            artifact.schema === schema &&
+            artifact.stage_id === 'intake' &&
+            artifact.source_revision === original.binding.work_source_revision &&
+            artifact.scope_id === original.binding.scope_id &&
+            artifact.ac_ids.every((id) => original.binding.ac_ids.includes(id))
+          )
+            admissionArtifacts.push(artifact);
         }
         for (const attempt of original.execution.assignment_attempts) {
-          const current = candidate.execution.assignment_attempts.find(entry => entry.attempt_id === attempt.attempt_id);
+          const current = candidate.execution.assignment_attempts.find(
+            (entry) => entry.attempt_id === attempt.attempt_id,
+          );
           requireState(current && sameJson(current, attempt), 'configured-frontier terminal assignment result changed');
           bindings.set(attempt.attempt_id, original.binding);
         }
         expected = original.binding;
         continue;
       }
-      requireState(capture !== null && receipt.frontier_snapshot === undefined,
-        'historical continuation capture or receipt shape differs');
+      requireState(
+        capture !== null && receipt.frontier_snapshot === undefined,
+        'historical continuation capture or receipt shape differs',
+      );
       requireState(
         receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
           receipt.status === 'action_ready' &&
@@ -1994,7 +2270,8 @@ function checkedStoredWork(
           capture.runtime_acceptance === false &&
           typeof capture.body_base64 === 'string' &&
           Buffer.from(capture.body_base64, 'base64').byteLength === capture.body_byte_length &&
-          createHash('sha256').update(Buffer.from(capture.body_base64, 'base64')).digest('hex') === capture.body_sha256 &&
+          createHash('sha256').update(Buffer.from(capture.body_base64, 'base64')).digest('hex') ===
+            capture.body_sha256 &&
           action?.kind === 'historical_terminal_review' &&
           action.original_request_pointer === capture.request.user_request_pointer &&
           action.capture.body_sha256 === capture.body_sha256 &&
@@ -2035,7 +2312,9 @@ function checkedStoredWork(
           original.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
           original.execution.status === 'suspended' &&
           original.lease === null &&
-          original.execution.assignment_attempts.every((attempt) => ['completed', 'no_effect'].includes(attempt.status)) &&
+          original.execution.assignment_attempts.every((attempt) =>
+            ['completed', 'no_effect'].includes(attempt.status),
+          ) &&
           successorWork.execution.assignment_attempts.length === original.execution.assignment_attempts.length &&
           sameJson(successorWork.execution.assignment_attempts, original.execution.assignment_attempts) &&
           scopedChanges !== null &&
@@ -2049,7 +2328,9 @@ function checkedStoredWork(
         'delivered-work continuation binding history is not continuous',
       );
       for (const attempt of original.execution.assignment_attempts) {
-        const current = candidate.execution.assignment_attempts.find((entry) => entry.attempt_id === attempt.attempt_id);
+        const current = candidate.execution.assignment_attempts.find(
+          (entry) => entry.attempt_id === attempt.attempt_id,
+        );
         requireState(current && sameJson(current, attempt), 'delivered-work terminal assignment result changed');
         bindings.set(attempt.attempt_id, original.binding);
       }
@@ -2255,8 +2536,12 @@ function sameJson(left: unknown, right: unknown): boolean {
   return canonicalJson(left) === canonicalJson(right);
 }
 function exactJsonKeys(value: unknown, keys: readonly string[]): boolean {
-  return value !== null && typeof value === 'object' && !Array.isArray(value) &&
-    sameJson(Object.keys(value as Record<string, unknown>).sort(), [...keys].sort());
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    sameJson(Object.keys(value as Record<string, unknown>).sort(), [...keys].sort())
+  );
 }
 function appendOnly<T>(before: readonly T[], after: readonly T[], id: (value: T) => string, label: string): void {
   const next = new Map(after.map((value) => [id(value), canonicalJson(value)]));
@@ -2404,22 +2689,25 @@ function validateProgress(
       sameJson(old.execution.assignment_attempts, work.execution.assignment_attempts),
       'attempt history requires its dedicated transaction',
     );
-    const bindingMatches = taskSourceResourceAdditions.length === 0
-      ? sameJson(old.binding, work.binding)
-      : (() => {
-          const additions = [...taskSourceResourceAdditions].sort();
-          return new Set(additions).size === additions.length &&
-            additions.every(
-              (resource) =>
-                (resource.startsWith('branch:') || resource.startsWith('worktree:')) &&
-                !old.binding.allowed_resources.includes(resource) &&
-                work.binding.allowed_resources.includes(resource),
-            ) &&
-            sameJson(old.binding, {
-              ...work.binding,
-              allowed_resources: work.binding.allowed_resources.filter((resource) => !additions.includes(resource)),
-            });
-        })();
+    const bindingMatches =
+      taskSourceResourceAdditions.length === 0
+        ? sameJson(old.binding, work.binding)
+        : (() => {
+            const additions = [...taskSourceResourceAdditions].sort();
+            return (
+              new Set(additions).size === additions.length &&
+              additions.every(
+                (resource) =>
+                  (resource.startsWith('branch:') || resource.startsWith('worktree:')) &&
+                  !old.binding.allowed_resources.includes(resource) &&
+                  work.binding.allowed_resources.includes(resource),
+              ) &&
+              sameJson(old.binding, {
+                ...work.binding,
+                allowed_resources: work.binding.allowed_resources.filter((resource) => !additions.includes(resource)),
+              })
+            );
+          })();
     requireState(bindingMatches, 'work authority changed; explicit rebind required');
     requireState(
       sameJson(old.contracts.scope, work.contracts.scope) &&
@@ -3427,27 +3715,34 @@ export class HostStateStore {
       );
     } else database.exec('PRAGMA synchronous=FULL');
     this.#assertDatabaseSupport();
-    if (!readOnlyInspection) database.exec(
-      'CREATE TABLE IF NOT EXISTS agent_host_state (workspace_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY (workspace_id, kind, id))',
-    );
-    if (!readOnlyInspection) database.exec(
-      'CREATE TABLE IF NOT EXISTS agent_host_governance (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, kind TEXT NOT NULL, record_key TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id,kind,record_key))',
-    );
-    if (!readOnlyInspection) database.exec(
-      'CREATE TABLE IF NOT EXISTS agent_host_governance_stores (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, generation TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id))',
-    );
-    if (!readOnlyInspection) database.exec(
-      'CREATE TABLE IF NOT EXISTS agent_host_reconciliation (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
-    );
-    if (!readOnlyInspection) database.exec(
-      'CREATE TABLE IF NOT EXISTS agent_host_maintenance (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
-    );
-    if (!readOnlyInspection) database.exec(
-      'CREATE TABLE IF NOT EXISTS agent_host_admission_attempt (workspace_id TEXT NOT NULL,generation INTEGER NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_digest TEXT NOT NULL,PRIMARY KEY(workspace_id,generation,work_id,attempt))',
-    );
-    if (!readOnlyInspection) database.exec(
-      'CREATE TABLE IF NOT EXISTS agent_host_final_assurance (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,generation INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,generation))',
-    );
+    if (!readOnlyInspection)
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_state (workspace_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY (workspace_id, kind, id))',
+      );
+    if (!readOnlyInspection)
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_governance (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, kind TEXT NOT NULL, record_key TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id,kind,record_key))',
+      );
+    if (!readOnlyInspection)
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_governance_stores (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, generation TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id))',
+      );
+    if (!readOnlyInspection)
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_reconciliation (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
+      );
+    if (!readOnlyInspection)
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_maintenance (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
+      );
+    if (!readOnlyInspection)
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_admission_attempt (workspace_id TEXT NOT NULL,generation INTEGER NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_digest TEXT NOT NULL,PRIMARY KEY(workspace_id,generation,work_id,attempt))',
+      );
+    if (!readOnlyInspection)
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_final_assurance (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,generation INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,generation))',
+      );
     this.governanceCapability = issueHostGovernanceCapability({
       workspaceId,
       reserveOperation: this.reserveOperation.bind(this),
@@ -3995,7 +4290,8 @@ export class HostStateStore {
       bytes.length <= 32768 &&
         createHash('sha256').update(bytes).digest('hex') === intakeRef.sha256 &&
         intake.native_session_handle === input.operatorHandle &&
-        isPlainRecord(intake.work_item) && intake.work_item.id === input.identity.work_id &&
+        isPlainRecord(intake.work_item) &&
+        intake.work_item.id === input.identity.work_id &&
         canonicalJsonDigest(intake.work_item) === original.binding.work_item_digest,
       'unprepared recovery original intake differs',
     );
@@ -4367,7 +4663,27 @@ export class HostStateStore {
     const continuation = this.#readDeliveredWorkContinuationReceipt(identity, input.context.attempt);
     const configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
     const configuredRecovery = configuredContinuation
-      ? this.#readFailedPrewriterRecoveryReceipt(identity, input.context.attempt) : null;
+      ? this.#readFailedPrewriterRecoveryReceipt(identity, input.context.attempt)
+      : null;
+    const initialContinuation = this.#readInitialSourceContinuationReceipt(identity, input.context.attempt);
+    requireState(
+      !(configuredContinuation && initialContinuation),
+      'multiple Host producer continuation receipts are ambiguous',
+    );
+    if (initialContinuation) {
+      requireState(
+        journal && !journal.state.corrective_execution,
+        'initial-source producer requires its current noncorrective Journal',
+      );
+      validateInitialSourceContinuationLineage(work, initialContinuation, journal.state);
+      requireState(
+        initialContinuation.request.currentSourceScope.digest === input.context.scope_digest &&
+          initialContinuation.request.currentInitialRequest.run_id === input.runId &&
+          initialContinuation.request.currentInitialRequest.workflow_id === input.workflowId &&
+          initialContinuation.request.configDigest === runtimeConfigDigest(currentConfig),
+        'initial-source producer receipt differs from the current same-attempt binding',
+      );
+    }
     requireState(
       work.execution.run_id ===
         'vida-' +
@@ -4375,16 +4691,21 @@ export class HostStateStore {
             workspaceId: this.#workspaceId,
             context: input.context,
             workflowId: input.workflowId,
-          }) || (configuredContinuation !== null &&
-            configuredContinuation.prior_work.execution.run_id === work.execution.run_id &&
-            configuredContinuation.request.action.request.run_id === input.runId &&
-            (configuredRecovery?.request.currentSourceScope.digest ?? configuredContinuation.request.currentSourceScope.digest) === input.context.scope_digest &&
-            configuredContinuation.request.targetConfigDigest === runtimeConfigDigest(currentConfig)),
+          }) ||
+        (configuredContinuation !== null &&
+          configuredContinuation.prior_work.execution.run_id === work.execution.run_id &&
+          configuredContinuation.request.action.request.run_id === input.runId &&
+          (configuredRecovery?.request.currentSourceScope.digest ??
+            configuredContinuation.request.currentSourceScope.digest) === input.context.scope_digest &&
+          configuredContinuation.request.targetConfigDigest === runtimeConfigDigest(currentConfig)) ||
+        (initialContinuation !== null &&
+          initialContinuation.prior_work.execution.run_id === work.execution.run_id &&
+          initialContinuation.request.currentSourceScope.digest === input.context.scope_digest &&
+          initialContinuation.request.currentInitialRequest.run_id === input.runId),
       'session producer original attempt differs',
     );
     requireState(
-        (!journal?.state.corrective_execution ||
-          journal.state.corrective_execution.base_run_id === work.execution.run_id),
+      !journal?.state.corrective_execution || journal.state.corrective_execution.base_run_id === work.execution.run_id,
       'session producer corrective base differs',
     );
     const ticket = host.ledger.tickets.find((row) => row.ticket_id === lease.ticket_id);
@@ -4419,39 +4740,101 @@ export class HostStateStore {
         this.assertSessionProducerWriteAllowed();
         const config = this.#assertSessionProducerContext(ledger, input, input.expectedJournal);
         const journal = MastraSessionLedger.prototype.resume.call(ledger, input.context.work_id, input.context.attempt);
-        const project = loadProjectSetContext(input.repositoryRoot, config, config.repository.repository_id, input.projectIds);
-        const continuation = this.#readDeliveredWorkContinuationReceipt({ repository_id: project.repository_id,
-          project_ids: project.project_ids, integrations_digest: project.integrations_digest, work_id: input.context.work_id }, input.context.attempt);
-        const configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
+        const project = loadProjectSetContext(
+            input.repositoryRoot,
+            config,
+            config.repository.repository_id,
+            input.projectIds,
+          ),
+          identity: WorkIdentity = {
+            repository_id: project.repository_id,
+            project_ids: project.project_ids,
+            integrations_digest: project.integrations_digest,
+            work_id: input.context.work_id,
+          },
+          continuation = this.#readDeliveredWorkContinuationReceipt(identity, input.context.attempt),
+          configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null,
+          initialContinuation = this.#readInitialSourceContinuationReceipt(identity, input.context.attempt);
+        requireState(
+          !(configuredContinuation && initialContinuation),
+          'multiple Host producer continuation receipts are ambiguous',
+        );
         const engineBinding = {
           ...input,
           config,
           correctiveExecution: journal?.state.corrective_execution ?? undefined,
         };
-        const engine = configuredContinuation
-          ? readConfiguredContinuationSessionEngineSnapshot(engineBinding, configuredContinuation as ConfiguredFrontierReceipt,
-              this.#readFailedPrewriterRecoveryReceipt({ repository_id: project.repository_id, project_ids: project.project_ids,
-                integrations_digest: project.integrations_digest, work_id: input.context.work_id }, input.context.attempt))
-          : readSessionEngineSnapshot(engineBinding);
-        const atOldFrontier = configuredContinuation !== null && engine?.status === 'suspended' &&
+        let engine: SessionBridgeSnapshot | null;
+        if (initialContinuation) {
+          requireState(
+            journal && !journal.state.corrective_execution,
+            'initial-source producer current Journal is missing or corrective',
+          );
+          const currentWork = this.#read(identity).work;
+          requireState(currentWork, 'initial-source producer current Work is missing');
+          engine = readInitialSourceContinuationSessionEngineSnapshot(
+            engineBinding,
+            initialContinuation,
+            journal.state,
+            currentWork,
+          );
+        } else if (configuredContinuation) {
+          engine = readConfiguredContinuationSessionEngineSnapshot(
+            engineBinding,
+            configuredContinuation as ConfiguredFrontierReceipt,
+            this.#readFailedPrewriterRecoveryReceipt(identity, input.context.attempt),
+          );
+        } else engine = readSessionEngineSnapshot(engineBinding);
+        if (initialContinuation && input.phase === 'resume')
+          requireState(
+            journal &&
+              journal.state.step_id === input.resumeIntent?.stepId &&
+              journal.state.items.length > 0 &&
+              journal.state.items.every(
+                (item) =>
+                  item.issue_id !== null &&
+                  item.observation?.status === 'reported_complete' &&
+                  item.observation.issue_id === item.issue_id &&
+                  item.observation.action_id === item.request.action_id &&
+                  item.observation.output_digest === canonicalJsonDigest(item.observation.summary),
+              ),
+            'initial-source producer requires complete reported observations before resume',
+          );
+        const atOldFrontier =
+          configuredContinuation !== null &&
+          engine?.status === 'suspended' &&
           engine.step_id === 'wave-' + configuredContinuation.request.action.request.wave_index &&
           journal?.state.step_id === engine.step_id;
         const expectedRequests = engine?.requests;
         if (atOldFrontier) {
-          requireState(journal && configuredContinuation &&
-            journal.state.step_id === 'wave-' + configuredContinuation.request.action.request.wave_index &&
-            sameJson(journal.state.completed, configuredContinuation.prior_journal.completed) &&
-            sameJson(journal.state.items.map(item => item.request), expectedRequests),
-          'configured producer current reviewer wave differs from retained receipt');
-          if (input.phase === 'resume') requireState(
-            journal.state.items.every(item => item.issue_id !== null && item.observation?.status === 'reported_complete' &&
-              item.observation.issue_id === item.issue_id && item.observation.action_id === item.request.action_id &&
-              item.observation.output_digest === canonicalJsonDigest(item.observation.summary)),
-          'configured producer requires the complete successful current prewriter reports');
+          requireState(
+            journal &&
+              configuredContinuation &&
+              journal.state.step_id === 'wave-' + configuredContinuation.request.action.request.wave_index &&
+              sameJson(journal.state.completed, configuredContinuation.prior_journal.completed) &&
+              sameJson(
+                journal.state.items.map((item) => item.request),
+                expectedRequests,
+              ),
+            'configured producer current reviewer wave differs from retained receipt',
+          );
+          if (input.phase === 'resume')
+            requireState(
+              journal.state.items.every(
+                (item) =>
+                  item.issue_id !== null &&
+                  item.observation?.status === 'reported_complete' &&
+                  item.observation.issue_id === item.issue_id &&
+                  item.observation.action_id === item.request.action_id &&
+                  item.observation.output_digest === canonicalJsonDigest(item.observation.summary),
+              ),
+              'configured producer requires the complete successful current prewriter reports',
+            );
         }
         if (input.phase === 'start') {
           requireState(
-            !engine &&
+            !initialContinuation &&
+              !engine &&
               (!journal ||
                 (journal.state.corrective_execution &&
                   journal.state.step_id === null &&
@@ -4574,22 +4957,54 @@ export class HostStateStore {
           entry.input.context.work_id,
           entry.input.context.attempt,
         );
-        const project = loadProjectSetContext(entry.input.repositoryRoot, config, config.repository.repository_id, entry.input.projectIds);
-        const continuation = this.#readDeliveredWorkContinuationReceipt({ repository_id: project.repository_id,
-          project_ids: project.project_ids, integrations_digest: project.integrations_digest, work_id: entry.input.context.work_id }, entry.input.context.attempt);
+        const project = loadProjectSetContext(
+            entry.input.repositoryRoot,
+            config,
+            config.repository.repository_id,
+            entry.input.projectIds,
+          ),
+          identity: WorkIdentity = {
+            repository_id: project.repository_id,
+            project_ids: project.project_ids,
+            integrations_digest: project.integrations_digest,
+            work_id: entry.input.context.work_id,
+          },
+          continuation = this.#readDeliveredWorkContinuationReceipt(identity, entry.input.context.attempt),
+          initialContinuation = this.#readInitialSourceContinuationReceipt(identity, entry.input.context.attempt);
+        requireState(
+          !(continuation?.request.action.kind === 'configured_frontier' && initialContinuation),
+          'multiple Host producer continuation receipts are ambiguous',
+        );
         const binding = {
           ...entry.input,
           config,
           correctiveExecution: journal?.state.corrective_execution ?? undefined,
         };
-        const engine = continuation?.request.action.kind === 'configured_frontier'
-          ? readConfiguredContinuationSessionEngineSnapshot(binding, continuation as ConfiguredFrontierReceipt,
-              this.#readFailedPrewriterRecoveryReceipt({ repository_id: project.repository_id, project_ids: project.project_ids,
-                integrations_digest: project.integrations_digest, work_id: entry.input.context.work_id }, entry.input.context.attempt))
-          : readSessionEngineSnapshot(binding);
+        let engine: SessionBridgeSnapshot | null;
+        if (initialContinuation) {
+          requireState(
+            journal && !journal.state.corrective_execution,
+            'initial-source producer current Journal is missing or corrective',
+          );
+          const currentWork = this.#read(identity).work;
+          requireState(currentWork, 'initial-source producer current Work is missing');
+          engine = readInitialSourceContinuationSessionEngineSnapshot(
+            binding,
+            initialContinuation,
+            journal.state,
+            currentWork,
+          );
+        } else if (continuation?.request.action.kind === 'configured_frontier') {
+          engine = readConfiguredContinuationSessionEngineSnapshot(
+            binding,
+            continuation as ConfiguredFrontierReceipt,
+            this.#readFailedPrewriterRecoveryReceipt(identity, entry.input.context.attempt),
+          );
+        } else engine = readSessionEngineSnapshot(binding);
         if (!engine)
           requireState(
             entry.input.phase === 'initialize' &&
+              !initialContinuation &&
               (!journal ||
                 (journal.state.corrective_execution &&
                   journal.state.step_id === null &&
@@ -5091,10 +5506,7 @@ export class HostStateStore {
     }
   }
   #withMaintenanceSnapshotReadScope<T>(callback: () => T): T {
-    requireState(
-      !this.#maintenanceSnapshotReadScopeActive,
-      'maintenance snapshot read scope cannot be re-entered',
-    );
+    requireState(!this.#maintenanceSnapshotReadScopeActive, 'maintenance snapshot read scope cannot be re-entered');
     this.#maintenanceSnapshotReadScopeActive = true;
     try {
       const result = callback();
@@ -5670,17 +6082,41 @@ export class HostStateStore {
   }
   #admissionHistory(work: WorkState): ContinuationAdmissionHistory {
     let history: ContinuationAdmissionHistory = { references: [], artifacts: [] };
-    checkedStoredWork(this.#database, this.#workspaceId, work, undefined, undefined, value => { history = value; });
+    checkedStoredWork(this.#database, this.#workspaceId, work, undefined, undefined, (value) => {
+      history = value;
+    });
     return history;
   }
   /** Pure projection; persistence revalidates the stored receipt chain under CAS. */
-  projectLifecycleTransition(work: WorkState, target: LifecyclePhase, nextAction: string,
-    documentationContext?: DocumentationVerificationContext): WorkState {
-    return transitionLifecycleState(work, target, nextAction, documentationContext, this.#admissionHistory(work).references);
+  projectLifecycleTransition(
+    work: WorkState,
+    target: LifecyclePhase,
+    nextAction: string,
+    documentationContext?: DocumentationVerificationContext,
+  ): WorkState {
+    return transitionLifecycleState(
+      work,
+      target,
+      nextAction,
+      documentationContext,
+      this.#admissionHistory(work).references,
+    );
   }
-  #validateProgress(before: HostStateSnapshot, work: WorkState, ledger: CoordinationLedger,
-    documentationContext?: DocumentationVerificationContext, taskSourceResourceAdditions: readonly string[] = []): void {
-    validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions, this.#admissionHistory(work).references);
+  #validateProgress(
+    before: HostStateSnapshot,
+    work: WorkState,
+    ledger: CoordinationLedger,
+    documentationContext?: DocumentationVerificationContext,
+    taskSourceResourceAdditions: readonly string[] = [],
+  ): void {
+    validateProgress(
+      before,
+      work,
+      ledger,
+      documentationContext,
+      taskSourceResourceAdditions,
+      this.#admissionHistory(work).references,
+    );
   }
   #load(
     kind: 'work' | 'ledger',
@@ -5693,7 +6129,8 @@ export class HostStateStore {
     if (!row) return null;
     const parsed: unknown = JSON.parse(row.payload);
     assertCanonicalJsonValue(parsed, '$');
-    const value = kind === 'work' ? this.#checkedWork(parsed, undefined, continuationRepairOverlay) : checkedLedger(parsed);
+    const value =
+      kind === 'work' ? this.#checkedWork(parsed, undefined, continuationRepairOverlay) : checkedLedger(parsed);
     requireState(
       value.workspace_id === this.#workspaceId &&
         value.revision === row.revision &&
@@ -5841,9 +6278,14 @@ export class HostStateStore {
     const work = host.work,
       ledger = host.ledger;
     requireState(
-      work && ledger && host.workVersion && host.ledgerVersion &&
-        work.execution.status === 'active' && work.lease &&
-        work.lease.thread_id === request.thread_id && work.lease.ticket_id.length > 0 &&
+      work &&
+        ledger &&
+        host.workVersion &&
+        host.ledgerVersion &&
+        work.execution.status === 'active' &&
+        work.lease &&
+        work.lease.thread_id === request.thread_id &&
+        work.lease.ticket_id.length > 0 &&
         journal.attempt === request.attempt &&
         work.binding.lifecycle_work_id === request.work_id &&
         work.binding.repository_id === identity.repository_id &&
@@ -5852,12 +6294,8 @@ export class HostStateStore {
       'task source preparation has no matching active Host owner',
     );
     const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id),
-      claims = ledger.claims.filter(
-        (entry) => entry.ticket_id === work.lease!.ticket_id && entry.status === 'active',
-      ),
-      journalScope = validateTaskSourceJournalScope(
-        (journal.state as { source_scope?: unknown }).source_scope,
-      ),
+      claims = ledger.claims.filter((entry) => entry.ticket_id === work.lease!.ticket_id && entry.status === 'active'),
+      journalScope = validateTaskSourceJournalScope((journal.state as { source_scope?: unknown }).source_scope),
       now = Date.now();
     assertTaskSourceJournalScopeWithinWork(journalScope, work);
     requireState(
@@ -5919,7 +6357,9 @@ export class HostStateStore {
         sameJson(request.project_ids, identity.project_ids),
       'task source request identity differs from the Host identity',
     );
-    const readJournal = (work: WorkState): {
+    const readJournal = (
+      work: WorkState,
+    ): {
       attempt: number;
       version: StateVersion;
       state: Readonly<Record<string, unknown>>;
@@ -5950,7 +6390,9 @@ export class HostStateStore {
     const tableExists = (): boolean =>
       Boolean(
         this.#database
-          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'")
+          .query(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
+          )
           .get(),
       );
     const readRecord = (operationId: string) => {
@@ -5989,13 +6431,8 @@ export class HostStateStore {
         ledger = before.ledger;
       requireState(work && ledger, 'task source preparation Host work or ledger is missing');
       this.#assertLiveTaskSourceOwner(before, request, identity, journal);
-      const journalScope = validateTaskSourceJournalScope(
-        (journal.state as { source_scope?: unknown }).source_scope,
-      );
-      requireState(
-        journalScope.digest.length === 64,
-        'task source preparation current journal scope is invalid',
-      );
+      const journalScope = validateTaskSourceJournalScope((journal.state as { source_scope?: unknown }).source_scope);
+      requireState(journalScope.digest.length === 64, 'task source preparation current journal scope is invalid');
       const checked = input.verifyCurrent({
         work,
         ledger,
@@ -6011,10 +6448,7 @@ export class HostStateStore {
       );
       return checked;
     };
-    const createResult = (
-      status: 'prepared' | 'inspected' | 'not_found',
-      stored: ReturnType<typeof readRecord>,
-    ) =>
+    const createResult = (status: 'prepared' | 'inspected' | 'not_found', stored: ReturnType<typeof readRecord>) =>
       snapshot({
         schema: 'TaskSourceBindingOperationResult/v1',
         status,
@@ -6070,7 +6504,8 @@ export class HostStateStore {
         revision: 1,
         created_at: new Date().toISOString(),
       });
-      const payload = canonicalJson(operation), operationDigest = canonicalJsonDigest(operation);
+      const payload = canonicalJson(operation),
+        operationDigest = canonicalJsonDigest(operation);
       this.#database.exec(
         'CREATE TABLE IF NOT EXISTS agent_host_task_source_binding_operation (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,request_digest TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
       );
@@ -6138,7 +6573,11 @@ export class HostStateStore {
         } | null;
         requireState(journalRow, 'task source inspection requires the current Host journal');
         const journalState = JSON.parse(journalRow.payload) as Record<string, unknown>;
-        validateWorkSessionBinding(before.work, journalState as unknown as MastraSessionLedgerState, this.#repositoryRoot);
+        validateWorkSessionBinding(
+          before.work,
+          journalState as unknown as MastraSessionLedgerState,
+          this.#repositoryRoot,
+        );
         requireState(
           journalState.schema === 'MastraSessionLedger/v1' &&
             journalState.workspace_id === this.#workspaceId &&
@@ -6171,9 +6610,7 @@ export class HostStateStore {
           claims = ledger.claims.filter(
             (entry) => entry.ticket_id === work.lease!.ticket_id && entry.status === 'active',
           ),
-          journalScope = validateTaskSourceJournalScope(
-            (journal.state as { source_scope?: unknown }).source_scope,
-          );
+          journalScope = validateTaskSourceJournalScope((journal.state as { source_scope?: unknown }).source_scope);
         assertTaskSourceJournalScopeWithinWork(journalScope, work);
         requireState(
           ticket?.status === 'active' &&
@@ -6206,7 +6643,9 @@ export class HostStateStore {
           'task source inspection authorization is invalid',
         );
         const table = this.#database
-          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'")
+          .query(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
+          )
           .get();
         if (!table)
           return snapshot({
@@ -6274,159 +6713,260 @@ export class HostStateStore {
     readonly verifyCurrent: Parameters<HostStateStore['inspectTaskSourceBindingOperation']>[0]['verifyCurrent'];
   }): Readonly<Record<string, unknown>> {
     const prepared = this.inspectTaskSourceBindingOperation(input);
-    if (prepared.status === 'not_found') return snapshot({
-      schema: 'TaskSourceBindingActionResult/v1', status: 'not_found',
-      operation_id: input.request.operation_id, request_id: input.request.request_id,
-      action: null, state_version: null, command_argv: null,
-    });
-    const table = this.#database.query(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
-    ).get();
-    if (!table) return snapshot({
-      schema: 'TaskSourceBindingActionResult/v1', status: 'prepared',
-      operation_id: input.request.operation_id, request_id: input.request.request_id,
-      action: null, state_version: null, command_argv: null,
-    });
-    const actionRow = this.#database.query(
-      'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-    ).get(this.#workspaceId, input.request.operation_id) as TaskSourceActionRow | null;
-    if (!actionRow) return snapshot({
-      schema: 'TaskSourceBindingActionResult/v1', status: 'prepared',
-      operation_id: input.request.operation_id, request_id: input.request.request_id,
-      action: null, state_version: null, command_argv: null,
-    });
-    const operationRow = this.#database.query(
-      'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-    ).get(this.#workspaceId, input.request.operation_id) as TaskSourceOperationRow | null;
+    if (prepared.status === 'not_found')
+      return snapshot({
+        schema: 'TaskSourceBindingActionResult/v1',
+        status: 'not_found',
+        operation_id: input.request.operation_id,
+        request_id: input.request.request_id,
+        action: null,
+        state_version: null,
+        command_argv: null,
+      });
+    const table = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'")
+      .get();
+    if (!table)
+      return snapshot({
+        schema: 'TaskSourceBindingActionResult/v1',
+        status: 'prepared',
+        operation_id: input.request.operation_id,
+        request_id: input.request.request_id,
+        action: null,
+        state_version: null,
+        command_argv: null,
+      });
+    const actionRow = this.#database
+      .query(
+        'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+      )
+      .get(this.#workspaceId, input.request.operation_id) as TaskSourceActionRow | null;
+    if (!actionRow)
+      return snapshot({
+        schema: 'TaskSourceBindingActionResult/v1',
+        status: 'prepared',
+        operation_id: input.request.operation_id,
+        request_id: input.request.request_id,
+        action: null,
+        state_version: null,
+        command_argv: null,
+      });
+    const operationRow = this.#database
+      .query(
+        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+      )
+      .get(this.#workspaceId, input.request.operation_id) as TaskSourceOperationRow | null;
     requireState(operationRow, 'task source recovery action has no prepared operation');
     const pair = validateTaskSourceActionPair(operationRow, actionRow as TaskSourceActionRow, input.request),
       action = pair.action;
     return snapshot({
-      schema: 'TaskSourceBindingActionResult/v1', status: action.status,
-      operation_id: input.request.operation_id, request_id: input.request.request_id,
-      action, state_version: { revision: actionRow.revision, digest: actionRow.digest }, command_argv: null,
+      schema: 'TaskSourceBindingActionResult/v1',
+      status: action.status,
+      operation_id: input.request.operation_id,
+      request_id: input.request.request_id,
+      action,
+      state_version: { revision: actionRow.revision, digest: actionRow.digest },
+      command_argv: null,
     });
   }
 
   /** Resolve only a reported current binding; absence keeps the original Host root. */
-  readCurrentTaskSourceBinding(
-    identity: WorkIdentity,
-    threadId: string,
-    attempt?: number,
-  ): TaskSourceBinding | null {
+  readCurrentTaskSourceBinding(identity: WorkIdentity, threadId: string, attempt?: number): TaskSourceBinding | null {
     const repositoryRoot = this.#repositoryRoot;
-    requireState(repositoryRoot !== undefined &&
-      (attempt === undefined || (Number.isSafeInteger(attempt) && attempt > 0)) &&
-      typeof threadId === 'string' && threadId.length > 0, 'task source binding read context is invalid');
+    requireState(
+      repositoryRoot !== undefined &&
+        (attempt === undefined || (Number.isSafeInteger(attempt) && attempt > 0)) &&
+        typeof threadId === 'string' &&
+        threadId.length > 0,
+      'task source binding read context is invalid',
+    );
     requireState(!this.#database.inTransaction, 'nested task source binding read forbidden');
-    return this.#database.transaction(() => {
-      this.#assertMaintenanceAvailable();
-      const current = this.#read(identity), work = current.work;
-      requireState(work && work.execution.status === 'active' && work.lease?.thread_id === threadId &&
-        work.binding.lifecycle_work_id === identity.work_id && work.binding.repository_id === identity.repository_id &&
-        sameJson(work.binding.project_ids, identity.project_ids), 'task source binding has no matching current Host owner');
-      const config = loadRuntimeConfig(repositoryRoot),
-        projectContext = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids);
-      requireState(work.binding.config_digest === runtimeConfigDigest(config),
-        'task source binding runtime configuration differs from current Host Work');
-      const operationsTable = this.#database.query(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
-      ).get();
-      const actionsTable = this.#database.query(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
-      ).get();
-      requireState(!actionsTable || operationsTable, 'task source action has no preparation storage');
-      if (actionsTable) requireState(!this.#database.query(
-        'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
-      ).get(this.#workspaceId), 'orphan task source action prevents Source root resolution');
-      const reservedTickets = current.ledger?.tickets.filter((ticket) =>
-        ticket.work_id === identity.work_id && ticket.ticket_id.startsWith('task-source-ticket:') && ticket.status !== 'queued',
-      ) ?? [];
-      requireState(reservedTickets.length === 0 || operationsTable && actionsTable,
-        'reserved task source ticket has no effect storage');
-      if (!operationsTable || !actionsTable) return null;
-      const rows = this.#database.query(
-        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=?',
-      ).all(this.#workspaceId) as { operation_id: string; revision: number; payload: string; digest: string; request_id: string; request_digest: string }[];
-      const workRows = rows.filter((row) => {
-        const operation = JSON.parse(row.payload) as Record<string, unknown>;
-        const request = validateTaskSourceBindingRequest(operation.request);
-        return request.work_id === identity.work_id;
-      });
-      requireState(reservedTickets.every((ticket) => workRows.some((row) =>
-        taskSourceTicketId(validateTaskSourceBindingRequest(parseStoredRecord(row.payload, 'task source retained operation').request)) === ticket.ticket_id &&
-        this.#database.query('SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?')
-          .get(this.#workspaceId, row.operation_id),
-      )), 'reserved task source ticket has no retained effect record');
-      if (!workRows.some((row) => this.#database.query(
-        'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-      ).get(this.#workspaceId, row.operation_id))) return null;
-      const journalRow = this.#database.query(
-        'SELECT attempt,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-      ).get(this.#workspaceId, identity.work_id) as { attempt: number; payload: string; digest: string } | null;
-      requireState(journalRow && (attempt === undefined || journalRow.attempt === attempt),
-        'task source binding Host journal attempt differs');
-      const currentAttempt = journalRow.attempt;
-      const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
-        durableSourceScope = validateTaskSourceJournalScope(journal.source_scope);
-      assertTaskSourceJournalScopeWithinWork(durableSourceScope, work);
-      requireState(
-        canonicalJsonDigest(journal) === journalRow.digest,
-        'task source binding Host journal or Source scope integrity differs',
-      );
-      let binding: TaskSourceBinding | null = null;
-      let uncertain = false;
-      for (const row of workRows) {
-        const operationRow = row as TaskSourceOperationRow,
-          operation = JSON.parse(row.payload) as Record<string, unknown>,
-          request = validateTaskSourceBindingRequest(operation.request);
-        requireState(sameJson(request.project_ids, identity.project_ids),
-          'task source prepared operation identity differs during binding read');
-        const actionRow = this.#database.query(
-          'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-        ).get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
-        if (!actionRow) continue;
-        const pair = validateTaskSourceActionPair(operationRow, actionRow),
-          action = pair.action;
-        if (request.operation === 'inspect') continue;
-        if (action.status === 'issued' || action.status === 'unknown') {
-          uncertain = true;
-          continue;
-        }
-        requireState(action.status === 'reported', 'task source action status is invalid');
-        const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
-        requireState(report.status === 'observed' && report.binding !== null,
-          'reported task source binding has no valid retained observed result');
-        if (request.attempt !== currentAttempt || request.thread_id !== threadId) continue;
-        const next = report.binding;
-        const authority = operation.authority as { source_authorization_sha256?: unknown; source_scope_digest?: unknown };
-        requireState(next.work_id === identity.work_id && next.attempt === currentAttempt && next.thread_id === threadId &&
-          next.canonical_host_root === this.#repositoryRoot && next.repository_id === identity.repository_id &&
-          sameJson(next.project_ids, identity.project_ids) && next.config_digest === work.binding.config_digest &&
-          next.source_scope.digest === work.binding.work_source_revision &&
-          authority.source_scope_digest === work.binding.work_source_revision &&
-          typeof authority.source_authorization_sha256 === 'string' && hashPattern.test(authority.source_authorization_sha256) &&
-          next.project_context_digest === projectContext.project_context_digest &&
-          next.common_dir === next.canonical_host_common_dir,
-          'reported task source binding differs from current Host identity, configuration or scope');
-        requireState(binding === null, 'multiple current task source bindings are ambiguous');
-        const stats = lstatSync(next.source_root);
-        requireState(stats.isDirectory() && !stats.isSymbolicLink() && realpathSync.native(next.source_root) === next.source_root,
-          'reported task source root is not a physical canonical directory');
-        binding = validateTaskSourceBinding(next);
-      }
-      requireState(!uncertain, 'task source action outcome remains unknown; Source root resolution is blocked');
-      const sourceRoot = binding?.source_root ?? repositoryRoot,
-        currentSource = snapshotDeclaredSources(
-          requireSafeRepositoryAccess(sourceRoot),
-          durableSourceScope!.entries.map((entry) => entry.path),
+    return this.#database
+      .transaction(() => {
+        this.#assertMaintenanceAvailable();
+        const current = this.#read(identity),
+          work = current.work;
+        requireState(
+          work &&
+            work.execution.status === 'active' &&
+            work.lease?.thread_id === threadId &&
+            work.binding.lifecycle_work_id === identity.work_id &&
+            work.binding.repository_id === identity.repository_id &&
+            sameJson(work.binding.project_ids, identity.project_ids),
+          'task source binding has no matching current Host owner',
         );
-      requireState(
-        compareScopedSourceSnapshots(durableSourceScope!, currentSource).length === 0,
-        'current task Source bytes differ from the durable Host journal scope',
-      );
-      return binding;
-    }).deferred();
+        const config = loadRuntimeConfig(repositoryRoot),
+          projectContext = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids);
+        requireState(
+          work.binding.config_digest === runtimeConfigDigest(config),
+          'task source binding runtime configuration differs from current Host Work',
+        );
+        const operationsTable = this.#database
+          .query(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
+          )
+          .get();
+        const actionsTable = this.#database
+          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'")
+          .get();
+        requireState(!actionsTable || operationsTable, 'task source action has no preparation storage');
+        if (actionsTable)
+          requireState(
+            !this.#database
+              .query(
+                'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
+              )
+              .get(this.#workspaceId),
+            'orphan task source action prevents Source root resolution',
+          );
+        const reservedTickets =
+          current.ledger?.tickets.filter(
+            (ticket) =>
+              ticket.work_id === identity.work_id &&
+              ticket.ticket_id.startsWith('task-source-ticket:') &&
+              ticket.status !== 'queued',
+          ) ?? [];
+        requireState(
+          reservedTickets.length === 0 || (operationsTable && actionsTable),
+          'reserved task source ticket has no effect storage',
+        );
+        if (!operationsTable || !actionsTable) return null;
+        const rows = this.#database
+          .query(
+            'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=?',
+          )
+          .all(this.#workspaceId) as {
+          operation_id: string;
+          revision: number;
+          payload: string;
+          digest: string;
+          request_id: string;
+          request_digest: string;
+        }[];
+        const workRows = rows.filter((row) => {
+          const operation = JSON.parse(row.payload) as Record<string, unknown>;
+          const request = validateTaskSourceBindingRequest(operation.request);
+          return request.work_id === identity.work_id;
+        });
+        requireState(
+          reservedTickets.every((ticket) =>
+            workRows.some(
+              (row) =>
+                taskSourceTicketId(
+                  validateTaskSourceBindingRequest(
+                    parseStoredRecord(row.payload, 'task source retained operation').request,
+                  ),
+                ) === ticket.ticket_id &&
+                this.#database
+                  .query(
+                    'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+                  )
+                  .get(this.#workspaceId, row.operation_id),
+            ),
+          ),
+          'reserved task source ticket has no retained effect record',
+        );
+        if (
+          !workRows.some((row) =>
+            this.#database
+              .query(
+                'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+              )
+              .get(this.#workspaceId, row.operation_id),
+          )
+        )
+          return null;
+        const journalRow = this.#database
+          .query(
+            'SELECT attempt,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+          )
+          .get(this.#workspaceId, identity.work_id) as { attempt: number; payload: string; digest: string } | null;
+        requireState(
+          journalRow && (attempt === undefined || journalRow.attempt === attempt),
+          'task source binding Host journal attempt differs',
+        );
+        const currentAttempt = journalRow.attempt;
+        const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
+          durableSourceScope = validateTaskSourceJournalScope(journal.source_scope);
+        assertTaskSourceJournalScopeWithinWork(durableSourceScope, work);
+        requireState(
+          canonicalJsonDigest(journal) === journalRow.digest,
+          'task source binding Host journal or Source scope integrity differs',
+        );
+        let binding: TaskSourceBinding | null = null;
+        let uncertain = false;
+        for (const row of workRows) {
+          const operationRow = row as TaskSourceOperationRow,
+            operation = JSON.parse(row.payload) as Record<string, unknown>,
+            request = validateTaskSourceBindingRequest(operation.request);
+          requireState(
+            sameJson(request.project_ids, identity.project_ids),
+            'task source prepared operation identity differs during binding read',
+          );
+          const actionRow = this.#database
+            .query(
+              'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+            )
+            .get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
+          if (!actionRow) continue;
+          const pair = validateTaskSourceActionPair(operationRow, actionRow),
+            action = pair.action;
+          if (request.operation === 'inspect') continue;
+          if (action.status === 'issued' || action.status === 'unknown') {
+            uncertain = true;
+            continue;
+          }
+          requireState(action.status === 'reported', 'task source action status is invalid');
+          const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
+          requireState(
+            report.status === 'observed' && report.binding !== null,
+            'reported task source binding has no valid retained observed result',
+          );
+          if (request.attempt !== currentAttempt || request.thread_id !== threadId) continue;
+          const next = report.binding;
+          const authority = operation.authority as {
+            source_authorization_sha256?: unknown;
+            source_scope_digest?: unknown;
+          };
+          requireState(
+            next.work_id === identity.work_id &&
+              next.attempt === currentAttempt &&
+              next.thread_id === threadId &&
+              next.canonical_host_root === this.#repositoryRoot &&
+              next.repository_id === identity.repository_id &&
+              sameJson(next.project_ids, identity.project_ids) &&
+              next.config_digest === work.binding.config_digest &&
+              next.source_scope.digest === work.binding.work_source_revision &&
+              authority.source_scope_digest === work.binding.work_source_revision &&
+              typeof authority.source_authorization_sha256 === 'string' &&
+              hashPattern.test(authority.source_authorization_sha256) &&
+              next.project_context_digest === projectContext.project_context_digest &&
+              next.common_dir === next.canonical_host_common_dir,
+            'reported task source binding differs from current Host identity, configuration or scope',
+          );
+          requireState(binding === null, 'multiple current task source bindings are ambiguous');
+          const stats = lstatSync(next.source_root);
+          requireState(
+            stats.isDirectory() &&
+              !stats.isSymbolicLink() &&
+              realpathSync.native(next.source_root) === next.source_root,
+            'reported task source root is not a physical canonical directory',
+          );
+          binding = validateTaskSourceBinding(next);
+        }
+        requireState(!uncertain, 'task source action outcome remains unknown; Source root resolution is blocked');
+        const sourceRoot = binding?.source_root ?? repositoryRoot,
+          currentSource = snapshotDeclaredSources(
+            requireSafeRepositoryAccess(sourceRoot),
+            durableSourceScope!.entries.map((entry) => entry.path),
+          );
+        requireState(
+          compareScopedSourceSnapshots(durableSourceScope!, currentSource).length === 0,
+          'current task Source bytes differ from the durable Host journal scope',
+        );
+        return binding;
+      })
+      .deferred();
   }
 
   /** Read original scoped bytes for historical release; this grants no current execution rights. */
@@ -6437,94 +6977,180 @@ export class HostStateStore {
     canonicalHostRoot: string;
     paths: readonly string[];
   }): ScopedSourceSnapshot {
-    requireState(!this.#database.inTransaction && Number.isSafeInteger(input.attempt) && input.attempt > 0,
-      'historical task source read context is invalid');
+    requireState(
+      !this.#database.inTransaction && Number.isSafeInteger(input.attempt) && input.attempt > 0,
+      'historical task source read context is invalid',
+    );
     const access = requireSafeRepositoryAccess(input.canonicalHostRoot);
-    requireState(deriveWorkspaceId(input.identity.repository_id, input.canonicalHostRoot) === this.#workspaceId &&
-      (this.#repositoryRoot === undefined || this.#repositoryRoot === input.canonicalHostRoot),
-      'historical task source canonical Host root differs');
-    return this.#database.transaction(() => {
-      const host = this.#read(input.identity), work = host.work;
-      requireState(work && host.ledger && work.binding.lifecycle_work_id === input.identity.work_id &&
-        work.binding.repository_id === input.identity.repository_id && sameJson(work.binding.project_ids, input.identity.project_ids) &&
-        (work.lease?.thread_id === input.threadId || work.lease === null && host.ledger.operations.some((operation) =>
-          operation.kind === 'release' && operation.work_id === input.identity.work_id && operation.thread_id === input.threadId)),
-        'historical task source original owner differs');
-      requireState(sameJson([...input.paths].sort(), [...work.lifecycle.scope.fingerprint_paths].sort()),
-        'historical task source paths differ from original fingerprint scope');
-      const journal = this.#database.query(
-        'SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-      ).get(this.#workspaceId, input.identity.work_id, input.attempt) as { payload: string; digest: string } | null;
-      const journalState = journal ? JSON.parse(journal.payload) as Record<string, unknown> : null;
-      requireState(journal && journalState?.schema === 'MastraSessionLedger/v1' &&
-        journalState.workspace_id === this.#workspaceId && journalState.work_id === input.identity.work_id &&
-        journalState.attempt === input.attempt && canonicalJsonDigest(journalState) === journal.digest,
-        'historical task source original journal is missing or changed');
-      const tables = this.#database.query(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('agent_host_task_source_binding_operation','agent_host_task_source_binding_action')",
-      ).all() as { name: string }[];
-      requireState(!tables.some((table) => table.name === 'agent_host_task_source_binding_action') || tables.length === 2,
-        'historical task source action has no preparation storage');
-      if (tables.length === 2) requireState(!this.#database.query(
-        'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
-      ).get(this.#workspaceId), 'orphan historical task source action prevents Source root resolution');
-      const reservedTickets = host.ledger.tickets.filter((ticket) =>
-        ticket.work_id === input.identity.work_id && ticket.ticket_id.startsWith('task-source-ticket:') && ticket.status !== 'queued',
-      );
-      requireState(reservedTickets.length === 0 || tables.length === 2,
-        'historical reserved task source ticket has no effect storage');
-      let sourceRoot: string | null = null;
-      if (tables.length === 2) {
-        const pairs = this.#database.query(
-          'SELECT p.operation_id,p.revision,p.payload,p.digest,p.request_id,p.request_digest,a.revision AS action_revision,a.payload AS action_payload,a.digest AS action_digest FROM agent_host_task_source_binding_operation p LEFT JOIN agent_host_task_source_binding_action a ON a.workspace_id=p.workspace_id AND a.operation_id=p.operation_id WHERE p.workspace_id=?',
-        ).all(this.#workspaceId) as {
-          operation_id: string; revision: number; payload: string; digest: string; request_id: string; request_digest: string;
-          action_revision: number | null; action_payload: string | null; action_digest: string | null;
-        }[];
-        requireState(reservedTickets.every((ticket) => pairs.some((pair) =>
-          taskSourceTicketId(validateTaskSourceBindingRequest(parseStoredRecord(pair.payload, 'historical task source retained operation').request)) === ticket.ticket_id &&
-          pair.action_payload !== null,
-        )), 'historical reserved task source ticket has no retained effect record');
-        for (const pair of pairs) {
-          const operation = JSON.parse(pair.payload) as Record<string, unknown>;
-          const request = validateTaskSourceBindingRequest(operation.request);
-          if (request.work_id !== input.identity.work_id || pair.action_payload === null) continue;
-          const action = JSON.parse(pair.action_payload) as Record<string, unknown>;
-          requireState(Object.keys(operation).sort().join(',') ===
-              'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
-            operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
-            operation.operation_id === pair.operation_id && operation.revision === pair.revision &&
-            operation.request_id === pair.request_id && operation.request_digest === pair.request_digest &&
-            canonicalJsonDigest(operation) === pair.digest && canonicalJsonDigest(request) === pair.request_digest &&
-            request.operation_id === pair.operation_id && request.request_id === pair.request_id &&
-            Object.keys(action).sort().join(',') ===
-              'command_argv,created_at,issue_id,operation_digest,operation_id,policy_decision,prepared_state_version,recovery_report,recovery_report_digest,report,report_digest,request_id,revision,schema,status,updated_at' &&
-            action.schema === 'TaskSourceBindingAction/v1' && action.operation_id === pair.operation_id &&
-            action.request_id === pair.request_id && action.revision === pair.action_revision &&
-            canonicalJsonDigest(action) === pair.action_digest && action.operation_digest === pair.digest &&
-            sameJson(action.prepared_state_version, { revision: pair.revision, digest: pair.digest }),
-            'historical task source action/preparation integrity differs');
-          if (request.operation === 'inspect') continue;
-          requireState(action.status === 'reported', 'historical task source effect remains issued or unknown');
-          const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
-          requireState(report.status === 'observed' && report.binding !== null && canonicalJsonDigest(report) ===
-            (action.recovery_report !== null ? action.recovery_report_digest : action.report_digest),
-            'historical task source has no valid retained observed result');
-          if (request.attempt !== input.attempt) continue;
-          const binding = report.binding;
-          requireState(sourceRoot === null && request.thread_id === input.threadId &&
-            binding.thread_id === input.threadId && binding.work_id === input.identity.work_id && binding.attempt === input.attempt &&
-            binding.repository_id === input.identity.repository_id && sameJson(binding.project_ids, input.identity.project_ids) &&
-            binding.canonical_host_root === input.canonicalHostRoot && binding.config_digest === work.binding.config_digest &&
-            binding.source_scope.digest === work.binding.work_source_revision &&
-            (operation.authority as { source_scope_digest?: unknown })?.source_scope_digest === work.binding.work_source_revision &&
-            binding.project_context_digest === request.project_context_digest && binding.common_dir === binding.canonical_host_common_dir,
-            'historical task source retained binding is foreign or ambiguous');
-          sourceRoot = binding.source_root;
+    requireState(
+      deriveWorkspaceId(input.identity.repository_id, input.canonicalHostRoot) === this.#workspaceId &&
+        (this.#repositoryRoot === undefined || this.#repositoryRoot === input.canonicalHostRoot),
+      'historical task source canonical Host root differs',
+    );
+    return this.#database
+      .transaction(() => {
+        const host = this.#read(input.identity),
+          work = host.work;
+        requireState(
+          work &&
+            host.ledger &&
+            work.binding.lifecycle_work_id === input.identity.work_id &&
+            work.binding.repository_id === input.identity.repository_id &&
+            sameJson(work.binding.project_ids, input.identity.project_ids) &&
+            (work.lease?.thread_id === input.threadId ||
+              (work.lease === null &&
+                host.ledger.operations.some(
+                  (operation) =>
+                    operation.kind === 'release' &&
+                    operation.work_id === input.identity.work_id &&
+                    operation.thread_id === input.threadId,
+                ))),
+          'historical task source original owner differs',
+        );
+        requireState(
+          sameJson([...input.paths].sort(), [...work.lifecycle.scope.fingerprint_paths].sort()),
+          'historical task source paths differ from original fingerprint scope',
+        );
+        const journal = this.#database
+          .query(
+            'SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(this.#workspaceId, input.identity.work_id, input.attempt) as { payload: string; digest: string } | null;
+        const journalState = journal ? (JSON.parse(journal.payload) as Record<string, unknown>) : null;
+        requireState(
+          journal &&
+            journalState?.schema === 'MastraSessionLedger/v1' &&
+            journalState.workspace_id === this.#workspaceId &&
+            journalState.work_id === input.identity.work_id &&
+            journalState.attempt === input.attempt &&
+            canonicalJsonDigest(journalState) === journal.digest,
+          'historical task source original journal is missing or changed',
+        );
+        const tables = this.#database
+          .query(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('agent_host_task_source_binding_operation','agent_host_task_source_binding_action')",
+          )
+          .all() as { name: string }[];
+        requireState(
+          !tables.some((table) => table.name === 'agent_host_task_source_binding_action') || tables.length === 2,
+          'historical task source action has no preparation storage',
+        );
+        if (tables.length === 2)
+          requireState(
+            !this.#database
+              .query(
+                'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
+              )
+              .get(this.#workspaceId),
+            'orphan historical task source action prevents Source root resolution',
+          );
+        const reservedTickets = host.ledger.tickets.filter(
+          (ticket) =>
+            ticket.work_id === input.identity.work_id &&
+            ticket.ticket_id.startsWith('task-source-ticket:') &&
+            ticket.status !== 'queued',
+        );
+        requireState(
+          reservedTickets.length === 0 || tables.length === 2,
+          'historical reserved task source ticket has no effect storage',
+        );
+        let sourceRoot: string | null = null;
+        if (tables.length === 2) {
+          const pairs = this.#database
+            .query(
+              'SELECT p.operation_id,p.revision,p.payload,p.digest,p.request_id,p.request_digest,a.revision AS action_revision,a.payload AS action_payload,a.digest AS action_digest FROM agent_host_task_source_binding_operation p LEFT JOIN agent_host_task_source_binding_action a ON a.workspace_id=p.workspace_id AND a.operation_id=p.operation_id WHERE p.workspace_id=?',
+            )
+            .all(this.#workspaceId) as {
+            operation_id: string;
+            revision: number;
+            payload: string;
+            digest: string;
+            request_id: string;
+            request_digest: string;
+            action_revision: number | null;
+            action_payload: string | null;
+            action_digest: string | null;
+          }[];
+          requireState(
+            reservedTickets.every((ticket) =>
+              pairs.some(
+                (pair) =>
+                  taskSourceTicketId(
+                    validateTaskSourceBindingRequest(
+                      parseStoredRecord(pair.payload, 'historical task source retained operation').request,
+                    ),
+                  ) === ticket.ticket_id && pair.action_payload !== null,
+              ),
+            ),
+            'historical reserved task source ticket has no retained effect record',
+          );
+          for (const pair of pairs) {
+            const operation = JSON.parse(pair.payload) as Record<string, unknown>;
+            const request = validateTaskSourceBindingRequest(operation.request);
+            if (request.work_id !== input.identity.work_id || pair.action_payload === null) continue;
+            const action = JSON.parse(pair.action_payload) as Record<string, unknown>;
+            requireState(
+              Object.keys(operation).sort().join(',') ===
+                'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+                operation.schema === 'TaskSourceBindingOperation/v1' &&
+                operation.status === 'prepared' &&
+                operation.operation_id === pair.operation_id &&
+                operation.revision === pair.revision &&
+                operation.request_id === pair.request_id &&
+                operation.request_digest === pair.request_digest &&
+                canonicalJsonDigest(operation) === pair.digest &&
+                canonicalJsonDigest(request) === pair.request_digest &&
+                request.operation_id === pair.operation_id &&
+                request.request_id === pair.request_id &&
+                Object.keys(action).sort().join(',') ===
+                  'command_argv,created_at,issue_id,operation_digest,operation_id,policy_decision,prepared_state_version,recovery_report,recovery_report_digest,report,report_digest,request_id,revision,schema,status,updated_at' &&
+                action.schema === 'TaskSourceBindingAction/v1' &&
+                action.operation_id === pair.operation_id &&
+                action.request_id === pair.request_id &&
+                action.revision === pair.action_revision &&
+                canonicalJsonDigest(action) === pair.action_digest &&
+                action.operation_digest === pair.digest &&
+                sameJson(action.prepared_state_version, { revision: pair.revision, digest: pair.digest }),
+              'historical task source action/preparation integrity differs',
+            );
+            if (request.operation === 'inspect') continue;
+            requireState(action.status === 'reported', 'historical task source effect remains issued or unknown');
+            const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
+            requireState(
+              report.status === 'observed' &&
+                report.binding !== null &&
+                canonicalJsonDigest(report) ===
+                  (action.recovery_report !== null ? action.recovery_report_digest : action.report_digest),
+              'historical task source has no valid retained observed result',
+            );
+            if (request.attempt !== input.attempt) continue;
+            const binding = report.binding;
+            requireState(
+              sourceRoot === null &&
+                request.thread_id === input.threadId &&
+                binding.thread_id === input.threadId &&
+                binding.work_id === input.identity.work_id &&
+                binding.attempt === input.attempt &&
+                binding.repository_id === input.identity.repository_id &&
+                sameJson(binding.project_ids, input.identity.project_ids) &&
+                binding.canonical_host_root === input.canonicalHostRoot &&
+                binding.config_digest === work.binding.config_digest &&
+                binding.source_scope.digest === work.binding.work_source_revision &&
+                (operation.authority as { source_scope_digest?: unknown })?.source_scope_digest ===
+                  work.binding.work_source_revision &&
+                binding.project_context_digest === request.project_context_digest &&
+                binding.common_dir === binding.canonical_host_common_dir,
+              'historical task source retained binding is foreign or ambiguous',
+            );
+            sourceRoot = binding.source_root;
+          }
         }
-      }
-      return snapshotDeclaredSources(sourceRoot === null ? access : requireSafeRepositoryAccess(sourceRoot), input.paths);
-    }).deferred();
+        return snapshotDeclaredSources(
+          sourceRoot === null ? access : requireSafeRepositoryAccess(sourceRoot),
+          input.paths,
+        );
+      })
+      .deferred();
   }
 
   /** Snapshot only the Work-declared source files from its current bound tree. */
@@ -6539,10 +7165,18 @@ export class HostStateStore {
       work = this.readHostStateSnapshot(identity).work;
     requireState(work, 'task source snapshot Work is missing');
     const allowedPaths = new Set([...work.lifecycle.scope.allowed_paths, ...work.lifecycle.scope.implementation_paths]);
-    requireState(Array.isArray(paths) && paths.length > 0 && paths.every((relative) =>
-      typeof relative === 'string' && [...allowedPaths].some((allowed) =>
-        relative === allowed || relative.startsWith(allowed.replace(/\/$/, '') + '/'))),
-      'task source snapshot paths exceed current Work scope');
+    requireState(
+      Array.isArray(paths) &&
+        paths.length > 0 &&
+        paths.every(
+          (relative) =>
+            typeof relative === 'string' &&
+            [...allowedPaths].some(
+              (allowed) => relative === allowed || relative.startsWith(allowed.replace(/\/$/, '') + '/'),
+            ),
+        ),
+      'task source snapshot paths exceed current Work scope',
+    );
     const sourceRoot = binding?.source_root ?? this.#repositoryRoot;
     return snapshotDeclaredSources(requireSafeRepositoryAccess(sourceRoot), paths);
   }
@@ -6552,96 +7186,163 @@ export class HostStateStore {
     readonly request: TaskSourceBindingRequest;
     readonly identity: WorkIdentity;
   }): Promise<Readonly<Record<string, unknown>>> {
-    requireState(input !== null && typeof input === 'object' &&
-      Object.keys(input).sort().join(',') === 'identity,request', 'task source issue input invalid');
-    const request = validateTaskSourceBindingRequest(input.request), identity = snapshot(input.identity);
-    requireState(this.#repositoryRoot !== undefined &&
-      (request.operation !== 'propose-create' || this.#verifyTaskSourceMutation !== undefined),
-      'trusted task source mutation policy verifier is unavailable');
-    requireState(request.work_id === identity.work_id && request.repository_id === identity.repository_id &&
-      sameJson(request.project_ids, identity.project_ids), 'task source request identity differs from the Host identity');
-    const tableExists = (): boolean => Boolean(this.#database.query(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
-    ).get());
+    requireState(
+      input !== null && typeof input === 'object' && Object.keys(input).sort().join(',') === 'identity,request',
+      'task source issue input invalid',
+    );
+    const request = validateTaskSourceBindingRequest(input.request),
+      identity = snapshot(input.identity);
+    requireState(
+      this.#repositoryRoot !== undefined &&
+        (request.operation !== 'propose-create' || this.#verifyTaskSourceMutation !== undefined),
+      'trusted task source mutation policy verifier is unavailable',
+    );
+    requireState(
+      request.work_id === identity.work_id &&
+        request.repository_id === identity.repository_id &&
+        sameJson(request.project_ids, identity.project_ids),
+      'task source request identity differs from the Host identity',
+    );
+    const tableExists = (): boolean =>
+      Boolean(
+        this.#database
+          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'")
+          .get(),
+      );
     const readAction = (operationId: string) => {
       if (!tableExists()) return null;
-      const actionRow = this.#database.query(
-        'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-      ).get(this.#workspaceId, operationId) as TaskSourceActionRow | null;
+      const actionRow = this.#database
+        .query(
+          'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(this.#workspaceId, operationId) as TaskSourceActionRow | null;
       if (!actionRow) return null;
-      const operationRow = this.#database.query(
-        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-      ).get(this.#workspaceId, operationId) as TaskSourceOperationRow | null;
+      const operationRow = this.#database
+        .query(
+          'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(this.#workspaceId, operationId) as TaskSourceOperationRow | null;
       requireState(operationRow, 'task source action has no prepared operation');
       const pair = validateTaskSourceActionPair(operationRow, actionRow);
       return { action: pair.action, state_version: { revision: actionRow.revision, digest: actionRow.digest } };
     };
-    const result = (status: string, stored: ReturnType<typeof readAction>, argv: unknown = null) => snapshot({
-      schema: 'TaskSourceBindingActionResult/v1', status, operation_id: request.operation_id,
-      request_id: request.request_id, action: stored?.action ?? null,
-      state_version: stored?.state_version ?? null, command_argv: argv,
-    });
-    const existing = this.#database.transaction(() => {
-      this.#assertMaintenanceAvailable();
-      const action = readAction(request.operation_id);
-      if (!action) return null;
-      const row = this.#database.query(
-        'SELECT payload,digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-      ).get(this.#workspaceId, request.operation_id) as { payload: string; digest: string } | null;
-      requireState(row, 'issued task source operation preparation is missing');
-      const prepared = JSON.parse(row.payload) as Record<string, unknown>;
-      requireState(prepared.request_id === request.request_id && sameJson(prepared.request, request) &&
-        (action.action as { operation_digest?: unknown }).operation_digest === row.digest,
-        'task source action retry changed its prepared request');
-      return action;
-    }).deferred();
+    const result = (status: string, stored: ReturnType<typeof readAction>, argv: unknown = null) =>
+      snapshot({
+        schema: 'TaskSourceBindingActionResult/v1',
+        status,
+        operation_id: request.operation_id,
+        request_id: request.request_id,
+        action: stored?.action ?? null,
+        state_version: stored?.state_version ?? null,
+        command_argv: argv,
+      });
+    const existing = this.#database
+      .transaction(() => {
+        this.#assertMaintenanceAvailable();
+        const action = readAction(request.operation_id);
+        if (!action) return null;
+        const row = this.#database
+          .query(
+            'SELECT payload,digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+          )
+          .get(this.#workspaceId, request.operation_id) as { payload: string; digest: string } | null;
+        requireState(row, 'issued task source operation preparation is missing');
+        const prepared = JSON.parse(row.payload) as Record<string, unknown>;
+        requireState(
+          prepared.request_id === request.request_id &&
+            sameJson(prepared.request, request) &&
+            (action.action as { operation_digest?: unknown }).operation_digest === row.digest,
+          'task source action retry changed its prepared request',
+        );
+        return action;
+      })
+      .deferred();
     if (existing) return result('already_issued', existing);
 
-    const prepared = this.#database.transaction(() => {
-      this.#assertMaintenanceAvailable();
-      const row = this.#database.query(
-        'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-      ).get(this.#workspaceId, request.operation_id) as {
-        revision: number; payload: string; digest: string; request_id: string; request_digest: string;
-      } | null;
-      requireState(row, 'task source operation must be prepared before issue');
-      const operation = JSON.parse(row.payload) as Record<string, unknown>;
-      requireState(Object.keys(operation).sort().join(',') ===
-        'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
-        operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
-        operation.revision === row.revision && operation.operation_id === request.operation_id &&
-        operation.request_id === row.request_id && operation.request_digest === row.request_digest &&
-        canonicalJsonDigest(operation) === row.digest && row.request_digest === canonicalJsonDigest(request) &&
-        sameJson(operation.request, request), 'task source prepared operation is stale or changed');
-      const before = this.#read(identity);
-      requireState(before.work && before.ledger && before.workVersion && before.ledgerVersion &&
-        before.work.execution.status === 'active' && before.work.lease?.thread_id === request.thread_id &&
-        before.work.binding.lifecycle_work_id === request.work_id &&
-        before.work.binding.config_digest === request.config_digest &&
-        before.work.binding.work_source_revision === (operation.authority as { source_scope_digest?: unknown }).source_scope_digest,
-        'task source issue has no matching active Host owner or scope');
-      const reservation = taskSourceReservationForRequest(this.#repositoryRoot!, before, request),
-        exactHostCas = before.workVersion.revision === request.expected_host.work.revision &&
-          before.workVersion.digest === request.expected_host.work.digest &&
-          before.ledgerVersion.revision === request.expected_host.ledger.revision &&
-          before.ledgerVersion.digest === request.expected_host.ledger.digest;
-      requireState(exactHostCas || reservation !== null,
-        'task source issue Host compare-and-swap changed outside its canonical reservation');
-      requireState(before.maintenanceGeneration === request.expected_host.maintenance_generation,
-        'task source issue maintenance generation changed');
-      const journalRow = this.#database.query(
-        'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-      ).get(this.#workspaceId, request.work_id) as { attempt: number; revision: number; payload: string; digest: string } | null;
-      requireState(journalRow && journalRow.attempt === request.expected_host.journal.attempt &&
-        journalRow.revision === request.expected_host.journal.version.revision &&
-        journalRow.digest === request.expected_host.journal.version.digest,
-        'task source issue journal compare-and-swap changed');
-      const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
-        journalScope = validateTaskSourceJournalScope(journal.source_scope);
-      requireState(canonicalJsonDigest(journal) === journalRow.digest && journalScope.digest.length === 64,
-        'task source issue journal or current scope integrity differs');
-      return { operation, state_version: { revision: row.revision, digest: row.digest }, hostSnapshot: before };
-    }).deferred();
+    const prepared = this.#database
+      .transaction(() => {
+        this.#assertMaintenanceAvailable();
+        const row = this.#database
+          .query(
+            'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+          )
+          .get(this.#workspaceId, request.operation_id) as {
+          revision: number;
+          payload: string;
+          digest: string;
+          request_id: string;
+          request_digest: string;
+        } | null;
+        requireState(row, 'task source operation must be prepared before issue');
+        const operation = JSON.parse(row.payload) as Record<string, unknown>;
+        requireState(
+          Object.keys(operation).sort().join(',') ===
+            'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+            operation.schema === 'TaskSourceBindingOperation/v1' &&
+            operation.status === 'prepared' &&
+            operation.revision === row.revision &&
+            operation.operation_id === request.operation_id &&
+            operation.request_id === row.request_id &&
+            operation.request_digest === row.request_digest &&
+            canonicalJsonDigest(operation) === row.digest &&
+            row.request_digest === canonicalJsonDigest(request) &&
+            sameJson(operation.request, request),
+          'task source prepared operation is stale or changed',
+        );
+        const before = this.#read(identity);
+        requireState(
+          before.work &&
+            before.ledger &&
+            before.workVersion &&
+            before.ledgerVersion &&
+            before.work.execution.status === 'active' &&
+            before.work.lease?.thread_id === request.thread_id &&
+            before.work.binding.lifecycle_work_id === request.work_id &&
+            before.work.binding.config_digest === request.config_digest &&
+            before.work.binding.work_source_revision ===
+              (operation.authority as { source_scope_digest?: unknown }).source_scope_digest,
+          'task source issue has no matching active Host owner or scope',
+        );
+        const reservation = taskSourceReservationForRequest(this.#repositoryRoot!, before, request),
+          exactHostCas =
+            before.workVersion.revision === request.expected_host.work.revision &&
+            before.workVersion.digest === request.expected_host.work.digest &&
+            before.ledgerVersion.revision === request.expected_host.ledger.revision &&
+            before.ledgerVersion.digest === request.expected_host.ledger.digest;
+        requireState(
+          exactHostCas || reservation !== null,
+          'task source issue Host compare-and-swap changed outside its canonical reservation',
+        );
+        requireState(
+          before.maintenanceGeneration === request.expected_host.maintenance_generation,
+          'task source issue maintenance generation changed',
+        );
+        const journalRow = this.#database
+          .query(
+            'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+          )
+          .get(this.#workspaceId, request.work_id) as {
+          attempt: number;
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
+        requireState(
+          journalRow &&
+            journalRow.attempt === request.expected_host.journal.attempt &&
+            journalRow.revision === request.expected_host.journal.version.revision &&
+            journalRow.digest === request.expected_host.journal.version.digest,
+          'task source issue journal compare-and-swap changed',
+        );
+        const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
+          journalScope = validateTaskSourceJournalScope(journal.source_scope);
+        requireState(
+          canonicalJsonDigest(journal) === journalRow.digest && journalScope.digest.length === 64,
+          'task source issue journal or current scope integrity differs',
+        );
+        return { operation, state_version: { revision: row.revision, digest: row.digest }, hostSnapshot: before };
+      })
+      .deferred();
 
     let decision: TaskSourceMutationPolicyDecision | null = null;
     let policyRequest: TaskSourceMutationPolicyRequest | null = null;
@@ -6659,18 +7360,25 @@ export class HostStateStore {
         stateVersion: prepared.state_version,
         hostSnapshot: prepared.hostSnapshot,
       });
-      requireState(decision !== null && typeof decision === 'object' &&
-        Object.keys(decision).sort().join(',') ===
-          'authorization,edictum_evaluation,edictum_operation,operation_hash,operation_id,preflight_evidence_digest,prepared_record_cas,request_id,source_authorization_reference,source_authorization_sha256' &&
-        decision.operation_id === policyRequest.operation_id && decision.request_id === policyRequest.request_id &&
-        decision.operation_hash === policyRequest.operation_hash && decision.authorization?.decision === 'allow' &&
-        decision.edictum_operation?.operation_hash === policyRequest.operation_hash &&
-        decision.edictum_evaluation?.action === 'pending_approval' &&
-        canonicalJsonDigest(decision.prepared_record_cas) === canonicalJsonDigest(policyRequest.prepared_record_cas) &&
-        hashPattern.test(decision.preflight_evidence_digest) && hashPattern.test(decision.source_authorization_sha256) &&
-        decision.source_authorization_sha256 ===
-          (prepared.operation.authority as { source_authorization_sha256?: unknown }).source_authorization_sha256,
-        'task source mutation policy evidence is invalid or denied');
+      requireState(
+        decision !== null &&
+          typeof decision === 'object' &&
+          Object.keys(decision).sort().join(',') ===
+            'authorization,edictum_evaluation,edictum_operation,operation_hash,operation_id,preflight_evidence_digest,prepared_record_cas,request_id,source_authorization_reference,source_authorization_sha256' &&
+          decision.operation_id === policyRequest.operation_id &&
+          decision.request_id === policyRequest.request_id &&
+          decision.operation_hash === policyRequest.operation_hash &&
+          decision.authorization?.decision === 'allow' &&
+          decision.edictum_operation?.operation_hash === policyRequest.operation_hash &&
+          decision.edictum_evaluation?.action === 'pending_approval' &&
+          canonicalJsonDigest(decision.prepared_record_cas) ===
+            canonicalJsonDigest(policyRequest.prepared_record_cas) &&
+          hashPattern.test(decision.preflight_evidence_digest) &&
+          hashPattern.test(decision.source_authorization_sha256) &&
+          decision.source_authorization_sha256 ===
+            (prepared.operation.authority as { source_authorization_sha256?: unknown }).source_authorization_sha256,
+        'task source mutation policy evidence is invalid or denied',
+      );
     }
 
     const commandArgv = policyRequest
@@ -6679,12 +7387,19 @@ export class HostStateStore {
     const committed = this.#transactionWithProducerFence(() => {
       this.#assertReconciliationWritesAllowed();
       const current = this.#read(identity);
-      requireState(current.work && current.workVersion && current.ledgerVersion,
-        'task source owner changed during policy evaluation');
-      const journalRow = this.#database.query(
-        'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-      ).get(this.#workspaceId, request.work_id) as {
-        attempt: number; revision: number; payload: string; digest: string;
+      requireState(
+        current.work && current.workVersion && current.ledgerVersion,
+        'task source owner changed during policy evaluation',
+      );
+      const journalRow = this.#database
+        .query(
+          'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+        )
+        .get(this.#workspaceId, request.work_id) as {
+        attempt: number;
+        revision: number;
+        payload: string;
+        digest: string;
       } | null;
       requireState(journalRow, 'task source issue requires the current Host journal');
       const currentJournal = JSON.parse(journalRow.payload) as Record<string, unknown>;
@@ -6697,90 +7412,144 @@ export class HostStateStore {
         state: currentJournal,
       });
       const reservation = taskSourceReservationForRequest(this.#repositoryRoot!, current, request),
-        exactHostCas = current.workVersion.revision === request.expected_host.work.revision &&
+        exactHostCas =
+          current.workVersion.revision === request.expected_host.work.revision &&
           current.workVersion.digest === request.expected_host.work.digest &&
           current.ledgerVersion.revision === request.expected_host.ledger.revision &&
           current.ledgerVersion.digest === request.expected_host.ledger.digest;
-      requireState(exactHostCas || reservation !== null,
-        'task source Host compare-and-swap changed outside its canonical reservation');
-      requireState(current.maintenanceGeneration === request.expected_host.maintenance_generation,
-        'task source maintenance generation changed during policy evaluation');
-      const row = this.#database.query(
-        'SELECT revision,payload,digest,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-      ).get(this.#workspaceId, request.operation_id) as { revision: number; payload: string; digest: string; request_digest: string } | null;
-      requireState(row && row.digest === prepared.state_version.digest && row.revision === prepared.state_version.revision &&
-        row.request_digest === canonicalJsonDigest(request), 'task source prepared record changed during policy evaluation');
+      requireState(
+        exactHostCas || reservation !== null,
+        'task source Host compare-and-swap changed outside its canonical reservation',
+      );
+      requireState(
+        current.maintenanceGeneration === request.expected_host.maintenance_generation,
+        'task source maintenance generation changed during policy evaluation',
+      );
+      const row = this.#database
+        .query(
+          'SELECT revision,payload,digest,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(this.#workspaceId, request.operation_id) as {
+        revision: number;
+        payload: string;
+        digest: string;
+        request_digest: string;
+      } | null;
+      requireState(
+        row &&
+          row.digest === prepared.state_version.digest &&
+          row.revision === prepared.state_version.revision &&
+          row.request_digest === canonicalJsonDigest(request),
+        'task source prepared record changed during policy evaluation',
+      );
       if (request.operation !== 'inspect') {
-        const previousActions = tableExists() ? this.#database.query(
-          'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id<>?',
-        ).all(this.#workspaceId, request.operation_id) as { operation_id: string }[] : [];
+        const previousActions = tableExists()
+          ? (this.#database
+              .query(
+                'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id<>?',
+              )
+              .all(this.#workspaceId, request.operation_id) as { operation_id: string }[])
+          : [];
         for (const previous of previousActions) {
           const action = readAction(previous.operation_id)!.action;
-          const priorRow = this.#database.query(
-            'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-          ).get(this.#workspaceId, previous.operation_id) as {
-            revision: number; payload: string; digest: string; request_id: string; request_digest: string;
+          const priorRow = this.#database
+            .query(
+              'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+            )
+            .get(this.#workspaceId, previous.operation_id) as {
+            revision: number;
+            payload: string;
+            digest: string;
+            request_id: string;
+            request_digest: string;
           } | null;
           requireState(priorRow, 'pending TaskSource action preparation is missing');
           const operation = JSON.parse(priorRow.payload) as Record<string, unknown>;
           requireState(
             Object.keys(operation).sort().join(',') ===
               'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
-              operation.schema === 'TaskSourceBindingOperation/v1' && operation.status === 'prepared' &&
-              typeof operation.created_at === 'string' && Number.isFinite(Date.parse(operation.created_at)) &&
-              operation.revision === priorRow.revision && operation.operation_id === previous.operation_id &&
-              operation.request_id === priorRow.request_id && operation.request_digest === priorRow.request_digest &&
+              operation.schema === 'TaskSourceBindingOperation/v1' &&
+              operation.status === 'prepared' &&
+              typeof operation.created_at === 'string' &&
+              Number.isFinite(Date.parse(operation.created_at)) &&
+              operation.revision === priorRow.revision &&
+              operation.operation_id === previous.operation_id &&
+              operation.request_id === priorRow.request_id &&
+              operation.request_digest === priorRow.request_digest &&
               canonicalJsonDigest(operation) === priorRow.digest &&
-              action.operation_digest === priorRow.digest && action.request_id === priorRow.request_id &&
+              action.operation_digest === priorRow.digest &&
+              action.request_id === priorRow.request_id &&
               sameJson(action.prepared_state_version, { revision: priorRow.revision, digest: priorRow.digest }),
             'pending TaskSource action preparation integrity differs',
           );
           const priorRequest = validateTaskSourceBindingRequest(operation.request);
-          requireState(priorRequest.operation_id === previous.operation_id &&
-            priorRequest.request_id === priorRow.request_id && canonicalJsonDigest(priorRequest) === priorRow.request_digest,
-            'pending TaskSource request integrity differs');
+          requireState(
+            priorRequest.operation_id === previous.operation_id &&
+              priorRequest.request_id === priorRow.request_id &&
+              canonicalJsonDigest(priorRequest) === priorRow.request_digest,
+            'pending TaskSource request integrity differs',
+          );
           if (action.status === 'reported') {
-            requireState(action.recovery_report !== null || action.report !== null,
-              'reported TaskSource action has no retained observed result');
-            const report = validateTaskSourceBindingExchange(priorRequest, action.recovery_report ?? action.report);
-            requireState(report.status === 'observed' && canonicalJsonDigest(report) ===
-              (action.recovery_report !== null ? action.recovery_report_digest : action.report_digest),
-              'reported TaskSource action lacks a valid retained observed result');
             requireState(
-              priorRequest.operation === 'inspect' || priorRequest.work_id !== request.work_id ||
-                priorRequest.attempt !== request.attempt || priorRequest.thread_id !== request.thread_id,
+              action.recovery_report !== null || action.report !== null,
+              'reported TaskSource action has no retained observed result',
+            );
+            const report = validateTaskSourceBindingExchange(priorRequest, action.recovery_report ?? action.report);
+            requireState(
+              report.status === 'observed' &&
+                canonicalJsonDigest(report) ===
+                  (action.recovery_report !== null ? action.recovery_report_digest : action.report_digest),
+              'reported TaskSource action lacks a valid retained observed result',
+            );
+            requireState(
+              priorRequest.operation === 'inspect' ||
+                priorRequest.work_id !== request.work_id ||
+                priorRequest.attempt !== request.attempt ||
+                priorRequest.thread_id !== request.thread_id,
               'this TaskSource attempt already has a reported observed binding',
             );
             continue;
           }
-          requireState(priorRequest.operation === 'inspect' || priorRequest.work_id !== request.work_id,
-            'TaskSource resources are already claimed by an issued or unknown operation for this Work');
+          requireState(
+            priorRequest.operation === 'inspect' || priorRequest.work_id !== request.work_id,
+            'TaskSource resources are already claimed by an issued or unknown operation for this Work',
+          );
         }
         const prior = taskSourcePriorTicket(current.ledger!, current.work, request);
-        requireState(prior && prior.status === 'active' && prior.expires_at !== null &&
-          timestamp(prior.expires_at) > Date.now() && current.work.lease?.ticket_id === prior.ticket_id,
-          'TaskSource reservation has no current active predecessor ticket');
+        requireState(
+          prior &&
+            prior.status === 'active' &&
+            prior.expires_at !== null &&
+            timestamp(prior.expires_at) > Date.now() &&
+            current.work.lease?.ticket_id === prior.ticket_id,
+          'TaskSource reservation has no current active predecessor ticket',
+        );
         const reservation = taskSourceReservationResources(this.#repositoryRoot!, request, current.work, prior),
           ownId = taskSourceTicketId(request),
           existingTicket = current.ledger!.tickets.find((ticket) => ticket.ticket_id === ownId) ?? null,
           sequence = existingTicket?.sequence ?? current.ledger!.next_sequence,
           resourceKeys = new Set(reservation.resources.map(coordinationResourceKey)),
-          conflicts = current.ledger!.tickets.some((candidate) =>
-            candidate.ticket_id !== ownId && candidate.ticket_id !== prior.ticket_id &&
-            (['active', 'ready_for_handoff', 'blocked'].includes(candidate.status) ||
-              (candidate.status === 'queued' && candidate.sequence < sequence)) &&
-            candidate.exclusive_resources.some((resource) => resourceKeys.has(coordinationResourceKey(resource))),
+          conflicts = current.ledger!.tickets.some(
+            (candidate) =>
+              candidate.ticket_id !== ownId &&
+              candidate.ticket_id !== prior.ticket_id &&
+              (['active', 'ready_for_handoff', 'blocked'].includes(candidate.status) ||
+                (candidate.status === 'queued' && candidate.sequence < sequence)) &&
+              candidate.exclusive_resources.some((resource) => resourceKeys.has(coordinationResourceKey(resource))),
           );
         if (existingTicket) {
           taskSourceTicketMatches(current.ledger!, current.work, request, reservation.resources);
-          requireState(taskSourceExpectedWorkMatches(
-            current.work,
-            current.ledger!,
-            request,
-            reservation.resources,
-            reservation.added,
-            existingTicket,
-          ), 'TaskSource reservation is not a continuation of its original Work scope');
+          requireState(
+            taskSourceExpectedWorkMatches(
+              current.work,
+              current.ledger!,
+              request,
+              reservation.resources,
+              reservation.added,
+              existingTicket,
+            ),
+            'TaskSource reservation is not a continuation of its original Work scope',
+          );
         }
         if (conflicts && existingTicket?.status === 'queued')
           return { status: 'queued' as const, action: null, state_version: null };
@@ -6805,13 +7574,17 @@ export class HostStateStore {
             blocked_resources: queued ? [...reservation.resources] : [],
             created_at: existingTicket?.created_at ?? now,
           },
-          additions = reservation.added.filter((resource) => !current.work!.binding.allowed_resources.includes(resource)),
+          additions = reservation.added.filter(
+            (resource) => !current.work!.binding.allowed_resources.includes(resource),
+          ),
           nextWork = {
             ...current.work!,
             revision: current.work!.revision + 1,
             binding: {
               ...current.work!.binding,
-              allowed_resources: [...new Set([...current.work!.binding.allowed_resources, ...reservation.added])].sort(),
+              allowed_resources: [
+                ...new Set([...current.work!.binding.allowed_resources, ...reservation.added]),
+              ].sort(),
             },
             lifecycle: { ...current.work!.lifecycle, revision: current.work!.lifecycle.revision + 1 },
             lease: queued ? current.work!.lease : { ticket_id: ticketId, thread_id: request.thread_id, generation },
@@ -6824,8 +7597,11 @@ export class HostStateStore {
           expires_at: null,
         };
         const nextTickets = current.ledger!.tickets.map((ticket) =>
-          ticket.ticket_id === ticketId ? sourceTicket :
-            !queued && ticket.ticket_id === prior.ticket_id ? releasedPrior : ticket,
+          ticket.ticket_id === ticketId
+            ? sourceTicket
+            : !queued && ticket.ticket_id === prior.ticket_id
+              ? releasedPrior
+              : ticket,
         );
         if (!existingTicket) nextTickets.push(sourceTicket);
         const nextClaims = current.ledger!.claims.map((claim) =>
@@ -6833,35 +7609,39 @@ export class HostStateStore {
             ? { ...claim, status: 'released' as const, renewed_at: now }
             : claim,
         );
-        if (!queued) nextClaims.push({
-          schema: 'WorkstreamClaim/v1',
-          claim_id: claimId,
-          ticket_id: ticketId,
-          work_id: request.work_id,
-          thread_id: request.thread_id,
-          generation,
-          resources: [...reservation.resources],
-          lease_expires_at: expiry!,
-          status: 'active',
-          created_at: now,
-          renewed_at: now,
-        });
+        if (!queued)
+          nextClaims.push({
+            schema: 'WorkstreamClaim/v1',
+            claim_id: claimId,
+            ticket_id: ticketId,
+            work_id: request.work_id,
+            thread_id: request.thread_id,
+            generation,
+            resources: [...reservation.resources],
+            lease_expires_at: expiry!,
+            status: 'active',
+            created_at: now,
+            renewed_at: now,
+          });
         const nextOperations = !queued
-          ? [...current.ledger!.operations, {
-              schema: 'CoordinationOperation/v1',
-              operation_id: 'task-source-release-' + ticketId,
-              kind: 'release',
-              ticket_id: prior.ticket_id,
-              work_id: prior.work_id,
-              thread_id: prior.thread_id,
-              source_revision: prior.source_revision,
-              resources: [...prior.exclusive_resources],
-              from_ledger_revision: current.ledger!.revision,
-              to_ledger_revision: current.ledger!.revision + 1,
-              decided_by: request.thread_id,
-              decision_pointer: request.source_root!,
-              created_at: now,
-            }]
+          ? [
+              ...current.ledger!.operations,
+              {
+                schema: 'CoordinationOperation/v1',
+                operation_id: 'task-source-release-' + ticketId,
+                kind: 'release',
+                ticket_id: prior.ticket_id,
+                work_id: prior.work_id,
+                thread_id: prior.thread_id,
+                source_revision: prior.source_revision,
+                resources: [...prior.exclusive_resources],
+                from_ledger_revision: current.ledger!.revision,
+                to_ledger_revision: current.ledger!.revision + 1,
+                decided_by: request.thread_id,
+                decision_pointer: request.source_root!,
+                created_at: now,
+              },
+            ]
           : current.ledger!.operations;
         const nextLedger = checkedLedger({
           ...current.ledger!,
@@ -6871,35 +7651,51 @@ export class HostStateStore {
           claims: nextClaims,
           operations: nextOperations,
         });
-        this.#commitHostState({
-          expectedWork: current.workVersion,
-          expectedLedger: current.ledgerVersion,
-          expectedMaintenanceGeneration: current.maintenanceGeneration,
-          nextWork,
-          nextLedger,
-        }, undefined, true, additions);
+        this.#commitHostState(
+          {
+            expectedWork: current.workVersion,
+            expectedLedger: current.ledgerVersion,
+            expectedMaintenanceGeneration: current.maintenanceGeneration,
+            nextWork,
+            nextLedger,
+          },
+          undefined,
+          true,
+          additions,
+        );
         if (queued) return { status: 'queued' as const, action: null, state_version: null };
       }
       const action = snapshot({
-        schema: 'TaskSourceBindingAction/v1', operation_id: request.operation_id, request_id: request.request_id,
-        operation_digest: row.digest, prepared_state_version: prepared.state_version, issue_id: randomUUID(),
-        command_argv: commandArgv, policy_decision: request.operation === 'propose-create' ? decision : null,
-        status: 'issued' as const, report: null, report_digest: null,
-        recovery_report: null, recovery_report_digest: null, revision: 1,
-        created_at: new Date().toISOString(), updated_at: null,
+        schema: 'TaskSourceBindingAction/v1',
+        operation_id: request.operation_id,
+        request_id: request.request_id,
+        operation_digest: row.digest,
+        prepared_state_version: prepared.state_version,
+        issue_id: randomUUID(),
+        command_argv: commandArgv,
+        policy_decision: request.operation === 'propose-create' ? decision : null,
+        status: 'issued' as const,
+        report: null,
+        report_digest: null,
+        recovery_report: null,
+        recovery_report_digest: null,
+        revision: 1,
+        created_at: new Date().toISOString(),
+        updated_at: null,
       });
-      const payload = canonicalJson(action), digest = canonicalJsonDigest(action);
+      const payload = canonicalJson(action),
+        digest = canonicalJsonDigest(action);
       this.#database.exec(
         'CREATE TABLE IF NOT EXISTS agent_host_task_source_binding_action (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
       );
-      this.#database.query(
-        'INSERT INTO agent_host_task_source_binding_action (workspace_id,operation_id,request_id,revision,payload,digest) VALUES(?,?,?,?,?,?)',
-      ).run(this.#workspaceId, request.operation_id, request.request_id, action.revision, payload, digest);
+      this.#database
+        .query(
+          'INSERT INTO agent_host_task_source_binding_action (workspace_id,operation_id,request_id,revision,payload,digest) VALUES(?,?,?,?,?,?)',
+        )
+        .run(this.#workspaceId, request.operation_id, request.request_id, action.revision, payload, digest);
       return { status: 'issued' as const, action, state_version: { revision: action.revision, digest } };
     }).immediate();
-    return committed.status === 'queued'
-      ? result('queued', null)
-      : result('issued', committed, commandArgv);
+    return committed.status === 'queued' ? result('queued', null) : result('issued', committed, commandArgv);
   }
 
   /** Persist one exact cooperative report; uncertain outcomes remain inspect-only and keep their claims. */
@@ -6909,86 +7705,160 @@ export class HostStateStore {
     readonly expectedActionStateVersion: StateVersion;
     readonly report: TaskSourceBindingReport;
   }): Readonly<Record<string, unknown>> {
-    requireState(input !== null && typeof input === 'object' &&
-      Object.keys(input).sort().join(',') === 'expectedActionStateVersion,identity,report,request',
-      'task source report input invalid');
-    const request = validateTaskSourceBindingRequest(input.request), identity = snapshot(input.identity),
+    requireState(
+      input !== null &&
+        typeof input === 'object' &&
+        Object.keys(input).sort().join(',') === 'expectedActionStateVersion,identity,report,request',
+      'task source report input invalid',
+    );
+    const request = validateTaskSourceBindingRequest(input.request),
+      identity = snapshot(input.identity),
       report = validateTaskSourceBindingExchange(request, input.report);
-    requireState(request.work_id === identity.work_id && request.repository_id === identity.repository_id &&
-      sameJson(request.project_ids, identity.project_ids), 'task source report identity differs from the Host');
+    requireState(
+      request.work_id === identity.work_id &&
+        request.repository_id === identity.repository_id &&
+        sameJson(request.project_ids, identity.project_ids),
+      'task source report identity differs from the Host',
+    );
     const stored = this.#transactionWithProducerFence(() => {
       this.#assertMaintenanceAvailable();
-      const actionRow = this.#database.query(
-        'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-      ).get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
+      const actionRow = this.#database
+        .query(
+          'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
       requireState(actionRow, 'task source report has no issued Host action');
-      const operationRow = this.#database.query(
-        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-      ).get(this.#workspaceId, request.operation_id) as TaskSourceOperationRow | null;
+      const operationRow = this.#database
+        .query(
+          'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(this.#workspaceId, request.operation_id) as TaskSourceOperationRow | null;
       requireState(operationRow, 'task source report has no prepared operation');
       const action = validateTaskSourceActionPair(operationRow, actionRow, request).action,
         reportDigest = canonicalJsonDigest(report);
-      if (action.status === 'reported' && action.report_digest === reportDigest ||
-          action.status === 'reported' && action.recovery_report_digest === reportDigest) {
+      if (
+        (action.status === 'reported' && action.report_digest === reportDigest) ||
+        (action.status === 'reported' && action.recovery_report_digest === reportDigest)
+      ) {
         return { action, state_version: { revision: actionRow.revision, digest: actionRow.digest } };
       }
       const recoveringUnknown = action.status === 'unknown';
       if (recoveringUnknown) {
-        requireState(action.recovery_report === null && action.recovery_report_digest === null && report.status === 'observed',
-          'uncertain task source action accepts only one later observed recovery report');
+        requireState(
+          action.recovery_report === null && action.recovery_report_digest === null && report.status === 'observed',
+          'uncertain task source action accepts only one later observed recovery report',
+        );
       } else requireState(action.status === 'issued', 'task source action is not awaiting its first report');
-      requireState(actionRow.revision === input.expectedActionStateVersion.revision &&
-        actionRow.digest === input.expectedActionStateVersion.digest, 'task source report action CAS is stale or already settled');
+      requireState(
+        actionRow.revision === input.expectedActionStateVersion.revision &&
+          actionRow.digest === input.expectedActionStateVersion.digest,
+        'task source report action CAS is stale or already settled',
+      );
       if (report.status === 'observed') {
         const current = this.#read(identity);
-        requireState(current.work && current.workVersion && current.ledgerVersion &&
-          current.work.execution.status === 'active' && current.work.lease?.thread_id === request.thread_id,
-          'observed task source report has no current Host owner');
+        requireState(
+          current.work &&
+            current.workVersion &&
+            current.ledgerVersion &&
+            current.work.execution.status === 'active' &&
+            current.work.lease?.thread_id === request.thread_id,
+          'observed task source report has no current Host owner',
+        );
         if (request.operation === 'inspect') {
           matchesExpected(current.workVersion, request.expected_host.work);
           matchesExpected(current.ledgerVersion, request.expected_host.ledger);
         } else {
           const reservation = taskSourceReservationForRequest(this.#repositoryRoot!, current, request);
-          requireState(reservation?.ticket.status === 'active',
-            'observed TaskSource report has no exact active canonical reservation');
+          requireState(
+            reservation?.ticket.status === 'active',
+            'observed TaskSource report has no exact active canonical reservation',
+          );
         }
-        requireState(current.maintenanceGeneration === request.expected_host.maintenance_generation,
-          'observed task source report maintenance CAS changed');
-        const journalRow = this.#database.query(
-          'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-        ).get(this.#workspaceId, request.work_id) as { attempt: number; revision: number; payload: string; digest: string } | null;
-        requireState(journalRow && journalRow.attempt === request.expected_host.journal.attempt &&
-          journalRow.revision === request.expected_host.journal.version.revision &&
-          journalRow.digest === request.expected_host.journal.version.digest,
-          'observed task source report journal CAS changed');
+        requireState(
+          current.maintenanceGeneration === request.expected_host.maintenance_generation,
+          'observed task source report maintenance CAS changed',
+        );
+        const journalRow = this.#database
+          .query(
+            'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+          )
+          .get(this.#workspaceId, request.work_id) as {
+          attempt: number;
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
+        requireState(
+          journalRow &&
+            journalRow.attempt === request.expected_host.journal.attempt &&
+            journalRow.revision === request.expected_host.journal.version.revision &&
+            journalRow.digest === request.expected_host.journal.version.digest,
+          'observed task source report journal CAS changed',
+        );
         const currentJournal = JSON.parse(journalRow.payload) as { source_scope?: unknown };
         const currentJournalScope = validateTaskSourceJournalScope(currentJournal.source_scope);
         assertTaskSourceJournalScopeWithinWork(currentJournalScope, current.work);
-        if (request.operation !== 'inspect') this.#assertLiveTaskSourceOwner(current, request, identity, {
-          attempt: journalRow.attempt,
-          state: currentJournal,
-        });
+        if (request.operation !== 'inspect')
+          this.#assertLiveTaskSourceOwner(current, request, identity, {
+            attempt: journalRow.attempt,
+            state: currentJournal,
+          });
         const binding = report.binding;
-        requireState(binding && binding.source_scope.digest === current.work.binding.work_source_revision &&
-          binding.source_scope.digest !== undefined && currentJournalScope.digest.length === 64 &&
-          binding.cwd === binding.source_root,
-          'observed task source binding differs from its original Work authorization or working root');
+        requireState(
+          binding &&
+            binding.source_scope.digest === current.work.binding.work_source_revision &&
+            binding.source_scope.digest !== undefined &&
+            currentJournalScope.digest.length === 64 &&
+            binding.cwd === binding.source_root,
+          'observed task source binding differs from its original Work authorization or working root',
+        );
       }
-      const next = snapshot(recoveringUnknown
-        ? { ...action, status: 'reported', recovery_report: report, recovery_report_digest: reportDigest,
-            revision: actionRow.revision + 1, updated_at: new Date().toISOString() }
-        : { ...action, status: report.status === 'observed' ? 'reported' : 'unknown',
-            report, report_digest: reportDigest, revision: actionRow.revision + 1, updated_at: new Date().toISOString() });
-      const payload = canonicalJson(next), digest = canonicalJsonDigest(next);
-      const update = this.#database.query(
-        'UPDATE agent_host_task_source_binding_action SET revision=?,payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND revision=? AND digest=?',
-      ).run(next.revision, payload, digest, this.#workspaceId, request.operation_id, actionRow.revision, actionRow.digest);
+      const next = snapshot(
+        recoveringUnknown
+          ? {
+              ...action,
+              status: 'reported',
+              recovery_report: report,
+              recovery_report_digest: reportDigest,
+              revision: actionRow.revision + 1,
+              updated_at: new Date().toISOString(),
+            }
+          : {
+              ...action,
+              status: report.status === 'observed' ? 'reported' : 'unknown',
+              report,
+              report_digest: reportDigest,
+              revision: actionRow.revision + 1,
+              updated_at: new Date().toISOString(),
+            },
+      );
+      const payload = canonicalJson(next),
+        digest = canonicalJsonDigest(next);
+      const update = this.#database
+        .query(
+          'UPDATE agent_host_task_source_binding_action SET revision=?,payload=?,digest=? WHERE workspace_id=? AND operation_id=? AND revision=? AND digest=?',
+        )
+        .run(
+          next.revision,
+          payload,
+          digest,
+          this.#workspaceId,
+          request.operation_id,
+          actionRow.revision,
+          actionRow.digest,
+        );
       requireState(update.changes === 1, 'task source report compare-and-swap conflict');
       return { action: next, state_version: { revision: next.revision, digest } };
     }).immediate();
-    return snapshot({ schema: 'TaskSourceBindingActionResult/v1', status: stored.action.status,
-      operation_id: request.operation_id, request_id: request.request_id, action: stored.action,
-      state_version: stored.state_version, command_argv: null });
+    return snapshot({
+      schema: 'TaskSourceBindingActionResult/v1',
+      status: stored.action.status,
+      operation_id: request.operation_id,
+      request_id: request.request_id,
+      action: stored.action,
+      state_version: stored.state_version,
+      command_argv: null,
+    });
   }
 
   /** Bundle-owned current-v1 normalization with one atomic operation record and exact recovery preimages. */
@@ -7053,24 +7923,34 @@ export class HostStateStore {
         requireState(hasGeneration === hasAuthority, 'partial assignment authority is ambiguous');
         const correction_generation = hasGeneration ? value.correction_generation : 0;
         const correction_authorization = hasAuthority ? value.correction_authorization : null;
-        requireState(correction_generation !== undefined && correction_authorization !== undefined,
-          'assignment authority values are missing');
+        requireState(
+          correction_generation !== undefined && correction_authorization !== undefined,
+          'assignment authority values are missing',
+        );
         return { ...value, correction_generation, correction_authorization };
       };
       const decodeWorkPreimage = (candidate: unknown): WorkRepairPreimage => {
-        requireState(isPlainRecord(candidate) && isPlainRecord(candidate.execution) &&
-          Array.isArray(candidate.execution.assignment_attempts), 'repair Work preimage shape is invalid');
+        requireState(
+          isPlainRecord(candidate) &&
+            isPlainRecord(candidate.execution) &&
+            Array.isArray(candidate.execution.assignment_attempts),
+          'repair Work preimage shape is invalid',
+        );
         const attempts: readonly unknown[] = candidate.execution.assignment_attempts;
-        const normalized = attempts.map(attempt => {
+        const normalized = attempts.map((attempt) => {
           requireState(isPlainRecord(attempt), 'repair assignment preimage is invalid');
           const hasGeneration = Object.hasOwn(attempt, 'correction_generation');
-          requireState(hasGeneration === Object.hasOwn(attempt, 'correction_authorization'),
-            'partial assignment authority is ambiguous');
-          requireState(kind === 'correction-generation' || hasGeneration,
-            'request transition cannot repair assignment authority');
-          return hasGeneration ? attempt : {...attempt, correction_generation: 0, correction_authorization: null};
+          requireState(
+            hasGeneration === Object.hasOwn(attempt, 'correction_authorization'),
+            'partial assignment authority is ambiguous',
+          );
+          requireState(
+            kind === 'correction-generation' || hasGeneration,
+            'request transition cannot repair assignment authority',
+          );
+          return hasGeneration ? attempt : { ...attempt, correction_generation: 0, correction_authorization: null };
         });
-        checkedWork({...candidate, execution: {...candidate.execution, assignment_attempts: normalized}});
+        checkedWork({ ...candidate, execution: { ...candidate.execution, assignment_attempts: normalized } });
         return candidate as WorkRepairPreimage;
       };
       const journalItems = (state: JournalRepairPreimage) => [
@@ -7371,7 +8251,7 @@ export class HostStateStore {
             'repair requires terminal issued observations',
           );
           if (!item.host_reservation) {
-            const {host_reservation: _reservation, ...unreserved} = item;
+            const { host_reservation: _reservation, ...unreserved } = item;
             return unreserved;
           }
           const reservation = item.host_reservation,
@@ -7435,34 +8315,55 @@ export class HostStateStore {
         };
       };
       const decodeJournalPreimage = (candidate: unknown): JournalRepairPreimage => {
-        requireState(isPlainRecord(candidate) && candidate.schema === 'MastraSessionLedger/v1' &&
-          candidate.workspace_id === this.#workspaceId && typeof candidate.work_id === 'string' &&
-          typeof candidate.run_id === 'string' && typeof candidate.attempt === 'number' &&
-          Number.isSafeInteger(candidate.attempt) && candidate.attempt > 0 &&
-          (candidate.step_id === null || typeof candidate.step_id === 'string') &&
-          Array.isArray(candidate.items) && Array.isArray(candidate.completed), 'repair journal preimage shape is invalid');
-        const host = states.find(state => state.current.binding.lifecycle_work_id === candidate.work_id)?.current;
+        requireState(
+          isPlainRecord(candidate) &&
+            candidate.schema === 'MastraSessionLedger/v1' &&
+            candidate.workspace_id === this.#workspaceId &&
+            typeof candidate.work_id === 'string' &&
+            typeof candidate.run_id === 'string' &&
+            typeof candidate.attempt === 'number' &&
+            Number.isSafeInteger(candidate.attempt) &&
+            candidate.attempt > 0 &&
+            (candidate.step_id === null || typeof candidate.step_id === 'string') &&
+            Array.isArray(candidate.items) &&
+            Array.isArray(candidate.completed),
+          'repair journal preimage shape is invalid',
+        );
+        const host = states.find((state) => state.current.binding.lifecycle_work_id === candidate.work_id)?.current;
         requireState(host && host.execution.run_id === candidate.run_id, 'repair journal/Host identity differs');
         const checkReceipt = (value: unknown): void => {
           requireState(isPlainRecord(value) && isPlainRecord(value.attempt), 'repair reservation receipt is invalid');
           const attempt = value.attempt;
           const hasGeneration = Object.hasOwn(attempt, 'correction_generation');
-          requireState(hasGeneration === Object.hasOwn(attempt, 'correction_authorization'),
-            'partial assignment authority is ambiguous');
-          const normalized = hasGeneration ? attempt : {...attempt, correction_generation: 0, correction_authorization: null};
-          requireState(validateWork({...host, execution: {...host.execution, assignment_attempts: [normalized]}}),
-            'repair reservation attempt contract is invalid');
+          requireState(
+            hasGeneration === Object.hasOwn(attempt, 'correction_authorization'),
+            'partial assignment authority is ambiguous',
+          );
+          const normalized = hasGeneration
+            ? attempt
+            : { ...attempt, correction_generation: 0, correction_authorization: null };
+          requireState(
+            validateWork({ ...host, execution: { ...host.execution, assignment_attempts: [normalized] } }),
+            'repair reservation attempt contract is invalid',
+          );
         };
         const checkItems = (values: readonly unknown[]): void => {
           for (const value of values) {
-            requireState(isPlainRecord(value) && (value.issue_id === null || typeof value.issue_id === 'string'),
-              'repair journal item is invalid');
+            requireState(
+              isPlainRecord(value) && (value.issue_id === null || typeof value.issue_id === 'string'),
+              'repair journal item is invalid',
+            );
             parseSessionBridgeRequest(value.request);
             if (value.observation !== null) parseSessionBridgeObservation(value.observation);
             if (value.host_reservation !== undefined) {
               const reservation = value.host_reservation;
-              requireState(isPlainRecord(reservation) && reservation.schema === 'WorkflowSessionReservation/v1' &&
-                isPlainRecord(reservation.request) && isPlainRecord(reservation.invocation), 'repair reservation is invalid');
+              requireState(
+                isPlainRecord(reservation) &&
+                  reservation.schema === 'WorkflowSessionReservation/v1' &&
+                  isPlainRecord(reservation.request) &&
+                  isPlainRecord(reservation.invocation),
+                'repair reservation is invalid',
+              );
               checkReceipt(reservation.receipt);
               if (reservation.authorization !== null) {
                 requireState(isPlainRecord(reservation.authorization), 'repair reservation authorization is invalid');
@@ -7475,8 +8376,10 @@ export class HostStateStore {
         const completed: readonly unknown[] = candidate.completed;
         checkItems(items);
         for (const wave of completed) {
-          requireState(isPlainRecord(wave) && typeof wave.step_id === 'string' && Array.isArray(wave.items),
-            'repair completed journal wave is invalid');
+          requireState(
+            isPlainRecord(wave) && typeof wave.step_id === 'string' && Array.isArray(wave.items),
+            'repair completed journal wave is invalid',
+          );
           const waveItems: readonly unknown[] = wave.items;
           checkItems(waveItems);
         }
@@ -7524,11 +8427,19 @@ export class HostStateStore {
             ],
       );
       const verifyWorkTransformation = (before: WorkRepairPreimage, after: WorkState): void => {
-        const normalized = {...before,
-          ...(kind === 'correction-generation' ? {execution: {...before.execution,
-            assignment_attempts: before.execution.assignment_attempts.map(normalizeAttempt)}} : {request_transition: null}),
+        const normalized = {
+          ...before,
+          ...(kind === 'correction-generation'
+            ? {
+                execution: {
+                  ...before.execution,
+                  assignment_attempts: before.execution.assignment_attempts.map(normalizeAttempt),
+                },
+              }
+            : { request_transition: null }),
           revision: before.revision + 1,
-          lifecycle: {...before.lifecycle, revision: before.lifecycle.revision + 1}};
+          lifecycle: { ...before.lifecycle, revision: before.lifecycle.revision + 1 },
+        };
         requireState(sameJson(normalized, after), 'repair frozen transformation differs');
       };
       const bindings = {
@@ -7580,9 +8491,12 @@ export class HostStateStore {
       const payloadDigest = (payload: string): string => createHash('sha256').update(payload).digest('hex');
       if (stored) requireState(payloadDigest(stored.payload) === stored.digest, 'repair operation checksum differs');
       const rawOperation = stored ? parseStoredRecord(stored.payload, 'stored repair operation') : null;
-      const restoredWorks = (changes: Operation['work_changes']) => changes.map(change => ({...change.before,
-        revision: change.after.revision + 1,
-        lifecycle: {...change.before.lifecycle, revision: change.after.lifecycle.revision + 1}}));
+      const restoredWorks = (changes: Operation['work_changes']) =>
+        changes.map((change) => ({
+          ...change.before,
+          revision: change.after.revision + 1,
+          lifecycle: { ...change.before.lifecycle, revision: change.after.lifecycle.revision + 1 },
+        }));
       const serialize = (value: Operation): unknown =>
         kind === 'correction-generation'
           ? value
@@ -7620,70 +8534,156 @@ export class HostStateStore {
         return candidate;
       };
       const decodeRow = (candidate: unknown): Row => {
-        requireState(exactJsonKeys(candidate, ['id', 'revision', 'payload', 'digest']) && isPlainRecord(candidate) && typeof candidate.id === 'string' &&
-          typeof candidate.payload === 'string' && typeof candidate.digest === 'string' &&
-          hashPattern.test(candidate.digest) && typeof candidate.revision === 'number' &&
-          Number.isSafeInteger(candidate.revision) && candidate.revision > 0, 'repair Work row is invalid');
-        return {id: candidate.id, revision: candidate.revision, payload: candidate.payload, digest: candidate.digest};
+        requireState(
+          exactJsonKeys(candidate, ['id', 'revision', 'payload', 'digest']) &&
+            isPlainRecord(candidate) &&
+            typeof candidate.id === 'string' &&
+            typeof candidate.payload === 'string' &&
+            typeof candidate.digest === 'string' &&
+            hashPattern.test(candidate.digest) &&
+            typeof candidate.revision === 'number' &&
+            Number.isSafeInteger(candidate.revision) &&
+            candidate.revision > 0,
+          'repair Work row is invalid',
+        );
+        return { id: candidate.id, revision: candidate.revision, payload: candidate.payload, digest: candidate.digest };
       };
       let operation: Operation | null = null;
       if (rawOperation) {
         const status = rawOperation.status;
-        requireState(exactJsonKeys(rawOperation, ['schema', 'operation_id', 'workspace_id', 'actor', 'status', 'bindings',
-          ...(kind === 'correction-generation' ? ['work_changes', 'journal_changes'] : ['changes']),
-          ...(kind === 'correction-generation' && Object.hasOwn(rawOperation, 'post_bindings') ? ['post_bindings'] : []),
-          ...(kind === 'request-transition' && Object.hasOwn(rawOperation, 'restored') ? ['restored'] : [])]),
-        'repair operation contains unexpected fields');
-        requireState(rawOperation.schema === (kind === 'correction-generation'
-          ? 'CorrectionGenerationRepairOperation/v1' : 'WorkStateRepairOperation/v1') &&
-          rawOperation.operation_id === input.operationId && rawOperation.workspace_id === this.#workspaceId &&
-          typeof rawOperation.actor === 'string' && rawOperation.actor.trim().length > 0 && !/\p{Cc}/u.test(rawOperation.actor),
-        'repair operation integrity differs');
+        requireState(
+          exactJsonKeys(rawOperation, [
+            'schema',
+            'operation_id',
+            'workspace_id',
+            'actor',
+            'status',
+            'bindings',
+            ...(kind === 'correction-generation' ? ['work_changes', 'journal_changes'] : ['changes']),
+            ...(kind === 'correction-generation' && Object.hasOwn(rawOperation, 'post_bindings')
+              ? ['post_bindings']
+              : []),
+            ...(kind === 'request-transition' && Object.hasOwn(rawOperation, 'restored') ? ['restored'] : []),
+          ]),
+          'repair operation contains unexpected fields',
+        );
+        requireState(
+          rawOperation.schema ===
+            (kind === 'correction-generation'
+              ? 'CorrectionGenerationRepairOperation/v1'
+              : 'WorkStateRepairOperation/v1') &&
+            rawOperation.operation_id === input.operationId &&
+            rawOperation.workspace_id === this.#workspaceId &&
+            typeof rawOperation.actor === 'string' &&
+            rawOperation.actor.trim().length > 0 &&
+            !/\p{Cc}/u.test(rawOperation.actor),
+          'repair operation integrity differs',
+        );
         requireState(status === 'planned' || status === 'applied' || status === 'restored', 'repair status is invalid');
-        requireState(kind === 'correction-generation'
-          ? Object.hasOwn(rawOperation, 'post_bindings') === (status !== 'planned')
-          : Object.hasOwn(rawOperation, 'restored') === (status === 'restored'), 'repair status fields differ');
-        const changedWorks = storedArray(kind === 'correction-generation' ? rawOperation.work_changes : rawOperation.changes,
-          'repair Work changes').map(candidate => {
-          requireState(exactJsonKeys(candidate, kind === 'correction-generation' ? ['row', 'before', 'after'] : ['identity', 'before', 'after']) &&
-            isPlainRecord(candidate), 'repair Work change is invalid');
+        requireState(
+          kind === 'correction-generation'
+            ? Object.hasOwn(rawOperation, 'post_bindings') === (status !== 'planned')
+            : Object.hasOwn(rawOperation, 'restored') === (status === 'restored'),
+          'repair status fields differ',
+        );
+        const changedWorks = storedArray(
+          kind === 'correction-generation' ? rawOperation.work_changes : rawOperation.changes,
+          'repair Work changes',
+        ).map((candidate) => {
+          requireState(
+            exactJsonKeys(
+              candidate,
+              kind === 'correction-generation' ? ['row', 'before', 'after'] : ['identity', 'before', 'after'],
+            ) && isPlainRecord(candidate),
+            'repair Work change is invalid',
+          );
           const before = decodeWorkPreimage(candidate.before);
           const after = this.#checkedWork(candidate.after);
           verifyWorkTransformation(before, after);
-          if (kind === 'request-transition') requireState(sameJson(candidate.identity, workIdentity(before)),
-            'repair frozen Work identity differs');
-          const row = kind === 'correction-generation' ? decodeRow(candidate.row) : {
-            id: identityKey(workIdentity(before)), revision: before.revision,
-            payload: canonicalJson(before), digest: canonicalJsonDigest(before),
-          };
-          requireState(row.id === identityKey(workIdentity(before)) && row.revision === before.revision &&
-            row.payload === canonicalJson(before) && row.digest === canonicalJsonDigest(before),
-          'repair frozen Work row differs from its beforeimage');
-          return {row, before, after};
+          if (kind === 'request-transition')
+            requireState(sameJson(candidate.identity, workIdentity(before)), 'repair frozen Work identity differs');
+          const row =
+            kind === 'correction-generation'
+              ? decodeRow(candidate.row)
+              : {
+                  id: identityKey(workIdentity(before)),
+                  revision: before.revision,
+                  payload: canonicalJson(before),
+                  digest: canonicalJsonDigest(before),
+                };
+          requireState(
+            row.id === identityKey(workIdentity(before)) &&
+              row.revision === before.revision &&
+              row.payload === canonicalJson(before) &&
+              row.digest === canonicalJsonDigest(before),
+            'repair frozen Work row differs from its beforeimage',
+          );
+          return { row, before, after };
         });
-        operation = {schema: kind === 'correction-generation' ? 'CorrectionGenerationRepairOperation/v1' : 'WorkStateRepairOperation/v1',
-          operation_id: input.operationId, workspace_id: this.#workspaceId, actor: rawOperation.actor, status,
+        operation = {
+          schema:
+            kind === 'correction-generation' ? 'CorrectionGenerationRepairOperation/v1' : 'WorkStateRepairOperation/v1',
+          operation_id: input.operationId,
+          workspace_id: this.#workspaceId,
+          actor: rawOperation.actor,
+          status,
           bindings: kind === 'correction-generation' ? rawOperation.bindings : bindings,
-          work_changes: changedWorks, journal_changes: [],
-          ...(Object.hasOwn(rawOperation, 'post_bindings') ? {post_bindings: rawOperation.post_bindings} : {})};
-        if (kind === 'request-transition' && status === 'restored') requireState(
-          sameJson(rawOperation.restored, restoredWorks(changedWorks)), 'repair restored list differs from its frozen changes');
-        if (kind === 'correction-generation') operation.journal_changes = storedArray(rawOperation.journal_changes,
-          'repair journal changes').map(candidate => {
-          requireState(exactJsonKeys(candidate, ['row', 'before', 'after']) && isPlainRecord(candidate) &&
-            exactJsonKeys(candidate.row, ['work_id', 'attempt', 'revision', 'payload', 'digest']) && isPlainRecord(candidate.row), 'repair journal change is invalid');
-          const row = candidate.row;
-          requireState(typeof row.work_id === 'string' && typeof row.attempt === 'number' &&
-            Number.isSafeInteger(row.attempt) && row.attempt > 0 && typeof row.revision === 'number' &&
-            Number.isSafeInteger(row.revision) && row.revision > 0 && typeof row.payload === 'string' &&
-            typeof row.digest === 'string' && hashPattern.test(row.digest), 'repair journal row is invalid');
-          const before = decodeJournalPreimage(candidate.before);
-          const after = normalizeJournal(before);
-          requireState(row.work_id === before.work_id && row.attempt === before.attempt &&
-            row.payload === canonicalJson(before) && row.digest === canonicalJsonDigest(before) && sameJson(after, candidate.after),
-          'repair frozen journal row or transformation differs');
-          return {row: {work_id: row.work_id, attempt: row.attempt, revision: row.revision, payload: row.payload, digest: row.digest}, before, after};
-        });
+          work_changes: changedWorks,
+          journal_changes: [],
+          ...(Object.hasOwn(rawOperation, 'post_bindings') ? { post_bindings: rawOperation.post_bindings } : {}),
+        };
+        if (kind === 'request-transition' && status === 'restored')
+          requireState(
+            sameJson(rawOperation.restored, restoredWorks(changedWorks)),
+            'repair restored list differs from its frozen changes',
+          );
+        if (kind === 'correction-generation')
+          operation.journal_changes = storedArray(rawOperation.journal_changes, 'repair journal changes').map(
+            (candidate) => {
+              requireState(
+                exactJsonKeys(candidate, ['row', 'before', 'after']) &&
+                  isPlainRecord(candidate) &&
+                  exactJsonKeys(candidate.row, ['work_id', 'attempt', 'revision', 'payload', 'digest']) &&
+                  isPlainRecord(candidate.row),
+                'repair journal change is invalid',
+              );
+              const row = candidate.row;
+              requireState(
+                typeof row.work_id === 'string' &&
+                  typeof row.attempt === 'number' &&
+                  Number.isSafeInteger(row.attempt) &&
+                  row.attempt > 0 &&
+                  typeof row.revision === 'number' &&
+                  Number.isSafeInteger(row.revision) &&
+                  row.revision > 0 &&
+                  typeof row.payload === 'string' &&
+                  typeof row.digest === 'string' &&
+                  hashPattern.test(row.digest),
+                'repair journal row is invalid',
+              );
+              const before = decodeJournalPreimage(candidate.before);
+              const after = normalizeJournal(before);
+              requireState(
+                row.work_id === before.work_id &&
+                  row.attempt === before.attempt &&
+                  row.payload === canonicalJson(before) &&
+                  row.digest === canonicalJsonDigest(before) &&
+                  sameJson(after, candidate.after),
+                'repair frozen journal row or transformation differs',
+              );
+              return {
+                row: {
+                  work_id: row.work_id,
+                  attempt: row.attempt,
+                  revision: row.revision,
+                  payload: row.payload,
+                  digest: row.digest,
+                },
+                before,
+                after,
+              };
+            },
+          );
       }
       if (operation)
         requireState(
@@ -7696,13 +8696,22 @@ export class HostStateStore {
           'repair operation integrity differs',
         );
       if (operation?.status === 'planned') {
-        const boundCurrent = kind === 'request-transition'
-          ? sameJson(rawOperation?.bindings, {ledger_version: bindings.ledger,
-            journals: bindings.journals.map(row => ({work_id: row.work_id, attempt: row.attempt,
-              version: {revision: row.revision, digest: row.digest}}))})
-          : sameJson(operation.bindings, bindings);
-        if (boundCurrent) requireState(sameJson(operation.work_changes, workChanges) &&
-          sameJson(operation.journal_changes, journalChanges), 'repair frozen change set is incomplete');
+        const boundCurrent =
+          kind === 'request-transition'
+            ? sameJson(rawOperation?.bindings, {
+                ledger_version: bindings.ledger,
+                journals: bindings.journals.map((row) => ({
+                  work_id: row.work_id,
+                  attempt: row.attempt,
+                  version: { revision: row.revision, digest: row.digest },
+                })),
+              })
+            : sameJson(operation.bindings, bindings);
+        if (boundCurrent)
+          requireState(
+            sameJson(operation.work_changes, workChanges) && sameJson(operation.journal_changes, journalChanges),
+            'repair frozen change set is incomplete',
+          );
       }
       if (input.mode === 'plan') {
         if (operation) {
@@ -7744,8 +8753,10 @@ export class HostStateStore {
         return operationSnapshot(operationPayload(operation));
       }
       if (operation.status === 'applied' && !restoring) {
-        requireState(workChanges.length === 0 && journalChanges.length === 0,
-          'applied repair leaves unlisted stale authority');
+        requireState(
+          workChanges.length === 0 && journalChanges.length === 0,
+          'applied repair leaves unlisted stale authority',
+        );
         requireState(
           kind === 'request-transition'
             ? operation.work_changes.every((change) =>
@@ -8662,6 +9673,384 @@ export class HostStateStore {
     }).immediate();
   }
   /** Continue the exact retained terminal review or wholly unissued frontier under its original attempt. */
+  /** Continue only an expired, same-owner, wholly unissued initial readonly wave under the original attempt. */
+  continueInitialSource(
+    request: InitialSourceContinuationRequest,
+    verifyCurrent: (state: InitialSourceContinuationState) => InitialSourceContinuationVerifiedCurrent,
+  ): InitialSourceContinuationReceipt {
+    const input = snapshot(request);
+    requireState(
+      typeof verifyCurrent === 'function' &&
+        verifyCurrent.constructor.name !== 'AsyncFunction' &&
+        !this.#database.inTransaction &&
+        this.#repositoryRoot !== undefined,
+      'initial Source continuation requires a synchronous verifier and configured repository',
+    );
+    return this.#transactionWithProducerFence(() => {
+      this.#assertMaintenanceAvailable();
+      this.#assertReconciliationWritesAllowed();
+      const lookup = (): InitialSourceContinuationReceipt | null => {
+        const table = this.#database
+          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_initial_source_continuation'")
+          .get();
+        if (!table) return null;
+        const rows = this.#database
+          .query(
+            'SELECT payload,digest,attempt FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .all(this.#workspaceId, input.identity.work_id, input.attempt) as {
+          payload: string;
+          digest: string;
+          attempt: number;
+        }[];
+        requireState(rows.length <= 1, 'initial Source continuation receipt is ambiguous');
+        if (!rows.length) return null;
+        const row = rows[0]!,
+          receipt = readInitialSourceContinuationRecord(row.payload, row.digest);
+        requireState(
+          row.attempt === input.attempt &&
+            sameJson(receipt.request.identity, input.identity) &&
+            receipt.request_digest === canonicalJsonDigest(input) &&
+            receipt.request_digest === canonicalJsonDigest(receipt.request),
+          'initial Source continuation retry differs from its immutable receipt',
+        );
+        return receipt;
+      };
+      const existing = lookup();
+      if (existing) {
+        this.#read(input.identity);
+        return snapshotInitialSourceContinuationReceipt(existing);
+      }
+
+      const before = this.#read(input.identity);
+      this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+      matchesExpected(before.workVersion, input.expectedWork);
+      matchesExpected(before.ledgerVersion, input.expectedLedger);
+      const work = before.work,
+        ledger = before.ledger;
+      requireState(
+        work !== null && ledger !== null && before.workVersion !== null && before.ledgerVersion !== null,
+        'initial Source continuation Work or Ledger is unavailable',
+      );
+      const row = this.#database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null;
+      requireState(
+        row !== null &&
+          row.revision === input.expectedJournal.revision &&
+          row.digest === input.expectedJournal.digest &&
+          row.payload === canonicalJson(JSON.parse(row.payload)) &&
+          canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+        'initial Source continuation Journal CAS or checksum changed',
+      );
+      const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
+      requireState(
+        journal.schema === 'MastraSessionLedger/v1' &&
+          journal.workspace_id === this.#workspaceId &&
+          journal.work_id === input.identity.work_id &&
+          journal.attempt === input.attempt &&
+          journal.run_id === work.execution.run_id,
+        'initial Source continuation Journal identity differs',
+      );
+      const state: InitialSourceContinuationState = Object.freeze({
+        work: snapshot(work),
+        ledger: snapshot(ledger),
+        journal: snapshot(journal),
+        workVersion: snapshot(before.workVersion),
+        ledgerVersion: snapshot(before.ledgerVersion),
+        journalVersion: snapshot({ revision: row.revision, digest: row.digest }),
+        maintenanceGeneration: before.maintenanceGeneration,
+      });
+      const repositoryRoot = this.#repositoryRoot;
+      requireState(typeof repositoryRoot === 'string', 'initial Source continuation repository root is unavailable');
+      const config = loadRuntimeConfig(repositoryRoot);
+      requireState(
+        runtimeConfigDigest(config) === input.configDigest && work.binding.config_digest === input.configDigest,
+        'initial Source continuation configuration changed',
+      );
+      const project = loadProjectSetContext(
+        repositoryRoot,
+        config,
+        input.identity.repository_id,
+        input.identity.project_ids,
+      );
+      requireState(
+        project.repository_id === input.identity.repository_id &&
+          sameJson(project.project_ids, input.identity.project_ids) &&
+          project.integrations_digest === input.identity.integrations_digest,
+        'initial Source continuation ProjectContext identity differs',
+      );
+      const validated = validateInitialSourceContinuationRequest(input, state, config);
+      const verified = snapshot(verifyCurrent(state));
+      requireState(
+        exactJsonKeys(verified, [
+          'configDigest',
+          'currentRuntimeCodeDigest',
+          'currentSourceScope',
+          'sourceAuthorizationReference',
+          'sourceAuthorizationSha256',
+          'intakeReference',
+          'intakeSha256',
+          'priorEngineSnapshot',
+          'currentInitialRequest',
+        ]) &&
+          verified.configDigest === runtimeConfigDigest(config) &&
+          verified.currentRuntimeCodeDigest === validated.currentRuntimeCodeDigest &&
+          sameJson(verified.currentSourceScope, validated.currentSourceScope) &&
+          sameJson(verified.sourceAuthorizationReference, validated.sourceAuthorizationReference) &&
+          verified.sourceAuthorizationSha256 === validated.sourceAuthorizationSha256 &&
+          sameJson(verified.priorEngineSnapshot, validated.priorEngineSnapshot) &&
+          sameJson(verified.currentInitialRequest, validated.currentInitialRequest),
+        'initial Source continuation current proof differs from its request',
+      );
+      const intakeRefs = work.artifacts.filter(
+        (ref) =>
+          ref.artifact_id === 'local-session-intake' &&
+          ref.schema === 'VidaLocalSessionIntake/v1' &&
+          ref.stage_id === 'intake',
+      );
+      requireState(
+        intakeRefs.length === 1 &&
+          sameJson(verified.intakeReference, intakeRefs[0]) &&
+          verified.intakeSha256 === intakeRefs[0]!.sha256 &&
+          hashPattern.test(verified.intakeSha256),
+        'initial Source continuation retained intake path or bytes changed',
+      );
+      requireState(
+        canonicalJsonDigest(parseSessionBridgeRequest(verified.currentInitialRequest)) ===
+          canonicalJsonDigest(validated.currentInitialRequest),
+        'initial Source continuation current readonly action is not canonical',
+      );
+
+      const oldTicket = ledger.tickets.find((ticket) => ticket.ticket_id === work.lease?.ticket_id),
+        oldClaims = ledger.claims.filter(
+          (claim) => claim.ticket_id === oldTicket?.ticket_id && claim.status === 'active',
+        );
+      requireState(
+        oldTicket !== undefined &&
+          oldClaims.length === 1 &&
+          !ledger.claims.some(
+            (claim) =>
+              claim.status === 'active' &&
+              claim.ticket_id !== oldTicket.ticket_id &&
+              claim.resources.some((resource) => oldTicket.active_resources.includes(resource)),
+          ) &&
+          !ledger.tickets.some(
+            (ticket) =>
+              ticket.status === 'queued' &&
+              ticket.sequence < ledger.next_sequence &&
+              ticket.exclusive_resources.some((resource) => oldTicket.exclusive_resources.includes(resource)),
+          ),
+        'initial Source continuation conflicts with a foreign owner or FIFO predecessor',
+      );
+      const now = Date.now(),
+        createdAt = new Date(now).toISOString(),
+        expiresAt = new Date(now + 60 * 60 * 1000).toISOString(),
+        ticketId = 'ticket-' + randomUUID(),
+        claimId = 'claim-' + randomUUID(),
+        oldClaim = oldClaims[0]!,
+        nextTicket = {
+          ...oldTicket,
+          ticket_id: ticketId,
+          source_revision: validated.currentSourceScope.digest,
+          generation: ledger.open_generation,
+          sequence: ledger.next_sequence,
+          claim_ids: [claimId],
+          expires_at: expiresAt,
+          created_at: createdAt,
+        },
+        nextClaim = {
+          ...oldClaim,
+          claim_id: claimId,
+          ticket_id: ticketId,
+          generation: ledger.open_generation,
+          lease_expires_at: expiresAt,
+          created_at: createdAt,
+          renewed_at: createdAt,
+        },
+        nextLedger = checkedLedger({
+          ...ledger,
+          revision: ledger.revision + 1,
+          next_sequence: ledger.next_sequence + 1,
+          tickets: [
+            ...ledger.tickets.map((ticket) =>
+              ticket.ticket_id === oldTicket.ticket_id
+                ? {
+                    ...ticket,
+                    status: 'read_only' as const,
+                    active_resources: [],
+                    blocked_resources: [],
+                    expires_at: null,
+                  }
+                : ticket,
+            ),
+            nextTicket,
+          ],
+          claims: [
+            ...ledger.claims.map((claim) =>
+              claim.claim_id === oldClaim.claim_id ? { ...claim, status: 'recovered' as const } : claim,
+            ),
+            nextClaim,
+          ],
+          rebinds: [
+            ...ledger.rebinds,
+            {
+              schema: 'CoordinationScopeRebind/v1',
+              rebind_id: 'rebind-' + randomUUID(),
+              work_id: input.identity.work_id,
+              previous_ticket_id: oldTicket.ticket_id,
+              previous_source_revision: oldTicket.source_revision,
+              ticket_id: ticketId,
+              thread_id: input.nativeSessionHandle,
+              source_revision: validated.currentSourceScope.digest,
+              resources: [...oldClaim.resources],
+              claimed_resources: [...oldClaim.resources],
+              retired_claim_ids: [oldClaim.claim_id],
+              reason: 'expired same-owner initial Source continuation',
+              decided_by: input.nativeSessionHandle,
+              decision_pointer: validated.sourceAuthorizationReference.path,
+              from_ledger_revision: ledger.revision,
+              to_ledger_revision: ledger.revision + 1,
+              created_at: createdAt,
+            },
+          ],
+        });
+      const successorJournal: MastraSessionLedgerState = {
+        ...journal,
+        source_scope: validated.currentSourceScope,
+        items: [{ ...journal.items[0]!, request: validated.currentInitialRequest }],
+      };
+      const successorWorkRaw = {
+        ...work,
+        revision: work.revision + 1,
+        lease: { ticket_id: ticketId, thread_id: input.nativeSessionHandle, generation: ledger.open_generation },
+        binding: {
+          ...work.binding,
+          work_source_revision: validated.currentSourceScope.digest,
+          runtime_code_digest: validated.currentRuntimeCodeDigest,
+          runtime_source_revision: validated.currentRuntimeCodeDigest,
+        },
+        lifecycle: {
+          ...work.lifecycle,
+          revision: work.revision + 1,
+          source_revision: validated.currentSourceScope.digest,
+          config_binding: { ...work.lifecycle.config_binding, runtime_code_digest: validated.currentRuntimeCodeDigest },
+        },
+      };
+      const workVersion = version(successorWorkRaw)!,
+        ledgerVersion = version(nextLedger)!,
+        journalVersion = { revision: row.revision + 1, digest: canonicalJsonDigest(successorJournal) },
+        receipt: InitialSourceContinuationReceipt = {
+          schema: 'InitialSourceContinuationReceipt/v1',
+          continuation_id: canonicalJsonDigest({
+            schema: 'InitialSourceContinuation/v1',
+            identity: input.identity,
+            attempt: input.attempt,
+            request_digest: canonicalJsonDigest(validated),
+            action_id: validated.currentInitialRequest.action_id,
+          }),
+          request_digest: canonicalJsonDigest(validated),
+          request: validated,
+          prior_work: work,
+          prior_ledger: ledger,
+          prior_journal: journal,
+          prior_work_version: before.workVersion,
+          prior_ledger_version: before.ledgerVersion,
+          prior_journal_version: state.journalVersion,
+          successor_work: successorWorkRaw as WorkState,
+          successor_ledger: nextLedger,
+          successor_journal: successorJournal,
+          work_version: workVersion,
+          ledger_version: ledgerVersion,
+          journal_version: journalVersion,
+          rights_granted: false,
+          accepted_result: false,
+          runtime_acceptance: false,
+          status: 'initial_request_ready',
+        };
+      const verifiedAgain = snapshot(verifyCurrent(state));
+      requireState(
+        sameJson(verifiedAgain, verified),
+        'Source, runtime package, permission or initial engine proof changed during Host CAS',
+      );
+      validateInitialSourceContinuationReceipt(receipt);
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_initial_source_continuation (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt))',
+      );
+      const encoded = initialSourceContinuationRecord(receipt);
+      this.#database
+        .query('INSERT INTO agent_host_initial_source_continuation VALUES(?,?,?,?,?)')
+        .run(this.#workspaceId, input.identity.work_id, input.attempt, encoded.payload, encoded.digest);
+      const successorWork = this.#checkedWork(successorWorkRaw);
+      validatePair(successorWork, nextLedger);
+      validateProgress(
+        before,
+        {
+          ...successorWork,
+          binding: work.binding,
+          lifecycle: {
+            ...successorWork.lifecycle,
+            source_revision: work.lifecycle.source_revision,
+            config_binding: work.lifecycle.config_binding,
+          },
+        },
+        nextLedger,
+        undefined,
+        [],
+        this.#admissionHistory(successorWork).references,
+      );
+      for (const [kind, id, value, expected] of [
+        ['work', identityKey(input.identity), successorWork, input.expectedWork],
+        ['ledger', 'shared', nextLedger, input.expectedLedger],
+      ] as const) {
+        const changed = this.#database
+          .query(
+            'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+          )
+          .run(
+            value.revision,
+            canonicalJson(value),
+            canonicalJsonDigest(value),
+            this.#workspaceId,
+            kind,
+            id,
+            expected.revision,
+            expected.digest,
+          );
+        requireState(changed.changes === 1, 'initial Source continuation Host CAS conflict');
+      }
+      const journalChanged = this.#database
+        .query(
+          'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+        )
+        .run(
+          journalVersion.revision,
+          canonicalJson(successorJournal),
+          journalVersion.digest,
+          this.#workspaceId,
+          input.identity.work_id,
+          input.attempt,
+          input.expectedJournal.revision,
+          input.expectedJournal.digest,
+        );
+      requireState(journalChanged.changes === 1, 'initial Source continuation Journal CAS conflict');
+      this.#onReconciledWorkWrite(input.identity, before.workVersion, workVersion);
+      const saved = this.#read(input.identity);
+      requireState(
+        sameJson(saved.workVersion, workVersion) &&
+          sameJson(saved.ledgerVersion, ledgerVersion) &&
+          sameJson(saved.work, successorWork),
+        'initial Source continuation did not persist its exact successor state',
+      );
+      return snapshotInitialSourceContinuationReceipt(receipt);
+    }).immediate();
+  }
   async continueDeliveredWork(request: DeliveredWorkContinuationRequest): Promise<DeliveredWorkContinuationResult> {
     requireState(this.#verifyDeliveredWorkContinuation, 'trusted delivered-work continuation verifier required');
     const contract = await import('./orchestration/delivered-work-continuation.js'),
@@ -8669,7 +10058,8 @@ export class HostStateStore {
       action = input.action,
       proofBinding = contract.deliveredContinuationProofBinding(input.sourceTransition);
     requireState(
-      proofBinding.maintenance_generation === undefined || input.expectedMaintenanceGeneration === proofBinding.maintenance_generation,
+      proofBinding.maintenance_generation === undefined ||
+        input.expectedMaintenanceGeneration === proofBinding.maintenance_generation,
       'delivered continuation maintenance fence differs',
     );
     const actionId = action.kind === 'historical_terminal_review' ? action.capture.action_id : action.request.action_id,
@@ -8692,12 +10082,13 @@ export class HostStateStore {
           canonicalJsonDigest(receipt) === row.digest &&
             receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
             receipt.request_digest === canonicalJsonDigest(input) &&
-            receipt.continuation_id === canonicalJsonDigest({
-              identity: input.identity,
-              attempt: input.attempt,
-              action_id: actionId,
-              transition_digest: input.sourceTransition.transition_digest,
-            }),
+            receipt.continuation_id ===
+              canonicalJsonDigest({
+                identity: input.identity,
+                attempt: input.attempt,
+                action_id: actionId,
+                transition_digest: input.sourceTransition.transition_digest,
+              }),
           'delivered-work continuation exact retry differs from its retained receipt',
         );
         return receipt;
@@ -8705,7 +10096,12 @@ export class HostStateStore {
       existing = lookupExisting();
     if (existing) {
       const current = this.readHostStateSnapshot(input.identity);
-      return Object.freeze({ status: 'already_continued', snapshot: current, receipt: snapshot(existing), action: null });
+      return Object.freeze({
+        status: 'already_continued',
+        snapshot: current,
+        receipt: snapshot(existing),
+        action: null,
+      });
     }
 
     const inspect = (
@@ -8719,101 +10115,153 @@ export class HostStateStore {
         selected = actionId;
       let projectedFrontier: { engine: SessionBridgeSnapshot; requests: readonly SessionBridgeRequest[] } | undefined;
       if (action.kind === 'configured_frontier') {
-        requireState(work && ledger && current.workVersion && current.ledgerVersion && journal && journalVersion &&
-          sameJson(current.workVersion, input.expectedWork) && sameJson(current.ledgerVersion, input.expectedLedger) &&
-          sameJson(journalVersion, input.expectedJournal) && sameJson(workIdentity(work), input.identity) &&
-          work.execution.status === 'suspended' && ['implementation', 'awaiting_followup'].includes(work.execution.phase) && work.lease === null &&
-          work.lifecycle.phase === 'INTAKE' && work.lifecycle.seal === null &&
-          work.lifecycle.assurance.review_generation === 0 && work.lifecycle.assurance.delivery_cycle_id === null &&
-          work.binding.config_digest === input.priorConfigDigest && work.binding.runtime_code_digest === input.priorRuntimeCodeDigest &&
-          work.binding.work_source_revision === journal.source_scope?.digest && work.execution.run_id === journal.run_id &&
-          proofBinding.workspace_id === this.#workspaceId &&
-          sameJson(proofBinding.project_ids, input.identity.project_ids) &&
-          work.execution.assignment_attempts.every(entry => ['completed', 'no_effect'].includes(entry.status)),
-        'original unissued frontier Work, Journal or owner differs');
+        requireState(
+          work &&
+            ledger &&
+            current.workVersion &&
+            current.ledgerVersion &&
+            journal &&
+            journalVersion &&
+            sameJson(current.workVersion, input.expectedWork) &&
+            sameJson(current.ledgerVersion, input.expectedLedger) &&
+            sameJson(journalVersion, input.expectedJournal) &&
+            sameJson(workIdentity(work), input.identity) &&
+            work.execution.status === 'suspended' &&
+            ['implementation', 'awaiting_followup'].includes(work.execution.phase) &&
+            work.lease === null &&
+            work.lifecycle.phase === 'INTAKE' &&
+            work.lifecycle.seal === null &&
+            work.lifecycle.assurance.review_generation === 0 &&
+            work.lifecycle.assurance.delivery_cycle_id === null &&
+            work.binding.config_digest === input.priorConfigDigest &&
+            work.binding.runtime_code_digest === input.priorRuntimeCodeDigest &&
+            work.binding.work_source_revision === journal.source_scope?.digest &&
+            work.execution.run_id === journal.run_id &&
+            proofBinding.workspace_id === this.#workspaceId &&
+            sameJson(proofBinding.project_ids, input.identity.project_ids) &&
+            work.execution.assignment_attempts.every((entry) => ['completed', 'no_effect'].includes(entry.status)),
+          'original unissued frontier Work, Journal or owner differs',
+        );
         if (input.sourceTransition.status === 'closed_config_rebind_proven')
           contract.validateContinuationSourceChangePaths(work, input.authorizedSourceChanges);
-        const binding = this.#configuredFrontierRepairBinding({ prior_work: work, request: input, attempt: input.attempt });
-        const engine = readRetainedUnissuedSessionEngineSnapshot({
-          ...binding, context: { ...binding.context, scope_digest: work.binding.work_source_revision }, runId: work.execution.run_id!,
-        }, { work, journal });
-        requireState(sameJson(contract.projectConfiguredFrontierContinuationAction({ engine, journal,
-          targetConfigDigest: input.targetConfigDigest, currentSourceScope: input.currentSourceScope }), action),
-        'unissued frontier action differs from its actual retained engine');
-        projectedFrontier = { engine, requests: projectConfiguredPrewriterContinuationRequests({
-          ...binding, engine, journal, currentSourceScope: input.currentSourceScope, lifecycleRisk: work.lifecycle.risk,
-        }) };
+        const binding = this.#configuredFrontierRepairBinding({
+          prior_work: work,
+          request: input,
+          attempt: input.attempt,
+        });
+        const engine = readRetainedUnissuedSessionEngineSnapshot(
+          {
+            ...binding,
+            context: { ...binding.context, scope_digest: work.binding.work_source_revision },
+            runId: work.execution.run_id!,
+          },
+          { work, journal },
+        );
+        requireState(
+          sameJson(
+            contract.projectConfiguredFrontierContinuationAction({
+              engine,
+              journal,
+              targetConfigDigest: input.targetConfigDigest,
+              currentSourceScope: input.currentSourceScope,
+            }),
+            action,
+          ),
+          'unissued frontier action differs from its actual retained engine',
+        );
+        projectedFrontier = {
+          engine,
+          requests: projectConfiguredPrewriterContinuationRequests({
+            ...binding,
+            engine,
+            journal,
+            currentSourceScope: input.currentSourceScope,
+            lifecycleRisk: work.lifecycle.risk,
+          }),
+        };
       } else {
-      requireState(
-        work && ledger && current.workVersion && current.ledgerVersion && capture && journal && journalVersion &&
-          sameJson(current.workVersion, input.expectedWork) &&
-          sameJson(current.ledgerVersion, input.expectedLedger) &&
-          sameJson(journalVersion, input.expectedJournal) &&
-          sameJson(capture.work_version, input.expectedWork) &&
-          sameJson(capture.ledger_version, input.expectedLedger) &&
-          sameJson(capture.journal_version, input.expectedJournal) &&
-          sameJson(workIdentity(work), input.identity) &&
-          work.execution.status === 'suspended' &&
-          work.execution.phase === 'awaiting_followup' &&
-          work.lease === null &&
-          work.lifecycle.phase === 'INTAKE' &&
-          work.lifecycle.seal === null &&
-          work.lifecycle.assurance.review_generation === 0 &&
-          work.lifecycle.assurance.delivery_cycle_id === null &&
-          work.lifecycle.next_action ===
-            'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' &&
-          work.binding.config_digest === input.priorConfigDigest &&
-          work.binding.runtime_code_digest === input.priorRuntimeCodeDigest &&
-          input.sourceTransition.status === 'closed_config_transition_proven' &&
-          proofBinding.workspace_id === this.#workspaceId &&
-          input.sourceTransition.transition.fence.binding.operation_id === input.forwardOperationId &&
-          sameJson(proofBinding.project_ids, input.identity.project_ids) &&
-          work.binding.work_source_revision === journal.source_scope?.digest &&
-          work.execution.run_id === journal.run_id &&
-          !work.execution.assignment_attempts.some((attempt) => attempt.status === 'started' || attempt.status === 'uncertain') &&
-          capture.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
-          capture.identity.work_id === input.identity.work_id &&
-          capture.attempt === input.attempt &&
-          capture.action_id === selected &&
-          capture.terminal_status === 'known_terminal_unaccepted' &&
-          capture.task_status === 'unfinished' &&
-          capture.accepted_result === false &&
-          capture.rights_granted === false &&
-          capture.runtime_acceptance === false &&
-          capture.request.native_session_handle === input.nativeSessionHandle &&
-          capture.request.user_request_pointer === input.originalRequestPointer &&
-          capture.body_byte_length > 0 &&
-          Buffer.from(capture.body_base64, 'base64').byteLength === capture.body_byte_length &&
-          createHash('sha256').update(Buffer.from(capture.body_base64, 'base64')).digest('hex') === capture.body_sha256 &&
-          actionId === action.capture.action_id &&
-          action.capture.issue_id === capture.issue_id &&
-          action.capture.receipt_digest === canonicalJsonDigest(capture) &&
-          action.capture.body_sha256 === capture.body_sha256 &&
-          action.capture.body_ref === capture.provenance.body_ref &&
-          action.original_request_pointer === capture.request.user_request_pointer &&
-          journal.schema === 'MastraSessionLedger/v1' &&
-          journal.workspace_id === this.#workspaceId &&
-          journal.work_id === input.identity.work_id &&
-          journal.attempt === input.attempt &&
-          journal.run_id === work.execution.run_id &&
-          journal.source_scope?.digest === work.binding.work_source_revision &&
-          journal.corrective_execution == null &&
-          journal.research_wave_exposure === undefined &&
-          input.action.workflow_id === work.binding.workflow_id &&
-          input.action.request.workflow_id === work.binding.workflow_id &&
-          input.action.request.run_id === work.execution.run_id &&
-          input.action.request.config_digest === input.targetConfigDigest &&
-          input.action.request.scope_digest === input.currentSourceScope.digest &&
-          input.action.request.stage_id === 'validate_parallel' &&
-          input.action.request.role === 'correctness-validator' &&
-          input.action.request.assignment_index === 0 &&
-          input.action.request.corrective_execution === undefined,
-        'original known-terminal work, captured body, owner or current review action changed',
-      );
+        requireState(
+          work &&
+            ledger &&
+            current.workVersion &&
+            current.ledgerVersion &&
+            capture &&
+            journal &&
+            journalVersion &&
+            sameJson(current.workVersion, input.expectedWork) &&
+            sameJson(current.ledgerVersion, input.expectedLedger) &&
+            sameJson(journalVersion, input.expectedJournal) &&
+            sameJson(capture.work_version, input.expectedWork) &&
+            sameJson(capture.ledger_version, input.expectedLedger) &&
+            sameJson(capture.journal_version, input.expectedJournal) &&
+            sameJson(workIdentity(work), input.identity) &&
+            work.execution.status === 'suspended' &&
+            work.execution.phase === 'awaiting_followup' &&
+            work.lease === null &&
+            work.lifecycle.phase === 'INTAKE' &&
+            work.lifecycle.seal === null &&
+            work.lifecycle.assurance.review_generation === 0 &&
+            work.lifecycle.assurance.delivery_cycle_id === null &&
+            work.lifecycle.next_action ===
+              'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' &&
+            work.binding.config_digest === input.priorConfigDigest &&
+            work.binding.runtime_code_digest === input.priorRuntimeCodeDigest &&
+            input.sourceTransition.status === 'closed_config_transition_proven' &&
+            proofBinding.workspace_id === this.#workspaceId &&
+            input.sourceTransition.transition.fence.binding.operation_id === input.forwardOperationId &&
+            sameJson(proofBinding.project_ids, input.identity.project_ids) &&
+            work.binding.work_source_revision === journal.source_scope?.digest &&
+            work.execution.run_id === journal.run_id &&
+            !work.execution.assignment_attempts.some(
+              (attempt) => attempt.status === 'started' || attempt.status === 'uncertain',
+            ) &&
+            capture.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
+            capture.identity.work_id === input.identity.work_id &&
+            capture.attempt === input.attempt &&
+            capture.action_id === selected &&
+            capture.terminal_status === 'known_terminal_unaccepted' &&
+            capture.task_status === 'unfinished' &&
+            capture.accepted_result === false &&
+            capture.rights_granted === false &&
+            capture.runtime_acceptance === false &&
+            capture.request.native_session_handle === input.nativeSessionHandle &&
+            capture.request.user_request_pointer === input.originalRequestPointer &&
+            capture.body_byte_length > 0 &&
+            Buffer.from(capture.body_base64, 'base64').byteLength === capture.body_byte_length &&
+            createHash('sha256').update(Buffer.from(capture.body_base64, 'base64')).digest('hex') ===
+              capture.body_sha256 &&
+            actionId === action.capture.action_id &&
+            action.capture.issue_id === capture.issue_id &&
+            action.capture.receipt_digest === canonicalJsonDigest(capture) &&
+            action.capture.body_sha256 === capture.body_sha256 &&
+            action.capture.body_ref === capture.provenance.body_ref &&
+            action.original_request_pointer === capture.request.user_request_pointer &&
+            journal.schema === 'MastraSessionLedger/v1' &&
+            journal.workspace_id === this.#workspaceId &&
+            journal.work_id === input.identity.work_id &&
+            journal.attempt === input.attempt &&
+            journal.run_id === work.execution.run_id &&
+            journal.source_scope?.digest === work.binding.work_source_revision &&
+            journal.corrective_execution == null &&
+            journal.research_wave_exposure === undefined &&
+            input.action.workflow_id === work.binding.workflow_id &&
+            input.action.request.workflow_id === work.binding.workflow_id &&
+            input.action.request.run_id === work.execution.run_id &&
+            input.action.request.config_digest === input.targetConfigDigest &&
+            input.action.request.scope_digest === input.currentSourceScope.digest &&
+            input.action.request.stage_id === 'validate_parallel' &&
+            input.action.request.role === 'correctness-validator' &&
+            input.action.request.assignment_index === 0 &&
+            input.action.request.corrective_execution === undefined,
+          'original known-terminal work, captured body, owner or current review action changed',
+        );
       }
       requireState(work && ledger && journal, 'original continuation state is missing');
       requireState(
-        sameJson(input.currentSourceScope.entries.map((entry) => entry.path), [...work.lifecycle.scope.allowed_paths].sort()) &&
+        sameJson(
+          input.currentSourceScope.entries.map((entry) => entry.path),
+          [...work.lifecycle.scope.allowed_paths].sort(),
+        ) &&
           sameJson(
             contract.validateCurrentSourceScopeBridge({
               original: journal.source_scope!,
@@ -8833,7 +10281,12 @@ export class HostStateStore {
       );
       requireState(!unresolved, 'issued or reserved action has an unresolved outcome and cannot be reissued');
       if (action.kind === 'configured_frontier') {
-        contract.validateConfiguredFrontierOwnerRelease({ work, ledger, identity: input.identity, nativeSessionHandle: input.nativeSessionHandle });
+        contract.validateConfiguredFrontierOwnerRelease({
+          work,
+          ledger,
+          identity: input.identity,
+          nativeSessionHandle: input.nativeSessionHandle,
+        });
       } else {
         const release = ledger.operations.at(-1),
           priorTicket = release && ledger.tickets.find((entry) => entry.ticket_id === release.ticket_id),
@@ -8859,7 +10312,9 @@ export class HostStateStore {
             release.thread_id === input.nativeSessionHandle &&
             release.source_revision === work.binding.work_source_revision &&
             release.decision_pointer === input.originalRequestPointer &&
-            capture !== null && validGateVersion(capture.request.expected_ledger) && release.from_ledger_revision === capture.request.expected_ledger.revision &&
+            capture !== null &&
+            validGateVersion(capture.request.expected_ledger) &&
+            release.from_ledger_revision === capture.request.expected_ledger.revision &&
             release.to_ledger_revision === input.expectedLedger.revision &&
             !ledger.tickets.some(
               (ticket) =>
@@ -8874,9 +10329,14 @@ export class HostStateStore {
     };
 
     const first = this.readHostStateSnapshot(input.identity),
-      capture = action.kind === 'historical_terminal_review' ? this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId) : null,
+      capture =
+        action.kind === 'historical_terminal_review'
+          ? this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId)
+          : null,
       journalRow = this.#database
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
         revision: number;
         payload: string;
@@ -8910,9 +10370,14 @@ export class HostStateStore {
       this.#assertReconciliationWritesAllowed();
       this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
       const current = this.#read(input.identity),
-        currentCapture = action.kind === 'historical_terminal_review' ? this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId) : null,
+        currentCapture =
+          action.kind === 'historical_terminal_review'
+            ? this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId)
+            : null,
         currentJournalRow = this.#database
-          .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
           .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
           revision: number;
           payload: string;
@@ -8925,20 +10390,38 @@ export class HostStateStore {
       const projectedFrontier = inspect(current, currentCapture, currentJournal, currentJournalVersion);
       const work = current.work!,
         ledger = current.ledger!,
-        priorTicket = action.kind === 'configured_frontier'
-          ? contract.validateConfiguredFrontierOwnerRelease({ work, ledger, identity: input.identity, nativeSessionHandle: input.nativeSessionHandle }).ticket
-          : ledger.tickets.find((ticket) => ticket.status === 'released' && ticket.thread_id === input.nativeSessionHandle && ticket.source_revision === work.binding.work_source_revision && ticket.exclusive_resources.length === 1 && ticket.exclusive_resources[0] === 'execution:' + input.identity.work_id)!,
-        priorClaim = ledger.claims.find((claim) => claim.ticket_id === priorTicket.ticket_id && claim.status === 'released')!,
+        priorTicket =
+          action.kind === 'configured_frontier'
+            ? contract.validateConfiguredFrontierOwnerRelease({
+                work,
+                ledger,
+                identity: input.identity,
+                nativeSessionHandle: input.nativeSessionHandle,
+              }).ticket
+            : ledger.tickets.find(
+                (ticket) =>
+                  ticket.status === 'released' &&
+                  ticket.thread_id === input.nativeSessionHandle &&
+                  ticket.source_revision === work.binding.work_source_revision &&
+                  ticket.exclusive_resources.length === 1 &&
+                  ticket.exclusive_resources[0] === 'execution:' + input.identity.work_id,
+              )!,
+        priorClaim = ledger.claims.find(
+          (claim) => claim.ticket_id === priorTicket.ticket_id && claim.status === 'released',
+        )!,
         sequence = ledger.next_sequence,
         generation = ledger.open_generation,
-        ticketId = 'ticket-' + canonicalJsonDigest({
-          identity: input.identity,
-          nativeSessionHandle: input.nativeSessionHandle,
-          sequence,
-          generation,
-          continuation: input.sourceTransition.transition_digest,
-        }).slice(0, 40),
-        claimId = 'claim-' + canonicalJsonDigest({ ticket_id: ticketId, source: input.currentSourceScope.digest }).slice(0, 40),
+        ticketId =
+          'ticket-' +
+          canonicalJsonDigest({
+            identity: input.identity,
+            nativeSessionHandle: input.nativeSessionHandle,
+            sequence,
+            generation,
+            continuation: input.sourceTransition.transition_digest,
+          }).slice(0, 40),
+        claimId =
+          'claim-' + canonicalJsonDigest({ ticket_id: ticketId, source: input.currentSourceScope.digest }).slice(0, 40),
         now = new Date().toISOString(),
         expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(),
         resources = [...priorTicket.exclusive_resources],
@@ -8985,13 +10468,19 @@ export class HostStateStore {
           ...currentJournal!,
           step_id: projectedFrontier ? projectedFrontier.engine.step_id : input.action.request.stage_id,
           source_scope: input.currentSourceScope,
-          items: (projectedFrontier ? projectedFrontier.requests : [input.action.request]).map(request => ({ request, issue_id: null, observation: null })),
-          completed: projectedFrontier ? currentJournal!.completed : [
-            ...currentJournal!.completed,
-            ...(currentJournal!.items.length > 0 && currentJournal!.step_id
-              ? [{ step_id: currentJournal!.step_id, items: currentJournal!.items }]
-              : []),
-          ],
+          items: (projectedFrontier ? projectedFrontier.requests : [input.action.request]).map((request) => ({
+            request,
+            issue_id: null,
+            observation: null,
+          })),
+          completed: projectedFrontier
+            ? currentJournal!.completed
+            : [
+                ...currentJournal!.completed,
+                ...(currentJournal!.items.length > 0 && currentJournal!.step_id
+                  ? [{ step_id: currentJournal!.step_id, items: currentJournal!.items }]
+                  : []),
+              ],
         },
         nextWork: WorkState = {
           ...work,
@@ -9003,8 +10492,12 @@ export class HostStateStore {
             ...work.lifecycle,
             revision: work.revision + 1,
             source_revision: input.currentSourceScope.digest,
-            ...(!projectedFrontier ? { next_action:
-              'Review the retained known-terminal body against the current Source/configuration; the body remains unaccepted and the work remains unfinished.' } : {}),
+            ...(!projectedFrontier
+              ? {
+                  next_action:
+                    'Review the retained known-terminal body against the current Source/configuration; the body remains unaccepted and the work remains unfinished.',
+                }
+              : {}),
             config_binding: {
               config_digest: input.targetConfigDigest,
               schema_digest: input.targetSchemaDigest,
@@ -9047,10 +10540,15 @@ export class HostStateStore {
         prior_work_version: priorWorkVersion,
         prior_ledger_version: priorLedgerVersion,
         prior_journal_version: currentJournalVersion!,
-        ...(projectedFrontier ? { historical_capture: null, frontier_snapshot: {
-          snapshot_bytes_base64: Buffer.from(canonicalJson(projectedFrontier.engine)).toString('base64'),
-          snapshot_sha256: createHash('sha256').update(canonicalJson(projectedFrontier.engine)).digest('hex'),
-        } } : { historical_capture: currentCapture! }),
+        ...(projectedFrontier
+          ? {
+              historical_capture: null,
+              frontier_snapshot: {
+                snapshot_bytes_base64: Buffer.from(canonicalJson(projectedFrontier.engine)).toString('base64'),
+                snapshot_sha256: createHash('sha256').update(canonicalJson(projectedFrontier.engine)).digest('hex'),
+              },
+            }
+          : { historical_capture: currentCapture! }),
         successor_work: nextWork,
         successor_ledger: nextLedger,
         successor_binding: nextBinding,
@@ -9087,7 +10585,9 @@ export class HostStateStore {
         ['ledger', 'shared', nextLedger, priorLedgerVersion],
       ] as const) {
         const changed = this.#database
-          .query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?')
+          .query(
+            'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+          )
           .run(
             value.revision,
             canonicalJson(value),
@@ -9101,7 +10601,9 @@ export class HostStateStore {
         requireState(changed.changes === 1, `delivered-work ${kind} CAS conflict`);
       }
       const journalChanged = this.#database
-        .query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?')
+        .query(
+          'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+        )
         .run(
           journalVersion.revision,
           canonicalJson(nextJournal),
@@ -9121,43 +10623,88 @@ export class HostStateStore {
           canonicalJsonDigest(nextJournal) === journalVersion.digest,
         'delivered-work continuation did not persist its exact successor state',
       );
-      return Object.freeze({ status: 'continued' as const, snapshot: saved, receipt: snapshot(receipt), action: snapshot(input.action) });
+      return Object.freeze({
+        status: 'continued' as const,
+        snapshot: saved,
+        receipt: snapshot(receipt),
+        action: snapshot(input.action),
+      });
     }).immediate();
   }
   #configuredFrontierRepairBinding(receipt: Pick<ConfiguredFrontierReceipt, 'prior_work' | 'request' | 'attempt'>) {
     requireState(this.#repositoryRoot, 'configured-frontier repair requires the configured repository root');
-    const root = this.#repositoryRoot, config = loadRuntimeConfig(root), original = receipt.prior_work,
+    const root = this.#repositoryRoot,
+      config = loadRuntimeConfig(root),
+      original = receipt.prior_work,
       identity = receipt.request.identity;
     const project = loadProjectSetContext(root, config, identity.repository_id, identity.project_ids);
-    requireState(runtimeConfigDigest(config) === receipt.request.targetConfigDigest &&
-      project.integrations_digest === identity.integrations_digest &&
-      sameJson(project.project_ids, identity.project_ids), 'configured-frontier repair current configuration or project differs');
-    const intakes = original.artifacts.filter(entry => entry.artifact_id === 'local-session-intake' && entry.schema === 'VidaLocalSessionIntake/v1');
+    requireState(
+      runtimeConfigDigest(config) === receipt.request.targetConfigDigest &&
+        project.integrations_digest === identity.integrations_digest &&
+        sameJson(project.project_ids, identity.project_ids),
+      'configured-frontier repair current configuration or project differs',
+    );
+    const intakes = original.artifacts.filter(
+      (entry) => entry.artifact_id === 'local-session-intake' && entry.schema === 'VidaLocalSessionIntake/v1',
+    );
     requireState(intakes.length === 1, 'configured-frontier repair requires the original accepted intake');
-    const reference = intakes[0]!, bytes = requireSafeRepositoryAccess(root).readBytes(reference.path, 'configured-frontier accepted intake');
-    requireState(bytes.length <= 32768 && createHash('sha256').update(bytes).digest('hex') === reference.sha256,
-      'configured-frontier repair original intake bytes differ');
+    const reference = intakes[0]!,
+      bytes = requireSafeRepositoryAccess(root).readBytes(reference.path, 'configured-frontier accepted intake');
+    requireState(
+      bytes.length <= 32768 && createHash('sha256').update(bytes).digest('hex') === reference.sha256,
+      'configured-frontier repair original intake bytes differ',
+    );
     const intake = JSON.parse(bytes.toString('utf8')) as {
-      schema: string; native_session_handle: string; risk: string;
-      work_item: { schema: string; id: string; canonical_kind: WorkItemSelection['kind']; intent: WorkItemSelection['intent']; project_id: string; risk_flags: string[]; labels: string[] };
-    }, item = intake.work_item;
-    requireState(intake.schema === 'VidaLocalSessionIntake/v1' && item?.schema === 'WorkItem/v1' &&
-      intake.native_session_handle === receipt.request.nativeSessionHandle &&
-      intake.risk === original.lifecycle.risk && item.id === identity.work_id &&
-      identity.project_ids.includes(item.project_id) &&
-      canonicalJsonDigest(item) === original.binding.work_item_digest &&
-      Array.isArray(item.risk_flags) && Array.isArray(item.labels),
-    'configured-frontier repair original task or attribution differs');
+        schema: string;
+        native_session_handle: string;
+        risk: string;
+        work_item: {
+          schema: string;
+          id: string;
+          canonical_kind: WorkItemSelection['kind'];
+          intent: WorkItemSelection['intent'];
+          project_id: string;
+          risk_flags: string[];
+          labels: string[];
+        };
+      },
+      item = intake.work_item;
+    requireState(
+      intake.schema === 'VidaLocalSessionIntake/v1' &&
+        item?.schema === 'WorkItem/v1' &&
+        intake.native_session_handle === receipt.request.nativeSessionHandle &&
+        intake.risk === original.lifecycle.risk &&
+        item.id === identity.work_id &&
+        identity.project_ids.includes(item.project_id) &&
+        canonicalJsonDigest(item) === original.binding.work_item_digest &&
+        Array.isArray(item.risk_flags) &&
+        Array.isArray(item.labels),
+      'configured-frontier repair original task or attribution differs',
+    );
     const selection: WorkItemSelection = {
-      team: original.binding.team_id, kind: item.canonical_kind, intent: item.intent, project: item.project_id,
-      risk_flags: [...item.risk_flags], labels: [...item.labels],
+      team: original.binding.team_id,
+      kind: item.canonical_kind,
+      intent: item.intent,
+      project: item.project_id,
+      risk_flags: [...item.risk_flags],
+      labels: [...item.labels],
     };
-    requireState(selectWorkflow(config, selection).workflow_id === original.binding.workflow_id &&
-      receipt.request.action.workflow_id === original.binding.workflow_id,
-    'configured-frontier repair original workflow differs');
-    return { repositoryRoot: root, config, selection,
-      context: { work_id: identity.work_id, attempt: receipt.attempt, scope_digest: receipt.request.currentSourceScope.digest },
-      workflowId: original.binding.workflow_id };
+    requireState(
+      selectWorkflow(config, selection).workflow_id === original.binding.workflow_id &&
+        receipt.request.action.workflow_id === original.binding.workflow_id,
+      'configured-frontier repair original workflow differs',
+    );
+    return {
+      repositoryRoot: root,
+      config,
+      selection,
+      context: {
+        work_id: identity.work_id,
+        attempt: receipt.attempt,
+        scope_digest: receipt.request.currentSourceScope.digest,
+      },
+      workflowId: original.binding.workflow_id,
+    };
   }
   #inspectDeliveredWorkContinuationRepairInTransaction(
     identity: WorkIdentity,
@@ -9214,49 +10761,67 @@ export class HostStateStore {
     const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState;
     assertCanonicalJsonValue(journal, '$.continuationRepair.journal');
     if (receipt.request.action.kind === 'configured_frontier') {
-      requireState(receipt.historical_capture === null && receipt.frontier_snapshot !== undefined &&
-        receipt.request.action.request.action_id === actionId && receipt.attempt === attempt &&
-        current.work && current.ledger && current.workVersion && current.ledgerVersion &&
-        journalRow.payload === canonicalJson(journal) && journalRow.digest === canonicalJsonDigest(journal),
-      'configured-frontier repair dependency or action identity differs');
+      requireState(
+        receipt.historical_capture === null &&
+          receipt.frontier_snapshot !== undefined &&
+          receipt.request.action.request.action_id === actionId &&
+          receipt.attempt === attempt &&
+          current.work &&
+          current.ledger &&
+          current.workVersion &&
+          current.ledgerVersion &&
+          journalRow.payload === canonicalJson(journal) &&
+          journalRow.digest === canonicalJsonDigest(journal),
+        'configured-frontier repair dependency or action identity differs',
+      );
       validateConfiguredFrontierRepairReceipt({
         receipt: receipt as ConfiguredFrontierReceipt,
-        current: { work: current.work, work_version: current.workVersion, ledger: current.ledger,
-          ledger_version: current.ledgerVersion, journal,
-          journal_version: { revision: journalRow.revision, digest: journalRow.digest } },
+        current: {
+          work: current.work,
+          work_version: current.workVersion,
+          ledger: current.ledger,
+          ledger_version: current.ledgerVersion,
+          journal,
+          journal_version: { revision: journalRow.revision, digest: journalRow.digest },
+        },
         prewriterBinding: this.#configuredFrontierRepairBinding(receipt as ConfiguredFrontierReceipt),
       });
     } else {
-    requireState(
-      journalRow.payload === canonicalJson(journal) &&
-        journalRow.digest === canonicalJsonDigest(journal) &&
-        receipt.request.action.kind === 'historical_terminal_review' &&
-        receipt.request.action.capture.action_id === actionId &&
-        receipt.attempt === attempt &&
-        current.work && current.ledger && current.workVersion && current.ledgerVersion &&
-        sameJson(current.work, receipt.successor_work) &&
-        sameJson(current.ledger, receipt.successor_ledger) &&
-        sameJson(current.workVersion, receipt.work_version) &&
-        sameJson(current.ledgerVersion, receipt.ledger_version) &&
-        journalRow.revision === receipt.journal_version.revision &&
-        journalRow.digest === receipt.journal_version.digest &&
-        sameJson(journal, receipt.successor_journal) &&
-        journal.corrective_execution == null &&
-        journal.research_wave_exposure === undefined &&
-        journal.items.length === 1 &&
-        journal.items[0]?.request.action_id === receipt.request.action.request.action_id &&
-        journal.items[0]?.issue_id === null &&
-        journal.items[0]?.observation === null &&
-        journal.items[0]?.host_reservation === undefined &&
-        journal.items[0]?.research_activation === undefined &&
-        journal.items[0]?.research_normalization === undefined &&
-        receipt.request.action.request.corrective_execution === undefined &&
-        current.work.execution.assignment_attempts.every((attempt) => !['started', 'uncertain'].includes(attempt.status)) &&
-        typeof receipt.request.sourceTransition?.transition_digest === 'string' &&
-        hashPattern.test(receipt.request.sourceTransition.transition_digest) &&
-        receipt.authorization.transition_digest === receipt.request.sourceTransition.transition_digest,
-      'delivered-work continuation repair dependency, transition or unissued action differs',
-    );
+      requireState(
+        journalRow.payload === canonicalJson(journal) &&
+          journalRow.digest === canonicalJsonDigest(journal) &&
+          receipt.request.action.kind === 'historical_terminal_review' &&
+          receipt.request.action.capture.action_id === actionId &&
+          receipt.attempt === attempt &&
+          current.work &&
+          current.ledger &&
+          current.workVersion &&
+          current.ledgerVersion &&
+          sameJson(current.work, receipt.successor_work) &&
+          sameJson(current.ledger, receipt.successor_ledger) &&
+          sameJson(current.workVersion, receipt.work_version) &&
+          sameJson(current.ledgerVersion, receipt.ledger_version) &&
+          journalRow.revision === receipt.journal_version.revision &&
+          journalRow.digest === receipt.journal_version.digest &&
+          sameJson(journal, receipt.successor_journal) &&
+          journal.corrective_execution == null &&
+          journal.research_wave_exposure === undefined &&
+          journal.items.length === 1 &&
+          journal.items[0]?.request.action_id === receipt.request.action.request.action_id &&
+          journal.items[0]?.issue_id === null &&
+          journal.items[0]?.observation === null &&
+          journal.items[0]?.host_reservation === undefined &&
+          journal.items[0]?.research_activation === undefined &&
+          journal.items[0]?.research_normalization === undefined &&
+          receipt.request.action.request.corrective_execution === undefined &&
+          current.work.execution.assignment_attempts.every(
+            (attempt) => !['started', 'uncertain'].includes(attempt.status),
+          ) &&
+          typeof receipt.request.sourceTransition?.transition_digest === 'string' &&
+          hashPattern.test(receipt.request.sourceTransition.transition_digest) &&
+          receipt.authorization.transition_digest === receipt.request.sourceTransition.transition_digest,
+        'delivered-work continuation repair dependency, transition or unissued action differs',
+      );
     }
     return snapshot({
       schema: 'DeliveredWorkContinuationRepairInspection/v1' as const,
@@ -9269,7 +10834,12 @@ export class HostStateStore {
       work_version: current.workVersion,
       ledger: current.ledger,
       ledger_version: current.ledgerVersion,
-      journal: { revision: journalRow.revision, payload: journalRow.payload, digest: journalRow.digest, state: journal },
+      journal: {
+        revision: journalRow.revision,
+        payload: journalRow.payload,
+        digest: journalRow.digest,
+        state: journal,
+      },
       maintenance_generation: current.maintenanceGeneration,
       transition_digest: receipt.request.sourceTransition.transition_digest,
     });
@@ -9290,14 +10860,28 @@ export class HostStateStore {
       { digest, ...body } = plan;
     const matchesRetainedBranch = (): boolean => {
       const receipt = parseStoredRecord(plan.inspection.row.payload, 'delivered-work repair retained receipt');
-      return isPlainRecord(receipt.request) && isPlainRecord(receipt.request.action) &&
-        receipt.request.action.kind === plan.branch;
+      return (
+        isPlainRecord(receipt.request) &&
+        isPlainRecord(receipt.request.action) &&
+        receipt.request.action.kind === plan.branch
+      );
     };
     requireState(
       exactJsonKeys(plan, ['schema', 'branch', 'repair_id', 'actor', 'timestamp', 'inspection', 'digest']) &&
         exactJsonKeys(plan.inspection, [
-          'schema', 'workspace_id', 'identity', 'attempt', 'action_id', 'row', 'work', 'work_version',
-          'ledger', 'ledger_version', 'journal', 'maintenance_generation', 'transition_digest',
+          'schema',
+          'workspace_id',
+          'identity',
+          'attempt',
+          'action_id',
+          'row',
+          'work',
+          'work_version',
+          'ledger',
+          'ledger_version',
+          'journal',
+          'maintenance_generation',
+          'transition_digest',
         ]) &&
         exactJsonKeys(plan.inspection.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) &&
         exactJsonKeys(plan.inspection.row, ['payload', 'before_digest', 'after_digest']) &&
@@ -9307,13 +10891,19 @@ export class HostStateStore {
         plan.schema === 'DeliveredWorkContinuationIntegrityRepairPlan/v1' &&
         ['historical_terminal_review', 'configured_frontier'].includes(plan.branch) &&
         matchesRetainedBranch() &&
-        typeof plan.repair_id === 'string' && /^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.repair_id) &&
-        typeof plan.actor === 'string' && plan.actor.trim().length > 0 && plan.actor === plan.actor.trim() &&
-        plan.actor.length <= 256 && !/\p{Cc}/u.test(plan.actor) &&
+        typeof plan.repair_id === 'string' &&
+        /^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.repair_id) &&
+        typeof plan.actor === 'string' &&
+        plan.actor.trim().length > 0 &&
+        plan.actor === plan.actor.trim() &&
+        plan.actor.length <= 256 &&
+        !/\p{Cc}/u.test(plan.actor) &&
         rfc3339TimestampMilliseconds(plan.timestamp) !== null &&
         plan.inspection?.schema === 'DeliveredWorkContinuationRepairInspection/v1' &&
         plan.inspection.workspace_id === this.#workspaceId &&
-        typeof digest === 'string' && hashPattern.test(digest) && canonicalJsonDigest(body) === digest,
+        typeof digest === 'string' &&
+        hashPattern.test(digest) &&
+        canonicalJsonDigest(body) === digest,
       'delivered-work continuation repair plan is malformed or changed',
     );
     return plan;
@@ -9379,141 +10969,259 @@ export class HostStateStore {
       return snapshot(record);
     }).immediate();
   }
-  applyDeliveredWorkContinuationRepair(value: unknown): { readonly status: 'applied' | 'already_applied'; readonly digest: string } {
+  applyDeliveredWorkContinuationRepair(value: unknown): {
+    readonly status: 'applied' | 'already_applied';
+    readonly digest: string;
+  } {
     const plan = this.#validateDeliveredContinuationRepairPlan(value),
       operationKey = this.#deliveredContinuationRepairOperationKey(plan),
       { identity, attempt, action_id: actionId } = plan.inspection;
     requireState(!this.#database.inTransaction, 'nested delivered-work continuation repair apply forbidden');
     // Persist UNKNOWN in its own transaction before the only row effect. A restart resumes this exact plan.
-    this.#database.transaction(() => {
-      this.#assertNoPendingSessionProducer();
-      const stored = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
-      requireState(stored, 'delivered-work continuation repair reservation is missing');
-      const current = stored.record as OperationReservation;
-      requireState(current.request_digest === plan.digest, 'delivered-work continuation repair plan changed');
-      if (current.status === 'reserved')
+    this.#database
+      .transaction(() => {
+        this.#assertNoPendingSessionProducer();
+        const stored = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
+        requireState(stored, 'delivered-work continuation repair reservation is missing');
+        const current = stored.record as OperationReservation;
+        requireState(current.request_digest === plan.digest, 'delivered-work continuation repair plan changed');
+        if (current.status === 'reserved')
+          this.#governanceWrite(
+            'operation',
+            operationKey,
+            { ...current, status: 'commit_unknown', terminal_revision: 2 },
+            stored,
+          );
+        else
+          requireState(
+            current.status === 'commit_unknown' || current.status === 'applied',
+            'repair operation is terminally denied',
+          );
+      })
+      .immediate();
+    return this.#database
+      .transaction(() => {
+        this.#assertNoPendingSessionProducer();
+        const stored = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
+        requireState(stored, 'delivered-work continuation repair reservation is missing');
+        const operation = stored.record as OperationReservation;
+        requireState(operation.request_digest === plan.digest, 'delivered-work continuation repair plan changed');
+        if (operation.status === 'applied') {
+          const row = this.#database
+            .query(
+              'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+            )
+            .get(this.#workspaceId, identity.work_id, attempt, actionId) as { payload: string; digest: string } | null;
+          const current = this.#read(identity),
+            journal = this.#database
+              .query(
+                'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+              )
+              .get(this.#workspaceId, identity.work_id, attempt) as {
+              revision: number;
+              payload: string;
+              digest: string;
+            } | null;
+          requireState(
+            row &&
+              row.payload === plan.inspection.row.payload &&
+              row.digest === plan.inspection.row.after_digest &&
+              operation.result_digest === canonicalJsonDigest({ payload: row.payload, digest: row.digest }) &&
+              current.work &&
+              current.ledger &&
+              sameJson(current.work, plan.inspection.work) &&
+              sameJson(current.ledger, plan.inspection.ledger) &&
+              sameJson(current.workVersion, plan.inspection.work_version) &&
+              sameJson(current.ledgerVersion, plan.inspection.ledger_version) &&
+              current.maintenanceGeneration === plan.inspection.maintenance_generation &&
+              journal?.revision === plan.inspection.journal.revision &&
+              journal.payload === plan.inspection.journal.payload &&
+              journal.digest === plan.inspection.journal.digest,
+            'applied delivered-work continuation repair afterimage differs',
+          );
+          return { status: 'already_applied' as const, digest: row.digest };
+        }
+        requireState(operation.status === 'commit_unknown', 'delivered-work continuation repair is not UNKNOWN');
+        const current = this.#inspectDeliveredWorkContinuationRepairInTransaction(identity, attempt, actionId);
+        requireState(sameJson(current, plan.inspection), 'delivered-work continuation repair dependency CAS changed');
+        const changed = this.#database
+          .query(
+            'UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=? AND payload=? AND digest=?',
+          )
+          .run(
+            plan.inspection.row.after_digest,
+            this.#workspaceId,
+            identity.work_id,
+            attempt,
+            actionId,
+            plan.inspection.row.payload,
+            plan.inspection.row.before_digest,
+          );
+        requireState(changed.changes === 1, 'delivered-work continuation repair row CAS changed');
+        const after = this.#read(identity);
+        requireState(
+          after.work &&
+            after.ledger &&
+            sameJson(after.work, plan.inspection.work) &&
+            sameJson(after.ledger, plan.inspection.ledger),
+          'delivered-work continuation repair changed linked state',
+        );
+        const resultDigest = canonicalJsonDigest({
+          payload: plan.inspection.row.payload,
+          digest: plan.inspection.row.after_digest,
+        });
         this.#governanceWrite(
           'operation',
           operationKey,
-          { ...current, status: 'commit_unknown', terminal_revision: 2 },
+          { ...operation, status: 'applied', terminal_revision: 3, result_digest: resultDigest },
           stored,
         );
-      else requireState(current.status === 'commit_unknown' || current.status === 'applied', 'repair operation is terminally denied');
-    }).immediate();
-    return this.#database.transaction(() => {
-      this.#assertNoPendingSessionProducer();
-      const stored = this.#governanceRead(deliveredContinuationRepairStore, 'operation', operationKey);
-      requireState(stored, 'delivered-work continuation repair reservation is missing');
-      const operation = stored.record as OperationReservation;
-      requireState(operation.request_digest === plan.digest, 'delivered-work continuation repair plan changed');
-      if (operation.status === 'applied') {
-        const row = this.#database
-          .query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
-          .get(this.#workspaceId, identity.work_id, attempt, actionId) as { payload: string; digest: string } | null;
-        const current = this.#read(identity),
-          journal = this.#database
-            .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
-            .get(this.#workspaceId, identity.work_id, attempt) as { revision: number; payload: string; digest: string } | null;
-        requireState(
-          row && row.payload === plan.inspection.row.payload && row.digest === plan.inspection.row.after_digest &&
-            operation.result_digest === canonicalJsonDigest({ payload: row.payload, digest: row.digest }) &&
-            current.work && current.ledger &&
-            sameJson(current.work, plan.inspection.work) && sameJson(current.ledger, plan.inspection.ledger) &&
-            sameJson(current.workVersion, plan.inspection.work_version) &&
-            sameJson(current.ledgerVersion, plan.inspection.ledger_version) &&
-            current.maintenanceGeneration === plan.inspection.maintenance_generation &&
-            journal?.revision === plan.inspection.journal.revision &&
-            journal.payload === plan.inspection.journal.payload &&
-            journal.digest === plan.inspection.journal.digest,
-          'applied delivered-work continuation repair afterimage differs',
-        );
-        return { status: 'already_applied' as const, digest: row.digest };
-      }
-      requireState(operation.status === 'commit_unknown', 'delivered-work continuation repair is not UNKNOWN');
-      const current = this.#inspectDeliveredWorkContinuationRepairInTransaction(identity, attempt, actionId);
-      requireState(sameJson(current, plan.inspection), 'delivered-work continuation repair dependency CAS changed');
-      const changed = this.#database
-        .query('UPDATE agent_host_delivered_work_continuation SET digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=? AND payload=? AND digest=?')
-        .run(
-          plan.inspection.row.after_digest,
-          this.#workspaceId,
-          identity.work_id,
-          attempt,
-          actionId,
-          plan.inspection.row.payload,
-          plan.inspection.row.before_digest,
-        );
-      requireState(changed.changes === 1, 'delivered-work continuation repair row CAS changed');
-      const after = this.#read(identity);
-      requireState(
-        after.work && after.ledger && sameJson(after.work, plan.inspection.work) && sameJson(after.ledger, plan.inspection.ledger),
-        'delivered-work continuation repair changed linked state',
-      );
-      const resultDigest = canonicalJsonDigest({ payload: plan.inspection.row.payload, digest: plan.inspection.row.after_digest });
-      this.#governanceWrite(
-        'operation',
-        operationKey,
-        { ...operation, status: 'applied', terminal_revision: 3, result_digest: resultDigest },
-        stored,
-      );
-      return { status: 'applied' as const, digest: plan.inspection.row.after_digest };
-    }).immediate();
+        return { status: 'applied' as const, digest: plan.inspection.row.after_digest };
+      })
+      .immediate();
   }
   readFailedPrewriterRecoveryReceipt(identity: WorkIdentity, attempt: number): FailedPrewriterRecoveryReceipt | null {
-    requireState(Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
-      'failed prewriter recovery inspection requires a valid nonnested attempt');
+    requireState(
+      Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
+      'failed prewriter recovery inspection requires a valid nonnested attempt',
+    );
     return this.#database.transaction(() => this.#readFailedPrewriterRecoveryReceipt(identity, attempt)).deferred();
   }
   #readFailedPrewriterRecoveryReceipt(identity: WorkIdentity, attempt: number): FailedPrewriterRecoveryReceipt | null {
-    const table = this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'").get();
+    const table = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'")
+      .get();
     if (!table) return null;
-    const rows = this.#database.query('SELECT payload,digest,recovery_id FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?')
+    const rows = this.#database
+      .query(
+        'SELECT payload,digest,recovery_id FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
       .all(this.#workspaceId, identity.work_id, attempt) as { payload: string; digest: string; recovery_id: string }[];
     requireState(rows.length <= 1, 'failed prewriter recovery identity is ambiguous');
     if (rows.length === 0) return null;
-    const row = rows[0]!, receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
+    const row = rows[0]!,
+      receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
     const encoded = failedPrewriterRecoveryRecord(receipt);
-    requireState(row.payload === encoded.payload && row.digest === encoded.digest &&
-      sameJson(receipt.request.identity, identity) && receipt.request.attempt === attempt &&
-      receipt.request.recovery_id === row.recovery_id, 'failed prewriter recovery row identity or checksum differs');
+    requireState(
+      row.payload === encoded.payload &&
+        row.digest === encoded.digest &&
+        sameJson(receipt.request.identity, identity) &&
+        receipt.request.attempt === attempt &&
+        receipt.request.recovery_id === row.recovery_id,
+      'failed prewriter recovery row identity or checksum differs',
+    );
     validateFailedPrewriterRecoveryReceipt(receipt);
-    const original = this.#database.query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
-      .get(this.#workspaceId, identity.work_id, attempt, receipt.original.request.action.request.action_id) as { payload: string; digest: string } | null;
-    requireState(original?.payload === canonicalJson(receipt.original) && original.digest === receipt.request.original_receipt_digest,
-      'failed prewriter recovery original custody differs');
+    const original = this.#database
+      .query(
+        'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+      )
+      .get(this.#workspaceId, identity.work_id, attempt, receipt.original.request.action.request.action_id) as {
+      payload: string;
+      digest: string;
+    } | null;
+    requireState(
+      original?.payload === canonicalJson(receipt.original) &&
+        original.digest === receipt.request.original_receipt_digest,
+      'failed prewriter recovery original custody differs',
+    );
     return snapshotFailedPrewriterRecoveryReceipt(receipt);
+  }
+  readInitialSourceContinuationReceipt(
+    identity: WorkIdentity,
+    attempt: number,
+  ): InitialSourceContinuationReceipt | null {
+    requireState(
+      Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
+      'initial Source continuation receipt inspection requires a valid nonnested attempt',
+    );
+    return this.#database.transaction(() => this.#readInitialSourceContinuationReceipt(identity, attempt)).deferred();
+  }
+  #readInitialSourceContinuationReceipt(
+    identity: WorkIdentity,
+    attempt: number,
+  ): InitialSourceContinuationReceipt | null {
+    const current = this.#read(identity);
+    if (!current.work) return null;
+    const table = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_initial_source_continuation'")
+      .get();
+    if (!table) return null;
+    const rows = this.#database
+      .query(
+        'SELECT payload,digest,attempt FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .all(this.#workspaceId, identity.work_id, attempt) as { payload: string; digest: string; attempt: number }[];
+    requireState(rows.length <= 1, 'initial Source continuation receipt inspection is ambiguous');
+    if (!rows.length) return null;
+    const row = rows[0]!,
+      receipt = readInitialSourceContinuationRecord(row.payload, row.digest);
+    requireState(
+      row.attempt === attempt &&
+        sameJson(receipt.request.identity, identity) &&
+        sameJson(current.work.binding, receipt.successor_work.binding) &&
+        sameJson(current.work.contracts, receipt.prior_work.contracts) &&
+        current.work.execution.run_id === receipt.prior_work.execution.run_id,
+      'initial Source continuation receipt or current Work lineage differs',
+    );
+    return snapshotInitialSourceContinuationReceipt(receipt);
   }
   readConfiguredFrontierRecoveryView(identity: WorkIdentity, attempt: number): ConfiguredFrontierRecoveryView | null {
     const original = this.readDeliveredWorkContinuationReceipt(identity, attempt);
     if (original?.request.action.kind !== 'configured_frontier') return null;
-    return Object.freeze({ original: original as ConfiguredFrontierReceipt,
-      recovery: this.readFailedPrewriterRecoveryReceipt(identity, attempt) });
+    return Object.freeze({
+      original: original as ConfiguredFrontierReceipt,
+      recovery: this.readFailedPrewriterRecoveryReceipt(identity, attempt),
+    });
   }
 
   /** Read immutable continuation custody after current journal progress; this grants no execution. */
-  readDeliveredWorkContinuationReceipt(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationReceipt | null {
-    requireState(Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
-      'delivered-work receipt inspection requires a valid nonnested attempt');
+  readDeliveredWorkContinuationReceipt(
+    identity: WorkIdentity,
+    attempt: number,
+  ): DeliveredWorkContinuationReceipt | null {
+    requireState(
+      Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
+      'delivered-work receipt inspection requires a valid nonnested attempt',
+    );
     return this.#database.transaction(() => this.#readDeliveredWorkContinuationReceipt(identity, attempt)).deferred();
   }
-  #readDeliveredWorkContinuationReceipt(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationReceipt | null {
+  #readDeliveredWorkContinuationReceipt(
+    identity: WorkIdentity,
+    attempt: number,
+  ): DeliveredWorkContinuationReceipt | null {
     this.#assertNoPendingDeliveredContinuationRepair();
     const current = this.#read(identity);
     if (!current.work) return null;
-    const table = this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'").get();
+    const table = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'")
+      .get();
     if (!table) return null;
-    const rows = this.#database.query('SELECT payload,digest,action_id FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=?')
+    const rows = this.#database
+      .query(
+        'SELECT payload,digest,action_id FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
       .all(this.#workspaceId, identity.work_id, attempt) as { payload: string; digest: string; action_id: string }[];
     requireState(rows.length <= 1, 'delivered-work receipt identity is ambiguous');
     if (rows.length === 0) return null;
-    const row = rows[0]!, receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt,
+    const row = rows[0]!,
+      receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt,
       action = receipt.request.action;
-    requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt) &&
-      sameJson(receipt.request.identity, identity) && receipt.attempt === attempt &&
-      receipt.request_digest === canonicalJsonDigest(receipt.request) &&
-      sameJson(current.work.binding, this.#readFailedPrewriterRecoveryReceipt(identity, attempt)?.successor_work.binding ?? receipt.successor_binding) &&
-      (action.kind === 'configured_frontier' ? action.request.action_id === row.action_id : action.capture.action_id === row.action_id),
-    'delivered-work receipt or current binding differs');
+    requireState(
+      row.payload === canonicalJson(receipt) &&
+        row.digest === canonicalJsonDigest(receipt) &&
+        sameJson(receipt.request.identity, identity) &&
+        receipt.attempt === attempt &&
+        receipt.request_digest === canonicalJsonDigest(receipt.request) &&
+        sameJson(
+          current.work.binding,
+          this.#readFailedPrewriterRecoveryReceipt(identity, attempt)?.successor_work.binding ??
+            receipt.successor_binding,
+        ) &&
+        (action.kind === 'configured_frontier'
+          ? action.request.action_id === row.action_id
+          : action.capture.action_id === row.action_id),
+      'delivered-work receipt or current binding differs',
+    );
     return snapshot(receipt);
   }
   /** Read the current retained review/prewriter wave for this original Work attempt. */
@@ -9546,14 +11254,20 @@ export class HostStateStore {
         ((receipt.request.action.kind === 'historical_terminal_review' &&
           receipt.request.action.capture.action_id === row.action_id &&
           receipt.request.action.request.action_id !== row.action_id) ||
-         (receipt.request.action.kind === 'configured_frontier' &&
-          receipt.request.action.request.action_id === row.action_id)) &&
+          (receipt.request.action.kind === 'configured_frontier' &&
+            receipt.request.action.request.action_id === row.action_id)) &&
         current.work.binding &&
-        sameJson(current.work.binding, this.#readFailedPrewriterRecoveryReceipt(identity, attempt)?.successor_work.binding ?? receipt.successor_binding),
+        sameJson(
+          current.work.binding,
+          this.#readFailedPrewriterRecoveryReceipt(identity, attempt)?.successor_work.binding ??
+            receipt.successor_binding,
+        ),
       'delivered-work continuation lookup receipt or current Work binding differs',
     );
-    const recovery = receipt.request.action.kind === 'configured_frontier'
-      ? this.#readFailedPrewriterRecoveryReceipt(identity, attempt) : null;
+    const recovery =
+      receipt.request.action.kind === 'configured_frontier'
+        ? this.#readFailedPrewriterRecoveryReceipt(identity, attempt)
+        : null;
     const currentSourceScope = recovery?.request.currentSourceScope ?? receipt.request.currentSourceScope;
     const work = current.work!,
       ledger = current.ledger,
@@ -9561,9 +11275,10 @@ export class HostStateStore {
       executionResource = `execution:${identity.work_id}`,
       ticket = lease && ledger?.tickets.find((entry) => entry.ticket_id === lease.ticket_id),
       claims = ticket && ledger ? ledger.claims.filter((entry) => entry.ticket_id === ticket.ticket_id) : [],
-      resources = receipt.request.action.kind === 'configured_frontier'
-        ? [executionResource, ...receipt.prior_work.binding.implementation_paths.map(path => 'file:' + path)].sort()
-        : [executionResource],
+      resources =
+        receipt.request.action.kind === 'configured_frontier'
+          ? [executionResource, ...receipt.prior_work.binding.implementation_paths.map((path) => 'file:' + path)].sort()
+          : [executionResource],
       now = Date.now();
     requireState(
       ledger &&
@@ -9590,9 +11305,11 @@ export class HostStateStore {
           (candidate) =>
             candidate.ticket_id !== ticket.ticket_id &&
             (receipt.request.action.kind === 'configured_frontier'
-              ? (['active', 'ready_for_handoff', 'blocked'].includes(candidate.status) || candidate.status === 'queued' && candidate.sequence < ticket.sequence) &&
-                candidate.exclusive_resources.some(resource => resources.includes(resource))
-              : candidate.sequence < ticket.sequence && ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(candidate.status) &&
+              ? (['active', 'ready_for_handoff', 'blocked'].includes(candidate.status) ||
+                  (candidate.status === 'queued' && candidate.sequence < ticket.sequence)) &&
+                candidate.exclusive_resources.some((resource) => resources.includes(resource))
+              : candidate.sequence < ticket.sequence &&
+                ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(candidate.status) &&
                 candidate.exclusive_resources.includes(executionResource)),
         ),
       'delivered-work continuation original owner lease or FIFO position is no longer current',
@@ -9622,51 +11339,111 @@ export class HostStateStore {
       'delivered-work continuation Journal identity or digest differs',
     );
     if (receipt.request.action.kind === 'configured_frontier') {
-      requireState(receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
-        'configured-frontier lookup immutable beforeimage is missing');
+      requireState(
+        receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
+        'configured-frontier lookup immutable beforeimage is missing',
+      );
       const frontier = receipt as ConfiguredFrontierReceipt,
         // checkedStoredWork has validated this immutable receipt and its engine snapshot.
-        engine = JSON.parse(Buffer.from(frontier.frontier_snapshot.snapshot_bytes_base64, 'base64').toString('utf8')) as SessionBridgeSnapshot,
+        engine = JSON.parse(
+          Buffer.from(frontier.frontier_snapshot.snapshot_bytes_base64, 'base64').toString('utf8'),
+        ) as SessionBridgeSnapshot,
         requests = projectConfiguredPrewriterContinuationRequests({
           ...this.#configuredFrontierRepairBinding(frontier),
-          context: { ...this.#configuredFrontierRepairBinding(frontier).context, scope_digest: currentSourceScope.digest },
-          engine, journal: frontier.prior_journal,
-          currentSourceScope, lifecycleRisk: frontier.prior_work.lifecycle.risk,
+          context: {
+            ...this.#configuredFrontierRepairBinding(frontier).context,
+            scope_digest: currentSourceScope.digest,
+          },
+          engine,
+          journal: frontier.prior_journal,
+          currentSourceScope,
+          lifecycleRisk: frontier.prior_work.lifecycle.risk,
         });
       if (journal.step_id !== 'wave-' + frontier.request.action.request.wave_index) {
         const prewriter = journal.completed[frontier.prior_journal.completed.length];
-        requireState(prewriter && prewriter.step_id === 'wave-' + frontier.request.action.request.wave_index &&
-          sameJson(journal.completed.slice(0, frontier.prior_journal.completed.length), frontier.prior_journal.completed) &&
-          prewriter.items.length === requests.length && prewriter.items.every((item, index) =>
-            sameJson(item.request, requests[index]) && item.issue_id !== null && item.observation?.status === 'reported_complete' &&
-            item.observation.issue_id === item.issue_id && item.observation.action_id === item.request.action_id &&
-            item.observation.output_digest === canonicalJsonDigest(item.observation.summary)),
-        'configured continuation current prewriter history is incomplete or changed');
+        requireState(
+          prewriter &&
+            prewriter.step_id === 'wave-' + frontier.request.action.request.wave_index &&
+            sameJson(
+              journal.completed.slice(0, frontier.prior_journal.completed.length),
+              frontier.prior_journal.completed,
+            ) &&
+            prewriter.items.length === requests.length &&
+            prewriter.items.every(
+              (item, index) =>
+                sameJson(item.request, requests[index]) &&
+                item.issue_id !== null &&
+                item.observation?.status === 'reported_complete' &&
+                item.observation.issue_id === item.issue_id &&
+                item.observation.action_id === item.request.action_id &&
+                item.observation.output_digest === canonicalJsonDigest(item.observation.summary),
+            ),
+          'configured continuation current prewriter history is incomplete or changed',
+        );
         const binding = this.#configuredFrontierRepairBinding(frontier),
-          engine = readConfiguredContinuationSessionEngineSnapshot({ ...binding,
-            context: { ...binding.context, scope_digest: currentSourceScope.digest },
-            runId: frontier.prior_work.execution.run_id! }, frontier, recovery);
-        requireState(engine.run_id === journal.run_id && engine.step_id === journal.step_id &&
-          sameJson(engine.requests, journal.items.map(item => item.request)) &&
-          sameJson(engine.observations, journal.completed.flatMap(wave => wave.items.map(item => item.observation))),
-        'configured continuation current engine suffix differs from its Journal');
+          engine = readConfiguredContinuationSessionEngineSnapshot(
+            {
+              ...binding,
+              context: { ...binding.context, scope_digest: currentSourceScope.digest },
+              runId: frontier.prior_work.execution.run_id!,
+            },
+            frontier,
+            recovery,
+          );
+        requireState(
+          engine.run_id === journal.run_id &&
+            engine.step_id === journal.step_id &&
+            sameJson(
+              engine.requests,
+              journal.items.map((item) => item.request),
+            ) &&
+            sameJson(
+              engine.observations,
+              journal.completed.flatMap((wave) => wave.items.map((item) => item.observation)),
+            ),
+          'configured continuation current engine suffix differs from its Journal',
+        );
         return null;
       }
       requireState(
         journal.step_id === 'wave-' + frontier.request.action.request.wave_index &&
-          journal.items.length === requests.length && sameJson(journal.completed, frontier.prior_journal.completed) &&
-          journal.items.every((item, index) => sameJson(item.request, requests[index]) &&
-            item.host_reservation === undefined && item.research_activation === undefined && item.research_normalization === undefined &&
-            (item.issue_id === null ? item.observation === null : typeof item.issue_id === 'string' && item.issue_id.length > 0 &&
-              (item.observation === null || (item.observation.action_id === item.request.action_id && item.observation.issue_id === item.issue_id &&
-                item.observation.output_digest === canonicalJsonDigest(item.observation.summary))))),
+          journal.items.length === requests.length &&
+          sameJson(journal.completed, frontier.prior_journal.completed) &&
+          journal.items.every(
+            (item, index) =>
+              sameJson(item.request, requests[index]) &&
+              item.host_reservation === undefined &&
+              item.research_activation === undefined &&
+              item.research_normalization === undefined &&
+              (item.issue_id === null
+                ? item.observation === null
+                : typeof item.issue_id === 'string' &&
+                  item.issue_id.length > 0 &&
+                  (item.observation === null ||
+                    (item.observation.action_id === item.request.action_id &&
+                      item.observation.issue_id === item.issue_id &&
+                      item.observation.output_digest === canonicalJsonDigest(item.observation.summary)))),
+          ),
         'configured-frontier lookup current reviewer wave or issue custody differs',
       );
-      const statuses = journal.items.map(item => item.observation ? 'reported' as const : item.issue_id ? 'issued' as const : 'unissued' as const);
+      const statuses = journal.items.map((item) =>
+        item.observation ? ('reported' as const) : item.issue_id ? ('issued' as const) : ('unissued' as const),
+      );
       const frozenJournal = snapshot({ version, state: journal });
-      return Object.freeze({ receipt: snapshot(receipt), recovery: recovery ? snapshotFailedPrewriterRecoveryReceipt(recovery) : null, snapshot: current, journal: frozenJournal, item: frozenJournal.state.items[0]!,
-        items: frozenJournal.state.items, item_statuses: Object.freeze(statuses),
-        action_status: statuses.every(status => status === 'reported') ? 'reported' as const : statuses.some(status => status !== 'unissued') ? 'issued' as const : 'unissued' as const });
+      return Object.freeze({
+        receipt: snapshot(receipt),
+        recovery: recovery ? snapshotFailedPrewriterRecoveryReceipt(recovery) : null,
+        snapshot: current,
+        journal: frozenJournal,
+        item: frozenJournal.state.items[0]!,
+        items: frozenJournal.state.items,
+        item_statuses: Object.freeze(statuses),
+        action_status: statuses.every((status) => status === 'reported')
+          ? ('reported' as const)
+          : statuses.some((status) => status !== 'unissued')
+            ? ('issued' as const)
+            : ('unissued' as const),
+      });
     }
     const matches = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].filter(
       (item) => item.request.action_id === receipt.request.action.request.action_id,
@@ -9684,10 +11461,10 @@ export class HostStateStore {
       item.issue_id === null
         ? item.observation === null
         : typeof item.issue_id === 'string' &&
-          item.issue_id.length > 0 &&
-          (item.observation === null ||
-            (item.observation.action_id === receipt.request.action.request.action_id &&
-              item.observation.issue_id === item.issue_id)),
+            item.issue_id.length > 0 &&
+            (item.observation === null ||
+              (item.observation.action_id === receipt.request.action.request.action_id &&
+                item.observation.issue_id === item.issue_id)),
       'delivered-work continuation review issuance is malformed',
     );
     const frozenItem = snapshot(item);
@@ -9697,7 +11474,9 @@ export class HostStateStore {
       journal: snapshot({ version, state: journal }),
       item: frozenItem,
       items: Object.freeze([frozenItem]),
-      item_statuses: Object.freeze([item.observation ? 'reported' as const : item.issue_id ? 'issued' as const : 'unissued' as const]),
+      item_statuses: Object.freeze([
+        item.observation ? ('reported' as const) : item.issue_id ? ('issued' as const) : ('unissued' as const),
+      ]),
       action_status: item.observation ? 'reported' : item.issue_id ? 'issued' : 'unissued',
     });
   }
@@ -9721,19 +11500,31 @@ export class HostStateStore {
     attempt: number,
     observation: { action_id: string; issue_id: string },
   ): MastraSessionLedgerState['items'][number] | null {
-    const failedTable = this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'").get();
+    const failedTable = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'")
+      .get();
     if (failedTable) {
-      const rows = this.#database.query('SELECT payload,digest FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?')
+      const rows = this.#database
+        .query(
+          'SELECT payload,digest FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .all(this.#workspaceId, workId, attempt) as { payload: string; digest: string }[];
       for (const row of rows) {
         const receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
         const encoded = failedPrewriterRecoveryRecord(receipt);
-        requireState(row.payload === encoded.payload && row.digest === encoded.digest, 'failed prewriter archive checksum differs');
+        requireState(
+          row.payload === encoded.payload && row.digest === encoded.digest,
+          'failed prewriter archive checksum differs',
+        );
         validateFailedPrewriterRecoveryReceipt(receipt);
-        const item = receipt.prior_journal.items.find(item => item.request.action_id === observation.action_id);
+        const item = receipt.prior_journal.items.find((item) => item.request.action_id === observation.action_id);
         if (!item) continue;
-        requireState(item.issue_id === observation.issue_id && item.observation &&
-          canonicalJson(item.observation) === canonicalJson(observation), 'archived failed prewriter report retry differs');
+        requireState(
+          item.issue_id === observation.issue_id &&
+            item.observation &&
+            canonicalJson(item.observation) === canonicalJson(observation),
+          'archived failed prewriter report retry differs',
+        );
         return snapshot(item);
       }
     }
@@ -10853,9 +12644,13 @@ export class HostStateStore {
         );
         input.verifyCurrent();
         const current = this.#read(input.identity);
-        requireState(isPlainRecord(record.released_ticket) && typeof record.released_ticket.ticket_id === 'string' &&
-          isPlainRecord(record.release_operation) && typeof record.release_operation.operation_id === 'string',
-        'stopped-source capture release lineage is invalid');
+        requireState(
+          isPlainRecord(record.released_ticket) &&
+            typeof record.released_ticket.ticket_id === 'string' &&
+            isPlainRecord(record.release_operation) &&
+            typeof record.release_operation.operation_id === 'string',
+          'stopped-source capture release lineage is invalid',
+        );
         const releasedTicketId = record.released_ticket.ticket_id;
         const releasedOperationId = record.release_operation.operation_id;
         requireState(
@@ -10895,13 +12690,11 @@ export class HostStateStore {
             ),
           'stopped-source capture retry released lineage changed',
         );
-        const releasedTicket = current.ledger.tickets.find(entry => entry.ticket_id === releasedTicketId);
+        const releasedTicket = current.ledger.tickets.find((entry) => entry.ticket_id === releasedTicketId);
         const originalLedger = validateCoordinationLedgerV1(record.original_ledger);
         requireState(releasedTicket && originalLedger.ok, 'stopped-source capture original release scope is invalid');
         const resources = releasedTicket.exclusive_resources;
-        const oldClaims = new Set(
-          originalLedger.ledger.claims.map((entry) => entry.claim_id),
-        );
+        const oldClaims = new Set(originalLedger.ledger.claims.map((entry) => entry.claim_id));
         requireState(
           !current.ledger.claims.some(
             (entry) =>
@@ -11791,88 +13584,238 @@ export class HostStateStore {
     request: FailedPrewriterTransitionRequest;
     verifyCurrent: (request: FailedPrewriterTransitionRequest, original: ConfiguredFrontierReceipt) => void;
   }): HostStateSnapshot {
-    requireState(typeof input.verifyCurrent === 'function' && input.verifyCurrent.constructor.name !== 'AsyncFunction' &&
-      !this.#database.inTransaction, 'failed prewriter transition requires synchronous current proof');
+    requireState(
+      typeof input.verifyCurrent === 'function' &&
+        input.verifyCurrent.constructor.name !== 'AsyncFunction' &&
+        !this.#database.inTransaction,
+      'failed prewriter transition requires synchronous current proof',
+    );
     const request = snapshot(input.request);
     return this.#transactionWithProducerFence(() => {
       this.assertSessionProducerWriteAllowed();
-      this.#assertMaintenanceAvailable(); this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceAvailable();
+      this.#assertReconciliationWritesAllowed();
       this.#assertMaintenanceGeneration(request.expectedMaintenanceGeneration);
       const before = this.#read(request.identity);
-      matchesExpected(before.workVersion, request.expectedWork); matchesExpected(before.ledgerVersion, request.expectedLedger);
+      matchesExpected(before.workVersion, request.expectedWork);
+      matchesExpected(before.ledgerVersion, request.expectedLedger);
       const original = this.#readDeliveredWorkContinuationReceipt(request.identity, request.attempt);
-      requireState(original?.request.action.kind === 'configured_frontier', 'failed prewriter original receipt missing');
+      requireState(
+        original?.request.action.kind === 'configured_frontier',
+        'failed prewriter original receipt missing',
+      );
       validateFailedPrewriterTransitionRequest(request, original as ConfiguredFrontierReceipt);
-      const row = this.#database.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
-        .get(this.#workspaceId, request.identity.work_id, request.attempt) as { revision: number; payload: string; digest: string } | null;
-      requireState(row && row.revision === request.expectedJournal.revision && row.digest === request.expectedJournal.digest,
-        'failed prewriter transition Journal CAS changed');
+      const row = this.#database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null;
+      requireState(
+        row && row.revision === request.expectedJournal.revision && row.digest === request.expectedJournal.digest,
+        'failed prewriter transition Journal CAS changed',
+      );
       const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
-      requireState(row.payload === canonicalJson(journal) && row.digest === canonicalJsonDigest(journal), 'failed prewriter Journal checksum differs');
-      const work = before.work!, ledger = before.ledger!, now = Date.now();
-      validateFailedPrewriterRecoveryBasis({ original: original as ConfiguredFrontierReceipt, work, ledger, journal,
-        nativeSessionHandle: request.nativeSessionHandle, now, leaseState: 'live' });
-      requireState(input.verifyCurrent(request, snapshot(original as ConfiguredFrontierReceipt)) === undefined,
-        'failed prewriter current endpoint proof must finish synchronously');
+      requireState(
+        row.payload === canonicalJson(journal) && row.digest === canonicalJsonDigest(journal),
+        'failed prewriter Journal checksum differs',
+      );
+      const work = before.work!,
+        ledger = before.ledger!,
+        now = Date.now();
+      validateFailedPrewriterRecoveryBasis({
+        original: original as ConfiguredFrontierReceipt,
+        work,
+        ledger,
+        journal,
+        nativeSessionHandle: request.nativeSessionHandle,
+        now,
+        leaseState: 'live',
+      });
+      requireState(
+        input.verifyCurrent(request, snapshot(original as ConfiguredFrontierReceipt)) === undefined,
+        'failed prewriter current endpoint proof must finish synchronously',
+      );
       const binding = this.#configuredFrontierRepairBinding(original as ConfiguredFrontierReceipt);
-      const engine = readConfiguredContinuationSessionEngineSnapshot({ ...binding,
-        runId: original.prior_work.execution.run_id! }, original as ConfiguredFrontierReceipt);
-      requireState(engine.status === 'suspended' && engine.step_id === journal.step_id, 'original physical engine is no longer suspended');
-      const originalEngine = JSON.parse(Buffer.from((original as ConfiguredFrontierReceipt).frontier_snapshot.snapshot_bytes_base64, 'base64').toString('utf8')) as SessionBridgeSnapshot;
-      const requests = projectConfiguredPrewriterContinuationRequests({ ...binding,
-        context: { ...binding.context, scope_digest: request.currentSourceScope.digest }, engine: originalEngine,
-        journal: original.prior_journal, currentSourceScope: request.currentSourceScope, lifecycleRisk: original.prior_work.lifecycle.risk });
-      const priorTicket = ledger.tickets.find(item => item.ticket_id === work.lease!.ticket_id)!;
-      const priorClaim = ledger.claims.find(item => item.ticket_id === priorTicket.ticket_id && item.status === 'active')!;
-      const ticketId = 'ticket-' + randomUUID(), claimId = 'claim-' + randomUUID();
-      const createdAt = new Date(now).toISOString(), expiry = new Date(now + 60 * 60 * 1000).toISOString();
-      const ticket = { ...priorTicket, ticket_id: ticketId, sequence: ledger.next_sequence, generation: ledger.open_generation,
-        source_revision: request.currentSourceScope.digest, claim_ids: [claimId], expires_at: expiry, created_at: createdAt };
-      const claim = { ...priorClaim, claim_id: claimId, ticket_id: ticketId, generation: ledger.open_generation,
-        lease_expires_at: expiry, created_at: createdAt, renewed_at: createdAt };
-      const nextLedger = checkedLedger({ ...ledger, revision: ledger.revision + 1, next_sequence: ledger.next_sequence + 1,
-        tickets: [...ledger.tickets.map(item => item.ticket_id === priorTicket.ticket_id
-          ? { ...item, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null } : item), ticket],
-        claims: [...ledger.claims.map(item => item.claim_id === priorClaim.claim_id ? { ...item, status: 'recovered' } : item), claim] });
+      const engine = readConfiguredContinuationSessionEngineSnapshot(
+        { ...binding, runId: original.prior_work.execution.run_id! },
+        original as ConfiguredFrontierReceipt,
+      );
+      requireState(
+        engine.status === 'suspended' && engine.step_id === journal.step_id,
+        'original physical engine is no longer suspended',
+      );
+      const originalEngine = JSON.parse(
+        Buffer.from((original as ConfiguredFrontierReceipt).frontier_snapshot.snapshot_bytes_base64, 'base64').toString(
+          'utf8',
+        ),
+      ) as SessionBridgeSnapshot;
+      const requests = projectConfiguredPrewriterContinuationRequests({
+        ...binding,
+        context: { ...binding.context, scope_digest: request.currentSourceScope.digest },
+        engine: originalEngine,
+        journal: original.prior_journal,
+        currentSourceScope: request.currentSourceScope,
+        lifecycleRisk: original.prior_work.lifecycle.risk,
+      });
+      const priorTicket = ledger.tickets.find((item) => item.ticket_id === work.lease!.ticket_id)!;
+      const priorClaim = ledger.claims.find(
+        (item) => item.ticket_id === priorTicket.ticket_id && item.status === 'active',
+      )!;
+      const ticketId = 'ticket-' + randomUUID(),
+        claimId = 'claim-' + randomUUID();
+      const createdAt = new Date(now).toISOString(),
+        expiry = new Date(now + 60 * 60 * 1000).toISOString();
+      const ticket = {
+        ...priorTicket,
+        ticket_id: ticketId,
+        sequence: ledger.next_sequence,
+        generation: ledger.open_generation,
+        source_revision: request.currentSourceScope.digest,
+        claim_ids: [claimId],
+        expires_at: expiry,
+        created_at: createdAt,
+      };
+      const claim = {
+        ...priorClaim,
+        claim_id: claimId,
+        ticket_id: ticketId,
+        generation: ledger.open_generation,
+        lease_expires_at: expiry,
+        created_at: createdAt,
+        renewed_at: createdAt,
+      };
+      const nextLedger = checkedLedger({
+        ...ledger,
+        revision: ledger.revision + 1,
+        next_sequence: ledger.next_sequence + 1,
+        tickets: [
+          ...ledger.tickets.map((item) =>
+            item.ticket_id === priorTicket.ticket_id
+              ? { ...item, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null }
+              : item,
+          ),
+          ticket,
+        ],
+        claims: [
+          ...ledger.claims.map((item) =>
+            item.claim_id === priorClaim.claim_id ? { ...item, status: 'recovered' } : item,
+          ),
+          claim,
+        ],
+      });
       const endpoint = request.sourceTransition.transition;
-      const nextBinding = { ...work.binding, work_source_revision: request.currentSourceScope.digest,
-        config_digest: endpoint.target_config_digest, schema_digest: endpoint.target_schema_digest,
-        runtime_code_digest: endpoint.target_runtime_code_digest, runtime_source_revision: endpoint.target_runtime_code_digest };
-      const nextWork: WorkState = { ...work, revision: work.revision + 1, binding: nextBinding,
+      const nextBinding = {
+        ...work.binding,
+        work_source_revision: request.currentSourceScope.digest,
+        config_digest: endpoint.target_config_digest,
+        schema_digest: endpoint.target_schema_digest,
+        runtime_code_digest: endpoint.target_runtime_code_digest,
+        runtime_source_revision: endpoint.target_runtime_code_digest,
+      };
+      const nextWork: WorkState = {
+        ...work,
+        revision: work.revision + 1,
+        binding: nextBinding,
         lease: { ticket_id: ticketId, thread_id: request.nativeSessionHandle, generation: ledger.open_generation },
-        lifecycle: { ...work.lifecycle, revision: work.revision + 1, source_revision: request.currentSourceScope.digest,
-          config_binding: { config_digest: endpoint.target_config_digest, schema_digest: endpoint.target_schema_digest,
-            runtime_code_digest: endpoint.target_runtime_code_digest } } };
-      const nextJournal: MastraSessionLedgerState = { ...journal, source_scope: request.currentSourceScope,
-        items: requests.map(request => ({ request, issue_id: null, observation: null })) };
-      const receipt: FailedPrewriterRecoveryReceipt = { schema: 'FailedPrewriterRecoveryReceipt/v1', request,
-        request_digest: canonicalJsonDigest(request), original: original as ConfiguredFrontierReceipt,
-        prior_work: work, prior_ledger: ledger, prior_journal: journal, prior_work_version: before.workVersion!,
-        prior_ledger_version: before.ledgerVersion!, prior_journal_version: request.expectedJournal,
-        successor_work: nextWork, successor_ledger: nextLedger, successor_journal: nextJournal,
-        work_version: version(nextWork)!, ledger_version: version(nextLedger)!,
+        lifecycle: {
+          ...work.lifecycle,
+          revision: work.revision + 1,
+          source_revision: request.currentSourceScope.digest,
+          config_binding: {
+            config_digest: endpoint.target_config_digest,
+            schema_digest: endpoint.target_schema_digest,
+            runtime_code_digest: endpoint.target_runtime_code_digest,
+          },
+        },
+      };
+      const nextJournal: MastraSessionLedgerState = {
+        ...journal,
+        source_scope: request.currentSourceScope,
+        items: requests.map((request) => ({ request, issue_id: null, observation: null })),
+      };
+      const receipt: FailedPrewriterRecoveryReceipt = {
+        schema: 'FailedPrewriterRecoveryReceipt/v1',
+        request,
+        request_digest: canonicalJsonDigest(request),
+        original: original as ConfiguredFrontierReceipt,
+        prior_work: work,
+        prior_ledger: ledger,
+        prior_journal: journal,
+        prior_work_version: before.workVersion!,
+        prior_ledger_version: before.ledgerVersion!,
+        prior_journal_version: request.expectedJournal,
+        successor_work: nextWork,
+        successor_ledger: nextLedger,
+        successor_journal: nextJournal,
+        work_version: version(nextWork)!,
+        ledger_version: version(nextLedger)!,
         journal_version: { revision: row.revision + 1, digest: canonicalJsonDigest(nextJournal) },
-        created_at: createdAt, rights_granted: false, accepted_result: false, runtime_acceptance: false };
+        created_at: createdAt,
+        rights_granted: false,
+        accepted_result: false,
+        runtime_acceptance: false,
+      };
       validateFailedPrewriterRecoveryReceipt(receipt);
       requireState(sameJson(this.#checkedWork(nextWork, receipt), nextWork), 'failed prewriter successor Work invalid');
       validatePair(nextWork, nextLedger);
-      this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_failed_prewriter_recovery (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,recovery_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,recovery_id))');
-      requireState(!this.#database.query('SELECT 1 FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?')
-        .get(this.#workspaceId, request.identity.work_id, request.attempt), 'failed prewriter recovery already recorded; inspect exact outcome');
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_failed_prewriter_recovery (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,recovery_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,recovery_id))',
+      );
+      requireState(
+        !this.#database
+          .query('SELECT 1 FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?')
+          .get(this.#workspaceId, request.identity.work_id, request.attempt),
+        'failed prewriter recovery already recorded; inspect exact outcome',
+      );
       const encoded = failedPrewriterRecoveryRecord(receipt);
-      this.#database.query('INSERT INTO agent_host_failed_prewriter_recovery VALUES(?,?,?,?,?,?)')
-        .run(this.#workspaceId, request.identity.work_id, request.attempt, request.recovery_id, encoded.payload, encoded.digest);
+      this.#database
+        .query('INSERT INTO agent_host_failed_prewriter_recovery VALUES(?,?,?,?,?,?)')
+        .run(
+          this.#workspaceId,
+          request.identity.work_id,
+          request.attempt,
+          request.recovery_id,
+          encoded.payload,
+          encoded.digest,
+        );
       for (const [kind, id, value, expected] of [
         ['work', identityKey(request.identity), nextWork, request.expectedWork],
         ['ledger', 'shared', nextLedger, request.expectedLedger],
       ] as const) {
-        const changed = this.#database.query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?')
-          .run(value.revision, canonicalJson(value), canonicalJsonDigest(value), this.#workspaceId, kind, id, expected.revision, expected.digest);
+        const changed = this.#database
+          .query(
+            'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+          )
+          .run(
+            value.revision,
+            canonicalJson(value),
+            canonicalJsonDigest(value),
+            this.#workspaceId,
+            kind,
+            id,
+            expected.revision,
+            expected.digest,
+          );
         requireState(changed.changes === 1, 'failed prewriter transition Host CAS conflict');
       }
-      const changedJournal = this.#database.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?')
-        .run(receipt.journal_version.revision, canonicalJson(nextJournal), receipt.journal_version.digest, this.#workspaceId,
-          request.identity.work_id, request.attempt, row.revision, row.digest);
+      const changedJournal = this.#database
+        .query(
+          'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+        )
+        .run(
+          receipt.journal_version.revision,
+          canonicalJson(nextJournal),
+          receipt.journal_version.digest,
+          this.#workspaceId,
+          request.identity.work_id,
+          request.attempt,
+          row.revision,
+          row.digest,
+        );
       requireState(changedJournal.changes === 1, 'failed prewriter transition Journal CAS conflict');
       this.#onReconciledWorkWrite(request.identity, before.workVersion, receipt.work_version);
       return this.#read(request.identity);
@@ -11881,15 +13824,23 @@ export class HostStateStore {
 
   /** Restore the exact failed readonly owner's lease; failed reports and all execution bindings stay unchanged. */
   recoverFailedPrewriterOwner(input: {
-    identity: WorkIdentity; attempt: number; nativeSessionHandle: string;
-    expectedWork: StateVersion; expectedLedger: StateVersion; expectedJournal: StateVersion;
+    identity: WorkIdentity;
+    attempt: number;
+    nativeSessionHandle: string;
+    expectedWork: StateVersion;
+    expectedLedger: StateVersion;
+    expectedJournal: StateVersion;
     expectedMaintenanceGeneration: number;
     verifyCurrent: (work: WorkState, journal: MastraSessionLedgerState, original: ConfiguredFrontierReceipt) => void;
   }): HostStateSnapshot {
-    requireState(Number.isSafeInteger(input.attempt) && input.attempt > 0 &&
-      typeof input.verifyCurrent === 'function' && input.verifyCurrent.constructor.name !== 'AsyncFunction' &&
-      !this.#database.inTransaction,
-    'failed prewriter owner recovery requires a valid nonnested request');
+    requireState(
+      Number.isSafeInteger(input.attempt) &&
+        input.attempt > 0 &&
+        typeof input.verifyCurrent === 'function' &&
+        input.verifyCurrent.constructor.name !== 'AsyncFunction' &&
+        !this.#database.inTransaction,
+      'failed prewriter owner recovery requires a valid nonnested request',
+    );
     return this.#transactionWithProducerFence(() => {
       this.assertSessionProducerWriteAllowed();
       this.#assertMaintenanceAvailable();
@@ -11899,58 +13850,141 @@ export class HostStateStore {
       matchesExpected(before.workVersion, input.expectedWork);
       matchesExpected(before.ledgerVersion, input.expectedLedger);
       const original = this.#readDeliveredWorkContinuationReceipt(input.identity, input.attempt);
-      requireState(original?.request.action.kind === 'configured_frontier', 'failed prewriter original continuation missing');
-      const row = this.#database.query(
-        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-      ).get(this.#workspaceId, input.identity.work_id, input.attempt) as { revision: number; payload: string; digest: string } | null;
-      requireState(row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
-        'failed prewriter recovery Journal CAS changed');
+      requireState(
+        original?.request.action.kind === 'configured_frontier',
+        'failed prewriter original continuation missing',
+      );
+      const row = this.#database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null;
+      requireState(
+        row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
+        'failed prewriter recovery Journal CAS changed',
+      );
       const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
-      requireState(row.payload === canonicalJson(journal) && row.digest === canonicalJsonDigest(journal),
-        'failed prewriter recovery Journal checksum differs');
-      const work = before.work!, ledger = before.ledger!, now = Date.now();
-      validateFailedPrewriterRecoveryBasis({ original: original as ConfiguredFrontierReceipt, work, ledger,
-        journal, nativeSessionHandle: input.nativeSessionHandle, now });
-      const verification = input.verifyCurrent(snapshot(work), snapshot(journal), snapshot(original as ConfiguredFrontierReceipt));
+      requireState(
+        row.payload === canonicalJson(journal) && row.digest === canonicalJsonDigest(journal),
+        'failed prewriter recovery Journal checksum differs',
+      );
+      const work = before.work!,
+        ledger = before.ledger!,
+        now = Date.now();
+      validateFailedPrewriterRecoveryBasis({
+        original: original as ConfiguredFrontierReceipt,
+        work,
+        ledger,
+        journal,
+        nativeSessionHandle: input.nativeSessionHandle,
+        now,
+      });
+      const verification = input.verifyCurrent(
+        snapshot(work),
+        snapshot(journal),
+        snapshot(original as ConfiguredFrontierReceipt),
+      );
       requireState(verification === undefined, 'failed prewriter current proof must finish synchronously');
-      const ticket = ledger.tickets.find(item => item.ticket_id === work.lease!.ticket_id)!;
-      const claim = ledger.claims.find(item => item.ticket_id === ticket.ticket_id && item.status === 'active')!;
-      const ticketId = 'ticket-' + randomUUID(), claimId = 'claim-' + randomUUID();
-      const timestampNow = new Date(now).toISOString(), expiry = new Date(now + 60 * 60 * 1000).toISOString();
-      const successorTicket = { ...ticket, ticket_id: ticketId, generation: ledger.open_generation,
-        sequence: ledger.next_sequence, claim_ids: [claimId], expires_at: expiry, created_at: timestampNow };
-      const successorClaim = { ...claim, claim_id: claimId, ticket_id: ticketId, generation: ledger.open_generation,
-        lease_expires_at: expiry, created_at: timestampNow, renewed_at: timestampNow };
-      const nextWork = this.#checkedWork({ ...work, revision: work.revision + 1,
+      const ticket = ledger.tickets.find((item) => item.ticket_id === work.lease!.ticket_id)!;
+      const claim = ledger.claims.find((item) => item.ticket_id === ticket.ticket_id && item.status === 'active')!;
+      const ticketId = 'ticket-' + randomUUID(),
+        claimId = 'claim-' + randomUUID();
+      const timestampNow = new Date(now).toISOString(),
+        expiry = new Date(now + 60 * 60 * 1000).toISOString();
+      const successorTicket = {
+        ...ticket,
+        ticket_id: ticketId,
+        generation: ledger.open_generation,
+        sequence: ledger.next_sequence,
+        claim_ids: [claimId],
+        expires_at: expiry,
+        created_at: timestampNow,
+      };
+      const successorClaim = {
+        ...claim,
+        claim_id: claimId,
+        ticket_id: ticketId,
+        generation: ledger.open_generation,
+        lease_expires_at: expiry,
+        created_at: timestampNow,
+        renewed_at: timestampNow,
+      };
+      const nextWork = this.#checkedWork({
+        ...work,
+        revision: work.revision + 1,
         lease: { ticket_id: ticketId, thread_id: input.nativeSessionHandle, generation: ledger.open_generation },
-        lifecycle: { ...work.lifecycle, revision: work.revision + 1 } });
-      const nextLedger = checkedLedger({ ...ledger, revision: ledger.revision + 1,
+        lifecycle: { ...work.lifecycle, revision: work.revision + 1 },
+      });
+      const nextLedger = checkedLedger({
+        ...ledger,
+        revision: ledger.revision + 1,
         next_sequence: ledger.next_sequence + 1,
-        tickets: [...ledger.tickets.map(item => item.ticket_id === ticket.ticket_id
-          ? { ...item, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null } : item), successorTicket],
-        claims: [...ledger.claims.map(item => item.claim_id === claim.claim_id ? { ...item, status: 'recovered' } : item), successorClaim],
-        rebinds: [...ledger.rebinds, { schema: 'CoordinationScopeRebind/v1', rebind_id: 'rebind-' + randomUUID(),
-          work_id: input.identity.work_id, previous_ticket_id: ticket.ticket_id, previous_source_revision: ticket.source_revision,
-          ticket_id: ticketId, thread_id: input.nativeSessionHandle, source_revision: ticket.source_revision,
-          resources: [...claim.resources], claimed_resources: [...claim.resources], retired_claim_ids: [claim.claim_id],
-          reason: 'expired known-failed readonly owner recovery', decided_by: input.nativeSessionHandle,
-          decision_pointer: original.request.originalRequestPointer, from_ledger_revision: ledger.revision,
-          to_ledger_revision: ledger.revision + 1, created_at: timestampNow }] });
+        tickets: [
+          ...ledger.tickets.map((item) =>
+            item.ticket_id === ticket.ticket_id
+              ? { ...item, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null }
+              : item,
+          ),
+          successorTicket,
+        ],
+        claims: [
+          ...ledger.claims.map((item) => (item.claim_id === claim.claim_id ? { ...item, status: 'recovered' } : item)),
+          successorClaim,
+        ],
+        rebinds: [
+          ...ledger.rebinds,
+          {
+            schema: 'CoordinationScopeRebind/v1',
+            rebind_id: 'rebind-' + randomUUID(),
+            work_id: input.identity.work_id,
+            previous_ticket_id: ticket.ticket_id,
+            previous_source_revision: ticket.source_revision,
+            ticket_id: ticketId,
+            thread_id: input.nativeSessionHandle,
+            source_revision: ticket.source_revision,
+            resources: [...claim.resources],
+            claimed_resources: [...claim.resources],
+            retired_claim_ids: [claim.claim_id],
+            reason: 'expired known-failed readonly owner recovery',
+            decided_by: input.nativeSessionHandle,
+            decision_pointer: original.request.originalRequestPointer,
+            from_ledger_revision: ledger.revision,
+            to_ledger_revision: ledger.revision + 1,
+            created_at: timestampNow,
+          },
+        ],
+      });
       validatePair(nextWork, nextLedger);
       this.#validateProgress(before, nextWork, nextLedger);
       for (const [kind, id, value, expected] of [
         ['work', identityKey(input.identity), nextWork, input.expectedWork],
         ['ledger', 'shared', nextLedger, input.expectedLedger],
       ] as const) {
-        const changed = this.#database.query(
-          'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
-        ).run(value.revision, canonicalJson(value), canonicalJsonDigest(value), this.#workspaceId,
-          kind, id, expected.revision, expected.digest);
+        const changed = this.#database
+          .query(
+            'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+          )
+          .run(
+            value.revision,
+            canonicalJson(value),
+            canonicalJsonDigest(value),
+            this.#workspaceId,
+            kind,
+            id,
+            expected.revision,
+            expected.digest,
+          );
         requireState(changed.changes === 1, 'failed prewriter recovery Host CAS conflict');
       }
-      const bumped = this.#database.query(
-        'UPDATE agent_host_mastra_session_ledger SET revision=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
-      ).run(row.revision + 1, this.#workspaceId, input.identity.work_id, input.attempt, row.revision, row.digest);
+      const bumped = this.#database
+        .query(
+          'UPDATE agent_host_mastra_session_ledger SET revision=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+        )
+        .run(row.revision + 1, this.#workspaceId, input.identity.work_id, input.attempt, row.revision, row.digest);
       requireState(bumped.changes === 1, 'failed prewriter recovery Journal CAS conflict');
       this.#onReconciledWorkWrite(input.identity, before.workVersion, version(nextWork)!);
       return this.#read(input.identity);
@@ -12868,7 +14902,8 @@ export class HostStateStore {
         'historical synthesis custody requires one exact active original owner release',
       );
       requireState(
-        work && ledger &&
+        work &&
+          ledger &&
           work.execution.status === 'active' &&
           work.lease?.thread_id === input.nativeSessionHandle &&
           work.lease.generation > 0 &&
@@ -12900,14 +14935,16 @@ export class HostStateStore {
           !ledger.tickets.some(
             (other) =>
               other.ticket_id !== ticket.ticket_id &&
-              !(other.status === 'queued' &&
+              !(
+                other.status === 'queued' &&
                 other.work_id === input.identity.work_id &&
                 other.thread_id === input.nativeSessionHandle &&
                 other.generation === work.lease!.generation &&
                 other.repository_id === input.identity.repository_id &&
                 sameJson(other.project_ids, input.identity.project_ids) &&
                 other.integrations_digest === input.identity.integrations_digest &&
-                other.source_revision === work.binding.work_source_revision) &&
+                other.source_revision === work.binding.work_source_revision
+              ) &&
               ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(other.status) &&
               other.exclusive_resources.some((resource) => resources.includes(resource)),
           ),
@@ -12976,29 +15013,38 @@ export class HostStateStore {
           ) &&
           sameJson(
             (() => {
-              const { revision: _revision, tickets: _tickets, claims: _claims, operations: _operations, ...rest } = nextLedger;
+              const {
+                revision: _revision,
+                tickets: _tickets,
+                claims: _claims,
+                operations: _operations,
+                ...rest
+              } = nextLedger;
               return rest;
             })(),
             (() => {
-              const { revision: _revision, tickets: _tickets, claims: _claims, operations: _operations, ...rest } = ledger;
+              const {
+                revision: _revision,
+                tickets: _tickets,
+                claims: _claims,
+                operations: _operations,
+                ...rest
+              } = ledger;
               return rest;
             })(),
           ) &&
-          sameJson(
-            nextWork,
-            {
-              ...work,
+          sameJson(nextWork, {
+            ...work,
+            revision: work.revision + 1,
+            lease: null,
+            execution: { ...work.execution, phase: 'awaiting_followup', status: 'suspended' },
+            lifecycle: {
+              ...work.lifecycle,
               revision: work.revision + 1,
-              lease: null,
-              execution: { ...work.execution, phase: 'awaiting_followup', status: 'suspended' },
-              lifecycle: {
-                ...work.lifecycle,
-                revision: work.revision + 1,
-                next_action:
-                  'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.',
-              },
+              next_action:
+                'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.',
             },
-          ),
+          }),
         'historical synthesis custody release operation is incomplete',
       );
       const journal = this.#database
@@ -13081,7 +15127,7 @@ export class HostStateStore {
     if (!row) return null;
     const receipt = JSON.parse(row.payload) as HistoricalTerminalSynthesisCaptureReceipt;
     requireState(
-        receipt.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
+      receipt.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
         receipt.identity.work_id === identity.work_id &&
         receipt.attempt === attempt &&
         receipt.action_id === actionId &&

@@ -18,8 +18,12 @@ import type { DevelopmentTaskPacket } from './mastra-boundary.js';
 import type { MastraLedgerItem, MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { observedReceiptEvidenceReference, validateObservedEvidenceReferences } from './observed-receipt-evidence.js';
 import { lifecyclePreparationObservationSchema } from './final-assurance.js';
-import { acceptedContractSourceRevision } from './admitted-development-packet.js';
-import type { ConfiguredFrontierRecoveryView } from './failed-prewriter-transition.js';
+import {
+  acceptedContractSourceRevision,
+  acceptedSourceAuthorizationRevision,
+  isInitialSourceContinuationReceipt,
+  type AcceptedSourceContinuation,
+} from './admitted-development-packet.js';
 
 const preparationKinds = lifecyclePreparationObservationSchema.shape.kind.options;
 const sourcePrewriterSecurityRiskFlags = new Set(['security', 'data_loss', 'migration', 'high']);
@@ -66,7 +70,7 @@ export interface SourceWritePreflightInput {
   readonly scopeBytes: Uint8Array;
   readonly acceptanceBytes: Uint8Array;
   /** Trusted Host-owned continuation custody; absent for an ordinary current admission. */
-  readonly continuation?: ConfiguredFrontierRecoveryView | null;
+  readonly continuation?: AcceptedSourceContinuation | null;
   /** Current preparation artifacts required by the Work lifecycle state and selected route. */
   readonly preparations: readonly SourcePreflightArtifactInput[];
 }
@@ -117,14 +121,12 @@ function currentHostWork(snapshot: HostStateSnapshot): NonNullable<HostStateSnap
     ledger.workspace_id !== work.workspace_id ||
     !Number.isSafeInteger(maintenanceGeneration) ||
     maintenanceGeneration < 0
-  ) return fail('Host snapshot versions or workspace binding are stale');
+  )
+    return fail('Host snapshot versions or workspace binding are stale');
   return work;
 }
 
-function currentWorkflowAssignment(
-  config: AgentRuntimeConfig,
-  request: WorkflowAttemptApprovalRequest,
-): void {
+function currentWorkflowAssignment(config: AgentRuntimeConfig, request: WorkflowAttemptApprovalRequest): void {
   const workflow = config.workflows[request.workflow_id];
   const stage = workflow?.stages.find((candidate) => candidate.id === request.stage_id);
   const assignment = stage?.assignments[request.assignment_index];
@@ -139,7 +141,8 @@ function currentWorkflowAssignment(
     profile.mutation_scope !== 'repository_source' ||
     profile.egress_policy !== 'none' ||
     policy.source_write !== true
-  ) fail('pending Host request is not a configured Source-writing assignment');
+  )
+    fail('pending Host request is not a configured Source-writing assignment');
 }
 
 function verifyEdictumWriteGate(
@@ -164,7 +167,8 @@ function verifyEdictumWriteGate(
     !gate ||
     gate.approval_required !== true ||
     !writeStage?.tools.includes('runtime.write')
-  ) fail('configured Edictum runtime.write evaluation is absent, denied, or bound to another gate');
+  )
+    fail('configured Edictum runtime.write evaluation is absent, denied, or bound to another gate');
 }
 
 function verifyPendingRequestPreview(
@@ -188,7 +192,8 @@ function verifyPendingRequestPreview(
     !work.lease ||
     !same(request.lease, work.lease) ||
     request.lease.thread_id !== work.lease.thread_id
-  ) fail('pending Host request differs from current work or lease');
+  )
+    fail('pending Host request differs from current work or lease');
 
   const prior = work.execution.assignment_attempts
     .filter((item) => item.stage_id === request.stage_id && item.assignment_index === request.assignment_index)
@@ -229,13 +234,15 @@ function verifyPendingRequestPreview(
       prior.request_digest !== request.request_digest ||
       !prior.reconciliation?.retry_lease ||
       !same(prior.reconciliation.retry_lease, request.lease))
-  ) fail('Host request does not match a replay-safe no-effect predecessor');
+  )
+    fail('Host request does not match a replay-safe no-effect predecessor');
   const operationFields = { ...fields } as Record<string, unknown>;
   if (
     request.attempt_id !== expectedAttemptId ||
     request.operation_hash !== canonicalJsonDigest(operationFields) ||
     work.execution.assignment_attempts.some((item) => item.attempt_id === request.attempt_id)
-  ) fail('Host request is not a current unreserved Source attempt preview');
+  )
+    fail('Host request is not a current unreserved Source attempt preview');
 }
 
 function parsePreparation(bytes: Uint8Array): LifecyclePreparationObservation {
@@ -267,7 +274,8 @@ function currentJournalEvidence(
       item.request.workflow_id !== work.binding.workflow_id ||
       item.request.config_digest !== work.binding.config_digest ||
       item.request.scope_digest !== work.binding.work_source_revision
-    ) continue;
+    )
+      continue;
     try {
       const reference = observedReceiptEvidenceReference(journal, item.request.action_id, observation.output_digest);
       evidence.set(reference, item);
@@ -287,16 +295,18 @@ function configuredSecurityReviewer(
   const team = config.teams[teamId];
   const matches = workflow?.stages.filter((stage) => stage.id === 'review_source_prewrite') ?? [];
   const stage = matches.length === 1 ? matches[0] : undefined;
-  const plannerAssignments = stage?.assignments.flatMap((assignment, assignmentIndex) =>
-    assignment.role === 'source-planner' && assignment.profile === 'architect'
-      ? [{ assignment, assignmentIndex }]
-      : [],
-  ) ?? [];
-  const securityAssignments = stage?.assignments.flatMap((assignment, assignmentIndex) =>
-    assignment.role === 'security-prewriter' && assignment.profile === 'reviewer-security'
-      ? [{ assignment, assignmentIndex }]
-      : [],
-  ) ?? [];
+  const plannerAssignments =
+    stage?.assignments.flatMap((assignment, assignmentIndex) =>
+      assignment.role === 'source-planner' && assignment.profile === 'architect'
+        ? [{ assignment, assignmentIndex }]
+        : [],
+    ) ?? [];
+  const securityAssignments =
+    stage?.assignments.flatMap((assignment, assignmentIndex) =>
+      assignment.role === 'security-prewriter' && assignment.profile === 'reviewer-security'
+        ? [{ assignment, assignmentIndex }]
+        : [],
+    ) ?? [];
   const planner = plannerAssignments.length === 1 ? plannerAssignments[0] : undefined;
   const security = securityAssignments.length === 1 ? securityAssignments[0] : undefined;
   const plannerProfile = planner && config.agents.profiles[planner.assignment.profile];
@@ -304,26 +314,41 @@ function configuredSecurityReviewer(
   const securityProfile = security && config.agents.profiles[security.assignment.profile];
   const securityPolicy = securityProfile && config.agents.tool_policies[securityProfile.tools_policy];
   const developers = workflow?.stages.filter((candidate) => candidate.kind === 'develop') ?? [];
-  const sourceWriters = developers.flatMap((developer) => developer.assignments.filter((assignment) => {
-    const profile = config.agents.profiles[assignment.profile];
-    const policy = profile && config.agents.tool_policies[profile.tools_policy];
-    return profile?.mutation_scope === 'repository_source' && policy?.source_write === true;
-  }));
+  const sourceWriters = developers.flatMap((developer) =>
+    developer.assignments.filter((assignment) => {
+      const profile = config.agents.profiles[assignment.profile];
+      const policy = profile && config.agents.tool_policies[profile.tools_policy];
+      return profile?.mutation_scope === 'repository_source' && policy?.source_write === true;
+    }),
+  );
   const securityRiskFlags = ['security', 'data_loss', 'migration', 'high'];
   if (
-    !stage || !team || team.enabled !== true || matches.length !== 1 || stage.kind !== 'validate' || stage.mode !== 'parallel' ||
-    !same(stage.required_after, ['synthesize_task']) || stage.assignments.length !== 2 ||
-    plannerAssignments.length !== 1 || securityAssignments.length !== 1 ||
-    (stage.risk_flags ?? []).length !== 0 || planner!.assignment.risk_flags?.length ||
+    !stage ||
+    !team ||
+    team.enabled !== true ||
+    matches.length !== 1 ||
+    stage.kind !== 'validate' ||
+    stage.mode !== 'parallel' ||
+    !same(stage.required_after, ['synthesize_task']) ||
+    stage.assignments.length !== 2 ||
+    plannerAssignments.length !== 1 ||
+    securityAssignments.length !== 1 ||
+    (stage.risk_flags ?? []).length !== 0 ||
+    planner!.assignment.risk_flags?.length ||
     !same([...(security!.assignment.risk_flags ?? [])].sort(), [...securityRiskFlags].sort()) ||
     !same(stage.consumes, ['DevelopmentTaskPacket/v1']) ||
     !same(stage.produces, ['LifecyclePreparationObservation/v1']) ||
     (team.stage_overrides[stage.id] ?? team.roles['source-planner']) !== planner!.assignment.profile ||
     (team.stage_overrides[stage.id] ?? team.roles['security-prewriter']) !== security!.assignment.profile ||
-    plannerProfile?.mutation_scope !== 'none' || plannerPolicy?.source_write !== false ||
-    securityProfile?.mutation_scope !== 'none' || securityPolicy?.source_write !== false ||
-    developers.length !== 1 || sourceWriters.length === 0 || !same(developers[0]!.required_after, [stage.id])
-  ) return [];
+    plannerProfile?.mutation_scope !== 'none' ||
+    plannerPolicy?.source_write !== false ||
+    securityProfile?.mutation_scope !== 'none' ||
+    securityPolicy?.source_write !== false ||
+    developers.length !== 1 ||
+    sourceWriters.length === 0 ||
+    !same(developers[0]!.required_after, [stage.id])
+  )
+    return [];
   return [{ stageId: stage.id, assignmentIndex: security!.assignmentIndex, role: security!.assignment.role }];
 }
 
@@ -348,7 +373,8 @@ function validateSecurityObservation(
         item.request.assignment_index === reviewer.assignmentIndex &&
         item.request.role === reviewer.role,
     )
-  ) fail('prewriter security evidence is not from an issued configured reviewer observation');
+  )
+    fail('prewriter security evidence is not from an issued configured reviewer observation');
 }
 
 /**
@@ -369,7 +395,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     work.lifecycle.schema !== 'LifecycleState/v1' ||
     work.execution.status !== 'active' ||
     !lease
-  ) return fail('current active Host work state is required');
+  )
+    return fail('current active Host work state is required');
   verifyPendingRequestPreview(work, request);
   currentWorkflowAssignment(config, request);
   if (
@@ -389,7 +416,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     trustedIdentity.tenant !== binding.repository_id ||
     trustedIdentity.registry_hash !== projectContext.registry_hash ||
     !projectContext.project_ids.includes(trustedIdentity.project)
-  ) return fail('current trusted configuration, project context or identity differs from Host work');
+  )
+    return fail('current trusted configuration, project context or identity differs from Host work');
 
   const receipt = authorization.receipt;
   if (
@@ -407,7 +435,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     receipt.registry_hash !== trustedIdentity.registry_hash ||
     receipt.resourceTenant !== trustedIdentity.tenant ||
     receipt.resourceProject !== trustedIdentity.project
-  ) fail('Cedar authorization is missing, denied, or bound to another operation');
+  )
+    fail('Cedar authorization is missing, denied, or bound to another operation');
 
   const now = Date.now();
   verifyEdictumWriteGate(config, input.edictumOperation, input.edictumEvaluation, request, trustedIdentity);
@@ -448,22 +477,24 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     typeof hostApproval.receipt.approval_id !== 'string' ||
     hostApproval.receipt.approval_id.length === 0 ||
     !/^[a-f0-9]{64}$/.test(hostApproval.receipt.evidence_digest) ||
-    hostApproval.receipt.evidence_digest !== computeEdictumWorkflowApprovalEvidenceDigest({
-      schema: hostApproval.receipt.schema,
-      stage_id: hostApproval.receipt.stage_id,
-      approval_id: hostApproval.receipt.approval_id,
-      approver: hostApproval.receipt.approver,
-      operation_hash: hostApproval.receipt.operation_hash,
-      tenant: hostApproval.receipt.tenant,
-      project: hostApproval.receipt.project,
-      approved_at: hostApproval.receipt.approved_at,
-      expires_at: hostApproval.receipt.expires_at,
-    }) ||
+    hostApproval.receipt.evidence_digest !==
+      computeEdictumWorkflowApprovalEvidenceDigest({
+        schema: hostApproval.receipt.schema,
+        stage_id: hostApproval.receipt.stage_id,
+        approval_id: hostApproval.receipt.approval_id,
+        approver: hostApproval.receipt.approver,
+        operation_hash: hostApproval.receipt.operation_hash,
+        tenant: hostApproval.receipt.tenant,
+        project: hostApproval.receipt.project,
+        approved_at: hostApproval.receipt.approved_at,
+        expires_at: hostApproval.receipt.expires_at,
+      }) ||
     !Number.isFinite(Date.parse(hostApproval.receipt.approved_at)) ||
     !Number.isFinite(Date.parse(hostApproval.receipt.expires_at)) ||
     Date.parse(hostApproval.receipt.approved_at) > now ||
     Date.parse(hostApproval.receipt.expires_at) <= now
-  ) fail('Host-local permission receipt is missing, expired, or bound to another operation');
+  )
+    fail('Host-local permission receipt is missing, expired, or bound to another operation');
 
   if (
     journal.state.schema !== 'MastraSessionLedger/v1' ||
@@ -478,7 +509,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     journal.version.digest !== canonicalJsonDigest(journal.state) ||
     !['ready', 'ready_to_resume'].includes(journal.resume_status) ||
     allJournalItems(journal).some((item) => item.issue_id !== null && item.observation === null)
-  ) fail('same-thread journal is stale, foreign, uncertain, or not ready');
+  )
+    fail('same-thread journal is stale, foreign, uncertain, or not ready');
 
   const scopeHash = sha256(input.scopeBytes),
     acceptanceHash = sha256(input.acceptanceBytes);
@@ -487,7 +519,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     scopeHash !== binding.scope_contract_digest ||
     acceptanceHash !== work.contracts.acceptance.sha256 ||
     acceptanceHash !== binding.acceptance_manifest_digest
-  ) fail('scope or acceptance bytes differ from current admitted contracts');
+  )
+    fail('scope or acceptance bytes differ from current admitted contracts');
 
   let scope: unknown, acceptance: unknown;
   try {
@@ -499,6 +532,17 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
   const scopeRecord = isRecord(scope) ? scope : fail('scope contract is not an object');
   const acceptanceRecord = isRecord(acceptance) ? acceptance : fail('acceptance contract is not an object');
   const acceptedRevision = acceptedContractSourceRevision(work, journal, input.continuation);
+  if (isInitialSourceContinuationReceipt(input.continuation)) {
+    const currentSourcePermissions = work.lifecycle.references.filter(
+      (reference) =>
+        reference.kind === 'execution_approval' &&
+        reference.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+        reference.decision === 'approved' &&
+        reference.disposition === 'current',
+    );
+    if (currentSourcePermissions.length !== 1) fail('current scoped local Source permission is missing or ambiguous');
+    acceptedSourceAuthorizationRevision(work, journal.state, currentSourcePermissions[0]!, input.continuation);
+  }
   if (
     scopeRecord.schema !== 'ImplementationScope/v1' ||
     scopeRecord.scope_id !== binding.scope_id ||
@@ -512,7 +556,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     acceptanceRecord.scope !== binding.scope_id ||
     acceptanceRecord.source_revision !== acceptedRevision ||
     !same(acceptanceRecord.ac_ids, binding.ac_ids)
-  ) fail('scope or acceptance contract binding differs from Host state');
+  )
+    fail('scope or acceptance contract binding differs from Host state');
 
   const unsignedPacket = { ...taskPacket } as Record<string, unknown>;
   delete unsignedPacket.digest;
@@ -534,7 +579,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     ) ||
     !Number.isFinite(Date.parse(taskPacket.lease_expires_at)) ||
     Date.parse(taskPacket.lease_expires_at) <= now
-  ) fail('development task packet is stale or differs from admitted scope');
+  )
+    fail('development task packet is stale or differs from admitted scope');
 
   const currentPreparationReferences = work.lifecycle.references.filter(
     (reference) =>
@@ -559,7 +605,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
       !same(reference.ac_ids, binding.ac_ids) ||
       sha256(item.bytes) !== reference.sha256 ||
       !currentPreparationReferences.some((current) => same(current, reference))
-    ) fail('preparation reference is not current or its bytes changed');
+    )
+      fail('preparation reference is not current or its bytes changed');
     const record = parsePreparation(item.bytes);
     if (
       record.kind !== reference.kind ||
@@ -572,7 +619,8 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
       !same(record.ac_ids, binding.ac_ids) ||
       record.status !== 'pass' ||
       record.gaps.length !== 0
-    ) fail('lifecycle preparation is stale, foreign, or has a GAP');
+    )
+      fail('lifecycle preparation is stale, foreign, or has a GAP');
     validateObservedEvidenceReferences(record.evidence_refs);
     if (!record.observations.every((observation) => record.evidence_refs.includes(observation.evidence_ref)))
       fail('preparation observation is missing its evidence reference');
@@ -596,7 +644,13 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
   if (!records.has('source_plan')) fail('Source write requires a current source plan');
 
   if (requiresSourcePrewriterSecurityReview(work.lifecycle.risk, taskPacket.risk_flags))
-    validateSecurityObservation(records.get('implementation_policy'), journalEvidence, config, binding.team_id, request.workflow_id);
+    validateSecurityObservation(
+      records.get('implementation_policy'),
+      journalEvidence,
+      config,
+      binding.team_id,
+      request.workflow_id,
+    );
 
   return references;
 }

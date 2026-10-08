@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "checkJs": true,
+    "noEmit": true,
+    "rootDir": ".."
+  },
+  "include": ["continue-initial-source.mjs"],
+  "exclude": []
+}

@@ -26,7 +26,11 @@ import {
   validateSourceWritePreflight,
   type SourceWritePreflightInput,
 } from './source-preflight.js';
-import { acceptedContractSourceRevision, buildAdmittedDevelopmentPacket } from './admitted-development-packet.js';
+import {
+  acceptedContractSourceRevision,
+  acceptedSourceAuthorizationRevision,
+  buildAdmittedDevelopmentPacket,
+} from './admitted-development-packet.js';
 import { readAdmittedSessionExecutionContext } from './admitted-session-execution.js';
 import type { LocalWorkAdmissionInput } from './local-work-admission.js';
 import { lifecyclePreparationObservationSchema } from './final-assurance.js';
@@ -149,16 +153,18 @@ function configuredSourcePrewriter(
   const team = config.teams[teamId];
   const matches = workflow?.stages.filter((stage) => stage.id === 'review_source_prewrite') ?? [];
   const stage = matches.length === 1 ? matches[0] : undefined;
-  const planners = stage?.assignments.flatMap((assignment, assignmentIndex) =>
-    assignment.role === 'source-planner' && assignment.profile === 'architect'
-      ? [{ assignment, assignmentIndex }]
-      : [],
-  ) ?? [];
-  const reviewers = stage?.assignments.flatMap((assignment, assignmentIndex) =>
-    assignment.role === 'security-prewriter' && assignment.profile === 'reviewer-security'
-      ? [{ assignment, assignmentIndex }]
-      : [],
-  ) ?? [];
+  const planners =
+    stage?.assignments.flatMap((assignment, assignmentIndex) =>
+      assignment.role === 'source-planner' && assignment.profile === 'architect'
+        ? [{ assignment, assignmentIndex }]
+        : [],
+    ) ?? [];
+  const reviewers =
+    stage?.assignments.flatMap((assignment, assignmentIndex) =>
+      assignment.role === 'security-prewriter' && assignment.profile === 'reviewer-security'
+        ? [{ assignment, assignmentIndex }]
+        : [],
+    ) ?? [];
   const planner = planners.length === 1 ? planners[0] : undefined;
   const reviewer = reviewers.length === 1 ? reviewers[0] : undefined;
   const plannerProfile = planner && config.agents.profiles[planner.assignment.profile];
@@ -166,30 +172,45 @@ function configuredSourcePrewriter(
   const reviewerProfile = reviewer && config.agents.profiles[reviewer.assignment.profile];
   const reviewerPolicy = reviewerProfile && config.agents.tool_policies[reviewerProfile.tools_policy];
   const developers = workflow?.stages.filter((candidate) => candidate.kind === 'develop') ?? [];
-  const writerAssignments = developers.flatMap((developer) => developer.assignments.filter((assignment) => {
-    const profile = config.agents.profiles[assignment.profile];
-    const policy = profile && config.agents.tool_policies[profile.tools_policy];
-    return profile?.mutation_scope === 'repository_source' && policy?.source_write === true;
-  }));
+  const writerAssignments = developers.flatMap((developer) =>
+    developer.assignments.filter((assignment) => {
+      const profile = config.agents.profiles[assignment.profile];
+      const policy = profile && config.agents.tool_policies[profile.tools_policy];
+      return profile?.mutation_scope === 'repository_source' && policy?.source_write === true;
+    }),
+  );
   const securityRiskFlags = ['security', 'data_loss', 'migration', 'high'];
   if (
-    !stage || matches.length !== 1 || !team || team.enabled !== true || stage.kind !== 'validate' || stage.mode !== 'parallel' ||
+    !stage ||
+    matches.length !== 1 ||
+    !team ||
+    team.enabled !== true ||
+    stage.kind !== 'validate' ||
+    stage.mode !== 'parallel' ||
     canonicalJsonDigest(stage.required_after) !== canonicalJsonDigest(['synthesize_task']) ||
-    stage.assignments.length !== 2 || planners.length !== 1 || reviewers.length !== 1 ||
-    (stage.risk_flags ?? []).length !== 0 || planner!.assignment.risk_flags?.length ||
-    canonicalJsonDigest([...(reviewer!.assignment.risk_flags ?? [])].sort()) !== canonicalJsonDigest([...securityRiskFlags].sort()) ||
+    stage.assignments.length !== 2 ||
+    planners.length !== 1 ||
+    reviewers.length !== 1 ||
+    (stage.risk_flags ?? []).length !== 0 ||
+    planner!.assignment.risk_flags?.length ||
+    canonicalJsonDigest([...(reviewer!.assignment.risk_flags ?? [])].sort()) !==
+      canonicalJsonDigest([...securityRiskFlags].sort()) ||
     canonicalJsonDigest(stage.consumes) !== canonicalJsonDigest(['DevelopmentTaskPacket/v1']) ||
     canonicalJsonDigest(stage.produces) !== canonicalJsonDigest(['LifecyclePreparationObservation/v1']) ||
     (team.stage_overrides[stage.id] ?? team.roles['source-planner']) !== planner!.assignment.profile ||
     (team.stage_overrides[stage.id] ?? team.roles['security-prewriter']) !== reviewer!.assignment.profile ||
-    plannerProfile?.mutation_scope !== 'none' || plannerPolicy?.source_write !== false ||
-    reviewerProfile?.mutation_scope !== 'none' || reviewerPolicy?.source_write !== false ||
-    developers.length !== 1 || writerAssignments.length === 0 ||
-    !developers[0]!.assignments.every((assignment) =>
-      (team.stage_overrides[developers[0]!.id] ?? team.roles[assignment.role]) === assignment.profile,
+    plannerProfile?.mutation_scope !== 'none' ||
+    plannerPolicy?.source_write !== false ||
+    reviewerProfile?.mutation_scope !== 'none' ||
+    reviewerPolicy?.source_write !== false ||
+    developers.length !== 1 ||
+    writerAssignments.length === 0 ||
+    !developers[0]!.assignments.every(
+      (assignment) => (team.stage_overrides[developers[0]!.id] ?? team.roles[assignment.role]) === assignment.profile,
     ) ||
     canonicalJsonDigest(developers[0]!.required_after) !== canonicalJsonDigest([stage.id])
-  ) return null;
+  )
+    return null;
   return {
     stageId: 'review_source_prewrite',
     plannerAssignmentIndex: planner!.assignmentIndex,
@@ -214,21 +235,33 @@ function attachObservedImplementationPolicyPreparation(input: {
   readonly observation: SessionBridgeObservation;
 }): HostStateSnapshot {
   requireCurrent(
-    input !== null && typeof input === 'object' &&
+    input !== null &&
+      typeof input === 'object' &&
       exactKeys(input as unknown as Record<string, unknown>, [
-        'repositoryRoot', 'hostState', 'workId', 'attempt', 'journal', 'observation',
-      ]) && path.isAbsolute(input.repositoryRoot) && path.resolve(input.repositoryRoot) === input.repositoryRoot &&
+        'repositoryRoot',
+        'hostState',
+        'workId',
+        'attempt',
+        'journal',
+        'observation',
+      ]) &&
+      path.isAbsolute(input.repositoryRoot) &&
+      path.resolve(input.repositoryRoot) === input.repositoryRoot &&
       /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(input.workId) &&
-      Number.isSafeInteger(input.attempt) && input.attempt > 0 &&
+      Number.isSafeInteger(input.attempt) &&
+      input.attempt > 0 &&
       HostStateStore.isHostStateStore(input.hostState),
     'prewriter attachment input is invalid',
   );
   const journal = input.journal;
   requireCurrent(
-    journal !== null && typeof journal === 'object' &&
+    journal !== null &&
+      typeof journal === 'object' &&
       journal.state?.schema === 'MastraSessionLedger/v1' &&
-      journal.state.work_id === input.workId && journal.state.attempt === input.attempt &&
-      Number.isSafeInteger(journal.version?.revision) && journal.version.revision > 0 &&
+      journal.state.work_id === input.workId &&
+      journal.state.attempt === input.attempt &&
+      Number.isSafeInteger(journal.version?.revision) &&
+      journal.version.revision > 0 &&
       /^[a-f0-9]{64}$/.test(journal.version.digest) &&
       canonicalJsonDigest(journal.state) === journal.version.digest,
     'prewriter attachment journal is stale or invalid',
@@ -253,19 +286,26 @@ function attachObservedImplementationPolicyPreparation(input: {
   const host = input.hostState.readHostStateSnapshot(identity);
   const work = host.work;
   requireCurrent(
-    work && host.ledger && host.workVersion && host.ledgerVersion &&
+    work &&
+      host.ledger &&
+      host.workVersion &&
+      host.ledgerVersion &&
       canonicalJsonDigest(work) === canonicalJsonDigest(owner) &&
       work.binding.lifecycle_work_id === input.workId &&
-      work.execution.status === 'active' && work.execution.run_id === journal.state.run_id &&
-      work.lifecycle.phase === 'PLAN' && work.lease !== null &&
+      work.execution.status === 'active' &&
+      work.execution.run_id === journal.state.run_id &&
+      work.lifecycle.phase === 'PLAN' &&
+      work.lease !== null &&
       work.lifecycle.assurance.correction_count === 0 &&
       work.binding.config_digest === runtimeConfigDigest(loadRuntimeConfig(input.repositoryRoot)) &&
       work.lifecycle.config_binding.config_digest === work.binding.config_digest,
     'prewriter attachment Host owner, phase, risk or configuration differs',
   );
   requireCurrent(
-    journal.state.workspace_id === work.workspace_id && journal.state.work_id === work.binding.lifecycle_work_id &&
-      journal.state.run_id === work.execution.run_id && journal.state.attempt === input.attempt,
+    journal.state.workspace_id === work.workspace_id &&
+      journal.state.work_id === work.binding.lifecycle_work_id &&
+      journal.state.run_id === work.execution.run_id &&
+      journal.state.attempt === input.attempt,
     'prewriter attachment journal differs from current Host execution',
   );
 
@@ -277,25 +317,28 @@ function attachObservedImplementationPolicyPreparation(input: {
     'prewriter attachment scope bytes differ from Host',
   );
   const scope = parseJsonRecord(scopeBytes, 'current implementation scope');
-  const acceptedRevision = acceptedContractSourceRevision(work, journal,
-    input.hostState.readConfiguredFrontierRecoveryView(identity, input.attempt));
+  const configuredContinuation = input.hostState.readConfiguredFrontierRecoveryView(identity, input.attempt);
+  const initialContinuation = input.hostState.readInitialSourceContinuationReceipt(identity, input.attempt);
   requireCurrent(
-    scope.schema === 'ImplementationScope/v1' && scope.work_id === input.workId &&
-      scope.source_revision === acceptedRevision && scope.scope_id === work.binding.scope_id &&
+    !(configuredContinuation && initialContinuation),
+    'multiple Host Source continuation records are ambiguous',
+  );
+  const acceptedRevision = acceptedContractSourceRevision(work, journal, initialContinuation ?? configuredContinuation);
+  requireCurrent(
+    scope.schema === 'ImplementationScope/v1' &&
+      scope.work_id === input.workId &&
+      scope.source_revision === acceptedRevision &&
+      scope.scope_id === work.binding.scope_id &&
       canonicalJsonDigest(scope.ac_ids) === canonicalJsonDigest(work.binding.ac_ids) &&
-      record(scope.attribution) && scope.attribution.thread_id === work.lease.thread_id,
+      record(scope.attribution) &&
+      scope.attribution.thread_id === work.lease.thread_id,
     'prewriter attachment scope or owning thread differs from Host',
   );
 
   const config = loadRuntimeConfig(input.repositoryRoot);
   const projectId = work.binding.project_ids.length === 1 ? work.binding.project_ids[0]! : null;
   requireCurrent(projectId !== null, 'prewriter attachment requires one admitted project');
-  const admitted = readAdmittedSessionExecutionContext(
-    input.repositoryRoot,
-    input.hostState,
-    projectId,
-    input.workId,
-  );
+  const admitted = readAdmittedSessionExecutionContext(input.repositoryRoot, input.hostState, projectId, input.workId);
   requireCurrent(
     canonicalJsonDigest(admitted.identity) === canonicalJsonDigest(identity) &&
       canonicalJsonDigest(admitted.work) === canonicalJsonDigest(work),
@@ -303,7 +346,8 @@ function attachObservedImplementationPolicyPreparation(input: {
   );
   const workItem = admitted.workItem as LocalWorkAdmissionInput['workItem'];
   requireCurrent(
-    workItem?.schema === 'WorkItem/v1' && workItem.id === input.workId &&
+    workItem?.schema === 'WorkItem/v1' &&
+      workItem.id === input.workId &&
       canonicalJsonDigest(workItem) === work.binding.work_item_digest,
     'prewriter attachment admitted work item differs from Host',
   );
@@ -329,7 +373,8 @@ function attachObservedImplementationPolicyPreparation(input: {
     configuredContext: null,
   });
   requireCurrent(
-    taskPacket.work_item_id === input.workId && taskPacket.attempt === input.attempt &&
+    taskPacket.work_item_id === input.workId &&
+      taskPacket.attempt === input.attempt &&
       taskPacket.workflow_id === work.binding.workflow_id &&
       requiresSourcePrewriterSecurityReview(work.lifecycle.risk, taskPacket.risk_flags),
     'prewriter attachment is not applicable to the current lifecycle risk or admitted packet flags',
@@ -339,37 +384,46 @@ function attachObservedImplementationPolicyPreparation(input: {
   const workflowStages = workflow?.stages ?? [];
   const prewriterMatches = workflowStages.filter((stage) => stage.id === 'review_source_prewrite');
   const prewriter = prewriterMatches.length === 1 ? prewriterMatches[0] : undefined;
-  const securityAssignments = prewriter?.assignments.flatMap((assignment, assignmentIndex) =>
-    assignment.role === 'security-prewriter' && assignment.profile === 'reviewer-security'
-      ? [{ assignment, assignmentIndex }]
-      : [],
-  ) ?? [];
+  const securityAssignments =
+    prewriter?.assignments.flatMap((assignment, assignmentIndex) =>
+      assignment.role === 'security-prewriter' && assignment.profile === 'reviewer-security'
+        ? [{ assignment, assignmentIndex }]
+        : [],
+    ) ?? [];
   const prewriterAssignment = securityAssignments.length === 1 ? securityAssignments[0]!.assignment : undefined;
   const prewriterAssignmentIndex = securityAssignments.length === 1 ? securityAssignments[0]!.assignmentIndex : -1;
-  const plannerAssignments = prewriter?.assignments.filter(
-    (assignment) => assignment.role === 'source-planner' && assignment.profile === 'architect',
-  ) ?? [];
+  const plannerAssignments =
+    prewriter?.assignments.filter(
+      (assignment) => assignment.role === 'source-planner' && assignment.profile === 'architect',
+    ) ?? [];
   const prewriterProfile = prewriterAssignment && config.agents.profiles[prewriterAssignment.profile];
   const prewriterPolicy = prewriterProfile && config.agents.tool_policies[prewriterProfile.tools_policy];
   const developers = workflowStages.filter((stage) => stage.kind === 'develop');
   const highRiskFlags = ['security', 'data_loss', 'migration', 'high'];
   requireCurrent(
-    prewriter && prewriterAssignment && prewriterMatches.length === 1 &&
-      prewriter.kind === 'validate' && prewriter.mode === 'parallel' &&
+    prewriter &&
+      prewriterAssignment &&
+      prewriterMatches.length === 1 &&
+      prewriter.kind === 'validate' &&
+      prewriter.mode === 'parallel' &&
       canonicalJsonDigest(prewriter.required_after) === canonicalJsonDigest(['synthesize_task']) &&
-      prewriter.assignments.length === 2 && plannerAssignments.length === 1 &&
+      prewriter.assignments.length === 2 &&
+      plannerAssignments.length === 1 &&
       !plannerAssignments[0]!.risk_flags?.length &&
       canonicalJsonDigest(prewriter.consumes) === canonicalJsonDigest(['DevelopmentTaskPacket/v1']) &&
       canonicalJsonDigest(prewriter.produces) === canonicalJsonDigest(['LifecyclePreparationObservation/v1']) &&
       (prewriter.risk_flags ?? []).length === 0 &&
-      canonicalJsonDigest([...(prewriterAssignment.risk_flags ?? [])].sort()) === canonicalJsonDigest([...highRiskFlags].sort()) &&
+      canonicalJsonDigest([...(prewriterAssignment.risk_flags ?? [])].sort()) ===
+        canonicalJsonDigest([...highRiskFlags].sort()) &&
       team?.enabled === true &&
       (team.stage_overrides[prewriter.id] ?? team.roles['security-prewriter']) === prewriterAssignment.profile &&
       (team.stage_overrides[prewriter.id] ?? team.roles['source-planner']) === plannerAssignments[0]!.profile &&
       config.agents.profiles.architect?.mutation_scope === 'none' &&
       config.agents.profiles.architect?.tools_policy === 'read_only' &&
-      prewriterProfile?.mutation_scope === 'none' && prewriterPolicy?.source_write === false &&
-      developers.length === 1 && canonicalJsonDigest(developers[0]!.required_after) === canonicalJsonDigest(['review_source_prewrite']),
+      prewriterProfile?.mutation_scope === 'none' &&
+      prewriterPolicy?.source_write === false &&
+      developers.length === 1 &&
+      canonicalJsonDigest(developers[0]!.required_after) === canonicalJsonDigest(['review_source_prewrite']),
     'current configured read-only prewriter does not gate the Source writer',
   );
 
@@ -378,11 +432,17 @@ function attachObservedImplementationPolicyPreparation(input: {
   requireCurrent(matches.length === 1, 'prewriter attachment action is missing or ambiguous in the journal');
   const item = matches[0]!;
   requireCurrent(
-      item.issue_id !== null && item.observation !== null && !item.host_reservation &&
-      item.issue_id === observation.issue_id && canonicalJsonDigest(item.observation) === canonicalJsonDigest(observation) &&
-      item.request.run_id === journal.state.run_id && item.request.workflow_id === work.binding.workflow_id &&
-      item.request.stage_id === 'review_source_prewrite' && item.request.assignment_index === prewriterAssignmentIndex &&
-      item.request.role === 'security-prewriter' && item.request.config_digest === work.binding.config_digest &&
+    item.issue_id !== null &&
+      item.observation !== null &&
+      !item.host_reservation &&
+      item.issue_id === observation.issue_id &&
+      canonicalJsonDigest(item.observation) === canonicalJsonDigest(observation) &&
+      item.request.run_id === journal.state.run_id &&
+      item.request.workflow_id === work.binding.workflow_id &&
+      item.request.stage_id === 'review_source_prewrite' &&
+      item.request.assignment_index === prewriterAssignmentIndex &&
+      item.request.role === 'security-prewriter' &&
+      item.request.config_digest === work.binding.config_digest &&
       item.request.scope_digest === work.binding.work_source_revision &&
       !work.execution.assignment_attempts.some((attempt) => attempt.stage_id === developers[0]!.id),
     'prewriter attachment report is not the current configured read-only action',
@@ -395,9 +455,12 @@ function attachObservedImplementationPolicyPreparation(input: {
     throw new Error('source write preflight: accepted prewriter report is not a LifecyclePreparationObservation/v1');
   }
   requireCurrent(
-    sourceRecord.kind === 'implementation_policy' && sourceRecord.work_id === input.workId &&
-      sourceRecord.attempt === input.attempt && sourceRecord.source_revision === work.binding.work_source_revision &&
-      sourceRecord.scope_id === work.binding.scope_id && sourceRecord.config_digest === work.binding.config_digest &&
+    sourceRecord.kind === 'implementation_policy' &&
+      sourceRecord.work_id === input.workId &&
+      sourceRecord.attempt === input.attempt &&
+      sourceRecord.source_revision === work.binding.work_source_revision &&
+      sourceRecord.scope_id === work.binding.scope_id &&
+      sourceRecord.config_digest === work.binding.config_digest &&
       canonicalJsonDigest(sourceRecord.ac_ids) === canonicalJsonDigest(work.binding.ac_ids) &&
       sourceRecord.observer_id === observation.agent_id &&
       (sourceRecord.status === 'pass' ? sourceRecord.gaps.length === 0 : sourceRecord.gaps.length > 0),
@@ -413,12 +476,12 @@ function attachObservedImplementationPolicyPreparation(input: {
   const gateObservations = sourceRecord.observations.filter((entry) => entry.mechanic === 'prewriter_security_gate');
   requireCurrent(
     gateObservations.length <= 1 &&
-      (sourceRecord.status !== 'pass' || (
-        sourceRecord.observations.some((entry) => entry.mechanic === 'root_cause_owner') &&
-        sourceRecord.observations.some((entry) => entry.mechanic === 'affected_callers') &&
-        sourceRecord.observations.some((entry) => entry.mechanic === 'existing_primitives') &&
-        gateObservations.length === 1 && gateObservations[0]!.actual.trim().length > 0
-      )),
+      (sourceRecord.status !== 'pass' ||
+        (sourceRecord.observations.some((entry) => entry.mechanic === 'root_cause_owner') &&
+          sourceRecord.observations.some((entry) => entry.mechanic === 'affected_callers') &&
+          sourceRecord.observations.some((entry) => entry.mechanic === 'existing_primitives') &&
+          gateObservations.length === 1 &&
+          gateObservations[0]!.actual.trim().length > 0)),
     'prewriter preparation is missing or duplicates a required mechanic',
   );
   const receiptReference = observedReceiptEvidenceReference(journal, item.request.action_id, observation.output_digest);
@@ -461,7 +524,8 @@ function attachObservedImplementationPolicyPreparation(input: {
   );
   if (currentPolicyRefs.length) {
     requireCurrent(
-      currentPolicyRefs.length === 1 && canonicalJsonDigest(currentPolicyRefs[0]) === canonicalJsonDigest(reference) &&
+      currentPolicyRefs.length === 1 &&
+        canonicalJsonDigest(currentPolicyRefs[0]) === canonicalJsonDigest(reference) &&
         access.fileExists(relativePath, 'prewriter preparation retry') &&
         access.readBytes(relativePath, 'prewriter preparation retry').equals(derivedBytes),
       'current implementation policy preparation belongs to a different observation',
@@ -502,9 +566,13 @@ function readAcceptedPrewriterObservation(
   role: 'source-planner' | 'security-prewriter',
 ): { readonly item: MastraLedgerItem; readonly observation: SessionBridgeObservation } | undefined {
   const items = [...journal.state.completed.flatMap((wave) => wave.items), ...journal.state.items].filter(
-    (item) => item.request.stage_id === 'review_source_prewrite' && item.request.assignment_index === assignmentIndex &&
-      item.request.role === role && item.request.run_id === journal.state.run_id &&
-      item.request.workflow_id === work.binding.workflow_id && item.request.config_digest === work.binding.config_digest &&
+    (item) =>
+      item.request.stage_id === 'review_source_prewrite' &&
+      item.request.assignment_index === assignmentIndex &&
+      item.request.role === role &&
+      item.request.run_id === journal.state.run_id &&
+      item.request.workflow_id === work.binding.workflow_id &&
+      item.request.config_digest === work.binding.config_digest &&
       item.request.scope_digest === work.binding.work_source_revision,
   );
   requireCurrent(items.length <= 1, 'configured prewriter assignment has multiple persisted observations');
@@ -512,9 +580,12 @@ function readAcceptedPrewriterObservation(
   if (!item || item.issue_id === null || !item.observation || item.host_reservation) return undefined;
   const observation = parseSessionBridgeObservation(item.observation);
   if (
-    observation.status !== 'reported_complete' || observation.action_id !== item.request.action_id ||
-    observation.issue_id !== item.issue_id || observation.output_digest !== canonicalJsonDigest(observation.summary)
-  ) return undefined;
+    observation.status !== 'reported_complete' ||
+    observation.action_id !== item.request.action_id ||
+    observation.issue_id !== item.issue_id ||
+    observation.output_digest !== canonicalJsonDigest(observation.summary)
+  )
+    return undefined;
   return { item, observation };
 }
 
@@ -525,7 +596,11 @@ function preparationFromPrewriterObservation(input: {
   readonly item: MastraLedgerItem;
   readonly observation: SessionBridgeObservation;
   readonly kind: 'source_plan' | 'implementation_policy';
-}): { readonly record: ReturnType<typeof lifecyclePreparationObservationSchema.parse>; readonly bytes: Uint8Array; readonly reference: LifecycleArtifactReference } {
+}): {
+  readonly record: ReturnType<typeof lifecyclePreparationObservationSchema.parse>;
+  readonly bytes: Uint8Array;
+  readonly reference: LifecycleArtifactReference;
+} {
   let sourceRecord: ReturnType<typeof lifecyclePreparationObservationSchema.parse>;
   try {
     sourceRecord = lifecyclePreparationObservationSchema.parse(JSON.parse(input.observation.summary));
@@ -534,9 +609,12 @@ function preparationFromPrewriterObservation(input: {
   }
   const { work, item, observation, kind } = input;
   requireCurrent(
-    sourceRecord.kind === kind && sourceRecord.work_id === work.binding.lifecycle_work_id &&
-      sourceRecord.attempt === input.journal.state.attempt && sourceRecord.source_revision === work.binding.work_source_revision &&
-      sourceRecord.scope_id === work.binding.scope_id && sourceRecord.config_digest === work.binding.config_digest &&
+    sourceRecord.kind === kind &&
+      sourceRecord.work_id === work.binding.lifecycle_work_id &&
+      sourceRecord.attempt === input.journal.state.attempt &&
+      sourceRecord.source_revision === work.binding.work_source_revision &&
+      sourceRecord.scope_id === work.binding.scope_id &&
+      sourceRecord.config_digest === work.binding.config_digest &&
       canonicalJsonDigest(sourceRecord.ac_ids) === canonicalJsonDigest(work.binding.ac_ids) &&
       sourceRecord.observer_id === observation.agent_id &&
       (sourceRecord.status === 'pass' ? sourceRecord.gaps.length === 0 : sourceRecord.gaps.length > 0),
@@ -548,35 +626,43 @@ function preparationFromPrewriterObservation(input: {
       new Set(sourceRecord.observations.map((entry) => entry.mechanic)).size === sourceRecord.observations.length,
     'prewriter preparation evidence or mechanics are ambiguous',
   );
-  const requiredMechanics = kind === 'source_plan'
-    ? ['scope_acceptance_trace', 'verification_rollback']
-    : ['root_cause_owner', 'affected_callers', 'existing_primitives'];
+  const requiredMechanics =
+    kind === 'source_plan'
+      ? ['scope_acceptance_trace', 'verification_rollback']
+      : ['root_cause_owner', 'affected_callers', 'existing_primitives'];
   if (sourceRecord.status === 'pass')
     requireCurrent(
-      requiredMechanics.every((mechanic) =>
-        sourceRecord.observations.filter((entry) => entry.mechanic === mechanic && entry.actual.trim().length > 0).length === 1,
+      requiredMechanics.every(
+        (mechanic) =>
+          sourceRecord.observations.filter((entry) => entry.mechanic === mechanic && entry.actual.trim().length > 0)
+            .length === 1,
       ),
       'prewriter preparation is missing a required current observation',
     );
-  const receiptReference = observedReceiptEvidenceReference(input.journal, item.request.action_id, observation.output_digest);
-  const record = kind === 'implementation_policy'
-    ? {
-        ...sourceRecord,
-        record_id: 'prewriter-' + item.request.action_id,
-        evidence_refs: sourceRecord.evidence_refs.includes(receiptReference)
-          ? [...sourceRecord.evidence_refs]
-          : [...sourceRecord.evidence_refs, receiptReference],
-        observations: sourceRecord.observations.map((entry) =>
-          entry.mechanic === 'prewriter_security_gate' ? { ...entry, evidence_ref: receiptReference } : entry,
-        ),
-      }
-    : {
-        ...sourceRecord,
-        record_id: 'source-plan-' + item.request.action_id,
-        evidence_refs: sourceRecord.evidence_refs.includes(receiptReference)
-          ? [...sourceRecord.evidence_refs]
-          : [...sourceRecord.evidence_refs, receiptReference],
-      };
+  const receiptReference = observedReceiptEvidenceReference(
+    input.journal,
+    item.request.action_id,
+    observation.output_digest,
+  );
+  const record =
+    kind === 'implementation_policy'
+      ? {
+          ...sourceRecord,
+          record_id: 'prewriter-' + item.request.action_id,
+          evidence_refs: sourceRecord.evidence_refs.includes(receiptReference)
+            ? [...sourceRecord.evidence_refs]
+            : [...sourceRecord.evidence_refs, receiptReference],
+          observations: sourceRecord.observations.map((entry) =>
+            entry.mechanic === 'prewriter_security_gate' ? { ...entry, evidence_ref: receiptReference } : entry,
+          ),
+        }
+      : {
+          ...sourceRecord,
+          record_id: 'source-plan-' + item.request.action_id,
+          evidence_refs: sourceRecord.evidence_refs.includes(receiptReference)
+            ? [...sourceRecord.evidence_refs]
+            : [...sourceRecord.evidence_refs, receiptReference],
+        };
   const bytes = Buffer.from(canonicalJson(record) + '\n');
   const reference: LifecycleArtifactReference = {
     schema: 'LifecycleArtifactReference/v1',
@@ -615,7 +701,10 @@ function attachPreparationArtifact(input: {
   const work = input.host.work;
   const ledger = input.host.ledger;
   requireCurrent(
-    work && ledger && input.host.workVersion && input.host.ledgerVersion &&
+    work &&
+      ledger &&
+      input.host.workVersion &&
+      input.host.ledgerVersion &&
       work.lifecycle.phase === input.expectedPhase,
     'prewriter preparation attachment phase or Host state changed',
   );
@@ -624,9 +713,12 @@ function attachPreparationArtifact(input: {
   );
   if (existing.length) {
     requireCurrent(
-      existing.length === 1 && canonicalJsonDigest(existing[0]) === canonicalJsonDigest(input.artifact.reference) &&
+      existing.length === 1 &&
+        canonicalJsonDigest(existing[0]) === canonicalJsonDigest(input.artifact.reference) &&
         input.access.fileExists(input.artifact.reference.path, 'prewriter preparation retry') &&
-        input.access.readBytes(input.artifact.reference.path, 'prewriter preparation retry').equals(input.artifact.bytes),
+        input.access
+          .readBytes(input.artifact.reference.path, 'prewriter preparation retry')
+          .equals(input.artifact.bytes),
       'current prewriter preparation belongs to a different accepted observation',
     );
     return input.host;
@@ -637,7 +729,12 @@ function attachPreparationArtifact(input: {
       input.access.readBytes(input.artifact.reference.path, 'prewriter preparation retry').equals(input.artifact.bytes),
       'prewriter preparation retry bytes differ',
     );
-  else input.access.writeExclusive(input.artifact.reference.path, Buffer.from(input.artifact.bytes).toString('utf8'), 'prewriter preparation');
+  else
+    input.access.writeExclusive(
+      input.artifact.reference.path,
+      Buffer.from(input.artifact.bytes).toString('utf8'),
+      'prewriter preparation',
+    );
   const nextWork: WorkState = {
     ...work,
     revision: work.revision + 1,
@@ -703,20 +800,32 @@ export function attachObservedSourcePreparation(input: {
   readonly observation: SessionBridgeObservation;
 }): HostStateSnapshot {
   requireCurrent(
-    input !== null && typeof input === 'object' &&
+    input !== null &&
+      typeof input === 'object' &&
       exactKeys(input as unknown as Record<string, unknown>, [
-        'repositoryRoot', 'hostState', 'workId', 'attempt', 'journal', 'observation',
-      ]) && path.isAbsolute(input.repositoryRoot) && path.resolve(input.repositoryRoot) === input.repositoryRoot &&
+        'repositoryRoot',
+        'hostState',
+        'workId',
+        'attempt',
+        'journal',
+        'observation',
+      ]) &&
+      path.isAbsolute(input.repositoryRoot) &&
+      path.resolve(input.repositoryRoot) === input.repositoryRoot &&
       /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(input.workId) &&
-      Number.isSafeInteger(input.attempt) && input.attempt > 0 &&
+      Number.isSafeInteger(input.attempt) &&
+      input.attempt > 0 &&
       HostStateStore.isHostStateStore(input.hostState),
     'prewriter attachment input is invalid',
   );
   const journal = input.journal;
   requireCurrent(
-    journal?.state?.schema === 'MastraSessionLedger/v1' && journal.state.work_id === input.workId &&
-      journal.state.attempt === input.attempt && Number.isSafeInteger(journal.version?.revision) &&
-      journal.version.revision > 0 && /^[a-f0-9]{64}$/.test(journal.version.digest) &&
+    journal?.state?.schema === 'MastraSessionLedger/v1' &&
+      journal.state.work_id === input.workId &&
+      journal.state.attempt === input.attempt &&
+      Number.isSafeInteger(journal.version?.revision) &&
+      journal.version.revision > 0 &&
+      /^[a-f0-9]{64}$/.test(journal.version.digest) &&
       canonicalJsonDigest(journal.state) === journal.version.digest,
     'prewriter attachment journal is stale or invalid',
   );
@@ -739,17 +848,23 @@ export function attachObservedSourcePreparation(input: {
   let host = input.hostState.readHostStateSnapshot(identity);
   let work = host.work;
   requireCurrent(
-    work && host.ledger && host.workVersion && host.ledgerVersion &&
+    work &&
+      host.ledger &&
+      host.workVersion &&
+      host.ledgerVersion &&
       canonicalJsonDigest(work) === canonicalJsonDigest(owner) &&
-      work.binding.lifecycle_work_id === input.workId && work.execution.status === 'active' &&
-      work.execution.run_id === journal.state.run_id && work.lease !== null &&
+      work.binding.lifecycle_work_id === input.workId &&
+      work.execution.status === 'active' &&
+      work.execution.run_id === journal.state.run_id &&
+      work.lease !== null &&
       work.lifecycle.assurance.correction_count === 0 &&
       work.binding.config_digest === runtimeConfigDigest(loadRuntimeConfig(input.repositoryRoot)) &&
       work.lifecycle.config_binding.config_digest === work.binding.config_digest,
     'prewriter attachment Host owner, phase or configuration differs',
   );
   requireCurrent(
-    journal.state.workspace_id === work.workspace_id && journal.state.work_id === work.binding.lifecycle_work_id &&
+    journal.state.workspace_id === work.workspace_id &&
+      journal.state.work_id === work.binding.lifecycle_work_id &&
       journal.state.run_id === work.execution.run_id,
     'prewriter attachment journal differs from current Host execution',
   );
@@ -759,7 +874,8 @@ export function attachObservedSourcePreparation(input: {
   const journalItems = [...journal.state.completed.flatMap((wave) => wave.items), ...journal.state.items];
   const suppliedItems = journalItems.filter((item) => item.request.action_id === suppliedObservation.action_id);
   requireCurrent(
-    suppliedItems.length === 1 && suppliedItems[0]!.observation !== null &&
+    suppliedItems.length === 1 &&
+      suppliedItems[0]!.observation !== null &&
       suppliedItems[0]!.observation !== undefined &&
       suppliedItems[0]!.issue_id === suppliedObservation.issue_id &&
       canonicalJsonDigest(suppliedItems[0]!.observation) === canonicalJsonDigest(suppliedObservation),
@@ -822,10 +938,7 @@ export function attachObservedSourcePreparation(input: {
     );
     requireCurrent(currentPlans.length === 1, 'current Source plan is required before policy attachment');
     const planBytes = access.readBytes(currentPlans[0]!.path, 'current source plan');
-    requireCurrent(
-      sha256(planBytes) === currentPlans[0]!.sha256,
-      'current Source plan bytes differ from Host state',
-    );
+    requireCurrent(sha256(planBytes) === currentPlans[0]!.sha256, 'current Source plan bytes differ from Host state');
     const currentPlan = lifecyclePreparationObservationSchema.parse(JSON.parse(planBytes.toString('utf8')));
     if (currentPlan.status === 'pass' && reviewer)
       host = attachObservedImplementationPolicyPreparation({ ...input, observation: reviewer.observation });
@@ -876,8 +989,7 @@ function exactContext(
   policy: RuntimeKernelSourcePreflightPolicySession,
 ): ProjectContext {
   requireCurrent(
-    runtimeConfigDigest(policy.config) === configDigest &&
-      runtimeConfigDigest(context.config) === configDigest,
+    runtimeConfigDigest(policy.config) === configDigest && runtimeConfigDigest(context.config) === configDigest,
     'current runtime configuration differs from the pending Host operation',
   );
   const current = validateProjectContext(context.projectContext, root);
@@ -917,7 +1029,14 @@ async function evaluateConfiguredSourcePolicy(input: {
     sessionId,
     context.workflowHostCapability,
   );
-  const projectContext = exactContext(repositoryRoot, operation.config_digest, repositoryId, projectIds, context, policy);
+  const projectContext = exactContext(
+    repositoryRoot,
+    operation.config_digest,
+    repositoryId,
+    projectIds,
+    context,
+    policy,
+  );
   const identity: TrustedProjectIdentity = context.trustedIdentity;
   const edictumOperation = Object.freeze({
     operation_hash: operation.operation_hash,
@@ -1001,9 +1120,7 @@ async function evaluateConfiguredSourcePolicy(input: {
  * before Host reserves a Source attempt. The Host's scoped human permission is
  * validated separately and remains the only approval consumption path.
  */
-export async function produceSourceWritePreflightApproval(
-  input: SourceWritePreflightApprovalInput,
-): Promise<void> {
+export async function produceSourceWritePreflightApproval(input: SourceWritePreflightApprovalInput): Promise<void> {
   const { repositoryRoot, context, request, hostApprovalPrincipal, hostApproval } = input;
   const { authorization, edictumOperation, edictumEvaluation } = await evaluateConfiguredSourcePolicy({
     repositoryRoot,
@@ -1015,11 +1132,7 @@ export async function produceSourceWritePreflightApproval(
     operationBinding: request,
   });
 
-  const {
-    workflowHostCapability: _workflowHostCapability,
-    assertCurrent: _assertCurrent,
-    ...preflight
-  } = context;
+  const { workflowHostCapability: _workflowHostCapability, assertCurrent: _assertCurrent, ...preflight } = context;
   validateSourceWritePreflight({
     ...preflight,
     request,
@@ -1068,7 +1181,8 @@ function journalEvidence(
       item.request.workflow_id !== work.binding.workflow_id ||
       item.request.config_digest !== work.binding.config_digest ||
       item.request.scope_digest !== work.binding.work_source_revision
-    ) continue;
+    )
+      continue;
     try {
       const reference = observedReceiptEvidenceReference(journal, item.request.action_id, observation.output_digest);
       evidence.set(reference, item);
@@ -1095,7 +1209,8 @@ function securityReviewers(
         (assignment.contour === 'security_data' || /security/i.test(assignment.role)) &&
         profile?.mutation_scope === 'none' &&
         policy?.source_write === false
-      ) result.push({ stageId: stage.id, assignmentIndex, role: assignment.role });
+      )
+        result.push({ stageId: stage.id, assignmentIndex, role: assignment.role });
     });
   }
   return result;
@@ -1240,16 +1355,18 @@ function validateTaskSourcePlanAndSecurity(context: TaskSourceMutationPolicyCont
   }
   requireCurrent(records.has('source_plan'), 'task-source mutation requires a current source plan');
 
-  if (
-    requiresSourcePrewriterSecurityReview(work.lifecycle.risk, taskPacket.risk_flags)
-  ) {
-    const security = records.get('implementation_policy')?.observations.filter(
-      (observation) => observation.mechanic === 'prewriter_security_gate' && observation.actual.trim().length > 0,
-    ) ?? [];
+  if (requiresSourcePrewriterSecurityReview(work.lifecycle.risk, taskPacket.risk_flags)) {
+    const security =
+      records
+        .get('implementation_policy')
+        ?.observations.filter(
+          (observation) => observation.mechanic === 'prewriter_security_gate' && observation.actual.trim().length > 0,
+        ) ?? [];
     const reviewers = securityReviewers(config, binding.workflow_id);
     const evidence = security[0] && journalItems.get(security[0].evidence_ref);
     requireCurrent(
-      records.has('implementation_policy') && security.length === 1 &&
+      records.has('implementation_policy') &&
+        security.length === 1 &&
         evidence !== undefined &&
         reviewers.some(
           (reviewer) =>
@@ -1263,40 +1380,61 @@ function validateTaskSourcePlanAndSecurity(context: TaskSourceMutationPolicyCont
   }
 }
 
-function validateTaskSourceMutationBinding(
-  input: {
-    readonly repositoryRoot: string;
-    readonly request: TaskSourceMutationPolicyRequest;
-    readonly context: TaskSourceMutationPolicyContext;
-  },
-): string {
+function validateTaskSourceMutationBinding(input: {
+  readonly repositoryRoot: string;
+  readonly request: TaskSourceMutationPolicyRequest;
+  readonly context: TaskSourceMutationPolicyContext;
+}): string {
   const { repositoryRoot, request, context } = input;
   const requestKeys = [
-    'schema', 'action', 'operation_id', 'request_id', 'operation_hash', 'work_id', 'thread_id', 'scope_digest',
-    'config_digest', 'lease', 'branch_ref', 'source_root', 'proposed_argv', 'prepared_record_cas',
+    'schema',
+    'action',
+    'operation_id',
+    'request_id',
+    'operation_hash',
+    'work_id',
+    'thread_id',
+    'scope_digest',
+    'config_digest',
+    'lease',
+    'branch_ref',
+    'source_root',
+    'proposed_argv',
+    'prepared_record_cas',
   ];
-  requireCurrent(record(request) && exactKeys(request as unknown as Record<string, unknown>, requestKeys),
-    'task-source policy request has unexpected fields');
+  requireCurrent(
+    record(request) && exactKeys(request as unknown as Record<string, unknown>, requestKeys),
+    'task-source policy request has unexpected fields',
+  );
   requireCurrent(
     request.schema === 'TaskSourceMutationPolicyRequest/v1' &&
       request.action === 'source.write' &&
       /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(request.operation_id) &&
       /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(request.request_id) &&
       /^[a-f0-9]{64}$/.test(request.operation_hash) &&
-      typeof request.work_id === 'string' && request.work_id.length > 0 &&
-      typeof request.thread_id === 'string' && request.thread_id.length > 0 &&
+      typeof request.work_id === 'string' &&
+      request.work_id.length > 0 &&
+      typeof request.thread_id === 'string' &&
+      request.thread_id.length > 0 &&
       /^[a-f0-9]{64}$/.test(request.scope_digest) &&
       /^[a-f0-9]{64}$/.test(request.config_digest) &&
-      typeof request.branch_ref === 'string' && request.branch_ref.startsWith('refs/heads/') &&
-      typeof request.source_root === 'string' && path.isAbsolute(request.source_root) && path.resolve(request.source_root) === request.source_root &&
-      Array.isArray(request.proposed_argv) && request.proposed_argv.length > 0 &&
+      typeof request.branch_ref === 'string' &&
+      request.branch_ref.startsWith('refs/heads/') &&
+      typeof request.source_root === 'string' &&
+      path.isAbsolute(request.source_root) &&
+      path.resolve(request.source_root) === request.source_root &&
+      Array.isArray(request.proposed_argv) &&
+      request.proposed_argv.length > 0 &&
       request.proposed_argv.every((argument) => typeof argument === 'string' && argument.length > 0),
     'task-source policy request is invalid',
   );
   requireCurrent(
     exactKeys(request.prepared_record_cas as unknown as Record<string, unknown>, ['operation_id', 'state_version']) &&
       request.prepared_record_cas.operation_id === request.operation_id &&
-      exactKeys(request.prepared_record_cas.state_version as unknown as Record<string, unknown>, ['digest', 'revision']) &&
+      exactKeys(request.prepared_record_cas.state_version as unknown as Record<string, unknown>, [
+        'digest',
+        'revision',
+      ]) &&
       Number.isSafeInteger(request.prepared_record_cas.state_version.revision) &&
       request.prepared_record_cas.state_version.revision > 0 &&
       /^[a-f0-9]{64}$/.test(request.prepared_record_cas.state_version.digest),
@@ -1313,12 +1451,18 @@ function validateTaskSourceMutationBinding(
   const workVersion = context.hostSnapshot.workVersion;
   const ledgerVersion = context.hostSnapshot.ledgerVersion;
   requireCurrent(
-    work && ledger && workVersion && ledgerVersion &&
-      workVersion.revision === work.revision && workVersion.digest === canonicalJsonDigest(work) &&
-      ledgerVersion.revision === ledger.revision && ledgerVersion.digest === canonicalJsonDigest(ledger) &&
+    work &&
+      ledger &&
+      workVersion &&
+      ledgerVersion &&
+      workVersion.revision === work.revision &&
+      workVersion.digest === canonicalJsonDigest(work) &&
+      ledgerVersion.revision === ledger.revision &&
+      ledgerVersion.digest === canonicalJsonDigest(ledger) &&
       ledger.workspace_id === work.workspace_id &&
       context.hostSnapshot.maintenanceGeneration >= 0 &&
-      work.execution.status === 'active' && work.lease !== null &&
+      work.execution.status === 'active' &&
+      work.lease !== null &&
       work.binding.lifecycle_work_id === request.work_id &&
       work.lease.thread_id === request.thread_id &&
       canonicalJsonDigest(work.lease) === canonicalJsonDigest(request.lease) &&
@@ -1357,16 +1501,27 @@ function validateTaskSourceMutationBinding(
   delete requestBinding.prepared_record_cas;
   requireCurrent(
     canonicalJsonDigest(preparedBinding) === canonicalJsonDigest(requestBinding) &&
-      canonicalJsonDigest(context.preparedStateVersion) === canonicalJsonDigest(request.prepared_record_cas.state_version),
+      canonicalJsonDigest(context.preparedStateVersion) ===
+        canonicalJsonDigest(request.prepared_record_cas.state_version),
     'task-source policy request differs from the current prepared operation or CAS',
   );
   const reference = context.sourceAuthorizationReference;
   const authorization = context.sourceAuthorization;
+  const authorizationSourceRevision = acceptedSourceAuthorizationRevision(
+    work,
+    context.journal.state,
+    reference,
+    context.continuation,
+  );
   const assignedSourceWriter = (stageId: string): boolean => {
-    const stage = context.config.workflows[work.binding.workflow_id]?.stages.find((candidate) => candidate.id === stageId);
-    return stage?.assignments.some(
-      (assignment) => context.config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source',
-    ) === true;
+    const stage = context.config.workflows[work.binding.workflow_id]?.stages.find(
+      (candidate) => candidate.id === stageId,
+    );
+    return (
+      stage?.assignments.some(
+        (assignment) => context.config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source',
+      ) === true
+    );
   };
   requireCurrent(
     reference.kind === 'execution_approval' &&
@@ -1374,18 +1529,19 @@ function validateTaskSourceMutationBinding(
       reference.disposition === 'current' &&
       reference.decision === 'approved' &&
       reference.scope_id === work.binding.scope_id &&
-      reference.source_revision === work.binding.work_source_revision &&
+      reference.source_revision === authorizationSourceRevision &&
       work.lifecycle.references.some((current) => canonicalJsonDigest(current) === canonicalJsonDigest(reference)) &&
       authorization.schema === 'LocalSourceWriteAuthorization/v1' &&
       authorization.action === 'source.write' &&
       authorization.user_instruction_ref === reference.record_id &&
       authorization.work_id === request.work_id &&
       authorization.attempt === context.journal.state.attempt &&
-      authorization.scope_digest === request.scope_digest &&
+      authorization.scope_digest === authorizationSourceRevision &&
       authorization.config_digest === request.config_digest &&
       authorization.workflow_id === work.binding.workflow_id &&
       authorization.native_session_handle === request.thread_id &&
-      authorization.stage_ids.length > 0 && authorization.stage_ids.every(assignedSourceWriter) &&
+      authorization.stage_ids.length > 0 &&
+      authorization.stage_ids.every(assignedSourceWriter) &&
       canonicalJsonDigest([...authorization.implementation_paths].sort()) ===
         canonicalJsonDigest([...work.binding.implementation_paths].sort()) &&
       reference.principal === 'local-session:' + canonicalJsonDigest(authorization.native_session_handle),
@@ -1424,7 +1580,10 @@ export async function evaluateTaskSourceMutationPolicy(input: {
       },
     });
   await context.assertCurrent();
-  requireCurrent(canonicalJsonDigest(request) === requestDigest, 'task-source policy request changed during evaluation');
+  requireCurrent(
+    canonicalJsonDigest(request) === requestDigest,
+    'task-source policy request changed during evaluation',
+  );
   return Object.freeze({
     operation_id: request.operation_id,
     request_id: request.request_id,

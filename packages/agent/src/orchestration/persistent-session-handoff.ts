@@ -53,8 +53,13 @@ import {
 } from './local-source-authorization.js';
 import { createLocalSessionReconciliationVerifier } from './local-session-reconciliation.js';
 import { readAdmittedSessionExecutionContext, openAdmittedSessionExecution } from './admitted-session-execution.js';
-import { buildAdmittedDevelopmentPacket } from './admitted-development-packet.js';
+import { buildAdmittedDevelopmentPacket, type AcceptedSourceContinuation } from './admitted-development-packet.js';
 import { configuredFrontierRecoveryViewDigest } from './failed-prewriter-transition.js';
+import {
+  initialSourceContinuationRecord,
+  validateInitialSourceContinuationReceipt,
+  type InitialSourceContinuationReceipt,
+} from './initial-source-continuation.js';
 import type { TrustedProjectIdentity } from '../contracts/public-ingress.js';
 import {
   attachObservedSourcePreparation,
@@ -84,7 +89,10 @@ interface Issuance {
 const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: boolean }) => {
   compile<T>(schema: object): ValidateFunction<T>;
 };
-const validSessionState = new Ajv2020Constructor({ strict: true, allErrors: true }).compile<PersistentSessionHandoffState>(stateSchema);
+const validSessionState = new Ajv2020Constructor({
+  strict: true,
+  allErrors: true,
+}).compile<PersistentSessionHandoffState>(stateSchema);
 const sameJson = (left: unknown, right: unknown): boolean => canonicalJson(left) === canonicalJson(right);
 
 function requestRoleMatchesConfiguredAssignment(config: AgentRuntimeConfig, request: SessionBridgeRequest): boolean {
@@ -126,6 +134,22 @@ export function sessionHandoffDatabasePath(repositoryRoot: string, config: Agent
   return path.join(repositoryRoot, config.control.work_root, 'session-handoff.v1.sqlite');
 }
 
+function sourcePreflightContinuation(
+  store: HostStateStore,
+  identity: WorkIdentity,
+  attempt: number,
+): AcceptedSourceContinuation | null {
+  const configured = store.readConfiguredFrontierRecoveryView(identity, attempt);
+  const initial = store.readInitialSourceContinuationReceipt(identity, attempt);
+  requireState(!(configured && initial), 'multiple Host Source continuation records are ambiguous');
+  return initial ?? configured;
+}
+
+function sourcePreflightContinuationDigest(view: AcceptedSourceContinuation | null): string {
+  if (view === null) return canonicalJsonDigest(null);
+  return 'schema' in view ? initialSourceContinuationRecord(view).digest : configuredFrontierRecoveryViewDigest(view);
+}
+
 function sourceWritePreflightResolver(
   repositoryRoot: string,
   getStore: () => HostStateStore,
@@ -144,17 +168,24 @@ function sourceWritePreflightResolver(
       work.binding.lifecycle_work_id !== workId ||
       work.binding.repository_id !== request.identity.repository_id ||
       canonicalJsonDigest(work.binding.project_ids) !== canonicalJsonDigest(request.identity.project_ids) ||
-      canonicalJsonDigest(work.binding.integrations_digest) !== canonicalJsonDigest(request.identity.integrations_digest) ||
+      canonicalJsonDigest(work.binding.integrations_digest) !==
+        canonicalJsonDigest(request.identity.integrations_digest) ||
       request.config_digest !== work.binding.config_digest ||
       request.workflow_id !== work.binding.workflow_id
-    ) throw new Error('Source preflight Host identity or workflow differs from the current Work');
+    )
+      throw new Error('Source preflight Host identity or workflow differs from the current Work');
     const projectId = work.binding.project_ids.length === 1 ? work.binding.project_ids[0]! : null;
     if (!projectId) throw new Error('Source preflight requires the admitted single-project session');
     const admitted = readAdmittedSessionExecutionContext(repositoryRoot, store, projectId, workId);
     if (canonicalJsonDigest(admitted.identity) !== canonicalJsonDigest(request.identity))
       throw new Error('Source preflight admitted identity differs from the Host request');
     const config = loadRuntimeConfig(repositoryRoot),
-      projectContext = loadProjectSetContext(repositoryRoot, config, request.identity.repository_id, request.identity.project_ids),
+      projectContext = loadProjectSetContext(
+        repositoryRoot,
+        config,
+        request.identity.repository_id,
+        request.identity.project_ids,
+      ),
       journal = getLedger().currentSnapshot(workId);
     if (!journal || journal.state.work_id !== workId || journal.state.run_id !== work.execution.run_id)
       throw new Error('Source preflight requires the current same-thread Host journal');
@@ -167,7 +198,8 @@ function sourceWritePreflightResolver(
       workItem.schema !== 'WorkItem/v1' ||
       workItem.id !== workId ||
       canonicalJsonDigest(workItem) !== work.binding.work_item_digest
-    ) throw new Error('Source preflight admitted work item differs from Host');
+    )
+      throw new Error('Source preflight admitted work item differs from Host');
     const selection: WorkItemSelection = {
       team: work.binding.team_id,
       kind: workItem.canonical_kind as WorkItemSelection['kind'],
@@ -230,7 +262,7 @@ function sourceWritePreflightResolver(
       taskPacket,
       scopeBytes,
       acceptanceBytes,
-      continuation: store.readConfiguredFrontierRecoveryView(request.identity, journal.state.attempt),
+      continuation: sourcePreflightContinuation(store, request.identity, journal.state.attempt),
       preparations,
       localAuthorizationSha256: localAuthorization.sha256,
       projectId,
@@ -256,9 +288,11 @@ function sourceWritePreflightResolver(
       authentication.repositoryRoot !== repositoryRoot ||
       authentication.repositoryId !== request.identity.repository_id ||
       canonicalJsonDigest(authentication.projectIds) !== canonicalJsonDigest(request.identity.project_ids) ||
-      authentication.principal !== 'local-session:' + canonicalJsonDigest(initial.hostSnapshot.work!.lease!.thread_id) ||
+      authentication.principal !==
+        'local-session:' + canonicalJsonDigest(initial.hostSnapshot.work!.lease!.thread_id) ||
       !authentication.permittedOperations.includes('runtime.write')
-    ) throw new Error('Source preflight trusted local workflow capability is unavailable');
+    )
+      throw new Error('Source preflight trusted local workflow capability is unavailable');
     const trustedIdentity: TrustedProjectIdentity = {
       schema: 'TrustedProjectIdentity/v1',
       source: 'authenticated-context',
@@ -276,17 +310,25 @@ function sourceWritePreflightResolver(
         runtimeConfigDigest(current.config) !== runtimeConfigDigest(initial.config) ||
         canonicalJsonDigest(current.projectContext) !== canonicalJsonDigest(initial.projectContext) ||
         canonicalJsonDigest(current.taskPacket) !== canonicalJsonDigest(initial.taskPacket) ||
-        configuredFrontierRecoveryViewDigest(current.continuation) !== configuredFrontierRecoveryViewDigest(initial.continuation) ||
+        sourcePreflightContinuationDigest(current.continuation) !==
+          sourcePreflightContinuationDigest(initial.continuation) ||
         !current.scopeBytes.equals(initial.scopeBytes) ||
         !current.acceptanceBytes.equals(initial.acceptanceBytes) ||
         canonicalJsonDigest(
-          current.preparations.map(({ reference, bytes }) => ({ reference, sha256: createHash('sha256').update(bytes).digest('hex') })),
+          current.preparations.map(({ reference, bytes }) => ({
+            reference,
+            sha256: createHash('sha256').update(bytes).digest('hex'),
+          })),
         ) !==
           canonicalJsonDigest(
-            initial.preparations.map(({ reference, bytes }) => ({ reference, sha256: createHash('sha256').update(bytes).digest('hex') })),
+            initial.preparations.map(({ reference, bytes }) => ({
+              reference,
+              sha256: createHash('sha256').update(bytes).digest('hex'),
+            })),
           ) ||
         current.localAuthorizationSha256 !== initial.localAuthorizationSha256
-      ) throw new Error('Source preflight inputs changed during configured policy evaluation');
+      )
+        throw new Error('Source preflight inputs changed during configured policy evaluation');
     };
     return {
       request,
@@ -317,32 +359,46 @@ function taskSourceMutationPolicyResolver(
   readonly stateVersion: StateVersion;
   readonly hostSnapshot: import('../host-state.js').HostStateSnapshot;
 }) => Promise<import('./source-preflight-operations.js').TaskSourceMutationPolicyDecision> {
-  const readEvidence = (
-    request: TaskSourceMutationPolicyRequest,
-    expectedIdentity: WorkIdentity,
-    attempt: number,
-  ) => {
-    const store = getStore(), hostSnapshot = store.readHostStateSnapshot(expectedIdentity);
+  const readEvidence = (request: TaskSourceMutationPolicyRequest, expectedIdentity: WorkIdentity, attempt: number) => {
+    const store = getStore(),
+      hostSnapshot = store.readHostStateSnapshot(expectedIdentity);
     const work = hostSnapshot.work;
-    requireState(work && work.binding.lifecycle_work_id === request.work_id &&
-      work.binding.config_digest === request.config_digest && work.lease?.thread_id === request.thread_id &&
-      canonicalJsonDigest(work.lease) === canonicalJsonDigest(request.lease),
-      'task-source policy Host identity or lease differs');
+    requireState(
+      work &&
+        work.binding.lifecycle_work_id === request.work_id &&
+        work.binding.config_digest === request.config_digest &&
+        work.lease?.thread_id === request.thread_id &&
+        canonicalJsonDigest(work.lease) === canonicalJsonDigest(request.lease),
+      'task-source policy Host identity or lease differs',
+    );
     const projectId = work.binding.project_ids.length === 1 ? work.binding.project_ids[0]! : null;
     requireState(projectId, 'task-source policy requires one admitted project');
     const admitted = readAdmittedSessionExecutionContext(repositoryRoot, store, projectId, request.work_id);
     const config = loadRuntimeConfig(repositoryRoot),
-      projectContext = loadProjectSetContext(repositoryRoot, config, work.binding.repository_id, work.binding.project_ids),
+      projectContext = loadProjectSetContext(
+        repositoryRoot,
+        config,
+        work.binding.repository_id,
+        work.binding.project_ids,
+      ),
       journal = getLedger().currentSnapshot(request.work_id);
-    requireState(journal && journal.state.run_id === work.execution.run_id && journal.state.attempt === attempt &&
-      request.scope_digest === work.binding.work_source_revision,
-      'task-source policy requires the current Host journal');
+    requireState(
+      journal &&
+        journal.state.run_id === work.execution.run_id &&
+        journal.state.attempt === attempt &&
+        request.scope_digest === work.binding.work_source_revision,
+      'task-source policy requires the current Host journal',
+    );
     const access = requireSafeRepositoryAccess(repositoryRoot),
       scopeBytes = access.readBytes(work.contracts.scope.path, 'task-source policy current scope'),
       acceptanceBytes = access.readBytes(work.contracts.acceptance.path, 'task-source policy current acceptance'),
       workItem = admitted.workItem as LocalWorkAdmissionInput['workItem'];
-    requireState(workItem?.schema === 'WorkItem/v1' && workItem.id === request.work_id &&
-      canonicalJsonDigest(workItem) === work.binding.work_item_digest, 'task-source policy work item differs from Host');
+    requireState(
+      workItem?.schema === 'WorkItem/v1' &&
+        workItem.id === request.work_id &&
+        canonicalJsonDigest(workItem) === work.binding.work_item_digest,
+      'task-source policy work item differs from Host',
+    );
     const selection: WorkItemSelection = {
       team: work.binding.team_id,
       kind: workItem.canonical_kind as WorkItemSelection['kind'],
@@ -352,40 +408,78 @@ function taskSourceMutationPolicyResolver(
       labels: [...workItem.labels],
     };
     const taskPacket = buildAdmittedDevelopmentPacket({
-      repositoryRoot, config, host: hostSnapshot, sourceStore: store, ledger: journal, workItem, selection, scopeBytes, acceptanceBytes,
+      repositoryRoot,
+      config,
+      host: hostSnapshot,
+      sourceStore: store,
+      ledger: journal,
+      workItem,
+      selection,
+      scopeBytes,
+      acceptanceBytes,
       configuredContext: null,
     });
     const preparationKinds = new Set([
-      'source_plan', 'platform_knowledge', 'implementation_policy', 'change_impact_pre', 'documentation_validation',
+      'source_plan',
+      'platform_knowledge',
+      'implementation_policy',
+      'change_impact_pre',
+      'documentation_validation',
     ]);
     const preparations = work.lifecycle.references
-      .filter((reference) => preparationKinds.has(reference.kind) &&
-        reference.artifact_schema === 'LifecyclePreparationObservation/v1' && reference.disposition === 'current')
+      .filter(
+        (reference) =>
+          preparationKinds.has(reference.kind) &&
+          reference.artifact_schema === 'LifecyclePreparationObservation/v1' &&
+          reference.disposition === 'current',
+      )
       .map((reference) => ({ reference, bytes: access.readBytes(reference.path, 'task-source policy preparation') }));
-    const authorizationReferences = work.lifecycle.references.filter((reference) =>
-      reference.kind === 'execution_approval' && reference.disposition === 'current' &&
-      reference.decision === 'approved' && reference.artifact_schema === 'LocalSourceWriteAuthorization/v1');
-    requireState(authorizationReferences.length === 1, 'task-source policy requires one current scoped Source authorization');
+    const authorizationReferences = work.lifecycle.references.filter(
+      (reference) =>
+        reference.kind === 'execution_approval' &&
+        reference.disposition === 'current' &&
+        reference.decision === 'approved' &&
+        reference.artifact_schema === 'LocalSourceWriteAuthorization/v1',
+    );
+    requireState(
+      authorizationReferences.length === 1,
+      'task-source policy requires one current scoped Source authorization',
+    );
     const sourceAuthorizationReference = authorizationReferences[0]!,
       sourceAuthorization = readLocalSourceWriteAuthorization(repositoryRoot, sourceAuthorizationReference.path),
       stageId = sourceAuthorization.authorization.stage_ids[0],
       stage = config.workflows[work.binding.workflow_id]?.stages.find((candidate) => candidate.id === stageId),
-      assignment = stage?.assignments.find((candidate) =>
-        config.agents.profiles[candidate.profile]?.mutation_scope === 'repository_source');
-    requireState(sourceAuthorization.sha256 === sourceAuthorizationReference.sha256 && assignment,
-      'task-source policy current Source authorization or assignment is invalid');
+      assignment = stage?.assignments.find(
+        (candidate) => config.agents.profiles[candidate.profile]?.mutation_scope === 'repository_source',
+      );
+    requireState(
+      sourceAuthorization.sha256 === sourceAuthorizationReference.sha256 && assignment,
+      'task-source policy current Source authorization or assignment is invalid',
+    );
     return {
-      hostSnapshot, journal, config, projectContext, workItem, taskPacket, scopeBytes, acceptanceBytes, preparations,
-      continuation: store.readConfiguredFrontierRecoveryView(expectedIdentity, journal.state.attempt),
-      sourceAuthorizationReference, sourceAuthorization: sourceAuthorization.authorization,
+      hostSnapshot,
+      journal,
+      config,
+      projectContext,
+      workItem,
+      taskPacket,
+      scopeBytes,
+      acceptanceBytes,
+      preparations,
+      continuation: sourcePreflightContinuation(store, expectedIdentity, journal.state.attempt),
+      sourceAuthorizationReference,
+      sourceAuthorization: sourceAuthorization.authorization,
       sourceAuthorizationSha256: sourceAuthorization.sha256,
-      assignmentRole: assignment.role, projectId,
+      assignmentRole: assignment.role,
+      projectId,
     };
   };
   return async ({ request, operation, stateVersion, hostSnapshot }) => {
     const originalRequest = operation.request as { readonly attempt?: unknown };
-    requireState(Number.isSafeInteger(originalRequest?.attempt) && (originalRequest.attempt as number) > 0,
-      'task-source prepared operation attempt is invalid');
+    requireState(
+      Number.isSafeInteger(originalRequest?.attempt) && (originalRequest.attempt as number) > 0,
+      'task-source prepared operation attempt is invalid',
+    );
     const identity: WorkIdentity = {
       repository_id: hostSnapshot.work!.binding.repository_id,
       project_ids: hostSnapshot.work!.binding.project_ids,
@@ -393,58 +487,102 @@ function taskSourceMutationPolicyResolver(
       work_id: request.work_id,
     };
     const initial = readEvidence(request, identity, originalRequest.attempt as number);
-    requireState(canonicalJsonDigest(initial.hostSnapshot) === canonicalJsonDigest(hostSnapshot),
-      'task-source policy received a stale Host snapshot');
+    requireState(
+      canonicalJsonDigest(initial.hostSnapshot) === canonicalJsonDigest(hostSnapshot),
+      'task-source policy received a stale Host snapshot',
+    );
     const execution = await openAdmittedSessionExecution(
-      repositoryRoot, getStore(), initial.projectId, request.work_id,
+      repositoryRoot,
+      getStore(),
+      initial.projectId,
+      request.work_id,
     );
     const authentication = execution.composition.authentication,
       workflowHostCapability = execution.composition.workflowHostCapability;
-    requireState(workflowHostCapability !== null && authentication.repositoryRoot === repositoryRoot &&
-      authentication.repositoryId === hostSnapshot.work!.binding.repository_id &&
-      canonicalJsonDigest(authentication.projectIds) === canonicalJsonDigest(hostSnapshot.work!.binding.project_ids) &&
-      authentication.principal === 'local-session:' + canonicalJsonDigest(request.thread_id) &&
-      authentication.permittedOperations.includes('runtime.write'),
-      'task-source trusted workflow capability is unavailable');
+    requireState(
+      workflowHostCapability !== null &&
+        authentication.repositoryRoot === repositoryRoot &&
+        authentication.repositoryId === hostSnapshot.work!.binding.repository_id &&
+        canonicalJsonDigest(authentication.projectIds) ===
+          canonicalJsonDigest(hostSnapshot.work!.binding.project_ids) &&
+        authentication.principal === 'local-session:' + canonicalJsonDigest(request.thread_id) &&
+        authentication.permittedOperations.includes('runtime.write'),
+      'task-source trusted workflow capability is unavailable',
+    );
     const trustedIdentity: TrustedProjectIdentity = {
-      schema: 'TrustedProjectIdentity/v1', source: 'authenticated-context',
-      principal: authentication.principal, role: initial.assignmentRole,
-      tenant: initial.projectContext.repository_id, project: initial.projectId,
+      schema: 'TrustedProjectIdentity/v1',
+      source: 'authenticated-context',
+      principal: authentication.principal,
+      role: initial.assignmentRole,
+      tenant: initial.projectContext.repository_id,
+      project: initial.projectId,
       registry_hash: initial.projectContext.registry_hash,
     };
     const preparedOperation: TaskSourcePreparedOperationBinding = {
-      operation_id: request.operation_id, request_id: request.request_id, operation_hash: request.operation_hash,
-      work_id: request.work_id, thread_id: request.thread_id, scope_digest: request.scope_digest,
-      config_digest: request.config_digest, lease: request.lease, branch_ref: request.branch_ref,
-      source_root: request.source_root, proposed_argv: request.proposed_argv,
+      operation_id: request.operation_id,
+      request_id: request.request_id,
+      operation_hash: request.operation_hash,
+      work_id: request.work_id,
+      thread_id: request.thread_id,
+      scope_digest: request.scope_digest,
+      config_digest: request.config_digest,
+      lease: request.lease,
+      branch_ref: request.branch_ref,
+      source_root: request.source_root,
+      proposed_argv: request.proposed_argv,
     };
     const assertCurrent = async (): Promise<void> => {
       const current = readEvidence(request, identity, originalRequest.attempt as number);
-      requireState(canonicalJsonDigest(current.hostSnapshot) === canonicalJsonDigest(initial.hostSnapshot) &&
-        canonicalJsonDigest(current.journal) === canonicalJsonDigest(initial.journal) &&
-        runtimeConfigDigest(current.config) === runtimeConfigDigest(initial.config) &&
-        canonicalJsonDigest(current.projectContext) === canonicalJsonDigest(initial.projectContext) &&
-        canonicalJsonDigest(current.taskPacket) === canonicalJsonDigest(initial.taskPacket) &&
-        configuredFrontierRecoveryViewDigest(current.continuation) === configuredFrontierRecoveryViewDigest(initial.continuation) &&
-        current.scopeBytes.equals(initial.scopeBytes) && current.acceptanceBytes.equals(initial.acceptanceBytes) &&
-        canonicalJsonDigest(current.preparations.map(({ reference, bytes }) => ({
-          reference, digest: createHash('sha256').update(bytes).digest('hex'),
-        }))) === canonicalJsonDigest(initial.preparations.map(({ reference, bytes }) => ({
-          reference, digest: createHash('sha256').update(bytes).digest('hex'),
-        }))) && current.sourceAuthorizationSha256 === initial.sourceAuthorizationSha256,
-        'task-source policy inputs changed during asynchronous evaluation');
+      requireState(
+        canonicalJsonDigest(current.hostSnapshot) === canonicalJsonDigest(initial.hostSnapshot) &&
+          canonicalJsonDigest(current.journal) === canonicalJsonDigest(initial.journal) &&
+          runtimeConfigDigest(current.config) === runtimeConfigDigest(initial.config) &&
+          canonicalJsonDigest(current.projectContext) === canonicalJsonDigest(initial.projectContext) &&
+          canonicalJsonDigest(current.taskPacket) === canonicalJsonDigest(initial.taskPacket) &&
+          sourcePreflightContinuationDigest(current.continuation) ===
+            sourcePreflightContinuationDigest(initial.continuation) &&
+          current.scopeBytes.equals(initial.scopeBytes) &&
+          current.acceptanceBytes.equals(initial.acceptanceBytes) &&
+          canonicalJsonDigest(
+            current.preparations.map(({ reference, bytes }) => ({
+              reference,
+              digest: createHash('sha256').update(bytes).digest('hex'),
+            })),
+          ) ===
+            canonicalJsonDigest(
+              initial.preparations.map(({ reference, bytes }) => ({
+                reference,
+                digest: createHash('sha256').update(bytes).digest('hex'),
+              })),
+            ) &&
+          current.sourceAuthorizationSha256 === initial.sourceAuthorizationSha256,
+        'task-source policy inputs changed during asynchronous evaluation',
+      );
       const stored = getStore().readHostStateSnapshot(identity);
-      requireState(canonicalJsonDigest(stored) === canonicalJsonDigest(hostSnapshot),
-        'task-source Host compare-and-swap changed during policy evaluation');
+      requireState(
+        canonicalJsonDigest(stored) === canonicalJsonDigest(hostSnapshot),
+        'task-source Host compare-and-swap changed during policy evaluation',
+      );
     };
     const context: TaskSourceMutationPolicyContext = {
-      repositoryRoot, taskSourceRequest: request, preparedOperation, preparedStateVersion: stateVersion,
+      repositoryRoot,
+      taskSourceRequest: request,
+      preparedOperation,
+      preparedStateVersion: stateVersion,
       sourceAuthorizationReference: initial.sourceAuthorizationReference,
-      sourceAuthorization: initial.sourceAuthorization, hostSnapshot: initial.hostSnapshot,
-      journal: initial.journal, config: initial.config, projectContext: initial.projectContext, trustedIdentity,
-      taskPacket: initial.taskPacket, scopeBytes: initial.scopeBytes, acceptanceBytes: initial.acceptanceBytes,
+      sourceAuthorization: initial.sourceAuthorization,
+      hostSnapshot: initial.hostSnapshot,
+      journal: initial.journal,
+      config: initial.config,
+      projectContext: initial.projectContext,
+      trustedIdentity,
+      taskPacket: initial.taskPacket,
+      scopeBytes: initial.scopeBytes,
+      acceptanceBytes: initial.acceptanceBytes,
       continuation: initial.continuation,
-      preparations: initial.preparations, workflowHostCapability, assertCurrent,
+      preparations: initial.preparations,
+      workflowHostCapability,
+      assertCurrent,
     };
     const { evaluateTaskSourceMutationPolicy } = await import('./source-preflight-operations.js');
     await assertCurrent();
@@ -981,6 +1119,30 @@ export class MastraSessionLedger {
 
   close(): void {
     this.#database.close(true);
+  }
+
+  /** Read the Host-owned receipt only for this fresh, exact ProjectContext. */
+  readInitialSourceContinuationReceipt(
+    identity: WorkIdentity,
+    attempt: number,
+  ): InitialSourceContinuationReceipt | null {
+    this.#assertFreshConfig();
+    const project = loadProjectSetContext(
+      this.#repositoryRoot,
+      this.#config,
+      identity.repository_id,
+      identity.project_ids,
+    );
+    requireState(
+      project.repository_id === identity.repository_id &&
+        sameJson(project.project_ids, identity.project_ids) &&
+        project.integrations_digest === identity.integrations_digest &&
+        Number.isSafeInteger(attempt) &&
+        attempt > 0,
+      'initial-source receipt ProjectContext or attempt differs',
+    );
+    const receipt = this.hostState.readInitialSourceContinuationReceipt(identity, attempt);
+    return receipt ? validateInitialSourceContinuationReceipt(receipt) : null;
   }
 
   sessionProducerBinding() {
@@ -1994,9 +2156,9 @@ export class MastraSessionLedger {
       (item) => item.request.action_id === observation.action_id,
     );
     if (matches.length !== 1 || matches[0]!.request.stage_id !== 'review_source_prewrite') return;
-    const owners = this.hostState.readWorkspaceSnapshot().work.filter(
-      (entry) => entry.work?.binding.lifecycle_work_id === workId,
-    );
+    const owners = this.hostState
+      .readWorkspaceSnapshot()
+      .work.filter((entry) => entry.work?.binding.lifecycle_work_id === workId);
     if (owners.length === 0) return;
     const item = matches[0]!;
     requireState(
@@ -2165,16 +2327,23 @@ export function openConfiguredMastraSessionLedger(repositoryRoot: string): Mastr
   }
   const database = openHostStateDatabase(databasePath);
   try {
-    let hostState!: HostStateStore,
-      ledger!: MastraSessionLedger;
+    let hostState!: HostStateStore, ledger!: MastraSessionLedger;
     const approvalVerifier = createLocalSourceWriteApprovalVerifier(
       repositoryRoot,
       () => hostState,
-      sourceWritePreflightResolver(repositoryRoot, () => hostState, () => ledger),
+      sourceWritePreflightResolver(
+        repositoryRoot,
+        () => hostState,
+        () => ledger,
+      ),
     );
     const reconciliationVerifier = createLocalSessionReconciliationVerifier(repositoryRoot);
     const taskSourceVerifier = {
-      verify: taskSourceMutationPolicyResolver(repositoryRoot, () => hostState, () => ledger),
+      verify: taskSourceMutationPolicyResolver(
+        repositoryRoot,
+        () => hostState,
+        () => ledger,
+      ),
     };
     hostState = new HostStateStore(
       database,

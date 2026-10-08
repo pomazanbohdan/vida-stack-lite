@@ -22,11 +22,14 @@ import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.
 import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
 import type { CorrectiveExecution } from './final-assurance.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
-import {
-  projectConfiguredPrewriterContinuationRequests,
-} from './delivered-work-continuation.js';
+import { projectConfiguredPrewriterContinuationRequests } from './delivered-work-continuation.js';
 import type { ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
 import { effectiveConfiguredFrontier, type FailedPrewriterRecoveryReceipt } from './failed-prewriter-transition.js';
+import {
+  validateInitialSourceContinuationReceipt,
+  type InitialSourceContinuationReceipt,
+} from './initial-source-continuation.js';
+import { validateInitialSourceContinuationLineage } from './admitted-development-packet.js';
 
 interface UntrustedMastraStep {
   readonly status?: unknown;
@@ -52,23 +55,38 @@ function arrayShape(value: unknown): boolean {
   return Array.isArray(value);
 }
 function snapshotStatus(value: unknown): value is SessionBridgeSnapshot['status'] {
-  return ['success', 'failed', 'canceled', 'suspended', 'unknown'].some(status => status === value);
+  return ['success', 'failed', 'canceled', 'suspended', 'unknown'].some((status) => status === value);
 }
 function decodeMastraSnapshot(text: string): UntrustedMastraSnapshot {
   const value: unknown = JSON.parse(text);
-  requireEngine(unknownRecord(value) && unknownRecord(value.context) && snapshotStatus(value.status),
-    'persisted snapshot object, context or status is invalid');
-  requireEngine(value.suspendedPaths === undefined || unknownRecord(value.suspendedPaths), 'persisted suspension map is invalid');
-  return { runId: value.runId, status: value.status, result: value.result,
-    context: value.context, suspendedPaths: value.suspendedPaths ?? {} };
+  requireEngine(
+    unknownRecord(value) && unknownRecord(value.context) && snapshotStatus(value.status),
+    'persisted snapshot object, context or status is invalid',
+  );
+  requireEngine(
+    value.suspendedPaths === undefined || unknownRecord(value.suspendedPaths),
+    'persisted suspension map is invalid',
+  );
+  return {
+    runId: value.runId,
+    status: value.status,
+    result: value.result,
+    context: value.context,
+    suspendedPaths: value.suspendedPaths ?? {},
+  };
 }
 function decodeMastraStep(value: unknown): UntrustedMastraStep | undefined {
   if (value === undefined) return undefined;
   requireEngine(unknownRecord(value), 'persisted step is not an object');
-  for (const [key, member] of [['suspendPayload', 'requests'], ['resumePayload', 'observations']] as const) {
+  for (const [key, member] of [
+    ['suspendPayload', 'requests'],
+    ['resumePayload', 'observations'],
+  ] as const) {
     const body = value[key];
-    requireEngine(body === undefined || unknownRecord(body) &&
-      (body[member] === undefined || unknownArray(body[member])), 'persisted step report or request container is invalid');
+    requireEngine(
+      body === undefined || (unknownRecord(body) && (body[member] === undefined || unknownArray(body[member]))),
+      'persisted step report or request container is invalid',
+    );
   }
   return value as UntrustedMastraStep;
 }
@@ -230,12 +248,15 @@ function validRetainedSourceScope(value: unknown): value is NonNullable<MastraSe
         !entry.path.startsWith('/') &&
         !entry.path.endsWith('/') &&
         !/^[A-Za-z]:/.test(entry.path) &&
-        !entry.path.split('').some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) &&
+        !entry.path.split('').some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) &&
         entry.path.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..') &&
         (index === 0 || scope.entries[index - 1]!.path < entry.path) &&
         typeof entry.exists === 'boolean' &&
         (entry.exists
-          ? Number.isSafeInteger(entry.bytes) && (entry.bytes as number) >= 0 && typeof entry.sha256 === 'string' && /^[a-f0-9]{64}$/.test(entry.sha256)
+          ? Number.isSafeInteger(entry.bytes) &&
+            (entry.bytes as number) >= 0 &&
+            typeof entry.sha256 === 'string' &&
+            /^[a-f0-9]{64}$/.test(entry.sha256)
           : entry.bytes === null && entry.sha256 === null),
     ) &&
     scope.digest === canonicalJsonDigest({ schema: scope.schema, entries: scope.entries })
@@ -379,8 +400,9 @@ export function readRetainedTerminalSessionEngineSnapshot(
       const expectedRequests = wave.items.map((item) => parseSessionBridgeRequest(item.request)),
         persistedRequests = row.suspendPayload?.requests;
       requireEngine(
-        persistedRequests === undefined || (arrayShape(persistedRequests) &&
-          isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), expectedRequests)),
+        persistedRequests === undefined ||
+          (arrayShape(persistedRequests) &&
+            isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), expectedRequests)),
         'retained terminal original request bodies differ from Host Journal',
       );
       const observations = wave.items.map((item) => item.observation!);
@@ -390,16 +412,12 @@ export function readRetainedTerminalSessionEngineSnapshot(
           if (expectedObservationIds.has(id)) return false;
           expectedObservationIds.add(id);
           return observation.output_digest === canonicalJsonDigest(observation.summary);
-        }) &&
-          isDeepStrictEqual(row.resumePayload?.observations, observations),
+        }) && isDeepStrictEqual(row.resumePayload?.observations, observations),
         'retained terminal original observations differ from Host Journal',
       );
       const output = parsePriorState(row.output);
       requireEngine(
-        isDeepStrictEqual(
-          output.observations,
-          [...state.observations, ...observations],
-        ),
+        isDeepStrictEqual(output.observations, [...state.observations, ...observations]),
         'retained terminal wave output differs from Host Journal',
       );
       state = output;
@@ -532,7 +550,8 @@ export function readRetainedUnissuedSessionEngineSnapshot(
   requireEngine(Number.isSafeInteger(frontierWaveIndex), 'retained unissued developer step index is invalid');
   const previousWaveIndexes: number[] = [];
   for (const [position, wave] of journal.completed.entries()) {
-    const match = /^wave-(\d+)$/.exec(wave.step_id), index = match ? Number(match[1]) : Number.NaN;
+    const match = /^wave-(\d+)$/.exec(wave.step_id),
+      index = match ? Number(match[1]) : Number.NaN;
     requireEngine(
       match &&
         Number.isSafeInteger(index) &&
@@ -627,7 +646,9 @@ export function readRetainedUnissuedSessionEngineSnapshot(
           state.scope_digest === scope.digest &&
           state.config_digest === oldConfigDigest &&
           isDeepStrictEqual(state.selection, oldSelection) &&
-          state.observations.every((observation) => observation.output_digest === canonicalJsonDigest(observation.summary)) &&
+          state.observations.every(
+            (observation) => observation.output_digest === canonicalJsonDigest(observation.summary),
+          ) &&
           new Set(state.observations.map((observation) => observation.action_id)).size === state.observations.length,
         'retained unissued run context differs',
       );
@@ -639,9 +660,9 @@ export function readRetainedUnissuedSessionEngineSnapshot(
     const expectedWaveIds = [...journal.completed.map((wave) => wave.step_id), journal.step_id];
     requireEngine(
       waveIds.length === expectedWaveIds.length &&
-        [...waveIds].sort((left, right) => Number(left.slice(5)) - Number(right.slice(5))).every((id, index) =>
-          /^wave-\d+$/.test(id) && id === expectedWaveIds[index],
-        ),
+        [...waveIds]
+          .sort((left, right) => Number(left.slice(5)) - Number(right.slice(5)))
+          .every((id, index) => /^wave-\d+$/.test(id) && id === expectedWaveIds[index]),
       'retained unissued wave count or prefix differs from Journal',
     );
     let state = input;
@@ -701,7 +722,9 @@ export function readRetainedUnissuedSessionEngineSnapshot(
         ),
         persistedRequests = row.suspendPayload?.requests;
       requireEngine(
-        persistedRequests === undefined || (arrayShape(persistedRequests) && isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), requests)),
+        persistedRequests === undefined ||
+          (arrayShape(persistedRequests) &&
+            isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), requests)),
         'retained unissued completed request bodies differ from Journal',
       );
       const observations = wave.items.map((entry: MastraSessionLedgerState['completed'][number]['items'][number]) => {
@@ -764,13 +787,20 @@ export function readRetainedUnissuedSessionEngineSnapshot(
         !arrayShape(paths) &&
         Object.keys(paths).length === 1 &&
         Object.keys(paths)[0] === journal.step_id &&
-        unknownArray(suspendedIndexes) && suspendedIndexes.length === 1 &&
-        typeof suspendedIndexes[0] === 'number' && Number.isSafeInteger(suspendedIndexes[0]) &&
+        unknownArray(suspendedIndexes) &&
+        suspendedIndexes.length === 1 &&
+        typeof suspendedIndexes[0] === 'number' &&
+        Number.isSafeInteger(suspendedIndexes[0]) &&
         suspendedIndexes[0] >= 0,
       'retained unissued suspended path differs',
     );
     requireEngine(
-      isDeepStrictEqual(state.observations, journal.completed.flatMap((wave: MastraSessionLedgerState['completed'][number]) => wave.items.map((item) => item.observation!))),
+      isDeepStrictEqual(
+        state.observations,
+        journal.completed.flatMap((wave: MastraSessionLedgerState['completed'][number]) =>
+          wave.items.map((item) => item.observation!),
+        ),
+      ),
       'retained unissued observation count differs from Journal prefix',
     );
     return {
@@ -807,9 +837,12 @@ export function readConfiguredContinuationSessionEngineSnapshot(
 ): SessionBridgeSnapshot {
   requireEngine(
     receipt?.schema === 'DeliveredWorkContinuationReceipt/v1' &&
-      receipt.status === 'action_ready' && receipt.rights_granted === false &&
-      receipt.accepted_result === false && receipt.runtime_acceptance === false &&
-      receipt.historical_capture === null && receipt.request?.schema === 'DeliveredWorkContinuationRequest/v1' &&
+      receipt.status === 'action_ready' &&
+      receipt.rights_granted === false &&
+      receipt.accepted_result === false &&
+      receipt.runtime_acceptance === false &&
+      receipt.historical_capture === null &&
+      receipt.request?.schema === 'DeliveredWorkContinuationRequest/v1' &&
       receipt.request_digest === canonicalJsonDigest(receipt.request) &&
       receipt.authorization?.request_digest === receipt.request_digest &&
       receipt.authorization.action_digest === canonicalJsonDigest(receipt.request.action) &&
@@ -834,7 +867,8 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     currentScope = effective.currentSourceScope,
     currentConfigDigest = runtimeConfigDigest(binding.config);
   requireEngine(
-    typeof oldRunId === 'string' && oldRunId.length > 0 &&
+    typeof oldRunId === 'string' &&
+      oldRunId.length > 0 &&
       binding.runId === oldRunId &&
       binding.context.work_id === request.identity.work_id &&
       binding.context.attempt === receipt.attempt &&
@@ -848,7 +882,8 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       priorJournal.corrective_execution == null &&
       binding.correctiveExecution == null &&
       priorJournal.research_wave_exposure === undefined &&
-      Number.isSafeInteger(boundaryWave) && boundaryWave >= 0 &&
+      Number.isSafeInteger(boundaryWave) &&
+      boundaryWave >= 0 &&
       priorJournal.completed.length === boundaryWave,
     'configured continuation Host, run or graph binding differs',
   );
@@ -888,7 +923,10 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     }),
     observations: beforeImageValue.observations.map((entry) => {
       const parsed = parseSessionBridgeObservation(entry);
-      requireEngine(isDeepStrictEqual(parsed, entry), 'configured continuation beforeimage observation is not canonical');
+      requireEngine(
+        isDeepStrictEqual(parsed, entry),
+        'configured continuation beforeimage observation is not canonical',
+      );
       return parsed;
     }),
   };
@@ -900,15 +938,24 @@ export function readConfiguredContinuationSessionEngineSnapshot(
 
   const access = requireSafeRepositoryAccess(binding.repositoryRoot),
     relative = binding.config.control.work_root + '/mastra-workflows.v1.sqlite';
-  requireEngine(access.fileExists(relative, 'configured continuation engine'), 'configured continuation engine unavailable');
+  requireEngine(
+    access.fileExists(relative, 'configured continuation engine'),
+    'configured continuation engine unavailable',
+  );
   const target = path.join(binding.repositoryRoot, relative),
     before = lstatSync(target);
-  requireEngine(before.isFile() && !before.isSymbolicLink() && before.nlink === 1, 'configured continuation database path is unsafe');
+  requireEngine(
+    before.isFile() && !before.isSymbolicLink() && before.nlink === 1,
+    'configured continuation database path is unsafe',
+  );
   const database = new Database(target, { readonly: true, strict: true });
   let persisted: UntrustedMastraSnapshot;
   try {
     requireEngine(
-      database.query('PRAGMA quick_check').all().every((row) => Object.values(row as Record<string, unknown>)[0] === 'ok'),
+      database
+        .query('PRAGMA quick_check')
+        .all()
+        .every((row) => Object.values(row as Record<string, unknown>)[0] === 'ok'),
       'configured continuation engine is corrupt',
     );
     const columns = database.query('PRAGMA table_info(mastra_workflow_snapshot)').all() as { name: string }[];
@@ -917,11 +964,17 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       'configured continuation snapshot table is missing or malformed',
     );
     const census = database
-      .query('SELECT count(*) AS count, coalesce(sum(length(CAST(snapshot AS BLOB))),0) AS bytes FROM mastra_workflow_snapshot')
+      .query(
+        'SELECT count(*) AS count, coalesce(sum(length(CAST(snapshot AS BLOB))),0) AS bytes FROM mastra_workflow_snapshot',
+      )
       .get() as { count: number; bytes: number };
     requireEngine(
-      Number.isSafeInteger(census.count) && census.count >= 0 && census.count <= 256 &&
-        Number.isSafeInteger(census.bytes) && census.bytes >= 0 && census.bytes <= 8 * 1024 * 1024,
+      Number.isSafeInteger(census.count) &&
+        census.count >= 0 &&
+        census.count <= 256 &&
+        Number.isSafeInteger(census.bytes) &&
+        census.bytes >= 0 &&
+        census.bytes <= 8 * 1024 * 1024,
       'configured continuation engine census exceeds bound',
     );
     const decoded = database
@@ -932,28 +985,40 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       )
       .get() as { invalid: number; bytes: number };
     requireEngine(
-      decoded.invalid === 0 && Number.isSafeInteger(decoded.bytes) && decoded.bytes >= 0 && decoded.bytes <= 8 * 1024 * 1024,
+      decoded.invalid === 0 &&
+        Number.isSafeInteger(decoded.bytes) &&
+        decoded.bytes >= 0 &&
+        decoded.bytes <= 8 * 1024 * 1024,
       'configured continuation engine snapshot encoding or census differs',
     );
     const rows = database
       .query('SELECT workflow_name,run_id,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?')
       .all(oldRunId) as { workflow_name: string; run_id: string; snapshot: string }[];
     requireEngine(
-      rows.length === 1 && rows[0]!.workflow_name === action.workflow_id && rows[0]!.run_id === oldRunId &&
+      rows.length === 1 &&
+        rows[0]!.workflow_name === action.workflow_id &&
+        rows[0]!.run_id === oldRunId &&
         Buffer.byteLength(rows[0]!.snapshot) <= 8 * 1024 * 1024,
       'configured continuation original engine run is missing or ambiguous',
     );
     persisted = decodeMastraSnapshot(rows[0]!.snapshot);
     requireEngine(
-      persisted && persisted.runId === oldRunId && persisted.context &&
-        typeof persisted.context === 'object' && !arrayShape(persisted.context),
+      persisted &&
+        persisted.runId === oldRunId &&
+        persisted.context &&
+        typeof persisted.context === 'object' &&
+        !arrayShape(persisted.context),
       'configured continuation original engine snapshot identity differs',
     );
   } finally {
     database.close(true);
     const after = lstatSync(target);
     requireEngine(
-      after.isFile() && !after.isSymbolicLink() && after.nlink === 1 && after.dev === before.dev && after.ino === before.ino,
+      after.isFile() &&
+        !after.isSymbolicLink() &&
+        after.nlink === 1 &&
+        after.dev === before.dev &&
+        after.ino === before.ino,
       'configured continuation database was substituted',
     );
   }
@@ -961,7 +1026,10 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   const beforeStep = decodeMastraStep(persisted.context[boundaryStep]);
   requireEngine(beforeStep, 'configured continuation boundary step is missing');
   if (beforeStep.status === 'suspended') {
-    const retained = readRetainedUnissuedSessionEngineSnapshot(priorBinding, { work: priorWork, journal: priorJournal });
+    const retained = readRetainedUnissuedSessionEngineSnapshot(priorBinding, {
+      work: priorWork,
+      journal: priorJournal,
+    });
     requireEngine(
       isDeepStrictEqual(retained, normalizedBeforeImage),
       'configured continuation actual prewriter boundary differs from its immutable beforeimage',
@@ -986,10 +1054,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     'configured continuation receipt current prewriter requests differ',
   );
   if (beforeStep.status === 'suspended') {
-    requireEngine(
-      persisted.status === 'suspended',
-      'configured continuation suspended beforewriter graph differs',
-    );
+    requireEngine(persisted.status === 'suspended', 'configured continuation suspended beforewriter graph differs');
     return {
       run_id: oldRunId,
       status: 'suspended',
@@ -1007,11 +1072,16 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   const parseOldState = (value: unknown): RunState => {
     const state = parseSessionBridgeRunState(value);
     requireEngine(
-      isDeepStrictEqual(state, value) && state.work_id === request.identity.work_id &&
-        state.attempt === receipt.attempt && state.workflow_id === action.workflow_id &&
-        state.config_digest === request.priorConfigDigest && state.scope_digest === priorScope.digest &&
+      isDeepStrictEqual(state, value) &&
+        state.work_id === request.identity.work_id &&
+        state.attempt === receipt.attempt &&
+        state.workflow_id === action.workflow_id &&
+        state.config_digest === request.priorConfigDigest &&
+        state.scope_digest === priorScope.digest &&
         isDeepStrictEqual(state.selection, binding.selection) &&
-        state.observations.every((observation) => observation.output_digest === canonicalJsonDigest(observation.summary)) &&
+        state.observations.every(
+          (observation) => observation.output_digest === canonicalJsonDigest(observation.summary),
+        ) &&
         new Set(state.observations.map((observation) => observation.action_id)).size === state.observations.length,
       'configured continuation original input or prefix state differs',
     );
@@ -1020,17 +1090,27 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   const parseCurrentState = (value: unknown): RunState => {
     const state = parseSessionBridgeRunState(value);
     requireEngine(
-      isDeepStrictEqual(state, value) && state.work_id === request.identity.work_id &&
-        state.attempt === receipt.attempt && state.workflow_id === action.workflow_id &&
-        state.config_digest === currentConfigDigest && state.scope_digest === currentScope.digest &&
+      isDeepStrictEqual(state, value) &&
+        state.work_id === request.identity.work_id &&
+        state.attempt === receipt.attempt &&
+        state.workflow_id === action.workflow_id &&
+        state.config_digest === currentConfigDigest &&
+        state.scope_digest === currentScope.digest &&
         isDeepStrictEqual(state.selection, binding.selection) &&
-        state.observations.every((observation) => observation.output_digest === canonicalJsonDigest(observation.summary)) &&
+        state.observations.every(
+          (observation) => observation.output_digest === canonicalJsonDigest(observation.summary),
+        ) &&
         new Set(state.observations.map((observation) => observation.action_id)).size === state.observations.length,
       'configured continuation current state differs',
     );
     return state;
   };
-  const parseRequests = (values: unknown, expected: readonly SessionBridgeRequest[], message: string, completed = false) => {
+  const parseRequests = (
+    values: unknown,
+    expected: readonly SessionBridgeRequest[],
+    message: string,
+    completed = false,
+  ) => {
     if (completed && values === undefined) return;
     requireEngine(unknownArray(values), message);
     const parsed = values.map((entry) => {
@@ -1041,11 +1121,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     requireEngine(isDeepStrictEqual(parsed, expected), message);
     return parsed;
   };
-  const parseCompleteObservations = (
-    values: unknown,
-    expected: readonly SessionBridgeRequest[],
-    message: string,
-  ) => {
+  const parseCompleteObservations = (values: unknown, expected: readonly SessionBridgeRequest[], message: string) => {
     requireEngine(unknownArray(values) && values.length === expected.length, message);
     const parsed = values.map((entry) => {
       const value = parseSessionBridgeObservation(entry);
@@ -1055,15 +1131,22 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     const expectedIds = new Set(expected.map((entry) => entry.action_id));
     requireEngine(
       new Set(parsed.map((entry) => entry.action_id)).size === expected.length &&
-        parsed.every((entry) => expectedIds.has(entry.action_id) && entry.status === 'reported_complete' &&
-          entry.output_digest === canonicalJsonDigest(entry.summary)),
+        parsed.every(
+          (entry) =>
+            expectedIds.has(entry.action_id) &&
+            entry.status === 'reported_complete' &&
+            entry.output_digest === canonicalJsonDigest(entry.summary),
+        ),
       message,
     );
     return parsed;
   };
 
   const originalInput = parseOldState(persisted.context.input);
-  requireEngine(originalInput.observations.length === 0, 'configured continuation original input observations are not empty');
+  requireEngine(
+    originalInput.observations.length === 0,
+    'configured continuation original input observations are not empty',
+  );
   let oldState = originalInput;
   const originalActionIds = new Set<string>();
   for (const [position, wave] of priorJournal.completed.entries()) {
@@ -1071,44 +1154,61 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       waveStep = 'wave-' + waveIndex,
       row = decodeMastraStep(persisted.context[waveStep]);
     requireEngine(
-      wave.step_id === waveStep && row?.status === 'success' &&
-        isDeepStrictEqual(parseOldState(row.payload), oldState),
+      wave.step_id === waveStep && row?.status === 'success' && isDeepStrictEqual(parseOldState(row.payload), oldState),
       'configured continuation original successful prefix differs',
     );
     const expected = wave.items.map((item) => {
       const parsed = parseSessionBridgeRequest(item.request);
       requireEngine(
-        isDeepStrictEqual(parsed, item.request) && parsed.run_id === oldRunId &&
-          parsed.workflow_id === action.workflow_id && parsed.wave_index === waveIndex &&
-          parsed.config_digest === request.priorConfigDigest && parsed.scope_digest === priorScope.digest &&
-          parsed.bindings_manifest_ref === canonicalJsonDigest({
-            config_digest: request.priorConfigDigest,
-            scope_digest: priorScope.digest,
-            work_id: request.identity.work_id,
-            attempt: receipt.attempt,
-            action_id: parsed.action_id,
-            stage_id: parsed.stage_id,
-            configured_context_digest: parsed.configured_context_digest ?? null,
-            wave_index: waveIndex,
-            prior_results: oldState.observations.map((entry) => entry.output_digest),
-          }) && !originalActionIds.has(parsed.action_id),
+        isDeepStrictEqual(parsed, item.request) &&
+          parsed.run_id === oldRunId &&
+          parsed.workflow_id === action.workflow_id &&
+          parsed.wave_index === waveIndex &&
+          parsed.config_digest === request.priorConfigDigest &&
+          parsed.scope_digest === priorScope.digest &&
+          parsed.bindings_manifest_ref ===
+            canonicalJsonDigest({
+              config_digest: request.priorConfigDigest,
+              scope_digest: priorScope.digest,
+              work_id: request.identity.work_id,
+              attempt: receipt.attempt,
+              action_id: parsed.action_id,
+              stage_id: parsed.stage_id,
+              configured_context_digest: parsed.configured_context_digest ?? null,
+              wave_index: waveIndex,
+              prior_results: oldState.observations.map((entry) => entry.output_digest),
+            }) &&
+          !originalActionIds.has(parsed.action_id),
         'configured continuation original prefix request binding differs',
       );
       originalActionIds.add(parsed.action_id);
       return parsed;
     });
-    parseRequests(row.suspendPayload?.requests, expected, 'configured continuation original prefix requests differ', true);
+    parseRequests(
+      row.suspendPayload?.requests,
+      expected,
+      'configured continuation original prefix requests differ',
+      true,
+    );
     requireEngine(
-      wave.items.every((item) => item.issue_id !== null && item.observation !== null &&
-        item.host_reservation === undefined && item.research_activation === undefined &&
-        item.research_normalization === undefined && item.request.corrective_execution === undefined),
+      wave.items.every(
+        (item) =>
+          item.issue_id !== null &&
+          item.observation !== null &&
+          item.host_reservation === undefined &&
+          item.research_activation === undefined &&
+          item.research_normalization === undefined &&
+          item.request.corrective_execution === undefined,
+      ),
       'configured continuation original prefix contains unresolved actions',
     );
     const observations = wave.items.map((item) => {
       const parsed = parseSessionBridgeObservation(item.observation);
       requireEngine(
-        isDeepStrictEqual(parsed, item.observation) && parsed.issue_id === item.issue_id &&
-          parsed.action_id === item.request.action_id && parsed.status === 'reported_complete' &&
+        isDeepStrictEqual(parsed, item.observation) &&
+          parsed.issue_id === item.issue_id &&
+          parsed.action_id === item.request.action_id &&
+          parsed.status === 'reported_complete' &&
           parsed.output_digest === canonicalJsonDigest(parsed.summary),
         'configured continuation original prefix observation differs',
       );
@@ -1127,8 +1227,12 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     isDeepStrictEqual(parseOldState(beforeStep.payload), oldState),
     'configured continuation prewriter input differs from the original prefix',
   );
-  parseRequests(beforeStep.suspendPayload?.requests, recovery ? normalizedBeforeImage.requests : currentRequests,
-    'configured continuation current prewriter requests differ', true);
+  parseRequests(
+    beforeStep.suspendPayload?.requests,
+    recovery ? normalizedBeforeImage.requests : currentRequests,
+    'configured continuation current prewriter requests differ',
+    true,
+  );
   const boundaryObservations = parseCompleteObservations(
       beforeStep.resumePayload?.observations,
       currentRequests,
@@ -1153,10 +1257,13 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       binding.selection.risk_flags,
       priorWork.lifecycle.risk,
     ),
-    executedWaves = [...plan.waves.entries()].filter(([, wave]) => !wave.every((stage) => stage.assignments.length === 0)),
+    executedWaves = [...plan.waves.entries()].filter(
+      ([, wave]) => !wave.every((stage) => stage.assignments.length === 0),
+    ),
     currentExecuted = executedWaves.filter(([index]) => index > boundaryWave);
   requireEngine(
-    currentExecuted.length > 0 && currentExecuted[0]![0] === boundaryWave + 1 &&
+    currentExecuted.length > 0 &&
+      currentExecuted[0]![0] === boundaryWave + 1 &&
       currentExecuted[0]![1].some((stage) => stage.kind === 'develop'),
     'configured continuation current developer suffix is missing',
   );
@@ -1172,22 +1279,24 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       priorWork.lifecycle.risk,
     );
     requireEngine(actions.length > 0, 'configured continuation current suffix wave has no assignments');
-    return actions.map((currentAction) => buildSessionBridgeRequest({
-      runId: oldRunId,
-      workflowId: action.workflow_id,
-      configDigest: currentConfigDigest,
-      context,
-      waveIndex,
-      action: currentAction,
-      configuredContext: configuredContextForStage(
-        binding.repositoryRoot,
-        binding.config,
-        action.workflow_id,
-        currentAction.stage_id,
+    return actions.map((currentAction) =>
+      buildSessionBridgeRequest({
+        runId: oldRunId,
+        workflowId: action.workflow_id,
+        configDigest: currentConfigDigest,
         context,
-      ),
-      priorResults: state.observations,
-    }));
+        waveIndex,
+        action: currentAction,
+        configuredContext: configuredContextForStage(
+          binding.repositoryRoot,
+          binding.config,
+          action.workflow_id,
+          currentAction.stage_id,
+          context,
+        ),
+        priorResults: state.observations,
+      }),
+    );
   };
   const waveIds = Object.keys(persisted.context).filter((key) => key.startsWith('wave-'));
   requireEngine(
@@ -1213,7 +1322,8 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       requireEngine(
         persisted.status === 'suspended' &&
           index === suffixRows[processedSuffix]!.index &&
-          !Object.hasOwn(row, 'resumePayload') && !Object.hasOwn(row, 'output'),
+          !Object.hasOwn(row, 'resumePayload') &&
+          !Object.hasOwn(row, 'output'),
         'configured continuation current suffix frontier is not the final suspended step',
       );
       parseRequests(row.suspendPayload?.requests, expected, 'configured continuation current suffix requests differ');
@@ -1222,7 +1332,12 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       break;
     }
     requireEngine(row.status === 'success', 'configured continuation current suffix contains a failed step');
-    parseRequests(row.suspendPayload?.requests, expected, 'configured continuation current suffix requests differ', true);
+    parseRequests(
+      row.suspendPayload?.requests,
+      expected,
+      'configured continuation current suffix requests differ',
+      true,
+    );
     const observations = parseCompleteObservations(
         row.resumePayload?.observations,
         expected,
@@ -1247,9 +1362,14 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     const pathIndex = executedWaves.findIndex(([index]) => index === frontier!.index),
       paths = persisted.suspendedPaths;
     requireEngine(
-      pathIndex >= 0 && paths && typeof paths === 'object' && !arrayShape(paths) &&
-        Object.keys(paths).length === 1 && Object.keys(paths)[0] === 'wave-' + frontier.index &&
-        arrayShape(paths['wave-' + frontier.index]) && isDeepStrictEqual(paths['wave-' + frontier.index], [pathIndex]),
+      pathIndex >= 0 &&
+        paths &&
+        typeof paths === 'object' &&
+        !arrayShape(paths) &&
+        Object.keys(paths).length === 1 &&
+        Object.keys(paths)[0] === 'wave-' + frontier.index &&
+        arrayShape(paths['wave-' + frontier.index]) &&
+        isDeepStrictEqual(paths['wave-' + frontier.index], [pathIndex]),
       'configured continuation current suspended path differs',
     );
     return {
@@ -1261,7 +1381,8 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     };
   }
   requireEngine(
-    persisted.status === 'success' && processedSuffix === suffixRows.length &&
+    persisted.status === 'success' &&
+      processedSuffix === suffixRows.length &&
       isDeepStrictEqual(parseCurrentState(persisted.result), state) &&
       isDeepStrictEqual(persisted.suspendedPaths ?? {}, {}),
     'configured continuation terminal current graph result differs',
@@ -1275,8 +1396,236 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   };
 }
 
+interface InitialSourceEngineContinuation {
+  readonly receipt: InitialSourceContinuationReceipt;
+  readonly journal: MastraSessionLedgerState;
+}
+
+/**
+ * Read the same run after an expired, execution-only initial-source continuation.
+ * Only the receipt-proven wave-0 input is allowed to retain its old Source digest;
+ * all current requests and later states are validated against current bindings.
+ */
+export function readInitialSourceContinuationSessionEngineSnapshot(
+  binding: SessionEngineBinding,
+  value: unknown,
+  journal: MastraSessionLedgerState,
+  work?: WorkState,
+): SessionBridgeSnapshot {
+  const receipt = validateInitialSourceContinuationReceipt(value),
+    request = receipt.request,
+    prior = receipt.prior_work,
+    priorJournal = receipt.prior_journal,
+    currentRequest = parseSessionBridgeRequest(request.currentInitialRequest),
+    originalScope = priorJournal.source_scope,
+    currentScope = request.currentSourceScope,
+    journalSource = journal.source_scope,
+    initialContext: SessionHandoffContext = {
+      work_id: request.identity.work_id,
+      attempt: request.attempt,
+      scope_digest: currentScope.digest,
+    };
+  requireEngine(
+    request.identity.work_id === binding.context.work_id &&
+      request.attempt === binding.context.attempt &&
+      request.configDigest === runtimeConfigDigest(binding.config) &&
+      request.configDigest === prior.binding.config_digest &&
+      request.priorRuntimeCodeDigest === prior.binding.runtime_code_digest &&
+      request.currentRuntimeCodeDigest === receipt.successor_work.binding.runtime_code_digest &&
+      prior.execution.run_id === priorJournal.run_id &&
+      prior.execution.run_id === binding.runId &&
+      prior.binding.workflow_id === binding.workflowId &&
+      binding.context.scope_digest === currentScope.digest &&
+      originalScope?.digest === prior.binding.work_source_revision &&
+      journal.schema === 'MastraSessionLedger/v1' &&
+      journal.workspace_id === priorJournal.workspace_id &&
+      journal.work_id === request.identity.work_id &&
+      journal.attempt === request.attempt &&
+      journal.run_id === prior.execution.run_id &&
+      journalSource !== undefined &&
+      journalSource !== null,
+    'initial-source receipt, current binding or journal differs',
+  );
+  if (journalSource.digest !== currentScope.digest) {
+    requireEngine(work, 'evolved initial-source Journal requires trusted current Host Work');
+    validateInitialSourceContinuationLineage(work, receipt, journal);
+  }
+  const originalItem = priorJournal.items[0],
+    originalRequest = parseSessionBridgeRequest(originalItem?.request);
+  requireEngine(
+    originalItem &&
+      priorJournal.step_id === 'wave-0' &&
+      priorJournal.completed.length === 0 &&
+      priorJournal.items.length === 1 &&
+      originalItem.issue_id === null &&
+      originalItem.observation === null &&
+      originalItem.host_reservation === undefined &&
+      originalItem.research_activation === undefined &&
+      originalItem.research_normalization === undefined &&
+      priorJournal.research_wave_exposure === undefined &&
+      originalRequest.run_id === prior.execution.run_id &&
+      originalRequest.workflow_id === binding.workflowId &&
+      originalRequest.wave_index === 0 &&
+      originalRequest.config_digest === prior.binding.config_digest &&
+      originalRequest.scope_digest === originalScope?.digest &&
+      originalRequest.corrective_execution === undefined &&
+      currentRequest.run_id === prior.execution.run_id &&
+      currentRequest.workflow_id === binding.workflowId &&
+      currentRequest.wave_index === 0 &&
+      currentRequest.config_digest === request.configDigest &&
+      currentRequest.scope_digest === currentScope.digest &&
+      currentRequest.corrective_execution === undefined,
+    'initial-source receipt does not retain the original wave-0 request',
+  );
+  const actions = sessionActionsForWave(
+      binding.config,
+      binding.selection,
+      initialContext,
+      binding.workflowId,
+      0,
+      [],
+      undefined,
+      prior.lifecycle.risk,
+    ),
+    action = actions[0];
+  requireEngine(actions.length === 1 && action, 'current initial wave no longer has one readonly assignment');
+  const expectedCurrentRequest = buildSessionBridgeRequest({
+    runId: binding.runId,
+    workflowId: binding.workflowId,
+    configDigest: runtimeConfigDigest(binding.config),
+    context: initialContext,
+    waveIndex: 0,
+    action,
+    configuredContext: configuredContextForStage(
+      binding.repositoryRoot,
+      binding.config,
+      binding.workflowId,
+      action.stage_id,
+      initialContext,
+    ),
+    priorResults: [],
+  });
+  requireEngine(
+    isDeepStrictEqual(currentRequest, expectedCurrentRequest) && currentRequest.action_id !== originalRequest.action_id,
+    'receipt current initial request differs from current configured behavior',
+  );
+  const firstCompleted = journal.completed[0],
+    currentInitialItem =
+      firstCompleted?.step_id === 'wave-0'
+        ? firstCompleted.items[0]
+        : journal.step_id === 'wave-0'
+          ? journal.items[0]
+          : undefined;
+  requireEngine(currentInitialItem, 'current initial wave-0 journal item is missing');
+  requireEngine(
+    isDeepStrictEqual(parseSessionBridgeRequest(currentInitialItem.request), currentRequest) &&
+      currentInitialItem.request.action_id === currentRequest.action_id &&
+      (currentInitialItem.issue_id === null
+        ? currentInitialItem.observation === null
+        : currentInitialItem.observation === null ||
+          (currentInitialItem.observation.issue_id === currentInitialItem.issue_id &&
+            currentInitialItem.observation.action_id === currentRequest.action_id &&
+            (currentInitialItem.observation.status === 'reported_complete' ||
+              currentInitialItem.observation.status === 'reported_failed') &&
+            currentInitialItem.observation.output_digest ===
+              canonicalJsonDigest(currentInitialItem.observation.summary))),
+    'current initial request is not the retained wave-0 journal item',
+  );
+  if (firstCompleted) {
+    requireEngine(
+      firstCompleted.step_id === 'wave-0' &&
+        currentInitialItem.issue_id !== null &&
+        currentInitialItem.observation?.status === 'reported_complete',
+      'initial-source completed prefix differs from its receipt',
+    );
+  } else {
+    requireEngine(
+      journal.completed.length === 0 &&
+        journal.step_id === 'wave-0' &&
+        journal.items.length === 1 &&
+        journal.items[0] === currentInitialItem &&
+        journal.source_scope?.digest === currentScope.digest,
+      'initial-source current frontier is not the retained wave-0 request',
+    );
+  }
+  const snapshot = readSessionEngineSnapshotInternal(binding, { receipt, journal });
+  requireEngine(snapshot, 'initial-source retained engine snapshot is missing');
+  const completedObservations = journal.completed.flatMap((wave) => wave.items.map((item) => item.observation!));
+  if (journal.step_id === null) {
+    requireEngine(
+      journal.items.length === 0 &&
+        snapshot.step_id === null &&
+        ['success', 'failed', 'canceled'].includes(snapshot.status) &&
+        isDeepStrictEqual(snapshot.observations, completedObservations),
+      'initial-source terminal engine result differs from current Host journal',
+    );
+  } else {
+    const currentWave = /^wave-(\d+)$/.exec(journal.step_id),
+      plannedWaves = [
+        ...compileDevelopmentWorkflow(
+          binding.config,
+          binding.selection.team,
+          binding.workflowId,
+          binding.selection.risk_flags,
+          binding.lifecycleRisk ?? prior.lifecycle.risk,
+        ).waves.entries(),
+      ]
+        .filter(([, wave]) => !wave.every((stage) => stage.assignments.length === 0))
+        .map(([index]) => index),
+      currentWaveIndex = currentWave ? Number(currentWave[1]) : -1,
+      currentPosition = plannedWaves.indexOf(currentWaveIndex);
+    requireEngine(
+      currentPosition >= 0 && currentWave && 'wave-' + Number(currentWave[1]) === journal.step_id,
+      'initial-source journal step is not in the current workflow',
+    );
+    if (snapshot.step_id === journal.step_id) {
+      requireEngine(
+        snapshot.status === 'suspended' &&
+          isDeepStrictEqual(
+            snapshot.requests,
+            journal.step_id === 'wave-0'
+              ? [currentRequest]
+              : journal.items.map((item) => parseSessionBridgeRequest(item.request)),
+          ) &&
+          isDeepStrictEqual(snapshot.observations, completedObservations),
+        'initial-source engine frontier differs from current Host journal',
+      );
+    } else {
+      const currentObservations = journal.items.map((item) => item.observation),
+        currentWaveComplete =
+          journal.items.length > 0 &&
+          journal.items.every(
+            (item) =>
+              item.issue_id !== null &&
+              item.observation?.status === 'reported_complete' &&
+              item.observation.issue_id === item.issue_id &&
+              item.observation.action_id === item.request.action_id &&
+              item.observation.output_digest === canonicalJsonDigest(item.observation.summary),
+          ),
+        nextWaveIndex = plannedWaves[currentPosition + 1],
+        expectedStepId = nextWaveIndex === undefined ? null : 'wave-' + nextWaveIndex,
+        expectedStatus = expectedStepId === null ? 'success' : 'suspended';
+      requireEngine(
+        currentWaveComplete &&
+          snapshot.step_id === expectedStepId &&
+          snapshot.status === expectedStatus &&
+          isDeepStrictEqual(snapshot.observations, [...completedObservations, ...currentObservations]),
+        'initial-source engine advanced beyond the current Host journal without its complete reported wave',
+      );
+    }
+  }
+  return snapshot;
+}
+
 /** Existing-file inspection only; never constructs LibSQL, initializes tables or creates a run. */
 export function readSessionEngineSnapshot(binding: SessionEngineBinding): SessionBridgeSnapshot | null {
+  return readSessionEngineSnapshotInternal(binding);
+}
+
+function readSessionEngineSnapshotInternal(
+  binding: SessionEngineBinding,
+  initial?: InitialSourceEngineContinuation,
+): SessionBridgeSnapshot | null {
   const { repositoryRoot, config, selection, context, workflowId, runId } = binding;
   const relative = config.control.work_root + '/mastra-workflows.v1.sqlite';
   const access = requireSafeRepositoryAccess(repositoryRoot);
@@ -1314,7 +1663,95 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
       );
       return state;
     };
-    const input = parseState(persisted.context.input);
+    const parseInitialInput = (value: unknown) => {
+      requireEngine(initial, 'initial-source input lacks its Host receipt');
+      const state = parseSessionBridgeRunState(value),
+        receipt = initial.receipt,
+        priorScope = receipt.prior_journal.source_scope;
+      requireEngine(
+        isDeepStrictEqual(state, value) &&
+          state.work_id === receipt.request.identity.work_id &&
+          state.attempt === receipt.request.attempt &&
+          state.workflow_id === receipt.prior_work.binding.workflow_id &&
+          state.scope_digest === priorScope?.digest &&
+          state.config_digest === receipt.prior_work.binding.config_digest &&
+          isDeepStrictEqual(state.selection, selection) &&
+          state.observations.length === 0,
+        'retained initial-source input differs from its receipt',
+      );
+      return state;
+    };
+    const input = initial ? parseInitialInput(persisted.context.input) : parseState(persisted.context.input);
+    if (initial) {
+      const receipt = initial.receipt,
+        request = receipt.request,
+        originalRequest = parseSessionBridgeRequest(receipt.prior_journal.items[0]?.request),
+        beforeimage: SessionBridgeSnapshot = {
+          run_id: receipt.prior_work.execution.run_id!,
+          status: 'suspended',
+          step_id: 'wave-0',
+          requests: [originalRequest],
+          observations: [],
+        },
+        originalStep = decodeMastraStep(persisted.context['wave-0']);
+      requireEngine(
+        receipt.request.priorEngineSnapshot &&
+          isDeepStrictEqual(receipt.request.priorEngineSnapshot, beforeimage) &&
+          originalStep &&
+          isDeepStrictEqual(parseInitialInput(originalStep.payload), input) &&
+          originalRequest.run_id === binding.runId &&
+          originalRequest.wave_index === 0,
+        'actual initial-source input or old wave-0 request differs from the frozen beforeimage',
+      );
+      if (originalStep.status === 'suspended') {
+        requireEngine(
+          persisted.status === 'suspended' &&
+            unknownArray(originalStep.suspendPayload?.requests) &&
+            isDeepStrictEqual(originalStep.suspendPayload.requests.map(parseSessionBridgeRequest), [originalRequest]) &&
+            !Object.hasOwn(originalStep, 'resumePayload') &&
+            !Object.hasOwn(originalStep, 'output') &&
+            Object.keys(persisted.context)
+              .filter((key) => /^wave-\d+$/.test(key))
+              .join(',') === 'wave-0',
+          'initial-source beforeimage has a completed prefix or changed suspension',
+        );
+      } else {
+        const currentInitialItems = [
+          ...initial.journal.completed.flatMap((wave) => wave.items),
+          ...initial.journal.items,
+        ].filter((item) => item.request.action_id === request.currentInitialRequest.action_id);
+        requireEngine(
+          originalStep.status === 'success' && currentInitialItems.length === 1,
+          'successful initial-source wave-0 step has no unique Host item',
+        );
+        const currentInitialItem = currentInitialItems[0]!;
+        requireEngine(
+          isDeepStrictEqual(parseSessionBridgeRequest(currentInitialItem.request), request.currentInitialRequest) &&
+            currentInitialItem.issue_id !== null &&
+            currentInitialItem.observation !== null,
+          'successful initial-source wave-0 step lacks its current issued Host result',
+        );
+        const observation = parseSessionBridgeObservation(currentInitialItem.observation),
+          resumeValues = originalStep.resumePayload?.observations;
+        requireEngine(
+          isDeepStrictEqual(observation, currentInitialItem.observation) &&
+            observation.issue_id === currentInitialItem.issue_id &&
+            observation.action_id === request.currentInitialRequest.action_id &&
+            observation.status === 'reported_complete' &&
+            observation.output_digest === canonicalJsonDigest(observation.summary) &&
+            unknownArray(resumeValues) &&
+            resumeValues.length === 1 &&
+            isDeepStrictEqual(parseSessionBridgeObservation(resumeValues[0]), observation) &&
+            isDeepStrictEqual(parseState(originalStep.output), {
+              ...input,
+              config_digest: request.currentInitialRequest.config_digest,
+              scope_digest: request.currentInitialRequest.scope_digest,
+              observations: [observation],
+            }),
+          'successful initial-source wave-0 output differs from its complete current Host observation',
+        );
+      }
+    }
     requireEngine(input.observations.length === 0, 'initial observations are not empty');
     const suspended = Object.entries(persisted.context).filter(
       ([key, step]) => /^wave-\d+$/.test(key) && (step as { status?: string })?.status === 'suspended',
@@ -1325,24 +1762,43 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
       'frontier is unknown or inconsistent',
     );
     const step = suspended[0];
-    const frontier = step?.[1] as { payload?: unknown; suspendPayload?: { requests?: unknown[] } } | undefined;
-    const state = parseState(
-      persisted.status === 'success' ? persisted.result : (frontier?.payload ?? persisted.context.input),
-    );
+    const frontier = step?.[1] as
+      | {
+          status?: unknown;
+          payload?: unknown;
+          suspendPayload?: { requests?: unknown[] };
+          resumePayload?: { observations?: unknown[] };
+          output?: unknown;
+        }
+      | undefined;
+    const initialBoundarySuspended = !!initial && step?.[0] === 'wave-0' && frontier?.status === 'suspended';
+    const stateValue =
+      persisted.status === 'success' ? persisted.result : (frontier?.payload ?? persisted.context.input);
+    const state = initialBoundarySuspended ? parseInitialInput(stateValue) : parseState(stateValue);
     requireEngine(
       state.observations.every(
         (observation) => observation.output_digest === canonicalJsonDigest(observation.summary),
       ) && new Set(state.observations.map((observation) => observation.action_id)).size === state.observations.length,
       'observations differ or are duplicated',
     );
-    const requests = frontier?.suspendPayload?.requests?.map(parseSessionBridgeRequest) ?? [];
+    const persistedRequests = frontier?.suspendPayload?.requests?.map(parseSessionBridgeRequest) ?? [];
+    const requests = initialBoundarySuspended ? [initial!.receipt.request.currentInitialRequest] : persistedRequests;
+    if (initialBoundarySuspended) {
+      const originalRequest = parseSessionBridgeRequest(initial!.receipt.prior_journal.items[0]?.request);
+      requireEngine(
+        persisted.status === 'suspended' &&
+          persistedRequests.length === 1 &&
+          isDeepStrictEqual(persistedRequests, [originalRequest]),
+        'initial-source persisted request is not the frozen original wave-0 boundary',
+      );
+    }
     requireEngine(terminal ? requests.length === 0 : requests.length > 0, 'suspended requests are missing');
     requireEngine(
       requests.every(
         (request) =>
           request.run_id === runId &&
           request.workflow_id === workflowId &&
-          request.config_digest === state.config_digest &&
+          request.config_digest === (initialBoundarySuspended ? runtimeConfigDigest(config) : state.config_digest) &&
           request.scope_digest === context.scope_digest,
       ),
       'request context differs',
@@ -1354,14 +1810,20 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
         ? Object.keys(paths).length === 0
         : Object.keys(paths).length === 1 &&
             Object.keys(paths)[0] === step![0] &&
-            unknownArray(suspendedIndexes) && suspendedIndexes.length === 1 &&
+            unknownArray(suspendedIndexes) &&
+            suspendedIndexes.length === 1 &&
             Number.isSafeInteger(suspendedIndexes[0]),
       'suspended path differs',
     );
     const correction = binding.correctiveExecution;
     const executedWaves = [
-      ...compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags, binding.lifecycleRisk)
-        .waves.entries(),
+      ...compileDevelopmentWorkflow(
+        config,
+        selection.team,
+        workflowId,
+        selection.risk_flags,
+        binding.lifecycleRisk,
+      ).waves.entries(),
     ].filter(
       ([, wave]) =>
         (!correction || wave.some((stage) => correction.stage_ids.includes(stage.id))) &&
@@ -1379,7 +1841,9 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
       const id = 'wave-' + waveIndex;
       const recorded = decodeMastraStep(persisted.context[id]);
       requireEngine(recorded, 'recorded wave is missing');
-      requireEngine(isDeepStrictEqual(parseState(recorded.payload), prior), 'wave payload chain differs');
+      const recordedInput =
+        initial && waveIndex === 0 ? parseInitialInput(recorded.payload) : parseState(recorded.payload);
+      requireEngine(isDeepStrictEqual(recordedInput, prior), 'wave payload chain differs');
       if (recorded.status !== 'success') {
         requireEngine(
           position === presentWaves.length - 1 && recorded.status === persisted.status,

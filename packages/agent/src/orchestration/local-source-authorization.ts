@@ -14,6 +14,7 @@ import {
   produceSourceWritePreflightApproval,
   type SourceWritePreflightContextResolver,
 } from './source-preflight-operations.js';
+import { acceptedSourceAuthorizationRevision } from './admitted-development-packet.js';
 
 const authorizationSchema = z
   .object({
@@ -71,15 +72,31 @@ export function createLocalSourceWriteApprovalVerifier(
         canonicalJsonDigest(work.lease) !== canonicalJsonDigest(request.lease)
       )
         return null;
-      const reference = work.lifecycle.references.find(
-        (item) => item.kind === 'execution_approval' && item.disposition === 'current' && item.decision === 'approved',
+      const journal = store.readWorkSessionJournal(request.identity);
+      const initialContinuation = journal
+        ? store.readInitialSourceContinuationReceipt(request.identity, journal.attempt)
+        : null;
+      const references = work.lifecycle.references.filter(
+        (item) =>
+          item.kind === 'execution_approval' &&
+          item.disposition === 'current' &&
+          item.decision === 'approved' &&
+          item.artifact_schema === 'LocalSourceWriteAuthorization/v1',
       );
-      if (
-        !reference ||
-        reference.artifact_schema !== 'LocalSourceWriteAuthorization/v1' ||
-        reference.scope_id !== work.binding.scope_id ||
-        reference.source_revision !== work.binding.work_source_revision
-      )
+      if (references.length !== 1) return null;
+      const reference = references[0]!;
+      let authorizationSourceRevision: string;
+      try {
+        authorizationSourceRevision = acceptedSourceAuthorizationRevision(
+          work,
+          journal?.state,
+          reference,
+          initialContinuation,
+        );
+      } catch {
+        return null;
+      }
+      if (reference.scope_id !== work.binding.scope_id || reference.source_revision !== authorizationSourceRevision)
         return null;
       let bound;
       try {
@@ -91,7 +108,7 @@ export function createLocalSourceWriteApprovalVerifier(
       if (
         sha256 !== reference.sha256 ||
         authorization.work_id !== request.identity.work_id ||
-        authorization.scope_digest !== work.binding.work_source_revision ||
+        authorization.scope_digest !== authorizationSourceRevision ||
         authorization.config_digest !== request.config_digest ||
         authorization.workflow_id !== request.workflow_id ||
         !authorization.stage_ids.includes(request.stage_id) ||
@@ -106,6 +123,7 @@ export function createLocalSourceWriteApprovalVerifier(
         reference.principal !== 'local-session:' + canonicalJsonDigest(authorization.native_session_handle) ||
         canonicalJsonDigest([...authorization.implementation_paths].sort()) !==
           canonicalJsonDigest([...work.binding.implementation_paths].sort()) ||
+        (journal !== null && authorization.attempt !== journal.attempt) ||
         work.execution.run_id !==
           sessionBridgeRunId(
             store.workspaceId,

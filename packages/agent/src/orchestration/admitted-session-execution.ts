@@ -12,7 +12,12 @@ import type { HostStateStore, WorkIdentity, WorkState } from '../host-state.js';
 import { createTrustedLocalSessionComposition, requireLiveLocalSessionAdmission } from '../runtime-kernel.js';
 import { snapshotRuntimePackageSources } from './scoped-source-snapshot.js';
 import { resolveTaskSourceFileRoot } from './task-source-binding.js';
-import { validateConfiguredFrontierReceiptStructure, type ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
+import {
+  validateConfiguredFrontierReceiptStructure,
+  type ConfiguredFrontierReceipt,
+} from './delivered-work-continuation-repair.js';
+import { validateInitialSourceContinuationReceipt } from './initial-source-continuation.js';
+import { validateInitialSourceContinuationLineage } from './admitted-development-packet.js';
 
 function requireExecution(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -52,8 +57,19 @@ export function readAdmittedSessionIntakeForWork(
   requireExecution(
     canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest &&
       typeof intake.native_session_handle === 'string' &&
-      intake.native_session_handle.length > 0,
-    'admitted local session intake identity differs',
+      intake.native_session_handle.length > 0 &&
+      Array.isArray(intake.runtime_code_paths) &&
+      intake.runtime_code_paths.every(
+        (entry) =>
+          typeof entry === 'string' &&
+          entry.length > 0 &&
+          !entry.includes('\\') &&
+          !entry.startsWith('/') &&
+          entry.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..'),
+      ) &&
+      canonicalJsonDigest(intake.runtime_code_paths) ===
+        canonicalJsonDigest([...new Set(intake.runtime_code_paths)].sort()),
+    'admitted local session intake identity or protected runtime path inventory differs',
   );
   return intake;
 }
@@ -68,37 +84,66 @@ export function assertAdmittedRuntimeCodeCurrent(
   const work = store.readHostStateSnapshot(identity).work!;
   const config = loadRuntimeConfig(repositoryRoot);
   const currentPaths = runtimePackageCodePaths(config.runtime.bundle);
-  let runtimePaths: readonly string[] = intake.runtime_code_paths;
-  if (canonicalJsonDigest(runtimePaths) !== canonicalJsonDigest(currentPaths)) {
-    const journal = store.readWorkSessionJournal(identity),
-      receipt = journal && store.readDeliveredWorkContinuationReceipt(identity, journal.attempt);
-    requireExecution(receipt?.request.action.kind === 'configured_frontier' &&
-      receipt.request.sourceTransition.status === 'closed_config_rebind_proven' &&
-      receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
-    'admitted runtime inventory differs; qualified runtime repair/rebind is required');
+  const journal = store.readWorkSessionJournal(identity);
+  const initialReceipt = journal ? store.readInitialSourceContinuationReceipt(identity, journal.attempt) : null;
+  const configuredContinuation = journal ? store.readConfiguredFrontierRecoveryView(identity, journal.attempt) : null;
+  requireExecution(
+    !(initialReceipt && configuredContinuation),
+    'multiple Host runtime continuation records are ambiguous',
+  );
+  let runtimePaths: readonly string[] = currentPaths;
+  if (initialReceipt) {
+    const receipt = validateInitialSourceContinuationReceipt(initialReceipt);
+    validateInitialSourceContinuationLineage(work, receipt, journal!.state);
+    const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, currentPaths);
+    requireExecution(
+      receipt.request.currentRuntimeCodeDigest === current.digest &&
+        current.digest === work.binding.runtime_code_digest,
+      'initial Source continuation does not bind the canonical runtime inventory and protected intake paths',
+    );
+  } else if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(currentPaths)) {
+    const receipt = journal && store.readDeliveredWorkContinuationReceipt(identity, journal.attempt);
+    requireExecution(
+      receipt?.request.action.kind === 'configured_frontier' &&
+        receipt.request.sourceTransition.status === 'closed_config_rebind_proven' &&
+        receipt.historical_capture === null &&
+        receipt.frontier_snapshot !== undefined,
+      'admitted runtime inventory differs; qualified runtime repair/rebind is required',
+    );
     validateConfiguredFrontierReceiptStructure({ receipt: receipt as ConfiguredFrontierReceipt });
     const recovery = store.readFailedPrewriterRecoveryReceipt(identity, journal!.attempt);
-    const request = receipt.request, transition = recovery?.request.sourceTransition.transition ?? request.sourceTransition.transition,
-      intakeRef = work.artifacts.find(ref => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1'),
+    const request = receipt.request,
+      transition = recovery?.request.sourceTransition.transition ?? request.sourceTransition.transition,
+      intakeRef = work.artifacts.find(
+        (ref) => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1',
+      ),
       project = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids),
-      schemaDigest = createHash('sha256').update(runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current runtime schema')).digest('hex');
-    requireExecution(intakeRef && 'original_intake_ref' in transition && transition.original_intake_ref === intakeRef.path &&
-      transition.original_intake_sha256 === intakeRef.sha256 && request.nativeSessionHandle === intake.native_session_handle &&
-      receipt.prior_work.execution.run_id === work.execution.run_id &&
-      receipt.prior_work.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
-      receipt.prior_work.binding.config_digest === request.priorConfigDigest &&
-      (recovery?.successor_work.binding.runtime_code_digest ?? request.targetRuntimeCodeDigest) === work.binding.runtime_code_digest &&
-      request.targetConfigDigest === runtimeConfigDigest(config) && request.targetConfigDigest === work.binding.config_digest &&
-      (recovery?.successor_work.binding.schema_digest ?? request.targetSchemaDigest) === schemaDigest && schemaDigest === work.binding.schema_digest &&
-      (recovery?.request.targetProjectContextDigest ?? request.targetProjectContextDigest) === project.project_context_digest,
-    'admitted runtime continuation does not bind the protected intake and current endpoint');
-    runtimePaths = currentPaths;
+      schemaDigest = createHash('sha256')
+        .update(
+          runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current runtime schema'),
+        )
+        .digest('hex');
+    requireExecution(
+      intakeRef &&
+        'original_intake_ref' in transition &&
+        transition.original_intake_ref === intakeRef.path &&
+        transition.original_intake_sha256 === intakeRef.sha256 &&
+        request.nativeSessionHandle === intake.native_session_handle &&
+        receipt.prior_work.execution.run_id === work.execution.run_id &&
+        receipt.prior_work.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
+        receipt.prior_work.binding.config_digest === request.priorConfigDigest &&
+        (recovery?.successor_work.binding.runtime_code_digest ?? request.targetRuntimeCodeDigest) ===
+          work.binding.runtime_code_digest &&
+        request.targetConfigDigest === runtimeConfigDigest(config) &&
+        request.targetConfigDigest === work.binding.config_digest &&
+        (recovery?.successor_work.binding.schema_digest ?? request.targetSchemaDigest) === schemaDigest &&
+        schemaDigest === work.binding.schema_digest &&
+        (recovery?.request.targetProjectContextDigest ?? request.targetProjectContextDigest) ===
+          project.project_context_digest,
+      'admitted runtime continuation does not bind the protected intake and current endpoint',
+    );
   }
-  const current = snapshotRuntimePackageSources(
-    runtimePackageAccess(),
-    config.runtime.bundle,
-    runtimePaths,
-  );
+  const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, runtimePaths);
   requireExecution(current.digest === work.binding.runtime_code_digest, 'admitted runtime code changed');
   return { work_item: intake.work_item, native_session_handle: intake.native_session_handle };
 }
@@ -124,13 +169,17 @@ export function readAdmittedSessionExecutionContext(
     work?.lease && work.execution.status === 'active',
     'admitted local session work or lease is unavailable',
   );
-  const currentProjectContext = loadProjectSetContext(repositoryRoot, config, work.binding.repository_id, work.binding.project_ids);
+  const currentProjectContext = loadProjectSetContext(
+    repositoryRoot,
+    config,
+    work.binding.repository_id,
+    work.binding.project_ids,
+  );
   requireExecution(
     work.binding.config_digest === runtimeConfigDigest(config) &&
       work.binding.repository_id === config.repository.repository_id &&
       work.binding.project_ids.length === 1 &&
-      work.binding.integrations_digest ===
-        currentProjectContext.integrations_digest,
+      work.binding.integrations_digest === currentProjectContext.integrations_digest,
     'admitted local session configuration or project differs',
   );
   const taskSourceBinding = store.readCurrentTaskSourceBinding(identity, work.lease.thread_id);
@@ -167,7 +216,12 @@ export async function openAdmittedSessionExecution(
   projectId: string,
   workId: string,
 ) {
-  const { identity, workItem, work, sourceFileRoot } = readAdmittedSessionExecutionContext(repositoryRoot, store, projectId, workId);
+  const { identity, workItem, work, sourceFileRoot } = readAdmittedSessionExecutionContext(
+    repositoryRoot,
+    store,
+    projectId,
+    workId,
+  );
   const runtimeSource = () => {
     assertAdmittedRuntimeCodeCurrent(repositoryRoot, store, identity);
     return { sourceRevision: work.binding.runtime_code_digest, currentRevision: 1 };

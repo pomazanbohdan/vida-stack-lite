@@ -11,10 +11,21 @@ import {
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import type { HostStateSnapshot, HostStateStore, WorkState } from '../host-state.js';
+import type { HostStateSnapshot, HostStateStore, WorkIdentity, WorkState } from '../host-state.js';
+import { completedSourceJournalObservationMatches } from '../host-state.js';
+import { compareScopedSourceSnapshots } from './scoped-source-snapshot.js';
+
+const arrayShape = (value: unknown): boolean => Array.isArray(value);
 import type { ConfiguredFrontierRecoveryView } from './failed-prewriter-transition.js';
+import {
+  validateInitialSourceContinuationReceipt,
+  type InitialSourceContinuationReceipt,
+} from './initial-source-continuation.js';
 import { validateFailedPrewriterRecoveryReceipt } from './failed-prewriter-transition.js';
-import { validateConfiguredFrontierReceiptStructure, type ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
+import {
+  validateConfiguredFrontierReceiptStructure,
+  type ConfiguredFrontierReceipt,
+} from './delivered-work-continuation-repair.js';
 import {
   validateResearchResult,
   validateResearchSynthesis,
@@ -23,7 +34,7 @@ import {
   type ResearchSynthesis,
 } from '../research-decision.js';
 import type { LocalWorkAdmissionInput } from './local-work-admission.js';
-import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
+import type { MastraSessionLedgerSnapshot, MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { buildConfiguredContext, type ConfiguredContext } from './configured-context.js';
 import { buildDevelopmentTaskPacket, type DevelopmentTaskPacket } from './mastra-boundary.js';
 import { snapshotAdmittedTaskSources, snapshotDeclaredSources } from './scoped-source-snapshot.js';
@@ -75,7 +86,14 @@ export interface AdmittedDevelopmentPacketInput {
   readonly config: AgentRuntimeConfig;
   readonly host: HostStateSnapshot;
   readonly sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'> &
-    Partial<Pick<HostStateStore, 'readDeliveredWorkContinuationReceipt' | 'readFailedPrewriterRecoveryReceipt'>>;
+    Partial<
+      Pick<
+        HostStateStore,
+        | 'readDeliveredWorkContinuationReceipt'
+        | 'readFailedPrewriterRecoveryReceipt'
+        | 'readInitialSourceContinuationReceipt'
+      >
+    >;
   readonly ledger: MastraSessionLedgerSnapshot;
   readonly workItem: LocalWorkAdmissionInput['workItem'];
   readonly selection: WorkItemSelection;
@@ -88,25 +106,274 @@ function requirePacket(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`admitted development packet: ${message}`);
 }
 
+export type AcceptedSourceContinuation = ConfiguredFrontierRecoveryView | InitialSourceContinuationReceipt;
+
+function isPacketRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function samePacket(left: unknown, right: unknown): boolean {
+  try {
+    return canonicalJsonDigest(left) === canonicalJsonDigest(right);
+  } catch {
+    return false;
+  }
+}
+
+function initialContinuationBindingCore(binding: WorkState['binding']): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...binding };
+  delete result.work_source_revision;
+  delete result.runtime_source_revision;
+  delete result.runtime_code_digest;
+  return result;
+}
+
+function intakeReference(work: WorkState) {
+  const references = work.artifacts.filter(
+    (item) => item.artifact_id === 'local-session-intake' && item.schema === 'VidaLocalSessionIntake/v1',
+  );
+  return references.length === 1 ? references[0] : null;
+}
+
+function sourceAuthorizationReferences(work: WorkState) {
+  return work.lifecycle.references.filter(
+    (reference) =>
+      reference.kind === 'execution_approval' &&
+      reference.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+      reference.decision === 'approved' &&
+      reference.disposition === 'current',
+  );
+}
+
+export function isInitialSourceContinuationReceipt(value: unknown): value is InitialSourceContinuationReceipt {
+  return isPacketRecord(value) && value.schema === 'InitialSourceContinuationReceipt/v1';
+}
+
+/** Validate the receipt lineage while retaining the original contract, intake and permission bytes. */
+export function validateInitialSourceContinuationLineage(
+  work: WorkState,
+  value: unknown,
+  journalValue?: unknown,
+): InitialSourceContinuationReceipt {
+  const receipt = validateInitialSourceContinuationReceipt(value);
+  const { request, prior_work: original, successor_work: successor } = receipt;
+  const permission = request.sourceAuthorizationReference;
+  const originalPermission = sourceAuthorizationReferences(original);
+  const successorPermission = sourceAuthorizationReferences(successor);
+  const currentPermission = sourceAuthorizationReferences(work);
+  const originalIntake = intakeReference(original);
+  const successorIntake = intakeReference(successor);
+  const currentIntake = intakeReference(work);
+  const bindingIdentity = (candidate: WorkState) => ({
+    repository_id: candidate.binding.repository_id,
+    project_ids: candidate.binding.project_ids,
+    integrations_digest: candidate.binding.integrations_digest,
+    work_id: candidate.binding.lifecycle_work_id,
+  });
+  const identity = bindingIdentity(work);
+
+  requirePacket(
+    original.schema === 'WorkState/v1' &&
+      successor.schema === 'WorkState/v1' &&
+      request.identity.repository_id === identity.repository_id &&
+      samePacket(request.identity.project_ids, identity.project_ids) &&
+      request.identity.integrations_digest === identity.integrations_digest &&
+      request.identity.work_id === identity.work_id &&
+      request.attempt === receipt.prior_journal.attempt &&
+      request.attempt === receipt.successor_journal.attempt &&
+      samePacket(receipt.prior_work_version, request.expectedWork) &&
+      samePacket(receipt.prior_ledger_version, request.expectedLedger) &&
+      samePacket(receipt.prior_journal_version, request.expectedJournal) &&
+      receipt.prior_journal.step_id === 'wave-0' &&
+      receipt.prior_journal.completed.length === 0 &&
+      receipt.prior_journal.items.length === 1 &&
+      receipt.prior_journal.items[0]!.issue_id === null &&
+      receipt.prior_journal.items[0]!.observation === null &&
+      receipt.prior_journal.items[0]!.host_reservation === undefined &&
+      receipt.prior_journal.items[0]!.research_activation === undefined &&
+      receipt.prior_journal.items[0]!.research_normalization === undefined &&
+      receipt.prior_journal.items[0]!.request.action_id === request.priorEngineSnapshot.requests[0]!.action_id &&
+      receipt.successor_journal.step_id === 'wave-0' &&
+      receipt.successor_journal.completed.length === 0 &&
+      receipt.successor_journal.items.length === 1 &&
+      receipt.successor_journal.items[0]!.issue_id === null &&
+      receipt.successor_journal.items[0]!.observation === null &&
+      receipt.successor_journal.items[0]!.host_reservation === undefined &&
+      samePacket(receipt.successor_journal.items[0]!.request, request.currentInitialRequest) &&
+      original.workspace_id === work.workspace_id &&
+      successor.workspace_id === work.workspace_id &&
+      original.execution.run_id !== null &&
+      original.execution.run_id === successor.execution.run_id &&
+      original.execution.run_id === work.execution.run_id &&
+      original.execution.input_digest === successor.execution.input_digest &&
+      original.execution.input_digest === work.execution.input_digest &&
+      request.nativeSessionHandle === original.lease?.thread_id &&
+      request.nativeSessionHandle === successor.lease?.thread_id &&
+      request.nativeSessionHandle === work.lease?.thread_id &&
+      samePacket(initialContinuationBindingCore(original.binding), initialContinuationBindingCore(successor.binding)) &&
+      samePacket(initialContinuationBindingCore(original.binding), initialContinuationBindingCore(work.binding)) &&
+      request.priorRuntimeCodeDigest === original.binding.runtime_code_digest &&
+      request.currentRuntimeCodeDigest === successor.binding.runtime_code_digest &&
+      request.currentRuntimeCodeDigest === successor.binding.runtime_source_revision &&
+      request.currentRuntimeCodeDigest === work.binding.runtime_code_digest &&
+      request.currentRuntimeCodeDigest === work.binding.runtime_source_revision &&
+      request.currentRuntimeCodeDigest === work.lifecycle.config_binding.runtime_code_digest &&
+      request.currentRuntimeCodeDigest === successor.lifecycle.config_binding.runtime_code_digest &&
+      original.lifecycle.source_revision === original.binding.work_source_revision &&
+      request.currentSourceScope.digest === successor.binding.work_source_revision &&
+      request.currentSourceScope.digest === successor.lifecycle.source_revision &&
+      request.currentSourceScope.digest === work.binding.work_source_revision &&
+      request.currentSourceScope.digest === work.lifecycle.source_revision &&
+      request.currentSourceScope.digest !== original.binding.work_source_revision &&
+      original.lifecycle.config_binding.config_digest === work.lifecycle.config_binding.config_digest &&
+      original.lifecycle.config_binding.schema_digest === work.lifecycle.config_binding.schema_digest &&
+      request.currentInitialRequest.workflow_id === work.binding.workflow_id &&
+      request.currentInitialRequest.run_id === work.execution.run_id &&
+      request.currentInitialRequest.config_digest === work.binding.config_digest &&
+      request.currentInitialRequest.scope_digest === work.binding.work_source_revision &&
+      request.currentInitialRequest.wave_index === 0 &&
+      samePacket(original.contracts, successor.contracts) &&
+      samePacket(original.contracts, work.contracts) &&
+      samePacket(original.lifecycle.scope, successor.lifecycle.scope) &&
+      samePacket(original.lifecycle.scope, work.lifecycle.scope) &&
+      samePacket(original.binding.scope_contract_digest, work.binding.scope_contract_digest) &&
+      samePacket(original.binding.acceptance_manifest_digest, work.binding.acceptance_manifest_digest) &&
+      samePacket(original.binding.ac_ids, work.binding.ac_ids) &&
+      samePacket(original.binding.implementation_paths, work.binding.implementation_paths) &&
+      originalPermission.length === 1 &&
+      successorPermission.length === 1 &&
+      currentPermission.length === 1 &&
+      samePacket(originalPermission[0], permission) &&
+      samePacket(successorPermission[0], permission) &&
+      samePacket(currentPermission[0], permission) &&
+      permission.scope_id === original.binding.scope_id &&
+      permission.source_revision === original.binding.work_source_revision &&
+      permission.sha256 === request.sourceAuthorizationSha256 &&
+      originalIntake !== null &&
+      successorIntake !== null &&
+      currentIntake !== null &&
+      samePacket(originalIntake, successorIntake) &&
+      samePacket(originalIntake, currentIntake),
+    'initial continuation does not preserve the original Work, contracts, intake, permission or endpoint',
+  );
+
+  if (journalValue !== undefined) {
+    requirePacket(isPacketRecord(journalValue), 'current initial continuation Journal is invalid');
+    const journal = journalValue as unknown as MastraSessionLedgerState;
+    const currentItems = [...journal.completed.flatMap((wave) => wave.items), ...journal.items];
+    requirePacket(
+      journal.schema === 'MastraSessionLedger/v1' &&
+        journal.workspace_id === work.workspace_id &&
+        journal.work_id === work.binding.lifecycle_work_id &&
+        journal.attempt === request.attempt &&
+        journal.run_id === work.execution.run_id &&
+        journal.source_scope !== undefined &&
+        journal.source_scope !== null &&
+        arrayShape(journal.completed) &&
+        arrayShape(journal.items) &&
+        journal.completed.every((wave) => wave !== null && typeof wave === 'object' && arrayShape(wave.items)),
+      'current Journal no longer binds the retained run or Source snapshot',
+    );
+    const reprojected = currentItems.filter(
+      (item) => item.request.action_id === request.currentInitialRequest.action_id,
+    );
+    requirePacket(
+      reprojected.length === 1 &&
+        samePacket(reprojected[0]!.request, request.currentInitialRequest) &&
+        (reprojected[0]!.issue_id !== null || reprojected[0]!.observation === null),
+      'current Journal does not retain the exact reprojected initial request',
+    );
+    const sourceChanges = compareScopedSourceSnapshots(request.currentSourceScope, journal.source_scope);
+    const currentScopePaths = new Set(request.currentSourceScope.entries.map((entry) => entry.path));
+    const netChangedPaths = new Set(sourceChanges.map((change) => change.path));
+    const reportedPaths = new Set<string>();
+    for (const item of currentItems) {
+      const reservation = item.host_reservation,
+        observation = item.observation;
+      if (
+        reservation?.approvalAction !== 'source.write' ||
+        observation?.status !== 'reported_complete' ||
+        !Array.isArray(observation.changed_paths) ||
+        !observation.changed_paths.some((path) => netChangedPaths.has(path))
+      )
+        continue;
+      const changedPaths = observation.changed_paths;
+      const canonicalPaths = [...new Set(changedPaths)].sort();
+      requirePacket(
+        completedSourceJournalObservationMatches(work, item) &&
+          observation.action_id === item.request.action_id &&
+          item.request.run_id === work.execution.run_id &&
+          item.request.scope_digest === request.currentSourceScope.digest &&
+          item.request.config_digest === work.binding.config_digest &&
+          canonicalPaths.length === changedPaths.length &&
+          samePacket(changedPaths, canonicalPaths) &&
+          canonicalPaths.every((path) => currentScopePaths.has(path)),
+        'evolved Journal contains a Source result without its completed Host attempt proof',
+      );
+      for (const changedPath of canonicalPaths) reportedPaths.add(changedPath);
+    }
+    requirePacket(
+      sourceChanges.every((change) => reportedPaths.has(change.path)),
+      'current Journal Source evolution is not covered by completed Host Source reports',
+    );
+  }
+  return receipt;
+}
+
+/** Return the original permission revision only when the Host receipt proves its lineage. */
+export function acceptedSourceAuthorizationRevision(
+  work: WorkState,
+  journalValue: unknown,
+  reference: InitialSourceContinuationReceipt['request']['sourceAuthorizationReference'],
+  continuation?: AcceptedSourceContinuation | null,
+): string {
+  const current = sourceAuthorizationReferences(work);
+  requirePacket(
+    current.length === 1 && samePacket(current[0], reference),
+    'current scoped Source authorization reference is missing or ambiguous',
+  );
+  const sourceRevision = isInitialSourceContinuationReceipt(continuation)
+    ? validateInitialSourceContinuationLineage(work, continuation, journalValue).prior_work.binding.work_source_revision
+    : work.binding.work_source_revision;
+  requirePacket(
+    reference.scope_id === work.binding.scope_id &&
+      reference.source_revision === sourceRevision &&
+      /^[a-f0-9]{64}$/.test(reference.sha256),
+    'Source authorization reference is outside its accepted source lineage',
+  );
+  return sourceRevision;
+}
+
 /** Resolve immutable accepted contracts against a trusted current Host/journal and continuation view. */
 export function acceptedContractSourceRevision(
-  work: WorkState, ledger: MastraSessionLedgerSnapshot, view?: ConfiguredFrontierRecoveryView | null,
+  work: WorkState,
+  ledger: MastraSessionLedgerSnapshot,
+  view?: AcceptedSourceContinuation | null,
 ): string {
   if (!view) return work.binding.work_source_revision;
-  const {original, recovery} = view;
-  validateConfiguredFrontierReceiptStructure({receipt: original});
+  if (isInitialSourceContinuationReceipt(view)) {
+    const receipt = validateInitialSourceContinuationLineage(work, view, ledger.state);
+    return receipt.prior_work.binding.work_source_revision;
+  }
+  const { original, recovery } = view;
+  validateConfiguredFrontierReceiptStructure({ receipt: original });
   if (recovery) validateFailedPrewriterRecoveryReceipt(recovery);
-  requirePacket(original.attempt === ledger.state.attempt &&
-    original.request.identity.work_id === work.binding.lifecycle_work_id &&
-    original.prior_work.workspace_id === work.workspace_id &&
-    ledger.state.workspace_id === work.workspace_id && ledger.state.work_id === work.binding.lifecycle_work_id &&
-    ledger.state.run_id === work.execution.run_id && original.prior_work.execution.run_id === work.execution.run_id &&
-    canonicalJsonDigest(recovery?.successor_work.binding ?? original.successor_binding) === canonicalJsonDigest(work.binding) &&
-    (!recovery || canonicalJsonDigest(recovery.original) === canonicalJsonDigest(original)) &&
-    canonicalJsonDigest(original.prior_work.contracts) === canonicalJsonDigest(work.contracts) &&
-    canonicalJsonDigest(ledger.state.completed.slice(0, original.prior_journal.completed.length)) ===
-      canonicalJsonDigest(original.prior_journal.completed),
-  'continued packet original admission or completed prefix differs');
+  requirePacket(
+    original.attempt === ledger.state.attempt &&
+      original.request.identity.work_id === work.binding.lifecycle_work_id &&
+      original.prior_work.workspace_id === work.workspace_id &&
+      ledger.state.workspace_id === work.workspace_id &&
+      ledger.state.work_id === work.binding.lifecycle_work_id &&
+      ledger.state.run_id === work.execution.run_id &&
+      original.prior_work.execution.run_id === work.execution.run_id &&
+      canonicalJsonDigest(recovery?.successor_work.binding ?? original.successor_binding) ===
+        canonicalJsonDigest(work.binding) &&
+      (!recovery || canonicalJsonDigest(recovery.original) === canonicalJsonDigest(original)) &&
+      canonicalJsonDigest(original.prior_work.contracts) === canonicalJsonDigest(work.contracts) &&
+      canonicalJsonDigest(ledger.state.completed.slice(0, original.prior_journal.completed.length)) ===
+        canonicalJsonDigest(original.prior_journal.completed),
+    'continued packet original admission or completed prefix differs',
+  );
   return original.prior_work.binding.work_source_revision;
 }
 
@@ -277,22 +544,28 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
   );
   const scope = JSON.parse(input.scopeBytes.toString('utf8')) as Scope;
   const acceptance = JSON.parse(input.acceptanceBytes.toString('utf8')) as Acceptance;
-  const continuation = input.sourceStore?.readDeliveredWorkContinuationReceipt?.({
-    repository_id: binding.repository_id, project_ids: binding.project_ids,
-    integrations_digest: binding.integrations_digest, work_id: binding.lifecycle_work_id,
-  }, ledger.state.attempt);
-  const original = continuation?.request.action.kind === 'configured_frontier' ? continuation as ConfiguredFrontierReceipt : null;
-  const recovery = original && input.sourceStore?.readFailedPrewriterRecoveryReceipt?.({
-    repository_id: binding.repository_id, project_ids: binding.project_ids,
-    integrations_digest: binding.integrations_digest, work_id: binding.lifecycle_work_id,
-  }, ledger.state.attempt);
-  const acceptedSourceRevision = acceptedContractSourceRevision(work, ledger, original ? {original, recovery: recovery || null} : null);
-  const originalObserved = original?.prior_journal.completed.flatMap(wave => wave.items) ?? [];
+  const identity: WorkIdentity = {
+    repository_id: binding.repository_id,
+    project_ids: binding.project_ids,
+    integrations_digest: binding.integrations_digest,
+    work_id: binding.lifecycle_work_id,
+  };
+  const continuation = input.sourceStore?.readDeliveredWorkContinuationReceipt?.(identity, ledger.state.attempt);
+  const original =
+    continuation?.request.action.kind === 'configured_frontier' ? (continuation as ConfiguredFrontierReceipt) : null;
+  const recovery = original && input.sourceStore?.readFailedPrewriterRecoveryReceipt?.(identity, ledger.state.attempt);
+  const initial = input.sourceStore?.readInitialSourceContinuationReceipt?.(identity, ledger.state.attempt) ?? null;
+  requirePacket(!(original && initial), 'multiple Host Source continuation records are ambiguous');
+  const acceptedContinuation = initial ?? (original ? { original, recovery: recovery || null } : null);
+  const acceptedSourceRevision = acceptedContractSourceRevision(work, ledger, acceptedContinuation);
+  const originalObserved = original?.prior_journal.completed.flatMap((wave) => wave.items) ?? [];
   const currentOrOriginal = (item: (typeof ledger.state.items)[number]): boolean =>
-    item.request.scope_digest === binding.work_source_revision && item.request.config_digest === binding.config_digest ||
-    original !== null && item.request.scope_digest === original.prior_work.binding.work_source_revision &&
-    item.request.config_digest === original.prior_work.binding.config_digest &&
-    originalObserved.some(prior => canonicalJsonDigest(prior) === canonicalJsonDigest(item));
+    (item.request.scope_digest === binding.work_source_revision &&
+      item.request.config_digest === binding.config_digest) ||
+    (original !== null &&
+      item.request.scope_digest === original.prior_work.binding.work_source_revision &&
+      item.request.config_digest === original.prior_work.binding.config_digest &&
+      originalObserved.some((prior) => canonicalJsonDigest(prior) === canonicalJsonDigest(item)));
 
   requirePacket(
     validScope(scope) &&
@@ -309,7 +582,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     'scope, acceptance or thread binding differs from admitted work',
   );
   const source = input.sourceStore
-      ? snapshotAdmittedTaskSources({
+    ? snapshotAdmittedTaskSources({
         store: input.sourceStore,
         host,
         canonicalHostRoot: root,
@@ -416,9 +689,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     const record: unknown = JSON.parse(bytes.toString('utf8'));
     const result = validateResearchResult(record);
     requirePacket(
-      bytes.length <= 64 * 1024 &&
-        sha256(bytes) === artifact.sha256 &&
-        result.digest === plan.result_digest,
+      bytes.length <= 64 * 1024 && sha256(bytes) === artifact.sha256 && result.digest === plan.result_digest,
       'research artifact bytes differ from observed digest',
     );
     // This pair was validated before artifact admission. Later sanctioned writes may
