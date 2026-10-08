@@ -561,6 +561,9 @@ test('Host atomically bridges the original capture to one current Core review un
     const lookup = f.store.readDeliveredWorkContinuation(f.identity, 1);
     expect(lookup.action_status).toBe('unissued');
     expect(lookup.receipt).toEqual(result.receipt);
+    for (const value of [lookup, lookup.receipt, lookup.snapshot, lookup.journal, lookup.journal.state,
+      lookup.item, lookup.items, lookup.item_statuses, lookup.item.request, lookup.snapshot.ledger.tickets[0].exclusive_resources])
+      expect(Object.isFrozen(value)).toBe(true);
     expect(lookup.snapshot.work.binding).toEqual(result.receipt.successor_binding);
     expect(lookup.journal.version).toEqual({ revision: afterJournal.revision, digest: afterJournal.digest });
     expect(lookup.item).toEqual(nextJournal.items[0]);
@@ -1152,6 +1155,9 @@ test('configured continuation lookup exposes the complete prewriter wave and eac
   const f = await continuationFixture({ root, config, workspaceId, databasePath, repositoryRoot: root, identity: input.receipt.request.identity });
   seedFrontierHostFixture(f, input);
   const before = f.store.readDeliveredWorkContinuation(f.identity, 1);
+  for (const value of [before, before.receipt, before.snapshot, before.journal, before.journal.state,
+    before.item, before.items, before.item_statuses, before.item.request, before.snapshot.ledger.tickets[0].exclusive_resources])
+    expect(Object.isFrozen(value)).toBe(true);
   expect(before.items.map(item => item.request.role)).toEqual(['source-planner', 'security-prewriter']);
   expect(before.item_statuses).toEqual(['unissued', 'unissued']);
   expect(before.items.some(item => item.request.action_id === input.receipt.request.action.request.action_id)).toBe(false);
@@ -1213,8 +1219,8 @@ await createOriginalFrontierEngine(data.root,{control:{work_root:data.workRoot}}
   expect(result.error).toBeUndefined(); expect(result.signal).toBeNull(); expect(result.status, result.stderr).toBe(0);
 }
 
-test.each(['delivery', 'normal'])('Host produces the current full prewriter wave atomically from the actual unissued old engine and preserves its original attempt [%s]', async (proofKind) => {
-  const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot(proofKind);
+test.each(['delivery', 'normal', 'normal-large'])('Host produces the current full prewriter wave atomically from the actual unissued old engine and preserves its original attempt [%s]', async (proofKind) => {
+  const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot(proofKind === 'normal-large' ? 'normal' : proofKind);
   // Another completed operation may advance the ledger after this work's release.
   const priorLedger = input.receipt.prior_ledger;
   priorLedger.revision += 1;
@@ -1225,6 +1231,18 @@ test.each(['delivery', 'normal'])('Host produces the current full prewriter wave
   priorLedger.operations.push({ ...priorLedger.operations[0], operation_id: 'unrelated-release',
     ticket_id: 'other-ticket', work_id: 'other-work', thread_id: 'other-thread', resources: ['file:other.ts'],
     from_ledger_revision: priorLedger.revision - 1, to_ledger_revision: priorLedger.revision });
+  if (proofKind === 'normal-large') {
+    for (let index = 0; index < 16; index++) {
+      const resources = Array.from({ length: 64 }, (_, resource) => `file:unrelated/${index}/${String(resource).padStart(3, '0')}.ts`);
+      const ticketId = 'unrelated-ticket-' + index, claimId = 'unrelated-claim-' + index, workId = 'unrelated-work-' + index;
+      priorLedger.tickets.push({ ...priorLedger.tickets[0], ticket_id: ticketId, work_id: workId, thread_id: workId,
+        sequence: priorLedger.next_sequence++, exclusive_resources: resources, claim_ids: [claimId] });
+      priorLedger.claims.push({ ...priorLedger.claims[0], claim_id: claimId, ticket_id: ticketId, work_id: workId, thread_id: workId, resources });
+      priorLedger.operations.push({ ...priorLedger.operations[0], operation_id: 'unrelated-release-' + index,
+        ticket_id: ticketId, work_id: workId, thread_id: workId, resources,
+        from_ledger_revision: priorLedger.revision, to_ledger_revision: ++priorLedger.revision });
+    }
+  }
   const priorVersion = { revision: priorLedger.revision, digest: canonicalJsonDigest(priorLedger) };
   const request = { ...input.receipt.request, expectedLedger: priorVersion };
   input.receipt = { ...input.receipt, prior_ledger_version: priorVersion, request,
@@ -1242,6 +1260,14 @@ test.each(['delivery', 'normal'])('Host produces the current full prewriter wave
   await expect(f.store.continueDeliveredWork({ ...prior.request, expectedLedger: { ...prior.request.expectedLedger, revision: prior.request.expectedLedger.revision - 1 } })).rejects.toThrow();
   expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
   const result = await f.store.continueDeliveredWork(prior.request);
+  if (proofKind === 'normal-large') {
+    expect(() => canonicalJsonDigest(result)).toThrow(/node budget/);
+    expect(() => canonicalJsonDigest(result.snapshot)).not.toThrow();
+    expect(() => canonicalJsonDigest(result.receipt)).not.toThrow();
+    for (const value of [result, result.snapshot, result.snapshot.ledger, result.receipt,
+      result.receipt.prior_ledger, result.receipt.successor_ledger, result.action]) expect(Object.isFrozen(value)).toBe(true);
+    expect(Object.isFrozen(result.receipt.prior_ledger.tickets[0].exclusive_resources)).toBe(true);
+  }
   expect(result.receipt.successor_ledger.tickets.at(-1).exclusive_resources).toEqual(prior.prior_ledger.tickets[0].exclusive_resources);
   expect(result.receipt.successor_ledger.claims.at(-1).resources).toEqual(prior.prior_ledger.claims[0].resources);
   expect(result.status).toBe('continued');
@@ -1257,6 +1283,10 @@ test.each(['delivery', 'normal'])('Host produces the current full prewriter wave
   const retry = await f.store.continueDeliveredWork(prior.request);
   expect(retry.status).toBe('already_continued');
   expect(retry.receipt).toEqual(result.receipt);
+  expect(retry.action).toBeNull();
+  expect(retry.snapshot.workVersion).toEqual(result.snapshot.workVersion);
+  expect(retry.snapshot.ledgerVersion).toEqual(result.snapshot.ledgerVersion);
+  expect(Object.isFrozen(retry.receipt.prior_ledger)).toBe(true);
   expect(f.store.readDeliveredWorkContinuation(f.identity, 1).items).toHaveLength(2);
   const delivered = f.store.readHostStateSnapshot(f.identity), activeTicket = delivered.ledger.tickets.at(-1);
   const fileResource = activeTicket.exclusive_resources.find(resource => resource.startsWith('file:'));

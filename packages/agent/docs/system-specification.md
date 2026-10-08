@@ -1399,6 +1399,12 @@ are rejected. Retained admission history grants no current Source or Runtime
 rights. An execution approval for the prior Source cannot satisfy the EXECUTE
 gate; current prewriter and authorization checks remain required.
 
+Continuation results compose independently validated, immutable Host snapshots,
+receipts and journal components. They preserve their existing fields and reuse
+the frozen components instead of validating duplicated aggregate copies against
+one ingress budget. Canonical limits still apply to each component and incoming
+request. Exact retry returns the retained receipt with no action to reissue.
+
 The Source public run consumer and same-run adapter preserve the old run and
 completed prefix, then advance to the current developer only after the complete
 current prewriter reports. Their installed delivery and chained configuration/code

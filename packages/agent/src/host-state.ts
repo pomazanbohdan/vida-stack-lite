@@ -8504,12 +8504,12 @@ export class HostStateStore {
             }),
           'delivered-work continuation exact retry differs from its retained receipt',
         );
-        return snapshot(receipt);
+        return receipt;
       },
       existing = lookupExisting();
     if (existing) {
       const current = this.readHostStateSnapshot(input.identity);
-      return snapshot({ status: 'already_continued', snapshot: current, receipt: existing, action: null });
+      return Object.freeze({ status: 'already_continued', snapshot: current, receipt: snapshot(existing), action: null });
     }
 
     const inspect = (
@@ -8925,7 +8925,7 @@ export class HostStateStore {
           canonicalJsonDigest(nextJournal) === journalVersion.digest,
         'delivered-work continuation did not persist its exact successor state',
       );
-      return snapshot({ status: 'continued' as const, snapshot: saved, receipt, action: input.action });
+      return Object.freeze({ status: 'continued' as const, snapshot: saved, receipt: snapshot(receipt), action: snapshot(input.action) });
     }).immediate();
   }
   #configuredFrontierRepairBinding(receipt: Pick<ConfiguredFrontierReceipt, 'prior_work' | 'request' | 'attempt'>) {
@@ -9423,8 +9423,9 @@ export class HostStateStore {
         'configured-frontier lookup current reviewer wave or issue custody differs',
       );
       const statuses = journal.items.map(item => item.observation ? 'reported' as const : item.issue_id ? 'issued' as const : 'unissued' as const);
-      return snapshot({ receipt, snapshot: current, journal: { version, state: journal }, item: journal.items[0]!,
-        items: journal.items, item_statuses: statuses,
+      const frozenJournal = snapshot({ version, state: journal });
+      return Object.freeze({ receipt: snapshot(receipt), snapshot: current, journal: frozenJournal, item: frozenJournal.state.items[0]!,
+        items: frozenJournal.state.items, item_statuses: Object.freeze(statuses),
         action_status: statuses.every(status => status === 'reported') ? 'reported' as const : statuses.some(status => status !== 'unissued') ? 'issued' as const : 'unissued' as const });
     }
     const matches = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].filter(
@@ -9449,13 +9450,14 @@ export class HostStateStore {
               item.observation.issue_id === item.issue_id)),
       'delivered-work continuation review issuance is malformed',
     );
-    return snapshot({
-      receipt,
+    const frozenItem = snapshot(item);
+    return Object.freeze({
+      receipt: snapshot(receipt),
       snapshot: current,
-      journal: { version, state: journal },
-      item,
-      items: [item],
-      item_statuses: [item.observation ? 'reported' : item.issue_id ? 'issued' : 'unissued'],
+      journal: snapshot({ version, state: journal }),
+      item: frozenItem,
+      items: Object.freeze([frozenItem]),
+      item_statuses: Object.freeze([item.observation ? 'reported' as const : item.issue_id ? 'issued' as const : 'unissued' as const]),
       action_status: item.observation ? 'reported' : item.issue_id ? 'issued' : 'unissued',
     });
   }
