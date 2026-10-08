@@ -116,7 +116,7 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       targetConfigDigest: request.targetConfigDigest,
       currentSourceScope: request.currentSourceScope,
     }),
-    completedObservations = receipt.prior_journal.completed.flatMap((wave) => wave.items.map((item) => item.observation)),
+    completedObservations = receipt.prior_journal.completed.flatMap((wave: MastraSessionLedgerState['completed'][number]) => wave.items.map(item => item.observation)),
     expectedRequests = receipt.successor_journal.items.map(item => parseSessionBridgeRequest(item.request));
   required(
     expectedRequests.length > 0 && expectedRequests.length <= 2 &&
@@ -259,6 +259,7 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       priorRelease.work_id === receipt.request.identity.work_id &&
       priorRelease.thread_id === receipt.request.nativeSessionHandle &&
       priorRelease.source_revision === priorWork.binding.work_source_revision &&
+      Array.isArray(priorRelease.resources) &&
       priorRelease.resources.length === 1 &&
       priorRelease.resources[0] === executionResource &&
       priorRelease.decision_pointer === receipt.request.originalRequestPointer &&
