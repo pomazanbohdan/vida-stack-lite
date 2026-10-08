@@ -216,6 +216,25 @@ public repair, UNKNOWN recovery and denial of an unrelated review phase.
 Eight selected cases pass with90 assertions. No active original-work effect
 or installed checkpoint is claimed by these checks.
 
+Installed checkpoint cef7cc6, CI37728025626/artifact11529190114, exposed one
+further real continuation denial: dist/src/runtime.js is generated and absent
+from the Source Git inventory. The new helper retains all generated outputs in
+the endpoint digest but uses their manifest/installed-package evidence. Only
+the four maintained JavaScript export paths get this classification. Copied
+schemas join exact Source paths and bytes; unknown dist outputs deny.
+Independent review found a stale-copy case when only Source changed. The helper
+now verifies every target schema pair, including unchanged output and Source
+deletion. Three selected cases pass47 assertions. Retained manifest metadata
+also produces11 Source targets with no missing published entry; this is not a
+new live installed observation or Runtime acceptance.
+
+The next delivery combines installer-result parsing and the PATH observation in
+one script. It preserves terminal/error custody and writes the same result from
+the one parsed installer record. No separate installation observer repeats the
+checks. The maintained policy now makes step reduction ongoing and keeps target
+installation independent from development paths and Host state. The same target
+may reuse its result; another environment must provide its own observation.
+
 The direct ordinary-admission check also exposed a retained fixture defect:
 the fixture constructs HostStateStore without a canonical Host root, then calls
 the existing TaskSource reader that requires it. HEAD already contains that

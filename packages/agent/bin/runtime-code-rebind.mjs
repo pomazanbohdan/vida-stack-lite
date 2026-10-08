@@ -24,7 +24,7 @@ import {
   snapshotDeclaredSources,
   snapshotRuntimePackageSources,
   snapshotRuntimeManifestSources,
-  compareRuntimeEndpointSnapshots,
+  runtimeEndpointSourceTargets,
 } from '../src/orchestration/scoped-source-snapshot.ts';
 import {
   buildSessionBridgeRequest,
@@ -721,9 +721,9 @@ export function planConfiguredFrontierContinuation({ database, root, config, wor
       !published.has(entry.path), 'published Source correction entry is invalid');
     published.set(entry.path, entry.sha256);
   }
-  const runtimeChanges = compareRuntimeEndpointSnapshots(beforeCode, targetCode);
-  requireRebind(runtimeChanges.every(change => change.after.exists
-    ? published.get(change.path) === change.after.sha256 : !published.has(change.path)),
+  const runtimeSourceTargets = runtimeEndpointSourceTargets(config.runtime.bundle, beforeCode, targetCode, currentCode);
+  requireRebind(runtimeSourceTargets.every(entry => entry.exists
+    ? published.get(entry.path) === entry.sha256 : !published.has(entry.path)),
   'runtime endpoint diff is outside the published correction');
   const currentSourceScope = snapshotDeclaredSources(access, [...work.lifecycle.scope.allowed_paths].sort()),
     authorizedSourceChanges = compareScopedSourceSnapshots(journal.source_scope, currentSourceScope);
@@ -733,7 +733,9 @@ export function planConfiguredFrontierContinuation({ database, root, config, wor
   'current task Source changes differ from the correction byte record');
   // The byte report is a hint. Actual regular Git objects prove the commit bytes;
   // remote publication and installation-call provenance are not inferred from it.
-  assertCommittedSourceChanges(root, publication.value.commit, [...runtimeChanges, ...authorizedSourceChanges]);
+  assertCommittedSourceChanges(root, publication.value.commit, [
+    ...runtimeSourceTargets.map(entry => ({ path: entry.path, after: entry })), ...authorizedSourceChanges,
+  ]);
   const selection = { team: work.binding.team_id, kind: intake.work_item.canonical_kind, intent: intake.work_item.intent,
     project: intake.work_item.project_id, risk_flags: intake.work_item.risk_flags, labels: intake.work_item.labels };
   requireRebind(project.project_ids.includes(selection.project) && selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,

@@ -24,6 +24,44 @@ function reader(files) {
 }
 
 describe('cooperative scoped source evidence', () => {
+  test('runtime endpoint evidence keeps generated exports and copied schemas separate from maintained Source targets', () => {
+    const bundle = 'packages/agent';
+    const files = new Map([
+      [`${bundle}/src/index.ts`, 'maintained source'],
+      [`${bundle}/dist/src/runtime.js`, 'old generated export'],
+      [`${bundle}/schemas/probe.schema.json`, '{}'],
+      [`${bundle}/dist/schemas/probe.schema.json`, '{}'],
+    ]);
+    const capture = () => snapshotDeclaredSources(reader(files), [...files.keys()]);
+    const before = capture();
+    files.set(`${bundle}/dist/src/runtime.js`, 'current generated export');
+    const target = capture();
+    expect(snapshots.runtimeEndpointSourceTargets(bundle, before, target, capture())).toEqual([]);
+    expect(compareScopedSourceSnapshots(before, target).map(change => change.path)).toEqual([`${bundle}/dist/src/runtime.js`]);
+    files.set(`${bundle}/dist/src/runtime.js`, 'different installed bytes');
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, before, target, capture())).toThrow();
+    files.set(`${bundle}/dist/src/runtime.js`, 'current generated export');
+    files.set(`${bundle}/schemas/probe.schema.json`, '{"type":"string"}');
+    files.set(`${bundle}/dist/schemas/probe.schema.json`, '{"type":"string"}');
+    files.set(`${bundle}/src/index.ts`, 'changed maintained source');
+    const withSchema = capture();
+    expect(snapshots.runtimeEndpointSourceTargets(bundle, before, withSchema, capture()).map(entry => entry.path)).toEqual([
+      `${bundle}/schemas/probe.schema.json`, `${bundle}/src/index.ts`,
+    ]);
+    files.set(`${bundle}/schemas/probe.schema.json`, '{"type":"boolean"}');
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, withSchema, capture(), capture())).toThrow(/copied schema/);
+    files.delete(`${bundle}/schemas/probe.schema.json`);
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, withSchema, capture(), capture())).toThrow(/copied schema/);
+    files.set(`${bundle}/schemas/probe.schema.json`, '{"type":"string"}');
+    files.set(`${bundle}/dist/schemas/probe.schema.json`, '{"type":"number"}');
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, before, capture(), capture())).toThrow(/copied schema/);
+    files.delete(`${bundle}/schemas/probe.schema.json`);
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, before, capture(), capture())).toThrow(/copied schema/);
+    files.set(`${bundle}/schemas/probe.schema.json`, '{}');
+    files.set(`${bundle}/dist/schemas/probe.schema.json`, '{}');
+    files.set(`${bundle}/dist/src/unlisted.js`, 'unlisted output');
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, target, capture(), capture())).toThrow(/maintained generated inventory/);
+  });
   test('retains distinct runtime endpoint inventories and derives appeared and disappeared bytes', () => {
     const prefix = 'packages/agent';
     const files = new Map([['src/old.ts', 'old'], ['src/shared.ts', 'before']]);

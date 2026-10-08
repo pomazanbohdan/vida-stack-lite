@@ -1396,6 +1396,12 @@ files through a temporary union with explicit absent entries, while preserving
 each endpoint's original aggregate digest. Ordinary task scopes still require
 equal path sets. This comparison supplies no configuration, Source or Runtime
 authority, and does not establish a historical update chain.
+Generated SDK exports use the exact maintained JavaScript inventory. Retain
+them in the runtime digest and verify the successor manifest against the
+installed package; do not require generated files in Source Git. Every copied
+target schema must match its corresponding maintained Source schema in path,
+size and digest, even when the copied output did not change. Git verification
+still covers all maintained runtime and task-source targets.
 
 The Source normal-config planner selects the actual wholly unissued request;
 it requires no invented issue or terminal capture. It preserves the Host-bound
@@ -1408,6 +1414,11 @@ its exact project subset. The config operation ID and native update operation ID
 remain distinct. Resolve the native update identity through the existing release
 owner and compare the installed executable's own byte observation with its
 selected manifest. Caller reports alone do not attest an installation call.
+Installation in another environment consumes the immutable artifact and its
+manifest. It requires no Source checkout or developer-host paths/state. The
+target owns its one integrity/post-install observation. Reuse that structured
+result only for that target; it does not establish admission or current runtime
+in another environment.
 The Source repository adapter checks changed files against exact regular local
 Git blobs, including their size and bytes. Reported hashes are only hints.
 Local commit evidence does not prove remote publication or grant rights.

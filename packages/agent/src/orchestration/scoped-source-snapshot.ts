@@ -3,6 +3,7 @@ import type { SafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import type { HostStateSnapshot, HostStateStore, WorkIdentity } from '../host-state.js';
+import { expectedJavascriptFiles } from '../../tooling/maintained-source-inventory.mjs';
 
 type SourceReader = Pick<SafeRepositoryAccess, 'fileExists' | 'readBytes'>;
 
@@ -118,6 +119,57 @@ export function compareRuntimeEndpointSnapshots(
     return { ...body, digest: canonicalJsonDigest(body) };
   };
   return compareScopedSourceSnapshots(expand(before), expand(after));
+}
+
+/** Source-byte targets only; generated outputs stay in the verified complete runtime snapshots. */
+export function runtimeEndpointSourceTargets(
+  bundlePath: string,
+  before: ScopedSourceSnapshot,
+  target: ScopedSourceSnapshot,
+  installed: ScopedSourceSnapshot,
+): readonly ScopedSourceEntry[] {
+  canonicalPaths([bundlePath]);
+  requireSnapshot(target.digest === installed.digest && compareRuntimeEndpointSnapshots(target, installed).length === 0,
+    'runtime target differs from the installed package');
+  const changes = compareRuntimeEndpointSnapshots(before, target),
+    generated = new Set(expectedJavascriptFiles.map((relative: string) => `${bundlePath}/dist/src/${relative}`)),
+    entries = new Map(target.entries.map(entry => [entry.path, entry])),
+    targets = new Map<string, ScopedSourceEntry>();
+  const sourceSchemaPrefix = `${bundlePath}/schemas/`, copiedSchemaPrefix = `${bundlePath}/dist/schemas/`;
+  for (const entry of target.entries) {
+    if (!entry.exists || (!entry.path.startsWith(sourceSchemaPrefix) && !entry.path.startsWith(copiedSchemaPrefix))) continue;
+    const copied = entry.path.startsWith(copiedSchemaPrefix),
+      name = entry.path.slice(copied ? copiedSchemaPrefix.length : sourceSchemaPrefix.length),
+      counterpart = entries.get(`${copied ? sourceSchemaPrefix : copiedSchemaPrefix}${name}`);
+    requireSnapshot(!name.includes('/') && name.endsWith('.schema.json') && counterpart?.exists &&
+      counterpart.bytes === entry.bytes && counterpart.sha256 === entry.sha256,
+    'copied schema target does not match its maintained Source pair');
+  }
+  for (const change of changes) {
+    requireSnapshot(change.path.startsWith(`${bundlePath}/`), 'runtime path differs from the package identity');
+    if (generated.has(change.path)) {
+      requireSnapshot(change.after.exists, 'required generated runtime export is absent');
+      continue;
+    }
+    const copiedPrefix = `${bundlePath}/dist/schemas/`;
+    if (change.path.startsWith(copiedPrefix)) {
+      const name = change.path.slice(copiedPrefix.length), sourcePath = `${bundlePath}/schemas/${name}`;
+      requireSnapshot(!name.includes('/') && name.endsWith('.schema.json'), 'copied schema path is not maintained');
+      const source = entries.get(sourcePath);
+      if (!change.after.exists) {
+        requireSnapshot(!source || !source.exists, 'copied schema removal differs from its maintained Source');
+        targets.set(sourcePath, Object.freeze({ path: sourcePath, exists: false, bytes: null, sha256: null }));
+      } else {
+        requireSnapshot(source?.exists && source.bytes === change.after.bytes && source.sha256 === change.after.sha256,
+          'copied schema bytes differ from the maintained Source');
+        targets.set(sourcePath, source);
+      }
+      continue;
+    }
+    requireSnapshot(!change.path.startsWith(`${bundlePath}/dist/`), 'runtime output is outside the maintained generated inventory');
+    targets.set(change.path, change.after);
+  }
+  return Object.freeze([...targets.values()].sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
 }
 
 /** Re-read declared task files through the Host-validated current TaskSource binding. */

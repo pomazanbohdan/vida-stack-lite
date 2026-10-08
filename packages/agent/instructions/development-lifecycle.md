@@ -489,6 +489,9 @@ solely to install it. Publish changed reviewed Source before its CI formation.
 
 Use four delivery steps: publish changed reviewed Source, issue one cached CI
 build, retrieve and qualify its exact artifact, then run the maintained installer.
+On every build or installation change, remove repeated work and duplicate
+scripts before adding another step. Reuse the existing owner, current evidence
+and returned results. Keep this simplification part of ordinary maintenance.
 Keep one current operation and its confirmed baseline. Reuse the selected run,
 download and current task evidence; do not rediscover them at every step. Observe
 cache restore/save in that run. Cache absence is not an installation gate.
@@ -505,8 +508,12 @@ conditional rollback never overwrites a drifted target. Remove the exact owned
 previous consumer binary only after verified success. Preserve project state.
 No prerequisite probes, installation test suite or permanent predecessor tree.
 
-Use the installer's successful structured result for its version and byte
+Use the installer's successful structured result for that target's version and byte
 postcheck. Do not repeat those same reads or CLI launches in a second observer.
+The target environment installs the immutable CI artifact independently. Its
+integrity and platform checks use artifact metadata, not the developer's Source
+files, local paths or Host state. Installation observations belong to that
+target; they do not prove another environment's admission or runtime freshness.
 Project configuration, recovery and work-admission inspection are separate
 operations, started only when the current task needs them. They are not
 installation postchecks or reasons to reinstall a successfully updated asset.
