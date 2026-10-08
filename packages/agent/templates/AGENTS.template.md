@@ -550,6 +550,8 @@ authorize private-state edits, fabricated admission, replay of `UNKNOWN`
 effects, weaker controls, a new authorization framework or partial-agent
 delivery. Preserve current Source ownership, CAS, final assurance and native
 qualification requirements.
+An explicit emergency Source repair follows the lifecycle owner's
+self-development exception; it never changes private operational state.
 
 Formation and installation follow only the installed development-lifecycle
 instruction's self-development policy. They do not run test suites or repeat

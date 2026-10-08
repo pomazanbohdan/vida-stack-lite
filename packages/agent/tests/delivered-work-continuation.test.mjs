@@ -6,8 +6,8 @@ import { LibSQLStore } from '@mastra/libsql';
 import z from 'zod';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { pinnedEnvironment } from '../bin/bun.mjs';
-import { createHash } from 'node:crypto';
+import { pinnedEnvironment, boundedSpawnSync, executionBudget } from '../bin/bun.mjs';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -18,6 +18,182 @@ import { runtimeConfigDigest, loadRuntimeConfig, runtimePackageAccess, runtimePa
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { buildSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge.ts';
+import { validateFailedPrewriterRecoveryBasis } from '../src/orchestration/failed-prewriter-recovery.ts';
+
+test('public failed prewriter owner recovery inspects, denies a changed owner and applies without rewriting failed reports', async () => {
+  const { root, config, workspaceId, input, intakePath } = configuredFrontierRepairHostRoot();
+  const receipt = input.receipt, prior = receipt.prior_work, successor = receipt.successor_work;
+  const authorizationPath = '.agent/source-authority.json';
+  const authority = { schema: 'LocalSourceWriteAuthorization/v1', action: 'source.write',
+    user_instruction_ref: receipt.request.originalRequestPointer, work_id: receipt.request.identity.work_id,
+    attempt: 1, scope_digest: prior.binding.work_source_revision, config_digest: prior.binding.config_digest,
+    workflow_id: prior.binding.workflow_id, stage_ids: ['develop_task'],
+    implementation_paths: prior.binding.implementation_paths, native_session_handle: receipt.request.nativeSessionHandle };
+  const authorityBytes = Buffer.from(canonicalJson(authority));
+  writeFileSync(path.join(root, authorizationPath), authorityBytes);
+  const intake = JSON.parse(readFileSync(path.join(root, intakePath), 'utf8'));
+  const intakeBytes = Buffer.from(canonicalJson({ ...intake, source_authorization_path: authorizationPath }));
+  writeFileSync(path.join(root, intakePath), intakeBytes);
+  const approval = { schema: 'LifecycleArtifactReference/v1', kind: 'execution_approval',
+    artifact_schema: 'LocalSourceWriteAuthorization/v1', record_id: authority.user_instruction_ref,
+    path: authorizationPath, sha256: createHash('sha256').update(authorityBytes).digest('hex'),
+    source_revision: prior.binding.work_source_revision, scope_id: prior.binding.scope_id,
+    ac_ids: prior.binding.ac_ids, generation: null, implementation_fingerprint: null, delivery_cycle_id: null,
+    principal: 'local-session:' + canonicalJsonDigest(receipt.request.nativeSessionHandle), decision: 'approved', disposition: 'current' };
+  for (const work of [prior, successor]) {
+    work.artifacts = work.artifacts.map(item => item.artifact_id === 'local-session-intake'
+      ? { ...item, sha256: createHash('sha256').update(intakeBytes).digest('hex') } : item);
+    work.lifecycle = { ...work.lifecycle, references: [approval] };
+  }
+  receipt.prior_work_version = { revision: prior.revision, digest: canonicalJsonDigest(prior) };
+  receipt.work_version = { revision: successor.revision, digest: canonicalJsonDigest(successor) };
+  receipt.request = { ...receipt.request, expectedWork: receipt.prior_work_version };
+  receipt.request_digest = canonicalJsonDigest(receipt.request);
+  receipt.authorization = { ...receipt.authorization, request_digest: receipt.request_digest };
+  const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+  mkdirSync(path.dirname(databasePath), { recursive: true });
+  const f = await continuationFixture({ root, config, workspaceId, databasePath,
+    repositoryRoot: root, identity: receipt.request.identity });
+  seedFrontierHostFixture(f, input);
+  const ledger = structuredClone(receipt.successor_ledger), journal = structuredClone(receipt.successor_journal);
+  const expiry = new Date(Date.now() - 1000).toISOString();
+  ledger.tickets.find(item => item.status === 'active').expires_at = expiry;
+  ledger.claims.find(item => item.status === 'active').lease_expires_at = expiry;
+  journal.items = journal.items.map(item => {
+    const issue_id = randomUUID(), summary = 'Known readonly fixture gap';
+    return { ...item, issue_id, observation: { schema: 'VidaSessionObservation/v1', action_id: item.request.action_id,
+      issue_id, agent_id: 'fixture:reviewer', tool_call_ref: 'fixture:result', status: 'reported_failed',
+      summary, output_digest: canonicalJsonDigest(summary), evidence_refs: ['fixture:gap'] } };
+  });
+  f.db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='ledger'")
+    .run(canonicalJson(ledger), canonicalJsonDigest(ledger), workspaceId);
+  f.db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1')
+    .run(canonicalJson(journal), canonicalJsonDigest(journal), workspaceId, f.identity.work_id);
+  const before = f.store.readHostStateSnapshot(f.identity), originalBytes = canonicalJson(receipt);
+  const requestPath = '.agent/owner-recovery-request.json', file = path.join(root, requestPath);
+  writeFileSync(file, canonicalJson({ schema: 'FailedPrewriterOwnerRecoveryRequest/v1', identity: f.identity,
+    attempt: 1, nativeSessionHandle: receipt.request.nativeSessionHandle }));
+  const bundle = path.join(runtimeRoot, 'packages/agent'), budget = executionBudget(60_000);
+  const invoke = (mode, status) => {
+    const result = boundedSpawnSync(spawnSync, process.execPath, [path.join(bundle, 'bin/run.mjs'),
+      '--recover-failed-prewriter-owner', 'true', '--mode', mode, '--project-root', root, '--request', requestPath],
+    { cwd: root, env: pinnedEnvironment(process.execPath, process.env, bundle), windowsHide: true,
+      encoding: 'utf8', budget }, 'public failed prewriter owner recovery');
+    expect(result.error).toBeUndefined(); expect(result.signal).toBeNull(); expect(result.status).toBe(status);
+    if (status !== 0) expect(result.stdout).toBe('');
+    return JSON.parse(status === 0 ? result.stdout : result.stderr);
+  };
+  const inspected = invoke('inspect', 0);
+  expect(inspected.status).toBe('failed_prewriter_owner_recovery_ready');
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+  writeFileSync(file, canonicalJson({ ...inspected.request, nativeSessionHandle: 'foreign' }));
+  expect(invoke('apply', 1)).toMatchObject({ schema: 'VidaAgentRunResult/v1', status: 'blocked' });
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+  writeFileSync(file, canonicalJson(inspected.request));
+  expect(invoke('apply', 0)).toMatchObject({ status: 'failed_prewriter_owner_recovered', rights_granted: false,
+    failed_reports_preserved: true, source_bindings_changed: false });
+  expect(f.store.readWorkSessionJournal(f.identity).state).toEqual(journal);
+  expect(f.store.readHostStateSnapshot(f.identity).work.binding).toEqual(before.work.binding);
+  expect(f.db.query('SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?').get(workspaceId).payload).toBe(originalBytes);
+  const current = f.store.readHostStateSnapshot(f.identity);
+  expect(invoke('apply', 1).status).toBe('blocked');
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(current);
+}, 60_000);
+
+test('failed prewriter owner recovery atomically reacquires full resources without changing reports, bindings or the original receipt', async () => {
+  const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot();
+  const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+  mkdirSync(path.dirname(databasePath), { recursive: true });
+  const f = await continuationFixture({ root, config, workspaceId, databasePath,
+    repositoryRoot: root, identity: input.receipt.request.identity });
+  seedFrontierHostFixture(f, input);
+  const ledger = structuredClone(input.receipt.successor_ledger), journal = structuredClone(input.receipt.successor_journal);
+  const expired = new Date(Date.now() - 1000).toISOString();
+  ledger.tickets.find(item => item.status === 'active').expires_at = expired;
+  ledger.claims.find(item => item.status === 'active').lease_expires_at = expired;
+  journal.items = journal.items.map(item => {
+    const issue_id = randomUUID(), summary = 'Fixture known packet gap';
+    return { ...item, issue_id, observation: { schema: 'VidaSessionObservation/v1',
+      action_id: item.request.action_id, issue_id, agent_id: 'fixture:readonly', tool_call_ref: 'fixture:result',
+      status: 'reported_failed', summary, output_digest: canonicalJsonDigest(summary), evidence_refs: ['fixture:gap'] } };
+  });
+  f.db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='ledger'")
+    .run(canonicalJson(ledger), canonicalJsonDigest(ledger), workspaceId);
+  f.db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1')
+    .run(canonicalJson(journal), canonicalJsonDigest(journal), workspaceId, f.identity.work_id);
+  const before = f.store.readHostStateSnapshot(f.identity), beforeJournal = f.store.readWorkSessionJournal(f.identity);
+  const receiptBytes = f.db.query('SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?').get(workspaceId).payload;
+  const request = { identity: f.identity, attempt: 1, nativeSessionHandle: input.receipt.request.nativeSessionHandle,
+    expectedWork: before.workVersion, expectedLedger: before.ledgerVersion, expectedJournal: beforeJournal.version,
+    expectedMaintenanceGeneration: before.maintenanceGeneration, verifyCurrent: () => {} };
+  for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal']) {
+    expect(() => f.store.recoverFailedPrewriterOwner({ ...request,
+      [key]: { ...request[key], revision: request[key].revision + 1 } })).toThrow();
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+  }
+  expect(() => f.store.recoverFailedPrewriterOwner({ ...request,
+    verifyCurrent: () => { throw Error('fixture current proof changed'); } })).toThrow('fixture current proof changed');
+  expect(() => f.store.recoverFailedPrewriterOwner({ ...request,
+    verifyCurrent: () => Promise.resolve() })).toThrow('must finish synchronously');
+  expect(() => f.store.recoverFailedPrewriterOwner({ ...request,
+    verifyCurrent: async () => {} })).toThrow();
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+  const result = f.store.recoverFailedPrewriterOwner(request);
+  expect(result.work.binding).toEqual(before.work.binding);
+  expect(result.work.execution).toEqual(before.work.execution);
+  expect(result.work.lease.ticket_id).not.toBe(before.work.lease.ticket_id);
+  const ticket = result.ledger.tickets.find(item => item.ticket_id === result.work.lease.ticket_id);
+  expect(ticket.exclusive_resources).toEqual(ledger.tickets.find(item => item.status === 'active').exclusive_resources);
+  expect(Date.parse(ticket.expires_at)).toBeGreaterThan(Date.now());
+  expect(f.store.readWorkSessionJournal(f.identity).state).toEqual(journal);
+  expect(f.db.query('SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?').get(workspaceId).payload).toBe(receiptBytes);
+  expect(f.store.readDeliveredWorkContinuation(f.identity, 1).item_statuses).toEqual(['reported', 'reported']);
+  const current = f.store.readHostStateSnapshot(f.identity), currentJournal = f.store.readWorkSessionJournal(f.identity);
+  expect(() => f.store.recoverFailedPrewriterOwner({ ...request, expectedWork: current.workVersion,
+    expectedLedger: current.ledgerVersion, expectedJournal: currentJournal.version })).toThrow();
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(current);
+});
+
+test('failed prewriter recovery basis preserves full resources and rejects unknown outcomes, foreign FIFO and stale cohorts', () => {
+  const fixture = configuredFrontierRepairFixture(true), original = fixture.receipt;
+  const work = structuredClone(original.successor_work), ledger = structuredClone(original.successor_ledger);
+  const journal = structuredClone(original.successor_journal), now = Date.now();
+  const ticket = ledger.tickets.find(item => item.ticket_id === work.lease.ticket_id);
+  const claim = ledger.claims.find(item => item.ticket_id === ticket.ticket_id && item.status === 'active');
+  ticket.expires_at = claim.lease_expires_at = new Date(now - 1000).toISOString();
+  journal.items = journal.items.map((item, index) => {
+    const issue_id = randomUUID(), summary = JSON.stringify({ status: 'gap', message: 'packet missing' });
+    return { ...item, issue_id, observation: { schema: 'VidaSessionObservation/v1',
+      action_id: item.request.action_id, issue_id, agent_id: 'fixture:readonly',
+      tool_call_ref: 'fixture:prewriter-' + index, status: 'reported_failed', summary,
+      output_digest: canonicalJsonDigest(summary), evidence_refs: ['fixture:packet-gap'] } };
+  });
+  const input = { original, work, ledger, journal, nativeSessionHandle: original.request.nativeSessionHandle, now };
+  const originalBytes = canonicalJson(original), failedBytes = canonicalJson(journal);
+  expect(() => validateFailedPrewriterRecoveryBasis(input)).not.toThrow();
+  expect(ticket.exclusive_resources.some(item => item.startsWith('file:'))).toBe(true);
+  expect(canonicalJson(original)).toBe(originalBytes);
+  expect(canonicalJson(journal)).toBe(failedBytes);
+  for (const mutate of [
+    value => { value.journal.items[0].observation = null; },
+    value => { value.journal.items[0].observation.status = 'reported_complete'; },
+    value => { value.journal.items[0].observation.output_digest = '0'.repeat(64); },
+    value => { value.journal.items[0].host_reservation = {}; },
+    value => { value.journal.items[0].research_activation = {}; },
+    value => { value.work.execution.assignment_attempts = [{}]; },
+    value => { value.nativeSessionHandle = 'foreign'; },
+    value => { value.ledger.tickets[1].expires_at = new Date(now + 1000).toISOString(); },
+    value => { value.ledger.tickets[1].exclusive_resources.pop(); },
+    value => { value.ledger.claims.push({ ...value.ledger.claims[1], ticket_id: 'foreign' }); },
+    value => { value.ledger.tickets.push({ ...value.ledger.tickets[1], ticket_id: 'queued', status: 'queued' }); },
+    value => { value.journal.completed = []; },
+    value => { value.journal.items[0].request.role = 'developer-orchestrator'; },
+    value => { value.journal.run_id = value.work.execution.run_id = 'foreign-run'; },
+  ]) {
+    const invalid = structuredClone(input); mutate(invalid);
+    expect(() => validateFailedPrewriterRecoveryBasis(invalid)).toThrow();
+  }
+});
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { compareScopedSourceSnapshots, snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';

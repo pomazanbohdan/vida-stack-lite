@@ -883,3 +883,23 @@ monotonic shared state instead. Mastra workflow snapshots preserve run identity
 and suspended context; their retained bytes remain the frozen engine boundary.
 The production read-only state inspection passes with both disposed outcomes;
 native installation and live config application remain separate evidence.
+
+### Known-failed prewriters and the retained engine boundary
+
+The configured-frontier CLI stores each prewriter result in the Host journal.
+It rejects a failed report before opening or resuming Mastra. A failed Host
+report therefore does not prove a failed Mastra run. The engine reader must
+still verify the physical suspended boundary against its retained beforeimage.
+This state needs no speculative snapshot reset or second execution engine.
+
+Owner recovery uses the existing Host producer fence, one SQLite transaction,
+fresh Work/Ledger/Journal versions and the full accepted resource set. It
+preserves failed reports, issue IDs, Source bindings and the original receipt.
+The public owner operation does not correct or reissue the failed wave.
+
+A later current-Source wave correction needs its own validated transition and
+retained failed beforeimage. It cannot manufacture another old-format receipt:
+the current continuation contract binds its prior versions and exact original
+Work, journal, contracts and engine. Canonical action IDs already include the
+Source scope, so a changed scope supplies fresh reviewer IDs. Reuse Mastra and
+the existing Host transaction owner; retain UNKNOWN without automatic replay.

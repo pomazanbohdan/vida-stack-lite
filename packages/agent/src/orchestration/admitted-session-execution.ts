@@ -8,7 +8,7 @@ import {
 import { loadProjectSetContext } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import type { HostStateStore, WorkIdentity } from '../host-state.js';
+import type { HostStateStore, WorkIdentity, WorkState } from '../host-state.js';
 import { createTrustedLocalSessionComposition, requireLiveLocalSessionAdmission } from '../runtime-kernel.js';
 import { snapshotRuntimePackageSources } from './scoped-source-snapshot.js';
 import { resolveTaskSourceFileRoot } from './task-source-binding.js';
@@ -24,9 +24,17 @@ export function readAdmittedSessionIntake(
   store: HostStateStore,
   identity: WorkIdentity,
 ): { work_item: unknown; runtime_code_paths: string[]; native_session_handle: string } {
-  const access = requireSafeRepositoryAccess(repositoryRoot);
   const work = store.readHostStateSnapshot(identity).work;
   requireExecution(work, 'admitted local session work is unavailable');
+  return readAdmittedSessionIntakeForWork(repositoryRoot, work);
+}
+
+/** Read protected intake bytes from an already checked Host snapshot, including inside its transaction. */
+export function readAdmittedSessionIntakeForWork(
+  repositoryRoot: string,
+  work: WorkState,
+): { work_item: unknown; runtime_code_paths: string[]; native_session_handle: string } {
+  const access = requireSafeRepositoryAccess(repositoryRoot);
   const intakeRef = work.artifacts.find(
     (item) => item.artifact_id === 'local-session-intake' && item.schema === 'VidaLocalSessionIntake/v1',
   );

@@ -628,52 +628,9 @@ function sourceTransitionAuthorizedPaths(root, config, transitionId, proof) {
   return [...artifact.request.authorized_changed_paths].sort();
 }
 
-/** Plan a same-attempt unissued continuation from actual config and native endpoint evidence. */
-export function planConfiguredFrontierContinuation({ database, root, config, workspaceId, projectIds,
-  workId, attempt, nativeHandle, repairId, actor, timestamp, sourceTransitionId, ownerNoCallPointer,
-  parentManifestRef, successorManifestRef, systemUpdateRef, sourceCorrectionRef }) {
-  requireRebind(identifier.test(repairId) && identifier.test(sourceTransitionId) && Number.isSafeInteger(attempt) && attempt > 0 &&
-    typeof nativeHandle === 'string' && nativeHandle.trim() === nativeHandle && nativeHandle.length > 0 && nativeHandle.length <= 256 &&
-    typeof actor === 'string' && actor.trim() === actor && actor.length > 0 && actor.length <= 256 &&
-    typeof timestamp === 'string' && !Number.isNaN(Date.parse(timestamp)) &&
-    typeof ownerNoCallPointer === 'string' && ownerNoCallPointer.trim() === ownerNoCallPointer && ownerNoCallPointer.length > 0 &&
-    ownerNoCallPointer.length <= 2048 && !/\p{Cc}/u.test(ownerNoCallPointer), 'configured frontier attribution is invalid');
-  const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds),
-    identity = { repository_id: project.repository_id, project_ids: project.project_ids,
-      integrations_digest: project.integrations_digest, work_id: workId },
-    store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
-    state = store.readHostStateSnapshot(identity), work = state.work,
-    journalRow = checkedRow(database, 'agent_host_mastra_session_ledger', 'workspace_id=? AND work_id=? AND attempt=?', [workspaceId, workId, attempt]),
-    journal = journalRow.value;
-  requireRebind(work && state.workVersion && state.ledgerVersion && work.workspace_id === workspaceId &&
-    work.execution.status === 'suspended' && ['implementation', 'awaiting_followup'].includes(work.execution.phase) && work.lease === null &&
-    work.lifecycle.phase === 'INTAKE' && work.lifecycle.seal === null &&
-    work.binding.repository_id === identity.repository_id && work.binding.integrations_digest === identity.integrations_digest &&
-    canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
-    work.binding.lifecycle_work_id === workId && work.execution.run_id === journal.run_id &&
-    journal.workspace_id === workspaceId && journal.work_id === workId && journal.attempt === attempt &&
-    journal.source_scope?.digest === work.binding.work_source_revision &&
-    work.execution.assignment_attempts.every(entry => ['completed', 'no_effect'].includes(entry.status)),
-  'original unissued Work or Journal no longer matches');
-  const access = requireSafeRepositoryAccess(root),
-    intakeRef = work.artifacts.find(ref => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1');
-  requireRebind(intakeRef, 'original protected intake is missing');
-  const intakeFile = validatedJson(access, intakeRef.path, 'original protected intake'), intake = intakeFile.value;
-  requireRebind(sha(intakeFile.bytes) === intakeRef.sha256 && intake.schema === 'VidaLocalSessionIntake/v1' &&
-    intake.native_session_handle === nativeHandle && canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest,
-  'original intake bytes, task or native owner differ');
-  const sourceApproval = work.lifecycle.references.find(ref => ref.kind === 'execution_approval' &&
-    ref.disposition === 'current' && ref.decision === 'approved' && ref.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
-    ref.path === intake.source_authorization_path);
-  requireRebind(sourceApproval, 'original accepted human Source instruction is unavailable');
-  const sourceAuthority = readLocalSourceWriteAuthorization(root, sourceApproval.path), authority = sourceAuthority.authorization;
-  requireRebind(sourceAuthority.sha256 === sourceApproval.sha256 && authority.work_id === workId && authority.attempt === attempt &&
-    authority.native_session_handle === nativeHandle && authority.scope_digest === work.binding.work_source_revision &&
-    authority.config_digest === work.binding.config_digest && authority.workflow_id === work.binding.workflow_id &&
-    authority.user_instruction_ref === sourceApproval.record_id && authority.user_instruction_ref === ownerNoCallPointer &&
-    sourceApproval.principal === 'local-session:' + canonicalJsonDigest(nativeHandle) &&
-    canonicalJsonDigest([...authority.implementation_paths].sort()) === canonicalJsonDigest([...work.binding.implementation_paths].sort()),
-  'original accepted human instruction, scope or owner binding differs');
+/** Shared exact native/Source endpoint verification; this grants no Host rights. */
+export function verifyConfiguredNativeEndpoint({ root, config, workspaceId, identity, work, journal,
+  intake, intakeRef, access, sourceTransitionId, parentManifestRef, successorManifestRef, systemUpdateRef, sourceCorrectionRef }) {
   const edge = readAppliedRuntimeConfigRebind(root, config, sourceTransitionId), plan = edge.value.plan;
   requireRebind(plan.old_config_digest === work.binding.config_digest &&
     identity.project_ids.every(id => plan.project_ids.includes(id)), 'normal config edge does not begin at the original Work');
@@ -736,16 +693,7 @@ export function planConfiguredFrontierContinuation({ database, root, config, wor
   assertCommittedSourceChanges(root, publication.value.commit, [
     ...runtimeSourceTargets.map(entry => ({ path: entry.path, after: entry })), ...authorizedSourceChanges,
   ]);
-  const selection = { team: work.binding.team_id, kind: intake.work_item.canonical_kind, intent: intake.work_item.intent,
-    project: intake.work_item.project_id, risk_flags: intake.work_item.risk_flags, labels: intake.work_item.labels };
-  requireRebind(project.project_ids.includes(selection.project) && selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
-    'current config no longer selects the original workflow');
-  const oldConfig = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
-    engine = readRetainedUnissuedSessionEngineSnapshot({ repositoryRoot: root, config: oldConfig, selection,
-      context: { work_id: workId, attempt, scope_digest: journal.source_scope.digest }, workflowId: work.binding.workflow_id,
-      runId: journal.run_id, lifecycleRisk: work.lifecycle.risk }, { work, journal }),
-    targetConfigDigest = runtimeConfigDigest(config),
-    action = projectConfiguredFrontierContinuationAction({ engine, journal, targetConfigDigest, currentSourceScope });
+  const targetConfigDigest = runtimeConfigDigest(config);
   const transition = { schema: 'ConfiguredRuntimeEndpointTransition/v1', workspace_id: workspaceId,
     repository_id: identity.repository_id, project_ids: identity.project_ids, operation_path: edge.operationPath,
     operation_sha256: sha(edge.bytes), operation_plan_digest: edge.value.plan_digest, operation_release_digest: canonicalJsonDigest(edge.release),
@@ -761,6 +709,70 @@ export function planConfiguredFrontierContinuation({ database, root, config, wor
   const sourceTransition = validateClosedConfigRebindProof({ status: 'closed_config_rebind_proven', operation_id: sourceTransitionId,
     baseline_config_digest: work.binding.config_digest, transition, transition_digest: canonicalJsonDigest(transition),
     caller_owner_cas_required: true, runtime_accepted: false, writes_host_state: false });
+  return { edge, plan, runtimePaths, beforeCode, targetCode, currentCode, parent, successor, update,
+    publication, currentSourceScope, authorizedSourceChanges, self, sourceTransition };
+}
+
+/** Plan a same-attempt unissued continuation from actual config and native endpoint evidence. */
+export function planConfiguredFrontierContinuation({ database, root, config, workspaceId, projectIds,
+  workId, attempt, nativeHandle, repairId, actor, timestamp, sourceTransitionId, ownerNoCallPointer,
+  parentManifestRef, successorManifestRef, systemUpdateRef, sourceCorrectionRef }) {
+  requireRebind(identifier.test(repairId) && identifier.test(sourceTransitionId) && Number.isSafeInteger(attempt) && attempt > 0 &&
+    typeof nativeHandle === 'string' && nativeHandle.trim() === nativeHandle && nativeHandle.length > 0 && nativeHandle.length <= 256 &&
+    typeof actor === 'string' && actor.trim() === actor && actor.length > 0 && actor.length <= 256 &&
+    typeof timestamp === 'string' && !Number.isNaN(Date.parse(timestamp)) &&
+    typeof ownerNoCallPointer === 'string' && ownerNoCallPointer.trim() === ownerNoCallPointer && ownerNoCallPointer.length > 0 &&
+    ownerNoCallPointer.length <= 2048 && !/\p{Cc}/u.test(ownerNoCallPointer), 'configured frontier attribution is invalid');
+  const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds),
+    identity = { repository_id: project.repository_id, project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest, work_id: workId },
+    store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+    state = store.readHostStateSnapshot(identity), work = state.work,
+    journalRow = checkedRow(database, 'agent_host_mastra_session_ledger', 'workspace_id=? AND work_id=? AND attempt=?', [workspaceId, workId, attempt]),
+    journal = journalRow.value;
+  requireRebind(work && state.workVersion && state.ledgerVersion && work.workspace_id === workspaceId &&
+    work.execution.status === 'suspended' && ['implementation', 'awaiting_followup'].includes(work.execution.phase) && work.lease === null &&
+    work.lifecycle.phase === 'INTAKE' && work.lifecycle.seal === null &&
+    work.binding.repository_id === identity.repository_id && work.binding.integrations_digest === identity.integrations_digest &&
+    canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+    work.binding.lifecycle_work_id === workId && work.execution.run_id === journal.run_id &&
+    journal.workspace_id === workspaceId && journal.work_id === workId && journal.attempt === attempt &&
+    journal.source_scope?.digest === work.binding.work_source_revision &&
+    work.execution.assignment_attempts.every(entry => ['completed', 'no_effect'].includes(entry.status)),
+  'original unissued Work or Journal no longer matches');
+  const access = requireSafeRepositoryAccess(root),
+    intakeRef = work.artifacts.find(ref => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1');
+  requireRebind(intakeRef, 'original protected intake is missing');
+  const intakeFile = validatedJson(access, intakeRef.path, 'original protected intake'), intake = intakeFile.value;
+  requireRebind(sha(intakeFile.bytes) === intakeRef.sha256 && intake.schema === 'VidaLocalSessionIntake/v1' &&
+    intake.native_session_handle === nativeHandle && canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest,
+  'original intake bytes, task or native owner differ');
+  const sourceApproval = work.lifecycle.references.find(ref => ref.kind === 'execution_approval' &&
+    ref.disposition === 'current' && ref.decision === 'approved' && ref.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+    ref.path === intake.source_authorization_path);
+  requireRebind(sourceApproval, 'original accepted human Source instruction is unavailable');
+  const sourceAuthority = readLocalSourceWriteAuthorization(root, sourceApproval.path), authority = sourceAuthority.authorization;
+  requireRebind(sourceAuthority.sha256 === sourceApproval.sha256 && authority.work_id === workId && authority.attempt === attempt &&
+    authority.native_session_handle === nativeHandle && authority.scope_digest === work.binding.work_source_revision &&
+    authority.config_digest === work.binding.config_digest && authority.workflow_id === work.binding.workflow_id &&
+    authority.user_instruction_ref === sourceApproval.record_id && authority.user_instruction_ref === ownerNoCallPointer &&
+    sourceApproval.principal === 'local-session:' + canonicalJsonDigest(nativeHandle) &&
+    canonicalJsonDigest([...authority.implementation_paths].sort()) === canonicalJsonDigest([...work.binding.implementation_paths].sort()),
+  'original accepted human instruction, scope or owner binding differs');
+  const { edge, plan, runtimePaths, beforeCode, targetCode, parent, successor, update,
+    currentSourceScope, authorizedSourceChanges, sourceTransition } = verifyConfiguredNativeEndpoint({
+      root, config, workspaceId, identity, work, journal, intake, intakeRef, access, sourceTransitionId,
+      parentManifestRef, successorManifestRef, systemUpdateRef, sourceCorrectionRef });
+  const selection = { team: work.binding.team_id, kind: intake.work_item.canonical_kind, intent: intake.work_item.intent,
+    project: intake.work_item.project_id, risk_flags: intake.work_item.risk_flags, labels: intake.work_item.labels };
+  requireRebind(project.project_ids.includes(selection.project) && selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
+    'current config no longer selects the original workflow');
+  const oldConfig = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
+    engine = readRetainedUnissuedSessionEngineSnapshot({ repositoryRoot: root, config: oldConfig, selection,
+      context: { work_id: workId, attempt, scope_digest: journal.source_scope.digest }, workflowId: work.binding.workflow_id,
+      runId: journal.run_id, lifecycleRisk: work.lifecycle.risk }, { work, journal }),
+    targetConfigDigest = runtimeConfigDigest(config),
+    action = projectConfiguredFrontierContinuationAction({ engine, journal, targetConfigDigest, currentSourceScope });
   const request = validateDeliveredWorkContinuationRequest({ schema: 'DeliveredWorkContinuationRequest/v1', identity, attempt,
     nativeSessionHandle: nativeHandle, expectedWork: state.workVersion, expectedLedger: state.ledgerVersion,
     expectedJournal: journalRow.version, expectedMaintenanceGeneration: state.maintenanceGeneration,

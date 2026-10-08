@@ -507,6 +507,58 @@ describe('admitted development packet', () => {
     expect(first.expected_tests).toEqual(['Run the focused acceptance check.']);
   });
 
+  test('continued packet retains only exact Host-bound original contracts and observed task synthesis', () => {
+    const originalInput = admitted();
+    const originalWork = structuredClone(originalInput.host.work);
+    const originalJournal = structuredClone(originalInput.ledger.state);
+    writeFileSync(path.join(root, originalInput.target), 'export const changed = true;');
+    const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), originalInput.allowedPaths);
+    const work = { ...originalInput.host.work, binding: { ...originalInput.host.work.binding, work_source_revision: source.digest } };
+    const state = { ...originalInput.ledger.state, source_scope: source };
+    const current = { ...originalInput, host: { ...originalInput.host, work }, ledger: {
+      state, version: { revision: 2, digest: canonicalJsonDigest(state) } } };
+    const receipt = { request: { action: { kind: 'configured_frontier' } }, prior_work: originalWork,
+      prior_journal: originalJournal, successor_binding: work.binding };
+    const sourceStore = { snapshotCurrentTaskSourceSources: () => source, readDeliveredWorkContinuationReceipt: () => receipt };
+    expect(() => buildAdmittedDevelopmentPacket(current)).toThrow(/scope, acceptance or thread/);
+    const packet = buildAdmittedDevelopmentPacket({ ...current, sourceStore });
+    expect(packet.source_revision).toBe(source.digest);
+    expect(packet.acceptance).toEqual(['AC-1: The scoped file is created.']);
+    expect(packet.implementation_constraints.some(value => value.includes('Baseline task synthesis summary'))).toBe(true);
+    expect(packet.code_evidence_refs).toEqual([originalInput.target]);
+    const corrupted = structuredClone(state); corrupted.completed[0].items[0].observation.summary = 'changed protected body';
+    expect(() => buildAdmittedDevelopmentPacket({ ...current, sourceStore, ledger: {
+      state: corrupted, version: { revision: 2, digest: canonicalJsonDigest(corrupted) } } })).toThrow(/completed prefix/);
+    const foreign = { ...receipt, successor_binding: { ...work.binding, scope_id: 'foreign-scope' } };
+    expect(() => buildAdmittedDevelopmentPacket({ ...current, sourceStore: { ...sourceStore,
+      readDeliveredWorkContinuationReceipt: () => foreign } })).toThrow(/original admission/);
+  });
+
+  test('continued packet preserves exact original typed research and synthesis with changed current Source', () => {
+    const input = addObservedSynthesis(admitted('implementation_change'));
+    try {
+      const priorWork = structuredClone(input.host.work), priorJournal = structuredClone(input.ledger.state);
+      writeFileSync(path.join(root, input.target), 'export const continued = true;');
+      const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), input.allowedPaths);
+      const work = { ...input.host.work, binding: { ...input.host.work.binding, work_source_revision: source.digest } };
+      const state = { ...input.ledger.state, source_scope: source };
+      const receipt = { request: { action: { kind: 'configured_frontier' } }, prior_work: priorWork,
+        prior_journal: priorJournal, successor_binding: work.binding };
+      const current = { ...input, host: { ...input.host, work }, ledger: {
+        state, version: { revision: 2, digest: canonicalJsonDigest(state) } }, sourceStore: {
+        snapshotCurrentTaskSourceSources: () => source, readDeliveredWorkContinuationReceipt: () => receipt } };
+      const packet = buildAdmittedDevelopmentPacket(current);
+      expect(packet.source_revision).toBe(source.digest);
+      expect(packet.research_artifact_refs.length).toBe(2);
+      expect(packet.implementation_constraints.some(value => value.includes('Unique synthesis requirement'))).toBe(true);
+      const damaged = structuredClone(state); damaged.completed[0].items[0].observation.summary = 'changed protected research';
+      expect(() => buildAdmittedDevelopmentPacket({ ...current, ledger: {
+        state: damaged, version: { revision: 2, digest: canonicalJsonDigest(damaged) } } })).toThrow(/completed prefix/);
+    } finally {
+      for (const artifactPath of input.artifactPaths) rmSync(artifactPath, { force: true });
+    }
+  });
+
   test('keeps high lifecycle risk separate from raw WorkItem and packet risk flags', () => {
     const input = admitted('task_execution', 'high');
     const packet = buildAdmittedDevelopmentPacket(input);

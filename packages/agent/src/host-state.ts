@@ -96,6 +96,7 @@ import type {
   DeliveredWorkContinuationVerifier,
 } from './orchestration/delivered-work-continuation.js';
 import { projectConfiguredPrewriterContinuationRequests } from './orchestration/delivered-work-continuation.js';
+import { validateFailedPrewriterRecoveryBasis } from './orchestration/failed-prewriter-recovery.js';
 import {
   validateConfiguredFrontierReceiptStructure,
   validateConfiguredFrontierRepairReceipt,
@@ -11517,6 +11518,84 @@ export class HostStateStore {
         )
         .run(row.revision + 1, this.#workspaceId, input.identity.work_id, input.attempt, row.revision, row.digest);
       requireState(bumped.changes === 1, 'lease renewal journal CAS conflict');
+      this.#onReconciledWorkWrite(input.identity, before.workVersion, version(nextWork)!);
+      return this.#read(input.identity);
+    }).immediate();
+  }
+
+  /** Restore the exact failed readonly owner's lease; failed reports and all execution bindings stay unchanged. */
+  recoverFailedPrewriterOwner(input: {
+    identity: WorkIdentity; attempt: number; nativeSessionHandle: string;
+    expectedWork: StateVersion; expectedLedger: StateVersion; expectedJournal: StateVersion;
+    expectedMaintenanceGeneration: number;
+    verifyCurrent: (work: WorkState, journal: MastraSessionLedgerState, original: ConfiguredFrontierReceipt) => void;
+  }): HostStateSnapshot {
+    requireState(Number.isSafeInteger(input.attempt) && input.attempt > 0 &&
+      typeof input.verifyCurrent === 'function' && input.verifyCurrent.constructor.name !== 'AsyncFunction' &&
+      !this.#database.inTransaction,
+    'failed prewriter owner recovery requires a valid nonnested request');
+    return this.#transactionWithProducerFence(() => {
+      this.assertSessionProducerWriteAllowed();
+      this.#assertMaintenanceAvailable();
+      this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
+      const before = this.#read(input.identity);
+      matchesExpected(before.workVersion, input.expectedWork);
+      matchesExpected(before.ledgerVersion, input.expectedLedger);
+      const original = this.#readDeliveredWorkContinuationReceipt(input.identity, input.attempt);
+      requireState(original?.request.action.kind === 'configured_frontier', 'failed prewriter original continuation missing');
+      const row = this.#database.query(
+        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      ).get(this.#workspaceId, input.identity.work_id, input.attempt) as { revision: number; payload: string; digest: string } | null;
+      requireState(row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
+        'failed prewriter recovery Journal CAS changed');
+      const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
+      requireState(row.payload === canonicalJson(journal) && row.digest === canonicalJsonDigest(journal),
+        'failed prewriter recovery Journal checksum differs');
+      const work = before.work!, ledger = before.ledger!, now = Date.now();
+      validateFailedPrewriterRecoveryBasis({ original: original as ConfiguredFrontierReceipt, work, ledger,
+        journal, nativeSessionHandle: input.nativeSessionHandle, now });
+      const verification = input.verifyCurrent(snapshot(work), snapshot(journal), snapshot(original as ConfiguredFrontierReceipt));
+      requireState(verification === undefined, 'failed prewriter current proof must finish synchronously');
+      const ticket = ledger.tickets.find(item => item.ticket_id === work.lease!.ticket_id)!;
+      const claim = ledger.claims.find(item => item.ticket_id === ticket.ticket_id && item.status === 'active')!;
+      const ticketId = 'ticket-' + randomUUID(), claimId = 'claim-' + randomUUID();
+      const timestampNow = new Date(now).toISOString(), expiry = new Date(now + 60 * 60 * 1000).toISOString();
+      const successorTicket = { ...ticket, ticket_id: ticketId, generation: ledger.open_generation,
+        sequence: ledger.next_sequence, claim_ids: [claimId], expires_at: expiry, created_at: timestampNow };
+      const successorClaim = { ...claim, claim_id: claimId, ticket_id: ticketId, generation: ledger.open_generation,
+        lease_expires_at: expiry, created_at: timestampNow, renewed_at: timestampNow };
+      const nextWork = this.#checkedWork({ ...work, revision: work.revision + 1,
+        lease: { ticket_id: ticketId, thread_id: input.nativeSessionHandle, generation: ledger.open_generation },
+        lifecycle: { ...work.lifecycle, revision: work.revision + 1 } });
+      const nextLedger = checkedLedger({ ...ledger, revision: ledger.revision + 1,
+        next_sequence: ledger.next_sequence + 1,
+        tickets: [...ledger.tickets.map(item => item.ticket_id === ticket.ticket_id
+          ? { ...item, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null } : item), successorTicket],
+        claims: [...ledger.claims.map(item => item.claim_id === claim.claim_id ? { ...item, status: 'recovered' } : item), successorClaim],
+        rebinds: [...ledger.rebinds, { schema: 'CoordinationScopeRebind/v1', rebind_id: 'rebind-' + randomUUID(),
+          work_id: input.identity.work_id, previous_ticket_id: ticket.ticket_id, previous_source_revision: ticket.source_revision,
+          ticket_id: ticketId, thread_id: input.nativeSessionHandle, source_revision: ticket.source_revision,
+          resources: [...claim.resources], claimed_resources: [...claim.resources], retired_claim_ids: [claim.claim_id],
+          reason: 'expired known-failed readonly owner recovery', decided_by: input.nativeSessionHandle,
+          decision_pointer: original.request.originalRequestPointer, from_ledger_revision: ledger.revision,
+          to_ledger_revision: ledger.revision + 1, created_at: timestampNow }] });
+      validatePair(nextWork, nextLedger);
+      this.#validateProgress(before, nextWork, nextLedger);
+      for (const [kind, id, value, expected] of [
+        ['work', identityKey(input.identity), nextWork, input.expectedWork],
+        ['ledger', 'shared', nextLedger, input.expectedLedger],
+      ] as const) {
+        const changed = this.#database.query(
+          'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+        ).run(value.revision, canonicalJson(value), canonicalJsonDigest(value), this.#workspaceId,
+          kind, id, expected.revision, expected.digest);
+        requireState(changed.changes === 1, 'failed prewriter recovery Host CAS conflict');
+      }
+      const bumped = this.#database.query(
+        'UPDATE agent_host_mastra_session_ledger SET revision=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+      ).run(row.revision + 1, this.#workspaceId, input.identity.work_id, input.attempt, row.revision, row.digest);
+      requireState(bumped.changes === 1, 'failed prewriter recovery Journal CAS conflict');
       this.#onReconciledWorkWrite(input.identity, before.workVersion, version(nextWork)!);
       return this.#read(input.identity);
     }).immediate();

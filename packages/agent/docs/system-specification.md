@@ -33,6 +33,37 @@ particular action passed enforcement. Native session tools remain the current ex
 The CLI prepares and issues typed actions, accepts bounded actual reports and
 checks freshness before progress. Uncertain issued actions are not reissued.
 
+## Dynamic engine requirements
+
+The engine core of `EPIC-CONFIGURABLE-AGENT-SYSTEM-001` is current P0.
+The target includes dynamic child tasks, loops and adaptive model/effort routing.
+UI and full business task management are separate work. Task kinds remain the
+shared fixed set; configuration selects their flows, not new business task types.
+These requirements define the target. They do not certify implementation or
+installed readiness. Packet delivery and correction of known-failed read-only
+waves remain current prerequisites, alongside the accepted pre-commit work.
+
+| Concern | Required behavior |
+| --- | --- |
+| Flow definition | Registered agent, tool and subflow blocks declare typed inputs, outputs and effects. Conditions and failure routes use typed results; configuration cannot execute arbitrary code. |
+| Inputs and gates | Every reachable path supplies required inputs before an action is issued. Required policy/security gates cannot be bypassed by a branch, skip or child. Mandatory task/context packets retain their complete typed body and evidence references. |
+| Scheduling | Independent branches may progress when their own dependencies are satisfied. Explicit joins wait for their declared inputs and define failed, skipped and partial results. Mastra remains the execution and snapshot owner. |
+| Child execution | Each child has stable parent/child identity, typed input, acceptance, scope, dependencies and result. Admission, ownership, attempts, cancellation, recovery and parent join remain explicit. A parent grants no child Source rights. |
+| Loops | Each iteration has stable identity, persisted decisions and a typed exit condition. Progress, no-progress, resource exhaustion and cancellation are explicit outcomes. Resource policy introduces no implicit total-duration limit on ordinary launcher work. |
+| Adaptive routing | Select registered model/effort profiles using declared capabilities and human policy. Record configured, issued and observed settings separately. Fallback is bounded and explicit; unavailable capability returns GAP. Issued settings remain immutable. |
+| Plan evolution | Freeze the base plan and record validated expansion/branch decisions. Restart preserves decisions and custody. Expansion cannot rewrite issued bodies, original attempts or prior outcomes. |
+| Failure recovery | Correct known-failed read-only work through supported same-attempt operations, retaining exact reports and beforeimages. UNKNOWN effects are never automatically reissued. HostState retains ownership, policy and CAS authority. |
+| Completion | Select Source, research, artifact or deployment completion by the task's declared outcome. Verified product Source-only completion need not deploy. VIDA self-development still updates the whole qualified runtime before dependent effects. Work completion, installation and human Runtime acceptance remain distinct. |
+| Compatibility | Preserve current active contracts. Ship the functional artifact repair required by lifecycle policy before changing an active current-v1 schema. Reuse existing libraries and storage owners. |
+
+Acceptance covers conditional producer reachability, required inputs and joins,
+restart, child admission and parent results, loop exit/no-progress/exhaustion,
+model restrictions and fallback, known-failed correction and UNKNOWN no-reissue.
+Actual test execution evidence is assessed separately from a tester's report.
+Audit F04 effective reachability and F05 acceptance remain validation questions;
+the audit alone does not establish reproduced defects. No additional UI, provider
+integration or token/ROI benchmark lane is implied by this engine scope.
+
 ## Package and consumer boundaries
 
 The source repository contains exactly `agent=packages/agent` and
@@ -1599,6 +1630,20 @@ requiring an unrelated research result.
 The separate Mastra workflow store is preserved; no cross-database atomicity is
 claimed. Old ticket capabilities and stale caller versions fail. Overlapping
 active owners and earlier queued overlapping writers block recovery.
+
+`run --recover-failed-prewriter-owner true` restores only the expired original
+owner of a configured-frontier read-only prewriter wave. Its `inspect` and
+`apply` modes use a strict `FailedPrewriterOwnerRecoveryRequest/v1`, current
+Work/Ledger/Journal and maintenance versions, retained human permission and
+the original protected intake. Every current reviewer must have an exact
+terminal `reported_failed` observation. Unknown outcomes, reservations,
+research effects, started writers and overlapping FIFO claims deny recovery.
+One existing Host transaction retains the full accepted file/resource set,
+creates a fresh ticket and claim, and advances the three state versions.
+It preserves Source/runtime/configuration bindings, original continuation
+bytes, completed history and all failed request/result bodies. It issues no
+reviewer, resets no workflow and grants no Source execution or acceptance.
+Correcting the failed wave remains a separate supported operation.
 
 The unissued-empty preparation release remains distinct: an exact expired owner
 may release only bound unsealed INTAKE preparation with no completed wave,

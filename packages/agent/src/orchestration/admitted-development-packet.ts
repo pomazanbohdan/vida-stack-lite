@@ -71,7 +71,8 @@ export interface AdmittedDevelopmentPacketInput {
   readonly repositoryRoot: string;
   readonly config: AgentRuntimeConfig;
   readonly host: HostStateSnapshot;
-  readonly sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'>;
+  readonly sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'> &
+    Partial<Pick<HostStateStore, 'readDeliveredWorkContinuationReceipt'>>;
   readonly ledger: MastraSessionLedgerSnapshot;
   readonly workItem: LocalWorkAdmissionInput['workItem'];
   readonly selection: WorkItemSelection;
@@ -251,6 +252,27 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
   );
   const scope = JSON.parse(input.scopeBytes.toString('utf8')) as Scope;
   const acceptance = JSON.parse(input.acceptanceBytes.toString('utf8')) as Acceptance;
+  const continuation = input.sourceStore?.readDeliveredWorkContinuationReceipt?.({
+    repository_id: binding.repository_id, project_ids: binding.project_ids,
+    integrations_digest: binding.integrations_digest, work_id: binding.lifecycle_work_id,
+  }, ledger.state.attempt);
+  const original = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
+  if (original) requirePacket(
+    original.prior_work.workspace_id === work.workspace_id &&
+      canonicalJsonDigest(original.successor_binding) === canonicalJsonDigest(binding) &&
+      canonicalJsonDigest(original.prior_work.contracts) === canonicalJsonDigest(work.contracts) &&
+      canonicalJsonDigest(ledger.state.completed.slice(0, original.prior_journal.completed.length)) ===
+        canonicalJsonDigest(original.prior_journal.completed),
+    'continued packet original admission or completed prefix differs',
+  );
+  const acceptedSourceRevision = original?.prior_work.binding.work_source_revision ?? binding.work_source_revision;
+  const originalObserved = original?.prior_journal.completed.flatMap(wave => wave.items) ?? [];
+  const currentOrOriginal = (item: (typeof ledger.state.items)[number]): boolean =>
+    item.request.scope_digest === binding.work_source_revision && item.request.config_digest === binding.config_digest ||
+    original !== null && item.request.scope_digest === original.prior_work.binding.work_source_revision &&
+    item.request.config_digest === original.prior_work.binding.config_digest &&
+    originalObserved.some(prior => canonicalJsonDigest(prior) === canonicalJsonDigest(item));
+
   requirePacket(
     validScope(scope) &&
       validAcceptance(acceptance) &&
@@ -261,8 +283,8 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
       canonicalJsonDigest(scope.ac_ids) === canonicalJsonDigest(binding.ac_ids) &&
       canonicalJsonDigest(acceptance.ac_ids) === canonicalJsonDigest(scope.ac_ids) &&
       canonicalJsonDigest(scope.implementation_paths) === canonicalJsonDigest(binding.implementation_paths) &&
-      scope.source_revision === binding.work_source_revision &&
-      acceptance.source_revision === binding.work_source_revision,
+      scope.source_revision === acceptedSourceRevision &&
+      acceptance.source_revision === acceptedSourceRevision,
     'scope, acceptance or thread binding differs from admitted work',
   );
   const source = input.sourceStore
@@ -305,8 +327,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
         item.observation.action_id === item.request.action_id &&
         item.observation.status === 'reported_complete' &&
         item.request.workflow_id === workflowId &&
-        item.request.scope_digest === binding.work_source_revision &&
-        item.request.config_digest === binding.config_digest,
+        currentOrOriginal(item),
     ),
     'prior research or synthesis has an unobserved, failed or mismatched action',
   );
@@ -333,8 +354,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     const summary = item.observation!.summary;
     requirePacket(
       item.request.workflow_id === workflowId &&
-        item.request.scope_digest === binding.work_source_revision &&
-        item.request.config_digest === binding.config_digest &&
+        currentOrOriginal(item) &&
         item.issue_id !== null &&
         item.observation!.issue_id === item.issue_id &&
         item.observation!.action_id === item.request.action_id &&
@@ -388,7 +408,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
         canonicalJsonDigest(result) === canonicalJsonDigest(JSON.parse(bytes.toString('utf8'))) &&
         result.work_item_id === workItem.id &&
         result.scope_id === scope.scope_id &&
-        result.source_revision === binding.work_source_revision &&
+        result.source_revision === item.request.scope_digest &&
         canonicalJsonDigest(result.ac_ids) === canonicalJsonDigest(scope.ac_ids),
       'research result differs from admitted work',
     );
@@ -433,7 +453,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
         synthesis.digest === plan.result_digest &&
         synthesis.work_item_id === workItem.id &&
         synthesis.scope_id === scope.scope_id &&
-        synthesis.source_revision === binding.work_source_revision &&
+        synthesis.source_revision === item.request.scope_digest &&
         canonicalJsonDigest(synthesis.ac_ids) === canonicalJsonDigest(scope.ac_ids),
       'synthesis differs from admitted work',
     );

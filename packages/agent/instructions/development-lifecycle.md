@@ -390,6 +390,17 @@ effects, weaker controls, a new authorization framework or partial-agent
 delivery. Preserve current Source ownership, CAS, final assurance and native
 qualification requirements.
 
+The repository owner's explicit emergency instruction may authorize the lead
+developer to repair Source manually when the runtime's own admission, lease or
+recovery defect prevents its supported repair flow. Record the original work,
+attempt, terminal blocker and instruction once. Limit this exception to the
+causal code, regression checks and maintained instructions; retain one writer
+and inspect competing claims before edits. Do not fabricate a live lease,
+rewrite private operational state, replay UNKNOWN effects or treat the exception
+as Runtime acceptance. Verify the correction, update the whole qualified system
+runtime, then recover the original attempt through its repaired public operation
+and return to the configured flow. Do not repeat the same permission question.
+
 For an admitted task with a separate Source root, inspect its current task-source
 operation before Source tool calls. Use the returned `SourceExecutionContext/v1`
 working directory for those calls. Keep configuration, intake and operational

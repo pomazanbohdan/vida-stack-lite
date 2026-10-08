@@ -35,6 +35,31 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { advanceCutoff, assertNoActiveCutoverMaintenance, run, writeDurable } from '../bin/run.mjs';
 import { initializeProject } from '../bin/init.mjs';
+
+test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {
+  const { main } = await import('../bin/run.mjs');
+  const diagnose = async (message) => {
+    const lines = [], exit = {};
+    await main({ isMain: true, args: [], execute: async () => { throw Error(message); },
+      io: { error: value => lines.push(value), log: () => { throw Error('unexpected success'); } }, exit });
+    expect(exit.exitCode).toBe(1);
+    expect(lines).toHaveLength(1);
+    return JSON.parse(lines[0]);
+  };
+  for (const message of ['issued writer outcome must settle before expired lease recovery',
+    'issued writer-bound wave must advance before expired lease recovery',
+    'expired recovery requires an entirely unissued current wave',
+    'failed prewriter recovery: exact expired full-resource ticket and claim differ',
+    'failed prewriter owner recovery: retained human Source authority missing']) {
+    const result = await diagnose(message);
+    expect(result.message).toContain('Phase: recovery eligibility.');
+    expect(result.message).toContain('do not repeat lease recovery');
+    expect(result.message).not.toContain('ownership lease expired');
+  }
+  expect((await diagnose('active ownership lease expired')).message).toContain('ownership lease expired');
+  expect((await diagnose('journal CAS changed')).message).toContain('current state revision changed');
+  expect((await diagnose('C:/secret/token confidential')).message).not.toContain('confidential');
+});
 import { canonicalJsonDigest, rfc3339TimestampMilliseconds } from '../src/contracts/public-ingress.ts';
 import {
   deriveWorkspaceId,

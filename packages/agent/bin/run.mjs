@@ -1464,6 +1464,12 @@ function publicFailure(error) {
   // credentials or stack traces through the public diagnostic envelope.
   const reasons = [
     [
+      /failed prewriter (?:owner )?recovery:|issued writer outcome must settle before expired lease recovery|issued writer-bound wave must advance before expired lease recovery|expired recovery requires an entirely unissued current wave/,
+      'current wave is outside the supported lease-recovery contract',
+      'recovery eligibility',
+      'Preserve the current reports and use a supported same-attempt wave disposition; do not repeat lease recovery.',
+    ],
+    [
       /lease.*expired|expired.*lease/i,
       'ownership lease expired',
       'lease recovery',
@@ -3188,6 +3194,12 @@ export async function run(args = process.argv.slice(2)) {
       cwd: bundleRoot,
     });
   }
+  if (args.includes('--recover-failed-prewriter-owner')) {
+    if (args[0] !== '--recover-failed-prewriter-owner' || args[1] !== 'true')
+      throw Error('Failed prewriter owner recovery requires its exact separate signal');
+    const { recoverFailedPrewriterOwner } = await import('./recover-failed-prewriter-owner.mjs');
+    return recoverFailedPrewriterOwner(args.slice(2));
+  }
   if (args.includes('--recovery-review')) {
     if (args[0] !== '--recovery-review' || args[1] !== 'true')
       throw Error('Recovery review requires its exact separate signal');
@@ -4005,7 +4017,7 @@ export async function run(args = process.argv.slice(2)) {
     if (continuationLookup?.receipt.request.action.kind === 'configured_frontier') {
       try {
         const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
-        assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
+        const intake = assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
         if (values.prepare_assurance || values.correct || values.reconcile)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'The current prewriter wave must finish before dependent execution.');
         let current = continuationLookup;
@@ -4019,7 +4031,17 @@ export async function run(args = process.argv.slice(2)) {
         const source = ledger.hostState.snapshotCurrentTaskSourceSources(admissionIdentity, owner, sourcePaths, context.attempt);
         if (source.digest !== current.receipt.request.currentSourceScope.digest || source.digest !== context.scope_digest)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter current Source differs.');
+        const { buildAdmittedDevelopmentPacket } = await import('../src/orchestration/admitted-development-packet.ts');
+        const access = requireSafeRepositoryAccess(values.project_root);
+        const packet = buildAdmittedDevelopmentPacket({
+          repositoryRoot: values.project_root, config, host: admissionHost, sourceStore: ledger.hostState,
+          ledger: current.journal, workItem: intake.work_item, selection,
+          scopeBytes: access.readBytes(admissionHost.work.contracts.scope.path, 'continued admitted scope'),
+          acceptanceBytes: access.readBytes(admissionHost.work.contracts.acceptance.path, 'continued admitted acceptance'),
+          configuredContext: configuredContextForStage(values.project_root, config, values.workflow, current.item.request.stage_id, context),
+        });
         let status = 'continuation_prewrite_ready';
+        let issuedNow = false;
         if (values.report) {
           const observed = parseSessionBridgeObservation(readBoundedReport(values.report));
           const issued = current.items.find(item => item.request.action_id === observed.action_id);
@@ -4032,6 +4054,7 @@ export async function run(args = process.argv.slice(2)) {
           ledger.issueWave(context.work_id, context.attempt, expected);
           current = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
           status = 'issued';
+          issuedNow = true;
         } else if (current.action_status === 'issued') status = 'wave_retrieved';
         else if (current.action_status === 'reported') status = 'continuation_prewrite_reported';
         const wave = current.items[0]?.request.wave_index;
@@ -4040,7 +4063,7 @@ export async function run(args = process.argv.slice(2)) {
           const action = actions.find(candidate => candidate.action_id === item.request.action_id);
           if (!action || action.stage_id !== 'review_source_prewrite' || action.resolved_profile.tools_policy.source_write)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter is not a current read-only configured action.');
-          return { request: item.request, action,
+          return { request: item.request, action, development_packet: packet,
             configured_context: configuredContextForStage(values.project_root, config, values.workflow, item.request.stage_id, context),
             ...(item.issue_id ? { issue_id: item.issue_id, logical_action_id: item.request.action_id } : {}) };
         };
@@ -4060,6 +4083,7 @@ export async function run(args = process.argv.slice(2)) {
             state_version: ledger.resume(context.work_id, context.attempt).version,
             next_actions: resumed.requests.map(request => ({ request,
               action: nextActions.find(action => action.action_id === request.action_id),
+              development_packet: packet,
               configured_context: configuredContextForStage(values.project_root, config, values.workflow, request.stage_id, context) })),
             issued_actions: [], completed_observations: resumed.observations,
             accepted_result: false, runtime_accepted: false };
@@ -4070,7 +4094,9 @@ export async function run(args = process.argv.slice(2)) {
           state_version: current.journal.version, continuation_id: current.receipt.continuation_id,
           source_snapshot_digest: source.digest, reconciliation_required: false,
           next_actions: current.items.filter(item => item.issue_id === null).map(describe),
-          issued_actions: current.items.filter(item => item.issue_id !== null && item.observation === null).map(item => ({ ...describe(item), prior_issue_outcome: 'unknown' })),
+          issued_actions: current.items.filter(item => item.issue_id !== null && item.observation === null).map(item => issuedNow
+            ? { ...describe(item), prior_issue_outcome: 'unknown' }
+            : { request: item.request, issue_id: item.issue_id, logical_action_id: item.request.action_id, prior_issue_outcome: 'unknown' }),
           action_statuses: current.items.map((item, index) => ({ action_id: item.request.action_id,
             status: current.item_statuses[index] === 'issued' ? 'issued_outcome_uncertain' : current.item_statuses[index] })),
           completed_observations: [...current.journal.state.completed.flatMap(wave => wave.items.map(item => item.observation)), ...current.items.flatMap(item => item.observation ? [item.observation] : [])],
@@ -4563,16 +4589,16 @@ export async function run(args = process.argv.slice(2)) {
       return current;
     };
     const admittedEvidence = async (currentJournal, requireImplementation = true, pendingDeveloper = null) => {
-      const { openAdmittedSessionExecution } = await import('../src/orchestration/admitted-session-execution.ts');
+      const { openAdmittedSessionExecution, readAdmittedSessionExecutionContext } = await import('../src/orchestration/admitted-session-execution.ts');
       const { buildAdmittedDevelopmentPacket } = await import('../src/orchestration/admitted-development-packet.ts');
       const { buildAdmittedImplementationResult } =
         await import('../src/orchestration/admitted-implementation-result.ts');
-      const execution = await openAdmittedSessionExecution(
+      const execution = requireImplementation ? await openAdmittedSessionExecution(
         values.project_root,
         ledger.hostState,
         pathProject.project_id,
         context.work_id,
-      );
+      ) : readAdmittedSessionExecutionContext(values.project_root, ledger.hostState, pathProject.project_id, context.work_id);
       const host = ledger.hostState.readHostStateSnapshot(execution.identity);
       const work = host.work;
       if (!work) fail('GAP-VIDA-RUN-EXECUTION-001', 'Admitted work is missing for evidence.');
@@ -4614,7 +4640,7 @@ export async function run(args = process.argv.slice(2)) {
       return {
         packet,
         implementationResult,
-        authority: execution.composition.deliveryEvidenceAuthority,
+        authority: requireImplementation ? execution.composition.deliveryEvidenceAuthority : undefined,
         host,
       };
     };
