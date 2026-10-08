@@ -171,7 +171,7 @@ function isTextList(value) {
 }
 
 /** @param {unknown} value @param {string} team @returns {WorkItemSelection} */
-function parseWorkItemSelection(value, team) {
+export function parseWorkItemSelection(value, team) {
   if (
     !exactKeys(value, [
       'schema',

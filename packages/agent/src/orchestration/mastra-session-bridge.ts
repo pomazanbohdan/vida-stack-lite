@@ -556,7 +556,17 @@ export class MastraSessionBridge {
       requireBridge(currentIdentity, 'initial-source current ProjectContext identity is missing');
       const currentWork = args.ledger.hostState.readHostStateSnapshot(currentIdentity).work;
       requireBridge(currentWork, 'initial-source current Host Work is missing');
-      readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, currentJournal.state, currentWork);
+      readInitialSourceContinuationSessionEngineSnapshot(
+        binding,
+        initialReceipt,
+        currentJournal.state,
+        currentWork,
+        args.ledger.hostState.readInitialSourceFrontierCodeRebindReceipt(
+          currentIdentity,
+          context.attempt,
+          initialReceipt.continuation_id,
+        ),
+      );
     }
     const producer = args.ledger.beginSessionProducer({
       selection,
@@ -704,7 +714,18 @@ export class MastraSessionBridge {
     requireBridge(journal, 'initial-source current Journal is missing');
     const currentWork = this.#ledger.hostState.readHostStateSnapshot(key.identity).work;
     requireBridge(currentWork, 'initial-source current Host Work is missing');
-    return readInitialSourceContinuationSessionEngineSnapshot(this.#binding, receipt, journal.state, currentWork);
+    const frontierCodeRebind = this.#ledger.hostState.readInitialSourceFrontierCodeRebindReceipt(
+      key.identity,
+      key.attempt,
+      receipt.continuation_id,
+    );
+    return readInitialSourceContinuationSessionEngineSnapshot(
+      this.#binding,
+      receipt,
+      journal.state,
+      currentWork,
+      frontierCodeRebind,
+    );
   }
 
   async #assertInitialSourceSynthesisIsCanonical(): Promise<void> {

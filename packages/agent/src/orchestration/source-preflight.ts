@@ -21,6 +21,7 @@ import { lifecyclePreparationObservationSchema } from './final-assurance.js';
 import {
   acceptedContractSourceRevision,
   acceptedSourceAuthorizationRevision,
+  isInitialSourceContinuationLineageView,
   isInitialSourceContinuationReceipt,
   type AcceptedSourceContinuation,
 } from './admitted-development-packet.js';
@@ -532,7 +533,10 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
   const scopeRecord = isRecord(scope) ? scope : fail('scope contract is not an object');
   const acceptanceRecord = isRecord(acceptance) ? acceptance : fail('acceptance contract is not an object');
   const acceptedRevision = acceptedContractSourceRevision(work, journal, input.continuation);
-  if (isInitialSourceContinuationReceipt(input.continuation)) {
+  if (
+    isInitialSourceContinuationReceipt(input.continuation) ||
+    isInitialSourceContinuationLineageView(input.continuation)
+  ) {
     const currentSourcePermissions = work.lifecycle.references.filter(
       (reference) =>
         reference.kind === 'execution_approval' &&

@@ -89,6 +89,21 @@ import {
 } from './orchestration/mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './orchestration/scoped-source-snapshot.js';
 import {
+  initialSourceFrontierCodeRebindRecord,
+  initialSourceFrontierCodeRebindReceiptRecord,
+  initialSourceFrontierCodeRebindWorkProjection,
+  readInitialSourceFrontierCodeRebindReceiptRecord,
+  snapshotInitialSourceFrontierCodeRebindReceipt,
+  validateInitialSourceFrontierCodeRebindReceipt,
+  validateInitialSourceFrontierCodeRebindRequest,
+  validateInitialSourceFrontierCodeRebindVerifiedCurrent,
+  type InitialSourceFrontierCodeRebindReceipt,
+  type InitialSourceFrontierCodeRebindRecord,
+  type InitialSourceFrontierCodeRebindRequest,
+  type InitialSourceFrontierCodeRebindState,
+  type InitialSourceFrontierCodeRebindVerifyCurrent,
+} from './orchestration/initial-source-frontier-code-rebind.js';
+import {
   initialSourceContinuationRecord,
   readInitialSourceContinuationRecord,
   snapshotInitialSourceContinuationReceipt,
@@ -1924,6 +1939,10 @@ function checkedStoredWork(
           readonly kind: 'initial-source';
           readonly receipt: InitialSourceContinuationReceipt;
         }
+      | {
+          readonly kind: 'initial-frontier-code';
+          readonly receipt: InitialSourceFrontierCodeRebindReceipt;
+        }
     )[] = [];
   const table = database
     .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_runtime_code_rebind'")
@@ -2015,6 +2034,33 @@ function checkedStoredWork(
       records.push({ kind: 'initial-source', receipt });
     }
   }
+  const frontierCodeTable = database
+    .query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_initial_source_frontier_code_rebind'",
+    )
+    .get();
+  if (frontierCodeTable) {
+    const rows = database
+      .query(
+        'SELECT payload,digest,attempt,original_receipt_id FROM agent_host_initial_source_frontier_code_rebind WHERE workspace_id=? AND work_id=?',
+      )
+      .all(workspaceId, candidate.binding?.lifecycle_work_id) as {
+      payload: string;
+      digest: string;
+      attempt: number;
+      original_receipt_id: string;
+    }[];
+    for (const row of rows) {
+      const receipt = readInitialSourceFrontierCodeRebindReceiptRecord(row.payload, row.digest);
+      requireState(
+        receipt.record.attempt === row.attempt &&
+          receipt.original_receipt_id === row.original_receipt_id &&
+          receipt.record.identity.work_id === candidate.binding?.lifecycle_work_id,
+        'initial-source frontier code rebind history row identity differs',
+      );
+      records.push({ kind: 'initial-frontier-code', receipt });
+    }
+  }
   const recoveryTable = database
     .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'")
     .get();
@@ -2047,7 +2093,9 @@ function checkedStoredWork(
     const revision = (record: (typeof records)[number]) =>
       record.kind === 'continuation'
         ? record.receipt.request.expectedWork.revision
-        : record.receipt.prior_work_version.revision;
+        : record.kind === 'initial-frontier-code'
+          ? record.receipt.record.prior_work_version.revision
+          : record.receipt.prior_work_version.revision;
     return revision(b) - revision(a);
   });
   let expected = candidate.binding;
@@ -2078,6 +2126,88 @@ function checkedStoredWork(
         'failed prewriter binding history is not continuous',
       );
       expected = receipt.prior_work.binding;
+      continue;
+    }
+    if (record.kind === 'initial-frontier-code') {
+      const receipt = validateInitialSourceFrontierCodeRebindReceipt(record.receipt),
+        transition = receipt.record,
+        request = transition.request,
+        original = transition.prior_work,
+        successor = transition.successor_work,
+        initialRow = database
+          .query(
+            'SELECT payload,digest,attempt FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(workspaceId, request.identity.work_id, request.attempt) as {
+          payload: string;
+          digest: string;
+          attempt: number;
+        } | null;
+      requireState(initialRow?.attempt === request.attempt, 'frontier rebind initial-source receipt is missing');
+      const initial = readInitialSourceContinuationRecord(initialRow!.payload, initialRow!.digest),
+        initialItem = initial.successor_journal.items[0],
+        frontierItem = transition.prior_journal.items.find((item) => item.request.action_id === request.actionId);
+      requireState(
+        sameJson(request.identity, workIdentity(candidate)) &&
+          request.attempt === initial.request.attempt &&
+          transition.original_receipt_id === initial.continuation_id &&
+          request.initialContinuationId === initial.continuation_id &&
+          request.initialContinuationRequestDigest === initial.request_digest &&
+          initial.request.currentRuntimeCodeDigest === request.oldRuntimeCodeDigest &&
+          initial.successor_work.binding.runtime_code_digest === request.oldRuntimeCodeDigest &&
+          request.configDigest === original.binding.config_digest &&
+          request.sourceScopeDigest === original.binding.work_source_revision &&
+          original.revision === transition.prior_work_version.revision &&
+          canonicalJsonDigest(original) === transition.prior_work_version.digest &&
+          transition.prior_ledger.revision === transition.prior_ledger_version.revision &&
+          canonicalJsonDigest(transition.prior_ledger) === transition.prior_ledger_version.digest &&
+          canonicalJsonDigest(transition.prior_journal) === transition.prior_journal_version.digest &&
+          sameJson(transition.prior_work_version, request.expectedWork) &&
+          sameJson(transition.prior_ledger_version, request.expectedLedger) &&
+          sameJson(transition.prior_journal_version, request.expectedJournal) &&
+          sameJson(successor.binding, expected) &&
+          sameJson(successor.binding, {
+            ...original.binding,
+            runtime_code_digest: request.newRuntimeCodeDigest,
+            runtime_source_revision: request.newRuntimeCodeDigest,
+          }) &&
+          successor.lifecycle.config_binding.runtime_code_digest === request.newRuntimeCodeDigest &&
+          sameJson(
+            initialSourceFrontierCodeRebindWorkProjection(original),
+            initialSourceFrontierCodeRebindWorkProjection(successor),
+          ) &&
+          transition.work_version.revision === original.revision + 1 &&
+          successor.revision === transition.work_version.revision &&
+          successor.lifecycle.revision === original.lifecycle.revision + 1 &&
+          transition.work_version.digest === canonicalJsonDigest(successor) &&
+          transition.prior_journal.workspace_id === workspaceId &&
+          transition.prior_journal.work_id === request.identity.work_id &&
+          transition.prior_journal.attempt === request.attempt &&
+          transition.prior_journal.run_id === original.execution.run_id &&
+          initialItem !== undefined &&
+          transition.prior_journal.completed.some((wave) =>
+            wave.items.some(
+              (item) =>
+                sameJson(item.request, initialItem.request) &&
+                item.issue_id !== null &&
+                item.observation?.status === 'reported_complete' &&
+                item.observation.issue_id === item.issue_id &&
+                item.observation.action_id === item.request.action_id &&
+                item.observation.output_digest === canonicalJsonDigest(item.observation.summary),
+            ),
+          ) &&
+          frontierItem !== undefined &&
+          frontierItem.request.run_id === original.execution.run_id &&
+          frontierItem.request.scope_digest === original.binding.work_source_revision &&
+          frontierItem.request.config_digest === original.binding.config_digest &&
+          frontierItem.issue_id === null &&
+          frontierItem.observation === null &&
+          frontierItem.research_activation === undefined &&
+          frontierItem.research_normalization === undefined &&
+          frontierItem.host_reservation === undefined,
+        'initial-source frontier code rebind history is not continuous',
+      );
+      expected = original.binding;
       continue;
     }
     if (record.kind === 'initial-source') {
@@ -2534,6 +2664,18 @@ function validatePair(work: WorkState | null, ledger: CoordinationLedger | null)
 }
 function sameJson(left: unknown, right: unknown): boolean {
   return canonicalJson(left) === canonicalJson(right);
+}
+function sameInitialSourceBindingOutsideRuntimeCode(
+  current: WorkState['binding'],
+  original: WorkState['binding'],
+): boolean {
+  const currentCore = { ...current } as Record<string, unknown>,
+    originalCore = { ...original } as Record<string, unknown>;
+  delete currentCore.runtime_code_digest;
+  delete currentCore.runtime_source_revision;
+  delete originalCore.runtime_code_digest;
+  delete originalCore.runtime_source_revision;
+  return sameJson(currentCore, originalCore);
 }
 function exactJsonKeys(value: unknown, keys: readonly string[]): boolean {
   return (
@@ -4675,7 +4817,16 @@ export class HostStateStore {
         journal && !journal.state.corrective_execution,
         'initial-source producer requires its current noncorrective Journal',
       );
-      validateInitialSourceContinuationLineage(work, initialContinuation, journal.state);
+      validateInitialSourceContinuationLineage(
+        work,
+        initialContinuation,
+        journal.state,
+        this.#readInitialSourceFrontierCodeRebindReceipt(
+          identity,
+          input.context.attempt,
+          initialContinuation.continuation_id,
+        ),
+      );
       requireState(
         initialContinuation.request.currentSourceScope.digest === input.context.scope_digest &&
           initialContinuation.request.currentInitialRequest.run_id === input.runId &&
@@ -4777,6 +4928,11 @@ export class HostStateStore {
             initialContinuation,
             journal.state,
             currentWork,
+            this.#readInitialSourceFrontierCodeRebindReceipt(
+              identity,
+              input.context.attempt,
+              initialContinuation.continuation_id,
+            ),
           );
         } else if (configuredContinuation) {
           engine = readConfiguredContinuationSessionEngineSnapshot(
@@ -4993,6 +5149,11 @@ export class HostStateStore {
             initialContinuation,
             journal.state,
             currentWork,
+            this.#readInitialSourceFrontierCodeRebindReceipt(
+              identity,
+              entry.input.context.attempt,
+              initialContinuation.continuation_id,
+            ),
           );
         } else if (continuation?.request.action.kind === 'configured_frontier') {
           engine = readConfiguredContinuationSessionEngineSnapshot(
@@ -11126,6 +11287,323 @@ export class HostStateStore {
     );
     return snapshotFailedPrewriterRecoveryReceipt(receipt);
   }
+  commitReadOnlyFrontierRuntimeCode(
+    input: InitialSourceFrontierCodeRebindRequest,
+    verifyCurrent: InitialSourceFrontierCodeRebindVerifyCurrent,
+  ): InitialSourceFrontierCodeRebindReceipt {
+    const request = validateInitialSourceFrontierCodeRebindRequest(input);
+    requireState(
+      typeof verifyCurrent === 'function' && !this.#database.inTransaction,
+      'frontier verifier or transaction invalid',
+    );
+    const existing = this.#readInitialSourceFrontierCodeRebindReceipt(
+      request.identity,
+      request.attempt,
+      request.initialContinuationId,
+    );
+    if (existing) {
+      requireState(
+        existing.record.request_digest === canonicalJsonDigest(request),
+        'frontier rebind retry differs from the committed request',
+      );
+      return existing;
+    }
+    const readState = (): InitialSourceFrontierCodeRebindState => {
+      const host = this.#read(request.identity),
+        row = this.#database
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
+      requireState(
+        row !== null &&
+          Number.isSafeInteger(row.revision) &&
+          row.revision > 0 &&
+          canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+        'frontier rebind Journal row is missing or corrupt',
+      );
+      const initialReceipt = this.#readInitialSourceContinuationReceipt(request.identity, request.attempt);
+      requireState(initialReceipt !== null, 'frontier rebind requires its original initial-source receipt');
+      return {
+        host,
+        journal: {
+          version: { revision: row!.revision, digest: row!.digest },
+          state: JSON.parse(row!.payload) as MastraSessionLedgerState,
+        },
+        initialReceipt,
+      };
+    };
+    const verifyState = (state: InitialSourceFrontierCodeRebindState) => {
+      const { host, journal: journalSnapshot, initialReceipt: initial } = state,
+        work = host.work,
+        ledger = host.ledger,
+        journal = journalSnapshot.state,
+        item = journal.items.length === 1 ? journal.items[0] : undefined,
+        ticket = ledger?.tickets.find((entry) => entry.ticket_id === work?.lease?.ticket_id),
+        claim = ledger?.claims.find(
+          (entry) =>
+            entry.ticket_id === work?.lease?.ticket_id &&
+            entry.status === 'active' &&
+            entry.work_id === request.identity.work_id &&
+            entry.thread_id === request.nativeSessionHandle,
+        );
+      requireState(this.#repositoryRoot !== undefined, 'frontier rebind requires its configured root');
+      const currentConfig = loadRuntimeConfig(this.#repositoryRoot);
+      requireState(runtimeConfigDigest(currentConfig) === request.configDigest, 'frontier configuration bytes changed');
+      requireState(work !== null, 'frontier Work is missing');
+      const actualSource = snapshotDeclaredSources(
+        requireSafeRepositoryAccess(this.#repositoryRoot),
+        work.lifecycle.scope.allowed_paths,
+      );
+      requireState(actualSource.digest === request.sourceScopeDigest, 'frontier Source bytes changed');
+      const stage =
+        item &&
+        currentConfig.workflows[work.binding.workflow_id]?.stages.find((entry) => entry.id === item.request.stage_id);
+      const assignment = stage?.assignments[item?.request.assignment_index ?? -1];
+      const profile = assignment && currentConfig.agents.profiles[assignment.profile];
+      requireState(
+        profile?.mutation_scope === 'none' &&
+          currentConfig.agents.tool_policies[profile.tools_policy]?.source_write === false,
+        'frontier action is not configured readonly',
+      );
+      const resources = ['execution:' + request.identity.work_id];
+      const ownerClaims =
+        ledger?.claims.filter((entry) => entry.ticket_id === work.lease?.ticket_id && entry.status === 'active') ?? [];
+      const leaseEnd = ticket?.expires_at ? Date.parse(ticket.expires_at) : NaN;
+      const claimEnd = claim ? Date.parse(claim.lease_expires_at) : NaN;
+      requireState(
+        ledger !== null &&
+          ticket !== undefined &&
+          claim !== undefined &&
+          ownerClaims.length === 1 &&
+          Number.isFinite(leaseEnd) &&
+          leaseEnd === claimEnd &&
+          sameJson(ticket.active_resources, resources) &&
+          sameJson(ticket.exclusive_resources, resources) &&
+          sameJson(claim.resources, resources) &&
+          !ledger.claims.some(
+            (entry) =>
+              entry.status === 'active' &&
+              entry.ticket_id !== ticket.ticket_id &&
+              entry.resources.some((resource) => resources.includes(resource)),
+          ) &&
+          !ledger.tickets.some(
+            (entry) =>
+              entry.status === 'queued' &&
+              entry.sequence < ledger.next_sequence &&
+              entry.exclusive_resources.some((resource) => resources.includes(resource)),
+          ),
+        'frontier recovery control owner resources or FIFO changed',
+      );
+      matchesExpected(host.workVersion, request.expectedWork);
+      matchesExpected(host.ledgerVersion, request.expectedLedger);
+      matchesExpected(journalSnapshot.version, request.expectedJournal);
+      requireState(
+        host.maintenanceGeneration === request.expectedMaintenanceGeneration &&
+          work !== null &&
+          ledger !== null &&
+          work.binding.runtime_code_digest === request.oldRuntimeCodeDigest &&
+          work.binding.runtime_source_revision === request.oldRuntimeCodeDigest &&
+          work.binding.config_digest === request.configDigest &&
+          work.binding.work_source_revision === request.sourceScopeDigest &&
+          work.lifecycle.phase === 'INTAKE' &&
+          work.lifecycle.seal === null &&
+          work.lifecycle.assurance.review_generation === 0 &&
+          work.lifecycle.assurance.delivery_cycle_id === null &&
+          work.execution.status === 'active' &&
+          work.execution.assignment_attempts.every((attempt) => ['completed', 'no_effect'].includes(attempt.status)) &&
+          work.lease?.thread_id === request.nativeSessionHandle &&
+          work.lease.generation === request.leaseGeneration &&
+          ticket?.status === 'active' &&
+          ticket.thread_id === request.nativeSessionHandle &&
+          ticket.generation === request.leaseGeneration &&
+          ticket.expires_at !== null &&
+          Number.isFinite(Date.parse(ticket.expires_at)) &&
+          claim !== undefined &&
+          Number.isFinite(Date.parse(claim.lease_expires_at)) &&
+          journal.run_id === work.execution.run_id &&
+          journal.workspace_id === this.#workspaceId &&
+          journal.work_id === request.identity.work_id &&
+          journal.attempt === request.attempt &&
+          journal.source_scope?.digest === request.sourceScopeDigest &&
+          item?.request.action_id === request.actionId &&
+          item.request.config_digest === request.configDigest &&
+          item.request.scope_digest === request.sourceScopeDigest &&
+          item.issue_id === null &&
+          item.observation === null &&
+          item.research_activation === undefined &&
+          item.research_normalization === undefined &&
+          item.host_reservation === undefined &&
+          initial.continuation_id === request.initialContinuationId &&
+          initial.request_digest === request.initialContinuationRequestDigest &&
+          initial.request.currentRuntimeCodeDigest === request.oldRuntimeCodeDigest &&
+          sameJson(work.binding, initial.successor_work.binding),
+        'frontier Work, lease, Journal or original receipt changed',
+      );
+      return validateInitialSourceFrontierCodeRebindVerifiedCurrent(verifyCurrent(request, state), request);
+    };
+    const first = readState(),
+      firstProof = verifyState(first);
+    requireState(!this.#database.inTransaction, 'nested frontier rebind transaction forbidden');
+    return this.#transactionWithProducerFence(() => {
+      this.#assertMaintenanceAvailable();
+      this.#assertMaintenanceGeneration(request.expectedMaintenanceGeneration);
+      const currentState = readState(),
+        proof = verifyState(currentState);
+      requireState(
+        sameJson(currentState.host.workVersion, first.host.workVersion) &&
+          sameJson(currentState.host.ledgerVersion, first.host.ledgerVersion) &&
+          sameJson(currentState.journal.version, first.journal.version) &&
+          sameJson(currentState.journal.state, first.journal.state) &&
+          sameJson(proof, firstProof),
+        'frontier endpoint or state changed before the Work CAS',
+      );
+      const priorWork = currentState.host.work!,
+        priorLedger = currentState.host.ledger!,
+        priorJournal = currentState.journal.state,
+        successorWork: WorkState = {
+          ...priorWork,
+          revision: priorWork.revision + 1,
+          binding: {
+            ...priorWork.binding,
+            runtime_code_digest: request.newRuntimeCodeDigest,
+            runtime_source_revision: request.newRuntimeCodeDigest,
+          },
+          lifecycle: {
+            ...priorWork.lifecycle,
+            revision: priorWork.lifecycle.revision + 1,
+            config_binding: {
+              ...priorWork.lifecycle.config_binding,
+              runtime_code_digest: request.newRuntimeCodeDigest,
+            },
+          },
+        },
+        record: InitialSourceFrontierCodeRebindRecord = {
+          schema: 'InitialSourceFrontierCodeRebindRecord/v1',
+          identity: request.identity,
+          attempt: request.attempt,
+          original_receipt_id: request.initialContinuationId,
+          request,
+          request_digest: canonicalJsonDigest(request),
+          prior_work: priorWork,
+          prior_work_version: request.expectedWork,
+          prior_ledger: priorLedger,
+          prior_ledger_version: request.expectedLedger,
+          prior_journal: priorJournal,
+          prior_journal_version: request.expectedJournal,
+          successor_work: successorWork,
+          work_version: { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) },
+          endpoint_proof: proof,
+          rights_granted: false,
+          accepted_result: false,
+          runtime_acceptance: false,
+          status: 'rebound',
+        },
+        receipt = validateInitialSourceFrontierCodeRebindReceipt({
+          schema: 'InitialSourceFrontierCodeRebindReceipt/v1',
+          record,
+          record_digest: initialSourceFrontierCodeRebindRecord(record).digest,
+          original_receipt_id: request.initialContinuationId,
+          current_runtime_code_digest: request.newRuntimeCodeDigest,
+          rights_granted: false,
+          accepted_result: false,
+          runtime_acceptance: false,
+          status: 'rebound',
+        }),
+        encoded = initialSourceFrontierCodeRebindReceiptRecord(receipt);
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_initial_source_frontier_code_rebind (workspace_id TEXT NOT NULL, work_id TEXT NOT NULL, attempt INTEGER NOT NULL, original_receipt_id TEXT NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,work_id,attempt,original_receipt_id))',
+      );
+      const inserted = this.#database
+        .query(
+          'INSERT INTO agent_host_initial_source_frontier_code_rebind (workspace_id,work_id,attempt,original_receipt_id,payload,digest) VALUES (?,?,?,?,?,?)',
+        )
+        .run(
+          this.#workspaceId,
+          request.identity.work_id,
+          request.attempt,
+          request.initialContinuationId,
+          encoded.payload,
+          encoded.digest,
+        );
+      requireState(inserted.changes === 1, 'frontier rebind receipt row already exists');
+      const updated = this.#database
+        .query(
+          'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+        )
+        .run(
+          successorWork.revision,
+          canonicalJson(successorWork),
+          canonicalJsonDigest(successorWork),
+          this.#workspaceId,
+          'work',
+          identityKey(request.identity),
+          request.expectedWork.revision,
+          request.expectedWork.digest,
+        );
+      requireState(updated.changes === 1, 'frontier Work CAS conflict');
+      requireState(sameJson(this.#checkedWork(successorWork), successorWork), 'frontier Work history failed after CAS');
+      return snapshotInitialSourceFrontierCodeRebindReceipt(receipt);
+    }).immediate();
+  }
+  readInitialSourceFrontierCodeRebindReceipt(
+    identity: WorkIdentity,
+    attempt: number,
+    originalReceiptId: string,
+  ): InitialSourceFrontierCodeRebindReceipt | null {
+    requireState(
+      Number.isSafeInteger(attempt) &&
+        attempt > 0 &&
+        hashPattern.test(originalReceiptId) &&
+        !this.#database.inTransaction,
+      'frontier rebind receipt inspection identity invalid',
+    );
+    return this.#database
+      .transaction(() => this.#readInitialSourceFrontierCodeRebindReceipt(identity, attempt, originalReceiptId))
+      .deferred();
+  }
+  #readInitialSourceFrontierCodeRebindReceipt(
+    identity: WorkIdentity,
+    attempt: number,
+    originalReceiptId: string,
+  ): InitialSourceFrontierCodeRebindReceipt | null {
+    const current = this.#read(identity);
+    if (!current.work) return null;
+    const table = this.#database
+      .query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_initial_source_frontier_code_rebind'",
+      )
+      .get();
+    if (!table) return null;
+    const rows = this.#database
+      .query(
+        'SELECT payload,digest,attempt,original_receipt_id FROM agent_host_initial_source_frontier_code_rebind WHERE workspace_id=? AND work_id=? AND attempt=? AND original_receipt_id=?',
+      )
+      .all(this.#workspaceId, identity.work_id, attempt, originalReceiptId) as {
+      payload: string;
+      digest: string;
+      attempt: number;
+      original_receipt_id: string;
+    }[];
+    requireState(rows.length <= 1, 'frontier rebind receipt inspection is ambiguous');
+    if (!rows.length) return null;
+    const row = rows[0]!,
+      receipt = readInitialSourceFrontierCodeRebindReceiptRecord(row.payload, row.digest);
+    requireState(
+      row.attempt === attempt &&
+        row.original_receipt_id === originalReceiptId &&
+        receipt.record.attempt === attempt &&
+        sameJson(receipt.record.identity, identity) &&
+        receipt.original_receipt_id === originalReceiptId &&
+        receipt.record.successor_work.binding.runtime_code_digest === current.work.binding.runtime_code_digest,
+      'frontier rebind receipt or current Work history differs',
+    );
+    return snapshotInitialSourceFrontierCodeRebindReceipt(receipt);
+  }
   readInitialSourceContinuationReceipt(
     identity: WorkIdentity,
     attempt: number,
@@ -11158,7 +11636,7 @@ export class HostStateStore {
     requireState(
       row.attempt === attempt &&
         sameJson(receipt.request.identity, identity) &&
-        sameJson(current.work.binding, receipt.successor_work.binding) &&
+        sameInitialSourceBindingOutsideRuntimeCode(current.work.binding, receipt.successor_work.binding) &&
         sameJson(current.work.contracts, receipt.prior_work.contracts) &&
         current.work.execution.run_id === receipt.prior_work.execution.run_id,
       'initial Source continuation receipt or current Work lineage differs',

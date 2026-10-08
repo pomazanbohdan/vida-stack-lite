@@ -17,7 +17,10 @@ import {
   type ConfiguredFrontierReceipt,
 } from './delivered-work-continuation-repair.js';
 import { validateInitialSourceContinuationReceipt } from './initial-source-continuation.js';
-import { validateInitialSourceContinuationLineage } from './admitted-development-packet.js';
+import {
+  readInitialSourceContinuationLineageView,
+  validateInitialSourceContinuationLineage,
+} from './admitted-development-packet.js';
 
 function requireExecution(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -85,7 +88,8 @@ export function assertAdmittedRuntimeCodeCurrent(
   const config = loadRuntimeConfig(repositoryRoot);
   const currentPaths = runtimePackageCodePaths(config.runtime.bundle);
   const journal = store.readWorkSessionJournal(identity);
-  const initialReceipt = journal ? store.readInitialSourceContinuationReceipt(identity, journal.attempt) : null;
+  const initialView = journal ? readInitialSourceContinuationLineageView(store, identity, journal.attempt) : null;
+  const initialReceipt = initialView?.receipt ?? null;
   const configuredContinuation = journal ? store.readConfiguredFrontierRecoveryView(identity, journal.attempt) : null;
   requireExecution(
     !(initialReceipt && configuredContinuation),
@@ -94,11 +98,13 @@ export function assertAdmittedRuntimeCodeCurrent(
   let runtimePaths: readonly string[] = currentPaths;
   if (initialReceipt) {
     const receipt = validateInitialSourceContinuationReceipt(initialReceipt);
-    validateInitialSourceContinuationLineage(work, receipt, journal!.state);
+    validateInitialSourceContinuationLineage(work, receipt, journal!.state, initialView?.frontierCodeRebind);
     const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, currentPaths);
     requireExecution(
-      receipt.request.currentRuntimeCodeDigest === current.digest &&
-        current.digest === work.binding.runtime_code_digest,
+      current.digest === work.binding.runtime_code_digest &&
+        (!initialView?.frontierCodeRebind
+          ? receipt.request.currentRuntimeCodeDigest === current.digest
+          : initialView.frontierCodeRebind.current_runtime_code_digest === current.digest),
       'initial Source continuation does not bind the canonical runtime inventory and protected intake paths',
     );
   } else if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(currentPaths)) {

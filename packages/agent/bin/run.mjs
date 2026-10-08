@@ -3528,6 +3528,11 @@ export async function run(args = process.argv.slice(2)) {
     };
   }
   if (values.recover_expired_lease) {
+    const {
+      readInitialSourceContinuationLineageView,
+      acceptedSourceAuthorizationRevision,
+      validateInitialSourceContinuationLineage,
+    } = await import('../src/orchestration/admitted-development-packet.ts');
     const { readLocalSourceWriteAuthorization } = await import('../src/orchestration/local-source-authorization.ts');
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
@@ -3558,6 +3563,11 @@ export async function run(args = process.argv.slice(2)) {
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery admitted work or selection differs.');
 
       const access = requireSafeRepositoryAccess(values.project_root);
+      const initialLineage = readInitialSourceContinuationLineageView(
+        ledger.hostState,
+        identity,
+        Number(values.attempt),
+      );
       ledger.hostState.recoverExpiredLocalLease({
         identity,
         attempt: Number(values.attempt),
@@ -3579,18 +3589,19 @@ export async function run(args = process.argv.slice(2)) {
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery requires the existing attributable source authority.');
           const existingAuthority = readLocalSourceWriteAuthorization(values.project_root, approval.path);
           const authority = existingAuthority.authorization;
+          const acceptedAuthorityRevision = acceptedSourceAuthorizationRevision(work, state, approval, initialLineage);
           if (
             existingAuthority.sha256 !== approval.sha256 ||
             authority.schema !== 'LocalSourceWriteAuthorization/v1' ||
             authority.action !== 'source.write' ||
             approval.scope_id !== work.binding.scope_id ||
-            approval.source_revision !== work.binding.work_source_revision ||
+            approval.source_revision !== acceptedAuthorityRevision ||
             authority.user_instruction_ref !== approval.record_id ||
             approval.principal !== 'local-session:' + canonicalJsonDigest(values.native_session_handle) ||
             authority.native_session_handle !== values.native_session_handle ||
             authority.work_id !== values.work_id ||
             authority.attempt !== Number(values.attempt) ||
-            authority.scope_digest !== work.binding.work_source_revision ||
+            authority.scope_digest !== acceptedAuthorityRevision ||
             authority.config_digest !== work.binding.config_digest ||
             authority.workflow_id !== work.binding.workflow_id ||
             canonicalJsonDigest([...authority.implementation_paths].sort()) !==
@@ -3698,7 +3709,10 @@ export async function run(args = process.argv.slice(2)) {
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery intake changed.');
           const intake = JSON.parse(intakeBytes.toString('utf8'));
           const inventory = runtimePackageCodePaths(currentConfig.runtime.bundle);
-          if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory))
+          if (
+            canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory) &&
+            !initialLineage?.frontierCodeRebind
+          )
             fail(
               'GAP-VIDA-RUN-CONTEXT-001',
               'Expired recovery intake requires qualified canonical runtime inventory repair.',
@@ -3708,6 +3722,23 @@ export async function run(args = process.argv.slice(2)) {
             currentConfig.runtime.bundle,
             inventory,
           );
+          if (initialLineage?.frontierCodeRebind) {
+            validateInitialSourceContinuationLineage(
+              work,
+              initialLineage.receipt,
+              state,
+              initialLineage.frontierCodeRebind,
+            );
+            if (
+              canonicalJsonDigest(initialLineage.frontierCodeRebind.record.request.runtimeCodePaths) !==
+                canonicalJsonDigest(inventory) ||
+              runtime.digest !== work.binding.runtime_code_digest
+            )
+              fail(
+                'GAP-VIDA-RUN-CONTEXT-001',
+                'Expired recovery current code does not match its qualified frontier record.',
+              );
+          }
           const schema = digest(
             runtimePackageAccess().readBytes(
               'schemas/agent-runtime-config.v1.schema.json',
@@ -5466,6 +5497,13 @@ export async function run(args = process.argv.slice(2)) {
         admissionIdentity,
         context.attempt,
       );
+      const initialSourceFrontierCodeRebind = initialSourceContinuation
+        ? ledger.hostState.readInitialSourceFrontierCodeRebindReceipt(
+            admissionIdentity,
+            context.attempt,
+            initialSourceContinuation.continuation_id,
+          )
+        : null;
       if (configuredContinuation && initialSourceContinuation)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Multiple Host producer continuation receipts are ambiguous.');
       if (
@@ -5517,7 +5555,12 @@ export async function run(args = process.argv.slice(2)) {
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Initial Source receipt no longer binds the active Work and Journal.');
         const { validateInitialSourceContinuationLineage } =
           await import('../src/orchestration/admitted-development-packet.ts');
-        validateInitialSourceContinuationLineage(workflowHost.work, initialSourceContinuation, persistedJournal.state);
+        validateInitialSourceContinuationLineage(
+          workflowHost.work,
+          initialSourceContinuation,
+          persistedJournal.state,
+          initialSourceFrontierCodeRebind,
+        );
       }
       const engineBinding = { ...bridgeArgs, runId: expectedRunId };
       let workflowSnapshot = configuredContinuation
@@ -5528,6 +5571,7 @@ export async function run(args = process.argv.slice(2)) {
               initialSourceContinuation,
               persistedJournal.state,
               workflowHost.work,
+              initialSourceFrontierCodeRebind,
             )
           : readSessionEngineSnapshot(engineBinding);
       const created = !workflowSnapshot;

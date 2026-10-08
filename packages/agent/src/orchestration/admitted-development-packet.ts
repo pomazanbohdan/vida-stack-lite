@@ -21,6 +21,10 @@ import {
   validateInitialSourceContinuationReceipt,
   type InitialSourceContinuationReceipt,
 } from './initial-source-continuation.js';
+import {
+  validateInitialSourceFrontierCodeRebindReceipt,
+  type InitialSourceFrontierCodeRebindReceipt,
+} from './initial-source-frontier-code-rebind.js';
 import { validateFailedPrewriterRecoveryReceipt } from './failed-prewriter-transition.js';
 import {
   validateConfiguredFrontierReceiptStructure,
@@ -92,6 +96,7 @@ export interface AdmittedDevelopmentPacketInput {
         | 'readDeliveredWorkContinuationReceipt'
         | 'readFailedPrewriterRecoveryReceipt'
         | 'readInitialSourceContinuationReceipt'
+        | 'readInitialSourceFrontierCodeRebindReceipt'
       >
     >;
   readonly ledger: MastraSessionLedgerSnapshot;
@@ -106,7 +111,15 @@ function requirePacket(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`admitted development packet: ${message}`);
 }
 
-export type AcceptedSourceContinuation = ConfiguredFrontierRecoveryView | InitialSourceContinuationReceipt;
+export interface InitialSourceContinuationLineageView {
+  readonly receipt: InitialSourceContinuationReceipt;
+  readonly frontierCodeRebind: InitialSourceFrontierCodeRebindReceipt | null;
+}
+
+export type AcceptedSourceContinuation =
+  | ConfiguredFrontierRecoveryView
+  | InitialSourceContinuationReceipt
+  | InitialSourceContinuationLineageView;
 
 function isPacketRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -149,14 +162,138 @@ export function isInitialSourceContinuationReceipt(value: unknown): value is Ini
   return isPacketRecord(value) && value.schema === 'InitialSourceContinuationReceipt/v1';
 }
 
+export function isInitialSourceContinuationLineageView(value: unknown): value is InitialSourceContinuationLineageView {
+  return (
+    isPacketRecord(value) &&
+    Object.keys(value).sort().join(',') === 'frontierCodeRebind,receipt' &&
+    isInitialSourceContinuationReceipt(value.receipt) &&
+    (value.frontierCodeRebind === null ||
+      (isPacketRecord(value.frontierCodeRebind) &&
+        value.frontierCodeRebind.schema === 'InitialSourceFrontierCodeRebindReceipt/v1'))
+  );
+}
+
+function initialSourceContinuationParts(
+  value: AcceptedSourceContinuation | null | undefined,
+): InitialSourceContinuationLineageView | null {
+  if (isInitialSourceContinuationLineageView(value)) return value;
+  return isInitialSourceContinuationReceipt(value) ? { receipt: value, frontierCodeRebind: null } : null;
+}
+
+/** Join the immutable initial receipt to the optional current Host-validated code-only descendant. */
+export function readInitialSourceContinuationLineageView(
+  sourceStore: Partial<
+    Pick<HostStateStore, 'readInitialSourceContinuationReceipt' | 'readInitialSourceFrontierCodeRebindReceipt'>
+  >,
+  identity: WorkIdentity,
+  attempt: number,
+): InitialSourceContinuationLineageView | null {
+  const readInitial = sourceStore.readInitialSourceContinuationReceipt;
+  if (!readInitial) return null;
+  const initial = readInitial.call(sourceStore, identity, attempt);
+  if (!initial) return null;
+  const receipt = validateInitialSourceContinuationReceipt(initial);
+  const frontierCodeRebind =
+    sourceStore.readInitialSourceFrontierCodeRebindReceipt?.call(
+      sourceStore,
+      identity,
+      attempt,
+      receipt.continuation_id,
+    ) ?? null;
+  return { receipt, frontierCodeRebind };
+}
+
+function initialFrontierCodeRebindWorkCore(work: WorkState): Record<string, unknown> {
+  const core = { ...work } as unknown as Record<string, unknown>;
+  delete core.revision;
+  const binding = { ...work.binding } as unknown as Record<string, unknown>;
+  delete binding.runtime_code_digest;
+  delete binding.runtime_source_revision;
+  core.binding = binding;
+  const lifecycle = { ...work.lifecycle } as unknown as Record<string, unknown>;
+  delete lifecycle.revision;
+  const configBinding = { ...work.lifecycle.config_binding } as unknown as Record<string, unknown>;
+  delete configBinding.runtime_code_digest;
+  lifecycle.config_binding = configBinding;
+  core.lifecycle = lifecycle;
+  return core;
+}
+
+function validateInitialSourceFrontierCodeRebindJoin(
+  work: WorkState,
+  initial: InitialSourceContinuationReceipt,
+  value: unknown,
+): InitialSourceFrontierCodeRebindReceipt | null {
+  if (value === null || value === undefined) return null;
+  const receipt = validateInitialSourceFrontierCodeRebindReceipt(value);
+  const record = receipt.record;
+  const currentDigest = record.request.newRuntimeCodeDigest;
+  requirePacket(
+    receipt.original_receipt_id === initial.continuation_id &&
+      receipt.current_runtime_code_digest === currentDigest &&
+      receipt.rights_granted === false &&
+      receipt.accepted_result === false &&
+      receipt.runtime_acceptance === false &&
+      receipt.status === 'rebound' &&
+      record.original_receipt_id === initial.continuation_id &&
+      record.attempt === initial.request.attempt &&
+      samePacket(record.identity, initial.request.identity) &&
+      record.request.attempt === initial.request.attempt &&
+      samePacket(record.request.identity, initial.request.identity) &&
+      record.request.initialContinuationId === initial.continuation_id &&
+      record.request.initialContinuationRequestDigest === initial.request_digest &&
+      record.request.oldRuntimeCodeDigest === initial.request.currentRuntimeCodeDigest &&
+      record.request.newRuntimeCodeDigest === currentDigest &&
+      record.prior_work_version.revision === initial.work_version.revision &&
+      samePacket(record.prior_work_version, initial.work_version) &&
+      record.prior_ledger_version.revision === initial.ledger_version.revision &&
+      samePacket(record.prior_ledger_version, initial.ledger_version) &&
+      record.prior_journal_version.revision > initial.journal_version.revision &&
+      samePacket(record.prior_work, initial.successor_work) &&
+      samePacket(record.prior_ledger, initial.successor_ledger) &&
+      record.prior_journal.run_id === initial.successor_journal.run_id &&
+      record.prior_journal.completed.some((wave) =>
+        wave.items.some(
+          (item) =>
+            samePacket(item.request, initial.request.currentInitialRequest) &&
+            item.issue_id !== null &&
+            item.observation?.status === 'reported_complete' &&
+            item.observation.issue_id === item.issue_id &&
+            item.observation.action_id === item.request.action_id &&
+            item.observation.output_digest === canonicalJsonDigest(item.observation.summary),
+        ),
+      ) &&
+      samePacket(record.successor_work.binding, work.binding) &&
+      record.successor_work.binding.runtime_code_digest === currentDigest &&
+      record.successor_work.binding.runtime_source_revision === currentDigest &&
+      record.work_version.revision <= work.revision &&
+      record.rights_granted === false &&
+      record.accepted_result === false &&
+      record.runtime_acceptance === false &&
+      record.status === 'rebound' &&
+      work.binding.runtime_code_digest === currentDigest &&
+      work.binding.runtime_source_revision === currentDigest &&
+      work.lifecycle.config_binding.runtime_code_digest === currentDigest &&
+      samePacket(
+        initialFrontierCodeRebindWorkCore(record.prior_work),
+        initialFrontierCodeRebindWorkCore(record.successor_work),
+      ),
+    'Host code rebind does not prove the exact initial-receipt descendant or code-only Work projection',
+  );
+  return receipt;
+}
+
 /** Validate the receipt lineage while retaining the original contract, intake and permission bytes. */
 export function validateInitialSourceContinuationLineage(
   work: WorkState,
   value: unknown,
   journalValue?: unknown,
+  frontierCodeRebindValue?: unknown,
 ): InitialSourceContinuationReceipt {
   const receipt = validateInitialSourceContinuationReceipt(value);
   const { request, prior_work: original, successor_work: successor } = receipt;
+  const frontierCodeRebind = validateInitialSourceFrontierCodeRebindJoin(work, receipt, frontierCodeRebindValue);
+  const currentRuntimeCodeDigest = frontierCodeRebind?.current_runtime_code_digest ?? request.currentRuntimeCodeDigest;
   const permission = request.sourceAuthorizationReference;
   const originalPermission = sourceAuthorizationReferences(original);
   const successorPermission = sourceAuthorizationReferences(successor);
@@ -215,10 +352,18 @@ export function validateInitialSourceContinuationLineage(
       request.priorRuntimeCodeDigest === original.binding.runtime_code_digest &&
       request.currentRuntimeCodeDigest === successor.binding.runtime_code_digest &&
       request.currentRuntimeCodeDigest === successor.binding.runtime_source_revision &&
-      request.currentRuntimeCodeDigest === work.binding.runtime_code_digest &&
-      request.currentRuntimeCodeDigest === work.binding.runtime_source_revision &&
-      request.currentRuntimeCodeDigest === work.lifecycle.config_binding.runtime_code_digest &&
+      request.currentRuntimeCodeDigest ===
+        (frontierCodeRebind?.record.prior_work.binding.runtime_code_digest ?? work.binding.runtime_code_digest) &&
+      request.currentRuntimeCodeDigest ===
+        (frontierCodeRebind?.record.prior_work.binding.runtime_source_revision ??
+          work.binding.runtime_source_revision) &&
+      request.currentRuntimeCodeDigest ===
+        (frontierCodeRebind?.record.prior_work.lifecycle.config_binding.runtime_code_digest ??
+          work.lifecycle.config_binding.runtime_code_digest) &&
       request.currentRuntimeCodeDigest === successor.lifecycle.config_binding.runtime_code_digest &&
+      currentRuntimeCodeDigest === work.binding.runtime_code_digest &&
+      currentRuntimeCodeDigest === work.binding.runtime_source_revision &&
+      currentRuntimeCodeDigest === work.lifecycle.config_binding.runtime_code_digest &&
       original.lifecycle.source_revision === original.binding.work_source_revision &&
       request.currentSourceScope.digest === successor.binding.work_source_revision &&
       request.currentSourceScope.digest === successor.lifecycle.source_revision &&
@@ -332,8 +477,10 @@ export function acceptedSourceAuthorizationRevision(
     current.length === 1 && samePacket(current[0], reference),
     'current scoped Source authorization reference is missing or ambiguous',
   );
-  const sourceRevision = isInitialSourceContinuationReceipt(continuation)
-    ? validateInitialSourceContinuationLineage(work, continuation, journalValue).prior_work.binding.work_source_revision
+  const initial = initialSourceContinuationParts(continuation);
+  const sourceRevision = initial
+    ? validateInitialSourceContinuationLineage(work, initial.receipt, journalValue, initial.frontierCodeRebind)
+        .prior_work.binding.work_source_revision
     : work.binding.work_source_revision;
   requirePacket(
     reference.scope_id === work.binding.scope_id &&
@@ -351,10 +498,17 @@ export function acceptedContractSourceRevision(
   view?: AcceptedSourceContinuation | null,
 ): string {
   if (!view) return work.binding.work_source_revision;
-  if (isInitialSourceContinuationReceipt(view)) {
-    const receipt = validateInitialSourceContinuationLineage(work, view, ledger.state);
+  const initial = initialSourceContinuationParts(view);
+  if (initial) {
+    const receipt = validateInitialSourceContinuationLineage(
+      work,
+      initial.receipt,
+      ledger.state,
+      initial.frontierCodeRebind,
+    );
     return receipt.prior_work.binding.work_source_revision;
   }
+  requirePacket('original' in view && 'recovery' in view, 'configured continuation view is missing');
   const { original, recovery } = view;
   validateConfiguredFrontierReceiptStructure({ receipt: original });
   if (recovery) validateFailedPrewriterRecoveryReceipt(recovery);
@@ -554,7 +708,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
   const original =
     continuation?.request.action.kind === 'configured_frontier' ? (continuation as ConfiguredFrontierReceipt) : null;
   const recovery = original && input.sourceStore?.readFailedPrewriterRecoveryReceipt?.(identity, ledger.state.attempt);
-  const initial = input.sourceStore?.readInitialSourceContinuationReceipt?.(identity, ledger.state.attempt) ?? null;
+  const initial = readInitialSourceContinuationLineageView(input.sourceStore ?? {}, identity, ledger.state.attempt);
   requirePacket(!(original && initial), 'multiple Host Source continuation records are ambiguous');
   const acceptedContinuation = initial ?? (original ? { original, recovery: recovery || null } : null);
   const acceptedSourceRevision = acceptedContractSourceRevision(work, ledger, acceptedContinuation);
@@ -824,7 +978,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     },
     attempt: ledger.state.attempt,
     risk_flags: [...selection.risk_flags],
-    objective: workItem.description.trim() || workItem.title,
+    objective: (workItem.description.trim() || workItem.title).replace(/[\r\n\t]/g, ' '),
     acceptance: contracts.map((entry) => `${entry.id}: ${entry.definition}`),
     in_scope: [...scope.implementation_paths],
     out_of_scope: [...scope.non_goals],

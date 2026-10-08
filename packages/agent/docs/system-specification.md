@@ -162,6 +162,11 @@ are preserved as inactive provenance; new work does not inherit their rights.
 
 ## Development task packet text screening
 
+The admitted task objective projects the human description or title into one
+line. CR, LF and tab become spaces in that projection. Preserve the original
+WorkItem and its digest. Other control characters, sensitive values and length
+limits remain subject to the existing packet validator.
+
 The public `buildDevelopmentTaskPacket` boundary screens free-text packet fields
 and string-list values before constructing `DevelopmentTaskPacket/v1`. It
 rejects explicit credential assignments and formats, including passwords,
@@ -2217,6 +2222,30 @@ retained engine boundary before consuming current observations. Later Source
 preflight verifies original permission lineage and current Source and ownership
 independently. Continuation grants no Source execution or Runtime acceptance.
 This is target behavior; an installed public result must prove availability.
+
+## Initial-source frontier code adoption
+
+After initial Source continuation, a qualified runtime correction can precede
+an unissued read-only prewriter. Use a distinct strict code-rebind request,
+receipt and Host history record. Bind the initial receipt, same owner and run,
+current Work/Ledger/Journal/maintenance versions, unchanged Source and config,
+and independently verified parent/current native endpoints. Current canonical
+runtime inventory is derived from the installed bundle. The parent inventory
+must reproduce the exact stored Work code identity; new target files are not
+invented as historical inputs.
+
+The atomic recovery-control operation changes only Work runtime-code bindings
+and Work/lifecycle revisions. Retain every other Work field, the full Journal,
+Ledger, current action, completed prefix, lease and original permission. A sole
+live or expired same-owner execution-only claim is eligible for this control
+operation with exact resources and FIFO checks. Its lease stays unchanged;
+the operation grants no Source or execution rights. After code adoption, the existing owner recovery operation
+may renew the lease using the original permission lineage and the authenticated
+current code inventory. No unknown action is reissued.
+
+Current readers treat the initial receipt as an immutable ancestor. Host history
+proves the permitted code-only descendant; actual installed bytes must match
+the current Work binding. Existing active v1 records remain unchanged.
 
 ## Distribution, recovery and evidence boundaries
 

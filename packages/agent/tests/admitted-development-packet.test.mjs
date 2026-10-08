@@ -8,9 +8,9 @@ import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { buildAdmittedDevelopmentPacket } from '../src/orchestration/admitted-development-packet.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
-import {configuredFrontierRepairFixture} from './helpers/configured-frontier-fixture.mjs';
-import {compileDevelopmentWorkflow} from '../src/orchestration/workflow-plan.ts';
-import {sessionActionsForWave} from '../src/orchestration/session-handoff.ts';
+import { configuredFrontierRepairFixture } from './helpers/configured-frontier-fixture.mjs';
+import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
+import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 
 const { repositoryRoot: root, config } = configuredTestContext();
 const projectId = config.projects[0].project_id;
@@ -19,7 +19,7 @@ mkdirSync(scratchRoot, { recursive: true });
 const fixture = mkdtempSync(path.join(scratchRoot, 'packet-adapter-'));
 const ownedResearchPaths = new Set();
 afterAll(() => {
-  for (const file of ownedResearchPaths) rmSync(file, {force: true});
+  for (const file of ownedResearchPaths) rmSync(file, { force: true });
   if (!fixture.startsWith(scratchRoot + path.sep)) throw new Error('unsafe packet fixture cleanup');
   rmSync(fixture, { recursive: true, force: true });
 });
@@ -119,8 +119,11 @@ function admitted(intent = 'task_execution', lifecycleRisk = 'medium', configDig
       schema: 'WorkState/v1',
       workspace_id: 'a'.repeat(64),
       binding,
-      contracts: {scope: {schema: 'ImplementationScope/v1', path: scopePath, sha256: digest(scopeBytes)},
-        acceptance: {schema: 'AcceptanceManifest/v1', path: acceptancePath, sha256: digest(acceptanceBytes)}, decisions: []},
+      contracts: {
+        scope: { schema: 'ImplementationScope/v1', path: scopePath, sha256: digest(scopeBytes) },
+        acceptance: { schema: 'AcceptanceManifest/v1', path: acceptancePath, sha256: digest(acceptanceBytes) },
+        decisions: [],
+      },
       lease: { ticket_id: 'packet-test-ticket', thread_id: 'packet-test-thread', generation: 1 },
       execution: { run_id: 'packet-test-run' },
       lifecycle: { risk: lifecycleRisk, assurance: { correction_count: 0 } },
@@ -301,14 +304,30 @@ function addObservedSynthesis(input, completeWave = false) {
     updated_at: timestamp,
   };
   const result = { ...resultBody, digest: canonicalJsonDigest(resultBody) };
-  const plan = compileDevelopmentWorkflow(config, input.selection.team, input.selection.intent, input.selection.risk_flags);
-  const researchWave = plan.waves.findIndex(wave => wave.some(stage => stage.id === researchStage.id));
-  const researchActions = sessionActionsForWave(config, input.selection,
-    {work_id: input.workItem.id, attempt: 1, scope_digest: sourceRevision}, input.selection.intent, researchWave, []);
-  const results = completeWave ? researchActions.map((_, index) => {
-    const body = {...resultBody, result_id: index === 0 ? resultBody.result_id : `${resultBody.result_id}-${index}`};
-    return {...body, digest: canonicalJsonDigest(body)};
-  }) : [result];
+  const plan = compileDevelopmentWorkflow(
+    config,
+    input.selection.team,
+    input.selection.intent,
+    input.selection.risk_flags,
+  );
+  const researchWave = plan.waves.findIndex((wave) => wave.some((stage) => stage.id === researchStage.id));
+  const researchActions = sessionActionsForWave(
+    config,
+    input.selection,
+    { work_id: input.workItem.id, attempt: 1, scope_digest: sourceRevision },
+    input.selection.intent,
+    researchWave,
+    [],
+  );
+  const results = completeWave
+    ? researchActions.map((_, index) => {
+        const body = {
+          ...resultBody,
+          result_id: index === 0 ? resultBody.result_id : `${resultBody.result_id}-${index}`,
+        };
+        return { ...body, digest: canonicalJsonDigest(body) };
+      })
+    : [result];
   const synthesisBody = {
     schema: 'ResearchSynthesis/v1',
     bundle_id: recordPrefix + '-synthesis',
@@ -316,7 +335,7 @@ function addObservedSynthesis(input, completeWave = false) {
     source_revision: sourceRevision,
     scope_id: 'packet-test-scope',
     topic: 'Current source requirements',
-    result_refs: results.map(record => ({result_id: record.result_id, digest: record.digest})),
+    result_refs: results.map((record) => ({ result_id: record.result_id, digest: record.digest })),
     findings: [
       {
         finding_id: 'synthesis-requirement',
@@ -375,7 +394,10 @@ function addObservedSynthesis(input, completeWave = false) {
       stage: researchStage,
       schema: 'ResearchResult/v1',
       suffix: '.research.json',
-      issue: index === 0 ? issueIds[0] : `${String(index + 3).repeat(8)}-${String(index + 3).repeat(4)}-4${String(index + 3).repeat(3)}-8${String(index + 3).repeat(3)}-${String(index + 3).repeat(12)}`,
+      issue:
+        index === 0
+          ? issueIds[0]
+          : `${String(index + 3).repeat(8)}-${String(index + 3).repeat(4)}-4${String(index + 3).repeat(3)}-8${String(index + 3).repeat(3)}-${String(index + 3).repeat(12)}`,
       action: index === 0 ? actionIds[0] : String(index + 1).repeat(64),
       assignment_index: index,
     })),
@@ -395,7 +417,7 @@ function addObservedSynthesis(input, completeWave = false) {
     const bytes = Buffer.from(JSON.stringify(fixtureArtifact.record));
     const recordName = `${fixtureArtifact.record.result_id ?? fixtureArtifact.record.bundle_id}${fixtureArtifact.suffix}`;
     const fullPath = path.join(recordsRoot, recordName);
-    writeFileSync(fullPath, bytes, {flag: 'wx'});
+    writeFileSync(fullPath, bytes, { flag: 'wx' });
     ownedResearchPaths.add(fullPath);
     const recordPath = path.relative(root, fullPath).replaceAll('\\', '/');
     const changelogPath = `${recordPath}.jsonl`;
@@ -417,10 +439,12 @@ function addObservedSynthesis(input, completeWave = false) {
       lease_generation: input.host.work.lease.generation,
     };
     const observation = {
-      schema: 'VidaSessionObservation/v1', agent_id: 'fixture-researcher', tool_call_ref: `fixture:${fixtureArtifact.action}`,
+      schema: 'VidaSessionObservation/v1',
+      agent_id: 'fixture-researcher',
+      tool_call_ref: `fixture:${fixtureArtifact.action}`,
       evidence_refs: [recordPath],
       issue_id: fixtureArtifact.issue,
-                action_id: fixtureArtifact.action,
+      action_id: fixtureArtifact.action,
       status: 'reported_complete',
       summary: `Observed ${fixtureArtifact.schema}`,
     };
@@ -514,6 +538,27 @@ function addObservedSynthesis(input, completeWave = false) {
 }
 
 describe('admitted development packet', () => {
+  test('projects human description line breaks without changing the admitted work item', () => {
+    const input = admitted();
+    const description = 'First requirement.\r\nSecond requirement.\tKeep both.';
+    input.workItem.description = description;
+    input.host.work.binding.work_item_digest = canonicalJsonDigest(input.workItem);
+    const boundDigest = input.host.work.binding.work_item_digest;
+    const packet = buildAdmittedDevelopmentPacket(input);
+    expect(packet.objective).toBe('First requirement.  Second requirement. Keep both.');
+    expect(input.workItem.description).toBe(description);
+    expect(input.host.work.binding.work_item_digest).toBe(boundDigest);
+  });
+
+  test('keeps other controls and sensitive assignments rejected in the projected objective', () => {
+    for (const description of ['Requirement\u0000payload', 'Requirement\u001bpayload', 'token=not-for-packet']) {
+      const input = admitted();
+      input.workItem.description = description;
+      input.host.work.binding.work_item_digest = canonicalJsonDigest(input.workItem);
+      expect(() => buildAdmittedDevelopmentPacket(input)).toThrow(/packet objective/);
+    }
+  });
+
   test('keeps an absent new file truthful and derives stable task content', () => {
     const input = admitted();
     const first = buildAdmittedDevelopmentPacket(input);
@@ -533,24 +578,52 @@ describe('admitted development packet', () => {
     const originalWork = structuredClone(originalInput.host.work);
     writeFileSync(path.join(root, originalInput.target), 'export const changed = true;');
     const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), originalInput.allowedPaths);
-    const {receipt} = configuredFrontierRepairFixture(true, false, {config, root, workspaceId: originalWork.workspace_id},
-      'implementation', originalInput, source);
-    const work = receipt.successor_work, state = receipt.successor_journal;
-    const current = {...originalInput, host: {work, ledger: receipt.successor_ledger},
-      ledger: {state, version: receipt.journal_version}};
-    const sourceStore = { snapshotCurrentTaskSourceSources: () => source, readDeliveredWorkContinuationReceipt: () => receipt };
+    const { receipt } = configuredFrontierRepairFixture(
+      true,
+      false,
+      { config, root, workspaceId: originalWork.workspace_id },
+      'implementation',
+      originalInput,
+      source,
+    );
+    const work = receipt.successor_work,
+      state = receipt.successor_journal;
+    const current = {
+      ...originalInput,
+      host: { work, ledger: receipt.successor_ledger },
+      ledger: { state, version: receipt.journal_version },
+    };
+    const sourceStore = {
+      snapshotCurrentTaskSourceSources: () => source,
+      readDeliveredWorkContinuationReceipt: () => receipt,
+    };
     expect(() => buildAdmittedDevelopmentPacket(current)).toThrow(/scope, acceptance or thread/);
     const packet = buildAdmittedDevelopmentPacket({ ...current, sourceStore });
     expect(packet.source_revision).toBe(source.digest);
     expect(packet.acceptance).toEqual(['AC-1: The scoped file is created.']);
-    expect(packet.implementation_constraints.some(value => value.includes('Baseline task synthesis summary'))).toBe(true);
+    expect(packet.implementation_constraints.some((value) => value.includes('Baseline task synthesis summary'))).toBe(
+      true,
+    );
     expect(packet.code_evidence_refs).toEqual([originalInput.target]);
-    const corrupted = structuredClone(state); corrupted.completed[0].items[0].observation.summary = 'changed protected body';
-    expect(() => buildAdmittedDevelopmentPacket({ ...current, sourceStore, ledger: {
-      state: corrupted, version: { revision: 2, digest: canonicalJsonDigest(corrupted) } } })).toThrow(/completed prefix/);
+    const corrupted = structuredClone(state);
+    corrupted.completed[0].items[0].observation.summary = 'changed protected body';
+    expect(() =>
+      buildAdmittedDevelopmentPacket({
+        ...current,
+        sourceStore,
+        ledger: {
+          state: corrupted,
+          version: { revision: 2, digest: canonicalJsonDigest(corrupted) },
+        },
+      }),
+    ).toThrow(/completed prefix/);
     const foreign = { ...receipt, successor_binding: { ...work.binding, scope_id: 'foreign-scope' } };
-    expect(() => buildAdmittedDevelopmentPacket({ ...current, sourceStore: { ...sourceStore,
-      readDeliveredWorkContinuationReceipt: () => foreign } })).toThrow(/future configured-frontier snapshot, prefix or prior CAS differs/);
+    expect(() =>
+      buildAdmittedDevelopmentPacket({
+        ...current,
+        sourceStore: { ...sourceStore, readDeliveredWorkContinuationReceipt: () => foreign },
+      }),
+    ).toThrow(/future configured-frontier snapshot, prefix or prior CAS differs/);
   });
 
   test('continued packet preserves exact original typed research and synthesis with changed current Source', () => {
@@ -559,19 +632,45 @@ describe('admitted development packet', () => {
       const priorWork = structuredClone(input.host.work);
       writeFileSync(path.join(root, input.target), 'export const continued = true;');
       const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), input.allowedPaths);
-      const {receipt} = configuredFrontierRepairFixture(true, false, {config, root, workspaceId: priorWork.workspace_id},
-        'implementation', input, source);
-      const work = receipt.successor_work, state = receipt.successor_journal;
-      const current = { ...input, host: {work, ledger: receipt.successor_ledger}, ledger: {
-        state, version: receipt.journal_version }, sourceStore: {
-        snapshotCurrentTaskSourceSources: () => source, readDeliveredWorkContinuationReceipt: () => receipt } };
+      const { receipt } = configuredFrontierRepairFixture(
+        true,
+        false,
+        { config, root, workspaceId: priorWork.workspace_id },
+        'implementation',
+        input,
+        source,
+      );
+      const work = receipt.successor_work,
+        state = receipt.successor_journal;
+      const current = {
+        ...input,
+        host: { work, ledger: receipt.successor_ledger },
+        ledger: {
+          state,
+          version: receipt.journal_version,
+        },
+        sourceStore: {
+          snapshotCurrentTaskSourceSources: () => source,
+          readDeliveredWorkContinuationReceipt: () => receipt,
+        },
+      };
       const packet = buildAdmittedDevelopmentPacket(current);
       expect(packet.source_revision).toBe(source.digest);
       expect(packet.research_artifact_refs.length).toBe(4);
-      expect(packet.implementation_constraints.some(value => value.includes('Unique synthesis requirement'))).toBe(true);
-      const damaged = structuredClone(state); damaged.completed[0].items[0].observation.summary = 'changed protected research';
-      expect(() => buildAdmittedDevelopmentPacket({ ...current, ledger: {
-        state: damaged, version: { revision: 2, digest: canonicalJsonDigest(damaged) } } })).toThrow(/completed prefix/);
+      expect(packet.implementation_constraints.some((value) => value.includes('Unique synthesis requirement'))).toBe(
+        true,
+      );
+      const damaged = structuredClone(state);
+      damaged.completed[0].items[0].observation.summary = 'changed protected research';
+      expect(() =>
+        buildAdmittedDevelopmentPacket({
+          ...current,
+          ledger: {
+            state: damaged,
+            version: { revision: 2, digest: canonicalJsonDigest(damaged) },
+          },
+        }),
+      ).toThrow(/completed prefix/);
     } finally {
       for (const artifactPath of input.artifactPaths) rmSync(artifactPath, { force: true });
     }
@@ -720,7 +819,7 @@ describe('admitted development packet', () => {
     const input = addObservedSynthesis(admitted('implementation_change'));
     try {
       const packet = buildAdmittedDevelopmentPacket(input);
-      const synthesisRef = input.host.work.artifacts.find(entry => entry.schema === 'ResearchSynthesis/v1');
+      const synthesisRef = input.host.work.artifacts.find((entry) => entry.schema === 'ResearchSynthesis/v1');
       expect(packet.research_artifact_refs).toContain(
         `artifact://research/${synthesisRef.artifact_id}/${synthesisRef.sha256}`,
       );

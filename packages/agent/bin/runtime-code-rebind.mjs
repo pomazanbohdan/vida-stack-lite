@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { closeSync, constants, fsyncSync, lstatSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import {
   loadRuntimeConfig,
@@ -14,7 +14,7 @@ import {
   validateRuntimeConfigRepairTargetBytes,
 } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
-import { selectCorrectiveEvidence,validateWorkSessionBinding } from '../src/orchestration/final-assurance.ts';
+import { selectCorrectiveEvidence, validateWorkSessionBinding } from '../src/orchestration/final-assurance.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
@@ -29,6 +29,7 @@ import {
 import {
   buildSessionBridgeRequest,
   configuredContextForStage,
+  parseSessionBridgeRequest,
 } from '../src/orchestration/mastra-session-bridge.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
@@ -40,14 +41,50 @@ import {
   validateDeliveredWorkContinuationRequest,
 } from '../src/orchestration/delivered-work-continuation.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { runRuntimeConfigRebind, readAppliedRuntimeConfigRebind, currentNativeSelfAttestation } from './runtime-config-rebind.mjs';
-import { readRetainedUnissuedSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
+import {
+  runRuntimeConfigRebind,
+  readAppliedRuntimeConfigRebind,
+  currentNativeSelfAttestation,
+} from './runtime-config-rebind.mjs';
+import {
+  readRetainedUnissuedSessionEngineSnapshot,
+  readInitialSourceContinuationSessionEngineSnapshot,
+} from '../src/orchestration/session-engine-snapshot.ts';
 import { readLocalSourceWriteAuthorization } from '../src/orchestration/local-source-authorization.ts';
 import { releaseState, releaseJournalFile, releasePath } from './local-release-artifacts.mjs';
+import {
+  validateInitialSourceFrontierCodeRebindRequest,
+  validateInitialSourceFrontierCodeRebindVerifiedCurrent,
+} from '../src/orchestration/initial-source-frontier-code-rebind.ts';
+import { parseWorkItemSelection } from './continue-initial-source.mjs';
 
-const requireRebind = (ok, message) => {
+/** @typedef {import('../src/config/runtime-config.ts').AgentRuntimeConfig} AgentRuntimeConfig */
+/** @typedef {import('../src/config/runtime-config.ts').WorkItemSelection} WorkItemSelection */
+/** @typedef {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess} SafeRepositoryAccess */
+/** @typedef {import('../src/host-state.ts').HostStateSnapshot} HostStateSnapshot */
+/** @typedef {import('../src/host-state.ts').WorkIdentity} WorkIdentity */
+/** @typedef {import('../src/host-state.ts').StateVersion} StateVersion */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerState} MastraSessionLedgerState */
+/** @typedef {import('../src/orchestration/scoped-source-snapshot.ts').ScopedSourceSnapshot} ScopedSourceSnapshot */
+/** @typedef {import('../src/orchestration/initial-source-continuation.ts').InitialSourceContinuationReceipt} InitialSourceContinuationReceipt */
+/** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindRequest} InitialSourceFrontierCodeRebindRequest */
+/** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindVerifiedCurrent} InitialSourceFrontierCodeRebindVerifiedCurrent */
+/** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindReceipt} InitialSourceFrontierCodeRebindReceipt */
+/** @typedef {import('bun:sqlite').Database} SqliteDatabase */
+
+/**
+ * @typedef {object} InitialSourceFrontierPlan
+ * @property {'InitialSourceFrontierCodeRebindPlan/v1'} schema
+ * @property {string} repair_id
+ * @property {InitialSourceFrontierCodeRebindRequest} request
+ * @property {InitialSourceFrontierCodeRebindVerifiedCurrent} endpoint_proof
+ * @property {string} digest
+ */
+
+/** @param {unknown} ok @param {string} message @returns {asserts ok} */
+function requireRebind(ok, message) {
   if (!ok) throw new Error(`vida runtime-code rebind: ${message}`);
-};
+}
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const identifier = /^[a-z0-9][a-z0-9._-]{0,79}$/;
 const hash = /^[a-f0-9]{64}$/;
@@ -68,14 +105,40 @@ const planningKeys = [
   '--owner-no-call-ref',
 ];
 const deliveredContinuationPlanningKeys = planningKeys.concat(['--basis', '--source-transition-id']);
-const configuredFrontierPlanningKeys = planningKeys.filter(key => !['--action-id', '--issue-id', '--forward-operation-id'].includes(key))
-  .concat(['--basis', '--source-transition-id', '--parent-manifest', '--successor-manifest', '--system-update', '--source-correction']);
+const configuredFrontierPlanningKeys = planningKeys
+  .filter((key) => !['--action-id', '--issue-id', '--forward-operation-id'].includes(key))
+  .concat([
+    '--basis',
+    '--source-transition-id',
+    '--parent-manifest',
+    '--successor-manifest',
+    '--system-update',
+    '--source-correction',
+  ]);
 const synthesisPlanningKeys = planningKeys
   .filter((key) => key !== '--owner-no-call-ref')
   .concat(['--basis', '--correction-id', '--owner-correction-ref']);
-const focusedPlanningKeys=planningKeys.filter(key=>key!=='--owner-no-call-ref').concat(['--basis','--owner-correction-ref']);
+const focusedPlanningKeys = planningKeys
+  .filter((key) => key !== '--owner-no-call-ref')
+  .concat(['--basis', '--owner-correction-ref']);
 const applyingKeys = ['--kind', '--mode', '--project-root', '--repair-id'];
+const initialSourceFrontierPlanningKeys = [
+  '--kind',
+  '--basis',
+  '--mode',
+  '--project-root',
+  '--repair-id',
+  '--projects',
+  '--work-id',
+  '--attempt',
+  '--action-id',
+  '--parent-manifest',
+  '--successor-manifest',
+  '--system-update',
+];
+const initialSourceFrontierApplyingKeys = ['--kind', '--basis', '--mode', '--project-root', '--repair-id'];
 const planPath = (id) => `.agent/work/${id}/runtime-code-rebind-plan.v1.json`;
+const initialSourceFrontierPlanPath = (id) => `.agent/work/${id}/initial-source-frontier-code-rebind-plan.v1.json`;
 const deliveredContinuationPlanPath = (id) => `.agent/work/${id}/delivered-work-continuation-plan.v1.json`;
 
 function parse(args) {
@@ -96,14 +159,23 @@ function parse(args) {
       identifier.test(values['--repair-id'] ?? ''),
     'kind, mode, root or repair ID invalid',
   );
+  if (values['--basis'] === 'initial-source-frontier')
+    requireRebind(['inspect', 'plan', 'apply'].includes(values['--mode']), 'initial-source frontier mode invalid');
   const expected = ['inspect', 'plan'].includes(values['--mode'])
-    ? values['--basis'] === 'configured-frontier-continuation' ? configuredFrontierPlanningKeys
-      : values['--basis'] === 'delivered-config-continuation'
-      ? deliveredContinuationPlanningKeys
-      : values['--basis'] === 'known-terminal-verify' ? focusedPlanningKeys : values['--basis'] === 'synthesis-correction'
-        ? synthesisPlanningKeys
-        : planningKeys
-    : applyingKeys;
+    ? values['--basis'] === 'initial-source-frontier'
+      ? initialSourceFrontierPlanningKeys
+      : values['--basis'] === 'configured-frontier-continuation'
+        ? configuredFrontierPlanningKeys
+        : values['--basis'] === 'delivered-config-continuation'
+          ? deliveredContinuationPlanningKeys
+          : values['--basis'] === 'known-terminal-verify'
+            ? focusedPlanningKeys
+            : values['--basis'] === 'synthesis-correction'
+              ? synthesisPlanningKeys
+              : planningKeys
+    : values['--basis'] === 'initial-source-frontier'
+      ? initialSourceFrontierApplyingKeys
+      : applyingKeys;
   requireRebind(
     JSON.stringify(Object.keys(values).sort()) === JSON.stringify([...expected].sort()),
     'missing or unexpected arguments',
@@ -111,6 +183,7 @@ function parse(args) {
   return values;
 }
 
+/** @param {string} root @param {AgentRuntimeConfig} config @param {boolean} readonly @returns {SqliteDatabase} */
 function trustedDatabase(root, config, readonly) {
   const access = requireSafeRepositoryAccess(root);
   access.assertDirectory(config.control.work_root, 'runtime-code rebind work root');
@@ -125,6 +198,12 @@ function trustedDatabase(root, config, readonly) {
   return new Database(file, { readonly, strict: true });
 }
 
+/**
+ * @param {SafeRepositoryAccess} access
+ * @param {string} relative
+ * @param {string} label
+ * @returns {{bytes: ReturnType<SafeRepositoryAccess['readBytes']>, value: unknown}}
+ */
 function validatedJson(access, relative, label) {
   const bytes = access.readBytes(relative, label);
   requireRebind(bytes.length <= 8 * 1024 * 1024, `${label} exceeds bound`);
@@ -133,19 +212,36 @@ function validatedJson(access, relative, label) {
 
 /** Source-repository adapter: actual local commit bytes, never remote-publication authority. */
 export function assertCommittedSourceChanges(root, commit, changes) {
-  requireRebind(/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(commit) && Array.isArray(changes) && changes.length <= 1024,
-    'committed Source proof input is invalid');
+  requireRebind(
+    /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(commit) && Array.isArray(changes) && changes.length <= 1024,
+    'committed Source proof input is invalid',
+  );
   const selected = new Map();
   for (const change of changes) {
     const entry = change?.after;
-    requireRebind(entry && typeof change.path === 'string' && change.path === entry.path && change.path.length > 0 &&
-      change.path.length <= 512 && !change.path.startsWith('/') && !/^[A-Za-z]:/.test(change.path) &&
-      !/[\\\p{Cc}]/u.test(change.path) && change.path.split('/').every(part => part && part !== '.' && part !== '..') &&
-      typeof entry.exists === 'boolean' && (entry.exists ? Number.isSafeInteger(entry.bytes) && entry.bytes >= 0 &&
-        entry.bytes <= 8 * 1024 * 1024 && hash.test(entry.sha256) : entry.bytes === null && entry.sha256 === null),
-    'committed Source entry is invalid');
-    requireRebind(!selected.has(change.path) || canonicalJsonDigest(selected.get(change.path)) === canonicalJsonDigest(entry),
-      'committed Source path has conflicting endpoint bytes');
+    requireRebind(
+      entry &&
+        typeof change.path === 'string' &&
+        change.path === entry.path &&
+        change.path.length > 0 &&
+        change.path.length <= 512 &&
+        !change.path.startsWith('/') &&
+        !/^[A-Za-z]:/.test(change.path) &&
+        !/[\\\p{Cc}]/u.test(change.path) &&
+        change.path.split('/').every((part) => part && part !== '.' && part !== '..') &&
+        typeof entry.exists === 'boolean' &&
+        (entry.exists
+          ? Number.isSafeInteger(entry.bytes) &&
+            entry.bytes >= 0 &&
+            entry.bytes <= 8 * 1024 * 1024 &&
+            hash.test(entry.sha256)
+          : entry.bytes === null && entry.sha256 === null),
+      'committed Source entry is invalid',
+    );
+    requireRebind(
+      !selected.has(change.path) || canonicalJsonDigest(selected.get(change.path)) === canonicalJsonDigest(entry),
+      'committed Source path has conflicting endpoint bytes',
+    );
     selected.set(change.path, entry);
   }
   requireRebind(selected.size <= 512, 'committed Source scope exceeds its bound');
@@ -153,38 +249,75 @@ export function assertCommittedSourceChanges(root, commit, changes) {
   Object.assign(env, { GIT_NO_LAZY_FETCH: '1', GIT_NO_REPLACE_OBJECTS: '1', GIT_OPTIONAL_LOCKS: '0' });
   const git = (args, input) => {
     const result = spawnSync('git', ['--no-replace-objects', '--literal-pathspecs', '-C', root, ...args], {
-      windowsHide: true, encoding: null, input, env, timeout: 30000, maxBuffer: 65 * 1024 * 1024,
+      windowsHide: true,
+      encoding: null,
+      input,
+      env,
+      timeout: 30000,
+      maxBuffer: 65 * 1024 * 1024,
     });
-    requireRebind(!result.error && result.signal === null && result.status === 0, 'local committed Source reader failed');
+    requireRebind(
+      !result.error && result.signal === null && result.status === 0,
+      'local committed Source reader failed',
+    );
     return result.stdout;
   };
   const observedRoot = path.resolve(git(['rev-parse', '--show-toplevel']).toString('utf8').trim());
-  requireRebind(process.platform === 'win32' ? observedRoot.toLowerCase() === path.resolve(root).toLowerCase() : observedRoot === path.resolve(root),
-    'committed Source repository root differs');
+  requireRebind(
+    process.platform === 'win32'
+      ? observedRoot.toLowerCase() === path.resolve(root).toLowerCase()
+      : observedRoot === path.resolve(root),
+    'committed Source repository root differs',
+  );
   requireRebind(git(['cat-file', '-t', commit]).toString('ascii').trim() === 'commit', 'Source object is not a commit');
   if (selected.size === 0) return { commit, checked_paths: 0, remote_publication_verified: false };
-  const paths = [...selected.keys()].sort(), modes = new Map();
-  for (const record of git(['ls-tree', '-rz', '--full-tree', commit, '--', ...paths]).toString('utf8').split('\0').filter(Boolean)) {
-    const separator = record.indexOf('\t'), relative = record.slice(separator + 1), metadata = record.slice(0, separator).split(' ');
-    requireRebind(separator > 0 && selected.has(relative) && !modes.has(relative) && metadata[1] === 'blob' &&
-      ['100644', '100755'].includes(metadata[0]), 'committed Source path is not an exact regular blob');
+  const paths = [...selected.keys()].sort(),
+    modes = new Map();
+  for (const record of git(['ls-tree', '-rz', '--full-tree', commit, '--', ...paths])
+    .toString('utf8')
+    .split('\0')
+    .filter(Boolean)) {
+    const separator = record.indexOf('\t'),
+      relative = record.slice(separator + 1),
+      metadata = record.slice(0, separator).split(' ');
+    requireRebind(
+      separator > 0 &&
+        selected.has(relative) &&
+        !modes.has(relative) &&
+        metadata[1] === 'blob' &&
+        ['100644', '100755'].includes(metadata[0]),
+      'committed Source path is not an exact regular blob',
+    );
     modes.set(relative, metadata[0]);
   }
-  requireRebind(paths.every(relative => modes.has(relative) === selected.get(relative).exists), 'committed Source existence differs');
-  const present = paths.filter(relative => selected.get(relative).exists);
+  requireRebind(
+    paths.every((relative) => modes.has(relative) === selected.get(relative).exists),
+    'committed Source existence differs',
+  );
+  const present = paths.filter((relative) => selected.get(relative).exists);
   if (present.length > 0) {
-    const stream = git(['cat-file', '--batch'], present.map(relative => commit + ':' + relative + '\n').join(''));
-    let offset = 0, totalBytes = 0;
+    const stream = git(['cat-file', '--batch'], present.map((relative) => commit + ':' + relative + '\n').join(''));
+    let offset = 0,
+      totalBytes = 0;
     for (const relative of present) {
-      const end = stream.indexOf(10, offset), entry = selected.get(relative);
+      const end = stream.indexOf(10, offset),
+        entry = selected.get(relative);
       requireRebind(end >= offset, 'committed Source blob header is absent');
-      const header = stream.subarray(offset, end).toString('ascii').split(' '), size = Number(header[2]);
-      requireRebind(header.length === 3 && header[1] === 'blob' && size === entry.bytes && Number.isSafeInteger(size) && size >= 0,
-        'committed Source blob size or type differs');
-      offset = end + 1; totalBytes += size;
-      requireRebind(totalBytes <= 64 * 1024 * 1024 && offset + size < stream.length &&
-        sha(stream.subarray(offset, offset + size)) === entry.sha256 && stream[offset + size] === 10,
-      'committed Source bytes differ from the endpoint');
+      const header = stream.subarray(offset, end).toString('ascii').split(' '),
+        size = Number(header[2]);
+      requireRebind(
+        header.length === 3 && header[1] === 'blob' && size === entry.bytes && Number.isSafeInteger(size) && size >= 0,
+        'committed Source blob size or type differs',
+      );
+      offset = end + 1;
+      totalBytes += size;
+      requireRebind(
+        totalBytes <= 64 * 1024 * 1024 &&
+          offset + size < stream.length &&
+          sha(stream.subarray(offset, offset + size)) === entry.sha256 &&
+          stream[offset + size] === 10,
+        'committed Source bytes differ from the endpoint',
+      );
       offset += size + 1;
     }
     requireRebind(offset === stream.length, 'committed Source stream has extra data');
@@ -290,18 +423,24 @@ export function planRuntimeCodeRebind({
       typeof nativeHandle === 'string' &&
       nativeHandle.length > 0 &&
       nativeHandle.length <= 256 &&
-      (focusedFailureCorrection ? typeof ownerCorrectionPointer==='string' && ownerCorrectionPointer.trim().length>0 && ownerCorrectionPointer.length<=2048 && ownerNoCallPointer===undefined && correctionId===undefined : correctionId
-        ? identifier.test(correctionId) &&
-          typeof ownerCorrectionPointer === 'string' &&
-          ownerCorrectionPointer.length > 0 &&
+      (focusedFailureCorrection
+        ? typeof ownerCorrectionPointer === 'string' &&
+          ownerCorrectionPointer.trim().length > 0 &&
           ownerCorrectionPointer.length <= 2048 &&
-          !/\p{Cc}/u.test(ownerCorrectionPointer) &&
-          ownerNoCallPointer === undefined
-        : typeof ownerNoCallPointer === 'string' &&
-          ownerNoCallPointer.length > 0 &&
-          ownerNoCallPointer.length <= 2048 &&
-          !/\p{Cc}/u.test(ownerNoCallPointer) &&
-          ownerCorrectionPointer === undefined) &&
+          ownerNoCallPointer === undefined &&
+          correctionId === undefined
+        : correctionId
+          ? identifier.test(correctionId) &&
+            typeof ownerCorrectionPointer === 'string' &&
+            ownerCorrectionPointer.length > 0 &&
+            ownerCorrectionPointer.length <= 2048 &&
+            !/\p{Cc}/u.test(ownerCorrectionPointer) &&
+            ownerNoCallPointer === undefined
+          : typeof ownerNoCallPointer === 'string' &&
+            ownerNoCallPointer.length > 0 &&
+            ownerNoCallPointer.length <= 2048 &&
+            !/\p{Cc}/u.test(ownerNoCallPointer) &&
+            ownerCorrectionPointer === undefined) &&
       typeof actor === 'string' &&
       actor.trim() === actor &&
       actor.length > 0 &&
@@ -335,20 +474,23 @@ export function planRuntimeCodeRebind({
   );
   const owner = work.value;
   const state = journal.value;
-  const item = [...state.items,...state.completed.flatMap(wave=>wave.items)].find((entry) => entry.request?.action_id === actionId);
+  const item = [...state.items, ...state.completed.flatMap((wave) => wave.items)].find(
+    (entry) => entry.request?.action_id === actionId,
+  );
   const stage = config.workflows[item?.request.workflow_id]?.stages.find(
     (entry) => entry.id === item?.request.stage_id,
   );
   const assignment = stage?.assignments[item?.request.assignment_index];
   const profile = config.agents.profiles[assignment?.profile];
   const toolPolicy = config.agents.tool_policies[profile?.tools_policy];
-  const dispatchRow = focusedFailureCorrection || correctionId
-    ? null
-    : database
-        .query(
-          'SELECT payload,digest FROM agent_host_readonly_dispatch_activation WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=?',
-        )
-        .get(workspaceId, workId, attempt, actionId);
+  const dispatchRow =
+    focusedFailureCorrection || correctionId
+      ? null
+      : database
+          .query(
+            'SELECT payload,digest FROM agent_host_readonly_dispatch_activation WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=?',
+          )
+          .get(workspaceId, workId, attempt, actionId);
   const dispatch = dispatchRow && JSON.parse(dispatchRow.payload);
   const repairRow =
     dispatch &&
@@ -404,85 +546,101 @@ export function planRuntimeCodeRebind({
     ) &&
     !owner.execution.assignment_attempts.some((entry) => entry.status === 'started' || entry.status === 'uncertain');
   requireRebind(
-    focusedFailureCorrection ?
-      owner.schema==='WorkState/v1' && owner.workspace_id===workspaceId && owner.binding.lifecycle_work_id===workId && owner.binding.config_digest===runtimeConfigDigest(config) && owner.binding.integrations_digest===identity.integrations_digest && canonicalJsonDigest(owner.binding.project_ids)===canonicalJsonDigest(projectIds) && owner.lifecycle.phase==='VERIFY' && owner.execution.status==='active' && owner.lease?.thread_id===nativeHandle && owner.execution.assignment_attempts.every(entry=>['completed','no_effect'].includes(entry.status)) && state.work_id===workId && state.attempt===attempt && state.workspace_id===workspaceId && state.source_scope?.digest===owner.binding.work_source_revision && selectCorrectiveEvidence(state,config.workflows[owner.binding.workflow_id]).failed.some(entry=>entry.request.action_id===actionId&&entry.issue_id===issueId) : (
-    owner.schema === 'WorkState/v1' &&
-      owner.workspace_id === workspaceId &&
-      owner.binding.lifecycle_work_id === workId &&
-      owner.binding.config_digest === runtimeConfigDigest(config) &&
-      owner.binding.integrations_digest === identity.integrations_digest &&
-      canonicalJsonDigest(owner.binding.project_ids) === canonicalJsonDigest(projectIds) &&
-      ((owner.execution.status === 'active' && owner.lease?.thread_id === nativeHandle) || pausedOwner) &&
-      owner.lifecycle.phase === 'INTAKE' &&
-      owner.lifecycle.seal === null &&
-      state.schema === 'MastraSessionLedger/v1' &&
-      state.workspace_id === workspaceId &&
-      state.work_id === workId &&
-      state.attempt === attempt &&
-      state.run_id === owner.execution.run_id &&
-      (correctionId ? item?.issue_id === null : item?.issue_id === issueId) &&
-      item?.observation === null &&
-      !item.research_activation &&
-      !item.research_normalization &&
-      !item.host_reservation &&
-      item.request.config_digest === runtimeConfigDigest(config) &&
-      item.request.scope_digest === state.source_scope?.digest &&
-      owner.binding.work_source_revision === state.source_scope.digest &&
-      assignment?.role === item.request.role &&
-      profile?.mutation_scope === 'none' &&
-      profile?.tools_policy === 'read_only' &&
-      toolPolicy?.source_write === false &&
-      (correctionId
-        ? correction &&
-          correctionRow &&
-          correction.schema === 'VidaSynthesisObservationCorrectionPlan/v1' &&
-          correction.digest === correctionRow.digest &&
-          correction.digest === canonicalJsonDigest(correctionBody) &&
-          correction.correction_id === correctionId &&
-          correction.owner_correction_pointer === ownerCorrectionPointer &&
-          correction.workspace_id === workspaceId &&
-          correction.repository_id === identity.repository_id &&
-          canonicalJsonDigest(correction.project_ids) === canonicalJsonDigest(projectIds) &&
-          correction.integrations_digest === identity.integrations_digest &&
-          correction.work_id === workId &&
-          correction.attempt === attempt &&
-          correction.action_id === actionId &&
-          correction.prior_issue_id === issueId &&
-          correction.original_item.issue_id === issueId &&
-          correction.original_item.observation?.status === 'reported_complete' &&
-          canonicalJsonDigest(correction.original_item.request) === canonicalJsonDigest(item.request) &&
-          correction.config_digest === runtimeConfigDigest(config) &&
-          correction.source_digest === state.source_scope.digest
-        : dispatch &&
-          canonicalJsonDigest(dispatch) === dispatchRow.digest &&
-          dispatch.schema === 'VidaReadOnlyDispatchActivation/v1' &&
-          dispatch.logical_action_id === actionId &&
-          dispatch.issue_id === issueId &&
-          repair &&
-          repair.schema === 'VidaReadOnlyDispatchRepairPlan/v1' &&
-          repairRow.digest === repair.digest &&
-          repair.digest === canonicalJsonDigest(repairBody) &&
-          dispatch.plan_digest === repair.digest &&
-          repair.workspace_id === workspaceId &&
-          repair.repository_id === identity.repository_id &&
-          canonicalJsonDigest(repair.project_ids) === canonicalJsonDigest(projectIds) &&
-          repair.integrations_digest === identity.integrations_digest &&
-          repair.work_id === workId &&
-          repair.attempt === attempt &&
-          repair.logical_action_id === actionId &&
-          repair.replacement_generation === dispatch.generation &&
-          repair.prior_outcome === 'unknown' &&
-          repair.prior_issue_id === dispatch.prior_issue_id &&
-          repair.replacement_issue_id === issueId &&
-          repair.dispatch_action_id === dispatch.dispatch_action_id &&
-          repair.prior_native_handle === nativeHandle &&
-          repair.request_digest === canonicalJsonDigest(item.request) &&
-          repair.scope_digest === item.request.scope_digest &&
-          repair.config_digest === item.request.config_digest &&
-          repair.source_digest === state.source_scope.digest)),
+    focusedFailureCorrection
+      ? owner.schema === 'WorkState/v1' &&
+          owner.workspace_id === workspaceId &&
+          owner.binding.lifecycle_work_id === workId &&
+          owner.binding.config_digest === runtimeConfigDigest(config) &&
+          owner.binding.integrations_digest === identity.integrations_digest &&
+          canonicalJsonDigest(owner.binding.project_ids) === canonicalJsonDigest(projectIds) &&
+          owner.lifecycle.phase === 'VERIFY' &&
+          owner.execution.status === 'active' &&
+          owner.lease?.thread_id === nativeHandle &&
+          owner.execution.assignment_attempts.every((entry) => ['completed', 'no_effect'].includes(entry.status)) &&
+          state.work_id === workId &&
+          state.attempt === attempt &&
+          state.workspace_id === workspaceId &&
+          state.source_scope?.digest === owner.binding.work_source_revision &&
+          selectCorrectiveEvidence(state, config.workflows[owner.binding.workflow_id]).failed.some(
+            (entry) => entry.request.action_id === actionId && entry.issue_id === issueId,
+          )
+      : owner.schema === 'WorkState/v1' &&
+          owner.workspace_id === workspaceId &&
+          owner.binding.lifecycle_work_id === workId &&
+          owner.binding.config_digest === runtimeConfigDigest(config) &&
+          owner.binding.integrations_digest === identity.integrations_digest &&
+          canonicalJsonDigest(owner.binding.project_ids) === canonicalJsonDigest(projectIds) &&
+          ((owner.execution.status === 'active' && owner.lease?.thread_id === nativeHandle) || pausedOwner) &&
+          owner.lifecycle.phase === 'INTAKE' &&
+          owner.lifecycle.seal === null &&
+          state.schema === 'MastraSessionLedger/v1' &&
+          state.workspace_id === workspaceId &&
+          state.work_id === workId &&
+          state.attempt === attempt &&
+          state.run_id === owner.execution.run_id &&
+          (correctionId ? item?.issue_id === null : item?.issue_id === issueId) &&
+          item?.observation === null &&
+          !item.research_activation &&
+          !item.research_normalization &&
+          !item.host_reservation &&
+          item.request.config_digest === runtimeConfigDigest(config) &&
+          item.request.scope_digest === state.source_scope?.digest &&
+          owner.binding.work_source_revision === state.source_scope.digest &&
+          assignment?.role === item.request.role &&
+          profile?.mutation_scope === 'none' &&
+          profile?.tools_policy === 'read_only' &&
+          toolPolicy?.source_write === false &&
+          (correctionId
+            ? correction &&
+              correctionRow &&
+              correction.schema === 'VidaSynthesisObservationCorrectionPlan/v1' &&
+              correction.digest === correctionRow.digest &&
+              correction.digest === canonicalJsonDigest(correctionBody) &&
+              correction.correction_id === correctionId &&
+              correction.owner_correction_pointer === ownerCorrectionPointer &&
+              correction.workspace_id === workspaceId &&
+              correction.repository_id === identity.repository_id &&
+              canonicalJsonDigest(correction.project_ids) === canonicalJsonDigest(projectIds) &&
+              correction.integrations_digest === identity.integrations_digest &&
+              correction.work_id === workId &&
+              correction.attempt === attempt &&
+              correction.action_id === actionId &&
+              correction.prior_issue_id === issueId &&
+              correction.original_item.issue_id === issueId &&
+              correction.original_item.observation?.status === 'reported_complete' &&
+              canonicalJsonDigest(correction.original_item.request) === canonicalJsonDigest(item.request) &&
+              correction.config_digest === runtimeConfigDigest(config) &&
+              correction.source_digest === state.source_scope.digest
+            : dispatch &&
+              canonicalJsonDigest(dispatch) === dispatchRow.digest &&
+              dispatch.schema === 'VidaReadOnlyDispatchActivation/v1' &&
+              dispatch.logical_action_id === actionId &&
+              dispatch.issue_id === issueId &&
+              repair &&
+              repair.schema === 'VidaReadOnlyDispatchRepairPlan/v1' &&
+              repairRow.digest === repair.digest &&
+              repair.digest === canonicalJsonDigest(repairBody) &&
+              dispatch.plan_digest === repair.digest &&
+              repair.workspace_id === workspaceId &&
+              repair.repository_id === identity.repository_id &&
+              canonicalJsonDigest(repair.project_ids) === canonicalJsonDigest(projectIds) &&
+              repair.integrations_digest === identity.integrations_digest &&
+              repair.work_id === workId &&
+              repair.attempt === attempt &&
+              repair.logical_action_id === actionId &&
+              repair.replacement_generation === dispatch.generation &&
+              repair.prior_outcome === 'unknown' &&
+              repair.prior_issue_id === dispatch.prior_issue_id &&
+              repair.replacement_issue_id === issueId &&
+              repair.dispatch_action_id === dispatch.dispatch_action_id &&
+              repair.prior_native_handle === nativeHandle &&
+              repair.request_digest === canonicalJsonDigest(item.request) &&
+              repair.scope_digest === item.request.scope_digest &&
+              repair.config_digest === item.request.config_digest &&
+              repair.source_digest === state.source_scope.digest),
     'current owner, journal or issued replacement differs',
   );
-  validateWorkSessionBinding(owner,state,root);
+  validateWorkSessionBinding(owner, state, root);
   const access = requireSafeRepositoryAccess(root);
   requireRebind(
     snapshotDeclaredSources(
@@ -534,9 +692,11 @@ export function planRuntimeCodeRebind({
     forwardOperationId,
     parentManifestDigest: lineage.parentManifestDigest,
     successorManifestDigest: lineage.successorManifestDigest,
-    ...(focusedFailureCorrection ? {focusedFailureCorrection:{ownerCorrectionPointer}} : correctionId
-      ? { synthesisCorrection: { correctionId, correctionDigest: correction.digest, ownerCorrectionPointer } }
-      : { ownerNoCallPointer }),
+    ...(focusedFailureCorrection
+      ? { focusedFailureCorrection: { ownerCorrectionPointer } }
+      : correctionId
+        ? { synthesisCorrection: { correctionId, correctionDigest: correction.digest, ownerCorrectionPointer } }
+        : { ownerNoCallPointer }),
   };
   const body = {
     schema: 'VidaRuntimeCodeRebindPlan/v1',
@@ -629,11 +789,29 @@ function sourceTransitionAuthorizedPaths(root, config, transitionId, proof) {
 }
 
 /** Shared exact native/Source endpoint verification; this grants no Host rights. */
-export function verifyConfiguredNativeEndpoint({ root, config, workspaceId, identity, work, journal,
-  intake, intakeRef, access, sourceTransitionId, parentManifestRef, successorManifestRef, systemUpdateRef, sourceCorrectionRef }) {
-  const edge = readAppliedRuntimeConfigRebind(root, config, sourceTransitionId), plan = edge.value.plan;
-  requireRebind(plan.old_config_digest === work.binding.config_digest &&
-    identity.project_ids.every(id => plan.project_ids.includes(id)), 'normal config edge does not begin at the original Work');
+export function verifyConfiguredNativeEndpoint({
+  root,
+  config,
+  workspaceId,
+  identity,
+  work,
+  journal,
+  intake,
+  intakeRef,
+  access,
+  sourceTransitionId,
+  parentManifestRef,
+  successorManifestRef,
+  systemUpdateRef,
+  sourceCorrectionRef,
+}) {
+  const edge = readAppliedRuntimeConfigRebind(root, config, sourceTransitionId),
+    plan = edge.value.plan;
+  requireRebind(
+    plan.old_config_digest === work.binding.config_digest &&
+      identity.project_ids.every((id) => plan.project_ids.includes(id)),
+    'normal config edge does not begin at the original Work',
+  );
   const self = currentNativeSelfAttestation();
   requireRebind(self, 'configured frontier planning requires the installed native runtime');
   const parent = validatedJson(access, parentManifestRef, 'original native manifest'),
@@ -644,145 +822,365 @@ export function verifyConfiguredNativeEndpoint({ root, config, workspaceId, iden
     beforeCode = snapshotRuntimeManifestSources(parent.value, config.runtime.bundle, intake.runtime_code_paths),
     targetCode = snapshotRuntimeManifestSources(successor.value, config.runtime.bundle, runtimePaths),
     currentCode = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, runtimePaths),
-    native = successor.value, installation = update.value.installation_observation;
-  requireRebind(beforeCode.digest === work.binding.runtime_code_digest && targetCode.digest === currentCode.digest &&
-    beforeCode.digest !== targetCode.digest && native.schema === 'VidaStandaloneBuild/v1' && native.pin === self.bun_version &&
-    native.version === self.package_version && native.payloadId === self.resource_payload_id &&
-    native.asset?.sha256 === self.executable_sha256 && native.asset?.bytes === self.executable_bytes &&
-    update.value.status === 'CURRENT_SYSTEM_REPAIR_CHECKPOINT_UPDATED' && identifier.test(update.value.operation_id) &&
-    installation?.schema === 'VidaNativeInstallationResult/v1' && ['install', 'update'].includes(installation.action) &&
-    installation.runtime_accepted === false && installation.cleanup_complete === true &&
-    installation.sha256.toLowerCase() === self.executable_sha256 && installation.bytes === self.executable_bytes &&
-    installation.version === self.package_version &&
-    path.resolve(installation.path) === path.resolve(self.executable_path) &&
-    path.resolve(update.value.entry) === path.resolve(self.executable_path) && update.value.version === self.package_version &&
-    update.value.runtime_accepted === false && update.value.developer_unblocked === false,
-  'native endpoints, current package or actual installation differ');
+    native = successor.value,
+    installation = update.value.installation_observation;
+  requireRebind(
+    beforeCode.digest === work.binding.runtime_code_digest &&
+      targetCode.digest === currentCode.digest &&
+      beforeCode.digest !== targetCode.digest &&
+      native.schema === 'VidaStandaloneBuild/v1' &&
+      native.pin === self.bun_version &&
+      native.version === self.package_version &&
+      native.payloadId === self.resource_payload_id &&
+      native.asset?.sha256 === self.executable_sha256 &&
+      native.asset?.bytes === self.executable_bytes &&
+      update.value.status === 'CURRENT_SYSTEM_REPAIR_CHECKPOINT_UPDATED' &&
+      identifier.test(update.value.operation_id) &&
+      installation?.schema === 'VidaNativeInstallationResult/v1' &&
+      ['install', 'update'].includes(installation.action) &&
+      installation.runtime_accepted === false &&
+      installation.cleanup_complete === true &&
+      installation.sha256.toLowerCase() === self.executable_sha256 &&
+      installation.bytes === self.executable_bytes &&
+      installation.version === self.package_version &&
+      path.resolve(installation.path) === path.resolve(self.executable_path) &&
+      path.resolve(update.value.entry) === path.resolve(self.executable_path) &&
+      update.value.version === self.package_version &&
+      update.value.runtime_accepted === false &&
+      update.value.developer_unblocked === false,
+    'native endpoints, current package or actual installation differ',
+  );
   const registeredUpdate = releaseState(releaseJournalFile(root, update.value.operation_id)),
     pendingUpdate = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
-  requireRebind(registeredUpdate.operation_id === update.value.operation_id && pendingUpdate.operation_id === registeredUpdate.operation_id &&
-    registeredUpdate.version === self.package_version && pendingUpdate.version === registeredUpdate.version &&
-    ['awaiting_assurance', 'qualified', 'packed', 'installing', 'successful'].includes(registeredUpdate.status),
-  'native endpoint observation has no matching current release-owner operation');
+  requireRebind(
+    registeredUpdate.operation_id === update.value.operation_id &&
+      pendingUpdate.operation_id === registeredUpdate.operation_id &&
+      registeredUpdate.version === self.package_version &&
+      pendingUpdate.version === registeredUpdate.version &&
+      ['awaiting_assurance', 'qualified', 'packed', 'installing', 'successful'].includes(registeredUpdate.status),
+    'native endpoint observation has no matching current release-owner operation',
+  );
   const source = publication.value.source_inventory;
-  requireRebind(/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(publication.value.commit) &&
-    publication.value.project?.repository_id === identity.repository_id && publication.value.project?.config_digest === runtimeConfigDigest(config) &&
-    source && Array.isArray(source.entries) && source.entries.length > 0 && source.entries.length <= 4096 &&
-    source.source_binding === sha(Buffer.from(JSON.stringify(source.entries))), 'published Source correction is invalid');
+  requireRebind(
+    /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(publication.value.commit) &&
+      publication.value.project?.repository_id === identity.repository_id &&
+      publication.value.project?.config_digest === runtimeConfigDigest(config) &&
+      source &&
+      Array.isArray(source.entries) &&
+      source.entries.length > 0 &&
+      source.entries.length <= 4096 &&
+      source.source_binding === sha(Buffer.from(JSON.stringify(source.entries))),
+    'published Source correction is invalid',
+  );
   const published = new Map();
   for (const entry of source.entries) {
-    requireRebind(entry && Object.keys(entry).sort().join(',') === 'path,sha256' &&
-      typeof entry.path === 'string' && entry.path.length > 0 && entry.path.length <= 512 && !entry.path.startsWith('/') &&
-      !/^[A-Za-z]:/.test(entry.path) && !/[\\\p{Cc}]/u.test(entry.path) &&
-      entry.path.split('/').every(part => part && part !== '.' && part !== '..') && hash.test(entry.sha256) &&
-      !published.has(entry.path), 'published Source correction entry is invalid');
+    requireRebind(
+      entry &&
+        Object.keys(entry).sort().join(',') === 'path,sha256' &&
+        typeof entry.path === 'string' &&
+        entry.path.length > 0 &&
+        entry.path.length <= 512 &&
+        !entry.path.startsWith('/') &&
+        !/^[A-Za-z]:/.test(entry.path) &&
+        !/[\\\p{Cc}]/u.test(entry.path) &&
+        entry.path.split('/').every((part) => part && part !== '.' && part !== '..') &&
+        hash.test(entry.sha256) &&
+        !published.has(entry.path),
+      'published Source correction entry is invalid',
+    );
     published.set(entry.path, entry.sha256);
   }
   const runtimeSourceTargets = runtimeEndpointSourceTargets(config.runtime.bundle, beforeCode, targetCode, currentCode);
-  requireRebind(runtimeSourceTargets.every(entry => entry.exists
-    ? published.get(entry.path) === entry.sha256 : !published.has(entry.path)),
-  'runtime endpoint diff is outside the published correction');
+  requireRebind(
+    runtimeSourceTargets.every((entry) =>
+      entry.exists ? published.get(entry.path) === entry.sha256 : !published.has(entry.path),
+    ),
+    'runtime endpoint diff is outside the published correction',
+  );
   const currentSourceScope = snapshotDeclaredSources(access, [...work.lifecycle.scope.allowed_paths].sort()),
     authorizedSourceChanges = compareScopedSourceSnapshots(journal.source_scope, currentSourceScope);
   validateContinuationSourceChangePaths(work, authorizedSourceChanges);
-  requireRebind(authorizedSourceChanges.every(change => change.after.exists
-    ? published.get(change.path) === change.after.sha256 : !published.has(change.path)),
-  'current task Source changes differ from the correction byte record');
+  requireRebind(
+    authorizedSourceChanges.every((change) =>
+      change.after.exists ? published.get(change.path) === change.after.sha256 : !published.has(change.path),
+    ),
+    'current task Source changes differ from the correction byte record',
+  );
   // The byte report is a hint. Actual regular Git objects prove the commit bytes;
   // remote publication and installation-call provenance are not inferred from it.
   assertCommittedSourceChanges(root, publication.value.commit, [
-    ...runtimeSourceTargets.map(entry => ({ path: entry.path, after: entry })), ...authorizedSourceChanges,
+    ...runtimeSourceTargets.map((entry) => ({ path: entry.path, after: entry })),
+    ...authorizedSourceChanges,
   ]);
   const targetConfigDigest = runtimeConfigDigest(config);
-  const transition = { schema: 'ConfiguredRuntimeEndpointTransition/v1', workspace_id: workspaceId,
-    repository_id: identity.repository_id, project_ids: identity.project_ids, operation_path: edge.operationPath,
-    operation_sha256: sha(edge.bytes), operation_plan_digest: edge.value.plan_digest, operation_release_digest: canonicalJsonDigest(edge.release),
-    target_config_digest: targetConfigDigest, target_schema_digest: edge.targetSchemaDigest, target_yaml_sha256: sha(Buffer.from(plan.target_yaml)),
-    receipt_path: edge.receiptPath, receipt_sha256: sha(edge.receipt.bytes),
-    prior_runtime_code_digest: beforeCode.digest, target_runtime_code_digest: targetCode.digest,
-    parent_manifest_digest: sha(parent.bytes), successor_manifest_digest: sha(successor.bytes),
-    parent_manifest_ref: parentManifestRef, successor_manifest_ref: successorManifestRef,
-    system_update_operation_id: update.value.operation_id, system_update_ref: systemUpdateRef, system_update_sha256: sha(update.bytes),
-    source_correction_ref: sourceCorrectionRef, source_correction_sha256: sha(publication.bytes),
-    native_self_attestation_digest: canonicalJsonDigest(self), original_intake_ref: intakeRef.path,
-    original_intake_sha256: intakeRef.sha256, runtime_accepted: false };
-  const sourceTransition = validateClosedConfigRebindProof({ status: 'closed_config_rebind_proven', operation_id: sourceTransitionId,
-    baseline_config_digest: work.binding.config_digest, transition, transition_digest: canonicalJsonDigest(transition),
-    caller_owner_cas_required: true, runtime_accepted: false, writes_host_state: false });
-  return { edge, plan, runtimePaths, beforeCode, targetCode, currentCode, parent, successor, update,
-    publication, currentSourceScope, authorizedSourceChanges, self, sourceTransition };
+  const transition = {
+    schema: 'ConfiguredRuntimeEndpointTransition/v1',
+    workspace_id: workspaceId,
+    repository_id: identity.repository_id,
+    project_ids: identity.project_ids,
+    operation_path: edge.operationPath,
+    operation_sha256: sha(edge.bytes),
+    operation_plan_digest: edge.value.plan_digest,
+    operation_release_digest: canonicalJsonDigest(edge.release),
+    target_config_digest: targetConfigDigest,
+    target_schema_digest: edge.targetSchemaDigest,
+    target_yaml_sha256: sha(Buffer.from(plan.target_yaml)),
+    receipt_path: edge.receiptPath,
+    receipt_sha256: sha(edge.receipt.bytes),
+    prior_runtime_code_digest: beforeCode.digest,
+    target_runtime_code_digest: targetCode.digest,
+    parent_manifest_digest: sha(parent.bytes),
+    successor_manifest_digest: sha(successor.bytes),
+    parent_manifest_ref: parentManifestRef,
+    successor_manifest_ref: successorManifestRef,
+    system_update_operation_id: update.value.operation_id,
+    system_update_ref: systemUpdateRef,
+    system_update_sha256: sha(update.bytes),
+    source_correction_ref: sourceCorrectionRef,
+    source_correction_sha256: sha(publication.bytes),
+    native_self_attestation_digest: canonicalJsonDigest(self),
+    original_intake_ref: intakeRef.path,
+    original_intake_sha256: intakeRef.sha256,
+    runtime_accepted: false,
+  };
+  const sourceTransition = validateClosedConfigRebindProof({
+    status: 'closed_config_rebind_proven',
+    operation_id: sourceTransitionId,
+    baseline_config_digest: work.binding.config_digest,
+    transition,
+    transition_digest: canonicalJsonDigest(transition),
+    caller_owner_cas_required: true,
+    runtime_accepted: false,
+    writes_host_state: false,
+  });
+  return {
+    edge,
+    plan,
+    runtimePaths,
+    beforeCode,
+    targetCode,
+    currentCode,
+    parent,
+    successor,
+    update,
+    publication,
+    currentSourceScope,
+    authorizedSourceChanges,
+    self,
+    sourceTransition,
+  };
 }
 
 /** Plan a same-attempt unissued continuation from actual config and native endpoint evidence. */
-export function planConfiguredFrontierContinuation({ database, root, config, workspaceId, projectIds,
-  workId, attempt, nativeHandle, repairId, actor, timestamp, sourceTransitionId, ownerNoCallPointer,
-  parentManifestRef, successorManifestRef, systemUpdateRef, sourceCorrectionRef }) {
-  requireRebind(identifier.test(repairId) && identifier.test(sourceTransitionId) && Number.isSafeInteger(attempt) && attempt > 0 &&
-    typeof nativeHandle === 'string' && nativeHandle.trim() === nativeHandle && nativeHandle.length > 0 && nativeHandle.length <= 256 &&
-    typeof actor === 'string' && actor.trim() === actor && actor.length > 0 && actor.length <= 256 &&
-    typeof timestamp === 'string' && !Number.isNaN(Date.parse(timestamp)) &&
-    typeof ownerNoCallPointer === 'string' && ownerNoCallPointer.trim() === ownerNoCallPointer && ownerNoCallPointer.length > 0 &&
-    ownerNoCallPointer.length <= 2048 && !/\p{Cc}/u.test(ownerNoCallPointer), 'configured frontier attribution is invalid');
+export function planConfiguredFrontierContinuation({
+  database,
+  root,
+  config,
+  workspaceId,
+  projectIds,
+  workId,
+  attempt,
+  nativeHandle,
+  repairId,
+  actor,
+  timestamp,
+  sourceTransitionId,
+  ownerNoCallPointer,
+  parentManifestRef,
+  successorManifestRef,
+  systemUpdateRef,
+  sourceCorrectionRef,
+}) {
+  requireRebind(
+    identifier.test(repairId) &&
+      identifier.test(sourceTransitionId) &&
+      Number.isSafeInteger(attempt) &&
+      attempt > 0 &&
+      typeof nativeHandle === 'string' &&
+      nativeHandle.trim() === nativeHandle &&
+      nativeHandle.length > 0 &&
+      nativeHandle.length <= 256 &&
+      typeof actor === 'string' &&
+      actor.trim() === actor &&
+      actor.length > 0 &&
+      actor.length <= 256 &&
+      typeof timestamp === 'string' &&
+      !Number.isNaN(Date.parse(timestamp)) &&
+      typeof ownerNoCallPointer === 'string' &&
+      ownerNoCallPointer.trim() === ownerNoCallPointer &&
+      ownerNoCallPointer.length > 0 &&
+      ownerNoCallPointer.length <= 2048 &&
+      !/\p{Cc}/u.test(ownerNoCallPointer),
+    'configured frontier attribution is invalid',
+  );
   const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds),
-    identity = { repository_id: project.repository_id, project_ids: project.project_ids,
-      integrations_digest: project.integrations_digest, work_id: workId },
+    identity = {
+      repository_id: project.repository_id,
+      project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest,
+      work_id: workId,
+    },
     store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
-    state = store.readHostStateSnapshot(identity), work = state.work,
-    journalRow = checkedRow(database, 'agent_host_mastra_session_ledger', 'workspace_id=? AND work_id=? AND attempt=?', [workspaceId, workId, attempt]),
+    state = store.readHostStateSnapshot(identity),
+    work = state.work,
+    journalRow = checkedRow(
+      database,
+      'agent_host_mastra_session_ledger',
+      'workspace_id=? AND work_id=? AND attempt=?',
+      [workspaceId, workId, attempt],
+    ),
     journal = journalRow.value;
-  requireRebind(work && state.workVersion && state.ledgerVersion && work.workspace_id === workspaceId &&
-    work.execution.status === 'suspended' && ['implementation', 'awaiting_followup'].includes(work.execution.phase) && work.lease === null &&
-    work.lifecycle.phase === 'INTAKE' && work.lifecycle.seal === null &&
-    work.binding.repository_id === identity.repository_id && work.binding.integrations_digest === identity.integrations_digest &&
-    canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
-    work.binding.lifecycle_work_id === workId && work.execution.run_id === journal.run_id &&
-    journal.workspace_id === workspaceId && journal.work_id === workId && journal.attempt === attempt &&
-    journal.source_scope?.digest === work.binding.work_source_revision &&
-    work.execution.assignment_attempts.every(entry => ['completed', 'no_effect'].includes(entry.status)),
-  'original unissued Work or Journal no longer matches');
+  requireRebind(
+    work &&
+      state.workVersion &&
+      state.ledgerVersion &&
+      work.workspace_id === workspaceId &&
+      work.execution.status === 'suspended' &&
+      ['implementation', 'awaiting_followup'].includes(work.execution.phase) &&
+      work.lease === null &&
+      work.lifecycle.phase === 'INTAKE' &&
+      work.lifecycle.seal === null &&
+      work.binding.repository_id === identity.repository_id &&
+      work.binding.integrations_digest === identity.integrations_digest &&
+      canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+      work.binding.lifecycle_work_id === workId &&
+      work.execution.run_id === journal.run_id &&
+      journal.workspace_id === workspaceId &&
+      journal.work_id === workId &&
+      journal.attempt === attempt &&
+      journal.source_scope?.digest === work.binding.work_source_revision &&
+      work.execution.assignment_attempts.every((entry) => ['completed', 'no_effect'].includes(entry.status)),
+    'original unissued Work or Journal no longer matches',
+  );
   const access = requireSafeRepositoryAccess(root),
-    intakeRef = work.artifacts.find(ref => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1');
+    intakeRef = work.artifacts.find(
+      (ref) => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1',
+    );
   requireRebind(intakeRef, 'original protected intake is missing');
-  const intakeFile = validatedJson(access, intakeRef.path, 'original protected intake'), intake = intakeFile.value;
-  requireRebind(sha(intakeFile.bytes) === intakeRef.sha256 && intake.schema === 'VidaLocalSessionIntake/v1' &&
-    intake.native_session_handle === nativeHandle && canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest,
-  'original intake bytes, task or native owner differ');
-  const sourceApproval = work.lifecycle.references.find(ref => ref.kind === 'execution_approval' &&
-    ref.disposition === 'current' && ref.decision === 'approved' && ref.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
-    ref.path === intake.source_authorization_path);
+  const intakeFile = validatedJson(access, intakeRef.path, 'original protected intake'),
+    intake = intakeFile.value;
+  requireRebind(
+    sha(intakeFile.bytes) === intakeRef.sha256 &&
+      intake.schema === 'VidaLocalSessionIntake/v1' &&
+      intake.native_session_handle === nativeHandle &&
+      canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest,
+    'original intake bytes, task or native owner differ',
+  );
+  const sourceApproval = work.lifecycle.references.find(
+    (ref) =>
+      ref.kind === 'execution_approval' &&
+      ref.disposition === 'current' &&
+      ref.decision === 'approved' &&
+      ref.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+      ref.path === intake.source_authorization_path,
+  );
   requireRebind(sourceApproval, 'original accepted human Source instruction is unavailable');
-  const sourceAuthority = readLocalSourceWriteAuthorization(root, sourceApproval.path), authority = sourceAuthority.authorization;
-  requireRebind(sourceAuthority.sha256 === sourceApproval.sha256 && authority.work_id === workId && authority.attempt === attempt &&
-    authority.native_session_handle === nativeHandle && authority.scope_digest === work.binding.work_source_revision &&
-    authority.config_digest === work.binding.config_digest && authority.workflow_id === work.binding.workflow_id &&
-    authority.user_instruction_ref === sourceApproval.record_id && authority.user_instruction_ref === ownerNoCallPointer &&
-    sourceApproval.principal === 'local-session:' + canonicalJsonDigest(nativeHandle) &&
-    canonicalJsonDigest([...authority.implementation_paths].sort()) === canonicalJsonDigest([...work.binding.implementation_paths].sort()),
-  'original accepted human instruction, scope or owner binding differs');
-  const { edge, plan, runtimePaths, beforeCode, targetCode, parent, successor, update,
-    currentSourceScope, authorizedSourceChanges, sourceTransition } = verifyConfiguredNativeEndpoint({
-      root, config, workspaceId, identity, work, journal, intake, intakeRef, access, sourceTransitionId,
-      parentManifestRef, successorManifestRef, systemUpdateRef, sourceCorrectionRef });
-  const selection = { team: work.binding.team_id, kind: intake.work_item.canonical_kind, intent: intake.work_item.intent,
-    project: intake.work_item.project_id, risk_flags: intake.work_item.risk_flags, labels: intake.work_item.labels };
-  requireRebind(project.project_ids.includes(selection.project) && selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
-    'current config no longer selects the original workflow');
+  const sourceAuthority = readLocalSourceWriteAuthorization(root, sourceApproval.path),
+    authority = sourceAuthority.authorization;
+  requireRebind(
+    sourceAuthority.sha256 === sourceApproval.sha256 &&
+      authority.work_id === workId &&
+      authority.attempt === attempt &&
+      authority.native_session_handle === nativeHandle &&
+      authority.scope_digest === work.binding.work_source_revision &&
+      authority.config_digest === work.binding.config_digest &&
+      authority.workflow_id === work.binding.workflow_id &&
+      authority.user_instruction_ref === sourceApproval.record_id &&
+      authority.user_instruction_ref === ownerNoCallPointer &&
+      sourceApproval.principal === 'local-session:' + canonicalJsonDigest(nativeHandle) &&
+      canonicalJsonDigest([...authority.implementation_paths].sort()) ===
+        canonicalJsonDigest([...work.binding.implementation_paths].sort()),
+    'original accepted human instruction, scope or owner binding differs',
+  );
+  const {
+    edge,
+    plan,
+    runtimePaths,
+    beforeCode,
+    targetCode,
+    parent,
+    successor,
+    update,
+    currentSourceScope,
+    authorizedSourceChanges,
+    sourceTransition,
+  } = verifyConfiguredNativeEndpoint({
+    root,
+    config,
+    workspaceId,
+    identity,
+    work,
+    journal,
+    intake,
+    intakeRef,
+    access,
+    sourceTransitionId,
+    parentManifestRef,
+    successorManifestRef,
+    systemUpdateRef,
+    sourceCorrectionRef,
+  });
+  const selection = {
+    team: work.binding.team_id,
+    kind: intake.work_item.canonical_kind,
+    intent: intake.work_item.intent,
+    project: intake.work_item.project_id,
+    risk_flags: intake.work_item.risk_flags,
+    labels: intake.work_item.labels,
+  };
+  requireRebind(
+    project.project_ids.includes(selection.project) &&
+      selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
+    'current config no longer selects the original workflow',
+  );
   const oldConfig = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
-    engine = readRetainedUnissuedSessionEngineSnapshot({ repositoryRoot: root, config: oldConfig, selection,
-      context: { work_id: workId, attempt, scope_digest: journal.source_scope.digest }, workflowId: work.binding.workflow_id,
-      runId: journal.run_id, lifecycleRisk: work.lifecycle.risk }, { work, journal }),
+    engine = readRetainedUnissuedSessionEngineSnapshot(
+      {
+        repositoryRoot: root,
+        config: oldConfig,
+        selection,
+        context: { work_id: workId, attempt, scope_digest: journal.source_scope.digest },
+        workflowId: work.binding.workflow_id,
+        runId: journal.run_id,
+        lifecycleRisk: work.lifecycle.risk,
+      },
+      { work, journal },
+    ),
     targetConfigDigest = runtimeConfigDigest(config),
     action = projectConfiguredFrontierContinuationAction({ engine, journal, targetConfigDigest, currentSourceScope });
-  const request = validateDeliveredWorkContinuationRequest({ schema: 'DeliveredWorkContinuationRequest/v1', identity, attempt,
-    nativeSessionHandle: nativeHandle, expectedWork: state.workVersion, expectedLedger: state.ledgerVersion,
-    expectedJournal: journalRow.version, expectedMaintenanceGeneration: state.maintenanceGeneration,
-    priorConfigDigest: work.binding.config_digest, targetConfigDigest, targetSchemaDigest: edge.targetSchemaDigest,
-    targetProjectContextDigest: project.project_context_digest, priorRuntimeCodeDigest: beforeCode.digest,
-    targetRuntimeCodeDigest: targetCode.digest, forwardOperationId: update.value.operation_id,
-    parentManifestDigest: sha(parent.bytes), successorManifestDigest: sha(successor.bytes), currentSourceScope,
-    authorizedSourceChanges, sourceTransition, action, originalRequestPointer: ownerNoCallPointer });
-  const body = { schema: 'VidaDeliveredWorkContinuationPlan/v1', repair_id: repairId, actor, timestamp,
-    source_transition_id: sourceTransitionId, runtime_code_paths: runtimePaths, request };
+  const request = validateDeliveredWorkContinuationRequest({
+    schema: 'DeliveredWorkContinuationRequest/v1',
+    identity,
+    attempt,
+    nativeSessionHandle: nativeHandle,
+    expectedWork: state.workVersion,
+    expectedLedger: state.ledgerVersion,
+    expectedJournal: journalRow.version,
+    expectedMaintenanceGeneration: state.maintenanceGeneration,
+    priorConfigDigest: work.binding.config_digest,
+    targetConfigDigest,
+    targetSchemaDigest: edge.targetSchemaDigest,
+    targetProjectContextDigest: project.project_context_digest,
+    priorRuntimeCodeDigest: beforeCode.digest,
+    targetRuntimeCodeDigest: targetCode.digest,
+    forwardOperationId: update.value.operation_id,
+    parentManifestDigest: sha(parent.bytes),
+    successorManifestDigest: sha(successor.bytes),
+    currentSourceScope,
+    authorizedSourceChanges,
+    sourceTransition,
+    action,
+    originalRequestPointer: ownerNoCallPointer,
+  });
+  const body = {
+    schema: 'VidaDeliveredWorkContinuationPlan/v1',
+    repair_id: repairId,
+    actor,
+    timestamp,
+    source_transition_id: sourceTransitionId,
+    runtime_code_paths: runtimePaths,
+    request,
+  };
   return { ...body, digest: canonicalJsonDigest(body) };
 }
 
@@ -807,13 +1205,25 @@ async function planDeliveredWorkContinuation({
   requireRebind(
     identifier.test(repairId) &&
       identifier.test(sourceTransitionId) &&
-      Number.isSafeInteger(attempt) && attempt > 0 && hash.test(actionId) &&
-      typeof issueId === 'string' && issueId.length > 0 && issueId.length <= 256 &&
-      typeof nativeHandle === 'string' && nativeHandle.length > 0 && nativeHandle.length <= 256 &&
-      typeof actor === 'string' && actor.trim() === actor && actor.length > 0 &&
-      typeof timestamp === 'string' && !Number.isNaN(Date.parse(timestamp)) &&
-      typeof ownerNoCallPointer === 'string' && ownerNoCallPointer.trim() === ownerNoCallPointer &&
-      ownerNoCallPointer.length > 0 && ownerNoCallPointer.length <= 2048 && !/\p{Cc}/u.test(ownerNoCallPointer),
+      Number.isSafeInteger(attempt) &&
+      attempt > 0 &&
+      hash.test(actionId) &&
+      typeof issueId === 'string' &&
+      issueId.length > 0 &&
+      issueId.length <= 256 &&
+      typeof nativeHandle === 'string' &&
+      nativeHandle.length > 0 &&
+      nativeHandle.length <= 256 &&
+      typeof actor === 'string' &&
+      actor.trim() === actor &&
+      actor.length > 0 &&
+      typeof timestamp === 'string' &&
+      !Number.isNaN(Date.parse(timestamp)) &&
+      typeof ownerNoCallPointer === 'string' &&
+      ownerNoCallPointer.trim() === ownerNoCallPointer &&
+      ownerNoCallPointer.length > 0 &&
+      ownerNoCallPointer.length <= 2048 &&
+      !/\p{Cc}/u.test(ownerNoCallPointer),
     'delivered continuation attribution or identity is invalid',
   );
   const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds),
@@ -826,22 +1236,31 @@ async function planDeliveredWorkContinuation({
     store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
     state = store.readHostStateSnapshot(identity),
     work = state.work,
-    journalRow = checkedRow(database, 'agent_host_mastra_session_ledger', 'workspace_id=? AND work_id=? AND attempt=?', [
-      workspaceId,
-      workId,
-      attempt,
-    ]),
+    journalRow = checkedRow(
+      database,
+      'agent_host_mastra_session_ledger',
+      'workspace_id=? AND work_id=? AND attempt=?',
+      [workspaceId, workId, attempt],
+    ),
     journal = journalRow.value;
   requireRebind(
-    work && state.workVersion && state.ledgerVersion &&
-      work.execution.status === 'suspended' && work.execution.phase === 'awaiting_followup' && work.lease === null &&
-      work.lifecycle.phase === 'INTAKE' && work.lifecycle.seal === null &&
+    work &&
+      state.workVersion &&
+      state.ledgerVersion &&
+      work.execution.status === 'suspended' &&
+      work.execution.phase === 'awaiting_followup' &&
+      work.lease === null &&
+      work.lifecycle.phase === 'INTAKE' &&
+      work.lifecycle.seal === null &&
       work.binding.config_digest !== runtimeConfigDigest(config) &&
-      work.binding.lifecycle_work_id === workId && work.binding.repository_id === identity.repository_id &&
+      work.binding.lifecycle_work_id === workId &&
+      work.binding.repository_id === identity.repository_id &&
       canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
       work.binding.integrations_digest === identity.integrations_digest &&
-      work.execution.run_id === journal.run_id && journal.workspace_id === workspaceId &&
-      journal.work_id === workId && journal.attempt === attempt &&
+      work.execution.run_id === journal.run_id &&
+      journal.workspace_id === workspaceId &&
+      journal.work_id === workId &&
+      journal.attempt === attempt &&
       journal.source_scope?.digest === work.binding.work_source_revision &&
       !work.execution.assignment_attempts.some((entry) => entry.status === 'started' || entry.status === 'uncertain'),
     'original unfinished owner or journal no longer matches the continuation basis',
@@ -850,22 +1269,32 @@ async function planDeliveredWorkContinuation({
   const capture = store.readHistoricalTerminalSynthesisCapture(identity, attempt, actionId);
   requireRebind(
     capture?.schema === 'HistoricalTerminalSynthesisCustodyReceipt/v1' &&
-      capture.issue_id === issueId && capture.request.native_session_handle === nativeHandle &&
+      capture.issue_id === issueId &&
+      capture.request.native_session_handle === nativeHandle &&
       capture.request.user_request_pointer === ownerNoCallPointer &&
-      capture.terminal_status === 'known_terminal_unaccepted' && capture.task_status === 'unfinished' &&
-      capture.accepted_result === false && capture.rights_granted === false && capture.runtime_acceptance === false,
+      capture.terminal_status === 'known_terminal_unaccepted' &&
+      capture.task_status === 'unfinished' &&
+      capture.accepted_result === false &&
+      capture.rights_granted === false &&
+      capture.runtime_acceptance === false,
     'exact retained terminal body, owner or original request pointer is unavailable',
   );
   const sourceTransition = await runRuntimeConfigRebind([
-    '--kind', 'runtime-config-delivery',
-    '--mode', 'repair-transition',
-    '--project-root', root,
-    '--repair-id', sourceTransitionId,
+    '--kind',
+    'runtime-config-delivery',
+    '--mode',
+    'repair-transition',
+    '--project-root',
+    root,
+    '--repair-id',
+    sourceTransitionId,
   ]);
   requireRebind(sourceTransition.status === 'closed_config_transition_proven', 'Source transition did not close');
   const sourceChangedPaths = sourceTransitionAuthorizedPaths(root, config, sourceTransitionId, sourceTransition),
     sourceAccess = requireSafeRepositoryAccess(root),
-    intakeRef = work.artifacts.find((ref) => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1');
+    intakeRef = work.artifacts.find(
+      (ref) => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1',
+    );
   requireRebind(intakeRef, 'original local session intake is missing');
   const intakeBytes = sourceAccess.readBytes(intakeRef.path, 'original local session intake'),
     intake = JSON.parse(intakeBytes.toString('utf8'));
@@ -890,7 +1319,13 @@ async function planDeliveredWorkContinuation({
       targetRuntimeCode.digest !== work.binding.runtime_code_digest,
     'current installed configuration or runtime bytes differ from the accepted Source transition',
   );
-  const lineage = forwardLineage(root, forwardOperationId, runtimePaths, work.binding.runtime_code_digest, targetRuntimeCode.digest),
+  const lineage = forwardLineage(
+      root,
+      forwardOperationId,
+      runtimePaths,
+      work.binding.runtime_code_digest,
+      targetRuntimeCode.digest,
+    ),
     allowedScopePaths = [...work.lifecycle.scope.allowed_paths].sort(),
     currentSourceScope = snapshotDeclaredSources(sourceAccess, allowedScopePaths);
   requireRebind(
@@ -923,9 +1358,12 @@ async function planDeliveredWorkContinuation({
     reviewProfile = reviewAssignment && config.agents.profiles[reviewAssignment.profile],
     reviewTools = reviewProfile && config.agents.tool_policies[reviewProfile.tools_policy];
   requireRebind(
-    reviewStage?.kind === 'validate' && reviewStage.mode === 'parallel' &&
-      reviewAssignment?.role === 'correctness-validator' && reviewProfile?.mutation_scope === 'none' &&
-      reviewProfile.tools_policy === 'read_only' && reviewTools?.source_write === false,
+    reviewStage?.kind === 'validate' &&
+      reviewStage.mode === 'parallel' &&
+      reviewAssignment?.role === 'correctness-validator' &&
+      reviewProfile?.mutation_scope === 'none' &&
+      reviewProfile.tools_policy === 'read_only' &&
+      reviewTools?.source_write === false,
     'current configured first review is not the read-only Core correctness validator',
   );
   const compiled = compileDevelopmentWorkflow(config, selection.team, work.binding.workflow_id, selection.risk_flags),
@@ -971,7 +1409,9 @@ async function planDeliveredWorkContinuation({
     expectedMaintenanceGeneration: state.maintenanceGeneration,
     priorConfigDigest: work.binding.config_digest,
     targetConfigDigest,
-    targetSchemaDigest: sha(runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current config schema')),
+    targetSchemaDigest: sha(
+      runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current config schema'),
+    ),
     targetProjectContextDigest: project.project_context_digest,
     priorRuntimeCodeDigest: work.binding.runtime_code_digest,
     targetRuntimeCodeDigest: targetRuntimeCode.digest,
@@ -1083,9 +1523,756 @@ function currentPlan(database, root, config, workspaceId, plan) {
     forwardOperationId: request.forwardOperationId,
     ownerNoCallPointer: request.ownerNoCallPointer,
     correctionId: request.synthesisCorrection?.correctionId,
-    ownerCorrectionPointer: request.focusedFailureCorrection?.ownerCorrectionPointer ?? request.synthesisCorrection?.ownerCorrectionPointer,
-    focusedFailureCorrection:Boolean(request.focusedFailureCorrection),
+    ownerCorrectionPointer:
+      request.focusedFailureCorrection?.ownerCorrectionPointer ?? request.synthesisCorrection?.ownerCorrectionPointer,
+    focusedFailureCorrection: Boolean(request.focusedFailureCorrection),
   });
+}
+
+const initialSourceFrontierRequestKeys = [
+  'schema',
+  'identity',
+  'attempt',
+  'actionId',
+  'nativeSessionHandle',
+  'leaseGeneration',
+  'expectedWork',
+  'expectedLedger',
+  'expectedJournal',
+  'expectedMaintenanceGeneration',
+  'initialContinuationId',
+  'initialContinuationRequestDigest',
+  'configDigest',
+  'sourceScopeDigest',
+  'oldRuntimeCodeDigest',
+  'newRuntimeCodeDigest',
+  'runtimeCodePaths',
+  'parentManifestRef',
+  'parentManifestDigest',
+  'successorManifestRef',
+  'successorManifestDigest',
+  'systemUpdateRef',
+  'systemUpdateOperationId',
+  'nativeSelfAttestationDigest',
+];
+
+/** @param {unknown} value @param {readonly string[]} keys @returns {value is Record<string, unknown>} */
+function initialSourceFrontierExactKeys(value, keys) {
+  return (
+    isPlainRecord(value) &&
+    Reflect.ownKeys(value).length === keys.length &&
+    Reflect.ownKeys(value).every((key) => typeof key === 'string' && keys.includes(key))
+  );
+}
+
+/**
+ * HostStateStore.readWorkSessionJournal checks the row digest and calls
+ * validateWorkSessionBinding. The existing engine/lineage reader validates the
+ * retained completed prefix and Source-scope relationship; this guard only
+ * narrows fields read directly by the CLI and preserves the full journal.
+ * @param {unknown} value
+ * @param {string} workspaceId
+ * @param {string} workId
+ * @param {number} attempt
+ * @returns {value is MastraSessionLedgerState}
+ */
+function isInitialSourceFrontierJournal(value, workspaceId, workId, attempt) {
+  const allowedKeys = [
+    'schema',
+    'workspace_id',
+    'work_id',
+    'attempt',
+    'run_id',
+    'corrective_execution',
+    'source_scope',
+    'research_wave_exposure',
+    'step_id',
+    'items',
+    'completed',
+  ];
+  if (
+    !isPlainRecord(value) ||
+    !Reflect.ownKeys(value).every((key) => typeof key === 'string' && allowedKeys.includes(key)) ||
+    value.schema !== 'MastraSessionLedger/v1' ||
+    value.workspace_id !== workspaceId ||
+    value.work_id !== workId ||
+    value.attempt !== attempt ||
+    typeof value.run_id !== 'string' ||
+    value.run_id.length === 0 ||
+    value.corrective_execution != null ||
+    value.research_wave_exposure !== undefined ||
+    (value.step_id !== null && typeof value.step_id !== 'string') ||
+    !isPlainRecord(value.source_scope) ||
+    value.source_scope.schema !== 'ScopedSourceSnapshot/v1' ||
+    typeof value.source_scope.digest !== 'string' ||
+    !Array.isArray(value.items) ||
+    !Array.isArray(value.completed)
+  )
+    return false;
+
+  if (value.step_id === null) return value.items.length === 0;
+  const currentStep = /^wave-(0|[1-9][0-9]*)$/.exec(value.step_id);
+  if (!currentStep) return false;
+  const currentItems = /** @type {unknown[]} */ (value.items);
+  for (const rawItem of currentItems) {
+    if (!isPlainRecord(rawItem)) return false;
+    try {
+      const request = parseSessionBridgeRequest(rawItem.request);
+      if (request.run_id !== value.run_id || request.wave_index !== Number(currentStep[1])) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** @param {string} root @param {string} repairId @returns {InitialSourceFrontierPlan} */
+function readInitialSourceFrontierPlan(root, repairId) {
+  const access = requireSafeRepositoryAccess(root),
+    relative = initialSourceFrontierPlanPath(repairId),
+    bytes = access.readBytes(relative, 'initial-source frontier code-rebind plan');
+  requireRebind(bytes.length <= 1024 * 1024, 'initial-source frontier plan exceeds its byte bound');
+  const parsed = /** @type {unknown} */ (JSON.parse(bytes.toString('utf8')));
+  requireRebind(
+    initialSourceFrontierExactKeys(parsed, ['schema', 'repair_id', 'request', 'endpoint_proof', 'digest']) &&
+      parsed.schema === 'InitialSourceFrontierCodeRebindPlan/v1' &&
+      parsed.repair_id === repairId &&
+      typeof parsed.digest === 'string' &&
+      hash.test(parsed.digest),
+    'initial-source frontier plan identity or digest differs',
+  );
+  const request = validateInitialSourceFrontierCodeRebindRequest(parsed.request),
+    endpointProof = validateInitialSourceFrontierCodeRebindVerifiedCurrent(parsed.endpoint_proof, request),
+    body = {
+      schema: /** @type {const} */ ('InitialSourceFrontierCodeRebindPlan/v1'),
+      repair_id: repairId,
+      request,
+      endpoint_proof: endpointProof,
+    };
+  requireRebind(
+    request.schema === 'InitialSourceFrontierCodeRebindRequest/v1' &&
+      parsed.digest === canonicalJsonDigest(body),
+    'initial-source frontier plan digest differs',
+  );
+  return { ...body, digest: parsed.digest };
+}
+
+/** @param {string} root @param {string} repairId @param {InitialSourceFrontierPlan} plan */
+function writeInitialSourceFrontierPlan(root, repairId, plan) {
+  const access = requireSafeRepositoryAccess(root),
+    relative = initialSourceFrontierPlanPath(repairId);
+  access.ensureDirectory(`.agent/work/${repairId}`, 'initial-source frontier plan root');
+  if (access.fileExists(relative, 'initial-source frontier plan presence')) {
+    const prior = readInitialSourceFrontierPlan(root, repairId);
+    requireRebind(
+      canonicalJsonDigest(prior) === canonicalJsonDigest(plan),
+      'existing initial-source frontier plan differs from the current proof',
+    );
+    return;
+  }
+  access.writeExclusive(relative, `${JSON.stringify(plan, null, 2)}\n`, 'initial-source frontier plan');
+}
+
+/** @param {unknown} manifest @param {string} bundle @returns {string[]} */
+function frontierManifestPaths(manifest, bundle) {
+  requireRebind(
+    isPlainRecord(manifest) &&
+      manifest.schema === 'VidaStandaloneBuild/v1' &&
+      Array.isArray(manifest.inputs) &&
+      manifest.inputs.length > 0 &&
+      manifest.inputs.length <= 2048,
+    'native runtime manifest inventory is invalid',
+  );
+  const inputs = /** @type {unknown[]} */ (manifest.inputs);
+  const paths = inputs
+    .map((entry) => {
+      requireRebind(
+        isPlainRecord(entry) &&
+          typeof entry.path === 'string' &&
+          entry.path.length > 0 &&
+          entry.path.length <= 512,
+        'native runtime manifest path is invalid',
+      );
+      return `${bundle}/${entry.path}`;
+    })
+    .sort();
+  requireRebind(new Set(paths).size === paths.length, 'native runtime manifest inventory contains duplicate paths');
+  return paths;
+}
+
+/**
+ * @param {{root: string, config: AgentRuntimeConfig, access: SafeRepositoryAccess, request: InitialSourceFrontierCodeRebindRequest, state: {host: HostStateSnapshot, journal: {version: StateVersion, state: MastraSessionLedgerState}, initialReceipt: InitialSourceContinuationReceipt}}} args
+ * @returns {InitialSourceFrontierCodeRebindVerifiedCurrent}
+ */
+function readInitialSourceFrontierNativeEndpoint({ root, config, access, request, state }) {
+  const host = state.host,
+    journal = state.journal.state,
+    receipt = state.initialReceipt,
+    work = host.work,
+    configDigest = runtimeConfigDigest(config);
+  requireRebind(
+    host.workVersion &&
+      host.ledgerVersion &&
+      work &&
+      work.lease &&
+      host.ledger &&
+      host.workVersion.revision === request.expectedWork.revision &&
+      host.workVersion.digest === request.expectedWork.digest &&
+      host.ledgerVersion.revision === request.expectedLedger.revision &&
+      host.ledgerVersion.digest === request.expectedLedger.digest &&
+      state.journal.version.revision === request.expectedJournal.revision &&
+      state.journal.version.digest === request.expectedJournal.digest &&
+      host.maintenanceGeneration === request.expectedMaintenanceGeneration &&
+      canonicalJsonDigest(request.identity) === canonicalJsonDigest(receipt.request.identity) &&
+      receipt.continuation_id === request.initialContinuationId &&
+      receipt.request_digest === request.initialContinuationRequestDigest &&
+      receipt.status === 'initial_request_ready' &&
+      request.nativeSessionHandle === receipt.request.nativeSessionHandle &&
+      request.attempt === receipt.request.attempt &&
+      request.configDigest === configDigest &&
+      work.binding.config_digest === configDigest &&
+      work.lifecycle.phase === 'INTAKE' &&
+      work.lifecycle.seal === null &&
+      work.execution.status === 'active' &&
+      work.execution.run_id === journal.run_id &&
+      work.binding.runtime_code_digest === request.oldRuntimeCodeDigest &&
+      work.binding.runtime_source_revision === request.oldRuntimeCodeDigest &&
+      work.lease?.thread_id === request.nativeSessionHandle &&
+      work.lease.generation === request.leaseGeneration &&
+      work.binding.repository_id === request.identity.repository_id &&
+      work.binding.lifecycle_work_id === request.identity.work_id &&
+      canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(request.identity.project_ids) &&
+      work.binding.integrations_digest === request.identity.integrations_digest &&
+      journal.schema === 'MastraSessionLedger/v1' &&
+      journal.work_id === request.identity.work_id &&
+      journal.attempt === request.attempt &&
+      journal.source_scope?.digest === request.sourceScopeDigest &&
+      work.binding.work_source_revision === request.sourceScopeDigest &&
+      !work.execution.assignment_attempts.some((entry) => entry.status === 'started' || entry.status === 'uncertain') &&
+      journal.corrective_execution == null &&
+      journal.research_wave_exposure === undefined,
+    'initial-source frontier owner, attempt, source, config or CAS binding differs',
+  );
+
+  const lease = work.lease;
+  requireRebind(lease, 'initial-source frontier owner lease is missing');
+  const ticket = host.ledger.tickets.find((entry) => entry.ticket_id === lease.ticket_id),
+    claim = host.ledger.claims.find(
+      (entry) =>
+        entry.ticket_id === lease.ticket_id &&
+        entry.work_id === request.identity.work_id &&
+        entry.thread_id === request.nativeSessionHandle &&
+        entry.status === 'active',
+    );
+  requireRebind(
+    ticket?.status === 'active' &&
+      ticket.generation === request.leaseGeneration &&
+      ticket.thread_id === request.nativeSessionHandle &&
+      ticket.work_id === request.identity.work_id &&
+      claim &&
+      typeof ticket.expires_at === 'string' &&
+      Number.isFinite(Date.parse(ticket.expires_at)) &&
+      ticket.expires_at === claim.lease_expires_at &&
+      canonicalJsonDigest(ticket.active_resources) === canonicalJsonDigest(['execution:' + request.identity.work_id]) &&
+      canonicalJsonDigest(ticket.exclusive_resources) === canonicalJsonDigest(ticket.active_resources) &&
+      canonicalJsonDigest(claim.resources) === canonicalJsonDigest(ticket.active_resources),
+    'initial-source frontier recovery-control claim is not the exact owner claim',
+  );
+
+  const sourcePaths = [...work.lifecycle.scope.allowed_paths].sort(),
+    currentSourceScope = snapshotDeclaredSources(access, sourcePaths);
+  requireRebind(
+    canonicalJsonDigest(sourcePaths) ===
+      canonicalJsonDigest(receipt.request.currentSourceScope.entries.map((entry) => entry.path)) &&
+      currentSourceScope.digest === request.sourceScopeDigest &&
+      currentSourceScope.digest === receipt.request.currentSourceScope.digest,
+    'initial-source frontier task Source changed',
+  );
+
+  const intakeRefs = work.artifacts.filter(
+    (entry) => entry.artifact_id === 'local-session-intake' && entry.schema === 'VidaLocalSessionIntake/v1',
+  );
+  const intakeRef = intakeRefs[0];
+  requireRebind(intakeRefs.length === 1 && intakeRef, 'initial-source frontier intake is missing or ambiguous');
+  const intakeFile = validatedJson(access, intakeRef.path, 'initial-source frontier intake'),
+    intake = /** @type {unknown} */ (intakeFile.value);
+  requireRebind(isPlainRecord(intake), 'initial-source frontier intake is not a record');
+  const workItem = intake.work_item;
+  requireRebind(
+    sha(intakeFile.bytes) === intakeRef.sha256 &&
+      intake.schema === 'VidaLocalSessionIntake/v1' &&
+      intake.native_session_handle === request.nativeSessionHandle &&
+      isPlainRecord(workItem) &&
+      canonicalJsonDigest(workItem) === work.binding.work_item_digest &&
+      workItem.schema === 'WorkItem/v1',
+    'initial-source frontier intake or selection binding differs',
+  );
+  const selection = parseWorkItemSelection(workItem, work.binding.team_id);
+  requireRebind(
+    request.identity.project_ids.includes(selection.project) &&
+      selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
+    'initial-source frontier current workflow selection differs',
+  );
+  const engine = readInitialSourceContinuationSessionEngineSnapshot(
+    {
+      repositoryRoot: root,
+      config,
+      selection,
+      context: { work_id: request.identity.work_id, attempt: request.attempt, scope_digest: request.sourceScopeDigest },
+      workflowId: work.binding.workflow_id,
+      runId: journal.run_id,
+      lifecycleRisk: work.lifecycle.risk,
+    },
+    receipt,
+    journal,
+    work,
+  );
+  const currentStep = /^wave-(0|[1-9][0-9]*)$/.exec(journal.step_id ?? ''),
+    waveIndex = currentStep ? Number(currentStep[1]) : -1,
+    context = { work_id: request.identity.work_id, attempt: request.attempt, scope_digest: request.sourceScopeDigest },
+    currentActions = sessionActionsForWave(
+      config,
+      selection,
+      context,
+      work.binding.workflow_id,
+      waveIndex,
+      [],
+      undefined,
+      work.lifecycle.risk,
+    );
+  requireRebind(
+    waveIndex >= 0 &&
+      engine.status === 'suspended' &&
+      engine.step_id === journal.step_id &&
+      currentActions.every((action) =>
+        action.mutation_scope === 'none' && !action.resolved_profile.tools_policy.source_write,
+      ),
+    'initial-source frontier is not the current configured readonly wave',
+  );
+  const currentRequests = currentActions.map((action) => buildSessionBridgeRequest({
+    runId: journal.run_id,
+    workflowId: work.binding.workflow_id,
+    configDigest,
+    context,
+    waveIndex,
+    action,
+    configuredContext: configuredContextForStage(root, config, work.binding.workflow_id, action.stage_id, context),
+    priorResults: engine.observations,
+  }));
+  const currentRequest = currentRequests[0];
+  requireRebind(
+    currentRequests.length === 1 && currentRequest,
+    'initial-source frontier is not the unique current unissued readonly action',
+  );
+  requireRebind(
+    canonicalJsonDigest(currentRequests) === canonicalJsonDigest(journal.items.map((item) => item.request)) &&
+      currentRequest.action_id === request.actionId &&
+      currentRequest.run_id === journal.run_id &&
+      currentRequest.config_digest === request.configDigest &&
+      currentRequest.scope_digest === request.sourceScopeDigest,
+    'initial-source frontier current action differs from the unique unissued readonly action',
+  );
+
+  const runtimePaths = [...runtimePackageCodePaths(config.runtime.bundle)].sort();
+  requireRebind(
+    runtimePaths.length > 0 &&
+      runtimePaths.length <= 2048 &&
+      new Set(runtimePaths).size === runtimePaths.length &&
+      canonicalJsonDigest(runtimePaths) === canonicalJsonDigest(request.runtimeCodePaths),
+    'current package runtime inventory differs from the request',
+  );
+  const parent = validatedJson(access, request.parentManifestRef, 'parent native manifest'),
+    successor = validatedJson(access, request.successorManifestRef, 'successor native manifest'),
+    update = validatedJson(access, request.systemUpdateRef, 'native system update'),
+    parentManifest = /** @type {unknown} */ (parent.value),
+    successorManifest = /** @type {unknown} */ (successor.value),
+    updateValue = /** @type {unknown} */ (update.value);
+  requireRebind(
+    isPlainRecord(parentManifest) && isPlainRecord(successorManifest) && isPlainRecord(updateValue),
+    'native endpoint evidence is not a record',
+  );
+  const parentInputs = new Set(frontierManifestPaths(parentManifest, config.runtime.bundle)),
+    successorInputs = new Set(frontierManifestPaths(successorManifest, config.runtime.bundle)),
+    parentRuntimePaths = runtimePaths.filter((relative) => parentInputs.has(relative));
+  requireRebind(
+    parentRuntimePaths.length > 0 && runtimePaths.every((relative) => successorInputs.has(relative)),
+    'native endpoint is missing its declared runtime inventory',
+  );
+  const self = currentNativeSelfAttestation();
+  requireRebind(self, 'initial-source frontier requires current native self-attestation');
+  const beforeCode = snapshotRuntimeManifestSources(parentManifest, config.runtime.bundle, parentRuntimePaths),
+    targetCode = snapshotRuntimeManifestSources(successorManifest, config.runtime.bundle, runtimePaths),
+    currentCode = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, runtimePaths),
+    installation = updateValue.installation_observation,
+    asset = successorManifest.asset;
+  requireRebind(
+    isPlainRecord(installation) &&
+      isPlainRecord(asset) &&
+      beforeCode.digest === request.oldRuntimeCodeDigest &&
+      targetCode.digest === currentCode.digest &&
+      beforeCode.digest !== targetCode.digest &&
+      successorManifest.schema === 'VidaStandaloneBuild/v1' &&
+      successorManifest.pin === self.bun_version &&
+      successorManifest.version === self.package_version &&
+      successorManifest.payloadId === self.resource_payload_id &&
+      asset.sha256 === self.executable_sha256 &&
+      asset.bytes === self.executable_bytes &&
+      updateValue.status === 'CURRENT_SYSTEM_REPAIR_CHECKPOINT_UPDATED' &&
+      typeof updateValue.operation_id === 'string' &&
+      identifier.test(updateValue.operation_id) &&
+      installation?.schema === 'VidaNativeInstallationResult/v1' &&
+      typeof installation.action === 'string' &&
+      ['install', 'update'].includes(installation.action) &&
+      installation.runtime_accepted === false &&
+      installation.cleanup_complete === true &&
+      typeof installation.sha256 === 'string' &&
+      installation.sha256.toLowerCase() === self.executable_sha256 &&
+      typeof installation.path === 'string' &&
+      installation.bytes === self.executable_bytes &&
+      installation.version === self.package_version &&
+      path.resolve(installation.path) === path.resolve(self.executable_path) &&
+      typeof updateValue.entry === 'string' &&
+      path.resolve(updateValue.entry) === path.resolve(self.executable_path) &&
+      updateValue.version === self.package_version &&
+      updateValue.runtime_accepted === false &&
+      updateValue.developer_unblocked === false,
+    'parent/target code, current native installation or system update differ',
+  );
+  const registeredUpdate = /** @type {unknown} */ (
+      releaseState(releaseJournalFile(root, updateValue.operation_id))
+    ),
+    pendingUpdate = /** @type {unknown} */ (releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json')));
+  requireRebind(
+    isPlainRecord(registeredUpdate) &&
+      isPlainRecord(pendingUpdate) &&
+      registeredUpdate.operation_id === updateValue.operation_id &&
+      pendingUpdate.operation_id === registeredUpdate.operation_id &&
+      typeof registeredUpdate.version === 'string' &&
+      typeof pendingUpdate.version === 'string' &&
+      registeredUpdate.version === self.package_version &&
+      pendingUpdate.version === registeredUpdate.version &&
+      typeof registeredUpdate.status === 'string' &&
+      ['awaiting_assurance', 'qualified', 'packed', 'installing', 'successful'].includes(registeredUpdate.status),
+    'native system update is not the current release-owner operation',
+  );
+  const proof = {
+    runtimeCodePaths: runtimePaths,
+    oldRuntimeCodeDigest: beforeCode.digest,
+    newRuntimeCodeDigest: targetCode.digest,
+    parentManifestRef: request.parentManifestRef,
+    parentManifestDigest: sha(parent.bytes),
+    successorManifestRef: request.successorManifestRef,
+    successorManifestDigest: sha(successor.bytes),
+    systemUpdateRef: request.systemUpdateRef,
+    systemUpdateOperationId: updateValue.operation_id,
+    nativeSelfAttestationDigest: canonicalJsonDigest(self),
+  };
+  return proof;
+}
+
+/**
+ * @param {{root: string, config: AgentRuntimeConfig, access: SafeRepositoryAccess, request: InitialSourceFrontierCodeRebindRequest, state: {host: HostStateSnapshot, journal: {version: StateVersion, state: MastraSessionLedgerState}, initialReceipt: InitialSourceContinuationReceipt}}} args
+ * @returns {InitialSourceFrontierCodeRebindVerifiedCurrent}
+ */
+function verifyInitialSourceFrontierNativeEndpoint({ root, config, access, request, state }) {
+  const proof = readInitialSourceFrontierNativeEndpoint({ root, config, access, request, state });
+  requireRebind(
+    canonicalJsonDigest(proof) ===
+      canonicalJsonDigest({
+        runtimeCodePaths: request.runtimeCodePaths,
+        oldRuntimeCodeDigest: request.oldRuntimeCodeDigest,
+        newRuntimeCodeDigest: request.newRuntimeCodeDigest,
+        parentManifestRef: request.parentManifestRef,
+        parentManifestDigest: request.parentManifestDigest,
+        successorManifestRef: request.successorManifestRef,
+        successorManifestDigest: request.successorManifestDigest,
+        systemUpdateRef: request.systemUpdateRef,
+        systemUpdateOperationId: request.systemUpdateOperationId,
+        nativeSelfAttestationDigest: request.nativeSelfAttestationDigest,
+      }),
+    'initial-source frontier native endpoint proof differs from the request',
+  );
+  return proof;
+}
+
+/**
+ * @param {{database: SqliteDatabase, root: string, config: AgentRuntimeConfig, workspaceId: string, projectIds: readonly string[], workId: string, attempt: number, actionId: string, repairId: string, parentManifestRef: string, successorManifestRef: string, systemUpdateRef: string}} args
+ * @returns {InitialSourceFrontierPlan}
+ */
+function planInitialSourceFrontierCodeRebind({
+  database,
+  root,
+  config,
+  workspaceId,
+  projectIds,
+  workId,
+  attempt,
+  actionId,
+  repairId,
+  parentManifestRef,
+  successorManifestRef,
+  systemUpdateRef,
+}) {
+  requireRebind(
+    identifier.test(repairId) &&
+      identifier.test(workId) &&
+      Number.isSafeInteger(attempt) &&
+      attempt > 0 &&
+      hash.test(actionId) &&
+      Array.isArray(projectIds) &&
+      projectIds.length > 0 &&
+      projectIds.length <= 64 &&
+      projectIds.every((id, index) => {
+        const previous = projectIds[index - 1];
+        return identifier.test(id) && (index === 0 || (previous !== undefined && previous < id));
+      }) &&
+      [parentManifestRef, successorManifestRef, systemUpdateRef].every(
+        (reference) =>
+          typeof reference === 'string' &&
+          reference.length > 0 &&
+          reference.length <= 512 &&
+          !reference.startsWith('/') &&
+          !/^[A-Za-z]:/.test(reference) &&
+          !/[\\\p{Cc}]/u.test(reference) &&
+          reference.split('/').every((part) => part && part !== '.' && part !== '..'),
+      ),
+    'initial-source frontier plan inputs are invalid',
+  );
+  const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds),
+    identity = {
+      repository_id: project.repository_id,
+      project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest,
+      work_id: workId,
+    },
+    store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+    host = store.readHostStateSnapshot(identity),
+    journalRow = store.readWorkSessionJournal(identity),
+    initialReceipt = store.readInitialSourceContinuationReceipt(identity, attempt);
+  requireRebind(journalRow && journalRow.attempt === attempt, 'initial-source frontier Host journal is missing');
+  const journalValue = journalRow.state;
+  requireRebind(
+    isInitialSourceFrontierJournal(journalValue, workspaceId, workId, attempt),
+    'initial-source frontier Host journal shape or run binding differs',
+  );
+  const journalState = journalValue;
+  requireRebind(initialReceipt, 'initial-source continuation receipt is missing');
+  const state = { host, journal: { version: journalRow.version, state: journalState }, initialReceipt },
+    runtimePaths = [...runtimePackageCodePaths(config.runtime.bundle)].sort();
+  const lease = host.work?.lease,
+    expectedWork = host.workVersion,
+    expectedLedger = host.ledgerVersion,
+    sourceScopeDigest = journalState.source_scope?.digest,
+    oldRuntimeCodeDigest = host.work?.binding.runtime_code_digest;
+  requireRebind(
+    lease && expectedWork && expectedLedger &&
+      typeof sourceScopeDigest === 'string' &&
+      typeof oldRuntimeCodeDigest === 'string',
+    'initial-source frontier request owner, scope or CAS state is incomplete',
+  );
+  const endpointInput = {
+    schema: /** @type {const} */ ('InitialSourceFrontierCodeRebindRequest/v1'),
+    identity,
+    attempt,
+    actionId,
+    nativeSessionHandle: initialReceipt.request.nativeSessionHandle,
+    leaseGeneration: lease.generation,
+    expectedWork,
+    expectedLedger,
+    expectedJournal: journalRow.version,
+    expectedMaintenanceGeneration: host.maintenanceGeneration,
+    initialContinuationId: initialReceipt.continuation_id,
+    initialContinuationRequestDigest: initialReceipt.request_digest,
+    configDigest: runtimeConfigDigest(config),
+    sourceScopeDigest,
+    oldRuntimeCodeDigest,
+    newRuntimeCodeDigest: '',
+    runtimeCodePaths: runtimePaths,
+    parentManifestRef,
+    parentManifestDigest: '0'.repeat(64),
+    successorManifestRef,
+    successorManifestDigest: '0'.repeat(64),
+    systemUpdateRef,
+    systemUpdateOperationId: 'pending',
+    nativeSelfAttestationDigest: '0'.repeat(64),
+  };
+  const preliminaryProof = readInitialSourceFrontierNativeEndpoint({
+    root,
+    config,
+    access: requireSafeRepositoryAccess(root),
+    request: {
+      ...endpointInput,
+    },
+    state,
+  });
+  /** @type {InitialSourceFrontierCodeRebindRequest} */
+  const request = {
+    ...endpointInput,
+    newRuntimeCodeDigest: preliminaryProof.newRuntimeCodeDigest,
+    parentManifestDigest: preliminaryProof.parentManifestDigest,
+    successorManifestDigest: preliminaryProof.successorManifestDigest,
+    systemUpdateOperationId: preliminaryProof.systemUpdateOperationId,
+    nativeSelfAttestationDigest: preliminaryProof.nativeSelfAttestationDigest,
+  };
+  const endpointProof = verifyInitialSourceFrontierNativeEndpoint({
+    root,
+    config,
+    access: requireSafeRepositoryAccess(root),
+    request,
+    state,
+  });
+  requireRebind(
+    initialSourceFrontierExactKeys(request, initialSourceFrontierRequestKeys),
+    'initial-source frontier request keys differ',
+  );
+  const body = {
+    schema: /** @type {const} */ ('InitialSourceFrontierCodeRebindPlan/v1'),
+    repair_id: repairId,
+    request,
+    endpoint_proof: endpointProof,
+  };
+  return { ...body, digest: canonicalJsonDigest(body) };
+}
+
+/** @param {string} status @param {InitialSourceFrontierPlan} plan @param {InitialSourceFrontierCodeRebindReceipt|null} [receipt] @returns {Record<string, unknown>} */
+function initialSourceFrontierResult(status, plan, receipt) {
+  const request = plan.request,
+    version = receipt?.record?.work_version ?? request.expectedWork;
+  return {
+    status,
+    repair_id: plan.repair_id,
+    plan_digest: plan.digest,
+    original_receipt_id: request.initialContinuationId,
+    action_id: request.actionId,
+    work_version: version,
+    ledger_version: request.expectedLedger,
+    journal_version: request.expectedJournal,
+    maintenance_generation: request.expectedMaintenanceGeneration,
+    old_runtime_code_digest: request.oldRuntimeCodeDigest,
+    new_runtime_code_digest: request.newRuntimeCodeDigest,
+    runtime_code_path_count: request.runtimeCodePaths.length,
+    parent_manifest_ref: request.parentManifestRef,
+    successor_manifest_ref: request.successorManifestRef,
+    system_update_operation_id: request.systemUpdateOperationId,
+    native_self_attestation_digest: request.nativeSelfAttestationDigest,
+    rights_granted: false,
+    accepted_result: false,
+    runtime_acceptance: false,
+  };
+}
+
+/** @param {{values: Record<string, string>, root: string, config: AgentRuntimeConfig, workspaceId: string}} args */
+async function runInitialSourceFrontierCodeRebind({ values, root, config, workspaceId }) {
+  const mode = values['--mode'],
+    repairId = values['--repair-id'];
+  requireRebind(typeof mode === 'string' && typeof repairId === 'string', 'initial-source frontier CLI arguments are incomplete');
+  const database = trustedDatabase(root, config, ['inspect', 'plan'].includes(mode));
+  try {
+    if (mode === 'inspect' || mode === 'plan') {
+      const projectIds = values['--projects'],
+        workId = values['--work-id'],
+        attempt = values['--attempt'],
+        actionId = values['--action-id'],
+        parentManifestRef = values['--parent-manifest'],
+        successorManifestRef = values['--successor-manifest'],
+        systemUpdateRef = values['--system-update'];
+      requireRebind(
+        typeof projectIds === 'string' &&
+          typeof workId === 'string' &&
+          typeof attempt === 'string' &&
+          typeof actionId === 'string' &&
+          typeof parentManifestRef === 'string' &&
+          typeof successorManifestRef === 'string' &&
+          typeof systemUpdateRef === 'string',
+        'initial-source frontier planning arguments are incomplete',
+      );
+      const plan = planInitialSourceFrontierCodeRebind({
+        database,
+        root,
+        config,
+        workspaceId,
+        projectIds: projectIds.split(','),
+        workId,
+        attempt: Number(attempt),
+        actionId,
+        repairId,
+        parentManifestRef,
+        successorManifestRef,
+        systemUpdateRef,
+      });
+      if (mode === 'plan') writeInitialSourceFrontierPlan(root, repairId, plan);
+      return initialSourceFrontierResult(mode === 'plan' ? 'planned' : 'rebindable_initial_source_frontier', plan);
+    }
+
+    const plan = readInitialSourceFrontierPlan(root, repairId),
+      project = loadProjectSetContext(root, config, config.repository.repository_id, plan.request.identity.project_ids),
+      identity = {
+        repository_id: project.repository_id,
+        project_ids: project.project_ids,
+        integrations_digest: project.integrations_digest,
+        work_id: plan.request.identity.work_id,
+      },
+      store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+      existing = store.readInitialSourceFrontierCodeRebindReceipt(
+        identity,
+        plan.request.attempt,
+        plan.request.initialContinuationId,
+      );
+    if (existing) {
+      requireRebind(
+        existing.status === 'rebound' &&
+          existing.record.request_digest === canonicalJsonDigest(plan.request) &&
+          canonicalJsonDigest(existing.record.request) === canonicalJsonDigest(plan.request) &&
+          existing.current_runtime_code_digest === plan.request.newRuntimeCodeDigest,
+        'existing initial-source frontier receipt differs from the frozen plan',
+      );
+      return initialSourceFrontierResult('already_rebound', plan, existing);
+    }
+
+    const currentPlan = planInitialSourceFrontierCodeRebind({
+      database,
+      root,
+      config,
+      workspaceId,
+      projectIds: plan.request.identity.project_ids,
+      workId: plan.request.identity.work_id,
+      attempt: plan.request.attempt,
+      actionId: plan.request.actionId,
+      repairId,
+      parentManifestRef: plan.request.parentManifestRef,
+      successorManifestRef: plan.request.successorManifestRef,
+      systemUpdateRef: plan.request.systemUpdateRef,
+    });
+    requireRebind(
+      currentPlan.digest === plan.digest &&
+        canonicalJsonDigest(currentPlan.request) === canonicalJsonDigest(plan.request) &&
+        canonicalJsonDigest(currentPlan.endpoint_proof) === canonicalJsonDigest(plan.endpoint_proof),
+      'initial-source frontier plan differs from fresh Host or native evidence',
+    );
+    const receipt = store.commitReadOnlyFrontierRuntimeCode(plan.request, (request, state) =>
+      verifyInitialSourceFrontierNativeEndpoint({
+        root,
+        config,
+        access: requireSafeRepositoryAccess(root),
+        request,
+        state,
+      }),
+    );
+    const persisted = store.readInitialSourceFrontierCodeRebindReceipt(
+      identity,
+      plan.request.attempt,
+      plan.request.initialContinuationId,
+    );
+    requireRebind(
+      persisted &&
+        persisted.record_digest === receipt.record_digest &&
+        canonicalJsonDigest(persisted) === canonicalJsonDigest(receipt),
+      'initial-source frontier Host receipt did not persist exactly',
+    );
+    return initialSourceFrontierResult('rebound', plan, persisted);
+  } finally {
+    database.close();
+  }
 }
 
 /** Existing reconcile-artifacts CLI branch; no native call or approval is synthesized. */
@@ -1094,11 +2281,16 @@ export async function runRuntimeCodeRebind(args) {
   const root = values['--project-root'];
   const config = loadRuntimeConfig(root);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+  if (values['--basis'] === 'initial-source-frontier')
+    return runInitialSourceFrontierCodeRebind({ values, root, config, workspaceId });
   const database = trustedDatabase(root, config, ['inspect', 'plan'].includes(values['--mode']));
   try {
     if (['inspect', 'plan'].includes(values['--mode'])) {
       if (['delivered-config-continuation', 'configured-frontier-continuation'].includes(values['--basis'])) {
-        const planner = values['--basis'] === 'configured-frontier-continuation' ? planConfiguredFrontierContinuation : planDeliveredWorkContinuation;
+        const planner =
+          values['--basis'] === 'configured-frontier-continuation'
+            ? planConfiguredFrontierContinuation
+            : planDeliveredWorkContinuation;
         const plan = await planner({
           database,
           root,
@@ -1152,7 +2344,7 @@ export async function runRuntimeCodeRebind(args) {
         ownerNoCallPointer: values['--owner-no-call-ref'],
         correctionId: values['--correction-id'],
         ownerCorrectionPointer: values['--owner-correction-ref'],
-        focusedFailureCorrection:values['--basis']==='known-terminal-verify',
+        focusedFailureCorrection: values['--basis'] === 'known-terminal-verify',
       });
       if (values['--mode'] === 'plan') writePlan(root, plan.repair_id, plan);
       return {
@@ -1179,8 +2371,14 @@ export async function runRuntimeCodeRebind(args) {
             projectIds: plan.request.identity.project_ids,
             workId: plan.request.identity.work_id,
             attempt: plan.request.attempt,
-            actionId: plan.request.action.kind === 'historical_terminal_review' ? plan.request.action.capture.action_id : undefined,
-            issueId: plan.request.action.kind === 'historical_terminal_review' ? plan.request.action.capture.issue_id : undefined,
+            actionId:
+              plan.request.action.kind === 'historical_terminal_review'
+                ? plan.request.action.capture.action_id
+                : undefined,
+            issueId:
+              plan.request.action.kind === 'historical_terminal_review'
+                ? plan.request.action.capture.issue_id
+                : undefined,
             nativeHandle: plan.request.nativeSessionHandle,
             repairId: plan.repair_id,
             actor: plan.actor,
@@ -1198,7 +2396,8 @@ export async function runRuntimeCodeRebind(args) {
             root,
             workspaceId,
             plan,
-            rebuildPlan: () => normal ? planConfiguredFrontierContinuation(sourceArgs) : planDeliveredWorkContinuation(sourceArgs),
+            rebuildPlan: () =>
+              normal ? planConfiguredFrontierContinuation(sourceArgs) : planDeliveredWorkContinuation(sourceArgs),
           });
         return {
           status: result.status,
@@ -1291,7 +2490,9 @@ export async function runRuntimeCodeRebind(args) {
           snapshot.work?.lease?.thread_id === plan.request.nativeSessionHandle &&
           canonicalJsonDigest(journal.version) === canonicalJsonDigest(plan.request.expectedJournal) &&
           (plan.request.synthesisCorrection ? item?.issue_id === null : item?.issue_id === plan.request.issueId) &&
-          (plan.request.focusedFailureCorrection ? item?.observation?.status==='reported_failed' : item?.observation === null) &&
+          (plan.request.focusedFailureCorrection
+            ? item?.observation?.status === 'reported_failed'
+            : item?.observation === null) &&
           current.digest === plan.request.newRuntimeCodeDigest,
         'runtime-code rebind replay needs current-state inspection',
       );
@@ -1364,8 +2565,10 @@ export async function runRuntimeCodeRebind(args) {
           forwardOperationId: request.forwardOperationId,
           ownerNoCallPointer: request.ownerNoCallPointer,
           correctionId: request.synthesisCorrection?.correctionId,
-          ownerCorrectionPointer: request.focusedFailureCorrection?.ownerCorrectionPointer ?? request.synthesisCorrection?.ownerCorrectionPointer,
-    focusedFailureCorrection:Boolean(request.focusedFailureCorrection),
+          ownerCorrectionPointer:
+            request.focusedFailureCorrection?.ownerCorrectionPointer ??
+            request.synthesisCorrection?.ownerCorrectionPointer,
+          focusedFailureCorrection: Boolean(request.focusedFailureCorrection),
         });
         requireRebind(
           current.digest === effective.digest && canonicalJsonDigest(current.request) === canonicalJsonDigest(request),
@@ -1378,12 +2581,14 @@ export async function runRuntimeCodeRebind(args) {
           forward_operation_id: request.forwardOperationId,
           parent_manifest_digest: request.parentManifestDigest,
           successor_manifest_digest: request.successorManifestDigest,
-          ...(request.focusedFailureCorrection ? {owner_correction_pointer:request.focusedFailureCorrection.ownerCorrectionPointer} : request.synthesisCorrection
-            ? {
-                owner_correction_pointer: request.synthesisCorrection.ownerCorrectionPointer,
-                synthesis_correction_digest: request.synthesisCorrection.correctionDigest,
-              }
-            : { owner_no_call_pointer: request.ownerNoCallPointer }),
+          ...(request.focusedFailureCorrection
+            ? { owner_correction_pointer: request.focusedFailureCorrection.ownerCorrectionPointer }
+            : request.synthesisCorrection
+              ? {
+                  owner_correction_pointer: request.synthesisCorrection.ownerCorrectionPointer,
+                  synthesis_correction_digest: request.synthesisCorrection.correctionDigest,
+                }
+              : { owner_no_call_pointer: request.ownerNoCallPointer }),
         };
       },
     };

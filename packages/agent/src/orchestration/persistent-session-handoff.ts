@@ -53,7 +53,12 @@ import {
 } from './local-source-authorization.js';
 import { createLocalSessionReconciliationVerifier } from './local-session-reconciliation.js';
 import { readAdmittedSessionExecutionContext, openAdmittedSessionExecution } from './admitted-session-execution.js';
-import { buildAdmittedDevelopmentPacket, type AcceptedSourceContinuation } from './admitted-development-packet.js';
+import {
+  buildAdmittedDevelopmentPacket,
+  readInitialSourceContinuationLineageView,
+  type AcceptedSourceContinuation,
+  type InitialSourceContinuationLineageView,
+} from './admitted-development-packet.js';
 import { configuredFrontierRecoveryViewDigest } from './failed-prewriter-transition.js';
 import {
   initialSourceContinuationRecord,
@@ -140,13 +145,22 @@ function sourcePreflightContinuation(
   attempt: number,
 ): AcceptedSourceContinuation | null {
   const configured = store.readConfiguredFrontierRecoveryView(identity, attempt);
-  const initial = store.readInitialSourceContinuationReceipt(identity, attempt);
+  const initial: InitialSourceContinuationLineageView | null = readInitialSourceContinuationLineageView(
+    store,
+    identity,
+    attempt,
+  );
   requireState(!(configured && initial), 'multiple Host Source continuation records are ambiguous');
   return initial ?? configured;
 }
 
 function sourcePreflightContinuationDigest(view: AcceptedSourceContinuation | null): string {
   if (view === null) return canonicalJsonDigest(null);
+  if ('receipt' in view)
+    return canonicalJsonDigest({
+      initialReceipt: initialSourceContinuationRecord(view.receipt).digest,
+      frontierCodeRebind: view.frontierCodeRebind?.record_digest ?? null,
+    });
   return 'schema' in view ? initialSourceContinuationRecord(view).digest : configuredFrontierRecoveryViewDigest(view);
 }
 

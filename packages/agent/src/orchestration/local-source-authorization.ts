@@ -14,7 +14,10 @@ import {
   produceSourceWritePreflightApproval,
   type SourceWritePreflightContextResolver,
 } from './source-preflight-operations.js';
-import { acceptedSourceAuthorizationRevision } from './admitted-development-packet.js';
+import {
+  acceptedSourceAuthorizationRevision,
+  readInitialSourceContinuationLineageView,
+} from './admitted-development-packet.js';
 
 const authorizationSchema = z
   .object({
@@ -74,7 +77,7 @@ export function createLocalSourceWriteApprovalVerifier(
         return null;
       const journal = store.readWorkSessionJournal(request.identity);
       const initialContinuation = journal
-        ? store.readInitialSourceContinuationReceipt(request.identity, journal.attempt)
+        ? readInitialSourceContinuationLineageView(store, request.identity, journal.attempt)
         : null;
       const references = work.lifecycle.references.filter(
         (item) =>

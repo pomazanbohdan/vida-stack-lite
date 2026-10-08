@@ -22,6 +22,7 @@ import {
 } from '../src/orchestration/scoped-source-snapshot.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
+import { validateInitialSourceFrontierCodeRebindReceipt } from '../src/orchestration/initial-source-frontier-code-rebind.ts';
 import { admitLocalSessionWork } from '../src/orchestration/local-work-admission.ts';
 import {
   MastraSessionBridge,
@@ -34,7 +35,10 @@ import {
   openConfiguredMastraSessionLedger,
 } from '../src/orchestration/persistent-session-handoff.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
-import { readSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
+import {
+  readSessionEngineSnapshot,
+  readInitialSourceContinuationSessionEngineSnapshot,
+} from '../src/orchestration/session-engine-snapshot.ts';
 import { bindRuntimeInitialization } from '../src/runtime-initialization.ts';
 import { run } from '../bin/run.mjs';
 import {
@@ -54,6 +58,8 @@ import {
 /** @typedef {import('../src/orchestration/initial-source-continuation.ts').InitialSourceContinuationRequest} InitialSourceContinuationRequest */
 /** @typedef {import('../src/orchestration/initial-source-continuation.ts').InitialSourceContinuationState} InitialSourceContinuationState */
 /** @typedef {import('../src/orchestration/initial-source-continuation.ts').InitialSourceContinuationVerifiedCurrent} InitialSourceContinuationVerifiedCurrent */
+/** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindRequest} InitialSourceFrontierCodeRebindRequest */
+/** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindVerifiedCurrent} InitialSourceFrontierCodeRebindVerifiedCurrent */
 /** @typedef {import('../src/orchestration/local-work-admission.ts').LocalWorkAdmissionInput} LocalWorkAdmissionInput */
 /** @typedef {import('../src/orchestration/mastra-session-bridge.ts').MastraSessionBridge} MastraSessionBridgeType */
 /** @typedef {import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} SessionBridgeRequest */
@@ -915,239 +921,381 @@ if (!fixtureChild) {
 }
 
 const registerFixtureTest = fixtureChild ? test : () => {};
-registerFixtureTest(
-  'continues real admitted initial work on the same attempt and replays its durable receipt',
-  async () =>
-    withInitialWork(async (f) => {
-      const currentSource = changeOneAcceptedDocument(f);
-      const requestPath = '.agent/work/' + f.identity.work_id + '/initial-source-continuation.json';
-      writeFileSync(
-        path.join(f.root, requestPath),
-        record({
-          identity: f.identity,
-          attempt: 1,
-          nativeSessionHandle: admittedInput(f).nativeSessionHandle,
-        }),
-      );
-      const inspectArgs = [
+/**
+ * Reuse the real admitted-work/initial-continuation/same-run synthesis path and
+ * stop at the current unissued wave-1 frontier. This is shared by the existing
+ * CLI regression and the Host-only code-rebind tests.
+ * @param {InitialWorkFixture} f
+ */
+async function prepareInitialSourceWaveOne(f) {
+  const currentSource = changeOneAcceptedDocument(f);
+  const requestPath = '.agent/work/' + f.identity.work_id + '/initial-source-continuation.json';
+  writeFileSync(
+    path.join(f.root, requestPath),
+    record({
+      identity: f.identity,
+      attempt: 1,
+      nativeSessionHandle: admittedInput(f).nativeSessionHandle,
+    }),
+  );
+  const inspectArgs = [
+    '--continue-initial-source',
+    'true',
+    '--mode',
+    'inspect',
+    '--project-root',
+    f.root,
+    '--request',
+    requestPath,
+  ];
+  const inspected = await withExpiredOwnerAsync(f, async () =>
+    parseInitialSourceInspection(await runAgent(inspectArgs), f),
+  );
+  expect(inspected.status).toBe('initial_source_continuation_ready');
+  expect(inspected.next_operation).toBe('apply');
+  expect(inspected.rights_granted).toBe(false);
+  expect(inspected.accepted_result).toBe(false);
+  expect(inspected.runtime_acceptance).toBe(false);
+  expect(inspected.request.configDigest).toBe(runtimeConfigDigest(f.config));
+  const request = inspected.request;
+  writeFileSync(path.join(f.root, requestPath), record(request));
+  expect(request.authorizedSourceChanges.map((change) => change.path)).toEqual([f.documents[1]]);
+  expect(request.currentInitialRequest.stage_id).toBe('synthesize_task');
+  expect(request.currentInitialRequest.wave_index).toBe(0);
+  const originalRequest = firstValue(originalEngine(f).requests, 'Original Initial Source engine request');
+  expect(originalRequest.stage_id).toBe('synthesize_task');
+  expect(originalEngine(f).observations).toEqual([]);
+  expect(request.currentRuntimeCodeDigest).toBe(request.priorRuntimeCodeDigest);
+  expect(request.currentSourceScope.digest).toBe(currentSource.digest);
+  const beforeHost = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
+  const retainedPaths = [f.scopePath, f.acceptancePath, f.sourceAuthorizationPath, f.intakePath, f.rawIntakePath];
+  const retainedBytes = retainedPaths.map((relative) => readFileSync(path.join(f.root, relative)));
+  const intakeBytes = retainedBytes[3];
+  if (!intakeBytes) throw new Error('Initial Source fixture intake beforeimage is unavailable');
+  const intakeBefore = canonicalJsonDigest(JSON.parse(intakeBytes.toString('utf8')));
+  const applied = parseInitialSourceCommandResult(
+    await withExpiredOwnerAsync(f, () =>
+      runAgent([
         '--continue-initial-source',
         'true',
         '--mode',
-        'inspect',
+        'apply',
         '--project-root',
         f.root,
         '--request',
         requestPath,
-      ];
-      const inspected = await withExpiredOwnerAsync(f, async () =>
-        parseInitialSourceInspection(await runAgent(inspectArgs), f),
-      );
-      expect(inspected.status).toBe('initial_source_continuation_ready');
-      expect(inspected.next_operation).toBe('apply');
-      expect(inspected.rights_granted).toBe(false);
-      expect(inspected.accepted_result).toBe(false);
-      expect(inspected.runtime_acceptance).toBe(false);
-      expect(inspected.request.configDigest).toBe(runtimeConfigDigest(f.config));
-      const request = inspected.request;
-      writeFileSync(path.join(f.root, requestPath), record(request));
-      expect(request.authorizedSourceChanges.map((change) => change.path)).toEqual([f.documents[1]]);
-      expect(request.currentInitialRequest.stage_id).toBe('synthesize_task');
-      expect(request.currentInitialRequest.wave_index).toBe(0);
-      const originalRequest = firstValue(originalEngine(f).requests, 'Original Initial Source engine request');
-      expect(originalRequest.stage_id).toBe('synthesize_task');
-      expect(originalEngine(f).observations).toEqual([]);
-      expect(request.currentRuntimeCodeDigest).toBe(request.priorRuntimeCodeDigest);
-      expect(request.currentSourceScope.digest).toBe(currentSource.digest);
-      const beforeHost = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
-      const retainedPaths = [f.scopePath, f.acceptancePath, f.sourceAuthorizationPath, f.intakePath, f.rawIntakePath];
-      const retainedBytes = retainedPaths.map((relative) => readFileSync(path.join(f.root, relative)));
-      const intakeBytes = retainedBytes[3];
-      if (!intakeBytes) throw new Error('Initial Source fixture intake beforeimage is unavailable');
-      const intakeBefore = canonicalJsonDigest(JSON.parse(intakeBytes.toString('utf8')));
-      const applied = parseInitialSourceCommandResult(
-        await withExpiredOwnerAsync(f, () =>
-          runAgent([
-            '--continue-initial-source',
-            'true',
-            '--mode',
-            'apply',
-            '--project-root',
-            f.root,
-            '--request',
-            requestPath,
-          ]),
-        ),
-        'initial_source_continuation_applied',
-      );
-      expect(applied.status).toBe('initial_source_continuation_applied');
-      expect(applied.rights_granted).toBe(false);
-      expect(applied.accepted_result).toBe(false);
-      expect(applied.runtime_acceptance).toBe(false);
-      const storedReceipt = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1);
-      if (!storedReceipt) throw new Error('Initial Source continuation receipt was not retained');
-      const receipt = validateInitialSourceContinuationReceipt(storedReceipt);
-      const priorRunId = workRunId(receipt.prior_work);
-      expect(receipt.status).toBe('initial_request_ready');
-      expect(receipt.rights_granted).toBe(false);
-      expect(receipt.accepted_result).toBe(false);
-      expect(receipt.runtime_acceptance).toBe(false);
-      expect(receipt.prior_work).toEqual(beforeHost.work);
-      expect(receipt.successor_work.binding.lifecycle_work_id).toBe(request.identity.work_id);
-      expect(receipt.successor_work.binding.workflow_id).toBe(beforeHost.work.binding.workflow_id);
-      expect(receipt.successor_work.binding.scope_id).toBe(beforeHost.work.binding.scope_id);
-      expect(receipt.successor_work.binding.ac_ids).toEqual(beforeHost.work.binding.ac_ids);
-      expect(workRunId(receipt.successor_work)).toBe(workRunId(beforeHost.work));
-      expect(receipt.successor_work.execution.assignment_attempts).toEqual([]);
-      expect(workLease(receipt.successor_work).thread_id).toBe(request.nativeSessionHandle);
-      expect(workLease(receipt.successor_work).ticket_id).not.toBe(workLease(beforeHost.work).ticket_id);
-      expect(receipt.successor_journal.completed).toEqual([]);
-      expect(receipt.successor_journal.items).toHaveLength(1);
-      const continuedItem = firstValue(receipt.successor_journal.items, 'Continued Initial Source Journal item');
-      expect(continuedItem.request).toEqual(request.currentInitialRequest);
-      expect(continuedItem.issue_id).toBeNull();
-      expect(continuedItem.observation).toBeNull();
-      const lastRebind = receipt.successor_ledger.rebinds.at(-1);
-      if (!lastRebind) throw new Error('Initial Source continuation rebind record is missing');
-      expect(lastRebind.resources).toEqual(['execution:' + request.identity.work_id]);
-      for (const [index, relative] of retainedPaths.entries())
-        expect(readFileSync(path.join(f.root, relative))).toEqual(retainedBytes[index]);
-      expect(canonicalJsonDigest(JSON.parse(readFileSync(path.join(f.root, f.intakePath), 'utf8')))).toBe(intakeBefore);
-      expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
+      ]),
+    ),
+    'initial_source_continuation_applied',
+  );
+  expect(applied.status).toBe('initial_source_continuation_applied');
+  expect(applied.rights_granted).toBe(false);
+  expect(applied.accepted_result).toBe(false);
+  expect(applied.runtime_acceptance).toBe(false);
+  const storedReceipt = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1);
+  if (!storedReceipt) throw new Error('Initial Source continuation receipt was not retained');
+  const receipt = validateInitialSourceContinuationReceipt(storedReceipt);
+  const priorRunId = workRunId(receipt.prior_work);
+  expect(receipt.status).toBe('initial_request_ready');
+  expect(receipt.rights_granted).toBe(false);
+  expect(receipt.accepted_result).toBe(false);
+  expect(receipt.runtime_acceptance).toBe(false);
+  expect(receipt.prior_work).toEqual(beforeHost.work);
+  expect(receipt.successor_work.binding.lifecycle_work_id).toBe(request.identity.work_id);
+  expect(receipt.successor_work.binding.workflow_id).toBe(beforeHost.work.binding.workflow_id);
+  expect(receipt.successor_work.binding.scope_id).toBe(beforeHost.work.binding.scope_id);
+  expect(receipt.successor_work.binding.ac_ids).toEqual(beforeHost.work.binding.ac_ids);
+  expect(workRunId(receipt.successor_work)).toBe(workRunId(beforeHost.work));
+  expect(receipt.successor_work.execution.assignment_attempts).toEqual([]);
+  expect(workLease(receipt.successor_work).thread_id).toBe(request.nativeSessionHandle);
+  expect(workLease(receipt.successor_work).ticket_id).not.toBe(workLease(beforeHost.work).ticket_id);
+  expect(receipt.successor_journal.completed).toEqual([]);
+  expect(receipt.successor_journal.items).toHaveLength(1);
+  const continuedItem = firstValue(receipt.successor_journal.items, 'Continued Initial Source Journal item');
+  expect(continuedItem.request).toEqual(request.currentInitialRequest);
+  expect(continuedItem.issue_id).toBeNull();
+  expect(continuedItem.observation).toBeNull();
+  const lastRebind = receipt.successor_ledger.rebinds.at(-1);
+  if (!lastRebind) throw new Error('Initial Source continuation rebind record is missing');
+  expect(lastRebind.resources).toEqual(['execution:' + request.identity.work_id]);
+  for (const [index, relative] of retainedPaths.entries())
+    expect(readFileSync(path.join(f.root, relative))).toEqual(retainedBytes[index]);
+  expect(canonicalJsonDigest(JSON.parse(readFileSync(path.join(f.root, f.intakePath), 'utf8')))).toBe(intakeBefore);
+  expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
 
-      await hostBridge(f).close();
-      f.bridge = null;
-      hostLedger(f).close();
+  await hostBridge(f).close();
+  f.bridge = null;
+  hostLedger(f).close();
+  f.ledger = null;
+  const receiptLedger = openConfiguredMastraSessionLedger(f.root);
+  f.ledger = receiptLedger;
+  f.store = receiptLedger.hostState;
+  expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
+  const retry = parseInitialSourceCommandResult(
+    await runAgent([
+      '--continue-initial-source',
+      'true',
+      '--mode',
+      'apply',
+      '--project-root',
+      f.root,
+      '--request',
+      requestPath,
+    ]),
+    'initial_source_continuation_already_ready',
+  );
+  expect(retry.status).toBe('initial_source_continuation_already_ready');
+  expect(retry.continuation_id).toBe(receipt.continuation_id);
+  expect(retry.request_digest).toBe(receipt.request_digest);
+  expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
+
+  const reopenedContext = { ...admittedInput(f).context, scope_digest: currentSource.digest };
+  const reopenedBridge = await MastraSessionBridge.open({
+    repositoryRoot: f.root,
+    config: f.config,
+    ledger: hostLedger(f),
+    projectIds: f.identity.project_ids,
+    selection: admittedInput(f).selection,
+    context: reopenedContext,
+    workflowId: 'task_execution',
+    workspaceId: deriveWorkspaceId(f.config.repository.repository_id, f.root),
+    initialSourceContinuation: { identity: f.identity, attempt: 1 },
+  });
+  f.bridge = reopenedBridge;
+  const reopened = await hostBridge(f).snapshot();
+  expect(reopened).toMatchObject({
+    run_id: priorRunId,
+    status: 'suspended',
+    step_id: 'wave-0',
+    requests: [request.currentInitialRequest],
+    observations: [],
+  });
+
+  await bindFixtureRuntimeInitialization(f);
+  const args = initialSourceRunArgs(f, currentSource.digest);
+  await hostBridge(f).close();
+  f.bridge = null;
+  hostLedger(f).close();
+  f.ledger = null;
+  hostDatabase(f).close(true);
+  f.database = null;
+  f.store = null;
+
+  const prepared = requireRecord(await runAgent(args), 'initial Source workflow preparation');
+  expect(requireString(prepared.mastra_run_id, 'prepared mastra_run_id')).toBe(priorRunId);
+  expect(requireString(prepared.mastra_step_id, 'prepared mastra_step_id')).toBe('wave-0');
+  expect(requireString(prepared.source_snapshot_digest, 'prepared source_snapshot_digest')).toBe(currentSource.digest);
+  const preparedStateVersion = requireStateVersion(prepared.state_version, 'prepared state_version');
+  const preparedAction = firstValue(
+    parsePendingRequests(prepared.next_actions, 'prepared next_actions'),
+    'prepared next_actions',
+  );
+  expect(preparedAction).toEqual(request.currentInitialRequest);
+
+  const issued = requireRecord(
+    await runAgent([...args, ...expectedRunVersion(preparedStateVersion), '--issue-wave', 'true']),
+    'initial Source first-wave issue',
+  );
+  expect(requireString(issued.status, 'issued status')).toBe('wave_issued');
+  expect(requireString(issued.mastra_run_id, 'issued mastra_run_id')).toBe(priorRunId);
+  const issuedStateVersion = requireStateVersion(issued.state_version, 'issued state_version');
+  const issuedActions = parseIssuedActions(issued.issued_actions, 'issued actions');
+  expect(issuedActions).toHaveLength(1);
+  const issuedAction = firstValue(issuedActions, 'issued actions');
+  expect(issuedAction.request).toEqual(request.currentInitialRequest);
+  const firstIssueId = issuedAction.issue_id;
+  await expectRejectedMessage(
+    runAgent([...args, ...expectedRunVersion(issuedStateVersion), '--issue-wave', 'true']),
+    /Initial Source continuation has an issued action with unknown outcome; automatic reissue is forbidden/,
+  );
+
+  const unknownOutcomeLedger = openConfiguredMastraSessionLedger(f.root);
+  f.ledger = unknownOutcomeLedger;
+  f.store = unknownOutcomeLedger.hostState;
+  let journal = currentJournal(f);
+  expect(journal.state.run_id).toBe(priorRunId);
+  expect(journal.state.items).toHaveLength(1);
+  const unresolvedItem = firstValue(journal.state.items, 'Issued unknown Initial Source Journal item');
+  expect(unresolvedItem.issue_id).toBe(firstIssueId);
+  expect(unresolvedItem.observation).toBeNull();
+  hostLedger(f).close();
+  f.ledger = null;
+  f.store = null;
+
+  const summary = 'Current accepted AC synthesized into a DevelopmentTaskPacket for the prewriter review.';
+  /** @type {SessionBridgeObservation} */
+  const observation = {
+    schema: 'VidaSessionObservation/v1',
+    action_id: issuedAction.request.action_id,
+    issue_id: firstIssueId,
+    agent_id: 'fixture:research-synthesizer',
+    tool_call_ref: 'fixture:initial-source-task-synthesis',
+    status: 'reported_complete',
+    summary,
+    output_digest: canonicalJsonDigest(summary),
+    evidence_refs: ['fixture://initial-source-task-synthesis'],
+  };
+  const reportPath = path.join(f.root, '.agent', 'work', f.identity.work_id, 'initial-source-synthesis-report.json');
+  writeFileSync(reportPath, record(observation));
+  const reported = requireRecord(
+    await runAgent([...args, ...expectedRunVersion(issuedStateVersion), '--report', reportPath]),
+    'reported initial synthesis',
+  );
+  expect(requireString(reported.status, 'reported status')).toBe('resumed');
+  expect(requireString(reported.mastra_run_id, 'reported mastra_run_id')).toBe(priorRunId);
+  expect(requireString(reported.mastra_step_id, 'reported mastra_step_id')).not.toBe('wave-0');
+  const reportedStateVersion = requireStateVersion(reported.state_version, 'reported state_version');
+  const reportedRequests = parsePendingRequests(reported.next_actions, 'reported next_actions');
+  expect(reportedRequests.length).toBeGreaterThan(0);
+  expect(firstValue(reportedRequests, 'reported next_actions').stage_id).toBe('review_source_prewrite');
+
+  const reopenedLedger = openConfiguredMastraSessionLedger(f.root);
+  f.ledger = reopenedLedger;
+  f.store = reopenedLedger.hostState;
+  const waveOne = currentJournal(f);
+  const frontier = firstValue(waveOne.state.items, 'Current unissued Initial Source wave-1 frontier');
+  expect(frontier.request.wave_index).toBe(1);
+  expect(waveOne.state.items.length).toBeGreaterThan(0);
+  for (const item of waveOne.state.items) {
+    expect(item.issue_id).toBeNull();
+    expect(item.observation).toBeNull();
+    expect(item.host_reservation).toBeUndefined();
+    const stage = f.config.workflows[item.request.workflow_id]?.stages.find(
+      (candidate) => candidate.id === item.request.stage_id,
+    );
+    expect(stage).toBeDefined();
+    for (const assignment of stage.assignments) {
+      const profile = f.config.agents.profiles[assignment.profile];
+      expect(profile?.mutation_scope).toBe('none');
+      expect(f.config.agents.tool_policies[profile.tools_policy]?.source_write).toBe(false);
+    }
+  }
+  return {
+    currentSource,
+    requestPath,
+    request,
+    receipt,
+    priorRunId,
+    args,
+    reportedStateVersion,
+    reportedRequests,
+    summary,
+    observation,
+  };
+}
+
+/** @param {InitialWorkFixture} f @returns {InitialSourceFrontierCodeRebindRequest} */
+function frontierCodeRequest(f) {
+  const state = continuationState(f);
+  const receipt = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1);
+  if (!receipt) throw new Error('Initial Source frontier fixture receipt is unavailable');
+  const action = firstValue(state.journal.items, 'Initial Source readonly frontier action');
+  const runtimeCodePaths = [...runtimePackageCodePaths(f.config.runtime.bundle)].sort();
+  const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
+  const newRuntimeCodeDigest = canonicalJsonDigest({
+    fixtureOnly: 'trusted-host-seam; not an installed-code claim',
+    prior: state.work.binding.runtime_code_digest,
+    work: f.identity.work_id,
+  });
+  return {
+    schema: 'InitialSourceFrontierCodeRebindRequest/v1',
+    identity: f.identity,
+    attempt: 1,
+    actionId: action.request.action_id,
+    nativeSessionHandle: receipt.request.nativeSessionHandle,
+    leaseGeneration: workLease(state.work).generation,
+    expectedWork: state.workVersion,
+    expectedLedger: state.ledgerVersion,
+    expectedJournal: state.journalVersion,
+    expectedMaintenanceGeneration: state.maintenanceGeneration,
+    initialContinuationId: receipt.continuation_id,
+    initialContinuationRequestDigest: receipt.request_digest,
+    configDigest: runtimeConfigDigest(f.config),
+    sourceScopeDigest: sourceScope.digest,
+    oldRuntimeCodeDigest: state.work.binding.runtime_code_digest,
+    newRuntimeCodeDigest,
+    runtimeCodePaths,
+    parentManifestRef: '.tmp/fixture/qualified-parent-native-manifest.json',
+    parentManifestDigest: canonicalJsonDigest('fixture-qualified-parent'),
+    successorManifestRef: '.tmp/fixture/qualified-successor-native-manifest.json',
+    successorManifestDigest: canonicalJsonDigest('fixture-qualified-successor'),
+    systemUpdateRef: '.tmp/fixture/system-update-result.json',
+    systemUpdateOperationId: 'fixture-system-update-operation',
+    nativeSelfAttestationDigest: canonicalJsonDigest('fixture-native-self-attestation'),
+  };
+}
+
+/** @param {InitialSourceFrontierCodeRebindRequest} request @returns {InitialSourceFrontierCodeRebindVerifiedCurrent} */
+function fixtureFrontierProof(request) {
+  // This injected verifier seam is a Host fixture only; it does not establish
+  // installed bytes, a qualified native endpoint, or native self-attestation.
+  return {
+    runtimeCodePaths: request.runtimeCodePaths,
+    oldRuntimeCodeDigest: request.oldRuntimeCodeDigest,
+    newRuntimeCodeDigest: request.newRuntimeCodeDigest,
+    parentManifestRef: request.parentManifestRef,
+    parentManifestDigest: request.parentManifestDigest,
+    successorManifestRef: request.successorManifestRef,
+    successorManifestDigest: request.successorManifestDigest,
+    systemUpdateRef: request.systemUpdateRef,
+    systemUpdateOperationId: request.systemUpdateOperationId,
+    nativeSelfAttestationDigest: request.nativeSelfAttestationDigest,
+  };
+}
+
+/** @param {InitialWorkFixture} f @param {InitialSourceFrontierCodeRebindVerifiedCurrent} proof
+ * @returns {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindVerifyCurrent} */
+function trustedHostFixtureVerifier(f, proof) {
+  return (request, state) => {
+    const initial = state.initialReceipt;
+    if (
+      request.initialContinuationId !== initial.continuation_id ||
+      request.initialContinuationRequestDigest !== initial.request_digest ||
+      request.nativeSessionHandle !== initial.request.nativeSessionHandle
+    )
+      throw new Error('fixture Host verifier: continuation history or owner changed');
+    if (runtimeConfigDigest(loadRuntimeConfig(f.root)) !== request.configDigest)
+      throw new Error('fixture Host verifier: current config changed');
+    const source = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
+    if (source.digest !== request.sourceScopeDigest)
+      throw new Error('fixture Host verifier: current Source scope changed');
+    if (
+      snapshotRuntimePackageSources(runtimePackageAccess(), f.config.runtime.bundle, request.runtimeCodePaths)
+        .digest !== request.oldRuntimeCodeDigest
+    )
+      throw new Error('fixture Host verifier: prior runtime code changed');
+    const authorization = initial.request.sourceAuthorizationReference;
+    if (sha256(readFileSync(path.join(f.root, authorization.path))) !== initial.request.sourceAuthorizationSha256)
+      throw new Error('fixture Host verifier: source permission changed');
+    // The endpoint proof is an injected Host test seam; it is not verified
+    // against installed target bytes and proves no native qualification.
+    return proof;
+  };
+}
+
+/** @param {WorkState} work */
+function withoutFrontierCodeBinding(work) {
+  return {
+    ...work,
+    revision: 0,
+    binding: { ...work.binding, runtime_code_digest: '', runtime_source_revision: '' },
+    lifecycle: {
+      ...work.lifecycle,
+      revision: 0,
+      config_binding: { ...work.lifecycle.config_binding, runtime_code_digest: '' },
+    },
+  };
+}
+
+registerFixtureTest(
+  'continues real admitted initial work on the same attempt and replays its durable receipt',
+  async () =>
+    withInitialWork(async (f) => {
+      const { priorRunId, args, reportedStateVersion, summary, observation } = await prepareInitialSourceWaveOne(f);
+      const reportedLedger = hostLedger(f);
+      reportedLedger.close();
       f.ledger = null;
-      const receiptLedger = openConfiguredMastraSessionLedger(f.root);
-      f.ledger = receiptLedger;
-      f.store = receiptLedger.hostState;
-      expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
-      const retry = parseInitialSourceCommandResult(
-        await runAgent([
-          '--continue-initial-source',
-          'true',
-          '--mode',
-          'apply',
-          '--project-root',
-          f.root,
-          '--request',
-          requestPath,
-        ]),
-        'initial_source_continuation_already_ready',
-      );
-      expect(retry.status).toBe('initial_source_continuation_already_ready');
-      expect(retry.continuation_id).toBe(receipt.continuation_id);
-      expect(retry.request_digest).toBe(receipt.request_digest);
-      expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
-
-      const reopenedContext = { ...admittedInput(f).context, scope_digest: currentSource.digest };
-      const reopenedBridge = await MastraSessionBridge.open({
-        repositoryRoot: f.root,
-        config: f.config,
-        ledger: hostLedger(f),
-        projectIds: f.identity.project_ids,
-        selection: admittedInput(f).selection,
-        context: reopenedContext,
-        workflowId: 'task_execution',
-        workspaceId: deriveWorkspaceId(f.config.repository.repository_id, f.root),
-        initialSourceContinuation: { identity: f.identity, attempt: 1 },
-      });
-      f.bridge = reopenedBridge;
-      const reopened = await hostBridge(f).snapshot();
-      expect(reopened).toMatchObject({
-        run_id: priorRunId,
-        status: 'suspended',
-        step_id: 'wave-0',
-        requests: [request.currentInitialRequest],
-        observations: [],
-      });
-
-      await bindFixtureRuntimeInitialization(f);
-      const args = initialSourceRunArgs(f, currentSource.digest);
-      await hostBridge(f).close();
-      f.bridge = null;
-      hostLedger(f).close();
-      f.ledger = null;
-      hostDatabase(f).close(true);
-      f.database = null;
       f.store = null;
-
-      const prepared = requireRecord(await runAgent(args), 'initial Source workflow preparation');
-      expect(requireString(prepared.mastra_run_id, 'prepared mastra_run_id')).toBe(priorRunId);
-      expect(requireString(prepared.mastra_step_id, 'prepared mastra_step_id')).toBe('wave-0');
-      expect(requireString(prepared.source_snapshot_digest, 'prepared source_snapshot_digest')).toBe(
-        currentSource.digest,
-      );
-      const preparedStateVersion = requireStateVersion(prepared.state_version, 'prepared state_version');
-      const preparedAction = firstValue(
-        parsePendingRequests(prepared.next_actions, 'prepared next_actions'),
-        'prepared next_actions',
-      );
-      expect(preparedAction).toEqual(request.currentInitialRequest);
-
-      const issued = requireRecord(
-        await runAgent([...args, ...expectedRunVersion(preparedStateVersion), '--issue-wave', 'true']),
-        'initial Source first-wave issue',
-      );
-      expect(requireString(issued.status, 'issued status')).toBe('wave_issued');
-      expect(requireString(issued.mastra_run_id, 'issued mastra_run_id')).toBe(priorRunId);
-      const issuedStateVersion = requireStateVersion(issued.state_version, 'issued state_version');
-      const issuedActions = parseIssuedActions(issued.issued_actions, 'issued actions');
-      expect(issuedActions).toHaveLength(1);
-      const issuedAction = firstValue(issuedActions, 'issued actions');
-      expect(issuedAction.request).toEqual(request.currentInitialRequest);
-      const firstIssueId = issuedAction.issue_id;
-      await expectRejectedMessage(
-        runAgent([...args, ...expectedRunVersion(issuedStateVersion), '--issue-wave', 'true']),
-        /Initial Source continuation has an issued action with unknown outcome; automatic reissue is forbidden/,
-      );
-
-      const unknownOutcomeLedger = openConfiguredMastraSessionLedger(f.root);
-      f.ledger = unknownOutcomeLedger;
-      f.store = unknownOutcomeLedger.hostState;
-      let journal = currentJournal(f);
-      expect(journal.state.run_id).toBe(priorRunId);
-      expect(journal.state.items).toHaveLength(1);
-      const unresolvedItem = firstValue(journal.state.items, 'Issued unknown Initial Source Journal item');
-      expect(unresolvedItem.issue_id).toBe(firstIssueId);
-      expect(unresolvedItem.observation).toBeNull();
-      hostLedger(f).close();
-      f.ledger = null;
-      f.store = null;
-
-      const summary = 'Current accepted AC synthesized into a DevelopmentTaskPacket for the prewriter review.';
-      /** @type {SessionBridgeObservation} */
-      const observation = {
-        schema: 'VidaSessionObservation/v1',
-        action_id: issuedAction.request.action_id,
-        issue_id: firstIssueId,
-        agent_id: 'fixture:research-synthesizer',
-        tool_call_ref: 'fixture:initial-source-task-synthesis',
-        status: 'reported_complete',
-        summary,
-        output_digest: canonicalJsonDigest(summary),
-        evidence_refs: ['fixture://initial-source-task-synthesis'],
-      };
-      const reportPath = path.join(
-        f.root,
-        '.agent',
-        'work',
-        f.identity.work_id,
-        'initial-source-synthesis-report.json',
-      );
-      writeFileSync(reportPath, record(observation));
-      const reported = requireRecord(
-        await runAgent([...args, ...expectedRunVersion(issuedStateVersion), '--report', reportPath]),
-        'reported initial synthesis',
-      );
-      expect(requireString(reported.status, 'reported status')).toBe('resumed');
-      expect(requireString(reported.mastra_run_id, 'reported mastra_run_id')).toBe(priorRunId);
-      expect(requireString(reported.mastra_step_id, 'reported mastra_step_id')).not.toBe('wave-0');
-      const reportedStateVersion = requireStateVersion(reported.state_version, 'reported state_version');
-      const reportedRequests = parsePendingRequests(reported.next_actions, 'reported next_actions');
-      expect(reportedRequests.length).toBeGreaterThan(0);
-      expect(firstValue(reportedRequests, 'reported next_actions').stage_id).toBe('review_source_prewrite');
-
       const prewriter = requireRecord(
         await runAgent([...args, ...expectedRunVersion(reportedStateVersion), '--issue-wave', 'true']),
         'initial Source prewriter issue',
@@ -1165,7 +1313,7 @@ registerFixtureTest(
       const completedLedger = openConfiguredMastraSessionLedger(f.root);
       f.ledger = completedLedger;
       f.store = completedLedger.hostState;
-      journal = currentJournal(f);
+      const journal = currentJournal(f);
       expect(journal.state.run_id).toBe(priorRunId);
       expect(journal.state.completed).toHaveLength(1);
       const completedWave = firstValue(journal.state.completed, 'Completed Initial Source Journal wave');
@@ -1176,6 +1324,189 @@ registerFixtureTest(
       expect(journal.state.items.every((item) => item.request.stage_id === 'review_source_prewrite')).toBe(true);
     }),
 );
+
+registerFixtureTest(
+  'rebinds code at the real unissued readonly frontier without changing source authority',
+  async () => {
+    await withInitialWork(async (f) => {
+      await prepareInitialSourceWaveOne(f);
+      const request = frontierCodeRequest(f);
+      const proof = fixtureFrontierProof(request);
+      const before = continuationState(f);
+      const initialReceiptBefore = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1);
+      const sourceAuthorization = before.work.lifecycle.references.find(
+        (entry) => entry.artifact_schema === 'LocalSourceWriteAuthorization/v1',
+      );
+      const retainedPaths = [
+        f.scopePath,
+        f.acceptancePath,
+        f.sourceAuthorizationPath,
+        f.intakePath,
+        f.rawIntakePath,
+        ...f.documents,
+      ];
+      const retainedBytes = retainedPaths.map((relative) => readFileSync(path.join(f.root, relative)));
+      const commit = () =>
+        hostStore(f).commitReadOnlyFrontierRuntimeCode(request, trustedHostFixtureVerifier(f, proof));
+      const storedValue = commit();
+      const receipt = validateInitialSourceFrontierCodeRebindReceipt(storedValue);
+      expect(receipt.status).toBe('rebound');
+      expect(receipt.rights_granted).toBe(false);
+      expect(receipt.accepted_result).toBe(false);
+      expect(receipt.runtime_acceptance).toBe(false);
+      expect(receipt.record.request.runtimeCodePaths).toEqual(
+        [...runtimePackageCodePaths(f.config.runtime.bundle)].sort(),
+      );
+      expect(receipt.record.endpoint_proof).toEqual(proof);
+      expect(receipt.record.prior_ledger).toEqual(before.ledger);
+      expect(receipt.record.prior_journal).toEqual(before.journal);
+      const after = continuationState(f);
+      expect(after.work).toEqual(receipt.record.successor_work);
+      expect(withoutFrontierCodeBinding(after.work)).toEqual(withoutFrontierCodeBinding(before.work));
+      expect(after.work.revision).toBe(before.work.revision + 1);
+      expect(after.work.lifecycle.revision).toBe(before.work.lifecycle.revision + 1);
+      expect(after.work.binding.runtime_code_digest).toBe(request.newRuntimeCodeDigest);
+      expect(after.ledger).toEqual(before.ledger);
+      expect(after.journal).toEqual(before.journal);
+      expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(initialReceiptBefore);
+      expect(sourceAuthorization).toBeDefined();
+      for (const [index, relative] of retainedPaths.entries())
+        expect(readFileSync(path.join(f.root, relative))).toEqual(retainedBytes[index]);
+      expect(
+        hostStore(f).readInitialSourceFrontierCodeRebindReceipt(f.identity, 1, receipt.original_receipt_id),
+      ).toEqual(receipt);
+      expect(commit()).toEqual(receipt);
+      expect(continuationState(f)).toEqual(after);
+      const initialReceipt = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1);
+      if (!initialReceipt) throw new Error('Initial Source lineage fixture receipt is unavailable');
+      const binding = {
+        repositoryRoot: f.root,
+        config: f.config,
+        selection: admittedInput(f).selection,
+        context: { ...admittedInput(f).context, scope_digest: request.sourceScopeDigest },
+        workflowId: 'task_execution',
+        runId: workRunId(after.work),
+      };
+      expect(after.journal.source_scope?.digest).toBe(initialReceipt.request.currentSourceScope.digest);
+      expect(() =>
+        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, after.journal, after.work),
+      ).toThrow();
+      expect(
+        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, after.journal, after.work, receipt)
+          .run_id,
+      ).toBe(binding.runId);
+      expect(() =>
+        validateInitialSourceFrontierCodeRebindReceipt({
+          ...receipt,
+          record: {
+            ...receipt.record,
+            work_version: { ...receipt.record.work_version, extra: true },
+          },
+        }),
+      ).toThrow();
+      expect(() =>
+        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, after.journal, after.work, {
+          ...receipt,
+          current_runtime_code_digest: canonicalJsonDigest('changed-code'),
+        }),
+      ).toThrow();
+      const producer = hostLedger(f).beginSessionProducer({
+        ...binding,
+        projectIds: f.identity.project_ids,
+        phase: 'initialize',
+      });
+      hostStore(f).assertSessionProducerCurrent(producer);
+      hostStore(f).settleSessionProducer(producer, after.journalVersion);
+      expect(continuationState(f)).toEqual(after);
+    });
+  },
+);
+
+registerFixtureTest('keeps an expired exact owner claim expired during code-only recovery control', async () => {
+  await withInitialWork(async (f) => {
+    await prepareInitialSourceWaveOne(f);
+    const request = frontierCodeRequest(f);
+    const proof = fixtureFrontierProof(request);
+    const before = continuationState(f);
+    const receipt = withExpiredOwner(f, () =>
+      hostStore(f).commitReadOnlyFrontierRuntimeCode(request, trustedHostFixtureVerifier(f, proof)),
+    );
+    const after = continuationState(f);
+    expect(receipt.status).toBe('rebound');
+    expect(after.work.lease).toEqual(before.work.lease);
+    expect(after.ledger).toEqual(before.ledger);
+    expect(after.journal).toEqual(before.journal);
+    expect(receipt.rights_granted).toBe(false);
+  });
+});
+
+registerFixtureTest('denies changed or stale frontier proof and an issued current wave without writes', async () => {
+  await withInitialWork(async (f) => {
+    await prepareInitialSourceWaveOne(f);
+    const base = frontierCodeRequest(f);
+    const proof = fixtureFrontierProof(base);
+    const before = continuationState(f);
+    /** @param {InitialSourceFrontierCodeRebindRequest} request */
+    const reject = (request) =>
+      expect(() =>
+        hostStore(f).commitReadOnlyFrontierRuntimeCode(request, trustedHostFixtureVerifier(f, proof)),
+      ).toThrow();
+    reject({ ...base, nativeSessionHandle: 'foreign-thread' });
+    reject({ ...base, expectedWork: { ...base.expectedWork, digest: canonicalJsonDigest('stale') } });
+    reject({ ...base, expectedJournal: { ...base.expectedJournal, digest: canonicalJsonDigest('stale-journal') } });
+    reject({ ...base, initialContinuationId: 'wrong-history' });
+    reject({ ...base, initialContinuationRequestDigest: canonicalJsonDigest('changed-permission-history') });
+    reject({ ...base, configDigest: canonicalJsonDigest('changed-config') });
+    reject({ ...base, sourceScopeDigest: canonicalJsonDigest('changed-source-scope') });
+    reject({ ...base, parentManifestDigest: canonicalJsonDigest('wrong-parent') });
+    reject({ ...base, runtimeCodePaths: base.runtimeCodePaths.slice(1) });
+
+    const configPath = path.join(f.root, 'agent-runtime.config.v1.yaml');
+    const configBefore = readFileSync(configPath);
+    try {
+      writeFileSync(
+        configPath,
+        configBefore.toString('utf8').replace('initial-source-repository', 'changed-source-repository'),
+      );
+      reject(base);
+    } finally {
+      writeFileSync(configPath, configBefore);
+    }
+    const sourceDriftPath = path.join(f.root, f.documents[0]);
+    const sourceBefore = readFileSync(sourceDriftPath);
+    try {
+      writeFileSync(sourceDriftPath, sourceBefore.toString('utf8') + 'out-of-band source change\n');
+      reject(base);
+    } finally {
+      writeFileSync(sourceDriftPath, sourceBefore);
+    }
+    const permissionRef = before.work.lifecycle.references.find(
+      (entry) => entry.artifact_schema === 'LocalSourceWriteAuthorization/v1',
+    );
+    if (!permissionRef) throw new Error('Initial Source permission fixture is unavailable');
+    const permissionPath = path.join(f.root, permissionRef.path);
+    const permissionBefore = readFileSync(permissionPath);
+    try {
+      writeFileSync(permissionPath, permissionBefore.toString('utf8') + '\n');
+      reject(base);
+    } finally {
+      writeFileSync(permissionPath, permissionBefore);
+    }
+    expect(continuationState(f)).toEqual(before);
+
+    const issued = hostLedger(f).issueWave(f.identity.work_id, 1, before.journalVersion);
+    const issuedState = continuationState(f);
+    const issuedRequest = frontierCodeRequest(f);
+    expect(issued.state.items.every((item) => item.issue_id !== null)).toBe(true);
+    expect(() =>
+      hostStore(f).commitReadOnlyFrontierRuntimeCode(
+        issuedRequest,
+        trustedHostFixtureVerifier(f, fixtureFrontierProof(issuedRequest)),
+      ),
+    ).toThrow();
+    expect(continuationState(f)).toEqual(issuedState);
+  });
+});
 
 registerFixtureTest(
   'denies a changed owner, a live owner, and an overlapping queued waiter without writes',

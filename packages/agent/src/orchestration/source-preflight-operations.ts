@@ -30,6 +30,7 @@ import {
   acceptedContractSourceRevision,
   acceptedSourceAuthorizationRevision,
   buildAdmittedDevelopmentPacket,
+  readInitialSourceContinuationLineageView,
 } from './admitted-development-packet.js';
 import { readAdmittedSessionExecutionContext } from './admitted-session-execution.js';
 import type { LocalWorkAdmissionInput } from './local-work-admission.js';
@@ -318,7 +319,7 @@ function attachObservedImplementationPolicyPreparation(input: {
   );
   const scope = parseJsonRecord(scopeBytes, 'current implementation scope');
   const configuredContinuation = input.hostState.readConfiguredFrontierRecoveryView(identity, input.attempt);
-  const initialContinuation = input.hostState.readInitialSourceContinuationReceipt(identity, input.attempt);
+  const initialContinuation = readInitialSourceContinuationLineageView(input.hostState, identity, input.attempt);
   requireCurrent(
     !(configuredContinuation && initialContinuation),
     'multiple Host Source continuation records are ambiguous',

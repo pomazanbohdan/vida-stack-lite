@@ -29,6 +29,7 @@ import {
   validateInitialSourceContinuationReceipt,
   type InitialSourceContinuationReceipt,
 } from './initial-source-continuation.js';
+import type { InitialSourceFrontierCodeRebindReceipt } from './initial-source-frontier-code-rebind.js';
 import { validateInitialSourceContinuationLineage } from './admitted-development-packet.js';
 
 interface UntrustedMastraStep {
@@ -1411,6 +1412,7 @@ export function readInitialSourceContinuationSessionEngineSnapshot(
   value: unknown,
   journal: MastraSessionLedgerState,
   work?: WorkState,
+  frontierCodeRebind?: InitialSourceFrontierCodeRebindReceipt | null,
 ): SessionBridgeSnapshot {
   const receipt = validateInitialSourceContinuationReceipt(value),
     request = receipt.request,
@@ -1446,9 +1448,9 @@ export function readInitialSourceContinuationSessionEngineSnapshot(
       journalSource !== null,
     'initial-source receipt, current binding or journal differs',
   );
-  if (journalSource.digest !== currentScope.digest) {
+  if (work || frontierCodeRebind || journalSource.digest !== currentScope.digest) {
     requireEngine(work, 'evolved initial-source Journal requires trusted current Host Work');
-    validateInitialSourceContinuationLineage(work, receipt, journal);
+    validateInitialSourceContinuationLineage(work, receipt, journal, frontierCodeRebind);
   }
   const originalItem = priorJournal.items[0],
     originalRequest = parseSessionBridgeRequest(originalItem?.request);

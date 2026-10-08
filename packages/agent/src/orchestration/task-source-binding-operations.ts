@@ -18,8 +18,11 @@ import { readLocalSourceWriteAuthorization } from './local-source-authorization.
 import { openConfiguredMastraSessionLedger, sessionHandoffDatabasePath } from './persistent-session-handoff.js';
 import { validateTaskSourceBindingRequest, type TaskSourceBindingRequest } from './task-source-binding.js';
 import type { TaskSourceMutationPolicyRequest } from './source-preflight-operations.js';
-import { acceptedSourceAuthorizationRevision } from './admitted-development-packet.js';
-import type { InitialSourceContinuationReceipt } from './initial-source-continuation.js';
+import {
+  acceptedSourceAuthorizationRevision,
+  readInitialSourceContinuationLineageView,
+  type InitialSourceContinuationLineageView,
+} from './admitted-development-packet.js';
 
 export type TaskSourceBindingOperationMode = 'prepare' | 'inspect' | 'issue' | 'report' | 'recover';
 
@@ -177,7 +180,7 @@ function currentSourceAuthority(
   journal: Readonly<Record<string, unknown>>,
   config: ReturnType<typeof loadRuntimeConfig>,
   identity: WorkIdentity,
-  initialContinuation: InitialSourceContinuationReceipt | null,
+  initialContinuation: InitialSourceContinuationLineageView | null,
 ): { readonly source_authorization_sha256: string; readonly source_scope_digest: string } {
   const work = currentWork;
   requireOperation(
@@ -330,7 +333,7 @@ export async function executeTaskSourceBindingOperation(input: {
         undefined,
         root,
       ),
-      initialContinuation = store.readInitialSourceContinuationReceipt(identity, request.attempt),
+      initialContinuation = readInitialSourceContinuationLineageView(store, identity, request.attempt),
       verifyCurrent = (context: {
         readonly work: NonNullable<HostStateSnapshot['work']>;
         readonly ledger: NonNullable<HostStateSnapshot['ledger']>;
