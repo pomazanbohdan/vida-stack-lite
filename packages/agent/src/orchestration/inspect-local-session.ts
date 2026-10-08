@@ -1,26 +1,49 @@
 import { Database } from 'bun:sqlite';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
-import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import Ajv2020 from 'ajv/dist/2020.js';
+import type { ValidateFunction } from 'ajv';
+import workSchema from '../../schemas/work-state.v1.schema.json' with { type: 'json' };
+import { canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
+import { validateCoordinationLedgerV1 } from '../contracts/envelopes.js';
+import type { WorkState } from '../host-state.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
 import type { AgentRuntimeConfig } from '../config/runtime-config.js';
 
-type Row = { revision: number; payload: string; digest: string };
+type Row = { revision: number; payload: string; digest: string; value: unknown };
+const AjvConstructor = Ajv2020 as unknown as new (options: object) => {
+  compile<T>(schema: object): ValidateFunction<T>;
+};
+const validWork = new AjvConstructor({ allErrors: true }).compile<WorkState>(workSchema);
+
+function journalItems(value: unknown) {
+  if (!Array.isArray(value)) throw new Error('local session inspection: journal items are invalid');
+  const items: readonly unknown[] = value;
+  return items.map(item => {
+    if (!isPlainRecord(item) || (item.issue_id !== null && typeof item.issue_id !== 'string') ||
+        !isPlainRecord(item.request) || typeof item.request.action_id !== 'string' ||
+        typeof item.request.stage_id !== 'string' || !Object.hasOwn(item, 'observation'))
+      throw new Error('local session inspection: journal item is invalid');
+    return {issue_id: item.issue_id, observation: item.observation,
+      request: {action_id: item.request.action_id, stage_id: item.request.stage_id}};
+  });
+}
 
 function readRow(db: Database, table: string, args: readonly (string | number)[]): Row | null {
   const key =
     table === 'agent_host_mastra_session_ledger'
       ? 'workspace_id=? AND work_id=? AND attempt=?'
       : 'workspace_id=? AND kind=? AND id=?';
-  const row = db.query(`SELECT revision,payload,digest FROM ${table} WHERE ${key}`).get(...args) as Row | null;
+  const row = db.query(`SELECT revision,payload,digest FROM ${table} WHERE ${key}`).get(...args) as Omit<Row, 'value'> | null;
   if (!row) return null;
+  const value: unknown = JSON.parse(row.payload);
   if (
     !Number.isSafeInteger(row.revision) ||
     row.revision < 1 ||
-    canonicalJsonDigest(JSON.parse(row.payload)) !== row.digest
+    canonicalJsonDigest(value) !== row.digest
   )
     throw new Error('local session inspection: persisted row is invalid');
-  return row;
+  return {...row, value};
 }
 
 /** Pure persisted-state inspection; it never constructs an execution capability. */
@@ -48,12 +71,12 @@ export function inspectLocalSession(input: {
     const journal = readRow(db, 'agent_host_mastra_session_ledger', [workspaceId, input.workId, input.attempt]);
     const work = readRow(db, 'agent_host_state', [workspaceId, 'work', workKey]);
     const ledger = readRow(db, 'agent_host_state', [workspaceId, 'ledger', 'shared']);
-    const journalState = journal ? JSON.parse(journal.payload) : null;
-    const workState = work ? JSON.parse(work.payload) : null;
-    const ledgerState = ledger ? JSON.parse(ledger.payload) : null;
+    const journalState = journal ? journal.value : null;
+    const workState = work ? work.value : null;
+    const ledgerResult = ledger ? validateCoordinationLedgerV1(ledger.value) : null;
     if (
-      journalState &&
-      (journalState.schema !== 'MastraSessionLedger/v1' ||
+      journal &&
+      (!isPlainRecord(journalState) || journalState.schema !== 'MastraSessionLedger/v1' ||
         journalState.workspace_id !== workspaceId ||
         journalState.work_id !== input.workId ||
         journalState.attempt !== input.attempt ||
@@ -61,28 +84,29 @@ export function inspectLocalSession(input: {
     )
       throw new Error('local session inspection: journal identity is invalid');
     if (
-      workState &&
-      (workState.schema !== 'WorkState/v1' ||
+      work &&
+      (!validWork(workState) ||
         workState.workspace_id !== workspaceId ||
         workState.binding.lifecycle_work_id !== input.workId)
     )
       throw new Error('local session inspection: work identity is invalid');
     if (
-      ledgerState &&
-      (ledgerState.schema !== 'CoordinationLedger/v1' ||
-        ledgerState.workspace_id !== workspaceId ||
-        !Array.isArray(ledgerState.tickets))
+      ledger &&
+      (!ledgerResult?.ok || ledgerResult.ledger.workspace_id !== workspaceId)
     )
       throw new Error('local session inspection: coordination ledger is invalid');
-    const lease = workState?.lease ?? null;
+    const inspectedWork = work && validWork(workState) ? workState : null;
+    const ledgerState = ledgerResult?.ok ? ledgerResult.ledger : null;
+    const items = journal && isPlainRecord(journalState) ? journalItems(journalState.items) : [];
+    const lease = inspectedWork?.lease ?? null;
     const ticket = ledgerState?.tickets.find((entry: { ticket_id: string }) => entry.ticket_id === lease?.ticket_id);
     const pending =
-      journalState?.items
+      items
         .filter(
-          (item: { issue_id: string | null; observation: unknown }) =>
+          (item) =>
             item.issue_id !== null && item.observation === null,
         )
-        .map((item: { issue_id: string; request: { action_id: string; stage_id: string } }) => ({
+        .map((item) => ({
           action_id: item.request.action_id,
           issue_id: item.issue_id,
           stage_id: item.request.stage_id,
@@ -95,8 +119,8 @@ export function inspectLocalSession(input: {
       journal_version: journal && { revision: journal.revision, digest: journal.digest },
       work_version: work && { revision: work.revision, digest: work.digest },
       ledger_version: ledger && { revision: ledger.revision, digest: ledger.digest },
-      lifecycle_phase: workState?.lifecycle.phase ?? null,
-      execution_status: workState?.execution.status ?? null,
+      lifecycle_phase: inspectedWork?.lifecycle.phase ?? null,
+      execution_status: inspectedWork?.execution.status ?? null,
       lease: lease && {
         ticket_id: lease.ticket_id,
         thread_id: lease.thread_id,

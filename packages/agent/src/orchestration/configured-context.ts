@@ -41,12 +41,12 @@ function requireContext(condition: unknown, message: string): asserts condition 
 }
 
 function canonicalList(values: readonly string[], label: string): readonly string[] {
-  requireContext(Array.isArray(values) && values.length <= MAX_REFS, `${label} must be a bounded list`);
+  requireContext(Boolean(Array.isArray(values)) && values.length <= MAX_REFS, `${label} must be a bounded list`);
   requireContext(
     values.every((value) => typeof value === 'string' && value.length > 0 && value.length <= 512),
     `${label} contains an invalid reference`,
   );
-  const sorted = [...values].sort();
+  const sorted = [...values].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
   requireContext(new Set(sorted).size === sorted.length, `${label} contains duplicates`);
   return sorted;
 }

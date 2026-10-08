@@ -813,10 +813,10 @@ test('CI public observer rejects duplicate physical ZIP names before accepting r
           transport_path: path.relative(readerRoot, transport).split(path.sep).join('/'),
         });
       if (duplicate)
-        await assert.rejects(
+        await Promise.resolve(assert.rejects(
           observe(),
           /GAP-VIDA-CI-DELIVERY-001: qualified ZIP reader unavailable or artifact invalid/,
-        );
+        ));
       else {
         const observation = await observe();
         assert.equal(observation.conclusion, 'success');
@@ -886,14 +886,14 @@ for (const kind of ['complete', 'partial', 'oversized', 'wrong-digest', 'wrong-c
         assert.equal((await downloadGitHubCIDelivery(options)).transport_path, relative);
         assert.deepEqual(read(value.root, relative), bytes);
         const count = calls.length;
-        await assert.rejects(downloadGitHubCIDelivery(options), /retained download exists/);
+        await Promise.resolve(assert.rejects(downloadGitHubCIDelivery(options), /retained download exists/));
         assert.equal(calls.length, count);
       } else {
-        await assert.rejects(downloadGitHubCIDelivery(options));
+        await Promise.resolve(assert.rejects(downloadGitHubCIDelivery(options)));
         assert.equal(existsSync(path.join(value.root, relative)), kind !== 'wrong-commit');
         if (kind !== 'wrong-commit') {
           const count = calls.length;
-          await assert.rejects(downloadGitHubCIDelivery(options), /retained download exists/);
+          await Promise.resolve(assert.rejects(downloadGitHubCIDelivery(options), /retained download exists/));
           assert.equal(calls.length, count);
         }
       }
@@ -1029,15 +1029,15 @@ test('CI portable observation joins current synthetic state but never manufactur
     ).source_binding,
     proof.request.source_binding,
   );
-  await assert.rejects(verifyCIDeliveryEvidence({ ...value.input, version }), /actual trusted controller/);
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(verifyCIDeliveryEvidence({ ...value.input, version }), /actual trusted controller/));
+  await Promise.resolve(assert.rejects(
     verifyCIDeliveryEvidence({
       ...value.input,
       version,
       ci: { request_id: proof.request.request_id, profile: proof.profile, observe: async () => true },
     }),
     /contract fields/,
-  );
+  ));
 });
 
 test('CI wrong issuer checks payload Source target and run bindings deny without effects', async () => {
@@ -1072,7 +1072,7 @@ test('CI observation failure and candidate drift preserve the existing operation
   await applyReleaseRetarget(value.input);
   const proof = ciRecord(value),
     before = read(value.root, folder + '/release.json');
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     verifyCIDeliveryEvidence({
       ...value.input,
       version,
@@ -1085,16 +1085,16 @@ test('CI observation failure and candidate drift preserve the existing operation
       },
     }),
     /UNKNOWN/,
-  );
+  ));
   write(value.root, 'packages/agent/lib.js', 'changed Source');
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     verifyCIDeliveryEvidence({
       ...value.input,
       version,
       ci: { request_id: proof.request.request_id, profile: proof.profile, observe: async () => proof.observation },
     }),
     /Source differs/,
-  );
+  ));
   assert.deepEqual(read(value.root, folder + '/release.json'), before);
 });
 
@@ -1121,7 +1121,7 @@ test('CI asynchronous observation rechecks bytes and isolates candidate mutation
     write(value.root, 'packages/agent/lib.js', 'changed while awaiting CI');
     return proof.observation;
   };
-  await assert.rejects(verifyCIDeliveryEvidence({ ...value.input, version, ci }), /input changed/);
+  await Promise.resolve(assert.rejects(verifyCIDeliveryEvidence({ ...value.input, version, ci }), /input changed/));
 });
 
 for (const changed of ['log', 'proof', 'input'])
@@ -1146,7 +1146,7 @@ for (const changed of ['log', 'proof', 'input'])
     });
     write(value.root, folder + '/tests.json', { operation_id: operation, version, tests });
     const before = read(value.root, folder + '/release.json');
-    await assert.rejects(
+    await Promise.resolve(assert.rejects(
       verifyLocalReleaseTests({
         ...value.input,
         version,
@@ -1162,7 +1162,7 @@ for (const changed of ['log', 'proof', 'input'])
         },
       }),
       /Local test (evidence|input) changed/,
-    );
+    ));
     assert.deepEqual(read(value.root, folder + '/release.json'), before);
   });
 
@@ -1194,7 +1194,7 @@ test('same operation preserves pointers, fields, old receipts and lost-ack ident
     const worker = await claimReleaseWorker(root, operation, 778899);
     worker.close();
     assertReleaseRetargetSettled(root, operation);
-    await assert.rejects(applyReleaseRetarget(value.input), /eligible/);
+    await Promise.resolve(assert.rejects(applyReleaseRetarget(value.input), /eligible/));
   }
 });
 
@@ -1203,14 +1203,14 @@ for (const boundary of ['archive_effect', 'archive', 'release_effect', 'release'
     const value = await fixture();
     await value.stage();
     await plan(value);
-    await assert.rejects(
+    await Promise.resolve(assert.rejects(
       applyReleaseRetarget(value.input, {
         onPhase: (phase) => {
           if (phase === boundary) throw Error('fault');
         },
       }),
       /fault/,
-    );
+    ));
     assert.throws(() => assertReleaseRetargetSettled(value.root, operation), /active/);
     assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
     assert.deepEqual(read(value.root, archive), value.bytes);
@@ -1221,7 +1221,7 @@ test('busy worker and admission deny before custody or effects', async () => {
   await value.stage();
   const worker = operationMutex(value.root, operation);
   try {
-    await assert.rejects(plan(value), /busy/);
+    await Promise.resolve(assert.rejects(plan(value), /busy/));
     const module = new URL('../bin/local-release-artifacts.mjs', import.meta.url).href;
     const child = spawnSync(
       'node',
@@ -1245,7 +1245,7 @@ test('busy worker and admission deny before custody or effects', async () => {
   await plan(value);
   const admission = admissionMutex(value.root);
   try {
-    await assert.rejects(applyReleaseRetarget(value.input), /locked|busy/i);
+    await Promise.resolve(assert.rejects(applyReleaseRetarget(value.input), /locked|busy/i));
   } finally {
     admission.close();
   }
@@ -1256,17 +1256,17 @@ test('active, failed, UNKNOWN and installation-started original states deny', as
   for (const status of ['running', 'failed', 'successful', 'UNKNOWN']) {
     const value = await fixture();
     write(value.root, folder + '/release.json', { ...value.original, status });
-    await assert.rejects(value.stage(), /eligible|invalid/);
+    await Promise.resolve(assert.rejects(value.stage(), /eligible|invalid/));
   }
   const value = await fixture();
   write(value.root, folder + '/release.json', { ...value.original, install_started: true });
-  await assert.rejects(value.stage(), /eligible/);
+  await Promise.resolve(assert.rejects(value.stage(), /eligible/));
 });
 
 test('existing partial candidate staging is preserved without overwrite', async () => {
   const partial = await fixture();
   mkdirSync(path.join(partial.root, folder + '/retarget/candidate'), { recursive: true });
-  await assert.rejects(partial.stage(), /EEXIST/);
+  await Promise.resolve(assert.rejects(partial.stage(), /EEXIST/));
 });
 for (const target of ['candidate', 'custody', 'Source', 'pointer', 'archive', 'missing'])
   test(target + ' drift remains UNKNOWN without overwrite', async () => {
@@ -1280,24 +1280,24 @@ for (const target of ['candidate', 'custody', 'Source', 'pointer', 'archive', 'm
     if (target === 'pointer') write(value.root, successful, { foreign: true });
     if (target === 'archive') write(value.root, archive, 'foreign archive');
     if (target === 'missing') rmSync(path.join(value.root, folder + '/retarget/custody/publication.tgz'));
-    await assert.rejects(applyReleaseRetarget(value.input), /changed|differs|missing|UNKNOWN/);
+    await Promise.resolve(assert.rejects(applyReleaseRetarget(value.input), /changed|differs|missing|UNKNOWN/));
     assert.deepEqual(obj(value.root, folder + '/release.json'), value.original);
   });
 
 test('admission rollback, source-input binding and CLI attribution stay narrow', async () => {
   const value = await fixture();
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     withReleaseAdmission(value.root, () => {
       throw Error('rollback');
     }),
     /rollback/,
-  );
+  ));
   await withReleaseAdmission(value.root, () => 1);
   const before = testInputBinding(value.root, ['packages/agent/lib.js']);
   write(value.root, 'packages/agent/lib.js', 'changed');
   assert.notEqual(testInputBinding(value.root, ['packages/agent/lib.js']), before);
   assert.throws(() => releaseState(path.join(value.root, folder + '/release.json') + '/escape'));
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     runReleaseRetarget([
       '--kind',
       'release-retarget',
@@ -1311,8 +1311,8 @@ test('admission rollback, source-input binding and CLI attribution stay narrow',
       'unfrozen',
     ]),
     /frozen/,
-  );
-  await assert.rejects(
+  ));
+  await Promise.resolve(assert.rejects(
     runReleaseRetarget([
       '--kind',
       'release-retarget',
@@ -1324,7 +1324,7 @@ test('admission rollback, source-input binding and CLI attribution stay narrow',
       '../escape',
     ]),
     /invalid/,
-  );
+  ));
 });
 
 test('successful local logs never replace trusted CI/CD delivery evidence', async () => {
@@ -1342,7 +1342,7 @@ test('successful local logs never replace trusted CI/CD delivery evidence', asyn
     };
   });
   write(value.root, folder + '/tests.json', { operation_id: operation, version, tests });
-  await assert.rejects(verifyLocalReleaseTests({ ...value.input, version }), /GAP-VIDA-CI-DELIVERY-001/);
+  await Promise.resolve(assert.rejects(verifyLocalReleaseTests({ ...value.input, version }), /GAP-VIDA-CI-DELIVERY-001/));
 });
 
 test('public fixed kind is read-only and missing initial ACK resumes only unchanged preimages', async () => {
@@ -1384,7 +1384,7 @@ test('mixed release effect before archive ACK and self-consistent forged field c
     }
     const files = [archive, folder + '/release.json', folder + '/retarget/state.json'];
     const before = files.map((file) => read(value.root, file));
-    await assert.rejects(applyReleaseRetarget(value.input), /UNKNOWN|continuity|differs/);
+    await Promise.resolve(assert.rejects(applyReleaseRetarget(value.input), /UNKNOWN|continuity|differs/));
     for (const [index, file] of files.entries()) assert.deepEqual(read(value.root, file), before[index]);
   }
 });
@@ -1396,24 +1396,24 @@ for (const boundary of ['planning', 'custody_reserved', 'custody_ready'])
       const value = await fixture();
       await value.stage();
       let launches = 0;
-      await assert.rejects(
+      await Promise.resolve(assert.rejects(
         planReleaseRetarget(
           { ...value.input, actor: 'isolated human controller' },
           {
             onPhase: async (phase) => {
               if (phase !== boundary) return;
-              await assert.rejects(
+              await Promise.resolve(assert.rejects(
                 reserveReleaseWorker(value.root, operation, () => {
                   launches++;
                   return 11;
                 }),
                 /active/,
-              );
-              await assert.rejects(verifyLocalReleaseTests({ ...value.input, version }), /active/);
+              ));
+              await Promise.resolve(assert.rejects(verifyLocalReleaseTests({ ...value.input, version }), /active/));
               throw Error('planning fault');
             },
           },
-        ),
+        ),)
         /planning fault/,
       );
       assert.equal(launches, 0);
@@ -1423,8 +1423,8 @@ for (const boundary of ['planning', 'custody_reserved', 'custody_ready'])
         await plan(value);
         assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
       } else if (boundary === 'custody_reserved') {
-        await assert.rejects(plan(value), /partial custody/);
-        await assert.rejects(applyReleaseRetarget(value.input), /missing/);
+        await Promise.resolve(assert.rejects(plan(value), /partial custody/));
+        await Promise.resolve(assert.rejects(applyReleaseRetarget(value.input), /missing/));
         assert.equal(existsSync(path.join(value.root, folder + '/retarget/custody/seal.json')), false);
       } else assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
     },
@@ -1434,7 +1434,7 @@ test('clean planning lost initial ACK resumes once with unchanged frozen inputs 
   for (const drift of [false, true]) {
     const value = await fixture();
     await value.stage();
-    await assert.rejects(
+    await Promise.resolve(assert.rejects(
       planReleaseRetarget(
         { ...value.input, actor: 'isolated human controller' },
         {
@@ -1444,21 +1444,21 @@ test('clean planning lost initial ACK resumes once with unchanged frozen inputs 
         },
       ),
       /fault/,
-    );
+    ));
     rmSync(path.join(value.root, folder + '/retarget/state.json'));
     if (drift) {
       write(value.root, '.tmp/old-log.json', { foreign: true });
-      await assert.rejects(applyReleaseRetarget(value.input), /preimage/);
+      await Promise.resolve(assert.rejects(applyReleaseRetarget(value.input), /preimage/));
       assert.equal(existsSync(path.join(value.root, folder + '/retarget/custody')), false);
     } else {
-      await assert.rejects(
+      await Promise.resolve(assert.rejects(
         applyReleaseRetarget(value.input, {
           onPhase: (phase) => {
             if (phase === 'planning_recovered') throw Error('recovered phase ACK lost');
           },
         }),
         /ACK lost/,
-      );
+      ));
       assert.equal(existsSync(path.join(value.root, folder + '/retarget/custody')), false);
       assert.equal((await applyReleaseRetarget(value.input)).status, 'complete');
     }
@@ -1482,14 +1482,14 @@ test('formation profile validates build identity without installation tests and 
     ).source_binding,
     proof.request.source_binding,
   );
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     verifyLocalReleaseAssurance({
       ...value.input,
       version,
       ci: { request_id: proof.request.request_id, profile: proof.profile, observe: async () => true },
     }),
     /contract fields/,
-  );
+  ));
   for (const checks of [[], ['public-routes'], ['native-build', 'native-install'], ['native-build', 'unsupported']]) {
     assert.throws(
       () => validateCIDeliveryObservation({ ...proof, profile: { ...proof.profile, required_checks: checks } }),

@@ -98,7 +98,7 @@ function arrayElementKey(key: PropertyKey): key is string {
 
 export function isPlainRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
-  const prototype = Object.getPrototypeOf(value);
+  const prototype: unknown = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
 }
 
@@ -109,7 +109,7 @@ function hasUnsafeSerializationHook(value: Record<string, unknown>): boolean {
     if (descriptor !== undefined) {
       return descriptor.get !== undefined || descriptor.set !== undefined || typeof descriptor.value === 'function';
     }
-    prototype = Object.getPrototypeOf(prototype);
+    prototype = Object.getPrototypeOf(prototype) as object | null;
   }
   return false;
 }
@@ -462,28 +462,17 @@ export function buildGovernedWriteRequest(
   );
 }
 export function freezeJsonValue<T>(value: T, seen = new WeakSet<object>()): T {
-  const objectLike = [!value, typeof value !== 'object'].some(Boolean) === false;
-  const target = value as object;
-  const skip = (): T => value;
-  const freeze = (): T => {
-    const alreadySeen = seen.has(target);
-    const visit = [
-      skip,
-      () => {
-        seen.add(target);
-        Reflect.ownKeys(target).forEach((key) => {
-          const descriptor = Object.getOwnPropertyDescriptor(target, key);
-          [descriptor]
-            .filter((entry): entry is PropertyDescriptor => entry !== undefined)
-            .filter((entry) => Object.hasOwn(entry, 'value'))
-            .forEach((entry) => freezeJsonValue(entry.value, seen));
-        });
-        return Object.freeze(value);
-      },
-    ];
-    return visit[Number(!alreadySeen)]!();
-  };
-  return [skip, freeze][Number(objectLike)]!();
+  if (value === null || typeof value !== 'object' || seen.has(value)) return value;
+  seen.add(value);
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (descriptor !== undefined && Object.hasOwn(descriptor, 'value')) {
+      const child: unknown = descriptor.value;
+      freezeJsonValue(child, seen);
+    }
+  }
+  Object.freeze(value);
+  return value;
 }
 export function computeGovernedWriteRequestDigest(value: GovernedWriteRequest): string {
   const { ingress_token: _ingressToken, ...request } = value;

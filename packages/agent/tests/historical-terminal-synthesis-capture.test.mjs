@@ -428,7 +428,7 @@ test.each([
       '.tmp/report-body.json',
     ],
     before = tracked.map((relative) => readFileSync(path.join(f.root, relative)));
-  await expect(
+  await Promise.resolve(expect(
     run([
       '--capture-historical-terminal-synthesis',
       'true',
@@ -443,7 +443,7 @@ test.each([
       '--request',
       '.tmp/request.json',
     ]),
-  ).rejects.toThrow(expected);
+  ).rejects.toThrow(expected));
   expect(tracked.map((relative) => readFileSync(path.join(f.root, relative)))).toEqual(before);
   expect(existsSync(path.join(f.root, '.agent/work/session-handoff.v1.sqlite'))).toBe(false);
 }, 30000);

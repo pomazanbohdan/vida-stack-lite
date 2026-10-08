@@ -13,7 +13,7 @@ export function validateObservedEvidenceReferences(references: readonly string[]
       throw new Error('observed evidence reference is invalid');
     const locator = reference.includes('://') ? reference.slice(reference.indexOf('://') + 3) : reference;
     const valid = reference.includes('://') ? internalReference.test(reference) : relativePath.test(reference);
-    if (!valid || reference.includes('\\') || locator.split(/[\/#]/).some((part) => part === '.' || part === '..'))
+    if (!valid || reference.includes('\\') || locator.split(/[/#]/).some((part) => part === '.' || part === '..'))
       throw new Error('observed evidence reference is not a safe internal citation');
   }
 }

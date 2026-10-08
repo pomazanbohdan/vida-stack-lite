@@ -417,7 +417,7 @@ describe('one strict YAML authority', () => {
       'config/runtime-operations.v1.json',
     ];
     for (const removedPath of removed) {
-      await expect(readFile(path.join(packageRoot, removedPath))).rejects.toMatchObject({ code: 'ENOENT' });
+      await Promise.resolve(expect(readFile(path.join(packageRoot, removedPath))).rejects.toMatchObject({ code: 'ENOENT' }));
     }
     expect(loadRuntimeConfig(repositoryRoot).authorization.cedar.policy).toContain('permit');
   });

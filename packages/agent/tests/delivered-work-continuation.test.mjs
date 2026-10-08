@@ -1,3 +1,4 @@
+import {prewriterProjectionFixture, configuredFrontierRepairFixture} from './helpers/configured-frontier-fixture.mjs';
 import { afterEach, test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
@@ -19,6 +20,202 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { buildSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge.ts';
 import { validateFailedPrewriterRecoveryBasis } from '../src/orchestration/failed-prewriter-recovery.ts';
+import { readConfiguredContinuationSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
+import { validateFailedPrewriterRecoveryReceipt } from '../src/orchestration/failed-prewriter-transition.ts';
+import { transitionFailedPrewriter } from '../bin/transition-failed-prewriter.mjs';
+import {run as runAgent} from '../bin/run.mjs';
+import { acceptedContractSourceRevision } from '../src/orchestration/admitted-development-packet.ts';
+
+test('failed prewriter transition preserves the failed wave and original receipt while binding fresh current Source reviewers', async () => {
+  const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot('normal');
+  const references = [['implementation_scope', input.receipt.prior_work.contracts.scope],
+    ['acceptance_manifest', input.receipt.prior_work.contracts.acceptance]].map(([kind, ref]) => ({
+      schema: 'LifecycleArtifactReference/v1', kind, artifact_schema: ref.schema, record_id: kind,
+      path: ref.path, sha256: ref.sha256, source_revision: input.receipt.prior_work.binding.work_source_revision,
+      scope_id: input.receipt.prior_work.binding.scope_id, ac_ids: input.receipt.prior_work.binding.ac_ids,
+      generation: null, implementation_fingerprint: null, delivery_cycle_id: null,
+      principal: 'fixture-original-owner', decision: 'approved', disposition: 'current',
+    }));
+  const priorWork = {...input.receipt.prior_work, lifecycle: {...input.receipt.prior_work.lifecycle, references}};
+  const successorWork = {...input.receipt.successor_work, lifecycle: {...input.receipt.successor_work.lifecycle, references}};
+  const priorVersion = {revision: priorWork.revision, digest: canonicalJsonDigest(priorWork)};
+  const originalRequest = {...input.receipt.request, expectedWork: priorVersion};
+  input.receipt = {...input.receipt, prior_work: priorWork, prior_work_version: priorVersion,
+    successor_work: successorWork, work_version: {revision: successorWork.revision, digest: canonicalJsonDigest(successorWork)},
+    request: originalRequest, request_digest: canonicalJsonDigest(originalRequest),
+    authorization: {...input.receipt.authorization, request_digest: canonicalJsonDigest(originalRequest)}};
+  const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+  mkdirSync(path.dirname(databasePath), { recursive: true });
+  const f = await continuationFixture({ root, config, workspaceId, databasePath,
+    repositoryRoot: root, identity: input.receipt.request.identity });
+  seedFrontierHostFixture(f, input);
+  await seedOriginalFrontierEngine(root, config, input);
+  const failed = structuredClone(input.receipt.successor_journal);
+  failed.items = failed.items.map(item => {
+    const issue_id = randomUUID(), summary = 'Known fixture packet failure';
+    return { ...item, issue_id, observation: { schema: 'VidaSessionObservation/v1', action_id: item.request.action_id,
+      issue_id, agent_id: 'fixture:reviewer', tool_call_ref: 'fixture:failed', status: 'reported_failed', summary,
+      output_digest: canonicalJsonDigest(summary), evidence_refs: ['fixture:gap'] } };
+  });
+  f.db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1')
+    .run(canonicalJson(failed), canonicalJsonDigest(failed), workspaceId, f.identity.work_id);
+  const before = f.store.readHostStateSnapshot(f.identity), journal = f.store.readWorkSessionJournal(f.identity);
+  const originalBytes = canonicalJson(input.receipt), changed = sourceScope(failed.source_scope.entries.map(item => ({
+    ...item, bytes: item.bytes + 1, sha256: '9'.repeat(64) })));
+  const transition = { ...input.receipt.request.sourceTransition.transition, target_runtime_code_digest: 'd'.repeat(64) };
+  const proof = { ...input.receipt.request.sourceTransition, transition, transition_digest: canonicalJsonDigest(transition) };
+  const request = { schema: 'FailedPrewriterTransitionRequest/v1', recovery_id: 'fixture-failed-wave', identity: f.identity,
+    attempt: 1, nativeSessionHandle: input.receipt.request.nativeSessionHandle,
+    original_receipt_digest: canonicalJsonDigest(input.receipt), expectedWork: before.workVersion,
+    expectedLedger: before.ledgerVersion, expectedJournal: journal.version,
+    expectedMaintenanceGeneration: before.maintenanceGeneration, currentSourceScope: changed,
+    authorizedSourceChanges: compareScopedSourceSnapshots(failed.source_scope, changed), sourceTransition: proof,
+    targetProjectContextDigest: input.receipt.request.targetProjectContextDigest };
+  for (const key of ['expectedWork', 'expectedLedger', 'expectedJournal']) {
+    expect(() => f.store.transitionFailedPrewriter({request: {...request,
+      [key]: {...request[key], revision: request[key].revision + 1}}, verifyCurrent: () => {}})).toThrow();
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+  }
+  expect(() => f.store.transitionFailedPrewriter({request, verifyCurrent: () => Promise.resolve()})).toThrow(/synchronously/);
+  expect(() => f.store.transitionFailedPrewriter({request, verifyCurrent: async () => {}})).toThrow(/synchronous/);
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+  expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+  expect(() => f.store.transitionFailedPrewriter({ request, verifyCurrent: () => {
+    throw Error('fixture current native proof changed');
+  } })).toThrow(/current native proof changed/);
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+  expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+  expect(f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1)).toBeNull();
+  f.db.exec("CREATE TRIGGER reject_failed_wave_write BEFORE UPDATE ON agent_host_mastra_session_ledger BEGIN SELECT RAISE(ABORT,'injected failed wave update'); END");
+  try {
+    expect(() => f.store.transitionFailedPrewriter({ request, verifyCurrent: () => {} })).toThrow(/injected failed wave update/);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+    expect(f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1)).toBeNull();
+    expect(f.db.query('SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?').get(workspaceId).payload).toBe(originalBytes);
+  } finally {
+    f.db.exec('DROP TRIGGER reject_failed_wave_write');
+  }
+  expect(() => f.store.transitionFailedPrewriter({ request, verifyCurrent: inspected => {
+    Reflect.set(inspected.sourceTransition.transition, 'target_runtime_code_digest', 'c'.repeat(64));
+    throw Error('fixture current proof rejected');
+  } })).toThrow(/current proof rejected/);
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+  expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+  expect(f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1)).toBeNull();
+  const result = f.store.transitionFailedPrewriter({ request, verifyCurrent: inspected => {
+    expect(Object.isFrozen(inspected)).toBe(true);
+    expect(Reflect.set(inspected.sourceTransition.transition, 'target_runtime_code_digest', 'c'.repeat(64))).toBe(false);
+  } });
+  expect(result.work.binding.work_source_revision).toBe(changed.digest);
+  expect(result.work.binding.runtime_code_digest).toBe(transition.target_runtime_code_digest);
+  expect(result.work.execution.assignment_attempts).toEqual([]);
+  expect(f.db.query('SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?').get(workspaceId).payload).toBe(originalBytes);
+  const recovered = f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1);
+  expect(recovered.request).toEqual(request);
+  const recoveryView = f.store.readConfiguredFrontierRecoveryView(f.identity, 1);
+  const recoveredJournal = f.store.readWorkSessionJournal(f.identity);
+  expect(acceptedContractSourceRevision(result.work, recoveredJournal, recoveryView)).toBe(input.receipt.prior_work.binding.work_source_revision);
+  expect(acceptedContractSourceRevision(result.work, recoveredJournal)).toBe(changed.digest);
+  expect(() => acceptedContractSourceRevision(result.work, recoveredJournal, {...recoveryView, recovery: null})).toThrow(/original admission/);
+  expect(() => acceptedContractSourceRevision(result.work, {...recoveredJournal,
+    state: {...recoveredJournal.state, run_id: 'foreign-run'}}, recoveryView)).toThrow(/original admission/);
+  expect(recovered.prior_journal).toEqual(failed);
+  expect(recovered.successor_journal.completed).toEqual(input.receipt.prior_journal.completed);
+  expect(recovered.rights_granted).toBe(false);
+  expect(recovered.successor_journal.items.every(item => item.issue_id === null && item.observation === null)).toBe(true);
+  expect(recovered.successor_journal.items.every(item => !failed.items.some(prior => prior.request.action_id === item.request.action_id))).toBe(true);
+  expect(f.store.readDeliveredWorkContinuation(f.identity, 1).items.map(item => item.request)).toEqual(recovered.successor_journal.items.map(item => item.request));
+  const currentEngine = readConfiguredContinuationSessionEngineSnapshot({
+    ...input.prewriterBinding, context: { ...input.prewriterBinding.context, scope_digest: changed.digest },
+    runId: input.receipt.prior_work.execution.run_id,
+  }, input.receipt, recovered);
+  expect(currentEngine.status).toBe('suspended');
+  expect(currentEngine.run_id).toBe(input.receipt.prior_work.execution.run_id);
+  expect(currentEngine.requests).toEqual(recovered.successor_journal.items.map(item => item.request));
+  expect(f.store.findArchivedReportedObservation(f.identity.work_id, 1, failed.items[0].observation)).toEqual(failed.items[0]);
+  expect(() => f.store.findArchivedReportedObservation(f.identity.work_id, 1,
+    { ...failed.items[0].observation, summary: 'changed archived report' })).toThrow();
+  const recordedInput = {schema: 'FailedPrewriterTransitionInput/v1', identity: f.identity, attempt: 1,
+    nativeSessionHandle: request.nativeSessionHandle, recovery_id: request.recovery_id,
+    sourceTransitionId: request.sourceTransition.operation_id,
+    parentManifestRef: request.sourceTransition.transition.parent_manifest_ref,
+    successorManifestRef: request.sourceTransition.transition.successor_manifest_ref,
+    systemUpdateRef: request.sourceTransition.transition.system_update_ref,
+    sourceCorrectionRef: request.sourceTransition.transition.source_correction_ref};
+  const requestPath = '.agent/failed-transition-retry.json';
+  const after = f.store.readHostStateSnapshot(f.identity), afterJournal = f.store.readWorkSessionJournal(f.identity);
+  for (const mode of ['status', 'inspect', 'apply']) {
+    writeFileSync(path.join(root, requestPath), canonicalJson({...recordedInput, ...(mode === 'apply' ? {request} : {})}));
+    const status = transitionFailedPrewriter(['--mode', mode, '--project-root', root, '--request', requestPath]);
+    expect(status.status).toBe('failed_prewriter_transition_recorded');
+    expect(status.effects_reissued).toBe(false);
+    expect(status.request).toEqual(request);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(afterJournal);
+  }
+  writeFileSync(path.join(root, requestPath), canonicalJson({...recordedInput, request: {...request, recovery_id: 'foreign'}}));
+  expect(() => transitionFailedPrewriter(['--mode', 'apply', '--project-root', root, '--request', requestPath])).toThrow(/recorded recovery intent differs/);
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+  expect(f.store.readWorkSessionJournal(f.identity)).toEqual(afterJournal);
+  writeFileSync(path.join(root, requestPath), canonicalJson(recordedInput));
+  const dispatched = await runAgent(['--transition-failed-prewriter', 'true', '--mode', 'status', '--project-root', root, '--request', requestPath]);
+  expect(dispatched.status).toBe('failed_prewriter_transition_recorded');
+  expect(dispatched.effects_reissued).toBe(false);
+  expect(dispatched.request).toEqual(request);
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+  expect(f.store.readWorkSessionJournal(f.identity)).toEqual(afterJournal);
+  for (const mutate of [
+    value => { value.successor_work.lifecycle.phase = 'EXECUTE'; },
+    value => { value.successor_journal.items[0].observation = failed.items[0].observation; },
+    value => { value.successor_ledger.notices = [{}]; },
+    value => { value.successor_journal.items.pop(); },
+  ]) {
+    const invalid = structuredClone(recovered); mutate(invalid);
+    invalid.work_version.digest = canonicalJsonDigest(invalid.successor_work);
+    invalid.ledger_version.digest = canonicalJsonDigest(invalid.successor_ledger);
+    invalid.journal_version.digest = canonicalJsonDigest(invalid.successor_journal);
+    expect(() => validateFailedPrewriterRecoveryReceipt(invalid)).toThrow();
+  }
+  const session = new MastraSessionLedger(f.db, workspaceId, config, root, f.store);
+  let issued = session.issueWave(f.identity.work_id, 1, afterJournal.version);
+  const evidence_ref = '.agent/recovered-fixture-evidence.md';
+  writeFileSync(path.join(root, evidence_ref), 'Synthetic current Source preparation for the recovery bridge regression.\n');
+  const observations = issued.state.items.map((item, index) => {
+    const kind = item.request.role === 'source-planner' ? 'source_plan' : 'implementation_policy';
+    const agent_id = `fixture:recovered-prewriter-${index}`;
+    const mechanics = kind === 'source_plan' ? ['scope_acceptance_trace', 'verification_rollback']
+      : ['root_cause_owner', 'affected_callers', 'existing_primitives'];
+    const summary = canonicalJson({schema: 'LifecyclePreparationObservation/v1', record_id: `recovered-${index}`,
+      kind, work_id: f.identity.work_id, attempt: 1, source_revision: changed.digest,
+      scope_id: result.work.binding.scope_id, config_digest: result.work.binding.config_digest,
+      ac_ids: result.work.binding.ac_ids, status: 'pass', observer_id: agent_id,
+      observed_at: new Date().toISOString(), evidence_refs: [evidence_ref], gaps: [],
+      observations: mechanics.map(mechanic => ({mechanic,
+        actual: 'Fixture current preparation observed', evidence_ref}))});
+    return {schema: 'VidaSessionObservation/v1', action_id: item.request.action_id, issue_id: item.issue_id,
+      agent_id, tool_call_ref: `fixture:recovered-${index}`,
+      status: 'reported_complete', summary, output_digest: canonicalJsonDigest(summary), evidence_refs: [evidence_ref]};
+  });
+  // This isolates physical engine continuation; native endpoint/admission is a separate qualification boundary.
+  const reportedJournal = {...issued.state, items: issued.state.items.map((item, index) => ({...item, observation: observations[index]}))};
+  f.db.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1')
+    .run(issued.version.revision + 1, canonicalJson(reportedJournal), canonicalJsonDigest(reportedJournal), workspaceId, f.identity.work_id);
+  const advanced = resumeFrontierBridgeFixture({root, workspaceId, identity: f.identity,
+    context: {...input.prewriterBinding.context, scope_digest: changed.digest},
+    selection: input.prewriterBinding.selection, observations, runId: input.receipt.prior_journal.run_id});
+  expect(advanced.before.run_id).toBe(input.receipt.prior_journal.run_id);
+  expect(advanced.before.requests).toEqual(recovered.successor_journal.items.map(item => item.request));
+  expect(advanced.after.run_id).toBe(input.receipt.prior_journal.run_id);
+  expect(advanced.after.step_id).toBe('wave-2');
+  expect(advanced.after.requests.map(item => item.role)).toEqual(['developer-orchestrator']);
+  expect(advanced.after.requests.every(item => !failed.items.some(prior => prior.request.action_id === item.action_id))).toBe(true);
+  expect(advanced.restart).toEqual(advanced.after);
+  expect(advanced.retained).toEqual(input.receipt);
+  expect(f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1)).toEqual(recovered);
+  expect(f.store.findArchivedReportedObservation(f.identity.work_id, 1, failed.items[0].observation)).toEqual(failed.items[0]);
+}, 90_000);
 
 test('public failed prewriter owner recovery inspects, denies a changed owner and applies without rewriting failed reports', async () => {
   const { root, config, workspaceId, input, intakePath } = configuredFrontierRepairHostRoot();
@@ -194,8 +391,6 @@ test('failed prewriter recovery basis preserves full resources and rejects unkno
     expect(() => validateFailedPrewriterRecoveryBasis(invalid)).toThrow();
   }
 });
-import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
-import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { compareScopedSourceSnapshots, snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { assertAdmittedRuntimeCodeCurrent } from '../src/orchestration/admitted-session-execution.ts';
 import * as continuationProjection from '../src/orchestration/delivered-work-continuation.ts';
@@ -210,6 +405,7 @@ import {
   runtimeRoot,
   sourceScope,
   trackContinuationFixtureRoot,
+  retainContinuationFixtureRoot,
   lifecycleFor,
 } from './helpers/delivered-work-continuation-fixture.mjs';
 import {
@@ -425,38 +621,7 @@ test('admitted runtime uses the Host stored normal continuation endpoint without
   writeFileSync(path.join(root, intakePath), '{}');
   expect(() => assertAdmittedRuntimeCodeCurrent(root, f.store, f.identity)).toThrow(/intake changed/);
 });
-function prewriterProjectionFixture(config = runtimeConfig, repositoryRoot = runtimeRoot, workspaceId = fixtureWorkspace) {
-  const source = requestFixture().currentSourceScope;
-  const context = { work_id: 'work-1', attempt: 1, scope_digest: source.digest };
-  const selection = { team: 'default-development', kind: 'task', intent: 'task_execution', project: 'agent', risk_flags: ['high'], labels: [] };
-  const workflowId = 'task_execution';
-  const plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags);
-  const waveIndex = plan.waves.findIndex(wave => wave.some(stage => stage.id === 'review_source_prewrite'));
-  const developerIndex = plan.waves.findIndex(wave => wave.some(stage => stage.kind === 'develop'));
-  const makeRequest = (index, action, priorResults = []) => buildSessionBridgeRequest({
-    runId: 'same-original-run', workflowId, configDigest: '5'.repeat(64), context,
-    waveIndex: index, action, configuredContext: null, priorResults,
-  });
-  const completed = plan.waves.slice(0, waveIndex).map((_, index) => ({
-    step_id: 'wave-' + index,
-    items: sessionActionsForWave(config, selection, context, workflowId, index, []).map(action => {
-      const request = makeRequest(index, action);
-      const summary = 'Original completed synthesis';
-      const observation = {
-        schema: 'VidaSessionObservation/v1', action_id: request.action_id,
-        issue_id: '71e62a38-b44b-470e-b732-81cefbaf983a', agent_id: 'original-synth',
-        tool_call_ref: 'original-call', status: 'reported_complete', summary,
-        output_digest: canonicalJsonDigest(summary), evidence_refs: [],
-      };
-      return { request, issue_id: observation.issue_id, observation };
-    }),
-  }));
-  const oldRequest = makeRequest(waveIndex, sessionActionsForWave(config, selection, context, workflowId, developerIndex, [])[0], completed.flatMap(wave => wave.items.map(item => item.observation)));
-  const engine = { run_id: oldRequest.run_id, status: 'suspended', step_id: 'wave-' + waveIndex, requests: [oldRequest], observations: completed.flatMap(wave => wave.items.map(item => item.observation)) };
-  const journal = { schema: 'MastraSessionLedger/v1', workspace_id: workspaceId, work_id: context.work_id, attempt: 1, run_id: engine.run_id, source_scope: source, step_id: engine.step_id, completed, items: [{ request: oldRequest, issue_id: null, observation: null }] };
-  const binding = { repositoryRoot, config, selection, context, workflowId, engine, journal, currentSourceScope: source };
-  return { binding, engine, journal, source, context, waveIndex, developerIndex, oldRequest };
-}
+/** @param {ReturnType<typeof loadRuntimeConfig>} [config] @param {string} [repositoryRoot] @param {string} [workspaceId] */
 test('current prewriter projection preserves the unissued developer and offers every configured reviewer', () => {
   const { binding, engine, journal, source, context, waveIndex, developerIndex, oldRequest } = prewriterProjectionFixture();
   const before = structuredClone({ engine, journal });
@@ -660,7 +825,7 @@ test('public runtime-code entry requires and accepts the finite delivered-config
     '--basis', 'delivered-config-continuation',
   ];
 
-  await expect(runRuntimeCodeRebind(args)).rejects.toThrow(/missing or unexpected arguments/);
+  await Promise.resolve(expect(runRuntimeCodeRebind(args)).rejects.toThrow(/missing or unexpected arguments/));
   const completeArgs = [...args, '--source-transition-id', 'p0-delivered-config-local-20261006'];
   let message = '';
   try {
@@ -848,7 +1013,7 @@ test('public runtime-code apply denies a changed rebuild before any Host or Jour
         request,
       },
       plan = { ...planBody, digest: canonicalJsonDigest(planBody) };
-    await expect(
+    await Promise.resolve(expect(
       applyDeliveredWorkContinuationPlan({
         database: f.db,
         root: f.root,
@@ -856,7 +1021,7 @@ test('public runtime-code apply denies a changed rebuild before any Host or Jour
         plan,
         rebuildPlan: async () => ({ ...plan, digest: 'f'.repeat(64) }),
       }),
-    ).rejects.toThrow(/plan, owner CAS or current Source proof changed/);
+    ).rejects.toThrow(/plan, owner CAS or current Source proof changed/));
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(stateBefore);
     expect(
       f.db
@@ -888,7 +1053,7 @@ test('Host denies a current CAS conflict without changing the newer Host or Jour
       journalBefore = f.db
         .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
         .get(fixtureWorkspace, f.identity.work_id, 1);
-    await expect(f.store.continueDeliveredWork(request)).rejects.toThrow();
+    await Promise.resolve(expect(f.store.continueDeliveredWork(request)).rejects.toThrow());
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(afterConcurrentWrite);
     expect(
       f.db
@@ -906,7 +1071,7 @@ test('Host denies a fresh overlapping FIFO owner before any continuation write',
       journalBefore = f.db
         .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
         .get(fixtureWorkspace, f.identity.work_id, 1);
-    await expect(f.store.continueDeliveredWork(request)).rejects.toThrow(/FIFO/);
+    await Promise.resolve(expect(f.store.continueDeliveredWork(request)).rejects.toThrow(/FIFO/));
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(
       f.db
@@ -1000,167 +1165,6 @@ test('stale continuation digest repair fences producers and changes only the row
   } finally {}
 });
 
-function configuredFrontierRepairFixture(prewriter = false, changedSource = false, runtime = { config: runtimeConfig, root: runtimeRoot, workspaceId: fixtureWorkspace }, priorPhase = 'awaiting_followup') {
-  const projection = prewriter ? prewriterProjectionFixture(runtime.config, runtime.root, runtime.workspaceId) : null;
-  const requestBase = requestFixture(prewriter ? { targetConfigDigest: runtimeConfigDigest(runtime.config), workspaceId: runtime.workspaceId } : {});
-  if (prewriter) requestBase.identity.integrations_digest = loadProjectSetContext(runtime.root, runtime.config, 'vida-agent', ['agent']).integrations_digest;
-  const
-    source = requestBase.currentSourceScope,
-    targetScope = changedSource ? sourceScope(source.entries.map(entry => ({ ...entry, bytes: entry.bytes + 1, sha256: '7'.repeat(64) }))) : source;
-  if (projection) projection.binding = { ...projection.binding, currentSourceScope: targetScope, context: { ...projection.binding.context, scope_digest: targetScope.digest } };
-  const
-    priorJournal = projection?.journal ?? {
-      schema: 'MastraSessionLedger/v1',
-      workspace_id: runtime.workspaceId,
-      work_id: requestBase.identity.work_id,
-      attempt: requestBase.attempt,
-      run_id: requestBase.action.run_id,
-      source_scope: source,
-      step_id: requestBase.action.step_id,
-      items: [{ request: requestBase.action.request, issue_id: null, observation: null }],
-      completed: [],
-    },
-    engine = projection?.engine ?? {
-      run_id: requestBase.action.run_id,
-      status: 'suspended',
-      step_id: requestBase.action.step_id,
-      requests: [requestBase.action.request],
-      observations: [],
-    },
-    action = projectConfiguredFrontierContinuationAction({
-      engine,
-      journal: priorJournal,
-      targetConfigDigest: requestBase.targetConfigDigest,
-      currentSourceScope: targetScope,
-    }),
-    priorBinding = {
-      repository_id: requestBase.identity.repository_id, project_ids: requestBase.identity.project_ids,
-      integrations_digest: requestBase.identity.integrations_digest, team_id: 'default-development',
-      workflow_id: action.workflow_id, provider_work_item_id: requestBase.identity.work_id,
-      lifecycle_work_id: requestBase.identity.work_id, work_item_digest: 'c'.repeat(64),
-      scope_id: 'scope-fixture', scope_contract_digest: 'e'.repeat(64), acceptance_manifest_digest: 'f'.repeat(64),
-      ac_ids: ['AC-1'], implementation_paths: source.entries.map(entry => entry.path), allowed_resources: ['execution:' + requestBase.identity.work_id, ...source.entries.map(entry => 'file:' + entry.path)],
-      config_digest: requestBase.priorConfigDigest, runtime_code_digest: requestBase.priorRuntimeCodeDigest,
-      runtime_source_revision: requestBase.priorRuntimeCodeDigest, schema_digest: '3'.repeat(64),
-      work_source_revision: source.digest,
-    },
-    priorWork = {
-      schema: 'WorkState/v1', workspace_id: runtime.workspaceId, revision: 10,
-      binding: priorBinding,
-      contracts: { scope: { schema: 'ImplementationScope/v1', path: '.agent/scope.json', sha256: priorBinding.scope_contract_digest }, acceptance: { schema: 'AcceptanceManifest/v1', path: '.agent/acceptance.json', sha256: priorBinding.acceptance_manifest_digest }, decisions: [] },
-      lease: null,
-      execution: { run_id: action.run_id, input_digest: '5'.repeat(64), status: 'suspended', phase: priorPhase, assignment_attempts: [] },
-      lifecycle: { ...lifecycleFor(priorBinding, 10), scope: { scope_id: priorBinding.scope_id,
-        allowed_paths: source.entries.map(entry => entry.path), fingerprint_paths: source.entries.map(entry => entry.path),
-        implementation_paths: source.entries.map(entry => entry.path), documentation_paths: [] } },
-      artifacts: [],
-    },
-    resources = ['execution:' + requestBase.identity.work_id, ...priorWork.binding.implementation_paths.map(path => 'file:' + path)].sort(),
-    priorTicket = {
-      schema: 'CoordinationTicket/v1', ticket_id: 'prior-ticket', repository_id: requestBase.identity.repository_id,
-      project_ids: requestBase.identity.project_ids, integrations_digest: requestBase.identity.integrations_digest,
-      work_id: requestBase.identity.work_id, thread_id: requestBase.nativeSessionHandle, source_revision: source.digest,
-      generation: 1, sequence: 1, contour_keys: [], exclusive_resources: resources, status: 'released',
-      claim_ids: ['prior-claim'], expires_at: null, active_resources: [], blocked_resources: [],
-      created_at: '2026-10-07T00:00:00.000Z',
-    },
-    priorClaim = {
-      schema: 'WorkstreamClaim/v1', claim_id: 'prior-claim', ticket_id: 'prior-ticket',
-      work_id: requestBase.identity.work_id, thread_id: requestBase.nativeSessionHandle, generation: 1,
-      resources: resources, lease_expires_at: '2026-10-07T00:00:00.000Z', status: 'released',
-      created_at: '2026-10-07T00:00:00.000Z', renewed_at: '2026-10-07T00:00:00.000Z',
-    },
-    priorRelease = {
-      schema: 'CoordinationOperation/v1', operation_id: 'prior-release', kind: 'release',
-      ticket_id: 'prior-ticket', work_id: requestBase.identity.work_id,
-      thread_id: requestBase.nativeSessionHandle, source_revision: source.digest, resources: resources,
-      from_ledger_revision: 94, to_ledger_revision: 95, decided_by: 'fixture-owner',
-      decision_pointer: 'owner:original-release-disposition', created_at: '2026-10-07T00:00:00.000Z',
-    },
-    priorLedger = {
-      schema: 'CoordinationLedger/v1', workspace_id: runtime.workspaceId, revision: 95,
-      open_generation: 1, next_sequence: 2, tickets: [priorTicket], claims: [priorClaim],
-      notices: [], dispositions: [], contours: [], batches: [], rebinds: [],
-      operations: [priorRelease], retirements: [],
-    },
-    priorWorkVersion = { revision: priorWork.revision, digest: canonicalJsonDigest(priorWork) },
-    priorLedgerVersion = { revision: priorLedger.revision, digest: canonicalJsonDigest(priorLedger) },
-    priorJournalVersion = { revision: 11, digest: canonicalJsonDigest(priorJournal) },
-    request = {
-      ...requestBase,
-      expectedWork: priorWorkVersion,
-      expectedLedger: priorLedgerVersion,
-      expectedJournal: priorJournalVersion,
-      currentSourceScope: targetScope,
-      authorizedSourceChanges: compareScopedSourceSnapshots(source, targetScope),
-      action,
-    },
-    successorWork = {
-      ...priorWork,
-      revision: 11,
-      binding: { ...priorWork.binding, config_digest: request.targetConfigDigest, runtime_code_digest: request.targetRuntimeCodeDigest, runtime_source_revision: request.targetRuntimeCodeDigest, schema_digest: request.targetSchemaDigest, work_source_revision: targetScope.digest },
-      lease: { ticket_id: 'repair-ticket', thread_id: request.nativeSessionHandle, generation: 1 },
-      execution: { ...priorWork.execution, status: 'active', phase: 'review', assignment_attempts: [] },
-    },
-    successorJournal = prewriter ? {
-      ...priorJournal,
-      source_scope: targetScope,
-      items: continuationProjection.projectConfiguredPrewriterContinuationRequests(projection.binding)
-        .map(request => ({ request, issue_id: null, observation: null })),
-    } : priorJournal,
-    expiresAt = new Date(Date.now() + 60_000).toISOString(),
-    successorLedger = {
-      ...priorLedger,
-      revision: 96,
-      next_sequence: 3,
-      tickets: [priorTicket, {
-        ...priorTicket, ticket_id: 'repair-ticket', sequence: 2, status: 'active',
-        source_revision: targetScope.digest,
-        claim_ids: ['repair-claim'], expires_at: expiresAt, active_resources: resources,
-        created_at: '2026-10-07T00:00:01.000Z',
-      }],
-      claims: [priorClaim, {
-        ...priorClaim, claim_id: 'repair-claim', ticket_id: 'repair-ticket', status: 'active',
-        lease_expires_at: expiresAt, created_at: '2026-10-07T00:00:01.000Z', renewed_at: '2026-10-07T00:00:01.000Z',
-      }],
-    },
-    snapshotBytes = Buffer.from(canonicalJson(engine));
-  successorWork.lifecycle = { ...priorWork.lifecycle, revision: 11, source_revision: targetScope.digest,
-    config_binding: { config_digest: successorWork.binding.config_digest, schema_digest: successorWork.binding.schema_digest, runtime_code_digest: successorWork.binding.runtime_code_digest } };
-  const
-    workVersion = { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) },
-    ledgerVersion = { revision: successorLedger.revision, digest: canonicalJsonDigest(successorLedger) },
-    journalVersion = { revision: priorJournalVersion.revision + 1, digest: canonicalJsonDigest(successorJournal) },
-    requestDigest = canonicalJsonDigest(request),
-    receipt = {
-      schema: 'DeliveredWorkContinuationReceipt/v1',
-      continuation_id: canonicalJsonDigest({
-        identity: request.identity, attempt: request.attempt, action_id: action.request.action_id,
-        transition_digest: request.sourceTransition.transition_digest,
-      }),
-      attempt: request.attempt, request_digest: requestDigest,
-      authorization: {
-        schema: 'VidaDeliveredWorkContinuationAuthorization/v1', request_digest: requestDigest,
-        principal: 'fixture-owner', transition_digest: request.sourceTransition.transition_digest,
-        action_digest: canonicalJsonDigest(action),
-      },
-      request, prior_work: priorWork, prior_ledger: priorLedger, prior_journal: priorJournal,
-      prior_work_version: priorWorkVersion, prior_ledger_version: priorLedgerVersion, prior_journal_version: priorJournalVersion,
-      historical_capture: null,
-      frontier_snapshot: {
-        snapshot_bytes_base64: snapshotBytes.toString('base64'),
-        snapshot_sha256: createHash('sha256').update(snapshotBytes).digest('hex'),
-      },
-      successor_work: successorWork, successor_ledger: successorLedger, successor_binding: successorWork.binding,
-      successor_journal: successorJournal, work_version: workVersion, ledger_version: ledgerVersion, journal_version: journalVersion,
-      rights_granted: false, accepted_result: false, runtime_acceptance: false, status: 'action_ready',
-    },
-    current = {
-      work: successorWork, work_version: workVersion, ledger: successorLedger, ledger_version: ledgerVersion,
-      journal: successorJournal, journal_version: journalVersion,
-    };
-  return { receipt, current, ...(projection ? { prewriterBinding: projection.binding } : {}) };
-}
 test('configured-frontier snapshot validation rejects changed bytes and unsupported repair branches', () => {
   const input = configuredFrontierRepairFixture(true);
   const { receipt } = input;
@@ -1395,6 +1399,31 @@ await createOriginalFrontierEngine(data.root,{control:{work_root:data.workRoot}}
   expect(result.error).toBeUndefined(); expect(result.signal).toBeNull(); expect(result.status, result.stderr).toBe(0);
 }
 
+function resumeFrontierBridgeFixture({root, workspaceId, identity, context, selection, observations, runId}) {
+  const bridgePayload = path.join(root, 'current-bridge-fixture.json');
+  writeFileSync(bridgePayload, JSON.stringify({root, workspaceId, identity, context, selection, observations, runId}));
+  const sourceBase = pathToFileURL(path.join(runtimeRoot, 'packages', 'agent', 'src') + path.sep).href;
+  const code = `import fs from 'node:fs'; import {Database} from 'bun:sqlite';
+import {loadRuntimeConfig} from '${sourceBase}config/runtime-config.ts';
+import {HostStateStore} from '${sourceBase}host-state.ts';
+import {MastraSessionLedger,sessionHandoffDatabasePath} from '${sourceBase}orchestration/persistent-session-handoff.ts';
+import {MastraSessionBridge} from '${sourceBase}orchestration/mastra-session-bridge.ts';
+const value=JSON.parse(fs.readFileSync(process.env.VIDA_BRIDGE_INPUT,'utf8')); const config=loadRuntimeConfig(value.root);
+const database=new Database(sessionHandoffDatabasePath(value.root,config),{strict:true}); const host=new HostStateStore(database,value.workspaceId,undefined,undefined,undefined,undefined,value.root);
+const ledger=new MastraSessionLedger(database,value.workspaceId,config,value.root,host);
+const args={repositoryRoot:value.root,config,selection:value.selection,context:value.context,workflowId:'task_execution',workspaceId:value.workspaceId,ledger,projectIds:['agent'],lifecycleRisk:'high',configuredFrontier:{identity:value.identity,attempt:1}};
+const bridge=await MastraSessionBridge.open(args); const before=await bridge.snapshot(); const after=await bridge.resume(before.step_id,value.observations,ledger.resume(value.identity.work_id,1).state.source_scope);
+const reopened=await MastraSessionBridge.open(args); const restart=await reopened.snapshot();
+fs.writeFileSync(value.root+'/bridge-result.json',JSON.stringify({before,after,restart,retained:host.readDeliveredWorkContinuationReceipt(value.identity,1)})); process.exit(0);`;
+  const child = boundedSpawnSync(spawnSync, process.execPath, ['-e', code], {
+    cwd: path.join(runtimeRoot, 'packages', 'agent'), windowsHide: true, encoding: 'utf8',
+    env: {...pinnedEnvironment(process.execPath), VIDA_BRIDGE_INPUT: bridgePayload}, budget: executionBudget(60_000),
+  }, 'fixture same-run frontier resume');
+  if (child.error || child.signal || child.status === null) retainContinuationFixtureRoot(root);
+  expect(child.error).toBeUndefined(); expect(child.signal).toBeNull(); expect(child.status, child.stderr).toBe(0);
+  return JSON.parse(readFileSync(path.join(root, 'bridge-result.json'), 'utf8'));
+}
+
 test.each(['delivery', 'normal', 'normal-large'])('Host produces the current full prewriter wave atomically from the actual unissued old engine and preserves its original attempt [%s]', async (proofKind) => {
   const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot(proofKind === 'normal-large' ? 'normal' : proofKind);
   // Another completed operation may advance the ledger after this work's release.
@@ -1433,7 +1462,7 @@ test.each(['delivery', 'normal', 'normal-large'])('Host produces the current ful
     .run(prior.prior_journal_version.revision, canonicalJson(prior.prior_journal), prior.prior_journal_version.digest, workspaceId, f.identity.work_id);
   await seedOriginalFrontierEngine(root, config, input);
   const before = f.store.readHostStateSnapshot(f.identity);
-  await expect(f.store.continueDeliveredWork({ ...prior.request, expectedLedger: { ...prior.request.expectedLedger, revision: prior.request.expectedLedger.revision - 1 } })).rejects.toThrow();
+  await Promise.resolve(expect(f.store.continueDeliveredWork({ ...prior.request, expectedLedger: { ...prior.request.expectedLedger, revision: prior.request.expectedLedger.revision - 1 } })).rejects.toThrow());
   expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
   const result = await f.store.continueDeliveredWork(prior.request);
   if (proofKind === 'normal-large') {
@@ -1488,27 +1517,9 @@ test.each(['delivery', 'normal', 'normal-large'])('Host produces the current ful
   const reportedJournal = { ...result.receipt.successor_journal, items: reports };
   f.db.query('UPDATE agent_host_mastra_session_ledger SET revision=revision+1,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1')
     .run(canonicalJson(reportedJournal), canonicalJsonDigest(reportedJournal), workspaceId, f.identity.work_id);
-  const bridgePayload = path.join(root, 'current-bridge-fixture.json');
-  writeFileSync(bridgePayload, JSON.stringify({ root, workspaceId, identity: f.identity, context: input.prewriterBinding.context,
-    selection: input.prewriterBinding.selection, observations: reports.map(item => item.observation), runId: prior.prior_journal.run_id }));
-  const sourceBase = pathToFileURL(path.join(runtimeRoot, 'packages', 'agent', 'src') + path.sep).href;
-  const bridgeCode = `import fs from 'node:fs'; import {Database} from 'bun:sqlite';
-import {loadRuntimeConfig} from '${sourceBase}config/runtime-config.ts';
-import {HostStateStore} from '${sourceBase}host-state.ts';
-import {MastraSessionLedger,sessionHandoffDatabasePath} from '${sourceBase}orchestration/persistent-session-handoff.ts';
-import {MastraSessionBridge} from '${sourceBase}orchestration/mastra-session-bridge.ts';
-const value=JSON.parse(fs.readFileSync(process.env.VIDA_BRIDGE_INPUT,'utf8')); const config=loadRuntimeConfig(value.root);
-const database=new Database(sessionHandoffDatabasePath(value.root,config),{strict:true}); const host=new HostStateStore(database,value.workspaceId,undefined,undefined,undefined,undefined,value.root);
-const ledger=new MastraSessionLedger(database,value.workspaceId,config,value.root,host);
-const args={repositoryRoot:value.root,config,selection:value.selection,context:value.context,workflowId:'task_execution',workspaceId:value.workspaceId,ledger,projectIds:['agent'],lifecycleRisk:'high',configuredFrontier:{identity:value.identity,attempt:1}};
-const bridge=await MastraSessionBridge.open(args); const before=await bridge.snapshot(); const after=await bridge.resume(before.step_id,value.observations,ledger.resume(value.identity.work_id,1).state.source_scope);
-const reopened=await MastraSessionBridge.open(args); const restart=await reopened.snapshot();
-fs.writeFileSync(value.root+'/bridge-result.json',JSON.stringify({before,after,restart,retained:host.readDeliveredWorkContinuationReceipt(value.identity,1)})); process.exit(0);`;
-  const executable = process.execPath;
-  const child = spawnSync(executable, ['-e', bridgeCode], { cwd: path.join(runtimeRoot, 'packages', 'agent'), windowsHide: true, encoding: 'utf8',
-    env: { ...pinnedEnvironment(executable), VIDA_BRIDGE_INPUT: bridgePayload } });
-  expect(child.error).toBeUndefined(); expect(child.signal).toBeNull(); expect(child.status, child.stderr).toBe(0);
-  const bridgeResult = JSON.parse(readFileSync(path.join(root, 'bridge-result.json'), 'utf8'));
+  const bridgeResult = resumeFrontierBridgeFixture({root, workspaceId, identity: f.identity,
+    context: input.prewriterBinding.context, selection: input.prewriterBinding.selection,
+    observations: reports.map(item => item.observation), runId: prior.prior_journal.run_id});
   expect(bridgeResult.after.run_id).toBe(prior.prior_journal.run_id);
   expect(bridgeResult.after.step_id).toBe('wave-2');
   expect(bridgeResult.after.requests.map(request => request.role)).toEqual(['developer-orchestrator']);
@@ -1656,11 +1667,11 @@ test.each(['delivery', 'normal'])('frontier repair rechecks accepted intake befo
   await runDeliveredWorkContinuationRepair([...prefix, '--mode', 'plan', ...details]);
   const original = readFileSync(path.join(root, intakePath));
   writeFileSync(path.join(root, intakePath), '{}');
-  await expect(runDeliveredWorkContinuationRepair([...prefix, '--mode', 'apply'])).rejects.toThrow(/intake bytes differ/);
+  await Promise.resolve(expect(runDeliveredWorkContinuationRepair([...prefix, '--mode', 'apply'])).rejects.toThrow(/intake bytes differ/));
   expect(f.db.query("SELECT count(*) AS n FROM agent_host_governance WHERE workspace_id=? AND store_id='vida-delivered-continuation-repairs'").get(workspaceId).n).toBe(0);
   writeFileSync(path.join(root, intakePath), original);
   f.db.exec("CREATE TRIGGER frontier_repair_interrupt BEFORE UPDATE OF digest ON agent_host_delivered_work_continuation BEGIN SELECT RAISE(ABORT,'fixture interrupted frontier repair'); END");
-  await expect(runDeliveredWorkContinuationRepair([...prefix, '--mode', 'apply'])).rejects.toThrow(/fixture interrupted frontier repair/);
+  await Promise.resolve(expect(runDeliveredWorkContinuationRepair([...prefix, '--mode', 'apply'])).rejects.toThrow(/fixture interrupted frontier repair/));
   const operation = f.db.query("SELECT payload FROM agent_host_governance WHERE workspace_id=? AND store_id='vida-delivered-continuation-repairs' AND kind='operation'").get(workspaceId);
   expect(JSON.parse(operation.payload).status).toBe('commit_unknown');
   expect(() => f.store.assertSessionProducerWriteAllowed()).toThrow(/repair/);
@@ -1680,7 +1691,7 @@ test('Host preserves an issued UNKNOWN journal action and denies continuation wi
       journalBefore = f.db
         .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
         .get(fixtureWorkspace, f.identity.work_id, 1);
-    await expect(f.store.continueDeliveredWork(request)).rejects.toThrow(/unresolved outcome/);
+    await Promise.resolve(expect(f.store.continueDeliveredWork(request)).rejects.toThrow(/unresolved outcome/));
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(
       f.db

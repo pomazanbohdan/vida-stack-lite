@@ -26,6 +26,52 @@ import {
   projectConfiguredPrewriterContinuationRequests,
 } from './delivered-work-continuation.js';
 import type { ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
+import { effectiveConfiguredFrontier, type FailedPrewriterRecoveryReceipt } from './failed-prewriter-transition.js';
+
+interface UntrustedMastraStep {
+  readonly status?: unknown;
+  readonly payload?: unknown;
+  readonly output?: unknown;
+  readonly suspendPayload?: { readonly requests?: readonly unknown[] };
+  readonly resumePayload?: { readonly observations?: readonly unknown[] };
+}
+interface UntrustedMastraSnapshot {
+  readonly runId: unknown;
+  readonly status: SessionBridgeSnapshot['status'];
+  readonly result: unknown;
+  readonly context: Record<string, unknown>;
+  readonly suspendedPaths: Record<string, unknown>;
+}
+function unknownRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+function unknownArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
+}
+function arrayShape(value: unknown): boolean {
+  return Array.isArray(value);
+}
+function snapshotStatus(value: unknown): value is SessionBridgeSnapshot['status'] {
+  return ['success', 'failed', 'canceled', 'suspended', 'unknown'].some(status => status === value);
+}
+function decodeMastraSnapshot(text: string): UntrustedMastraSnapshot {
+  const value: unknown = JSON.parse(text);
+  requireEngine(unknownRecord(value) && unknownRecord(value.context) && snapshotStatus(value.status),
+    'persisted snapshot object, context or status is invalid');
+  requireEngine(value.suspendedPaths === undefined || unknownRecord(value.suspendedPaths), 'persisted suspension map is invalid');
+  return { runId: value.runId, status: value.status, result: value.result,
+    context: value.context, suspendedPaths: value.suspendedPaths ?? {} };
+}
+function decodeMastraStep(value: unknown): UntrustedMastraStep | undefined {
+  if (value === undefined) return undefined;
+  requireEngine(unknownRecord(value), 'persisted step is not an object');
+  for (const [key, member] of [['suspendPayload', 'requests'], ['resumePayload', 'observations']] as const) {
+    const body = value[key];
+    requireEngine(body === undefined || unknownRecord(body) &&
+      (body[member] === undefined || unknownArray(body[member])), 'persisted step report or request container is invalid');
+  }
+  return value as UntrustedMastraStep;
+}
 
 export interface SessionEngineBinding {
   readonly repositoryRoot: string;
@@ -121,7 +167,7 @@ export function assertUnpreparedSessionEngineAbsent(input: {
     for (const row of rows) {
       bytes += Buffer.byteLength(row.snapshot);
       requireEngine(bytes <= 8 * 1024 * 1024, 'preparation engine census bytes exceed bound');
-      const persisted = JSON.parse(row.snapshot),
+      const persisted = decodeMastraSnapshot(row.snapshot),
         state = parseSessionBridgeRunState(persisted.context?.input);
       requireEngine(
         persisted.runId === row.run_id &&
@@ -160,7 +206,7 @@ function hasExactKeys(value: unknown, expected: string): boolean {
   return (
     value !== null &&
     typeof value === 'object' &&
-    !Array.isArray(value) &&
+    !arrayShape(value) &&
     Object.keys(value).sort().join(',') === expected
   );
 }
@@ -171,7 +217,7 @@ function validRetainedSourceScope(value: unknown): value is NonNullable<MastraSe
   return (
     scope.schema === 'ScopedSourceSnapshot/v1' &&
     /^[a-f0-9]{64}$/.test(scope.digest) &&
-    Array.isArray(scope.entries) &&
+    arrayShape(scope.entries) &&
     scope.entries.length > 0 &&
     scope.entries.length <= 512 &&
     scope.entries.every(
@@ -184,7 +230,7 @@ function validRetainedSourceScope(value: unknown): value is NonNullable<MastraSe
         !entry.path.startsWith('/') &&
         !entry.path.endsWith('/') &&
         !/^[A-Za-z]:/.test(entry.path) &&
-        !/[\u0000-\u001f\u007f]/.test(entry.path) &&
+        !entry.path.split('').some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) &&
         entry.path.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..') &&
         (index === 0 || scope.entries[index - 1]!.path < entry.path) &&
         typeof entry.exists === 'boolean' &&
@@ -291,14 +337,14 @@ export function readRetainedTerminalSessionEngineSnapshot(
       rows.length === 1 && rows[0]!.workflow_name === action.workflow_id && rows[0]!.run_id === prior.run_id,
       'retained terminal engine identity is missing or ambiguous',
     );
-    const persisted = JSON.parse(rows[0]!.snapshot) as Record<string, any>;
+    const persisted = decodeMastraSnapshot(rows[0]!.snapshot);
     requireEngine(
       persisted &&
         persisted.runId === prior.run_id &&
         persisted.status === 'success' &&
         persisted.context &&
         typeof persisted.context === 'object' &&
-        !Array.isArray(persisted.context) &&
+        !arrayShape(persisted.context) &&
         Object.keys(persisted.suspendedPaths ?? {}).length === 0,
       'retained original run is not a successful terminal snapshot',
     );
@@ -322,7 +368,7 @@ export function readRetainedTerminalSessionEngineSnapshot(
     requireEngine(waveIds.length === prior.completed.length, 'retained terminal wave count differs from its Journal');
     const expectedObservationIds = new Set<string>();
     for (const [position, wave] of prior.completed.entries()) {
-      const row = persisted.context[wave.step_id] as Record<string, any> | undefined;
+      const row = decodeMastraStep(persisted.context[wave.step_id]);
       requireEngine(
         /^wave-\d+$/.test(wave.step_id) &&
           waveIds[position] === wave.step_id &&
@@ -333,7 +379,7 @@ export function readRetainedTerminalSessionEngineSnapshot(
       const expectedRequests = wave.items.map((item) => parseSessionBridgeRequest(item.request)),
         persistedRequests = row.suspendPayload?.requests;
       requireEngine(
-        persistedRequests === undefined || (Array.isArray(persistedRequests) &&
+        persistedRequests === undefined || (arrayShape(persistedRequests) &&
           isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), expectedRequests)),
         'retained terminal original request bodies differ from Host Journal',
       );
@@ -422,9 +468,9 @@ export function readRetainedUnissuedSessionEngineSnapshot(
       binding.correctiveExecution == null &&
       journal.research_wave_exposure === undefined &&
       typeof journal.step_id === 'string' &&
-      Array.isArray(journal.items) &&
+      arrayShape(journal.items) &&
       journal.items.length > 0 &&
-      Array.isArray(journal.completed),
+      arrayShape(journal.completed),
     'retained unissued Host/Journal binding differs',
   );
   requireEngine(
@@ -464,8 +510,8 @@ export function readRetainedUnissuedSessionEngineSnapshot(
       typeof item.canonical_kind === 'string' &&
       typeof item.intent === 'string' &&
       typeof item.project_id === 'string' &&
-      Array.isArray(item.risk_flags) &&
-      Array.isArray(item.labels) &&
+      arrayShape(item.risk_flags) &&
+      arrayShape(item.labels) &&
       work.binding.project_ids.includes(item.project_id) &&
       canonicalJsonDigest(item) === work.binding.work_item_digest,
     'retained unissued original selection source differs',
@@ -561,14 +607,14 @@ export function readRetainedUnissuedSessionEngineSnapshot(
       'retained unissued engine identity is missing or ambiguous',
     );
     requireEngine(Buffer.byteLength(rows[0]!.snapshot) <= 8 * 1024 * 1024, 'retained unissued snapshot exceeds bound');
-    const persisted = JSON.parse(rows[0]!.snapshot) as Record<string, any>;
+    const persisted = decodeMastraSnapshot(rows[0]!.snapshot);
     requireEngine(
       persisted &&
         persisted.runId === oldRunId &&
         persisted.status === 'suspended' &&
         persisted.context &&
         typeof persisted.context === 'object' &&
-        !Array.isArray(persisted.context),
+        !arrayShape(persisted.context),
       'retained original run is not a suspended snapshot',
     );
     const parsePriorState = (value: unknown) => {
@@ -639,10 +685,10 @@ export function readRetainedUnissuedSessionEngineSnapshot(
     };
     for (const wave of journal.completed) {
       const waveIndex = Number(wave.step_id.slice(5)),
-        row = persisted.context[wave.step_id] as Record<string, any> | undefined;
+        row = decodeMastraStep(persisted.context[wave.step_id]);
       requireEngine(
         row?.status === 'success' &&
-          Array.isArray(wave.items) &&
+          arrayShape(wave.items) &&
           wave.items.length > 0 &&
           isDeepStrictEqual(parsePriorState(row.payload), state),
         'retained unissued completed wave or input differs',
@@ -655,7 +701,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
         ),
         persistedRequests = row.suspendPayload?.requests;
       requireEngine(
-        persistedRequests === undefined || (Array.isArray(persistedRequests) && isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), requests)),
+        persistedRequests === undefined || (arrayShape(persistedRequests) && isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), requests)),
         'retained unissued completed request bodies differ from Journal',
       );
       const observations = wave.items.map((entry: MastraSessionLedgerState['completed'][number]['items'][number]) => {
@@ -678,7 +724,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
         return observation;
       });
       requireEngine(
-        Array.isArray(row.resumePayload?.observations) &&
+        unknownArray(row.resumePayload?.observations) &&
           isDeepStrictEqual(row.resumePayload.observations.map(parseSessionBridgeObservation), observations),
         'retained unissued completed resume bodies differ from Journal',
       );
@@ -690,7 +736,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
       );
       state = output;
     }
-    const frontier = persisted.context[journal.step_id] as Record<string, any> | undefined,
+    const frontier = decodeMastraStep(persisted.context[journal.step_id]),
       waveIndex = frontierWaveIndex,
       requests = verifyRequests(
         journal.items.map((entry) => entry.request),
@@ -707,20 +753,20 @@ export function readRetainedUnissuedSessionEngineSnapshot(
         !Object.hasOwn(frontier, 'output') &&
         requests.length === 1 &&
         requests.every((request) => request.stage_id === requests[0]!.stage_id) &&
-        Array.isArray(persistedRequests) &&
+        unknownArray(persistedRequests) &&
         isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), requests),
       'retained unissued suspended developer step differs from Journal',
     );
+    const suspendedIndexes = paths[journal.step_id];
     requireEngine(
       paths &&
         typeof paths === 'object' &&
-        !Array.isArray(paths) &&
+        !arrayShape(paths) &&
         Object.keys(paths).length === 1 &&
         Object.keys(paths)[0] === journal.step_id &&
-        Array.isArray(paths[journal.step_id]) &&
-        paths[journal.step_id].length === 1 &&
-        Number.isSafeInteger(paths[journal.step_id][0]) &&
-        paths[journal.step_id][0] >= 0,
+        unknownArray(suspendedIndexes) && suspendedIndexes.length === 1 &&
+        typeof suspendedIndexes[0] === 'number' && Number.isSafeInteger(suspendedIndexes[0]) &&
+        suspendedIndexes[0] >= 0,
       'retained unissued suspended path differs',
     );
     requireEngine(
@@ -757,6 +803,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
 export function readConfiguredContinuationSessionEngineSnapshot(
   binding: SessionEngineBinding,
   receipt: ConfiguredFrontierReceipt,
+  recovery: FailedPrewriterRecoveryReceipt | null = null,
 ): SessionBridgeSnapshot {
   requireEngine(
     receipt?.schema === 'DeliveredWorkContinuationReceipt/v1' &&
@@ -774,6 +821,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       /^[a-f0-9]{64}$/.test(receipt.frontier_snapshot.snapshot_sha256),
     'configured continuation receipt identity or integrity binding differs',
   );
+  const effective = effectiveConfiguredFrontier({ original: receipt, recovery });
   const request = receipt.request;
   requireEngine(request.action.kind === 'configured_frontier', 'configured continuation action differs');
   const action = request.action,
@@ -783,7 +831,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     oldRunId = priorWork.execution.run_id,
     boundaryWave = action.request.wave_index,
     boundaryStep = 'wave-' + boundaryWave,
-    currentScope = request.currentSourceScope,
+    currentScope = effective.currentSourceScope,
     currentConfigDigest = runtimeConfigDigest(binding.config);
   requireEngine(
     typeof oldRunId === 'string' && oldRunId.length > 0 &&
@@ -825,8 +873,8 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       beforeImageValue.run_id === oldRunId &&
       beforeImageValue.status === 'suspended' &&
       beforeImageValue.step_id === boundaryStep &&
-      Array.isArray(beforeImageValue.requests) &&
-      Array.isArray(beforeImageValue.observations),
+      unknownArray(beforeImageValue.requests) &&
+      unknownArray(beforeImageValue.observations),
     'configured continuation immutable beforeimage is not a normalized suspended snapshot',
   );
   const normalizedBeforeImage: SessionBridgeSnapshot = {
@@ -857,7 +905,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     before = lstatSync(target);
   requireEngine(before.isFile() && !before.isSymbolicLink() && before.nlink === 1, 'configured continuation database path is unsafe');
   const database = new Database(target, { readonly: true, strict: true });
-  let persisted: Record<string, any>;
+  let persisted: UntrustedMastraSnapshot;
   try {
     requireEngine(
       database.query('PRAGMA quick_check').all().every((row) => Object.values(row as Record<string, unknown>)[0] === 'ok'),
@@ -895,10 +943,10 @@ export function readConfiguredContinuationSessionEngineSnapshot(
         Buffer.byteLength(rows[0]!.snapshot) <= 8 * 1024 * 1024,
       'configured continuation original engine run is missing or ambiguous',
     );
-    persisted = JSON.parse(rows[0]!.snapshot) as Record<string, any>;
+    persisted = decodeMastraSnapshot(rows[0]!.snapshot);
     requireEngine(
       persisted && persisted.runId === oldRunId && persisted.context &&
-        typeof persisted.context === 'object' && !Array.isArray(persisted.context),
+        typeof persisted.context === 'object' && !arrayShape(persisted.context),
       'configured continuation original engine snapshot identity differs',
     );
   } finally {
@@ -910,7 +958,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     );
   }
 
-  const beforeStep = persisted.context[boundaryStep] as Record<string, any> | undefined;
+  const beforeStep = decodeMastraStep(persisted.context[boundaryStep]);
   requireEngine(beforeStep, 'configured continuation boundary step is missing');
   if (beforeStep.status === 'suspended') {
     const retained = readRetainedUnissuedSessionEngineSnapshot(priorBinding, { work: priorWork, journal: priorJournal });
@@ -932,9 +980,9 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     lifecycleRisk: priorWork.lifecycle.risk,
   });
   requireEngine(
-    receipt.successor_journal.step_id === boundaryStep &&
-      receipt.successor_journal.items.length === currentRequests.length &&
-      currentRequests.every((entry, index) => isDeepStrictEqual(entry, receipt.successor_journal.items[index]!.request)),
+    (recovery?.successor_journal ?? receipt.successor_journal).step_id === boundaryStep &&
+      effective.requests.length === currentRequests.length &&
+      currentRequests.every((entry, index) => isDeepStrictEqual(entry, effective.requests[index])),
     'configured continuation receipt current prewriter requests differ',
   );
   if (beforeStep.status === 'suspended') {
@@ -984,7 +1032,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   };
   const parseRequests = (values: unknown, expected: readonly SessionBridgeRequest[], message: string, completed = false) => {
     if (completed && values === undefined) return;
-    requireEngine(Array.isArray(values), message);
+    requireEngine(unknownArray(values), message);
     const parsed = values.map((entry) => {
       const value = parseSessionBridgeRequest(entry);
       requireEngine(isDeepStrictEqual(value, entry), message);
@@ -998,7 +1046,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     expected: readonly SessionBridgeRequest[],
     message: string,
   ) => {
-    requireEngine(Array.isArray(values) && values.length === expected.length, message);
+    requireEngine(unknownArray(values) && values.length === expected.length, message);
     const parsed = values.map((entry) => {
       const value = parseSessionBridgeObservation(entry);
       requireEngine(isDeepStrictEqual(value, entry), message);
@@ -1021,7 +1069,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   for (const [position, wave] of priorJournal.completed.entries()) {
     const waveIndex = position,
       waveStep = 'wave-' + waveIndex,
-      row = persisted.context[waveStep] as Record<string, any> | undefined;
+      row = decodeMastraStep(persisted.context[waveStep]);
     requireEngine(
       wave.step_id === waveStep && row?.status === 'success' &&
         isDeepStrictEqual(parseOldState(row.payload), oldState),
@@ -1079,7 +1127,8 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     isDeepStrictEqual(parseOldState(beforeStep.payload), oldState),
     'configured continuation prewriter input differs from the original prefix',
   );
-  parseRequests(beforeStep.suspendPayload?.requests, currentRequests, 'configured continuation current prewriter requests differ', true);
+  parseRequests(beforeStep.suspendPayload?.requests, recovery ? normalizedBeforeImage.requests : currentRequests,
+    'configured continuation current prewriter requests differ', true);
   const boundaryObservations = parseCompleteObservations(
       beforeStep.resumePayload?.observations,
       currentRequests,
@@ -1148,7 +1197,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   const presentIndexes = waveIds.map((key) => Number(key.slice(5))).sort((left, right) => left - right);
   const suffixRows = currentExecuted.map(([index]) => ({
     index,
-    row: persisted.context['wave-' + index] as Record<string, any> | undefined,
+    row: decodeMastraStep(persisted.context['wave-' + index]),
   }));
   let state = currentBoundaryOutput,
     frontier: { readonly index: number; readonly requests: readonly SessionBridgeRequest[] } | null = null,
@@ -1198,9 +1247,9 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     const pathIndex = executedWaves.findIndex(([index]) => index === frontier!.index),
       paths = persisted.suspendedPaths;
     requireEngine(
-      pathIndex >= 0 && paths && typeof paths === 'object' && !Array.isArray(paths) &&
+      pathIndex >= 0 && paths && typeof paths === 'object' && !arrayShape(paths) &&
         Object.keys(paths).length === 1 && Object.keys(paths)[0] === 'wave-' + frontier.index &&
-        Array.isArray(paths['wave-' + frontier.index]) && isDeepStrictEqual(paths['wave-' + frontier.index], [pathIndex]),
+        arrayShape(paths['wave-' + frontier.index]) && isDeepStrictEqual(paths['wave-' + frontier.index], [pathIndex]),
       'configured continuation current suspended path differs',
     );
     return {
@@ -1246,9 +1295,9 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
       .all(runId) as { workflow_name: string; run_id: string; snapshot: string }[];
     if (rows.length === 0) return null;
     requireEngine(rows.length === 1 && rows[0]!.workflow_name === workflowId, 'run identity is ambiguous or foreign');
-    const persisted = JSON.parse(rows[0]!.snapshot);
+    const persisted = decodeMastraSnapshot(rows[0]!.snapshot);
     requireEngine(
-      persisted && persisted.runId === runId && persisted.context && !Array.isArray(persisted.context),
+      persisted && persisted.runId === runId && persisted.context && !arrayShape(persisted.context),
       'snapshot identity is invalid',
     );
     const parseState = (value: unknown) => {
@@ -1299,14 +1348,14 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
       'request context differs',
     );
     const paths = persisted.suspendedPaths ?? {};
+    const suspendedIndexes = step ? paths[step[0]] : undefined;
     requireEngine(
       terminal
         ? Object.keys(paths).length === 0
         : Object.keys(paths).length === 1 &&
             Object.keys(paths)[0] === step![0] &&
-            Array.isArray(paths[step![0]]) &&
-            paths[step![0]].length === 1 &&
-            Number.isSafeInteger(paths[step![0]][0]),
+            unknownArray(suspendedIndexes) && suspendedIndexes.length === 1 &&
+            Number.isSafeInteger(suspendedIndexes[0]),
       'suspended path differs',
     );
     const correction = binding.correctiveExecution;
@@ -1328,7 +1377,8 @@ export function readSessionEngineSnapshot(binding: SessionEngineBinding): Sessio
     let incomplete: string | null = null;
     for (const [position, [waveIndex]] of presentWaves.entries()) {
       const id = 'wave-' + waveIndex;
-      const recorded = persisted.context[id];
+      const recorded = decodeMastraStep(persisted.context[id]);
+      requireEngine(recorded, 'recorded wave is missing');
       requireEngine(isDeepStrictEqual(parseState(recorded.payload), prior), 'wave payload chain differs');
       if (recorded.status !== 'success') {
         requireEngine(

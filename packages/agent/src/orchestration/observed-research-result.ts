@@ -174,7 +174,7 @@ export function buildObservedResearchResult(input: ObservedResearchResultInput):
   const sourceRefs = output.source_refs as readonly { readonly source_id: string; readonly claim: string }[];
   const acIds = output.ac_ids as readonly string[];
   requireResearch(
-    Array.isArray(acIds) &&
+    Boolean(Array.isArray(acIds)) &&
       canonicalJsonDigest(sorted(acIds)) === canonicalJsonDigest(sorted(scope.ac_ids)) &&
       acIds.every((id) => sourceRefs.some((source) => source.claim?.includes(id))),
     'research AC IDs must exactly match accepted scope and be source-backed',

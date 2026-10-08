@@ -16,6 +16,8 @@ Use short sentences and plain terms. Keep one main idea in each paragraph. Aim f
 | Package qualification | Successful formation provenance, target and exact artifact integrity. No test suite at formation or installation. |
 | Aggregate numeric evidence | GAP. The current policy retains owned post-cutover gaps for 100% coverage, 100% mutation and CRAP below 5. A missing report is not a pass. |
 | Mutation | A separate, explicitly authorized manual run. It is not part of an aggregate or CI/CD job. |
+| Lint closure | In progress. The complete Source lint profile and full Source TypeScript checks pass. The test/tooling lint profile still needs correction. Source checks do not prove a clean package. |
+| Precommit | The approved hook changes are in Source. Activation waits for completed checks. Pre-push remains separate. |
 | Provider and ZIP capability | Use the approved adapter and current locked reader. Missing or drifting capability is a GAP. |
 
 Read current operation details from the [release owner](../../tooling/agent/release-local.mjs), [installation guide](docs/installation.md), and current work receipts. Version text alone does not prove installed bytes. Source changes do not change an installed artifact.
@@ -48,7 +50,7 @@ Use current generated SDK outputs only when their inputs match. Missing or stale
 
 Use supported temporary directories or explicit owned fixture roots. Keep Source-workspace scratch in ignored `.tmp`, outside the package payload. Preserve fixtures when a child outcome is UNKNOWN.
 
-Tests and comments describe current supported behavior. Do not include narratives about absent legacy implementations. Formatter hooks, TypeScript 7 hooks and pre-push coverage/CRAP hooks are proposals. Do not install or activate them from this guide.
+Tests and comments describe current supported behavior. Do not include narratives about absent legacy implementations. Precommit activation has human authorization. Complete and verify its formatter, Source type, lint, focused-test and staged-byte checks before activation. This authorization does not activate pre-push coverage, CRAP or mutation checks.
 
 ## Commands and pins
 
@@ -60,7 +62,48 @@ For a focused check, use:
 node bin/bun.mjs test tests/FILE.test.mjs --test-name-pattern "CASE_PATTERN"
 ```
 
-Use the current scripts for the applicable completion checks:
+## Lint and type contracts
+
+Fix every lint error and warning. Do not disable rules, lower severity, add suppression comments or accept a baseline to hide a defect. Use `--max-warnings 0` for the final lint gate and the approved precommit checks.
+
+Oxlint type-aware analysis needs a declared TypeScript project for each file. Source uses the package `tsconfig.json`. The standard nested projects in `tests/tsconfig.json` and `tooling/tsconfig.json` include MJS files with `allowJs`, `checkJs` and `noEmit`. An import-resolution flag does not place an excluded file in a typed project. Keep the Bun/Node declarations and exact pins current; the Bun runtime and current Bun declarations are 1.4.2.
+
+Type shared fixture state and helpers with the existing production contracts. Give SQLite results the exact selected row type and check missing rows. Preserve deliberately invalid test inputs with separate malformed values; do not present them as valid production data.
+
+Check changed shared MJS helpers with strict `checkJs --noEmit` as well as lint.
+A zero-lint result does not prove that their TypeScript contracts compile.
+Keep mutable test seeds separate from readonly production snapshots. Use the
+complete current Work contract for valid research fixtures, and check nullable
+Host state, journal versions and original request pointers before use.
+
+Parse external JSON as `unknown`. Check records, arrays, status values and nested containers before use. Keep identity, digest, size, scope and caller checks. Avoid a broad cast or a library type that reintroduces nested `any` at an untrusted boundary. Check array shape without widening an already typed readonly array to `any[]`.
+
+Preserve async assertion completion. If a matcher declaration differs from its runtime thenable, standard Promise assimilation can retain the awaited result. Do not delete the await merely to clear lint. Handle APIs declared as synchronous or asynchronous in both forms.
+
+Cleanup must retain the original failure and any cleanup or recovery failure. Throw after cleanup; use an aggregate when both failed. Include errors from recovery listing and completion probes. Keep unresolved process or fixture custody. A lint correction must not turn an uncertain result into a pass or remove a negative regression.
+
+CRAP tooling reads AST locations and coverage counters through checked types.
+Counter values must be non-negative safe integers; do not coerce malformed
+values into covered evidence. Each provided location requires a valid start
+with an integer line of at least1 and an integer column of at least0. Reject
+invalid locations before mapping; do not skip them or substitute column0.
+Check coordinates against the actual source line length. A large integer column
+must not move a statement into a later function or remove it from the denominator.
+Missing function/file/statement coverage stays uncovered. Keep source-fingerprint
+checks, exact function mapping and nested statement ownership. A clean lint or
+type result for the gate does not prove that product coverage or CRAP passed.
+
+The precommit checks use pinned Bun, Oxfmt, full Source TypeScript with `--noEmit`, type-aware Oxlint and AST checks for focused tests. The AST check must detect Bun `test.only` and aliases, while allowing comments and strings. After formatting and `git add`, verify the staged object and mode against the captured checked bytes with Git's path filters. Include the root instructions, sidecar, YAML and attributes in checked inputs. Reject partial staging before tools run.
+Compare every captured maintained input with its staged object, including files
+hidden by `assume-unchanged` or `skip-worktree`. Use indexed attributes for Git
+path filters. Reject a missing file or the first mismatch before checks; verify
+the index and mode again afterward. A clean `git diff` alone is insufficient.
+
+While fixing lint, capture complete machine-readable diagnostics in the owned ignored output directory. Read counts, rule groups and bounded examples. Do not print the full report. Recheck changed files and their callers; run the complete current profile once after the correction batch is stable. Require zero errors and zero warnings before claiming lint closure or activating the hook.
+
+## Completion commands
+
+Use the current scripts for the applicable completion checks.
 
 | Check | Command |
 | --- | --- |
@@ -75,6 +118,7 @@ Use the current scripts for the applicable completion checks:
 | ZOMBIES | `node bin/bun.mjs run test:zombies:pinned` |
 | Deep properties | `node bin/bun.mjs run test:deep:pinned` |
 | Static quality | `node bin/bun.mjs run quality:static:pinned` |
+| Full Source types | `node bin/bun.mjs node_modules/typescript/bin/tsc --project tsconfig.json --noEmit` |
 | Coverage | `node bin/bun.mjs run test:coverage:pinned`, then `node bin/bun.mjs run coverage:gate:pinned` |
 | CRAP | `node bin/bun.mjs run crap:pinned` |
 | Format | `node bin/bun.mjs run format:check:pinned` |
@@ -179,6 +223,55 @@ Successor admission and eligible predecessor release use one immediate work/shar
 
 Use the strict current v1 contracts. Ship and qualify a functional bundle-owned repair before changing active artifacts or readers. Check dependency drift, atomic application boundaries, interruption, exact resume and owned-field restore. Preserve monotonic versions. Caller fields do not create approval or new rights.
 
+### Failed prewriter recovery
+
+Use the cases in `tests/delivered-work-continuation.test.mjs` for owner recovery
+and failed-wave correction. These are development behavior checks. They do not
+form or install a package.
+
+Owner recovery restores only the original expired owner. Check the exact
+Work/Ledger/Journal and maintenance versions, full accepted resource set,
+retained human scope and FIFO. Keep failed observations, Source bindings,
+completed history and the original continuation receipt unchanged. Deny a
+foreign owner, started writer, unknown outcome, reservation or competing claim.
+Recovery grants no Source execution or Runtime acceptance.
+
+Failed-wave correction has a separate recovery receipt. Check fresh current
+Source requests, stale CAS denial, the immutable original receipt and exact
+archived failed reports. Read the actual suspended Mastra run. Keep its original
+run identity and completed prefix. Check that Host, engine, packet and admission
+readers join the original receipt with the explicit recovery view. Reject a
+changed archived report or invalid successor state. Status and exact retry
+return the stored result without reissuing an uncertain effect.
+Inject a journal SQL failure after receipt and Host writes. The transaction must
+restore all three beforeimages and leave no recovery receipt. Reject a failed or
+asynchronous current-proof callback. The callback sees frozen request data.
+Exercise the public Source handler's recorded-result path for status, inspect
+and exact apply retry; all return the same result without Host or journal writes.
+Changed retry intent must deny.
+Use `tests/helpers/configured-frontier-fixture.mjs` for complete continuation
+receipts in engine and packet tests. Keep one constructor. Packet cases retain
+their real accepted contract bytes and every configured completed assignment.
+Derive research results from the filtered workflow wave; raw assignment lists
+can include disabled roles. Synthesis references every retained result. A partial
+mock receipt is invalid setup, not permission to weaken the runtime reader.
+Research fixtures use unique record IDs and exclusive creation at the configured
+library path. Track and remove only paths created by that fixture. Never replace
+or delete an existing record to prepare or clean a test.
+Resume the recovered wave through the actual persisted Mastra run and reopen it.
+Require the same run/attempt, the new reviewer cohort, one developer suffix and
+retained failed reports. Synthetic seeded reports isolate engine continuation;
+they do not prove public report admission or native endpoint qualification.
+Check the shared accepted-contract revision resolver for ordinary admissions,
+configured continuations and failed-wave recovery. Preserve original Scope and
+Acceptance bytes while current Source changes. Deny a missing recovery view,
+foreign run or changed contracts. Prewriter and preparation evidence stays
+current-bound. Trusted policy contexts re-read continuation custody after awaits.
+
+A Host fixture with a supplied endpoint callback proves the Host transition
+only. It does not prove native endpoint qualification, installed public CLI
+behavior or developer admission. Keep those gaps explicit until observed.
+
 `native-delivery-evidence-repair.test.mjs` covers the fixed stale qualification
 reset. It checks the original uninstalled operation and archive, review, reverse,
 scope and CLEAR bytes and directory membership, complete protected dependency
@@ -202,6 +295,21 @@ Use actual SQLite JSONB fixtures. Cover unrelated valid state, matching run ID, 
 Configuration rebind uses `runtime-config` and `ConfigRebindOperation/v1`. Keep YAML and initialization schemas unchanged. Check the exact executor-only target, read-only inspect/plan, maintenance before owner YAML authoring and receipt-only CAS. Preserve provenance and stale work. Deny queued/active ownership and issued/uncertain effects. Check own-fence release, interruption, no-effect abandonment and forbidden rollback. Verify exact two-file ownership retirement and deny partial or unrelated omissions. Keep parent proof and the current changelog path valid.
 
 Correction-generation repair must use an actual isolated admitted Source attempt with an issued action, started Host state, `commit_unknown` approval and null observation. Remove only the coupled correction fields from the Host and mirrored receipts. Check inspect/plan/apply/resume/restore. All other semantic fields must stay unchanged. Deny partial fields, conflicting history, foreign receipts, competing ownership and dependency drift. Inject a transaction failure. Strict readers reject the unrepaired shape. Repair grants no replay, outcome or ownership transition.
+
+Keep raw repair beforeimages separate from normalized current Work and journal
+types. Validate the permitted normalization and exact afterimage before any
+plan retry, applied resume or restore returns. Reject null records, invalid
+arrays, extra fields, foreign identity, invalid actor/status and changed frozen
+transformations without modifying Host state or the stored operation.
+Request-transition repair does not supply missing correction authority.
+Remove a required stored change and recompute its operation checksum in a
+fixture. The reader must deny the incomplete set. A matching checksum does not
+prove complete repair or permit an early plan/resume result.
+
+Writer fixtures follow the configured graph. Report the required source-plan
+prewriter through the normal journal and bridge before reserving a Source
+writer. Use the fixture's actual scope and acceptance evidence. Do not insert
+lifecycle references directly or relax production approval to make setup pass.
 
 Stopped-source capture uses a physically contained, qualified immutable controller and separate consumer fixtures. Fresh pinned processes call the copied public route for their own target. Do not use controller execution for a foreign target. Recheck package binding before and after each case. Preserve the mutable-package drift control, the original missing/null completion denial and unchanged Host. Fixture review manifests are setup data, not real independent review or Runtime proof.
 
@@ -245,7 +353,7 @@ These are operation receipts, not installation tests or user Runtime acceptance.
 Preserve credential separation, path/transport integrity, exclusive custody,
 rollback and UNKNOWN/no-reissue controls. Keep sensitive diagnostics private.
 
-## Development-controller qualification## Development-controller qualification
+## Development-controller qualification
 
 Use an immutable current-candidate controller outside editable Source. Verify prepare, inspect, verify and controlled execution. Bind the exact logical target, original repository/projects/request, Host work/scope/lease/CAS, target Source and controller code. Reject active-selector targets and alias, FIFO or predecessor escapes.
 
@@ -305,10 +413,19 @@ The bundle must include complete declared exports and resources. Reject undeclar
 
 Check queued suspension, producer cardinality, stopped-writer capture, execution-resource recovery and ledger headroom before admission. Track optional answer/save surfaces, publication-temp cleanup and ledger lookup as requirements or GAPs. A linked successor alone does not close a bounded correction. Do not compact current v1 state or invent an agent/job cap to make admission pass.
 
-Before installation, complete the applicable quality checks. Seal the actual current bytes. Obtain exactly three fresh history-isolated blind reviews, reverse validation and documentation CLEAR. Relevant Source or asset changes invalidate the affected checks and review set.
+At development-task closeout, complete the applicable quality checks and the
+lifecycle-required three fresh independent reviews, reverse validation and
+documentation CLEAR. Bind them to current Source and declared assets. A change
+invalidates only affected evidence. Formation and installation reuse current
+task evidence; they do not repeat these checks or require a new seal.
 
 Where cutover activation applies, validate the approved activation decision and its current plan, payload, selector intent and separate parity, security, assurance, rollback, DEV and UAT evidence. Check missing, rejected, stale and changed inputs, including resume. No direct selector path may bypass the decision. Integrity checks are not authenticated user observations.
 
 Declare created/modified files, exact payload destination and order, PATH/prior-install/rollback effects, repository-only items and post-install checks. Apply the Source-specific [Git order](../../AGENT.sidecar.md#source-package-git-policy). A failed formation is not the commit/push trigger. Changed included bytes invalidate their proof; Git metadata alone does not.
 
-Require actual installed binary, manifest, effective command, resource and prerequisite observations. Keep prepared, available, qualified, installed and accepted states separate. Obtain attributable user testing of the delivered version. A copied file, report or version string does not grant Runtime acceptance.
+Use the installer's successful structured result for installed bytes and
+version. Confirm effective PATH once. Do not repeat these observations or add
+prerequisite probes. Check runtime resources when the development task requires
+them. Keep prepared, available, qualified, installed and accepted states
+separate. Obtain attributable user testing of the delivered version. A copied
+file, report or version string does not grant Runtime acceptance.

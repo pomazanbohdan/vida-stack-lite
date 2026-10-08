@@ -145,7 +145,7 @@ test('V8 coverage mode retains public initializer input rejection', async () => 
     readFileSync(path.join(candidateRoot, 'tooling/v8-coverage.env'), 'utf8'),
     'AGENT_RUNTIME_V8_COVERAGE=1\n',
   );
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     () =>
       initializeProject({
         projectRoot: 'relative',
@@ -153,7 +153,7 @@ test('V8 coverage mode retains public initializer input rejection', async () => 
         projectMappings: ['candidate'],
       }),
     /canonical absolute project root/,
-  );
+  ));
 });
 
 const nativeCoverageProbe = process.env.AGENT_RUNTIME_NATIVE_COVERAGE_MAIN === '1' ? test.skip : test;
@@ -527,7 +527,7 @@ test('CRAP gate maps covered functions by source range and treats absent coverag
       0: {
         name: '(anonymous_0)',
         decl: { start: { line: 1, column: 0 }, end: { line: 1, column: 14 } },
-        loc: { start: { line: 1, column: 16 }, end: { line: 1, column: 40 } },
+        loc: { start: { line: 1, column: 16 }, end: { line: 1, column: 'const mapped = (value: boolean) => value;'.length } },
         line: 1,
       },
       1: {
@@ -542,8 +542,8 @@ test('CRAP gate maps covered functions by source range and treats absent coverag
     },
     f: { 0: 1, 1: 1 },
     statementMap: {
-      0: { start: { line: 4, column: 2 }, end: { line: 4, column: 42 } },
-      1: { start: { line: 5, column: 2 }, end: { line: 5, column: 37 } },
+      0: { start: { line: 4, column: 2 }, end: { line: 4, column: '  if (value && value !== null) return 1;'.length } },
+      1: { start: { line: 5, column: 2 }, end: { line: 5, column: '  if (value === false) return 2;'.length } },
     },
     s: { 0: 1, 1: 0 },
   };
@@ -690,9 +690,8 @@ test('CRAP gate assigns nested statements to their own function and handles entr
       3: { start: location(4, 2) },
       4: { start: location(7, lines[6].lastIndexOf('0')) },
       5: { start: location(5, 1) },
-      6: { start: location(99, 0) },
     },
-    s: { 0: 1, 1: 0, 2: 1, 3: 0, 4: 0, 5: 0, 6: 1 },
+    s: { 0: 1, 1: 0, 2: 1, 3: 0, 4: 0, 5: 0 },
   };
   writeFileSync(path.join(coverageDirectory, 'coverage-final.json'), JSON.stringify({ [sourcePath]: fileCoverage }));
   stampFixtureCoverage(directory);
@@ -771,3 +770,99 @@ test('CRAP gate treats missing file and statement counters as uncovered', () => 
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('CRAP gate rejects malformed numeric counters instead of coercing them to covered evidence', () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'vida-crap-invalid-counter-'));
+  const sourcePath = path.join(directory, 'src/fixture.ts'), coverageDirectory = path.join(directory, 'coverage');
+  mkdirSync(path.dirname(sourcePath), {recursive: true});
+  mkdirSync(coverageDirectory, {recursive: true});
+  writeFileSync(sourcePath, 'function fixture() { return 1; }\n');
+  try {
+    for (const counters of [{f: {0: '1'}}, {s: {0: '1'}}, {f: []},
+      {f: {0: 0.5}}, {s: {0: 0.5}}, {f: {0: -1}}, {s: {0: Number.MAX_SAFE_INTEGER + 1}}]) {
+      const fileCoverage = {
+        fnMap: {0: {name: 'fixture', loc: {start: {line: 1, column: 19}}}},
+        f: {0: 1}, statementMap: {0: {start: {line: 1, column: 21}}}, s: {0: 1}, ...counters,
+      };
+      writeFileSync(path.join(coverageDirectory, 'coverage-final.json'), JSON.stringify({[sourcePath]: fileCoverage}));
+      stampFixtureCoverage(directory);
+      const result = spawnSync(process.execPath, [path.join(candidateRoot, 'tooling/crap-gate.mjs')], {
+        cwd: candidateRoot, encoding: 'utf8', env: {...process.env, CRAP_GATE_ROOT: directory},
+      });
+      assert.equal(result.status, 1);
+      assert.equal(result.error, undefined);
+      assert.equal(result.signal, null);
+      const report = JSON.parse(readFileSync(path.join(coverageDirectory, 'crap-report.json'), 'utf8'));
+      assert.equal(report.reason, 'missing or invalid coverage/coverage-final.json');
+      assert.equal(report.status, 'fail');
+      assert.equal(report.functions, undefined);
+    }
+  } finally {
+    assert.ok(path.resolve(directory).startsWith(path.resolve(tmpdir(), 'vida-crap-invalid-counter-')));
+    rmSync(directory, {recursive: true, force: true});
+  }
+}, 30_000);
+
+test('CRAP gate rejects missing statement starts and invalid coverage coordinates', () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'vida-crap-invalid-location-'));
+  const sourcePath = path.join(directory, 'src/fixture.ts'), coverageDirectory = path.join(directory, 'coverage');
+  mkdirSync(path.dirname(sourcePath), {recursive: true});
+  mkdirSync(coverageDirectory, {recursive: true});
+  writeFileSync(sourcePath, 'function fixture() { return 1; }\n');
+  try {
+    for (const statement of [{}, {end: {line: 1, column: 30}},
+      {start: {line: 1, column: 0.5}}, {start: {line: 1, column: -1}},
+      {start: {line: 0, column: 19}}, {start: {line: 1.5, column: 19}}]) {
+      const fileCoverage = {
+        fnMap: {0: {name: 'fixture', loc: {start: {line: 1, column: 19}}}},
+        f: {0: 1}, statementMap: {0: statement}, s: {0: 1},
+      };
+      writeFileSync(path.join(coverageDirectory, 'coverage-final.json'), JSON.stringify({[sourcePath]: fileCoverage}));
+      stampFixtureCoverage(directory);
+      const result = spawnSync(process.execPath, [path.join(candidateRoot, 'tooling/crap-gate.mjs')], {
+        cwd: candidateRoot, encoding: 'utf8', env: {...process.env, CRAP_GATE_ROOT: directory},
+      });
+      assert.equal(result.error, undefined);
+      assert.equal(result.signal, null);
+      assert.equal(result.status, 1);
+      const report = JSON.parse(readFileSync(path.join(coverageDirectory, 'crap-report.json'), 'utf8'));
+      assert.equal(report.reason, 'missing or invalid coverage/coverage-final.json');
+      assert.equal(report.status, 'fail');
+      assert.equal(report.functions, undefined);
+    }
+  } finally {
+    assert.ok(path.resolve(directory).startsWith(path.resolve(tmpdir(), 'vida-crap-invalid-location-')));
+    rmSync(directory, {recursive: true, force: true});
+  }
+}, 30_000);
+
+test('CRAP gate rejects integer coordinates outside their source line', () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'vida-crap-line-bounds-'));
+  const sourcePath = path.join(directory, 'src/fixture.ts'), coverageDirectory = path.join(directory, 'coverage');
+  mkdirSync(path.dirname(sourcePath), {recursive: true});
+  mkdirSync(coverageDirectory, {recursive: true});
+  writeFileSync(sourcePath, 'function fixture() { return 1; }\nfunction next() { return 2; }\n');
+  try {
+    for (const start of [{line: 1, column: 40}, {line: 4, column: 0}]) {
+      const fileCoverage = {
+        fnMap: {0: {name: 'fixture', loc: {start: {line: 1, column: 19}}}},
+        f: {0: 1}, statementMap: {0: {start}}, s: {0: 1},
+      };
+      writeFileSync(path.join(coverageDirectory, 'coverage-final.json'), JSON.stringify({[sourcePath]: fileCoverage}));
+      stampFixtureCoverage(directory);
+      const result = spawnSync(process.execPath, [path.join(candidateRoot, 'tooling/crap-gate.mjs')], {
+        cwd: candidateRoot, encoding: 'utf8', env: {...process.env, CRAP_GATE_ROOT: directory},
+      });
+      assert.equal(result.error, undefined);
+      assert.equal(result.signal, null);
+      assert.equal(result.status, 1);
+      const report = JSON.parse(readFileSync(path.join(coverageDirectory, 'crap-report.json'), 'utf8'));
+      assert.equal(report.reason, 'invalid coverage source location');
+      assert.equal(report.details.file, 'src/fixture.ts');
+      assert.equal(report.details.field, 'statementMap.0');
+    }
+  } finally {
+    assert.ok(path.resolve(directory).startsWith(path.resolve(tmpdir(), 'vida-crap-line-bounds-')));
+    rmSync(directory, {recursive: true, force: true});
+  }
+}, 30_000);

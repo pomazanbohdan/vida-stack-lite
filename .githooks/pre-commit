@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 root=$(git rev-parse --show-toplevel)
-exec node "$root/tooling/agent/git-quality-hooks.mjs" pre-commit
+exec node "$root/packages/agent/bin/bun.mjs" "$root/tooling/agent/git-quality-hooks.mjs" pre-commit

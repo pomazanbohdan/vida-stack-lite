@@ -505,10 +505,10 @@ v8CoverageTest(
       expect(JSON.parse(incomplete.stderr).status).toBe('blocked');
       expect(await readFile(selectorPath, 'utf8')).toBe(record(selector));
       expect(JSON.parse(incomplete.stderr).code).toBe('GAP-VIDA-RUN-SELECTOR-001');
-      await expect(readFile(path.join(journalRoot, 'cutoff-witness.json'))).rejects.toMatchObject({ code: 'ENOENT' });
-      await expect(readFile(path.join(root, '.agent/work/session-handoff.v1.sqlite'))).rejects.toMatchObject({
+      await Promise.resolve(expect(readFile(path.join(journalRoot, 'cutoff-witness.json'))).rejects.toMatchObject({ code: 'ENOENT' }));
+      await Promise.resolve(expect(readFile(path.join(root, '.agent/work/session-handoff.v1.sqlite'))).rejects.toMatchObject({
         code: 'ENOENT',
-      });
+      }));
     } finally {
       bundle = ordinaryBundle;
       if (!initializationOutcomeUnknown) {

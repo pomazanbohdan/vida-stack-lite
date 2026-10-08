@@ -73,7 +73,7 @@ function windowsCapability(access: SafeRepositoryAccess): NativeNoFollowCapabili
     assurance_profile: 'windows-best-effort-v1',
     filesystem,
     package: access.package!,
-    ...Object.fromEntries([['residual_risks', residual_risks]].filter(([, value]) => Array.isArray(value))),
+    ...(Array.isArray(residual_risks) ? { residual_risks } : {}),
     attested: access.attested && ['ntfs', 'refs'].includes(filesystem),
   };
 }

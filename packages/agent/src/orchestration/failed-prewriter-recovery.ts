@@ -19,6 +19,7 @@ export function validateFailedPrewriterRecoveryBasis(input: {
   readonly journal: MastraSessionLedgerState;
   readonly nativeSessionHandle: string;
   readonly now: number;
+  readonly leaseState?: 'expired' | 'live';
 }): void {
   const { original, work, ledger, journal, nativeSessionHandle, now } = input;
   validateConfiguredFrontierReceiptStructure({ receipt: original });
@@ -41,7 +42,8 @@ export function validateFailedPrewriterRecoveryBasis(input: {
     same(ticket.project_ids, identity.project_ids) && ticket.integrations_digest === identity.integrations_digest &&
     ticket.generation === work.lease!.generation && ticket.source_revision === work.binding.work_source_revision &&
     same(ticket.exclusive_resources, resources) && same(ticket.active_resources, resources) &&
-    ticket.blocked_resources.length === 0 && ticket.expires_at !== null && Date.parse(ticket.expires_at) <= now &&
+    ticket.blocked_resources.length === 0 && ticket.expires_at !== null &&
+    (input.leaseState === 'live' ? Date.parse(ticket.expires_at) > now : Date.parse(ticket.expires_at) <= now) &&
     claims.length === 1 && claims[0]!.thread_id === nativeSessionHandle &&
     claims[0]!.work_id === identity.work_id && claims[0]!.generation === ticket.generation &&
     same(claims[0]!.resources, resources) && claims[0]!.lease_expires_at === ticket.expires_at,

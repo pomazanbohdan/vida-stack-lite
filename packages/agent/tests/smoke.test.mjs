@@ -437,15 +437,15 @@ describe('clean v1 package surface', () => {
     const proof = createRuntimeKernelHostProofForCompositionRoot(bindings);
     const host = runtime.createRuntimeKernelHost(proof);
     expect(runtime.createDeliveryEvidenceAuthority(host)).toBeDefined();
-    await expect(runtime.createRuntimeKernel(path.resolve(repositoryRoot, '..'), host)).rejects.toThrow(
+    await Promise.resolve(expect(runtime.createRuntimeKernel(path.resolve(repositoryRoot, '..'), host)).rejects.toThrow(
       /runtime kernel host is bound to a different repository root/,
-    );
+    ));
     expect(() => runtime.createRuntimeKernelHost(Object.freeze({}))).toThrow(
       /runtime kernel host authentication proof is required/,
     );
-    await expect(runtime.createFileWorkflowHostCapability(Object.freeze({}))).rejects.toThrow(
+    await Promise.resolve(expect(runtime.createFileWorkflowHostCapability(Object.freeze({}))).rejects.toThrow(
       /Edictum workflow host authentication proof is required/,
-    );
+    ));
   });
 
   test('keeps the clean surface free of activation or lifecycle APIs', () => {
@@ -498,9 +498,9 @@ describe('clean v1 package surface', () => {
   });
 
   test('fails closed without an opaque runtime-kernel host capability', async () => {
-    await expect(runtime.createRuntimeKernel(repositoryRoot, Object.freeze({}))).rejects.toThrow(
+    await Promise.resolve(expect(runtime.createRuntimeKernel(repositoryRoot, Object.freeze({}))).rejects.toThrow(
       /opaque host capability/,
-    );
+    ));
   });
 
   test('persists and reopens the configured LibSQL memory store', async () => {

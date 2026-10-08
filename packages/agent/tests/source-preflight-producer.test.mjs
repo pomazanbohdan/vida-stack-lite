@@ -280,7 +280,7 @@ test('configured Source producer passes the pending Edictum gate without reservi
 
 test('configured Cedar denial stops the Source producer before any Host attempt marker', async () => {
   const value = fixture('researcher');
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     produceSourceWritePreflightApproval({
       repositoryRoot: value.repositoryRoot,
       context: value.context,
@@ -289,14 +289,14 @@ test('configured Cedar denial stops the Source producer before any Host attempt 
       hostApproval: value.hostApproval,
     }),
     /configured Cedar policy denied Source write/,
-  );
+  ));
   assert.equal(value.currentChecks(), 1);
   assert.deepEqual(value.context.hostSnapshot.work.execution.assignment_attempts, []);
 });
 
 test('missing Host-local permission blocks even when configured Cedar and Edictum policy pass', async () => {
   const value = fixture();
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     produceSourceWritePreflightApproval({
       repositoryRoot: value.repositoryRoot,
       context: value.context,
@@ -305,7 +305,7 @@ test('missing Host-local permission blocks even when configured Cedar and Edictu
       hostApproval: null,
     }),
     /Host-local permission receipt is missing/,
-  );
+  ));
   assert.equal(value.currentChecks(), 2);
   assert.deepEqual(value.context.hostSnapshot.work.execution.assignment_attempts, []);
 });
@@ -313,7 +313,7 @@ test('missing Host-local permission blocks even when configured Cedar and Edictu
 test('a stale Host configuration digest stops the Source producer before Host attempt reservation', async () => {
   const value = fixture();
   value.request.config_digest = '0'.repeat(64);
-  await assert.rejects(
+  await Promise.resolve(assert.rejects(
     produceSourceWritePreflightApproval({
       repositoryRoot: value.repositoryRoot,
       context: value.context,
@@ -322,7 +322,7 @@ test('a stale Host configuration digest stops the Source producer before Host at
       hostApproval: value.hostApproval,
     }),
     /configuration differs from the current Host request/,
-  );
+  ));
   assert.equal(value.currentChecks(), 1);
   assert.deepEqual(value.context.hostSnapshot.work.execution.assignment_attempts, []);
 });

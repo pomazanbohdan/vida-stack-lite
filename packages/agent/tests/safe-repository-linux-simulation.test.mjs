@@ -30,7 +30,7 @@ if (!isolated && !underStryker) {
       console.error(`${child.stdout}\n${child.stderr}`);
     expect(child.error).toBeUndefined();
     expect(child.status).toBe(0);
-    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+17 passed/);
+    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+18 passed/);
   }, 180_000);
 } else {
   const realFs = await vi.importActual('node:fs');
@@ -68,6 +68,9 @@ if (!isolated && !underStryker) {
   let cooperatingReaderAttempted = false;
   let cooperatingReaderError;
   let renameReplaceFailureMode;
+  let recoveryProbeFailureAt = 0;
+  let recoveryProbeCalls = 0;
+  let recoveryProbeArmed = false;
   let publicationPauseBeforeAtomicRenameMs = 0;
   let publicationPauseAfterAtomicRenameMs = 0;
   let publicationPauseBeforeCopyMs = 0;
@@ -239,6 +242,8 @@ if (!isolated && !underStryker) {
       return realFs.mkdirSync(translatedPath(value), options);
     },
     readdirSync(value, options) {
+      if (recoveryProbeArmed && ++recoveryProbeCalls === recoveryProbeFailureAt)
+        throw Object.assign(new Error('simulated recovery listing failure'), {code: 'EIO'});
       return realFs.readdirSync(translatedPath(value), options);
     },
     renameSync(from, to) {
@@ -344,6 +349,7 @@ if (!isolated && !underStryker) {
     renameReplaceFailureMode = undefined;
     if (failureMode === 'remove-target') {
       realFs.unlinkSync(target);
+      recoveryProbeArmed = recoveryProbeFailureAt > 0;
       if (failRecoveryCloneAfterRenameFailure) {
         failRecoveryCloneAfterRenameFailure = false;
         cloneFailuresRemaining = 1;
@@ -433,6 +439,9 @@ if (!isolated && !underStryker) {
     cooperatingReaderAttempted = false;
     cooperatingReaderError = undefined;
     renameReplaceFailureMode = undefined;
+    recoveryProbeFailureAt = 0;
+    recoveryProbeCalls = 0;
+    recoveryProbeArmed = false;
     publicationPauseBeforeAtomicRenameMs = 0;
     publicationPauseAfterAtomicRenameMs = 0;
     publicationPauseBeforeCopyMs = 0;
@@ -590,6 +599,29 @@ if (!isolated && !underStryker) {
       expect(traversalRecoveryError).toBeInstanceOf(Error);
       expect(traversalRecoveryError.message).toMatch(/lock/);
       expect(access.readText('data/recovery.txt', 'recovered original')).toBe('before');
+    });
+
+    test('retains original replacement and recovery-probe failures together', () => {
+      for (const failureAt of [1, 3]) {
+        const repositoryRoot = temporaryRoot();
+        const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+        access.ensureDirectory('data', 'data directory');
+        access.writeExclusive('data/probe.txt', 'before', 'probe source');
+        renameReplaceFailureMode = 'remove-target';
+        recoveryProbeFailureAt = failureAt;
+        recoveryProbeCalls = 0;
+        recoveryProbeArmed = false;
+        let caught;
+        try { access.replaceAtomic('data/probe.txt', hash('before'), 'after', 'probe replacement'); }
+        catch (error) { caught = error; }
+        expect(caught).toBeInstanceOf(AggregateError);
+        expect(caught.errors[0].message).toBe('simulated native replacement failure');
+        expect(caught.errors[1].message).toBe('simulated recovery listing failure');
+        expect(caught.cause).toBe(caught.errors[0]);
+        expect(realFs.readdirSync(path.join(repositoryRoot, 'data')).some(name => name.endsWith('.cas.lock'))).toBe(true);
+        recoveryProbeFailureAt = 0;
+        recoveryProbeArmed = false;
+      }
     });
 
     test('real Linux FIFO and repeated traversal faults stay prompt and leak-free', () => {

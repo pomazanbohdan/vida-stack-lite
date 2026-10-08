@@ -219,10 +219,10 @@ test('a confirmed pending build keeps its operation and version on default and e
       await prepareRelease(root, { mode: 'exact', version: pending.version, explicit: true }),
       pending,
     );
-    await assert.rejects(
+    await Promise.resolve(assert.rejects(
       prepareRelease(root, { mode: 'exact', version: '0.1.4', explicit: true }),
       /Pending build retains its version/,
-    );
+    ));
     for (const [relative, bytes] of unchangedFiles)
       assert.deepEqual(readFileSync(path.join(root, relative)), bytes, `${relative} remains unchanged`);
   } finally {

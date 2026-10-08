@@ -76,7 +76,8 @@ async function safeStringProperty(error: unknown, property: 'message' | 'code'):
   const objectLike = isObjectLike(error);
   const read = (): string => {
     const descriptor = Object.getOwnPropertyDescriptor(error as object, property);
-    const descriptorObject = defined([descriptor, Object.create(null)]);
+    const emptyDescriptor = Object.create(null) as object;
+    const descriptorObject = defined<object>([descriptor, emptyDescriptor]);
     const valid = [
       Object.hasOwn(descriptorObject, 'value'),
       typeof (descriptorObject as { value?: unknown }).value === 'string',

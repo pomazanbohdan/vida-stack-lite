@@ -1,5 +1,6 @@
 import { Database } from 'bun:sqlite';
 import Ajv2020 from 'ajv/dist/2020.js';
+import type { ValidateFunction } from 'ajv';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
@@ -80,9 +81,9 @@ interface Issuance {
 }
 
 const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: boolean }) => {
-  compile(schema: object): (value: unknown) => boolean;
+  compile<T>(schema: object): ValidateFunction<T>;
 };
-const validSessionState = new Ajv2020Constructor({ strict: true, allErrors: true }).compile(stateSchema);
+const validSessionState = new Ajv2020Constructor({ strict: true, allErrors: true }).compile<PersistentSessionHandoffState>(stateSchema);
 const sameJson = (left: unknown, right: unknown): boolean => canonicalJson(left) === canonicalJson(right);
 
 function requestRoleMatchesConfiguredAssignment(config: AgentRuntimeConfig, request: SessionBridgeRequest): boolean {
@@ -228,6 +229,7 @@ function sourceWritePreflightResolver(
       taskPacket,
       scopeBytes,
       acceptanceBytes,
+      continuation: store.readConfiguredFrontierRecoveryView(request.identity, journal.state.attempt),
       preparations,
       localAuthorizationSha256: localAuthorization.sha256,
       projectId,
@@ -273,6 +275,7 @@ function sourceWritePreflightResolver(
         runtimeConfigDigest(current.config) !== runtimeConfigDigest(initial.config) ||
         canonicalJsonDigest(current.projectContext) !== canonicalJsonDigest(initial.projectContext) ||
         canonicalJsonDigest(current.taskPacket) !== canonicalJsonDigest(initial.taskPacket) ||
+        canonicalJsonDigest(current.continuation) !== canonicalJsonDigest(initial.continuation) ||
         !current.scopeBytes.equals(initial.scopeBytes) ||
         !current.acceptanceBytes.equals(initial.acceptanceBytes) ||
         canonicalJsonDigest(
@@ -294,6 +297,7 @@ function sourceWritePreflightResolver(
       taskPacket: initial.taskPacket,
       scopeBytes: initial.scopeBytes,
       acceptanceBytes: initial.acceptanceBytes,
+      continuation: initial.continuation,
       preparations: initial.preparations,
       workflowHostCapability,
       assertCurrent,
@@ -371,6 +375,7 @@ function taskSourceMutationPolicyResolver(
       'task-source policy current Source authorization or assignment is invalid');
     return {
       hostSnapshot, journal, config, projectContext, workItem, taskPacket, scopeBytes, acceptanceBytes, preparations,
+      continuation: store.readConfiguredFrontierRecoveryView(expectedIdentity, journal.state.attempt),
       sourceAuthorizationReference, sourceAuthorization: sourceAuthorization.authorization,
       sourceAuthorizationSha256: sourceAuthorization.sha256,
       assignmentRole: assignment.role, projectId,
@@ -419,6 +424,7 @@ function taskSourceMutationPolicyResolver(
         runtimeConfigDigest(current.config) === runtimeConfigDigest(initial.config) &&
         canonicalJsonDigest(current.projectContext) === canonicalJsonDigest(initial.projectContext) &&
         canonicalJsonDigest(current.taskPacket) === canonicalJsonDigest(initial.taskPacket) &&
+        canonicalJsonDigest(current.continuation) === canonicalJsonDigest(initial.continuation) &&
         current.scopeBytes.equals(initial.scopeBytes) && current.acceptanceBytes.equals(initial.acceptanceBytes) &&
         canonicalJsonDigest(current.preparations.map(({ reference, bytes }) => ({
           reference, digest: createHash('sha256').update(bytes).digest('hex'),
@@ -436,6 +442,7 @@ function taskSourceMutationPolicyResolver(
       sourceAuthorization: initial.sourceAuthorization, hostSnapshot: initial.hostSnapshot,
       journal: initial.journal, config: initial.config, projectContext: initial.projectContext, trustedIdentity,
       taskPacket: initial.taskPacket, scopeBytes: initial.scopeBytes, acceptanceBytes: initial.acceptanceBytes,
+      continuation: initial.continuation,
       preparations: initial.preparations, workflowHostCapability, assertCurrent,
     };
     const { evaluateTaskSourceMutationPolicy } = await import('./source-preflight-operations.js');
@@ -516,7 +523,7 @@ export class PersistentSessionHandoffStore {
       )
       .get(this.#workspaceId, workId, attempt) as { revision: number; payload: string; digest: string } | null;
     if (!row) return null;
-    const state = JSON.parse(row.payload) as PersistentSessionHandoffState;
+    const state: unknown = JSON.parse(row.payload);
     requireState(validSessionState(state), 'session state current-v1 schema is invalid');
     requireState(
       state.schema === 'PersistentSessionHandoffState/v1' &&
@@ -527,8 +534,7 @@ export class PersistentSessionHandoffStore {
     );
     requireState(
       JSON.stringify(Object.keys(state).sort()) ===
-        JSON.stringify(['schema', 'workspace_id', 'work_id', 'attempt', 'handoff', 'issuances'].sort()) &&
-        Array.isArray(state.issuances),
+        JSON.stringify(['schema', 'workspace_id', 'work_id', 'attempt', 'handoff', 'issuances'].sort()),
       'session state fields are invalid',
     );
     requireState(
@@ -1132,8 +1138,8 @@ export class MastraSessionLedger {
         state.work_id === workId &&
         state.attempt === attempt &&
         typeof state.run_id === 'string' &&
-        Array.isArray(state.items) &&
-        Array.isArray(state.completed) &&
+        Boolean(Array.isArray(state.items)) &&
+        Boolean(Array.isArray(state.completed)) &&
         (state.step_id === null || typeof state.step_id === 'string') &&
         Number.isSafeInteger(row.revision) &&
         row.revision > 0 &&

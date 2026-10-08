@@ -26,7 +26,7 @@ import { readAppliedRuntimeConfigRebind } from '../bin/runtime-config-rebind.mjs
 import { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
 import { loadRuntimeConfig, parseRuntimeConfigYaml, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
-import { canonicalJson, canonicalJsonDigest, MAX_CANONICAL_BYTES } from '../src/contracts/public-ingress.ts';
+import { canonicalJson, canonicalJsonDigest, MAX_CANONICAL_BYTES, isPlainRecord } from '../src/contracts/public-ingress.ts';
 import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.mjs';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
@@ -46,22 +46,39 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
 const source = process.env.VIDA_CONFIG_REBIND_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '..');
+/** @template T @typedef {{-readonly [K in keyof T]: T[K] extends object ? MutableFixture<T[K]> : T[K]}} MutableFixture */
+/** @typedef {MutableFixture<import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerState>} FixtureJournal */
 const fixtureContextPath = 'docs/project-context.md';
+/** @type {string[]} */
 const fixtureRoots = [];
+/** @type {Map<string | undefined, number>} */
 const pendingFixtureCalls = new Map();
 const sourceCorrectionNativeRuntime = { value: null, mocked: false, previousPath: undefined };
 const sourceCorrectionPriorVersion = '0.1.2';
+/** @param {string} version */
 const sourceCorrectionNextVersion = (version) => {
   const [major, minor, patch] = version.split('.').map(Number);
   return `${major}.${minor}.${patch + 1}`;
 };
+/**
+ * @typedef {NonNullable<Parameters<typeof reconcileEntrypoint>[1]>} ReconcileOptions
+ */
+/**
+ * @template TResult
+ * @param {(args: string[], options?: ReconcileOptions) => TResult | Promise<TResult>} entrypoint
+ * @param {string[]} args
+ * @param {ReconcileOptions} [options]
+ * @returns {Promise<Awaited<TResult>>}
+ */
 async function fixtureCall(entrypoint, args, options) {
   const root = args[args.indexOf('--project-root') + 1];
   pendingFixtureCalls.set(root, (pendingFixtureCalls.get(root) ?? 0) + 1);
   try {
     return await entrypoint(args, options);
   } finally {
-    const remaining = pendingFixtureCalls.get(root) - 1;
+    const active = pendingFixtureCalls.get(root);
+    if (active === undefined) throw Error('Fixture call tracking was lost; custody must be retained');
+    const remaining = active - 1;
     if (remaining) pendingFixtureCalls.set(root, remaining);
     else pendingFixtureCalls.delete(root);
   }
@@ -79,10 +96,16 @@ afterEach(() => {
     else rmSync(root, { recursive: true, force: true });
   }
 });
+/** @param {Parameters<ReturnType<typeof createHash>['update']>[0]} bytes @returns {string} */
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const json = (v) => JSON.stringify(v, null, 2) + '\n';
+/** @param {unknown} value @returns {number} */
 function jsonNodeCount(value) {
-  if (Array.isArray(value)) return 1 + value.reduce((total, item) => total + jsonNodeCount(item), 0);
+  if (Array.isArray(value)) {
+    /** @type {readonly unknown[]} */
+    const items = value;
+    return 1 + items.reduce((total, item) => total + jsonNodeCount(item), 0);
+  }
   if (value && typeof value === 'object')
     return 1 + Object.values(value).reduce((total, item) => total + jsonNodeCount(item), 0);
   return 1;
@@ -188,7 +211,7 @@ test.each(['PASS', 'FAIL'])(
     expect((await call('complete', { ...resumed, observation: observed })).operation).toEqual(settled.operation);
     const changed = structuredClone(observed);
     changed.observation.result = { findings: ['Different retained body'] };
-    await expect(call('complete', { ...resumed, observation: changed })).rejects.toThrow(/result conflict/);
+    await Promise.resolve(expect(call('complete', { ...resumed, observation: changed })).rejects.toThrow(/result conflict/));
     const after = databaseState(f);
     expect(after.agent_host_state).toEqual(before.agent_host_state);
     expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
@@ -200,23 +223,23 @@ test('internal recovery UNKNOWN survives reopen and cannot reissue or reconstruc
   const { f, input, call, observation } = recoveryFixture();
   const prepared = await call('prepare'),
     resumed = { ...input, request: prepared.request };
-  await expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow(
+  await Promise.resolve(expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow(
     /reissue forbidden/,
-  );
+  ));
   await call('begin', resumed);
   const before = databaseState(f);
   expect((await call('inspect', resumed)).status).toBe('commit_unknown');
-  await expect(call('begin', resumed)).rejects.toThrow(/reissue forbidden/);
-  await expect(call('prepare')).rejects.toThrow(/reservation exists/);
-  await expect(call('inspect', input)).rejects.toThrow(/shape/);
+  await Promise.resolve(expect(call('begin', resumed)).rejects.toThrow(/reissue forbidden/));
+  await Promise.resolve(expect(call('prepare')).rejects.toThrow(/reservation exists/));
+  await Promise.resolve(expect(call('inspect', input)).rejects.toThrow(/shape/));
   const foreign = { ...resumed, callerSession: 'fixture-foreign' };
-  await expect(call('inspect', foreign)).rejects.toThrow(/request changed/);
-  await expect(call('complete', { ...resumed, observation: { status: 'PASS' } })).rejects.toThrow(
+  await Promise.resolve(expect(call('inspect', foreign)).rejects.toThrow(/request changed/));
+  await Promise.resolve(expect(call('complete', { ...resumed, observation: { status: 'PASS' } })).rejects.toThrow(
     /observation differs/,
-  );
+  ));
   const altered = observation(prepared.operation);
   altered.controller_id = 'foreign';
-  await expect(call('complete', { ...resumed, observation: altered })).rejects.toThrow(/observation differs/);
+  await Promise.resolve(expect(call('complete', { ...resumed, observation: altered })).rejects.toThrow(/observation differs/));
   expect(databaseState(f)).toEqual(before);
 }, 60000);
 
@@ -227,7 +250,7 @@ test('internal recovery stale Source denies settlement while retaining UNKNOWN',
   await call('begin', resumed);
   const before = databaseState(f);
   f.put('.githooks/pre-commit', 'Concurrent scoped edit');
-  await expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow();
+  await Promise.resolve(expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow());
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -241,7 +264,7 @@ test('internal recovery controller drift outside original Work scope denies begi
     readFileSync(path.join(f.root, 'packages/agent/src/runtime-kernel.ts'), 'utf8') +
       '\n// Injected controller drift\n',
   );
-  await expect(call('begin', resumed)).rejects.toThrow(/request changed/);
+  await Promise.resolve(expect(call('begin', resumed)).rejects.toThrow(/request changed/));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -262,16 +285,18 @@ test('internal recovery reviews current declared Source while preserving histori
 test('internal recovery denies mixed execution flags and missing original context without effects', async () => {
   const { f, input, call } = recoveryFixture(),
     before = databaseState(f);
-  await expect(call('prepare', input, ['--issue-wave', 'true'])).rejects.toThrow(/exact mode/);
-  await expect(call('prepare', { ...input, baselinePath: 'missing.yaml' })).rejects.toThrow();
-  await expect(call('prepare', { ...input, userInstructionRef: '' })).rejects.toThrow(/binding missing/);
+  await Promise.resolve(expect(call('prepare', input, ['--issue-wave', 'true'])).rejects.toThrow(/exact mode/));
+  await Promise.resolve(expect(call('prepare', { ...input, baselinePath: 'missing.yaml' })).rejects.toThrow());
+  await Promise.resolve(expect(call('prepare', { ...input, userInstructionRef: '' })).rejects.toThrow(/binding missing/));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
+/** @param {{sourceMode?: boolean, extraProject?: boolean}} [options] */
 function fixture({ sourceMode = false, extraProject = false } = {}) {
   const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? tmpdir();
   const root = mkdtempSync(path.join(fixtureRoot, 'fixture-'));
   fixtureRoots.push(root);
+  /** @param {string} relative @param {Parameters<typeof writeFileSync>[1]} bytes */
   const put = (relative, bytes) => {
     const file = path.join(root, relative);
     mkdirSync(path.dirname(file), { recursive: true });
@@ -280,6 +305,7 @@ function fixture({ sourceMode = false, extraProject = false } = {}) {
   mkdirSync(path.join(root, '.git'));
   const bundle = sourceMode ? 'packages/agent' : 'vida-agent';
   const projectId = sourceMode ? 'agent' : 'fixture-project';
+  /** @param {string} name @returns {string} */
   const template = (name) =>
     readFileSync(path.join(source, 'templates', name), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'fixture-repository')
@@ -397,6 +423,7 @@ function fixture({ sourceMode = false, extraProject = false } = {}) {
     'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT NOT NULL, work_id TEXT NOT NULL, attempt INTEGER NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,work_id,attempt))',
   );
   db.close();
+  /** @param {string} mode @returns {string[]} */
   const args = (mode) => [
     '--kind',
     'runtime-config',
@@ -777,7 +804,7 @@ test('public source repair freezes original beforeimages, prior update and held-
   const sourceManifest = JSON.parse(readFileSync(path.join(f.root, sourceManifestPath), 'utf8'));
   f.put(sourceManifestPath, json({ ...sourceManifest, version: '0.0.0' }));
   const beforeStaleVersionInspect = databaseState(f);
-  await expect(runReconcileArtifacts(repairArgs('repair-inspect'))).rejects.toThrow(/at or after the prior installed version/);
+  await Promise.resolve(expect(runReconcileArtifacts(repairArgs('repair-inspect'))).rejects.toThrow(/at or after the prior installed version/));
   expect(databaseState(f)).toEqual(beforeStaleVersionInspect);
   f.put(sourceManifestPath, json(sourceManifest));
 
@@ -810,18 +837,18 @@ test('public source repair freezes original beforeimages, prior update and held-
   expect((await runReconcileArtifacts([
     ...repairArgs('repair-plan'), '--publish-operation', publishedOperation,
   ])).request_id).toBe(planned.request_id);
-  await expect(runReconcileArtifacts([
+  await Promise.resolve(expect(runReconcileArtifacts([
     ...repairArgs('repair-plan'), '--publish-operation', 'local-different-publication',
-  ])).rejects.toThrow(/repair inputs differ/);
-  await expect(runReconcileArtifacts([
+  ])).rejects.toThrow(/repair inputs differ/));
+  await Promise.resolve(expect(runReconcileArtifacts([
     ...repairArgs('repair-inspect'), '--publish-operation', '../invalid-operation',
-  ])).rejects.toThrow(/published operation identity is invalid/);
+  ])).rejects.toThrow(/published operation identity is invalid/));
   expect(readFileSync(path.join(f.root, planned.sidecar_path))).toEqual(frozenSidecarBytes);
   expect(sidecar.request.new_source.digest).not.toBe(sidecar.request.old_source.digest);
   expect(databaseState(f)).toEqual(beforeRepair);
 
   expect((await runReconcileArtifacts(repairArgs('repair-resume'))).status).toBe('repair_apply_required');
-  await expect(runReconcileArtifacts(deliveryArgs('resume'))).rejects.toThrow('source correction is not applied');
+  await Promise.resolve(expect(runReconcileArtifacts(deliveryArgs('resume'))).rejects.toThrow('source correction is not applied'));
   expect(databaseState(f)).toEqual(beforeRepair);
 }, 30000);
 
@@ -853,9 +880,9 @@ test('source correction withdrawal archives the exact request, accepts Source dr
       '--expected-request',
       expectedRequest,
     ];
-  await expect(runReconcileArtifacts(withdrawArgs(randomUUID()))).rejects.toThrow(
+  await Promise.resolve(expect(runReconcileArtifacts(withdrawArgs(randomUUID()))).rejects.toThrow(
     'source correction request does not bind the original fenced delivery operation',
-  );
+  ));
   expect(readFileSync(sidecarPath)).toEqual(sidecarBytes);
   expect(databaseState(f)).toEqual(baseline.host);
   expect(existsSync(historyPath)).toBe(false);
@@ -918,7 +945,7 @@ test('source correction streams inert native assets above the generic read cap a
       const candidate = structuredClone(report);
       candidate.installation_receipt.source_path = pathValue;
       f.put('.tmp/source-correction-report.json', json(candidate));
-      await expect(runReconcileArtifacts(applyArgs)).rejects.toThrow();
+      await Promise.resolve(expect(runReconcileArtifacts(applyArgs)).rejects.toThrow());
       expect(databaseState(f)).toEqual(before);
       expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('requested');
     };
@@ -950,11 +977,11 @@ test('source repair captures a closed config transition and reads it after later
     reusedOperationIdReport = structuredClone(report);
   reusedOperationIdReport.publish_operation_id = sidecar.request.operation_id;
   f.put('.tmp/source-correction-report.json', json(reusedOperationIdReport));
-  await expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result');
+  await Promise.resolve(expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result'));
   expect(databaseState(f)).toEqual(beforeApply);
   expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('requested');
   f.put('.tmp/source-correction-report.json', json(staleVersionReport));
-  await expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result');
+  await Promise.resolve(expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result'));
   expect(databaseState(f)).toEqual(beforeApply);
   expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('requested');
   for (const field of ['run_id', 'artifact_id']) {
@@ -962,13 +989,13 @@ test('source repair captures a closed config transition and reads it after later
     staleCIReport.ci_delivery[field] = sidecar.request.prior_system_update[field];
     if (field === 'run_id') staleCIReport.ci_delivery.result.run_id = staleCIReport.ci_delivery.run_id;
     f.put('.tmp/source-correction-report.json', json(staleCIReport));
-    await expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result');
+    await Promise.resolve(expect(run(applyArgs)).rejects.toThrow('source correction report does not bind the current package-native build and CI result'));
     expect(databaseState(f)).toEqual(beforeApply);
   }
   f.put('.tmp/source-correction-report.json', json(report));
-  await expect(
+  await Promise.resolve(expect(
     run(applyArgs, { onPhase: (phase) => { if (phase === 'applied') throw new Error('lost repair apply acknowledgement'); } }),
-  ).rejects.toThrow('lost repair apply acknowledgement');
+  ).rejects.toThrow('lost repair apply acknowledgement'));
   expect(databaseState(f)).toEqual(beforeApply);
   expect(JSON.parse(readFileSync(sidecarPath, 'utf8')).status).toBe('applied');
   expect((await run(applyArgs)).status).toBe('applied');
@@ -990,11 +1017,11 @@ test('source repair captures a closed config transition and reads it after later
     bundle_digest: plan.bundle_digest,
   });
 
-  await expect(
+  await Promise.resolve(expect(
     run(deliveryArgs('resume'), {
       onPhase: (phase) => { if (phase === 'transition_captured') throw new Error('lost transition acknowledgement'); },
     }),
-  ).rejects.toThrow('lost transition acknowledgement');
+  ).rejects.toThrow('lost transition acknowledgement'));
   const completedOperation = JSON.parse(
       readFileSync(path.join(f.root, '.agent/work/fixture-rebind/runtime-config-delivery-operation.v1.json'), 'utf8'),
     ),
@@ -1014,13 +1041,13 @@ test('source repair captures a closed config transition and reads it after later
       f.root,
       `.agent/work/fixture-rebind/source-correction-request-history/${completedSidecar.request.request_id}.json`,
     );
-  await expect(
+  await Promise.resolve(expect(
     run([
       ...repairArgs('repair-withdraw'),
       '--expected-request',
       completedSidecar.request.request_id,
     ]),
-  ).rejects.toThrow('only an unapplied source correction request can be withdrawn');
+  ).rejects.toThrow('only an unapplied source correction request can be withdrawn'));
   expect(readFileSync(sidecarPath)).toEqual(appliedSidecarBytes);
   expect(existsSync(appliedHistoryPath)).toBe(false);
   expect(databaseState(f)).toEqual(beforeAppliedWithdrawal);
@@ -1054,16 +1081,16 @@ test('source repair captures a closed config transition and reads it after later
     ...JSON.parse(completedReceiptBytes.toString('utf8')),
     config_digest: sha(Buffer.from('foreign postimage')),
   }));
-  await expect(run(repairArgs('repair-transition'))).rejects.toThrow('closed source delivery configuration');
+  await Promise.resolve(expect(run(repairArgs('repair-transition'))).rejects.toThrow('closed source delivery configuration'));
   f.put('.agent/runtime-initialization.v1.json', completedReceiptBytes);
   f.put(changedPath, readFileSync(path.join(f.root, changedPath), 'utf8') + '\n// post-delivery Source drift\n');
-  await expect(run(repairArgs('repair-transition'))).rejects.toThrow('closed source delivery current Source differs');
+  await Promise.resolve(expect(run(repairArgs('repair-transition'))).rejects.toThrow('closed source delivery current Source differs'));
 }, 60000);
 
 test('delivered configuration adopts only its receipt under the original fence and preserves history', async () => {
   const f = deliveryFixture(),
     before = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('unchanged baseline YAML and receipt');
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('unchanged baseline YAML and receipt'));
   expect((await runReconcileArtifacts(f.deliveryArgs('inspect'))).status).toBe('inspect_ready_unauthorized');
   expect(databaseState(f)).toEqual(before);
   const planned = await runReconcileArtifacts(f.deliveryArgs('plan'));
@@ -1087,14 +1114,14 @@ test('delivered configuration adopts only its receipt under the original fence a
   expect(after.agent_host_state).toEqual(before.agent_host_state);
   expect(after.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
   expect((await runReconcileArtifacts(f.deliveryArgs('resume'))).status).toBe('applied');
-  await expect(runReconcileArtifacts(f.deliveryArgs('restore'))).rejects.toThrow('rollback is forbidden');
+  await Promise.resolve(expect(runReconcileArtifacts(f.deliveryArgs('restore'))).rejects.toThrow('rollback is forbidden'));
 }, 30000);
 
 test('delivered configuration denies substituted baseline, target drift and cross-kind operation conversion', async () => {
   const f = deliveryFixture(),
     before = databaseState(f);
   f.put('accepted-baseline.yaml', f.target);
-  await expect(runReconcileArtifacts(f.deliveryArgs('inspect'))).rejects.toThrow('unchanged baseline YAML and receipt');
+  await Promise.resolve(expect(runReconcileArtifacts(f.deliveryArgs('inspect'))).rejects.toThrow('unchanged baseline YAML and receipt'));
   expect(databaseState(f)).toEqual(before);
   f.put('accepted-baseline.yaml', f.oldYaml);
   const planned = await runReconcileArtifacts(f.deliveryArgs('plan'));
@@ -1102,10 +1129,10 @@ test('delivered configuration denies substituted baseline, target drift and cros
     '.agent/work/fixture-rebind/runtime-config-rebind-operation.v1.json',
     readFileSync(path.join(f.root, planned.operation_path)),
   );
-  await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow('frozen operation invalid or foreign');
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow('frozen operation invalid or foreign'));
   expect(databaseState(f)).toEqual(before);
   f.put('agent-runtime.config.v1.yaml', f.oldYaml);
-  await expect(runReconcileArtifacts(f.deliveryArgs('apply'))).rejects.toThrow('authored YAML bytes differ');
+  await Promise.resolve(expect(runReconcileArtifacts(f.deliveryArgs('apply'))).rejects.toThrow('authored YAML bytes differ'));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -1133,15 +1160,15 @@ test.each(['fence_acquired', 'fenced', 'receipt_rebound', 'applied', 'released']
       },
     };
     if (['fence_acquired', 'fenced'].includes(cutoff)) {
-      await expect(runReconcileArtifacts(f.deliveryArgs('apply'), options)).rejects.toThrow(
+      await Promise.resolve(expect(runReconcileArtifacts(f.deliveryArgs('apply'), options)).rejects.toThrow(
         'injected delivery interruption',
-      );
+      ));
       await runReconcileArtifacts(f.deliveryArgs('resume'));
     } else {
       await runReconcileArtifacts(f.deliveryArgs('apply'));
-      await expect(runReconcileArtifacts(f.deliveryArgs('resume'), options)).rejects.toThrow(
+      await Promise.resolve(expect(runReconcileArtifacts(f.deliveryArgs('resume'), options)).rejects.toThrow(
         'injected delivery interruption',
-      );
+      ));
     }
     expect((await runReconcileArtifacts(f.deliveryArgs('resume'))).status).toBe('applied');
     expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(f.target);
@@ -1166,18 +1193,19 @@ test('delivered configuration rejects retagging a fenced standard operation with
   const before = databaseState(f),
     args = f.args('resume');
   args[1] = 'runtime-config-delivery';
-  await expect(runReconcileArtifacts(args)).rejects.toThrow('frozen operation invalid or foreign');
+  await Promise.resolve(expect(runReconcileArtifacts(args)).rejects.toThrow('frozen operation invalid or foreign'));
   expect(databaseState(f)).toEqual(before);
   const retagged = { ...operation, schema: 'SourceDeliveryConfigRebindOperation/v1' };
   retagged.plan_digest = canonicalJsonDigest({ schema: retagged.schema, plan: retagged.plan });
   f.put('.agent/work/fixture-rebind/runtime-config-delivery-operation.v1.json', json(retagged));
-  await expect(runReconcileArtifacts(args)).rejects.toThrow('foreign or absent maintenance fence');
+  await Promise.resolve(expect(runReconcileArtifacts(args)).rejects.toThrow('foreign or absent maintenance fence'));
   expect(databaseState(f)).toEqual(before);
   expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'), 'utf8'))).toEqual(
     f.receipt,
   );
 }, 30000);
 
+/** @template T @param {ReturnType<typeof fixture>} f @param {(db: Database) => T} callback @returns {T} */
 function withDatabase(f, callback, readonly = false) {
   const db = new Database(
     path.join(f.root, '.agent/work/session-handoff.v1.sqlite'),
@@ -1190,6 +1218,7 @@ function withDatabase(f, callback, readonly = false) {
   }
 }
 
+/** @param {ReturnType<typeof fixture>} f */
 function databaseState(f) {
   return withDatabase(
     f,
@@ -1204,10 +1233,15 @@ function databaseState(f) {
   );
 }
 
+/** @param {ReturnType<typeof fixture>} f */
 function fence(f) {
   return withDatabase(f, (db) => new HostStateStore(db, f.workspace).readMaintenanceFence());
 }
 
+/**
+ * @param {ReturnType<typeof fixture>} f
+ * @param {{lease?: boolean, effect?: string | null, ticketStatus?: string | null, activeClaim?: boolean, issued?: boolean, native?: boolean}} [options]
+ */
 function seedState(
   f,
   { lease = false, effect = null, ticketStatus = null, activeClaim = false, issued = false, native = false } = {},
@@ -1445,6 +1479,7 @@ function seedState(
   return { work, identity };
 }
 
+/** @param {ReturnType<typeof fixture>} f @param {number} count */
 function seedManyReadonlyWorks(f, count) {
   const { work: base } = seedState(f);
   return withDatabase(f, (db) => {
@@ -1528,9 +1563,9 @@ test('compact config binding handles over ten thousand readonly row nodes and re
   const driftDigest = withDatabase(f, (db) => currentState(db, f.workspace, f.root, config));
   expect(driftDigest).not.toBe(originalDigest);
   const driftedState = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(
     /current selector\/schema\/global state differs from plan/,
-  );
+  ));
   expect(databaseState(f)).toEqual(driftedState);
   expect(fence(f)).toBeNull();
 });
@@ -1553,9 +1588,9 @@ test('compact config binding includes row metadata and retains per-row digest de
   );
   expect(metadataDriftDigest).not.toBe(metadataDigest);
   const metadataDrift = databaseState(metadataFixture);
-  await expect(runReconcileArtifacts(metadataFixture.args('apply'))).rejects.toThrow(
+  await Promise.resolve(expect(runReconcileArtifacts(metadataFixture.args('apply'))).rejects.toThrow(
     /current selector\/schema\/global state differs from plan/,
-  );
+  ));
   expect(databaseState(metadataFixture)).toEqual(metadataDrift);
   expect(fence(metadataFixture)).toBeNull();
 
@@ -1569,9 +1604,9 @@ test('compact config binding includes row metadata and retains per-row digest de
     );
   });
   const digestDrift = databaseState(digestFixture);
-  await expect(runReconcileArtifacts(digestFixture.args('apply'))).rejects.toThrow(
+  await Promise.resolve(expect(runReconcileArtifacts(digestFixture.args('apply'))).rejects.toThrow(
     /agent_host_state row integrity differs/,
-  );
+  ));
   expect(databaseState(digestFixture)).toEqual(digestDrift);
   expect(fence(digestFixture)).toBeNull();
 });
@@ -1749,7 +1784,7 @@ test.each(['source bytes', 'inventory addition', 'selector appearance', 'workspa
     const expectedDenial = ['source bytes', 'inventory addition'].includes(change)
       ? 'vida runtime-config rebind: Source drift requires the applied same-operation source correction under its original fence'
       : /differs|differ|rejects an active selector/;
-    await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(expectedDenial);
+    await Promise.resolve(expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(expectedDenial));
     expect(databaseState(f)).toEqual(before);
     expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(f.oldYaml);
   },
@@ -1760,7 +1795,7 @@ test('a consumer without selector cannot use Source rebind', async () => {
   const f = fixture();
   rmSync(path.join(f.root, '.agent/active-runtime-selector.v1.json'));
   const before = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/only for the Source project/);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/only for the Source project/));
   expect(databaseState(f)).toEqual(before);
 });
 
@@ -1779,7 +1814,7 @@ test('Source rejects a preexisting consumer-shaped selector without state change
   );
   const before = databaseState(f);
   for (const mode of ['inspect', 'plan'])
-    await expect(runReconcileArtifacts(f.args(mode))).rejects.toThrow(/Source configuration rejects/);
+    await Promise.resolve(expect(runReconcileArtifacts(f.args(mode))).rejects.toThrow(/Source configuration rejects/));
   expect(databaseState(f)).toEqual(before);
   expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(f.oldYaml);
   expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual(f.receipt);
@@ -1793,12 +1828,12 @@ test('Source inventory rejects linked directories before traversal and bounds en
   f.put('external/file.ts', '// outside Source');
   symlinkSync(path.join(f.root, 'external'), directory, process.platform === 'win32' ? 'junction' : 'dir');
   const before = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/symlink|reparse|boundary|link/);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/symlink|reparse|boundary|link/));
   expect(databaseState(f)).toEqual(before);
   const g = fixture({ sourceMode: true });
   for (let i = 0; i < 513; i++) g.put(g.bundle + '/src/config/entry-' + i + '.ts', '// bounded fixture');
   const otherBefore = databaseState(g);
-  await expect(runReconcileArtifacts(g.args('inspect'))).rejects.toThrow(/inventory exceeds the path bound/);
+  await Promise.resolve(expect(runReconcileArtifacts(g.args('inspect'))).rejects.toThrow(/inventory exceeds the path bound/));
   expect(databaseState(g)).toEqual(otherBefore);
 }, 30_000);
 
@@ -1814,13 +1849,13 @@ test('reasoning-only targets are accepted while invalid reasoning and unrelated 
   );
   expect(invalidReasoning).not.toBe(f.target);
   f.put('proposed.yaml', invalidReasoning);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/validation failed/);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/validation failed/));
   const invalidModel = f.target.replace(/(    executor:\r?\n      model:) [^\r\n]+/, '$1 123');
   expect(invalidModel).not.toBe(f.target);
   f.put('proposed.yaml', invalidModel);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/validation failed/);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/validation failed/));
   f.put('proposed.yaml', f.target.replace(/(architect:\r?\n      model:) [^\r\n]+/, '$1 another-model'));
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/only requested executor/);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/only requested executor/));
   expect(databaseState(f)).toEqual(before);
 });
 
@@ -1848,7 +1883,7 @@ test('prewriter template adoption preserves a multi-project registry and rejects
     const changed = structuredClone(target);
     mutate(changed);
     f.put('proposed.yaml', json(changed));
-    await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow();
+    await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow());
     expect(databaseState(f)).toEqual(before);
   }
   f.put('proposed.yaml', json(target));
@@ -1902,9 +1937,9 @@ test('a new normal config operation adopts only the approved prewriter delta aft
   const unrelatedTarget = structuredClone(prewriterTarget);
   unrelatedTarget.agents.profiles.architect.reasoning = 'high';
   f.put('proposed.yaml', json(unrelatedTarget));
-  await expect(runReconcileArtifacts(normalArgs('inspect'))).rejects.toThrow(
+  await Promise.resolve(expect(runReconcileArtifacts(normalArgs('inspect'))).rejects.toThrow(
     /approved prewriter workflow template delta/,
-  );
+  ));
   expect(databaseState(f)).toEqual(beforeRejectedTarget);
   expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'))).toEqual(authoredBaseline);
   expect(readFileSync(deliveryOperationPath)).toEqual(frozenDeliveryOperation);
@@ -1993,7 +2028,7 @@ test.each(['source bytes', 'selector appearance'])(
       change === 'source bytes'
         ? 'vida runtime-config rebind: Source drift requires the applied same-operation source correction under its original fence'
         : /differs|differ|rejects an active selector/;
-    await expect(runReconcileArtifacts(f.args('resume'))).rejects.toThrow(expectedDenial);
+    await Promise.resolve(expect(runReconcileArtifacts(f.args('resume'))).rejects.toThrow(expectedDenial));
     expect(fence(f)).toEqual(held);
     expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual(f.receipt);
   },
@@ -2023,7 +2058,7 @@ test('no-effect abandonment releases its own fence; receipt-applied rollback is 
   await runReconcileArtifacts(g.args('apply'));
   g.put('agent-runtime.config.v1.yaml', g.target);
   await runReconcileArtifacts(g.args('resume'));
-  await expect(runReconcileArtifacts(g.args('restore'))).rejects.toThrow(/rollback/);
+  await Promise.resolve(expect(runReconcileArtifacts(g.args('restore'))).rejects.toThrow(/rollback/));
 }, 30_000);
 
 test.each([
@@ -2038,7 +2073,7 @@ test.each([
   const f = fixture();
   seedState(f, setup);
   const persisted = databaseState(f);
-  for (const mode of ['inspect', 'plan']) await expect(runReconcileArtifacts(f.args(mode))).rejects.toThrow(message);
+  for (const mode of ['inspect', 'plan']) await Promise.resolve(expect(runReconcileArtifacts(f.args(mode))).rejects.toThrow(message));
   expect(databaseState(f)).toEqual(persisted);
   expect(existsSync(path.join(f.root, '.agent/work/fixture-rebind'))).toBe(false);
 });
@@ -2049,11 +2084,11 @@ test('target cannot move operational/path fields or edit YAML before held fence'
     'proposed.yaml',
     f.target.replace(/^config_revision: (\d+)$/m, (_, n) => `config_revision: ${Number(n) + 1}`),
   );
-  await expect(runReconcileArtifacts(f.args('plan'))).rejects.toThrow(/only requested/);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('plan'))).rejects.toThrow(/only requested/));
   const g = fixture();
   await runReconcileArtifacts(g.args('plan'));
   g.put('agent-runtime.config.v1.yaml', g.target);
-  await expect(runReconcileArtifacts(g.args('apply'))).rejects.toThrow(/wait for held/);
+  await Promise.resolve(expect(runReconcileArtifacts(g.args('apply'))).rejects.toThrow(/wait for held/));
 });
 
 test.each(['queued ownership', 'work', 'journal', 'governance'])(
@@ -2077,9 +2112,9 @@ test.each(['queued ownership', 'work', 'journal', 'governance'])(
       return original.apply(this, args);
     };
     try {
-      await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(
+      await Promise.resolve(expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(
         /ownership|global state differs|governance effect pending\/unknown/,
-      );
+      ));
       expect(fence(f)).toBeNull();
       expect(databaseState(f)).toEqual(injected);
       expect(JSON.parse(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')))).toEqual(f.receipt);
@@ -2127,7 +2162,7 @@ test('a foreign maintenance fence acquired after preflight is preserved without 
     return original.apply(this, args);
   };
   try {
-    await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(/maintenance\/global state differs/);
+    await Promise.resolve(expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(/maintenance\/global state differs/));
     expect(fence(f)).toEqual(foreign);
     expect(databaseState(f)).toEqual(before);
   } finally {
@@ -2144,12 +2179,12 @@ test.each(['fence_acquired', 'fenced', 'receipt_rebound', 'applied', 'released']
       if (_phase === phase) throw Error('injected interruption');
     };
     if (['fence_acquired', 'fenced'].includes(phase)) {
-      await expect(runReconcileArtifacts(f.args('apply'), { onPhase: interrupt })).rejects.toThrow(/injected/);
+      await Promise.resolve(expect(runReconcileArtifacts(f.args('apply'), { onPhase: interrupt })).rejects.toThrow(/injected/));
       expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('author_config_required');
     } else await runReconcileArtifacts(f.args('apply'));
     f.put('agent-runtime.config.v1.yaml', f.target);
     if (!['fence_acquired', 'fenced'].includes(phase))
-      await expect(runReconcileArtifacts(f.args('resume'), { onPhase: interrupt })).rejects.toThrow(/injected/);
+      await Promise.resolve(expect(runReconcileArtifacts(f.args('resume'), { onPhase: interrupt })).rejects.toThrow(/injected/));
     expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');
   },
   // The serial lifecycle wrapper must settle before fixture teardown.
@@ -2264,6 +2299,10 @@ function seedReadonlyUnknown(f, mutate = null, { writer = false, validateFixture
 }
 
 // Synthetic persisted engine observations are fixture setup, never external caller or Runtime evidence.
+/**
+ * @param {Parameters<typeof suspendHistoricalOwnerWork>[0]['predicate']} predicate
+ * @param {{configuredContext?: boolean, markerlessExcerpt?: boolean, aggregateContext?: boolean, officialDocs?: boolean}} [options]
+ */
 function historicalFixture(
   predicate,
   { configuredContext = false, markerlessExcerpt = false, aggregateContext = false, officialDocs = false } = {},
@@ -2696,12 +2735,12 @@ test('public unissued owner release preserves its inert frontier and denies comp
   f.put('release.json', json(legacy));
   const oldArgs = args('inspect');
   oldArgs[0] = '--release-historical-owner';
-  await expect(run(oldArgs)).rejects.toThrow('completed readonly');
+  await Promise.resolve(expect(run(oldArgs)).rejects.toThrow('completed readonly'));
   expect(databaseState(f)).toEqual(before);
   f.put('release.json', json(request));
   const wrongOwner = args('inspect');
   wrongOwner[7] = 'foreign-owner';
-  await expect(run(wrongOwner)).rejects.toThrow('original owner differs');
+  await Promise.resolve(expect(run(wrongOwner)).rejects.toThrow('original owner differs'));
   const inspected = await run(args('inspect'));
   expect(inspected.status).toBe('historical_owner_release_inspected');
   expect(databaseState(f)).toEqual(before);
@@ -2730,7 +2769,7 @@ test('public historical context history uses retained context after mutable docu
   );
   f.put(fixtureContextPath, 'Current changed documentation');
   const before = databaseState(f);
-  await expect(run(args('inspect'))).rejects.toThrow('original configured requests differ');
+  await Promise.resolve(expect(run(args('inspect'))).rejects.toThrow('original configured requests differ'));
   const withHistory = (mode) => [...args(mode), '--context-history', 'retained-run.json'];
   const foreign = structuredClone(configuredContexts[0]);
   foreign.work_id = 'foreign-work';
@@ -2738,7 +2777,7 @@ test('public historical context history uses retained context after mutable docu
     'retained-run.json',
     json({ schema: 'VidaAgentRunResult/v1', next_actions: [{ configured_context: foreign }] }),
   );
-  await expect(run(withHistory('inspect'))).rejects.toThrow('identity invalid');
+  await Promise.resolve(expect(run(withHistory('inspect'))).rejects.toThrow('identity invalid'));
   expect(databaseState(f)).toEqual(before);
   f.put(
     'retained-run.json',
@@ -2761,7 +2800,7 @@ test('public unissued owner release rejects an issued frontier without disposing
   f.put('release.json', json({ ...request, schema: 'UnissuedOwnerReleaseRequest/v1', predicate: 'unissued_prepared' }));
   const signal = args('inspect');
   signal[0] = '--release-unissued-owner';
-  await expect(run(signal)).rejects.toThrow('issued or reserved activity');
+  await Promise.resolve(expect(run(signal)).rejects.toThrow('issued or reserved activity'));
   expect(databaseState(f)).toEqual(before);
 });
 
@@ -2810,15 +2849,31 @@ test('historical owner release rejects maintenance drift between predicate and w
   expect(databaseState(f)).toEqual(before);
 });
 
+/**
+ * @param {ReturnType<typeof fixture>} f
+ * @param {ReturnType<typeof historicalFixture>['request']} request
+ * @param {FixtureJournal} state
+ * @param {(input: {db: Database, store: HostStateStore, capture: Parameters<HostStateStore['captureHistoricalTerminalSynthesisAndRelease']>[0], before: ReturnType<HostStateStore['readHostStateSnapshot']>, journal: FixtureJournal, candidate: FixtureJournal['items'][number], result: ReturnType<HostStateStore['captureHistoricalTerminalSynthesisAndRelease']>}) => unknown} [receiptMutation]
+ */
 function seedKnownTerminalSynthesisCustody(f, request, state, receiptMutation = undefined) {
   return withDatabase(f, (db) => {
-    const journalRow = db
+    /** @type {unknown} */
+    const selected = db
         .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
-        .get(f.workspace, request.identity.work_id, request.attempt),
-      journal = JSON.parse(journalRow.payload),
-      candidate = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].find(
+        .get(f.workspace, request.identity.work_id, request.attempt);
+    if (!isPlainRecord(selected) || typeof selected.payload !== 'string' || typeof selected.revision !== 'number' ||
+        !Number.isSafeInteger(selected.revision) || selected.revision < 1 || typeof selected.digest !== 'string')
+      throw Error('Seeded terminal journal row missing or malformed');
+    const journalRow = {revision: selected.revision, digest: selected.digest};
+    /** @type {unknown} */
+    const recorded = JSON.parse(selected.payload);
+    if (canonicalJsonDigest(recorded) !== canonicalJsonDigest(state) || canonicalJsonDigest(recorded) !== selected.digest)
+      throw Error('Seeded terminal journal differs from its current fixture state');
+    const journal = structuredClone(state);
+    const candidate = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].find(
         (item) => item.request.action_id === state.items[0].request.action_id,
       );
+    if (!candidate) throw Error('Seeded terminal synthesis target missing');
     expect(candidate.request.stage_id).toBe('synthesize_task');
     expect(candidate.research_activation).toBeTruthy();
     db.query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?').run(
@@ -2828,14 +2883,19 @@ function seedKnownTerminalSynthesisCustody(f, request, state, receiptMutation = 
       request.identity.work_id,
       request.attempt,
     );
-    const store = new HostStateStore(db, f.workspace),
-      before = store.readHostStateSnapshot(request.identity),
+    const store = new HostStateStore(db, f.workspace);
+    const before = store.readHostStateSnapshot(request.identity);
+    if (!before.work || !before.ledger || !before.workVersion || !before.ledgerVersion)
+      throw Error('Seeded terminal Host state missing');
+    const
       work = before.work,
       ledger = before.ledger,
       ticket = ledger.tickets.find((entry) => entry.work_id === request.identity.work_id && entry.status === 'active'),
       claim = ledger.claims.find((entry) => entry.ticket_id === ticket.ticket_id && entry.status === 'active'),
       now = '2026-10-07T00:00:00.000Z',
+      /** @type {MutableFixture<import('../src/host-state.ts').WorkState>} */
       nextWork = structuredClone(work),
+      /** @type {MutableFixture<import('../src/host-state.ts').CoordinationLedger>} */
       nextLedger = structuredClone(ledger),
       summary = JSON.stringify({
         schema: 'VidaSynthesisObservationOutput/v1',
@@ -2923,6 +2983,7 @@ function seedKnownTerminalSynthesisCustody(f, request, state, receiptMutation = 
       decision_pointer: request.userRequestPointer,
       created_at: now,
     });
+    /** @type {Parameters<HostStateStore['captureHistoricalTerminalSynthesisAndRelease']>[0]} */
     const capture = {
       schema: 'HistoricalTerminalSynthesisCapture/v1',
       identity: request.identity,
@@ -3315,7 +3376,7 @@ test('terminal synthesis predicate accepts only its exact known target with offi
   );
   expect(databaseState(unknown.f)).toEqual(unknownBefore);
   expect(readFileSync(path.join(unknown.f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(unknownEngine);
-});
+}, 60_000);
 
 test.each([
   'missing receipt',
@@ -3380,13 +3441,13 @@ test.each([
     f.put('agent-runtime.config.v1.yaml', f.oldYaml);
     f.put('proposed.yaml', f.target);
     const beforeInspect = databaseState(f);
-    await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown|custody|denial|UTF-8|digest/i);
+    await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown|custody|denial|UTF-8|digest/i));
     expect(databaseState(f)).toEqual(beforeInspect);
   },
   30000,
 );
 
-test('known terminal reader denies a synthesis stage whose configured output schema changed', () => {
+test('known terminal reader denies unjournaled configuration drift before resolving capture-time authority', () => {
   const { f, request, state } = historicalFixture('terminal_synthesis_unaccepted'),
     completedResearch = state.completed.flatMap((wave) => wave.items),
     pendingSynthesisIndex = completedResearch.length;
@@ -3402,12 +3463,18 @@ test('known terminal reader denies a synthesis stage whose configured output sch
   stage.produces = stage.produces.filter((schema) => schema !== 'ResearchSynthesis/v1');
   withDatabase(f, (db) =>
     expect(() => currentState(db, f.workspace, f.root, config)).toThrow(
-      /original stage or configured readonly role differs/,
+      'vida runtime-config rebind: issued native outcome is pending/unknown: vida runtime-config rebind: bound original configuration is unavailable',
     ),
   );
   expect(databaseState(f)).toEqual(before);
 });
 
+/**
+ * @param {ReturnType<typeof fixture>} f
+ * @param {ReturnType<typeof historicalFixture>['request']} request
+ * @param {FixtureJournal} state
+ * @param {{unnormalizedIndex?: number, pendingIndex?: number, activationOnlyIndex?: number, includeCompleted?: boolean}} [options]
+ */
 function seedHistoricalResearchLineage(
   f,
   request,
@@ -3723,7 +3790,7 @@ test('public historical normalization resumes the original record-first request 
       .run(f.workspace, 1, json(maintenanceFence), canonicalJsonDigest(maintenanceFence)),
   );
   const afterMaintenance = databaseState(f);
-  await expect(run(resumeArgs('resume'))).rejects.toThrow(/maintenance|original|reserved/);
+  await Promise.resolve(expect(run(resumeArgs('resume'))).rejects.toThrow(/maintenance|original|reserved/));
   expect(databaseState(f)).toEqual(afterMaintenance);
 }, 30000);
 
@@ -3771,7 +3838,7 @@ test('public historical normalization rejects foreign requests and stale Host CA
     changelog: readFileSync(changelogPath, 'utf8'),
   };
   f.put(requestPath, json({ ...inspected.request, action_id: 'foreign-action' }));
-  await expect(run(resumeArgs('apply'))).rejects.toThrow(/original|inspection|action/i);
+  await Promise.resolve(expect(run(resumeArgs('apply'))).rejects.toThrow(/original|inspection|action/i));
   expect(readFileSync(recordPath, 'utf8')).toBe(beforeForeign.record);
   expect(readFileSync(changelogPath, 'utf8')).toBe(beforeForeign.changelog);
   expect(databaseState(f)).toEqual(beforeForeign.database);
@@ -3796,7 +3863,7 @@ test('public historical normalization rejects foreign requests and stale Host CA
   });
   const changedHost = databaseState(f),
     beforeStale = { record: readFileSync(recordPath, 'utf8'), changelog: readFileSync(changelogPath, 'utf8') };
-  await expect(run(resumeArgs('apply'))).rejects.toThrow(/changed|CAS|state|maintenance/i);
+  await Promise.resolve(expect(run(resumeArgs('apply'))).rejects.toThrow(/changed|CAS|state|maintenance/i));
   expect(readFileSync(recordPath, 'utf8')).toBe(beforeStale.record);
   expect(readFileSync(changelogPath, 'utf8')).toBe(beforeStale.changelog);
   expect(databaseState(f)).toEqual(changedHost);
@@ -3972,7 +4039,7 @@ test('released UNKNOWN uses its bound historical config through a second repair 
   unclosed.phase = 'planned';
   unclosed.maintenance_released = false;
   f.put(priorPath, json(unclosed));
-  await expect(runReconcileArtifacts(nextArgs('inspect'))).rejects.toThrow(/original configuration is unavailable/);
+  await Promise.resolve(expect(runReconcileArtifacts(nextArgs('inspect'))).rejects.toThrow(/original configuration is unavailable/));
   expect(databaseState(f)).toEqual(before);
   f.put(priorPath, priorBytes);
   const tampered = JSON.parse(priorBytes.toString('utf8'));
@@ -3981,7 +4048,7 @@ test('released UNKNOWN uses its bound historical config through a second repair 
   tampered.plan.baseline_yaml = json(wrongConfig);
   tampered.plan_digest = canonicalJsonDigest(tampered.plan);
   f.put(priorPath, json(tampered));
-  await expect(runReconcileArtifacts(nextArgs('inspect'))).rejects.toThrow(/historical config bytes differ/);
+  await Promise.resolve(expect(runReconcileArtifacts(nextArgs('inspect'))).rejects.toThrow(/historical config bytes differ/));
   expect(databaseState(f)).toEqual(before);
   f.put(priorPath, priorBytes);
   expect((await runReconcileArtifacts(nextArgs('inspect'))).status).toBe('inspect_ready_unauthorized');
@@ -4014,7 +4081,7 @@ test('readonly bookkeeping config rebind rejects a changed retained release oper
     );
   });
   const before = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown/);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown/));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -4039,7 +4106,7 @@ test('readonly bookkeeping config rebind rejects retained release source revisio
     expect(canonicalJsonDigest(JSON.parse(payload))).toBe(canonicalJsonDigest(ledger));
   });
   const before = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown/);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(/pending\/unknown/));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -4293,7 +4360,7 @@ test('readonly bookkeeping proof drift after config plan denies apply without ch
     activationBytes = readFileSync(path.join(f.root, activationPath), 'utf8');
   f.put(activationPath, activationBytes + '{}\n');
   const beforeDeniedApply = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(/pending\/unknown|activation|history/i);
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('apply'))).rejects.toThrow(/pending\/unknown|activation|history/i));
   expect(databaseState(f)).toEqual(beforeDeniedApply);
   expect(readFileSync(path.join(f.root, activationPath), 'utf8')).toBe(activationBytes + '{}\n');
 }, 30000);
@@ -4309,7 +4376,7 @@ test('public readonly bookkeeping denies pending official-docs egress without ch
   expect(pending.request.role).toBe('documentation-researcher');
   expect(config.agents.egress_policies[profile.egress_policy].allowed_hosts.length).toBeGreaterThan(0);
   const before = databaseState(f);
-  await expect(run(args('inspect'))).rejects.toThrow(/egress/);
+  await Promise.resolve(expect(run(args('inspect'))).rejects.toThrow(/egress/));
   expect(databaseState(f)).toEqual(before);
 });
 
@@ -4323,7 +4390,7 @@ test.each(['altered', 'missing'])(
     if (change === 'altered') f.put(historyPath, readFileSync(fullPath, 'utf8') + '{}\n');
     else rmSync(fullPath, { force: true });
     const before = databaseState(f);
-    await expect(run(args('inspect'))).rejects.toThrow(/activation|history/i);
+    await Promise.resolve(expect(run(args('inspect'))).rejects.toThrow(/activation|history/i));
     expect(databaseState(f)).toEqual(before);
   },
   30000,
@@ -4339,7 +4406,7 @@ test.each(['tampered', 'missing'])(
     if (change === 'tampered') f.put(recordPath, '{}\n');
     else rmSync(fullPath, { force: true });
     const before = databaseState(f);
-    await expect(run(args('inspect'))).rejects.toThrow(/record|research|digest/i);
+    await Promise.resolve(expect(run(args('inspect'))).rejects.toThrow(/record|research|digest/i));
     expect(databaseState(f)).toEqual(before);
   },
   30000,
@@ -4358,7 +4425,7 @@ test('public readonly bookkeeping denies an existing mismatched artifact at a no
       .run(json(work), canonicalJsonDigest(work)),
   );
   const before = databaseState(f);
-  await expect(run(args('inspect'))).rejects.toThrow(/artifact|lineage/i);
+  await Promise.resolve(expect(run(args('inspect'))).rejects.toThrow(/artifact|lineage/i));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -4460,7 +4527,7 @@ test('public readonly bookkeeping denies an earlier overlapping queued ticket wi
     true,
   );
   const before = databaseState(f);
-  await expect(run(args('inspect'))).rejects.toThrow(/FIFO|resource activation/i);
+  await Promise.resolve(expect(run(args('inspect'))).rejects.toThrow(/FIFO|resource activation/i));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -4470,7 +4537,7 @@ test('public readonly bookkeeping rejects a foreign owner and stale inspection C
   const before = databaseState(f),
     foreignOwner = args('inspect');
   foreignOwner[7] = 'foreign-owner';
-  await expect(run(foreignOwner)).rejects.toThrow(/original owner differs/);
+  await Promise.resolve(expect(run(foreignOwner)).rejects.toThrow(/original owner differs/));
   expect(databaseState(f)).toEqual(before);
   const inspected = await run(args('inspect'));
   f.put(
@@ -4483,7 +4550,7 @@ test('public readonly bookkeeping rejects a foreign owner and stale inspection C
       },
     }),
   );
-  await expect(run(args('apply'))).rejects.toThrow(/CAS changed/);
+  await Promise.resolve(expect(run(args('apply'))).rejects.toThrow(/CAS changed/));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -4498,9 +4565,9 @@ test.each(['completed_readonly', 'unknown_readonly', 'unissued_prepared'])(
     );
     const control = args('inspect');
     control[0] = '--release-settled-research-owner';
-    await expect(run(control)).rejects.toThrow(
+    await Promise.resolve(expect(run(control)).rejects.toThrow(
       predicate === 'unknown_readonly' ? /unfinished issued effects/ : /settled research/,
-    );
+    ));
     expect(databaseState(f)).toEqual(before);
   },
   30000,
@@ -4669,9 +4736,9 @@ test('public recovery review accepts a canonical markerless original excerpt and
   substituted[0].context.entries.find((candidate) => candidate.id === 'fixture-context').content =
     'Substituted excerpt';
   substituted[0].context = resignFixtureContext(substituted[0].context);
-  await expect(call('prepare', { ...input, originalContexts: substituted })).rejects.toThrow(
+  await Promise.resolve(expect(call('prepare', { ...input, originalContexts: substituted })).rejects.toThrow(
     'historical original configured requests differ',
-  );
+  ));
   expect(databaseState(f)).toEqual(before);
   const prepared = await call('prepare', { ...input, originalContexts });
   expect(prepared.status).toBe('reserved');
@@ -4683,9 +4750,9 @@ test('public recovery review accepts a canonical markerless original excerpt and
   expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
   const changedRequest = structuredClone(prepared.request);
   changedRequest.expectedWork += 1;
-  await expect(call('inspect', { ...input, originalContexts, request: changedRequest })).rejects.toThrow(
+  await Promise.resolve(expect(call('inspect', { ...input, originalContexts, request: changedRequest })).rejects.toThrow(
     /retained recovery request changed/,
-  );
+  ));
   expect(databaseState(f)).toEqual(after);
   expect((await call('inspect', { ...input, originalContexts, request: prepared.request })).status).toBe('reserved');
 }, 30000);
@@ -4699,9 +4766,9 @@ test('public recovery review retains UNKNOWN when original-context custody is lo
     resumed = { ...input, originalContexts, request: prepared.request };
   expect((await call('begin', resumed)).status).toBe('commit_unknown');
   const afterBegin = databaseState(f);
-  await expect(call('inspect', { ...input, request: prepared.request })).rejects.toThrow();
+  await Promise.resolve(expect(call('inspect', { ...input, request: prepared.request })).rejects.toThrow());
   expect(databaseState(f)).toEqual(afterBegin);
-  await expect(call('begin', resumed)).rejects.toThrow(/reissue forbidden/);
+  await Promise.resolve(expect(call('begin', resumed)).rejects.toThrow(/reissue forbidden/));
   expect(databaseState(f)).toEqual(afterBegin);
   f.put(fixtureContextPath, readFileSync(localPath, 'utf8') + '\nConcurrent Source edit after prepare.\n');
   const inspected = await call('inspect', resumed);
@@ -4710,9 +4777,9 @@ test('public recovery review retains UNKNOWN when original-context custody is lo
   expect(inspected.rights_granted).toBe(false);
   expect(inspected.runtime_acceptance).toBe(false);
   expect(databaseState(f)).toEqual(afterBegin);
-  await expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow(
+  await Promise.resolve(expect(call('complete', { ...resumed, observation: observation(prepared.operation) })).rejects.toThrow(
     /retained recovery request changed|source scope changed/,
-  );
+  ));
   expect(databaseState(f)).toEqual(afterBegin);
 }, 30000);
 
@@ -4725,7 +4792,7 @@ test('public recovery review rejects current Source drift before begin after bod
     resumed = { ...input, originalContexts, request: prepared.request },
     afterPrepare = databaseState(f);
   f.put(fixtureContextPath, readFileSync(localPath, 'utf8') + '\nConcurrent Source edit after prepare.\n');
-  await expect(call('begin', resumed)).rejects.toThrow(/retained recovery request changed|source scope changed/);
+  await Promise.resolve(expect(call('begin', resumed)).rejects.toThrow(/retained recovery request changed|source scope changed/));
   expect(databaseState(f)).toEqual(afterPrepare);
 }, 30000);
 
@@ -4830,9 +4897,9 @@ test('public recovery review rejects aggregate original-context bytes before res
   const before = databaseState(f),
     enginePath = path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'),
     engineBefore = readFileSync(enginePath);
-  await expect(call('prepare', { ...input, originalContexts })).rejects.toThrow(
+  await Promise.resolve(expect(call('prepare', { ...input, originalContexts })).rejects.toThrow(
     'original configured context exceeds aggregate limit',
-  );
+  ));
   expect(databaseState(f)).toEqual(before);
   expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
 });
@@ -4842,7 +4909,7 @@ test('public recovery review rejects original-context export over the caller-his
     originalContexts = fixtureOriginalContexts(state, configuredContexts),
     oversized = { ...input, originalContexts, padding: 'x'.repeat(262145) },
     before = databaseState(f);
-  await expect(call('prepare', oversized)).rejects.toThrow(/caller-history export exceeds bound/);
+  await Promise.resolve(expect(call('prepare', oversized)).rejects.toThrow(/caller-history export exceeds bound/));
   expect(databaseState(f)).toEqual(before);
 });
 
@@ -4857,9 +4924,9 @@ test('original context body cannot authorize current topology drift or rewrite t
     ),
   );
   const before = databaseState(f);
-  await expect(call('prepare', { ...input, originalContexts })).rejects.toThrow(
+  await Promise.resolve(expect(call('prepare', { ...input, originalContexts })).rejects.toThrow(
     'vida runtime-config rebind: only requested executor model/reasoning or the approved prewriter workflow template delta may change',
-  );
+  ));
   expect(databaseState(f)).toEqual(before);
 });
 
@@ -4968,7 +5035,7 @@ test.each([
         drift === 'changed'
           ? /historical original configured requests differ/
           : /configured context \.codex\/skills\/historical-review\/SKILL\.md/;
-      await expect(invoke()).rejects.toThrow(expected);
+      await Promise.resolve(expect(invoke()).rejects.toThrow(expected));
     }
     expect(databaseState(f)).toEqual(before);
     expect(readFileSync(enginePath).equals(engineBefore)).toBe(true);
@@ -5041,9 +5108,9 @@ test.each([
       );
     expect(reviewReservations(before)).toHaveLength(0);
     const invoke = route === 'owner inspect' ? () => run(subject.args('inspect')) : () => subject.call('prepare');
-    await expect(invoke()).rejects.toThrow(
+    await Promise.resolve(expect(invoke()).rejects.toThrow(
       'vida runtime-config rebind: only requested executor model/reasoning or the approved prewriter workflow template delta may change',
-    );
+    ));
     const after = databaseState(f);
     expect(after).toEqual(before);
     expect(reviewReservations(after)).toHaveLength(0);
@@ -5110,7 +5177,7 @@ test.each([
     if (change === 'source drift') f.put('.githooks/pre-commit', 'Concurrent source drift');
     const before = databaseState(f),
       receipt = readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'));
-    await expect(run(values)).rejects.toThrow();
+    await Promise.resolve(expect(run(values)).rejects.toThrow());
     expect(databaseState(f)).toEqual(before);
     expect(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json')).equals(receipt)).toBe(true);
   },
@@ -5142,7 +5209,7 @@ test.each(['journal', 'preimage', 'maintenance'])(
       f.put('release.json', json(changed));
     }
     const before = databaseState(f);
-    await expect(run(args('apply'))).rejects.toThrow(/changed/);
+    await Promise.resolve(expect(run(args('apply'))).rejects.toThrow(/changed/));
     expect(databaseState(f)).toEqual(before);
   },
   30000,
@@ -5179,7 +5246,7 @@ test('historical inert preparation remains blocked and mixed execution flags can
     'release.json',
   ];
   const before = databaseState(f);
-  await expect(run(args)).rejects.toThrow(/inert release is unsupported/);
+  await Promise.resolve(expect(run(args)).rejects.toThrow(/inert release is unsupported/));
   for (const flag of [
     '--issue-wave',
     '--report',
@@ -5187,7 +5254,7 @@ test('historical inert preparation remains blocked and mixed execution flags can
     '--retire-interrupted-source-owner',
     '--release-completed-readonly',
   ])
-    await expect(run([...args, flag, 'true'])).rejects.toThrow();
+    await Promise.resolve(expect(run([...args, flag, 'true'])).rejects.toThrow());
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -5222,9 +5289,9 @@ test('readonly unknown denies a genuine owner project integration binding mismat
     );
   });
   const before = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(
     'readonly owner project integration binding differs',
-  );
+  ));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 
@@ -5252,7 +5319,7 @@ for (const [name, mutation] of [
     const f = fixture();
     seedReadonlyUnknown(f, mutation);
     const before = databaseState(f);
-    await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('issued native outcome is pending/unknown');
+    await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('issued native outcome is pending/unknown'));
     expect(databaseState(f)).toEqual(before);
   }, 30000);
 }
@@ -5299,7 +5366,7 @@ for (const [name, mutation, validateFixture] of [
     const f = fixture();
     seedReadonlyUnknown(f, mutation, { validateFixture });
     const before = databaseState(f);
-    await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('issued native outcome is pending/unknown');
+    await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('issued native outcome is pending/unknown'));
     expect(databaseState(f)).toEqual(before);
   }, 30000);
 }
@@ -5308,7 +5375,7 @@ test('readonly unknown denies original configured source writer despite lease-nu
   const f = fixture();
   seedReadonlyUnknown(f, null, { writer: true });
   const before = databaseState(f);
-  await expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('capability is not cooperative readonly');
+  await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('capability is not cooperative readonly'));
   expect(databaseState(f)).toEqual(before);
 }, 30000);
 

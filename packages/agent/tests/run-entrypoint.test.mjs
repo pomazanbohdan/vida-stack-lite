@@ -35,6 +35,55 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { advanceCutoff, assertNoActiveCutoverMaintenance, run, writeDurable } from '../bin/run.mjs';
 import { initializeProject } from '../bin/init.mjs';
+import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
+
+test('readonly local inspection validates decoded rows and retains uncertain journal custody without writes', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-readonly-inspection-'));
+  const config = loadRuntimeConfig(path.resolve(import.meta.dirname, '..', '..', '..'));
+  const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+  const file = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+  mkdirSync(path.dirname(file), {recursive: true});
+  const database = new Database(file);
+  try {
+    database.exec('CREATE TABLE agent_host_state (workspace_id TEXT,kind TEXT,id TEXT,revision INTEGER,payload TEXT,digest TEXT)');
+    database.exec('CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)');
+    const input = {repositoryRoot: root, config, projectIds: ['agent'], integrationsDigest: 'a'.repeat(64),
+      workId: 'fixture-inspection', attempt: 1};
+    const state = {schema: 'MastraSessionLedger/v1', workspace_id: workspaceId, work_id: input.workId, attempt: 1,
+      items: [{issue_id: 'retained-issue', observation: null, request: {action_id: 'retained-action', stage_id: 'review'}}]};
+    /** @param {unknown} value */
+    const saveJournal = value => {
+      database.exec('DELETE FROM agent_host_mastra_session_ledger');
+      database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+        .run(workspaceId, input.workId, 1, 1, JSON.stringify(value), canonicalJsonDigest(value));
+    };
+    saveJournal(state);
+    const before = database.query('SELECT * FROM agent_host_mastra_session_ledger').all();
+    expect(inspectLocalSession(input)).toMatchObject({status: 'inspected', recovery_required: true,
+      pending_actions: [{action_id: 'retained-action', issue_id: 'retained-issue', stage_id: 'review'}]});
+    expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(before);
+    for (const candidate of [null, {...state, items: [null]}, {...state, items: [{...state.items[0], request: {action_id: 1, stage_id: 'review'}}]}]) {
+      saveJournal(candidate);
+      const retained = database.query('SELECT * FROM agent_host_mastra_session_ledger').all();
+      expect(() => inspectLocalSession(input)).toThrow(/local session inspection/);
+      expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(retained);
+    }
+    saveJournal(state);
+    const workKey = JSON.stringify([config.repository.repository_id, input.projectIds, input.integrationsDigest, input.workId]);
+    database.query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)')
+      .run(workspaceId, 'work', workKey, 1, 'null', canonicalJsonDigest(null));
+    expect(() => inspectLocalSession(input)).toThrow(/work identity/);
+    database.exec('DELETE FROM agent_host_state');
+    database.query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)')
+      .run(workspaceId, 'ledger', 'shared', 1, '{}', canonicalJsonDigest({}));
+    expect(() => inspectLocalSession(input)).toThrow(/coordination ledger/);
+  } finally {
+    database.close(true);
+    if (!path.resolve(root).startsWith(path.resolve(tmpdir(), 'vida-readonly-inspection-')))
+      throw Error('owned inspection fixture cleanup target differs');
+    rmSync(root, {recursive: true, force: true});
+  }
+});
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {
   const { main } = await import('../bin/run.mjs');
@@ -460,9 +509,9 @@ describe('unprepared recovery', () => {
         path.join(f.root, 'changed.json'),
         JSON.stringify({ ...inspected.request, decisionPointer: 'user:changed' }),
       );
-      await expect(
+      await Promise.resolve(expect(
         run(apply.map((value, index) => (apply[index - 1] === '--request' ? 'changed.json' : value))),
-      ).rejects.toThrow();
+      ).rejects.toThrow());
       expect(f.observed()).toEqual(after);
     } finally {
       f.close();
@@ -535,7 +584,7 @@ describe('unprepared recovery', () => {
         const apply = args.map((value, index) =>
           args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
         );
-        await expect(run(apply)).rejects.toThrow();
+        await Promise.resolve(expect(run(apply)).rejects.toThrow());
         expect(f.observed()).toEqual(before);
         expect(readFileSync(f.engineFile)).toEqual(engine);
         expect(readFileSync(path.join(f.root, 'baseline.yaml'))).toEqual(baseline);
@@ -1025,7 +1074,7 @@ test('cutoff SQLite exclusion rejects a live owner and recovers after process te
       attempt: '1',
       scope_digest: 'a'.repeat(64),
     };
-    await expect(advanceCutoff(selector, values)).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CUTOFF-001' });
+    await Promise.resolve(expect(advanceCutoff(selector, values)).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CUTOFF-001' }));
     expect(JSON.parse(readFileSync(witnessPath)).first_admitted_work_attempt).toBeNull();
     child.kill('SIGKILL');
     await exited;
@@ -1101,7 +1150,7 @@ describe('vida-agent run entrypoint fast checks', () => {
       ['--issue-wave', 'true', '--expected-revision', '2', '--expected-digest', 'not-a-digest'],
       ['--report', 'relative.json', '--expected-revision', '2', '--expected-digest', 'a'.repeat(64)],
     ]) {
-      await expect(run([...args, ...extra])).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' });
+      await Promise.resolve(expect(run([...args, ...extra])).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' }));
     }
   });
 
@@ -2023,9 +2072,9 @@ if (mutationMode || v8CoverageMode) {
         expect(reportRetry.state_version).toEqual(reported.state_version);
         expect(reportRetry.recorded_observation).toEqual(reported.reported_observation);
         writeFileSync(reportPath, observationBody('Conflicting retry must be denied.'));
-        await expect(run([...args, ...expected(reported.state_version), '--report', reportPath])).rejects.toThrow(
+        await Promise.resolve(expect(run([...args, ...expected(reported.state_version), '--report', reportPath])).rejects.toThrow(
           /retry differs/,
-        );
+        ));
         expect(snapshotSpy).not.toHaveBeenCalled();
         expect(bridgeSpy).not.toHaveBeenCalled();
         snapshotSpy.mockRestore();
@@ -2051,7 +2100,7 @@ if (mutationMode || v8CoverageMode) {
         [withValue('--attempt', '0'), 'GAP-VIDA-RUN-CLI-003'],
         [withValue('--scope-digest', 'z'.repeat(64)), 'GAP-VIDA-RUN-CLI-003'],
       ]) {
-        await expect(run(candidate)).rejects.toMatchObject({ code });
+        await Promise.resolve(expect(run(candidate)).rejects.toMatchObject({ code }));
       }
     });
 
@@ -2060,16 +2109,16 @@ if (mutationMode || v8CoverageMode) {
       try {
         const { args, initialization, initializationPath } = createFixture(root);
         writeFileSync(initializationPath, record({ ...initialization, workspace_binding_status: 'unknown' }));
-        await expect(run(args)).rejects.toMatchObject({
+        await Promise.resolve(expect(run(args)).rejects.toMatchObject({
           code: 'GAP-VIDA-RUN-CONTEXT-001',
           message: 'Runtime initialization status is invalid.',
-        });
+        }));
         writeFileSync(initializationPath, record(initialization));
         const escaping = args.map((entry, index) => (args[index - 1] === '--work-path' ? '../escape' : entry));
-        await expect(run(escaping)).rejects.toMatchObject({
+        await Promise.resolve(expect(run(escaping)).rejects.toMatchObject({
           code: 'GAP-VIDA-RUN-CONTEXT-001',
           message: 'The work path is not bound to the selected project context.',
-        });
+        }));
         expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
       } finally {
         rmSync(root, { recursive: true, force: true });
@@ -2118,9 +2167,9 @@ if (mutationMode || v8CoverageMode) {
               ? `mutation-run-${randomUUID()}`
               : value,
         );
-        await expect(run([...args, '--workflow', 'information_research_light'])).rejects.toMatchObject({
+        await Promise.resolve(expect(run([...args, '--workflow', 'information_research_light'])).rejects.toMatchObject({
           code: 'GAP-VIDA-RUN-SELECTOR-001',
-        });
+        }));
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -2151,10 +2200,10 @@ if (mutationMode || v8CoverageMode) {
         ];
         for (const entry of cases) {
           writeFileSync(initializationPath, record(entry.initialization));
-          await expect(run(entry.args)).rejects.toMatchObject({
+          await Promise.resolve(expect(run(entry.args)).rejects.toMatchObject({
             code: 'GAP-VIDA-RUN-CONTEXT-001',
             message: entry.message,
-          });
+          }));
           expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
         }
       } finally {

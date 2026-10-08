@@ -1,12 +1,22 @@
 {
   "$schema": "https://oxc.rs/schema/oxlint.json",
-  "plugins": ["eslint", "typescript"],
+  "plugins": ["eslint", "typescript", "vitest"],
   "env": { "node": true, "es2024": true },
   "globals": { "Bun": "readonly" },
   "rules": {
     "eslint/no-constant-condition": "error",
     "eslint/no-undef": "error",
     "eslint/no-unused-vars": "error",
-    "typescript/no-explicit-any": "error"
+    "typescript/no-explicit-any": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/no-unsafe-assignment": "error",
+    "typescript/no-unsafe-argument": "error",
+    "typescript/no-unsafe-call": "error",
+    "typescript/no-unsafe-member-access": "error",
+    "typescript/no-unsafe-return": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+    "eslint/no-constant-binary-expression": "error",
+    "vitest/no-focused-tests": "error"
   }
 }

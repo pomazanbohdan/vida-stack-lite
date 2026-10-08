@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { configuredTestContext } from './configured-context.mjs';
@@ -8,20 +8,25 @@ import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { buildAdmittedDevelopmentPacket } from '../src/orchestration/admitted-development-packet.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import {configuredFrontierRepairFixture} from './helpers/configured-frontier-fixture.mjs';
+import {compileDevelopmentWorkflow} from '../src/orchestration/workflow-plan.ts';
+import {sessionActionsForWave} from '../src/orchestration/session-handoff.ts';
 
 const { repositoryRoot: root, config } = configuredTestContext();
 const projectId = config.projects[0].project_id;
 const scratchRoot = path.join(root, '.planning', 'agent-flow');
 mkdirSync(scratchRoot, { recursive: true });
 const fixture = mkdtempSync(path.join(scratchRoot, 'packet-adapter-'));
+const ownedResearchPaths = new Set();
 afterAll(() => {
+  for (const file of ownedResearchPaths) rmSync(file, {force: true});
   if (!fixture.startsWith(scratchRoot + path.sep)) throw new Error('unsafe packet fixture cleanup');
   rmSync(fixture, { recursive: true, force: true });
 });
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 let fixtureNumber = 0;
 
-function admitted(intent = 'task_execution', lifecycleRisk = 'medium') {
+function admitted(intent = 'task_execution', lifecycleRisk = 'medium', configDigest = runtimeConfigDigest(config)) {
   const directory = path.join(fixture, String(++fixtureNumber));
   mkdirSync(directory);
   const relative = (name) => path.relative(root, path.join(directory, name)).replaceAll('\\', '/');
@@ -101,7 +106,7 @@ function admitted(intent = 'task_execution', lifecycleRisk = 'medium') {
     team_id: selection.team,
     workflow_id: workflowId,
     project_ids: [projectId],
-    config_digest: runtimeConfigDigest(config),
+    config_digest: configDigest,
     scope_id: scope.scope_id,
     scope_contract_digest: digest(scopeBytes),
     acceptance_manifest_digest: digest(acceptanceBytes),
@@ -114,7 +119,8 @@ function admitted(intent = 'task_execution', lifecycleRisk = 'medium') {
       schema: 'WorkState/v1',
       workspace_id: 'a'.repeat(64),
       binding,
-      contracts: { scope: { path: scopePath }, acceptance: { path: acceptancePath } },
+      contracts: {scope: {schema: 'ImplementationScope/v1', path: scopePath, sha256: digest(scopeBytes)},
+        acceptance: {schema: 'AcceptanceManifest/v1', path: acceptancePath, sha256: digest(acceptanceBytes)}, decisions: []},
       lease: { ticket_id: 'packet-test-ticket', thread_id: 'packet-test-thread', generation: 1 },
       execution: { run_id: 'packet-test-run' },
       lifecycle: { risk: lifecycleRisk, assurance: { correction_count: 0 } },
@@ -199,7 +205,8 @@ function admitted(intent = 'task_execution', lifecycleRisk = 'medium') {
   };
 }
 
-function addObservedSynthesis(input) {
+function addObservedSynthesis(input, completeWave = false) {
+  const recordPrefix = 'packet-fixture-' + randomUUID();
   const researchStage = config.workflows[input.selection.intent].stages.find((stage) =>
     stage.produces.includes('ResearchResult/v1'),
   );
@@ -234,7 +241,7 @@ function addObservedSynthesis(input) {
   };
   const resultBody = {
     schema: 'ResearchResult/v1',
-    result_id: 'research-packet-synthesis',
+    result_id: recordPrefix + '-research',
     work_item_id: input.workItem.id,
     source_revision: sourceRevision,
     scope_id: 'packet-test-scope',
@@ -294,14 +301,22 @@ function addObservedSynthesis(input) {
     updated_at: timestamp,
   };
   const result = { ...resultBody, digest: canonicalJsonDigest(resultBody) };
+  const plan = compileDevelopmentWorkflow(config, input.selection.team, input.selection.intent, input.selection.risk_flags);
+  const researchWave = plan.waves.findIndex(wave => wave.some(stage => stage.id === researchStage.id));
+  const researchActions = sessionActionsForWave(config, input.selection,
+    {work_id: input.workItem.id, attempt: 1, scope_digest: sourceRevision}, input.selection.intent, researchWave, []);
+  const results = completeWave ? researchActions.map((_, index) => {
+    const body = {...resultBody, result_id: index === 0 ? resultBody.result_id : `${resultBody.result_id}-${index}`};
+    return {...body, digest: canonicalJsonDigest(body)};
+  }) : [result];
   const synthesisBody = {
     schema: 'ResearchSynthesis/v1',
-    bundle_id: 'synthesis-packet-current',
+    bundle_id: recordPrefix + '-synthesis',
     work_item_id: input.workItem.id,
     source_revision: sourceRevision,
     scope_id: 'packet-test-scope',
     topic: 'Current source requirements',
-    result_refs: [{ result_id: result.result_id, digest: result.digest }],
+    result_refs: results.map(record => ({result_id: record.result_id, digest: record.digest})),
     findings: [
       {
         finding_id: 'synthesis-requirement',
@@ -355,14 +370,15 @@ function addObservedSynthesis(input) {
   const recordsRoot = path.join(root, config.research_decision.paths.research_records);
   mkdirSync(recordsRoot, { recursive: true });
   const artifacts = [
-    {
-      record: result,
+    ...results.map((record, index) => ({
+      record,
       stage: researchStage,
       schema: 'ResearchResult/v1',
       suffix: '.research.json',
-      issue: issueIds[0],
-      action: actionIds[0],
-    },
+      issue: index === 0 ? issueIds[0] : `${String(index + 3).repeat(8)}-${String(index + 3).repeat(4)}-4${String(index + 3).repeat(3)}-8${String(index + 3).repeat(3)}-${String(index + 3).repeat(12)}`,
+      action: index === 0 ? actionIds[0] : String(index + 1).repeat(64),
+      assignment_index: index,
+    })),
     {
       record: synthesis,
       stage: synthesisStage,
@@ -370,6 +386,7 @@ function addObservedSynthesis(input) {
       suffix: '.synthesis.json',
       issue: issueIds[1],
       action: actionIds[1],
+      assignment_index: 0,
     },
   ];
   const entries = [];
@@ -378,7 +395,8 @@ function addObservedSynthesis(input) {
     const bytes = Buffer.from(JSON.stringify(fixtureArtifact.record));
     const recordName = `${fixtureArtifact.record.result_id ?? fixtureArtifact.record.bundle_id}${fixtureArtifact.suffix}`;
     const fullPath = path.join(recordsRoot, recordName);
-    writeFileSync(fullPath, bytes);
+    writeFileSync(fullPath, bytes, {flag: 'wx'});
+    ownedResearchPaths.add(fullPath);
     const recordPath = path.relative(root, fullPath).replaceAll('\\', '/');
     const changelogPath = `${recordPath}.jsonl`;
     const recordSha = digest(bytes);
@@ -399,8 +417,10 @@ function addObservedSynthesis(input) {
       lease_generation: input.host.work.lease.generation,
     };
     const observation = {
+      schema: 'VidaSessionObservation/v1', agent_id: 'fixture-researcher', tool_call_ref: `fixture:${fixtureArtifact.action}`,
+      evidence_refs: [recordPath],
       issue_id: fixtureArtifact.issue,
-      action_id: fixtureArtifact.action,
+                action_id: fixtureArtifact.action,
       status: 'reported_complete',
       summary: `Observed ${fixtureArtifact.schema}`,
     };
@@ -470,6 +490,7 @@ function addObservedSynthesis(input) {
             scope_digest: sourceRevision,
             config_digest: input.host.work.binding.config_digest,
             action_id: fixtureArtifact.action,
+            assignment_index: fixtureArtifact.assignment_index,
           },
           issue_id: fixtureArtifact.issue,
           observation,
@@ -508,17 +529,15 @@ describe('admitted development packet', () => {
   });
 
   test('continued packet retains only exact Host-bound original contracts and observed task synthesis', () => {
-    const originalInput = admitted();
+    const originalInput = admitted('task_execution', 'medium', '5'.repeat(64));
     const originalWork = structuredClone(originalInput.host.work);
-    const originalJournal = structuredClone(originalInput.ledger.state);
     writeFileSync(path.join(root, originalInput.target), 'export const changed = true;');
     const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), originalInput.allowedPaths);
-    const work = { ...originalInput.host.work, binding: { ...originalInput.host.work.binding, work_source_revision: source.digest } };
-    const state = { ...originalInput.ledger.state, source_scope: source };
-    const current = { ...originalInput, host: { ...originalInput.host, work }, ledger: {
-      state, version: { revision: 2, digest: canonicalJsonDigest(state) } } };
-    const receipt = { request: { action: { kind: 'configured_frontier' } }, prior_work: originalWork,
-      prior_journal: originalJournal, successor_binding: work.binding };
+    const {receipt} = configuredFrontierRepairFixture(true, false, {config, root, workspaceId: originalWork.workspace_id},
+      'implementation', originalInput, source);
+    const work = receipt.successor_work, state = receipt.successor_journal;
+    const current = {...originalInput, host: {work, ledger: receipt.successor_ledger},
+      ledger: {state, version: receipt.journal_version}};
     const sourceStore = { snapshotCurrentTaskSourceSources: () => source, readDeliveredWorkContinuationReceipt: () => receipt };
     expect(() => buildAdmittedDevelopmentPacket(current)).toThrow(/scope, acceptance or thread/);
     const packet = buildAdmittedDevelopmentPacket({ ...current, sourceStore });
@@ -531,25 +550,24 @@ describe('admitted development packet', () => {
       state: corrupted, version: { revision: 2, digest: canonicalJsonDigest(corrupted) } } })).toThrow(/completed prefix/);
     const foreign = { ...receipt, successor_binding: { ...work.binding, scope_id: 'foreign-scope' } };
     expect(() => buildAdmittedDevelopmentPacket({ ...current, sourceStore: { ...sourceStore,
-      readDeliveredWorkContinuationReceipt: () => foreign } })).toThrow(/original admission/);
+      readDeliveredWorkContinuationReceipt: () => foreign } })).toThrow(/future configured-frontier snapshot, prefix or prior CAS differs/);
   });
 
   test('continued packet preserves exact original typed research and synthesis with changed current Source', () => {
-    const input = addObservedSynthesis(admitted('implementation_change'));
+    const input = addObservedSynthesis(admitted('implementation_change', 'medium', '5'.repeat(64)), true);
     try {
-      const priorWork = structuredClone(input.host.work), priorJournal = structuredClone(input.ledger.state);
+      const priorWork = structuredClone(input.host.work);
       writeFileSync(path.join(root, input.target), 'export const continued = true;');
       const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), input.allowedPaths);
-      const work = { ...input.host.work, binding: { ...input.host.work.binding, work_source_revision: source.digest } };
-      const state = { ...input.ledger.state, source_scope: source };
-      const receipt = { request: { action: { kind: 'configured_frontier' } }, prior_work: priorWork,
-        prior_journal: priorJournal, successor_binding: work.binding };
-      const current = { ...input, host: { ...input.host, work }, ledger: {
-        state, version: { revision: 2, digest: canonicalJsonDigest(state) } }, sourceStore: {
+      const {receipt} = configuredFrontierRepairFixture(true, false, {config, root, workspaceId: priorWork.workspace_id},
+        'implementation', input, source);
+      const work = receipt.successor_work, state = receipt.successor_journal;
+      const current = { ...input, host: {work, ledger: receipt.successor_ledger}, ledger: {
+        state, version: receipt.journal_version }, sourceStore: {
         snapshotCurrentTaskSourceSources: () => source, readDeliveredWorkContinuationReceipt: () => receipt } };
       const packet = buildAdmittedDevelopmentPacket(current);
       expect(packet.source_revision).toBe(source.digest);
-      expect(packet.research_artifact_refs.length).toBe(2);
+      expect(packet.research_artifact_refs.length).toBe(4);
       expect(packet.implementation_constraints.some(value => value.includes('Unique synthesis requirement'))).toBe(true);
       const damaged = structuredClone(state); damaged.completed[0].items[0].observation.summary = 'changed protected research';
       expect(() => buildAdmittedDevelopmentPacket({ ...current, ledger: {
@@ -702,8 +720,9 @@ describe('admitted development packet', () => {
     const input = addObservedSynthesis(admitted('implementation_change'));
     try {
       const packet = buildAdmittedDevelopmentPacket(input);
+      const synthesisRef = input.host.work.artifacts.find(entry => entry.schema === 'ResearchSynthesis/v1');
       expect(packet.research_artifact_refs).toContain(
-        `artifact://research/synthesis-packet-current/${input.host.work.artifacts.find((entry) => entry.schema === 'ResearchSynthesis/v1').sha256}`,
+        `artifact://research/${synthesisRef.artifact_id}/${synthesisRef.sha256}`,
       );
       expect(
         packet.implementation_constraints.some((entry) =>

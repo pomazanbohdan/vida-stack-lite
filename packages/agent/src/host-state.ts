@@ -7,6 +7,7 @@ import { deriveWorkspaceId } from './workspace-identity.js';
 import type {
   SynthesisObservationCorrectionPlan,
   MastraSessionLedgerState,
+  MastraLedgerItem,
 } from './orchestration/persistent-session-handoff.js';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
@@ -23,6 +24,7 @@ import {
   canonicalJson,
   canonicalJsonDigest,
   freezeJsonValue,
+  isPlainRecord,
   rfc3339TimestampMilliseconds,
 } from './contracts/public-ingress.js';
 import type { WorkExecutionContext, TrustedWorkflowAssignment, WorkflowApprovalAction } from './runtime-kernel.js';
@@ -72,11 +74,9 @@ import {
   assertUnpreparedSessionEngineAbsent,
   type SessionEngineBinding,
 } from './orchestration/session-engine-snapshot.js';
-import type { SessionBridgeObservation, SessionBridgeSnapshot, SessionBridgeRequest } from './orchestration/mastra-session-bridge.js';
+import { parseSessionBridgeRequest, parseSessionBridgeObservation, type SessionBridgeObservation, type SessionBridgeSnapshot, type SessionBridgeRequest } from './orchestration/mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './orchestration/scoped-source-snapshot.js';
 import {
-  createTaskSourceBinding,
-  parseTaskSourceGitObservation,
   resolveTaskSourceRoot,
   taskSourceGitArgv,
   validateTaskSourceBindingExchange,
@@ -97,6 +97,9 @@ import type {
 } from './orchestration/delivered-work-continuation.js';
 import { projectConfiguredPrewriterContinuationRequests } from './orchestration/delivered-work-continuation.js';
 import { validateFailedPrewriterRecoveryBasis } from './orchestration/failed-prewriter-recovery.js';
+import { validateFailedPrewriterRecoveryReceipt, validateFailedPrewriterTransitionRequest,
+  type FailedPrewriterRecoveryReceipt,
+  type FailedPrewriterTransitionRequest, type ConfiguredFrontierRecoveryView } from './orchestration/failed-prewriter-transition.js';
 import {
   validateConfiguredFrontierReceiptStructure,
   validateConfiguredFrontierRepairReceipt,
@@ -217,6 +220,25 @@ export interface AssignmentAttempt {
   readonly result_digest: string | null;
   readonly reconciliation: WorkflowAttemptReconciliationAuthorization | null;
 }
+type AssignmentRepairPreimage = Omit<AssignmentAttempt, 'correction_generation' | 'correction_authorization'> &
+  Partial<Pick<AssignmentAttempt, 'correction_generation' | 'correction_authorization'>>;
+type WorkRepairPreimage = Omit<WorkState, 'execution'> & {
+  readonly execution: Omit<WorkState['execution'], 'assignment_attempts'> & {
+    readonly assignment_attempts: readonly AssignmentRepairPreimage[];
+  };
+};
+type ReceiptRepairPreimage = Omit<WorkflowAttemptReceipt, 'attempt'> & { readonly attempt: AssignmentRepairPreimage };
+type ReservationRepairPreimage = Omit<NonNullable<MastraLedgerItem['host_reservation']>, 'receipt' | 'authorization'> & {
+  readonly receipt: ReceiptRepairPreimage;
+  readonly authorization: (Omit<WorkflowAttemptApprovalAuthorization, 'receipt'> & { readonly receipt: ReceiptRepairPreimage }) | null;
+};
+type JournalItemRepairPreimage = Omit<MastraLedgerItem, 'host_reservation'> & {
+  readonly host_reservation?: ReservationRepairPreimage;
+};
+type JournalRepairPreimage = Omit<MastraSessionLedgerState, 'items' | 'completed'> & {
+  readonly items: readonly JournalItemRepairPreimage[];
+  readonly completed: readonly { readonly step_id: string; readonly items: readonly JournalItemRepairPreimage[] }[];
+};
 export interface WorkflowAttemptReconciliationRequest {
   readonly identity: WorkIdentity;
   readonly expectedWork: StateVersion;
@@ -682,6 +704,7 @@ export interface DeliveredWorkContinuationResult {
 }
 export interface DeliveredWorkContinuationLookup {
   readonly receipt: DeliveredWorkContinuationReceipt;
+  readonly recovery?: FailedPrewriterRecoveryReceipt | null;
   readonly snapshot: HostStateSnapshot;
   readonly journal: {
     readonly version: StateVersion;
@@ -1030,7 +1053,7 @@ function checkedReconciliationGateBinding(value: unknown): ReconciliationGateBin
       [binding.manifest_digest, binding.request_digest, binding.bindings_digest, binding.closure_digest].every(
         (digest) => typeof digest === 'string' && hashPattern.test(digest),
       ) &&
-      Array.isArray(binding.work) &&
+      Boolean(Array.isArray(binding.work)) &&
       binding.work.length > 0,
     'reconciliation gate binding invalid',
   );
@@ -1068,6 +1091,11 @@ export class HostStateError extends Error {
 }
 function requireState(condition: unknown, message: string): asserts condition {
   if (!condition) throw new HostStateError(message);
+}
+function parseStoredRecord(payload: string, label: string): Record<string, unknown> {
+  const value: unknown = JSON.parse(payload);
+  requireState(isPlainRecord(value), label + ' must be a JSON record');
+  return value;
 }
 export function assertCodexDesktopAdapterContract(value: unknown): CodexDesktopAdapterContract {
   requireState(
@@ -1290,7 +1318,7 @@ function validateTaskSourceJournalScope(candidate: unknown): ScopedSourceSnapsho
   );
   const scope = candidate as unknown as ScopedSourceSnapshot;
   requireState(
-    scope.schema === 'ScopedSourceSnapshot/v1' && Array.isArray(scope.entries) &&
+    scope.schema === 'ScopedSourceSnapshot/v1' && Boolean(Array.isArray(scope.entries)) &&
       scope.entries.length > 0 && scope.entries.length <= 512 &&
       scope.entries.every((entry, index) => {
         if (entry === null || typeof entry !== 'object' || Array.isArray(entry) ||
@@ -1298,7 +1326,7 @@ function validateTaskSourceJournalScope(candidate: unknown): ScopedSourceSnapsho
         const prior = scope.entries[index - 1];
         return typeof entry.path === 'string' && entry.path.length > 0 && entry.path.length <= 512 &&
           !entry.path.includes('\\') && !entry.path.startsWith('/') && !entry.path.endsWith('/') &&
-          !/^[A-Za-z]:/.test(entry.path) && !/[\u0000-\u001f\u007f]/.test(entry.path) &&
+          !/^[A-Za-z]:/.test(entry.path) && !Array.from(entry.path).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) &&
           entry.path.split('/').every((part: string) => part.length > 0 && part !== '.' && part !== '..') &&
           (prior === undefined || prior.path < entry.path) &&
           (entry.exists
@@ -1740,7 +1768,7 @@ function checkedStoredWork(
   database: Database,
   workspaceId: string,
   value: unknown,
-  pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt,
+  pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt | FailedPrewriterRecoveryReceipt,
   continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
   observeAdmissionHistory?: (history: ContinuationAdmissionHistory) => void,
 ): WorkState {
@@ -1750,6 +1778,8 @@ function checkedStoredWork(
     admissionArtifacts: WorkArtifactReference[] = [],
     continuationRepairOverlayUsed = { value: false },
     records: ({ readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt } | {
+      readonly kind: 'failed-prewriter'; readonly receipt: FailedPrewriterRecoveryReceipt;
+    } | {
       readonly kind: 'continuation';
       readonly receipt: DeliveredWorkContinuationReceipt;
     })[] = [];
@@ -1822,20 +1852,48 @@ function checkedStoredWork(
   }
   if (continuationRepairOverlay)
     requireState(continuationRepairOverlayUsed.value, 'delivered-work continuation repair row is missing');
+  const recoveryTable = database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'").get();
+  if (recoveryTable) {
+    const rows = database.query('SELECT payload,digest FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=?')
+      .all(workspaceId, candidate.binding?.lifecycle_work_id) as { payload: string; digest: string }[];
+    for (const row of rows) {
+      const receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
+      requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt),
+        'failed prewriter recovery history checksum differs');
+      records.push({ kind: 'failed-prewriter', receipt });
+    }
+  }
   if (pendingReceipt) {
     records.push(
-      pendingReceipt.schema === 'VidaRuntimeCodeRebindAuthorization/v1'
+      pendingReceipt.schema === 'FailedPrewriterRecoveryReceipt/v1'
+        ? { kind: 'failed-prewriter', receipt: pendingReceipt }
+        : pendingReceipt.schema === 'VidaRuntimeCodeRebindAuthorization/v1'
         ? { kind: 'runtime', receipt: pendingReceipt }
         : { kind: 'continuation', receipt: pendingReceipt },
     );
   }
   records.sort((a, b) => {
     const revision = (record: (typeof records)[number]) =>
-      record.kind === 'runtime' ? record.receipt.prior_work_version.revision : record.receipt.request.expectedWork.revision;
+      record.kind === 'continuation' ? record.receipt.request.expectedWork.revision : record.receipt.prior_work_version.revision;
     return revision(b) - revision(a);
   });
   let expected = candidate.binding;
   for (const record of records) {
+    if (record.kind === 'failed-prewriter') {
+      const receipt = validateFailedPrewriterRecoveryReceipt(record.receipt);
+      const original = database.query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
+        .get(workspaceId, receipt.request.identity.work_id, receipt.request.attempt,
+          receipt.original.request.action.request.action_id) as { payload: string; digest: string } | null;
+      requireState(original && original.payload === canonicalJson(receipt.original) &&
+        original.digest === receipt.request.original_receipt_digest &&
+        sameJson(receipt.request.identity, workIdentity(candidate)) &&
+        sameJson(receipt.successor_work.binding, expected) &&
+        sameJson(candidate.contracts, receipt.prior_work.contracts) &&
+        sameJson(candidate.execution.assignment_attempts.slice(0, receipt.prior_work.execution.assignment_attempts.length),
+          receipt.prior_work.execution.assignment_attempts), 'failed prewriter binding history is not continuous');
+      expected = receipt.prior_work.binding;
+      continue;
+    }
     if (record.kind === 'continuation') {
       const receipt = record.receipt,
         request = receipt.request,
@@ -2000,7 +2058,7 @@ function checkedStoredWork(
     const history = receipt.binding_history;
     requireState(
       history?.schema === 'RuntimeCodeRebindHistory/v1' &&
-        Array.isArray(history.terminal_attempt_ids) &&
+        Boolean(Array.isArray(history.terminal_attempt_ids)) &&
         new Set(history.terminal_attempt_ids).size === history.terminal_attempt_ids.length &&
         receipt.schema === 'VidaRuntimeCodeRebindAuthorization/v1' &&
         sameJson(receipt.identity, workIdentity(candidate)) &&
@@ -2139,7 +2197,7 @@ function identityKey(identity: WorkIdentity): string {
   );
   return JSON.stringify([identity.repository_id, identity.project_ids, identity.integrations_digest, identity.work_id]);
 }
-function workIdentity(work: WorkState): WorkIdentity {
+function workIdentity(work: Pick<WorkState, 'binding'>): WorkIdentity {
   const binding = work.binding as WorkExecutionContext['binding'] & {
     repository_id?: string;
     project_ids?: readonly string[];
@@ -2566,7 +2624,7 @@ function validateProgress(
           resources.every(
             (resource) =>
               ((resource.startsWith('file:') && safeWorkflowOwnedPath(resource.slice(5))) ||
-                resource === `execution:${rebind.work_id}`) &&
+                resource === 'execution:' + String(rebind.work_id)) &&
               ticket.exclusive_resources.includes(resource),
           ) &&
           claimedResources.every(
@@ -2722,7 +2780,7 @@ function validateProgress(
     }
   }
 }
-function version(value: WorkState | CoordinationLedger | null): StateVersion | null {
+function version(value: { readonly revision: number } | null): StateVersion | null {
   return value ? { revision: value.revision, digest: canonicalJsonDigest(value) } : null;
 }
 function matchesExpected(actual: StateVersion | null, expected: StateVersion | null): void {
@@ -2809,7 +2867,7 @@ export function inspectHostWorkspaceDatabase(
         let ledger: CoordinationLedger | null = null;
         const work: { identity: WorkIdentity; version: StateVersion; state: WorkState }[] = [];
         for (const row of rows) {
-          const value = JSON.parse(row.payload);
+          const value = parseStoredRecord(row.payload, 'workspace inspection row');
           requireState(
             canonicalJsonDigest(value) === row.digest &&
               value.revision === row.revision &&
@@ -3487,18 +3545,20 @@ export class HostStateStore {
             Array.isArray(journal.completed),
           'consumer migration journal integrity differs',
         );
-        const items = [
-          ...journal.items,
-          ...journal.completed.flatMap((value) => {
+        const journalItems: readonly unknown[] = journal.items;
+        const completed: readonly unknown[] = journal.completed;
+        const items: readonly unknown[] = [
+          ...journalItems,
+          ...completed.flatMap((value) => {
             requireState(
               value && typeof value === 'object' && Array.isArray((value as { items?: unknown }).items),
               'consumer migration journal shape differs',
             );
             return (value as { items: unknown[] }).items;
           }),
-        ] as Record<string, unknown>[];
+        ];
         requireState(
-          items.every((item) => item && !item.host_reservation && (!item.issue_id || item.observation)),
+          items.every((item) => isPlainRecord(item) && !item.host_reservation && (!item.issue_id || item.observation)),
           'consumer migration native outcome remains unknown',
         );
       }
@@ -3928,12 +3988,12 @@ export class HostStateStore {
         intakeRef.path,
         'unprepared original intake',
       ),
-      intake = JSON.parse(bytes.toString('utf8'));
+      intake = parseStoredRecord(bytes.toString('utf8'), 'unprepared recovery original intake');
     requireState(
       bytes.length <= 32768 &&
         createHash('sha256').update(bytes).digest('hex') === intakeRef.sha256 &&
         intake.native_session_handle === input.operatorHandle &&
-        intake.work_item?.id === input.identity.work_id &&
+        isPlainRecord(intake.work_item) && intake.work_item.id === input.identity.work_id &&
         canonicalJsonDigest(intake.work_item) === original.binding.work_item_digest,
       'unprepared recovery original intake differs',
     );
@@ -4304,6 +4364,8 @@ export class HostStateStore {
     );
     const continuation = this.#readDeliveredWorkContinuationReceipt(identity, input.context.attempt);
     const configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
+    const configuredRecovery = configuredContinuation
+      ? this.#readFailedPrewriterRecoveryReceipt(identity, input.context.attempt) : null;
     requireState(
       work.execution.run_id ===
         'vida-' +
@@ -4314,7 +4376,7 @@ export class HostStateStore {
           }) || (configuredContinuation !== null &&
             configuredContinuation.prior_work.execution.run_id === work.execution.run_id &&
             configuredContinuation.request.action.request.run_id === input.runId &&
-            configuredContinuation.request.currentSourceScope.digest === input.context.scope_digest &&
+            (configuredRecovery?.request.currentSourceScope.digest ?? configuredContinuation.request.currentSourceScope.digest) === input.context.scope_digest &&
             configuredContinuation.request.targetConfigDigest === runtimeConfigDigest(currentConfig)),
       'session producer original attempt differs',
     );
@@ -4365,14 +4427,14 @@ export class HostStateStore {
           correctiveExecution: journal?.state.corrective_execution ?? undefined,
         };
         const engine = configuredContinuation
-          ? readConfiguredContinuationSessionEngineSnapshot(engineBinding, configuredContinuation as ConfiguredFrontierReceipt)
+          ? readConfiguredContinuationSessionEngineSnapshot(engineBinding, configuredContinuation as ConfiguredFrontierReceipt,
+              this.#readFailedPrewriterRecoveryReceipt({ repository_id: project.repository_id, project_ids: project.project_ids,
+                integrations_digest: project.integrations_digest, work_id: input.context.work_id }, input.context.attempt))
           : readSessionEngineSnapshot(engineBinding);
         const atOldFrontier = configuredContinuation !== null && engine?.status === 'suspended' &&
           engine.step_id === 'wave-' + configuredContinuation.request.action.request.wave_index &&
           journal?.state.step_id === engine.step_id;
-        const expectedRequests = atOldFrontier
-          ? configuredContinuation.successor_journal.items.map(item => item.request)
-          : engine?.requests;
+        const expectedRequests = engine?.requests;
         if (atOldFrontier) {
           requireState(journal && configuredContinuation &&
             journal.state.step_id === 'wave-' + configuredContinuation.request.action.request.wave_index &&
@@ -4519,7 +4581,9 @@ export class HostStateStore {
           correctiveExecution: journal?.state.corrective_execution ?? undefined,
         };
         const engine = continuation?.request.action.kind === 'configured_frontier'
-          ? readConfiguredContinuationSessionEngineSnapshot(binding, continuation as ConfiguredFrontierReceipt)
+          ? readConfiguredContinuationSessionEngineSnapshot(binding, continuation as ConfiguredFrontierReceipt,
+              this.#readFailedPrewriterRecoveryReceipt({ repository_id: project.repository_id, project_ids: project.project_ids,
+                integrations_digest: project.integrations_digest, work_id: entry.input.context.work_id }, entry.input.context.attempt))
           : readSessionEngineSnapshot(binding);
         if (!engine)
           requireState(
@@ -5597,7 +5661,7 @@ export class HostStateStore {
   }
   #checkedWork(
     value: unknown,
-    pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt,
+    pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt | FailedPrewriterRecoveryReceipt,
     continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
   ): WorkState {
     return checkedStoredWork(this.#database, this.#workspaceId, value, pendingReceipt, continuationRepairOverlay);
@@ -6288,7 +6352,7 @@ export class HostStateStore {
         return request.work_id === identity.work_id;
       });
       requireState(reservedTickets.every((ticket) => workRows.some((row) =>
-        taskSourceTicketId(validateTaskSourceBindingRequest(JSON.parse(row.payload).request)) === ticket.ticket_id &&
+        taskSourceTicketId(validateTaskSourceBindingRequest(parseStoredRecord(row.payload, 'task source retained operation').request)) === ticket.ticket_id &&
         this.#database.query('SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?')
           .get(this.#workspaceId, row.operation_id),
       )), 'reserved task source ticket has no retained effect record');
@@ -6416,7 +6480,7 @@ export class HostStateStore {
           action_revision: number | null; action_payload: string | null; action_digest: string | null;
         }[];
         requireState(reservedTickets.every((ticket) => pairs.some((pair) =>
-          taskSourceTicketId(validateTaskSourceBindingRequest(JSON.parse(pair.payload).request)) === ticket.ticket_id &&
+          taskSourceTicketId(validateTaskSourceBindingRequest(parseStoredRecord(pair.payload, 'historical task source retained operation').request)) === ticket.ticket_id &&
           pair.action_payload !== null,
         )), 'historical reserved task source ticket has no retained effect record');
         for (const pair of pairs) {
@@ -6981,13 +7045,33 @@ export class HostStateStore {
             .all(this.#workspaceId) as JournalRow[])
         : [];
       const maintenanceGeneration = this.#maintenanceGeneration();
-      const normalizeAttempt = (value: AssignmentAttempt): AssignmentAttempt => {
+      const normalizeAttempt = (value: AssignmentRepairPreimage): AssignmentAttempt => {
         const hasGeneration = Object.hasOwn(value, 'correction_generation'),
           hasAuthority = Object.hasOwn(value, 'correction_authorization');
         requireState(hasGeneration === hasAuthority, 'partial assignment authority is ambiguous');
-        return hasGeneration ? value : { ...value, correction_generation: 0, correction_authorization: null };
+        const correction_generation = hasGeneration ? value.correction_generation : 0;
+        const correction_authorization = hasAuthority ? value.correction_authorization : null;
+        requireState(correction_generation !== undefined && correction_authorization !== undefined,
+          'assignment authority values are missing');
+        return { ...value, correction_generation, correction_authorization };
       };
-      const journalItems = (state: MastraSessionLedgerState) => [
+      const decodeWorkPreimage = (candidate: unknown): WorkRepairPreimage => {
+        requireState(isPlainRecord(candidate) && isPlainRecord(candidate.execution) &&
+          Array.isArray(candidate.execution.assignment_attempts), 'repair Work preimage shape is invalid');
+        const attempts: readonly unknown[] = candidate.execution.assignment_attempts;
+        const normalized = attempts.map(attempt => {
+          requireState(isPlainRecord(attempt), 'repair assignment preimage is invalid');
+          const hasGeneration = Object.hasOwn(attempt, 'correction_generation');
+          requireState(hasGeneration === Object.hasOwn(attempt, 'correction_authorization'),
+            'partial assignment authority is ambiguous');
+          requireState(kind === 'correction-generation' || hasGeneration,
+            'request transition cannot repair assignment authority');
+          return hasGeneration ? attempt : {...attempt, correction_generation: 0, correction_authorization: null};
+        });
+        checkedWork({...candidate, execution: {...candidate.execution, assignment_attempts: normalized}});
+        return candidate as WorkRepairPreimage;
+      };
+      const journalItems = (state: JournalRepairPreimage) => [
         ...state.items,
         ...state.completed.flatMap((wave) => wave.items),
       ];
@@ -6995,7 +7079,7 @@ export class HostStateStore {
         string,
         {
           readonly work: WorkState;
-          readonly authorization: WorkflowAttemptApprovalAuthorization;
+          readonly authorization: NonNullable<ReservationRepairPreimage['authorization']>;
         }
       >();
       if (kind === 'correction-generation') {
@@ -7021,7 +7105,7 @@ export class HostStateStore {
           );
           const matches: {
             journal: MastraSessionLedgerState;
-            item: MastraSessionLedgerState['items'][number];
+            item: JournalRepairPreimage['items'][number];
           }[] = [];
           for (const journalRow of journals) {
             if (journalRow.work_id !== work.binding.lifecycle_work_id) continue;
@@ -7162,7 +7246,7 @@ export class HostStateStore {
         }
       }
       const states = works.map((row) => {
-        const before = JSON.parse(row.payload) as WorkState;
+        const before = decodeWorkPreimage(JSON.parse(row.payload));
         requireState(
           canonicalJsonDigest(before) === row.digest &&
             before.revision === row.revision &&
@@ -7272,10 +7356,10 @@ export class HostStateStore {
         matchedUnknownGovernance === unknownRepair.size,
         'interrupted repair retained approval governance is missing or duplicated',
       );
-      const normalizeJournal = (before: MastraSessionLedgerState) => {
+      const normalizeJournal = (before: JournalRepairPreimage): MastraSessionLedgerState => {
         const host = states.find((state) => state.current.binding.lifecycle_work_id === before.work_id)?.current;
         requireState(host && host.execution.run_id === before.run_id, 'repair journal/Host identity differs');
-        const normalizeItem = (item: MastraSessionLedgerState['items'][number]) => {
+        const normalizeItem = (item: JournalItemRepairPreimage): MastraLedgerItem => {
           const rawAttempt = item.host_reservation?.receipt.attempt,
             interrupted = rawAttempt ? unknownRepair.get(rawAttempt.attempt_id) : undefined;
           requireState(
@@ -7284,7 +7368,10 @@ export class HostStateStore {
               (interrupted !== undefined && item.issue_id !== null && item.observation === null),
             'repair requires terminal issued observations',
           );
-          if (!item.host_reservation) return item;
+          if (!item.host_reservation) {
+            const {host_reservation: _reservation, ...unreserved} = item;
+            return unreserved;
+          }
           const reservation = item.host_reservation,
             attempt = normalizeAttempt(reservation.receipt.attempt);
           const authorization = reservation.authorization
@@ -7335,7 +7422,7 @@ export class HostStateStore {
             host_reservation: {
               ...reservation,
               receipt: { ...reservation.receipt, attempt },
-              ...(authorization ? { authorization } : {}),
+              authorization: authorization ?? null,
             },
           };
         };
@@ -7345,11 +7432,61 @@ export class HostStateStore {
           completed: before.completed.map((wave) => ({ ...wave, items: wave.items.map(normalizeItem) })),
         };
       };
+      const decodeJournalPreimage = (candidate: unknown): JournalRepairPreimage => {
+        requireState(isPlainRecord(candidate) && candidate.schema === 'MastraSessionLedger/v1' &&
+          candidate.workspace_id === this.#workspaceId && typeof candidate.work_id === 'string' &&
+          typeof candidate.run_id === 'string' && typeof candidate.attempt === 'number' &&
+          Number.isSafeInteger(candidate.attempt) && candidate.attempt > 0 &&
+          (candidate.step_id === null || typeof candidate.step_id === 'string') &&
+          Array.isArray(candidate.items) && Array.isArray(candidate.completed), 'repair journal preimage shape is invalid');
+        const host = states.find(state => state.current.binding.lifecycle_work_id === candidate.work_id)?.current;
+        requireState(host && host.execution.run_id === candidate.run_id, 'repair journal/Host identity differs');
+        const checkReceipt = (value: unknown): void => {
+          requireState(isPlainRecord(value) && isPlainRecord(value.attempt), 'repair reservation receipt is invalid');
+          const attempt = value.attempt;
+          const hasGeneration = Object.hasOwn(attempt, 'correction_generation');
+          requireState(hasGeneration === Object.hasOwn(attempt, 'correction_authorization'),
+            'partial assignment authority is ambiguous');
+          const normalized = hasGeneration ? attempt : {...attempt, correction_generation: 0, correction_authorization: null};
+          requireState(validateWork({...host, execution: {...host.execution, assignment_attempts: [normalized]}}),
+            'repair reservation attempt contract is invalid');
+        };
+        const checkItems = (values: readonly unknown[]): void => {
+          for (const value of values) {
+            requireState(isPlainRecord(value) && (value.issue_id === null || typeof value.issue_id === 'string'),
+              'repair journal item is invalid');
+            parseSessionBridgeRequest(value.request);
+            if (value.observation !== null) parseSessionBridgeObservation(value.observation);
+            if (value.host_reservation !== undefined) {
+              const reservation = value.host_reservation;
+              requireState(isPlainRecord(reservation) && reservation.schema === 'WorkflowSessionReservation/v1' &&
+                isPlainRecord(reservation.request) && isPlainRecord(reservation.invocation), 'repair reservation is invalid');
+              checkReceipt(reservation.receipt);
+              if (reservation.authorization !== null) {
+                requireState(isPlainRecord(reservation.authorization), 'repair reservation authorization is invalid');
+                checkReceipt(reservation.authorization.receipt);
+              }
+            }
+          }
+        };
+        const items: readonly unknown[] = candidate.items;
+        const completed: readonly unknown[] = candidate.completed;
+        checkItems(items);
+        for (const wave of completed) {
+          requireState(isPlainRecord(wave) && typeof wave.step_id === 'string' && Array.isArray(wave.items),
+            'repair completed journal wave is invalid');
+          const waveItems: readonly unknown[] = wave.items;
+          checkItems(waveItems);
+        }
+        if (candidate.source_scope != null) validateTaskSourceJournalScope(candidate.source_scope);
+        if (candidate.corrective_execution != null) correctiveExecutionSchema.parse(candidate.corrective_execution);
+        return candidate as JournalRepairPreimage;
+      };
       const journalChanges =
         kind === 'request-transition'
           ? []
           : journals.flatMap((row) => {
-              const before = JSON.parse(row.payload) as MastraSessionLedgerState;
+              const before = decodeJournalPreimage(JSON.parse(row.payload));
               requireState(
                 before.schema === 'MastraSessionLedger/v1' &&
                   before.work_id === row.work_id &&
@@ -7384,6 +7521,14 @@ export class HostStateStore {
               },
             ],
       );
+      const verifyWorkTransformation = (before: WorkRepairPreimage, after: WorkState): void => {
+        const normalized = {...before,
+          ...(kind === 'correction-generation' ? {execution: {...before.execution,
+            assignment_attempts: before.execution.assignment_attempts.map(normalizeAttempt)}} : {request_transition: null}),
+          revision: before.revision + 1,
+          lifecycle: {...before.lifecycle, revision: before.lifecycle.revision + 1}};
+        requireState(sameJson(normalized, after), 'repair frozen transformation differs');
+      };
       const bindings = {
         maintenance_generation: maintenanceGeneration,
         ledger: version(ledger),
@@ -7425,14 +7570,17 @@ export class HostStateStore {
         workspace_id: string;
         actor: string;
         status: 'planned' | 'applied' | 'restored';
-        bindings: typeof bindings;
+        bindings: unknown;
         work_changes: typeof workChanges;
         journal_changes: typeof journalChanges;
-        post_bindings?: typeof bindings;
+        post_bindings?: unknown;
       };
       const payloadDigest = (payload: string): string => createHash('sha256').update(payload).digest('hex');
       if (stored) requireState(payloadDigest(stored.payload) === stored.digest, 'repair operation checksum differs');
-      const rawOperation = stored ? JSON.parse(stored.payload) : null;
+      const rawOperation = stored ? parseStoredRecord(stored.payload, 'stored repair operation') : null;
+      const restoredWorks = (changes: Operation['work_changes']) => changes.map(change => ({...change.before,
+        revision: change.after.revision + 1,
+        lifecycle: {...change.before.lifecycle, revision: change.after.lifecycle.revision + 1}}));
       const serialize = (value: Operation): unknown =>
         kind === 'correction-generation'
           ? value
@@ -7443,8 +7591,8 @@ export class HostStateStore {
               actor: value.actor,
               status: value.status,
               bindings: {
-                ledger_version: value.bindings.ledger,
-                journals: value.bindings.journals.map((row) => ({
+                ledger_version: bindings.ledger,
+                journals: bindings.journals.map((row) => ({
                   work_id: row.work_id,
                   attempt: row.attempt,
                   version: { revision: row.revision, digest: row.digest },
@@ -7457,37 +7605,84 @@ export class HostStateStore {
               })),
               ...(value.status === 'restored'
                 ? {
-                    restored: value.work_changes.map((change) => ({
-                      ...change.before,
-                      revision: change.after.revision + 1,
-                      lifecycle: { ...change.before.lifecycle, revision: change.after.lifecycle.revision + 1 },
-                    })),
+                    restored: restoredWorks(value.work_changes),
                   }
                 : {}),
             };
       // Bundle-owned recovery aggregates contain individually bounded rows, not one public ingress document.
       const operationPayload = (value: Operation): string => JSON.stringify(serialize(value));
       const operationSnapshot = (payload: string): Readonly<Record<string, unknown>> =>
-        freezeJsonValue(JSON.parse(payload));
-      let operation: Operation | null = rawOperation
-        ? kind === 'correction-generation'
-          ? rawOperation
-          : {
-              ...rawOperation,
-              bindings,
-              work_changes: rawOperation.changes.map((change: { before: WorkState; after: WorkState }) => ({
-                row: {
-                  id: identityKey(workIdentity(change.before)),
-                  revision: change.before.revision,
-                  payload: canonicalJson(change.before),
-                  digest: canonicalJsonDigest(change.before),
-                },
-                before: change.before,
-                after: change.after,
-              })),
-              journal_changes: [],
-            }
-        : null;
+        freezeJsonValue(parseStoredRecord(payload, 'repair operation snapshot'));
+      const storedArray = (candidate: unknown, label: string): readonly unknown[] => {
+        requireState(Array.isArray(candidate), label + ' must be an array');
+        return candidate;
+      };
+      const decodeRow = (candidate: unknown): Row => {
+        requireState(exactJsonKeys(candidate, ['id', 'revision', 'payload', 'digest']) && isPlainRecord(candidate) && typeof candidate.id === 'string' &&
+          typeof candidate.payload === 'string' && typeof candidate.digest === 'string' &&
+          hashPattern.test(candidate.digest) && typeof candidate.revision === 'number' &&
+          Number.isSafeInteger(candidate.revision) && candidate.revision > 0, 'repair Work row is invalid');
+        return {id: candidate.id, revision: candidate.revision, payload: candidate.payload, digest: candidate.digest};
+      };
+      let operation: Operation | null = null;
+      if (rawOperation) {
+        const status = rawOperation.status;
+        requireState(exactJsonKeys(rawOperation, ['schema', 'operation_id', 'workspace_id', 'actor', 'status', 'bindings',
+          ...(kind === 'correction-generation' ? ['work_changes', 'journal_changes'] : ['changes']),
+          ...(kind === 'correction-generation' && Object.hasOwn(rawOperation, 'post_bindings') ? ['post_bindings'] : []),
+          ...(kind === 'request-transition' && Object.hasOwn(rawOperation, 'restored') ? ['restored'] : [])]),
+        'repair operation contains unexpected fields');
+        requireState(rawOperation.schema === (kind === 'correction-generation'
+          ? 'CorrectionGenerationRepairOperation/v1' : 'WorkStateRepairOperation/v1') &&
+          rawOperation.operation_id === input.operationId && rawOperation.workspace_id === this.#workspaceId &&
+          typeof rawOperation.actor === 'string' && rawOperation.actor.trim().length > 0 && !/\p{Cc}/u.test(rawOperation.actor),
+        'repair operation integrity differs');
+        requireState(status === 'planned' || status === 'applied' || status === 'restored', 'repair status is invalid');
+        requireState(kind === 'correction-generation'
+          ? Object.hasOwn(rawOperation, 'post_bindings') === (status !== 'planned')
+          : Object.hasOwn(rawOperation, 'restored') === (status === 'restored'), 'repair status fields differ');
+        const changedWorks = storedArray(kind === 'correction-generation' ? rawOperation.work_changes : rawOperation.changes,
+          'repair Work changes').map(candidate => {
+          requireState(exactJsonKeys(candidate, kind === 'correction-generation' ? ['row', 'before', 'after'] : ['identity', 'before', 'after']) &&
+            isPlainRecord(candidate), 'repair Work change is invalid');
+          const before = decodeWorkPreimage(candidate.before);
+          const after = this.#checkedWork(candidate.after);
+          verifyWorkTransformation(before, after);
+          if (kind === 'request-transition') requireState(sameJson(candidate.identity, workIdentity(before)),
+            'repair frozen Work identity differs');
+          const row = kind === 'correction-generation' ? decodeRow(candidate.row) : {
+            id: identityKey(workIdentity(before)), revision: before.revision,
+            payload: canonicalJson(before), digest: canonicalJsonDigest(before),
+          };
+          requireState(row.id === identityKey(workIdentity(before)) && row.revision === before.revision &&
+            row.payload === canonicalJson(before) && row.digest === canonicalJsonDigest(before),
+          'repair frozen Work row differs from its beforeimage');
+          return {row, before, after};
+        });
+        operation = {schema: kind === 'correction-generation' ? 'CorrectionGenerationRepairOperation/v1' : 'WorkStateRepairOperation/v1',
+          operation_id: input.operationId, workspace_id: this.#workspaceId, actor: rawOperation.actor, status,
+          bindings: kind === 'correction-generation' ? rawOperation.bindings : bindings,
+          work_changes: changedWorks, journal_changes: [],
+          ...(Object.hasOwn(rawOperation, 'post_bindings') ? {post_bindings: rawOperation.post_bindings} : {})};
+        if (kind === 'request-transition' && status === 'restored') requireState(
+          sameJson(rawOperation.restored, restoredWorks(changedWorks)), 'repair restored list differs from its frozen changes');
+        if (kind === 'correction-generation') operation.journal_changes = storedArray(rawOperation.journal_changes,
+          'repair journal changes').map(candidate => {
+          requireState(exactJsonKeys(candidate, ['row', 'before', 'after']) && isPlainRecord(candidate) &&
+            exactJsonKeys(candidate.row, ['work_id', 'attempt', 'revision', 'payload', 'digest']) && isPlainRecord(candidate.row), 'repair journal change is invalid');
+          const row = candidate.row;
+          requireState(typeof row.work_id === 'string' && typeof row.attempt === 'number' &&
+            Number.isSafeInteger(row.attempt) && row.attempt > 0 && typeof row.revision === 'number' &&
+            Number.isSafeInteger(row.revision) && row.revision > 0 && typeof row.payload === 'string' &&
+            typeof row.digest === 'string' && hashPattern.test(row.digest), 'repair journal row is invalid');
+          const before = decodeJournalPreimage(candidate.before);
+          const after = normalizeJournal(before);
+          requireState(row.work_id === before.work_id && row.attempt === before.attempt &&
+            row.payload === canonicalJson(before) && row.digest === canonicalJsonDigest(before) && sameJson(after, candidate.after),
+          'repair frozen journal row or transformation differs');
+          return {row: {work_id: row.work_id, attempt: row.attempt, revision: row.revision, payload: row.payload, digest: row.digest}, before, after};
+        });
+      }
       if (operation)
         requireState(
           operation.schema ===
@@ -7498,6 +7693,15 @@ export class HostStateStore {
             operation.workspace_id === this.#workspaceId,
           'repair operation integrity differs',
         );
+      if (operation?.status === 'planned') {
+        const boundCurrent = kind === 'request-transition'
+          ? sameJson(rawOperation?.bindings, {ledger_version: bindings.ledger,
+            journals: bindings.journals.map(row => ({work_id: row.work_id, attempt: row.attempt,
+              version: {revision: row.revision, digest: row.digest}}))})
+          : sameJson(operation.bindings, bindings);
+        if (boundCurrent) requireState(sameJson(operation.work_changes, workChanges) &&
+          sameJson(operation.journal_changes, journalChanges), 'repair frozen change set is incomplete');
+      }
       if (input.mode === 'plan') {
         if (operation) {
           requireState(operation.actor === input.actor, 'repair attribution differs');
@@ -7520,7 +7724,7 @@ export class HostStateStore {
           .run(this.#workspaceId, input.operationId, payload, payloadDigest(payload));
         return operationSnapshot(payload);
       }
-      requireState(operation, 'correction repair frozen plan unavailable');
+      requireState(operation && rawOperation, 'correction repair frozen plan unavailable');
       const restoring = input.mode === 'restore';
       if (operation.status === 'restored') {
         requireState(
@@ -7538,6 +7742,8 @@ export class HostStateStore {
         return operationSnapshot(operationPayload(operation));
       }
       if (operation.status === 'applied' && !restoring) {
+        requireState(workChanges.length === 0 && journalChanges.length === 0,
+          'applied repair leaves unlisted stale authority');
         requireState(
           kind === 'request-transition'
             ? operation.work_changes.every((change) =>
@@ -7586,20 +7792,7 @@ export class HostStateStore {
                 : change.before
             : change.after;
         requireState(canonicalJsonDigest(change.before) === change.row.digest, 'repair frozen work preimage differs');
-        const normalized = {
-          ...change.before,
-          ...(kind === 'correction-generation'
-            ? {
-                execution: {
-                  ...change.before.execution,
-                  assignment_attempts: change.before.execution.assignment_attempts.map(normalizeAttempt),
-                },
-              }
-            : { request_transition: null }),
-          revision: change.before.revision + 1,
-          lifecycle: { ...change.before.lifecycle, revision: change.before.lifecycle.revision + 1 },
-        };
-        requireState(canonicalJson(normalized) === canonicalJson(change.after), 'repair frozen transformation differs');
+        verifyWorkTransformation(change.before, change.after);
         const result = this.#database
           .query(
             "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
@@ -9093,6 +9286,11 @@ export class HostStateStore {
     requireState(value !== null && typeof value === 'object' && !Array.isArray(value), 'repair plan object required');
     const plan = value as DeliveredContinuationRepairPlan,
       { digest, ...body } = plan;
+    const matchesRetainedBranch = (): boolean => {
+      const receipt = parseStoredRecord(plan.inspection.row.payload, 'delivered-work repair retained receipt');
+      return isPlainRecord(receipt.request) && isPlainRecord(receipt.request.action) &&
+        receipt.request.action.kind === plan.branch;
+    };
     requireState(
       exactJsonKeys(plan, ['schema', 'branch', 'repair_id', 'actor', 'timestamp', 'inspection', 'digest']) &&
         exactJsonKeys(plan.inspection, [
@@ -9106,7 +9304,7 @@ export class HostStateStore {
         exactJsonKeys(plan.inspection.journal, ['revision', 'payload', 'digest', 'state']) &&
         plan.schema === 'DeliveredWorkContinuationIntegrityRepairPlan/v1' &&
         ['historical_terminal_review', 'configured_frontier'].includes(plan.branch) &&
-        JSON.parse(plan.inspection.row.payload).request.action.kind === plan.branch &&
+        matchesRetainedBranch() &&
         typeof plan.repair_id === 'string' && /^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.repair_id) &&
         typeof plan.actor === 'string' && plan.actor.trim().length > 0 && plan.actor === plan.actor.trim() &&
         plan.actor.length <= 256 && !/\p{Cc}/u.test(plan.actor) &&
@@ -9259,6 +9457,36 @@ export class HostStateStore {
       return { status: 'applied' as const, digest: plan.inspection.row.after_digest };
     }).immediate();
   }
+  readFailedPrewriterRecoveryReceipt(identity: WorkIdentity, attempt: number): FailedPrewriterRecoveryReceipt | null {
+    requireState(Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
+      'failed prewriter recovery inspection requires a valid nonnested attempt');
+    return this.#database.transaction(() => this.#readFailedPrewriterRecoveryReceipt(identity, attempt)).deferred();
+  }
+  #readFailedPrewriterRecoveryReceipt(identity: WorkIdentity, attempt: number): FailedPrewriterRecoveryReceipt | null {
+    const table = this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'").get();
+    if (!table) return null;
+    const rows = this.#database.query('SELECT payload,digest,recovery_id FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?')
+      .all(this.#workspaceId, identity.work_id, attempt) as { payload: string; digest: string; recovery_id: string }[];
+    requireState(rows.length <= 1, 'failed prewriter recovery identity is ambiguous');
+    if (rows.length === 0) return null;
+    const row = rows[0]!, receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
+    requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt) &&
+      sameJson(receipt.request.identity, identity) && receipt.request.attempt === attempt &&
+      receipt.request.recovery_id === row.recovery_id, 'failed prewriter recovery row identity or checksum differs');
+    validateFailedPrewriterRecoveryReceipt(receipt);
+    const original = this.#database.query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?')
+      .get(this.#workspaceId, identity.work_id, attempt, receipt.original.request.action.request.action_id) as { payload: string; digest: string } | null;
+    requireState(original?.payload === canonicalJson(receipt.original) && original.digest === receipt.request.original_receipt_digest,
+      'failed prewriter recovery original custody differs');
+    return snapshot(receipt);
+  }
+  readConfiguredFrontierRecoveryView(identity: WorkIdentity, attempt: number): ConfiguredFrontierRecoveryView | null {
+    const original = this.readDeliveredWorkContinuationReceipt(identity, attempt);
+    if (original?.request.action.kind !== 'configured_frontier') return null;
+    return snapshot({ original: original as ConfiguredFrontierReceipt,
+      recovery: this.readFailedPrewriterRecoveryReceipt(identity, attempt) });
+  }
+
   /** Read immutable continuation custody after current journal progress; this grants no execution. */
   readDeliveredWorkContinuationReceipt(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationReceipt | null {
     requireState(Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
@@ -9280,7 +9508,7 @@ export class HostStateStore {
     requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt) &&
       sameJson(receipt.request.identity, identity) && receipt.attempt === attempt &&
       receipt.request_digest === canonicalJsonDigest(receipt.request) &&
-      sameJson(current.work.binding, receipt.successor_binding) &&
+      sameJson(current.work.binding, this.#readFailedPrewriterRecoveryReceipt(identity, attempt)?.successor_work.binding ?? receipt.successor_binding) &&
       (action.kind === 'configured_frontier' ? action.request.action_id === row.action_id : action.capture.action_id === row.action_id),
     'delivered-work receipt or current binding differs');
     return snapshot(receipt);
@@ -9318,9 +9546,12 @@ export class HostStateStore {
          (receipt.request.action.kind === 'configured_frontier' &&
           receipt.request.action.request.action_id === row.action_id)) &&
         current.work.binding &&
-        sameJson(current.work.binding, receipt.successor_binding),
+        sameJson(current.work.binding, this.#readFailedPrewriterRecoveryReceipt(identity, attempt)?.successor_work.binding ?? receipt.successor_binding),
       'delivered-work continuation lookup receipt or current Work binding differs',
     );
+    const recovery = receipt.request.action.kind === 'configured_frontier'
+      ? this.#readFailedPrewriterRecoveryReceipt(identity, attempt) : null;
+    const currentSourceScope = recovery?.request.currentSourceScope ?? receipt.request.currentSourceScope;
     const work = current.work!,
       ledger = current.ledger,
       lease = work.lease,
@@ -9341,7 +9572,7 @@ export class HostStateStore {
         ticket?.status === 'active' &&
         ticket.work_id === identity.work_id &&
         ticket.thread_id === receipt.request.nativeSessionHandle &&
-        ticket.source_revision === receipt.request.currentSourceScope.digest &&
+        ticket.source_revision === currentSourceScope.digest &&
         sameJson(ticket.exclusive_resources, resources) &&
         sameJson(ticket.active_resources, resources) &&
         ticket.expires_at !== null &&
@@ -9391,10 +9622,13 @@ export class HostStateStore {
       requireState(receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
         'configured-frontier lookup immutable beforeimage is missing');
       const frontier = receipt as ConfiguredFrontierReceipt,
-        engine = JSON.parse(Buffer.from(frontier.frontier_snapshot.snapshot_bytes_base64, 'base64').toString('utf8')),
+        // checkedStoredWork has validated this immutable receipt and its engine snapshot.
+        engine = JSON.parse(Buffer.from(frontier.frontier_snapshot.snapshot_bytes_base64, 'base64').toString('utf8')) as SessionBridgeSnapshot,
         requests = projectConfiguredPrewriterContinuationRequests({
-          ...this.#configuredFrontierRepairBinding(frontier), engine, journal: frontier.prior_journal,
-          currentSourceScope: frontier.request.currentSourceScope, lifecycleRisk: frontier.prior_work.lifecycle.risk,
+          ...this.#configuredFrontierRepairBinding(frontier),
+          context: { ...this.#configuredFrontierRepairBinding(frontier).context, scope_digest: currentSourceScope.digest },
+          engine, journal: frontier.prior_journal,
+          currentSourceScope, lifecycleRisk: frontier.prior_work.lifecycle.risk,
         });
       if (journal.step_id !== 'wave-' + frontier.request.action.request.wave_index) {
         const prewriter = journal.completed[frontier.prior_journal.completed.length];
@@ -9406,7 +9640,9 @@ export class HostStateStore {
             item.observation.output_digest === canonicalJsonDigest(item.observation.summary)),
         'configured continuation current prewriter history is incomplete or changed');
         const binding = this.#configuredFrontierRepairBinding(frontier),
-          engine = readConfiguredContinuationSessionEngineSnapshot({ ...binding, runId: frontier.prior_work.execution.run_id! }, frontier);
+          engine = readConfiguredContinuationSessionEngineSnapshot({ ...binding,
+            context: { ...binding.context, scope_digest: currentSourceScope.digest },
+            runId: frontier.prior_work.execution.run_id! }, frontier, recovery);
         requireState(engine.run_id === journal.run_id && engine.step_id === journal.step_id &&
           sameJson(engine.requests, journal.items.map(item => item.request)) &&
           sameJson(engine.observations, journal.completed.flatMap(wave => wave.items.map(item => item.observation))),
@@ -9425,7 +9661,7 @@ export class HostStateStore {
       );
       const statuses = journal.items.map(item => item.observation ? 'reported' as const : item.issue_id ? 'issued' as const : 'unissued' as const);
       const frozenJournal = snapshot({ version, state: journal });
-      return Object.freeze({ receipt: snapshot(receipt), snapshot: current, journal: frozenJournal, item: frozenJournal.state.items[0]!,
+      return Object.freeze({ receipt: snapshot(receipt), recovery: snapshot(recovery), snapshot: current, journal: frozenJournal, item: frozenJournal.state.items[0]!,
         items: frozenJournal.state.items, item_statuses: Object.freeze(statuses),
         action_status: statuses.every(status => status === 'reported') ? 'reported' as const : statuses.some(status => status !== 'unissued') ? 'issued' as const : 'unissued' as const });
     }
@@ -9482,6 +9718,21 @@ export class HostStateStore {
     attempt: number,
     observation: { action_id: string; issue_id: string },
   ): MastraSessionLedgerState['items'][number] | null {
+    const failedTable = this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'").get();
+    if (failedTable) {
+      const rows = this.#database.query('SELECT payload,digest FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .all(this.#workspaceId, workId, attempt) as { payload: string; digest: string }[];
+      for (const row of rows) {
+        const receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
+        requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt), 'failed prewriter archive checksum differs');
+        validateFailedPrewriterRecoveryReceipt(receipt);
+        const item = receipt.prior_journal.items.find(item => item.request.action_id === observation.action_id);
+        if (!item) continue;
+        requireState(item.issue_id === observation.issue_id && item.observation &&
+          canonicalJson(item.observation) === canonicalJson(observation), 'archived failed prewriter report retry differs');
+        return snapshot(item);
+      }
+    }
     if (
       !this.#database
         .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_corrective_recovery'")
@@ -10591,13 +10842,18 @@ export class HostStateStore {
         digest: string;
       } | null;
       if (existing) {
-        const record = JSON.parse(existing.payload);
+        const record = parseStoredRecord(existing.payload, 'stopped-source capture receipt');
         requireState(
           canonicalJsonDigest(record) === existing.digest && record.request_digest === requestDigest,
           'stopped-source capture retry differs',
         );
         input.verifyCurrent();
         const current = this.#read(input.identity);
+        requireState(isPlainRecord(record.released_ticket) && typeof record.released_ticket.ticket_id === 'string' &&
+          isPlainRecord(record.release_operation) && typeof record.release_operation.operation_id === 'string',
+        'stopped-source capture release lineage is invalid');
+        const releasedTicketId = record.released_ticket.ticket_id;
+        const releasedOperationId = record.release_operation.operation_id;
         requireState(
           current.work?.lease === null &&
             current.work.execution.status === 'suspended' &&
@@ -10622,22 +10878,25 @@ export class HostStateStore {
         requireState(
           current.ledger &&
             sameJson(
-              current.ledger.tickets.find((entry) => entry.ticket_id === record.released_ticket.ticket_id),
+              current.ledger.tickets.find((entry) => entry.ticket_id === releasedTicketId),
               record.released_ticket,
             ) &&
             sameJson(
-              current.ledger.claims.filter((entry) => entry.ticket_id === record.released_ticket.ticket_id),
+              current.ledger.claims.filter((entry) => entry.ticket_id === releasedTicketId),
               record.released_claims,
             ) &&
             sameJson(
-              current.ledger.operations.find((entry) => entry.operation_id === record.release_operation.operation_id),
+              current.ledger.operations.find((entry) => entry.operation_id === releasedOperationId),
               record.release_operation,
             ),
           'stopped-source capture retry released lineage changed',
         );
-        const resources = record.released_ticket.exclusive_resources as readonly string[];
+        const releasedTicket = current.ledger.tickets.find(entry => entry.ticket_id === releasedTicketId);
+        const originalLedger = validateCoordinationLedgerV1(record.original_ledger);
+        requireState(releasedTicket && originalLedger.ok, 'stopped-source capture original release scope is invalid');
+        const resources = releasedTicket.exclusive_resources;
         const oldClaims = new Set(
-          (record.original_ledger.claims as typeof current.ledger.claims).map((entry) => entry.claim_id),
+          originalLedger.ledger.claims.map((entry) => entry.claim_id),
         );
         requireState(
           !current.ledger.claims.some(
@@ -10920,10 +11179,10 @@ export class HostStateStore {
         input.nativeReadResult.issue.action_id === input.actionId &&
         input.nativeReadResult.issue.issue_id === input.issueId &&
         input.nativeReadResult.issue.host_attempt_id === evidence.host_attempt_id &&
-        Array.isArray(input.nativeReadResult.command_refs) &&
-        Array.isArray(input.nativeReadResult.file_change_refs) &&
+        Boolean(Array.isArray(input.nativeReadResult.command_refs)) &&
+        Boolean(Array.isArray(input.nativeReadResult.file_change_refs)) &&
         evidence.active_source_writer_ids?.length === 0 &&
-        Array.isArray(evidence.observed_commands) &&
+        Boolean(Array.isArray(evidence.observed_commands)) &&
         evidence.observed_commands.length > 0 &&
         evidence.observed_commands.length <= 512 &&
         evidence.observed_commands.every(
@@ -10941,7 +11200,7 @@ export class HostStateStore {
           evidence.observed_commands.map((entry) => entry.ref),
           input.nativeReadResult.command_refs,
         ) &&
-        Array.isArray(evidence.original_tool_records) &&
+        Boolean(Array.isArray(evidence.original_tool_records)) &&
         evidence.original_tool_records.length > 0 &&
         evidence.original_tool_records.length <= 256 &&
         evidence.original_tool_records.every(
@@ -11520,6 +11779,98 @@ export class HostStateStore {
       requireState(bumped.changes === 1, 'lease renewal journal CAS conflict');
       this.#onReconciledWorkWrite(input.identity, before.workVersion, version(nextWork)!);
       return this.#read(input.identity);
+    }).immediate();
+  }
+
+  /** Correct a known-failed readonly wave under its original owner, attempt and immutable engine boundary. */
+  transitionFailedPrewriter(input: {
+    request: FailedPrewriterTransitionRequest;
+    verifyCurrent: (request: FailedPrewriterTransitionRequest, original: ConfiguredFrontierReceipt) => void;
+  }): HostStateSnapshot {
+    requireState(typeof input.verifyCurrent === 'function' && input.verifyCurrent.constructor.name !== 'AsyncFunction' &&
+      !this.#database.inTransaction, 'failed prewriter transition requires synchronous current proof');
+    const request = snapshot(input.request);
+    return this.#transactionWithProducerFence(() => {
+      this.assertSessionProducerWriteAllowed();
+      this.#assertMaintenanceAvailable(); this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceGeneration(request.expectedMaintenanceGeneration);
+      const before = this.#read(request.identity);
+      matchesExpected(before.workVersion, request.expectedWork); matchesExpected(before.ledgerVersion, request.expectedLedger);
+      const original = this.#readDeliveredWorkContinuationReceipt(request.identity, request.attempt);
+      requireState(original?.request.action.kind === 'configured_frontier', 'failed prewriter original receipt missing');
+      validateFailedPrewriterTransitionRequest(request, original as ConfiguredFrontierReceipt);
+      const row = this.#database.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(this.#workspaceId, request.identity.work_id, request.attempt) as { revision: number; payload: string; digest: string } | null;
+      requireState(row && row.revision === request.expectedJournal.revision && row.digest === request.expectedJournal.digest,
+        'failed prewriter transition Journal CAS changed');
+      const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
+      requireState(row.payload === canonicalJson(journal) && row.digest === canonicalJsonDigest(journal), 'failed prewriter Journal checksum differs');
+      const work = before.work!, ledger = before.ledger!, now = Date.now();
+      validateFailedPrewriterRecoveryBasis({ original: original as ConfiguredFrontierReceipt, work, ledger, journal,
+        nativeSessionHandle: request.nativeSessionHandle, now, leaseState: 'live' });
+      requireState(input.verifyCurrent(request, snapshot(original as ConfiguredFrontierReceipt)) === undefined,
+        'failed prewriter current endpoint proof must finish synchronously');
+      const binding = this.#configuredFrontierRepairBinding(original as ConfiguredFrontierReceipt);
+      const engine = readConfiguredContinuationSessionEngineSnapshot({ ...binding,
+        runId: original.prior_work.execution.run_id! }, original as ConfiguredFrontierReceipt);
+      requireState(engine.status === 'suspended' && engine.step_id === journal.step_id, 'original physical engine is no longer suspended');
+      const originalEngine = JSON.parse(Buffer.from((original as ConfiguredFrontierReceipt).frontier_snapshot.snapshot_bytes_base64, 'base64').toString('utf8')) as SessionBridgeSnapshot;
+      const requests = projectConfiguredPrewriterContinuationRequests({ ...binding,
+        context: { ...binding.context, scope_digest: request.currentSourceScope.digest }, engine: originalEngine,
+        journal: original.prior_journal, currentSourceScope: request.currentSourceScope, lifecycleRisk: original.prior_work.lifecycle.risk });
+      const priorTicket = ledger.tickets.find(item => item.ticket_id === work.lease!.ticket_id)!;
+      const priorClaim = ledger.claims.find(item => item.ticket_id === priorTicket.ticket_id && item.status === 'active')!;
+      const ticketId = 'ticket-' + randomUUID(), claimId = 'claim-' + randomUUID();
+      const createdAt = new Date(now).toISOString(), expiry = new Date(now + 60 * 60 * 1000).toISOString();
+      const ticket = { ...priorTicket, ticket_id: ticketId, sequence: ledger.next_sequence, generation: ledger.open_generation,
+        source_revision: request.currentSourceScope.digest, claim_ids: [claimId], expires_at: expiry, created_at: createdAt };
+      const claim = { ...priorClaim, claim_id: claimId, ticket_id: ticketId, generation: ledger.open_generation,
+        lease_expires_at: expiry, created_at: createdAt, renewed_at: createdAt };
+      const nextLedger = checkedLedger({ ...ledger, revision: ledger.revision + 1, next_sequence: ledger.next_sequence + 1,
+        tickets: [...ledger.tickets.map(item => item.ticket_id === priorTicket.ticket_id
+          ? { ...item, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null } : item), ticket],
+        claims: [...ledger.claims.map(item => item.claim_id === priorClaim.claim_id ? { ...item, status: 'recovered' } : item), claim] });
+      const endpoint = request.sourceTransition.transition;
+      const nextBinding = { ...work.binding, work_source_revision: request.currentSourceScope.digest,
+        config_digest: endpoint.target_config_digest, schema_digest: endpoint.target_schema_digest,
+        runtime_code_digest: endpoint.target_runtime_code_digest, runtime_source_revision: endpoint.target_runtime_code_digest };
+      const nextWork: WorkState = { ...work, revision: work.revision + 1, binding: nextBinding,
+        lease: { ticket_id: ticketId, thread_id: request.nativeSessionHandle, generation: ledger.open_generation },
+        lifecycle: { ...work.lifecycle, revision: work.revision + 1, source_revision: request.currentSourceScope.digest,
+          config_binding: { config_digest: endpoint.target_config_digest, schema_digest: endpoint.target_schema_digest,
+            runtime_code_digest: endpoint.target_runtime_code_digest } } };
+      const nextJournal: MastraSessionLedgerState = { ...journal, source_scope: request.currentSourceScope,
+        items: requests.map(request => ({ request, issue_id: null, observation: null })) };
+      const receipt: FailedPrewriterRecoveryReceipt = { schema: 'FailedPrewriterRecoveryReceipt/v1', request,
+        request_digest: canonicalJsonDigest(request), original: original as ConfiguredFrontierReceipt,
+        prior_work: work, prior_ledger: ledger, prior_journal: journal, prior_work_version: before.workVersion!,
+        prior_ledger_version: before.ledgerVersion!, prior_journal_version: request.expectedJournal,
+        successor_work: nextWork, successor_ledger: nextLedger, successor_journal: nextJournal,
+        work_version: version(nextWork)!, ledger_version: version(nextLedger)!,
+        journal_version: { revision: row.revision + 1, digest: canonicalJsonDigest(nextJournal) },
+        created_at: createdAt, rights_granted: false, accepted_result: false, runtime_acceptance: false };
+      validateFailedPrewriterRecoveryReceipt(receipt);
+      requireState(sameJson(this.#checkedWork(nextWork, receipt), nextWork), 'failed prewriter successor Work invalid');
+      validatePair(nextWork, nextLedger);
+      this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_failed_prewriter_recovery (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,recovery_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,recovery_id))');
+      requireState(!this.#database.query('SELECT 1 FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .get(this.#workspaceId, request.identity.work_id, request.attempt), 'failed prewriter recovery already recorded; inspect exact outcome');
+      this.#database.query('INSERT INTO agent_host_failed_prewriter_recovery VALUES(?,?,?,?,?,?)')
+        .run(this.#workspaceId, request.identity.work_id, request.attempt, request.recovery_id, canonicalJson(receipt), canonicalJsonDigest(receipt));
+      for (const [kind, id, value, expected] of [
+        ['work', identityKey(request.identity), nextWork, request.expectedWork],
+        ['ledger', 'shared', nextLedger, request.expectedLedger],
+      ] as const) {
+        const changed = this.#database.query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?')
+          .run(value.revision, canonicalJson(value), canonicalJsonDigest(value), this.#workspaceId, kind, id, expected.revision, expected.digest);
+        requireState(changed.changes === 1, 'failed prewriter transition Host CAS conflict');
+      }
+      const changedJournal = this.#database.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?')
+        .run(receipt.journal_version.revision, canonicalJson(nextJournal), receipt.journal_version.digest, this.#workspaceId,
+          request.identity.work_id, request.attempt, row.revision, row.digest);
+      requireState(changedJournal.changes === 1, 'failed prewriter transition Journal CAS conflict');
+      this.#onReconciledWorkWrite(request.identity, before.workVersion, receipt.work_version);
+      return this.#read(request.identity);
     }).immediate();
   }
 

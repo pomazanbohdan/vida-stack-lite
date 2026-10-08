@@ -4,20 +4,36 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HostStateStore } from '../../src/host-state.ts';
-import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
+import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig } from '../../src/config/runtime-config.ts';
 import { compareScopedSourceSnapshots } from '../../src/orchestration/scoped-source-snapshot.ts';
+/** @typedef {import('../../src/host-state.ts').WorkState} WorkState */
+/** @typedef {import('../../src/host-state.ts').WorkIdentity} WorkIdentity */
+/** @typedef {import('../../src/orchestration/scoped-source-snapshot.ts').ScopedSourceSnapshot} ScopedSourceSnapshot */
+/** @typedef {import('../../src/orchestration/delivered-work-continuation.ts').DeliveredWorkContinuationRequest} ContinuationRequest */
+/** @typedef {import('../../src/orchestration/delivered-work-continuation.ts').ClosedConfigTransitionProof} ClosedTransition */
+/** @typedef {{priorConfigDigest?: string, targetConfigDigest?: string, projectIds?: readonly string[], workspaceId?: string, integrationsDigest?: string}} DigestOptions */
+/** @param {unknown} value @returns {{revision: number, digest: string}} */
+function journalVersion(value) {
+  if (!isPlainRecord(value) || typeof value.revision !== 'number' || !Number.isSafeInteger(value.revision) ||
+      value.revision < 1 || typeof value.digest !== 'string') throw Error('Fixture journal version is missing or malformed');
+  return {revision: value.revision, digest: value.digest};
+}
+/** @param {ScopedSourceSnapshot['entries']} entries @returns {ScopedSourceSnapshot} */
 export const sourceScope = (entries) => {
+  /** @type {Omit<ScopedSourceSnapshot, 'digest'>} */
   const body = { schema: 'ScopedSourceSnapshot/v1', entries };
   return { ...body, digest: canonicalJsonDigest(body) };
 };
 
+/** @param {DigestOptions} [options] @returns {ClosedTransition} */
 export function closedTransition({
   priorConfigDigest = '5'.repeat(64),
   targetConfigDigest = '6'.repeat(64),
   projectIds = ['agent'],
   workspaceId = '9'.repeat(64),
 } = {}) {
+  /** @type {ClosedTransition['transition']} */
   const transition = {
     schema: 'RuntimeConfigDeliveryTransition/v1',
     operation_path: '.agent/work/config-delivery/runtime-config-delivery-operation.v1.json',
@@ -64,18 +80,21 @@ export function closedTransition({
   };
 }
 
+/** @param {DigestOptions} [options] @returns {ContinuationRequest} */
 export function requestFixture({
   priorConfigDigest = '5'.repeat(64),
   targetConfigDigest = '6'.repeat(64),
   projectIds = ['agent'],
   workspaceId = '9'.repeat(64),
+  integrationsDigest = '6'.repeat(64),
 } = {}) {
   const scope = sourceScope([
     { path: 'packages/agent/src/work.ts', exists: true, bytes: 4, sha256: '1'.repeat(64) },
   ]);
-  const transition = closedTransition({ priorConfigDigest, targetConfigDigest, projectIds, workspaceId });
-  transition.transition.source_snapshot_digest = scope.digest;
-  transition.transition_digest = canonicalJsonDigest(transition.transition);
+  const originalTransition = closedTransition({ priorConfigDigest, targetConfigDigest, projectIds, workspaceId });
+  const body = {...originalTransition.transition, source_snapshot_digest: scope.digest};
+  const transition = {...originalTransition, transition: body, transition_digest: canonicalJsonDigest(body)};
+  /** @type {import('../../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} */
   const actionRequest = {
     schema: 'VidaSessionRequest/v1',
     run_id: 'run-1',
@@ -89,6 +108,7 @@ export function requestFixture({
     scope_digest: scope.digest,
     bindings_manifest_ref: '3'.repeat(64),
   };
+  /** @type {import('../../src/orchestration/delivered-work-continuation.ts').ConfiguredFrontierContinuationAction} */
   const action = {
     schema: 'DeliveredWorkContinuationAction/v1',
     kind: 'configured_frontier',
@@ -105,7 +125,7 @@ export function requestFixture({
     identity: {
       repository_id: 'vida-agent',
       project_ids: ['agent'],
-      integrations_digest: '6'.repeat(64),
+      integrations_digest: integrationsDigest,
       work_id: 'work-1',
     },
     attempt: 1,
@@ -134,15 +154,19 @@ export function requestFixture({
 export const fixtureWorkspace = '9'.repeat(64);
 export const runtimeRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 export const runtimeConfig = loadRuntimeConfig(runtimeRoot);
+/** @type {WorkIdentity} */
 export const fixtureIdentity = {
   repository_id: 'vida-agent',
   project_ids: ['agent'],
   integrations_digest: '6'.repeat(64),
   work_id: 'work-1',
 };
+/** @type {string[]} */
 const fixtureRoots = [];
+/** @type {Database[]} */
 const fixtureDatabases = [];
 
+/** @param {WorkState['binding']} binding @param {number} [revision] @returns {WorkState['lifecycle']} */
 export function lifecycleFor(binding, revision = 1) {
   return {
     schema: 'LifecycleState/v1',
@@ -177,7 +201,9 @@ export function lifecycleFor(binding, revision = 1) {
   };
 }
 
+/** @param {ScopedSourceSnapshot} sourceScope @param {string} [runId] @param {string} [workflowId] @returns {import('../../src/orchestration/persistent-session-handoff.ts').MastraLedgerItem} */
 export function historicalJournalItem(sourceScope, runId = 'run-fixture', workflowId = 'task_execution') {
+  /** @type {import('../../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} */
   const request = {
     schema: 'VidaSessionRequest/v1',
     run_id: runId,
@@ -194,6 +220,10 @@ export function historicalJournalItem(sourceScope, runId = 'run-fixture', workfl
   return { request, issue_id: 'fixture-issue', observation: null };
 }
 
+/**
+ * @typedef {{queued?: boolean, uncertain?: boolean, root?: string, config?: ReturnType<typeof loadRuntimeConfig>, identity?: WorkIdentity, workspaceId?: string, databasePath?: string, originalSource?: ScopedSourceSnapshot, repositoryRoot?: string, workflowId?: string, workItemDigest?: string, priorConfigDigest?: string, intakeArtifacts?: WorkState['artifacts'], nativeSessionHandle?: string, runId?: string}} ContinuationFixtureOptions
+ * @param {ContinuationFixtureOptions} [options]
+ */
 export async function continuationFixture(options = {}) {
   const {
     queued = false,
@@ -228,6 +258,7 @@ export async function continuationFixture(options = {}) {
   };
   const principal = 'fixture:delivered-work-continuation',
     maintenancePrincipal = 'fixture:maintenance',
+    /** @type {import('../../src/host-state.ts').MaintenanceReleaseVerifier} */
     maintenanceVerifier = {
       principal: maintenancePrincipal,
       projectIds: identity.project_ids,
@@ -239,6 +270,7 @@ export async function continuationFixture(options = {}) {
         bundle_digest: fence.binding.bundle_digest,
       }),
     },
+    /** @type {import('../../src/orchestration/delivered-work-continuation.ts').DeliveredWorkContinuationVerifier} */
     continuationVerifier = {
       principal,
       verify: (request) => ({
@@ -261,6 +293,7 @@ export async function continuationFixture(options = {}) {
       undefined,
       continuationVerifier,
     );
+  /** @type {import('../../src/host-state.ts').MaintenanceFenceBinding} */
   const maintenanceBinding = {
     schema: 'MaintenanceFenceBinding/v1',
     project_ids: identity.project_ids,
@@ -278,7 +311,7 @@ export async function continuationFixture(options = {}) {
     ]),
     binding = {
       repository_id: identity.repository_id,
-      project_ids: identity.project_ids,
+      project_ids: [...identity.project_ids],
       integrations_digest: identity.integrations_digest,
       team_id: 'default-development',
       workflow_id: workflowId,
@@ -299,6 +332,7 @@ export async function continuationFixture(options = {}) {
     },
     now = new Date().toISOString(),
     expires = new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    /** @type {import('../../src/host-state.ts').CoordinationClaim} */
     claim = {
       schema: 'WorkstreamClaim/v1',
       claim_id: 'claim-original',
@@ -312,6 +346,7 @@ export async function continuationFixture(options = {}) {
       created_at: now,
       renewed_at: now,
     },
+    /** @type {import('../../src/host-state.ts').CoordinationTicket} */
     ticket = {
       schema: 'CoordinationTicket/v1',
       ticket_id: 'ticket-original',
@@ -331,8 +366,8 @@ export async function continuationFixture(options = {}) {
       active_resources: ['execution:' + identity.work_id],
       blocked_resources: [],
       created_at: now,
-    },
-    initial = store.compareAndSwapHostState({
+    };
+    store.compareAndSwapHostState({
       expectedWork: null,
       expectedLedger: null,
       expectedMaintenanceGeneration: 1,
@@ -376,7 +411,7 @@ export async function continuationFixture(options = {}) {
       observation: {
         schema: 'VidaSessionObservation/v1',
         action_id: journalItem.request.action_id,
-        issue_id: journalItem.issue_id,
+        issue_id: 'fixture-issue',
         agent_id: 'fixture:research-synthesizer',
         tool_call_ref: 'fixture:terminal-body',
         status: 'reported_complete',
@@ -406,8 +441,12 @@ export async function continuationFixture(options = {}) {
     canonicalJsonDigest(initialJournal),
   );
   if (queued) {
-    const before = store.readHostStateSnapshot(identity),
+    const before = store.readHostStateSnapshot(identity);
+    if (!before.work || !before.ledger) throw Error('Seeded Host state missing');
+    /** @type {WorkState} */
+    const
       nextWork = { ...before.work, revision: before.work.revision + 1, lifecycle: { ...before.work.lifecycle, revision: before.work.revision + 1 } },
+      /** @type {import('../../src/host-state.ts').CoordinationLedger} */
       nextLedger = {
         ...before.ledger,
         revision: before.ledger.revision + 1,
@@ -435,27 +474,33 @@ export async function continuationFixture(options = {}) {
       nextLedger,
     });
   }
-  const beforeRelease = store.readHostStateSnapshot(identity),
-    row = db.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(
+  const beforeRelease = store.readHostStateSnapshot(identity);
+  if (!beforeRelease.work || !beforeRelease.ledger || !beforeRelease.workVersion || !beforeRelease.ledgerVersion)
+    throw Error('Seeded release Host state missing');
+  const
+    row = journalVersion(db.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(
       workspaceId,
       identity.work_id,
       1,
-    ),
-    workAfter = { ...beforeRelease.work, revision: beforeRelease.work.revision + 1, lease: null, execution: { ...beforeRelease.work.execution, phase: 'awaiting_followup', status: 'suspended' }, lifecycle: { ...beforeRelease.work.lifecycle, revision: beforeRelease.work.revision + 1, next_action: 'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' } },
-    ledgerAfter = structuredClone(beforeRelease.ledger),
-    currentTicket = ledgerAfter.tickets.find((entry) => entry.status === 'active'),
-    currentClaim = ledgerAfter.claims.find((entry) => entry.ticket_id === currentTicket.ticket_id && entry.status === 'active'),
-    releaseTime = new Date().toISOString();
-  ledgerAfter.revision++;
-  ledgerAfter.tickets = ledgerAfter.tickets.map((entry) =>
+    )),
+    /** @type {WorkState} */
+    workAfter = { ...beforeRelease.work, revision: beforeRelease.work.revision + 1, lease: null, execution: { ...beforeRelease.work.execution, phase: 'awaiting_followup', status: 'suspended' }, lifecycle: { ...beforeRelease.work.lifecycle, revision: beforeRelease.work.revision + 1, next_action: 'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' } };
+  const currentTicket = beforeRelease.ledger.tickets.find((entry) => entry.status === 'active');
+  if (!currentTicket) throw Error('Original ticket missing');
+  const currentClaim = beforeRelease.ledger.claims.find((entry) => entry.ticket_id === currentTicket.ticket_id && entry.status === 'active');
+  if (!currentClaim) throw Error('Original claim missing');
+  const releaseTime = new Date().toISOString();
+  /** @type {import('../../src/host-state.ts').CoordinationLedger} */
+  const ledgerAfter = {...beforeRelease.ledger, revision: beforeRelease.ledger.revision + 1,
+    tickets: beforeRelease.ledger.tickets.map((entry) =>
     entry.ticket_id === currentTicket.ticket_id
       ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
       : entry,
-  );
-  ledgerAfter.claims = ledgerAfter.claims.map((entry) =>
+    ),
+    claims: beforeRelease.ledger.claims.map((entry) =>
     entry.claim_id === currentClaim.claim_id ? { ...entry, status: 'released', renewed_at: releaseTime } : entry,
-  );
-  ledgerAfter.operations.push({
+    ),
+    operations: [...beforeRelease.ledger.operations, {
     schema: 'CoordinationOperation/v1',
     operation_id: 'release-original-owner',
     kind: 'release',
@@ -465,12 +510,14 @@ export async function continuationFixture(options = {}) {
     source_revision: currentTicket.source_revision,
     resources: [...currentTicket.exclusive_resources],
     from_ledger_revision: beforeRelease.ledger.revision,
-    to_ledger_revision: ledgerAfter.revision,
+    to_ledger_revision: beforeRelease.ledger.revision + 1,
     decided_by: threadId,
     decision_pointer: 'WORK.md#accepted-request',
     created_at: releaseTime,
-  });
+    }],
+  };
   const bodyBytes = Buffer.from('{"schema":"VidaSessionObservation/v1","status":"reported_complete"}\n'),
+    /** @type {Parameters<HostStateStore['captureHistoricalTerminalSynthesisAndRelease']>[0]} */
     captureInput = {
       schema: 'HistoricalTerminalSynthesisCapture/v1',
       identity: identity,
@@ -516,11 +563,21 @@ export async function continuationFixture(options = {}) {
   return { root, db, store, identity, originalSource, capture, principal, workspaceId, config, repositoryRoot, priorConfigDigest, threadId, runId, closeDatabase };
 }
 
+/**
+ * @param {Awaited<ReturnType<typeof continuationFixture>>} f
+ * @param {{currentSourceScope?: ScopedSourceSnapshot, targetConfigDigest?: string, actionRequest?: ContinuationRequest['action']['request'], action?: ContinuationRequest['action']}} [options]
+ * @returns {ContinuationRequest}
+ */
 export function continuationRequestFor(f, options = {}) {
-  const state = f.store.readHostStateSnapshot(f.identity),
-    journalRow = f.db
+  const state = f.store.readHostStateSnapshot(f.identity);
+  if (!state.work || !state.workVersion || !state.ledgerVersion || !state.work.execution.run_id)
+    throw Error('Current continuation Host state missing');
+  const pointer = f.capture.request.user_request_pointer;
+  if (typeof pointer !== 'string') throw Error('Original request pointer missing');
+  const
+    journalRow = journalVersion(f.db
       .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
-      .get(f.workspaceId ?? fixtureWorkspace, f.identity.work_id, 1),
+      .get(f.workspaceId ?? fixtureWorkspace, f.identity.work_id, 1)),
     currentSourceScope = options.currentSourceScope ?? sourceScope([
       { path: 'src/task.ts', exists: true, bytes: 5, sha256: '8'.repeat(64) },
     ]),
@@ -554,7 +611,7 @@ export function continuationRequestFor(f, options = {}) {
         body_sha256: f.capture.body_sha256,
         body_ref: f.capture.provenance.body_ref,
       },
-      original_request_pointer: f.capture.request.user_request_pointer,
+      original_request_pointer: pointer,
       request: actionRequest,
     },
     changes = compareScopedSourceSnapshots(f.originalSource, currentSourceScope);
@@ -570,22 +627,36 @@ export function continuationRequestFor(f, options = {}) {
     priorRuntimeCodeDigest: state.work.binding.runtime_code_digest,
     currentSourceScope,
     authorizedSourceChanges: changes,
-    originalRequestPointer: f.capture.request.user_request_pointer,
+    originalRequestPointer: pointer,
     action,
   };
 }
 
+/** @param {string} root @returns {string} */
 export function trackContinuationFixtureRoot(root) {
   fixtureRoots.push(root);
   return root;
 }
 
+/** @type {Set<string>} */
+const uncertainFixtureRoots = new Set();
+/** @param {string} root */
+export function retainContinuationFixtureRoot(root) {
+  uncertainFixtureRoots.add(path.resolve(root));
+}
+
 export function cleanupContinuationFixtures() {
-  const retained = new Set();
+  const retained = new Set(uncertainFixtureRoots);
   for (const database of fixtureDatabases.splice(0)) {
     const filename = path.resolve(database.filename);
+    /** @type {readonly unknown[]} */
     const operations = database.query("SELECT payload FROM agent_host_governance WHERE kind='operation'").all();
-    if (operations.some(row => ['reserved', 'commit_unknown'].includes(JSON.parse(row.payload).status))) {
+    if (operations.some(row => {
+      if (!isPlainRecord(row) || typeof row.payload !== 'string') return true;
+      /** @type {unknown} */
+      const value = JSON.parse(row.payload);
+      return !isPlainRecord(value) || typeof value.status !== 'string' || ['reserved', 'commit_unknown'].includes(value.status);
+    })) {
       for (const root of fixtureRoots) {
         const relative = path.relative(path.resolve(root), filename);
         if (relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)) retained.add(path.resolve(root));

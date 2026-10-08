@@ -192,7 +192,7 @@ test('public policy transition preserves genuine baseline and completes one audi
   expect(readFileSync(path.join(f.root, f.oldPolicy.changelog_path), 'utf8')).toBe(lineage);
   expect(readFileSync(path.join(f.root, baseline.path)).equals(before)).toBe(true);
   expect((await executeDocumentationClearFromWork(input, 'verify')).status).toBe('verified');
-  await expect(runReconcileArtifacts(args('restore'))).rejects.toThrow('rollback');
+  await Promise.resolve(expect(runReconcileArtifacts(args('restore'))).rejects.toThrow('rollback'));
 }, 30000);
 
 for (const phase of ['fence_acquired', 'events_frozen', 'events_published', 'applied', 'released']) {
@@ -205,13 +205,13 @@ for (const phase of ['fence_acquired', 'events_frozen', 'events_published', 'app
       },
     };
     if (phase === 'fence_acquired') {
-      await expect(runReconcileArtifacts(args('apply'), fault)).rejects.toThrow('fixture interruption');
+      await Promise.resolve(expect(runReconcileArtifacts(args('apply'), fault)).rejects.toThrow('fixture interruption'));
       expect((await runReconcileArtifacts(args('resume'))).status).toBe('author_policy_required');
       f.put(f.policyPath, targetPolicy);
     } else {
       await runReconcileArtifacts(args('apply'));
       f.put(f.policyPath, targetPolicy);
-      await expect(runReconcileArtifacts(args('resume'), fault)).rejects.toThrow('fixture interruption');
+      await Promise.resolve(expect(runReconcileArtifacts(args('resume'), fault)).rejects.toThrow('fixture interruption'));
     }
     expect((await runReconcileArtifacts(args('resume'))).status).toBe('applied');
     const lineage = readFileSync(path.join(f.root, f.oldPolicy.changelog_path), 'utf8');
@@ -226,13 +226,13 @@ test('public CLEAR rejects forged phase, events and closure references', async (
   await runReconcileArtifacts(args('plan'));
   await runReconcileArtifacts(args('apply'));
   f.put(f.policyPath, targetPolicy);
-  await expect(
+  await Promise.resolve(expect(
     runReconcileArtifacts(args('resume'), {
       onPhase: (phase) => {
         if (phase === 'events_published') throw Error('before closeout');
       },
     }),
-  ).rejects.toThrow('before closeout');
+  ).rejects.toThrow('before closeout'));
   const file = `.agent/work/${f.work}/documentation-policy-transition.v1.json`,
     original = readFileSync(path.join(f.root, file), 'utf8');
   const forged = JSON.parse(original);
@@ -241,7 +241,7 @@ test('public CLEAR rejects forged phase, events and closure references', async (
   delete forged.operation_digest;
   forged.operation_digest = canonicalJsonDigest(forged);
   f.put(file, f.json(forged));
-  await expect(executeDocumentationClearFromWork(input, 'closeout')).rejects.toThrow('closeout reference');
+  await Promise.resolve(expect(executeDocumentationClearFromWork(input, 'closeout')).rejects.toThrow('closeout reference'));
   f.put(file, original);
   await runReconcileArtifacts(args('resume'));
   const applied = readFileSync(path.join(f.root, file), 'utf8');
@@ -258,7 +258,7 @@ test('public CLEAR rejects forged phase, events and closure references', async (
     delete record.operation_digest;
     record.operation_digest = canonicalJsonDigest(record);
     f.put(file, f.json(record));
-    await expect(executeDocumentationClearFromWork(input, 'verify')).rejects.toThrow();
+    await Promise.resolve(expect(executeDocumentationClearFromWork(input, 'verify')).rejects.toThrow());
   }
   f.put(file, applied);
   expect((await executeDocumentationClearFromWork(input, 'verify')).status).toBe('verified');
@@ -268,6 +268,6 @@ test('public policy planning denies an extra or substituted map outside exact sc
   const { f, targetPath, args } = await preparedFixture();
   for (const additions of [['docs/unapproved.md'], ['vida-agent/TESTING.md', 'docs/unapproved.md']]) {
     f.put(targetPath, f.json({ ...f.oldPolicy, map_paths: [...f.oldPolicy.map_paths, ...additions] }));
-    await expect(runReconcileArtifacts(args('plan'))).rejects.toThrow('exact accepted documentation scope');
+    await Promise.resolve(expect(runReconcileArtifacts(args('plan'))).rejects.toThrow('exact accepted documentation scope'));
   }
 }, 30000);

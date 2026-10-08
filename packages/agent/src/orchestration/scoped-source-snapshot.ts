@@ -95,7 +95,7 @@ export function compareRuntimeEndpointSnapshots(
 ): readonly ScopedSourceChange[] {
   for (const snapshot of [before, after]) {
     requireSnapshot(hasExactKeys(snapshot, ['schema', 'entries', 'digest']) &&
-      snapshot.schema === 'ScopedSourceSnapshot/v1' && Array.isArray(snapshot.entries) &&
+      snapshot.schema === 'ScopedSourceSnapshot/v1' && Boolean(Array.isArray(snapshot.entries)) &&
       typeof snapshot.digest === 'string' && sourceHash.test(snapshot.digest), 'runtime endpoint shape is invalid');
     const paths = canonicalPaths(snapshot.entries.map((entry) => entry.path));
     let totalBytes = 0;
@@ -206,10 +206,10 @@ function requireSnapshot(condition: unknown, message: string): asserts condition
 
 function canonicalPaths(paths: readonly string[]): readonly string[] {
   requireSnapshot(
-    Array.isArray(paths) && paths.length > 0 && paths.length <= 512,
+    Boolean(Array.isArray(paths)) && paths.length > 0 && paths.length <= 512,
     'scoped source paths must be a nonempty bounded list',
   );
-  const result = [...paths].sort();
+  const result = [...paths].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
   requireSnapshot(
     result.every(
       (value) =>
@@ -220,7 +220,7 @@ function canonicalPaths(paths: readonly string[]): readonly string[] {
         !value.startsWith('/') &&
         !value.endsWith('/') &&
         !/^[A-Za-z]:/.test(value) &&
-        !/[\u0000-\u001f]/.test(value) &&
+        !Array.from(value).some(character => character.charCodeAt(0) < 32) &&
         value.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..'),
     ),
     'scoped source path is not canonical repository-relative',

@@ -13,7 +13,7 @@ import {
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { loadProjectSetContext, projectMayScopeRepositoryPath } from '../config/project-context.js';
-import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
 import {
   HostStateStore,
   completedSourceJournalObservationMatches,
@@ -182,7 +182,8 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   const canonicalIntakePath =
     input.intakePath === undefined ? null : `.agent/work/${context.work_id}/local-session-intake.v1.json`;
   if (intakeBytes !== null) {
-    const raw = JSON.parse(intakeBytes.toString('utf8'));
+    const raw: unknown = JSON.parse(intakeBytes.toString('utf8'));
+    requireAdmission(isPlainRecord(raw), 'local admission intake must be a JSON record');
     intakeBytes = Buffer.from(
       canonicalJson({ ...raw, runtime_code_paths: runtimeCode.entries.map((entry) => entry.path) }),
     );
@@ -551,10 +552,10 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
           );
           const bytes = access.readBytes(artifact.path, 'predecessor accepted research provenance');
           requireAdmission(digest(bytes) === artifact.sha256, 'predecessor canonical research artifact changed');
-          const record = JSON.parse(bytes.toString('utf8'));
-          if (artifact.schema === 'ResearchResult/v1') validateResearchResult(record);
-          else if (artifact.schema === 'ResearchSynthesis/v1') validateResearchSynthesis(record);
-          else requireAdmission(false, 'predecessor normalized artifact has an unexpected contract');
+          const candidate: unknown = JSON.parse(bytes.toString('utf8'));
+          const record = artifact.schema === 'ResearchResult/v1' ? validateResearchResult(candidate)
+            : artifact.schema === 'ResearchSynthesis/v1' ? validateResearchSynthesis(candidate) : null;
+          requireAdmission(record !== null, 'predecessor normalized artifact has an unexpected contract');
           requireAdmission(
             record.digest === plan.result_digest &&
               record.work_item_id === work.binding.lifecycle_work_id &&

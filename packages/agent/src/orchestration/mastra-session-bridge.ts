@@ -22,6 +22,8 @@ import {
   type SessionEngineBinding,
 } from './session-engine-snapshot.js';
 import type { ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
+import { effectiveConfiguredFrontier, type FailedPrewriterRecoveryReceipt,
+  type ConfiguredFrontierRecoveryView } from './failed-prewriter-transition.js';
 import type { ScopedSourceSnapshot } from './scoped-source-snapshot.js';
 
 const observationSchema = z
@@ -203,7 +205,7 @@ export interface SessionBridgeSnapshot {
 
 /** Mastra owns stage order; the session ledger only issues and records effects. */
 export class MastraSessionBridge {
-  readonly #workflow: ReturnType<typeof createWorkflow>;
+  readonly #workflow: ReturnType<typeof createWorkflow<string, typeof runStateSchema, typeof runStateSchema>>;
   readonly #storage: LibSQLStore;
   readonly #context: SessionHandoffContext;
   readonly #runId: string;
@@ -215,7 +217,7 @@ export class MastraSessionBridge {
   readonly #configuredFrontier: { readonly identity: WorkIdentity; readonly attempt: number } | undefined;
 
   private constructor(
-    workflow: ReturnType<typeof createWorkflow>,
+    workflow: ReturnType<typeof createWorkflow<string, typeof runStateSchema, typeof runStateSchema>>,
     storage: LibSQLStore,
     config: AgentRuntimeConfig,
     selection: WorkItemSelection,
@@ -278,6 +280,7 @@ export class MastraSessionBridge {
     const baseRunId = sessionBridgeRunId(workspaceId, context, workflowId);
     requireBridge(!correctiveExecution || correctiveExecution.base_run_id === baseRunId, 'corrective base run differs');
     let configuredReceipt: ConfiguredFrontierReceipt | undefined;
+    let configuredRecovery: FailedPrewriterRecoveryReceipt | null = null;
     let runId = correctiveExecution?.engine_run_id ?? baseRunId;
     if (args.configuredFrontier) {
       requireBridge(!correctiveExecution, 'configured frontier cannot use a corrective run');
@@ -292,13 +295,16 @@ export class MastraSessionBridge {
       );
       const stored = args.ledger.hostState.readDeliveredWorkContinuationReceipt(identity, attempt);
       requireBridge(stored, 'configured-frontier Host receipt is missing');
+      requireBridge(stored.request.action.kind === 'configured_frontier', 'configured-frontier receipt kind differs');
+      configuredRecovery = args.ledger.hostState.readFailedPrewriterRecoveryReceipt(identity, attempt);
+      const effective = effectiveConfiguredFrontier({ original: stored as ConfiguredFrontierReceipt, recovery: configuredRecovery });
       requireBridge(
         stored.request.action.kind === 'configured_frontier' &&
           stored.attempt === attempt &&
           canonicalJsonDigest(stored.request.identity) === canonicalJsonDigest(identity) &&
           stored.request.identity.work_id === context.work_id &&
           stored.request.action.workflow_id === workflowId &&
-          stored.request.currentSourceScope.digest === context.scope_digest &&
+          effective.currentSourceScope.digest === context.scope_digest &&
           stored.request.targetConfigDigest === runtimeConfigDigest(config) &&
           stored.request.action.request.run_id === stored.prior_work.execution.run_id &&
           typeof stored.prior_work.execution.run_id === 'string' &&
@@ -311,7 +317,7 @@ export class MastraSessionBridge {
       const host = args.ledger.hostState.readHostStateSnapshot(identity);
       requireBridge(
         host.work && host.workVersion &&
-          canonicalJsonDigest(host.work.binding) === canonicalJsonDigest(stored.successor_binding) &&
+          canonicalJsonDigest(host.work.binding) === canonicalJsonDigest(effective.currentBinding) &&
           host.work.execution.run_id === runId &&
           host.work.execution.status === 'active',
         'configured-frontier current Work differs from the stored receipt',
@@ -326,7 +332,7 @@ export class MastraSessionBridge {
         runId,
         ...(args.lifecycleRisk === undefined ? {} : { lifecycleRisk: args.lifecycleRisk }),
       };
-      const preflight = readConfiguredContinuationSessionEngineSnapshot(binding, configuredReceipt);
+      const preflight = readConfiguredContinuationSessionEngineSnapshot(binding, configuredReceipt, configuredRecovery);
       requireBridge(
         preflight.status === 'suspended',
         'configured-frontier run has no resumable current graph frontier',
@@ -500,17 +506,21 @@ export class MastraSessionBridge {
 
   async snapshot(): Promise<SessionBridgeSnapshot | null> {
     this.#assertEngineFile();
+    const view = this.#configuredFrontier ? this.#readConfiguredFrontierView() : null;
     const snapshot = this.#configuredFrontier
-      ? readConfiguredContinuationSessionEngineSnapshot(this.#binding, this.#readConfiguredFrontierReceipt())
+      ? readConfiguredContinuationSessionEngineSnapshot(this.#binding, view!.original, view!.recovery)
       : readSessionEngineSnapshot({ ...this.#binding, correctiveExecution: this.#correctiveExecution });
     this.#assertEngineFile();
     return snapshot;
   }
 
-  #readConfiguredFrontierReceipt(): ConfiguredFrontierReceipt {
+  #readConfiguredFrontierView(): ConfiguredFrontierRecoveryView {
     const key = this.#configuredFrontier;
     requireBridge(key, 'configured-frontier receipt binding is missing');
     const receipt = this.#ledger.hostState.readDeliveredWorkContinuationReceipt(key.identity, key.attempt);
+    requireBridge(receipt?.request.action.kind === 'configured_frontier', 'configured-frontier receipt missing');
+    const recovery = this.#ledger.hostState.readFailedPrewriterRecoveryReceipt(key.identity, key.attempt);
+    const effective = effectiveConfiguredFrontier({ original: receipt as ConfiguredFrontierReceipt, recovery });
     requireBridge(
       receipt && receipt.request.action.kind === 'configured_frontier' &&
         receipt.attempt === key.attempt &&
@@ -519,19 +529,19 @@ export class MastraSessionBridge {
         receipt.successor_binding.workflow_id === this.#binding.workflowId &&
         receipt.request.action.workflow_id === this.#binding.workflowId &&
         receipt.request.targetConfigDigest === runtimeConfigDigest(this.#binding.config) &&
-        receipt.request.currentSourceScope.digest === this.#context.scope_digest &&
+        effective.currentSourceScope.digest === this.#context.scope_digest &&
         receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
       'configured-frontier Host receipt changed or is no longer applicable',
     );
     const host = this.#ledger.hostState.readHostStateSnapshot(key.identity);
     requireBridge(
       host.work && host.workVersion &&
-        canonicalJsonDigest(host.work.binding) === canonicalJsonDigest(receipt.successor_binding) &&
+        canonicalJsonDigest(host.work.binding) === canonicalJsonDigest(effective.currentBinding) &&
         host.work.execution.run_id === this.#runId &&
         host.work.execution.status === 'active',
       'configured-frontier current Work no longer matches its stored receipt',
     );
-    return receipt as ConfiguredFrontierReceipt;
+    return { original: receipt as ConfiguredFrontierReceipt, recovery };
   }
 
   #reserve(
@@ -540,7 +550,7 @@ export class MastraSessionBridge {
     resumeIntent?: { stepId: string; observations: readonly SessionBridgeObservation[] },
   ) {
     this.#assertEngineFile();
-    if (this.#configuredFrontier) this.#readConfiguredFrontierReceipt();
+    if (this.#configuredFrontier) this.#readConfiguredFrontierView();
     return this.#ledger.beginSessionProducer({
       ...this.#binding,
       projectIds: this.#projectIds,

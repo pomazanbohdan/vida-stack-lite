@@ -704,7 +704,7 @@ test('retired Source capture settles only the issued failure and retries through
       ...c.operation,
       terminalEvidence: { ...c.operation.terminalEvidence, source_turn_id: 'synthetic-changed-turn' },
     });
-    await expect(run(args)).rejects.toThrow('original thread or interrupted turn differs');
+    await Promise.resolve(expect(run(args)).rejects.toThrow('original thread or interrupted turn differs'));
   } finally {
     await f.close();
   }
@@ -751,7 +751,7 @@ test('retired Source capture accounts command patches, exact exclusions and unre
     artifact.data.turns[0].items.push(event);
     writeJson(f.root, c.operation.nativeTurnEvidenceRef, artifact);
     writeJson(f.root, requestRef, { workspace_id: f.workspace, ...c.operation });
-    await expect(run(args)).rejects.toThrow('patch outcome is unresolved');
+    await Promise.resolve(expect(run(args)).rejects.toThrow('patch outcome is unresolved'));
     expect(f.inspect()).toEqual(before);
     mkdirSync(path.join(f.root, '.tmp'), { recursive: true });
     writeFileSync(path.join(f.root, '.tmp/original.patch'),
@@ -765,7 +765,7 @@ test('retired Source capture accounts command patches, exact exclusions and unre
     for (const command of [standalone.command, "with Path('docs/outside.md').open('a') as f: f.write('unexpected')"] ) {
       standalone.command = command;
       writeJson(f.root, c.operation.nativeTurnEvidenceRef, artifact);
-      await expect(run(args)).rejects.toThrow('outside the original scope');
+      await Promise.resolve(expect(run(args)).rejects.toThrow('outside the original scope'));
       expect(f.inspect()).toEqual(before);
     }
     artifact.data.turns[0].items.pop();
@@ -1125,7 +1125,7 @@ test('completed readonly release rejects absent and null engine completion evide
             '--request',
             requestRef,
           ]);
-      await expect(cli()).rejects.toThrow('Readonly release actual engine completion differs');
+      await Promise.resolve(expect(cli()).rejects.toThrow('Readonly release actual engine completion differs'));
       const denied = containedPackage.run(
         [
           '--release-completed-readonly',

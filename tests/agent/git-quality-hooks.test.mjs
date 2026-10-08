@@ -14,11 +14,14 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { baseline, measuredMaxima, pushedHead } from '../../tooling/agent/git-quality-hooks.mjs';
+import { baseline, measuredMaxima, pushedHead, rejectFocusedTests, stableInputs, verifyStagedObjects } from '../../tooling/agent/git-quality-hooks.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const uncertainFixtureRoots = new Set();
 function execute(root, executable, args, options = {}) {
-  return spawnSync(executable, args, { cwd: root, encoding: 'utf8', windowsHide: true, ...options });
+  const result = spawnSync(executable, args, { cwd: root, encoding: 'utf8', windowsHide: true, ...options });
+  if (result.error || result.signal || !Number.isInteger(result.status)) uncertainFixtureRoots.add(root);
+  return result;
 }
 function git(root, ...args) {
   const result = execute(root, 'git', args);
@@ -29,13 +32,17 @@ function temporary(t) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida hook Україна '));
   t.after(() => {
     assert.ok(root.startsWith(path.join(tmpdir(), 'vida hook Україна ')));
+    if (uncertainFixtureRoots.has(root)) {
+      console.warn('Retained Git fixture with an uncertain child outcome: ' + root);
+      return;
+    }
     rmSync(root, { recursive: true, force: true });
   });
   return root;
 }
 function fixture(t) {
   const root = temporary(t);
-  for (const directory of ['.githooks', 'tooling/agent', 'packages/agent/src'])
+  for (const directory of ['.githooks', 'tooling/agent', 'packages/agent/src', 'packages/agent/bin', 'packages/agent/tests', 'packages/agent/tooling'])
     mkdirSync(path.join(root, directory), { recursive: true });
   for (const file of ['.githooks/pre-commit', '.githooks/pre-push', 'tooling/agent/git-quality-hooks.mjs'])
     copyFileSync(path.join(source, file), path.join(root, file));
@@ -46,6 +53,12 @@ function fixture(t) {
     process.platform === 'win32' ? 'junction' : 'dir',
   );
   copyFileSync(path.join(source, 'packages/agent/.oxfmtrc.json'), path.join(pkg, '.oxfmtrc.json'));
+  copyFileSync(path.join(source, 'packages/agent/oxlint.config.json'), path.join(pkg, 'oxlint.config.json'));
+  copyFileSync(path.join(source, 'packages/agent/bin/bun.mjs'), path.join(pkg, 'bin/bun.mjs'));
+  copyFileSync(path.join(source, 'packages/agent/.bun-version'), path.join(pkg, '.bun-version'));
+  writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({type: 'module', packageManager: 'bun@1.4.2', engines: {bun: '1.4.2'}}));
+  for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', '.gitattributes'])
+    writeFileSync(path.join(root, file), file === '.gitattributes' ? '*.ts text eol=lf\n' : 'Fixture root input\n');
   writeFileSync(
     path.join(pkg, 'tsconfig.json'),
     JSON.stringify({
@@ -64,7 +77,7 @@ function fixture(t) {
   return root;
 }
 
-test('real Git pre-commit formats a new Unicode/spaces TS module and checks full project', (t) => {
+test('real Git pre-commit formats a new Unicode/spaces TS module and checks full project', {timeout: 60_000}, (t) => {
   const root = fixture(t);
   const file = 'packages/agent/src/новий модуль.ts';
   writeFileSync(path.join(root, file), 'export const value:number=3');
@@ -78,7 +91,7 @@ test('real Git pre-commit formats a new Unicode/spaces TS module and checks full
   assert.match(result.stderr, /TS2322/);
 });
 
-test('partial staging rejects before writes and preserves unrelated index/worktree', (t) => {
+test('partial staging rejects before writes and preserves unrelated index/worktree', {timeout: 30_000}, (t) => {
   const root = fixture(t);
   const file = 'packages/agent/src/initial.ts';
   writeFileSync(path.join(root, file), 'export const initial=2');
@@ -96,7 +109,7 @@ test('partial staging rejects before writes and preserves unrelated index/worktr
   assert.equal(readFileSync(path.join(root, 'unrelated.txt'), 'utf8'), 'unstaged\n');
 });
 
-test('untracked maintained graph input rejects before staged formatting', (t) => {
+test('untracked maintained graph input rejects before staged formatting', {timeout: 30_000}, (t) => {
   const root = fixture(t);
   writeFileSync(path.join(root, 'packages/agent/src/initial.ts'), 'export const initial=2');
   git(root, 'add', 'packages/agent/src/initial.ts');
@@ -107,7 +120,7 @@ test('untracked maintained graph input rejects before staged formatting', (t) =>
   assert.equal(readFileSync(path.join(root, 'packages/agent/src/initial.ts'), 'utf8'), 'export const initial=2');
 });
 
-test('successful formatting preserves unrelated staged and separate unstaged text bytes', (t) => {
+test('successful formatting preserves unrelated staged and separate unstaged text bytes', {timeout: 60_000}, (t) => {
   const root = fixture(t);
   writeFileSync(path.join(root, 'packages/agent/src/initial.ts'), 'export const initial=2');
   git(root, 'add', 'packages/agent/src/initial.ts');
@@ -118,6 +131,91 @@ test('successful formatting preserves unrelated staged and separate unstaged tex
   assert.equal(git(root, 'show', 'HEAD:unrelated.txt'), 'staged\n');
   assert.equal(readFileSync(path.join(root, 'separate-untracked.txt'), 'utf8'), 'unstaged\n');
   assert.equal(git(root, 'ls-files', '--', 'separate-untracked.txt'), '');
+});
+
+test('real pre-commit rejects a type-correct floating promise through the complete lint profile', {timeout: 60_000}, (t) => {
+  const root = fixture(t), file = 'packages/agent/src/initial.ts';
+  writeFileSync(path.join(root, file), 'export async function observed() { return 1; }\nobserved();\n');
+  git(root, 'add', '--', file);
+  const before = git(root, 'rev-parse', 'HEAD');
+  const result = execute(root, 'git', ['commit', '-qm', 'must reject lint']);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /no-floating-promises/);
+  assert.equal(git(root, 'rev-parse', 'HEAD'), before);
+});
+
+test('real pre-commit rejects a focused Bun test before allowing a commit', {timeout: 60_000}, (t) => {
+  const root = fixture(t), file = 'packages/agent/tests/focused.test.mjs';
+  writeFileSync(path.join(root, file), "import { test as check } from 'bun:test'; check.only('fixture', () => {});\n");
+  git(root, 'add', '--', file);
+  const before = git(root, 'rev-parse', 'HEAD');
+  const result = execute(root, 'git', ['commit', '-qm', 'must reject focused test']);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Focused test is forbidden/);
+  assert.equal(git(root, 'rev-parse', 'HEAD'), before);
+});
+
+test('root instruction, sidecar, YAML and attributes drift invalidate checked inputs', {timeout: 30_000}, (t) => {
+  const root = fixture(t);
+  const before = stableInputs(root);
+  for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', '.gitattributes']) {
+    const original = readFileSync(path.join(root, file));
+    writeFileSync(path.join(root, file), Buffer.concat([original, Buffer.from('Changed\n')]));
+    assert.throws(() => stableInputs(root), /Checked inputs differ/);
+    writeFileSync(path.join(root, file), original);
+    assert.equal(stableInputs(root), before);
+  }
+});
+
+for (const flag of ['assume-unchanged', 'skip-worktree']) {
+  test(`checked inputs reject drift hidden by ${flag}`, {timeout: 30_000}, (t) => {
+    const root = fixture(t);
+    for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', '.gitattributes', 'packages/agent/src/initial.ts']) {
+      const original = readFileSync(path.join(root, file));
+      git(root, 'update-index', '--' + flag, '--', file);
+      try {
+        assert.doesNotThrow(() => stableInputs(root));
+        writeFileSync(path.join(root, file), Buffer.concat([original, Buffer.from('Hidden change\n')]));
+        assert.equal(git(root, 'diff', '--name-only', '--', file), '');
+        assert.throws(() => stableInputs(root), /Staged bytes or mode changed/);
+      } finally {
+        writeFileSync(path.join(root, file), original);
+        git(root, 'update-index', '--no-' + flag, '--', file);
+      }
+    }
+  });
+}
+
+test('staging validation uses Git path filters and rejects byte or mode changes', {timeout: 30_000}, (t) => {
+  const root = fixture(t), file = 'packages/agent/src/initial.ts';
+  const index = git(root, 'ls-files', '--stage', '-z');
+  const bytes = Buffer.from('export const initial = 2;\r\n');
+  writeFileSync(path.join(root, file), bytes);
+  const expected = execute(root, 'git', ['hash-object', '--path=' + file, '--stdin'], {input: bytes});
+  assert.equal(expected.status, 0, expected.stderr);
+  const objects = [[file, expected.stdout.trim()]];
+  git(root, 'add', '--', file);
+  verifyStagedObjects(root, objects, index);
+  git(root, 'update-index', '--chmod=+x', '--', file);
+  assert.throws(() => verifyStagedObjects(root, objects, index), /Staged bytes or mode changed/);
+  git(root, 'update-index', '--chmod=-x', '--', file);
+  writeFileSync(path.join(root, file), 'export const initial = 3;\n');
+  git(root, 'add', '--', file);
+  assert.throws(() => verifyStagedObjects(root, objects, index), /Staged bytes or mode changed/);
+});
+
+test('focused-test AST checks catch Bun aliases and namespaces and allow comments and strings', async (t) => {
+  const root = temporary(t), file = path.join(root, 'focused.test.mjs');
+  const pkg = path.join(source, 'packages/agent');
+  for (const body of ["import { test } from 'bun:test'; test.only('x', () => {});",
+    "import { test as check } from 'bun:test'; check['only']('x', () => {});",
+    "import * as suite from 'bun:test'; suite.test.only('x', () => {});",
+    "import { describe as group } from 'vitest'; group.only('x', () => {});"]) {
+    writeFileSync(file, body);
+    await assert.rejects(rejectFocusedTests(pkg, [file]), /Focused test is forbidden/);
+  }
+  writeFileSync(file, "import { test } from 'bun:test'; // test.only('x')\nconst text = 'test.only'; test('ordinary', () => {});\n");
+  await rejectFocusedTests(pkg, [file]);
 });
 
 test('all ref rows are checked, deletions ignored, alternate local OIDs denied', () => {

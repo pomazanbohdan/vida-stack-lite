@@ -830,7 +830,7 @@ function requireTrustedHostAuthentication(value: TrustedHostAuthentication): Rea
     'trusted host config revision is invalid',
   );
   requireCondition(
-    Array.isArray(value.permittedOperations) &&
+    Boolean(Array.isArray(value.permittedOperations)) &&
       value.permittedOperations.length > 0 &&
       new Set(value.permittedOperations).size === value.permittedOperations.length &&
       value.permittedOperations.every((operation) => trustedHostOperations.has(operation)),

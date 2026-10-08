@@ -17,10 +17,11 @@ const numericReason = 'one or more maintained functions do not satisfy CRAP <5 a
 const formula = 'complexity^2 * (1-coverage)^3 + complexity';
 const supported = /\.(?:[cm]?[jt]sx?|jsonc?|md|mdx|yaml|yml|toml|html|css|scss|vue|svelte)$/i;
 const maintained = (file) =>
+  ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', '.gitattributes'].includes(file) ||
   (file.startsWith('packages/agent/') && !/^packages\/agent\/(?:node_modules|dist|coverage|\.tmp)\//.test(file)) ||
   /^(?:tooling\/agent\/|tests\/agent\/|\.githooks\/)/.test(file);
 
-function command(executable, args, cwd, env, capture = true) {
+function command(executable, args, cwd, env, capture = true, input) {
   const result = spawnSync(executable, args, {
     cwd,
     env,
@@ -28,19 +29,20 @@ function command(executable, args, cwd, env, capture = true) {
     stdio: capture ? 'pipe' : 'inherit',
     windowsHide: true,
     maxBuffer: 64 * 1024 * 1024,
+    ...(input === undefined ? {} : { input }),
   });
   if (result.error || result.signal || !Number.isInteger(result.status))
     throw new Error(`${executable} failed: ${result.error ?? result.signal}`);
   return result;
 }
-function checked(executable, args, cwd, env) {
-  const result = command(executable, args, cwd, env);
+function checked(executable, args, cwd, env, input) {
+  const result = command(executable, args, cwd, env, true, input);
   if (result.status !== 0) throw new Error(`${executable} ${args[0]} failed:\n${result.stdout}${result.stderr}`);
   return result.stdout;
 }
 const nul = (text) => text.split('\0').filter(Boolean);
-function git(root, args) {
-  return checked('git', args, root, process.env);
+function git(root, args, input) {
+  return checked('git', args, root, process.env, input);
 }
 
 export function pushedHead(input, head) {
@@ -60,7 +62,7 @@ export function pushedHead(input, head) {
   return count;
 }
 
-function stableInputs(root, push = false) {
+export function stableInputs(root, push = false) {
   const changed = nul(git(root, ['diff', '--name-only', '-z'])).filter(maintained);
   const unknown = nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z'])).filter(maintained);
   const staged = push ? nul(git(root, ['diff', '--cached', '--name-only', '-z', 'HEAD'])).filter(maintained) : [];
@@ -73,12 +75,23 @@ function stableInputs(root, push = false) {
     .sort();
   const bytes = files.map((file) => {
     const absolute = path.join(root, file);
-    if (!existsSync(absolute)) return [file, null];
+    if (!existsSync(absolute)) throw new Error(`Checked input is missing: ${file}`);
     if (!lstatSync(absolute).isFile() || lstatSync(absolute).isSymbolicLink())
       throw new Error(`Checked input is not a regular file: ${file}`);
     return [file, readFileSync(absolute).toString('base64')];
   });
-  return JSON.stringify([git(root, ['rev-parse', 'HEAD']), git(root, ['ls-files', '--stage', '-z']), bytes]);
+  const index = git(root, ['ls-files', '--stage', '-z']);
+  const attributes = git(root, ['write-tree']).trim();
+  const ordered = [...bytes].sort(([left], [right]) =>
+    Number(!left.endsWith('.gitattributes')) - Number(!right.endsWith('.gitattributes')) || left.localeCompare(right));
+  const expected = indexObjects(index), objects = [];
+  for (const [file, contents] of ordered) {
+    const oid = git(root, ['--attr-source=' + attributes, 'hash-object', '--path=' + file, '--stdin'], Buffer.from(contents, 'base64')).trim();
+    if (expected.get(file)?.oid !== oid) throw new Error('Staged bytes or mode changed after validation; commit denied.');
+    objects.push([file, oid]);
+  }
+  verifyStagedObjects(root, objects, index);
+  return JSON.stringify([git(root, ['rev-parse', 'HEAD']), index, bytes]);
 }
 
 function environment(pkg) {
@@ -116,6 +129,7 @@ function installedBun(pkg, env) {
   const manifest = JSON.parse(readFileSync(path.join(pkg, 'package.json'), 'utf8'));
   if (pin !== '1.4.2' || manifest.packageManager !== `bun@${pin}` || manifest.engines?.bun !== pin)
     throw new Error('Bun pin/manifest mismatch.');
+  if (process.versions.bun === pin) return realpathSync(process.execPath);
   const pathKey = Object.keys(env).find((key) => key.toUpperCase() === 'PATH');
   for (const directory of String(env[pathKey] ?? '')
     .split(path.delimiter)
@@ -278,11 +292,56 @@ export function baseline(directory, measurement) {
   renameSync(temporary, file);
 }
 
+function indexObjects(index) {
+  return new Map(nul(index).map(row => {
+    const split = row.indexOf('\t'), metadata = row.slice(0, split).split(' ');
+    if (split < 0 || metadata[2] !== '0') throw new Error('Unmerged or invalid staged input.');
+    return [row.slice(split + 1), { oid: metadata[1], mode: metadata[0] }];
+  }));
+}
+export function verifyStagedObjects(root, objects, index) {
+  const staged = indexObjects(git(root, ['ls-files', '--stage', '-z'])), previous = indexObjects(index);
+  if (objects.some(([file, oid]) => staged.get(file)?.oid !== oid || staged.get(file)?.mode !== previous.get(file)?.mode))
+    throw new Error('Staged bytes or mode changed after validation; commit denied.');
+}
+
+export async function rejectFocusedTests(pkg, files) {
+  const { parse } = await import(pathToFileURL(path.join(pkg, 'node_modules/@babel/parser/lib/index.js')));
+  for (const file of files) {
+    const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'unambiguous', plugins: ['typescript', 'jsx'] });
+    const names = new Set(['test', 'it', 'describe']), namespaces = new Set();
+    for (const node of ast.program.body) if (node.type === 'ImportDeclaration' &&
+      ['bun:test', 'vitest', '@jest/globals'].includes(node.source.value)) {
+      for (const item of node.specifiers) {
+        if (item.type === 'ImportNamespaceSpecifier') namespaces.add(item.local.name);
+        else if (item.type === 'ImportSpecifier' && ['test', 'it', 'describe'].includes(item.imported.name)) names.add(item.local.name);
+      }
+    }
+    const identifier = (node) => {
+      while (node?.type === 'MemberExpression' || node?.type === 'OptionalMemberExpression') node = node.object;
+      return node?.type === 'Identifier' ? node.name : null;
+    };
+    const visit = node => {
+      if (!node || typeof node !== 'object') return;
+      if (['MemberExpression', 'OptionalMemberExpression'].includes(node.type) &&
+        (node.computed ? node.property?.value === 'only' : node.property?.name === 'only') &&
+        (names.has(identifier(node.object)) || namespaces.has(identifier(node.object))))
+        throw new Error(`Focused test is forbidden: ${file}:${node.loc?.start.line ?? 0}`);
+      for (const [key, value] of Object.entries(node)) if (!['loc', 'extra', 'comments', 'tokens'].includes(key)) {
+        if (Array.isArray(value)) value.forEach(visit);
+        else if (value && typeof value === 'object') visit(value);
+      }
+    };
+    visit(ast.program);
+  }
+}
+
 async function main(mode) {
   const root = git(process.cwd(), ['rev-parse', '--show-toplevel']).trim();
   const pkg = path.join(root, 'packages/agent');
   const env = environment(pkg);
   if (mode === 'pre-commit') {
+    const bun = installedBun(pkg, env);
     const selected = nul(git(root, ['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z']));
     const unstaged = new Set(nul(git(root, ['diff', '--name-only', '-z'])));
     if (selected.some((file) => unstaged.has(file)))
@@ -290,6 +349,7 @@ async function main(mode) {
     stableInputs(root);
     const formatter = installedTool(pkg, 'oxfmt', '0.64.0');
     const compiler = installedTool(pkg, 'typescript', '7.0.2');
+    const linter = installedTool(pkg, 'oxlint', '1.79.0');
     const files = selected.filter((file) => supported.test(file));
     for (const file of files)
       if (!lstatSync(path.join(root, file)).isFile() || lstatSync(path.join(root, file)).isSymbolicLink())
@@ -297,19 +357,27 @@ async function main(mode) {
     if (files.length) {
       const args = [formatter, '--config', path.join(pkg, '.oxfmtrc.json')];
       const index = git(root, ['ls-files', '--stage', '-z']);
-      checked(process.execPath, [...args, '--', ...files], root, env);
+      checked(bun, [...args, '--', ...files], root, env);
       const formatted = files.map((file) => readFileSync(path.join(root, file)).toString('base64'));
-      checked(process.execPath, [...args, '--check', '--', ...files], root, env);
+      checked(bun, [...args, '--check', '--', ...files], root, env);
       if (
         git(root, ['ls-files', '--stage', '-z']) !== index ||
         files.some((file, i) => readFileSync(path.join(root, file)).toString('base64') !== formatted[i])
       )
         throw new Error('Index or formatted files changed; no restaging performed.');
+      const objects = files.map((file, index) => [file, git(root,
+        ['hash-object', '--path=' + file, '--stdin'], Buffer.from(formatted[index], 'base64')).trim()]);
       git(root, ['add', '--', ...files]);
+      verifyStagedObjects(root, objects, index);
     }
     const before = stableInputs(root);
-    checked(process.execPath, [compiler, '--project', path.join(pkg, 'tsconfig.json'), '--noEmit'], root, env);
-    if (stableInputs(root) !== before) throw new Error('Checked inputs changed during typechecking.');
+    const testFiles = nul(git(root, ['ls-files', '-z'])).filter(file =>
+      maintained(file) && /(?:^|\/)tests\//.test(file) && /\.[cm]?[jt]sx?$/.test(file));
+    await rejectFocusedTests(pkg, testFiles.map(file => path.join(root, file)));
+    checked(bun, [compiler, '--project', path.join(pkg, 'tsconfig.json'), '--noEmit'], root, env);
+    checked(bun, [linter, '--config', path.join(pkg, 'oxlint.config.json'), '--type-aware', '--max-warnings', '0',
+      'src', 'tests', 'tooling'], pkg, env);
+    if (stableInputs(root) !== before) throw new Error('Checked inputs changed during pre-commit checks.');
     return;
   }
   if (mode !== 'pre-push') throw new Error('Expected pre-commit or pre-push.');

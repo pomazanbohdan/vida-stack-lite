@@ -514,7 +514,7 @@ function snapshotJson(value: unknown, label: string, seen: WeakSet<object>, stat
               const result = choose<JsonSnapshot>(
                 Array.isArray(objectValue),
                 () => {
-                  const length = snapshotDescriptor(objectValue, 'length', label + '.length', false).value;
+                  const length: unknown = snapshotDescriptor(objectValue, 'length', label + '.length', false).value;
                   assertCondition(Number.isSafeInteger(length), label + ' has an invalid length');
                   assertCondition((length as number) >= 0, label + ' has an invalid length');
                   const keys = Reflect.ownKeys(objectValue);
@@ -655,7 +655,9 @@ function assertSafeYamlNode(node: unknown, seen = new WeakSet<object>()): void {
       const record = node as Record<string, unknown>;
       assertCondition(!seen.has(node as object), 'runtime YAML contains a cycle or alias');
       seen.add(node as object);
-      const constructorName = Object.getPrototypeOf(node)?.constructor?.name;
+      const prototype: unknown = Object.getPrototypeOf(node);
+      const constructor: unknown = prototype !== null && typeof prototype === 'object' ? Reflect.get(prototype, 'constructor') : undefined;
+      const constructorName = typeof constructor === 'function' ? constructor.name : undefined;
       assertCondition(
         ![constructorName === 'Alias', record.type === 'ALIAS'].some(Boolean),
         'runtime YAML aliases are forbidden',

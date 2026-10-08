@@ -205,9 +205,9 @@ describe('cooperative scoped source evidence', () => {
       ];
       const expected = await inspectScope(['--project-root', root, ...options]);
       expect(await inspectScope(['--project-root', root.split(path.sep).join('/'), ...options])).toEqual(expected);
-      await expect(inspectScope(['--project-root', '.', ...options])).rejects.toThrow('absolute');
+      await Promise.resolve(expect(inspectScope(['--project-root', '.', ...options])).rejects.toThrow('absolute'));
       symlinkSync(root, alias, 'junction');
-      await expect(inspectScope(['--project-root', alias, ...options])).rejects.toThrow();
+      await Promise.resolve(expect(inspectScope(['--project-root', alias, ...options])).rejects.toThrow());
       const args = [
         '--project-root',
         root.split(path.sep).join('/'),

@@ -6,8 +6,6 @@ import {
   assertCanonicalJsonValue,
   buildGovernedWriteRequest,
   computeWriteOperationHash,
-  loadProjectContext,
-  loadRuntimeConfig,
   resolveAgentRoleProfile,
   resolvePathProfile,
   resolveProviderWorkItemKind,
@@ -19,6 +17,7 @@ import {
   validateResolvedPathProfile,
   validateRuntimeConfig,
 } from '../src/index.ts';
+import { configuredTestContext } from './configured-context.mjs';
 import {
   canonicalJson,
   canonicalJsonDigest,
@@ -49,11 +48,9 @@ import { requireAbsoluteRepositoryRoot } from '../src/config/project-context.ts'
 import { validateConfiguredRepositoryAccess } from '../src/config/runtime-config.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
-const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(packageRoot, '..');
-const config = loadRuntimeConfig(repositoryRoot);
-const project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, '3mob');
+const { repositoryRoot, config, context: project } = configuredTestContext();
 const projectBinding = project.project_bindings[0];
-if (!projectBinding) throw new Error('Expected the configured 3mob project binding');
+if (!projectBinding) throw new Error('Expected a configured project binding');
 
 function clock(...values) {
   return {
@@ -545,6 +542,12 @@ describe('direct maintained-source completeness', () => {
     expect(Object.isFrozen(frozen.nested)).toBe(true);
     expect(Object.isFrozen(frozen.nested[0])).toBe(true);
     expect(freezeJsonValue(1)).toBe(1);
+    expect(freezeJsonValue(null)).toBeNull();
+    let getterCalls = 0;
+    const frozenAccessor = Object.defineProperty({}, 'value', {enumerable: true, get() { getterCalls++; return {value: 1}; }});
+    expect(freezeJsonValue(frozenAccessor)).toBe(frozenAccessor);
+    expect(Object.isFrozen(frozenAccessor)).toBe(true);
+    expect(getterCalls).toBe(0);
     expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00Z')).toBe(true);
     expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00.12Z')).toBe(true);
     expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00+00:00')).toBe(true);
@@ -842,7 +845,7 @@ describe('direct maintained-source completeness', () => {
         team: 'default-development',
         kind: 'bug',
         intent: 'bug_fix',
-        project: '3mob',
+        project: projectBinding.project_id,
         risk_flags: ['security'],
         labels: [],
       }),
@@ -852,7 +855,7 @@ describe('direct maintained-source completeness', () => {
         team: 'missing',
         kind: 'task',
         intent: 'task_execution',
-        project: '3mob',
+        project: projectBinding.project_id,
         risk_flags: [],
         labels: [],
       }),

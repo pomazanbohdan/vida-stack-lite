@@ -236,7 +236,7 @@ function validateCanonicalBranchRef(value: unknown): string {
   requireBinding(value.length <= 1024, 'branch ref is too long');
   const name = value.slice('refs/heads/'.length);
   const components = name.split('/');
-  const hasForbiddenCharacter = [...name].some((character) => {
+  const hasForbiddenCharacter = Array.from(name).some((character) => {
     const code = character.codePointAt(0) ?? 0;
     return code < 0x21 || code === 0x7f || '~^:?*['.includes(character) || character === '\\';
   });
@@ -418,8 +418,8 @@ export function parseTaskSourceGitObservation(
 }
 
 function canonicalProjectIds(projectIds: readonly string[]): readonly string[] {
-  requireBinding(Array.isArray(projectIds) && projectIds.length > 0 && projectIds.length <= 128, 'project set is invalid');
-  const sorted = [...projectIds].sort();
+  requireBinding(Boolean(Array.isArray(projectIds)) && projectIds.length > 0 && projectIds.length <= 128, 'project set is invalid');
+  const sorted = [...projectIds].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
   requireBinding(
     sorted.every((id) => typeof id === 'string' && /^[a-z0-9][a-z0-9._-]{0,63}$/.test(id)) &&
       new Set(sorted).size === sorted.length,
@@ -430,17 +430,17 @@ function canonicalProjectIds(projectIds: readonly string[]): readonly string[] {
 
 function validateScope(scope: TaskSourceScope): TaskSourceScope {
   requireBinding(
-    Object.keys(scope).sort().join(',') === ['digest', 'entries', 'schema'].join(','),
+    Object.keys(scope).sort((left, right) => left < right ? -1 : left > right ? 1 : 0).join(',') === ['digest', 'entries', 'schema'].join(','),
     'source scope contains unexpected fields',
   );
   requireBinding(scope?.schema === 'ScopedSourceSnapshot/v1', 'source scope schema is invalid');
-  requireBinding(Array.isArray(scope.entries) && scope.entries.length > 0 && scope.entries.length <= 512, 'source scope entries are invalid');
+  requireBinding(Boolean(Array.isArray(scope.entries)) && scope.entries.length > 0 && scope.entries.length <= 512, 'source scope entries are invalid');
   let previous = '';
   for (const entry of scope.entries) {
     requireBinding(
       entry !== null &&
         typeof entry === 'object' &&
-        Object.keys(entry).sort().join(',') === ['bytes', 'exists', 'path', 'sha256'].join(','),
+        Object.keys(entry).sort((left, right) => left < right ? -1 : left > right ? 1 : 0).join(',') === ['bytes', 'exists', 'path', 'sha256'].join(','),
       'source scope entry contains unexpected fields',
     );
     requireBinding(
@@ -450,7 +450,7 @@ function validateScope(scope: TaskSourceScope): TaskSourceScope {
         !entry.path.includes('\\') &&
         !entry.path.startsWith('/') &&
         !/^[A-Za-z]:/.test(entry.path) &&
-        !/[\u0000-\u001f]/.test(entry.path) &&
+        !Array.from(entry.path).some(character => character.charCodeAt(0) < 32) &&
         entry.path.split('/').every((part: string) => part && part !== '.' && part !== '..') &&
         entry.path > previous,
       'source scope paths must be canonical, sorted, and unique',
@@ -501,7 +501,7 @@ export function createTaskSourceBinding(input: CreateTaskSourceBindingInput): Ta
   );
   const cwd = canonicalAbsolutePath(git.cwd, 'caller working directory');
   requireBinding(
-    git.branch === null || (typeof git.branch === 'string' && git.branch.length > 0 && !/[\u0000-\u001f\u007f]/.test(git.branch)),
+    git.branch === null || (typeof git.branch === 'string' && git.branch.length > 0 && !Array.from(git.branch).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)),
     'Git branch is invalid',
   );
   if (request.branch_ref !== undefined) {

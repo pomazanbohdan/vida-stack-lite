@@ -827,7 +827,7 @@ function suspendLocalWorkCore(
             decided_by: nativeSessionHandle,
             decision_pointer: userRequestPointer,
             created_at: now,
-          })),
+          }))
       ),
     ],
   };

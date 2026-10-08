@@ -1645,6 +1645,36 @@ bytes, completed history and all failed request/result bodies. It issues no
 reviewer, resets no workflow and grants no Source execution or acceptance.
 Correcting the failed wave remains a separate supported operation.
 
+`run --transition-failed-prewriter true` provides that correction with
+`FailedPrewriterTransitionInput/v1` and `FailedPrewriterTransitionRequest/v1`.
+Inspect binds the original receipt, current Work/Ledger/Journal and maintenance
+versions, original human scope and a verified native/Source endpoint. Apply
+rechecks current Source, configuration and ProjectContext before one existing
+Host transaction. Only exact terminal failed read-only prewriters qualify.
+The actual original Mastra run must still match its suspended beforeimage.
+
+The transaction archives the failed wave in a distinct strict
+`FailedPrewriterRecoveryReceipt/v1`, leaves the original continuation receipt
+unchanged, updates current Source/runtime binding and reacquires the full
+resource set with normal FIFO checks. It derives fresh read-only requests from
+the current scope and keeps the original completed prefix. Caller data grants
+no Source capability or acceptance. Status and exact retry read the recorded
+result without reissuing effects; an old report can match only its exact archive.
+The engine, packet and admission readers use an explicit original/recovery
+view. All fresh prewriters must complete before the existing developer suffix
+can resume. Existing active v1 artifacts are not rewritten or reinterpreted.
+The session producer keeps the original run identity and reads its current scope
+from the validated recovery view. It compares the current journal wave with the
+requests returned by the verified engine reader. The immutable original receipt
+does not supply the current scope or corrected reviewer cohort.
+Scope and Acceptance retain their accepted contract revision. The packet and
+preflight readers resolve that revision from the same validated original/recovery
+view, matching current Work, contracts, attempt, run and completed prefix. Trusted
+policy contexts retain this view only in memory and recheck it after awaits.
+New requests, preparation observations and Source permissions still bind current
+Source. An unrelated or stale contract revision denies; this changes no artifact
+format and grants no Source authority.
+
 The unissued-empty preparation release remains distinct: an exact expired owner
 may release only bound unsealed INTAKE preparation with no completed wave,
 observation, issue, reservation, host assignment or effect. Preserve that attempt;
@@ -1859,6 +1889,18 @@ null using frozen preimages, postimages and dependency versions in one atomic
 transaction. Restore changes only its owned field with advancing revisions;
 pending, reserved or uncertain native effects remain guarded. This work-state
 repair does not establish general consumer configuration/storage migration.
+
+Repair readers decode stored JSON as bounded records. Work and journal
+beforeimages have a repair-only representation; they are not current execution
+state. Validate a separate normalized copy, and retain the exact raw beforeimage.
+Only correction-generation repair can supply missing paired assignment authority.
+Request-transition repair cannot change that authority. Validate the exact frozen
+transformation before plan retry, applied resume or restore can return. Check
+operation/change/row identity, scalar fields, status-dependent fields and the
+existing dependency CAS. At matching planned dependencies, the frozen Work and
+journal change sets must equal the complete derived correction set. Applied
+resume rejects remaining stale authority. A shortened list cannot prove repair
+completion. Malformed data grants no rights and produces no writes.
 
 Consumer rollback binds an authoritative read-only HostState baseline and the
 existing maintenance fence through restore. Initialization alone does not close

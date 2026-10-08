@@ -77,7 +77,8 @@ export function assertAdmittedRuntimeCodeCurrent(
       receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
     'admitted runtime inventory differs; qualified runtime repair/rebind is required');
     validateConfiguredFrontierReceiptStructure({ receipt: receipt as ConfiguredFrontierReceipt });
-    const request = receipt.request, transition = request.sourceTransition.transition,
+    const recovery = store.readFailedPrewriterRecoveryReceipt(identity, journal!.attempt);
+    const request = receipt.request, transition = recovery?.request.sourceTransition.transition ?? request.sourceTransition.transition,
       intakeRef = work.artifacts.find(ref => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1'),
       project = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids),
       schemaDigest = createHash('sha256').update(runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current runtime schema')).digest('hex');
@@ -86,10 +87,10 @@ export function assertAdmittedRuntimeCodeCurrent(
       receipt.prior_work.execution.run_id === work.execution.run_id &&
       receipt.prior_work.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
       receipt.prior_work.binding.config_digest === request.priorConfigDigest &&
-      request.targetRuntimeCodeDigest === work.binding.runtime_code_digest &&
+      (recovery?.successor_work.binding.runtime_code_digest ?? request.targetRuntimeCodeDigest) === work.binding.runtime_code_digest &&
       request.targetConfigDigest === runtimeConfigDigest(config) && request.targetConfigDigest === work.binding.config_digest &&
-      request.targetSchemaDigest === schemaDigest && request.targetSchemaDigest === work.binding.schema_digest &&
-      request.targetProjectContextDigest === project.project_context_digest,
+      (recovery?.successor_work.binding.schema_digest ?? request.targetSchemaDigest) === schemaDigest && schemaDigest === work.binding.schema_digest &&
+      (recovery?.request.targetProjectContextDigest ?? request.targetProjectContextDigest) === project.project_context_digest,
     'admitted runtime continuation does not bind the protected intake and current endpoint');
     runtimePaths = currentPaths;
   }

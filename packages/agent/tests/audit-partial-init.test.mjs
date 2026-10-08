@@ -102,7 +102,7 @@ for (const target of [
     await interrupt(root, target);
     const intent = await readFile(path.join(root, pending));
     const before = await snapshot(root);
-    await expect(initializeProjectFromBundle(input(root), bundle)).rejects.toThrow(/partial_not_ready/);
+    await Promise.resolve(expect(initializeProjectFromBundle(input(root), bundle)).rejects.toThrow(/partial_not_ready/));
     expect(await snapshot(root)).toEqual(before);
     const result = await initializeProjectFromBundle({ ...input(root), reconcileExisting: true }, bundle);
     expect(result.status).toBe('resumed_initialization');
@@ -151,31 +151,31 @@ test('pending recovery denies changed managed AGENTS, foreign repository/project
     { ...input(root), projectMappings: ['foreign'] },
   ]) {
     const before = await snapshot(root);
-    await expect(initializeProjectFromBundle({ ...request, reconcileExisting: true }, bundle)).rejects.toThrow(
+    await Promise.resolve(expect(initializeProjectFromBundle({ ...request, reconcileExisting: true }, bundle)).rejects.toThrow(
       /intent differs/,
-    );
+    ));
     expect(await snapshot(root)).toEqual(before);
   }
   const other = await consumer();
   await mkdir(path.join(other, '.agent'));
   await writeFile(path.join(other, pending), await readFile(path.join(root, pending)));
   const beforeOther = await snapshot(other);
-  await expect(initializeProjectFromBundle({ ...input(other), reconcileExisting: true }, bundle)).rejects.toThrow(
+  await Promise.resolve(expect(initializeProjectFromBundle({ ...input(other), reconcileExisting: true }, bundle)).rejects.toThrow(
     /intent differs/,
-  );
+  ));
   expect(await snapshot(other)).toEqual(beforeOther);
   await writeFile(path.join(root, 'AGENTS.md'), 'owner edited managed instructions');
   const before = await snapshot(root);
-  await expect(initializeProjectFromBundle({ ...input(root), reconcileExisting: true }, bundle)).rejects.toThrow(
+  await Promise.resolve(expect(initializeProjectFromBundle({ ...input(root), reconcileExisting: true }, bundle)).rejects.toThrow(
     /diff resolution/,
-  );
+  ));
   expect(await snapshot(root)).toEqual(before);
   const unknown = await consumer();
   await writeFile(path.join(unknown, 'AGENTS.md'), 'unidentified old partial');
   const unknownBefore = await snapshot(unknown);
-  await expect(initializeProjectFromBundle({ ...input(unknown), reconcileExisting: true }, bundle)).rejects.toThrow(
+  await Promise.resolve(expect(initializeProjectFromBundle({ ...input(unknown), reconcileExisting: true }, bundle)).rejects.toThrow(
     /requires all existing/,
-  );
+  ));
   expect(await snapshot(unknown)).toEqual(unknownBefore);
 }, 15_000);
 
@@ -190,9 +190,9 @@ test('pending intent refuses changed templates and conflicting canonical receipt
     'Changed {{REPOSITORY}} {{PROJECTS}} {{BUNDLE}}\n',
   );
   const before = await snapshot(root);
-  await expect(initializeProjectFromBundle({ ...input(root), reconcileExisting: true }, isolated)).rejects.toThrow(
+  await Promise.resolve(expect(initializeProjectFromBundle({ ...input(root), reconcileExisting: true }, isolated)).rejects.toThrow(
     /intent differs/,
-  );
+  ));
   expect(await snapshot(root)).toEqual(before);
   const committed = await consumer();
   await interrupt(committed, 'archive');
@@ -200,8 +200,8 @@ test('pending intent refuses changed templates and conflicting canonical receipt
   changed.workspace_id = 'a'.repeat(64);
   await writeFile(path.join(committed, receipt), JSON.stringify(changed));
   const conflict = await snapshot(committed);
-  await expect(initializeProjectFromBundle({ ...input(committed), reconcileExisting: true }, bundle)).rejects.toThrow(
+  await Promise.resolve(expect(initializeProjectFromBundle({ ...input(committed), reconcileExisting: true }, bundle)).rejects.toThrow(
     /cannot replace/,
-  );
+  ));
   expect(await snapshot(committed)).toEqual(conflict);
 }, 15_000);

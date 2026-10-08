@@ -439,7 +439,7 @@ test('issue rechecks canonical owner expiry after async policy before writing ac
     if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining + 10));
     resumePolicy.resolve();
 
-    await expect(issue).rejects.toThrow(/expiry|expired|stale/i);
+    await Promise.resolve(expect(issue).rejects.toThrow(/expiry|expired|stale/i));
 
     const after = fixture.store.readHostStateSnapshot(identity);
     expect(after.workVersion).toEqual(before.workVersion);

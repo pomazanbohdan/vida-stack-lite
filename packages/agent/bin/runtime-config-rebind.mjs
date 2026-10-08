@@ -438,6 +438,14 @@ function targetConfig(access, root, oldConfig, targetPath) {
 }
 
 /** Recovery reads historical authority without passing the ordinary current-execution gate. No initializer or engine producer runs here. */
+/**
+ * @param {string} root
+ * @param {string} baselinePath
+ * @param {import('../src/host-state.ts').WorkIdentity} identity
+ * @param {number} attempt
+ * @param {unknown} [originalContexts]
+ * @returns {{config: ReturnType<typeof loadRuntimeConfig>, current: ReturnType<typeof loadRuntimeConfig>, workspace: ReturnType<typeof inspectHostWorkspaceDatabase>, owner: ReturnType<typeof inspectHostWorkspaceDatabase>['work'][number], journal: ReturnType<typeof inspectHostWorkspaceDatabase>['journals'][number], maintenanceGeneration: number, engine_binding: string, baseline_binding: string, receipt_binding: string, runtime_binding: ReturnType<typeof runtimeBinding>}}
+ */
 export function inspectHistoricalOwnerContext(root, baselinePath, identity, attempt, originalContexts) {
   const originalContextByAction = validateOriginalContextCollection(originalContexts),
     usedOriginalContextActions = new Set();

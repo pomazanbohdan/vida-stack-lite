@@ -50,10 +50,10 @@ test(
         selection,
       };
       const enginePath = path.join(root, config.control.work_root, 'mastra-workflows.v1.sqlite');
-      await expect(createStagedRuntimeWitness(input)).rejects.toThrow(/absent/);
+      await Promise.resolve(expect(createStagedRuntimeWitness(input)).rejects.toThrow(/absent/));
       expect(existsSync(enginePath)).toBe(false);
       ledger = openConfiguredMastraSessionLedger(root);
-      await expect(createStagedRuntimeWitness(input)).rejects.toThrow(/absent/);
+      await Promise.resolve(expect(createStagedRuntimeWitness(input)).rejects.toThrow(/absent/));
       expect(existsSync(enginePath)).toBe(false);
       bridge = await MastraSessionBridge.open({
         repositoryRoot: root,
@@ -66,7 +66,7 @@ test(
         workspaceId,
       });
       let engine = await bridge.start();
-      await expect(createStagedRuntimeWitness(input)).rejects.toThrow(/identity|checksum|successful/);
+      await Promise.resolve(expect(createStagedRuntimeWitness(input)).rejects.toThrow(/identity|checksum|successful/));
       while (engine.status === 'suspended') {
         let journal = ledger.resume('work', 1);
         journal = ledger.issueWave('work', 1, journal.version);
@@ -126,10 +126,10 @@ test(
       expect(canonicalRows()).toEqual(before);
       expect(readFileSync(enginePath)).toEqual(engineBefore);
       expect(readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(configBefore);
-      await expect(createStagedRuntimeWitness({ ...input, workId: 'foreign' })).rejects.toThrow(/absent/);
-      await expect(
+      await Promise.resolve(expect(createStagedRuntimeWitness({ ...input, workId: 'foreign' })).rejects.toThrow(/absent/));
+      await Promise.resolve(expect(
         createStagedRuntimeWitness({ ...input, selection: { ...selection, labels: ['foreign'] } }),
-      ).rejects.toThrow(/context differs/);
+      ).rejects.toThrow(/context differs/));
       const handle = ledger.beginSessionProducer({
         selection,
         context,
@@ -138,7 +138,7 @@ test(
         phase: 'initialize',
         runId: sessionBridgeRunId(workspaceId, context, 'task_execution'),
       });
-      await expect(createStagedRuntimeWitness(input)).rejects.toThrow(/producer is unknown/);
+      await Promise.resolve(expect(createStagedRuntimeWitness(input)).rejects.toThrow(/producer is unknown/));
       ledger.hostState.settleSessionProducer(handle, ledger.resume('work', 1).version);
       const journal = database.query('SELECT * FROM agent_host_mastra_session_ledger').get();
       const invalid = JSON.parse(journal.payload);
@@ -146,7 +146,7 @@ test(
       database
         .query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=?')
         .run(JSON.stringify(invalid), canonicalJsonDigest(invalid));
-      await expect(createStagedRuntimeWitness(input)).rejects.toThrow(/not the same successful/);
+      await Promise.resolve(expect(createStagedRuntimeWitness(input)).rejects.toThrow(/not the same successful/));
       database
         .query('UPDATE agent_host_mastra_session_ledger SET payload=?,digest=?')
         .run(journal.payload, journal.digest);

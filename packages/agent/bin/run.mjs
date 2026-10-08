@@ -3194,6 +3194,12 @@ export async function run(args = process.argv.slice(2)) {
       cwd: bundleRoot,
     });
   }
+  if (args.includes('--transition-failed-prewriter')) {
+    if (args[0] !== '--transition-failed-prewriter' || args[1] !== 'true')
+      throw Error('Failed prewriter transition requires its exact separate signal');
+    const { transitionFailedPrewriter } = await import('./transition-failed-prewriter.mjs');
+    return transitionFailedPrewriter(args.slice(2));
+  }
   if (args.includes('--recover-failed-prewriter-owner')) {
     if (args[0] !== '--recover-failed-prewriter-owner' || args[1] !== 'true')
       throw Error('Failed prewriter owner recovery requires its exact separate signal');
@@ -4025,11 +4031,12 @@ export async function run(args = process.argv.slice(2)) {
         if ((values.issue_wave || values.report) &&
             (current.journal.version.revision !== expected.revision || current.journal.version.digest !== expected.digest))
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter Journal version is stale.');
-        const sourcePaths = current.receipt.request.currentSourceScope.entries.map(entry => entry.path);
+        const effectiveScope = current.recovery?.request.currentSourceScope ?? current.receipt.request.currentSourceScope;
+        const sourcePaths = effectiveScope.entries.map(entry => entry.path);
         const owner = admissionHost.work?.lease?.thread_id;
         if (!owner) fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter has no original owner lease.');
         const source = ledger.hostState.snapshotCurrentTaskSourceSources(admissionIdentity, owner, sourcePaths, context.attempt);
-        if (source.digest !== current.receipt.request.currentSourceScope.digest || source.digest !== context.scope_digest)
+        if (source.digest !== effectiveScope.digest || source.digest !== context.scope_digest)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter current Source differs.');
         const { buildAdmittedDevelopmentPacket } = await import('../src/orchestration/admitted-development-packet.ts');
         const access = requireSafeRepositoryAccess(values.project_root);
@@ -4045,6 +4052,10 @@ export async function run(args = process.argv.slice(2)) {
         if (values.report) {
           const observed = parseSessionBridgeObservation(readBoundedReport(values.report));
           const issued = current.items.find(item => item.request.action_id === observed.action_id);
+          if (!issued && ledger.hostState.findArchivedReportedObservation(context.work_id, context.attempt, observed))
+            return { schema: 'VidaAgentRunResult/v1', status: 'archived_report_retained',
+              state_version: current.journal.version, accepted_result: false, runtime_accepted: false,
+              issued_actions: [], next_actions: [] };
           if (!issued?.issue_id || issued.issue_id !== observed.issue_id)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Prewriter report has no matching retained issuance.');
           ledger.report(context.work_id, context.attempt, expected, observed, source);

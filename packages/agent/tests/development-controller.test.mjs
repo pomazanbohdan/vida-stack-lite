@@ -59,9 +59,9 @@ test('qualified development controller preserves Source identity and accepts a s
     expect(prepared.status).toBe('prepared');
     expect(readFileSync(path.join(prepared.package_root, 'bun.lock'))).toEqual(readPortableLock(packageRoot));
     expect(prepared.identity.bundle).toBe('packages/agent');
-    await expect(
+    await Promise.resolve(expect(
       executeDevelopmentController({ controllerRoot, command: 'run', args: ['--project-root', sourceRoot] }),
-    ).rejects.toThrow('qualified');
+    ).rejects.toThrow('qualified'));
     const ready = await verifyDevelopmentController({ controllerRoot });
     expect(ready.status).toBe('ready');
     expect(ready.qualification.checks).toContain('actual-source-report');
@@ -101,23 +101,23 @@ test('qualified development controller preserves Source identity and accepts a s
     expect(invoked.status, invoked.stderr).toBe(0);
     expect(JSON.parse(invoked.stdout).schema).toBe('ScopedSourceSnapshot/v1');
     console.log(JSON.stringify({ operation: 'warm-controller-exec', elapsed_ms: performance.now() - execStarted }));
-    await expect(
+    await Promise.resolve(expect(
       executeDevelopmentController({ controllerRoot, command: 'scope', args: ['--project-root', scratch] }),
-    ).rejects.toThrow('exact original target');
+    ).rejects.toThrow('exact original target'));
     const file = path.join(ready.package_root, 'bin/scope.mjs'),
       before = readFileSync(file);
     writeFileSync(file, Buffer.concat([before, Buffer.from('\n// altered controller\n')]));
-    await expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('drift');
+    await Promise.resolve(expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('drift'));
     writeFileSync(file, before);
     const manifestFile = path.join(ready.package_root, 'package.json'),
       manifest = readFileSync(manifestFile);
     writeFileSync(manifestFile, JSON.stringify({ ...JSON.parse(manifest), name: 'wrong-package' }));
-    await expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('current vida-agent candidate');
+    await Promise.resolve(expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('current vida-agent candidate'));
     writeFileSync(manifestFile, manifest);
     const pinFile = path.join(ready.package_root, '.bun-version'),
       pin = readFileSync(pinFile);
     writeFileSync(pinFile, '1.4.1\n');
-    await expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow();
+    await Promise.resolve(expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow());
     writeFileSync(pinFile, pin);
     const dependency = ready.package_binding.files.find(
       (file) => file.path.startsWith('node_modules/') && file.path.endsWith('package.json'),
@@ -126,7 +126,7 @@ test('qualified development controller preserves Source identity and accepts a s
     const depFile = path.join(ready.package_root, dependency.path),
       dep = readFileSync(depFile);
     writeFileSync(depFile, '{}');
-    await expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('drift');
+    await Promise.resolve(expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('drift'));
     writeFileSync(depFile, dep);
   } finally {
     cleanupOwnedFixture(scratch);
@@ -137,20 +137,20 @@ test('development controller rejects an active selector and an overlapping or li
   try {
     mkdirSync(path.join(scratch, '.agent'));
     writeFileSync(path.join(scratch, '.agent/active-runtime-selector.v1.json'), '{}');
-    await expect(
+    await Promise.resolve(expect(
       prepareDevelopmentController({ target: scratch, controllerRoot: path.join(scratch, 'controller') }),
-    ).rejects.toThrow('active-selector');
+    ).rejects.toThrow('active-selector'));
     const alias = path.join(scratch, 'source-alias');
     symlinkSync(sourceRoot, alias, process.platform === 'win32' ? 'junction' : 'dir');
-    await expect(
+    await Promise.resolve(expect(
       prepareDevelopmentController({ target: alias, controllerRoot: path.join(scratch, 'controller') }),
-    ).rejects.toThrow('physical');
-    await expect(
+    ).rejects.toThrow('physical'));
+    await Promise.resolve(expect(
       prepareDevelopmentController({
         target: sourceRoot,
         controllerRoot: path.join(sourceRoot, '.tmp/new-controller'),
       }),
-    ).rejects.toThrow('outside');
+    ).rejects.toThrow('outside'));
   } finally {
     cleanupOwnedFixture(scratch);
   }

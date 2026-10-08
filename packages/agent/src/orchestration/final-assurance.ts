@@ -178,7 +178,7 @@ export function configuredReadonlyAssignment(
     assignment?.role === request.role &&
     profile?.mutation_scope === 'none' &&
     tools?.source_write === false &&
-    Array.isArray(tools.allowed_tools) &&
+    Boolean(Array.isArray(tools.allowed_tools)) &&
     tools.allowed_tools.every(
       (tool) =>
         ['runtime.read', 'source.read', 'docs.read', 'web.search'].includes(tool) ||

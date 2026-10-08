@@ -296,11 +296,13 @@ export function buildObservedSynthesisResult(input: ObservedSynthesisResultInput
         canonicalJsonDigest([...new Set(observation.evidence_refs)].sort()),
     'synthesis evidence references differ from admitted research sources',
   );
+  requireSynthesis(Array.isArray(output.ac_ids), 'synthesis AC IDs must be an array');
+  const acIds: readonly unknown[] = output.ac_ids;
+  requireSynthesis(acIds.every((id): id is string => typeof id === 'string'), 'synthesis AC IDs must be strings');
   requireSynthesis(
-    Array.isArray(output.ac_ids) &&
-      canonicalJsonDigest([...output.ac_ids].sort()) ===
+      canonicalJsonDigest([...acIds].sort((left, right) => left < right ? -1 : left > right ? 1 : 0)) ===
         canonicalJsonDigest([...(scope.ac_ids as readonly string[])].sort()) &&
-      output.ac_ids.every(
+      acIds.every(
         (id) =>
           typeof id === 'string' &&
           input.researchResults.some(

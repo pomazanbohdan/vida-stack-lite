@@ -38,7 +38,7 @@ test('exclusive creation preserves collisions and arbitrates competing creators'
   expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
   const value = readFileSync(path.join(root, 'nested/data/value.txt'), 'utf8');
   expect(['one', 'two']).toContain(value);
-  await expect(creator.writeExclusive('nested/data/value.txt', 'replacement', 'value')).rejects.toThrow();
+  await Promise.resolve(expect(creator.writeExclusive('nested/data/value.txt', 'replacement', 'value')).rejects.toThrow());
   expect(readFileSync(path.join(root, 'nested/data/value.txt'), 'utf8')).toBe(value);
   if (process.platform === 'win32') {
     expect(access.attested).toBe(true);
@@ -61,9 +61,9 @@ test('exclusive creation preserves collisions and arbitrates competing creators'
       await releasePromise;
     });
     await enteredPromise;
-    await expect(
+    await Promise.resolve(expect(
       access.withExclusiveLockAsync('nested/data/held.lock', 'held lock', async () => undefined),
-    ).rejects.toThrow(/file lock timeout|already held/);
+    ).rejects.toThrow(/file lock timeout|already held/));
     release();
     await holder;
     expect(readdirSync(path.join(root, 'nested/data'))).not.toContain('held.lock');
@@ -77,9 +77,9 @@ test('unsafe ancestors, outside targets and non-directory parents cannot receive
   symlinkSync(outside, path.join(root, 'linked'), process.platform === 'win32' ? 'junction' : 'dir');
   writeFileSync(path.join(root, 'parent-file'), 'preserve');
   for (const target of ['../escape.txt', '.git/config', 'linked/escape.txt', 'parent-file/value.txt']) {
-    await expect(creator.writeExclusive(target, 'unsafe', 'unsafe target')).rejects.toThrow();
+    await Promise.resolve(expect(creator.writeExclusive(target, 'unsafe', 'unsafe target')).rejects.toThrow());
   }
-  await expect(creator.ensureDirectory('linked/new', 'unsafe directory')).rejects.toThrow();
+  await Promise.resolve(expect(creator.ensureDirectory('linked/new', 'unsafe directory')).rejects.toThrow());
   expect(readdirSync(outside)).toEqual([]);
   expect(readFileSync(path.join(root, 'parent-file'), 'utf8')).toBe('preserve');
 });
@@ -91,9 +91,9 @@ test('disabled live native capability fails before output even after provider cr
   const prior = process.env.FS_SAFE_NATIVE_MODE;
   process.env.FS_SAFE_NATIVE_MODE = 'off';
   try {
-    await expect(access.prepareExclusiveCreation()).rejects.toThrow(/native provider/);
-    await expect(creator.ensureDirectory('new', 'new directory')).rejects.toThrow(/native provider/);
-    await expect(creator.writeExclusive('new.txt', 'new', 'new file')).rejects.toThrow(/native provider/);
+    await Promise.resolve(expect(access.prepareExclusiveCreation()).rejects.toThrow(/native provider/));
+    await Promise.resolve(expect(creator.ensureDirectory('new', 'new directory')).rejects.toThrow(/native provider/));
+    await Promise.resolve(expect(creator.writeExclusive('new.txt', 'new', 'new file')).rejects.toThrow(/native provider/));
     expect(readdirSync(root)).toEqual([]);
   } finally {
     if (prior === undefined) delete process.env.FS_SAFE_NATIVE_MODE;
@@ -104,9 +104,9 @@ test('disabled live native capability fails before output even after provider cr
 test('oversized contents fail before destination creation', async () => {
   const { root, access } = fixture();
   const creator = await access.prepareExclusiveCreation();
-  await expect(creator.writeExclusive('oversized.txt', 'x'.repeat(8 * 1024 * 1024 + 1), 'oversized')).rejects.toThrow(
+  await Promise.resolve(expect(creator.writeExclusive('oversized.txt', 'x'.repeat(8 * 1024 * 1024 + 1), 'oversized')).rejects.toThrow(
     /bounded/,
-  );
+  ));
   expect(readdirSync(root)).toEqual([]);
 });
 
@@ -133,11 +133,11 @@ test('resource sidecar locks preserve existing payloads and exclude concurrent h
   try {
     expect(readFileSync(path.join(root, 'operation.json'), 'utf8')).toBe(payload);
     expect(existsSync(path.join(root, 'operation.json.lock'))).toBe(true);
-    await expect(
+    await Promise.resolve(expect(
       contender.withExclusiveLockAsync('operation.json', 'contender', async () => {
         throw new Error('contender callback must not run');
       }),
-    ).rejects.toThrow(/EEXIST|file lock timeout|already held/);
+    ).rejects.toThrow(/EEXIST|file lock timeout|already held/));
     if (process.platform === 'linux') {
       const child = spawnSync(
         'bun',
@@ -166,11 +166,11 @@ test('resource sidecar locks preserve existing payloads and exclude concurrent h
   }
   expect(readFileSync(path.join(root, 'operation.json'), 'utf8')).toBe('{"phase":"complete"}');
   expect(existsSync(path.join(root, 'operation.json.lock'))).toBe(false);
-  await expect(
+  await Promise.resolve(expect(
     access.withExclusiveLockAsync('operation.json', 'throwing operation', async () => {
       throw new Error('operation failed');
     }),
-  ).rejects.toThrow('operation failed');
+  ).rejects.toThrow('operation failed'));
   expect(existsSync(path.join(root, 'operation.json.lock'))).toBe(false);
   expect(readFileSync(path.join(root, 'operation.json'), 'utf8')).toBe('{"phase":"complete"}');
   await expect(
@@ -193,28 +193,28 @@ test('Linux resource locks recover only dead stale sidecars and preserve unsafe 
   expect(existsSync(sidecar)).toBe(false);
   writeFileSync(sidecar, JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid }));
   utimesSync(sidecar, old, old);
-  await expect(access.withExclusiveLockAsync('operation.json', 'live owner', async () => undefined)).rejects.toThrow(
+  await Promise.resolve(expect(access.withExclusiveLockAsync('operation.json', 'live owner', async () => undefined)).rejects.toThrow(
     /owner is alive/,
-  );
+  ));
   rmSync(sidecar);
   const outside = fixture().root;
   const sentinel = path.join(outside, 'sentinel');
   writeFileSync(sentinel, 'preserve');
   symlinkSync(sentinel, sidecar);
-  await expect(
+  await Promise.resolve(expect(
     access.withExclusiveLockAsync('operation.json', 'symlink sidecar', async () => undefined),
-  ).rejects.toThrow();
+  ).rejects.toThrow());
   expect(readFileSync(sentinel, 'utf8')).toBe('preserve');
   rmSync(sidecar);
   linkSync(sentinel, sidecar);
-  await expect(
+  await Promise.resolve(expect(
     access.withExclusiveLockAsync('operation.json', 'hardlink sidecar', async () => undefined),
-  ).rejects.toThrow();
+  ).rejects.toThrow());
   expect(readFileSync(sentinel, 'utf8')).toBe('preserve');
   rmSync(sidecar);
   symlinkSync(outside, path.join(root, 'linked'), 'dir');
   for (const target of ['../escape', '.git', '.git/config', 'linked/escape']) {
-    await expect(access.withExclusiveLockAsync(target, 'unsafe resource', async () => undefined)).rejects.toThrow();
+    await Promise.resolve(expect(access.withExclusiveLockAsync(target, 'unsafe resource', async () => undefined)).rejects.toThrow());
   }
   expect(readdirSync(outside)).toEqual(['sentinel']);
   expect(readFileSync(path.join(root, 'operation.json'))).toEqual(payload);
@@ -225,9 +225,9 @@ test('Linux resource locks preserve legal long UTF-8 basenames through release a
   const { root, access } = fixture();
   for (const name of ['x'.repeat(194), 'x'.repeat(195), 'x'.repeat(239), 'x'.repeat(255), 'я'.repeat(127)]) {
     writeFileSync(path.join(root, name), 'preserved');
-    await access.withExclusiveLockAsync(name, 'long resource', async () => {
-      await expect(access.withExclusiveLockAsync(name, 'contender', async () => undefined)).rejects.toThrow();
-      expect(readFileSync(path.join(root, name), 'utf8')).toBe('preserved');
+    await Promise.resolve(access.withExclusiveLockAsync(name, 'long resource', async () => {
+      await Promise.resolve(expect(access.withExclusiveLockAsync(name, 'contender', async () => undefined)).rejects.toThrow());
+      expect(readFileSync(path.join(root, name), 'utf8')).toBe('pr)eserved');
     });
     expect(access.withExclusiveLock(name, 'reacquire', () => 'held')).toBe('held');
     expect(readdirSync(root)).toEqual([name]);

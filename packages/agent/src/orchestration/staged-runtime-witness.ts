@@ -113,11 +113,11 @@ export async function createStagedRuntimeWitness(input: {
           state.work_id === workId &&
           state.attempt === attempt &&
           canonicalJsonDigest(state) === row.digest &&
-          Array.isArray(state.items) &&
-          Array.isArray(state.completed) &&
+          Boolean(Array.isArray(state.items)) &&
+          Boolean(Array.isArray(state.completed)) &&
           state.items.length === 0 &&
           state.completed.every(
-            (wave) => typeof wave.step_id === 'string' && Array.isArray(wave.items) && wave.items.length > 0,
+            (wave) => typeof wave.step_id === 'string' && Boolean(Array.isArray(wave.items)) && wave.items.length > 0,
           ) &&
           new Set(state.completed.map((wave) => wave.step_id)).size === state.completed.length,
         'journal identity or checksum differs',

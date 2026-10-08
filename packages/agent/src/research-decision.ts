@@ -752,23 +752,24 @@ function date(value: unknown, name: string): string {
 }
 
 function strings(value: unknown, name: string, maximum = 128, minimum = 0, itemMaximum = 4096): readonly string[] {
+  if (!Array.isArray(value)) fail(name + ' invalid');
+  const entries: readonly unknown[] = value;
   if (
-    !Array.isArray(value) ||
-    value.length < minimum ||
-    value.length > maximum ||
-    value.some(
-      (item) =>
-        typeof item !== 'string' ||
-        !item.trim() ||
-        item.length > itemMaximum ||
-        /[\r\n]/.test(item) ||
-        sensitiveMaterial(item),
+    entries.length < minimum ||
+    entries.length > maximum ||
+    !entries.every(
+      (item): item is string =>
+        typeof item === 'string' &&
+        item.trim().length > 0 &&
+        item.length <= itemMaximum &&
+        !/[\r\n]/.test(item) &&
+        !sensitiveMaterial(item),
     ) ||
-    Array.from({ length: value.length }, (_, index) => index).some((index) => !Object.hasOwn(value, index))
+    Array.from({ length: entries.length }, (_, index) => index).some((index) => !Object.hasOwn(entries, index))
   )
     fail(name + ' invalid');
-  if (new Set(value).size !== value.length) fail(name + ' contains duplicates');
-  return value;
+  if (new Set(entries).size !== entries.length) fail(name + ' contains duplicates');
+  return entries;
 }
 function denseArray(value: unknown, name: string): void {
   if (

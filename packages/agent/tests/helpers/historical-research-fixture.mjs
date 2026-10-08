@@ -7,9 +7,16 @@ import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime
 import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { buildObservedResearchResult } from '../../src/orchestration/observed-research-result.ts';
 import { digest, resolveInstructionActivation } from '../../src/research-decision.ts';
+import { lifecycleFor } from './delivered-work-continuation-fixture.mjs';
+import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 
+/** @param {Parameters<ReturnType<typeof createHash>['update']>[0]} value */
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 
+/**
+ * @typedef {{config?: ReturnType<typeof loadRuntimeConfig>, feature?: ReturnType<typeof loadRuntimeConfig>['research_decision'], binding?: Partial<import('../../src/research-decision.ts').ObservedResearchBinding>, issueId?: string, request?: import('../../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest, workItem?: Parameters<typeof buildObservedResearchResult>[0]['workItem'], scopeBytes?: Uint8Array, acceptanceBytes?: Uint8Array, activationUse?: import('../../src/research-decision.ts').ActivationUse, topic?: string, result?: import('../../src/research-decision.ts').ResearchResult}} HistoricalResearchFixtureOptions
+ * @param {HistoricalResearchFixtureOptions} [overrides]
+ */
 export function createHistoricalResearchFixture(overrides = {}) {
   const { repositoryRoot } = configuredTestContext();
   const root = mkdtempSync(path.join(os.tmpdir(), 'vida-historical-research-'));
@@ -90,23 +97,28 @@ export function createHistoricalResearchFixture(overrides = {}) {
     lease_generation: 1,
     ...overrides.binding,
   };
+  /** @type {import('../../src/host-state.ts').WorkState['binding']} */
+  const workBinding = {
+    repository_id: config.repository.repository_id, project_ids: config.projects.map(project => project.project_id),
+    integrations_digest: canonicalJsonDigest(config.integrations), team_id: 'default-development',
+    provider_work_item_id: workItem.id, work_item_digest: canonicalJsonDigest(workItem), workflow_id: workflowId,
+    config_digest: binding.config_digest, work_source_revision: sourceRevision, scope_id: scopeId,
+    lifecycle_work_id: workId, scope_contract_digest: sha(scopeBytes), acceptance_manifest_digest: sha(acceptanceBytes),
+    ac_ids: ['AC-1'], implementation_paths: ['docs/research.md'], allowed_resources: ['file:docs/research.md'],
+    runtime_source_revision: 'a'.repeat(64), runtime_code_digest: 'a'.repeat(64), schema_digest: 'c'.repeat(64),
+  };
+  /** @type {import('../../src/host-state.ts').WorkState} */
   const work = {
     schema: 'WorkState/v1',
+    workspace_id: deriveWorkspaceId(config.repository.repository_id, root), revision: 1,
     lease: { ticket_id: binding.lease_ticket_id, thread_id: threadId, generation: 1 },
-    execution: { run_id: binding.run_id, status: 'active' },
-    contracts: { scope: { sha256: sha(scopeBytes) }, acceptance: { sha256: sha(acceptanceBytes) } },
-    binding: {
-      provider_work_item_id: workItem.id,
-      work_item_digest: canonicalJsonDigest(workItem),
-      workflow_id: workflowId,
-      config_digest: binding.config_digest,
-      work_source_revision: sourceRevision,
-      scope_id: scopeId,
-      lifecycle_work_id: workId,
-      scope_contract_digest: sha(scopeBytes),
-      acceptance_manifest_digest: sha(acceptanceBytes),
-      ac_ids: ['AC-1'],
-    },
+    execution: { run_id: binding.run_id, status: 'active', input_digest: canonicalJsonDigest(workItem), phase: 'research', assignment_attempts: [] },
+    contracts: { scope: {schema: 'ImplementationScope/v1', path: 'scope.json', sha256: sha(scopeBytes)},
+      acceptance: {schema: 'AcceptanceManifest/v1', path: 'acceptance.json', sha256: sha(acceptanceBytes)}, decisions: [] },
+    binding: workBinding,
+    lifecycle: {...lifecycleFor(workBinding), scope: {scope_id: scopeId, allowed_paths: ['docs/research.md'],
+      fingerprint_paths: ['docs/research.md'], implementation_paths: ['docs/research.md'], documentation_paths: []}},
+    artifacts: [],
   };
   const feature = overrides.feature ?? config.research_decision;
   const resolved = resolveInstructionActivation(
@@ -126,7 +138,8 @@ export function createHistoricalResearchFixture(overrides = {}) {
     },
     { root, write_cache: false },
   );
-  const defaultActivationUse = {
+  /** @type {Omit<import('../../src/research-decision.ts').ActivationUse, 'digest'>} */
+  const activationInputBody = {
     schema: 'InstructionActivationUse/v1',
     use_id: `use-${actionId.slice(0, 40)}`,
     work_item_id: workId,
@@ -148,8 +161,9 @@ export function createHistoricalResearchFixture(overrides = {}) {
     pointer: 'WORK.md',
     timestamp,
   };
-  defaultActivationUse.digest = canonicalJsonDigest(defaultActivationUse);
+  const defaultActivationUse = {...activationInputBody, digest: canonicalJsonDigest(activationInputBody)};
   const activationUse = overrides.activationUse ?? defaultActivationUse;
+  /** @type {import('../../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} */
   const request = overrides.request ?? {
     schema: 'VidaSessionRequest/v1',
     run_id: binding.run_id,
@@ -233,6 +247,7 @@ export function createHistoricalResearchFixture(overrides = {}) {
     readiness: 'ready',
   };
   const summary = JSON.stringify(output),
+    /** @type {import('../../src/orchestration/mastra-session-bridge.ts').SessionBridgeObservation} */
     observation = {
       schema: 'VidaSessionObservation/v1',
       action_id: actionId,
@@ -321,6 +336,7 @@ export function createHistoricalResearchFixture(overrides = {}) {
     history_sha256: sha(historyBytes),
   };
   const activationPlan = { ...activationBody, digest: canonicalJsonDigest(activationBody) };
+  /** @param {string} relative @param {Parameters<typeof writeFileSync>[1]} bytes */
   const write = (relative, bytes) => {
     const target = path.join(root, ...relative.split('/'));
     mkdirSync(path.dirname(target), { recursive: true });
@@ -344,7 +360,6 @@ export function createHistoricalResearchFixture(overrides = {}) {
     activationPlan,
     scopeBytes,
     acceptanceBytes,
-    workItem,
     recordPath,
     recordBytes,
     historyPath,

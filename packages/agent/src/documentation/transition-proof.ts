@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
+import type { ValidateFunction } from 'ajv';
 import canonicalize from 'canonicalize';
 import transitionSchema from '../../schemas/documentation-policy-transition.v1.schema.json' with { type: 'json' };
 import scopeSchema from '../../schemas/implementation-scope.v1.schema.json' with { type: 'json' };
@@ -8,32 +9,35 @@ import eventSchema from '../../schemas/documentation-change-event.v1.schema.json
 import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
 
 type RecordValue = Record<string, unknown>;
+type ScopeProjection = RecordValue & { documentation_paths?: readonly string[] };
+type PolicyProjection = RecordValue & { schema: 'DocumentationPolicy/v1'; source_path: string; map_paths: readonly string[] };
+const compareStrings = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0;
 const sha = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 const digest = (value: unknown): string => sha(canonicalize(value)!);
 const Constructor = Ajv2020 as unknown as new (options: object) => {
-  compile(schema: object): (value: unknown) => boolean;
+  compile<T = RecordValue>(schema: object): ValidateFunction<T>;
 };
-const validScope = new Constructor({ strict: true, allErrors: true }).compile(scopeSchema);
+const validScope = new Constructor({ strict: true, allErrors: true }).compile<ScopeProjection>(scopeSchema);
 const validPolicy = new Constructor({
   strict: true,
   allErrors: true,
   formats: { 'date-time': true },
-}).compile(policySchema);
-const validTransition = new Constructor({ strict: true, allErrors: true }).compile(transitionSchema);
+}).compile<PolicyProjection>(policySchema);
+const validTransition = new Constructor({ strict: true, allErrors: true }).compile<RecordValue & { plan: RecordValue }>(transitionSchema);
 const validEvent = new Constructor({
   strict: true,
   allErrors: true,
   formats: { 'date-time': true },
 }).compile(eventSchema);
 const validCheckpoint = new Constructor({ strict: true, allErrors: true }).compile(checkpointSchema);
-const requireProof = (condition: unknown, message: string): void => {
+function requireProof(condition: unknown, message: string): asserts condition {
   if (!condition) throw Error('forward documentation proof: ' + message);
-};
+}
 
 /** Pure current-v1 integrity check shared by transition readers and committed-forward proof. */
 export function parseDocumentationPolicyTransitionEnvelope(bytes: Uint8Array): RecordValue {
   requireProof(bytes.byteLength <= 16 * 1024 * 1024, 'operation exceeds bound');
-  const operation = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  const operation: unknown = JSON.parse(Buffer.from(bytes).toString('utf8'));
   requireProof(validTransition(operation), 'operation schema invalid');
   const { operation_digest, ...body } = operation;
   requireProof(operation_digest === digest(body), 'whole operation integrity differs');
@@ -61,7 +65,8 @@ export function parseDocumentationPolicyTransitionEnvelope(bytes: Uint8Array): R
 }
 
 export function parseForwardClearCheckpoint(bytes: Uint8Array): RecordValue {
-  const checkpoint = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  const checkpoint: unknown = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  requireProof(validCheckpoint(checkpoint), 'CLEAR checkpoint schema invalid');
   const { digest: expected, ...body } = checkpoint;
   requireProof(
     validCheckpoint(checkpoint) && expected === digest(body) && checkpoint.status === 'pass',
@@ -71,7 +76,7 @@ export function parseForwardClearCheckpoint(bytes: Uint8Array): RecordValue {
 }
 
 export function parseForwardDocumentationEvent(bytes: Uint8Array): RecordValue {
-  const event = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  const event: unknown = JSON.parse(Buffer.from(bytes).toString('utf8'));
   requireProof(validEvent(event), 'documentation event schema invalid');
   return event;
 }
@@ -136,10 +141,10 @@ export function verifySelectedForwardPolicyProof(input: LeafProof): string {
       admission!.target_sha256 === change.new_sha256,
     'policy preimages differ from committed manifests',
   );
-  const scope = JSON.parse(Buffer.from(input.scopeBytes).toString('utf8'));
+  const scope: unknown = JSON.parse(Buffer.from(input.scopeBytes).toString('utf8'));
   requireProof(
     validScope(scope) &&
-      Array.isArray(scope.documentation_paths) &&
+      scope.documentation_paths !== undefined &&
       sha(input.scopeBytes) === plan.scope_file_digest &&
       scope.work_id === plan.work_id &&
       scope.source_revision === plan.source_revision,
@@ -151,12 +156,12 @@ export function verifySelectedForwardPolicyProof(input: LeafProof): string {
     sha256: string;
     size: number;
   }[];
-  const addedPaths = addedMaps.map((entry) => entry.path).sort();
+  const addedPaths = addedMaps.map((entry) => entry.path).sort(compareStrings);
   const oldDocuments = baseline.documents as RecordValue[];
   requireProof(
     digest(addedPaths) ===
       digest(
-        scope.documentation_paths.filter((file: string) => !oldDocuments.some((entry) => entry.path === file)).sort(),
+        scope.documentation_paths.filter((file) => !oldDocuments.some((entry) => entry.path === file)).sort(compareStrings),
       ),
     'policy addition differs from accepted documentation target',
   );
@@ -171,18 +176,16 @@ export function verifySelectedForwardPolicyProof(input: LeafProof): string {
       'added map preimage differs from committed manifests',
     );
   }
-  const before = JSON.parse(beforeBytes),
-    after = JSON.parse(afterBytes);
+  const before: unknown = JSON.parse(beforeBytes);
+  const after: unknown = JSON.parse(afterBytes);
   requireProof(
-    before.schema === 'DocumentationPolicy/v1' &&
-      after.schema === 'DocumentationPolicy/v1' &&
+    validPolicy(before) &&
+      validPolicy(after) &&
       before.source_path === policyPath &&
       after.source_path === policyPath &&
-      Array.isArray(before.map_paths) &&
-      Array.isArray(after.map_paths) &&
       new Set(after.map_paths).size === after.map_paths.length &&
-      digest(after.map_paths.filter((file: string) => before.map_paths.includes(file))) === digest(before.map_paths) &&
-      digest(after.map_paths.filter((file: string) => !before.map_paths.includes(file)).sort()) ===
+      digest(after.map_paths.filter((file) => before.map_paths.includes(file))) === digest(before.map_paths) &&
+      digest(after.map_paths.filter((file) => !before.map_paths.includes(file)).sort(compareStrings)) ===
         digest(addedPaths) &&
       digest({ ...after, map_paths: before.map_paths }) === digest(before),
     'selected policy must add only accepted map registration',
@@ -317,7 +320,7 @@ export function verifyCommittedParentPolicyProof(input: ParentProof): string {
 
 /** Current canonical identity locates retained lineage; it does not reinterpret old configuration. */
 export function parseForwardPolicyIdentity(bytes: Uint8Array, expectedPath: string): RecordValue {
-  const policy = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  const policy: unknown = JSON.parse(Buffer.from(bytes).toString('utf8'));
   requireProof(validPolicy(policy) && policy.source_path === expectedPath, 'canonical policy identity differs');
   return policy;
 }

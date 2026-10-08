@@ -1057,6 +1057,8 @@ function withLinuxCasLocks<T>(
     .sort((left, right) => left.key.localeCompare(right.key));
   const locks: LinuxCasLock[] = [];
   const lockKeys = new Set<string>();
+  const failures: unknown[] = [];
+  let result!: T;
   try {
     for (const item of ordered) {
       if (lockKeys.has(item.key)) continue;
@@ -1065,18 +1067,23 @@ function withLinuxCasLocks<T>(
       lockKeys.add(item.key);
       rejectLinuxOrphanBackups(lock.parentFd, lock.name, item.label);
     }
-    return operation();
-  } finally {
-    let releaseError: unknown;
-    for (const lock of locks.reverse()) {
-      try {
-        releaseLinuxCasLock(lock, true);
-      } catch (error) {
-        releaseError ??= error;
-      }
-    }
-    if (releaseError !== undefined) throw releaseError;
+    result = operation();
+  } catch (error) {
+    failures.push(error);
   }
+  for (const lock of locks.reverse()) {
+    try {
+      releaseLinuxCasLock(lock, true);
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1) {
+    const cleanup = failures[1];
+    throw new AggregateError(failures, cleanup instanceof Error ? cleanup.message : 'Linux CAS lock cleanup failed');
+  }
+  return result;
 }
 function readText(root: string, target: string, label: string): string {
   return withLinuxCasLocks(root, [{ target, label }], () => readTextUnlocked(root, target, label));
@@ -1352,6 +1359,9 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
   let tempIdentity: Stats | undefined;
   let backupIdentity: Stats | undefined;
   let lockFd = -1;
+  let operationFailed = false;
+  let operationError: unknown;
+  let recoveryError: unknown;
   try {
     lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
     fsyncSync(lockFd);
@@ -1422,9 +1432,11 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
       label + ' private backup identity changed before cleanup',
     );
     fsyncSync(parent.fd);
+  } catch (error) {
+    operationFailed = true;
+    operationError = error;
   } finally {
     let recoveryComplete = lockFd < 0;
-    let recoveryError: unknown;
     if (lockFd >= 0) {
       try {
         if (tempFd >= 0) {
@@ -1468,9 +1480,13 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
           recoveryError === undefined &&
           linuxOrphanBackupNames(parent.fd, name).length === 0 &&
           !existsSync(childPath(parent.fd, tempName));
+      } catch (error) {
+        recoveryError ??= error;
       } finally {
         try {
           if (recoveryComplete) releaseExclusiveLock(parent.fd, lockName, lockFd);
+        } catch (error) {
+          recoveryError ??= error;
         } finally {
           try {
             closeQuietly(lockFd);
@@ -1482,8 +1498,12 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
     } else {
       closeQuietly(parent.fd);
     }
-    if (recoveryError !== undefined) throw recoveryError;
   }
+  if (operationFailed && recoveryError !== undefined)
+    throw new AggregateError([operationError, recoveryError], recoveryError instanceof Error
+      ? recoveryError.message : label + ' recovery failed', { cause: operationError });
+  if (operationFailed) throw operationError;
+  if (recoveryError !== undefined) throw recoveryError;
 }
 function recoverLinuxOrphanBackup(
   native: LinuxNativeBinding,

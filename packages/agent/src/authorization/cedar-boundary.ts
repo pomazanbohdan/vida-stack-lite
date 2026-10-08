@@ -136,7 +136,7 @@ const authorizationAttempt = Result.fromThrowable((parameters: AuthorizationPara
       ? {
           decision: 'allow',
           diagnostics: successResult.response.diagnostics.reason,
-          ...Object.fromEntries([['receipt', receipt]].filter(() => receipt !== undefined)),
+          ...(receipt === undefined ? {} : { receipt }),
         }
       : deny(diagnostics);
   };

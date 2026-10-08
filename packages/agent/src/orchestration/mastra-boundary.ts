@@ -1497,7 +1497,7 @@ function mastraModel(profile: AgentRoleProfile): string {
   return ['openai/' + profile.model, profile.model][Number(profile.model.includes('/'))]!;
 }
 
-function mastraRegistrationIsValid(mastra: Mastra, agent: Agent, workflow: ReturnType<typeof createWorkflow>): boolean {
+function mastraRegistrationIsValid(mastra: Mastra, agent: Agent, workflow: { readonly id: string }): boolean {
   return allChecksPass([
     () => mastra.getAgent('developmentOrchestrator').id === agent.id,
     () => mastra.getWorkflow('configuredWorkflow').id === workflow.id,
@@ -1582,7 +1582,8 @@ function createExecutableStage(
           execution.pending.add(pending);
           const output = await pending;
           assertCanonicalJsonValue(output, '$');
-          const snapshot = freezeJsonValue(JSON.parse(JSON.stringify(output)));
+          const decoded: unknown = JSON.parse(JSON.stringify(output));
+          const snapshot = freezeJsonValue(decoded);
           return {
             ...inputData,
             stageOutputs: {

@@ -903,3 +903,58 @@ the current continuation contract binds its prior versions and exact original
 Work, journal, contracts and engine. Canonical action IDs already include the
 Source scope, so a changed scope supplies fresh reviewer IDs. Reuse Mastra and
 the existing Host transaction owner; retain UNKNOWN without automatic replay.
+
+### Typed JSON and library boundaries
+
+[Ajv compiled validators](https://ajv.js.org/guide/typescript.html) act as type
+guards. Parse external JSON as `unknown`, then validate its current contract.
+Reuse the accepted value for checksum, scope and caller checks. Do not parse the
+same body again to read a field. A cast alone is not runtime validation.
+
+[TypeScript narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing)
+preserves checked types through assertions and type predicates. For an unknown
+array, validate its elements before accepting a string or contract array. For
+an already typed readonly array, preserve its declared element type while
+checking runtime shape. Keep malformed-input regressions.
+
+Mastra's default generic workflow type contains `any`. Bind the session bridge
+to the actual input and output schemas. A registration check that reads only
+the workflow ID needs only that ID contract. This type correction grants no
+execution or recovery rights.
+
+[Node's module-relative URL rules](https://nodejs.org/api/url.html) determine
+fixture paths. Use the actual repository root or an owned fixture with its
+selected sources, skill and required markers. An absent old path is a fixture
+error; it does not justify changing the production filesystem boundary.
+
+### Coverage counters and source locations
+
+[Babel parser](https://babeljs.io/docs/babel-parser) supplies source locations
+and offsets for the maintained function inventory. The
+[Istanbul coverage format](https://github.com/gotwarlost/istanbul/blob/master/coverage.json.md)
+defines function and statement execution counts and locations with one-based
+lines and zero-based columns. The local CRAP reader accepts non-negative safe
+integer counts and requires a valid start for each provided location. It rejects
+malformed evidence before mapping instead of coercing counts or dropping invalid
+statements. Coordinates must also fit their actual source line. Missing counters
+remain uncovered.
+
+Focused synthetic regressions reproduce and deny fractional counters, missing
+statement starts and invalid coordinates. They check the report reader; they do
+not establish current product coverage, native qualification or Runtime acceptance.
+
+### Git checked inputs and hidden index flags
+
+[Git update-index](https://git-scm.com/docs/git-update-index) supports flags that
+can hide worktree changes from routine diff output.
+[Git ls-files](https://git-scm.com/docs/git-ls-files) exposes staged objects and
+modes. The precommit reader compares all captured maintained bytes with those
+objects; a clean diff does not establish parity.
+
+[Git hash-object](https://git-scm.com/docs/git-hash-object) applies path filters
+to captured stdin bytes when `--path` is supplied. The
+[indexed attribute source](https://git-scm.com/docs/git)
+keeps hidden worktree attribute changes from selecting those filters. The
+current checked Git2.55.0 supports this path. Reproduction confirmed false
+acceptance for both hidden flags before correction. Focused regression now
+denies changed root policy and Source inputs without removing the flags.

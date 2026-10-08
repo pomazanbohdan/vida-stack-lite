@@ -26,7 +26,7 @@ import {
   validateSourceWritePreflight,
   type SourceWritePreflightInput,
 } from './source-preflight.js';
-import { buildAdmittedDevelopmentPacket } from './admitted-development-packet.js';
+import { acceptedContractSourceRevision, buildAdmittedDevelopmentPacket } from './admitted-development-packet.js';
 import { readAdmittedSessionExecutionContext } from './admitted-session-execution.js';
 import type { LocalWorkAdmissionInput } from './local-work-admission.js';
 import { lifecyclePreparationObservationSchema } from './final-assurance.js';
@@ -277,9 +277,11 @@ function attachObservedImplementationPolicyPreparation(input: {
     'prewriter attachment scope bytes differ from Host',
   );
   const scope = parseJsonRecord(scopeBytes, 'current implementation scope');
+  const acceptedRevision = acceptedContractSourceRevision(work, journal,
+    input.hostState.readConfiguredFrontierRecoveryView(identity, input.attempt));
   requireCurrent(
     scope.schema === 'ImplementationScope/v1' && scope.work_id === input.workId &&
-      scope.source_revision === work.binding.work_source_revision && scope.scope_id === work.binding.scope_id &&
+      scope.source_revision === acceptedRevision && scope.scope_id === work.binding.scope_id &&
       canonicalJsonDigest(scope.ac_ids) === canonicalJsonDigest(work.binding.ac_ids) &&
       record(scope.attribution) && scope.attribution.thread_id === work.lease.thread_id,
     'prewriter attachment scope or owning thread differs from Host',
@@ -1132,11 +1134,12 @@ function validateTaskSourcePlanAndSecurity(context: TaskSourceMutationPolicyCont
   );
   const scope = parseJsonRecord(context.scopeBytes, 'scope contract');
   const acceptance = parseJsonRecord(context.acceptanceBytes, 'acceptance contract');
+  const acceptedRevision = acceptedContractSourceRevision(work, journal, context.continuation);
   requireCurrent(
     scope.schema === 'ImplementationScope/v1' &&
       scope.scope_id === binding.scope_id &&
       scope.work_id === binding.lifecycle_work_id &&
-      scope.source_revision === binding.work_source_revision &&
+      scope.source_revision === acceptedRevision &&
       canonicalJsonDigest(scope.ac_ids) === canonicalJsonDigest(binding.ac_ids) &&
       canonicalJsonDigest(scope.allowed_paths) === canonicalJsonDigest(work.lifecycle.scope.allowed_paths) &&
       canonicalJsonDigest(scope.implementation_paths) === canonicalJsonDigest(binding.implementation_paths) &&
@@ -1144,7 +1147,7 @@ function validateTaskSourcePlanAndSecurity(context: TaskSourceMutationPolicyCont
       scope.attribution.thread_id === work.lease.thread_id &&
       acceptance.schema === 'AcceptanceManifest/v1' &&
       acceptance.scope === binding.scope_id &&
-      acceptance.source_revision === binding.work_source_revision &&
+      acceptance.source_revision === acceptedRevision &&
       canonicalJsonDigest(acceptance.ac_ids) === canonicalJsonDigest(binding.ac_ids),
     'scope or acceptance contract binding differs from Host state',
   );

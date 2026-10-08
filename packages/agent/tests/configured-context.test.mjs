@@ -1,11 +1,31 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
 import { fileURLToPath } from 'node:url';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { buildConfiguredContext } from '../src/orchestration/configured-context.ts';
 
-const root = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
+const sourceRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? path.resolve(fileURLToPath(new URL('../../../', import.meta.url)));
+const root = mkdtempSync(path.join(tmpdir(), 'vida-configured-context-'));
+const yaml = readFileSync(path.join(sourceRoot, 'agent-runtime.config.v1.yaml'), 'utf8');
+if (!yaml.includes('id: runtime-development-lifecycle') || !yaml.includes('location: packages/agent/TESTING.md'))
+  throw Error('configured context fixture source registration is missing');
+writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), yaml
+  .replaceAll('runtime-development-lifecycle', 'candidate-testing')
+  .replace('location: packages/agent/TESTING.md', 'location: docs/context.md'));
+mkdirSync(path.join(root, 'docs'), {recursive: true});
+mkdirSync(path.join(root, '.codex/skills/clio'), {recursive: true});
+writeFileSync(path.join(root, 'docs/context.md'), '# Fixture source\nCurrent test context.\n');
+writeFileSync(path.join(root, '.codex/skills/clio/SKILL.md'), '# Fixture skill\nUse only the selected test source.\n');
+writeFileSync(path.join(root, 'AGENTS.md'), '# Fixture instructions\nRead the fixture sidecar.\n');
+writeFileSync(path.join(root, 'AGENT.sidecar.md'), '# Fixture source map\nSelected Source: docs/context.md\n');
+afterAll(() => {
+  if (!path.resolve(root).startsWith(path.resolve(tmpdir(), 'vida-configured-context-')))
+    throw Error('owned context fixture cleanup target differs');
+  rmSync(root, {recursive: true, force: true});
+});
 const config = loadRuntimeConfig(root);
 const base = {
   work_id: 'context-test',

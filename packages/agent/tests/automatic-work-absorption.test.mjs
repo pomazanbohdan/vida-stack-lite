@@ -388,7 +388,7 @@ test(
         { ...input.selection, intent: 'task_execution' },
         { ...input.selection, project: 'foreign' },
       ]) {
-        await expect(MastraSessionBridge.open({ ...args, selection })).rejects.toThrow();
+        await Promise.resolve(expect(MastraSessionBridge.open({ ...args, selection })).rejects.toThrow());
         expect(existsSync(enginePath)).toBe(false);
         expect(
           f.database
@@ -853,7 +853,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
       report,
       JSON.stringify({ ...observation, summary: 'changed retry', output_digest: canonicalJsonDigest('changed retry') }),
     );
-    await expect(run(args)).rejects.toThrow(/retry differs/);
+    await Promise.resolve(expect(run(args)).rejects.toThrow(/retry differs/));
   } finally {
     f.close();
   }
@@ -1414,11 +1414,11 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
       mode: 'baseline',
     };
     let called = false;
-    await expect(
+    await Promise.resolve(expect(
       runConsumerMigrationState(input, () => {
         called = true;
       }),
-    ).rejects.toThrow(/unknown or inflight/);
+    ).rejects.toThrow(/unknown or inflight/));
     expect(called).toBe(false);
     const settled = openHostStateDatabase(workflowPath);
     settled.query('UPDATE mastra_workflow_snapshot SET snapshot=?').run(JSON.stringify({ status: 'suspended' }));
@@ -1439,12 +1439,12 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
     });
     const consumerFile = path.join(f.root, 'consumer-init-output.txt');
     writeFileSync(consumerFile, 'known init failure');
-    await expect(
+    await Promise.resolve(expect(
       runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
         writeFileSync(consumerFile, 'original consumer bytes');
         throw Error('fixture interruption after file restore');
       }),
-    ).rejects.toThrow(/fixture interruption/);
+    ).rejects.toThrow(/fixture interruption/));
     const restored = await runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
       expect(readFileSync(consumerFile, 'utf8')).toBe('original consumer bytes');
       return 'recovered-files';
@@ -1456,11 +1456,11 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
     corrupt.close();
     const bytesBefore = readFileSync(databasePath);
     let unexpectedCallback = false;
-    await expect(
+    await Promise.resolve(expect(
       runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
         unexpectedCallback = true;
       }),
-    ).rejects.toThrow(/admission metadata missing/);
+    ).rejects.toThrow(/admission metadata missing/));
     expect(unexpectedCallback).toBe(false);
     expect(() =>
       inspectHostWorkspaceDatabase(databasePath, deriveWorkspaceId(f.config.repository.repository_id, f.root)),
@@ -2474,7 +2474,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           f.database.exec(
             "CREATE TRIGGER reject_synthetic_rebind BEFORE INSERT ON agent_host_runtime_code_rebind BEGIN SELECT RAISE(ABORT,'synthetic receipt rollback'); END",
           );
-          await expect(reboundStore.rebindRuntimeCode(request)).rejects.toThrow('synthetic receipt rollback');
+          await Promise.resolve(expect(reboundStore.rebindRuntimeCode(request)).rejects.toThrow('synthetic receipt rollback'));
           expect(reboundStore.readHostStateSnapshot(identity)).toEqual(current);
           expect(
             f.database.query('SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE work_id=?').get(id),

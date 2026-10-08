@@ -945,7 +945,7 @@ test.each(['issued', 'unknown', 'malformed_reported', 'reported_observed'])('pol
   request = operationRequest({ source_root: path.join(root, 'task-source') });
   setPolicyStore(async () => { throw new Error('configured Cedar or Edictum denied'); });
   prepare();
-  await expect(store.issueTaskSourceBindingOperation({ request, identity })).rejects.toThrow(/denied/);
+  await Promise.resolve(expect(store.issueTaskSourceBindingOperation({ request, identity })).rejects.toThrow(/denied/));
   expect(database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'").get()).toBeNull();
 
   setPolicyStore(async (input) => allowTaskSourcePolicy(input));
@@ -1011,21 +1011,21 @@ test.each(['issued', 'unknown', 'malformed_reported', 'reported_observed'])('pol
   });
   prepare(second);
   const beforeDeniedIssue = store.readWorkspaceSnapshot();
-  await expect(store.issueTaskSourceBindingOperation({ request: second, identity })).rejects.toThrow(
+  await Promise.resolve(expect(store.issueTaskSourceBindingOperation({ request: second, identity })).rejects.toThrow(
     pendingStatus === 'reported_observed'
       ? /already has a reported observed binding/
       : pendingStatus === 'malformed_reported'
         ? /^task source action status differs from its retained report pair$/
         : /already claimed|retained observed result/,
-  );
+  ));
   expect(store.readWorkspaceSnapshot()).toEqual(beforeDeniedIssue);
   expect(store.inspectTaskSourceBindingAction({ request: second, identity, verifyCurrent })).toMatchObject({ status: 'prepared' });
   expect(database.query('SELECT COUNT(*) AS count FROM agent_host_task_source_binding_action').get().count).toBe(1);
   expect(issued.status).toBe('issued');
   if (pendingStatus === 'malformed_reported') {
-    await expect(store.issueTaskSourceBindingOperation({ request, identity })).rejects.toThrow(
+    await Promise.resolve(expect(store.issueTaskSourceBindingOperation({ request, identity })).rejects.toThrow(
       /^task source action status differs from its retained report pair$/,
-    );
+    ));
     expect(() => store.inspectTaskSourceBindingAction({ request, identity, verifyCurrent })).toThrow(
       /^task source action status differs from its retained report pair$/,
     );

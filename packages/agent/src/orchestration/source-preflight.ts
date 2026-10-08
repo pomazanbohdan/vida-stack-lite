@@ -18,6 +18,8 @@ import type { DevelopmentTaskPacket } from './mastra-boundary.js';
 import type { MastraLedgerItem, MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { observedReceiptEvidenceReference, validateObservedEvidenceReferences } from './observed-receipt-evidence.js';
 import { lifecyclePreparationObservationSchema } from './final-assurance.js';
+import { acceptedContractSourceRevision } from './admitted-development-packet.js';
+import type { ConfiguredFrontierRecoveryView } from './failed-prewriter-transition.js';
 
 const preparationKinds = lifecyclePreparationObservationSchema.shape.kind.options;
 const sourcePrewriterSecurityRiskFlags = new Set(['security', 'data_loss', 'migration', 'high']);
@@ -63,6 +65,8 @@ export interface SourceWritePreflightInput {
   readonly taskPacket: DevelopmentTaskPacket;
   readonly scopeBytes: Uint8Array;
   readonly acceptanceBytes: Uint8Array;
+  /** Trusted Host-owned continuation custody; absent for an ordinary current admission. */
+  readonly continuation?: ConfiguredFrontierRecoveryView | null;
   /** Current preparation artifacts required by the Work lifecycle state and selected route. */
   readonly preparations: readonly SourcePreflightArtifactInput[];
 }
@@ -494,18 +498,19 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
   }
   const scopeRecord = isRecord(scope) ? scope : fail('scope contract is not an object');
   const acceptanceRecord = isRecord(acceptance) ? acceptance : fail('acceptance contract is not an object');
+  const acceptedRevision = acceptedContractSourceRevision(work, journal, input.continuation);
   if (
     scopeRecord.schema !== 'ImplementationScope/v1' ||
     scopeRecord.scope_id !== binding.scope_id ||
     scopeRecord.work_id !== identity.work_id ||
-    scopeRecord.source_revision !== binding.work_source_revision ||
+    scopeRecord.source_revision !== acceptedRevision ||
     !same(scopeRecord.ac_ids, binding.ac_ids) ||
     !same(scopeRecord.allowed_paths, work.lifecycle.scope.allowed_paths) ||
     !same(scopeRecord.implementation_paths, binding.implementation_paths) ||
     (scopeRecord.attribution as Record<string, unknown> | undefined)?.thread_id !== lease.thread_id ||
     acceptanceRecord.schema !== 'AcceptanceManifest/v1' ||
     acceptanceRecord.scope !== binding.scope_id ||
-    acceptanceRecord.source_revision !== binding.work_source_revision ||
+    acceptanceRecord.source_revision !== acceptedRevision ||
     !same(acceptanceRecord.ac_ids, binding.ac_ids)
   ) fail('scope or acceptance contract binding differs from Host state');
 

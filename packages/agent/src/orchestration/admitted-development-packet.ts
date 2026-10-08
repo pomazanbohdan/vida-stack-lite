@@ -11,7 +11,10 @@ import {
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import type { HostStateSnapshot, HostStateStore } from '../host-state.js';
+import type { HostStateSnapshot, HostStateStore, WorkState } from '../host-state.js';
+import type { ConfiguredFrontierRecoveryView } from './failed-prewriter-transition.js';
+import { validateFailedPrewriterRecoveryReceipt } from './failed-prewriter-transition.js';
+import { validateConfiguredFrontierReceiptStructure, type ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
 import {
   validateResearchResult,
   validateResearchSynthesis,
@@ -72,7 +75,7 @@ export interface AdmittedDevelopmentPacketInput {
   readonly config: AgentRuntimeConfig;
   readonly host: HostStateSnapshot;
   readonly sourceStore?: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'> &
-    Partial<Pick<HostStateStore, 'readDeliveredWorkContinuationReceipt'>>;
+    Partial<Pick<HostStateStore, 'readDeliveredWorkContinuationReceipt' | 'readFailedPrewriterRecoveryReceipt'>>;
   readonly ledger: MastraSessionLedgerSnapshot;
   readonly workItem: LocalWorkAdmissionInput['workItem'];
   readonly selection: WorkItemSelection;
@@ -83,6 +86,28 @@ export interface AdmittedDevelopmentPacketInput {
 
 function requirePacket(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`admitted development packet: ${message}`);
+}
+
+/** Resolve immutable accepted contracts against a trusted current Host/journal and continuation view. */
+export function acceptedContractSourceRevision(
+  work: WorkState, ledger: MastraSessionLedgerSnapshot, view?: ConfiguredFrontierRecoveryView | null,
+): string {
+  if (!view) return work.binding.work_source_revision;
+  const {original, recovery} = view;
+  validateConfiguredFrontierReceiptStructure({receipt: original});
+  if (recovery) validateFailedPrewriterRecoveryReceipt(recovery);
+  requirePacket(original.attempt === ledger.state.attempt &&
+    original.request.identity.work_id === work.binding.lifecycle_work_id &&
+    original.prior_work.workspace_id === work.workspace_id &&
+    ledger.state.workspace_id === work.workspace_id && ledger.state.work_id === work.binding.lifecycle_work_id &&
+    ledger.state.run_id === work.execution.run_id && original.prior_work.execution.run_id === work.execution.run_id &&
+    canonicalJsonDigest(recovery?.successor_work.binding ?? original.successor_binding) === canonicalJsonDigest(work.binding) &&
+    (!recovery || canonicalJsonDigest(recovery.original) === canonicalJsonDigest(original)) &&
+    canonicalJsonDigest(original.prior_work.contracts) === canonicalJsonDigest(work.contracts) &&
+    canonicalJsonDigest(ledger.state.completed.slice(0, original.prior_journal.completed.length)) ===
+      canonicalJsonDigest(original.prior_journal.completed),
+  'continued packet original admission or completed prefix differs');
+  return original.prior_work.binding.work_source_revision;
 }
 
 function uniqueSorted(values: readonly string[]): readonly string[] {
@@ -256,16 +281,12 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     repository_id: binding.repository_id, project_ids: binding.project_ids,
     integrations_digest: binding.integrations_digest, work_id: binding.lifecycle_work_id,
   }, ledger.state.attempt);
-  const original = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
-  if (original) requirePacket(
-    original.prior_work.workspace_id === work.workspace_id &&
-      canonicalJsonDigest(original.successor_binding) === canonicalJsonDigest(binding) &&
-      canonicalJsonDigest(original.prior_work.contracts) === canonicalJsonDigest(work.contracts) &&
-      canonicalJsonDigest(ledger.state.completed.slice(0, original.prior_journal.completed.length)) ===
-        canonicalJsonDigest(original.prior_journal.completed),
-    'continued packet original admission or completed prefix differs',
-  );
-  const acceptedSourceRevision = original?.prior_work.binding.work_source_revision ?? binding.work_source_revision;
+  const original = continuation?.request.action.kind === 'configured_frontier' ? continuation as ConfiguredFrontierReceipt : null;
+  const recovery = original && input.sourceStore?.readFailedPrewriterRecoveryReceipt?.({
+    repository_id: binding.repository_id, project_ids: binding.project_ids,
+    integrations_digest: binding.integrations_digest, work_id: binding.lifecycle_work_id,
+  }, ledger.state.attempt);
+  const acceptedSourceRevision = acceptedContractSourceRevision(work, ledger, original ? {original, recovery: recovery || null} : null);
   const originalObserved = original?.prior_journal.completed.flatMap(wave => wave.items) ?? [];
   const currentOrOriginal = (item: (typeof ledger.state.items)[number]): boolean =>
     item.request.scope_digest === binding.work_source_revision && item.request.config_digest === binding.config_digest ||
@@ -392,20 +413,19 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     );
     requirePacket(artifact !== undefined, 'research action has no current admitted typed artifact');
     const bytes = access.readBytes(artifact.path, 'packet observed research artifact');
+    const record: unknown = JSON.parse(bytes.toString('utf8'));
+    const result = validateResearchResult(record);
     requirePacket(
       bytes.length <= 64 * 1024 &&
         sha256(bytes) === artifact.sha256 &&
-        JSON.parse(bytes.toString('utf8')).digest === plan.result_digest,
+        result.digest === plan.result_digest,
       'research artifact bytes differ from observed digest',
     );
-    const record = JSON.parse(bytes.toString('utf8'));
     // This pair was validated before artifact admission. Later sanctioned writes may
     // advance the live source snapshot, while the admitted research bytes stay fixed.
-    const result = validateResearchResult(record);
     requirePacket(
-      result.result_id === record.result_id &&
-        artifact.artifact_id === result.result_id &&
-        canonicalJsonDigest(result) === canonicalJsonDigest(JSON.parse(bytes.toString('utf8'))) &&
+      artifact.artifact_id === result.result_id &&
+        canonicalJsonDigest(result) === canonicalJsonDigest(record) &&
         result.work_item_id === workItem.id &&
         result.scope_id === scope.scope_id &&
         result.source_revision === item.request.scope_digest &&

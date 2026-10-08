@@ -50,8 +50,7 @@ export function validateRuntimeEnvelope(value: unknown): RuntimeEnvelope {
   assertDataOnlyJson(value);
   reject(
     [!validator(value)],
-    `runtime envelope rejected: ${[validator.errors, [] as NonNullable<typeof validator.errors>]
-      .find(Array.isArray)!
+      `runtime envelope rejected: ${(validator.errors ?? [])
       .map((error) => error.message)
       .join('; ')}`,
   );
@@ -190,7 +189,7 @@ export function safeHistoricalWorkflowOwnedPath(value: string): boolean {
   const pathProbe = value
     .replaceAll('*', 'x')
     .replaceAll('?', 'x')
-    .replace(/[\[\]{}]/g, 'x');
+    .replace(/[[\]{}]/g, 'x');
   return safeWorkflowOwnedPath(pathProbe);
 }
 

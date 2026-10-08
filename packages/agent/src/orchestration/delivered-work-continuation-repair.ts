@@ -45,8 +45,8 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
   const receipt = input?.receipt;
   required(
     receipt && Buffer.byteLength(JSON.stringify(receipt), 'utf8') <= 64 * 1024 * 1024 &&
-      Array.isArray(receipt.prior_journal?.completed) && Array.isArray(receipt.prior_journal?.items) &&
-      Array.isArray(receipt.successor_journal?.completed) && Array.isArray(receipt.successor_journal?.items),
+      Boolean(Array.isArray(receipt.prior_journal?.completed)) && Boolean(Array.isArray(receipt.prior_journal?.items)) &&
+      Boolean(Array.isArray(receipt.successor_journal?.completed)) && Boolean(Array.isArray(receipt.successor_journal?.items)),
     'future configured-frontier receipt exceeds bounds or lacks journal arrays',
   );
   required(validateCoordinationLedgerV1(receipt.prior_ledger).ok && validateCoordinationLedgerV1(receipt.successor_ledger).ok,
@@ -191,7 +191,7 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       canonicalJsonDigest(receipt.successor_ledger) === receipt.ledger_version.digest &&
       canonicalJsonDigest(receipt.successor_binding) === canonicalJsonDigest(receipt.successor_work.binding) &&
       action.request.corrective_execution === undefined &&
-      Array.isArray(receipt.successor_work.execution.assignment_attempts) &&
+      Boolean(Array.isArray(receipt.successor_work.execution.assignment_attempts)) &&
       receipt.successor_work.execution.assignment_attempts.every((attempt) => ['completed', 'no_effect'].includes(attempt.status)),
     'future configured-frontier snapshot, prefix or prior CAS differs',
   );
@@ -266,8 +266,8 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       same(receipt.successor_ledger.tickets.filter((entry) => entry.ticket_id !== ticket?.ticket_id), priorLedger.tickets) &&
       same(receipt.successor_ledger.tickets.find((entry) => entry.ticket_id === ticket?.ticket_id), ticket) &&
       receipt.successor_ledger.claims.length === priorLedger.claims.length + 1 &&
-      same(receipt.successor_ledger.claims.filter((entry) => entry.claim_id !== claims[0]!?.claim_id), priorLedger.claims) &&
-      same(receipt.successor_ledger.claims.find((entry) => entry.claim_id === claims[0]!?.claim_id), claims[0]!) &&
+      same(receipt.successor_ledger.claims.filter((entry) => entry.claim_id !== claims[0]?.claim_id), priorLedger.claims) &&
+      same(receipt.successor_ledger.claims.find((entry) => entry.claim_id === claims[0]?.claim_id), claims[0]!) &&
       nextTicket?.sequence === priorLedger.next_sequence &&
       nextTicket?.generation === priorLedger.open_generation &&
       same(nextTicket, ticket) &&

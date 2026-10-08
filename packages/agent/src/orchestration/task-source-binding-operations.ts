@@ -17,7 +17,6 @@ import {
 import { readLocalSourceWriteAuthorization } from './local-source-authorization.js';
 import { openConfiguredMastraSessionLedger, sessionHandoffDatabasePath } from './persistent-session-handoff.js';
 import {
-  resolveTaskSourceRoot,
   validateTaskSourceBindingRequest,
   type TaskSourceBindingRequest,
 } from './task-source-binding.js';

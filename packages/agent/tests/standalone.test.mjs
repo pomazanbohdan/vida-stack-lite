@@ -45,7 +45,7 @@ test('resources preserve dangling foreign directory links', async () => {
     const missing = path.join(value.cache, 'foreign-missing-target'),
       destination = path.join(value.cache, value.version + '-' + value.payloadId);
     symlinkSync(missing, destination, process.platform === 'win32' ? 'junction' : 'dir');
-    await assert.rejects(materializeResources(value), /linked|link/);
+    await Promise.resolve(assert.rejects(materializeResources(value), /linked|link/));
     assert.ok(lstatSync(destination).isSymbolicLink());
   } finally {
     rmSync(value.cache, { recursive: true, force: true });
@@ -61,10 +61,10 @@ test('resources preserve dangling foreign directory links', async () => {
         cache = path.join(parent, 'runtime');
       mkdirSync(cache, { mode: 0o700 });
       chmodSync(parent, 0o755);
-      await assert.rejects(materializeResources({ ...value, cache, privateRoot: parent }), /permissions/);
+      await Promise.resolve(assert.rejects(materializeResources({ ...value, cache, privateRoot: parent }), /permissions/));
       chmodSync(parent, 0o700);
       chmodSync(cache, 0o777);
-      await assert.rejects(materializeResources({ ...value, cache, privateRoot: parent }), /permissions/);
+      await Promise.resolve(assert.rejects(materializeResources({ ...value, cache, privateRoot: parent }), /permissions/));
     } finally {
       rmSync(value.cache, { recursive: true, force: true });
     }
@@ -79,7 +79,7 @@ test('resources reject unsafe paths and partial or foreign publication without r
     const destination = path.join(value.cache, value.version + '-' + value.payloadId);
     mkdirSync(destination);
     writeFileSync(path.join(destination, 'foreign.txt'), 'foreign owner');
-    await assert.rejects(materializeResources(value));
+    await Promise.resolve(assert.rejects(materializeResources(value)));
     assert.equal(readFileSync(path.join(destination, 'foreign.txt'), 'utf8'), 'foreign owner');
   } finally {
     rmSync(value.cache, { recursive: true, force: true });
@@ -104,7 +104,7 @@ test('resources publish once under concurrency and reuse only exact regular byte
     };
     assert.equal(await materializeResources(value), first);
     writeFileSync(path.join(first, 'instructions/owned.md'), 'tampered');
-    await assert.rejects(materializeResources(value), /payload differs/);
+    await Promise.resolve(assert.rejects(materializeResources(value), /payload differs/));
     assert.equal(readFileSync(path.join(first, 'instructions/owned.md'), 'utf8'), 'tampered');
   } finally {
     rmSync(value.cache, { recursive: true, force: true });
@@ -119,7 +119,7 @@ test('resources reject a linked resource directory and preserve its external own
       owner = path.join(value.cache, 'external-owned-instructions');
     renameSync(directory, owner);
     symlinkSync(owner, directory, process.platform === 'win32' ? 'junction' : 'dir');
-    await assert.rejects(materializeResources(value), /link/);
+    await Promise.resolve(assert.rejects(materializeResources(value), /link/));
     assert.equal(readFileSync(path.join(owner, 'owned.md'), 'utf8'), 'owned physical instruction');
   } finally {
     rmSync(value.cache, { recursive: true, force: true });
@@ -129,7 +129,7 @@ test('resources reject a linked resource directory and preserve its external own
 test('resources retain interrupted private staging and refuse uncertain locks or linked payloads', async () => {
   const value = fixture();
   try {
-    await assert.rejects(
+    await Promise.resolve(assert.rejects(
       materializeResources({
         ...value,
         loadFiles: async () => {
@@ -137,7 +137,7 @@ test('resources retain interrupted private staging and refuse uncertain locks or
         },
       }),
       /interrupted/,
-    );
+    ));
     assert.equal(readdirSync(value.cache).filter((name) => name.startsWith('.pending-')).length, 1);
     const root = await materializeResources(value);
     linkSync(path.join(root, 'instructions/owned.md'), path.join(value.cache, 'linked-owner'));
@@ -145,7 +145,7 @@ test('resources retain interrupted private staging and refuse uncertain locks or
     const other = { ...value, payloadId: resourceDigest('other'), waitMs: 0 };
     const lock = path.join(other.cache, other.version + '-' + other.payloadId + '.lock');
     writeFileSync(lock, 'unknown prior publisher');
-    await assert.rejects(materializeResources(other), /uncertain/);
+    await Promise.resolve(assert.rejects(materializeResources(other), /uncertain/));
     assert.equal(readFileSync(lock, 'utf8'), 'unknown prior publisher');
   } finally {
     rmSync(value.cache, { recursive: true, force: true });
@@ -217,7 +217,7 @@ test('resources drain disjoint writes before releasing the owned lock on a faile
           return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length);
         },
       });
-    await assert.rejects(
+    await Promise.resolve(assert.rejects(
       materializeResources({
         ...value,
         index: entries,
@@ -225,7 +225,7 @@ test('resources drain disjoint writes before releasing the owned lock on a faile
         loadFiles: async () => files,
       }),
       /owned batch fault/,
-    );
+    ));
     assert.equal(completed, 7);
     assert.equal(nextBatchStarted, false);
     assert.equal(readdirSync(value.cache).filter((name) => name.endsWith('.lock')).length, 0);
