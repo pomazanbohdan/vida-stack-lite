@@ -438,7 +438,7 @@ test('competing base attempt commits before the local Host call and cannot be re
 });
 
 test('admission normalizes a caller runtime subset into one immutable canonical intake without changing raw input', () => {
-  const f = fixture();
+  const f = fixture(false, true);
   try {
     const input = f.prepare('canonical', 'user:canonical');
     input.intakePath = '.agent/work/canonical/raw-intake.json';

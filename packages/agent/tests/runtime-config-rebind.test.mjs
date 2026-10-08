@@ -22,6 +22,7 @@ import { spawnSync } from 'node:child_process';
 import { runReconcileArtifacts as reconcileEntrypoint } from '../bin/reconcile-artifacts.mjs';
 import { run as runEntrypoint } from '../bin/run.mjs';
 import { cooperativeReadonlyAssignments, currentState, inspectHistoricalOwnerContext } from '../bin/runtime-config-rebind.mjs';
+import { readAppliedRuntimeConfigRebind } from '../bin/runtime-config-rebind.mjs';
 import { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
 import { loadRuntimeConfig, parseRuntimeConfigYaml, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -1960,6 +1961,20 @@ test('a new normal config operation adopts only the approved prewriter delta aft
   expect(completedNormalOperation.schema).toBe('ConfigRebindOperation/v1');
   expect(completedNormalOperation.phase).toBe('applied');
   expect(completedNormalOperation.maintenance_released).toBe(true);
+  const normalEdge = readAppliedRuntimeConfigRebind(f.root, adopted, completedNormalOperation.plan.operation_id);
+  expect(normalEdge.value).toEqual(completedNormalOperation);
+  expect(normalEdge.receipt.value.config_digest).toBe(runtimeConfigDigest(adopted));
+  const savedNormal = readFileSync(normalOperationPath);
+  for (const patch of [{ maintenance_released: false }, { phase: 'fenced' }, { plan_digest: '0'.repeat(64) }]) {
+    writeFileSync(normalOperationPath, json({ ...completedNormalOperation, ...patch }));
+    expect(() => readAppliedRuntimeConfigRebind(f.root, adopted, completedNormalOperation.plan.operation_id)).toThrow();
+  }
+  writeFileSync(normalOperationPath, savedNormal);
+  expect(readAppliedRuntimeConfigRebind(f.root, adopted, completedNormalOperation.plan.operation_id).bytes).toEqual(savedNormal);
+  const forgedPlan = { ...completedNormalOperation.plan, actor: 'forged-controller' };
+  writeFileSync(normalOperationPath, json({ ...completedNormalOperation, plan: forgedPlan, plan_digest: canonicalJsonDigest(forgedPlan) }));
+  expect(() => readAppliedRuntimeConfigRebind(f.root, adopted, completedNormalOperation.plan.operation_id)).toThrow(/typed Host maintenance release/);
+  writeFileSync(normalOperationPath, savedNormal);
   expect(readFileSync(deliveryOperationPath)).toEqual(frozenDeliveryOperation);
   expect(JSON.parse(readFileSync(deliveryOperationPath, 'utf8'))).toEqual(frozenDeliveryValue);
 }, 120_000);

@@ -12,6 +12,7 @@ import type { HostStateStore, WorkIdentity } from '../host-state.js';
 import { createTrustedLocalSessionComposition, requireLiveLocalSessionAdmission } from '../runtime-kernel.js';
 import { snapshotRuntimePackageSources } from './scoped-source-snapshot.js';
 import { resolveTaskSourceFileRoot } from './task-source-binding.js';
+import { validateConfiguredFrontierReceiptStructure, type ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
 
 function requireExecution(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -58,15 +59,36 @@ export function assertAdmittedRuntimeCodeCurrent(
   const intake = readAdmittedSessionIntake(repositoryRoot, store, identity);
   const work = store.readHostStateSnapshot(identity).work!;
   const config = loadRuntimeConfig(repositoryRoot);
-  requireExecution(
-    canonicalJsonDigest(intake.runtime_code_paths) ===
-      canonicalJsonDigest(runtimePackageCodePaths(config.runtime.bundle)),
-    'admitted runtime inventory differs; qualified runtime repair/rebind is required',
-  );
+  const currentPaths = runtimePackageCodePaths(config.runtime.bundle);
+  let runtimePaths: readonly string[] = intake.runtime_code_paths;
+  if (canonicalJsonDigest(runtimePaths) !== canonicalJsonDigest(currentPaths)) {
+    const journal = store.readWorkSessionJournal(identity),
+      receipt = journal && store.readDeliveredWorkContinuationReceipt(identity, journal.attempt);
+    requireExecution(receipt?.request.action.kind === 'configured_frontier' &&
+      receipt.request.sourceTransition.status === 'closed_config_rebind_proven' &&
+      receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
+    'admitted runtime inventory differs; qualified runtime repair/rebind is required');
+    validateConfiguredFrontierReceiptStructure({ receipt: receipt as ConfiguredFrontierReceipt });
+    const request = receipt.request, transition = request.sourceTransition.transition,
+      intakeRef = work.artifacts.find(ref => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1'),
+      project = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids),
+      schemaDigest = createHash('sha256').update(runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current runtime schema')).digest('hex');
+    requireExecution(intakeRef && 'original_intake_ref' in transition && transition.original_intake_ref === intakeRef.path &&
+      transition.original_intake_sha256 === intakeRef.sha256 && request.nativeSessionHandle === intake.native_session_handle &&
+      receipt.prior_work.execution.run_id === work.execution.run_id &&
+      receipt.prior_work.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
+      receipt.prior_work.binding.config_digest === request.priorConfigDigest &&
+      request.targetRuntimeCodeDigest === work.binding.runtime_code_digest &&
+      request.targetConfigDigest === runtimeConfigDigest(config) && request.targetConfigDigest === work.binding.config_digest &&
+      request.targetSchemaDigest === schemaDigest && request.targetSchemaDigest === work.binding.schema_digest &&
+      request.targetProjectContextDigest === project.project_context_digest,
+    'admitted runtime continuation does not bind the protected intake and current endpoint');
+    runtimePaths = currentPaths;
+  }
   const current = snapshotRuntimePackageSources(
     runtimePackageAccess(),
     config.runtime.bundle,
-    intake.runtime_code_paths,
+    runtimePaths,
   );
   requireExecution(current.digest === work.binding.runtime_code_digest, 'admitted runtime code changed');
   return { work_item: intake.work_item, native_session_handle: intake.native_session_handle };

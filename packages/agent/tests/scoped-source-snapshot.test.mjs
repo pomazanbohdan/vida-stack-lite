@@ -13,6 +13,8 @@ import {
   snapshotDeclaredSources,
   snapshotRuntimePackageSources,
 } from '../src/orchestration/scoped-source-snapshot.ts';
+import * as snapshots from '../src/orchestration/scoped-source-snapshot.ts';
+import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 
 function reader(files) {
   return {
@@ -22,6 +24,60 @@ function reader(files) {
 }
 
 describe('cooperative scoped source evidence', () => {
+  test('retains distinct runtime endpoint inventories and derives appeared and disappeared bytes', () => {
+    const prefix = 'packages/agent';
+    const files = new Map([['src/old.ts', 'old'], ['src/shared.ts', 'before']]);
+    const manifest = (values) => ({
+      schema: 'VidaStandaloneBuild/v1',
+      inputs: snapshotDeclaredSources(reader(values), [...values.keys()]).entries.map(({ path, bytes, sha256 }) => ({ path, bytes, sha256 })),
+    });
+    const paths = (values) => [...values.keys()].map((name) => `${prefix}/${name}`);
+    const beforeManifest = manifest(files);
+    beforeManifest.inputs.push(manifest(new Map([['docs/unrelated.md', 'valid extra input']])).inputs[0]);
+    const before = snapshots.snapshotRuntimeManifestSources(beforeManifest, prefix, paths(files));
+    expect(before).toEqual(snapshotRuntimePackageSources(reader(files), prefix, paths(files)));
+    files.delete('src/old.ts');
+    files.set('src/shared.ts', 'after');
+    files.set('src/new.ts', 'new');
+    const afterManifest = manifest(files);
+    const after = snapshots.snapshotRuntimeManifestSources(afterManifest, prefix, paths(files));
+    expect(after).toEqual(snapshotRuntimePackageSources(reader(files), prefix, paths(files)));
+    expect(() => compareScopedSourceSnapshots(before, after)).toThrow('different scope');
+    const changes = snapshots.compareRuntimeEndpointSnapshots(before, after);
+    expect(changes.map(({ path, kind }) => [path, kind])).toEqual([
+      [`${prefix}/src/new.ts`, 'appeared'],
+      [`${prefix}/src/old.ts`, 'disappeared'],
+      [`${prefix}/src/shared.ts`, 'changed'],
+    ]);
+    expect(changes[0].before).toEqual({ path: `${prefix}/src/new.ts`, exists: false, bytes: null, sha256: null });
+    expect(before.entries).toHaveLength(2);
+    expect(after.entries).toHaveLength(2);
+    expect(() => snapshots.compareRuntimeEndpointSnapshots({ ...before, digest: '0'.repeat(64) }, after)).toThrow();
+    for (const entries of [
+      [before.entries[0], before.entries[0]],
+      [{ ...before.entries[0], path: '../outside.ts' }],
+      [{ ...before.entries[0], bytes: -1 }],
+      [{ ...before.entries[0], sha256: 'wrong' }],
+      [{ ...before.entries[0], extra: true }],
+    ]) {
+      const body = { schema: before.schema, entries };
+      expect(() => snapshots.compareRuntimeEndpointSnapshots({ ...body, digest: canonicalJsonDigest(body) }, after)).toThrow();
+    }
+    for (const invalid of [
+      { ...beforeManifest, schema: 'other' },
+      { ...beforeManifest, inputs: [...beforeManifest.inputs, beforeManifest.inputs[0]] },
+      { ...beforeManifest, inputs: beforeManifest.inputs.slice(1) },
+      { ...beforeManifest, inputs: null },
+      { ...beforeManifest, inputs: [] },
+      { ...beforeManifest, inputs: Array(2049).fill(beforeManifest.inputs[0]) },
+      { ...beforeManifest, inputs: [{ ...beforeManifest.inputs[0], extra: true }] },
+      { ...beforeManifest, inputs: [{ path: 'src/old.ts', bytes: 3 }] },
+      { ...beforeManifest, inputs: [{ ...beforeManifest.inputs[0], path: '../outside.ts' }] },
+      { ...beforeManifest, inputs: [{ ...beforeManifest.inputs[0], bytes: -1 }] },
+      { ...beforeManifest, inputs: [{ ...beforeManifest.inputs[0], sha256: 'wrong' }] },
+    ]) expect(() => snapshots.snapshotRuntimeManifestSources(invalid, prefix, paths(new Map([['src/old.ts', 'old'], ['src/shared.ts', 'before']])))).toThrow();
+    expect(() => snapshots.snapshotRuntimeManifestSources(beforeManifest, prefix, ['foreign/src/old.ts'])).toThrow();
+  });
   test('public scope resolves equal, nested, shared and repository-evidence paths without widening selectors', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'scope-shared-fixture-'));
     mkdirSync(path.join(root, '.git'), { recursive: true });

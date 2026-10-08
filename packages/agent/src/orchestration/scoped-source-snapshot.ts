@@ -46,6 +46,80 @@ export interface ScopedSourceChange {
   readonly after: ScopedSourceEntry;
 }
 
+function hasExactKeys(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) &&
+    JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
+}
+
+const sourceHash = /^[a-f0-9]{64}$/;
+
+/** Read declared runtime bytes from a retained formation manifest. This is byte evidence only. */
+export function snapshotRuntimeManifestSources(
+  manifest: unknown,
+  bundlePath: string,
+  paths: readonly string[],
+): ScopedSourceSnapshot {
+  requireSnapshot(manifest !== null && typeof manifest === 'object' && !Array.isArray(manifest), 'runtime manifest is invalid');
+  const value = manifest as Record<string, unknown>;
+  requireSnapshot(value.schema === 'VidaStandaloneBuild/v1' && Array.isArray(value.inputs) &&
+    value.inputs.length > 0 && value.inputs.length <= 2048, 'runtime manifest inputs are invalid');
+  canonicalPaths([bundlePath]);
+  const inputs = new Map<string, { bytes: number; sha256: string }>();
+  for (const input of value.inputs) {
+    requireSnapshot(hasExactKeys(input, ['path', 'bytes', 'sha256']) &&
+      typeof input.path === 'string' && Number.isSafeInteger(input.bytes) && (input.bytes as number) >= 0 &&
+      (input.bytes as number) <= 8 * 1024 * 1024 && typeof input.sha256 === 'string' && sourceHash.test(input.sha256),
+    'runtime manifest input shape is invalid');
+    canonicalPaths([input.path]);
+    requireSnapshot(!inputs.has(input.path), 'runtime manifest input paths contain duplicates');
+    inputs.set(input.path, { bytes: input.bytes as number, sha256: input.sha256 });
+  }
+  let totalBytes = 0;
+  const entries = canonicalPaths(paths).map((relative) => {
+    requireSnapshot(relative.startsWith(`${bundlePath}/`), 'runtime source is outside the configured package identity');
+    const input = inputs.get(relative.slice(bundlePath.length + 1));
+    requireSnapshot(input, 'runtime path is missing from the exact manifest');
+    totalBytes += input.bytes;
+    requireSnapshot(totalBytes <= 64 * 1024 * 1024, 'runtime manifest scope exceeds total byte limit');
+    return Object.freeze({ path: relative, exists: true, bytes: input.bytes, sha256: input.sha256 });
+  });
+  const body = { schema: 'ScopedSourceSnapshot/v1' as const, entries: Object.freeze(entries) };
+  return Object.freeze({ ...body, digest: canonicalJsonDigest(body) });
+}
+
+/** Preserve endpoint inventories; a temporary union represents only their per-file differences. */
+export function compareRuntimeEndpointSnapshots(
+  before: ScopedSourceSnapshot,
+  after: ScopedSourceSnapshot,
+): readonly ScopedSourceChange[] {
+  for (const snapshot of [before, after]) {
+    requireSnapshot(hasExactKeys(snapshot, ['schema', 'entries', 'digest']) &&
+      snapshot.schema === 'ScopedSourceSnapshot/v1' && Array.isArray(snapshot.entries) &&
+      typeof snapshot.digest === 'string' && sourceHash.test(snapshot.digest), 'runtime endpoint shape is invalid');
+    const paths = canonicalPaths(snapshot.entries.map((entry) => entry.path));
+    let totalBytes = 0;
+    requireSnapshot(snapshot.entries.every((entry, index) => {
+      if (!hasExactKeys(entry, ['path', 'exists', 'bytes', 'sha256']) || entry.path !== paths[index] ||
+        typeof entry.exists !== 'boolean') return false;
+      if (!entry.exists) return entry.bytes === null && entry.sha256 === null;
+      if (!Number.isSafeInteger(entry.bytes) || (entry.bytes as number) < 0 ||
+        (entry.bytes as number) > 8 * 1024 * 1024 || typeof entry.sha256 !== 'string' || !sourceHash.test(entry.sha256)) return false;
+      totalBytes += entry.bytes as number;
+      return totalBytes <= 64 * 1024 * 1024;
+    }) && snapshot.digest === canonicalJsonDigest({ schema: snapshot.schema, entries: snapshot.entries }),
+    'runtime endpoint entries or digest are invalid');
+  }
+  const paths = canonicalPaths([...new Set([...before.entries, ...after.entries].map((entry) => entry.path))]);
+  const expand = (snapshot: ScopedSourceSnapshot): ScopedSourceSnapshot => {
+    const entriesByPath = new Map(snapshot.entries.map((entry) => [entry.path, entry]));
+    const entries = paths.map((relative) => entriesByPath.get(relative) ??
+      Object.freeze({ path: relative, exists: false, bytes: null, sha256: null }));
+    const body = { schema: snapshot.schema, entries };
+    return { ...body, digest: canonicalJsonDigest(body) };
+  };
+  return compareScopedSourceSnapshots(expand(before), expand(after));
+}
+
 /** Re-read declared task files through the Host-validated current TaskSource binding. */
 export function snapshotAdmittedTaskSources(input: {
   readonly store: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'>;

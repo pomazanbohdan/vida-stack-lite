@@ -1830,6 +1830,40 @@ function readOperation(access, operationPath, id, root, delivery) {
   return { bytes, value };
 }
 
+/** Read an already applied normal config edge; no maintenance or receipt mutation. */
+export function readAppliedRuntimeConfigRebind(root, config, operationId) {
+  requireRebind(identifier.test(operationId), 'normal config operation identity invalid');
+  const access = requireSafeRepositoryAccess(root),
+    operationPath = `${config.control.work_root}/${operationId}/${operationName}`,
+    stored = readOperation(access, operationPath, operationId, root, false),
+    operation = stored.value,
+    plan = operation.plan,
+    before = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
+    after = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.target_yaml), root),
+    receipt = readReceipt(access, config);
+  sameIdentity(root, config, receipt.value);
+  const projects = config.projects.map(project => project.project_id).sort();
+  requireRebind(operation.schema === 'ConfigRebindOperation/v1' && operation.phase === 'applied' &&
+    operation.maintenance_released === true && plan.workspace_id === deriveWorkspaceId(config.repository.repository_id, root) &&
+    plan.repository_id === config.repository.repository_id && canonicalJsonDigest(plan.project_ids) === canonicalJsonDigest(projects) &&
+    runtimeConfigDigest(before) === plan.old_config_digest && runtimeConfigDigest(after) === plan.target_config_digest &&
+    runtimeConfigDigest(config) === plan.target_config_digest && receipt.value.config_digest === plan.target_config_digest &&
+    access.readBytes(configPath, 'current normal config target').equals(Buffer.from(plan.target_yaml)) &&
+    receipt.bytes.equals(Buffer.from(json({ ...JSON.parse(plan.baseline_receipt), config_digest: plan.target_config_digest }))),
+  'normal config operation is not the exact released current edge');
+  const hostDatabase = database(root, config, true);
+  let release;
+  try {
+    release = new HostStateStore(hostDatabase, plan.workspace_id).readMaintenanceFence();
+    requireRebind(release?.status === 'released' &&
+      canonicalJsonDigest(release.binding) === canonicalJsonDigest(fenceBinding(plan, operation.plan_digest)),
+    'normal config operation has no matching typed Host maintenance release');
+  } finally { hostDatabase.close(); }
+  return { ...stored, operationPath, receiptPath, receipt,
+    release,
+    targetSchemaDigest: sha(runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current config schema')) };
+}
+
 function readExternalBytes(file, maximum, label) {
   requireRebind(
     typeof file === 'string' &&
@@ -2041,7 +2075,7 @@ function canonicalChangedPaths(value) {
   return result;
 }
 
-function currentNativeSelfAttestation() {
+export function currentNativeSelfAttestation() {
   const runtime = standaloneRuntime();
   if (!runtime) return null;
   requireRebind(

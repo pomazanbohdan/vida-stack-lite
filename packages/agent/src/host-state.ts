@@ -66,10 +66,12 @@ import { loadProjectSetContext } from './config/project-context.js';
 import { MastraSessionLedger } from './orchestration/persistent-session-handoff.js';
 import {
   readSessionEngineSnapshot,
+  readRetainedUnissuedSessionEngineSnapshot,
+  readConfiguredContinuationSessionEngineSnapshot,
   assertUnpreparedSessionEngineAbsent,
   type SessionEngineBinding,
 } from './orchestration/session-engine-snapshot.js';
-import type { SessionBridgeObservation } from './orchestration/mastra-session-bridge.js';
+import type { SessionBridgeObservation, SessionBridgeSnapshot, SessionBridgeRequest } from './orchestration/mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './orchestration/scoped-source-snapshot.js';
 import {
   createTaskSourceBinding,
@@ -92,6 +94,7 @@ import type {
   DeliveredWorkContinuationRequest,
   DeliveredWorkContinuationVerifier,
 } from './orchestration/delivered-work-continuation.js';
+import { projectConfiguredPrewriterContinuationRequests } from './orchestration/delivered-work-continuation.js';
 import {
   validateConfiguredFrontierReceiptStructure,
   validateConfiguredFrontierRepairReceipt,
@@ -683,6 +686,8 @@ export interface DeliveredWorkContinuationLookup {
     readonly state: MastraSessionLedgerState;
   };
   readonly item: MastraSessionLedgerState['items'][number];
+  readonly items: MastraSessionLedgerState['items'];
+  readonly item_statuses: readonly ('unissued' | 'issued' | 'reported')[];
   readonly action_status: 'unissued' | 'issued' | 'reported';
 }
 export interface WorkCheckpointMigrationLineage {
@@ -4268,6 +4273,8 @@ export class HostStateStore {
       input.runId === (journal?.state.corrective_execution?.engine_run_id ?? work.execution.run_id),
       'session producer base/corrective run differs',
     );
+    const continuation = this.#readDeliveredWorkContinuationReceipt(identity, input.context.attempt);
+    const configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
     requireState(
       work.execution.run_id ===
         'vida-' +
@@ -4275,10 +4282,17 @@ export class HostStateStore {
             workspaceId: this.#workspaceId,
             context: input.context,
             workflowId: input.workflowId,
-          }) &&
+          }) || (configuredContinuation !== null &&
+            configuredContinuation.prior_work.execution.run_id === work.execution.run_id &&
+            configuredContinuation.request.action.request.run_id === input.runId &&
+            configuredContinuation.request.currentSourceScope.digest === input.context.scope_digest &&
+            configuredContinuation.request.targetConfigDigest === runtimeConfigDigest(currentConfig)),
+      'session producer original attempt differs',
+    );
+    requireState(
         (!journal?.state.corrective_execution ||
           journal.state.corrective_execution.base_run_id === work.execution.run_id),
-      'session producer original attempt differs',
+      'session producer corrective base differs',
     );
     const ticket = host.ledger.tickets.find((row) => row.ticket_id === lease.ticket_id);
     const claims = host.ledger.claims.filter((row) => row.status === 'active' && row.ticket_id === lease.ticket_id);
@@ -4312,11 +4326,36 @@ export class HostStateStore {
         this.assertSessionProducerWriteAllowed();
         const config = this.#assertSessionProducerContext(ledger, input, input.expectedJournal);
         const journal = MastraSessionLedger.prototype.resume.call(ledger, input.context.work_id, input.context.attempt);
-        const engine = readSessionEngineSnapshot({
+        const project = loadProjectSetContext(input.repositoryRoot, config, config.repository.repository_id, input.projectIds);
+        const continuation = this.#readDeliveredWorkContinuationReceipt({ repository_id: project.repository_id,
+          project_ids: project.project_ids, integrations_digest: project.integrations_digest, work_id: input.context.work_id }, input.context.attempt);
+        const configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
+        const engineBinding = {
           ...input,
           config,
           correctiveExecution: journal?.state.corrective_execution ?? undefined,
-        });
+        };
+        const engine = configuredContinuation
+          ? readConfiguredContinuationSessionEngineSnapshot(engineBinding, configuredContinuation as ConfiguredFrontierReceipt)
+          : readSessionEngineSnapshot(engineBinding);
+        const atOldFrontier = configuredContinuation !== null && engine?.status === 'suspended' &&
+          engine.step_id === 'wave-' + configuredContinuation.request.action.request.wave_index &&
+          journal?.state.step_id === engine.step_id;
+        const expectedRequests = atOldFrontier
+          ? configuredContinuation.successor_journal.items.map(item => item.request)
+          : engine?.requests;
+        if (atOldFrontier) {
+          requireState(journal && configuredContinuation &&
+            journal.state.step_id === 'wave-' + configuredContinuation.request.action.request.wave_index &&
+            sameJson(journal.state.completed, configuredContinuation.prior_journal.completed) &&
+            sameJson(journal.state.items.map(item => item.request), expectedRequests),
+          'configured producer current reviewer wave differs from retained receipt');
+          if (input.phase === 'resume') requireState(
+            journal.state.items.every(item => item.issue_id !== null && item.observation?.status === 'reported_complete' &&
+              item.observation.issue_id === item.issue_id && item.observation.action_id === item.request.action_id &&
+              item.observation.output_digest === canonicalJsonDigest(item.observation.summary)),
+          'configured producer requires the complete successful current prewriter reports');
+        }
         if (input.phase === 'start') {
           requireState(
             !engine &&
@@ -4335,7 +4374,7 @@ export class HostStateStore {
               engine.step_id === journal.state.step_id &&
               engine.run_id === journal.state.run_id &&
               sameJson(
-                engine.requests,
+                expectedRequests,
                 journal.state.items.map((item) => item.request),
               ) &&
               sameJson(
@@ -4361,7 +4400,7 @@ export class HostStateStore {
                   engine.run_id === journal.state.run_id &&
                   engine.step_id === journal.state.step_id &&
                   sameJson(
-                    engine.requests,
+                    expectedRequests,
                     journal.state.items.map((item) => item.request),
                   ) &&
                   sameJson(
@@ -4442,11 +4481,17 @@ export class HostStateStore {
           entry.input.context.work_id,
           entry.input.context.attempt,
         );
-        const engine = readSessionEngineSnapshot({
+        const project = loadProjectSetContext(entry.input.repositoryRoot, config, config.repository.repository_id, entry.input.projectIds);
+        const continuation = this.#readDeliveredWorkContinuationReceipt({ repository_id: project.repository_id,
+          project_ids: project.project_ids, integrations_digest: project.integrations_digest, work_id: entry.input.context.work_id }, entry.input.context.attempt);
+        const binding = {
           ...entry.input,
           config,
           correctiveExecution: journal?.state.corrective_execution ?? undefined,
-        });
+        };
+        const engine = continuation?.request.action.kind === 'configured_frontier'
+          ? readConfiguredContinuationSessionEngineSnapshot(binding, continuation as ConfiguredFrontierReceipt)
+          : readSessionEngineSnapshot(binding);
         if (!engine)
           requireState(
             entry.input.phase === 'initialize' &&
@@ -8378,18 +8423,18 @@ export class HostStateStore {
       return this.#read(input.identity);
     }).immediate();
   }
-  /** Continue one captured known-terminal body under the same original owner and task attempt. */
+  /** Continue the exact retained terminal review or wholly unissued frontier under its original attempt. */
   async continueDeliveredWork(request: DeliveredWorkContinuationRequest): Promise<DeliveredWorkContinuationResult> {
     requireState(this.#verifyDeliveredWorkContinuation, 'trusted delivered-work continuation verifier required');
     const contract = await import('./orchestration/delivered-work-continuation.js'),
       input = snapshot(contract.validateDeliveredWorkContinuationRequest(request)),
-      action = input.action;
+      action = input.action,
+      proofBinding = contract.deliveredContinuationProofBinding(input.sourceTransition);
     requireState(
-      action.kind === 'historical_terminal_review' &&
-        input.expectedMaintenanceGeneration === input.sourceTransition.transition.fence.generation,
-      'only the source-proven historical terminal review is supported by this finite continuation',
+      proofBinding.maintenance_generation === undefined || input.expectedMaintenanceGeneration === proofBinding.maintenance_generation,
+      'delivered continuation maintenance fence differs',
     );
-    const actionId = action.capture.action_id,
+    const actionId = action.kind === 'historical_terminal_review' ? action.capture.action_id : action.request.action_id,
       lookupExisting = (): DeliveredWorkContinuationReceipt | null => {
         const table = this.#database
           .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'")
@@ -8430,10 +8475,37 @@ export class HostStateStore {
       capture: HistoricalTerminalSynthesisCaptureReceipt | null,
       journal: MastraSessionLedgerState | null,
       journalVersion: StateVersion | null,
-    ): void => {
+    ): { engine: SessionBridgeSnapshot; requests: readonly SessionBridgeRequest[] } | undefined => {
       const work = current.work,
         ledger = current.ledger,
         selected = actionId;
+      let projectedFrontier: { engine: SessionBridgeSnapshot; requests: readonly SessionBridgeRequest[] } | undefined;
+      if (action.kind === 'configured_frontier') {
+        requireState(work && ledger && current.workVersion && current.ledgerVersion && journal && journalVersion &&
+          sameJson(current.workVersion, input.expectedWork) && sameJson(current.ledgerVersion, input.expectedLedger) &&
+          sameJson(journalVersion, input.expectedJournal) && sameJson(workIdentity(work), input.identity) &&
+          work.execution.status === 'suspended' && ['implementation', 'awaiting_followup'].includes(work.execution.phase) && work.lease === null &&
+          work.lifecycle.phase === 'INTAKE' && work.lifecycle.seal === null &&
+          work.lifecycle.assurance.review_generation === 0 && work.lifecycle.assurance.delivery_cycle_id === null &&
+          work.binding.config_digest === input.priorConfigDigest && work.binding.runtime_code_digest === input.priorRuntimeCodeDigest &&
+          work.binding.work_source_revision === journal.source_scope?.digest && work.execution.run_id === journal.run_id &&
+          proofBinding.workspace_id === this.#workspaceId &&
+          sameJson(proofBinding.project_ids, input.identity.project_ids) &&
+          work.execution.assignment_attempts.every(entry => ['completed', 'no_effect'].includes(entry.status)),
+        'original unissued frontier Work, Journal or owner differs');
+        if (input.sourceTransition.status === 'closed_config_rebind_proven')
+          contract.validateContinuationSourceChangePaths(work, input.authorizedSourceChanges);
+        const binding = this.#configuredFrontierRepairBinding({ prior_work: work, request: input, attempt: input.attempt });
+        const engine = readRetainedUnissuedSessionEngineSnapshot({
+          ...binding, context: { ...binding.context, scope_digest: work.binding.work_source_revision }, runId: work.execution.run_id!,
+        }, { work, journal });
+        requireState(sameJson(contract.projectConfiguredFrontierContinuationAction({ engine, journal,
+          targetConfigDigest: input.targetConfigDigest, currentSourceScope: input.currentSourceScope }), action),
+        'unissued frontier action differs from its actual retained engine');
+        projectedFrontier = { engine, requests: projectConfiguredPrewriterContinuationRequests({
+          ...binding, engine, journal, currentSourceScope: input.currentSourceScope, lifecycleRisk: work.lifecycle.risk,
+        }) };
+      } else {
       requireState(
         work && ledger && current.workVersion && current.ledgerVersion && capture && journal && journalVersion &&
           sameJson(current.workVersion, input.expectedWork) &&
@@ -8454,9 +8526,10 @@ export class HostStateStore {
             'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' &&
           work.binding.config_digest === input.priorConfigDigest &&
           work.binding.runtime_code_digest === input.priorRuntimeCodeDigest &&
-          input.sourceTransition.transition.fence.workspace_id === this.#workspaceId &&
+          input.sourceTransition.status === 'closed_config_transition_proven' &&
+          proofBinding.workspace_id === this.#workspaceId &&
           input.sourceTransition.transition.fence.binding.operation_id === input.forwardOperationId &&
-          sameJson(input.sourceTransition.transition.fence.binding.project_ids, input.identity.project_ids) &&
+          sameJson(proofBinding.project_ids, input.identity.project_ids) &&
           work.binding.work_source_revision === journal.source_scope?.digest &&
           work.execution.run_id === journal.run_id &&
           !work.execution.assignment_attempts.some((attempt) => attempt.status === 'started' || attempt.status === 'uncertain') &&
@@ -8499,6 +8572,8 @@ export class HostStateStore {
           input.action.request.corrective_execution === undefined,
         'original known-terminal work, captured body, owner or current review action changed',
       );
+      }
+      requireState(work && ledger && journal, 'original continuation state is missing');
       requireState(
         sameJson(input.currentSourceScope.entries.map((entry) => entry.path), [...work.lifecycle.scope.allowed_paths].sort()) &&
           sameJson(
@@ -8543,8 +8618,9 @@ export class HostStateStore {
           release.thread_id === input.nativeSessionHandle &&
           release.source_revision === work.binding.work_source_revision &&
           release.decision_pointer === input.originalRequestPointer &&
-          validGateVersion(capture.request.expected_ledger) &&
-          release.from_ledger_revision === capture.request.expected_ledger.revision &&
+          (action.kind === 'configured_frontier'
+            ? release.from_ledger_revision === ledger.revision - 1
+            : capture !== null && validGateVersion(capture.request.expected_ledger) && release.from_ledger_revision === capture.request.expected_ledger.revision) &&
           release.to_ledger_revision === input.expectedLedger.revision &&
           !ledger.tickets.some(
             (ticket) =>
@@ -8554,10 +8630,11 @@ export class HostStateStore {
           ),
         'original execution owner release or FIFO position changed',
       );
+      return projectedFrontier;
     };
 
     const first = this.readHostStateSnapshot(input.identity),
-      capture = this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId),
+      capture = action.kind === 'historical_terminal_review' ? this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId) : null,
       journalRow = this.#database
         .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
         .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
@@ -8593,7 +8670,7 @@ export class HostStateStore {
       this.#assertReconciliationWritesAllowed();
       this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
       const current = this.#read(input.identity),
-        currentCapture = this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId),
+        currentCapture = action.kind === 'historical_terminal_review' ? this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId) : null,
         currentJournalRow = this.#database
           .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
           .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
@@ -8605,7 +8682,7 @@ export class HostStateStore {
         currentJournalVersion = currentJournalRow
           ? { revision: currentJournalRow.revision, digest: currentJournalRow.digest }
           : null;
-      inspect(current, currentCapture, currentJournal, currentJournalVersion);
+      const projectedFrontier = inspect(current, currentCapture, currentJournal, currentJournalVersion);
       const work = current.work!,
         ledger = current.ledger!,
         priorTicket = ledger.tickets.find((ticket) => ticket.status === 'released' && ticket.thread_id === input.nativeSessionHandle && ticket.source_revision === work.binding.work_source_revision && ticket.exclusive_resources.length === 1 && ticket.exclusive_resources[0] === 'execution:' + input.identity.work_id)!,
@@ -8664,10 +8741,10 @@ export class HostStateStore {
         },
         nextJournal: MastraSessionLedgerState = {
           ...currentJournal!,
-          step_id: input.action.request.stage_id,
+          step_id: projectedFrontier ? projectedFrontier.engine.step_id : input.action.request.stage_id,
           source_scope: input.currentSourceScope,
-          items: [{ request: input.action.request, issue_id: null, observation: null }],
-          completed: [
+          items: (projectedFrontier ? projectedFrontier.requests : [input.action.request]).map(request => ({ request, issue_id: null, observation: null })),
+          completed: projectedFrontier ? currentJournal!.completed : [
             ...currentJournal!.completed,
             ...(currentJournal!.items.length > 0 && currentJournal!.step_id
               ? [{ step_id: currentJournal!.step_id, items: currentJournal!.items }]
@@ -8684,14 +8761,14 @@ export class HostStateStore {
             ...work.lifecycle,
             revision: work.revision + 1,
             source_revision: input.currentSourceScope.digest,
-            next_action:
-              'Review the retained known-terminal body against the current Source/configuration; the body remains unaccepted and the work remains unfinished.',
+            ...(!projectedFrontier ? { next_action:
+              'Review the retained known-terminal body against the current Source/configuration; the body remains unaccepted and the work remains unfinished.' } : {}),
             config_binding: {
               config_digest: input.targetConfigDigest,
               schema_digest: input.targetSchemaDigest,
               runtime_code_digest: input.targetRuntimeCodeDigest,
             },
-            ...(sourceChanged
+            ...(!projectedFrontier && sourceChanged
               ? {
                   references: work.lifecycle.references.map((reference) => ({
                     ...reference,
@@ -8728,7 +8805,10 @@ export class HostStateStore {
         prior_work_version: priorWorkVersion,
         prior_ledger_version: priorLedgerVersion,
         prior_journal_version: currentJournalVersion!,
-        historical_capture: currentCapture!,
+        ...(projectedFrontier ? { historical_capture: null, frontier_snapshot: {
+          snapshot_bytes_base64: Buffer.from(canonicalJson(projectedFrontier.engine)).toString('base64'),
+          snapshot_sha256: createHash('sha256').update(canonicalJson(projectedFrontier.engine)).digest('hex'),
+        } } : { historical_capture: currentCapture! }),
         successor_work: nextWork,
         successor_ledger: nextLedger,
         successor_binding: nextBinding,
@@ -8802,7 +8882,7 @@ export class HostStateStore {
       return snapshot({ status: 'continued' as const, snapshot: saved, receipt, action: input.action });
     }).immediate();
   }
-  #configuredFrontierRepairBinding(receipt: ConfiguredFrontierReceipt) {
+  #configuredFrontierRepairBinding(receipt: Pick<ConfiguredFrontierReceipt, 'prior_work' | 'request' | 'attempt'>) {
     requireState(this.#repositoryRoot, 'configured-frontier repair requires the configured repository root');
     const root = this.#repositoryRoot, config = loadRuntimeConfig(root), original = receipt.prior_work,
       identity = receipt.request.identity;
@@ -9132,7 +9212,33 @@ export class HostStateStore {
       return { status: 'applied' as const, digest: plan.inspection.row.after_digest };
     }).immediate();
   }
-  /** Read the one current terminal-review continuation for this original Work attempt. */
+  /** Read immutable continuation custody after current journal progress; this grants no execution. */
+  readDeliveredWorkContinuationReceipt(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationReceipt | null {
+    requireState(Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
+      'delivered-work receipt inspection requires a valid nonnested attempt');
+    return this.#database.transaction(() => this.#readDeliveredWorkContinuationReceipt(identity, attempt)).deferred();
+  }
+  #readDeliveredWorkContinuationReceipt(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationReceipt | null {
+    this.#assertNoPendingDeliveredContinuationRepair();
+    const current = this.#read(identity);
+    if (!current.work) return null;
+    const table = this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'").get();
+    if (!table) return null;
+    const rows = this.#database.query('SELECT payload,digest,action_id FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=?')
+      .all(this.#workspaceId, identity.work_id, attempt) as { payload: string; digest: string; action_id: string }[];
+    requireState(rows.length <= 1, 'delivered-work receipt identity is ambiguous');
+    if (rows.length === 0) return null;
+    const row = rows[0]!, receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt,
+      action = receipt.request.action;
+    requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt) &&
+      sameJson(receipt.request.identity, identity) && receipt.attempt === attempt &&
+      receipt.request_digest === canonicalJsonDigest(receipt.request) &&
+      sameJson(current.work.binding, receipt.successor_binding) &&
+      (action.kind === 'configured_frontier' ? action.request.action_id === row.action_id : action.capture.action_id === row.action_id),
+    'delivered-work receipt or current binding differs');
+    return snapshot(receipt);
+  }
+  /** Read the current retained review/prewriter wave for this original Work attempt. */
   readDeliveredWorkContinuation(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationLookup | null {
     requireState(Number.isSafeInteger(attempt) && attempt > 0, 'delivered-work continuation attempt is invalid');
     requireState(!this.#database.inTransaction, 'nested delivered-work continuation inspection forbidden');
@@ -9159,9 +9265,11 @@ export class HostStateStore {
         receipt.request_digest === canonicalJsonDigest(receipt.request) &&
         receipt.attempt === attempt &&
         sameJson(receipt.request.identity, identity) &&
-        receipt.request.action.kind === 'historical_terminal_review' &&
-        receipt.request.action.capture.action_id === row.action_id &&
-        receipt.request.action.request.action_id !== row.action_id &&
+        ((receipt.request.action.kind === 'historical_terminal_review' &&
+          receipt.request.action.capture.action_id === row.action_id &&
+          receipt.request.action.request.action_id !== row.action_id) ||
+         (receipt.request.action.kind === 'configured_frontier' &&
+          receipt.request.action.request.action_id === row.action_id)) &&
         current.work.binding &&
         sameJson(current.work.binding, receipt.successor_binding),
       'delivered-work continuation lookup receipt or current Work binding differs',
@@ -9228,6 +9336,47 @@ export class HostStateStore {
         canonicalJsonDigest(journal) === journalRow.digest,
       'delivered-work continuation Journal identity or digest differs',
     );
+    if (receipt.request.action.kind === 'configured_frontier') {
+      requireState(receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
+        'configured-frontier lookup immutable beforeimage is missing');
+      const frontier = receipt as ConfiguredFrontierReceipt,
+        engine = JSON.parse(Buffer.from(frontier.frontier_snapshot.snapshot_bytes_base64, 'base64').toString('utf8')),
+        requests = projectConfiguredPrewriterContinuationRequests({
+          ...this.#configuredFrontierRepairBinding(frontier), engine, journal: frontier.prior_journal,
+          currentSourceScope: frontier.request.currentSourceScope, lifecycleRisk: frontier.prior_work.lifecycle.risk,
+        });
+      if (journal.step_id !== 'wave-' + frontier.request.action.request.wave_index) {
+        const prewriter = journal.completed[frontier.prior_journal.completed.length];
+        requireState(prewriter && prewriter.step_id === 'wave-' + frontier.request.action.request.wave_index &&
+          sameJson(journal.completed.slice(0, frontier.prior_journal.completed.length), frontier.prior_journal.completed) &&
+          prewriter.items.length === requests.length && prewriter.items.every((item, index) =>
+            sameJson(item.request, requests[index]) && item.issue_id !== null && item.observation?.status === 'reported_complete' &&
+            item.observation.issue_id === item.issue_id && item.observation.action_id === item.request.action_id &&
+            item.observation.output_digest === canonicalJsonDigest(item.observation.summary)),
+        'configured continuation current prewriter history is incomplete or changed');
+        const binding = this.#configuredFrontierRepairBinding(frontier),
+          engine = readConfiguredContinuationSessionEngineSnapshot({ ...binding, runId: frontier.prior_work.execution.run_id! }, frontier);
+        requireState(engine.run_id === journal.run_id && engine.step_id === journal.step_id &&
+          sameJson(engine.requests, journal.items.map(item => item.request)) &&
+          sameJson(engine.observations, journal.completed.flatMap(wave => wave.items.map(item => item.observation))),
+        'configured continuation current engine suffix differs from its Journal');
+        return null;
+      }
+      requireState(
+        journal.step_id === 'wave-' + frontier.request.action.request.wave_index &&
+          journal.items.length === requests.length && sameJson(journal.completed, frontier.prior_journal.completed) &&
+          journal.items.every((item, index) => sameJson(item.request, requests[index]) &&
+            item.host_reservation === undefined && item.research_activation === undefined && item.research_normalization === undefined &&
+            (item.issue_id === null ? item.observation === null : typeof item.issue_id === 'string' && item.issue_id.length > 0 &&
+              (item.observation === null || (item.observation.action_id === item.request.action_id && item.observation.issue_id === item.issue_id &&
+                item.observation.output_digest === canonicalJsonDigest(item.observation.summary))))),
+        'configured-frontier lookup current reviewer wave or issue custody differs',
+      );
+      const statuses = journal.items.map(item => item.observation ? 'reported' as const : item.issue_id ? 'issued' as const : 'unissued' as const);
+      return snapshot({ receipt, snapshot: current, journal: { version, state: journal }, item: journal.items[0]!,
+        items: journal.items, item_statuses: statuses,
+        action_status: statuses.every(status => status === 'reported') ? 'reported' as const : statuses.some(status => status !== 'unissued') ? 'issued' as const : 'unissued' as const });
+    }
     const matches = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].filter(
       (item) => item.request.action_id === receipt.request.action.request.action_id,
     );
@@ -9255,6 +9404,8 @@ export class HostStateStore {
       snapshot: current,
       journal: { version, state: journal },
       item,
+      items: [item],
+      item_statuses: [item.observation ? 'reported' : item.issue_id ? 'issued' : 'unissued'],
       action_status: item.observation ? 'reported' : item.issue_id ? 'issued' : 'unissued',
     });
   }

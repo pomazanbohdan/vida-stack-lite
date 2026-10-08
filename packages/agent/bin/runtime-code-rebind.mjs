@@ -2,6 +2,7 @@ import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { closeSync, constants, fsyncSync, lstatSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import {
@@ -10,6 +11,7 @@ import {
   runtimePackageAccess,
   runtimePackageCodePaths,
   selectWorkflow,
+  validateRuntimeConfigRepairTargetBytes,
 } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { selectCorrectiveEvidence,validateWorkSessionBinding } from '../src/orchestration/final-assurance.ts';
@@ -21,6 +23,8 @@ import {
   compareScopedSourceSnapshots,
   snapshotDeclaredSources,
   snapshotRuntimePackageSources,
+  snapshotRuntimeManifestSources,
+  compareRuntimeEndpointSnapshots,
 } from '../src/orchestration/scoped-source-snapshot.ts';
 import {
   buildSessionBridgeRequest,
@@ -30,10 +34,16 @@ import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import {
   projectHistoricalTerminalReviewAction,
+  projectConfiguredFrontierContinuationAction,
+  validateClosedConfigRebindProof,
+  validateContinuationSourceChangePaths,
   validateDeliveredWorkContinuationRequest,
 } from '../src/orchestration/delivered-work-continuation.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { runRuntimeConfigRebind } from './runtime-config-rebind.mjs';
+import { runRuntimeConfigRebind, readAppliedRuntimeConfigRebind, currentNativeSelfAttestation } from './runtime-config-rebind.mjs';
+import { readRetainedUnissuedSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
+import { readLocalSourceWriteAuthorization } from '../src/orchestration/local-source-authorization.ts';
+import { releaseState, releaseJournalFile, releasePath } from './local-release-artifacts.mjs';
 
 const requireRebind = (ok, message) => {
   if (!ok) throw new Error(`vida runtime-code rebind: ${message}`);
@@ -58,6 +68,8 @@ const planningKeys = [
   '--owner-no-call-ref',
 ];
 const deliveredContinuationPlanningKeys = planningKeys.concat(['--basis', '--source-transition-id']);
+const configuredFrontierPlanningKeys = planningKeys.filter(key => !['--action-id', '--issue-id', '--forward-operation-id'].includes(key))
+  .concat(['--basis', '--source-transition-id', '--parent-manifest', '--successor-manifest', '--system-update', '--source-correction']);
 const synthesisPlanningKeys = planningKeys
   .filter((key) => key !== '--owner-no-call-ref')
   .concat(['--basis', '--correction-id', '--owner-correction-ref']);
@@ -85,7 +97,8 @@ function parse(args) {
     'kind, mode, root or repair ID invalid',
   );
   const expected = ['inspect', 'plan'].includes(values['--mode'])
-    ? values['--basis'] === 'delivered-config-continuation'
+    ? values['--basis'] === 'configured-frontier-continuation' ? configuredFrontierPlanningKeys
+      : values['--basis'] === 'delivered-config-continuation'
       ? deliveredContinuationPlanningKeys
       : values['--basis'] === 'known-terminal-verify' ? focusedPlanningKeys : values['--basis'] === 'synthesis-correction'
         ? synthesisPlanningKeys
@@ -116,6 +129,67 @@ function validatedJson(access, relative, label) {
   const bytes = access.readBytes(relative, label);
   requireRebind(bytes.length <= 8 * 1024 * 1024, `${label} exceeds bound`);
   return { bytes, value: JSON.parse(bytes.toString('utf8')) };
+}
+
+/** Source-repository adapter: actual local commit bytes, never remote-publication authority. */
+export function assertCommittedSourceChanges(root, commit, changes) {
+  requireRebind(/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(commit) && Array.isArray(changes) && changes.length <= 1024,
+    'committed Source proof input is invalid');
+  const selected = new Map();
+  for (const change of changes) {
+    const entry = change?.after;
+    requireRebind(entry && typeof change.path === 'string' && change.path === entry.path && change.path.length > 0 &&
+      change.path.length <= 512 && !change.path.startsWith('/') && !/^[A-Za-z]:/.test(change.path) &&
+      !/[\\\p{Cc}]/u.test(change.path) && change.path.split('/').every(part => part && part !== '.' && part !== '..') &&
+      typeof entry.exists === 'boolean' && (entry.exists ? Number.isSafeInteger(entry.bytes) && entry.bytes >= 0 &&
+        entry.bytes <= 8 * 1024 * 1024 && hash.test(entry.sha256) : entry.bytes === null && entry.sha256 === null),
+    'committed Source entry is invalid');
+    requireRebind(!selected.has(change.path) || canonicalJsonDigest(selected.get(change.path)) === canonicalJsonDigest(entry),
+      'committed Source path has conflicting endpoint bytes');
+    selected.set(change.path, entry);
+  }
+  requireRebind(selected.size <= 512, 'committed Source scope exceeds its bound');
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
+  Object.assign(env, { GIT_NO_LAZY_FETCH: '1', GIT_NO_REPLACE_OBJECTS: '1', GIT_OPTIONAL_LOCKS: '0' });
+  const git = (args, input) => {
+    const result = spawnSync('git', ['--no-replace-objects', '--literal-pathspecs', '-C', root, ...args], {
+      windowsHide: true, encoding: null, input, env, timeout: 30000, maxBuffer: 65 * 1024 * 1024,
+    });
+    requireRebind(!result.error && result.signal === null && result.status === 0, 'local committed Source reader failed');
+    return result.stdout;
+  };
+  const observedRoot = path.resolve(git(['rev-parse', '--show-toplevel']).toString('utf8').trim());
+  requireRebind(process.platform === 'win32' ? observedRoot.toLowerCase() === path.resolve(root).toLowerCase() : observedRoot === path.resolve(root),
+    'committed Source repository root differs');
+  requireRebind(git(['cat-file', '-t', commit]).toString('ascii').trim() === 'commit', 'Source object is not a commit');
+  if (selected.size === 0) return { commit, checked_paths: 0, remote_publication_verified: false };
+  const paths = [...selected.keys()].sort(), modes = new Map();
+  for (const record of git(['ls-tree', '-rz', '--full-tree', commit, '--', ...paths]).toString('utf8').split('\0').filter(Boolean)) {
+    const separator = record.indexOf('\t'), relative = record.slice(separator + 1), metadata = record.slice(0, separator).split(' ');
+    requireRebind(separator > 0 && selected.has(relative) && !modes.has(relative) && metadata[1] === 'blob' &&
+      ['100644', '100755'].includes(metadata[0]), 'committed Source path is not an exact regular blob');
+    modes.set(relative, metadata[0]);
+  }
+  requireRebind(paths.every(relative => modes.has(relative) === selected.get(relative).exists), 'committed Source existence differs');
+  const present = paths.filter(relative => selected.get(relative).exists);
+  if (present.length > 0) {
+    const stream = git(['cat-file', '--batch'], present.map(relative => commit + ':' + relative + '\n').join(''));
+    let offset = 0, totalBytes = 0;
+    for (const relative of present) {
+      const end = stream.indexOf(10, offset), entry = selected.get(relative);
+      requireRebind(end >= offset, 'committed Source blob header is absent');
+      const header = stream.subarray(offset, end).toString('ascii').split(' '), size = Number(header[2]);
+      requireRebind(header.length === 3 && header[1] === 'blob' && size === entry.bytes && Number.isSafeInteger(size) && size >= 0,
+        'committed Source blob size or type differs');
+      offset = end + 1; totalBytes += size;
+      requireRebind(totalBytes <= 64 * 1024 * 1024 && offset + size < stream.length &&
+        sha(stream.subarray(offset, offset + size)) === entry.sha256 && stream[offset + size] === 10,
+      'committed Source bytes differ from the endpoint');
+      offset += size + 1;
+    }
+    requireRebind(offset === stream.length, 'committed Source stream has extra data');
+  }
+  return { commit, checked_paths: paths.length, remote_publication_verified: false };
 }
 
 function forwardLineage(root, operationChain, paths, oldDigest, newDigest) {
@@ -554,6 +628,150 @@ function sourceTransitionAuthorizedPaths(root, config, transitionId, proof) {
   return [...artifact.request.authorized_changed_paths].sort();
 }
 
+/** Plan a same-attempt unissued continuation from actual config and native endpoint evidence. */
+export function planConfiguredFrontierContinuation({ database, root, config, workspaceId, projectIds,
+  workId, attempt, nativeHandle, repairId, actor, timestamp, sourceTransitionId, ownerNoCallPointer,
+  parentManifestRef, successorManifestRef, systemUpdateRef, sourceCorrectionRef }) {
+  requireRebind(identifier.test(repairId) && identifier.test(sourceTransitionId) && Number.isSafeInteger(attempt) && attempt > 0 &&
+    typeof nativeHandle === 'string' && nativeHandle.trim() === nativeHandle && nativeHandle.length > 0 && nativeHandle.length <= 256 &&
+    typeof actor === 'string' && actor.trim() === actor && actor.length > 0 && actor.length <= 256 &&
+    typeof timestamp === 'string' && !Number.isNaN(Date.parse(timestamp)) &&
+    typeof ownerNoCallPointer === 'string' && ownerNoCallPointer.trim() === ownerNoCallPointer && ownerNoCallPointer.length > 0 &&
+    ownerNoCallPointer.length <= 2048 && !/\p{Cc}/u.test(ownerNoCallPointer), 'configured frontier attribution is invalid');
+  const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds),
+    identity = { repository_id: project.repository_id, project_ids: project.project_ids,
+      integrations_digest: project.integrations_digest, work_id: workId },
+    store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+    state = store.readHostStateSnapshot(identity), work = state.work,
+    journalRow = checkedRow(database, 'agent_host_mastra_session_ledger', 'workspace_id=? AND work_id=? AND attempt=?', [workspaceId, workId, attempt]),
+    journal = journalRow.value;
+  requireRebind(work && state.workVersion && state.ledgerVersion && work.workspace_id === workspaceId &&
+    work.execution.status === 'suspended' && ['implementation', 'awaiting_followup'].includes(work.execution.phase) && work.lease === null &&
+    work.lifecycle.phase === 'INTAKE' && work.lifecycle.seal === null &&
+    work.binding.repository_id === identity.repository_id && work.binding.integrations_digest === identity.integrations_digest &&
+    canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+    work.binding.lifecycle_work_id === workId && work.execution.run_id === journal.run_id &&
+    journal.workspace_id === workspaceId && journal.work_id === workId && journal.attempt === attempt &&
+    journal.source_scope?.digest === work.binding.work_source_revision &&
+    work.execution.assignment_attempts.every(entry => ['completed', 'no_effect'].includes(entry.status)),
+  'original unissued Work or Journal no longer matches');
+  const access = requireSafeRepositoryAccess(root),
+    intakeRef = work.artifacts.find(ref => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1');
+  requireRebind(intakeRef, 'original protected intake is missing');
+  const intakeFile = validatedJson(access, intakeRef.path, 'original protected intake'), intake = intakeFile.value;
+  requireRebind(sha(intakeFile.bytes) === intakeRef.sha256 && intake.schema === 'VidaLocalSessionIntake/v1' &&
+    intake.native_session_handle === nativeHandle && canonicalJsonDigest(intake.work_item) === work.binding.work_item_digest,
+  'original intake bytes, task or native owner differ');
+  const sourceApproval = work.lifecycle.references.find(ref => ref.kind === 'execution_approval' &&
+    ref.disposition === 'current' && ref.decision === 'approved' && ref.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+    ref.path === intake.source_authorization_path);
+  requireRebind(sourceApproval, 'original accepted human Source instruction is unavailable');
+  const sourceAuthority = readLocalSourceWriteAuthorization(root, sourceApproval.path), authority = sourceAuthority.authorization;
+  requireRebind(sourceAuthority.sha256 === sourceApproval.sha256 && authority.work_id === workId && authority.attempt === attempt &&
+    authority.native_session_handle === nativeHandle && authority.scope_digest === work.binding.work_source_revision &&
+    authority.config_digest === work.binding.config_digest && authority.workflow_id === work.binding.workflow_id &&
+    authority.user_instruction_ref === sourceApproval.record_id && authority.user_instruction_ref === ownerNoCallPointer &&
+    sourceApproval.principal === 'local-session:' + canonicalJsonDigest(nativeHandle) &&
+    canonicalJsonDigest([...authority.implementation_paths].sort()) === canonicalJsonDigest([...work.binding.implementation_paths].sort()),
+  'original accepted human instruction, scope or owner binding differs');
+  const edge = readAppliedRuntimeConfigRebind(root, config, sourceTransitionId), plan = edge.value.plan;
+  requireRebind(plan.old_config_digest === work.binding.config_digest &&
+    identity.project_ids.every(id => plan.project_ids.includes(id)), 'normal config edge does not begin at the original Work');
+  const self = currentNativeSelfAttestation();
+  requireRebind(self, 'configured frontier planning requires the installed native runtime');
+  const parent = validatedJson(access, parentManifestRef, 'original native manifest'),
+    successor = validatedJson(access, successorManifestRef, 'current native manifest'),
+    update = validatedJson(access, systemUpdateRef, 'native system update'),
+    publication = validatedJson(access, sourceCorrectionRef, 'published causal Source correction'),
+    runtimePaths = runtimePackageCodePaths(config.runtime.bundle),
+    beforeCode = snapshotRuntimeManifestSources(parent.value, config.runtime.bundle, intake.runtime_code_paths),
+    targetCode = snapshotRuntimeManifestSources(successor.value, config.runtime.bundle, runtimePaths),
+    currentCode = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, runtimePaths),
+    native = successor.value, installation = update.value.installation_observation;
+  requireRebind(beforeCode.digest === work.binding.runtime_code_digest && targetCode.digest === currentCode.digest &&
+    beforeCode.digest !== targetCode.digest && native.schema === 'VidaStandaloneBuild/v1' && native.pin === self.bun_version &&
+    native.version === self.package_version && native.payloadId === self.resource_payload_id &&
+    native.asset?.sha256 === self.executable_sha256 && native.asset?.bytes === self.executable_bytes &&
+    update.value.status === 'CURRENT_SYSTEM_REPAIR_CHECKPOINT_UPDATED' && identifier.test(update.value.operation_id) &&
+    installation?.schema === 'VidaNativeInstallationResult/v1' && ['install', 'update'].includes(installation.action) &&
+    installation.runtime_accepted === false && installation.cleanup_complete === true &&
+    installation.sha256.toLowerCase() === self.executable_sha256 && installation.bytes === self.executable_bytes &&
+    installation.version === self.package_version &&
+    path.resolve(installation.path) === path.resolve(self.executable_path) &&
+    path.resolve(update.value.entry) === path.resolve(self.executable_path) && update.value.version === self.package_version &&
+    update.value.runtime_accepted === false && update.value.developer_unblocked === false,
+  'native endpoints, current package or actual installation differ');
+  const registeredUpdate = releaseState(releaseJournalFile(root, update.value.operation_id)),
+    pendingUpdate = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+  requireRebind(registeredUpdate.operation_id === update.value.operation_id && pendingUpdate.operation_id === registeredUpdate.operation_id &&
+    registeredUpdate.version === self.package_version && pendingUpdate.version === registeredUpdate.version &&
+    ['awaiting_assurance', 'qualified', 'packed', 'installing', 'successful'].includes(registeredUpdate.status),
+  'native endpoint observation has no matching current release-owner operation');
+  const source = publication.value.source_inventory;
+  requireRebind(/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(publication.value.commit) &&
+    publication.value.project?.repository_id === identity.repository_id && publication.value.project?.config_digest === runtimeConfigDigest(config) &&
+    source && Array.isArray(source.entries) && source.entries.length > 0 && source.entries.length <= 4096 &&
+    source.source_binding === sha(Buffer.from(JSON.stringify(source.entries))), 'published Source correction is invalid');
+  const published = new Map();
+  for (const entry of source.entries) {
+    requireRebind(entry && Object.keys(entry).sort().join(',') === 'path,sha256' &&
+      typeof entry.path === 'string' && entry.path.length > 0 && entry.path.length <= 512 && !entry.path.startsWith('/') &&
+      !/^[A-Za-z]:/.test(entry.path) && !/[\\\p{Cc}]/u.test(entry.path) &&
+      entry.path.split('/').every(part => part && part !== '.' && part !== '..') && hash.test(entry.sha256) &&
+      !published.has(entry.path), 'published Source correction entry is invalid');
+    published.set(entry.path, entry.sha256);
+  }
+  const runtimeChanges = compareRuntimeEndpointSnapshots(beforeCode, targetCode);
+  requireRebind(runtimeChanges.every(change => change.after.exists
+    ? published.get(change.path) === change.after.sha256 : !published.has(change.path)),
+  'runtime endpoint diff is outside the published correction');
+  const currentSourceScope = snapshotDeclaredSources(access, [...work.lifecycle.scope.allowed_paths].sort()),
+    authorizedSourceChanges = compareScopedSourceSnapshots(journal.source_scope, currentSourceScope);
+  validateContinuationSourceChangePaths(work, authorizedSourceChanges);
+  requireRebind(authorizedSourceChanges.every(change => change.after.exists
+    ? published.get(change.path) === change.after.sha256 : !published.has(change.path)),
+  'current task Source changes differ from the correction byte record');
+  // The byte report is a hint. Actual regular Git objects prove the commit bytes;
+  // remote publication and installation-call provenance are not inferred from it.
+  assertCommittedSourceChanges(root, publication.value.commit, [...runtimeChanges, ...authorizedSourceChanges]);
+  const selection = { team: work.binding.team_id, kind: intake.work_item.canonical_kind, intent: intake.work_item.intent,
+    project: intake.work_item.project_id, risk_flags: intake.work_item.risk_flags, labels: intake.work_item.labels };
+  requireRebind(project.project_ids.includes(selection.project) && selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
+    'current config no longer selects the original workflow');
+  const oldConfig = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root),
+    engine = readRetainedUnissuedSessionEngineSnapshot({ repositoryRoot: root, config: oldConfig, selection,
+      context: { work_id: workId, attempt, scope_digest: journal.source_scope.digest }, workflowId: work.binding.workflow_id,
+      runId: journal.run_id, lifecycleRisk: work.lifecycle.risk }, { work, journal }),
+    targetConfigDigest = runtimeConfigDigest(config),
+    action = projectConfiguredFrontierContinuationAction({ engine, journal, targetConfigDigest, currentSourceScope });
+  const transition = { schema: 'ConfiguredRuntimeEndpointTransition/v1', workspace_id: workspaceId,
+    repository_id: identity.repository_id, project_ids: identity.project_ids, operation_path: edge.operationPath,
+    operation_sha256: sha(edge.bytes), operation_plan_digest: edge.value.plan_digest, operation_release_digest: canonicalJsonDigest(edge.release),
+    target_config_digest: targetConfigDigest, target_schema_digest: edge.targetSchemaDigest, target_yaml_sha256: sha(Buffer.from(plan.target_yaml)),
+    receipt_path: edge.receiptPath, receipt_sha256: sha(edge.receipt.bytes),
+    prior_runtime_code_digest: beforeCode.digest, target_runtime_code_digest: targetCode.digest,
+    parent_manifest_digest: sha(parent.bytes), successor_manifest_digest: sha(successor.bytes),
+    parent_manifest_ref: parentManifestRef, successor_manifest_ref: successorManifestRef,
+    system_update_operation_id: update.value.operation_id, system_update_ref: systemUpdateRef, system_update_sha256: sha(update.bytes),
+    source_correction_ref: sourceCorrectionRef, source_correction_sha256: sha(publication.bytes),
+    native_self_attestation_digest: canonicalJsonDigest(self), original_intake_ref: intakeRef.path,
+    original_intake_sha256: intakeRef.sha256, runtime_accepted: false };
+  const sourceTransition = validateClosedConfigRebindProof({ status: 'closed_config_rebind_proven', operation_id: sourceTransitionId,
+    baseline_config_digest: work.binding.config_digest, transition, transition_digest: canonicalJsonDigest(transition),
+    caller_owner_cas_required: true, runtime_accepted: false, writes_host_state: false });
+  const request = validateDeliveredWorkContinuationRequest({ schema: 'DeliveredWorkContinuationRequest/v1', identity, attempt,
+    nativeSessionHandle: nativeHandle, expectedWork: state.workVersion, expectedLedger: state.ledgerVersion,
+    expectedJournal: journalRow.version, expectedMaintenanceGeneration: state.maintenanceGeneration,
+    priorConfigDigest: work.binding.config_digest, targetConfigDigest, targetSchemaDigest: edge.targetSchemaDigest,
+    targetProjectContextDigest: project.project_context_digest, priorRuntimeCodeDigest: beforeCode.digest,
+    targetRuntimeCodeDigest: targetCode.digest, forwardOperationId: update.value.operation_id,
+    parentManifestDigest: sha(parent.bytes), successorManifestDigest: sha(successor.bytes), currentSourceScope,
+    authorizedSourceChanges, sourceTransition, action, originalRequestPointer: ownerNoCallPointer });
+  const body = { schema: 'VidaDeliveredWorkContinuationPlan/v1', repair_id: repairId, actor, timestamp,
+    source_transition_id: sourceTransitionId, runtime_code_paths: runtimePaths, request };
+  return { ...body, digest: canonicalJsonDigest(body) };
+}
+
 async function planDeliveredWorkContinuation({
   database,
   root,
@@ -865,8 +1083,9 @@ export async function runRuntimeCodeRebind(args) {
   const database = trustedDatabase(root, config, ['inspect', 'plan'].includes(values['--mode']));
   try {
     if (['inspect', 'plan'].includes(values['--mode'])) {
-      if (values['--basis'] === 'delivered-config-continuation') {
-        const plan = await planDeliveredWorkContinuation({
+      if (['delivered-config-continuation', 'configured-frontier-continuation'].includes(values['--basis'])) {
+        const planner = values['--basis'] === 'configured-frontier-continuation' ? planConfiguredFrontierContinuation : planDeliveredWorkContinuation;
+        const plan = await planner({
           database,
           root,
           config,
@@ -883,13 +1102,19 @@ export async function runRuntimeCodeRebind(args) {
           forwardOperationId: values['--forward-operation-id'],
           sourceTransitionId: values['--source-transition-id'],
           ownerNoCallPointer: values['--owner-no-call-ref'],
+          parentManifestRef: values['--parent-manifest'],
+          successorManifestRef: values['--successor-manifest'],
+          systemUpdateRef: values['--system-update'],
+          sourceCorrectionRef: values['--source-correction'],
         });
         if (values['--mode'] === 'plan') writeDeliveredContinuationPlan(root, plan.repair_id, plan);
         return {
           status: values['--mode'] === 'plan' ? 'planned' : 'continuation_ready',
           repair_id: plan.repair_id,
           plan_digest: plan.digest,
-          retained_issue_id: plan.request.action.capture.issue_id,
+          ...(plan.request.action.kind === 'historical_terminal_review'
+            ? { retained_issue_id: plan.request.action.capture.issue_id }
+            : { retained_unissued_action_id: plan.request.action.request.action_id }),
           action: plan.request.action,
           runtime_accepted: false,
           accepted_result: false,
@@ -930,6 +1155,8 @@ export async function runRuntimeCodeRebind(args) {
         deliveredPlanRelative = deliveredContinuationPlanPath(values['--repair-id']);
       if (access.fileExists(deliveredPlanRelative, 'delivered continuation plan presence')) {
         const plan = readDeliveredContinuationPlan(root, values['--repair-id']),
+          normal = plan.request.sourceTransition.status === 'closed_config_rebind_proven',
+          transition = normal ? plan.request.sourceTransition.transition : null,
           sourceArgs = {
             database,
             root,
@@ -938,8 +1165,8 @@ export async function runRuntimeCodeRebind(args) {
             projectIds: plan.request.identity.project_ids,
             workId: plan.request.identity.work_id,
             attempt: plan.request.attempt,
-            actionId: plan.request.action.capture.action_id,
-            issueId: plan.request.action.capture.issue_id,
+            actionId: plan.request.action.kind === 'historical_terminal_review' ? plan.request.action.capture.action_id : undefined,
+            issueId: plan.request.action.kind === 'historical_terminal_review' ? plan.request.action.capture.issue_id : undefined,
             nativeHandle: plan.request.nativeSessionHandle,
             repairId: plan.repair_id,
             actor: plan.actor,
@@ -947,19 +1174,25 @@ export async function runRuntimeCodeRebind(args) {
             forwardOperationId: plan.request.forwardOperationId,
             sourceTransitionId: plan.source_transition_id,
             ownerNoCallPointer: plan.request.originalRequestPointer,
+            parentManifestRef: transition?.parent_manifest_ref,
+            successorManifestRef: transition?.successor_manifest_ref,
+            systemUpdateRef: transition?.system_update_ref,
+            sourceCorrectionRef: transition?.source_correction_ref,
           },
           result = await applyDeliveredWorkContinuationPlan({
             database,
             root,
             workspaceId,
             plan,
-            rebuildPlan: () => planDeliveredWorkContinuation(sourceArgs),
+            rebuildPlan: () => normal ? planConfiguredFrontierContinuation(sourceArgs) : planDeliveredWorkContinuation(sourceArgs),
           });
         return {
           status: result.status,
           repair_id: plan.repair_id,
           plan_digest: plan.digest,
-          retained_issue_id: plan.request.action.capture.issue_id,
+          ...(plan.request.action.kind === 'historical_terminal_review'
+            ? { retained_issue_id: plan.request.action.capture.issue_id }
+            : { retained_unissued_action_id: plan.request.action.request.action_id }),
           continuation_id: result.receipt.continuation_id,
           action: result.action,
           work_version: result.snapshot.workVersion,

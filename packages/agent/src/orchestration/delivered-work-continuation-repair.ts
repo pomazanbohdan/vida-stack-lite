@@ -9,6 +9,7 @@ import {
   projectConfiguredPrewriterContinuationRequests,
   validateCurrentSourceScopeBridge,
   validateDeliveredWorkContinuationRequest,
+  deliveredContinuationProofBinding,
 } from './delivered-work-continuation.js';
 
 export interface ConfiguredFrontierReceipt extends Omit<DeliveredWorkContinuationReceipt, 'historical_capture'> {
@@ -64,9 +65,10 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
     'future configured-frontier receipt or immutable snapshot is malformed',
   );
   const request = validateDeliveredWorkContinuationRequest(receipt.request),
-    action = request.action;
+    action = request.action,
+    proofBinding = deliveredContinuationProofBinding(request.sourceTransition);
   required(action.kind === 'configured_frontier', 'repair-only frontier validator received a historical action');
-  required(request.expectedMaintenanceGeneration === request.sourceTransition.transition.fence.generation,
+  required(proofBinding.maintenance_generation === undefined || request.expectedMaintenanceGeneration === proofBinding.maintenance_generation,
     'configured-frontier receipt maintenance generation differs from its closed transition fence');
   required(
     exactKeys(receipt.authorization, ['schema', 'request_digest', 'principal', 'transition_digest', 'action_digest']) &&
@@ -145,7 +147,7 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       receipt.prior_ledger.revision === receipt.prior_ledger_version.revision &&
       canonicalJsonDigest(receipt.prior_ledger) === receipt.prior_ledger_version.digest &&
       canonicalJsonDigest(receipt.prior_journal) === receipt.prior_journal_version.digest &&
-      receipt.prior_journal.workspace_id === request.sourceTransition.transition.fence.workspace_id &&
+      receipt.prior_journal.workspace_id === proofBinding.workspace_id &&
       receipt.prior_journal.work_id === request.identity.work_id &&
       receipt.prior_journal.attempt === receipt.attempt &&
       receipt.prior_journal.run_id === action.run_id &&
@@ -172,12 +174,12 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       receipt.journal_version.revision === receipt.prior_journal_version.revision + 1 &&
       canonicalJsonDigest(receipt.successor_journal) === receipt.journal_version.digest &&
       receipt.successor_work.schema === 'WorkState/v1' &&
-      receipt.successor_work.workspace_id === request.sourceTransition.transition.fence.workspace_id &&
+      receipt.successor_work.workspace_id === proofBinding.workspace_id &&
       receipt.successor_work.binding.lifecycle_work_id === request.identity.work_id &&
       receipt.successor_ledger.schema === 'CoordinationLedger/v1' &&
-      receipt.successor_ledger.workspace_id === request.sourceTransition.transition.fence.workspace_id &&
+      receipt.successor_ledger.workspace_id === proofBinding.workspace_id &&
       receipt.successor_journal.schema === 'MastraSessionLedger/v1' &&
-      receipt.successor_journal.workspace_id === request.sourceTransition.transition.fence.workspace_id &&
+      receipt.successor_journal.workspace_id === proofBinding.workspace_id &&
       receipt.successor_journal.work_id === request.identity.work_id &&
       receipt.work_version.revision === receipt.successor_work.revision &&
       canonicalJsonDigest(receipt.successor_work) === receipt.work_version.digest &&
@@ -250,7 +252,7 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
   required(
     priorWork.lease === null &&
       priorWork.execution.status === 'suspended' &&
-      priorWork.execution.phase === 'awaiting_followup' &&
+      ['implementation', 'awaiting_followup'].includes(priorWork.execution.phase) &&
       priorWork.lifecycle.phase === 'INTAKE' &&
       priorWork.lifecycle.seal === null &&
       priorRelease?.schema === 'CoordinationOperation/v1' &&

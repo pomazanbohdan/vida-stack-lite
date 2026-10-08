@@ -1359,8 +1359,10 @@ intake itself. The intake bytes, task, native owner, project set and workflow mu
 match their protected bindings. Caller JSON cannot select a different risk or
 reviewer wave. Reservation and application retain the existing producer fence,
 maintenance generation and exact Work, Ledger and Journal CAS.
-The recorded expected maintenance generation equals the closed transition fence
-generation. The prior Work run and Source revision match its Journal, whose path
+For the historical delivery proof, the recorded maintenance generation equals
+the closed transition fence generation. A normal configured-frontier proof uses
+current Host maintenance CAS and independently verifies the config operation's
+actual typed released fence. The prior Work run and Source revision match its Journal, whose path
 set equals the accepted Work scope. One reacquisition advances Ledger by exactly
 one revision.
 
@@ -1370,11 +1372,65 @@ current lease. Interrupted application retains UNKNOWN and blocks a new producer
 until exact repair resume. Repair changes only the stored receipt digest and its
 own operation; it grants no Source or Runtime rights.
 
-The configured-frontier producer and ordinary public run consumer still require
-their continuation implementation. Ship the qualified functional repair before
-the first active receipt is produced. Historical reader and receipt semantics
-stay unchanged. Configuration-lineage and Source-rights checks remain required
-before any actual continuation.
+The configured-frontier Host producer verifies the exact existing suspended
+engine through a read-only retained reader. It derives current reviewer requests
+from the protected intake and current configuration, then commits one receipt,
+same-owner lease and full successor wave under the existing transaction and CAS.
+The original developer stays in the immutable beforeimage, and the completed
+prefix stays unchanged. Exact retry returns the retained result before another
+engine read. The Host lookup exposes the whole reviewer wave and each item's
+retained issuance/report state. It rejects missing, duplicate or foreign items.
+
+The Source public run consumer and same-run adapter preserve the old run and
+completed prefix, then advance to the current developer only after the complete
+current prewriter reports. Their installed delivery and chained configuration/code
+proof remain pending. The functional repair checkpoint must already be installed
+before the first active receipt is produced. Historical behavior stays unchanged.
+Source checks do not establish installed continuation or Source rights.
+
+Runtime endpoint byte evidence retains each endpoint's own declared inventory.
+Resolve every selected package-relative file from exactly one valid manifest
+input. Validate all input paths, exact fields, byte counts and digests; other
+valid manifest inputs do not widen the selected inventory. Compare endpoint
+files through a temporary union with explicit absent entries, while preserving
+each endpoint's original aggregate digest. Ordinary task scopes still require
+equal path sets. This comparison supplies no configuration, Source or Runtime
+authority, and does not establish a historical update chain.
+
+The Source normal-config planner selects the actual wholly unissued request;
+it requires no invented issue or terminal capture. It preserves the Host-bound
+human Source instruction and verifies its exact original scope, owner and task.
+The retained suspended frontier may be in implementation or awaiting-followup
+execution phase; verify the actual unissued developer through the retained
+engine before resuming. The historical terminal-review predicate is unchanged.
+The config operation covers the full repository registry while the task retains
+its exact project subset. The config operation ID and native update operation ID
+remain distinct. Resolve the native update identity through the existing release
+owner and compare the installed executable's own byte observation with its
+selected manifest. Caller reports alone do not attest an installation call.
+The Source repository adapter checks changed files against exact regular local
+Git blobs, including their size and bytes. Reported hashes are only hints.
+Local commit evidence does not prove remote publication or grant rights.
+The package-runtime endpoint diff is independent from task-source mutation
+authority. The existing self-development permission and native release owner
+cover an authorized causal package correction; task implementation paths do not
+limit the installed runtime's inventory. This evidence never extends task Source
+rights or substitutes for actual whole-package qualification and installation.
+Only accepted implementation and documentation paths may change in this scope
+bridge. Paths present solely for reading or evidence remain unchanged. The
+documentation set is maintenance scope, not Source-write approval; retain its
+sidecar policy and final DocFlow. Do not require a delivery CLEAR checkpoint
+before the read-only prewriter. Every configured-frontier report, issue, resume
+and returned offer first runs the ordinary admitted current-runtime guard.
+
+After this continuation, the admitted runtime guard can use the current package
+inventory only through the validated Host-stored normal continuation receipt.
+Join its original intake reference, owner and prior binding with the current
+runtime/configuration/schema and ProjectContext. Keep the protected original
+intake unchanged. Ordinary admission still requires its original inventory.
+This Source branch requires the qualified whole repair checkpoint before its
+first active receipt; installed delivery and actual original-work restoration
+remain pending.
 
 Before changing an active strict artifact schema, qualify and ship its supported
 artifact/dependency repair command. Same-attempt correction still requires current

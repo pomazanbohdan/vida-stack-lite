@@ -4002,6 +4002,81 @@ export async function run(args = process.argv.slice(2)) {
       throw error;
     }
     const continuationLookup = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+    if (continuationLookup?.receipt.request.action.kind === 'configured_frontier') {
+      try {
+        const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
+        assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
+        if (values.prepare_assurance || values.correct || values.reconcile)
+          fail('GAP-VIDA-RUN-CONTEXT-001', 'The current prewriter wave must finish before dependent execution.');
+        let current = continuationLookup;
+        const expected = { revision: Number(values.expected_revision), digest: values.expected_digest };
+        if ((values.issue_wave || values.report) &&
+            (current.journal.version.revision !== expected.revision || current.journal.version.digest !== expected.digest))
+          fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter Journal version is stale.');
+        const sourcePaths = current.receipt.request.currentSourceScope.entries.map(entry => entry.path);
+        const owner = admissionHost.work?.lease?.thread_id;
+        if (!owner) fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter has no original owner lease.');
+        const source = ledger.hostState.snapshotCurrentTaskSourceSources(admissionIdentity, owner, sourcePaths, context.attempt);
+        if (source.digest !== current.receipt.request.currentSourceScope.digest || source.digest !== context.scope_digest)
+          fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter current Source differs.');
+        let status = 'continuation_prewrite_ready';
+        if (values.report) {
+          const observed = parseSessionBridgeObservation(readBoundedReport(values.report));
+          const issued = current.items.find(item => item.request.action_id === observed.action_id);
+          if (!issued?.issue_id || issued.issue_id !== observed.issue_id)
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Prewriter report has no matching retained issuance.');
+          ledger.report(context.work_id, context.attempt, expected, observed, source);
+          current = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+          status = 'continuation_prewrite_reported';
+        } else if (values.issue_wave && current.action_status === 'unissued') {
+          ledger.issueWave(context.work_id, context.attempt, expected);
+          current = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+          status = 'issued';
+        } else if (current.action_status === 'issued') status = 'wave_retrieved';
+        else if (current.action_status === 'reported') status = 'continuation_prewrite_reported';
+        const wave = current.items[0]?.request.wave_index;
+        const actions = wave === undefined ? [] : sessionActionsForWave(config, selection, context, values.workflow, wave, [], undefined, admissionHost.work.lifecycle.risk);
+        const describe = item => {
+          const action = actions.find(candidate => candidate.action_id === item.request.action_id);
+          if (!action || action.stage_id !== 'review_source_prewrite' || action.resolved_profile.tools_policy.source_write)
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter is not a current read-only configured action.');
+          return { request: item.request, action,
+            configured_context: configuredContextForStage(values.project_root, config, values.workflow, item.request.stage_id, context),
+            ...(item.issue_id ? { issue_id: item.issue_id, logical_action_id: item.request.action_id } : {}) };
+        };
+        if (!values.inspect && current.action_status === 'reported') {
+          const observations = current.items.map(item => item.observation);
+          if (observations.some(observation => observation?.status !== 'reported_complete'))
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'The current prewriter wave contains a failed or incomplete report.');
+          const bridge = await MastraSessionBridge.open({ repositoryRoot: values.project_root, config, selection, context,
+            workflowId: values.workflow, workspaceId: initialization.workspace_id, ledger,
+            projectIds: admissionProject.project_ids, lifecycleRisk: admissionHost.work.lifecycle.risk,
+            configuredFrontier: { identity: admissionIdentity, attempt: context.attempt } });
+          const resumed = await bridge.resume(current.journal.state.step_id, observations, source);
+          const nextWave = resumed.requests[0]?.wave_index;
+          const nextActions = nextWave === undefined ? [] : sessionActionsForWave(config, selection, context, values.workflow, nextWave, [], undefined, admissionHost.work.lifecycle.risk);
+          return { schema: 'VidaAgentRunResult/v1', status: 'continuation_resumed', workflow: values.workflow,
+            mastra_run_id: resumed.run_id, mastra_step_id: resumed.step_id, execution_status: resumed.status,
+            state_version: ledger.resume(context.work_id, context.attempt).version,
+            next_actions: resumed.requests.map(request => ({ request,
+              action: nextActions.find(action => action.action_id === request.action_id),
+              configured_context: configuredContextForStage(values.project_root, config, values.workflow, request.stage_id, context) })),
+            issued_actions: [], completed_observations: resumed.observations,
+            accepted_result: false, runtime_accepted: false };
+        }
+        return { schema: 'VidaAgentRunResult/v1', status, workflow: values.workflow,
+          mastra_run_id: current.journal.state.run_id, mastra_step_id: current.journal.state.step_id,
+          execution_status: 'configured_prewrite', resume_status: ledger.resume(context.work_id, context.attempt).resume_status,
+          state_version: current.journal.version, continuation_id: current.receipt.continuation_id,
+          source_snapshot_digest: source.digest, reconciliation_required: false,
+          next_actions: current.items.filter(item => item.issue_id === null).map(describe),
+          issued_actions: current.items.filter(item => item.issue_id !== null && item.observation === null).map(item => ({ ...describe(item), prior_issue_outcome: 'unknown' })),
+          action_statuses: current.items.map((item, index) => ({ action_id: item.request.action_id,
+            status: current.item_statuses[index] === 'issued' ? 'issued_outcome_uncertain' : current.item_statuses[index] })),
+          completed_observations: [...current.journal.state.completed.flatMap(wave => wave.items.map(item => item.observation)), ...current.items.flatMap(item => item.observation ? [item.observation] : [])],
+          accepted_result: false, runtime_accepted: false, initialization_status: initialization.workspace_binding_status };
+      } finally { ledger.close(); }
+    }
     if (continuationLookup) {
       const actionRequest = continuationLookup.receipt.request.action.request;
       if (
@@ -5193,6 +5268,8 @@ export async function run(args = process.argv.slice(2)) {
           : null;
       if (admittedSource && sourceSnapshot?.digest !== admittedSource.digest)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Accepted source scope changed before workflow start.');
+      const storedContinuation = ledger.hostState.readDeliveredWorkContinuationReceipt(admissionIdentity, context.attempt);
+      const configuredContinuation = storedContinuation?.request.action.kind === 'configured_frontier' ? storedContinuation : null;
       const bridgeArgs = {
         ledger,
         projectIds: admissionProject.project_ids,
@@ -5204,18 +5281,19 @@ export async function run(args = process.argv.slice(2)) {
         workspaceId: initialization.workspace_id,
         lifecycleRisk,
         correctiveExecution: ledger.resume(context.work_id, context.attempt)?.state.corrective_execution,
+        ...(configuredContinuation ? { configuredFrontier: { identity: admissionIdentity, attempt: context.attempt } } : {}),
       };
       const openBridge = async () => (bridge ??= await MastraSessionBridge.open(bridgeArgs));
-      const { readSessionEngineSnapshot } = await import('../src/orchestration/session-engine-snapshot.ts');
-      const expectedRunId = bridgeArgs.correctiveExecution?.engine_run_id ??
+      const { readSessionEngineSnapshot, readConfiguredContinuationSessionEngineSnapshot } = await import('../src/orchestration/session-engine-snapshot.ts');
+      const expectedRunId = configuredContinuation?.prior_work.execution.run_id ?? bridgeArgs.correctiveExecution?.engine_run_id ??
         sessionBridgeRunId(initialization.workspace_id, context, values.workflow);
       const persistedJournal = ledger.resume(context.work_id, context.attempt);
       if (persistedJournal && persistedJournal.state.run_id !== expectedRunId)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'The persisted attempt differs from the current launcher context.');
-      let workflowSnapshot = readSessionEngineSnapshot({
-        ...bridgeArgs,
-        runId: expectedRunId,
-      });
+      const engineBinding = { ...bridgeArgs, runId: expectedRunId };
+      let workflowSnapshot = configuredContinuation
+        ? readConfiguredContinuationSessionEngineSnapshot(engineBinding, configuredContinuation)
+        : readSessionEngineSnapshot(engineBinding);
       const created = !workflowSnapshot;
       if (!workflowSnapshot) {
         if (values.issue_wave || values.report || values.reconcile)

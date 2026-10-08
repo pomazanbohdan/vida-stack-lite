@@ -1,6 +1,6 @@
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { assertLoadedRuntimeConfig, runtimeConfigDigest, type AgentRuntimeConfig, type WorkItemSelection } from '../config/runtime-config.js';
-import type { HostStateSnapshot, StateVersion, WorkIdentity } from '../host-state.js';
+import type { HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { MaintenanceFence } from '../host-state.js';
 import {
   parseSessionBridgeRequest,
@@ -44,6 +44,45 @@ export interface ClosedConfigTransitionProof {
   readonly runtime_accepted: false;
   readonly writes_host_state: false;
 }
+
+/** Exact normal config operation and native endpoint references; never a delivery fence. */
+export interface ConfiguredRuntimeEndpointTransition {
+  readonly schema: 'ConfiguredRuntimeEndpointTransition/v1';
+  readonly workspace_id: string;
+  readonly repository_id: string;
+  readonly project_ids: readonly string[];
+  readonly operation_path: string;
+  readonly operation_sha256: string;
+  readonly operation_plan_digest: string;
+  readonly operation_release_digest: string;
+  readonly target_config_digest: string;
+  readonly target_schema_digest: string;
+  readonly target_yaml_sha256: string;
+  readonly receipt_path: string;
+  readonly receipt_sha256: string;
+  readonly prior_runtime_code_digest: string;
+  readonly target_runtime_code_digest: string;
+  readonly parent_manifest_digest: string;
+  readonly successor_manifest_digest: string;
+  readonly parent_manifest_ref: string;
+  readonly successor_manifest_ref: string;
+  readonly system_update_operation_id: string;
+  readonly system_update_ref: string;
+  readonly system_update_sha256: string;
+  readonly source_correction_ref: string;
+  readonly source_correction_sha256: string;
+  readonly native_self_attestation_digest: string;
+  readonly original_intake_ref: string;
+  readonly original_intake_sha256: string;
+  readonly runtime_accepted: false;
+}
+
+export interface ClosedConfigRebindProof extends Omit<ClosedConfigTransitionProof, 'status' | 'transition'> {
+  readonly status: 'closed_config_rebind_proven';
+  readonly transition: ConfiguredRuntimeEndpointTransition;
+}
+
+export type DeliveredContinuationProof = ClosedConfigTransitionProof | ClosedConfigRebindProof;
 
 export interface ConfiguredFrontierContinuationAction {
   readonly schema: 'DeliveredWorkContinuationAction/v1';
@@ -103,7 +142,7 @@ export interface DeliveredWorkContinuationRequest {
   readonly currentSourceScope: ScopedSourceSnapshot;
   /** Exact before/after entries authorized by the accepted Source transition. */
   readonly authorizedSourceChanges: readonly ScopedSourceChange[];
-  readonly sourceTransition: ClosedConfigTransitionProof;
+  readonly sourceTransition: DeliveredContinuationProof;
   readonly action: DeliveredWorkContinuationAction;
   readonly originalRequestPointer: string;
 }
@@ -130,6 +169,18 @@ const pathPattern = /^[^\\\0\r\n]+$/;
 
 function requireContinuation(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`delivered work continuation: ${message}`);
+}
+
+/** Scope maintenance is not a grant: implementation, documentation and evidence stay distinct. */
+export function validateContinuationSourceChangePaths(work: WorkState, changes: readonly ScopedSourceChange[]): void {
+  const allowed = new Set(work.lifecycle.scope.allowed_paths),
+    implementation = work.binding.implementation_paths,
+    documentation = work.lifecycle.scope.documentation_paths ?? [];
+  requireContinuation(implementation.every(relative => allowed.has(relative)) && documentation.every(relative => allowed.has(relative)),
+    'continuation mutation paths differ from the accepted scope');
+  const maintained = new Set([...implementation, ...documentation]);
+  requireContinuation(changes.every(change => maintained.has(change.path)),
+    'continuation Source changes are outside accepted implementation or documentation paths');
 }
 
 function exactKeys(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
@@ -339,6 +390,65 @@ export function validateClosedConfigTransitionProof(value: unknown): ClosedConfi
     'Source transition proof is not a closed current transition',
   );
   return proof;
+}
+
+export function validateClosedConfigRebindProof(value: unknown): ClosedConfigRebindProof {
+  requireContinuation(exactKeys(value, ['status', 'operation_id', 'baseline_config_digest', 'transition',
+    'transition_digest', 'caller_owner_cas_required', 'runtime_accepted', 'writes_host_state']),
+  'normal config proof fields are invalid');
+  const proof = value as unknown as ClosedConfigRebindProof;
+  const transition = proof.transition;
+  const hashes = ['operation_sha256', 'operation_plan_digest', 'operation_release_digest', 'target_config_digest', 'target_schema_digest',
+    'target_yaml_sha256', 'receipt_sha256', 'prior_runtime_code_digest', 'target_runtime_code_digest',
+    'parent_manifest_digest', 'successor_manifest_digest', 'system_update_sha256', 'source_correction_sha256',
+    'native_self_attestation_digest', 'original_intake_sha256'] as const;
+  const refs = ['operation_path', 'receipt_path', 'parent_manifest_ref', 'successor_manifest_ref',
+    'system_update_ref', 'source_correction_ref', 'original_intake_ref'] as const;
+  requireContinuation(exactKeys(transition, ['schema', 'workspace_id', 'repository_id', 'project_ids',
+    'system_update_operation_id', 'runtime_accepted', ...hashes, ...refs]), 'normal config transition fields are invalid');
+  requireContinuation(proof.status === 'closed_config_rebind_proven' &&
+    typeof proof.operation_id === 'string' && identifierPattern.test(proof.operation_id) &&
+    typeof proof.baseline_config_digest === 'string' && digestPattern.test(proof.baseline_config_digest) &&
+    typeof proof.transition_digest === 'string' && digestPattern.test(proof.transition_digest) &&
+    proof.transition_digest === canonicalJsonDigest(transition) &&
+    proof.caller_owner_cas_required === true && proof.runtime_accepted === false && proof.writes_host_state === false &&
+    transition.schema === 'ConfiguredRuntimeEndpointTransition/v1' &&
+    typeof transition.workspace_id === 'string' && digestPattern.test(transition.workspace_id) &&
+    typeof transition.repository_id === 'string' && identifierPattern.test(transition.repository_id) &&
+    Array.isArray(transition.project_ids) && transition.project_ids.length > 0 && transition.project_ids.length <= 64 &&
+    transition.project_ids.every((id, index) => typeof id === 'string' && identifierPattern.test(id) &&
+      (index === 0 || transition.project_ids[index - 1]! < id)) &&
+    typeof transition.system_update_operation_id === 'string' && identifierPattern.test(transition.system_update_operation_id) &&
+    transition.system_update_operation_id !== proof.operation_id && transition.runtime_accepted === false &&
+    hashes.every(key => typeof transition[key] === 'string' && digestPattern.test(transition[key])) &&
+    refs.every(key => typeof transition[key] === 'string' && transition[key].length <= 512 &&
+      pathPattern.test(transition[key]) && !transition[key].startsWith('/') && !/^[A-Za-z]:/.test(transition[key]) &&
+      !/\p{Cc}/u.test(transition[key]) && transition[key].split('/').every(part => part.length > 0 && part !== '.' && part !== '..')) &&
+    transition.operation_path.endsWith(`/${proof.operation_id}/runtime-config-rebind-operation.v1.json`) &&
+    transition.prior_runtime_code_digest !== transition.target_runtime_code_digest &&
+    proof.baseline_config_digest !== transition.target_config_digest,
+  'normal config operation or runtime endpoints are invalid');
+  return proof;
+}
+
+/** Read only validated proof bindings. Normal config and native update identities stay separate. */
+export function deliveredContinuationProofBinding(proof: DeliveredContinuationProof) {
+  if (proof.status === 'closed_config_rebind_proven') return {
+    workspace_id: proof.transition.workspace_id,
+    project_ids: proof.transition.project_ids,
+    forward_operation_id: proof.transition.system_update_operation_id,
+    parent_manifest_digest: proof.transition.parent_manifest_digest,
+    successor_manifest_digest: proof.transition.successor_manifest_digest,
+    maintenance_generation: undefined,
+  };
+  return {
+    workspace_id: proof.transition.fence.workspace_id,
+    project_ids: proof.transition.fence.binding.project_ids,
+    forward_operation_id: proof.operation_id,
+    parent_manifest_digest: proof.transition.fence.binding.manifest_digest,
+    successor_manifest_digest: proof.transition.fence.binding.bundle_digest,
+    maintenance_generation: proof.transition.fence.generation,
+  };
 }
 
 export function validateDeliveredWorkContinuationAction(value: unknown): DeliveredWorkContinuationAction {
@@ -599,8 +709,17 @@ export function validateDeliveredWorkContinuationRequest(value: unknown): Delive
   ];
   requireContinuation(exactKeys(value, keys), 'continuation request fields are invalid');
   const request = value as unknown as DeliveredWorkContinuationRequest;
-  const transition = validateClosedConfigTransitionProof(request.sourceTransition);
+  const transition = request.sourceTransition?.status === 'closed_config_rebind_proven'
+    ? validateClosedConfigRebindProof(request.sourceTransition)
+    : validateClosedConfigTransitionProof(request.sourceTransition);
   const action = validateDeliveredWorkContinuationAction(request.action);
+  const proofBinding = deliveredContinuationProofBinding(transition);
+  requireContinuation(transition.status !== 'closed_config_rebind_proven' ||
+    (action.kind === 'configured_frontier' && transition.transition.repository_id === request.identity?.repository_id &&
+      transition.transition.prior_runtime_code_digest === request.priorRuntimeCodeDigest &&
+      transition.transition.target_runtime_code_digest === request.targetRuntimeCodeDigest &&
+      transition.transition.target_schema_digest === request.targetSchemaDigest),
+  'normal config proof is not bound to the configured frontier and exact runtime endpoints');
   const identity = request.identity;
   requireContinuation(
     request.schema === 'DeliveredWorkContinuationRequest/v1' &&
@@ -652,9 +771,9 @@ export function validateDeliveredWorkContinuationRequest(value: unknown): Delive
       validScope(request.currentSourceScope) &&
       Array.isArray(request.authorizedSourceChanges) &&
       transition.operation_id.length > 0 &&
-      request.forwardOperationId === transition.operation_id &&
-      request.parentManifestDigest === transition.transition.fence.binding.manifest_digest &&
-      request.successorManifestDigest === transition.transition.fence.binding.bundle_digest &&
+      request.forwardOperationId === proofBinding.forward_operation_id &&
+      request.parentManifestDigest === proofBinding.parent_manifest_digest &&
+      request.successorManifestDigest === proofBinding.successor_manifest_digest &&
       transition.transition.target_config_digest === request.targetConfigDigest &&
       transition.baseline_config_digest === request.priorConfigDigest &&
       action.target_config_digest === request.targetConfigDigest &&
@@ -662,7 +781,7 @@ export function validateDeliveredWorkContinuationRequest(value: unknown): Delive
       (action.kind !== 'historical_terminal_review' ||
         action.original_request_pointer === request.originalRequestPointer) &&
       (action.kind !== 'configured_frontier' || action.request.config_digest === request.priorConfigDigest) &&
-      canonicalJsonDigest(transition.transition.fence.binding.project_ids) ===
+      canonicalJsonDigest(proofBinding.project_ids) ===
         canonicalJsonDigest(identity.project_ids) &&
       action.workflow_id.length > 0 &&
       typeof request.originalRequestPointer === 'string' &&
