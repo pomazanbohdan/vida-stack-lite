@@ -36,7 +36,6 @@ import type { LifecycleArtifactReference } from '../lifecycle/lifecycle-state.js
 import type { MastraLedgerItem, MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
 import { parseSessionBridgeObservation, type SessionBridgeObservation } from './mastra-session-bridge.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { transitionLifecycleState } from '../lifecycle/lifecycle-state.js';
 
 type PolicyDerivedInput =
   | 'authorization'
@@ -669,7 +668,7 @@ function transitionObservedLifecycle(input: {
     work && ledger && input.host.workVersion && input.host.ledgerVersion,
     'prewriter lifecycle transition lacks a fresh Host snapshot',
   );
-  const nextWork = transitionLifecycleState(
+  const nextWork = input.hostState.projectLifecycleTransition(
     work,
     input.target,
     input.target === 'TRACE'

@@ -1388,6 +1388,17 @@ prefix stays unchanged. Exact retry returns the retained result before another
 engine read. The Host lookup exposes the whole reviewer wave and each item's
 retained issuance/report state. It rejects missing, duplicate or foreign items.
 
+After a Source change, the verified continuation history preserves the exact
+original scope, acceptance and execution-approval references, admission Source
+snapshot and session intake. HostState validates these finite admission records
+against their original binding. It rederives this temporary validation context
+for lifecycle projections and before CAS writes; the context is never stored in
+WorkState or accepted from caller JSON. Ordinary validation remains strict.
+Changed references, unrelated historical artifacts and old assurance evidence
+are rejected. Retained admission history grants no current Source or Runtime
+rights. An execution approval for the prior Source cannot satisfy the EXECUTE
+gate; current prewriter and authorization checks remain required.
+
 The Source public run consumer and same-run adapter preserve the old run and
 completed prefix, then advance to the current developer only after the complete
 current prewriter reports. Their installed delivery and chained configuration/code

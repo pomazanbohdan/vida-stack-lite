@@ -251,7 +251,8 @@ function unique(values: readonly string[], message: string): void {
   requireLifecycle(new Set(values).size === values.length, message);
 }
 function current(lifecycle: LifecycleState, kind: LifecycleArtifactKind): readonly LifecycleArtifactReference[] {
-  return lifecycle.references.filter((reference) => reference.kind === kind && reference.disposition === 'current');
+  return lifecycle.references.filter((reference) => reference.kind === kind && reference.disposition === 'current' &&
+    (kind !== 'execution_approval' || reference.source_revision === lifecycle.source_revision));
 }
 function requireCurrent(lifecycle: LifecycleState, ...kinds: LifecycleArtifactKind[]): void {
   for (const kind of kinds) requireLifecycle(current(lifecycle, kind).length > 0, `current ${kind} reference required`);
@@ -266,14 +267,16 @@ function pathList(values: readonly string[], name: string): void {
   );
   for (const value of values) requireLifecycle(safeWorkflowOwnedPath(value), `${name} contains an unsafe path`);
 }
-function validateReference(reference: LifecycleArtifactReference, work: LifecycleWorkState): void {
+function validateReference(reference: LifecycleArtifactReference, work: LifecycleWorkState, admissionHistory: readonly LifecycleArtifactReference[]): void {
   requireLifecycle(reference.schema === 'LifecycleArtifactReference/v1', 'lifecycle reference schema invalid');
   requireLifecycle(schemaPattern.test(reference.artifact_schema), 'lifecycle artifact schema must be current v1');
   requireLifecycle(reference.record_id.trim().length > 0, 'lifecycle record id missing');
   requireLifecycle(safeWorkflowOwnedPath(reference.path), 'lifecycle artifact path unsafe');
   requireLifecycle(digestPattern.test(reference.sha256), 'lifecycle artifact digest invalid');
   requireLifecycle(
-    reference.source_revision === work.lifecycle.source_revision &&
+    (reference.source_revision === work.lifecycle.source_revision ||
+      ['implementation_scope', 'acceptance_manifest', 'execution_approval'].includes(reference.kind) &&
+      admissionHistory.some(original => canonicalJsonDigest(original) === canonicalJsonDigest(reference))) &&
       reference.scope_id === work.lifecycle.scope.scope_id,
     'lifecycle artifact authority binding differs from current work',
   );
@@ -317,7 +320,7 @@ function validateReference(reference: LifecycleArtifactReference, work: Lifecycl
     requireLifecycle(reference.decision === 'pass', `${reference.kind} did not pass`);
 }
 
-export function validateLifecycleAggregate(work: LifecycleWorkState): LifecycleState {
+export function validateLifecycleAggregate(work: LifecycleWorkState, admissionHistory: readonly LifecycleArtifactReference[] = []): LifecycleState {
   assertCanonicalJsonValue(work.lifecycle, '$.lifecycle');
   const lifecycle = work.lifecycle;
   requireLifecycle(lifecycle.schema === 'LifecycleState/v1', 'lifecycle schema invalid');
@@ -364,7 +367,7 @@ export function validateLifecycleAggregate(work: LifecycleWorkState): LifecycleS
   requireLifecycle(lifecycle.assurance.review_generation >= 0, 'review generation invalid');
   requireLifecycle(lifecycle.assurance.correction_count >= 0, 'correction count invalid');
   requireLifecycle(lifecycle.assurance.review_failure_count >= 0, 'review failure count invalid');
-  for (const reference of lifecycle.references) validateReference(reference, work);
+  for (const reference of lifecycle.references) validateReference(reference, work, admissionHistory);
   unique(
     lifecycle.references.map((reference) => `${reference.kind}:${reference.record_id}`),
     'lifecycle reference identity',
@@ -441,8 +444,9 @@ export function transitionLifecycleState<T extends LifecycleWorkState>(
   target: LifecyclePhase,
   nextAction: string,
   documentationContext?: DocumentationVerificationContext,
+  admissionHistory: readonly LifecycleArtifactReference[] = [],
 ): T {
-  validateLifecycleAggregate(work);
+  validateLifecycleAggregate(work, admissionHistory);
   const before = work.lifecycle;
   requireLifecycle(before.phase !== 'COMPLETE', 'completed lifecycle is immutable');
   requireLifecycle(legalTransitions.has(`${before.phase}:${target}`), 'illegal lifecycle transition');
@@ -512,7 +516,7 @@ export function transitionLifecycleState<T extends LifecycleWorkState>(
     assurance,
   };
   const next = freezeJsonValue({ ...work, revision: work.revision + 1, lifecycle: nextLifecycle }) as T;
-  validateLifecycleAggregate(next);
+  validateLifecycleAggregate(next, admissionHistory);
   return next;
 }
 
@@ -520,9 +524,10 @@ export function validateLifecycleProgress(
   before: LifecycleWorkState,
   after: LifecycleWorkState,
   documentationContext?: DocumentationVerificationContext,
+  admissionHistory: readonly LifecycleArtifactReference[] = [],
 ): void {
-  validateLifecycleAggregate(before);
-  validateLifecycleAggregate(after);
+  validateLifecycleAggregate(before, admissionHistory);
+  validateLifecycleAggregate(after, admissionHistory);
   requireLifecycle(after.revision === before.revision + 1, 'lifecycle work revision must advance exactly once');
   const stableBefore = {
     source_revision: before.lifecycle.source_revision,
@@ -550,6 +555,7 @@ export function validateLifecycleProgress(
       after.lifecycle.phase,
       after.lifecycle.next_action,
       documentationContext,
+      admissionHistory,
     );
     requireLifecycle(
       canonicalJsonDigest(expected.lifecycle) === canonicalJsonDigest(after.lifecycle),

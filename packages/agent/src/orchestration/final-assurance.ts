@@ -5,7 +5,7 @@ import { runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import type { HostStateStore, WorkState, WorkIdentity, StateVersion, HostStateSnapshot } from '../host-state.js';
-import { transitionLifecycleState, type LifecycleArtifactReference } from '../lifecycle/lifecycle-state.js';
+import { type LifecycleArtifactReference } from '../lifecycle/lifecycle-state.js';
 import { snapshotAdmittedTaskSources } from './scoped-source-snapshot.js';
 import type { MastraSessionLedgerSnapshot, MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { parseObservedValidatorVerdict } from './observed-validation.js';
@@ -868,7 +868,7 @@ function prepareLifecycleAssurance(
   };
   const transition = (phase: 'TRACE' | 'PLAN' | 'EXECUTE' | 'VERIFY') =>
     commit(
-      transitionLifecycleState(
+      store.projectLifecycleTransition(
         work!,
         phase,
         'Current explicit assurance preparation; preserve original execution observations.',

@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { runRuntimeCodeRebind, assertCommittedSourceChanges } from '../bin/runtime-code-rebind.mjs';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { validateLifecycleAggregate } from '../src/lifecycle/lifecycle-state.ts';
 import { runtimeConfigDigest, loadRuntimeConfig, runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
@@ -1309,7 +1310,7 @@ fs.writeFileSync(value.root+'/bridge-result.json',JSON.stringify({before,after,r
   expect(bridgeResult.retained).toEqual(result.receipt);
 }, 30000);
 
-function configuredFrontierRepairHostRoot(proofKind = 'delivery') {
+function configuredFrontierRepairHostRoot(proofKind = 'delivery', changedSource = false) {
   const root = mkdtempSync(path.join(tmpdir(), 'frontier-repair-host-'));
   trackContinuationFixtureRoot(root);
   mkdirSync(path.join(root, 'docs', 'agent-instructions'), { recursive: true });
@@ -1320,7 +1321,7 @@ function configuredFrontierRepairHostRoot(proofKind = 'delivery') {
   writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Fixture map\n');
   writeFileSync(path.join(root, 'docs', 'agent-instructions', 'documentation-policy.v1.json'), '{}');
   const config = loadRuntimeConfig(root), workspaceId = deriveWorkspaceId('vida-agent', root);
-  const input = configuredFrontierRepairFixture(true, false, { root, config, workspaceId }, 'implementation');
+  const input = configuredFrontierRepairFixture(true, changedSource, { root, config, workspaceId }, 'implementation');
   const item = { schema: 'WorkItem/v1', id: input.receipt.request.identity.work_id, provider: 'local', provider_type: 'Task', canonical_kind: 'task', intent: 'task_execution', project_id: 'agent', title: 'Repair the original frontier', description: 'Fixture task', risk_flags: ['high'], labels: [] };
   const intake = { schema: 'VidaLocalSessionIntake/v1', native_session_handle: input.receipt.request.nativeSessionHandle,
     runtime_code_paths: [config.runtime.bundle + '/bin/run.mjs'], risk: 'high', route: 'R4', change_kind: 'fix', work_item: item };
@@ -1344,6 +1345,80 @@ function configuredFrontierRepairHostRoot(proofKind = 'delivery') {
   if (proofKind === 'normal') useNormalConfigEndpointProof(input);
   return { root, config, workspaceId, input, intakePath };
 }
+
+test('Host keeps nonempty original admission references and intake through a changed Source continuation', async () => {
+  const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot('normal', true);
+  const prior = structuredClone(input.receipt.prior_work);
+  const scopeBytes = Buffer.from(canonicalJson(input.receipt.prior_journal.source_scope));
+  const scopePath = '.agent/admission-source-snapshot.json';
+  writeFileSync(path.join(root, scopePath), scopeBytes);
+  prior.artifacts = [{ ...prior.artifacts[0], artifact_id: 'admission-source-snapshot', schema: 'ScopedSourceSnapshot/v1',
+    path: scopePath, sha256: createHash('sha256').update(scopeBytes).digest('hex') }, ...prior.artifacts];
+  prior.lifecycle.references = [
+    ['implementation_scope', prior.contracts.scope], ['acceptance_manifest', prior.contracts.acceptance],
+    ['execution_approval', { schema: 'LocalSourceWriteAuthorization/v1', path: '.agent/source-approval.json', sha256: '8'.repeat(64) }],
+  ].map(([kind, ref]) => ({ schema: 'LifecycleArtifactReference/v1', kind, artifact_schema: ref.schema, record_id: kind,
+    path: ref.path, sha256: ref.sha256, source_revision: prior.binding.work_source_revision,
+    scope_id: prior.binding.scope_id, ac_ids: prior.binding.ac_ids, generation: null,
+    implementation_fingerprint: null, delivery_cycle_id: null, principal: 'fixture-owner', decision: 'approved', disposition: 'current' }));
+  const priorVersion = { revision: prior.revision, digest: canonicalJsonDigest(prior) };
+  const request = { ...input.receipt.request, expectedWork: priorVersion };
+  input.receipt = { ...input.receipt, prior_work: prior, prior_work_version: priorVersion, request,
+    request_digest: canonicalJsonDigest(request), authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(request) } };
+  const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+  mkdirSync(path.dirname(databasePath), { recursive: true });
+  const f = await continuationFixture({ root, config, workspaceId, databasePath, repositoryRoot: root, identity: request.identity });
+  for (const [kind, value, version] of [['work', prior, priorVersion], ['ledger', input.receipt.prior_ledger, input.receipt.prior_ledger_version]])
+    f.db.query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=?')
+      .run(version.revision, canonicalJson(value), version.digest, workspaceId, kind);
+  f.db.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1')
+    .run(input.receipt.prior_journal_version.revision, canonicalJson(input.receipt.prior_journal), input.receipt.prior_journal_version.digest, workspaceId, request.identity.work_id);
+  await seedOriginalFrontierEngine(root, config, input);
+  const result = await f.store.continueDeliveredWork(request);
+  expect(result.status).toBe('continued');
+  expect(result.receipt.successor_work.lifecycle.references).toEqual(prior.lifecycle.references);
+  expect(result.receipt.successor_work.artifacts).toEqual(prior.artifacts);
+  expect(f.store.readHostStateSnapshot(request.identity).work).toEqual(result.receipt.successor_work);
+  expect(result.receipt.rights_granted).toBe(false);
+  const continued = f.store.readHostStateSnapshot(request.identity);
+  expect(() => validateLifecycleAggregate(continued.work)).toThrow(/authority binding/);
+  const tampered = structuredClone(continued.work);
+  tampered.lifecycle.references[0].sha256 = '2'.repeat(64);
+  expect(() => f.store.projectLifecycleTransition(tampered, 'TRACE', 'Trace the retained admission.')).toThrow(/authority binding/);
+  const staleTest = { ...continued.work, lifecycle: { ...continued.work.lifecycle,
+    references: [...continued.work.lifecycle.references, { ...prior.lifecycle.references[0], kind: 'test_receipt', record_id: 'old-test',
+      artifact_schema: 'TestReceipt/v1', path: '.agent/old-test.json', decision: 'pass' }] } };
+  expect(() => f.store.projectLifecycleTransition(staleTest, 'TRACE', 'Trace the retained admission.')).toThrow(/authority binding/);
+  for (const index of [0, 1]) {
+    const wrongIntake = structuredClone(continued.work); wrongIntake.artifacts[index].sha256 = '2'.repeat(64);
+    expect(() => f.store.projectLifecycleTransition(wrongIntake, 'TRACE', 'Trace the retained admission.')).toThrow(/artifact reference/);
+  }
+  const unrelatedArtifact = { ...continued.work, artifacts: [...continued.work.artifacts,
+    { ...prior.artifacts[0], artifact_id: 'old-other', schema: 'TestReceipt/v1', path: '.agent/foreign-artifact.json' }] };
+  expect(() => f.store.projectLifecycleTransition(unrelatedArtifact, 'TRACE', 'Trace the retained admission.')).toThrow(/artifact reference/);
+  const advance = nextWork => {
+    const current = f.store.readHostStateSnapshot(request.identity);
+    return f.store.compareAndSwapHostState({ expectedWork: current.workVersion, expectedLedger: current.ledgerVersion,
+      expectedMaintenanceGeneration: current.maintenanceGeneration, nextWork, nextLedger: { ...current.ledger, revision: current.ledger.revision + 1 } });
+  };
+  const traced = advance(f.store.projectLifecycleTransition(continued.work, 'TRACE', 'Trace the retained admission.'));
+  const planRef = { ...prior.lifecycle.references[0], kind: 'source_plan', artifact_schema: 'SourcePlan/v1', record_id: 'current-plan',
+    path: '.agent/current-plan.json', source_revision: traced.work.binding.work_source_revision, decision: 'pass' };
+  const prepared = advance({ ...traced.work, revision: traced.work.revision + 1,
+    lifecycle: { ...traced.work.lifecycle, revision: traced.work.revision + 1, references: [...traced.work.lifecycle.references, planRef] } });
+  const planned = advance(f.store.projectLifecycleTransition(prepared.work, 'PLAN', 'Plan the current Source work.'));
+  expect(planned.work.lifecycle.phase).toBe('PLAN');
+  expect(() => f.store.projectLifecycleTransition(planned.work, 'EXECUTE', 'Execute current Source work.')).toThrow(/current execution_approval/);
+  expect(planned.work.lifecycle.references.slice(0, 3)).toEqual(prior.lifecycle.references);
+  expect(planned.work.artifacts).toEqual(prior.artifacts);
+  expect(f.store.readHostStateSnapshot(request.identity).work).toEqual(planned.work);
+  const storedReceipt = f.db.query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=?').get(workspaceId);
+  f.db.query('DELETE FROM agent_host_delivered_work_continuation WHERE workspace_id=?').run(workspaceId);
+  expect(() => f.store.readHostStateSnapshot(request.identity)).toThrow(/authority binding/);
+  f.db.query('INSERT INTO agent_host_delivered_work_continuation VALUES(?,?,?,?,?,?)')
+    .run(workspaceId, request.identity.work_id, 1, request.action.request.action_id, storedReceipt.payload, storedReceipt.digest);
+  expect(f.store.readHostStateSnapshot(request.identity).work).toEqual(planned.work);
+});
 
 test.each(['delivery', 'normal'])('configured-frontier public repair plans, applies and resumes the exact full-wave receipt without changing Host state [%s]', async (proofKind) => {
   const fixture = configuredFrontierRepairHostRoot(proofKind), { root, config, workspaceId, input } = fixture;

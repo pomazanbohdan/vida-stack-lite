@@ -46,6 +46,7 @@ import {
   type LifecycleArtifactReference,
   type DocumentationVerificationContext,
   type LifecycleState,
+  type LifecyclePhase,
 } from './lifecycle/lifecycle-state.js';
 import {
   validateFinalAssuranceState,
@@ -1515,9 +1516,15 @@ function validateReferences(refs: readonly ContractReference[]): void {
     'artifact paths',
   );
 }
+interface ContinuationAdmissionHistory {
+  readonly references: readonly LifecycleArtifactReference[];
+  readonly artifacts: readonly WorkArtifactReference[];
+}
+
 function checkedWork(
   value: unknown,
   historicalBindings: ReadonlyMap<string, WorkState['binding']> = new Map(),
+  admissionHistory: ContinuationAdmissionHistory = { references: [], artifacts: [] },
 ): WorkState {
   requireState(validateWork(value), 'work record must match current WorkState/v1');
   const work = value as WorkState,
@@ -1538,7 +1545,7 @@ function checkedWork(
       'request transition identity invalid',
     );
   }
-  validateLifecycleAggregate(work);
+  validateLifecycleAggregate(work, admissionHistory.references);
   if (work.migration) {
     const migration = work.migration;
     requireState(
@@ -1617,7 +1624,7 @@ function checkedWork(
   );
   for (const ref of work.artifacts)
     requireState(
-      ref.source_revision === binding.work_source_revision &&
+      (ref.source_revision === binding.work_source_revision || admissionHistory.artifacts.some(original => sameJson(original, ref))) &&
         ref.scope_id === binding.scope_id &&
         ref.ac_ids.every((id) => binding.ac_ids.includes(id)),
       'artifact reference has foreign authority binding',
@@ -1734,9 +1741,12 @@ function checkedStoredWork(
   value: unknown,
   pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt,
   continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  observeAdmissionHistory?: (history: ContinuationAdmissionHistory) => void,
 ): WorkState {
   const candidate = value as WorkState,
     bindings = new Map<string, WorkState['binding']>(),
+    admissionReferences: LifecycleArtifactReference[] = [],
+    admissionArtifacts: WorkArtifactReference[] = [],
     continuationRepairOverlayUsed = { value: false },
     records: ({ readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt } | {
       readonly kind: 'continuation';
@@ -1862,6 +1872,20 @@ function checkedStoredWork(
             sameJson(successorWork.execution.assignment_attempts, original.execution.assignment_attempts),
           'configured-frontier binding history is not continuous',
         );
+        for (const reference of original.lifecycle.references) {
+          const schema = { implementation_scope: 'ImplementationScope/v1', acceptance_manifest: 'AcceptanceManifest/v1',
+            execution_approval: 'LocalSourceWriteAuthorization/v1' }[reference.kind as 'implementation_scope' | 'acceptance_manifest' | 'execution_approval'];
+          if (schema && reference.artifact_schema === schema && reference.source_revision === original.binding.work_source_revision &&
+              reference.scope_id === original.binding.scope_id && reference.ac_ids.every(id => original.binding.ac_ids.includes(id)))
+            admissionReferences.push(reference);
+        }
+        for (const artifact of original.artifacts) {
+          const schema = { 'admission-source-snapshot': 'ScopedSourceSnapshot/v1', 'local-session-intake': 'VidaLocalSessionIntake/v1' }[
+            artifact.artifact_id as 'admission-source-snapshot' | 'local-session-intake'];
+          if (schema && artifact.schema === schema && artifact.stage_id === 'intake' &&
+              artifact.source_revision === original.binding.work_source_revision && artifact.scope_id === original.binding.scope_id &&
+              artifact.ac_ids.every(id => original.binding.ac_ids.includes(id))) admissionArtifacts.push(artifact);
+        }
         for (const attempt of original.execution.assignment_attempts) {
           const current = candidate.execution.assignment_attempts.find(entry => entry.attempt_id === attempt.attempt_id);
           requireState(current && sameJson(current, attempt), 'configured-frontier terminal assignment result changed');
@@ -2042,7 +2066,10 @@ function checkedStoredWork(
     }
     expected = original.binding;
   }
-  return checkedWork(value, bindings);
+  const admissionHistory = { references: admissionReferences, artifacts: admissionArtifacts };
+  const checked = checkedWork(value, bindings, admissionHistory);
+  observeAdmissionHistory?.(admissionHistory);
+  return checked;
 }
 
 function assignmentIdentity(
@@ -2303,6 +2330,7 @@ function validateProgress(
   ledger: CoordinationLedger,
   documentationContext?: DocumentationVerificationContext,
   taskSourceResourceAdditions: readonly string[] = [],
+  admissionHistory: readonly LifecycleArtifactReference[] = [],
 ): void {
   requireState(
     work.revision === (before.work?.revision ?? 0) + 1 && ledger.revision === (before.ledger?.revision ?? 0) + 1,
@@ -2310,7 +2338,7 @@ function validateProgress(
   );
   if (before.work) {
     const old = before.work;
-    validateLifecycleProgress(old, work, documentationContext);
+    validateLifecycleProgress(old, work, documentationContext, admissionHistory);
     requireState(
       sameJson(old.execution.assignment_attempts, work.execution.assignment_attempts),
       'attempt history requires its dedicated transaction',
@@ -5573,6 +5601,20 @@ export class HostStateStore {
   ): WorkState {
     return checkedStoredWork(this.#database, this.#workspaceId, value, pendingReceipt, continuationRepairOverlay);
   }
+  #admissionHistory(work: WorkState): ContinuationAdmissionHistory {
+    let history: ContinuationAdmissionHistory = { references: [], artifacts: [] };
+    checkedStoredWork(this.#database, this.#workspaceId, work, undefined, undefined, value => { history = value; });
+    return history;
+  }
+  /** Pure projection; persistence revalidates the stored receipt chain under CAS. */
+  projectLifecycleTransition(work: WorkState, target: LifecyclePhase, nextAction: string,
+    documentationContext?: DocumentationVerificationContext): WorkState {
+    return transitionLifecycleState(work, target, nextAction, documentationContext, this.#admissionHistory(work).references);
+  }
+  #validateProgress(before: HostStateSnapshot, work: WorkState, ledger: CoordinationLedger,
+    documentationContext?: DocumentationVerificationContext, taskSourceResourceAdditions: readonly string[] = []): void {
+    validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions, this.#admissionHistory(work).references);
+  }
   #load(
     kind: 'work' | 'ledger',
     id: string,
@@ -7712,7 +7754,7 @@ export class HostStateStore {
       matchesExpected(before.ledgerVersion, input.expectedLedger);
       input.verifySuccessor();
       validatePair(successor, incomingLedger);
-      validateProgress(before, successor, incomingLedger);
+      this.#validateProgress(before, successor, incomingLedger);
       const baseline = before.ledger;
       requireState(input.predecessors.length === 0 || baseline !== null, 'predecessors need existing coordination');
       unique(
@@ -7859,7 +7901,7 @@ export class HostStateStore {
           operations: [...baseline.operations, ...operations],
         });
         validatePair(next, projection);
-        validateProgress(prior, { ...next, request_transition: work.request_transition ?? null }, projection);
+        this.#validateProgress(prior, { ...next, request_transition: work.request_transition ?? null }, projection);
         ledger = checkedLedger({
           ...ledger,
           tickets: releaseTickets(ledger.tickets),
@@ -8047,7 +8089,7 @@ export class HostStateStore {
         },
         lifecycle: { ...current.work!.lifecycle, revision },
       });
-      validateLifecycleProgress(current.work!, work);
+      validateLifecycleProgress(current.work!, work, undefined, this.#admissionHistory(work).references);
       const result = this.#database
         .query(
           'UPDATE agent_host_state SET revision=?, payload=?, digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
@@ -9735,14 +9777,14 @@ export class HostStateStore {
         },
       };
       const middleLedger = { ...host.ledger, revision: host.ledger.revision + 1 };
-      validateProgress(host, middle, middleLedger);
-      const next = transitionLifecycleState(
+      this.#validateProgress(host, middle, middleLedger);
+      const next = this.projectLifecycleTransition(
           middle,
           'EXECUTE',
           'Issue only the Host-authorized corrective configured stages; preserve original terminal evidence.',
         ),
         nextLedger = { ...middleLedger, revision: middleLedger.revision + 1 };
-      validateProgress(
+      this.#validateProgress(
         {
           ...host,
           work: middle,
@@ -11445,7 +11487,7 @@ export class HostStateStore {
         ),
       });
       validatePair(nextWork, nextLedger);
-      validateProgress(before, nextWork, nextLedger);
+      this.#validateProgress(before, nextWork, nextLedger);
       for (const [kind, id, value, expected] of [
         ['work', identityKey(input.identity), nextWork, before.workVersion!],
         ['ledger', 'shared', nextLedger, before.ledgerVersion!],
@@ -11739,7 +11781,7 @@ export class HostStateStore {
       );
       // Keep the actual preimage intact. Project only the separately validated bundle delta
       // out of the successor while checking every ordinary lifecycle/history transition.
-      validateProgress(
+      this.#validateProgress(
         before,
         {
           ...nextWork,
@@ -12795,20 +12837,20 @@ export class HostStateStore {
         },
       };
       const verificationLedger = { ...ledger, revision: ledger.revision + 1 };
-      validateProgress(
+      this.#validateProgress(
         before,
         this.#checkedWork(verified),
         checkedLedger(verificationLedger),
         input.documentationContext,
       );
-      const delivered = transitionLifecycleState(
+      const delivered = this.projectLifecycleTransition(
         verified,
         'DELIVERY',
         'Present the current manifest; wait for attributable current-version testing.',
         input.documentationContext,
       );
       const deliveryLedger = { ...verificationLedger, revision: verificationLedger.revision + 1 };
-      validateProgress(
+      this.#validateProgress(
         {
           ...before,
           work: verified,
@@ -12936,7 +12978,7 @@ export class HostStateStore {
           terminalJournal.verifyCurrent();
         }
       }
-      validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions);
+      this.#validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions);
       if (work.lease) {
         const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id)!;
         requireState(
