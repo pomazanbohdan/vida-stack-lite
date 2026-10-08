@@ -267,6 +267,14 @@ configured continuations and failed-wave recovery. Preserve original Scope and
 Acceptance bytes while current Source changes. Deny a missing recovery view,
 foreign run or changed contracts. Prewriter and preparation evidence stays
 current-bound. Trusted policy contexts re-read continuation custody after awaits.
+Recovery receipt serialization checks each Work, Ledger, journal and original
+receipt component with ordinary canonical limits at its actual nested depth.
+The complete recovery receipt and continuation view have a 64MiB byte bound.
+Their canonical v1 bytes and full-body digests stay unchanged for small records.
+Use a valid unrelated shared-ledger cohort to exceed the aggregate 10,000-node
+limit while each component remains valid. Check write, reopen, view, status/retry,
+archive and tamper denial. Ordinary untrusted canonical JSON keeps its existing
+node, depth and byte bounds.
 
 A Host fixture with a supplied endpoint callback proves the Host transition
 only. It does not prove native endpoint qualification, installed public CLI

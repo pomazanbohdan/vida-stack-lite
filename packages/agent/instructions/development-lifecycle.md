@@ -425,6 +425,19 @@ Do not add a full candidate cycle solely to score an individual outcome or
 interrupt a long check already running. Reuse accepted evidence only while its
 inputs remain current; changed inputs invalidate their affected proof.
 
+Keep files and context proportional to one responsibility. Use size and observed
+co-change as review triggers, not hard line or token caps. Extract cohesive pure
+contracts and validators before transaction code; HostState remains the single
+CAS owner. Command entrypoints route to existing focused handlers. Tests split
+by behavior and share fixture setup only when semantics match. Each document has one owner.
+Read the relevant symbol or section first; use typed IDs and compact status
+projections, then retrieve exact evidence only when required. Do not copy large
+work, Ledger or receipt bodies into prompts or parallel summaries. Preserve
+current passing proof through one correction batch and one delivery checkpoint.
+Use the directly returned CI run ID and current operation; do not scan history
+for routine correlation. Do not create extra architecture or benchmark lanes
+solely to reduce context. A split must reduce repeated reads or change coupling.
+
 For authorized agent execution optimization, use at most ten iterations.
 Find one evidenced bottleneck, apply its smallest portable correction, run its
 focused regression, then inspect the remaining path. Reuse existing execution

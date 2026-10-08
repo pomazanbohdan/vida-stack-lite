@@ -98,6 +98,7 @@ import type {
 import { projectConfiguredPrewriterContinuationRequests } from './orchestration/delivered-work-continuation.js';
 import { validateFailedPrewriterRecoveryBasis } from './orchestration/failed-prewriter-recovery.js';
 import { validateFailedPrewriterRecoveryReceipt, validateFailedPrewriterTransitionRequest,
+  failedPrewriterRecoveryRecord, snapshotFailedPrewriterRecoveryReceipt,
   type FailedPrewriterRecoveryReceipt,
   type FailedPrewriterTransitionRequest, type ConfiguredFrontierRecoveryView } from './orchestration/failed-prewriter-transition.js';
 import {
@@ -1858,7 +1859,8 @@ function checkedStoredWork(
       .all(workspaceId, candidate.binding?.lifecycle_work_id) as { payload: string; digest: string }[];
     for (const row of rows) {
       const receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
-      requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt),
+      const encoded = failedPrewriterRecoveryRecord(receipt);
+      requireState(row.payload === encoded.payload && row.digest === encoded.digest,
         'failed prewriter recovery history checksum differs');
       records.push({ kind: 'failed-prewriter', receipt });
     }
@@ -9470,7 +9472,8 @@ export class HostStateStore {
     requireState(rows.length <= 1, 'failed prewriter recovery identity is ambiguous');
     if (rows.length === 0) return null;
     const row = rows[0]!, receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
-    requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt) &&
+    const encoded = failedPrewriterRecoveryRecord(receipt);
+    requireState(row.payload === encoded.payload && row.digest === encoded.digest &&
       sameJson(receipt.request.identity, identity) && receipt.request.attempt === attempt &&
       receipt.request.recovery_id === row.recovery_id, 'failed prewriter recovery row identity or checksum differs');
     validateFailedPrewriterRecoveryReceipt(receipt);
@@ -9478,12 +9481,12 @@ export class HostStateStore {
       .get(this.#workspaceId, identity.work_id, attempt, receipt.original.request.action.request.action_id) as { payload: string; digest: string } | null;
     requireState(original?.payload === canonicalJson(receipt.original) && original.digest === receipt.request.original_receipt_digest,
       'failed prewriter recovery original custody differs');
-    return snapshot(receipt);
+    return snapshotFailedPrewriterRecoveryReceipt(receipt);
   }
   readConfiguredFrontierRecoveryView(identity: WorkIdentity, attempt: number): ConfiguredFrontierRecoveryView | null {
     const original = this.readDeliveredWorkContinuationReceipt(identity, attempt);
     if (original?.request.action.kind !== 'configured_frontier') return null;
-    return snapshot({ original: original as ConfiguredFrontierReceipt,
+    return Object.freeze({ original: original as ConfiguredFrontierReceipt,
       recovery: this.readFailedPrewriterRecoveryReceipt(identity, attempt) });
   }
 
@@ -9661,7 +9664,7 @@ export class HostStateStore {
       );
       const statuses = journal.items.map(item => item.observation ? 'reported' as const : item.issue_id ? 'issued' as const : 'unissued' as const);
       const frozenJournal = snapshot({ version, state: journal });
-      return Object.freeze({ receipt: snapshot(receipt), recovery: snapshot(recovery), snapshot: current, journal: frozenJournal, item: frozenJournal.state.items[0]!,
+      return Object.freeze({ receipt: snapshot(receipt), recovery: recovery ? snapshotFailedPrewriterRecoveryReceipt(recovery) : null, snapshot: current, journal: frozenJournal, item: frozenJournal.state.items[0]!,
         items: frozenJournal.state.items, item_statuses: Object.freeze(statuses),
         action_status: statuses.every(status => status === 'reported') ? 'reported' as const : statuses.some(status => status !== 'unissued') ? 'issued' as const : 'unissued' as const });
     }
@@ -9724,7 +9727,8 @@ export class HostStateStore {
         .all(this.#workspaceId, workId, attempt) as { payload: string; digest: string }[];
       for (const row of rows) {
         const receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
-        requireState(row.payload === canonicalJson(receipt) && row.digest === canonicalJsonDigest(receipt), 'failed prewriter archive checksum differs');
+        const encoded = failedPrewriterRecoveryRecord(receipt);
+        requireState(row.payload === encoded.payload && row.digest === encoded.digest, 'failed prewriter archive checksum differs');
         validateFailedPrewriterRecoveryReceipt(receipt);
         const item = receipt.prior_journal.items.find(item => item.request.action_id === observation.action_id);
         if (!item) continue;
@@ -11855,8 +11859,9 @@ export class HostStateStore {
       this.#database.exec('CREATE TABLE IF NOT EXISTS agent_host_failed_prewriter_recovery (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,recovery_id TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,recovery_id))');
       requireState(!this.#database.query('SELECT 1 FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=? AND attempt=?')
         .get(this.#workspaceId, request.identity.work_id, request.attempt), 'failed prewriter recovery already recorded; inspect exact outcome');
+      const encoded = failedPrewriterRecoveryRecord(receipt);
       this.#database.query('INSERT INTO agent_host_failed_prewriter_recovery VALUES(?,?,?,?,?,?)')
-        .run(this.#workspaceId, request.identity.work_id, request.attempt, request.recovery_id, canonicalJson(receipt), canonicalJsonDigest(receipt));
+        .run(this.#workspaceId, request.identity.work_id, request.attempt, request.recovery_id, encoded.payload, encoded.digest);
       for (const [kind, id, value, expected] of [
         ['work', identityKey(request.identity), nextWork, request.expectedWork],
         ['ledger', 'shared', nextLedger, request.expectedLedger],

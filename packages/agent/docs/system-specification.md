@@ -8,6 +8,19 @@ the distribution, migration or Runtime acceptance gates have passed.
 
 ## Authority and responsibilities
 
+Module boundaries follow one cohesive responsibility and observed change coupling.
+HostState remains the single owner of transactional Work, Ledger and journal CAS.
+Pure contract and validation helpers may be extracted without a second state
+owner. Command entrypoints keep parsing, dispatch and public errors; existing
+focused handlers own their command behavior. File size prompts a boundary review
+and does not impose a fixed line limit.
+
+Operational context uses compact projections with typed work, attempt, operation
+and state-version IDs. Consumers retrieve the exact evidence when needed. Large
+durable receipt bodies retain their integrity and are not routine prompt context.
+Existing v1 artifacts keep their format until a qualified artifact-repair path
+permits change. There is one owner for each maintained rule and specification.
+
 The runtime preserves one project-owned configuration and one attributable
 lifecycle authority. Human business intent constrains system behavior; code,
 tests and local receipts provide separate evidence. Caller JSON and tool
@@ -1674,6 +1687,13 @@ policy contexts retain this view only in memory and recheck it after awaits.
 New requests, preparation observations and Source permissions still bind current
 Source. An unrelated or stale contract revision denies; this changes no artifact
 format and grants no Source authority.
+The failed-wave recovery receipt stores complete immutable v1 components. Its
+serializer canonicalizes each component within ordinary node and byte limits,
+including the component's depth inside the envelope. The recovery receipt and
+combined continuation view have a 64MiB aggregate byte bound. Full-body digests
+bind the same canonical bytes; component handling does not omit or summarize
+history. Generic untrusted JSON bounds are unchanged. Projections expose typed
+references and current status without copying these complete bodies into prompts.
 
 The unissued-empty preparation release remains distinct: an exact expired owner
 may release only bound unsealed INTAKE preparation with no completed wave,

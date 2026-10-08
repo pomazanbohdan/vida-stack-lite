@@ -54,6 +54,7 @@ import {
 import { createLocalSessionReconciliationVerifier } from './local-session-reconciliation.js';
 import { readAdmittedSessionExecutionContext, openAdmittedSessionExecution } from './admitted-session-execution.js';
 import { buildAdmittedDevelopmentPacket } from './admitted-development-packet.js';
+import { configuredFrontierRecoveryViewDigest } from './failed-prewriter-transition.js';
 import type { TrustedProjectIdentity } from '../contracts/public-ingress.js';
 import {
   attachObservedSourcePreparation,
@@ -275,7 +276,7 @@ function sourceWritePreflightResolver(
         runtimeConfigDigest(current.config) !== runtimeConfigDigest(initial.config) ||
         canonicalJsonDigest(current.projectContext) !== canonicalJsonDigest(initial.projectContext) ||
         canonicalJsonDigest(current.taskPacket) !== canonicalJsonDigest(initial.taskPacket) ||
-        canonicalJsonDigest(current.continuation) !== canonicalJsonDigest(initial.continuation) ||
+        configuredFrontierRecoveryViewDigest(current.continuation) !== configuredFrontierRecoveryViewDigest(initial.continuation) ||
         !current.scopeBytes.equals(initial.scopeBytes) ||
         !current.acceptanceBytes.equals(initial.acceptanceBytes) ||
         canonicalJsonDigest(
@@ -424,7 +425,7 @@ function taskSourceMutationPolicyResolver(
         runtimeConfigDigest(current.config) === runtimeConfigDigest(initial.config) &&
         canonicalJsonDigest(current.projectContext) === canonicalJsonDigest(initial.projectContext) &&
         canonicalJsonDigest(current.taskPacket) === canonicalJsonDigest(initial.taskPacket) &&
-        canonicalJsonDigest(current.continuation) === canonicalJsonDigest(initial.continuation) &&
+        configuredFrontierRecoveryViewDigest(current.continuation) === configuredFrontierRecoveryViewDigest(initial.continuation) &&
         current.scopeBytes.equals(initial.scopeBytes) && current.acceptanceBytes.equals(initial.acceptanceBytes) &&
         canonicalJsonDigest(current.preparations.map(({ reference, bytes }) => ({
           reference, digest: createHash('sha256').update(bytes).digest('hex'),

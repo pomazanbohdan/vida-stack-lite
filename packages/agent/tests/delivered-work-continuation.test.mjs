@@ -13,7 +13,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { runRuntimeCodeRebind, assertCommittedSourceChanges } from '../bin/runtime-code-rebind.mjs';
-import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJson, canonicalJsonAtDepth, canonicalJsonDigest, MAX_CANONICAL_BYTES } from '../src/contracts/public-ingress.ts';
 import { validateLifecycleAggregate } from '../src/lifecycle/lifecycle-state.ts';
 import { runtimeConfigDigest, loadRuntimeConfig, runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -21,13 +21,45 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { buildSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge.ts';
 import { validateFailedPrewriterRecoveryBasis } from '../src/orchestration/failed-prewriter-recovery.ts';
 import { readConfiguredContinuationSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
-import { validateFailedPrewriterRecoveryReceipt } from '../src/orchestration/failed-prewriter-transition.ts';
+import { validateFailedPrewriterRecoveryReceipt, serializeFailedPrewriterRecoveryReceipt,
+  failedPrewriterRecoveryDigest, configuredFrontierRecoveryViewDigest } from '../src/orchestration/failed-prewriter-transition.ts';
 import { transitionFailedPrewriter } from '../bin/transition-failed-prewriter.mjs';
 import {run as runAgent} from '../bin/run.mjs';
 import { acceptedContractSourceRevision } from '../src/orchestration/admitted-development-packet.ts';
 
-test('failed prewriter transition preserves the failed wave and original receipt while binding fresh current Source reviewers', async () => {
+test('canonical envelope depth keeps exact ordinary component node and byte budgets', () => {
+  const nodes = Array.from({length: 9999}, () => null);
+  expect(canonicalJsonAtDepth(nodes, 2)).toBe(canonicalJson(nodes));
+  expect(() => canonicalJsonAtDepth([...nodes, null], 2)).toThrow(/node budget/);
+  const text = 'x'.repeat(MAX_CANONICAL_BYTES);
+  expect(canonicalJsonAtDepth(text, 2).length).toBe(MAX_CANONICAL_BYTES + 2);
+  expect(() => canonicalJsonAtDepth(text + 'x', 2)).toThrow(/byte budget/);
+  for (const depth of [-1, 65, 0.5, Infinity])
+    expect(() => canonicalJsonAtDepth(null, depth)).toThrow(/root depth invalid/);
+});
+
+test.each([0, 12])('failed prewriter transition preserves the failed wave and original receipt while binding fresh current Source reviewers [shared ledger %i]', async (extraTickets) => {
   const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot('normal');
+  const priorLedger = input.receipt.prior_ledger, successorLedger = input.receipt.successor_ledger;
+  for (let index = 0; index < extraTickets; index++) {
+    const resources = Array.from({length: 64}, (_, item) => `file:unrelated/${index}/${String(item).padStart(3, '0')}.ts`);
+    const ticketId = `unrelated-ticket-${index}`, claimId = `unrelated-claim-${index}`, workId = `unrelated-work-${index}`;
+    const ticket = {...priorLedger.tickets[0], ticket_id: ticketId, claim_ids: [claimId], work_id: workId,
+      thread_id: workId, sequence: priorLedger.next_sequence++, exclusive_resources: resources};
+    const claim = {...priorLedger.claims[0], claim_id: claimId, ticket_id: ticketId, work_id: workId, thread_id: workId, resources};
+    const release = {...priorLedger.operations[0], operation_id: `unrelated-release-${index}`, ticket_id: ticketId,
+      work_id: workId, thread_id: workId, resources, from_ledger_revision: priorLedger.revision, to_ledger_revision: ++priorLedger.revision};
+    priorLedger.tickets.push(ticket); priorLedger.claims.push(claim); priorLedger.operations.push(release);
+    successorLedger.tickets.splice(-1, 0, ticket); successorLedger.claims.splice(-1, 0, claim);
+    if (successorLedger.operations !== priorLedger.operations) successorLedger.operations.push(release);
+  }
+  successorLedger.revision = priorLedger.revision + 1;
+  successorLedger.tickets.at(-1).sequence = priorLedger.next_sequence;
+  successorLedger.next_sequence = priorLedger.next_sequence + 1;
+  const ledgerBeforeVersion = {revision: priorLedger.revision, digest: canonicalJsonDigest(priorLedger)};
+  input.receipt.prior_ledger_version = ledgerBeforeVersion;
+  input.receipt.ledger_version = {revision: successorLedger.revision, digest: canonicalJsonDigest(successorLedger)};
+  input.receipt.request = {...input.receipt.request, expectedLedger: ledgerBeforeVersion};
   const references = [['implementation_scope', input.receipt.prior_work.contracts.scope],
     ['acceptance_manifest', input.receipt.prior_work.contracts.acceptance]].map(([kind, ref]) => ({
       schema: 'LifecycleArtifactReference/v1', kind, artifact_schema: ref.schema, record_id: kind,
@@ -115,6 +147,34 @@ test('failed prewriter transition preserves the failed wave and original receipt
   const recovered = f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1);
   expect(recovered.request).toEqual(request);
   const recoveryView = f.store.readConfiguredFrontierRecoveryView(f.identity, 1);
+  for (const value of [recovered, recovered.prior_ledger.tickets,
+    recovered.successor_ledger.tickets.at(-1).exclusive_resources, recoveryView, recoveryView.original, recoveryView.recovery])
+    expect(Object.isFrozen(value)).toBe(true);
+  if (extraTickets) {
+    let receiptError, viewError;
+    try { canonicalJson(recovered); } catch (error) { receiptError = error; }
+    try { canonicalJson(recoveryView); } catch (error) { viewError = error; }
+    expect(receiptError?.message).toMatch(/node budget/);
+    expect(viewError?.message).toMatch(/node budget/);
+  } else {
+    expect(serializeFailedPrewriterRecoveryReceipt(recovered)).toBe(canonicalJson(recovered));
+    expect(failedPrewriterRecoveryDigest(recovered)).toBe(canonicalJsonDigest(recovered));
+    expect(configuredFrontierRecoveryViewDigest(recoveryView)).toBe(canonicalJsonDigest(recoveryView));
+  }
+  expect(configuredFrontierRecoveryViewDigest(recoveryView)).toMatch(/^[a-f0-9]{64}$/);
+  const getter = {...recovered};
+  Object.defineProperty(getter, 'created_at', {enumerable: true, get: () => {throw Error('Getter must not execute');}});
+  expect(() => serializeFailedPrewriterRecoveryReceipt(getter)).toThrow(/data properties/);
+  for (const depth of [-1, -2, 0.5, Infinity, NaN])
+    expect(() => serializeFailedPrewriterRecoveryReceipt(recovered, depth)).toThrow(/root depth invalid/);
+  expect(() => serializeFailedPrewriterRecoveryReceipt(recovered, 64)).toThrow(/root depth invalid/);
+  let nested = null;
+  for (let index = 0; index < 64; index++) nested = {v: nested};
+  expect(() => serializeFailedPrewriterRecoveryReceipt({...recovered, created_at: nested})).toThrow(/depth budget/);
+  let viewNested = null;
+  for (let index = 0; index < 63; index++) viewNested = {v: viewNested};
+  expect(() => configuredFrontierRecoveryViewDigest({...recoveryView, recovery: {...recovered, created_at: viewNested}})).toThrow(/depth budget/);
+  expect(() => configuredFrontierRecoveryViewDigest({...recoveryView, recovery: undefined})).toThrow();
   const recoveredJournal = f.store.readWorkSessionJournal(f.identity);
   expect(acceptedContractSourceRevision(result.work, recoveredJournal, recoveryView)).toBe(input.receipt.prior_work.binding.work_source_revision);
   expect(acceptedContractSourceRevision(result.work, recoveredJournal)).toBe(changed.digest);
@@ -215,6 +275,13 @@ test('failed prewriter transition preserves the failed wave and original receipt
   expect(advanced.retained).toEqual(input.receipt);
   expect(f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1)).toEqual(recovered);
   expect(f.store.findArchivedReportedObservation(f.identity.work_id, 1, failed.items[0].observation)).toEqual(failed.items[0]);
+  const reopenedDb = new Database(databasePath, {readonly: true, strict: true});
+  try {
+    const reopened = new f.store.constructor(reopenedDb, workspaceId, undefined, undefined, undefined, undefined, root);
+    expect(reopened.readFailedPrewriterRecoveryReceipt(f.identity, 1)).toEqual(recovered);
+    expect(reopened.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(recoveryView);
+    expect(reopened.readHostStateSnapshot(f.identity).work.binding).toEqual(recovered.successor_work.binding);
+  } finally {reopenedDb.close(true);}
 }, 90_000);
 
 test('public failed prewriter owner recovery inspects, denies a changed owner and applies without rewriting failed reports', async () => {

@@ -1,4 +1,5 @@
-import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { createHash } from 'node:crypto';
+import { canonicalJsonAtDepth, canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
 import type { CoordinationLedger } from '../contracts/envelopes.js';
 import type { WorkIdentity, WorkState, StateVersion } from '../host-state.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
@@ -53,6 +54,54 @@ export interface FailedPrewriterRecoveryReceipt {
 export interface ConfiguredFrontierRecoveryView {
   readonly original: ConfiguredFrontierReceipt;
   readonly recovery: FailedPrewriterRecoveryReceipt | null;
+}
+
+const recoveryKeys = ['schema', 'request', 'request_digest', 'original', 'prior_work', 'prior_ledger', 'prior_journal',
+  'prior_work_version', 'prior_ledger_version', 'prior_journal_version', 'successor_work', 'successor_ledger',
+  'successor_journal', 'work_version', 'ledger_version', 'journal_version', 'created_at', 'rights_granted',
+  'accepted_result', 'runtime_acceptance'] as const;
+const recoveryByteLimit = 64 * 1024 * 1024;
+
+/** Keep ordinary component limits and their actual depth inside the artifact. */
+function componentJson(value: unknown, depth: number): string {
+  return canonicalJsonAtDepth(value, depth);
+}
+function envelopeGuard(value: unknown, keys: readonly string[]): void {
+  requireTransition(isPlainRecord(value) && Reflect.ownKeys(value).length === keys.length &&
+    Reflect.ownKeys(value).every(key => typeof key === 'string' && keys.includes(key)), 'artifact envelope keys differ');
+  for (const key of keys) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    requireTransition(descriptor?.enumerable && Object.hasOwn(descriptor, 'value') &&
+      descriptor.get === undefined && descriptor.set === undefined, 'artifact envelope must contain data properties');
+  }
+}
+function boundedArtifact(text: string): string {
+  requireTransition(Buffer.byteLength(text, 'utf8') <= recoveryByteLimit, 'recovery artifact exceeds its byte bound');
+  return text;
+}
+/** Identical canonical v1 bytes, with each existing state component checked separately. */
+export function serializeFailedPrewriterRecoveryReceipt(receipt: FailedPrewriterRecoveryReceipt, depth = 0): string {
+  canonicalJsonAtDepth(null, depth);
+  envelopeGuard(receipt, recoveryKeys);
+  return boundedArtifact('{' + [...recoveryKeys].sort().map(key =>
+    JSON.stringify(key) + ':' + componentJson(receipt[key], depth + 1)).join(',') + '}');
+}
+export function failedPrewriterRecoveryDigest(receipt: FailedPrewriterRecoveryReceipt): string {
+  return failedPrewriterRecoveryRecord(receipt).digest;
+}
+export function failedPrewriterRecoveryRecord(receipt: FailedPrewriterRecoveryReceipt): {payload: string; digest: string} {
+  const payload = serializeFailedPrewriterRecoveryReceipt(receipt);
+  return {payload, digest: createHash('sha256').update(payload).digest('hex')};
+}
+export function snapshotFailedPrewriterRecoveryReceipt(receipt: FailedPrewriterRecoveryReceipt): FailedPrewriterRecoveryReceipt {
+  return freezeJsonValue(JSON.parse(serializeFailedPrewriterRecoveryReceipt(receipt)) as FailedPrewriterRecoveryReceipt);
+}
+export function configuredFrontierRecoveryViewDigest(view: ConfiguredFrontierRecoveryView | null): string {
+  if (view === null) return canonicalJsonDigest(null);
+  envelopeGuard(view, ['original', 'recovery']);
+  const text = boundedArtifact('{"original":' + componentJson(view.original, 1) + ',"recovery":' +
+    (view.recovery === null ? 'null' : serializeFailedPrewriterRecoveryReceipt(view.recovery, 1)) + '}');
+  return createHash('sha256').update(text).digest('hex');
 }
 
 const same = (left: unknown, right: unknown) => canonicalJsonDigest(left) === canonicalJsonDigest(right);

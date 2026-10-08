@@ -119,7 +119,12 @@ function serializeCanonicalJson(value: unknown): string {
   return serialized;
 }
 export function canonicalJson(value: unknown): string {
-  assertCanonicalJsonValue(value);
+  return canonicalJsonAtDepth(value, 0);
+}
+/** Preserve the ordinary component budget while validating its actual envelope depth. */
+export function canonicalJsonAtDepth(value: unknown, depth: number): string {
+  reject([!Number.isSafeInteger(depth), depth < 0, depth > MAX_CANONICAL_DEPTH], 'canonical JSON root depth invalid');
+  assertCanonicalJsonValue(value, '$', new WeakSet<object>(), depth);
   return serializeCanonicalJson(value);
 }
 export function canonicalJsonDigest(value: unknown): string {
