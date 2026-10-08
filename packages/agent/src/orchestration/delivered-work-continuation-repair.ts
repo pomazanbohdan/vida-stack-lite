@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { canonicalJson, canonicalJsonDigest, rfc3339TimestampMilliseconds } from '../contracts/public-ingress.js';
-import type { CoordinationLedger } from '../contracts/envelopes.js';
+import { validateCoordinationLedgerV1, type CoordinationLedger } from '../contracts/envelopes.js';
 import type { DeliveredWorkContinuationReceipt, WorkState, StateVersion } from '../host-state.js';
 import { parseSessionBridgeRequest, type SessionBridgeSnapshot } from './mastra-session-bridge.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
@@ -8,6 +8,7 @@ import {
   projectConfiguredFrontierContinuationAction,
   projectConfiguredPrewriterContinuationRequests,
   validateCurrentSourceScopeBridge,
+  validateConfiguredFrontierOwnerRelease,
   validateDeliveredWorkContinuationRequest,
   deliveredContinuationProofBinding,
 } from './delivered-work-continuation.js';
@@ -48,6 +49,8 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       Array.isArray(receipt.successor_journal?.completed) && Array.isArray(receipt.successor_journal?.items),
     'future configured-frontier receipt exceeds bounds or lacks journal arrays',
   );
+  required(validateCoordinationLedgerV1(receipt.prior_ledger).ok && validateCoordinationLedgerV1(receipt.successor_ledger).ok,
+    'configured-frontier immutable ledger contract is invalid');
   required(
     exactKeys(receipt, [
       'schema', 'continuation_id', 'attempt', 'request_digest', 'authorization', 'request', 'prior_work', 'prior_ledger',
@@ -194,12 +197,12 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
   );
   const priorWork = receipt.prior_work,
     priorLedger = receipt.prior_ledger,
-    priorRelease = priorLedger.operations.at(-1),
-    priorTicket = priorRelease && priorLedger.tickets.find((entry) => entry.ticket_id === priorRelease.ticket_id),
-    priorClaims = priorTicket && priorLedger.claims.filter((entry) => entry.ticket_id === priorTicket.ticket_id),
+    owner = validateConfiguredFrontierOwnerRelease({ work: priorWork, ledger: priorLedger, identity: request.identity, nativeSessionHandle: request.nativeSessionHandle }),
+    priorTicket = owner.ticket,
+    priorClaims = [owner.claim],
+    resources = owner.resources,
     work = receipt.successor_work,
     ledger = receipt.successor_ledger,
-    executionResource = `execution:${receipt.request.identity.work_id}`,
     lease = work.lease,
     ticket = lease && ledger.tickets.find((entry) => entry.ticket_id === lease.ticket_id),
     claims = ticket ? ledger.claims.filter((entry) => entry.ticket_id === ticket.ticket_id) : [],
@@ -255,33 +258,6 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       ['implementation', 'awaiting_followup'].includes(priorWork.execution.phase) &&
       priorWork.lifecycle.phase === 'INTAKE' &&
       priorWork.lifecycle.seal === null &&
-      priorRelease?.schema === 'CoordinationOperation/v1' &&
-      priorRelease.kind === 'release' &&
-      priorRelease.ticket_id === priorTicket?.ticket_id &&
-      priorRelease.work_id === receipt.request.identity.work_id &&
-      priorRelease.thread_id === receipt.request.nativeSessionHandle &&
-      priorRelease.source_revision === priorWork.binding.work_source_revision &&
-      Array.isArray(priorRelease.resources) &&
-      priorRelease.resources.length === 1 &&
-      priorRelease.resources[0] === executionResource &&
-      priorRelease.decision_pointer === receipt.request.originalRequestPointer &&
-      priorRelease.from_ledger_revision === priorLedger.revision - 1 &&
-      priorRelease.to_ledger_revision === priorLedger.revision &&
-      priorTicket?.status === 'released' &&
-      priorTicket.work_id === receipt.request.identity.work_id &&
-      priorTicket.repository_id === receipt.request.identity.repository_id &&
-      same(priorTicket.project_ids, receipt.request.identity.project_ids) &&
-      priorTicket.integrations_digest === receipt.request.identity.integrations_digest &&
-      priorTicket.thread_id === receipt.request.nativeSessionHandle &&
-      priorTicket.source_revision === priorWork.binding.work_source_revision &&
-      priorTicket.exclusive_resources.length === 1 &&
-      priorTicket.exclusive_resources[0] === executionResource &&
-      priorTicket.expires_at === null &&
-      priorTicket.active_resources.length === 0 &&
-      priorClaims?.length === 1 &&
-      priorClaims[0]!.status === 'released' &&
-      priorClaims[0]!.thread_id === receipt.request.nativeSessionHandle &&
-      priorClaims[0]!.work_id === receipt.request.identity.work_id &&
       receipt.successor_ledger.next_sequence === priorLedger.next_sequence + 1 &&
       receipt.successor_ledger.open_generation === priorLedger.open_generation &&
       receipt.successor_ledger.operations.length === priorLedger.operations.length &&
@@ -295,11 +271,7 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       nextTicket?.sequence === priorLedger.next_sequence &&
       nextTicket?.generation === priorLedger.open_generation &&
       same(nextTicket, ticket) &&
-      same(nextClaim, claims[0]!) &&
-      !priorLedger.tickets.some((candidate) =>
-        candidate.ticket_id !== priorTicket?.ticket_id &&
-        ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(candidate.status) &&
-        candidate.exclusive_resources.includes(executionResource)),
+      same(nextClaim, claims[0]!),
     'future configured-frontier prior owner release or FIFO beforeimage differs',
   );
   required(
@@ -308,17 +280,16 @@ export function validateConfiguredFrontierReceiptStructure(input: FrontierValida
       ticket?.status === 'active' && ticket.work_id === receipt.request.identity.work_id &&
       ticket.thread_id === receipt.request.nativeSessionHandle &&
       ticket.source_revision === receipt.request.currentSourceScope.digest &&
-      ticket.exclusive_resources.length === 1 && ticket.exclusive_resources[0] === executionResource &&
-      ticket.active_resources.length === 1 && ticket.active_resources[0] === executionResource &&
+      same(ticket.exclusive_resources, resources) && same(ticket.active_resources, resources) &&
       ticket.expires_at !== null && rfc3339TimestampMilliseconds(ticket.expires_at) !== null &&
       claims.length === 1 && claims[0]!.status === 'active' &&
       claims[0]!.thread_id === receipt.request.nativeSessionHandle &&
-      claims[0]!.work_id === receipt.request.identity.work_id &&
+      claims[0]!.work_id === receipt.request.identity.work_id && same(claims[0]!.resources, resources) &&
       rfc3339TimestampMilliseconds(claims[0]!.lease_expires_at) !== null &&
       !ledger.tickets.some((candidate) =>
-        candidate.ticket_id !== ticket.ticket_id && candidate.sequence < ticket.sequence &&
-        ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(candidate.status) &&
-        candidate.exclusive_resources.includes(executionResource)),
+        candidate.ticket_id !== ticket.ticket_id &&
+        (['active', 'ready_for_handoff', 'blocked'].includes(candidate.status) || candidate.status === 'queued' && candidate.sequence < ticket.sequence) &&
+        candidate.exclusive_resources.some(resource => resources.includes(resource))),
     'future configured-frontier owner or FIFO beforeimage differs',
   );
   return { branch: 'configured_frontier' as const, snapshot_sha256: receipt.frontier_snapshot.snapshot_sha256 };

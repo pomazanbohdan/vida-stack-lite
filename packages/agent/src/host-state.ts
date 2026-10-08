@@ -8594,42 +8594,44 @@ export class HostStateStore {
           item.research_normalization !== undefined,
       );
       requireState(!unresolved, 'issued or reserved action has an unresolved outcome and cannot be reissued');
-      const release = ledger.operations.at(-1),
-        priorTicket = release && ledger.tickets.find((entry) => entry.ticket_id === release.ticket_id),
-        priorClaims = priorTicket && ledger.claims.filter((entry) => entry.ticket_id === priorTicket.ticket_id);
-      requireState(
-        priorTicket?.status === 'released' &&
-          priorTicket.work_id === input.identity.work_id &&
-          priorTicket.repository_id === input.identity.repository_id &&
-          sameJson(priorTicket.project_ids, input.identity.project_ids) &&
-          priorTicket.integrations_digest === input.identity.integrations_digest &&
-          priorTicket.thread_id === input.nativeSessionHandle &&
-          priorTicket.source_revision === work.binding.work_source_revision &&
-          priorTicket.exclusive_resources.length === 1 &&
-          priorTicket.exclusive_resources[0] === 'execution:' + input.identity.work_id &&
-          priorTicket.expires_at === null &&
-          priorClaims?.length === 1 &&
-          priorClaims[0]!.status === 'released' &&
-          priorClaims[0]!.thread_id === input.nativeSessionHandle &&
-          priorClaims[0]!.work_id === input.identity.work_id &&
-          release?.kind === 'release' &&
-          release.ticket_id === priorTicket.ticket_id &&
-          release.work_id === input.identity.work_id &&
-          release.thread_id === input.nativeSessionHandle &&
-          release.source_revision === work.binding.work_source_revision &&
-          release.decision_pointer === input.originalRequestPointer &&
-          (action.kind === 'configured_frontier'
-            ? release.from_ledger_revision === ledger.revision - 1
-            : capture !== null && validGateVersion(capture.request.expected_ledger) && release.from_ledger_revision === capture.request.expected_ledger.revision) &&
-          release.to_ledger_revision === input.expectedLedger.revision &&
-          !ledger.tickets.some(
-            (ticket) =>
-              ticket.ticket_id !== priorTicket.ticket_id &&
-              ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(ticket.status) &&
-              ticket.exclusive_resources.some((resource) => priorTicket.exclusive_resources.includes(resource)),
-          ),
-        'original execution owner release or FIFO position changed',
-      );
+      if (action.kind === 'configured_frontier') {
+        contract.validateConfiguredFrontierOwnerRelease({ work, ledger, identity: input.identity, nativeSessionHandle: input.nativeSessionHandle });
+      } else {
+        const release = ledger.operations.at(-1),
+          priorTicket = release && ledger.tickets.find((entry) => entry.ticket_id === release.ticket_id),
+          priorClaims = priorTicket && ledger.claims.filter((entry) => entry.ticket_id === priorTicket.ticket_id);
+        requireState(
+          priorTicket?.status === 'released' &&
+            priorTicket.work_id === input.identity.work_id &&
+            priorTicket.repository_id === input.identity.repository_id &&
+            sameJson(priorTicket.project_ids, input.identity.project_ids) &&
+            priorTicket.integrations_digest === input.identity.integrations_digest &&
+            priorTicket.thread_id === input.nativeSessionHandle &&
+            priorTicket.source_revision === work.binding.work_source_revision &&
+            priorTicket.exclusive_resources.length === 1 &&
+            priorTicket.exclusive_resources[0] === 'execution:' + input.identity.work_id &&
+            priorTicket.expires_at === null &&
+            priorClaims?.length === 1 &&
+            priorClaims[0]!.status === 'released' &&
+            priorClaims[0]!.thread_id === input.nativeSessionHandle &&
+            priorClaims[0]!.work_id === input.identity.work_id &&
+            release?.kind === 'release' &&
+            release.ticket_id === priorTicket.ticket_id &&
+            release.work_id === input.identity.work_id &&
+            release.thread_id === input.nativeSessionHandle &&
+            release.source_revision === work.binding.work_source_revision &&
+            release.decision_pointer === input.originalRequestPointer &&
+            capture !== null && validGateVersion(capture.request.expected_ledger) && release.from_ledger_revision === capture.request.expected_ledger.revision &&
+            release.to_ledger_revision === input.expectedLedger.revision &&
+            !ledger.tickets.some(
+              (ticket) =>
+                ticket.ticket_id !== priorTicket.ticket_id &&
+                ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(ticket.status) &&
+                ticket.exclusive_resources.some((resource) => priorTicket.exclusive_resources.includes(resource)),
+            ),
+          'original execution owner release or FIFO position changed',
+        );
+      }
       return projectedFrontier;
     };
 
@@ -8685,7 +8687,9 @@ export class HostStateStore {
       const projectedFrontier = inspect(current, currentCapture, currentJournal, currentJournalVersion);
       const work = current.work!,
         ledger = current.ledger!,
-        priorTicket = ledger.tickets.find((ticket) => ticket.status === 'released' && ticket.thread_id === input.nativeSessionHandle && ticket.source_revision === work.binding.work_source_revision && ticket.exclusive_resources.length === 1 && ticket.exclusive_resources[0] === 'execution:' + input.identity.work_id)!,
+        priorTicket = action.kind === 'configured_frontier'
+          ? contract.validateConfiguredFrontierOwnerRelease({ work, ledger, identity: input.identity, nativeSessionHandle: input.nativeSessionHandle }).ticket
+          : ledger.tickets.find((ticket) => ticket.status === 'released' && ticket.thread_id === input.nativeSessionHandle && ticket.source_revision === work.binding.work_source_revision && ticket.exclusive_resources.length === 1 && ticket.exclusive_resources[0] === 'execution:' + input.identity.work_id)!,
         priorClaim = ledger.claims.find((claim) => claim.ticket_id === priorTicket.ticket_id && claim.status === 'released')!,
         sequence = ledger.next_sequence,
         generation = ledger.open_generation,
@@ -9280,6 +9284,9 @@ export class HostStateStore {
       executionResource = `execution:${identity.work_id}`,
       ticket = lease && ledger?.tickets.find((entry) => entry.ticket_id === lease.ticket_id),
       claims = ticket && ledger ? ledger.claims.filter((entry) => entry.ticket_id === ticket.ticket_id) : [],
+      resources = receipt.request.action.kind === 'configured_frontier'
+        ? [executionResource, ...receipt.prior_work.binding.implementation_paths.map(path => 'file:' + path)].sort()
+        : [executionResource],
       now = Date.now();
     requireState(
       ledger &&
@@ -9292,23 +9299,24 @@ export class HostStateStore {
         ticket.work_id === identity.work_id &&
         ticket.thread_id === receipt.request.nativeSessionHandle &&
         ticket.source_revision === receipt.request.currentSourceScope.digest &&
-        ticket.exclusive_resources.length === 1 &&
-        ticket.exclusive_resources[0] === executionResource &&
-        ticket.active_resources.length === 1 &&
-        ticket.active_resources[0] === executionResource &&
+        sameJson(ticket.exclusive_resources, resources) &&
+        sameJson(ticket.active_resources, resources) &&
         ticket.expires_at !== null &&
         Date.parse(ticket.expires_at) > now &&
         claims.length === 1 &&
         claims[0]!.status === 'active' &&
         claims[0]!.thread_id === receipt.request.nativeSessionHandle &&
         claims[0]!.work_id === identity.work_id &&
+        sameJson(claims[0]!.resources, resources) &&
         Date.parse(claims[0]!.lease_expires_at) > now &&
         !ledger.tickets.some(
           (candidate) =>
             candidate.ticket_id !== ticket.ticket_id &&
-            candidate.sequence < ticket.sequence &&
-            ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(candidate.status) &&
-            candidate.exclusive_resources.includes(executionResource),
+            (receipt.request.action.kind === 'configured_frontier'
+              ? (['active', 'ready_for_handoff', 'blocked'].includes(candidate.status) || candidate.status === 'queued' && candidate.sequence < ticket.sequence) &&
+                candidate.exclusive_resources.some(resource => resources.includes(resource))
+              : candidate.sequence < ticket.sequence && ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(candidate.status) &&
+                candidate.exclusive_resources.includes(executionResource)),
         ),
       'delivered-work continuation original owner lease or FIFO position is no longer current',
     );

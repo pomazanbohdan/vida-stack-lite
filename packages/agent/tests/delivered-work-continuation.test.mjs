@@ -54,6 +54,31 @@ import * as continuationRepair from '../bin/repair-delivered-work-continuation.m
 
 afterEach(() => cleanupContinuationFixtures());
 
+test('configured frontier joins released writer custody despite later unrelated ledger revisions', () => {
+  const input = configuredFrontierRepairFixture(true), work = input.receipt.prior_work,
+    ledger = structuredClone(input.receipt.prior_ledger), identity = input.receipt.request.identity,
+    owner = input.receipt.request.nativeSessionHandle;
+  const release = ledger.operations.at(-1), ticket = ledger.tickets.find(entry => entry.ticket_id === release.ticket_id),
+    claim = ledger.claims.find(entry => entry.ticket_id === ticket.ticket_id);
+  const resources = ['execution:' + identity.work_id, ...work.binding.implementation_paths.map(path => 'file:' + path)].sort();
+  ticket.exclusive_resources = resources; claim.resources = resources; release.resources = resources;
+  release.decision_pointer = 'owner:original-release-disposition';
+  ledger.revision += 1;
+  const joined = continuationProjection.validateConfiguredFrontierOwnerRelease({ work, ledger, identity, nativeSessionHandle: owner });
+  expect(joined.ticket).toEqual(ticket); expect(joined.claim).toEqual(claim); expect(joined.release).toEqual(release);
+  const invalid = mutate => {
+    const changed = structuredClone(ledger); mutate(changed);
+    expect(() => continuationProjection.validateConfiguredFrontierOwnerRelease({ work, ledger: changed, identity, nativeSessionHandle: owner })).toThrow();
+  };
+  invalid(value => value.tickets.at(-1).exclusive_resources.push('file:foreign.ts'));
+  invalid(value => value.claims.at(-1).resources = ['execution:' + identity.work_id]);
+  invalid(value => value.operations.at(-1).to_ledger_revision = value.revision + 1);
+  invalid(value => value.operations.at(-1).decision_pointer = '');
+  invalid(value => value.operations.push({ ...value.operations.at(-1), operation_id: 'new-owner-op', kind: 'acquire',
+    from_ledger_revision: value.revision - 1, to_ledger_revision: value.revision }));
+  invalid(value => value.tickets.push({ ...ticket, ticket_id: 'foreign-active', work_id: 'foreign', thread_id: 'foreign', status: 'active' }));
+});
+
 test.each(['implementation', 'awaiting_followup'])('unissued frontier repair preserves the actual suspended %s phase', (phase) => {
   const input = configuredFrontierRepairFixture(true, false, undefined, phase);
   expect(() => continuationRepair.validateConfiguredFrontierReceiptStructure(input)).not.toThrow();
@@ -850,27 +875,27 @@ function configuredFrontierRepairFixture(prewriter = false, changedSource = fals
         implementation_paths: source.entries.map(entry => entry.path), documentation_paths: [] } },
       artifacts: [],
     },
-    resource = 'execution:' + requestBase.identity.work_id,
+    resources = ['execution:' + requestBase.identity.work_id, ...priorWork.binding.implementation_paths.map(path => 'file:' + path)].sort(),
     priorTicket = {
       schema: 'CoordinationTicket/v1', ticket_id: 'prior-ticket', repository_id: requestBase.identity.repository_id,
       project_ids: requestBase.identity.project_ids, integrations_digest: requestBase.identity.integrations_digest,
       work_id: requestBase.identity.work_id, thread_id: requestBase.nativeSessionHandle, source_revision: source.digest,
-      generation: 1, sequence: 1, contour_keys: [], exclusive_resources: [resource], status: 'released',
+      generation: 1, sequence: 1, contour_keys: [], exclusive_resources: resources, status: 'released',
       claim_ids: ['prior-claim'], expires_at: null, active_resources: [], blocked_resources: [],
       created_at: '2026-10-07T00:00:00.000Z',
     },
     priorClaim = {
       schema: 'WorkstreamClaim/v1', claim_id: 'prior-claim', ticket_id: 'prior-ticket',
       work_id: requestBase.identity.work_id, thread_id: requestBase.nativeSessionHandle, generation: 1,
-      resources: [resource], lease_expires_at: '2026-10-07T00:00:00.000Z', status: 'released',
+      resources: resources, lease_expires_at: '2026-10-07T00:00:00.000Z', status: 'released',
       created_at: '2026-10-07T00:00:00.000Z', renewed_at: '2026-10-07T00:00:00.000Z',
     },
     priorRelease = {
       schema: 'CoordinationOperation/v1', operation_id: 'prior-release', kind: 'release',
       ticket_id: 'prior-ticket', work_id: requestBase.identity.work_id,
-      thread_id: requestBase.nativeSessionHandle, source_revision: source.digest, resources: [resource],
+      thread_id: requestBase.nativeSessionHandle, source_revision: source.digest, resources: resources,
       from_ledger_revision: 94, to_ledger_revision: 95, decided_by: 'fixture-owner',
-      decision_pointer: requestBase.originalRequestPointer, created_at: '2026-10-07T00:00:00.000Z',
+      decision_pointer: 'owner:original-release-disposition', created_at: '2026-10-07T00:00:00.000Z',
     },
     priorLedger = {
       schema: 'CoordinationLedger/v1', workspace_id: runtime.workspaceId, revision: 95,
@@ -911,7 +936,7 @@ function configuredFrontierRepairFixture(prewriter = false, changedSource = fals
       tickets: [priorTicket, {
         ...priorTicket, ticket_id: 'repair-ticket', sequence: 2, status: 'active',
         source_revision: targetScope.digest,
-        claim_ids: ['repair-claim'], expires_at: expiresAt, active_resources: [resource],
+        claim_ids: ['repair-claim'], expires_at: expiresAt, active_resources: resources,
         created_at: '2026-10-07T00:00:01.000Z',
       }],
       claims: [priorClaim, {
@@ -1071,6 +1096,19 @@ test('frontier repair joins prior Work with the exact run and accepted scope and
     { ...prior, binding: { ...prior.binding, work_source_revision: wrongSource }, lifecycle: { ...prior.lifecycle, source_revision: wrongSource } },
     next, wrongPriorLedger, wrongNextLedger,
   ))).toThrow();
+  for (const mutate of [
+    ledger => ledger.operations[0].from_ledger_revision = 1.5,
+    ledger => ledger.operations[0].to_ledger_revision = Number.MAX_SAFE_INTEGER + 1,
+    ledger => ledger.operations.push({ ...ledger.operations[0], operation_id: 'malformed-kind', kind: 'acquire' }),
+    ledger => { ledger.tickets[0].generation = 1.5; ledger.claims[0].generation = 1.5; },
+    ledger => ledger.tickets[0].sequence = Number.MAX_SAFE_INTEGER + 1,
+  ]) {
+    const malformed = structuredClone(input.receipt.prior_ledger); mutate(malformed);
+    const nextLedger = { ...input.receipt.successor_ledger, operations: malformed.operations,
+      tickets: [malformed.tickets[0], input.receipt.successor_ledger.tickets[1]],
+      claims: [malformed.claims[0], input.receipt.successor_ledger.claims[1]] };
+    expect(() => continuationRepair.validateConfiguredFrontierReceiptStructure(rebind(prior, next, malformed, nextLedger))).toThrow(/ledger contract|non-canonical JSON number/);
+  }
   const wrongRevision = { ...input.receipt.successor_ledger, revision: input.receipt.prior_ledger.revision + 2 };
   expect(() => continuationRepair.validateConfiguredFrontierReceiptStructure(rebind(prior, next, input.receipt.prior_ledger, wrongRevision))).toThrow();
   const request = { ...input.receipt.request, expectedMaintenanceGeneration: input.receipt.request.sourceTransition.transition.fence.generation + 1 };
@@ -1176,6 +1214,20 @@ await createOriginalFrontierEngine(data.root,{control:{work_root:data.workRoot}}
 
 test.each(['delivery', 'normal'])('Host produces the current full prewriter wave atomically from the actual unissued old engine and preserves its original attempt [%s]', async (proofKind) => {
   const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot(proofKind);
+  // Another completed operation may advance the ledger after this work's release.
+  const priorLedger = input.receipt.prior_ledger;
+  priorLedger.revision += 1;
+  priorLedger.tickets.push({ ...priorLedger.tickets[0], ticket_id: 'other-ticket', work_id: 'other-work', thread_id: 'other-thread',
+    sequence: priorLedger.next_sequence++, claim_ids: ['other-claim'], exclusive_resources: ['file:other.ts'] });
+  priorLedger.claims.push({ ...priorLedger.claims[0], claim_id: 'other-claim', ticket_id: 'other-ticket',
+    work_id: 'other-work', thread_id: 'other-thread', resources: ['file:other.ts'] });
+  priorLedger.operations.push({ ...priorLedger.operations[0], operation_id: 'unrelated-release',
+    ticket_id: 'other-ticket', work_id: 'other-work', thread_id: 'other-thread', resources: ['file:other.ts'],
+    from_ledger_revision: priorLedger.revision - 1, to_ledger_revision: priorLedger.revision });
+  const priorVersion = { revision: priorLedger.revision, digest: canonicalJsonDigest(priorLedger) };
+  const request = { ...input.receipt.request, expectedLedger: priorVersion };
+  input.receipt = { ...input.receipt, prior_ledger_version: priorVersion, request,
+    request_digest: canonicalJsonDigest(request), authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(request) } };
   const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
   mkdirSync(path.dirname(databasePath), { recursive: true });
   const f = await continuationFixture({ root, config, workspaceId, databasePath, repositoryRoot: root, identity: input.receipt.request.identity });
@@ -1185,7 +1237,12 @@ test.each(['delivery', 'normal'])('Host produces the current full prewriter wave
   f.db.query('UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1')
     .run(prior.prior_journal_version.revision, canonicalJson(prior.prior_journal), prior.prior_journal_version.digest, workspaceId, f.identity.work_id);
   await seedOriginalFrontierEngine(root, config, input);
+  const before = f.store.readHostStateSnapshot(f.identity);
+  await expect(f.store.continueDeliveredWork({ ...prior.request, expectedLedger: { ...prior.request.expectedLedger, revision: prior.request.expectedLedger.revision - 1 } })).rejects.toThrow();
+  expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
   const result = await f.store.continueDeliveredWork(prior.request);
+  expect(result.receipt.successor_ledger.tickets.at(-1).exclusive_resources).toEqual(prior.prior_ledger.tickets[0].exclusive_resources);
+  expect(result.receipt.successor_ledger.claims.at(-1).resources).toEqual(prior.prior_ledger.claims[0].resources);
   expect(result.status).toBe('continued');
   expect(result.receipt.historical_capture).toBeNull();
   expect(result.receipt.successor_journal.run_id).toBe(prior.prior_journal.run_id);
@@ -1200,6 +1257,20 @@ test.each(['delivery', 'normal'])('Host produces the current full prewriter wave
   expect(retry.status).toBe('already_continued');
   expect(retry.receipt).toEqual(result.receipt);
   expect(f.store.readDeliveredWorkContinuation(f.identity, 1).items).toHaveLength(2);
+  const delivered = f.store.readHostStateSnapshot(f.identity), activeTicket = delivered.ledger.tickets.at(-1);
+  const fileResource = activeTicket.exclusive_resources.find(resource => resource.startsWith('file:'));
+  const conflict = { ...activeTicket, ticket_id: 'foreign-file-only', work_id: 'other-work', thread_id: 'other-thread',
+    sequence: activeTicket.sequence + 1, claim_ids: ['foreign-claim'], exclusive_resources: [fileResource], active_resources: [fileResource] };
+  const conflictClaim = { ...delivered.ledger.claims.at(-1), claim_id: 'foreign-claim', ticket_id: conflict.ticket_id, work_id: conflict.work_id,
+    thread_id: conflict.thread_id, resources: [fileResource] };
+  const writeLedger = ledger => f.db.query("UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger'")
+    .run(ledger.revision, canonicalJson(ledger), canonicalJsonDigest(ledger), workspaceId);
+  writeLedger({ ...delivered.ledger, next_sequence: conflict.sequence + 1, tickets: [...delivered.ledger.tickets, conflict], claims: [...delivered.ledger.claims, conflictClaim] });
+  expect(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).toThrow(/FIFO/);
+  writeLedger({ ...delivered.ledger, next_sequence: conflict.sequence + 1, tickets: [...delivered.ledger.tickets, { ...conflict, status: 'queued', claim_ids: [], expires_at: null, active_resources: [] }] });
+  expect(f.store.readDeliveredWorkContinuation(f.identity, 1).items).toHaveLength(2);
+  writeLedger(delivered.ledger);
+
   const reports = result.receipt.successor_journal.items.map((item, index) => {
     const issue = index === 0 ? '71e62a38-b44b-470e-b732-81cefbaf983a' : 'fa354d58-05f9-4a5f-8f39-5b594cb9d95d';
     const summary = 'Fixture current prewriter report ' + index;

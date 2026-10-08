@@ -2,6 +2,7 @@ import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { assertLoadedRuntimeConfig, runtimeConfigDigest, type AgentRuntimeConfig, type WorkItemSelection } from '../config/runtime-config.js';
 import type { HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { MaintenanceFence } from '../host-state.js';
+import type { CoordinationLedger } from '../contracts/envelopes.js';
 import {
   parseSessionBridgeRequest,
   buildSessionBridgeRequest,
@@ -169,6 +170,47 @@ const pathPattern = /^[^\\\0\r\n]+$/;
 
 function requireContinuation(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`delivered work continuation: ${message}`);
+}
+
+/** Current CAS is independent from the recorded original owner disposition. */
+export function validateConfiguredFrontierOwnerRelease(input: {
+  readonly work: WorkState;
+  readonly ledger: CoordinationLedger;
+  readonly identity: WorkIdentity;
+  readonly nativeSessionHandle: string;
+}) {
+  const { work, ledger, identity, nativeSessionHandle } = input,
+    resources = [`execution:${identity.work_id}`, ...work.binding.implementation_paths.map(path => `file:${path}`)].sort(),
+    candidates = ledger.tickets.filter(ticket => ticket.work_id === identity.work_id && ticket.thread_id === nativeSessionHandle &&
+      ticket.source_revision === work.binding.work_source_revision).sort((left, right) => right.sequence - left.sequence),
+    ticket = candidates[0],
+    claims = ticket ? ledger.claims.filter(claim => claim.ticket_id === ticket.ticket_id) : [],
+    releases = ticket ? ledger.operations.filter(operation => operation.ticket_id === ticket.ticket_id && operation.kind === 'release') : [],
+    release = releases[0];
+  const same = (left: unknown, right: unknown) => canonicalJsonDigest(left) === canonicalJsonDigest(right);
+  requireContinuation(ticket && release && candidates.filter(entry => entry.sequence === ticket.sequence).length === 1 &&
+    resources.length === new Set(resources).size && resources.every(resource => work.binding.allowed_resources.includes(resource)) &&
+    ticket.schema === 'CoordinationTicket/v1' && ticket.status === 'released' && ticket.repository_id === identity.repository_id && same(ticket.project_ids, identity.project_ids) &&
+    ticket.integrations_digest === identity.integrations_digest && ticket.expires_at === null && ticket.active_resources.length === 0 &&
+    ticket.blocked_resources.length === 0 && same(ticket.exclusive_resources, resources) &&
+    claims.length === 1 && ticket.claim_ids.length === 1 && ticket.claim_ids[0] === claims[0]!.claim_id &&
+    claims[0]!.schema === 'WorkstreamClaim/v1' && claims[0]!.status === 'released' && claims[0]!.generation === ticket.generation &&
+    claims[0]!.work_id === identity.work_id && claims[0]!.thread_id === nativeSessionHandle && same(claims[0]!.resources, resources) &&
+    releases.length === 1 && release.schema === 'CoordinationOperation/v1' &&
+    typeof release.decided_by === 'string' && release.decided_by.trim().length > 0 &&
+    typeof release.created_at === 'string' && Number.isFinite(Date.parse(release.created_at)) && release.work_id === identity.work_id && release.thread_id === nativeSessionHandle &&
+    release.source_revision === work.binding.work_source_revision && Array.isArray(release.resources) && same(release.resources, resources) &&
+    typeof release.decision_pointer === 'string' && release.decision_pointer.trim().length > 0 &&
+    typeof release.from_ledger_revision === 'number' && Number.isSafeInteger(release.from_ledger_revision) && release.from_ledger_revision >= 1 &&
+    typeof release.to_ledger_revision === 'number' && Number.isSafeInteger(release.to_ledger_revision) &&
+    release.to_ledger_revision === release.from_ledger_revision + 1 && release.to_ledger_revision <= ledger.revision &&
+    !ledger.operations.some(operation => operation.ticket_id === ticket.ticket_id &&
+      (typeof operation.to_ledger_revision !== 'number' || operation.to_ledger_revision > (release.to_ledger_revision as number))) &&
+    !ledger.tickets.some(other => other.ticket_id !== ticket.ticket_id &&
+      ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(other.status) &&
+      other.exclusive_resources.some(resource => resources.includes(resource))),
+  'configured frontier original release, resources or FIFO changed');
+  return { ticket, claim: claims[0]!, release, resources };
 }
 
 /** Scope maintenance is not a grant: implementation, documentation and evidence stay distinct. */

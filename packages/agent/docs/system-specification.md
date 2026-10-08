@@ -1290,7 +1290,14 @@ the accepted configuration and installed-runtime transition through fresh
 Work, Ledger, Journal and maintenance CAS. It preserves the original owner,
 attempt, scope, acceptance and history. Only the exact original released
 resources can be reacquired after contention checks. The configured runtime
-returns a real unfinished action; known terminal and UNKNOWN actions are not
+joins the latest original-owner ticket to its single released claim and release
+operation by ticket identity and the full execution/implementation resource set.
+The release disposition and Source intent retain separate pointers. Unrelated
+later ledger revisions do not invalidate that release; current CAS still binds
+the apply. Reacquisition rejects overlapping owners or waiters. An active
+continuation rejects any overlapping active owner and earlier FIFO waiter;
+later queued work waits without invalidating the current owner.
+The configured runtime returns a real unfinished action; known terminal and UNKNOWN actions are not
 automatically reissued. Actual original-owner continuation is required evidence
 after delivery, not a consequence of Source checks or physical installation.
 

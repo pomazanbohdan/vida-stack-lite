@@ -518,6 +518,15 @@ Project configuration, recovery and work-admission inspection are separate
 operations, started only when the current task needs them. They are not
 installation postchecks or reasons to reinstall a successfully updated asset.
 
+After every successful whole-system runtime update, notify the configured
+TeamLead through the authorized coordination channel. Reuse the current delivery
+result. State the installed artifact/version, tasks and fixes delivered, actual
+original-work recovery result, and remaining blockers. Name the developers or
+work items that can resume only when their supported continuation and current
+rights are confirmed. Installation success alone is not developer unblocking.
+Notify before dependent next-batch work; do not add a test, build or duplicate
+installation observation to send this message. Retain the sent-result reference.
+
 Target short-command and control return below two seconds; retain existing
 elapsed/failure diagnostics without a separate optimization measurement lane.
 Start long tests, builds and installs asynchronously and return control early;
