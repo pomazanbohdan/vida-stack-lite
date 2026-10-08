@@ -1,14 +1,19 @@
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { assertLoadedRuntimeConfig, runtimeConfigDigest, type AgentRuntimeConfig, type WorkItemSelection } from '../config/runtime-config.js';
 import type { HostStateSnapshot, StateVersion, WorkIdentity } from '../host-state.js';
 import type { MaintenanceFence } from '../host-state.js';
 import {
   parseSessionBridgeRequest,
+  buildSessionBridgeRequest,
+  configuredContextForStage,
   type SessionBridgeSnapshot,
   type SessionBridgeRequest,
 } from './mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './scoped-source-snapshot.js';
 import { compareScopedSourceSnapshots, type ScopedSourceChange } from './scoped-source-snapshot.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
+import { sessionActionsForWave, type SessionHandoffContext } from './session-handoff.js';
+import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
 
 export interface RuntimeConfigDeliveryTransition {
   readonly schema: 'RuntimeConfigDeliveryTransition/v1';
@@ -227,7 +232,7 @@ export function validateCurrentSourceScopeBridge(input: {
   }
   const changes = compareScopedSourceSnapshots(input.original, input.current);
   requireContinuation(
-    changes.every((change) => {
+    authorized.size === changes.length && changes.every((change) => {
       const authorizedChange = authorized.get(change.path);
       return authorizedChange !== undefined && canonicalJsonDigest(authorizedChange) === canonicalJsonDigest(change);
     }),
@@ -367,8 +372,7 @@ export function validateDeliveredWorkContinuationAction(value: unknown): Deliver
         digestPattern.test(candidate.source_scope_digest as string) &&
         digestPattern.test(candidate.target_config_digest as string) &&
         request.workflow_id === candidate.workflow_id &&
-        request.run_id === candidate.run_id &&
-        request.scope_digest === candidate.source_scope_digest,
+        request.run_id === candidate.run_id,
       'configured frontier action binding is invalid',
     );
     return { ...candidate, request } as unknown as ConfiguredFrontierContinuationAction;
@@ -431,6 +435,7 @@ export function projectConfiguredFrontierContinuationAction(input: {
   readonly currentSourceScope: ScopedSourceSnapshot;
 }): ConfiguredFrontierContinuationAction {
   const { engine, journal, targetConfigDigest, currentSourceScope } = input;
+  const priorScope = journal.source_scope ?? currentSourceScope;
   requireContinuation(
     engine.status === 'suspended' &&
       engine.step_id !== null &&
@@ -438,7 +443,7 @@ export function projectConfiguredFrontierContinuationAction(input: {
       journal.step_id === engine.step_id &&
       engine.requests.length === 1 &&
       digestPattern.test(targetConfigDigest) &&
-      validScope(currentSourceScope),
+      validScope(currentSourceScope) && validScope(priorScope),
     'configured continuation has no current suspended frontier',
   );
   const byAction = new Map(journal.items.map((item) => [item.request.action_id, item]));
@@ -448,7 +453,7 @@ export function projectConfiguredFrontierContinuationAction(input: {
       return (
         request.run_id === engine.run_id &&
         request.workflow_id === journal.items[0]?.request.workflow_id &&
-        request.scope_digest === currentSourceScope.digest &&
+        request.scope_digest === priorScope.digest &&
         item !== undefined &&
         item.issue_id === null &&
         item.observation === null &&
@@ -477,6 +482,73 @@ export function projectConfiguredFrontierContinuationAction(input: {
     target_config_digest: targetConfigDigest,
     request: engine.requests[0]!,
   }) as ConfiguredFrontierContinuationAction;
+}
+
+/** Derive read-only current reviewers; the retained developer frontier is never issued or completed here. */
+export function projectConfiguredPrewriterContinuationRequests(input: {
+  readonly repositoryRoot: string;
+  readonly config: AgentRuntimeConfig;
+  readonly selection: WorkItemSelection;
+  readonly context: SessionHandoffContext;
+  readonly workflowId: string;
+  readonly engine: SessionBridgeSnapshot;
+  readonly journal: MastraSessionLedgerState;
+  readonly currentSourceScope: ScopedSourceSnapshot;
+  readonly lifecycleRisk?: WorkflowLifecycleRisk;
+}): readonly SessionBridgeRequest[] {
+  const { repositoryRoot, config, selection, context, workflowId, engine, journal, currentSourceScope } = input;
+  assertLoadedRuntimeConfig(config, repositoryRoot);
+  requireContinuation(
+    validScope(currentSourceScope) && validScope(journal.source_scope) &&
+      context.work_id === journal.work_id && context.attempt === journal.attempt &&
+      context.scope_digest === currentSourceScope.digest &&
+      journal.corrective_execution == null && journal.research_wave_exposure === undefined,
+    'current prewriter context or original journal differs',
+  );
+  const frontier = projectConfiguredFrontierContinuationAction({
+    engine, journal, targetConfigDigest: runtimeConfigDigest(config), currentSourceScope,
+  });
+  const step = /^wave-(0|[1-9][0-9]*)$/.exec(frontier.step_id);
+  const waveIndex = step ? Number(step[1]) : -1;
+  const plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags, input.lifecycleRisk);
+  const wave = plan.waves[waveIndex];
+  const developer = plan.waves[waveIndex + 1]?.find(stage => stage.kind === 'develop');
+  requireContinuation(
+    frontier.workflow_id === workflowId && developer?.id === frontier.request.stage_id &&
+      frontier.request.role === 'developer-orchestrator' &&
+      frontier.request.wave_index === waveIndex && Number.isSafeInteger(waveIndex) &&
+      wave?.length === 1 && wave[0]!.id === 'review_source_prewrite' && wave[0]!.kind !== 'develop',
+    'current prewriter does not replace the exact unissued developer wave',
+  );
+  const priorObservations = journal.completed.flatMap(entry => entry.items.map(item => item.observation));
+  requireContinuation(
+    journal.completed.length === waveIndex &&
+      journal.completed.every((entry, index) => {
+        const actions = sessionActionsForWave(config, selection, context, workflowId, index, [], undefined, input.lifecycleRisk);
+        return entry.step_id === 'wave-' + index && entry.items.length === actions.length &&
+          new Set(entry.items.map(item => canonicalJsonDigest({ stage: item.request.stage_id, role: item.request.role, index: item.request.assignment_index }))).size === actions.length &&
+          entry.items.every(item => item.issue_id !== null && item.observation?.status === 'reported_complete' &&
+            item.observation.action_id === item.request.action_id && item.observation.issue_id === item.issue_id &&
+            item.observation.output_digest === canonicalJsonDigest(item.observation.summary) &&
+            item.request.run_id === engine.run_id && item.request.workflow_id === workflowId &&
+            item.request.config_digest === frontier.request.config_digest && item.request.wave_index === index &&
+            item.request.scope_digest === journal.source_scope!.digest &&
+            actions.some(action => action.stage_id === item.request.stage_id && action.role === item.request.role &&
+              action.assignment_index === item.request.assignment_index)) &&
+          new Set(entry.items.map(item => item.request.action_id)).size === actions.length;
+      }) && new Set(engine.observations.map(observation => observation.action_id)).size === engine.observations.length &&
+      canonicalJsonDigest(priorObservations) === canonicalJsonDigest(engine.observations),
+    'current prewriter completed prefix differs',
+  );
+  const actions = sessionActionsForWave(config, selection, context, workflowId, waveIndex, [], undefined, input.lifecycleRisk);
+  requireContinuation(actions.length > 0 && actions.every(action =>
+    action.stage_id === 'review_source_prewrite' && !action.resolved_profile.tools_policy.source_write),
+  'current prewriter assignments are missing or permit Source writes');
+  return actions.map(action => buildSessionBridgeRequest({
+    runId: engine.run_id, workflowId, configDigest: runtimeConfigDigest(config), context, waveIndex, action,
+    configuredContext: configuredContextForStage(repositoryRoot, config, workflowId, action.stage_id, context),
+    priorResults: engine.observations,
+  }));
 }
 
 /** Construct the one permitted first action for a retained known-terminal synthesis body. */

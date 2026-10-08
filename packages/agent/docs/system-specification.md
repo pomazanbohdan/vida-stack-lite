@@ -1333,9 +1333,48 @@ state, owner or dependency denies. This is consistency evidence, not package
 qualification or Runtime acceptance.
 
 The future configured-frontier validator requires immutable engine snapshot
-bytes bound to the action and completed prefix. It is isolated: frontier apply
-and resume remain disabled until the normal reader is adopted. Historical
-reader and receipt semantics stay unchanged.
+bytes bound to the old unissued developer action and completed prefix. Its old
+request retains the original configuration and Source scope. The action binds
+the current target configuration and Source scope separately. Changed Source
+entries require the exact authorized beforeimage bridge; a target digest alone
+cannot authorize them.
+
+For current prewriter continuation, derive the entire reviewer wave from loaded
+repository configuration, the accepted original task and its protected lifecycle
+risk. The completed prefix and old developer request stay unchanged. The current
+reviewer requests replace only the successor journal items at the same run and
+wave step. Compare every request in order with that derivation. Omitted security
+reviewers, duplicate requests, developer leakage and issued or reserved items
+deny. A caller cannot lower the protected lifecycle risk to omit security review.
+The authorized Source entries must equal the actual scope diff; extra latent
+entries deny. Successor Work has one permitted projection: advance revision,
+bind the current configuration/runtime/Source, reacquire the checked original
+owner lease, and enter active review. Lifecycle updates only its revision,
+Source revision and configuration binding. Preserve the run ID, input, risk,
+scope, contracts, artifacts, assurance and retained references exactly.
+
+The bundle-owned repair supports inspect, plan, apply and exact resume for this
+receipt branch. The Host resolves current configuration and the original accepted
+intake itself. The intake bytes, task, native owner, project set and workflow must
+match their protected bindings. Caller JSON cannot select a different risk or
+reviewer wave. Reservation and application retain the existing producer fence,
+maintenance generation and exact Work, Ledger and Journal CAS.
+The recorded expected maintenance generation equals the closed transition fence
+generation. The prior Work run and Source revision match its Journal, whose path
+set equals the accepted Work scope. One reacquisition advances Ledger by exactly
+one revision.
+
+Immutable Host history remains readable after later Work progress or lease
+expiry. Live repair still requires the exact recorded successor tuple and a
+current lease. Interrupted application retains UNKNOWN and blocks a new producer
+until exact repair resume. Repair changes only the stored receipt digest and its
+own operation; it grants no Source or Runtime rights.
+
+The configured-frontier producer and ordinary public run consumer still require
+their continuation implementation. Ship the qualified functional repair before
+the first active receipt is produced. Historical reader and receipt semantics
+stay unchanged. Configuration-lineage and Source-rights checks remain required
+before any actual continuation.
 
 Before changing an active strict artifact schema, qualify and ship its supported
 artifact/dependency repair command. Same-attempt correction still requires current

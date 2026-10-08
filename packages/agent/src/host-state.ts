@@ -61,7 +61,7 @@ import {
 } from './orchestration/final-assurance.js';
 import { requireSafeRepositoryAccess } from './config/safe-repository-access.js';
 import { compareScopedSourceSnapshots, snapshotDeclaredSources } from './orchestration/scoped-source-snapshot.js';
-import { loadRuntimeConfig, runtimeConfigDigest, selectWorkflow } from './config/runtime-config.js';
+import { loadRuntimeConfig, runtimeConfigDigest, selectWorkflow, type WorkItemSelection } from './config/runtime-config.js';
 import { loadProjectSetContext } from './config/project-context.js';
 import { MastraSessionLedger } from './orchestration/persistent-session-handoff.js';
 import {
@@ -92,6 +92,11 @@ import type {
   DeliveredWorkContinuationRequest,
   DeliveredWorkContinuationVerifier,
 } from './orchestration/delivered-work-continuation.js';
+import {
+  validateConfiguredFrontierReceiptStructure,
+  validateConfiguredFrontierRepairReceipt,
+  type ConfiguredFrontierReceipt,
+} from './orchestration/delivered-work-continuation-repair.js';
 
 const sessionProducerStore = 'vida-session-producers';
 const recoveryReviewStore = 'vida-recovery-reviews';
@@ -649,7 +654,8 @@ export interface DeliveredWorkContinuationReceipt {
   readonly prior_work_version: StateVersion;
   readonly prior_ledger_version: StateVersion;
   readonly prior_journal_version: StateVersion;
-  readonly historical_capture: HistoricalTerminalSynthesisCaptureReceipt;
+  readonly historical_capture: HistoricalTerminalSynthesisCaptureReceipt | null;
+  readonly frontier_snapshot?: { readonly snapshot_bytes_base64: string; readonly snapshot_sha256: string };
   readonly successor_work: WorkState;
   readonly successor_ledger: CoordinationLedger;
   readonly successor_binding: WorkState['binding'];
@@ -1788,8 +1794,10 @@ function checkedStoredWork(
       const storedDigest = repairOverlayMatches ? continuationRepairOverlay!.after_digest : row.digest;
       requireState(
         canonicalJsonDigest(receipt) === storedDigest &&
-          receipt.request?.action?.kind === 'historical_terminal_review' &&
-          receipt.request.action.capture.action_id === row.action_id &&
+          ((receipt.request?.action?.kind === 'historical_terminal_review' &&
+            receipt.request.action.capture.action_id === row.action_id) ||
+           (receipt.request?.action?.kind === 'configured_frontier' &&
+            receipt.request.action.request.action_id === row.action_id)) &&
           receipt.attempt === row.attempt,
         'delivered-work continuation history receipt checksum or identity differs',
       );
@@ -1826,6 +1834,39 @@ function checkedStoredWork(
         journal?.source_scope && request?.currentSourceScope
           ? compareScopedSourceSnapshots(journal.source_scope, request.currentSourceScope)
           : null;
+      if (action?.kind === 'configured_frontier') {
+        requireState(receipt.historical_capture === null && receipt.frontier_snapshot !== undefined,
+          'configured-frontier history snapshot is missing');
+        validateConfiguredFrontierReceiptStructure({ receipt: receipt as ConfiguredFrontierReceipt });
+        requireState(
+          sameJson(request.identity, workIdentity(candidate)) &&
+            original.workspace_id === workspaceId &&
+            sameJson(successor, expected) &&
+            sameJson(successor, {
+              ...original.binding,
+              config_digest: request.targetConfigDigest,
+              work_source_revision: request.currentSourceScope.digest,
+              runtime_source_revision: request.targetRuntimeCodeDigest,
+              runtime_code_digest: request.targetRuntimeCodeDigest,
+              schema_digest: request.targetSchemaDigest,
+            }) &&
+            original.binding.config_digest === request.priorConfigDigest &&
+            original.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
+            receipt.work_version.revision === original.revision + 1 &&
+            successorWork.lifecycle.revision === successorWork.revision &&
+            sameJson(successorWork.execution.assignment_attempts, original.execution.assignment_attempts),
+          'configured-frontier binding history is not continuous',
+        );
+        for (const attempt of original.execution.assignment_attempts) {
+          const current = candidate.execution.assignment_attempts.find(entry => entry.attempt_id === attempt.attempt_id);
+          requireState(current && sameJson(current, attempt), 'configured-frontier terminal assignment result changed');
+          bindings.set(attempt.attempt_id, original.binding);
+        }
+        expected = original.binding;
+        continue;
+      }
+      requireState(capture !== null && receipt.frontier_snapshot === undefined,
+        'historical continuation capture or receipt shape differs');
       requireState(
         receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
           receipt.status === 'action_ready' &&
@@ -8761,6 +8802,41 @@ export class HostStateStore {
       return snapshot({ status: 'continued' as const, snapshot: saved, receipt, action: input.action });
     }).immediate();
   }
+  #configuredFrontierRepairBinding(receipt: ConfiguredFrontierReceipt) {
+    requireState(this.#repositoryRoot, 'configured-frontier repair requires the configured repository root');
+    const root = this.#repositoryRoot, config = loadRuntimeConfig(root), original = receipt.prior_work,
+      identity = receipt.request.identity;
+    const project = loadProjectSetContext(root, config, identity.repository_id, identity.project_ids);
+    requireState(runtimeConfigDigest(config) === receipt.request.targetConfigDigest &&
+      project.integrations_digest === identity.integrations_digest &&
+      sameJson(project.project_ids, identity.project_ids), 'configured-frontier repair current configuration or project differs');
+    const intakes = original.artifacts.filter(entry => entry.artifact_id === 'local-session-intake' && entry.schema === 'VidaLocalSessionIntake/v1');
+    requireState(intakes.length === 1, 'configured-frontier repair requires the original accepted intake');
+    const reference = intakes[0]!, bytes = requireSafeRepositoryAccess(root).readBytes(reference.path, 'configured-frontier accepted intake');
+    requireState(bytes.length <= 32768 && createHash('sha256').update(bytes).digest('hex') === reference.sha256,
+      'configured-frontier repair original intake bytes differ');
+    const intake = JSON.parse(bytes.toString('utf8')) as {
+      schema: string; native_session_handle: string; risk: string;
+      work_item: { schema: string; id: string; canonical_kind: WorkItemSelection['kind']; intent: WorkItemSelection['intent']; project_id: string; risk_flags: string[]; labels: string[] };
+    }, item = intake.work_item;
+    requireState(intake.schema === 'VidaLocalSessionIntake/v1' && item?.schema === 'WorkItem/v1' &&
+      intake.native_session_handle === receipt.request.nativeSessionHandle &&
+      intake.risk === original.lifecycle.risk && item.id === identity.work_id &&
+      identity.project_ids.includes(item.project_id) &&
+      canonicalJsonDigest(item) === original.binding.work_item_digest &&
+      Array.isArray(item.risk_flags) && Array.isArray(item.labels),
+    'configured-frontier repair original task or attribution differs');
+    const selection: WorkItemSelection = {
+      team: original.binding.team_id, kind: item.canonical_kind, intent: item.intent, project: item.project_id,
+      risk_flags: [...item.risk_flags], labels: [...item.labels],
+    };
+    requireState(selectWorkflow(config, selection).workflow_id === original.binding.workflow_id &&
+      receipt.request.action.workflow_id === original.binding.workflow_id,
+    'configured-frontier repair original workflow differs');
+    return { repositoryRoot: root, config, selection,
+      context: { work_id: identity.work_id, attempt: receipt.attempt, scope_digest: receipt.request.currentSourceScope.digest },
+      workflowId: original.binding.workflow_id };
+  }
   #inspectDeliveredWorkContinuationRepairInTransaction(
     identity: WorkIdentity,
     attempt: number,
@@ -8815,6 +8891,20 @@ export class HostStateStore {
     requireState(journalRow, 'delivered-work continuation repair Journal is missing');
     const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState;
     assertCanonicalJsonValue(journal, '$.continuationRepair.journal');
+    if (receipt.request.action.kind === 'configured_frontier') {
+      requireState(receipt.historical_capture === null && receipt.frontier_snapshot !== undefined &&
+        receipt.request.action.request.action_id === actionId && receipt.attempt === attempt &&
+        current.work && current.ledger && current.workVersion && current.ledgerVersion &&
+        journalRow.payload === canonicalJson(journal) && journalRow.digest === canonicalJsonDigest(journal),
+      'configured-frontier repair dependency or action identity differs');
+      validateConfiguredFrontierRepairReceipt({
+        receipt: receipt as ConfiguredFrontierReceipt,
+        current: { work: current.work, work_version: current.workVersion, ledger: current.ledger,
+          ledger_version: current.ledgerVersion, journal,
+          journal_version: { revision: journalRow.revision, digest: journalRow.digest } },
+        prewriterBinding: this.#configuredFrontierRepairBinding(receipt as ConfiguredFrontierReceipt),
+      });
+    } else {
     requireState(
       journalRow.payload === canonicalJson(journal) &&
         journalRow.digest === canonicalJsonDigest(journal) &&
@@ -8845,6 +8935,7 @@ export class HostStateStore {
         receipt.authorization.transition_digest === receipt.request.sourceTransition.transition_digest,
       'delivered-work continuation repair dependency, transition or unissued action differs',
     );
+    }
     return snapshot({
       schema: 'DeliveredWorkContinuationRepairInspection/v1' as const,
       workspace_id: this.#workspaceId,
@@ -8887,7 +8978,8 @@ export class HostStateStore {
         exactJsonKeys(plan.inspection.ledger_version, ['revision', 'digest']) &&
         exactJsonKeys(plan.inspection.journal, ['revision', 'payload', 'digest', 'state']) &&
         plan.schema === 'DeliveredWorkContinuationIntegrityRepairPlan/v1' &&
-        plan.branch === 'historical_terminal_review' &&
+        ['historical_terminal_review', 'configured_frontier'].includes(plan.branch) &&
+        JSON.parse(plan.inspection.row.payload).request.action.kind === plan.branch &&
         typeof plan.repair_id === 'string' && /^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.repair_id) &&
         typeof plan.actor === 'string' && plan.actor.trim().length > 0 && plan.actor === plan.actor.trim() &&
         plan.actor.length <= 256 && !/\p{Cc}/u.test(plan.actor) &&

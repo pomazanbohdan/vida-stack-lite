@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, realpathSync, lstatSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -581,6 +581,33 @@ export function trackContinuationFixtureRoot(root) {
 }
 
 export function cleanupContinuationFixtures() {
-  for (const database of fixtureDatabases.splice(0)) database.close();
-  for (const root of fixtureRoots.splice(0)) rmSync(root, { recursive: true, force: true });
+  const retained = new Set();
+  for (const database of fixtureDatabases.splice(0)) {
+    const filename = path.resolve(database.filename);
+    const operations = database.query("SELECT payload FROM agent_host_governance WHERE kind='operation'").all();
+    if (operations.some(row => ['reserved', 'commit_unknown'].includes(JSON.parse(row.payload).status))) {
+      for (const root of fixtureRoots) {
+        const relative = path.relative(path.resolve(root), filename);
+        if (relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)) retained.add(path.resolve(root));
+      }
+    }
+    database.close();
+  }
+  const scratchPath = path.join(runtimeRoot, '.tmp'), scratchStat = lstatSync(scratchPath, { throwIfNoEntry: false });
+  const parents = [realpathSync(tmpdir()), ...(scratchStat?.isDirectory() && !scratchStat.isSymbolicLink() ? [realpathSync(scratchPath)] : [])];
+  for (const root of new Set(fixtureRoots.splice(0).map(value => path.resolve(value)))) {
+    if (retained.has(root)) {
+      process.stderr.write('Preserved continuation fixture with unresolved operation: ' + root + '\n');
+      continue;
+    }
+    const stat = lstatSync(root, { throwIfNoEntry: false });
+    if (!stat) continue;
+    const resolved = realpathSync(root);
+    const owned = parents.some(parent => {
+      const relative = path.relative(parent, resolved);
+      return relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep);
+    });
+    if (!stat.isDirectory() || stat.isSymbolicLink() || !owned) throw new Error('Continuation fixture cleanup target is outside the owned temporary roots');
+    rmSync(resolved, { recursive: true, force: true });
+  }
 }
