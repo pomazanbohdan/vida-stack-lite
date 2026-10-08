@@ -175,7 +175,7 @@ function validRetainedSourceScope(value: unknown): value is NonNullable<MastraSe
     scope.entries.length > 0 &&
     scope.entries.length <= 512 &&
     scope.entries.every(
-      (entry, index) =>
+      (entry: NonNullable<MastraSessionLedgerState['source_scope']>['entries'][number], index) =>
         hasExactKeys(entry, 'bytes,exists,path,sha256') &&
         typeof entry.path === 'string' &&
         entry.path.length > 0 &&
@@ -648,7 +648,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
         'retained unissued completed wave or input differs',
       );
       const requests = verifyRequests(
-          wave.items.map((entry) => entry.request),
+          wave.items.map((entry: MastraSessionLedgerState['completed'][number]['items'][number]) => entry.request),
           waveIndex,
           state,
           false,
@@ -658,7 +658,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
         persistedRequests === undefined || (Array.isArray(persistedRequests) && isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), requests)),
         'retained unissued completed request bodies differ from Journal',
       );
-      const observations = wave.items.map((entry) => {
+      const observations = wave.items.map((entry: MastraSessionLedgerState['completed'][number]['items'][number]) => {
         requireEngine(
           entry.issue_id !== null &&
             entry.observation !== null &&
@@ -724,7 +724,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
       'retained unissued suspended path differs',
     );
     requireEngine(
-      isDeepStrictEqual(state.observations, journal.completed.flatMap((wave) => wave.items.map((item) => item.observation!))),
+      isDeepStrictEqual(state.observations, journal.completed.flatMap((wave: MastraSessionLedgerState['completed'][number]) => wave.items.map((item) => item.observation!))),
       'retained unissued observation count differs from Journal prefix',
     );
     return {
@@ -846,7 +846,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   };
   requireEngine(
     isDeepStrictEqual(normalizedBeforeImage, beforeImageValue) &&
-      canonicalJsonDigest(normalizedBeforeImage) === receipt.request.action.engine_snapshot_digest,
+      canonicalJsonDigest(normalizedBeforeImage) === action.engine_snapshot_digest,
     'configured continuation beforeimage digest differs from its action',
   );
 
