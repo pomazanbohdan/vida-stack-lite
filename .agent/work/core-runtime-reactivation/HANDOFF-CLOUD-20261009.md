@@ -7,6 +7,87 @@ The Windows author stops implementation after this publication. Cloud becomes
 the temporary integration author, subject to fresh runtime ownership checks.
 Chat delegation does not transfer leases or authorize another host's state.
 
+## Cloud return checkpoint — 2026-10-09
+
+The human now returns development to the original Core developer and explicitly
+orders committing all scoped changes and a non-force Source push. This is a WIP
+handoff checkpoint, not fresh independent review, native qualification, Runtime
+acceptance, lease recovery or developer unblocking. Cloud stops Source edits
+at this publication; one original owner resumes after fresh state inspection.
+
+Read this ENTIRE file, including the original transfer snapshot below. Also read
+[CLOUD-CORRECTION-20261009.md](CLOUD-CORRECTION-20261009.md) for retained outcomes and
+[RETURN-TO-CORE-20261009.md](RETURN-TO-CORE-20261009.md) for the continuation prompt.
+These records are derived evidence, not additional lifecycle policy.
+
+### Changes and actual checks
+
+- Fetch and safe ff-only integration succeeded; the initial Source matched the
+  transferred checkpoint. Windows Host state/configuration/leases were not copied.
+- The existing typed qualified-runtime-code owner now owns prepared-plan
+  publication. An already-replaced retry uses the same Host writer fence and
+  fresh Source/native endpoint callback. Publication checks active/history bytes
+  and Source/native endpoints again after asynchronous replacement. Conditional
+  rollback retains foreign changes. Request v1 and existing Host guard stay fixed.
+- Isolated real Host fixtures cover target-only negatives, unchanged original
+  Work/Ledger/Journal/Source/expired lease, byte-exact history, atomic publication,
+  conditional rollback, terminated-process retry before/after replacement,
+  adopted-successor denial, second SQLite writer, nested guard and public
+  apply/refresh shared-lock exclusion. Fixture endpoints are not native proof.
+- Each Host case owns its subprocess and cleanup. Case60s, child180s and
+  parent190s bounds were not raised. Initial retry probes remain in their
+  dedicated test; recovery preparation omits those repeated checks.
+- One full initial-source run:13 PASS /1 FAIL in14 tests. The original
+  recovery/follow-up timed out. Subsequent changed-case run:4 PASS /0 FAIL,
+  ten filtered; shared historical-normalization caller:8 PASS /0 FAIL.
+  The full failed run remains FAIL; do not claim a clean complete matrix.
+- Timing GAP: Bun later reported the original follow-up PASS at about77s despite
+  its configured60s case bound. setSystemTime lease fixtures are involved.
+  Passing assertions do not prove strict wall-clock enforcement or a causal
+  performance fix. Investigate only if relevant; never raise integrity bounds.
+- Full Source TypeScript, owned TS/test type-aware lint, owned code formatting,
+  bin syntax, git whitespace and actual CLI Source scope checks passed.
+  Full tests typecheck still encounters existing syntax errors in
+  release-retarget-state.test.mjs and windows-exclusive-create.test.mjs.
+  Additional whole-bin lint has untyped/excluded-file diagnostics. Quality,
+  coverage, dynamic CRAP and authorized mutation remain explicit GAPs.
+- The existing system-specification section and existing research registry now
+  describe SAME-plan refresh, guarded retry and SQLite/filesystem limits.
+
+### Current operational blockers and next boundary
+
+Cloud operational controller preparation succeeded; verification failed because
+its qualifier expected the writer immediately after synthesis. The actual next
+stage is required read-only review_source_prewrite. Qualifier correction must
+issue/report the genuine preparation before asserting writer authorization.
+That qualifier is unchanged in this checkpoint.
+
+Its compound qualification retains an UNKNOWN reservation under
+/workspace/.vida-cloud/guarded-refresh-controller/observations. No supported
+public disposition exists in that controller owner. Retain observations and
+frozen bytes; do not remove the reservation, replay the child or create a new
+controller to evade custody. This fresh Cloud blocker does not replace any
+original Windows operation. The TeamLead thread was unavailable from Cloud.
+No native independent review, CI, native update or notification occurred.
+
+The Cloud Source environment has pinned dependencies and generated ignored SDK
+output under the separately authorized onboarding exception. Tested setup and
+startup instructions were saved to the environment draft; publishing that draft
+is a settings action. Dependencies, generated output, logs and controller state
+remain environment-local and are not Git attachments.
+
+The original release is STILL
+local-2409a62a-f5f7-405d-a570-eb8abec32937 /0.1.3. Original Test repair is STILL
+test-qualified-code-continuation-20261009. Its original Work/attempt and Core's
+expired FULL15 Source claim are unchanged. Continue in the original owner's
+actual environment: fresh state/custody, independent final reviews, exact native
+qualification and supported same-plan refresh/apply. Expired Source disposition
+and lease recovery remain separate operations. Preserve the full P0/P1 order.
+
+The rest of this file is the original transfer snapshot; its unchecked-tests
+statements describe that earlier checkpoint and are superseded only by the
+actual Cloud outcomes above.
+
 ## Start here
 
 1. Preserve your local changes. Fetch `origin/main` and integrate with fast-forward

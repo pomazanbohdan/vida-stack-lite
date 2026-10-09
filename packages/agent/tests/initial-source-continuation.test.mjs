@@ -23,7 +23,11 @@ import {
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { validateInitialSourceFrontierCodeRebindReceipt } from '../src/orchestration/initial-source-frontier-code-rebind.ts';
-import { validateQualifiedRuntimeCodeContinuationRequest } from '../src/orchestration/qualified-runtime-code-continuation.ts';
+import {
+  validateQualifiedRuntimeCodeContinuationRequest,
+  validateQualifiedRuntimeCodePreparedPlanRefresh,
+  refreshQualifiedRuntimeCodePreparedPlan,
+} from '../src/orchestration/qualified-runtime-code-continuation.ts';
 import {
   validateCompletedSourceReportRecoveryCurrentWorkJoin,
   validateCompletedSourceReportRecoveryReceipt,
@@ -48,6 +52,7 @@ import {
 import { bindRuntimeInitialization } from '../src/runtime-initialization.ts';
 import { lifecyclePreparationObservationSchema } from '../src/orchestration/final-assurance.ts';
 import { run } from '../bin/run.mjs';
+import { runQualifiedRuntimeCodeContinuation } from '../bin/qualified-runtime-code-continuation.mjs';
 import {
   validateInitialSourceContinuationReceipt,
   validateInitialSourceContinuationRequest,
@@ -118,7 +123,87 @@ const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const record = (value) => JSON.stringify(value) + '\n';
 const fixtureChild = process.env.VIDA_INITIAL_SOURCE_FIXTURE_CHILD === '1';
 const fixtureParentRoot = process.env.VIDA_INITIAL_SOURCE_FIXTURE_ROOT;
-const fixtureTestFilter = process.env.VIDA_INITIAL_SOURCE_TEST_FILTER;
+
+/** Pure request fixtures establish no Host authority or native qualification. */
+if (!fixtureChild) {
+  test('prepared code refresh permits only the current native target fields', () => {
+    const prior = validateQualifiedRuntimeCodeContinuationRequest({
+      schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
+      identity: {
+        repository_id: 'fixture',
+        project_ids: ['agent'],
+        integrations_digest: 'a'.repeat(64),
+        work_id: 'work',
+      },
+      attempt: 1,
+      nativeSessionHandle: 'fixture-owner',
+      leaseGeneration: 1,
+      expectedWork: { revision: 2, digest: 'b'.repeat(64) },
+      expectedLedger: { revision: 3, digest: 'c'.repeat(64) },
+      expectedJournal: { revision: 4, digest: 'd'.repeat(64) },
+      expectedMaintenanceGeneration: 0,
+      originalSourceScopeDigest: 'e'.repeat(64),
+      journalSourceScopeDigest: 'f'.repeat(64),
+      oldRuntimeCodeDigest: '0'.repeat(64),
+      currentRuntimeCodeDigest: '1'.repeat(64),
+      oldRuntimeCodePaths: ['bin/run.mjs'],
+      currentRuntimeCodePaths: ['bin/run.mjs'],
+      oldManifestRef: '.tmp/parent/manifest.json',
+      oldManifestDigest: '2'.repeat(64),
+      oldInstallRef: '.tmp/parent/install.json',
+      currentManifestRef: '.tmp/current/manifest.json',
+      currentManifestDigest: '3'.repeat(64),
+      currentInstallRef: '.tmp/current/install.json',
+      systemUpdateRef: '.tmp/current/install.json',
+      systemUpdateOperationId: 'fixture-current',
+      nativeSelfAttestationDigest: '4'.repeat(64),
+    });
+    const target = {
+      ...prior,
+      currentRuntimeCodeDigest: '5'.repeat(64),
+      currentRuntimeCodePaths: ['bin/run.mjs', 'src/host-state.ts'],
+      currentManifestRef: '.tmp/next/manifest.json',
+      currentManifestDigest: '6'.repeat(64),
+      currentInstallRef: '.tmp/next/install.json',
+      systemUpdateRef: '.tmp/next/install.json',
+      systemUpdateOperationId: 'fixture-next',
+      nativeSelfAttestationDigest: '7'.repeat(64),
+    };
+    expect(validateQualifiedRuntimeCodePreparedPlanRefresh(prior, target)).toEqual(target);
+    expect(validateQualifiedRuntimeCodePreparedPlanRefresh(prior, prior)).toEqual(prior);
+    for (const changed of [
+      { identity: { ...prior.identity, repository_id: 'foreign' } },
+      { identity: { ...prior.identity, project_ids: ['plugin'] } },
+      { identity: { ...prior.identity, integrations_digest: '8'.repeat(64) } },
+      { identity: { ...prior.identity, work_id: 'other-work' } },
+      { attempt: 2 },
+      { nativeSessionHandle: 'foreign-owner' },
+      { leaseGeneration: 2 },
+      { expectedWork: { ...prior.expectedWork, revision: 3 } },
+      { expectedLedger: { ...prior.expectedLedger, digest: '8'.repeat(64) } },
+      { expectedJournal: { ...prior.expectedJournal, revision: 5 } },
+      { expectedMaintenanceGeneration: 1 },
+      { originalSourceScopeDigest: '8'.repeat(64) },
+      { journalSourceScopeDigest: '8'.repeat(64) },
+      { oldRuntimeCodeDigest: '8'.repeat(64) },
+      { oldRuntimeCodePaths: ['src/host-state.ts'] },
+      { oldManifestRef: '.tmp/foreign/manifest.json' },
+      { oldManifestDigest: '8'.repeat(64) },
+      { oldInstallRef: '.tmp/foreign/install.json' },
+    ])
+      expect(() => validateQualifiedRuntimeCodePreparedPlanRefresh(prior, { ...target, ...changed })).toThrow(
+        /changed original identity, parent, Source or CAS/,
+      );
+    for (const changed of [
+      { currentRuntimeCodeDigest: prior.oldRuntimeCodeDigest },
+      { currentRuntimeCodePaths: ['../escape'] },
+      { currentManifestRef: '/outside/manifest.json' },
+      { nativeSelfAttestationDigest: 'invalid' },
+      { extra: true },
+    ])
+      expect(() => validateQualifiedRuntimeCodePreparedPlanRefresh(prior, { ...target, ...changed })).toThrow();
+  });
+}
 
 /** @param {InitialWorkResources} f */
 async function closeInitialWorkResources(f) {
@@ -912,57 +997,64 @@ function expectNoChange(f, request, expire = true) {
   expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toBeNull();
 }
 
-if (!fixtureChild) {
-  test('runs the initial-source Host fixtures in an owned subprocess', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'vida-initial-source-owned-'));
-    let terminalObserved = false;
-    await withCleanup(
-      async () => {
-        const resultValue = /** @type {unknown} */ (
-          await runBoundedSubprocess(
-            process.execPath,
-            [
-              'test',
-              '--timeout',
-              '60000',
-              ...(fixtureTestFilter ? ['--test-name-pattern', fixtureTestFilter] : []),
-              fileURLToPath(import.meta.url),
-            ],
-            {
-              cwd: bundle,
-              env: {
-                ...pinnedEnvironment(process.execPath, process.env, bundle),
-                VIDA_INITIAL_SOURCE_FIXTURE_CHILD: '1',
-                VIDA_INITIAL_SOURCE_FIXTURE_ROOT: root,
-              },
-              timeoutMs: 180_000,
+/** @param {string} name */
+async function runOwnedInitialSourceFixture(name) {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-initial-source-owned-'));
+  let terminalObserved = false;
+  await withCleanup(
+    async () => {
+      const resultValue = /** @type {unknown} */ (
+        await runBoundedSubprocess(
+          process.execPath,
+          [
+            'test',
+            '--timeout',
+            '60000',
+            '--test-name-pattern',
+            '^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$',
+            fileURLToPath(import.meta.url),
+          ],
+          {
+            cwd: bundle,
+            env: {
+              ...pinnedEnvironment(process.execPath, process.env, bundle),
+              VIDA_INITIAL_SOURCE_FIXTURE_CHILD: '1',
+              VIDA_INITIAL_SOURCE_FIXTURE_ROOT: root,
             },
-          )
-        );
-        const result = parseBoundedChildResult(resultValue);
-        terminalObserved = result.exitCode !== null || result.signal !== null;
-        process.stderr.write(result.stderr);
-        if (result.timedOut || result.exitCode !== 0 || result.signal)
-          throw new Error(subprocessFailure('initial-source fixture subprocess', result));
-        return result;
-      },
-      () => {
-        if (!terminalObserved) throw new Error('Initial Source child outcome is unknown; fixture retained at ' + root);
-        removeOwnedFixtureParent(root);
-      },
-      'Initial Source subprocess',
-    );
-  }, 190_000);
+            timeoutMs: 180_000,
+          },
+        )
+      );
+      const result = parseBoundedChildResult(resultValue);
+      terminalObserved = result.exitCode !== null || result.signal !== null;
+      process.stderr.write(result.stderr);
+      if (result.timedOut || result.exitCode !== 0 || result.signal)
+        throw new Error(subprocessFailure('initial-source fixture subprocess', result));
+      return result;
+    },
+    () => {
+      if (!terminalObserved) throw new Error('Initial Source child outcome is unknown; fixture retained at ' + root);
+      removeOwnedFixtureParent(root);
+    },
+    'Initial Source subprocess',
+  );
 }
 
-const registerFixtureTest = fixtureChild ? test : () => {};
+// Each real Host case owns its child and cleanup; existing case/child bounds stay fixed.
+/** @param {string} name @param {() => Promise<void>} operation */
+function registerFixtureTest(name, operation) {
+  if (fixtureChild) test(name, operation);
+  else test(name, () => runOwnedInitialSourceFixture(name), 190_000);
+}
+
 /**
  * Reuse the real admitted-work/initial-continuation/same-run synthesis path and
  * stop at the current unissued wave-1 frontier. This is shared by the existing
  * CLI regression and the Host-only code-rebind tests.
  * @param {InitialWorkFixture} f
+ * @param {boolean} [checkInitialRetries]
  */
-async function prepareInitialSourceWaveOne(f) {
+async function prepareInitialSourceWaveOne(f, checkInitialRetries = true) {
   const currentSource = changeOneAcceptedDocument(f);
   const requestPath = '.agent/work/' + f.identity.work_id + '/initial-source-continuation.json';
   writeFileSync(
@@ -1066,23 +1158,25 @@ async function prepareInitialSourceWaveOne(f) {
   f.ledger = receiptLedger;
   f.store = receiptLedger.hostState;
   expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
-  const retry = parseInitialSourceCommandResult(
-    await runAgent([
-      '--continue-initial-source',
-      'true',
-      '--mode',
-      'apply',
-      '--project-root',
-      f.root,
-      '--request',
-      requestPath,
-    ]),
-    'initial_source_continuation_already_ready',
-  );
-  expect(retry.status).toBe('initial_source_continuation_already_ready');
-  expect(retry.continuation_id).toBe(receipt.continuation_id);
-  expect(retry.request_digest).toBe(receipt.request_digest);
-  expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
+  if (checkInitialRetries) {
+    const retry = parseInitialSourceCommandResult(
+      await runAgent([
+        '--continue-initial-source',
+        'true',
+        '--mode',
+        'apply',
+        '--project-root',
+        f.root,
+        '--request',
+        requestPath,
+      ]),
+      'initial_source_continuation_already_ready',
+    );
+    expect(retry.status).toBe('initial_source_continuation_already_ready');
+    expect(retry.continuation_id).toBe(receipt.continuation_id);
+    expect(retry.request_digest).toBe(receipt.request_digest);
+    expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(receipt);
+  }
 
   const reopenedContext = { ...admittedInput(f).context, scope_digest: currentSource.digest };
   const reopenedBridge = await MastraSessionBridge.open({
@@ -1139,10 +1233,12 @@ async function prepareInitialSourceWaveOne(f) {
   const issuedAction = firstValue(issuedActions, 'issued actions');
   expect(issuedAction.request).toEqual(request.currentInitialRequest);
   const firstIssueId = issuedAction.issue_id;
-  await expectRejectedMessage(
-    runAgent([...args, ...expectedRunVersion(issuedStateVersion), '--issue-wave', 'true']),
-    /Initial Source continuation has an issued action with unknown outcome; automatic reissue is forbidden/,
-  );
+  if (checkInitialRetries) {
+    await expectRejectedMessage(
+      runAgent([...args, ...expectedRunVersion(issuedStateVersion), '--issue-wave', 'true']),
+      /Initial Source continuation has an issued action with unknown outcome; automatic reissue is forbidden/,
+    );
+  }
 
   const unknownOutcomeLedger = openConfiguredMastraSessionLedger(f.root);
   f.ledger = unknownOutcomeLedger;
@@ -1689,12 +1785,13 @@ registerFixtureTest(
     }),
 );
 
-registerFixtureTest(
-  'recovers the exact completed Initial Source writer report into a readonly follow-up under current code',
-  async () => {
+/** @param {'none' | 'guards' | 'crash-before' | 'crash-after'} refreshOnly
+ * @returns {() => Promise<void>} */
+function completedSourceRecoveryCase(refreshOnly) {
+  return async () => {
     await withInitialWork(async (f) => {
       holdExpiredOwnerClockForFixture(f);
-      const { args } = await prepareInitialSourceWaveOne(f);
+      const { args } = await prepareInitialSourceWaveOne(f, false);
       let stateVersion = continuationState(f).journalVersion;
       const prewriterIssue = requireRecord(
         await runAgent([...args, ...expectedRunVersion(stateVersion), '--issue-wave', 'true']),
@@ -2072,6 +2169,281 @@ registerFixtureTest(
       });
       const beforeCodeAdoption = continuationState(f),
         codeRequest = codeFixtureRequest(canonicalJsonDigest('fixture-next-code'), 'next-code');
+      if (refreshOnly !== 'none') {
+        holdExpiredOwnerClockForFixture(f);
+        const expiredTicket = beforeCodeAdoption.ledger.tickets.find(
+          (ticket) => ticket.ticket_id === executionLease.ticket_id,
+        );
+        expect(Date.parse(expiredTicket?.expires_at ?? '')).toBeLessThan(Date.now());
+        // Exercise the production publication handler with real isolated Host state.
+        // Fixture endpoint callbacks remain Static proof, never native qualification.
+        const planAccess = requireSafeRepositoryAccess(f.root),
+          planDirectory = '.agent/work/fixture-prepared-code',
+          planPath = planDirectory + '/qualified-runtime-code-continuation-plan.v1.json',
+          oldPlanBytes = Buffer.from(JSON.stringify(codeRequest, null, '\t') + '\n'),
+          priorRequestId = canonicalJsonDigest(codeRequest),
+          historyPath = planDirectory + '/qualified-code-plan-history/' + priorRequestId + '.json',
+          newTarget = validateQualifiedRuntimeCodePreparedPlanRefresh(codeRequest, {
+            ...codeRequest,
+            currentRuntimeCodeDigest: canonicalJsonDigest('fixture-refreshed-code'),
+            currentManifestRef: '.tmp/fixture/refreshed-manifest.json',
+            currentManifestDigest: canonicalJsonDigest('fixture-refreshed-manifest'),
+            currentInstallRef: '.tmp/fixture/refreshed-install.json',
+            systemUpdateRef: '.tmp/fixture/refreshed-install.json',
+            systemUpdateOperationId: 'fixture-refreshed-install',
+            nativeSelfAttestationDigest: canonicalJsonDigest('fixture-refreshed-native'),
+          });
+        planAccess.ensureDirectory(planDirectory, 'fixture plan');
+        planAccess.writeExclusive(planPath, oldPlanBytes.toString('utf8'), 'fixture original plan');
+        const sourceBeforeRefresh = snapshotDeclaredSources(planAccess, f.documents);
+        const verifyRefreshSource = () => {
+          expect(snapshotDeclaredSources(planAccess, f.documents)).toEqual(sourceBeforeRefresh);
+        };
+        const refreshInput = {
+          access: planAccess,
+          store: hostStore(f),
+          relative: planPath,
+          request: newTarget,
+          expectedRequestId: priorRequestId,
+          verifyCurrent: verifyRefreshSource,
+        };
+        if (refreshOnly === 'crash-before' || refreshOnly === 'crash-after') {
+          const childFile = path.join(f.root, '.tmp/refresh-publication-child.mjs');
+          mkdirSync(path.dirname(childFile), { recursive: true });
+          for (const phase of [refreshOnly === 'crash-before' ? 'before-replacement' : 'after-replacement']) {
+            writeFileSync(path.join(f.root, planPath), oldPlanBytes);
+            const childCode = `
+            import {Database} from 'bun:sqlite';
+            import {HostStateStore} from ${JSON.stringify(new URL('../src/host-state.ts', import.meta.url).href)};
+            import {deriveWorkspaceId} from ${JSON.stringify(new URL('../src/workspace-identity.ts', import.meta.url).href)};
+            import {requireSafeRepositoryAccess} from ${JSON.stringify(new URL('../src/config/safe-repository-access.ts', import.meta.url).href)};
+            import {refreshQualifiedRuntimeCodePreparedPlan} from ${JSON.stringify(new URL('../src/orchestration/qualified-runtime-code-continuation.ts', import.meta.url).href)};
+            const root=${JSON.stringify(f.root)}, request=${JSON.stringify(newTarget)};
+            const database=new Database(${JSON.stringify(path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite'))});
+            const store=new HostStateStore(database, deriveWorkspaceId(request.identity.repository_id,root),undefined,undefined,undefined,undefined,root);
+            const real=requireSafeRepositoryAccess(root);
+            const access={...real,replaceAtomicAsync:async(...args)=>{
+              if(${JSON.stringify(phase)}==='after-replacement') await real.replaceAtomicAsync(...args);
+              process.exit(${phase === 'before-replacement' ? 31 : 32});
+            }};
+            await refreshQualifiedRuntimeCodePreparedPlan({access,store,relative:${JSON.stringify(planPath)},
+              request,expectedRequestId:${JSON.stringify(priorRequestId)},verifyCurrent:()=>{}});
+            throw Error('Crash injection was not reached');
+          `;
+            writeFileSync(childFile, childCode);
+            const child = parseBoundedChildResult(
+              await runBoundedSubprocess(process.execPath, [childFile], {
+                cwd: f.root,
+                env: pinnedEnvironment(process.execPath, process.env, bundle),
+                timeoutMs: 10_000,
+              }),
+            );
+            expect(child.timedOut).toBe(false);
+            expect(child.signal).toBeNull();
+            expect(child.exitCode, Buffer.from(child.stderr).toString()).toBe(phase === 'before-replacement' ? 31 : 32);
+            expect(child.stderrTruncated || child.stdoutTruncated).toBe(false);
+            expect(planAccess.readBytes(historyPath, 'terminated child history')).toEqual(oldPlanBytes);
+            const expectedBytes =
+              phase === 'before-replacement' ? oldPlanBytes : Buffer.from(JSON.stringify(newTarget, null, 2) + '\n');
+            expect(planAccess.readBytes(planPath, 'terminated child plan')).toEqual(expectedBytes);
+            expect(continuationState(f)).toEqual(beforeCodeAdoption);
+            await refreshQualifiedRuntimeCodePreparedPlan(refreshInput);
+            expect(planAccess.readBytes(planPath, 'interrupted exact retry')).toEqual(
+              Buffer.from(JSON.stringify(newTarget, null, 2) + '\n'),
+            );
+            expect(planAccess.readBytes(historyPath, 'retained interrupted history')).toEqual(oldPlanBytes);
+            expect(continuationState(f)).toEqual(beforeCodeAdoption);
+            expect(snapshotDeclaredSources(planAccess, f.documents)).toEqual(sourceBeforeRefresh);
+          }
+          return;
+        }
+        await Promise.resolve(
+          expect(
+            refreshQualifiedRuntimeCodePreparedPlan({ ...refreshInput, expectedRequestId: 'invalid' }),
+          ).rejects.toThrow(/expected prior request ID/),
+        );
+        await Promise.resolve(
+          expect(
+            refreshQualifiedRuntimeCodePreparedPlan({
+              ...refreshInput,
+              expectedRequestId: canonicalJsonDigest('fixture-unrelated-request'),
+            }),
+          ).rejects.toThrow(/neither exact old nor new request/),
+        );
+        await Promise.resolve(
+          expect(
+            refreshQualifiedRuntimeCodePreparedPlan({
+              ...refreshInput,
+              request: { ...newTarget, nativeSessionHandle: 'foreign-owner' },
+            }),
+          ).rejects.toThrow(/changed original/),
+        );
+        expect(planAccess.fileExists(historyPath, 'no history on denial')).toBe(false);
+        expect(planAccess.readBytes(planPath, 'unchanged denied plan')).toEqual(oldPlanBytes);
+        expect(continuationState(f)).toEqual(beforeCodeAdoption);
+
+        // Both ordinary publication faults retain the exact prior history.
+        for (const phase of ['before-replacement', 'after-replacement']) {
+          let publicationEntered = false;
+          const faultAccess = {
+            ...planAccess,
+            /** @type {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess['replaceAtomicAsync']} */
+            replaceAtomicAsync: async (target, expected, contents, label) => {
+              if (label === 'prepared code plan target refresh') {
+                publicationEntered = true;
+                expect(planAccess.readBytes(historyPath, 'history before replace')).toEqual(oldPlanBytes);
+                if (phase === 'after-replacement')
+                  await planAccess.replaceAtomicAsync(target, expected, contents, label);
+                throw new Error('fixture publication ' + phase);
+              }
+              return planAccess.replaceAtomicAsync(target, expected, contents, label);
+            },
+          };
+          await Promise.resolve(
+            expect(refreshQualifiedRuntimeCodePreparedPlan({ ...refreshInput, access: faultAccess })).rejects.toThrow(
+              'fixture publication ' + phase,
+            ),
+          );
+          expect(publicationEntered).toBe(true);
+          expect(planAccess.readBytes(planPath, 'fault plan restoration')).toEqual(oldPlanBytes);
+          expect(planAccess.readBytes(historyPath, 'exact fault history')).toEqual(oldPlanBytes);
+          expect(continuationState(f)).toEqual(beforeCodeAdoption);
+        }
+
+        // A drifted target belongs to the external writer; rollback must preserve it.
+        const foreignPlanBytes = Buffer.from('foreign fixture writer\n');
+        const driftAccess = {
+          ...planAccess,
+          /** @type {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess['replaceAtomicAsync']} */
+          replaceAtomicAsync: async (target, expected, contents, label) => {
+            await planAccess.replaceAtomicAsync(target, expected, contents, label);
+            if (label === 'prepared code plan target refresh') {
+              writeFileSync(path.join(f.root, planPath), foreignPlanBytes);
+              throw new Error('fixture external publication drift');
+            }
+          },
+        };
+        await Promise.resolve(
+          expect(refreshQualifiedRuntimeCodePreparedPlan({ ...refreshInput, access: driftAccess })).rejects.toThrow(
+            /rollback failed/,
+          ),
+        );
+        expect(planAccess.readBytes(planPath, 'foreign target preservation')).toEqual(foreignPlanBytes);
+        expect(planAccess.readBytes(historyPath, 'history after drift')).toEqual(oldPlanBytes);
+        expect(continuationState(f)).toEqual(beforeCodeAdoption);
+        writeFileSync(path.join(f.root, planPath), oldPlanBytes);
+
+        // Source drift across asynchronous publication must reject and restore only our plan.
+        const sourcePath = path.join(f.root, firstValue(f.documents, 'fixture Source path')),
+          retainedSourceBytes = readFileSync(sourcePath),
+          foreignSourceBytes = Buffer.from('external fixture Source drift\n');
+        const sourceDriftAccess = {
+          ...planAccess,
+          /** @type {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess['replaceAtomicAsync']} */
+          replaceAtomicAsync: async (...replacement) => {
+            await planAccess.replaceAtomicAsync(...replacement);
+            if (replacement[3] === 'prepared code plan target refresh') writeFileSync(sourcePath, foreignSourceBytes);
+          },
+        };
+        try {
+          await Promise.resolve(
+            expect(
+              refreshQualifiedRuntimeCodePreparedPlan({ ...refreshInput, access: sourceDriftAccess }),
+            ).rejects.toThrow(),
+          );
+          expect(planAccess.readBytes(planPath, 'post-publication validation rollback')).toEqual(oldPlanBytes);
+          expect(readFileSync(sourcePath)).toEqual(foreignSourceBytes);
+          expect(continuationState(f)).toEqual(beforeCodeAdoption);
+        } finally {
+          writeFileSync(sourcePath, retainedSourceBytes);
+        }
+
+        writeFileSync(path.join(f.root, historyPath), Buffer.from('foreign history\n'));
+        await Promise.resolve(
+          expect(refreshQualifiedRuntimeCodePreparedPlan(refreshInput)).rejects.toThrow(/history differs/),
+        );
+        expect(planAccess.readBytes(planPath, 'history denial plan')).toEqual(oldPlanBytes);
+        expect(continuationState(f)).toEqual(beforeCodeAdoption);
+        writeFileSync(path.join(f.root, historyPath), oldPlanBytes);
+
+        // The actual SQLite writer fence excludes another connection through awaits.
+        const peerDatabase = new Database(path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite'));
+        peerDatabase.exec('PRAGMA busy_timeout=0');
+        try {
+          const fencedAccess = {
+            ...planAccess,
+            /** @type {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess['replaceAtomicAsync']} */
+            replaceAtomicAsync: async (...replacement) => {
+              expect(() => peerDatabase.exec('BEGIN IMMEDIATE')).toThrow(/locked|busy/i);
+              await Promise.resolve(
+                expect(
+                  hostStore(f).withQualifiedRuntimeCodePlanRefresh(
+                    codeRequest,
+                    () => {
+                      throw new Error('nested refresh callback must not enter');
+                    },
+                    async () => {},
+                  ),
+                ).rejects.toThrow(/already active/),
+              );
+              await Promise.resolve();
+              expect(() => peerDatabase.exec('BEGIN IMMEDIATE')).toThrow(/locked|busy/i);
+              return planAccess.replaceAtomicAsync(...replacement);
+            },
+          };
+          await refreshQualifiedRuntimeCodePreparedPlan({ ...refreshInput, access: fencedAccess });
+          peerDatabase.exec('BEGIN IMMEDIATE');
+          peerDatabase.exec('ROLLBACK');
+        } finally {
+          peerDatabase.close(true);
+        }
+        const newPlanBytes = Buffer.from(JSON.stringify(newTarget, null, 2) + '\n');
+        expect(planAccess.readBytes(planPath, 'published refreshed plan')).toEqual(newPlanBytes);
+        expect(planAccess.readBytes(historyPath, 'byte exact prepared history')).toEqual(oldPlanBytes);
+        expect(continuationState(f)).toEqual(beforeCodeAdoption);
+        expect(snapshotDeclaredSources(planAccess, f.documents)).toEqual(sourceBeforeRefresh);
+        // A lost acknowledgement must revalidate Source and Host under the same guard.
+        await Promise.resolve(
+          expect(
+            refreshQualifiedRuntimeCodePreparedPlan({
+              ...refreshInput,
+              verifyCurrent: () => {
+                throw new Error('fixture Source drift on retry');
+              },
+            }),
+          ).rejects.toThrow(/Source drift on retry/),
+        );
+        await refreshQualifiedRuntimeCodePreparedPlan(refreshInput);
+        expect(planAccess.readBytes(planPath, 'exact retry')).toEqual(newPlanBytes);
+        expect(continuationState(f)).toEqual(beforeCodeAdoption);
+
+        // Both public modes contend on the same existing owner before native checks.
+        await planAccess.withExclusiveLockAsync(
+          planDirectory + '/.qualified-code-plan-owner',
+          'fixture owner',
+          async () => {
+            for (const mode of ['apply', 'refresh']) {
+              await Promise.resolve(
+                expect(
+                  runQualifiedRuntimeCodeContinuation({
+                    '--project-root': f.root,
+                    '--repair-id': 'fixture-prepared-code',
+                    '--mode': mode,
+                  }),
+                ).rejects.toThrow(/lock/i),
+              );
+              expect(continuationState(f)).toEqual(beforeCodeAdoption);
+              expect(planAccess.readBytes(planPath, 'blocked public mode')).toEqual(newPlanBytes);
+            }
+          },
+        );
+        hostStore(f).commitQualifiedRuntimeCodeContinuation(codeRequest, codeFixtureProof);
+        const adoptedRefreshState = continuationState(f);
+        await Promise.resolve(expect(refreshQualifiedRuntimeCodePreparedPlan(refreshInput)).rejects.toThrow());
+        expect(continuationState(f)).toEqual(adoptedRefreshState);
+        expect(planAccess.readBytes(planPath, 'adopted successor denial')).toEqual(newPlanBytes);
+        return;
+      }
       /** @param {import('../src/orchestration/qualified-runtime-code-continuation.ts').QualifiedRuntimeCodeContinuationRequest} candidate */
       const adopt = (candidate) => hostStore(f).commitQualifiedRuntimeCodeContinuation(candidate, codeFixtureProof);
       for (const alteration of [
@@ -2307,7 +2679,24 @@ registerFixtureTest(
         ),
       ).toEqual(completedAttempt);
     });
-  },
+  };
+}
+
+registerFixtureTest(
+  'recovers the exact completed Initial Source writer report into a readonly follow-up under current code',
+  completedSourceRecoveryCase('none'),
+);
+registerFixtureTest(
+  'refreshes SAME prepared code plan with unchanged Host state and guarded crash concurrency',
+  completedSourceRecoveryCase('guards'),
+);
+registerFixtureTest(
+  'retries SAME prepared code plan after terminated publication before replacement',
+  completedSourceRecoveryCase('crash-before'),
+);
+registerFixtureTest(
+  'retries SAME prepared code plan after terminated publication after replacement',
+  completedSourceRecoveryCase('crash-after'),
 );
 
 registerFixtureTest(

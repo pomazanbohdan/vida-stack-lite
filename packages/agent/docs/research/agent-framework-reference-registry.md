@@ -958,3 +958,21 @@ keeps hidden worktree attribute changes from selecting those filters. The
 current checked Git2.55.0 supports this path. Reproduction confirmed false
 acceptance for both hidden flags before correction. Focused regression now
 denies changed root policy and Source inputs without removing the flags.
+
+### Guarded prepared code plan refresh
+
+Checked2026-10-09: official [SQLite WAL implementation](https://github.com/sqlite/sqlite/blob/master/src/wal.c)
+states that only one writer may be active and a competing write transaction
+returns `SQLITE_BUSY`. The existing `BEGIN IMMEDIATE` Host guard retains that
+writer fence while the asynchronous prepared-plan publication is awaited.
+An isolated second SQLite connection verifies contention and release. A separate
+same-connection guard prevents nested artifact mutation.
+
+The official [Node filesystem API](https://nodejs.org/api/fs.html) provides file
+replacement and syncing primitives, not a transaction joining files and SQLite.
+The current safe repository adapter owns atomic replacement and conditional CAS
+under cooperative locks. Retain old-plan history before replacing the active
+plan; do not infer cross-store crash atomicity. Isolated terminated-process
+fixtures exercise retry before and after replacement. Source and native endpoint
+checks must run again after awaited publication and on an already-replaced retry.
+Fixture endpoints establish Source/Host behavior, not native qualification.

@@ -2270,6 +2270,28 @@ current code against the authenticated adoption history. Exact retry returns
 the stored receipt. Plan/apply returns current versions and one next action;
 it never reissues an action or grants Source rights or Runtime acceptance.
 
+Before adoption, `refresh` retargets the SAME prepared plan under its original
+repair ID. It requires the prior request ID. Only the current runtime inventory,
+manifest, installation/update references and native self-attestation may change.
+Identity, attempt, owner, lease generation, parent endpoints, Source and all
+Host/Journal/maintenance versions remain fixed. No schema or repair is replaced.
+
+Apply and refresh hold one shared plan-owner lock. Refresh uses the existing
+Host artifact mutation transaction and SQLite writer fence through publication.
+It checks current versions, quiescence, the sole same-owner execution-only claim
+and absence of an adopted successor. It retains the exact prior UTF-8 plan
+bytes in request-ID history before the atomic active-plan replacement. Check
+plan/history bytes, Source and native endpoints again after replacement, before
+committing the guard. A failed publication restores the prior plan only while
+the active bytes still match this refresh's postimage. Preserve foreign drift.
+
+An interrupted retry accepts only the exact old request or refreshed request
+with matching retained history. Revalidate Host, Source and native endpoints
+under the same writer fence, including when replacement already succeeded.
+Reject unexplained drift and adopted successors. History and separate file
+publication do not form one crash-atomic SQLite/filesystem transaction. Refresh
+changes no Work, Ledger, Journal, Source or lease and grants no operational rights.
+
 ## Completed Source report recovery
 
 An already-executed Source action can retain an uncommitted completed report

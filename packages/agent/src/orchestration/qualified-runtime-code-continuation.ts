@@ -1,5 +1,8 @@
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+import type { SafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
-import type { HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
+import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 
 export interface QualifiedRuntimeCodeContinuationRequest {
@@ -429,4 +432,123 @@ export function validateQualifiedRuntimeCodeContinuationState(
     'foreign ownership or earlier FIFO contender',
   );
   return work;
+}
+
+function readPreparedCodePlan(
+  access: SafeRepositoryAccess,
+  relative: string,
+  label: string,
+): {
+  bytes: Buffer;
+  value: unknown;
+} {
+  const bytes = access.readBytes(relative, label);
+  requireContinuation(bytes.length > 0 && bytes.length <= 64 * 1024 * 1024, 'reference size invalid');
+  const value: unknown = JSON.parse(bytes.toString('utf8'));
+  return { bytes, value };
+}
+
+/** Refresh retained plan bytes; the native caller owns Source and endpoint verification. */
+export async function refreshQualifiedRuntimeCodePreparedPlan({
+  access,
+  store,
+  relative,
+  request,
+  expectedRequestId,
+  verifyCurrent,
+}: {
+  access: SafeRepositoryAccess;
+  store: HostStateStore;
+  relative: string;
+  request: QualifiedRuntimeCodeContinuationRequest;
+  expectedRequestId: string;
+  verifyCurrent: () => void;
+}): Promise<void> {
+  request = validateQualifiedRuntimeCodeContinuationRequest(request);
+  const previous = readPreparedCodePlan(access, relative, 'prepared code plan beforeimage'),
+    before = validateQualifiedRuntimeCodeContinuationRequest(previous.value),
+    expected = expectedRequestId;
+  requireContinuation(
+    typeof expected === 'string' && /^[a-f0-9]{64}$/.test(expected),
+    'expected prior request ID invalid',
+  );
+  requireContinuation(
+    Buffer.from(previous.bytes.toString('utf8')).equals(previous.bytes),
+    'prepared plan UTF-8 bytes invalid',
+  );
+  const oldId = canonicalJsonDigest(before),
+    historyRef = path.posix.dirname(relative) + '/qualified-code-plan-history/' + expected + '.json';
+  const encoded = JSON.stringify(request, null, 2) + '\n',
+    newBytes = Buffer.from(encoded);
+  if (oldId !== expected) {
+    requireContinuation(
+      oldId === canonicalJsonDigest(request) && access.fileExists(historyRef, 'retained prepared code plan history'),
+      'prepared refresh state is neither exact old nor new request',
+    );
+    const retained = readPreparedCodePlan(access, historyRef, 'retained prepared code request');
+    requireContinuation(
+      canonicalJsonDigest(validateQualifiedRuntimeCodeContinuationRequest(retained.value)) === expected,
+      'retained prepared request ID differs',
+    );
+    validateQualifiedRuntimeCodePreparedPlanRefresh(retained.value, before);
+    await store.withQualifiedRuntimeCodePlanRefresh(
+      before,
+      async () => {
+        requireContinuation(
+          access.readBytes(relative, 'prepared refresh retry CAS').equals(previous.bytes) &&
+            access.readBytes(historyRef, 'prepared refresh retry history').equals(retained.bytes),
+          'prepared refresh retry plan or history changed',
+        );
+        verifyCurrent();
+      },
+      async () => {},
+    );
+  } else {
+    validateQualifiedRuntimeCodePreparedPlanRefresh(before, request);
+    await store.withQualifiedRuntimeCodePlanRefresh(
+      before,
+      async () => {
+        requireContinuation(
+          access.readBytes(relative, 'prepared refresh CAS').equals(previous.bytes),
+          'prepared code plan changed before replacement',
+        );
+        verifyCurrent();
+        access.ensureDirectory(path.posix.dirname(historyRef), 'prepared code plan history owner');
+        if (access.fileExists(historyRef, 'prepared code history presence'))
+          requireContinuation(
+            access.readBytes(historyRef, 'exact prepared code history').equals(previous.bytes),
+            'prepared code history differs',
+          );
+        else
+          access.writeExclusive(
+            historyRef,
+            previous.bytes.toString('utf8'),
+            'retain exact prepared code plan beforeimage',
+          );
+        await access.replaceAtomicAsync(
+          relative,
+          createHash('sha256').update(previous.bytes).digest('hex'),
+          encoded,
+          'prepared code plan target refresh',
+        );
+        requireContinuation(
+          access.readBytes(relative, 'published prepared code plan').equals(newBytes) &&
+            access.readBytes(historyRef, 'published prepared code history').equals(previous.bytes),
+          'prepared refresh plan or history changed during replacement',
+        );
+        verifyCurrent();
+      },
+      async () => {
+        const actual = access.readBytes(relative, 'prepared refresh conditional rollback');
+        if (actual.equals(previous.bytes)) return;
+        requireContinuation(actual.equals(newBytes), 'prepared refresh rollback target drifted');
+        await access.replaceAtomicAsync(
+          relative,
+          createHash('sha256').update(newBytes).digest('hex'),
+          previous.bytes.toString('utf8'),
+          'prepared refresh rollback',
+        );
+      },
+    );
+  }
 }
