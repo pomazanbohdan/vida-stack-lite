@@ -235,6 +235,7 @@ function validateRetainedSourcePermission(root, request, state, reservation) {
   const authorizationRevision = acceptedSourceAuthorizationRevision(work, state.journal.state, reference, {
     receipt: state.initialReceipt,
     frontierCodeRebind: state.frontierReceipt,
+    completedSourceReportRecovery: state.recoveryReceipt,
   });
   requireRecovery(
     authority.scope_digest === authorizationRevision &&
