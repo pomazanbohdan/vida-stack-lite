@@ -153,6 +153,7 @@ import type {
 import { projectConfiguredPrewriterContinuationRequests } from './orchestration/delivered-work-continuation.js';
 import { validateInitialSourceContinuationLineage } from './orchestration/admitted-development-packet.js';
 import {
+  projectQualifiedRuntimeCodeAncestor,
   runtimeCodeContinuationProtectedWorkDigest,
   validateQualifiedRuntimeCodeContinuationReceipt,
   validateQualifiedRuntimeCodeContinuationRequest,
@@ -12213,6 +12214,7 @@ export class HostStateStore {
     const row = rows[0]!,
       receipt = readInitialSourceFrontierCodeRebindReceiptRecord(row.payload, row.digest);
     const recovery = this.#readCompletedSourceReportRecoveryReceiptRow(identity, attempt),
+      historicalWork = projectQualifiedRuntimeCodeAncestor(current.work, current.runtimeCodeContinuations),
       currentCodeDigest =
         recovery?.record.request.currentRuntimeCodeDigest ?? receipt.record.successor_work.binding.runtime_code_digest;
     requireState(
@@ -12221,7 +12223,7 @@ export class HostStateStore {
         receipt.record.attempt === attempt &&
         sameJson(receipt.record.identity, identity) &&
         receipt.original_receipt_id === originalReceiptId &&
-        currentCodeDigest === current.work.binding.runtime_code_digest &&
+        currentCodeDigest === historicalWork.binding.runtime_code_digest &&
         (!recovery ||
           (recovery.record.request.initialContinuationId === originalReceiptId &&
             recovery.record.request.frontierReceiptId === receipt.original_receipt_id)),

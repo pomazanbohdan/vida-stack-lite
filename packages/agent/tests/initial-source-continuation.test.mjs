@@ -2794,6 +2794,59 @@ registerFixtureTest(
       hostStore(f).assertSessionProducerCurrent(producer);
       hostStore(f).settleSessionProducer(producer, after.journalVersion);
       expect(continuationState(f)).toEqual(after);
+
+      const codeRequest = validateQualifiedRuntimeCodeContinuationRequest({
+        schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
+        identity: f.identity,
+        attempt: 1,
+        nativeSessionHandle: workLease(after.work).thread_id,
+        leaseGeneration: workLease(after.work).generation,
+        expectedWork: after.workVersion,
+        expectedLedger: after.ledgerVersion,
+        expectedJournal: after.journalVersion,
+        expectedMaintenanceGeneration: after.maintenanceGeneration,
+        originalSourceScopeDigest: after.work.binding.work_source_revision,
+        journalSourceScopeDigest: request.sourceScopeDigest,
+        oldRuntimeCodeDigest: request.newRuntimeCodeDigest,
+        currentRuntimeCodeDigest: canonicalJsonDigest('fixture-qualified-code-after-frontier'),
+        oldRuntimeCodePaths: request.runtimeCodePaths,
+        currentRuntimeCodePaths: request.runtimeCodePaths,
+        oldManifestRef: request.successorManifestRef,
+        oldManifestDigest: request.successorManifestDigest,
+        oldInstallRef: request.systemUpdateRef,
+        currentManifestRef: '.tmp/fixture/later-code-manifest.json',
+        currentManifestDigest: canonicalJsonDigest('fixture-later-code-manifest'),
+        currentInstallRef: '.tmp/fixture/later-code-install.json',
+        systemUpdateRef: '.tmp/fixture/later-code-install.json',
+        systemUpdateOperationId: 'fixture-later-code-install',
+        nativeSelfAttestationDigest: canonicalJsonDigest('fixture-later-code-self'),
+      });
+      // Endpoint fixtures prove this reader join, not native qualification or rights.
+      hostStore(f).commitQualifiedRuntimeCodeContinuation(codeRequest, (candidate) => ({
+        oldRuntime: {
+          codeDigest: candidate.oldRuntimeCodeDigest,
+          codePaths: candidate.oldRuntimeCodePaths,
+          manifestRef: candidate.oldManifestRef,
+          manifestDigest: candidate.oldManifestDigest,
+          installRef: candidate.oldInstallRef,
+        },
+        currentRuntime: {
+          codeDigest: candidate.currentRuntimeCodeDigest,
+          codePaths: candidate.currentRuntimeCodePaths,
+          manifestRef: candidate.currentManifestRef,
+          manifestDigest: candidate.currentManifestDigest,
+          installRef: candidate.currentInstallRef,
+        },
+        systemUpdate: { ref: candidate.systemUpdateRef, operationId: candidate.systemUpdateOperationId },
+        nativeSelfAttestationDigest: candidate.nativeSelfAttestationDigest,
+      }));
+      const later = continuationState(f);
+      expect(later.journal).toEqual(after.journal);
+      expect(later.ledger).toEqual(after.ledger);
+      expect(later.work.lease).toEqual(after.work.lease);
+      expect(
+        hostStore(f).readInitialSourceFrontierCodeRebindReceipt(f.identity, 1, receipt.original_receipt_id),
+      ).toEqual(receipt);
     });
   },
 );
