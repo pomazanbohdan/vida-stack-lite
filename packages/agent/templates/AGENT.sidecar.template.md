@@ -18,6 +18,11 @@ This project-owned sidecar is the source map for business requirements, system s
 
 Framework documentation and agent instructions stay inside the runtime bundle. Project documents and operational state stay outside it. Provider and tenant details belong only to the integration bindings in the root configuration; they are not policy or project identity. Differential comparison is disabled for a new project until an explicit reference implementation is configured; that does not mark migration parity as passed.
 
+Project initialization creates configuration, project instruction instances and
+operational data. It does not copy runtime implementation, dependencies, schemas
+or template Source into the project. Product code keeps its project-owned source
+location. The runtime package owns the initializer and upgrade implementation.
+
 Initialization preserves these project files on repeat runs. Template updates do not overwrite project values. Before any future current-v1 schema change affecting active artifacts, implement and ship one functional bundle-owned artifact repair command with atomic application and recovery; until then, stop before changing those artifacts.
 
 Template owner: framework. Canonical template contract: bundle README.md and current v1 configuration schema. After initialization this file belongs to the project owner.

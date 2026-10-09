@@ -1186,7 +1186,7 @@ export async function advanceCutoff(selector, values) {
   if (pathExists(lock)) fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { withHostStateExclusiveTransaction } = await import('../src/host-state.ts');
   const config = loadRuntimeConfig(values.project_root);
   const access = requireSafeRepositoryAccess(values.project_root);
@@ -1605,7 +1605,7 @@ async function captureStoppedSource(args) {
   const { HostStateStore, openHostStateDatabase, inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
-  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const base = path.resolve(import.meta.dirname, '../../..');
   if (args.length !== 6 || args[0] !== '--mode' || args[2] !== '--project-root' || args[4] !== '--request')
@@ -1806,7 +1806,7 @@ async function recoverUnpreparedWork(args) {
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { loadProjectSetContext } = await import('../src/config/project-context.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
-  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { HostStateStore } = await import('../src/host-state.ts');
   const access = requireSafeRepositoryAccess(root),
     current = loadRuntimeConfig(root),
@@ -1851,7 +1851,8 @@ async function recoverUnpreparedWork(args) {
     current.control.work_root !== original.control.work_root
   )
     throw Error('Unprepared recovery original project or storage differs');
-  const relative = current.control.work_root + '/session-handoff.v1.sqlite';
+  const { sessionHandoffDatabaseRelativePath } = await import('../src/config/project-paths.ts');
+  const relative = sessionHandoffDatabaseRelativePath(current);
   if (!access.fileExists(relative, 'existing unprepared Host')) throw Error('Unprepared recovery Host unavailable');
   const file = sessionHandoffDatabasePath(root, current),
     before = lstatSync(file);
@@ -2206,7 +2207,7 @@ async function captureRetiredSource(args) {
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   if (
     args.length !== 6 ||
@@ -2527,7 +2528,7 @@ async function releaseCompletedReadonly(args) {
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const { HostStateStore, openHostStateDatabase, inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
   const { suspendCompletedReadOnlyWork } = await import('../src/orchestration/suspend-local-work.ts');
@@ -2916,7 +2917,7 @@ async function releaseHistoricalOwner(
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const { Database } = await import('bun:sqlite');
-  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
   const { compareScopedSourceSnapshots } = await import('../src/orchestration/scoped-source-snapshot.ts');
   const { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } =
@@ -3359,15 +3360,14 @@ export async function run(args = process.argv.slice(2)) {
   const configDigest = runtimeConfigDigest(config);
   if (selector && config.runtime.bundle !== 'vida-agent')
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Selected bundle differs from configured runtime.');
-  const initializationPath = path.join(values.project_root, '.agent', 'runtime-initialization.v1.json');
+  const { readRuntimeInitializationReceipt } = await import('../src/config/initialization-record.ts');
+  const { requireSafeRepositoryAccess: initializationAccess } = await import('../src/config/safe-repository-access.ts');
   let initialization;
   try {
-    initialization = JSON.parse(await Bun.file(initializationPath).text());
+    initialization = readRuntimeInitializationReceipt(initializationAccess(values.project_root)).receipt;
   } catch {
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization authority is unavailable.');
   }
-  if (!['pending', 'bound'].includes(initialization.workspace_binding_status))
-    fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization status is invalid.');
   if (
     initialization.repository_id !== config.repository.repository_id ||
     (!values.task_source_operation && initialization.repository_id !== values.repository)
@@ -3385,11 +3385,6 @@ export async function run(args = process.argv.slice(2)) {
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization configuration is stale.');
   if (initialization.workspace_id !== deriveWorkspaceId(config.repository.repository_id, values.project_root))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization workspace identity is stale.');
-  const schemaSha = createHash('sha256')
-    .update(runtimePackageAccess().readBytes('schemas/runtime-initialization.v1.schema.json', 'initialization schema'))
-    .digest('hex');
-  if (initialization.schema_sha256 !== schemaSha)
-    fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization schema is stale.');
   const { assertRuntimePackageExports } = await import('../tooling/maintained-source-inventory.mjs');
   assertRuntimePackageExports(runtimePackageAccess().repository_root);
   if (values.task_source_operation) {
@@ -3464,7 +3459,7 @@ export async function run(args = process.argv.slice(2)) {
     fail('GAP-VIDA-RUN-WORKFLOW-001', 'The requested workflow is not the configured workflow for this selection.');
   if (values.export_staged_witness) {
     const { createStagedRuntimeWitness } = await import('../src/orchestration/staged-runtime-witness.ts');
-    const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+    const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
     const { inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
     const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
@@ -3983,8 +3978,9 @@ export async function run(args = process.argv.slice(2)) {
   }
   {
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+    const { sessionHandoffDatabaseRelativePath } = await import('../src/config/project-paths.ts');
     const access = requireSafeRepositoryAccess(values.project_root);
-    if (access.fileExists(config.control.work_root + '/session-handoff.v1.sqlite', 'existing preparation inspection')) {
+    if (access.fileExists(sessionHandoffDatabaseRelativePath(config), 'existing preparation inspection')) {
       const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
       const { loadProjectSetContext } = await import('../src/config/project-context.ts');
       const project = loadProjectSetContext(values.project_root, config, config.repository.repository_id, [

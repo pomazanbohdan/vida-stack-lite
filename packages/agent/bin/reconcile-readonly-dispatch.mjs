@@ -5,7 +5,7 @@ import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { HostStateStore } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { planReadOnlyDispatchRepair, applyReadOnlyDispatchRepair } from './read-only-dispatch-repair.mjs';
 
@@ -69,7 +69,7 @@ export function runReadOnlyDispatchRepair(args) {
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
   const access = requireSafeRepositoryAccess(root);
   access.assertDirectory(config.control.work_root, 'read-only dispatch state root');
-  const relativeDatabasePath = `${config.control.work_root}/session-handoff.v1.sqlite`;
+  const relativeDatabasePath = sessionHandoffDatabaseRelativePath(config);
   requireCommand(access.fileExists(relativeDatabasePath, 'read-only dispatch database'),
     'read-only dispatch database is absent or unsafe');
   const databasePath = sessionHandoffDatabasePath(root, config);

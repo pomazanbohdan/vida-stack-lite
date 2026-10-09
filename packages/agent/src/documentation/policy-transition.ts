@@ -8,6 +8,7 @@ import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.sc
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
+import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
 
 type Entry = { path: string; bytes: string; sha256: string; size: number };
@@ -206,7 +207,7 @@ export function documentationPolicyTransitionPreimages(
       'intermediate phase has forged closure',
     );
   // Read-only database access verifies the real fence; a caller's phase/token is insufficient.
-  const databasePath = `${config.control.work_root}/session-handoff.v1.sqlite`;
+  const databasePath = sessionHandoffDatabaseRelativePath(config);
   access.readBytes(databasePath, 'existing transition fence database');
   const db = new Database(path.join(input.repository_root, databasePath), {
     readonly: true,

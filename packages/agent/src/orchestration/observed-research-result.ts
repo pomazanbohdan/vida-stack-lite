@@ -4,6 +4,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import scopeSchema from '../../schemas/implementation-scope.v1.schema.json' with { type: 'json' };
 import acceptanceSchema from '../../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
 import { runtimeConfigDigest, type AgentRuntimeConfig } from '../config/runtime-config.js';
+import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
 import type { WorkState } from '../host-state.js';
 import {
@@ -187,7 +188,7 @@ export function buildObservedResearchResult(input: ObservedResearchResultInput):
       `research ${key} lack source claim support`,
     );
   }
-  const pointer = path.posix.join(config.control.work_root, 'session-handoff.v1.sqlite');
+  const pointer = sessionHandoffDatabaseRelativePath(config);
   requireResearch(
     !path.posix.isAbsolute(pointer) && !pointer.includes('..') && !pointer.includes('\\') && !pointer.includes(':'),
     'persisted observation pointer is unsafe',

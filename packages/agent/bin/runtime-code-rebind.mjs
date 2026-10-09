@@ -4,6 +4,7 @@ import { closeSync, constants, fsyncSync, lstatSync, openSync, readFileSync, wri
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
+import { coordinationLedgerDigest } from '../src/contracts/envelopes.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import {
   loadRuntimeConfig,
@@ -16,7 +17,7 @@ import {
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { selectCorrectiveEvidence, validateWorkSessionBinding } from '../src/orchestration/final-assurance.ts';
 import { HostStateStore } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { resumePausedLocalWork } from '../src/orchestration/resume-paused-local-work.ts';
 import {
@@ -213,7 +214,7 @@ function parse(args) {
 function trustedDatabase(root, config, readonly) {
   const access = requireSafeRepositoryAccess(root);
   access.assertDirectory(config.control.work_root, 'runtime-code rebind work root');
-  const relative = `${config.control.work_root}/session-handoff.v1.sqlite`;
+  const relative = sessionHandoffDatabaseRelativePath(config);
   requireRebind(access.fileExists(relative, 'runtime-code rebind database'), 'database absent or unsafe');
   const file = sessionHandoffDatabasePath(root, config);
   const stat = lstatSync(file);
@@ -408,11 +409,11 @@ function forwardLineage(root, operationChain, paths, oldDigest, newDigest) {
   return { parentManifestDigest: oldManifestDigest, successorManifestDigest: newManifestDigest };
 }
 
-function checkedRow(database, table, where, args) {
+function checkedRow(database, table, where, args, digest = canonicalJsonDigest) {
   const row = database.query(`SELECT revision,payload,digest FROM ${table} WHERE ${where}`).get(...args);
   requireRebind(row && Number.isSafeInteger(row.revision) && row.revision > 0, `${table} row missing`);
   const value = JSON.parse(row.payload);
-  requireRebind(canonicalJsonDigest(value) === row.digest, `${table} row digest differs`);
+  requireRebind(digest(value) === row.digest, `${table} row digest differs`);
   return { value, version: { revision: row.revision, digest: row.digest } };
 }
 
@@ -489,9 +490,13 @@ export function planRuntimeCodeRebind({
   };
   const key = JSON.stringify([identity.repository_id, identity.project_ids, identity.integrations_digest, workId]);
   const work = checkedRow(database, 'agent_host_state', "workspace_id=? AND kind='work' AND id=?", [workspaceId, key]);
-  const ledger = checkedRow(database, 'agent_host_state', "workspace_id=? AND kind='ledger' AND id='shared'", [
-    workspaceId,
-  ]);
+  const ledger = checkedRow(
+    database,
+    'agent_host_state',
+    "workspace_id=? AND kind='ledger' AND id='shared'",
+    [workspaceId],
+    coordinationLedgerDigest,
+  );
   const journal = checkedRow(
     database,
     'agent_host_mastra_session_ledger',
@@ -1518,7 +1523,12 @@ export async function applyDeliveredWorkContinuationPlan({ database, root, works
 
 function sameRepairIntent(left, right) {
   const stable = (plan) => {
-    const { expectedWork, expectedLedger, expectedMaintenanceGeneration, ...request } = plan.request;
+    const {
+      expectedWork: _expectedWork,
+      expectedLedger: _expectedLedger,
+      expectedMaintenanceGeneration: _expectedMaintenanceGeneration,
+      ...request
+    } = plan.request;
     return {
       repair_id: plan.repair_id,
       actor: plan.actor,

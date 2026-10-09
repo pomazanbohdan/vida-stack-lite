@@ -1,4 +1,4 @@
-# Candidate-only Bun 1.4 policy. Legacy agent-runtime keeps its Node/npm policy.
+# Bun runtime and local test configuration.
 # Authority/config files remain strict JSON/YAML and are never parsed as JSON5.
 telemetry = false
 env = false

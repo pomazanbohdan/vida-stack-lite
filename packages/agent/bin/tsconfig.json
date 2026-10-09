@@ -7,6 +7,14 @@
     "noEmit": true,
     "rootDir": ".."
   },
-  "include": ["continue-initial-source.mjs"],
+  "include": [
+    "continue-initial-source.mjs",
+    "local-release-artifacts.mjs",
+    "capture-completed-readonly.mjs",
+    "read-only-dispatch-repair.mjs",
+    "reconcile-synthesis-qualification.mjs",
+    "runtime-code-rebind.mjs",
+    "synthesis-observation-correction.mjs"
+  ],
   "exclude": []
 }

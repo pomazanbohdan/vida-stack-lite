@@ -5,7 +5,7 @@ import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore, openHostStateDatabase, inspectHostWorkspaceDatabase } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 
 function requireRepair(value, message) {
   if (!value) throw new Error(`vida work-state repair: ${message}`);
@@ -42,7 +42,7 @@ export function runWorkStateRepair(args) {
   const config = loadRuntimeConfig(root);
   const access = requireSafeRepositoryAccess(root);
   const databasePath = sessionHandoffDatabasePath(root, config);
-  const relative = path.relative(root, databasePath).replaceAll(path.sep, '/');
+  const relative = sessionHandoffDatabaseRelativePath(config);
   requireRepair(
     access.fileExists(relative, 'existing canonical HostState database'),
     'canonical HostState database is unavailable; inspection never creates one',

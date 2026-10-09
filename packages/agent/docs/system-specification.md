@@ -39,12 +39,44 @@ ownership, policy checks and freshness remain technically enforced.
 
 Mastra owns the configured stage graph, suspension and session snapshot. The
 runtime owns work identity, exact repository/project/thread binding, ownership,
-leases, coordination, artifact integrity and CAS through HostState. Existing
-Cedar WASM and Edictum SDK boundaries execute in-process and retain their
-policy/evidence responsibilities. Configuration alone does not prove that a
+leases, coordination, artifact integrity and CAS through HostState. Cedar WASM
+authorizes operations in-process. VIDA validates the finite configured policy
+and evidence contracts. Configuration alone does not prove that a
 particular action passed enforcement. Native session tools remain the current execution adapter.
 The CLI prepares and issues typed actions, accepts bounded actual reports and
 checks freshness before progress. Uncertain issued actions are not reissued.
+
+Mastra is the only workflow engine. VIDA owns the finite configured tool-policy
+checks in `operation-policy.ts` and the adapter in `policy-workflow.ts`. The
+exported `RuntimeKernel.runGovernedWrite` supports direct SDK calls outside a
+Mastra Agent, so its preconditions, result contract and configured session limits
+must execute at one common VIDA boundary. Preserve policy-only evaluation without
+execution. Do not add a generic rule language, second scheduler or policy engine.
+HostState retains attributable approval, operation reservation, CAS and UNKNOWN
+fencing; Cedar retains authorization. Reuse those implementations. Keep current
+v1 configuration and receipt shapes, including their existing field names;
+renaming a field is not a prerequisite for removing the library. Existing public
+SDK operations remain supported through the same contract boundary.
+Each governance session has one Mastra graph and an isolated in-memory snapshot.
+Approval records a decision without advancing the stage; the next evaluation
+advances it. Recording a result advances only the final stage when its configured
+result condition passes. Required-stage evidence lives in that same snapshot.
+The graph runs no tools and consumes no Host approval. Its explicit SDK reset
+clears policy state only; it cannot reset a durable reservation or replay an
+uncertain operation. A reset of the current stage resumes that suspended step.
+Cross-stage policy reset uses Mastra's explicit time travel over pure steps.
+The direct-call guard counts denied attempts and completed or failed executions.
+It reserves concurrent capacity before an effect. Invalid and error-shaped
+results cannot complete a Host reservation.
+Preparation failures stop before policy evaluation and the writer. They still
+count as one denied attempt. `GovernanceDenied` returns a safe message and a
+finite `decisionName`: `configuration`, `envelope`, `authorization`, `approval`,
+`reservation` or `cleanup`, with `decisionSource: preparation`. Raw input and
+adapter messages are not copied into the public reason. Diagnostic causes are
+retained. A failed reservation abort retains operation custody and both errors;
+it does not authorize a new attempt or replay.
+The current dependency comparison is recorded in the
+[framework reference registry](research/agent-framework-reference-registry.md#mastra-and-edictum).
 
 ## Dynamic engine requirements
 
@@ -79,6 +111,81 @@ Audit F04 effective reachability and F05 acceptance remain validation questions;
 the audit alone does not establish reproduced defects. No additional UI, provider
 integration or token/ROI benchmark lane is implied by this engine scope.
 
+## Initialized project layout and upgrades
+
+The approved target keeps product Source in `packages/agent` and
+`packages/plugin`. An initialized consumer keeps VIDA configuration, local
+instructions and operational state under `.vida`. Root `AGENTS.md` is only the
+discovery entry; it points to the project instruction and source map in `.vida`.
+Package-owned instruction Source remains in the runtime package.
+Initialization does not copy product implementation, dependencies, bundled
+schemas or maintained templates into `.vida`. Project instructions are generated
+instances or owner-authored additions; their maintained Source and upgrade code
+remain in `packages/agent`. Root discovery is the only integration entry outside
+`.vida`; business and product documents keep their project-owned locations.
+
+The configuration entry is `.vida/project.yaml`. It contains project settings
+and references `.vida/agents.yaml` and `.vida/flows.yaml`. Each component owns
+disjoint fields. One loader resolves them through the safe repository boundary,
+validates each component, composes one configuration and validates its cross-file
+references. The effective binding covers every input. No implicit deep merge,
+host-dependent search path or network schema lookup selects configuration.
+
+| File | Schema | Owned configuration |
+| --- | --- | --- |
+| `project.yaml` | `VidaProjectConfig/v1` | Repository, projects, paths, policies and remaining runtime settings; fixed local component references |
+| `agents.yaml` | `VidaAgentsConfig/v1` | Agent profiles, role instructions, tool and egress policies, teams |
+| `flows.yaml` | `VidaFlowsConfig/v1` | Workflows and workflow bindings |
+
+All components share one `config_id` and declare independent content revisions.
+The project revision maps to the composed `config_revision`. Conversion creates
+the agents and flows documents at revision 1. Their revisions do not claim an
+inferred history. The internal configuration keeps `AgentRuntimeConfig/v1` and
+its existing `version: 1`. Composition reuses its schema and reference checks.
+The exact-input binding includes all three fixed paths and their complete UTF-8
+text, including metadata. A content digest of the composed value alone is
+insufficient for that binding. The three inputs together are limited to 4 MiB;
+YAML and structured snapshots reject nesting beyond 64 levels before traversal
+can overflow. Parsing or conversion alone never grants loaded-config authority.
+
+Local instructions and their source map live in `.vida/instructions` and
+`.vida/AGENT.sidecar.md`. Work, coordination, planning and temporary state use
+separate operational subdirectories. One path resolver supplies all consumers.
+The shared resolver owns both configuration locations and Host/Mastra database
+names. Readers, writers and persisted relative pointers use that same mapping.
+It operates on validated configuration; configuration ingress, safe filesystem
+access and Host authorization retain their existing responsibilities. Resolution
+does not probe old directories, choose a fallback or create state.
+Documentation policy includes managed configuration and instructions; it excludes
+only operational subdirectories. It must not exclude all of `.vida`.
+
+Every managed structured artifact and instruction declares its schema identity.
+JSON/YAML keeps the `Type/vN` convention. Markdown uses a small YAML frontmatter
+with `schema`, stable `id` and `revision`. Schema version describes the format;
+revision describes the content. The runtime package version is separate.
+Schema definitions retain explicit `$schema` dialect and versioned `$id` values.
+Existing valid v1 records need no duplicate version field or cosmetic renaming.
+
+One bundle-owned upgrade entry and migration registry extend the existing repair
+and maintenance owner. A migration declares its exact supported input and output
+versions, dependencies and affected files. The operation inspects once, freezes
+a plan, records its intent and beforeimages, prepares and validates outputs, then
+activates them under the maintenance fence. SQLite changes use a transaction;
+file changes use the existing journal and atomic replacement. A database
+transaction alone cannot make arbitrary file writes atomic. Readers cannot admit
+partially applied state.
+
+Resume uses the same operation and recorded progress. It never repeats an
+uncertain effect. Unknown future versions produce an actionable upgrade error;
+normal reads never rewrite older files. Only the migration reader interprets
+supported older formats. Preserve owner-authored configuration and instructions;
+report conflicting local edits instead of silently overwriting them.
+
+The upgrade implementation and recovery path must precede any active schema or
+layout change. Fresh CLEAR initialization creates current `.vida` state without
+importing archived attempts, leases or UNKNOWN operations. Runtime installation,
+project migration and Runtime acceptance remain distinct results.
+
 ## Package and consumer boundaries
 
 The source repository contains exactly `agent=packages/agent` and
@@ -107,6 +214,19 @@ implementation or machine-specific installation path. Generic runtime behavior,
 ProjectContext, ownership/CAS, maintenance, Cedar, fs-safe and Mastra/LibSQL
 semantics remain unchanged. A convenience ABI or loader flag is not established
 as a supported mechanism without actual target qualification.
+
+CLI help is a maintained public contract. `vida-agent --help` lists every
+top-level command, alias and global option. Each command supports `--help`
+with its purpose, syntax, options, types, required values, defaults, supported
+values, conflicting options and a minimal valid example. Nested modes expose
+their own option sets without requiring the reader to inspect Source. Use one
+command/option declaration for parsing, dispatch and help where applicable;
+do not maintain a second manual command inventory. Help returns successfully
+without project initialization, credentials, network access or mutation.
+Compatibility aliases route to the same help. A development gate checks public
+command/option parity and behavior; an undocumented public option or a help
+option rejected by its parser fails that gate. Isolated native help checks
+provide behavior evidence, not installation or Runtime acceptance.
 
 Recognized `GAP-VIDA-RUN-CLI-*` failures retain their code-defined public message
 before phase/reason inference from parser text. This keeps unsupported-argument
@@ -506,9 +626,26 @@ without rewriting either record. An outstanding patch, missing/mismatched
 baseline or unsupported manifest rejects without rewriting those artifacts.
 The sole reconciliation exception is an exact completed pending installation:
 existing archive and installed-tree proof must match before repairing its success
-pointer; the baseline is re-read and validated before new allocation. SQLite
-writer exclusion does not make the separate filesystem saves atomic. Preparation
-metadata is not installed proof; version equality never replaces exact payload,
+pointer; the baseline is re-read and validated before new allocation.
+
+Preparation stores one `VidaReleasePreparation/v1` intent before changing the
+manifest, disposition receipt or release pointers. It contains the selected
+operation/version and exact before/after images for those targets. The existing
+preparation entry resumes that intent under admission exclusion. It accepts
+only each recorded beforeimage or afterimage; a third state preserves the
+intent and stops without overwrite or worker launch. The journal precedes the
+pending pointer. After every afterimage matches, the intent is atomically moved
+into its operation as `preparation.json`. Its manifest beforeimage identifies
+the same minor/major retry after a lost response; the current journal supplies
+the returned status. A different override still requires supported disposition.
+Other release admission and repair operations wait for preparation to settle.
+The bundle's `reconcile-artifacts --kind release-preparation --mode resume
+--project-root ROOT` resumes only the exact pending intent. It does not select
+a version, start a worker or establish a confirmed version baseline.
+Same-version preparation preserves manifest bytes. Process-interruption
+recovery does not imply platform power-loss durability.
+
+Preparation metadata is not installed proof; version equality never replaces exact payload,
 archive, operation, current assurance or installed postchecks.
 
 Candidate preparation settles version and ownership before assurance. Applicable
@@ -664,9 +801,7 @@ download. Transport ZIP is bounded to256MiB, nested TGZ to240MiB and result JSON
 to8MiB. The observer reuses the existing fs-safe archive reader and exact Source
 lock bindings; unavailable or drifting optional jszip is a GAP, not an implicit
 installation or alternative parser. No current v1 request/result/release/Host
-schema changes. Broad latest-stable dependency/tool and caller adaptation is
-the last-priority 0.1.3 lane, after native UPDATE01/developer-unblocking work and
-required installed checkpoints, before final 0.1.3 delivery and acceptance.
+schema changes. The current backlog sets dependency/tool adaptation priorities.
 P0 work retains exact current qualified pins; metadata drift alone does not
 block every step. Actual required runtime/reader defects and missing target
 qualification still block their dependent effects. Prepared workflow pins do
@@ -790,8 +925,11 @@ Compilation uses deterministic pinned tools and explicit build inputs, retaining
 useful function/class names and disabling ambient dotenv/bunfig/build-environment
 configuration. Minification and bytecode require actual command/native-resource
 checks; performance or size improvement is claimed only from comparable measured
-evidence. Short commands and control return target under two seconds, separately
-from elapsed long-operation time. Native CI build/artifact verification and English product-
+evidence. Operations target completion within two seconds. Long operations expose
+asynchronous start/status responses within that target and retain total elapsed
+time. A slower result triggers causal optimization of duplicate work, reads,
+caches and contention under the lifecycle policy; it is not an implicit timeout.
+Native CI build/artifact verification and English product-
 version release notes/scripts are prepared and qualified without executing
 registry or GitHub publication merely as a test.
 
@@ -822,6 +960,21 @@ effects is permitted. Native and CI acceptance retain their actual GAPs. Only
 verified installed native behavior can establish developer readiness.
 
 ## Scoped source and lease continuity
+
+Host and CLI consumers use the same canonical codec for `CoordinationLedger/v1`.
+The ledger uses its schema collection limits and an 8MiB encoded byte bound.
+Its tickets, claims and history records keep those component bounds during
+comparison and validation. They do not inherit the 10,000-node limit of one
+untrusted ingress message. Ordinary ingress retains that limit. Existing v1
+canonical bytes, digests, CAS, FIFO and authority checks remain unchanged.
+Composite continuation receipts have a 64MiB aggregate bound and validate
+property descriptors before reading fields; accessors and serialization hooks
+are rejected without invocation.
+
+Read-only session inspection reads Work, Ledger and Journal in one database
+read transaction. Its returned versions describe one committed snapshot.
+It does not open a writer, renew a lease or make the snapshot valid for a later
+effect; that effect still checks current authority and CAS.
 
 Project membership for a repository path comes from the deepest matching
 configured `project_root`. Equal deepest roots are explicitly shared by those
@@ -983,7 +1136,7 @@ The projection grants no rights and changes no existing persisted v1 contract.
 The Host validates applicable current plan and independent security evidence
 before reserving a Source attempt. It uses the genuine Host-created request,
 current work and journal, scope and acceptance bytes, task packet and configured
-project identity. Actual Cedar and Edictum decisions remain required alongside
+project identity. Actual Cedar and VIDA policy decisions remain required alongside
 the attributable scoped human permission. A locally formatted approval receipt
 does not substitute for a policy decision.
 
@@ -1025,12 +1178,12 @@ source or context invalidates the affected evidence. Cedar's
 [authorization contract](https://docs.cedarpolicy.com/auth/authorization.html)
 defines policy evaluation; the Host binds its result to the protected operation.
 
-Edictum evaluates the actual configured tool call before its effect. Record read
+The VIDA guard evaluates the actual configured tool call before its effect. Record read
 evidence only after a successful read; a dry-run decision is not execution proof.
 The configured prewriter result must be persisted and attached before writer
-issuance. The result cannot be supplied later by final assurance. This follows
-Edictum's [workflow gates](https://github.com/edictum-ai/edictum#workflow-gates)
-and [execution pipeline](https://docs.edictum.ai/docs/concepts/how-it-works).
+issuance. The result cannot be supplied later by final assurance. Mastra supplies
+the [stage suspension and continuation](https://mastra.ai/docs/workflows/suspend-and-resume);
+VIDA retains the approval and evidence contract at the effect boundary.
 
 ### Recovery across delivered configuration
 

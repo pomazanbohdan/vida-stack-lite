@@ -1,0 +1,143 @@
+{
+  "ac_ids": [
+    "AC-REPOSITORY-SCOPE-1"
+  ],
+  "actor": "/root/clear_create_issued_research_luna",
+  "br_ids": [
+    ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority"
+  ],
+  "completeness": {
+    "answered_questions": [
+      "What is the minimal safe path for explicit repository-shared files?"
+    ],
+    "external_validation": {
+      "live_check": null,
+      "minimum_sources": 0,
+      "required": false,
+      "source_count": 0,
+      "status": "not_required"
+    },
+    "material_gaps": [],
+    "missing_questions": [],
+    "required_questions": [
+      "What is the minimal safe path for explicit repository-shared files?"
+    ],
+    "status": "pass"
+  },
+  "conflicts": [],
+  "contour": "vida-agent-repository-scope-fix-20260930-scope",
+  "created_at": "2026-09-30T12:20:42.702Z",
+  "digest": "c625cbbb04a10ed81f5af03c5bb54d411a44906c694940410e6f817fa8ced048",
+  "evidence_classes": [
+    "Code"
+  ],
+  "findings": [
+    {
+      "evidence_class": "Code",
+      "finding_id": "missing-option",
+      "source_ids": [
+        "scope-safe-code",
+        "scope-contract"
+      ],
+      "statement": "inspectScope accepts no --repository-path option, and snapshots values.paths only, so repository-shared files cannot currently be included.",
+      "status": "confirmed"
+    },
+    {
+      "evidence_class": "Code",
+      "finding_id": "safe-boundary",
+      "source_ids": [
+        "br-authority",
+        "scope-contract",
+        "scope-safe-code"
+      ],
+      "statement": "Collect shared paths separately; accept only paths uncovered by every configured project root, rejecting selected or unselected project matches and invalid or ambiguous resolution. Merge accepted exact paths with --path for the existing safe snapshot, preserving its traversal, duplicate, bounded-read and no-follow protections.",
+      "status": "confirmed"
+    }
+  ],
+  "gap_ids": [],
+  "instruction_activation": {
+    "instruction_ids": [
+      "dynamic-instruction-activation",
+      "research-protocol"
+    ],
+    "lane": "researcher",
+    "phase": "trace",
+    "registry_digest": "e35231036c79728d576adcdf168c07be8a0189d2395fd7c5f7e4516177e6309b",
+    "required_instruction_ids": [],
+    "risk": "medium",
+    "source_digests": [
+      {
+        "instruction_id": "dynamic-instruction-activation",
+        "source_sha256": "4b8d50c741c7743e8d82602140c651e65c51b7173f2f5dceb38b1a39b382666e"
+      },
+      {
+        "instruction_id": "research-protocol",
+        "source_sha256": "9734d3f004e8cd4b41dff91392c8cce842785db5fa57ee33cffb047f96a18c19"
+      }
+    ],
+    "trigger": "research_intent",
+    "use_id": "research-d2cf6e9ae335da65e9a0a17383fe825103bab1829c01bf88c977d5f62f437635"
+  },
+  "objective": "Locate the missing CLI path and safe reuse boundary.",
+  "options": [
+    {
+      "description": "Reject shared paths covered by any project, then merge the remaining exact paths into the safe snapshot.",
+      "evidence_refs": [
+        "br-authority",
+        "scope-contract",
+        "scope-safe-code"
+      ],
+      "label": "Add explicit uncovered paths",
+      "option_id": "explicit-uncovered-repo-paths"
+    }
+  ],
+  "pointer": ".agent/work/session-handoff.v1.sqlite",
+  "question": "What is the minimal safe path for explicit repository-shared files?",
+  "readiness": "ready",
+  "recommendation": {
+    "evidence_refs": [
+      "br-authority",
+      "scope-contract",
+      "scope-safe-code"
+    ],
+    "option_id": "explicit-uncovered-repo-paths",
+    "rationale": "This enables the requested shared source while preserving project checks and read-only snapshot safety."
+  },
+  "result_id": "research-d2cf6e9ae335da65e9a0a17383fe825103bab182",
+  "schema": "ResearchResult/v1",
+  "scope_id": "vida-agent-repository-scope-fix-20260930-scope",
+  "source_refs": [
+    {
+      "claim": "BR .agent/work/npm-agent-migration-20260930/WORK.md#Request and authority authorizes exact shared-source snapshots without changing write authority.",
+      "locator": ".agent/work/npm-agent-migration-20260930/WORK.md#Request and authority",
+      "retrieved_at": "2026-09-30T12:46:28Z",
+      "source_id": "br-authority",
+      "source_kind": "internal",
+      "title": "BR"
+    },
+    {
+      "claim": "SR .agent/work/vida-agent-repository-scope-fix-20260930/scope.json#behavior_trace allows explicit read-only paths outside all project roots; AC-REPOSITORY-SCOPE-1 rejects project paths, duplicates, traversal, symlinks and collisions.",
+      "locator": ".agent/work/vida-agent-repository-scope-fix-20260930/scope.json#behavior_trace",
+      "retrieved_at": "2026-09-30T12:46:28Z",
+      "source_id": "scope-contract",
+      "source_kind": "internal",
+      "title": "SR and AC"
+    },
+    {
+      "claim": "The CLI gates --path by selected-project membership and snapshots only that list. The resolver identifies uncovered paths; the existing snapshot validates exact canonical paths, duplicates and bounded stable reads through safe no-follow access.",
+      "locator": "packages/agent/bin/scope.mjs#inspectScope; project-context.ts#resolveProjectForRepositoryPath; scoped-source-snapshot.ts#snapshotDeclaredSources; safe-repository-access.ts#requireSafeRepositoryAccess",
+      "retrieved_at": "2026-09-30T12:46:28Z",
+      "source_id": "scope-safe-code",
+      "source_kind": "internal",
+      "title": "CLI and safe snapshot"
+    }
+  ],
+  "source_revision": "7d965a69519073d07d3e1c85d55dcc3869b1c5544b12b650a4f94ecf57ac8cd0",
+  "sr_ids": [
+    ".agent/work/vida-agent-repository-scope-fix-20260930/scope.json#behavior_trace"
+  ],
+  "topic": "Repository-shared scope paths",
+  "uncertainties": [],
+  "updated_at": "2026-09-30T12:20:42.702Z",
+  "work_item_id": "vida-agent-repository-scope-fix-20260930"
+}

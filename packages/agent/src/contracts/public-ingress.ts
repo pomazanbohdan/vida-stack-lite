@@ -1,9 +1,6 @@
-import { Buffer } from 'node:buffer';
-import { createHash } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject } from 'ajv';
 import authorizationSchema from '../../schemas/authorization-request.v1.schema.json' with { type: 'json' };
-import canonicalize from 'canonicalize';
 import governedWriteIntentSchema from '../../schemas/governed-write-intent.v1.schema.json' with { type: 'json' };
 import governedWriteSchema from '../../schemas/governed-write.v1.schema.json' with { type: 'json' };
 
@@ -69,13 +66,9 @@ const governedWriteIntentValidator = new Ajv2020Constructor({ allErrors: true })
   governedWriteIntentSchema as object,
 );
 const governedWriteValidator = new Ajv2020Constructor({ allErrors: true }).compile(governedWriteSchema as object);
-const MAX_CANONICAL_DEPTH = 64;
-const MAX_CANONICAL_NODES = 10_000;
-export const MAX_CANONICAL_BYTES = 8_388_608;
-interface CanonicalBudget {
-  nodes: number;
-  bytes: number;
-}
+export { MAX_CANONICAL_BYTES, isPlainRecord, canonicalJson, canonicalJsonAtDepth, canonicalJsonDigest,
+  assertCanonicalJsonValue } from './canonical-json-core.js';
+import { assertCanonicalJsonValue, canonicalJsonDigest } from './canonical-json-core.js';
 
 function reject(conditions: readonly boolean[], message: string): void {
   if (conditions.some(Boolean)) throw new Error(message);
@@ -83,166 +76,6 @@ function reject(conditions: readonly boolean[], message: string): void {
 function defined<T>(values: readonly (T | undefined)[]): T {
   return values.find((value): value is T => value !== undefined) as T;
 }
-function denseArrayIndex(key: string, length: number): boolean {
-  const numeric = Number(key);
-  return [String(numeric) === key, Number.isSafeInteger(numeric), numeric < length].every(Boolean);
-}
-function arrayPropertyInvalid(key: PropertyKey, length: number): boolean {
-  const text = typeof key === 'string';
-  const valid = [key === 'length', denseArrayIndex(String(key), length)].some(Boolean);
-  return [true, !valid][Number(text)]!;
-}
-function arrayElementKey(key: PropertyKey): key is string {
-  return [typeof key === 'string', key !== 'length'].every(Boolean);
-}
-
-export function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
-  const prototype: unknown = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
-}
-
-function hasUnsafeSerializationHook(value: Record<string, unknown>): boolean {
-  let prototype: object | null = value;
-  while (prototype !== null) {
-    const descriptor = Object.getOwnPropertyDescriptor(prototype, 'toJSON');
-    if (descriptor !== undefined) {
-      return descriptor.get !== undefined || descriptor.set !== undefined || typeof descriptor.value === 'function';
-    }
-    prototype = Object.getPrototypeOf(prototype) as object | null;
-  }
-  return false;
-}
-function serializeCanonicalJson(value: unknown): string {
-  const serialized = canonicalize(value);
-  if (serialized === undefined) throw new Error('canonical JSON serializer returned no output');
-  return serialized;
-}
-export function canonicalJson(value: unknown): string {
-  return canonicalJsonAtDepth(value, 0);
-}
-/** Preserve the ordinary component budget while validating its actual envelope depth. */
-export function canonicalJsonAtDepth(value: unknown, depth: number): string {
-  reject([!Number.isSafeInteger(depth), depth < 0, depth > MAX_CANONICAL_DEPTH], 'canonical JSON root depth invalid');
-  assertCanonicalJsonValue(value, '$', new WeakSet<object>(), depth);
-  return serializeCanonicalJson(value);
-}
-export function canonicalJsonDigest(value: unknown): string {
-  return createHash('sha256').update(canonicalJson(value)).digest('hex');
-}
-
-/** JSON-only payloads keep the canonical digest one-to-one with the wire value. */
-export function assertCanonicalJsonValue(
-  value: unknown,
-  pointer = '$',
-  seen = new WeakSet<object>(),
-  depth = 0,
-  budget: CanonicalBudget = { nodes: 0, bytes: 0 },
-): void {
-  budget.nodes += 1;
-  reject([budget.nodes > MAX_CANONICAL_NODES], `canonical JSON node budget exceeded at ${pointer}`);
-  reject([depth > MAX_CANONICAL_DEPTH], `canonical JSON depth budget exceeded at ${pointer}`);
-  if (value === null || typeof value === 'boolean') return;
-  const kind = Array.isArray(value) ? 'array' : typeof value;
-  const handler = canonicalValidators[kind];
-  reject([handler === undefined], `non-canonical JSON value at ${pointer}`);
-  handler!(value, pointer, seen, depth, budget);
-}
-
-type CanonicalValidator = (
-  value: unknown,
-  pointer: string,
-  seen: WeakSet<object>,
-  depth: number,
-  budget: CanonicalBudget,
-) => void;
-
-function canonicalNumber(value: unknown, pointer: string): void {
-  const unsafeInteger = Number.isInteger(value) && !Number.isSafeInteger(value);
-  reject([!Number.isFinite(value), unsafeInteger, Object.is(value, -0)], `non-canonical JSON number at ${pointer}`);
-}
-
-function canonicalString(
-  value: unknown,
-  pointer: string,
-  _seen: WeakSet<object>,
-  _depth: number,
-  budget: CanonicalBudget,
-): void {
-  budget.bytes += Buffer.byteLength(value as string, 'utf8');
-  reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${pointer}`);
-}
-
-function canonicalArray(
-  value: unknown,
-  pointer: string,
-  seen: WeakSet<object>,
-  depth: number,
-  budget: CanonicalBudget,
-): void {
-  const target = value as unknown[];
-  reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
-  reject(
-    [hasUnsafeSerializationHook(target as unknown as Record<string, unknown>)],
-    `serialization hook at ${pointer}`,
-  );
-  seen.add(target);
-  const ownKeys = Reflect.ownKeys(target);
-  reject(
-    [ownKeys.some((key) => arrayPropertyInvalid(key, target.length))],
-    `non-canonical array property at ${pointer}`,
-  );
-  const elements = ownKeys.filter(arrayElementKey);
-  reject([elements.length !== target.length], `sparse array at ${pointer}`);
-  // Validate every descriptor before any child is inspected; accessors never execute.
-  for (const key of elements) canonicalDescriptor(target, key, `${pointer}[${key}]`);
-  for (let index = 0; index < target.length; index += 1) {
-    reject([!Object.prototype.hasOwnProperty.call(target, index)], `sparse array at ${pointer}[${index}]`);
-    assertCanonicalJsonValue(target[index], `${pointer}[${index}]`, seen, depth + 1, budget);
-  }
-  seen.delete(target);
-}
-
-function canonicalDescriptor(target: object, key: PropertyKey, pointer: string): PropertyDescriptor {
-  const descriptor = Object.getOwnPropertyDescriptor(target, key);
-  reject(
-    [!descriptor?.enumerable, descriptor?.get !== undefined, descriptor?.set !== undefined],
-    `non-canonical property descriptor at ${pointer}`,
-  );
-  return descriptor!;
-}
-
-function canonicalObject(
-  value: unknown,
-  pointer: string,
-  seen: WeakSet<object>,
-  depth: number,
-  budget: CanonicalBudget,
-): void {
-  const target = value as Record<string, unknown>;
-  reject([!isPlainRecord(target)], `non-canonical JSON object at ${pointer}`);
-  reject([hasUnsafeSerializationHook(target)], `serialization hook at ${pointer}`);
-  reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
-  seen.add(target);
-  for (const key of Reflect.ownKeys(target)) {
-    reject([typeof key !== 'string'], `symbol property at ${pointer}`);
-    const childPointer = `${pointer}.${String(key)}`;
-    const descriptor = canonicalDescriptor(target, key, childPointer);
-    budget.bytes += Buffer.byteLength(String(key), 'utf8');
-    reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${childPointer}`);
-    assertCanonicalJsonValue(descriptor.value, childPointer, seen, depth + 1, budget);
-  }
-  seen.delete(target);
-}
-
-const canonicalValidators = Object.freeze(
-  Object.assign(Object.create(null) as Record<string, CanonicalValidator | undefined>, {
-    number: canonicalNumber,
-    string: canonicalString,
-    array: canonicalArray,
-    object: canonicalObject,
-  }),
-);
 function errorText(errors: ErrorObject[] | null | undefined): string {
   const rows = [errors, []].find((entry) => Array.isArray(entry)) as ErrorObject[];
   return rows.map((error) => `${defined([error.instancePath, '/'])} ${defined([error.message, 'invalid'])}`).join('; ');

@@ -1,6 +1,9 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { Buffer } from 'node:buffer';
+import { canonicalJsonWithNodeLimit, MAX_CANONICAL_BYTES } from './canonical-json-core.js';
 import coordinationLedgerSchema from '../../schemas/coordination-ledger.v1.schema.json' with { type: 'json' };
 import envelopeSchema from '../../schemas/runtime-envelope.v1.schema.json' with { type: 'json' };
 import { Result } from 'neverthrow';
@@ -84,6 +87,32 @@ export const localToolEnvelope = z
   .strict();
 
 export type LocalToolEnvelope = z.infer<typeof localToolEnvelope>;
+
+/** A typed ledger has record/resource limits, not the node budget of one ingress message. */
+export function coordinationLedgerJson(value: unknown, depth = 0): string {
+  const payload = coordinationComponentJson(value, depth);
+  const result = validateCoordinationLedgerV1(value);
+  reject([!result.ok], 'coordination ledger rejected: ' + result.issues.map((issue) => issue.message).join('; '));
+  return payload;
+}
+
+/** Internal components selected from a validated ledger retain its byte/depth bounds. */
+export function coordinationComponentJson(value: unknown, depth = 0): string {
+  // Each encoded JSON node consumes at least one byte. The encoded component cap
+  // therefore bounds traversal independently of the schema's collection limits.
+  const payload = canonicalJsonWithNodeLimit(value, depth, MAX_CANONICAL_BYTES);
+  reject([Buffer.byteLength(payload, 'utf8') > MAX_CANONICAL_BYTES], 'coordination ledger byte budget exceeded');
+  return payload;
+}
+
+export function coordinationLedgerDigest(value: unknown): string {
+  return createHash('sha256').update(coordinationLedgerJson(value)).digest('hex');
+}
+
+/** Order-sensitive comparison of string lists after their domain boundary validation. */
+export function sameCoordinationStrings(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
 
 export interface CoordinationTicket {
   readonly schema: 'CoordinationTicket/v1';
@@ -430,7 +459,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
     );
     const projected = [...new Set(activeClaims.flatMap((claim) => claim.resources))].sort();
     ledgerRequire(
-      canonicalJsonDigest(projected) === canonicalJsonDigest([...ticket.active_resources].sort()),
+      sameCoordinationStrings(projected, [...ticket.active_resources].sort()),
       'ACTIVE_RESOURCE_PROJECTION_INVALID',
       `$.tickets.${index}.active_resources`,
       'ticket active resource projection differs from claims',
@@ -457,8 +486,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
     if (ticket.status === 'ready_for_handoff') {
       ledgerRequire(
         ticket.blocked_resources.length === 0 &&
-          canonicalJsonDigest([...ticket.active_resources].sort()) ===
-            canonicalJsonDigest([...ticket.exclusive_resources].sort()),
+          sameCoordinationStrings([...ticket.active_resources].sort(), [...ticket.exclusive_resources].sort()),
         'READY_OWNERSHIP_INCOMPLETE',
         `$.tickets.${index}`,
         'ready ticket requires complete current ownership',

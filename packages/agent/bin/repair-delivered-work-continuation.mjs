@@ -7,7 +7,7 @@ import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 
 const required = (condition, message) => {
@@ -96,7 +96,7 @@ export async function runDeliveredWorkContinuationRepair(args) {
   const values = parse(args), root = values['--project-root'], access = requireSafeRepositoryAccess(root),
     config = loadRuntimeConfig(root), repairId = values['--repair-id'],
     workspaceId = deriveWorkspaceId(config.repository.repository_id, root),
-    relativeDatabasePath = `${config.control.work_root}/session-handoff.v1.sqlite`;
+    relativeDatabasePath = sessionHandoffDatabaseRelativePath(config);
   access.assertDirectory(config.control.work_root, 'configured Host work root');
   required(access.fileExists(relativeDatabasePath, 'configured Host database'), 'configured Host database is absent or unsafe');
   const databasePath = sessionHandoffDatabasePath(root, config), databaseIdentity = safeIdentity(databasePath, 'configured Host database'),

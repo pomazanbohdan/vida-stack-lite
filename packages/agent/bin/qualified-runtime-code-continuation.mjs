@@ -7,7 +7,7 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
 import { readAdmittedSessionIntakeForWork } from '../src/orchestration/admitted-session-execution.ts';
 import {
   readInitialSourceContinuationLineageView,

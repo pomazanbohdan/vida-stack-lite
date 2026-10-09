@@ -9,6 +9,7 @@ import {
   type WorkItemSelection,
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
+import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { validateResearchJournalItem, type MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { correctiveExecutionSchema } from './final-assurance.js';
@@ -59,7 +60,7 @@ export async function createStagedRuntimeWitness(input: {
   const config = loadRuntimeConfig(repositoryRoot);
   const workflowId = selectWorkflow(config, selection).workflow_id;
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  const databasePath = `${config.control.work_root}/session-handoff.v1.sqlite`;
+  const databasePath = sessionHandoffDatabaseRelativePath(config);
   requireWitness(
     access.fileExists(databasePath, 'staged witness persisted journal'),
     'persisted Mastra journal is absent',

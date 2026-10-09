@@ -1,4 +1,5 @@
 import { eligibleReadonlyRelinquishment } from './final-assurance.js';
+import { sameCoordinationStrings } from '../contracts/envelopes.js';
 import { createHash } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
 import acceptanceSchema from '../../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
@@ -416,10 +417,20 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       },
       references: [
         ...[
-          { kind: 'implementation_scope' as const, artifact_schema: 'ImplementationScope/v1',
-            record_id: scope.scope_id, path: input.scopePath, sha256: binding.scope_contract_digest },
-          { kind: 'acceptance_manifest' as const, artifact_schema: 'AcceptanceManifest/v1',
-            record_id: acceptance.id, path: input.acceptancePath, sha256: binding.acceptance_manifest_digest },
+          {
+            kind: 'implementation_scope' as const,
+            artifact_schema: 'ImplementationScope/v1',
+            record_id: scope.scope_id,
+            path: input.scopePath,
+            sha256: binding.scope_contract_digest,
+          },
+          {
+            kind: 'acceptance_manifest' as const,
+            artifact_schema: 'AcceptanceManifest/v1',
+            record_id: acceptance.id,
+            path: input.acceptancePath,
+            sha256: binding.acceptance_manifest_digest,
+          },
         ].map((reference) => ({
           schema: 'LifecycleArtifactReference/v1' as const,
           ...reference,
@@ -553,8 +564,12 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
           const bytes = access.readBytes(artifact.path, 'predecessor accepted research provenance');
           requireAdmission(digest(bytes) === artifact.sha256, 'predecessor canonical research artifact changed');
           const candidate: unknown = JSON.parse(bytes.toString('utf8'));
-          const record = artifact.schema === 'ResearchResult/v1' ? validateResearchResult(candidate)
-            : artifact.schema === 'ResearchSynthesis/v1' ? validateResearchSynthesis(candidate) : null;
+          const record =
+            artifact.schema === 'ResearchResult/v1'
+              ? validateResearchResult(candidate)
+              : artifact.schema === 'ResearchSynthesis/v1'
+                ? validateResearchSynthesis(candidate)
+                : null;
           requireAdmission(record !== null, 'predecessor normalized artifact has an unexpected contract');
           requireAdmission(
             record.digest === plan.result_digest &&
@@ -620,7 +635,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
         (ticket) =>
           ticket.work_id === work.binding.lifecycle_work_id &&
           ticket.repository_id === identity.repository_id &&
-          canonicalJsonDigest(ticket.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+          sameCoordinationStrings(ticket.project_ids, identity.project_ids) &&
           ticket.integrations_digest === identity.integrations_digest &&
           ['active', 'queued', 'blocked'].includes(ticket.status),
       ) ?? [];
@@ -782,7 +797,7 @@ export function acquireLocalSourceWriterLease(input: {
       ticket.work_id === input.identity.work_id &&
       ticket.status === 'queued' &&
       ticket.thread_id === input.nativeSessionHandle &&
-      canonicalJsonDigest(ticket.exclusive_resources) === canonicalJsonDigest(resources),
+      sameCoordinationStrings(ticket.exclusive_resources, resources),
   );
   const ticketId =
     queued?.ticket_id ??

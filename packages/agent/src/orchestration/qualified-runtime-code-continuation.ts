@@ -1,9 +1,19 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import type { SafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
+import { canonicalJsonAtDepth, canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
+import { canonicalJsonComponents } from '../contracts/canonical-json-core.js';
 import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
+
+export function qualifiedRuntimeCodeHistoryJson(value: unknown, depth = 0): string {
+  if (!Array.isArray(value)) throw new Error('qualified runtime code history must be an array');
+  return canonicalJsonComponents(value, depth, (receipt, at) => {
+    const payload = canonicalJsonAtDepth(receipt, at);
+    validateQualifiedRuntimeCodeContinuationReceipt(receipt);
+    return payload;
+  });
+}
 
 export interface QualifiedRuntimeCodeContinuationRequest {
   readonly schema: 'QualifiedRuntimeCodeContinuationRequest/v1';

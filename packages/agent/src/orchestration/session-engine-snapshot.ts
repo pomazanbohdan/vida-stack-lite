@@ -7,6 +7,7 @@ import type { AgentRuntimeConfig, WorkItemSelection } from '../config/runtime-co
 import type { DeliveredWorkContinuationReceipt, HostStateSnapshot, WorkState } from '../host-state.js';
 import { runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
+import { sessionBridgeDatabaseRelativePath } from '../config/project-paths.js';
 import {
   buildSessionBridgeRequest,
   configuredContextForStage,
@@ -135,7 +136,7 @@ export function assertUnpreparedSessionEngineAbsent(input: {
     'corrected preparation is outside recovery scope',
   );
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  const relative = config.control.work_root + '/mastra-workflows.v1.sqlite';
+  const relative = sessionBridgeDatabaseRelativePath(config);
   requireEngine(access.fileExists(relative, 'existing preparation engine'), 'preparation engine unavailable');
   const target = path.join(repositoryRoot, relative),
     before = lstatSync(target);
@@ -338,7 +339,7 @@ export function readRetainedTerminalSessionEngineSnapshot(
     'retained terminal journal contains unresolved or foreign actions',
   );
 
-  const relative = binding.config.control.work_root + '/mastra-workflows.v1.sqlite';
+  const relative = sessionBridgeDatabaseRelativePath(binding.config);
   const access = requireSafeRepositoryAccess(binding.repositoryRoot);
   requireEngine(access.fileExists(relative, 'retained terminal engine'), 'retained terminal engine unavailable');
   const target = path.join(binding.repositoryRoot, relative),
@@ -580,7 +581,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
     'retained unissued frontier contains issued, observed, reserved, or corrective work',
   );
 
-  const relative = binding.config.control.work_root + '/mastra-workflows.v1.sqlite';
+  const relative = sessionBridgeDatabaseRelativePath(binding.config);
   requireEngine(access.fileExists(relative, 'retained unissued engine'), 'retained unissued engine unavailable');
   const target = path.join(binding.repositoryRoot, relative),
     before = lstatSync(target);
@@ -948,7 +949,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   );
 
   const access = requireSafeRepositoryAccess(binding.repositoryRoot),
-    relative = binding.config.control.work_root + '/mastra-workflows.v1.sqlite';
+    relative = sessionBridgeDatabaseRelativePath(binding.config);
   requireEngine(
     access.fileExists(relative, 'configured continuation engine'),
     'configured continuation engine unavailable',
@@ -1658,7 +1659,7 @@ function readSessionEngineSnapshotInternal(
   initial?: InitialSourceEngineContinuation,
 ): SessionBridgeSnapshot | null {
   const { repositoryRoot, config, selection, context, workflowId, runId } = binding;
-  const relative = config.control.work_root + '/mastra-workflows.v1.sqlite';
+  const relative = sessionBridgeDatabaseRelativePath(config);
   const access = requireSafeRepositoryAccess(repositoryRoot);
   if (!access.fileExists(relative, 'persisted session engine')) return null;
   const target = path.join(repositoryRoot, relative),

@@ -18,7 +18,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const releaseIdPattern = /^[a-z0-9][a-z0-9-]{0,95}$/;
+/** @param {unknown} value */
 export const releaseJSON = (value) => JSON.stringify(value, null, 2) + '\n';
+/** @param {Parameters<import('node:crypto').Hash['update']>[0]} bytes */
 export const releaseDigest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 export function parseReleaseVersion(value) {
   const match = typeof value === 'string' && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
@@ -28,11 +30,13 @@ export function parseReleaseVersion(value) {
     ? { major: components[0], minor: components[1], patch: components[2] }
     : null;
 }
+/** @type {(value: unknown, message: string) => asserts value} */
 export const requireRelease = (value, message) => {
   if (!value) throw Error('Local release: ' + message);
 };
 export const releaseRootDefault = fileURLToPath(new URL('../../../', import.meta.url));
 
+/** @param {unknown} value */
 export function releaseRelative(value) {
   requireRelease(
     typeof value === 'string' &&
@@ -56,7 +60,12 @@ export function releaseRelative(value) {
   return value;
 }
 
-/** The shared release namespace; no Host ledger or installation state is created here. */
+/**
+ * The shared release namespace; no Host ledger or installation state is created here.
+ * @param {string} root
+ * @param {string} relative
+ * @param {boolean} [allowMissing]
+ */
 export function releasePath(root, relative, allowMissing = false) {
   requireRelease(path.isAbsolute(root), 'absolute root required');
   const base = realpathSync(root);
@@ -186,12 +195,26 @@ export function operationMutex(root, operation) {
   return openMutex(root, '.agent/work/agent-local-release/' + operation + '/worker.sqlite', 0, true);
 }
 
-export function admissionMutex(root) {
-  return openMutex(root, '.agent/work/agent-local-release/admission.sqlite', 1000);
+export function admissionMutex(root, allowPreparation = false) {
+  const connection = openMutex(root, '.agent/work/agent-local-release/admission.sqlite', 1000);
+  try {
+    if (!allowPreparation) assertPreparationSettled(root);
+    return connection;
+  } catch (error) {
+    connection.close();
+    throw error;
+  }
 }
 
-export async function withReleaseAdmission(root, action) {
-  const connection = admissionMutex(root);
+function assertPreparationSettled(root) {
+  requireRelease(
+    !existsSync(releasePath(root, '.agent/work/agent-local-release/preparation.json', true)),
+    'preparation pending; resume release preparation before another operation',
+  );
+}
+
+export async function withReleaseAdmission(root, action, allowPreparation = false) {
+  const connection = admissionMutex(root, allowPreparation);
   let open = true;
   try {
     const result = action();
@@ -262,9 +285,33 @@ export function selectedTarball(metadata, folder, version) {
 
 const excluded = new Set(['node_modules', 'dist', 'coverage', '.pack-inspect']);
 const scratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent']);
+/**
+ * @typedef {{ path: string, sha256: string }} ReleaseSourceInput
+ * @typedef {readonly [number, number, number, number, number]} SourceIdentity
+ * @typedef {{ path: string, identity: SourceIdentity }} SourceDirectoryIdentity
+ * @typedef {(ReleaseSourceInput & { identity: SourceIdentity, kind?: never }) |
+ *   (SourceDirectoryIdentity & { kind: 'directory' })} SourceObservation
+ * @typedef {{ path: string }} SourceNodeMarker
+ * @typedef {{
+ *   root: string | null,
+ *   rootInput: string | null,
+ *   rootIdentity: SourceIdentity | null,
+ *   physicalNodes: Set<string | SourceNodeMarker>,
+ *   nodePaths: Map<string, string | SourceNodeMarker>,
+ *   paths: Map<string, { entries: ReleaseSourceInput[], observations: SourceObservation[] }>
+ * }} RepairSourceState
+ */
+/** @type {WeakMap<object, RepairSourceState>} */
 const repairSourcePasses = new WeakMap();
 const repairSourceNodeLimit = 8192;
+/** @param {import('node:fs').Stats} info @returns {SourceIdentity} */
 const sourceIdentity = (info) => [info.dev, info.ino, info.size, info.mtimeMs, info.ctimeMs];
+/**
+ * @param {RepairSourceState} state
+ * @param {string} relative
+ * @param {string} file
+ * @param {import('node:fs').Stats} stat
+ */
 function registerRepairSourceNode(state, relative, file, stat) {
   releaseRelative(relative);
   requireRelease(!stat.isSymbolicLink(), 'linked source');
@@ -292,6 +339,7 @@ function registerRepairSourceNode(state, relative, file, stat) {
   state.physicalNodes.add(physicalKey);
   state.nodePaths.set(relative, physicalKey);
 }
+/** @param {readonly SourceDirectoryIdentity[]} directories */
 function verifySourceDirectories(directories) {
   for (const expected of directories) {
     const current = lstatSync(expected.path);
@@ -302,6 +350,7 @@ function verifySourceDirectories(directories) {
     );
   }
 }
+/** @returns {object} */
 export function createRepairSourcePass() {
   const pass = Object.freeze({});
   repairSourcePasses.set(pass, {
@@ -314,6 +363,7 @@ export function createRepairSourcePass() {
   });
   return pass;
 }
+/** @param {object} pass @param {string} relative */
 export function registerRepairSourcePath(pass, relative) {
   const state = repairSourcePasses.get(pass);
   requireRelease(state, 'invalid repair Source enumeration pass');
@@ -328,32 +378,45 @@ export function registerRepairSourcePath(pass, relative) {
   state.physicalNodes.add(marker);
   state.nodePaths.set(key, marker);
 }
+/**
+ * @param {string} root
+ * @param {string} relative
+ * @param {SourceObservation[] | undefined} observations
+ * @param {object} pass
+ * @param {import('node:fs').Stats} [suppliedStat]
+ * @param {readonly SourceDirectoryIdentity[]} [suppliedAncestors]
+ * @returns {ReleaseSourceInput[]}
+ */
 function releaseSourceInputsForRepair(root, relative, observations, pass, suppliedStat, suppliedAncestors) {
   const state = repairSourcePasses.get(pass);
   requireRelease(state, 'invalid repair Source enumeration pass');
   const inputRoot = path.resolve(root),
     key = releaseRelative(relative);
   if (!state.root) {
-    state.root = realpathSync(root);
-    state.rootInput = inputRoot;
-    const rootStat = lstatSync(state.root);
+    const physicalRoot = realpathSync(root);
+    const rootStat = lstatSync(physicalRoot);
     requireRelease(!rootStat.isSymbolicLink() && rootStat.isDirectory(), 'linked source');
+    state.root = physicalRoot;
+    state.rootInput = inputRoot;
     state.rootIdentity = sourceIdentity(rootStat);
   }
   requireRelease(state.rootInput === inputRoot, 'repair Source enumeration root changed');
+  requireRelease(state.rootIdentity !== null, 'repair Source root identity is missing');
+  const physicalRoot = state.root,
+    rootIdentity = state.rootIdentity;
   const cached = state.paths.get(key);
   if (cached) {
     if (observations && cached.observations) observations.push(...cached.observations);
     return cached.entries.slice();
   }
-  const file = suppliedStat ? path.join(state.root, ...key.split('/')) : releasePath(root, key),
+  const file = suppliedStat ? path.join(physicalRoot, ...key.split('/')) : releasePath(root, key),
     stat = suppliedStat ?? lstatSync(file),
     identity = sourceIdentity;
   const ancestors =
     suppliedAncestors ??
     (() => {
-      const result = [{ path: state.root, identity: state.rootIdentity }];
-      let current = state.root;
+      const result = [{ path: physicalRoot, identity: rootIdentity }];
+      let current = physicalRoot;
       for (const part of key.split('/').slice(0, -1)) {
         current = path.join(current, part);
         const info = lstatSync(current);
@@ -384,15 +447,16 @@ function releaseSourceInputsForRepair(root, relative, observations, pass, suppli
   requireRelease(stat.isDirectory(), 'source is not regular');
   const directoryChain = [...ancestors, { path: file, identity: identity(stat) }];
   verifySourceDirectories(directoryChain);
-  const directory = opendirSync(file),
-    children = [];
+  const directory = opendirSync(file);
+  /** @type {{ name: string, child: string, info: import('node:fs').Stats }[]} */
+  const children = [];
   try {
     while (true) {
       const entry = directory.readSync();
       if (!entry) break;
       const name = entry.name,
         child = key + '/' + name;
-      const childFile = path.join(state.root, ...child.split('/')),
+      const childFile = path.join(physicalRoot, ...child.split('/')),
         info = lstatSync(childFile);
       requireRelease(!info.isSymbolicLink(), 'linked source');
       if (info.isDirectory() && (excluded.has(name) || scratch.has(child))) continue;
@@ -404,12 +468,14 @@ function releaseSourceInputsForRepair(root, relative, observations, pass, suppli
   }
   verifySourceDirectories(directoryChain);
   children.sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0));
-  const localObservations = [],
-    result = children.flatMap(({ child, info }) =>
-      releaseSourceInputsForRepair(root, child, localObservations, pass, info, directoryChain),
-    );
-  const before = identity(stat),
-    observed = { path: relative, kind: 'directory', identity: before };
+  /** @type {SourceObservation[]} */
+  const localObservations = [];
+  const result = children.flatMap(({ child, info }) =>
+    releaseSourceInputsForRepair(root, child, localObservations, pass, info, directoryChain),
+  );
+  const before = identity(stat);
+  /** @type {SourceObservation} */
+  const observed = { path: relative, kind: 'directory', identity: before };
   verifySourceDirectories(directoryChain);
   requireRelease(
     releaseJSON(before) === releaseJSON(identity(lstatSync(file))),
@@ -420,15 +486,21 @@ function releaseSourceInputsForRepair(root, relative, observations, pass, suppli
   observations?.push(...localObservations);
   return result.slice();
 }
+/**
+ * @param {string} root
+ * @param {string} relative
+ * @param {SourceObservation[]} [observations]
+ * @param {object} [repairPass]
+ * @returns {ReleaseSourceInput[]}
+ */
 export function releaseSourceInputs(root, relative, observations, repairPass) {
   if (repairPass) return releaseSourceInputsForRepair(root, relative, observations, repairPass);
   const file = releasePath(root, relative),
     stat = lstatSync(file);
   if (stat.isFile()) {
-    const identity = (info) => [info.dev, info.ino, info.size, info.mtimeMs, info.ctimeMs];
-    const before = identity(stat),
+    const before = sourceIdentity(stat),
       sha256 = releaseDigest(readFileSync(file));
-    requireRelease(releaseJSON(before) === releaseJSON(identity(lstatSync(file))), 'Source changed during read');
+    requireRelease(releaseJSON(before) === releaseJSON(sourceIdentity(lstatSync(file))), 'Source changed during read');
     observations?.push({ path: relative, sha256, identity: before });
     return [{ path: relative, sha256 }];
   }
@@ -444,10 +516,9 @@ export function releaseSourceInputs(root, relative, observations, repairPass) {
       return releaseSourceInputs(root, child, observations);
     });
   if (observations) {
-    const identity = (info) => [info.dev, info.ino, info.size, info.mtimeMs, info.ctimeMs];
-    const before = identity(stat);
+    const before = sourceIdentity(stat);
     requireRelease(
-      releaseJSON(before) === releaseJSON(identity(lstatSync(file))),
+      releaseJSON(before) === releaseJSON(sourceIdentity(lstatSync(file))),
       'Source directory changed during scan',
     );
     observations.push({ path: relative, kind: 'directory', identity: before });
@@ -455,7 +526,9 @@ export function releaseSourceInputs(root, relative, observations, repairPass) {
   return result;
 }
 
+/** @param {string} [root] @param {boolean} [withObservations] @param {object} [repairPass] */
 export function releaseSourceBinding(root = releaseRootDefault, withObservations = false, repairPass) {
+  /** @type {SourceObservation[] | undefined} */
   const observations = withObservations ? [] : undefined;
   const entries = [
     'package.json',

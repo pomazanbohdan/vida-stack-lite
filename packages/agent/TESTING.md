@@ -6,23 +6,17 @@ Use this guide for the current agent. The [system specification](docs/system-spe
 
 Use short sentences and plain terms. Keep one main idea in each paragraph. Aim for approximately 80% ASD-STE100 principles, as defined by [adaptive reporting](instructions/adaptive-reporting.md). This is a style target, not a compliance claim or measured score.
 
-## Current state
+## Evidence status
 
-| Area | Current state |
-| --- | --- |
-| Public delivery | One native executable with embedded Bun 1.4.2. npm exports are SDK library interfaces. |
-| Build lane | `native-build -> emit-build -> upload`. It publishes formation files. It does not qualify the target. |
-| System command | Read actual installation and qualification status from the current release evidence and [installation owner](docs/installation.md). Keep user Runtime acceptance separate. |
-| Package qualification | Successful formation provenance, target and exact artifact integrity. No test suite at formation or installation. |
-| Aggregate numeric evidence | GAP. Retain coverage/mutation deficits and current fixed-gate results. The accepted frozen-budget policy below awaits executable gate reconciliation. A missing report is not a pass. |
-| Mutation | A separate, explicitly authorized manual run. It is not part of an aggregate or CI/CD job. |
-| Lint closure | In progress. The complete Source lint profile and full Source TypeScript checks pass. The test/tooling lint profile still needs correction. Source checks do not prove a clean package. |
-| Precommit | The approved hook changes are in Source. Activation waits for completed checks. Pre-push remains separate. |
-| Provider and ZIP capability | Use the approved adapter and current locked reader. Missing or drifting capability is a GAP. |
+Read operational status from the current work and release evidence. Version
+text and passing Source checks do not prove installation or Runtime acceptance.
+Keep dated runs, failed logs and audit history in their evidence stores.
+Preserve FAIL and UNKNOWN. Missing numeric reports remain explicit gaps.
 
-Read current operation details from the [release owner](../../tooling/agent/release-local.mjs), [installation guide](docs/installation.md), and current work receipts. Version text alone does not prove installed bytes. Source changes do not change an installed artifact.
-
-This file contains current rules and required checks. Keep dated runs, failed logs and audit history in their existing evidence stores. Preserve FAIL and UNKNOWN records.
+Coverage must use a provider compatible with Bun and report all required
+metrics. The frozen-budget CRAP policy must match its executable gate; a fixed
+legacy threshold does not establish that match. Pre-commit is authorized after
+its required checks; pre-push and automatic mutation are separate.
 
 ## New and modified files
 
@@ -88,6 +82,41 @@ to improve the reported result. Keep the focused-batch/one-completion-run policy
 below; no separate benchmark or ROI lane is required.
 
 ## Local execution policy
+
+The final CLEAR P0–P1 regression scope includes these distinct contracts:
+
+- A valid ledger and its records can exceed one ingress message's node count.
+  Check codec parity, schema/byte/depth limits, foreign-record preservation and
+  CAS. Ordinary ingress limits remain unchanged. Getter and serialization-hook
+  rejection must occur without invoking them.
+- Session inspection must return Work, Ledger and Journal from one committed
+  snapshot. Reject foreign work keys, mismatched journal runs and stale or
+  foreign lease tickets. Concurrent commits must never produce a mixed view.
+- Release preparation must resume the same intent at each interrupted file
+  publication point. Use state fixtures; preserve exact beforeimages, conflicting
+  edits and UNKNOWN outcomes.
+- Governed-write preparation failures must return a safe finite phase, retain
+  their cause and count one denied attempt, with zero writer calls. Trigger a
+  failed abort before commit starts to test cleanup custody and both errors.
+  A failure after `markCommitStarted` tests UNKNOWN retention and must not be
+  presented as proof that abort ran.
+- Project configuration components must preserve all v1 values and configured
+  paths through split/compose. Check exact field ownership, schema versions,
+  revisions, identities, fixed local references and cross-component references.
+  Reject oversized, deep, aliased or invalid Unicode inputs before use. The
+  input binding must change for an edit in any file, including its metadata.
+  Pure parsing/conversion must not grant loaded-config authority or perform writes.
+  Include accepted v1 numeric boundaries. Block and flow YAML nesting must fail
+  at the configured depth before Composer runs on an over-deep CST; preserve
+  empty/single-document behavior and reject a second document.
+- All Host and Mastra database readers must use the shared project path owner.
+  Check the configured work root, the supported `.` root, canonical relative
+  pointers, native absolute paths and existing public exports. Configuration
+  validation and filesystem/Host checks remain separate required boundaries.
+- Source inventory must preserve entry order, file identities, directory
+  observations and repair-pass cache results. A failed root inspection must not
+  publish a partial root identity. Reuse the existing inventory equivalence case
+  and cover interrupted root inspection without invoking build or installation.
 
 Run agent behavior, property, ZOMBIES, concurrency, fault, schema, integration and security checks locally. Run coverage and CRAP locally.
 
@@ -279,6 +308,17 @@ Source-only fixtures exclude the exact generated `dist/standalone` directory. Ke
 ## Required agent regressions
 
 ### Public CLI and diagnostics
+
+Keep root help, per-command help and parsing declarations in parity. The CLI
+contract gate must detect an unlisted public command, alias or option, and a
+documented option that its parser cannot accept. Cover argument types, required
+values, defaults, allowed values and conflicting combinations. Enumerate the
+supported commands from their shared declarations, not a copied test list.
+Invoke root, command and nested-mode help in an isolated empty workspace with
+no credentials or network. Require exit zero, no project initialization or file
+mutation, and the same help for compatibility aliases. Measure response time
+against the lifecycle's two-second target; retain the actual slow result for
+optimization. Test invalid input separately from informational help requests.
 
 Check actual public envelopes, exit codes and empty stdout on denial. Preserve the supported next action and redact unknown error details. Recognized CLI argument codes must not acquire misleading lease, CAS or Source messages from usage text. Pair each negative with a real positive boundary control.
 

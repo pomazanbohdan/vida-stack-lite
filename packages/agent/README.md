@@ -1,48 +1,43 @@
 # Portable `vida-agent` runtime
 
-Owner: runtime maintainers. Verification requirements are in [TESTING.md](TESTING.md). Public agent delivery uses only a qualified standalone executable with embedded Bun 1.4.2; external Node, npm and Bun are not runtime prerequisites. SDK exports remain library interfaces. A formed SDK/npm archive is not native delivery. Source standalone construction uses the pinned build command; full-product native qualification, supported pending-release retarget and installed qualification remain open GAPs. Installation alone does not switch a consumer runtime selector.
+VIDA coordinates agent work through Mastra and HostState. Public installation
+uses one standalone executable with embedded Bun. External Node, npm and Bun
+are not required to run it. SDK exports are library interfaces.
 
-## Target bundle and state
+## Product and project state
 
-The `vida-agent/` bundle contains runtime source and output, entrypoints, schemas, generic instructions, neutral templates, documentation, tests, tooling, package manifest, and pinned lockfile. It declares and checks external prerequisites. Project requirements, configuration values, work records, and history stay outside the bundle. Root `agent-runtime.config.v1.yaml` is the sole effective settings authority; the generated root `AGENTS.md` and project-owned `AGENT.sidecar.md` point to the active bundle. Templates initialize missing files without overwriting project values.
+The bundle owns runtime code, schemas, instructions, templates and tooling.
+Project requirements, configuration, tasks, research and operational state stay
+outside the bundle. `agent-runtime.config.v1.yaml` selects the project settings;
+`AGENT.sidecar.md` maps authoritative project sources.
 
-The migration transfers runtime behavior and effective project configuration only. The old runtime and pre-cutover `.agent/work/` and `.agent/coordination/` state are archived byte-for-byte as inactive provenance. The new runtime starts with clean work and coordination state. Old tasks, tickets, leases, approvals, reviews, and Runtime receipts are not converted, continued, rebound, or accepted in the new state. The old root JSON config and schema are retired at cutover, leaving no parallel configuration authority.
+Mastra owns configured stages and workflow snapshots. HostState owns admission,
+Source ownership, leases and compare-and-swap checks. A report records observed
+results; it does not grant delivery approval or user Runtime acceptance.
+Unknown issued effects cannot be reissued without a supported disposition.
 
-Production readers use one strict current v1 contract per active artifact type. Before changing any current-v1 schema while active new-runtime artifacts exist, implement and ship one functional bundle-owned artifact repair command that covers affected files and dependencies, with atomic application and recovery. Until that command exists, a schema change must stop before altering active artifacts. The old-state migrator is repository-only, excluded from the production package, and has no cutover role. No production legacy export, historical converter, or active import of `agent-runtime/` belongs in the bundle.
+The session issues the ready wave with the returned `state_version`, invokes
+its available collaboration tools and reports each actual result. The CLI does
+not invoke those tools or operate external providers by itself.
 
-## Agent execution boundary
+Production readers use strict current artifact contracts. A contract change
+must include the supported repair of affected active artifacts. A clean start
+preserves task requirements, accepted decisions and research while excluding
+archived operational state from active execution.
 
-The active agent transport is the collaboration tools available inside the orchestrating session: spawn or follow up, send, wait, and request interruption. Interruption is not proof of termination. The local `bin/run.mjs` CLI uses a LibSQL-backed Mastra snapshot as the sole configured stage owner and a compare-and-swap session ledger for issued actions and observations. The session issues a ready wave with `--issue-wave true` and the returned `state_version` before invoking native tools, then reports each observed result with the latest version. An issued action with an uncertain outcome cannot be automatically reissued; the session must reconcile the actual native outcome. The CLI cannot invoke those tools on its own or keep agents running after the session exits.
+## Development and delivery
 
-Reports are bounded consistency input, not native-tool attestation. Fresh local work admission binds accepted scope and acceptance files, an actual session handle, configuration and exact source paths to the existing HostState work/ticket/lease CAS. A source-writing assignment needs that live lease and a narrowly scoped, attributable `source.write` authorization; its HostState attempt is reserved before the native action is exposed, then completed from a matching observed result. This does not approve `delivery.execute` or user Runtime acceptance. The CLI does not call an external provider, Desktop/API, App Server, MCP, plugin, or host service.
+[TESTING.md](TESTING.md) owns test selection, commands and numeric criteria.
+[Development lifecycle](instructions/development-lifecycle.md#self-development-protocol)
+owns execution and release sequencing. [Package scripts](package.json) own
+reproducible commands and exact tool pins. Reuse current evidence; do not repeat
+passing suites without a changed input or an unresolved failure.
 
-User and external processes may edit repository files. The CLI rereads declared source and configured-context paths at issue, report, validation and test/delivery preparation boundaries; changed bytes invalidate affected proof unless they are the admitted writer's reported in-scope output. These cooperative checks do not attribute an edit made by another actor during the same write interval, detect changes outside declared paths, or provide physical filesystem exclusion. The current native write witness and source tests cover bounded paths, not complete cutover assurance.
+CI forms and publishes the native artifact. Build and installation do not run
+development test suites. The [installation guide](docs/installation.md) explains
+the maintained installer and update flow. Formation, installation, runtime
+admission and user acceptance require their respective actual results.
 
-All five configured workflows use the same Mastra session bridge. A configured developer action receives deterministic local context and exact hashes; official references remain explicitly unfetched. The CLI derives a development packet from admitted scope and real persisted prerequisite evidence, and derives an implementation result from a completed source-write attempt. A research-producing workflow currently blocks validator issue until a genuine current `ResearchResult/v1` artifact is recorded; its Windows recorder/classification path is unresolved. In the research-free `task_execution` path, structured validator and tester reports are rechecked against configured action IDs and current source bytes before the trusted receipt authority rebuilds receipts from the persisted journal. The CLI prepares a `DeliveryInstruction/v1` from an observed delivery proposal and those current receipts; it does not execute delivery. An injected crash before native issue stays blocked until the local session supplies positive no-invocation and quiescence evidence; explicit reconciliation then advances the same ticket to a new lease generation before one retry. A bounded fixture used actual read-only Luna validator/tester calls, with prerequisite synthesis/developer steps marked TEST SETUP. Full assurance, user acceptance and activation remain open.
-
-## Verification
-
-Run focused agent behavior checks during development. At task end, use
-`bun run local:candidate` once for the full applicable local matrix. Current
-generated SDK outputs are reused; test commands do not build or install.
-Build, packaging and installation checks belong to CI/CD. No configured provider
-pipeline or current delivery receipt is implied by these commands. Missing
-coverage/mutation/CRAP or delivery evidence remains an explicit GAP.
-
-Run this full development matrix only from the candidate repository. `package.json` defines these checks; their presence is not a pass receipt.
-
-```text
-bun run preflight
-bun run typecheck
-bun run test
-bun run test:differential
-bun run test:parity
-bun run test:coverage
-bun run coverage:gate
-bun run crap
-bun run test:mutation
-bun run quality:static
-bun run format:check
-```
-
-The complete matrix, genuine session tool observation, portable install, archive/cutover recovery and current-version assurance are specified in [TESTING.md](TESTING.md). The cutover `execute` command requires `--activation-decision .agent/cutover/<cutover-id>/activation-decision.v1.json` bound to the inspected plan, payload manifest and projected selector intent, with six separately hashed evidence files. Its byte checks do not authenticate DEV/UAT observations or close the Cedar/Edictum and source-drift enforcement GAPs. Source and passing tests provide Code/Static evidence; they do not establish delivered Runtime behavior or user acceptance.
+See the [system specification](docs/system-specification.md) for supported
+behavior, data contracts and boundaries. Keep run history and temporary status
+in work evidence, outside this guide.

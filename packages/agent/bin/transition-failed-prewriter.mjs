@@ -6,7 +6,7 @@ import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
 import { compareScopedSourceSnapshots } from '../src/orchestration/scoped-source-snapshot.ts';
 import { readAdmittedSessionIntakeForWork } from '../src/orchestration/admitted-session-execution.ts';
 import { validateFailedPrewriterRecoveryBasis } from '../src/orchestration/failed-prewriter-recovery.ts';

@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.invalid/schemas/project-configuration.v1.schema.json",
+  "title": "VIDA project configuration components v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project", "agents", "flows"],
+  "properties": {
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "agents": {
+      "$ref": "#/$defs/agents"
+    },
+    "flows": {
+      "$ref": "#/$defs/flows"
+    }
+  },
+  "$defs": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "revision",
+        "components",
+        "config_id",
+        "repository",
+        "integrations",
+        "runtime",
+        "control",
+        "paths",
+        "projects",
+        "work_items",
+        "artifact_contracts",
+        "research_decision",
+        "knowledge",
+        "authorization",
+        "governance",
+        "orchestration",
+        "operations",
+        "verification",
+        "observability",
+        "timing"
+      ],
+      "properties": {
+        "schema": {
+          "const": "VidaProjectConfig/v1"
+        },
+        "revision": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/config_revision"
+        },
+        "components": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["agents", "flows"],
+          "properties": {
+            "agents": {
+              "const": "agents.yaml"
+            },
+            "flows": {
+              "const": "flows.yaml"
+            }
+          }
+        },
+        "config_id": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/config_id"
+        },
+        "repository": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/repository"
+        },
+        "integrations": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/integrations"
+        },
+        "runtime": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/runtime"
+        },
+        "control": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/control"
+        },
+        "paths": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/paths"
+        },
+        "projects": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/projects"
+        },
+        "work_items": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/work_items"
+        },
+        "artifact_contracts": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/artifact_contracts"
+        },
+        "research_decision": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/research_decision"
+        },
+        "knowledge": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/knowledge"
+        },
+        "authorization": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/authorization"
+        },
+        "governance": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/governance"
+        },
+        "orchestration": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/orchestration"
+        },
+        "operations": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/operations"
+        },
+        "verification": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/verification"
+        },
+        "observability": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/observability"
+        },
+        "timing": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/timing"
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "revision", "config_id", "agents", "teams"],
+      "properties": {
+        "schema": {
+          "const": "VidaAgentsConfig/v1"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "config_id": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/config_id"
+        },
+        "agents": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/agents"
+        },
+        "teams": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/teams"
+        }
+      }
+    },
+    "flows": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "revision", "config_id", "workflows", "workflow_bindings"],
+      "properties": {
+        "schema": {
+          "const": "VidaFlowsConfig/v1"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "config_id": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/config_id"
+        },
+        "workflows": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/workflows"
+        },
+        "workflow_bindings": {
+          "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/workflow_bindings"
+        }
+      }
+    }
+  }
+}

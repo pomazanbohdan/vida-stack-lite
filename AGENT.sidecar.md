@@ -44,6 +44,13 @@ One writer owns overlapping shared root configuration and workspace files.
   package. Project YAML, products and operational state resolve from explicit
   consumer `--project-root`; consumers do not contain copied agent source.
 - Repository projects are `agent=packages/agent` and `plugin=packages/plugin`.
+- Product implementation, schemas, templates and maintained instruction Source
+  stay in those packages. The approved initialized-project target is `.vida/`:
+  project configuration, project agent instructions and operational data only.
+  It is not a source package or a copied runtime installation. The layout and
+  upgrade contract is owned by
+  `packages/agent/docs/system-specification.md#initialized-project-layout-and-upgrades`.
+  Current paths below remain in use until that upgrade is implemented and applied.
 - Root agent instructions are generated from the maintained package template.
 - Work and coordination live under `.agent/`; scratch and asynchronous output
   live under `.tmp/`, outside sealed package payloads. Measure control latency
@@ -82,10 +89,8 @@ The explicit downloader reserves a bounded exclusive transport, binds the
 selected published commit and attempt job interval, and never forwards its API
 credential to artifact storage. Missing/drifting locked ZIP capability remains a
 GAP without installation. Latest package/tool policy belongs to the lifecycle
-self-development owner. For 0.1.3, broad dependency/tool and caller adaptation
-has last priority, after native UPDATE01/developer-unblocking work and required
-installed checkpoints, before final 0.1.3 delivery and acceptance. Current exact
-qualified pins remain usable for P0 work; a version-drift list alone does not
+self-development owner. The current backlog sets implementation priorities.
+Current exact qualified pins remain usable for P0 work; a version-drift list alone does not
 block it. An actual required runtime/reader defect and missing target evidence
 still block their dependent effects. Preparation is not evidence that an old
 Source pin is latest or that a native target passed.

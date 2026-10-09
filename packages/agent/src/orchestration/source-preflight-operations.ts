@@ -1,3 +1,4 @@
+import { coordinationLedgerDigest } from '../contracts/envelopes.js';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { validateProjectContext } from '../config/project-context.js';
@@ -6,7 +7,7 @@ import type { TrustedProjectIdentity } from '../contracts/public-ingress.js';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { ProjectContext } from '../config/project-context.js';
 import type { ProjectAuthorizationResult } from '../authorization/cedar-boundary.js';
-import type { WorkflowEvaluation } from '@edictum/core';
+import type { WorkflowEvaluation } from '../governance/policy-workflow.js';
 import type { WorkflowHostCapability } from '../governance/edictum-boundary.js';
 import { HostStateStore } from '../host-state.js';
 import type {
@@ -1459,7 +1460,7 @@ function validateTaskSourceMutationBinding(input: {
       workVersion.revision === work.revision &&
       workVersion.digest === canonicalJsonDigest(work) &&
       ledgerVersion.revision === ledger.revision &&
-      ledgerVersion.digest === canonicalJsonDigest(ledger) &&
+      ledgerVersion.digest === coordinationLedgerDigest(ledger) &&
       ledger.workspace_id === work.workspace_id &&
       context.hostSnapshot.maintenanceGeneration >= 0 &&
       work.execution.status === 'active' &&

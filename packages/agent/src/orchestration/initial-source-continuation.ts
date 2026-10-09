@@ -1,3 +1,4 @@
+import { sameCoordinationStrings } from '../contracts/envelopes.js';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import {
@@ -7,7 +8,8 @@ import {
   isPlainRecord,
 } from '../contracts/public-ingress.js';
 import { runtimeConfigDigest, type AgentRuntimeConfig, type WorkItemSelection } from '../config/runtime-config.js';
-import type { CoordinationLedger } from '../contracts/envelopes.js';
+import { coordinationLedgerJson, coordinationLedgerDigest, type CoordinationLedger } from '../contracts/envelopes.js';
+import { canonicalJsonComponents } from '../contracts/canonical-json-core.js';
 import type { LifecycleArtifactReference } from '../lifecycle/lifecycle-state.js';
 import type { StateVersion, WorkArtifactReference, WorkIdentity, WorkState } from '../host-state.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
@@ -69,23 +71,18 @@ function receiptEnvelope(value: unknown): asserts value is InitialSourceContinua
     );
   }
 }
-function receiptComponent(value: unknown, depth: number): string {
-  return canonicalJsonAtDepth(value, depth);
-}
-/** Serialize each retained state component under its normal 10k-node / 8 MiB / depth-64 limits. */
+/** Preserve each retained component's domain bounds and actual envelope depth. */
 export function serializeInitialSourceContinuationReceipt(
   receipt: InitialSourceContinuationReceipt,
   depth = 0,
 ): string {
   canonicalJsonAtDepth(null, depth);
   receiptEnvelope(receipt);
-  const payload =
-    '{' +
-    [...receiptKeys]
-      .sort()
-      .map((key) => JSON.stringify(key) + ':' + receiptComponent(receipt[key], depth + 1))
-      .join(',') +
-    '}';
+  const payload = canonicalJsonComponents(receipt, depth, (value, at, key) =>
+    key === 'prior_ledger' || key === 'successor_ledger'
+      ? coordinationLedgerJson(value, at)
+      : canonicalJsonAtDepth(value, at),
+  );
   requireInitial(Buffer.byteLength(payload, 'utf8') <= receiptByteLimit, 'receipt exceeds its 64 MiB envelope limit');
   return payload;
 }
@@ -303,7 +300,7 @@ export function validateInitialSourceContinuationRequest(
       exactKeys(request.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) &&
       request.identity.work_id === work.binding.lifecycle_work_id &&
       request.identity.repository_id === work.binding.repository_id &&
-      canonicalJsonDigest(request.identity.project_ids) === canonicalJsonDigest(work.binding.project_ids) &&
+      sameCoordinationStrings(request.identity.project_ids, work.binding.project_ids) &&
       request.identity.integrations_digest === work.binding.integrations_digest &&
       request.attempt === journal.attempt &&
       Number.isSafeInteger(request.attempt) &&
@@ -367,13 +364,12 @@ export function validateInitialSourceContinuationRequest(
       claims.length === 1 &&
       Date.parse(claims[0]!.lease_expires_at) <= Date.now() &&
       ticket.expires_at === claims[0]!.lease_expires_at &&
-      canonicalJsonDigest(ticket.active_resources) === canonicalJsonDigest(ticket.exclusive_resources) &&
+      sameCoordinationStrings(ticket.active_resources, ticket.exclusive_resources) &&
       ticket.blocked_resources.length === 0 &&
-      canonicalJsonDigest(claims[0]!.resources) === canonicalJsonDigest(ticket.active_resources) &&
+      sameCoordinationStrings(claims[0]!.resources, ticket.active_resources) &&
       claims[0]!.thread_id === request.nativeSessionHandle &&
       claims[0]!.generation === work.lease.generation &&
-      canonicalJsonDigest(ticket.exclusive_resources) ===
-        canonicalJsonDigest(['execution:' + request.identity.work_id]) &&
+      sameCoordinationStrings(ticket.exclusive_resources, ['execution:' + request.identity.work_id]) &&
       journal.schema === 'MastraSessionLedger/v1' &&
       journal.workspace_id === work.workspace_id &&
       journal.work_id === request.identity.work_id &&
@@ -593,7 +589,7 @@ export function validateInitialSourceContinuationReceipt(value: unknown): Initia
       original.revision === receipt.prior_work_version.revision &&
       canonicalJsonDigest(original) === receipt.prior_work_version.digest &&
       priorLedger.revision === receipt.prior_ledger_version.revision &&
-      canonicalJsonDigest(priorLedger) === receipt.prior_ledger_version.digest &&
+      coordinationLedgerDigest(priorLedger) === receipt.prior_ledger_version.digest &&
       priorJournal.workspace_id === original.workspace_id &&
       priorJournal.work_id === request.identity.work_id &&
       priorJournal.run_id === original.execution.run_id &&
@@ -604,7 +600,7 @@ export function validateInitialSourceContinuationReceipt(value: unknown): Initia
       canonicalJsonDigest(successor) === receipt.work_version.digest &&
       receipt.ledger_version.revision === receipt.prior_ledger_version.revision + 1 &&
       successorLedger.revision === receipt.ledger_version.revision &&
-      canonicalJsonDigest(successorLedger) === receipt.ledger_version.digest &&
+      coordinationLedgerDigest(successorLedger) === receipt.ledger_version.digest &&
       receipt.journal_version.revision === receipt.prior_journal_version.revision + 1 &&
       canonicalJsonDigest(successorJournal) === receipt.journal_version.digest &&
       successor.workspace_id === original.workspace_id &&

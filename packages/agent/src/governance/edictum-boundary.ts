@@ -1,24 +1,15 @@
 import { Buffer } from 'node:buffer';
 import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
+import { GovernanceDenied, OperationPolicyGuard, PolicySession, type EvaluationResult } from './operation-policy.js';
 import {
-  createEnvelope,
-  Decision,
-  Edictum,
-  EdictumDenied,
-  loadWorkflowString,
-  MemoryBackend,
-  Session,
-  WorkflowRuntime,
-  type EvaluationResult,
-  type Session as EdictumSession,
+  PolicyWorkflowRuntime,
   type ToolCall,
   type WorkflowDefinition,
   type WorkflowEvaluation,
   type WorkflowState,
-} from '@edictum/core';
+} from './policy-workflow.js';
 import type { ProjectAuthorizer } from '../authorization/cedar-boundary.js';
-import { stringify as stringifyYaml } from 'yaml';
 import { Result, ResultAsync } from 'neverthrow';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import {
@@ -32,10 +23,10 @@ import {
   type ProjectContext,
 } from '../config/project-context.js';
 import {
-  assertCanonicalJsonValue,
   buildGovernedWriteRequest,
   canonicalJson,
   canonicalJsonDigest,
+  freezeJsonValue,
   computeGovernedWriteRequestDigest,
   computeWriteOperationHash,
   isPlainRecord,
@@ -66,8 +57,6 @@ const requireCondition = (condition: boolean, message: string): void =>
 const optionalObject = <T extends object>(condition: boolean, value: T): T => pick(condition, value, {} as T);
 const deferPick = <T>(condition: boolean, whenTrue: () => T, whenFalse: () => T): T =>
   pick(condition, whenTrue, whenFalse)();
-const errorText = (error: unknown, defaultMessage: string): string =>
-  pick(error instanceof Error, (error as Error).message, defaultMessage);
 const stringValue = (value: unknown): string => pick(typeof value === 'string', value as string, '');
 const numberValue = (value: unknown): number => pick(typeof value === 'number', value as number, Number.NaN);
 function hasExactOwnKeys(value: Record<string, unknown>, expected: readonly string[]): boolean {
@@ -176,11 +165,11 @@ export function computeEdictumWorkflowApprovalEvidenceDigest(value: EdictumWorkf
 
 export interface ConfiguredEdictumWorkflow {
   readonly config_digest: string;
-  /** Edictum only gates workflow progression; Cedar and host verification remain write authority. */
+  /** VIDA policy only gates workflow progression; Cedar and host verification remain write authority. */
   readonly approval_authority: 'workflow-gate-only';
   readonly definition: WorkflowDefinition;
-  readonly runtime: WorkflowRuntime;
-  readonly session: EdictumSession;
+  readonly runtime: PolicyWorkflowRuntime;
+  readonly session: PolicySession;
   readonly evaluate: (tool: string, args?: Record<string, unknown>) => Promise<WorkflowEvaluation>;
   readonly approve: (receipt: unknown) => Promise<void>;
   readonly recordResult: (
@@ -201,7 +190,7 @@ function requireSupportedEdictumSandbox(policy: AgentRuntimeConfig['governance']
   requireCondition(policy.sandbox.allowlist.length === 0, 'unsupported Edictum sandbox allowlist');
 }
 
-/** Load the hash-bound Edictum limits/tools used by the composition root. */
+/** Load the hash-bound VIDA policy limits/tools used by the composition root. */
 export function loadConfiguredEdictumGovernancePolicy(
   repositoryRoot: string,
   config: AgentRuntimeConfig,
@@ -249,39 +238,35 @@ export function loadConfiguredEdictumGovernancePolicy(
 }
 
 export function compileConfiguredEdictumWorkflow(config: AgentRuntimeConfig): WorkflowDefinition {
-  const edictum = config.governance.edictum;
-  requireSupportedEdictumSandbox(edictum);
-  const raw = stringifyYaml(
-    {
-      apiVersion: 'edictum/v1',
-      kind: 'Workflow',
-      metadata: {
-        name: edictum.workflow_id,
-        description: 'Configured runtime governance workflow.',
-        version: '1',
-      },
-      stages: edictum.workflow.stages.map((stage) => ({
-        id: stage.id,
-        description: 'Configured ' + stage.id + ' governance stage.',
-        ...optionalObject(stage.tools.length > 0, { tools: stage.tools }),
-        ...optionalObject(stage.approval_required, { approval: { message: 'Attributable approval is required.' } }),
-        ...optionalObject(stage.require_result, {
-          exit: [
+  const policy = config.governance.edictum;
+  requireSupportedEdictumSandbox(policy);
+  // The public v1 descriptor is retained; execution uses the Mastra graph.
+  return freezeJsonValue({
+    apiVersion: 'edictum/v1',
+    kind: 'Workflow',
+    metadata: { name: policy.workflow_id, description: 'Configured runtime governance workflow.', version: '1' },
+    stages: policy.workflow.stages.map((stage) => ({
+      id: stage.id,
+      description: 'Configured ' + stage.id + ' governance stage.',
+      tools: [...stage.tools],
+      entry: [],
+      checks: [],
+      terminal: false,
+      approval: stage.approval_required ? { message: 'Attributable approval is required.' } : null,
+      exit: stage.require_result
+        ? [
             {
               condition: `mcp_result_matches("${stage.tools[0]}", "accepted", "true")`,
               message: 'Result evidence is required.',
             },
-          ],
-        }),
-      })),
-    },
-    { lineWidth: 0 },
-  );
-  return loadWorkflowString(raw);
+          ]
+        : [],
+    })),
+  }) as WorkflowDefinition;
 }
 
 /**
- * Load the candidate Edictum workflow from repository configuration.
+ * Load the candidate VIDA policy workflow from repository configuration.
  *
  * This is deliberately a pure governance adapter: it owns only workflow
  * state/evidence for a session and never receives Cedar identity, checkpoint
@@ -313,12 +298,11 @@ export function createConfiguredEdictumWorkflow(
   const edictum = runtimeConfig.governance.edictum;
   const configuredStages = new Map(edictum.workflow.stages.map((stage) => [stage.id, stage] as const));
   const terminalStageId = edictum.workflow.stages.at(-1)?.id;
-  const requiredStageEvidence = new Set<string>();
   const approvalClockSkewMs = edictum.approval.clock_skew_ms;
   const approvalMaxAgeMs = edictum.approval.max_age_ms;
   const definition = compileConfiguredEdictumWorkflow(runtimeConfig);
-  const runtime = new WorkflowRuntime(definition);
-  const session = new Session(sessionId, new MemoryBackend());
+  const runtime = new PolicyWorkflowRuntime(definition, sessionId);
+  const session = new PolicySession(sessionId);
   let operationBinding: {
     operation_hash: string;
     tenant: string;
@@ -355,15 +339,12 @@ export function createConfiguredEdictumWorkflow(
   };
   const assertRequiredStageEvidence = async (): Promise<void> => {
     assertRuntimeConfigCurrent();
-    const missing = edictum.evidence.required_stages.filter((stageId) => !requiredStageEvidence.has(stageId));
+    const recorded = await runtime.recordedStages(session);
+    const missing = edictum.evidence.required_stages.filter((stageId) => !recorded.includes(stageId));
     requireCondition(
       missing.length === 0,
       'GAP-RTNEW-EDICTUM-EVIDENCE-001: required Edictum stage evidence is incomplete: ' + missing.join(', '),
     );
-    // Edictum clears the active stage after a terminal result. Evidence is
-    // captured only after its promise resolves, so terminal completion does
-    // not depend on an implementation-specific post-terminal state shape.
-    await runtime.state(session);
     assertRuntimeConfigCurrent();
   };
   const snapshotApproval = (input: unknown): EdictumWorkflowApprovalReceipt => {
@@ -470,13 +451,20 @@ export function createConfiguredEdictumWorkflow(
       'Edictum workflow approval evidence digest is invalid',
     );
   };
-  let approvalQueue: Promise<void> = Promise.resolve();
-  const envelope = (tool: string, args: Record<string, unknown> = {}): ToolCall =>
-    createEnvelope(tool, args, {
-      runId: session.sessionId,
-      environment: 'candidate',
-      caller: 'candidate-edictum-workflow',
+  let workflowQueue: Promise<void> = Promise.resolve();
+  const serializeWorkflowOperation = <T>(operation: () => Promise<T>): Promise<T> => {
+    const result = workflowQueue.then(() => {
+      assertRuntimeConfigCurrent();
+      return operation();
     });
+    workflowQueue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  };
+  const envelope = (tool: string, args: Record<string, unknown> = {}): ToolCall =>
+    Object.freeze({ toolName: tool, args });
   return Object.freeze({
     config_digest: runtimeConfigDigest(runtimeConfig),
     approval_authority: 'workflow-gate-only',
@@ -486,7 +474,8 @@ export function createConfiguredEdictumWorkflow(
     evaluate: (tool: string, args: Record<string, unknown> = {}) => {
       assertRuntimeConfigCurrent();
       bindOperation(tool, args);
-      return runtime.evaluate(session, envelope(tool, args)).then((result) => {
+      const call = Object.freeze({ toolName: tool, args: JSON.parse(canonicalJson(args)) as Record<string, unknown> });
+      return serializeWorkflowOperation(() => runtime.evaluate(session, call)).then((result) => {
         assertRuntimeConfigCurrent();
         return result;
       });
@@ -498,7 +487,7 @@ export function createConfiguredEdictumWorkflow(
       requireCondition(Boolean(binding), 'Edictum workflow approval requires a pending operation binding');
       validateApproval(receipt, binding!);
       assertRuntimeConfigCurrent();
-      const run = approvalQueue.then(async () => {
+      return serializeWorkflowOperation(async () => {
         assertRuntimeConfigCurrent();
         const approvalBinding = Object.freeze({
           stage_id: receipt.stage_id,
@@ -515,7 +504,6 @@ export function createConfiguredEdictumWorkflow(
           assertRuntimeConfigCurrent();
           try {
             await runtime.recordApproval(session, receipt.stage_id);
-            requiredStageEvidence.add(receipt.stage_id);
             assertRuntimeConfigCurrent();
           } catch (error) {
             await runtime.reset(session, current.activeStage);
@@ -523,8 +511,6 @@ export function createConfiguredEdictumWorkflow(
           }
         });
       });
-      approvalQueue = run.catch(() => undefined);
-      return run;
     },
     recordResult: (
       stageId: string,
@@ -552,17 +538,21 @@ export function createConfiguredEdictumWorkflow(
       const stage = configuredStages.get(stageId);
       requireCondition(Boolean(stage), 'Edictum result stage is not configured');
       requireCondition(stage!.tools.includes(tool), 'Edictum result tool is not configured for the stage');
-      return runtime.recordResult(session, stageId, envelope(tool, args), normalized).then(async (result) => {
-        requiredStageEvidence.add(stageId);
-        assertRuntimeConfigCurrent();
-        if (stageId === terminalStageId) await assertRequiredStageEvidence();
-        return result;
-      });
+      const call = envelope(tool, JSON.parse(canonicalJson(args)) as Record<string, unknown>);
+      const resultSnapshot =
+        normalized == null ? undefined : (JSON.parse(canonicalJson(normalized)) as Record<string, unknown>);
+      return serializeWorkflowOperation(() => runtime.recordResult(session, stageId, call, resultSnapshot)).then(
+        async (result) => {
+          assertRuntimeConfigCurrent();
+          if (stageId === terminalStageId) await assertRequiredStageEvidence();
+          return result;
+        },
+      );
     },
-    assertRequiredStageEvidence,
+    assertRequiredStageEvidence: () => serializeWorkflowOperation(assertRequiredStageEvidence),
     state: () => {
       assertRuntimeConfigCurrent();
-      return runtime.state(session).then((result) => {
+      return serializeWorkflowOperation(() => runtime.state(session)).then((result) => {
         assertRuntimeConfigCurrent();
         return result;
       });
@@ -1421,10 +1411,10 @@ export interface OperationReservationStore {
   readonly inspect: (operationKey: string) => OperationReservation | null | Promise<OperationReservation | null>;
 }
 
-const guardBindings = new WeakMap<Edictum, GovernanceBindings>();
-const consumedOperationKeys = new WeakMap<Edictum, Set<string>>();
+const guardBindings = new WeakMap<OperationPolicyGuard, GovernanceBindings>();
+const consumedOperationKeys = new WeakMap<OperationPolicyGuard, Set<string>>();
 const guardIngressCapabilities = new WeakMap<
-  Edictum,
+  OperationPolicyGuard,
   Map<
     string,
     {
@@ -1573,7 +1563,7 @@ export function createTestOperationReservationStore(
  * consumers.  The public package entry point does not export the binding
  * constructor; only the composition root in this module can issue a kernel.
  * The test-only adapter below is kept out of `src/index.ts` so tests can
- * exercise the Edictum boundary without turning caller-provided authority
+ * exercise the VIDA policy boundary without turning caller-provided authority
  * into a production API.
  */
 export interface GovernanceControlKernel {
@@ -1951,7 +1941,7 @@ function governedWriteOperationKey(request: GovernedWriteRequest): string {
   return request.authorization.operation_hash;
 }
 
-function consumeGovernedWriteOnce(guard: Edictum, request: GovernedWriteRequest): void {
+function consumeGovernedWriteOnce(guard: OperationPolicyGuard, request: GovernedWriteRequest): void {
   const existing = consumedOperationKeys.get(guard);
   const keys = pick(Boolean(existing), existing!, new Set<string>());
   const key = governedWriteOperationKey(request);
@@ -2010,7 +2000,7 @@ export function isTrustedGovernanceControlKernel(value: unknown): value is Gover
   return all(Boolean(value), typeof value === 'object', trustedControlKernels.has(value as object));
 }
 
-function createGuardFromBindings(bindings: GovernanceBindings): Edictum {
+function createGuardFromBindings(bindings: GovernanceBindings): OperationPolicyGuard {
   validateGovernanceBindings(bindings);
   const governancePolicy = bindings.governancePolicy;
   requireCondition(
@@ -2027,75 +2017,21 @@ function createGuardFromBindings(bindings: GovernanceBindings): Edictum {
     ),
     'Edictum governance policy is invalid',
   );
-  let guard: Edictum;
-  guard = new Edictum({
-    environment: 'candidate',
-    mode: 'enforce',
-    limits: {
-      maxAttempts: governancePolicy.maxAttempts,
-      maxToolCalls: governancePolicy.maxToolCalls,
-      maxCallsPerTool: governancePolicy.maxCallsPerTool,
-    },
-    policyVersion: governancePolicy.policyVersion,
-    tools: governancePolicy.tools,
-    rules: [
-      {
-        tool: 'runtime.write',
-        check: (call: ToolCall) =>
-          Result.fromThrowable(
-            () => {
-              const record = pick(isPlainRecord(call.args), call.args as Record<string, unknown>, {});
-              const capability = pick(
-                all(isPlainRecord(call.args), typeof record.ingress_token === 'string'),
-                guardIngressCapabilities.get(guard)?.get(record.ingress_token as string),
-                undefined,
-              );
-              requireCondition(Boolean(capability), 'governed write must originate from the canonical Cedar ingress');
-              validateGovernedWriteRequest(call.args);
-              requireCondition(
-                (call.args.authorization as Record<string, unknown>).operation_hash === capability!.operationHash,
-                'governed write capability is bound to a different operation',
-              );
-              const { ingress_token: _ingressToken, ...request } = call.args as Record<string, unknown>;
-              requireCondition(
-                computeGovernedWriteRequestDigest(request as unknown as GovernedWriteRequest) ===
-                  capability!.requestDigest,
-                'governed write capability is bound to a different request digest',
-              );
-              return Decision.pass_();
-            },
-            (error) => error,
-          )().match(
-            (decision) => decision,
-            (error) => Decision.fail(errorText(error, 'governed write evidence rejected')),
-          ),
-      },
-      {
-        contractType: 'post',
-        tool: 'runtime.write',
-        check: (_call: ToolCall, result: unknown) =>
-          Result.fromThrowable(
-            () => {
-              assertCanonicalJsonValue(result, '$.result');
-              return Decision.pass_();
-            },
-            (error) => error,
-          )().match(
-            (decision) => decision,
-            (error) => Decision.fail(errorText(error, 'governed write result rejected')),
-          ),
-      },
-      {
-        check: async (session: Session) => {
-          const executions = await session.executionCount();
-          return pick(
-            executions < governancePolicy.maxToolCalls,
-            Decision.pass_(),
-            Decision.fail('governed write session execution limit reached'),
-          );
-        },
-      },
-    ],
+  let guard: OperationPolicyGuard;
+  guard = new OperationPolicyGuard(governancePolicy, (args) => {
+    const capability =
+      typeof args.ingress_token === 'string' ? guardIngressCapabilities.get(guard)?.get(args.ingress_token) : undefined;
+    requireCondition(Boolean(capability), 'governed write must originate from the canonical Cedar ingress');
+    validateGovernedWriteRequest(args);
+    requireCondition(
+      (args.authorization as Record<string, unknown>).operation_hash === capability!.operationHash,
+      'governed write capability is bound to a different operation',
+    );
+    const { ingress_token: _ingressToken, ...request } = args;
+    requireCondition(
+      computeGovernedWriteRequestDigest(request as unknown as GovernedWriteRequest) === capability!.requestDigest,
+      'governed write capability is bound to a different request digest',
+    );
   });
   guardBindings.set(guard, bindings);
   guardIngressCapabilities.set(guard, new Map());
@@ -2107,7 +2043,7 @@ function createGuardFromBindings(bindings: GovernanceBindings): Edictum {
  * the TypeScript shape is rejected because the kernel must be issued by this
  * module's private WeakSet/WeakMap pair.
  */
-export function createGovernanceGuard(kernel: GovernanceControlKernel): Edictum {
+export function createGovernanceGuard(kernel: GovernanceControlKernel): OperationPolicyGuard {
   requireCondition(
     all(Boolean(kernel), trustedControlKernels.has(kernel as object)),
     'governance guard requires a control-kernel capability',
@@ -2118,17 +2054,17 @@ export function createGovernanceGuard(kernel: GovernanceControlKernel): Edictum 
 }
 
 /** @internal test-only adapter; deliberately not re-exported by src/index.ts. */
-export function createTestGovernanceGuard(bindings: GovernanceBindings): Edictum {
+export function createTestGovernanceGuard(bindings: GovernanceBindings): OperationPolicyGuard {
   return createGovernanceGuard(createCompositionRootControlKernel(bindings));
 }
 
 /** @internal Package composition-root bridge; never re-export from src/index.ts. */
-export function createCompositionRootGovernanceGuard(bindings: GovernanceBindings): Edictum {
+export function createCompositionRootGovernanceGuard(bindings: GovernanceBindings): OperationPolicyGuard {
   return createGovernanceGuard(createCompositionRootControlKernel(bindings));
 }
 
 export async function evaluateGovernance(
-  guard: Edictum,
+  guard: OperationPolicyGuard,
   tool: 'runtime.read' | 'runtime.write',
   args: unknown,
 ): Promise<EvaluationResult> {
@@ -2153,118 +2089,146 @@ function requireMatchingRuntimeRevision(
   );
 }
 async function prepareGovernedWrite(
-  guard: Edictum,
+  guard: OperationPolicyGuard,
   bindings: GovernanceBindings | undefined,
   input: unknown,
 ): Promise<GovernedWritePreparation> {
-  requireCondition(Boolean(bindings), 'trusted governance bindings are unavailable');
-  const trusted = bindings as GovernanceBindings;
-  trusted.assertRuntimeConfigCurrent();
-  const record = pick(isPlainRecord(input), input as Record<string, unknown>, {});
-  requireCondition(
-    all(isPlainRecord(input), isPlainRecord(record.envelope), Object.prototype.hasOwnProperty.call(record, 'intent')),
-    'governed write requires a runtime envelope wrapper',
-  );
-  const revision = await trusted.runtimeRevision();
-  trusted.assertRuntimeConfigCurrent();
-  const envelope = consumeRuntimeEnvelope(record.envelope, revision);
-  requireCondition(
-    all(envelope.kind === 'governed-write', envelope.operation === 'runtime.write'),
-    'governed write requires a runtime.write envelope',
-  );
-  const intent = validateGovernedWriteIntent(record.intent);
-  const payload = pick(isPlainRecord(envelope.payload), envelope.payload as Record<string, unknown>, {});
-  requireCondition(
-    all(isPlainRecord(envelope.payload), payload.operation === intent.operation),
-    'runtime.write envelope is not bound to the governed intent',
-  );
-  const projectContext = await trusted.resolveProjectContext(intent);
-  trusted.assertRuntimeConfigCurrent();
-  requireCondition(Boolean(projectContext), 'registry-backed project context is unavailable');
-  validateProjectContext(projectContext!, trusted.repositoryRoot);
-  requireCondition(
-    intent.authorization.registryHash === projectContext!.registry_hash,
-    'write intent registry context is stale',
-  );
-  requireCondition(
-    projectContext!.integration_bindings.some((binding) => binding.project_id === intent.authorization.project),
-    'write intent project does not match the bound integration binding',
-  );
-  const operationHash = computeWriteOperationHash({
-    operation: intent.operation,
-    payload: intent.payload,
-    principal: intent.authorization.principal,
-    role: intent.authorization.role,
-    tenant: intent.authorization.tenant,
-    project: intent.authorization.project,
-    resourceTenant: intent.authorization.resourceTenant,
-    resourceProject: intent.authorization.resourceProject,
-    registryHash: projectContext!.registry_hash,
-  });
-  requireCondition(
-    intent.approval.operation_hash === operationHash,
-    'approval is not bound to the requested operation',
-  );
-  const identity = await trusted.resolveIdentity(intent);
-  trusted.assertRuntimeConfigCurrent();
-  requireCondition(Boolean(identity), 'trusted authenticated identity context is unavailable');
-  const authorization = trusted.authorizeProject(
-    { ...intent.authorization, operationHash, registryHash: projectContext!.registry_hash },
-    identity!,
-    projectContext!,
-  );
-  requireCondition(
-    all(authorization.decision === 'allow', Boolean(authorization.receipt)),
-    'Cedar denied governed write: ' + authorization.diagnostics.join('; '),
-  );
-  const approval = await trusted.verifyApproval(intent.approval, operationHash, authorization.receipt!);
-  trusted.assertRuntimeConfigCurrent();
-  requireCondition(Boolean(approval), 'approval authority rejected governed write evidence');
-  const parsed = buildGovernedWriteRequest(intent, authorization.receipt!, approval!);
-  const operationKey = governedWriteOperationKey(parsed);
-  const reservation = await trusted.reservationStore.reserve(operationKey, parsed);
-  requireCondition(Boolean(reservation), 'governed write operation already reserved');
-  let consumed = false;
-  let ingressToken: string | undefined;
+  const failures = {
+    configuration: 'governed write runtime configuration is unavailable or changed',
+    envelope: 'governed write runtime envelope is missing, invalid or stale',
+    authorization: 'governed write identity or project authorization was rejected',
+    approval: 'governed write approval evidence was rejected',
+    reservation: 'governed write operation is already reserved or reservation is unavailable',
+    cleanup: 'governed write reservation cleanup failed; retain the current operation',
+  } as const;
+  let phase: keyof typeof failures = 'configuration';
   try {
-    trusted.assertRuntimeConfigCurrent();
-    consumeGovernedWriteOnce(guard, parsed);
-    consumed = true;
-    ingressToken = randomUUID();
-    guardIngressCapabilities.get(guard)?.set(ingressToken, {
-      operationHash: parsed.authorization.operation_hash,
-      requestDigest: reservation!.request_digest,
-      reservation: reservation!,
-      operationKey,
-      sourceRevision: envelope.sourceRevision,
-      expectedRevision: envelope.expectedRevision,
-    });
-    return {
-      args: { ...(parsed as unknown as Record<string, unknown>), ingress_token: ingressToken },
-      ingressToken,
-      reservation: reservation!,
-      operationKey,
-      sourceRevision: envelope.sourceRevision,
-      expectedRevision: envelope.expectedRevision,
+    requireCondition(Boolean(bindings), 'trusted governance bindings are unavailable');
+    const trusted = bindings as GovernanceBindings;
+    const assertCurrent = () => {
+      phase = 'configuration';
+      trusted.assertRuntimeConfigCurrent();
     };
-  } catch (error) {
+    assertCurrent();
+    phase = 'envelope';
+    const record = pick(isPlainRecord(input), input as Record<string, unknown>, {});
+    requireCondition(
+      all(isPlainRecord(input), isPlainRecord(record.envelope), Object.prototype.hasOwnProperty.call(record, 'intent')),
+      'governed write requires a runtime envelope wrapper',
+    );
+    const revision = await trusted.runtimeRevision();
+    assertCurrent();
+    phase = 'envelope';
+    const envelope = consumeRuntimeEnvelope(record.envelope, revision);
+    requireCondition(
+      all(envelope.kind === 'governed-write', envelope.operation === 'runtime.write'),
+      'governed write requires a runtime.write envelope',
+    );
+    const intent = validateGovernedWriteIntent(record.intent);
+    const payload = pick(isPlainRecord(envelope.payload), envelope.payload as Record<string, unknown>, {});
+    requireCondition(
+      all(isPlainRecord(envelope.payload), payload.operation === intent.operation),
+      'runtime.write envelope is not bound to the governed intent',
+    );
+    phase = 'authorization';
+    const projectContext = await trusted.resolveProjectContext(intent);
+    assertCurrent();
+    phase = 'authorization';
+    requireCondition(Boolean(projectContext), 'registry-backed project context is unavailable');
+    validateProjectContext(projectContext!, trusted.repositoryRoot);
+    requireCondition(
+      intent.authorization.registryHash === projectContext!.registry_hash,
+      'write intent registry context is stale',
+    );
+    requireCondition(
+      projectContext!.integration_bindings.some((binding) => binding.project_id === intent.authorization.project),
+      'write intent project does not match the bound integration binding',
+    );
+    const operationHash = computeWriteOperationHash({
+      operation: intent.operation,
+      payload: intent.payload,
+      principal: intent.authorization.principal,
+      role: intent.authorization.role,
+      tenant: intent.authorization.tenant,
+      project: intent.authorization.project,
+      resourceTenant: intent.authorization.resourceTenant,
+      resourceProject: intent.authorization.resourceProject,
+      registryHash: projectContext!.registry_hash,
+    });
+    phase = 'approval';
+    requireCondition(
+      intent.approval.operation_hash === operationHash,
+      'approval is not bound to the requested operation',
+    );
+    phase = 'authorization';
+    const identity = await trusted.resolveIdentity(intent);
+    assertCurrent();
+    phase = 'authorization';
+    requireCondition(Boolean(identity), 'trusted authenticated identity context is unavailable');
+    const authorization = trusted.authorizeProject(
+      { ...intent.authorization, operationHash, registryHash: projectContext!.registry_hash },
+      identity!,
+      projectContext!,
+    );
+    requireCondition(
+      all(authorization.decision === 'allow', Boolean(authorization.receipt)),
+      'Cedar denied governed write: ' + authorization.diagnostics.join('; '),
+    );
+    phase = 'approval';
+    const approval = await trusted.verifyApproval(intent.approval, operationHash, authorization.receipt!);
+    assertCurrent();
+    phase = 'approval';
+    requireCondition(Boolean(approval), 'approval authority rejected governed write evidence');
+    const parsed = buildGovernedWriteRequest(intent, authorization.receipt!, approval!);
+    const operationKey = governedWriteOperationKey(parsed);
+    phase = 'reservation';
+    const reservation = await trusted.reservationStore.reserve(operationKey, parsed);
+    requireCondition(Boolean(reservation), 'governed write operation already reserved');
+    let consumed = false;
+    let ingressToken: string | undefined;
     try {
-      await trusted.reservationStore.abort(reservation!);
-    } catch (cleanupError) {
-      // Cleanup is best-effort; the preparation error remains authoritative.
-      void cleanupError;
-    } finally {
-      if (consumed) consumedOperationKeys.get(guard)?.delete(operationKey);
-      if (ingressToken !== undefined) guardIngressCapabilities.get(guard)?.delete(ingressToken);
+      assertCurrent();
+      phase = 'reservation';
+      consumeGovernedWriteOnce(guard, parsed);
+      consumed = true;
+      ingressToken = randomUUID();
+      guardIngressCapabilities.get(guard)?.set(ingressToken, {
+        operationHash: parsed.authorization.operation_hash,
+        requestDigest: reservation!.request_digest,
+        reservation: reservation!,
+        operationKey,
+        sourceRevision: envelope.sourceRevision,
+        expectedRevision: envelope.expectedRevision,
+      });
+      return {
+        args: { ...(parsed as unknown as Record<string, unknown>), ingress_token: ingressToken },
+        ingressToken,
+        reservation: reservation!,
+        operationKey,
+        sourceRevision: envelope.sourceRevision,
+        expectedRevision: envelope.expectedRevision,
+      };
+    } catch (error) {
+      try {
+        await trusted.reservationStore.abort(reservation!);
+        if (consumed) consumedOperationKeys.get(guard)?.delete(operationKey);
+      } catch (cleanupError) {
+        phase = 'cleanup';
+        throw new AggregateError([error, cleanupError], failures.cleanup);
+      } finally {
+        if (ingressToken !== undefined) guardIngressCapabilities.get(guard)?.delete(ingressToken);
+      }
+      throw error;
     }
-    throw error;
+  } catch (cause) {
+    throw new GovernanceDenied(failures[phase], 'preparation', phase, { cause });
   }
 }
 
 async function executeGovernedWrite(
   bindings: GovernanceBindings | undefined,
   args: Record<string, unknown>,
-  guard: Edictum,
+  guard: OperationPolicyGuard,
   commitStarted: { value: boolean },
 ): Promise<unknown> {
   requireCondition(
@@ -2315,7 +2279,7 @@ async function finalizeGovernedWrite(
   expectedRevision?: RuntimeEnvelopeRevisionBinding,
 ): Promise<unknown> {
   requireCondition(result !== undefined, 'governed CAS writer must return a canonical JSON result');
-  assertCanonicalJsonValue(result, '$.result');
+  const resultDigest = canonicalJsonDigest(result);
   requireCondition(
     all(Boolean(reservation), Boolean(bindings)),
     'governed CAS completion requires its reservation context',
@@ -2325,12 +2289,12 @@ async function finalizeGovernedWrite(
     requireMatchingRuntimeRevision(expectedRevision, await bindings!.runtimeRevision());
     bindings!.assertRuntimeConfigCurrent();
   }
-  await bindings!.reservationStore.complete(reservation!, canonicalJsonDigest(result));
+  await bindings!.reservationStore.complete(reservation!, resultDigest);
   return result;
 }
 
 async function abortGovernedWrite(
-  guard: Edictum,
+  guard: OperationPolicyGuard,
   bindings: GovernanceBindings | undefined,
   reservation: OperationReservation | null,
   operationKey: string | undefined,
@@ -2347,33 +2311,32 @@ async function abortGovernedWrite(
       () => Promise.resolve(),
     );
   } catch (cleanupError) {
-    // Cleanup is best-effort; the governed operation error remains authoritative.
-    void cleanupError;
+    throw new GovernanceDenied(
+      'governed write reservation cleanup failed; retain the current operation',
+      'preparation',
+      'cleanup',
+      { cause: new AggregateError([error, cleanupError], 'governed write and cleanup failed') },
+    );
   }
   throw error;
 }
 
-function cleanupGovernedWrite(guard: Edictum, ingressToken: string | undefined): void {
+function cleanupGovernedWrite(guard: OperationPolicyGuard, ingressToken: string | undefined): void {
   deferPick(
     Boolean(ingressToken),
     () => guardIngressCapabilities.get(guard)?.delete(ingressToken!),
     () => undefined,
   );
 }
-export async function runGovernedWrite(guard: Edictum, input: unknown): Promise<unknown> {
+export async function runGovernedWrite(guard: OperationPolicyGuard, input: unknown): Promise<unknown> {
   const bindings = guardBindings.get(guard);
-  const preparation = await ResultAsync.fromPromise(
-    prepareGovernedWrite(guard, bindings, input),
-    (error) => error,
-  ).match(
-    (value) => value,
-    () => ({
-      args: pick(isPlainRecord(input), input as Record<string, unknown>, {}),
-      ingressToken: undefined,
-      reservation: null,
-      operationKey: undefined,
-    }),
-  );
+  let preparation: GovernedWritePreparation;
+  try {
+    preparation = await prepareGovernedWrite(guard, bindings, input);
+  } catch (error) {
+    if (!(error instanceof GovernanceDenied)) throw error;
+    return guard.rejectPreparation(error);
+  }
   const commitStarted = { value: false };
   return guard
     .run('runtime.write', preparation.args, () =>
@@ -2384,9 +2347,7 @@ export async function runGovernedWrite(guard: Edictum, input: unknown): Promise<
         bindings,
         preparation.reservation,
         result,
-        'sourceRevision' in preparation &&
-          preparation.sourceRevision !== undefined &&
-          preparation.expectedRevision !== undefined
+        preparation.sourceRevision !== undefined && preparation.expectedRevision !== undefined
           ? { sourceRevision: preparation.sourceRevision, currentRevision: preparation.expectedRevision }
           : undefined,
       ),
@@ -2404,6 +2365,6 @@ export async function runGovernedWrite(guard: Edictum, input: unknown): Promise<
     .finally(() => cleanupGovernedWrite(guard, preparation.ingressToken));
 }
 
-export function isGovernanceDenied(error: unknown): error is EdictumDenied {
-  return error instanceof EdictumDenied;
+export function isGovernanceDenied(error: unknown): error is GovernanceDenied {
+  return error instanceof GovernanceDenied;
 }

@@ -9,6 +9,7 @@ import baselineSchema from '../schemas/documentation-clear-checkpoint.v1.schema.
 import eventSchema from '../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
+import { sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { loadProjectContext, projectBindingFor } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
@@ -249,7 +250,7 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
       'frozen administrative source admission differs',
     );
   }
-  const databasePath = `${config.control.work_root}/session-handoff.v1.sqlite`;
+  const databasePath = sessionHandoffDatabaseRelativePath(config);
   access.readBytes(databasePath, 'existing host database');
   const db = new Database(path.join(root, databasePath), {
     readonly: ['inspect', 'plan'].includes(values['--mode']),

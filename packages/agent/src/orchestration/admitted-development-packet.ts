@@ -11,6 +11,7 @@ import {
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { coordinationLedgerDigest } from '../contracts/envelopes.js';
 import type { HostStateSnapshot, HostStateStore, WorkIdentity, WorkState } from '../host-state.js';
 import { completedSourceJournalObservationMatches } from '../host-state.js';
 import {
@@ -39,6 +40,7 @@ import {
   validateFailedPrewriterRecoveryReceipt,
 } from './failed-prewriter-transition.js';
 import {
+  serializeDeliveredWorkContinuationReceipt,
   validateConfiguredFrontierReceiptStructure,
   type ConfiguredFrontierReceipt,
 } from './delivered-work-continuation-repair.js';
@@ -141,9 +143,9 @@ function isPacketRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function samePacket(left: unknown, right: unknown): boolean {
+function samePacket(left: unknown, right: unknown, digest = canonicalJsonDigest): boolean {
   try {
-    return canonicalJsonDigest(left) === canonicalJsonDigest(right);
+    return digest(left) === digest(right);
   } catch {
     return false;
   }
@@ -292,7 +294,7 @@ function validateInitialSourceFrontierCodeRebindJoin(
       samePacket(record.prior_ledger_version, initial.ledger_version) &&
       record.prior_journal_version.revision > initial.journal_version.revision &&
       samePacket(record.prior_work, initial.successor_work) &&
-      samePacket(record.prior_ledger, initial.successor_ledger) &&
+      samePacket(record.prior_ledger, initial.successor_ledger, coordinationLedgerDigest) &&
       record.prior_journal.run_id === initial.successor_journal.run_id &&
       record.prior_journal.completed.some((wave) =>
         wave.items.some(
@@ -623,7 +625,9 @@ export function acceptedContractSourceRevision(
       original.prior_work.execution.run_id === work.execution.run_id &&
       canonicalJsonDigest(recovery?.successor_work.binding ?? original.successor_binding) ===
         canonicalJsonDigest(work.binding) &&
-      (!recovery || canonicalJsonDigest(recovery.original) === canonicalJsonDigest(original)) &&
+      (!recovery ||
+        serializeDeliveredWorkContinuationReceipt(recovery.original) ===
+          serializeDeliveredWorkContinuationReceipt(original)) &&
       canonicalJsonDigest(original.prior_work.contracts) === canonicalJsonDigest(work.contracts) &&
       canonicalJsonDigest(ledger.state.completed.slice(0, original.prior_journal.completed.length)) ===
         canonicalJsonDigest(original.prior_journal.completed),

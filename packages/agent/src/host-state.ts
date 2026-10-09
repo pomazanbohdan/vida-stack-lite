@@ -1,3 +1,11 @@
+import { sameCoordinationStrings } from './contracts/envelopes.js';
+import { coordinationLedgerDigest, coordinationLedgerJson, coordinationComponentJson } from './contracts/envelopes.js';
+import { canonicalJsonAtDepth, canonicalJsonComponents } from './contracts/canonical-json-core.js';
+import { qualifiedRuntimeCodeHistoryJson } from './orchestration/qualified-runtime-code-continuation.js';
+import {
+  deliveredWorkContinuationRecord,
+  serializeDeliveredWorkContinuationReceipt,
+} from './orchestration/delivered-work-continuation-repair.js';
 import { Database } from 'bun:sqlite';
 import { isDeepStrictEqual } from 'node:util';
 import { createHash, randomUUID } from 'node:crypto';
@@ -5,6 +13,12 @@ import { lstatSync, realpathSync, statSync, mkdtempSync, writeFileSync, rmSync }
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { deriveWorkspaceId } from './workspace-identity.js';
+import {
+  sessionHandoffDatabasePath,
+  sessionHandoffDatabaseRelativePath,
+  sessionBridgeDatabasePath,
+  sessionBridgeDatabaseRelativePath,
+} from './config/project-paths.js';
 import type {
   SynthesisObservationCorrectionPlan,
   MastraSessionLedgerState,
@@ -121,6 +135,8 @@ import {
   isAcceptedCompletedSourceWave,
   readCompletedSourceReportRecoveryReceiptRecord,
   snapshotCompletedSourceReportRecoveryReceipt,
+  completedSourceReportRecoveryRecordJson,
+  completedSourceReportRecoveryReceiptJson,
   validateCompletedSourceReportRecoveryLineage,
   validateCompletedSourceReportRecoveryReceipt,
   validateCompletedSourceReportRecoveryRecord,
@@ -1496,6 +1512,67 @@ function snapshot<T>(value: T): T {
   assertCanonicalJsonValue(value, '$');
   return freezeJsonValue(JSON.parse(JSON.stringify(value))) as T;
 }
+
+function stateRecord(kind: string, value: unknown): { payload: string; digest: string } {
+  requireState(kind === 'work' || kind === 'ledger', 'unknown Host state kind');
+  const payload = kind === 'ledger' ? coordinationLedgerJson(value) : canonicalJson(value);
+  return { payload, digest: createHash('sha256').update(payload).digest('hex') };
+}
+function stateValues(kind: string, value: unknown): readonly [string, string] {
+  const record = stateRecord(kind, value);
+  return [record.payload, record.digest];
+}
+function snapshotLedger(value: unknown): CoordinationLedger {
+  return freezeJsonValue(JSON.parse(coordinationLedgerJson(value)) as CoordinationLedger);
+}
+function snapshotEncoded<T>(value: T, encode: (value: unknown) => string): T {
+  return freezeJsonValue(JSON.parse(encode(value))) as T;
+}
+function unpreparedRecoveryJson(value: unknown): string {
+  return canonicalJsonComponents(value, 0, (child, depth, key) =>
+    ['originalTicket', 'originalClaims', 'identity'].includes(key)
+      ? coordinationComponentJson(child, depth)
+      : canonicalJsonAtDepth(child, depth),
+  );
+}
+function sourceCaptureRequestJson(value: unknown, depth = 0): string {
+  return canonicalJsonComponents(value, depth, (child, at, key) =>
+    ['candidateSnapshot', 'attributions', 'terminalEvidence', 'nativeReadResult'].includes(key)
+      ? coordinationComponentJson(child, at)
+      : canonicalJsonAtDepth(child, at),
+  );
+}
+function sourceCaptureRecord(value: unknown): { payload: string; digest: string } {
+  const payload = canonicalJsonComponents(value, 0, (child, depth, key) => {
+    if (key === 'request') return sourceCaptureRequestJson(child, depth);
+    if (key === 'original_ledger') return coordinationLedgerJson(child, depth);
+    if (
+      [
+        'released_ticket',
+        'released_claims',
+        'release_operation',
+        'retirement_operation',
+        'retirement_ticket',
+        'retirement_claim',
+        'terminal_evidence',
+        'attributions',
+        'candidate_snapshot',
+      ].includes(key)
+    )
+      return coordinationComponentJson(child, depth);
+    return canonicalJsonAtDepth(child, depth);
+  });
+  return { payload, digest: createHash('sha256').update(payload).digest('hex') };
+}
+function snapshotHostComponents<T>(value: T): T {
+  const payload = canonicalJsonComponents(value, 0, (child, depth, key) => {
+    if ((key === 'ledger' || key === 'nextLedger') && child !== null) return coordinationLedgerJson(child, depth);
+    if (key === 'runtimeCodeContinuations') return qualifiedRuntimeCodeHistoryJson(child, depth);
+    return canonicalJsonAtDepth(child, depth);
+  });
+  return freezeJsonValue(JSON.parse(payload)) as T;
+}
+
 function unique(values: readonly string[], label: string): void {
   requireState(new Set(values).size === values.length, label + ' contains aliases or duplicate identifiers');
 }
@@ -1739,7 +1816,7 @@ function taskSourceTicketMatches(
       ticket.thread_id === request.thread_id &&
       ticket.source_revision === work.binding.work_source_revision &&
       ticket.generation === ledger.open_generation &&
-      sameJson(ticket.exclusive_resources, resources) &&
+      sameCoordinationStrings(ticket.exclusive_resources, resources) &&
       resources.every((resource) => ticket.contour_keys.includes(resource)),
     'TaskSource coordination ticket differs from its exact request',
   );
@@ -1748,7 +1825,7 @@ function taskSourceTicketMatches(
       ticket.claim_ids.length === 0 &&
         ticket.active_resources.length === 0 &&
         ticket.expires_at === null &&
-        sameJson(ticket.blocked_resources, resources) &&
+        sameCoordinationStrings(ticket.blocked_resources, resources) &&
         !ledger.claims.some((claim) => claim.ticket_id === ticket.ticket_id && claim.status === 'active'),
       'queued TaskSource ticket has active or incomplete ownership',
     );
@@ -1759,13 +1836,13 @@ function taskSourceTicketMatches(
         work.lease.thread_id === ticket.thread_id &&
         work.lease.generation === ticket.generation &&
         ticket.blocked_resources.length === 0 &&
-        sameJson(ticket.active_resources, resources) &&
+        sameCoordinationStrings(ticket.active_resources, resources) &&
         claims.length === 1 &&
         ticket.claim_ids.includes(claims[0]!.claim_id) &&
         claims[0]!.work_id === ticket.work_id &&
         claims[0]!.thread_id === ticket.thread_id &&
         claims[0]!.generation === ticket.generation &&
-        sameJson(claims[0]!.resources, resources) &&
+        sameCoordinationStrings(claims[0]!.resources, resources) &&
         ticket.expires_at !== null &&
         claims[0]!.lease_expires_at === ticket.expires_at &&
         timestamp(claims[0]!.lease_expires_at) > Date.now(),
@@ -2195,14 +2272,14 @@ function checkedStoredWork(
           !continuationRepairOverlayUsed.value &&
             hashPattern.test(row.digest) &&
             row.digest === continuationRepairOverlay.before_digest &&
-            continuationRepairOverlay.after_digest === canonicalJsonDigest(receipt),
+            continuationRepairOverlay.after_digest === deliveredWorkContinuationRecord(receipt).digest,
           'delivered-work continuation repair digest beforeimage differs',
         );
         continuationRepairOverlayUsed.value = true;
       }
       const storedDigest = repairOverlayMatches ? continuationRepairOverlay!.after_digest : row.digest;
       requireState(
-        canonicalJsonDigest(receipt) === storedDigest &&
+        deliveredWorkContinuationRecord(receipt).digest === storedDigest &&
           ((receipt.request?.action?.kind === 'historical_terminal_review' &&
             receipt.request.action.capture.action_id === row.action_id) ||
             (receipt.request?.action?.kind === 'configured_frontier' &&
@@ -2535,7 +2612,7 @@ function checkedStoredWork(
           original.revision === transition.prior_work_version.revision &&
           canonicalJsonDigest(original) === transition.prior_work_version.digest &&
           transition.prior_ledger.revision === transition.prior_ledger_version.revision &&
-          canonicalJsonDigest(transition.prior_ledger) === transition.prior_ledger_version.digest &&
+          coordinationLedgerDigest(transition.prior_ledger) === transition.prior_ledger_version.digest &&
           canonicalJsonDigest(transition.prior_journal) === transition.prior_journal_version.digest &&
           sameJson(transition.prior_work_version, request.expectedWork) &&
           sameJson(transition.prior_ledger_version, request.expectedLedger) &&
@@ -2600,7 +2677,7 @@ function checkedStoredWork(
           original.revision === receipt.prior_work_version.revision &&
           canonicalJsonDigest(original) === receipt.prior_work_version.digest &&
           receipt.prior_ledger.revision === receipt.prior_ledger_version.revision &&
-          canonicalJsonDigest(receipt.prior_ledger) === receipt.prior_ledger_version.digest &&
+          coordinationLedgerDigest(receipt.prior_ledger) === receipt.prior_ledger_version.digest &&
           sameJson(successor.binding, expected) &&
           sameJson(successor.binding, {
             ...original.binding,
@@ -2768,13 +2845,13 @@ function checkedStoredWork(
           request.attempt === receipt.attempt &&
           sameJson(request.expectedWork, receipt.prior_work_version) &&
           receipt.prior_ledger.revision === request.expectedLedger.revision &&
-          canonicalJsonDigest(receipt.prior_ledger) === request.expectedLedger.digest &&
+          coordinationLedgerDigest(receipt.prior_ledger) === request.expectedLedger.digest &&
           receipt.prior_journal_version.revision === request.expectedJournal.revision &&
           canonicalJsonDigest(receipt.prior_journal) === request.expectedJournal.digest &&
           receipt.prior_work_version.revision === original.revision &&
           canonicalJsonDigest(original) === receipt.prior_work_version.digest &&
           receipt.prior_ledger.revision === receipt.prior_ledger_version.revision &&
-          canonicalJsonDigest(receipt.prior_ledger) === receipt.prior_ledger_version.digest &&
+          coordinationLedgerDigest(receipt.prior_ledger) === receipt.prior_ledger_version.digest &&
           journal.workspace_id === workspaceId &&
           journal.work_id === request.identity.work_id &&
           journal.attempt === request.attempt &&
@@ -2819,7 +2896,7 @@ function checkedStoredWork(
           canonicalJsonDigest(successorWork) === receipt.work_version.digest &&
           receipt.ledger_version.revision === request.expectedLedger.revision + 1 &&
           receipt.successor_ledger.revision === receipt.ledger_version.revision &&
-          canonicalJsonDigest(receipt.successor_ledger) === receipt.ledger_version.digest &&
+          coordinationLedgerDigest(receipt.successor_ledger) === receipt.ledger_version.digest &&
           successorWork.binding &&
           sameJson(successorWork.binding, successor) &&
           sameJson(successor, expected) &&
@@ -2980,7 +3057,7 @@ function checkedLedger(value: unknown): CoordinationLedger {
   return result.ledger;
 }
 function identityKey(identity: WorkIdentity): string {
-  assertCanonicalJsonValue(identity, '$');
+  coordinationComponentJson(identity);
   requireState(
     Object.keys(identity).length === 4 &&
       ['repository_id', 'project_ids', 'integrations_digest', 'work_id'].every((key) => Object.hasOwn(identity, key)),
@@ -3055,8 +3132,8 @@ function validatePair(work: WorkState | null, ledger: CoordinationLedger | null)
     );
   }
 }
-function sameJson(left: unknown, right: unknown): boolean {
-  return canonicalJson(left) === canonicalJson(right);
+function sameJson(left: unknown, right: unknown, encode = canonicalJson): boolean {
+  return encode(left) === encode(right);
 }
 function sameInitialSourceBindingOutsideRuntimeCode(
   current: WorkState['binding'],
@@ -3078,10 +3155,16 @@ function exactJsonKeys(value: unknown, keys: readonly string[]): boolean {
     sameJson(Object.keys(value as Record<string, unknown>).sort(), [...keys].sort())
   );
 }
-function appendOnly<T>(before: readonly T[], after: readonly T[], id: (value: T) => string, label: string): void {
-  const next = new Map(after.map((value) => [id(value), canonicalJson(value)]));
+function appendOnly<T>(
+  before: readonly T[],
+  after: readonly T[],
+  id: (value: T) => string,
+  label: string,
+  encode = canonicalJson,
+): void {
+  const next = new Map(after.map((value) => [id(value), encode(value)]));
   for (const value of before)
-    requireState(next.get(id(value)) === canonicalJson(value), label + ' cannot be removed or replaced');
+    requireState(next.get(id(value)) === encode(value), label + ' cannot be removed or replaced');
 }
 function recordId(value: Readonly<Record<string, unknown>>, field: string, label: string): string {
   const id = value[field];
@@ -3135,17 +3218,15 @@ function validateMutableHistories(before: CoordinationLedger, ledger: Coordinati
       resources: value.resources,
       created_at: value.created_at,
     });
-    const changed = canonicalJsonDigest(prior) !== canonicalJsonDigest(notice);
+    const changed = !sameJson(prior, notice, coordinationComponentJson);
     requireState(!changed || authority, 'foreign notice mutation forbidden');
-    requireState(
-      canonicalJsonDigest(immutable(prior)) === canonicalJsonDigest(immutable(notice)),
-      'notice authority changed',
-    );
+    requireState(sameJson(immutable(prior), immutable(notice), coordinationComponentJson), 'notice authority changed');
     appendOnly(
       prior.acknowledgements as readonly Readonly<Record<string, unknown>>[],
       notice.acknowledgements as readonly Readonly<Record<string, unknown>>[],
       (entry) => String(entry.actor),
       'notice acknowledgements',
+      coordinationComponentJson,
     );
     const transition = String(prior.status) + '->' + String(notice.status);
     requireState(
@@ -3184,7 +3265,7 @@ function validateMutableHistories(before: CoordinationLedger, ledger: Coordinati
       const { status: _status, decision_pointer: _pointer, ...rest } = value;
       return rest;
     };
-    const changed = canonicalJsonDigest(prior) !== canonicalJsonDigest(batch);
+    const changed = !sameJson(prior, batch, coordinationComponentJson);
     const contour = ledger.contours.find((entry) => entry.contour_id === batch.contour_id);
     const owned = (contour?.ticket_ids as readonly string[] | undefined)?.some((id) => {
       const ticket = ledger.tickets.find((entry) => entry.ticket_id === id);
@@ -3192,7 +3273,7 @@ function validateMutableHistories(before: CoordinationLedger, ledger: Coordinati
     });
     requireState(!changed || owned, 'foreign batch mutation forbidden');
     requireState(
-      canonicalJsonDigest(immutable(prior)) === canonicalJsonDigest(immutable(batch)),
+      sameJson(immutable(prior), immutable(batch), coordinationComponentJson),
       'release batch authority changed',
     );
     const transition = String(prior.status) + '->' + String(batch.status);
@@ -3200,7 +3281,7 @@ function validateMutableHistories(before: CoordinationLedger, ledger: Coordinati
       transition === 'ready_for_user_testing->accepted' ||
         transition === 'ready_for_user_testing->feedback' ||
         transition === 'ready_for_user_testing->rejected' ||
-        (prior.status === batch.status && canonicalJsonDigest(prior) === canonicalJsonDigest(batch)),
+        (prior.status === batch.status && !changed),
       'release batch status transition invalid',
     );
   }
@@ -3327,9 +3408,14 @@ function validateProgress(
               const component = contourComponent(ledger, seed);
               return (
                 component.every((ticket) => ticket.status === 'ready_for_handoff') &&
-                canonicalJsonDigest(ticketIds) === canonicalJsonDigest(component.map((ticket) => ticket.ticket_id)) &&
-                canonicalJsonDigest(newContours[0]?.work_ids) ===
-                  canonicalJsonDigest(component.map((ticket) => ticket.work_id))
+                sameCoordinationStrings(
+                  ticketIds,
+                  component.map((ticket) => ticket.ticket_id),
+                ) &&
+                sameCoordinationStrings(
+                  newContours[0]?.work_ids as readonly string[],
+                  component.map((ticket) => ticket.work_id),
+                )
               );
             })())),
       'open generation requires one frozen prior-generation contour',
@@ -3353,7 +3439,7 @@ function validateProgress(
         continue;
       }
       if (!ticket || identityKey(ticketIdentity(ticket)) !== ownerKey) {
-        requireState(canonicalJsonDigest(old) === canonicalJsonDigest(claim), 'foreign claim mutation forbidden');
+        requireState(sameJson(old, claim, coordinationComponentJson), 'foreign claim mutation forbidden');
         continue;
       }
       requireState(
@@ -3361,7 +3447,7 @@ function validateProgress(
           old.work_id === claim.work_id &&
           (old.status === 'active' || old.thread_id === claim.thread_id) &&
           old.created_at === claim.created_at &&
-          (old.status === 'active' || canonicalJsonDigest(old.resources) === canonicalJsonDigest(claim.resources)),
+          (old.status === 'active' || sameCoordinationStrings(old.resources, claim.resources)),
         'claim authority changed',
       );
       requireState(
@@ -3559,7 +3645,13 @@ function validateProgress(
       ['operations', 'operation_id'],
       ['retirements', 'retirement_id'],
     ] as const)
-      appendOnly(before.ledger[field], ledger[field], (entry) => recordId(entry, id, field), field);
+      appendOnly(
+        before.ledger[field],
+        ledger[field],
+        (entry) => recordId(entry, id, field),
+        field,
+        coordinationComponentJson,
+      );
   }
   if (!before.ledger)
     requireState(
@@ -3592,14 +3684,14 @@ function validateProgress(
     requireState(
       old.source_revision === next.source_revision &&
         old.sequence === next.sequence &&
-        canonicalJsonDigest(old.contour_keys) === canonicalJsonDigest(next.contour_keys) &&
-        canonicalJsonDigest(old.exclusive_resources) === canonicalJsonDigest(next.exclusive_resources),
+        sameCoordinationStrings(old.contour_keys, next.contour_keys) &&
+        sameCoordinationStrings(old.exclusive_resources, next.exclusive_resources),
       'ticket authority changed',
     );
     if (identityKey(ticketIdentity(old)) !== ownerKey)
-      requireState(canonicalJsonDigest(old) === canonicalJsonDigest(next), 'foreign ticket mutation forbidden');
+      requireState(sameJson(old, next, coordinationComponentJson), 'foreign ticket mutation forbidden');
     if (['released', 'read_only'].includes(old.status))
-      requireState(canonicalJsonDigest(old) === canonicalJsonDigest(next), 'terminal ticket mutation forbidden');
+      requireState(sameJson(old, next, coordinationComponentJson), 'terminal ticket mutation forbidden');
   }
   for (const ticket of ledger.tickets) {
     const old = oldTickets.get(ticket.ticket_id);
@@ -3613,11 +3705,9 @@ function validateProgress(
         old.thread_id !== ticket.thread_id ||
         old.status !== ticket.status ||
         (old.expires_at !== null && old.expires_at !== ticket.expires_at && timestamp(old.expires_at) <= Date.now()) ||
-        canonicalJsonDigest(old.claim_ids) !== canonicalJsonDigest(ticket.claim_ids) ||
-        canonicalJsonDigest([...old.active_resources].sort()) !==
-          canonicalJsonDigest([...ticket.active_resources].sort()) ||
-        canonicalJsonDigest([...old.blocked_resources].sort()) !==
-          canonicalJsonDigest([...ticket.blocked_resources].sort());
+        !sameCoordinationStrings(old.claim_ids, ticket.claim_ids) ||
+        !sameCoordinationStrings([...old.active_resources].sort(), [...ticket.active_resources].sort()) ||
+        !sameCoordinationStrings([...old.blocked_resources].sort(), [...ticket.blocked_resources].sort());
       const generationDelta = ticket.generation - old.generation;
       const noEffectRetryFence =
         generationDelta === 1 &&
@@ -3640,8 +3730,8 @@ function validateProgress(
     }
   }
 }
-function version(value: { readonly revision: number } | null): StateVersion | null {
-  return value ? { revision: value.revision, digest: canonicalJsonDigest(value) } : null;
+function version(value: { readonly revision: number } | null, kind: 'work' | 'ledger' = 'work'): StateVersion | null {
+  return value ? { revision: value.revision, digest: stateRecord(kind, value).digest } : null;
 }
 function matchesExpected(actual: StateVersion | null, expected: StateVersion | null): void {
   if (expected !== null)
@@ -3729,7 +3819,7 @@ export function inspectHostWorkspaceDatabase(
         for (const row of rows) {
           const value = parseStoredRecord(row.payload, 'workspace inspection row');
           requireState(
-            canonicalJsonDigest(value) === row.digest &&
+            stateRecord(row.kind, value).digest === row.digest &&
               value.revision === row.revision &&
               value.workspace_id === workspaceId,
             'workspace inspection row integrity differs',
@@ -3831,7 +3921,7 @@ export function inspectHostWorkspaceDatabase(
           workspace_id: workspaceId,
           work,
           ledger,
-          ledger_version: version(ledger),
+          ledger_version: version(ledger, 'ledger'),
           journals,
           governance,
           admission_attempts: database
@@ -3931,14 +4021,12 @@ export async function runConsumerMigrationState<T>(
   const { requireSafeRepositoryAccess } = await import('./config/safe-repository-access.js');
   const { loadProjectSetContext } = await import('./config/project-context.js');
   const { snapshotRuntimePackageSources } = await import('./orchestration/scoped-source-snapshot.js');
-  const { sessionHandoffDatabasePath } = await import('./orchestration/persistent-session-handoff.js');
-  const { sessionBridgeDatabasePath } = await import('./orchestration/mastra-session-bridge.js');
   const config = loadRuntimeConfig(input.repositoryRoot),
     access = requireSafeRepositoryAccess(input.repositoryRoot);
   const projectIds = config.projects.map((project) => project.project_id).sort();
   loadProjectSetContext(input.repositoryRoot, config, config.repository.repository_id, projectIds);
   const databasePath = sessionHandoffDatabasePath(input.repositoryRoot, config);
-  const relativeDatabase = path.relative(input.repositoryRoot, databasePath).split(path.sep).join('/');
+  const relativeDatabase = sessionHandoffDatabaseRelativePath(config);
   if (input.mode === 'restore') access.readBytes(relativeDatabase, 'existing consumer migration canonical database');
   else access.ensureDirectory(config.control.work_root, 'consumer migration canonical state root');
   assertHostStateDatabasePathSafe(databasePath);
@@ -4019,7 +4107,7 @@ export async function runConsumerMigrationState<T>(
     );
     const workflowDatabasePath = sessionBridgeDatabasePath(input.repositoryRoot, config);
     const verifyWorkflowStore = (): void => {
-      const relative = path.relative(input.repositoryRoot, workflowDatabasePath).split(path.sep).join('/');
+      const relative = sessionBridgeDatabaseRelativePath(config);
       if (!access.fileExists(relative, 'consumer migration workflow store')) return;
       const sourceFiles = ['', '-wal', '-shm'].map((suffix) => ({ suffix, relative: relative + suffix }));
       const before = sourceFiles.map((file) => ({
@@ -4816,7 +4904,7 @@ export class HostStateStore {
         physical.dev === this.#producerDatabaseIdentity?.dev &&
         physical.ino === this.#producerDatabaseIdentity?.ino &&
         realpathSync.native(this.#database.filename) ===
-          realpathSync.native(path.join(this.#repositoryRoot, current.control.work_root, 'session-handoff.v1.sqlite')),
+          realpathSync.native(sessionHandoffDatabasePath(this.#repositoryRoot, current)),
       'unprepared recovery Host storage differs',
     );
     requireState(
@@ -4902,17 +4990,17 @@ export class HostStateStore {
       resources = ['execution:' + input.identity.work_id];
     requireState(
       ticket?.status === 'active' &&
-        sameJson(ticketIdentity(ticket), input.identity) &&
+        sameJson(ticketIdentity(ticket), input.identity, coordinationComponentJson) &&
         ticket.thread_id === input.operatorHandle &&
         ticket.generation === work.lease.generation &&
-        sameJson(ticket.exclusive_resources, resources) &&
-        sameJson(ticket.active_resources, resources) &&
+        sameCoordinationStrings(ticket.exclusive_resources, resources) &&
+        sameCoordinationStrings(ticket.active_resources, resources) &&
         ticket.blocked_resources.length === 0 &&
         claims.length === 1 &&
-        sameJson(ticket.claim_ids, [claims[0]!.claim_id]) &&
+        sameCoordinationStrings(ticket.claim_ids, [claims[0]!.claim_id]) &&
         claims[0]!.thread_id === input.operatorHandle &&
         claims[0]!.generation === ticket.generation &&
-        sameJson(claims[0]!.resources, resources),
+        sameCoordinationStrings(claims[0]!.resources, resources),
       'unprepared recovery exact execution ownership differs',
     );
     requireState(
@@ -4936,18 +5024,21 @@ export class HostStateStore {
       .transaction(() => {
         const before = this.#read(input.identity),
           owned = this.#unpreparedWorkOwner(input, before);
-        return snapshot({
-          identity: input.identity,
-          attempt: input.attempt,
-          operatorHandle: input.operatorHandle,
-          decisionPointer: input.decisionPointer,
-          expectedWork: before.workVersion!,
-          expectedLedger: before.ledgerVersion!,
-          expectedMaintenanceGeneration: before.maintenanceGeneration,
-          originalWork: owned.work,
-          originalTicket: owned.ticket,
-          originalClaims: owned.claims,
-        });
+        return snapshotEncoded(
+          {
+            identity: input.identity,
+            attempt: input.attempt,
+            operatorHandle: input.operatorHandle,
+            decisionPointer: input.decisionPointer,
+            expectedWork: before.workVersion!,
+            expectedLedger: before.ledgerVersion!,
+            expectedMaintenanceGeneration: before.maintenanceGeneration,
+            originalWork: owned.work,
+            originalTicket: owned.ticket,
+            originalClaims: owned.claims,
+          },
+          unpreparedRecoveryJson,
+        );
       })
       .deferred();
   }
@@ -4957,11 +5048,12 @@ export class HostStateStore {
     input: UnpreparedWorkRecoveryContext,
     supplied: UnpreparedWorkRecoveryRequest,
   ): HostStateSnapshot {
-    const request = snapshot(supplied),
-      operationId = 'unprepared-release-' + canonicalJsonDigest(request);
+    const requestJson = unpreparedRecoveryJson(supplied),
+      request = freezeJsonValue(JSON.parse(requestJson)) as UnpreparedWorkRecoveryRequest,
+      operationId = 'unprepared-release-' + createHash('sha256').update(requestJson).digest('hex');
     requireState(
       !this.#database.inTransaction &&
-        sameJson(request.identity, input.identity) &&
+        sameJson(request.identity, input.identity, coordinationComponentJson) &&
         request.attempt === input.attempt &&
         request.operatorHandle === input.operatorHandle &&
         request.decisionPointer === input.decisionPointer &&
@@ -5018,10 +5110,12 @@ export class HostStateStore {
             sameJson(
               ledger.tickets.find((item) => item.ticket_id === prior.ticket_id),
               releasedTicket,
+              coordinationComponentJson,
             ) &&
             sameJson(
               ledger.claims.filter((item) => item.ticket_id === prior.ticket_id),
               releasedClaims,
+              coordinationComponentJson,
             ),
           'unprepared recovery retry postcondition differs',
         );
@@ -5032,8 +5126,8 @@ export class HostStateStore {
       const owned = this.#unpreparedWorkOwner(input, before);
       requireState(
         sameJson(owned.work, request.originalWork) &&
-          sameJson(owned.ticket, request.originalTicket) &&
-          sameJson(owned.claims, request.originalClaims),
+          sameJson(owned.ticket, request.originalTicket, coordinationComponentJson) &&
+          sameJson(owned.claims, request.originalClaims, coordinationComponentJson),
         'unprepared recovery retained owner changed',
       );
       const nextLedger: CoordinationLedger = {
@@ -5100,9 +5194,7 @@ export class HostStateStore {
         this.#repositoryRoot === repositoryRootIdentity(input.repositoryRoot) &&
         bound.repositoryRoot === this.#repositoryRoot &&
         realpathSync.native(this.#database.filename) ===
-          realpathSync.native(
-            path.join(input.repositoryRoot, input.config.control.work_root, 'session-handoff.v1.sqlite'),
-          ) &&
+          realpathSync.native(sessionHandoffDatabasePath(input.repositoryRoot, input.config)) &&
         deriveWorkspaceId(input.config.repository.repository_id, input.repositoryRoot) === this.#workspaceId,
       'session producer ledger/root/database differs',
     );
@@ -5302,7 +5394,7 @@ export class HostStateStore {
         claims[0]!.thread_id === lease.thread_id &&
         claims[0]!.generation === lease.generation &&
         ticket.claim_ids.includes(claims[0]!.claim_id) &&
-        sameJson(claims[0]!.resources, ticket.active_resources),
+        sameCoordinationStrings(claims[0]!.resources, ticket.active_resources),
       'session producer owner claim/FIFO/expiry differs',
     );
     this.#assertNoOverlappingActiveSourceOwner(host.ledger, ticket);
@@ -6537,7 +6629,7 @@ export class HostStateStore {
     );
     requireState(Array.isArray(workStates) && workStates.length > 0, 'reconciled work state set is empty');
     const work = snapshot(workStates).map((value) => this.#checkedWork(value));
-    const ledger = checkedLedger(snapshot(coordinationLedger));
+    const ledger = checkedLedger(snapshotLedger(coordinationLedger));
     const binding = checkedReconciliationGateBinding(snapshot(gateBinding));
     requireState(ledger.workspace_id === this.#workspaceId, 'foreign workspace state');
     const keys = new Set<string>();
@@ -6607,7 +6699,7 @@ export class HostStateStore {
           'reconciled host state already exists',
         );
         requireState(
-          canonicalJsonDigest(this.#load('ledger', 'shared')) === canonicalJsonDigest(ledger) &&
+          coordinationLedgerDigest(this.#load('ledger', 'shared')) === coordinationLedgerDigest(ledger) &&
             work.every(
               (state) =>
                 canonicalJsonDigest(this.#load('work', identityKey(workIdentity(state)))) ===
@@ -6623,8 +6715,8 @@ export class HostStateStore {
         )
         .run(
           ledger.revision,
-          canonicalJson(ledger),
-          canonicalJsonDigest(ledger),
+          coordinationLedgerJson(ledger),
+          coordinationLedgerDigest(ledger),
           this.#workspaceId,
           'ledger',
           'shared',
@@ -6723,7 +6815,7 @@ export class HostStateStore {
       revision: gate.revision + 1,
       status: 'closed',
       closed_work_version: after,
-      closed_ledger_version: version(this.#load('ledger', 'shared') as CoordinationLedger | null),
+      closed_ledger_version: version(this.#load('ledger', 'shared') as CoordinationLedger | null, 'ledger'),
     };
     this.#writeReconciliationGate(next, gate);
   }
@@ -6782,13 +6874,11 @@ export class HostStateStore {
       .get(this.#workspaceId, kind, id) as { revision: number; payload: string; digest: string } | null;
     if (!row) return null;
     const parsed: unknown = JSON.parse(row.payload);
-    assertCanonicalJsonValue(parsed, '$');
+    const encoded = stateRecord(kind, parsed);
     const value =
       kind === 'work' ? this.#checkedWork(parsed, undefined, continuationRepairOverlay) : checkedLedger(parsed);
     requireState(
-      value.workspace_id === this.#workspaceId &&
-        value.revision === row.revision &&
-        canonicalJsonDigest(value) === row.digest,
+      value.workspace_id === this.#workspaceId && value.revision === row.revision && encoded.digest === row.digest,
       'stored state checksum or identity mismatch',
     );
     if (kind === 'work') requireState(identityKey(workIdentity(value as WorkState)) === id, 'stored work key mismatch');
@@ -6812,11 +6902,11 @@ export class HostStateStore {
       'coordination ticket references missing work state',
     );
     validatePair(work, ledger);
-    return snapshot({
+    return snapshotHostComponents({
       work,
       ledger,
       workVersion: version(work),
-      ledgerVersion: version(ledger),
+      ledgerVersion: version(ledger, 'ledger'),
       maintenanceGeneration: this.#maintenanceGeneration(),
       ...(work
         ? {
@@ -6845,8 +6935,12 @@ export class HostStateStore {
     return this.#database
       .transaction(() =>
         this.#read(identity).work
-          ? snapshot(
-              storedQualifiedRuntimeCodeContinuations(this.#database, this.#workspaceId, identity.work_id, attempt),
+          ? freezeJsonValue(
+              JSON.parse(
+                qualifiedRuntimeCodeHistoryJson(
+                  storedQualifiedRuntimeCodeContinuations(this.#database, this.#workspaceId, identity.work_id, attempt),
+                ),
+              ) as QualifiedRuntimeCodeContinuationReceipt[],
             )
           : [],
       )
@@ -7068,7 +7162,7 @@ export class HostStateStore {
           workspace_id: this.#workspaceId,
           work,
           ledger,
-          ledger_version: version(ledger),
+          ledger_version: version(ledger, 'ledger'),
         });
       })
       .deferred();
@@ -7157,7 +7251,7 @@ export class HostStateStore {
         ticket.thread_id === request.thread_id &&
         ticket.generation === work.lease.generation &&
         ticket.repository_id === identity.repository_id &&
-        sameJson(ticket.project_ids, identity.project_ids) &&
+        sameCoordinationStrings(ticket.project_ids, identity.project_ids) &&
         ticket.expires_at !== null &&
         timestamp(ticket.expires_at) > now &&
         claims.length === 1 &&
@@ -7166,7 +7260,7 @@ export class HostStateStore {
         claims[0]!.thread_id === request.thread_id &&
         claims[0]!.generation === work.lease.generation &&
         timestamp(claims[0]!.lease_expires_at) > now &&
-        sameJson(claims[0]!.resources, ticket.active_resources) &&
+        sameCoordinationStrings(claims[0]!.resources, ticket.active_resources) &&
         journalScope.digest.length === 64,
       'task source owner ticket, claim, lease expiry or journal scope is stale',
     );
@@ -7470,7 +7564,7 @@ export class HostStateStore {
             ticket.thread_id === request.thread_id &&
             ticket.generation === work.lease.generation &&
             ticket.repository_id === identity.repository_id &&
-            sameJson(ticket.project_ids, identity.project_ids) &&
+            sameCoordinationStrings(ticket.project_ids, identity.project_ids) &&
             ticket.expires_at !== null &&
             timestamp(ticket.expires_at) > Date.now() &&
             claims.length === 1 &&
@@ -9043,7 +9137,7 @@ export class HostStateStore {
             ticket?.status === 'active' &&
             ticket.work_id === work.binding.lifecycle_work_id &&
             ticket.repository_id === work.binding.repository_id &&
-            canonicalJson(ticket.project_ids) === canonicalJson(work.binding.project_ids) &&
+            sameCoordinationStrings(ticket.project_ids, work.binding.project_ids) &&
             ticket.thread_id === lease.thread_id &&
             ticket.generation === lease.generation &&
             activeClaims.length === 1 &&
@@ -9052,7 +9146,7 @@ export class HostStateStore {
             activeClaims[0]!.work_id === ticket.work_id &&
             activeClaims[0]!.thread_id === ticket.thread_id &&
             activeClaims[0]!.generation === ticket.generation &&
-            canonicalJson(activeClaims[0]!.resources) === canonicalJson(ticket.active_resources) &&
+            sameCoordinationStrings(activeClaims[0]!.resources, ticket.active_resources) &&
             ticket.active_resources.some((resource) => resource.startsWith('file:')) &&
             ticket.exclusive_resources.some((resource) => resource.startsWith('file:')),
           'interrupted repair source owner claim differs',
@@ -9302,7 +9396,7 @@ export class HostStateStore {
       };
       const bindings = {
         maintenance_generation: maintenanceGeneration,
-        ledger: version(ledger),
+        ledger: version(ledger, 'ledger'),
         works: works.map((row) => ({ id: row.id, revision: row.revision, digest: row.digest })),
         journals: journals.map((row) => ({
           work_id: row.work_id,
@@ -9784,7 +9878,7 @@ export class HostStateStore {
     ) => void;
   }): HostStateSnapshot {
     const successor = this.#checkedWork(snapshot(input.nextWork));
-    const incomingLedger = checkedLedger(snapshot(input.nextLedger));
+    const incomingLedger = checkedLedger(snapshotLedger(input.nextLedger));
     requireState(
       successor.workspace_id === this.#workspaceId &&
         incomingLedger.workspace_id === this.#workspaceId &&
@@ -10028,8 +10122,8 @@ export class HostStateStore {
             )
             .run(
               ledger.revision,
-              canonicalJson(ledger),
-              canonicalJsonDigest(ledger),
+              coordinationLedgerJson(ledger),
+              coordinationLedgerDigest(ledger),
               this.#workspaceId,
               priorLedger.revision,
               priorLedger.digest,
@@ -10038,7 +10132,7 @@ export class HostStateStore {
             .query(
               "INSERT INTO agent_host_state (revision,payload,digest,workspace_id,kind,id) VALUES(?,?,?,?,'ledger','shared')",
             )
-            .run(ledger.revision, canonicalJson(ledger), canonicalJsonDigest(ledger), this.#workspaceId);
+            .run(ledger.revision, coordinationLedgerJson(ledger), coordinationLedgerDigest(ledger), this.#workspaceId);
       requireState(result.changes === 1, 'successor ledger CAS conflict');
       return this.#read(workIdentity(nextSuccessor));
     }).immediate();
@@ -10621,7 +10715,7 @@ export class HostStateStore {
       );
       const state: InitialSourceContinuationState = Object.freeze({
         work: snapshot(work),
-        ledger: snapshot(ledger),
+        ledger: snapshotLedger(ledger),
         journal: snapshot(journal),
         workVersion: snapshot(before.workVersion),
         ledgerVersion: snapshot(before.ledgerVersion),
@@ -10805,7 +10899,7 @@ export class HostStateStore {
         },
       };
       const workVersion = version(successorWorkRaw)!,
-        ledgerVersion = version(nextLedger)!,
+        ledgerVersion = version(nextLedger, 'ledger')!,
         journalVersion = { revision: row.revision + 1, digest: canonicalJsonDigest(successorJournal) },
         receipt: InitialSourceContinuationReceipt = {
           schema: 'InitialSourceContinuationReceipt/v1',
@@ -10876,8 +10970,7 @@ export class HostStateStore {
           )
           .run(
             value.revision,
-            canonicalJson(value),
-            canonicalJsonDigest(value),
+            ...stateValues(kind, value),
             this.#workspaceId,
             kind,
             id,
@@ -10940,7 +11033,7 @@ export class HostStateStore {
         if (!row) return null;
         const receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
         requireState(
-          canonicalJsonDigest(receipt) === row.digest &&
+          deliveredWorkContinuationRecord(receipt).digest === row.digest &&
             receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
             receipt.request_digest === canonicalJsonDigest(input) &&
             receipt.continuation_id ===
@@ -11156,7 +11249,7 @@ export class HostStateStore {
           priorTicket?.status === 'released' &&
             priorTicket.work_id === input.identity.work_id &&
             priorTicket.repository_id === input.identity.repository_id &&
-            sameJson(priorTicket.project_ids, input.identity.project_ids) &&
+            sameCoordinationStrings(priorTicket.project_ids, input.identity.project_ids) &&
             priorTicket.integrations_digest === input.identity.integrations_digest &&
             priorTicket.thread_id === input.nativeSessionHandle &&
             priorTicket.source_revision === work.binding.work_source_revision &&
@@ -11382,7 +11475,7 @@ export class HostStateStore {
         priorWorkVersion = current.workVersion!,
         priorLedgerVersion = current.ledgerVersion!,
         workVersion = version(nextWork)!,
-        ledgerVersion = version(nextLedger)!;
+        ledgerVersion = version(nextLedger, 'ledger')!;
       const receipt: DeliveredWorkContinuationReceipt = {
         schema: 'DeliveredWorkContinuationReceipt/v1',
         continuation_id: canonicalJsonDigest({
@@ -11438,8 +11531,8 @@ export class HostStateStore {
           input.identity.work_id,
           input.attempt,
           actionId,
-          canonicalJson(receipt),
-          canonicalJsonDigest(receipt),
+          serializeDeliveredWorkContinuationReceipt(receipt),
+          deliveredWorkContinuationRecord(receipt).digest,
         );
       for (const [kind, id, value, expected] of [
         ['work', identityKey(input.identity), nextWork, priorWorkVersion],
@@ -11451,8 +11544,7 @@ export class HostStateStore {
           )
           .run(
             value.revision,
-            canonicalJson(value),
-            canonicalJsonDigest(value),
+            ...stateValues(kind, value),
             this.#workspaceId,
             kind,
             id,
@@ -11487,7 +11579,9 @@ export class HostStateStore {
       return Object.freeze({
         status: 'continued' as const,
         snapshot: saved,
-        receipt: snapshot(receipt),
+        receipt: freezeJsonValue(
+          JSON.parse(serializeDeliveredWorkContinuationReceipt(receipt)) as DeliveredWorkContinuationReceipt,
+        ),
         action: snapshot(input.action),
       });
     }).immediate();
@@ -11595,10 +11689,10 @@ export class HostStateStore {
       'delivered-work continuation repair row identity or digest invalid',
     );
     const receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
-    assertCanonicalJsonValue(receipt, '$.continuationRepair');
-    const afterDigest = canonicalJsonDigest(receipt);
+    const encodedReceipt = deliveredWorkContinuationRecord(receipt);
+    const afterDigest = encodedReceipt.digest;
     requireState(
-      row.payload === canonicalJson(receipt) && row.digest !== afterDigest,
+      row.payload === encodedReceipt.payload && row.digest !== afterDigest,
       'delivered-work continuation repair is limited to a stale stored digest',
     );
     const overlay: DeliveredContinuationRepairDigestOverlay = {
@@ -11659,7 +11753,7 @@ export class HostStateStore {
           current.workVersion &&
           current.ledgerVersion &&
           sameJson(current.work, receipt.successor_work) &&
-          sameJson(current.ledger, receipt.successor_ledger) &&
+          coordinationLedgerDigest(current.ledger) === coordinationLedgerDigest(receipt.successor_ledger) &&
           sameJson(current.workVersion, receipt.work_version) &&
           sameJson(current.ledgerVersion, receipt.ledger_version) &&
           journalRow.revision === receipt.journal_version.revision &&
@@ -11891,7 +11985,7 @@ export class HostStateStore {
               current.work &&
               current.ledger &&
               sameJson(current.work, plan.inspection.work) &&
-              sameJson(current.ledger, plan.inspection.ledger) &&
+              coordinationLedgerDigest(current.ledger) === coordinationLedgerDigest(plan.inspection.ledger) &&
               sameJson(current.workVersion, plan.inspection.work_version) &&
               sameJson(current.ledgerVersion, plan.inspection.ledger_version) &&
               current.maintenanceGeneration === plan.inspection.maintenance_generation &&
@@ -11924,7 +12018,7 @@ export class HostStateStore {
           after.work &&
             after.ledger &&
             sameJson(after.work, plan.inspection.work) &&
-            sameJson(after.ledger, plan.inspection.ledger),
+            coordinationLedgerDigest(after.ledger) === coordinationLedgerDigest(plan.inspection.ledger),
           'delivered-work continuation repair changed linked state',
         );
         const resultDigest = canonicalJsonDigest({
@@ -12085,9 +12179,9 @@ export class HostStateStore {
           ownerClaims.length === 1 &&
           Number.isFinite(leaseEnd) &&
           leaseEnd === claimEnd &&
-          sameJson(ticket.active_resources, resources) &&
-          sameJson(ticket.exclusive_resources, resources) &&
-          sameJson(claim.resources, resources) &&
+          sameCoordinationStrings(ticket.active_resources, resources) &&
+          sameCoordinationStrings(ticket.exclusive_resources, resources) &&
+          sameCoordinationStrings(claim.resources, resources) &&
           !ledger.claims.some(
             (entry) =>
               entry.status === 'active' &&
@@ -12477,8 +12571,8 @@ export class HostStateStore {
       action = receipt.request.action,
       recovery = this.#readFailedPrewriterRecoveryReceipt(identity, attempt);
     requireState(
-      row.payload === canonicalJson(receipt) &&
-        row.digest === canonicalJsonDigest(receipt) &&
+      row.payload === serializeDeliveredWorkContinuationReceipt(receipt) &&
+        row.digest === deliveredWorkContinuationRecord(receipt).digest &&
         sameJson(receipt.request.identity, identity) &&
         receipt.attempt === attempt &&
         receipt.request_digest === canonicalJsonDigest(receipt.request) &&
@@ -12496,7 +12590,9 @@ export class HostStateStore {
           : action.capture.action_id === row.action_id),
       'delivered-work receipt or current binding differs',
     );
-    return snapshot(receipt);
+    return freezeJsonValue(
+      JSON.parse(serializeDeliveredWorkContinuationReceipt(receipt)) as DeliveredWorkContinuationReceipt,
+    );
   }
   /** Read the current retained review/prewriter wave for this original Work attempt. */
   readDeliveredWorkContinuation(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationLookup | null {
@@ -12520,7 +12616,7 @@ export class HostStateStore {
       receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt,
       bindingRecovery = this.#readFailedPrewriterRecoveryReceipt(identity, attempt);
     requireState(
-      canonicalJsonDigest(receipt) === row.digest &&
+      deliveredWorkContinuationRecord(receipt).digest === row.digest &&
         receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
         receipt.status === 'action_ready' &&
         receipt.request_digest === canonicalJsonDigest(receipt.request) &&
@@ -12570,15 +12666,15 @@ export class HostStateStore {
         ticket.work_id === identity.work_id &&
         ticket.thread_id === receipt.request.nativeSessionHandle &&
         ticket.source_revision === currentSourceScope.digest &&
-        sameJson(ticket.exclusive_resources, resources) &&
-        sameJson(ticket.active_resources, resources) &&
+        sameCoordinationStrings(ticket.exclusive_resources, resources) &&
+        sameCoordinationStrings(ticket.active_resources, resources) &&
         ticket.expires_at !== null &&
         Date.parse(ticket.expires_at) > now &&
         claims.length === 1 &&
         claims[0]!.status === 'active' &&
         claims[0]!.thread_id === receipt.request.nativeSessionHandle &&
         claims[0]!.work_id === identity.work_id &&
-        sameJson(claims[0]!.resources, resources) &&
+        sameCoordinationStrings(claims[0]!.resources, resources) &&
         Date.parse(claims[0]!.lease_expires_at) > now &&
         !ledger.tickets.some(
           (candidate) =>
@@ -13122,7 +13218,7 @@ export class HostStateStore {
           work: middle,
           ledger: middleLedger,
           workVersion: version(middle),
-          ledgerVersion: version(middleLedger),
+          ledgerVersion: version(middleLedger, 'ledger'),
         },
         next,
         nextLedger,
@@ -13875,7 +13971,7 @@ export class HostStateStore {
   }): HostStateSnapshot {
     requireState(!this.#database.inTransaction, 'nested stopped-source capture forbidden');
     const { verifyCurrent: _verify, fault: _fault, ...boundedRequest } = input;
-    const request = snapshot(boundedRequest);
+    const request = snapshotEncoded(boundedRequest, sourceCaptureRequestJson);
     requireState(
       input.attempt > 0 && Number.isSafeInteger(input.attempt) && typeof input.verifyCurrent === 'function',
       'stopped-source capture input invalid',
@@ -13905,7 +14001,7 @@ export class HostStateStore {
         Array.isArray(input.candidateSnapshot.entries),
       'unverified candidate inventory required',
     );
-    const requestDigest = canonicalJsonDigest(request);
+    const requestDigest = createHash('sha256').update(sourceCaptureRequestJson(request)).digest('hex');
     return this.#transactionWithProducerFence(() => {
       this.#database.exec(
         'CREATE TABLE IF NOT EXISTS agent_host_stopped_source_capture (workspace_id TEXT,work_id TEXT,attempt INTEGER,action_id TEXT,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt,action_id))',
@@ -13922,7 +14018,7 @@ export class HostStateStore {
       if (existing) {
         const record = parseStoredRecord(existing.payload, 'stopped-source capture receipt');
         requireState(
-          canonicalJsonDigest(record) === existing.digest && record.request_digest === requestDigest,
+          sourceCaptureRecord(record).digest === existing.digest && record.request_digest === requestDigest,
           'stopped-source capture retry differs',
         );
         requireSynchronousVerification(input.verifyCurrent(), 'stopped Source proof must finish synchronously');
@@ -13962,14 +14058,17 @@ export class HostStateStore {
             sameJson(
               current.ledger.tickets.find((entry) => entry.ticket_id === releasedTicketId),
               record.released_ticket,
+              coordinationComponentJson,
             ) &&
             sameJson(
               current.ledger.claims.filter((entry) => entry.ticket_id === releasedTicketId),
               record.released_claims,
+              coordinationComponentJson,
             ) &&
             sameJson(
               current.ledger.operations.find((entry) => entry.operation_id === releasedOperationId),
               record.release_operation,
+              coordinationComponentJson,
             ),
           'stopped-source capture retry released lineage changed',
         );
@@ -14203,6 +14302,7 @@ export class HostStateStore {
         runtime_acceptance: false,
         rights_granted: false,
       };
+      const encoded = sourceCaptureRecord(record);
       this.#database
         .query('INSERT INTO agent_host_stopped_source_capture VALUES(?,?,?,?,?,?)')
         .run(
@@ -14210,8 +14310,8 @@ export class HostStateStore {
           input.identity.work_id,
           input.attempt,
           observation.action_id,
-          canonicalJson(record),
-          canonicalJsonDigest(record),
+          encoded.payload,
+          encoded.digest,
         );
       input.fault?.();
       return after;
@@ -14221,7 +14321,7 @@ export class HostStateStore {
   /** Settle only the original reported failure after its Source owner was retired. */
   captureRetiredSourceObservation(input: RetiredSourceCaptureRequest): RetiredSourceCaptureResult {
     const { verifyCurrent: _verify, fault: _fault, ...bounded } = input,
-      request = snapshot(bounded),
+      request = snapshotEncoded(bounded, sourceCaptureRequestJson),
       evidence = input.terminalEvidence,
       observation = input.observation;
     requireState(
@@ -14312,7 +14412,7 @@ export class HostStateStore {
         input.attributions.length <= 8192,
       'retired-source partial observation or candidate inventory invalid',
     );
-    const requestDigest = canonicalJsonDigest(request);
+    const requestDigest = createHash('sha256').update(sourceCaptureRequestJson(request)).digest('hex');
     requireState(!this.#database.inTransaction, 'nested retired-source capture forbidden');
     return this.#transactionWithProducerFence(() => {
       this.#database.exec(
@@ -14340,7 +14440,7 @@ export class HostStateStore {
             digest: string;
           } | null;
         requireState(
-          canonicalJsonDigest(record) === existing.digest && record.request_digest === requestDigest,
+          sourceCaptureRecord(record).digest === existing.digest && record.request_digest === requestDigest,
           'retired-source capture retry differs',
         );
         requireSynchronousVerification(input.verifyCurrent(), 'retired Source proof must finish synchronously');
@@ -14395,7 +14495,8 @@ export class HostStateStore {
           release.work_id === ticket.work_id &&
           release.thread_id === ticket.thread_id &&
           release.source_revision === ticket.source_revision &&
-          sameJson(release.resources, ticket.exclusive_resources) &&
+          Array.isArray(release.resources) &&
+          sameCoordinationStrings(release.resources, ticket.exclusive_resources) &&
           release.decided_by === input.operatorHandle,
         'exact original retired ticket, claim or release operation differs',
       );
@@ -14527,7 +14628,7 @@ export class HostStateStore {
                   operation.ticket_id === grant.ticket_id &&
                   operation.work_id === grant.work_id &&
                   operation.thread_id === grant.thread_id &&
-                  sameJson(
+                  sameCoordinationStrings(
                     [...((operation.resources as string[]) ?? [])].sort(),
                     [...grant.exclusive_resources].sort(),
                   ),
@@ -14542,6 +14643,7 @@ export class HostStateStore {
           sameJson(
             later.map((entry) => ({ ticket_id: entry.ticket_id, claim_id: entry.claim_id })),
             laterClaims.map((entry) => ({ ticket_id: entry.ticket_id, claim_id: entry.claim_id })),
+            coordinationComponentJson,
           ),
         'original writes, later grants or active Source ownership are incomplete',
       );
@@ -14562,7 +14664,7 @@ export class HostStateStore {
       );
       const attributedPaths = new Set(input.attributions.map((entry) => entry.path));
       requireState(
-        sameJson(input.attributions, input.nativeReadResult.source_effects) &&
+        sameJson(input.attributions, input.nativeReadResult.source_effects, coordinationComponentJson) &&
           sameJson([...attributedPaths].sort(), originalPaths),
         'retired-source source-change attribution is incomplete',
       );
@@ -14687,16 +14789,10 @@ export class HostStateStore {
         canonical_acceptance: false,
       };
       input.fault?.();
+      const encoded = sourceCaptureRecord(receipt);
       this.#database
         .query('INSERT INTO agent_host_retired_source_capture VALUES(?,?,?,?,?,?)')
-        .run(
-          this.#workspaceId,
-          input.identity.work_id,
-          input.attempt,
-          input.actionId,
-          canonicalJson(receipt),
-          canonicalJsonDigest(receipt),
-        );
+        .run(this.#workspaceId, input.identity.work_id, input.attempt, input.actionId, encoded.payload, encoded.digest);
       return { snapshot: after, request_digest: requestDigest };
     }).immediate();
   }
@@ -14853,8 +14949,7 @@ export class HostStateStore {
           )
           .run(
             value.revision,
-            canonicalJson(value),
-            canonicalJsonDigest(value),
+            ...stateValues(kind, value),
             this.#workspaceId,
             kind,
             id,
@@ -15052,7 +15147,7 @@ export class HostStateStore {
         successor_ledger: nextLedger,
         successor_journal: nextJournal,
         work_version: version(nextWork)!,
-        ledger_version: version(nextLedger)!,
+        ledger_version: version(nextLedger, 'ledger')!,
         journal_version: { revision: row.revision + 1, digest: canonicalJsonDigest(nextJournal) },
         created_at: createdAt,
         rights_granted: false,
@@ -15092,8 +15187,7 @@ export class HostStateStore {
           )
           .run(
             value.revision,
-            canonicalJson(value),
-            canonicalJsonDigest(value),
+            ...stateValues(kind, value),
             this.#workspaceId,
             kind,
             id,
@@ -15274,8 +15368,7 @@ export class HostStateStore {
           )
           .run(
             value.revision,
-            canonicalJson(value),
-            canonicalJsonDigest(value),
+            ...stateValues(kind, value),
             this.#workspaceId,
             kind,
             id,
@@ -15613,7 +15706,7 @@ export class HostStateStore {
             work: nextWork,
             ledger: nextLedger,
             workVersion: version(nextWork),
-            ledgerVersion: version(nextLedger),
+            ledgerVersion: version(nextLedger, 'ledger'),
           },
           journal: {
             version: { revision: row.revision + 1, digest: row.digest },
@@ -15634,8 +15727,7 @@ export class HostStateStore {
           )
           .run(
             value.revision,
-            canonicalJson(value),
-            canonicalJsonDigest(value),
+            ...stateValues(kind, value),
             this.#workspaceId,
             kind,
             id,
@@ -15762,7 +15854,7 @@ export class HostStateStore {
           target.claim_ids.includes(activeClaims[0]!.claim_id) &&
           activeClaims[0]!.thread_id === target.thread_id &&
           activeClaims[0]!.generation === target.generation &&
-          canonicalJsonDigest(activeClaims[0]!.resources) === canonicalJsonDigest(target.active_resources),
+          sameCoordinationStrings(activeClaims[0]!.resources, target.active_resources),
         'interrupted Source retirement owner, lease, ticket, or claim differs',
       );
       matchesExpected(before.workVersion, request.expectedWork);
@@ -16251,7 +16343,7 @@ export class HostStateStore {
           activeClaims[0]!.generation === request.leaseGeneration &&
           activeClaims[0]!.lease_expires_at === ticket.expires_at &&
           timestamp(activeClaims[0]!.lease_expires_at) <= Date.now() &&
-          sameJson(activeClaims[0]!.resources, ticket.active_resources),
+          sameCoordinationStrings(activeClaims[0]!.resources, ticket.active_resources),
         'completed Source report recovery original Source ticket or claim differs',
       );
       this.#assertNoOverlappingActiveSourceOwner(priorLedger, ticket!);
@@ -16405,7 +16497,7 @@ export class HostStateStore {
         verified_current: verifiedCurrent,
         successor_work: nextWork,
         work_version: version(nextWork)!,
-        successor_ledger_version: version(handoff.nextLedger)!,
+        successor_ledger_version: version(handoff.nextLedger, 'ledger')!,
         successor_journal: request.nextJournal,
         journal_version: successorJournalVersion,
         execution_ticket: handoff.executionTicket,
@@ -16423,9 +16515,9 @@ export class HostStateStore {
           issue_id: request.issueId,
           report_id: request.reportId,
           request_digest: canonicalJsonDigest(request),
-          record_digest: canonicalJsonDigest(record),
+          record_digest: createHash('sha256').update(completedSourceReportRecoveryRecordJson(record)).digest('hex'),
           work_version: version(nextWork)!,
-          ledger_version: version(handoff.nextLedger)!,
+          ledger_version: version(handoff.nextLedger, 'ledger')!,
           journal_version: successorJournalVersion,
           maintenance_generation: before.maintenanceGeneration,
           status: 'completed_report_recovered',
@@ -16437,7 +16529,7 @@ export class HostStateStore {
       this.#database.exec(
         'CREATE TABLE IF NOT EXISTS agent_host_completed_source_report_recovery (workspace_id TEXT,work_id TEXT,attempt INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
       );
-      const encodedReceipt = canonicalJson(receipt),
+      const encodedReceipt = completedSourceReportRecoveryReceiptJson(receipt),
         inserted = this.#database
           .query('INSERT INTO agent_host_completed_source_report_recovery VALUES(?,?,?,?,?)')
           .run(
@@ -16445,7 +16537,7 @@ export class HostStateStore {
             request.identity.work_id,
             request.attempt,
             encodedReceipt,
-            canonicalJsonDigest(receipt),
+            createHash('sha256').update(encodedReceipt).digest('hex'),
           );
       requireState(inserted.changes === 1, 'completed Source report recovery receipt already exists');
       const after = this.#commitHostState(
@@ -16680,7 +16772,7 @@ export class HostStateStore {
           activeClaims[0]!.thread_id === input.nativeSessionHandle &&
           activeClaims[0]!.work_id === input.identity.work_id &&
           activeClaims[0]!.generation === work.lease.generation &&
-          canonicalJsonDigest([...activeClaims[0]!.resources].sort()) === canonicalJsonDigest(resources) &&
+          sameCoordinationStrings([...activeClaims[0]!.resources].sort(), resources) &&
           resources.length > 0 &&
           !ledger.tickets.some(
             (other) =>
@@ -16691,7 +16783,7 @@ export class HostStateStore {
                 other.thread_id === input.nativeSessionHandle &&
                 other.generation === work.lease!.generation &&
                 other.repository_id === input.identity.repository_id &&
-                sameJson(other.project_ids, input.identity.project_ids) &&
+                sameCoordinationStrings(other.project_ids, input.identity.project_ids) &&
                 other.integrations_digest === input.identity.integrations_digest &&
                 other.source_revision === work.binding.work_source_revision
               ) &&
@@ -16703,6 +16795,21 @@ export class HostStateStore {
       const releasedTicket = nextLedger.tickets.find((entry) => entry.ticket_id === ticket.ticket_id),
         releasedClaim = nextLedger.claims.find((entry) => entry.claim_id === activeClaims[0]!.claim_id),
         releaseOperation = nextLedger.operations.at(-1);
+      const expectedNextLedger: CoordinationLedger = {
+        ...ledger,
+        revision: ledger.revision + 1,
+        tickets: ledger.tickets.map((entry) =>
+          entry.ticket_id === ticket.ticket_id
+            ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
+            : entry,
+        ),
+        claims: ledger.claims.map((entry) =>
+          entry.claim_id === activeClaims[0]!.claim_id && releasedClaim
+            ? { ...entry, status: 'released', renewed_at: releasedClaim.renewed_at }
+            : entry,
+        ),
+        operations: releaseOperation ? [...ledger.operations, releaseOperation] : ledger.operations,
+      };
       requireState(
         releasedTicket?.status === 'released' &&
           releasedTicket.expires_at === null &&
@@ -16710,7 +16817,7 @@ export class HostStateStore {
           typeof releasedClaim.renewed_at === 'string' &&
           Number.isFinite(Date.parse(releasedClaim.renewed_at)) &&
           nextLedger.operations.length === ledger.operations.length + 1 &&
-          sameJson(nextLedger.operations.slice(0, -1), ledger.operations) &&
+          coordinationLedgerDigest(nextLedger) === coordinationLedgerDigest(expectedNextLedger) &&
           releaseOperation !== undefined &&
           releaseOperation.schema === 'CoordinationOperation/v1' &&
           typeof releaseOperation.operation_id === 'string' &&
@@ -16739,50 +16846,13 @@ export class HostStateStore {
           releaseOperation.work_id === input.identity.work_id &&
           releaseOperation.thread_id === input.nativeSessionHandle &&
           releaseOperation.source_revision === ticket.source_revision &&
-          sameJson(releaseOperation.resources, resources) &&
+          Array.isArray(releaseOperation.resources) &&
+          sameCoordinationStrings(releaseOperation.resources, resources) &&
           releaseOperation.decision_pointer === input.userRequestPointer &&
           releaseOperation.decided_by === input.nativeSessionHandle &&
           releaseOperation.from_ledger_revision === ledger.revision &&
           releaseOperation.to_ledger_revision === ledger.revision + 1 &&
           Number.isFinite(Date.parse(releaseOperation.created_at)) &&
-          sameJson(
-            nextLedger.tickets,
-            ledger.tickets.map((entry) =>
-              entry.ticket_id === ticket.ticket_id
-                ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
-                : entry,
-            ),
-          ) &&
-          sameJson(
-            nextLedger.claims,
-            ledger.claims.map((entry) =>
-              entry.claim_id === activeClaims[0]!.claim_id
-                ? { ...entry, status: 'released', renewed_at: releasedClaim.renewed_at }
-                : entry,
-            ),
-          ) &&
-          sameJson(
-            (() => {
-              const {
-                revision: _revision,
-                tickets: _tickets,
-                claims: _claims,
-                operations: _operations,
-                ...rest
-              } = nextLedger;
-              return rest;
-            })(),
-            (() => {
-              const {
-                revision: _revision,
-                tickets: _tickets,
-                claims: _claims,
-                operations: _operations,
-                ...rest
-              } = ledger;
-              return rest;
-            })(),
-          ) &&
           sameJson(nextWork, {
             ...work,
             revision: work.revision + 1,
@@ -17089,7 +17159,7 @@ export class HostStateStore {
           work: verified,
           ledger: verificationLedger,
           workVersion: version(verified),
-          ledgerVersion: version(verificationLedger),
+          ledgerVersion: version(verificationLedger, 'ledger'),
         },
         this.#checkedWork(delivered),
         checkedLedger(deliveryLedger),
@@ -17106,8 +17176,7 @@ export class HostStateStore {
           )
           .run(
             value.revision,
-            canonicalJson(value),
-            canonicalJsonDigest(value),
+            ...stateValues(kind, value),
             this.#workspaceId,
             kind,
             id,
@@ -17136,7 +17205,7 @@ export class HostStateStore {
     },
   ): HostStateSnapshot {
     const { documentationContext, expectedSessionJournal, ...stateInput } = input;
-    const data = snapshot(stateInput);
+    const data = snapshotHostComponents(stateInput);
     requireState(
       Object.keys(data).length === (data.expectedMaintenanceGeneration === undefined ? 4 : 5),
       'host state transaction fields invalid',
@@ -17181,7 +17250,7 @@ export class HostStateStore {
             predecessorClaims[0]!.work_id === before.work!.binding.lifecycle_work_id &&
             predecessorClaims[0]!.thread_id === predecessorLease.thread_id &&
             predecessorClaims[0]!.generation === predecessorLease.generation &&
-            sameJson(predecessorClaims[0]!.resources, predecessorTicket.active_resources) &&
+            sameCoordinationStrings(predecessorClaims[0]!.resources, predecessorTicket.active_resources) &&
             timestamp(predecessorClaims[0]!.lease_expires_at) > Date.now(),
           'source writer promotion requires live predecessor ticket and claim',
         );
@@ -17289,14 +17358,7 @@ export class HostStateStore {
         ['work', identityKey(workIdentity(work)), work, before.workVersion],
         ['ledger', 'shared', ledger, before.ledgerVersion],
       ] as const) {
-        const values = [
-          value.revision,
-          canonicalJson(value),
-          canonicalJsonDigest(value),
-          this.#workspaceId,
-          kind,
-          id,
-        ] as const;
+        const values = [value.revision, ...stateValues(kind, value), this.#workspaceId, kind, id] as const;
         const result =
           expected === null
             ? this.#database

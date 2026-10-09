@@ -1,3 +1,4 @@
+import { sameCoordinationStrings } from '../contracts/envelopes.js';
 import { createHash } from 'node:crypto';
 import { validateLifecycleReferencePreservation } from '../lifecycle/lifecycle-state.js';
 import {
@@ -6,7 +7,12 @@ import {
   freezeJsonValue,
   isPlainRecord,
 } from '../contracts/public-ingress.js';
-import type { CoordinationLedger } from '../contracts/envelopes.js';
+import {
+  coordinationLedgerJson,
+  coordinationLedgerDigest,
+  coordinationComponentJson,
+  type CoordinationLedger,
+} from '../contracts/envelopes.js';
 import type { WorkIdentity, WorkState, StateVersion } from '../host-state.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import type { SessionBridgeRequest } from './mastra-session-bridge.js';
@@ -21,11 +27,16 @@ import {
 import { validateFailedPrewriterRecoveryBasis } from './failed-prewriter-recovery.js';
 import {
   projectQualifiedRuntimeCodeAncestor,
+  qualifiedRuntimeCodeHistoryJson,
   runtimeCodeContinuationProtectedWorkDigest,
   validateQualifiedRuntimeCodeContinuationReceipt,
   type QualifiedRuntimeCodeContinuationReceipt,
 } from './qualified-runtime-code-continuation.js';
-import type { ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
+import {
+  deliveredWorkContinuationRecord,
+  serializeDeliveredWorkContinuationReceipt,
+  type ConfiguredFrontierReceipt,
+} from './delivered-work-continuation-repair.js';
 
 export interface FailedPrewriterTransitionRequest {
   readonly schema: 'FailedPrewriterTransitionRequest/v1';
@@ -98,7 +109,9 @@ const recoveryKeys = [
 const recoveryByteLimit = 64 * 1024 * 1024;
 
 /** Keep ordinary component limits and their actual depth inside the artifact. */
-function componentJson(value: unknown, depth: number): string {
+function componentJson(value: unknown, depth: number, key: string): string {
+  if (key === 'prior_ledger' || key === 'successor_ledger') return coordinationLedgerJson(value, depth);
+  if (key === 'original') return serializeDeliveredWorkContinuationReceipt(value as ConfiguredFrontierReceipt, depth);
   return canonicalJsonAtDepth(value, depth);
 }
 function envelopeGuard(value: unknown, keys: readonly string[]): void {
@@ -131,7 +144,7 @@ export function serializeFailedPrewriterRecoveryReceipt(receipt: FailedPrewriter
     '{' +
       [...recoveryKeys]
         .sort()
-        .map((key) => JSON.stringify(key) + ':' + componentJson(receipt[key], depth + 1))
+        .map((key) => JSON.stringify(key) + ':' + componentJson(receipt[key], depth + 1, key))
         .join(',') +
       '}',
   );
@@ -161,19 +174,20 @@ export function configuredFrontierRecoveryViewDigest(view: ConfiguredFrontierRec
     !hasHistory || Array.isArray(view.runtimeCodeContinuations),
     'configured code history must be an array',
   );
-  const history = view.runtimeCodeContinuations?.map(validateQualifiedRuntimeCodeContinuationReceipt) ?? [];
+  const history = view.runtimeCodeContinuations ?? [];
+  const historyJson = qualifiedRuntimeCodeHistoryJson(history, 1);
   const text = boundedArtifact(
     '{"original":' +
-      componentJson(view.original, 1) +
+      componentJson(view.original, 1, 'original') +
       ',"recovery":' +
       (view.recovery === null ? 'null' : serializeFailedPrewriterRecoveryReceipt(view.recovery, 1)) +
-      (history.length ? ',"runtimeCodeContinuations":' + componentJson(history, 1) : '') +
+      (history.length ? ',"runtimeCodeContinuations":' + historyJson : '') +
       '}',
   );
   return createHash('sha256').update(text).digest('hex');
 }
 
-const same = (left: unknown, right: unknown) => canonicalJsonDigest(left) === canonicalJsonDigest(right);
+const same = (left: unknown, right: unknown, encode = canonicalJsonDigest) => encode(left) === encode(right);
 function requireTransition(condition: unknown, message: string): asserts condition {
   if (!condition) throw Error(`failed prewriter transition: ${message}`);
 }
@@ -198,7 +212,7 @@ export function validateFailedPrewriterTransitionRequest(
       same(request.identity, original.request.identity) &&
       request.attempt === original.attempt &&
       request.nativeSessionHandle === original.request.nativeSessionHandle &&
-      request.original_receipt_digest === canonicalJsonDigest(original) &&
+      request.original_receipt_digest === deliveredWorkContinuationRecord(original).digest &&
       stateVersion(request.expectedWork) &&
       stateVersion(request.expectedLedger) &&
       stateVersion(request.expectedJournal) &&
@@ -246,14 +260,26 @@ export function validateFailedPrewriterRecoveryReceipt(
       same(receipt.prior_journal_version, request.expectedJournal),
     'receipt request or prior versions differ',
   );
-  for (const [before, after, beforeVersion, afterVersion] of [
-    [receipt.prior_work, receipt.successor_work, receipt.prior_work_version, receipt.work_version],
-    [receipt.prior_ledger, receipt.successor_ledger, receipt.prior_ledger_version, receipt.ledger_version],
-    [receipt.prior_journal, receipt.successor_journal, receipt.prior_journal_version, receipt.journal_version],
+  for (const [before, after, beforeVersion, afterVersion, digest] of [
+    [receipt.prior_work, receipt.successor_work, receipt.prior_work_version, receipt.work_version, canonicalJsonDigest],
+    [
+      receipt.prior_ledger,
+      receipt.successor_ledger,
+      receipt.prior_ledger_version,
+      receipt.ledger_version,
+      coordinationLedgerDigest,
+    ],
+    [
+      receipt.prior_journal,
+      receipt.successor_journal,
+      receipt.prior_journal_version,
+      receipt.journal_version,
+      canonicalJsonDigest,
+    ],
   ] as const)
     requireTransition(
-      canonicalJsonDigest(before) === beforeVersion.digest &&
-        canonicalJsonDigest(after) === afterVersion.digest &&
+      digest(before) === beforeVersion.digest &&
+        digest(after) === afterVersion.digest &&
         afterVersion.revision === beforeVersion.revision + 1,
       'receipt beforeimage, afterimage or version differs',
     );
@@ -336,15 +362,15 @@ export function validateFailedPrewriterRecoveryReceipt(
       nextTicket.thread_id === request.nativeSessionHandle &&
       nextTicket.work_id === request.identity.work_id &&
       nextTicket.source_revision === request.currentSourceScope.digest &&
-      same(nextTicket.exclusive_resources, priorTicket.exclusive_resources) &&
-      same(nextTicket.active_resources, priorTicket.exclusive_resources) &&
+      sameCoordinationStrings(nextTicket.exclusive_resources, priorTicket.exclusive_resources) &&
+      sameCoordinationStrings(nextTicket.active_resources, priorTicket.exclusive_resources) &&
       nextTicket.blocked_resources.length === 0 &&
       nextTicket.expires_at !== null &&
       Date.parse(nextTicket.expires_at) > Date.parse(receipt.created_at) &&
       newClaims.length === 1 &&
       newClaims[0]!.thread_id === request.nativeSessionHandle &&
       newClaims[0]!.lease_expires_at === nextTicket.expires_at &&
-      same(newClaims[0]!.resources, oldClaim.resources) &&
+      sameCoordinationStrings(newClaims[0]!.resources, oldClaim.resources) &&
       after.tickets.find((item) => item.ticket_id === priorTicket.ticket_id)?.status === 'read_only' &&
       after.claims.find((item) => item.claim_id === oldClaim.claim_id)?.status === 'recovered',
     'successor full-resource ownership differs',
@@ -373,44 +399,56 @@ export function validateFailedPrewriterRecoveryReceipt(
         source_scope: request.currentSourceScope,
         items: receipt.successor_journal.items,
       }) &&
-      same(after, {
-        ...before,
-        revision: receipt.ledger_version.revision,
-        next_sequence: before.next_sequence + 1,
-        tickets: [
-          ...before.tickets.map((item) =>
-            item.ticket_id === priorTicket.ticket_id
-              ? { ...item, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null }
-              : item,
-          ),
-          nextTicket,
-        ],
-        claims: [
-          ...before.claims.map((item) =>
-            item.claim_id === oldClaim.claim_id ? { ...item, status: 'recovered' } : item,
-          ),
-          newClaims[0],
-        ],
-      }) &&
-      same(nextTicket, {
-        ...priorTicket,
-        ticket_id: nextTicket.ticket_id,
-        sequence: before.next_sequence,
-        generation: before.open_generation,
-        source_revision: request.currentSourceScope.digest,
-        claim_ids: [newClaims[0]!.claim_id],
-        expires_at: nextTicket.expires_at,
-        created_at: receipt.created_at,
-      }) &&
-      same(newClaims[0], {
-        ...oldClaim,
-        claim_id: newClaims[0]!.claim_id,
-        ticket_id: nextTicket.ticket_id,
-        generation: before.open_generation,
-        lease_expires_at: nextTicket.expires_at,
-        created_at: receipt.created_at,
-        renewed_at: receipt.created_at,
-      }),
+      same(
+        after,
+        {
+          ...before,
+          revision: receipt.ledger_version.revision,
+          next_sequence: before.next_sequence + 1,
+          tickets: [
+            ...before.tickets.map((item) =>
+              item.ticket_id === priorTicket.ticket_id
+                ? { ...item, status: 'read_only', active_resources: [], blocked_resources: [], expires_at: null }
+                : item,
+            ),
+            nextTicket,
+          ],
+          claims: [
+            ...before.claims.map((item) =>
+              item.claim_id === oldClaim.claim_id ? { ...item, status: 'recovered' } : item,
+            ),
+            newClaims[0],
+          ],
+        },
+        coordinationLedgerJson,
+      ) &&
+      same(
+        nextTicket,
+        {
+          ...priorTicket,
+          ticket_id: nextTicket.ticket_id,
+          sequence: before.next_sequence,
+          generation: before.open_generation,
+          source_revision: request.currentSourceScope.digest,
+          claim_ids: [newClaims[0]!.claim_id],
+          expires_at: nextTicket.expires_at,
+          created_at: receipt.created_at,
+        },
+        coordinationComponentJson,
+      ) &&
+      same(
+        newClaims[0],
+        {
+          ...oldClaim,
+          claim_id: newClaims[0]!.claim_id,
+          ticket_id: nextTicket.ticket_id,
+          generation: before.open_generation,
+          lease_expires_at: nextTicket.expires_at,
+          created_at: receipt.created_at,
+          renewed_at: receipt.created_at,
+        },
+        coordinationComponentJson,
+      ),
     'transition changed unrelated state or rights',
   );
   return receipt;
@@ -458,7 +496,12 @@ export function effectiveConfiguredFrontier(view: ConfiguredFrontierRecoveryView
 } {
   const recovery =
     view.recovery && validateFailedPrewriterRecoveryReceipt(view.recovery, view.runtimeCodeContinuations);
-  requireTransition(!recovery || same(recovery.original, view.original), 'recovery view original receipt differs');
+  requireTransition(
+    !recovery ||
+      serializeDeliveredWorkContinuationReceipt(recovery.original) ===
+        serializeDeliveredWorkContinuationReceipt(view.original),
+    'recovery view original receipt differs',
+  );
   const base = recovery?.successor_work ?? view.original.successor_work;
   const adopted = view.runtimeCodeContinuations?.at(-1);
   let currentBinding = recovery?.successor_work.binding ?? view.original.successor_binding;

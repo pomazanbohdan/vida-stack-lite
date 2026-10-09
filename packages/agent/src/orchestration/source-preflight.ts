@@ -1,3 +1,4 @@
+import { coordinationLedgerDigest } from '../contracts/envelopes.js';
 import { createHash } from 'node:crypto';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { TrustedProjectIdentity } from '../contracts/public-ingress.js';
@@ -5,7 +6,7 @@ import { runtimeConfigDigest } from '../config/runtime-config.js';
 import type { AgentRuntimeConfig } from '../config/runtime-config.js';
 import type { ProjectContext } from '../config/project-context.js';
 import type { ProjectAuthorizationResult } from '../authorization/cedar-boundary.js';
-import type { WorkflowEvaluation } from '@edictum/core';
+import type { WorkflowEvaluation } from '../governance/policy-workflow.js';
 import { computeEdictumWorkflowApprovalEvidenceDigest } from '../governance/edictum-boundary.js';
 import type {
   CanonicalHostSourceWriteApproval,
@@ -118,7 +119,7 @@ function currentHostWork(snapshot: HostStateSnapshot): NonNullable<HostStateSnap
     !Number.isSafeInteger(ledgerVersion.revision) ||
     ledgerVersion.revision !== ledger.revision ||
     !/^[a-f0-9]{64}$/.test(ledgerVersion.digest) ||
-    ledgerVersion.digest !== canonicalJsonDigest(ledger) ||
+    ledgerVersion.digest !== coordinationLedgerDigest(ledger) ||
     ledger.workspace_id !== work.workspace_id ||
     !Number.isSafeInteger(maintenanceGeneration) ||
     maintenanceGeneration < 0

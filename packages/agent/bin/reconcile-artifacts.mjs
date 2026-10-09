@@ -7,7 +7,7 @@ import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { applyResearchSourceIdentityRepair, planResearchSourceIdentityRepair } from './repair-research-records.mjs';
 import { runReadOnlyDispatchRepair } from './reconcile-readonly-dispatch.mjs';
@@ -131,6 +131,10 @@ export async function runReconcileArtifacts(args, { onPhase } = {}) {
   if (kind === 'release-retarget') {
     const { runReleaseRetarget } = await import('./repair-release-retarget.mjs');
     return runReleaseRetarget(args, { onPhase });
+  }
+  if (kind === 'release-preparation') {
+    const { runReleasePreparation } = await import('./release-preparation.mjs');
+    return runReleasePreparation(args);
   }
   if (kind === 'work-state') return runWorkStateRepair(args);
   if (kind === 'documentation-policy') return runDocumentationPolicyTransition(args, { onPhase });

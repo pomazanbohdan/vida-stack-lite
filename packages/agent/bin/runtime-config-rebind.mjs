@@ -15,7 +15,11 @@ import {
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { HostStateStore } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import {
+  sessionHandoffDatabasePath,
+  sessionHandoffDatabaseRelativePath,
+  sessionBridgeDatabaseRelativePath,
+} from '../src/config/project-paths.ts';
 import { inspectHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
 import { readAdmittedSessionIntake } from '../src/orchestration/admitted-session-execution.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
@@ -511,7 +515,7 @@ export function inspectHistoricalOwnerContext(root, baselinePath, identity, atte
     'historical work configuration or base run differs',
   );
   const file = sessionBridgeDatabasePath(root, config);
-  access.readBytes(path.relative(root, file).split(path.sep).join('/'), 'original workflow database');
+  access.readBytes(sessionBridgeDatabaseRelativePath(config), 'original workflow database');
   const engine = new Database(file, { readonly: true, strict: true });
   try {
     const rows = engine
@@ -802,7 +806,7 @@ export function openInternalRecoveryReview(input) {
 
 function database(root, config, readonly) {
   const access = requireSafeRepositoryAccess(root);
-  const relative = `${config.control.work_root}/session-handoff.v1.sqlite`;
+  const relative = sessionHandoffDatabaseRelativePath(config);
   requireRebind(access.fileExists(relative, 'existing host database'), 'existing host database required');
   const file = sessionHandoffDatabasePath(root, config);
   const stat = lstatSync(file);
@@ -976,7 +980,7 @@ function readonlyUnknownFrozenEngine(root, config, row, item, host) {
   );
   const file = sessionBridgeDatabasePath(root, config),
     access = requireSafeRepositoryAccess(root);
-  access.readBytes(path.relative(root, file).split(path.sep).join('/'), 'original workflow database');
+  access.readBytes(sessionBridgeDatabaseRelativePath(config), 'original workflow database');
   const original = new Database(file, { readonly: true, strict: true });
   try {
     const rows = original

@@ -6,7 +6,7 @@ import {
   freezeJsonValue,
   isPlainRecord,
 } from '../contracts/public-ingress.js';
-import { validateCoordinationLedgerV1, type CoordinationLedger } from '../contracts/envelopes.js';
+import { coordinationLedgerJson, coordinationLedgerDigest, validateCoordinationLedgerV1, type CoordinationLedger } from '../contracts/envelopes.js';
 import type { HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { InitialSourceContinuationReceipt } from './initial-source-continuation.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
@@ -117,7 +117,8 @@ function encodeEnvelope(value: Record<string, unknown>, keys: readonly string[],
     '{' +
     [...keys]
       .sort()
-      .map((key) => JSON.stringify(key) + ':' + canonicalJsonAtDepth(value[key], depth + 1))
+      .map((key) => JSON.stringify(key) + ':' + (key === 'prior_ledger'
+        ? coordinationLedgerJson(value[key], depth + 1) : canonicalJsonAtDepth(value[key], depth + 1)))
       .join(',') +
     '}'
   );
@@ -358,7 +359,7 @@ export function validateInitialSourceFrontierCodeRebindRecord(value: unknown): I
       canonicalJsonDigest(record.prior_work) === record.prior_work_version.digest &&
       isPlainRecord(record.prior_ledger) &&
       record.prior_ledger.revision === record.prior_ledger_version.revision &&
-      canonicalJsonDigest(record.prior_ledger) === record.prior_ledger_version.digest &&
+      coordinationLedgerDigest(record.prior_ledger) === record.prior_ledger_version.digest &&
       isPlainRecord(record.prior_journal) &&
       canonicalJsonDigest(record.prior_journal) === record.prior_journal_version.digest &&
       record.successor_work?.schema === 'WorkState/v1' &&

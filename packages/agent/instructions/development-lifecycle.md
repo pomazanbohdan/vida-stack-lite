@@ -551,12 +551,23 @@ rights are confirmed. Installation success alone is not developer unblocking.
 Notify before dependent next-batch work; do not add a test, build or duplicate
 installation observation to send this message. Retain the sent-result reference.
 
-Target short-command and control return below two seconds; retain existing
-elapsed/failure diagnostics without a separate optimization measurement lane.
-Start long tests, builds and installs asynchronously and return control early;
-an early yield is not faster execution. Reuse verified dependencies, warm caches
-and exact deltas without weakening checks or forcing timeouts. Record an actual
-tool minimum-latency exception when it applies.
+Target operation completion within two seconds. When an operation exceeds this
+target, use its elapsed/failure diagnostics to locate duplicate work, repeated
+reads, missing or ineffective caches, lock contention and unnecessary steps.
+Optimize the cause and compare the same operation after the correction. Reuse
+current evidence; do not create a separate measurement lane. Long tests, builds
+and installs run asynchronously: start and status responses meet the two-second
+target, while total elapsed execution remains visible. An early yield does not
+prove faster execution. Cache only data with valid input/version bindings; read
+current ownership, CAS and UNKNOWN state at each effect boundary. Two seconds
+is an optimization target, not a timeout or permission to skip required work.
+Record an actual tool or external-service latency limit when it applies.
+
+Keep every public CLI command and option discoverable through root and
+command-specific help. Update the shared declarations, help and contract checks
+in the same change. Help must explain required values and valid combinations
+without Source access and must run before project initialization or effects.
+The system specification owns this behavior; TESTING.md owns its parity gate.
 
 Agents do not calculate, copy, paste, request or enumerate hashes as manual
 work steps in prompts, work records, reviews or routine handoffs. Pass the
@@ -590,6 +601,16 @@ behavioral regression. Reuse existing framework primitives; an architectural
 fix does not require new abstractions. Reduce agent execution steps, commands
 and handoffs, streamline existing commands and keep outputs compact and
 actionable while preserving authorization, recovery and evidence semantics.
+Apply safe call and token reductions during the current correction: batch
+independent reads, reuse still-current results, and return bounded findings or
+diffs. Do not defer an evident simplification to a separate optimization lane.
+For the standalone agent, prefer public Bun-native APIs and Web platform APIs
+implemented by Bun over Node compatibility calls. Inspect actual callers and
+official contracts before replacing them. Preserve no-follow access, atomic
+writes, CAS, subprocess completion, cancellation and UNKNOWN custody. Retain a
+needed compatibility adapter when Bun has no equivalent supported primitive;
+do not add a second execution engine or host-specific requirement. Group related
+migrations into the current storage, execution, delivery and testing tasks.
 Existing execution diagnostics remain separate from estimates; fewer steps or
 larger timeouts alone prove no speed improvement. References inform mechanics;
 current approved local contracts retain authority. An inaccessible relevant
@@ -612,9 +633,10 @@ installation harnesses. CI/CD may run these delivery checks, but not agent
 behavior tests, coverage, CRAP or mutation. Mutation requires an explicit manual
 launch. Missing local or CI/CD evidence remains a GAP, never a pass. Tests and
 comments describe the current architecture and supported behavior, without
-narratives about absent legacy implementations. Formatter/TypeScript 7 hooks and
-pre-push coverage/CRAP remain proposals for discussion; do not install or activate
-hooks from this policy.
+narratives about absent legacy implementations. The approved pre-commit includes
+formatter, Source type, lint, focused-test and staged-byte checks; activate it
+after those checks pass. Pre-push coverage/CRAP and automatic mutation remain
+outside that authorization.
 
 Apply `TESTING.md#new-and-modified-files` to every new or modified production
 file. Developers author and correct the tests for their feature/fix within their

@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
-import path from 'node:path';
+import { sessionBridgeDatabasePath } from '../config/project-paths.js';
+export { sessionBridgeDatabasePath } from '../config/project-paths.js';
 import { pathToFileURL } from 'node:url';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { Mastra } from '@mastra/core/mastra';
@@ -200,10 +201,6 @@ function requireBridge(condition: unknown, message: string): asserts condition {
 
 export function sessionBridgeRunId(workspaceId: string, context: SessionHandoffContext, workflowId: string): string {
   return 'vida-' + canonicalJsonDigest({ workspaceId, context, workflowId });
-}
-
-export function sessionBridgeDatabasePath(repositoryRoot: string, config: AgentRuntimeConfig): string {
-  return path.join(repositoryRoot, config.control.work_root, 'mastra-workflows.v1.sqlite');
 }
 
 export interface SessionBridgeSnapshot {

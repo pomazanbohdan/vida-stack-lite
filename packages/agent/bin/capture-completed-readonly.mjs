@@ -1,11 +1,11 @@
 import { Database } from 'bun:sqlite';
 import Ajv2020 from 'ajv/dist/2020.js';
 import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
-import ledgerSchema from '../schemas/coordination-ledger.v1.schema.json' with { type: 'json' };
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.js';
 import { loadProjectSetContext } from '../src/config/project-context.js';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.js';
+import { coordinationLedgerDigest } from '../src/contracts/envelopes.js';
 import {
   openConfiguredMastraSessionLedger,
   sessionHandoffDatabasePath,
@@ -159,10 +159,9 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
           validator = new Ajv2020({ allErrors: true });
         requireCapture(
           validator.compile(workSchema)(work) &&
-            validator.compile(ledgerSchema)(coordination) &&
             canonicalJsonDigest(work) === inspected.work_version.digest &&
             workRow.digest === inspected.work_version.digest &&
-            canonicalJsonDigest(coordination) === inspected.ledger_version.digest &&
+            coordinationLedgerDigest(coordination) === inspected.ledger_version.digest &&
             ledgerRow.digest === inspected.ledger_version.digest,
           'terminal host schema or snapshot drift',
         );

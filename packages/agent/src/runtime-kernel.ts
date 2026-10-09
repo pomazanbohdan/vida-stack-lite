@@ -30,10 +30,7 @@ import {
   type WorkflowHostCapability,
   type HostGovernanceCapability,
 } from './governance/edictum-boundary.js';
-import {
-  createConfiguredProjectAuthorizer,
-  type ProjectAuthorizer,
-} from './authorization/cedar-boundary.js';
+import { createConfiguredProjectAuthorizer, type ProjectAuthorizer } from './authorization/cedar-boundary.js';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -56,7 +53,7 @@ import {
 } from './contracts/public-ingress.js';
 import { safeWorkflowOwnedPath, type RuntimeEnvelopeRevisionBinding } from './contracts/envelopes.js';
 export { safeWorkflowOwnedPath } from './contracts/envelopes.js';
-import type { EvaluationResult } from '@edictum/core';
+import type { EvaluationResult } from './governance/operation-policy.js';
 import {
   defaultRuntimeClock,
   defaultRuntimeTimingSink,
@@ -598,8 +595,7 @@ export function createRuntimeKernelSourcePreflightPolicySession(
     workflow.config_digest === expectedConfigDigest,
     'configured Edictum workflow differs from the current Host request',
   );
-  const assertCurrent = (): void =>
-    assertRuntimeConfigUnchanged(loadRuntimeConfig(root), expectedConfigDigest);
+  const assertCurrent = (): void => assertRuntimeConfigUnchanged(loadRuntimeConfig(root), expectedConfigDigest);
   return Object.freeze({ config, authorizeProject, workflow, assertCurrent });
 }
 

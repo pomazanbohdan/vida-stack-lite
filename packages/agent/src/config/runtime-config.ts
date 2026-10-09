@@ -5,8 +5,13 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject } from 'ajv';
-import { parseDocument } from 'yaml';
+import { Composer, CST, Parser, type Document } from 'yaml';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './safe-repository-access.js';
+import {
+  LEGACY_RUNTIME_CONFIGURATION_PATH,
+  PROJECT_CONFIGURATION_PATHS,
+  type RuntimeConfigurationSource,
+} from './project-paths.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
 import researchResultSchema from '../../schemas/research-result.v1.schema.json' with { type: 'json' };
 import researchSynthesisSchema from '../../schemas/research-synthesis.v1.schema.json' with { type: 'json' };
@@ -19,7 +24,7 @@ export {
   type NativeNoFollowCapability,
 } from './host-capability.js';
 
-const CONFIG_FILE = 'agent-runtime.config.v1.yaml';
+const CONFIG_FILE = LEGACY_RUNTIME_CONFIGURATION_PATH;
 const CONFIG_SCHEMA_ID = 'https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json';
 const CONFIG_SCHEMA_SHA256 = 'ed7c14b68f51c103aa06172b057a7c60cf58af69fa6727bad6aa11d9180d40e9';
 const CONFIG_SCHEMA_FILE = fileURLToPath(new URL('../../schemas/agent-runtime-config.v1.schema.json', import.meta.url));
@@ -42,7 +47,8 @@ export function runtimePackageCodePaths(bundle: string): readonly string[] {
     resourceRoot === RUNTIME_PACKAGE_ROOT ? 'source' : 'dist',
   ).map((file) => bundle + '/' + file);
 }
-const MAX_CONFIG_BYTES = 4 * 1024 * 1024;
+export const MAX_CONFIG_BYTES = 4 * 1024 * 1024;
+const MAX_CONFIG_DEPTH = 64;
 const MAX_SNAPSHOT_NODES = 50_000;
 const SOURCE_WRITE_TOOLS = new Set(['runtime.write', 'source.write']);
 
@@ -488,7 +494,14 @@ function snapshotDescriptor(value: object, key: PropertyKey, label: string, enum
   return descriptor as PropertyDescriptor;
 }
 
-function snapshotJson(value: unknown, label: string, seen: WeakSet<object>, state: { nodes: number }): JsonSnapshot {
+function snapshotJson(
+  value: unknown,
+  label: string,
+  seen: WeakSet<object>,
+  state: { nodes: number },
+  depth = 0,
+): JsonSnapshot {
+  assertCondition(depth <= MAX_CONFIG_DEPTH, 'runtime config exceeds the depth budget');
   const kind = typeof value;
   return choose(
     value === null,
@@ -533,6 +546,7 @@ function snapshotJson(value: unknown, label: string, seen: WeakSet<object>, stat
                       label + '[' + index + ']',
                       seen,
                       state,
+                      depth + 1,
                     ),
                   );
                 },
@@ -554,6 +568,7 @@ function snapshotJson(value: unknown, label: string, seen: WeakSet<object>, stat
                         label + '.' + textKey,
                         seen,
                         state,
+                        depth + 1,
                       ),
                     });
                   });
@@ -648,7 +663,8 @@ function yamlNodeChildren(node: Record<string, unknown>): readonly unknown[] {
   });
 }
 
-function assertSafeYamlNode(node: unknown, seen = new WeakSet<object>()): void {
+function assertSafeYamlNode(node: unknown, seen = new WeakSet<object>(), depth = 0): void {
+  assertCondition(depth <= MAX_CONFIG_DEPTH, 'runtime YAML exceeds the depth budget');
   choose(
     isYamlObject(node),
     () => {
@@ -656,7 +672,8 @@ function assertSafeYamlNode(node: unknown, seen = new WeakSet<object>()): void {
       assertCondition(!seen.has(node as object), 'runtime YAML contains a cycle or alias');
       seen.add(node as object);
       const prototype: unknown = Object.getPrototypeOf(node);
-      const constructor: unknown = prototype !== null && typeof prototype === 'object' ? Reflect.get(prototype, 'constructor') : undefined;
+      const constructor: unknown =
+        prototype !== null && typeof prototype === 'object' ? Reflect.get(prototype, 'constructor') : undefined;
       const constructorName = typeof constructor === 'function' ? constructor.name : undefined;
       assertCondition(
         ![constructorName === 'Alias', record.type === 'ALIAS'].some(Boolean),
@@ -671,22 +688,53 @@ function assertSafeYamlNode(node: unknown, seen = new WeakSet<object>()): void {
         () => false,
       );
       assertCondition(!merge, 'runtime YAML merge keys are forbidden');
-      yamlNodeChildren(record).forEach((child) => assertSafeYamlNode(child, seen));
+      yamlNodeChildren(record).forEach((child) => assertSafeYamlNode(child, seen, depth + 1));
       seen.delete(node as object);
     },
     () => undefined,
   );
 }
 
-function parseYaml(raw: string): unknown {
+/** Bound collection nesting before the YAML Composer's recursive traversal. */
+function assertYamlSyntaxDepth(token: CST.Token): void {
+  const pending = [{ token, depth: 0 }];
+  while (pending.length > 0) {
+    const current = pending.pop()!;
+    assertCondition(current.depth <= MAX_CONFIG_DEPTH, 'runtime YAML exceeds the depth budget');
+    if (current.token.type === 'document') {
+      if (current.token.value) pending.push({ token: current.token.value, depth: current.depth });
+    } else if (CST.isCollection(current.token)) {
+      for (const item of current.token.items) {
+        if (item.key) pending.push({ token: item.key, depth: current.depth + 1 });
+        if (item.value) pending.push({ token: item.value, depth: current.depth + 1 });
+      }
+    }
+  }
+}
+
+function* boundedYamlTokens(raw: string): Generator<CST.Token> {
+  for (const token of new Parser().parse(raw)) {
+    assertYamlSyntaxDepth(token);
+    yield token;
+  }
+}
+
+/** Shared strict syntax boundary; the caller must validate its document schema. */
+export function parseRuntimeConfigDocument(raw: string): unknown {
   assertCondition(Buffer.byteLength(raw, 'utf8') <= MAX_CONFIG_BYTES, 'runtime YAML is too large');
-  const document = parseDocument(raw, {
+  const composer = new Composer({
     schema: 'core',
     uniqueKeys: true,
     merge: false,
     prettyErrors: false,
     strict: true,
   });
+  let document: Document.Parsed | undefined;
+  for (const next of composer.compose(boundedYamlTokens(raw), true, raw.length)) {
+    assertCondition(document === undefined, 'runtime YAML parse failed: Source contains multiple documents');
+    document = next;
+  }
+  if (document === undefined) throw new RuntimeConfigError('runtime YAML document is unavailable');
   const issues = [...document.errors, ...document.warnings].map((issue) => issue.message).join('; ');
   assertCondition(issues.length === 0, 'runtime YAML parse failed: ' + issues);
   assertSafeYamlNode(document.contents);
@@ -699,7 +747,7 @@ function validator(): ConfigValidator {
     Boolean(schemaValidator),
     () => schemaValidator as ConfigValidator,
     () => {
-      const schema = parseYaml(assertRegularSchemaFile(CONFIG_SCHEMA_FILE));
+      const schema = parseRuntimeConfigDocument(assertRegularSchemaFile(CONFIG_SCHEMA_FILE));
       assertCondition(isYamlObject(schema), 'runtime config schema identity is not canonical');
       assertCondition(Object.hasOwn(schema as object, '$id'), 'runtime config schema identity is not canonical');
       assertCondition(
@@ -760,7 +808,7 @@ function assertConfiguredPaths(config: AgentRuntimeConfig): void {
       source.kind === 'local',
       () => [[source.location, 'knowledge source ' + source.id]] as [string, string][],
       () => {
-        assertCondition(/^https:\/\//.test(source.location), 'knowledge source ' + source.id + ' is not HTTPS');
+        assertCondition(source.location.startsWith('https://'), 'knowledge source ' + source.id + ' is not HTTPS');
         return [] as [string, string][];
       },
     ),
@@ -1202,8 +1250,7 @@ function assertWorkflowReferences(config: AgentRuntimeConfig): void {
           stage.required_after.length === 1 && stage.required_after[0] === 'synthesize_task',
           stageRiskFlags.length === 0,
           stage.assignments.length === 2,
-          stage.assignments[0]?.role === 'source-planner' &&
-            stage.assignments[1]?.role === 'security-prewriter',
+          stage.assignments[0]?.role === 'source-planner' && stage.assignments[1]?.role === 'security-prewriter',
           sourcePlanner?.profile === 'architect' && !sourcePlanner.risk_flags?.length,
           securityPrewriter?.profile === 'reviewer-security',
           securityRiskFlags.length === prewriterRiskFlags.length &&
@@ -1232,17 +1279,16 @@ function assertWorkflowReferences(config: AgentRuntimeConfig): void {
         : preDevelopmentValidators.length === 0;
       assertCondition(
         preDevelopmentValidatorsValid,
-        'code workflow ' + workflowId + ' permits only the exact configured read-only source planner and risk-filtered security prewriter before development',
+        'code workflow ' +
+          workflowId +
+          ' permits only the exact configured read-only source planner and risk-filtered security prewriter before development',
       );
       assertCondition(
         postWriteValidate >= 0 && test >= 0 && deliver >= 0,
         'code workflow ' + workflowId + ' must include post-write validation, test, and delivery stages',
       );
       assertCondition(
-        develop < postWriteValidate &&
-          develop < test &&
-          postWriteValidate < deliver &&
-          test < deliver,
+        develop < postWriteValidate && develop < test && postWriteValidate < deliver && test < deliver,
         'code workflow ' + workflowId + ' must preserve post-write validation/test before delivery',
       );
       const stageMap = new Map(workflow.stages.map((stage) => [stage.id, stage]));
@@ -1261,7 +1307,7 @@ function assertWorkflowReferences(config: AgentRuntimeConfig): void {
   );
 }
 
-function assertResearchDecisionConfiguration(config: AgentRuntimeConfig): void {
+function assertResearchDecisionConfiguration(config: AgentRuntimeConfig, source: RuntimeConfigurationSource): void {
   const settings = config.research_decision;
   const registry = settings.registry;
   assertCondition(registry.schema === 'InstructionRegistry/v1', 'research decision registry identity is invalid');
@@ -1277,7 +1323,7 @@ function assertResearchDecisionConfiguration(config: AgentRuntimeConfig): void {
     );
     instructionIds.add(instruction.instruction_id);
     assertCondition(
-      instruction.source_path === 'agent-runtime.config.v1.yaml#research_decision.registry.instructions.' + index,
+      instruction.source_path === source + '#research_decision.registry.instructions.' + index,
       'research decision instruction source binding is invalid',
     );
     const sourceDigest = createHash('sha256').update(instruction.content, 'utf8').digest('hex');
@@ -1460,7 +1506,7 @@ export function validateWorkflowConfiguration(config: AgentRuntimeConfig): Agent
 }
 
 export function parseRuntimeConfigYaml(raw: string): AgentRuntimeConfig {
-  return validateRuntimeConfig(parseYaml(raw));
+  return validateRuntimeConfig(parseRuntimeConfigDocument(raw));
 }
 
 export function validateRuntimeConfigRepairTargetBytes(bytes: Uint8Array, repositoryRoot: string): AgentRuntimeConfig {
@@ -1468,10 +1514,18 @@ export function validateRuntimeConfigRepairTargetBytes(bytes: Uint8Array, reposi
   assertCondition(bytes.byteLength <= MAX_CONFIG_BYTES, 'runtime YAML is too large');
   const raw = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
   assertCondition(Buffer.from(raw, 'utf8').equals(Buffer.from(bytes)), 'runtime YAML bytes are not canonical UTF-8');
-  return validateRuntimeConfig(parseYaml(raw), repositoryRoot);
+  return validateRuntimeConfig(parseRuntimeConfigDocument(raw), repositoryRoot);
 }
 
-export function validateRuntimeConfig(value: unknown, repositoryRoot?: string): AgentRuntimeConfig {
+export function validateRuntimeConfig(
+  value: unknown,
+  repositoryRoot?: string,
+  source: RuntimeConfigurationSource = CONFIG_FILE,
+): AgentRuntimeConfig {
+  assertCondition(
+    source === CONFIG_FILE || source === PROJECT_CONFIGURATION_PATHS.project,
+    'runtime config source is unsupported',
+  );
   const snapshot = snapshotRuntimeConfig(value);
   const validate = validator();
   assertCondition(validate(snapshot), 'runtime config validation failed: ' + formatAjvErrors(validate.errors));
@@ -1479,7 +1533,7 @@ export function validateRuntimeConfig(value: unknown, repositoryRoot?: string): 
   assertCondition(config.schema === 'AgentRuntimeConfig/v1', 'runtime config identity is invalid');
   assertCondition(config.version === 1, 'runtime config identity is invalid');
   assertConfiguredPaths(config);
-  assertResearchDecisionConfiguration(config);
+  assertResearchDecisionConfiguration(config, source);
   assertNoLiteralCredentials(config);
   validateWorkflowConfiguration(config);
   assertEmbeddedPolicies(config);
@@ -1523,7 +1577,7 @@ export function loadRuntimeConfig(repositoryRoot: string): AgentRuntimeConfig {
     cacheMatches(cached, bytesSha256),
     () => (cached as CachedConfig).config,
     () => {
-      const config = validateRuntimeConfig(parseYaml(raw), root);
+      const config = validateRuntimeConfig(parseRuntimeConfigDocument(raw), root);
       authorizedRuntimeConfigs.add(config);
       authorizedRuntimeConfigRoots.set(config, root);
       configCache.set(root, { bytes_sha256: bytesSha256, config });

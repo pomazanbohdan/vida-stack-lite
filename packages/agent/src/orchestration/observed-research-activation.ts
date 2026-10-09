@@ -1,4 +1,5 @@
 import type { AgentRuntimeConfig } from '../config/runtime-config.js';
+import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -144,7 +145,7 @@ export async function issueObservedResearchActivation(input: {
     })),
     cache_status: resolution.cache_status,
     actor: 'local-session:' + canonicalJsonDigest(binding.lease_thread_id),
-    pointer: `${input.config.control.work_root}/session-handoff.v1.sqlite`,
+    pointer: sessionHandoffDatabaseRelativePath(input.config),
     timestamp: new Date().toISOString(),
   };
   const use: ActivationUse = { ...body, digest: canonicalJsonDigest(body) };

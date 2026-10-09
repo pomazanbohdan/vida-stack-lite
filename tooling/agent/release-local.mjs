@@ -44,6 +44,11 @@ import { findNpmCli } from '../../packages/agent/bin/bun.mjs';
 import { readNativeRetargetCandidate } from '../../packages/agent/bin/repair-release-retarget.mjs';
 import { assertNativeDeliveryEvidenceRepairSettled } from '../../packages/agent/bin/repair-native-delivery-evidence.mjs';
 import { readConfirmedCIDeliveryFormation, validateCIDeliveryRequest } from './release-ci-evidence.mjs';
+import {
+  publishReleasePreparation,
+  readReleasePreparation,
+  resumeReleasePreparation,
+} from '../../packages/agent/bin/release-preparation.mjs';
 
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
 const idPattern = /^[a-z0-9][a-z0-9-]{0,95}$/;
@@ -98,16 +103,18 @@ export function confirmedVersionBaseline(successful, formation) {
   if (!formation) return successful;
   return compareVersions(formation.version, successful.version) > 0 ? formation : successful;
 }
-function pendingBuildRetry(pending, successful, selection = { mode: 'patch' }, dispositionReceipt) {
+function pendingBuildRetry(pending, successful, selection = { mode: 'patch' }, dispositionReceipt, preparedFrom) {
   if (
     !pending ||
     pending.operation_id === successful?.operation_id ||
     dispositionReceipt?.operation_id === pending.operation_id
   )
     return null;
+  const sameOverride = preparedFrom != null && ['minor', 'major'].includes(selection.mode) &&
+    candidateVersion(preparedFrom, undefined, selection) === pending.version;
   if (
     (selection.mode === 'exact' && selection.version !== pending.version) ||
-    (selection.mode !== 'exact' && (selection.mode !== 'patch' || selection.explicit))
+    (selection.mode !== 'exact' && (selection.mode !== 'patch' || selection.explicit) && !sameOverride)
   )
     throw new Error(
       'Pending build retains its version; use an exact matching retry or supported disposition before selecting another version.',
@@ -844,17 +851,6 @@ export async function pendingReleaseDispositionReceipt(root = repositoryRoot, ac
     };
   }
 }
-function writeDispositionReceipt(root, operation, receipt) {
-  const relative = `.agent/work/agent-local-release/${operation}/disposition.json`;
-  const file = releasePath(root, relative, true);
-  const descriptor = openSync(file, 'wx', 0o600);
-  try {
-    writeFileSync(descriptor, json(receipt));
-    fsyncSync(descriptor);
-  } finally {
-    closeSync(descriptor);
-  }
-}
 export function reserveReleaseWorker(root, operation, launch) {
   return withReleaseAdmission(root, () => {
     assertReleaseRetargetSettled(root, operation);
@@ -886,17 +882,17 @@ export function claimReleaseWorker(root, operation, pid) {
   });
 }
 export function prepareRelease(root = repositoryRoot, selection = { mode: 'patch' }) {
-  return withReleaseAdmission(root, () => prepareCandidate(root, false, selection));
+  return withReleaseAdmission(root, () => prepareCandidate(root, false, selection), true);
 }
 export async function prepareReleaseAfterDisposition(
   root = repositoryRoot,
   selection = { mode: 'patch' },
   proposal,
 ) {
-  return withReleaseAdmission(root, () => prepareCandidate(root, false, selection, proposal));
+  return withReleaseAdmission(root, () => prepareCandidate(root, false, selection, proposal), true);
 }
 export function prepareSystemUpdate(root = repositoryRoot) {
-  return withReleaseAdmission(root, () => prepareCandidate(root, true));
+  return withReleaseAdmission(root, () => prepareCandidate(root, true), true);
 }
 function successfulBaseline(root, successful) {
   if (!successful || successful.status !== 'successful')
@@ -924,9 +920,10 @@ function preflightSystemUpdate(root, currentVersion, pending, successful) {
 }
 function prepareCandidate(root, systemUpdate = false, selection = { mode: 'patch' }, dispositionProposal) {
   const releases = directory(root, '.agent/work/agent-local-release');
+  resumeReleasePreparation(root);
   const pendingFile = path.join(releases, 'pending.json');
   const successFile = path.join(releases, 'successful.json');
-  const { file, value } = manifest(root);
+  const { value } = manifest(root);
   let successful = existsSync(successFile) ? releaseState(successFile) : null;
   const pending = existsSync(pendingFile) ? releaseState(pendingFile) : null;
   if (successful) successfulBaseline(root, successful);
@@ -968,10 +965,14 @@ function prepareCandidate(root, systemUpdate = false, selection = { mode: 'patch
       }
     }
   }
+  const preparation = pending ? readReleasePreparation(root, pending) : null;
   let dispositionReceipt;
   if (dispositionProposal) {
     if (dispositionProposal.status !== 'eligible' || !dispositionProposal.census)
       throw new Error('A current eligible pending disposition proposal is required.');
+    const alreadyPrepared = preparation?.disposition &&
+      json(preparation.disposition) === json(dispositionProposal.receipt);
+    if (!alreadyPrepared) {
     const verified = pendingDispositionUnlocked(root, {
       requestCensus: dispositionProposal.census.requestCensus,
       runObservations: dispositionProposal.census.runObservations,
@@ -982,18 +983,19 @@ function prepareCandidate(root, systemUpdate = false, selection = { mode: 'patch
     )
       throw new Error('Pending disposition evidence changed; preserve the existing operation.');
     dispositionReceipt = verified.receipt;
+    }
   }
   if (pending && pending.operation_id !== successful?.operation_id) {
     if (pending.version !== value.version) throw new Error('Pending candidate differs from manifest.');
-    directory(root, `.tmp/releases/${pending.operation_id}`);
     const pendingJournal = journalFile(root, pending.operation_id);
     if (!existsSync(pendingJournal))
       throw new Error('Pending release journal missing; reconcile without repeating effects.');
     const currentPending = releaseState(pendingJournal);
     if (currentPending.operation_id !== pending.operation_id || currentPending.version !== pending.version)
       throw new Error('Pending release differs from its operation journal; preserve its exact operation.');
-    const retry = pendingBuildRetry(pending, successful, selection, dispositionReceipt);
-    if (retry) return systemUpdate ? currentPending : retry;
+    const retry = pendingBuildRetry(pending, successful, selection, dispositionReceipt,
+      preparation?.priorVersion);
+    if (retry) return currentPending;
   }
   const formation = readConfirmedCIDeliveryFormation(root);
   const confirmed = confirmedVersionBaseline(successful, formation);
@@ -1006,20 +1008,14 @@ function prepareCandidate(root, systemUpdate = false, selection = { mode: 'patch
   if (!systemUpdate && confirmed && value.version !== confirmed.version)
     throw new Error('Manifest version differs from the last confirmed formation; reconcile the pending operation first.');
   const version = selectedVersion;
-  if (value.version !== version) save(file, { ...value, version });
   const operation_id = `local-${randomUUID()}`;
-  directory(root, `.tmp/releases/${operation_id}`);
-  directory(root, `.agent/work/agent-local-release/${operation_id}`);
-  if (dispositionReceipt) writeDispositionReceipt(root, operation_id, dispositionReceipt);
   const prepared = {
     schema: 'VidaLocalReleaseState/v1',
     operation_id,
     version,
     status: 'awaiting_assurance',
   };
-  save(pendingFile, prepared);
-  save(journalFile(root, operation_id), prepared);
-  return prepared;
+  return publishReleasePreparation(root, prepared, { ...value, version }, dispositionReceipt);
 }
 export function runCommand(command, args, { cwd, env = process.env, log, windowsVerbatimArguments = false } = {}) {
   return new Promise((resolve, reject) => {

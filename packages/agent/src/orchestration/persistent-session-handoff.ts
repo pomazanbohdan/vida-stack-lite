@@ -1,9 +1,13 @@
+import { coordinationLedgerDigest } from '../contracts/envelopes.js';
+import { canonicalJsonAtDepth, canonicalJsonComponents } from '../contracts/canonical-json-core.js';
+import { qualifiedRuntimeCodeHistoryJson } from './qualified-runtime-code-continuation.js';
 import { Database } from 'bun:sqlite';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstatSync } from 'node:fs';
-import path from 'node:path';
+import { sessionHandoffDatabasePath } from '../config/project-paths.js';
+export { sessionHandoffDatabasePath } from '../config/project-paths.js';
 import stateSchema from '../../schemas/persistent-session-handoff-state.v1.schema.json' with { type: 'json' };
 import {
   loadRuntimeConfig,
@@ -134,11 +138,6 @@ function resumeStatus(state: PersistentSessionHandoffState): PersistentSessionSn
   return 'ready';
 }
 
-/** One deterministic database path beneath the YAML-controlled work root. */
-export function sessionHandoffDatabasePath(repositoryRoot: string, config: AgentRuntimeConfig): string {
-  return path.join(repositoryRoot, config.control.work_root, 'session-handoff.v1.sqlite');
-}
-
 function sourcePreflightContinuation(
   store: HostStateStore,
   identity: WorkIdentity,
@@ -156,13 +155,22 @@ function sourcePreflightContinuation(
 
 function sourcePreflightContinuationDigest(view: AcceptedSourceContinuation | null): string {
   if (view === null) return canonicalJsonDigest(null);
-  if ('receipt' in view)
-    return canonicalJsonDigest({
-      initialReceipt: initialSourceContinuationRecord(view.receipt).digest,
-      frontierCodeRebind: view.frontierCodeRebind?.record_digest ?? null,
-      completedSourceReportRecovery: view.completedSourceReportRecovery?.record_digest ?? null,
-      ...(view.runtimeCodeContinuations ? { runtimeCodeContinuations: view.runtimeCodeContinuations } : {}),
-    });
+  if ('receipt' in view) {
+    const payload = canonicalJsonComponents(
+      {
+        initialReceipt: initialSourceContinuationRecord(view.receipt).digest,
+        frontierCodeRebind: view.frontierCodeRebind?.record_digest ?? null,
+        completedSourceReportRecovery: view.completedSourceReportRecovery?.record_digest ?? null,
+        ...(view.runtimeCodeContinuations ? { runtimeCodeContinuations: view.runtimeCodeContinuations } : {}),
+      },
+      0,
+      (value, depth, key) =>
+        key === 'runtimeCodeContinuations'
+          ? qualifiedRuntimeCodeHistoryJson(value, depth)
+          : canonicalJsonAtDepth(value, depth),
+    );
+    return createHash('sha256').update(payload).digest('hex');
+  }
   return 'schema' in view ? initialSourceContinuationRecord(view).digest : configuredFrontierRecoveryViewDigest(view);
 }
 
@@ -1749,7 +1757,7 @@ export class MastraSessionLedger {
             canonicalJsonDigest(owner) === owners[0]!.digest &&
             ledger?.revision === plan.expected_ledger.revision &&
             ledger.digest === plan.expected_ledger.digest &&
-            canonicalJsonDigest(JSON.parse(ledger.payload)) === ledger.digest,
+            coordinationLedgerDigest(JSON.parse(ledger.payload)) === ledger.digest,
           'synthesis correction owner, artifacts or coordination CAS changed',
         );
         const state: MastraSessionLedgerState = {

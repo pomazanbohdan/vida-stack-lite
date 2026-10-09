@@ -7,7 +7,7 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { loadRuntimeConfig, runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { HostStateStore } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
 import { parseSessionBridgeObservation } from '../src/orchestration/mastra-session-bridge.ts';
 import {
   compareScopedSourceSnapshots,

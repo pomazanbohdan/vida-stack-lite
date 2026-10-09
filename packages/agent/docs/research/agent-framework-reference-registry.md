@@ -2,17 +2,15 @@
 
 Owner: agent maintainer. Class: supporting current research. Policy owner:
 `../../instructions/development-lifecycle.md#self-development-protocol`.
-Architecture owner: `../system-specification.md`. Work:
-`vida-final-assurance-fix-20261001-sibling`; acceptance trace:
+Architecture owner: `../system-specification.md`. Acceptance trace:
 `AC-ARCHITECTURAL-DEFECT`, `AC-FINAL-ASSURANCE`, `AC-PARTIAL-FAILURE`.
 
 Consult the official references relevant to each reported defect and record the
 mechanic, applicability and chosen local invariant. The registry does not
 require exhaustive per-defect research, introduce dependencies or services, or
-grant local approval. Independent reference research retrieved the official
-sources below on 2026-10-01, directly except for the noted Mastra snapshot search
-result; unavailable or changed relevant sources require an explicit research
-GAP. Vendor mechanics remain separate from approved local requirements.
+grant local approval. Verify the relevant official source when its behavior
+affects a change. An unavailable source is a research GAP. Vendor mechanics
+remain separate from approved local requirements.
 
 | Family                              | Official references                                                                                                                                                                                                                                                          | Supported mechanics                                                                                                                                                                                            |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,6 +42,157 @@ Work trace: `.agent/work/vida-final-assurance-finish-20261001/WORK.md`.
 | OAuth values and bearer credentials      | [RFC 6749](https://www.rfc-editor.org/rfc/rfc6749.html), [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750.html)                                                                                                                 | `state` and authorization `code` are meaningful in OAuth response context; bearer credentials remain recognizable credentials. The local screen preserves context-qualified checks while allowing ordinary labels. |
 | OIDC nonce                               | [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)                                                                                                                                                 | `nonce` is meaningful in the ID Token and replay-checking context; the local screen treats protocol-qualified values as sensitive.                                                                                 |
 | SAML response                            | [OASIS SAML 2.0 technical overview](https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html)                                                                                                          | The `SAMLResponse` parameter carries the encoded SAML response in the HTTP POST binding; qualified response values remain sensitive.                                                                               |
+
+## Mastra and Edictum
+
+Source pins `@mastra/core` 1.75.0 and has no `@edictum/core` dependency.
+Mastra owns the development graph and persisted execution. Its
+[tool hooks](https://mastra.ai/blog/introducing-tool-hooks) intercept Agent tool
+calls; [approval](https://mastra.ai/docs/agents/human-in-the-loop) and
+[suspend/resume](https://mastra.ai/docs/workflows/suspend-and-resume) pause and
+continue execution. These are integration points, not a built-in replacement
+for Edictum's precondition, postcondition and session-rule evaluation.
+Mastra loop stopping rules do not have the same meaning as separate denied
+attempt, executed call and per-tool counters.
+
+Actual VIDA use is concentrated in `src/governance/edictum-boundary.ts`:
+
+- `createConfiguredEdictumWorkflow` provides the read-evidence and pending-write
+  gate consumed by `source-preflight-operations.ts`. Its approval/result APIs
+  remain exported SDK behavior; absence of an internal caller does not make
+  them dead code.
+- `createGuardFromBindings` and `runGovernedWrite` enforce direct RuntimeKernel
+  calls, including calls outside a Mastra Agent. `operation-policy.ts` retains
+  the used precondition, result and counter contract. `policy-workflow.ts` uses
+  a Mastra graph for stage progression, suspension and its policy snapshot.
+- VIDA, through HostState and Cedar, owns operation identity, attributable
+  approval, authorization, CAS and uncertain-effect fencing. These checks are
+  not delegated to either workflow engine.
+
+Conclusion: Mastra is not a complete native policy replacement. The approved
+implementation therefore combines its workflow primitives with the finite checks
+already owned by VIDA and a small direct-call guard. Preserve SDK behavior and
+current v1 projections. Do not port unused generic ruleset/YAML parsing,
+redaction, remote services or framework adapters. A pause, trace or hook callback
+alone does not establish equivalent enforcement.
+
+### Lightweight alternatives
+
+Registry metadata and repository activity checked on 2026-10-09. Unpacked sizes
+include distribution files, types and maps, exclude dependencies, and do not
+measure contribution to the standalone binary. Recent repository activity is
+maintenance evidence, not a support guarantee.
+
+| Package | Published version | Unpacked bytes | Runtime dependencies | Fit for VIDA |
+| --- | --- | ---: | ---: | --- |
+| [Edictum](https://github.com/edictum-ai/edictum-ts) | 0.5.0, 2026-04-15 | 1,415,362 | 1 | Current finite contract source; repository remains active |
+| [CASL](https://github.com/stalniy/casl) | 7.0.1, 2026-07-06 | 182,661 | 1 | Authorization overlaps existing Cedar; lacks execution/session workflow contract |
+| [Casbin](https://github.com/apache/casbin-node-casbin) | 5.51.1, 2026-06-25 | 509,727 | 5 | Another authorization engine; does not replace the needed guard and evidence flow |
+| [governance-sdk](https://github.com/lua-ai-global/governance) | 0.20.0, 2026-08-09 | 1,033,827 | 0 | Closest policy alternative with Mastra integration; host still supplies counters and stage evidence |
+
+No alternative package is selected. Replacing one governance dependency with
+another does not achieve the requested Mastra + VIDA ownership boundary.
+Mastra 1.75.0 is the selected exact Source pin. Its
+[release notes](https://github.com/mastra-ai/mastra/releases/tag/%40mastra%2Fcore%401.75.0)
+add adjacent approval/output/observability capabilities, not equivalent
+direct-call policy evaluation. Package selection is not runtime qualification.
+
+### Function migration
+
+| Current function | Target owner and work |
+| --- | --- |
+| Configured stage sequence, pause and continuation | Existing Mastra workflow primitives; one engine |
+| Read evidence and required stage result checks | VIDA contract checks over the existing execution context |
+| Direct `evaluateGovernance` and guarded invocation | Small VIDA guard; preserve no-effect evaluation and pre/post result semantics |
+| Configured attempt, execution and per-tool counters | Local policy session; no new durable ledger or default caps |
+| Canonical request/result, identity and approval validation | Reuse current VIDA validators and Cedar |
+| Approval consumption, reservation, commit-unknown, CAS and finalization | Reuse HostState and current prepare/execute/finalize/abort functions |
+| SDK and persisted v1 projections | Preserve existing supported operations and wire shapes; do not rename stored fields |
+
+The adapter compiles the existing typed configuration directly; no YAML round
+trip or generic condition interpreter remains. One Mastra snapshot holds stage
+evidence. The direct guard serializes admission only and reserves in-flight
+capacity before concurrent effects. Host/Cedar prepare, execute, finalize and
+abort ownership remains unchanged. Public v1 field and error names remain for
+compatibility. Behavioral and final release qualification remain in CLEAR's
+completion stage; Source changes do not prove installed behavior.
+
+## Bun-native runtime mapping
+
+Type-aware CLI checks use the nearest standard TypeScript project with
+`allowJs` and `checkJs`. Passing a file to Oxlint is not enough to give it the
+correct project and imported declarations. The CLI project must include each
+maintained checked file; annotate parameters and SQL rows with existing domain
+contracts and validate external JSON as `unknown`. Do not suppress unsafe-value
+diagnostics. References: [Oxlint type-aware linting](https://oxc.rs/docs/guide/usage/linter/type-aware.html)
+and [TypeScript checkJs](https://www.typescriptlang.org/tsconfig/checkJs.html).
+
+The official [Bun 1.4.2 release](https://bun.sh/blog/bun-v1.4.2) matches the
+current runtime pin. HostState already uses `bun:sqlite`; package and native
+formation already use `Bun.build`, and embedded tar resources use `Bun.Archive`.
+These are existing implementations, not new migration work.
+
+| Existing contour | Native candidate or retained boundary |
+| --- | --- |
+| SQLite WF07/WF08 | Reuse [bun:sqlite transactions](https://bun.sh/docs/runtime/sqlite); retain short write locks, bound queries and CAS |
+| Bun-only CLI and helpers | Use [Bun.spawn](https://bun.sh/docs/runtime/child-process) where it preserves argv, streaming, cancellation, terminal status and child custody |
+| Ordinary file reads/writes | Use [Bun.file/Bun.write](https://bun.sh/docs/runtime/file-io); descriptor-bound no-follow, fsync and atomic publication still need the current safe filesystem boundary |
+| Integrity hashing | Evaluate [Bun.CryptoHasher](https://bun.sh/docs/runtime/hashing) in Bun-only paths; preserve exact SHA-256 bytes and incremental order; never substitute Bun.hash |
+| Version comparison | [Bun.semver.order](https://bun.sh/docs/runtime/semver) may follow the existing strict version parser; permissive range parsing cannot replace it |
+| Native resources | [Bun.Archive](https://bun.sh/docs/runtime/archive) already serves tar resources; it does not supply the required ZIP-reader contract |
+| Test and dependency tooling | Reuse pinned Bun, frozen lock and cache. Preserve measured coverage/mutation contracts; API availability does not prove equivalent counters |
+
+No active HTTP/TLS/WebSocket server or worker_threads migration was found in the
+agent Source. `fetch` is already a Web API. A `node:` import executed by Bun does
+not require an external Node runtime. Replace actual redundant work, while
+retaining the filesystem and bootstrap primitives that Bun's public API lacks.
+Verify the supported SDK execution host before changing shared SDK primitives.
+
+## Versioned project upgrades
+
+The current-state read and serialization boundaries use these primary patterns:
+[SQLite isolation](https://sqlite.org/isolation.html) keeps all reads in one
+transaction on one committed snapshot; [RFC 8785](https://www.rfc-editor.org/info/rfc8785/)
+defines deterministic JSON representation for repeatable integrity bindings.
+VIDA's ledger/component resource bounds are product limits, not limits imposed
+by either reference. Changing traversal budgets must preserve canonical bytes.
+
+The target `.vida` layout and upgrade behavior are specified in
+`../system-specification.md#initialized-project-layout-and-upgrades`.
+Implementation remains part of CLEAR; moving a directory or rerunning the current
+create-only initializer does not implement a migration.
+
+| Primary reference | Applicable pattern |
+| --- | --- |
+| [JSON Schema dialect](https://json-schema.org/understanding-json-schema/reference/schema) and [schema identity](https://json-schema.org/understanding-json-schema/structuring) | `$schema` identifies the validation dialect; `$id` identifies a schema. Neither replaces the artifact's `Type/vN` tag. Resolve bundled schemas locally |
+| [Kubernetes storage version migration](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/) | Declaring a new storage version does not migrate existing records. Conversion and completed storage migration are separate evidence; no Kubernetes dependency is required |
+| [SQLite user_version](https://sqlite.org/pragma.html#pragma_user_version) | An application-owned database format marker. Do not use SQLite's internal schema_version as a product migration counter; preserve component ownership in the shared DB |
+| [SQLite atomic commit](https://sqlite.org/atomiccommit.html) | Use transactional database updates and durable recovery. This does not make external Markdown/YAML changes part of a database transaction |
+| [Expand and contract](https://www.prisma.io/docs/guides/database/data-migration) | Prepare the converter and validated target before retiring old storage. Keep older-format readers inside migration only; do not add a second ordinary runtime path or a Prisma dependency |
+
+Reuse one current repair operation, exact beforeimages, maintenance fencing and
+resume. Managed Markdown adds versioned frontmatter; user-authored bodies and
+configuration values remain preserved. Physical layout and initialization
+receipts need a supported upgrade before activation. The inactive CLEAR archive
+is provenance, not an upgrade input for new operational state.
+
+The configuration components reference canonical property schemas through the
+bundled schema registry. A URI identifies the schema; it does not require a
+network fetch. This follows [JSON Schema references and bundling](https://json-schema.org/understanding-json-schema/structuring).
+The shared [YAML parser options](https://eemeli.org/yaml/#parse-options) keep
+duplicate-key rejection and disable merges. VIDA also rejects aliases, anchors
+and custom tags before conversion and applies its own byte and depth bounds.
+Component revisions describe document changes; the project package version
+remains separate. Three-file composition does not provide atomic activation;
+the maintenance and upgrade owner must supply that boundary.
+
+The shared syntax boundary uses the public YAML `Parser` and `Composer` stages.
+It checks CST collection depth with an iterative walk before recursive
+composition, then keeps the existing strict document and value checks. See the
+[YAML parsing API](https://eemeli.org/yaml/#parsing-yaml). The Bun-only project
+converter uses [strict Bun.deepEquals](https://bun.com/docs/runtime/utils#bun-deepequals)
+on validated snapshots. This preserves the current v1 numeric domain without
+introducing a narrower canonical-JSON comparison into conversion.
 
 ## Current defect applicability
 
@@ -921,6 +1070,14 @@ Mastra's default generic workflow type contains `any`. Bind the session bridge
 to the actual input and output schemas. A registration check that reads only
 the workflow ID needs only that ID contract. This type correction grants no
 execution or recovery rights.
+
+For a wrapped library call, derive its accepted input from the actual method
+declaration with [TypeScript Parameters](https://www.typescriptlang.org/docs/handbook/utility-types#parameterstype).
+Check overloaded declarations before using the extracted type. The pinned
+`Hash.update` accepts string or an ArrayBuffer view; `BinaryLike` also includes
+raw ArrayBuffer and is wider. `releaseDigest` uses the method's parameter type.
+The source inventory uses one typed file-identity tuple and typed file/directory
+observations. Its private repair cache keeps those types across recursion.
 
 [Node's module-relative URL rules](https://nodejs.org/api/url.html) determine
 fixture paths. Use the actual repository root or an owned fixture with its

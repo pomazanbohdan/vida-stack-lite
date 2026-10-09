@@ -1,4 +1,7 @@
 import { canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
+import { createHash } from 'node:crypto';
+import { canonicalJsonAtDepth, canonicalJsonComponents } from '../contracts/canonical-json-core.js';
+import { coordinationComponentJson } from '../contracts/envelopes.js';
 import { projectQualifiedRuntimeCodeAncestor } from './qualified-runtime-code-continuation.js';
 import { validateLifecycleReferencePreservation } from '../lifecycle/lifecycle-state.js';
 import type { CoordinationClaim, CoordinationTicket } from '../contracts/envelopes.js';
@@ -189,9 +192,9 @@ function stateVersion(value: unknown): value is StateVersion {
     hash((value as StateVersion).digest)
   );
 }
-function same(left: unknown, right: unknown): boolean {
+function same(left: unknown, right: unknown, encode = canonicalJsonDigest): boolean {
   try {
-    return canonicalJsonDigest(left) === canonicalJsonDigest(right);
+    return encode(left) === encode(right);
   } catch {
     return false;
   }
@@ -301,12 +304,12 @@ function recoveryExecutionTicketMatches(
     isPlainRecord(ticket) &&
     ticket.schema === 'CoordinationTicket/v1' &&
     ticket.repository_id === request.identity.repository_id &&
-    same(ticket.project_ids, request.identity.project_ids) &&
+    same(ticket.project_ids, request.identity.project_ids, coordinationComponentJson) &&
     ticket.integrations_digest === request.identity.integrations_digest &&
     ticket.work_id === request.identity.work_id &&
     ticket.thread_id === request.nativeSessionHandle &&
     ticket.source_revision === source.source_revision &&
-    same(ticket.contour_keys, source.contour_keys) &&
+    same(ticket.contour_keys, source.contour_keys, coordinationComponentJson) &&
     same(ticket.exclusive_resources, [resource]) &&
     Array.isArray(ticket.claim_ids) &&
     ticket.claim_ids.length === 1 &&
@@ -645,6 +648,20 @@ export interface CompletedSourceReportRecoveryReceipt {
   readonly record: CompletedSourceReportRecoveryRecord;
 }
 
+export function completedSourceReportRecoveryRecordJson(value: unknown, depth = 0): string {
+  return canonicalJsonComponents(value, depth, (child, at, key) =>
+    ['original_source_ticket', 'original_source_claim', 'execution_ticket', 'execution_claim'].includes(key)
+      ? coordinationComponentJson(child, at)
+      : canonicalJsonAtDepth(child, at),
+  );
+}
+
+export function completedSourceReportRecoveryReceiptJson(value: unknown, depth = 0): string {
+  return canonicalJsonComponents(value, depth, (child, at, key) =>
+    key === 'record' ? completedSourceReportRecoveryRecordJson(child, at) : canonicalJsonAtDepth(child, at),
+  );
+}
+
 export function validateCompletedSourceReportRecoveryRequest(value: unknown): CompletedSourceReportRecoveryRequest {
   exactEnvelope(value, requestKeys, 'request');
   const r = value as unknown as CompletedSourceReportRecoveryRequest;
@@ -851,6 +868,7 @@ export function buildCompletedSourceReportRecoverySuccessorWork(
 }
 
 export function validateCompletedSourceReportRecoveryRecord(value: unknown): CompletedSourceReportRecoveryRecord {
+  completedSourceReportRecoveryRecordJson(value);
   exactEnvelope(value, recordKeys, 'record');
   const record = value as unknown as CompletedSourceReportRecoveryRecord;
   const request = validateCompletedSourceReportRecoveryRequest(record.request);
@@ -1028,7 +1046,8 @@ export function validateCompletedSourceReportRecoveryReceipt(value: unknown): Co
       receipt.report_id === record.request.reportId &&
       receipt.request_digest === record.request_digest &&
       hash(receipt.record_digest) &&
-      receipt.record_digest === canonicalJsonDigest(record) &&
+      receipt.record_digest ===
+        createHash('sha256').update(completedSourceReportRecoveryRecordJson(record)).digest('hex') &&
       stateVersion(receipt.work_version) &&
       same(receipt.work_version, record.work_version) &&
       stateVersion(receipt.ledger_version) &&
@@ -1045,7 +1064,8 @@ export function validateCompletedSourceReportRecoveryReceipt(value: unknown): Co
   return receipt;
 }
 export function snapshotCompletedSourceReportRecoveryReceipt(value: unknown): CompletedSourceReportRecoveryReceipt {
-  return freezeJsonValue(validateCompletedSourceReportRecoveryReceipt(value));
+  const snapshot: unknown = JSON.parse(completedSourceReportRecoveryReceiptJson(value));
+  return freezeJsonValue(validateCompletedSourceReportRecoveryReceipt(snapshot));
 }
 export function readCompletedSourceReportRecoveryReceiptRecord(
   payload: string,
@@ -1056,7 +1076,10 @@ export function readCompletedSourceReportRecoveryReceiptRecord(
     'stored recovery receipt envelope is invalid',
   );
   const value: unknown = JSON.parse(payload);
-  requireRecovery(canonicalJsonDigest(value) === expectedDigest, 'stored recovery receipt integrity differs');
+  requireRecovery(
+    createHash('sha256').update(completedSourceReportRecoveryReceiptJson(value)).digest('hex') === expectedDigest,
+    'stored recovery receipt integrity differs',
+  );
   return validateCompletedSourceReportRecoveryReceipt(value);
 }
 

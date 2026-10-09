@@ -607,13 +607,6 @@ function requireResearchWriteGate(
   return { store: options.host_state, generation: options.expected_maintenance_generation! };
 }
 
-export interface CanonicalRecordResult<T> {
-  readonly record: T;
-  readonly replay: boolean;
-  readonly path: string;
-  readonly event: DocumentationChangeEvent | null;
-}
-
 export interface ActivationUseResult {
   readonly recorded: boolean;
   readonly replay: boolean;
@@ -2845,46 +2838,6 @@ function recordId(value: JsonRecord, kind: RecordKind): string {
   return scalarText(value.decision_id) ?? '';
 }
 
-function normalizeRecord(input: unknown, kind: RecordKind): JsonRecord {
-  const value = cloneJson(isPlainRecord(input) ? input : {});
-  const suppliedDigest = value.digest;
-  if (kind === 'research' && !value.result_id && value.topic) value.result_id = topicSlug(value.topic, 'research');
-  if (kind === 'synthesis' && !value.bundle_id && value.topic) value.bundle_id = topicSlug(value.topic, 'synthesis');
-  if (kind === 'decision' && !value.decision_id && value.statement) {
-    const statement = scalarText(value.statement);
-    if (statement) value.decision_id = slug(statement, 'decision-' + digest(statement).slice(0, 16));
-  }
-  const now = new Date().toISOString();
-  if (!value.created_at) value.created_at = now;
-  if (!value.updated_at) value.updated_at = value.created_at;
-  delete value.digest;
-  const computedDigest = recordDigest(value);
-  if (suppliedDigest !== undefined && suppliedDigest !== computedDigest)
-    fail(kind + ' digest mismatch', 'GAP-RESEARCH-DECISION-DIGEST-001');
-  value.digest = computedDigest;
-  return value;
-}
-
-function asRecordOptions(value: unknown): ResearchDecisionRecordOptions | null {
-  if (!isPlainRecord(value)) return null;
-  if (value.root !== undefined && typeof value.root !== 'string') fail('record root option invalid');
-  if (value.expectedDigest !== undefined && typeof value.expectedDigest !== 'string')
-    fail('record expected digest option invalid');
-  if (value.expected_digest !== undefined && typeof value.expected_digest !== 'string')
-    fail('record expected digest option invalid');
-  if (
-    value.expectedRevision !== undefined &&
-    (!Number.isInteger(value.expectedRevision) || Number(value.expectedRevision) < 1)
-  )
-    fail('record expected revision option invalid');
-  if (value.work_item_id !== undefined) text(value.work_item_id, 'record work_item_id option', 256);
-  if (value.source_revision !== undefined) text(value.source_revision, 'record source_revision option', 2048);
-  if (value.authority_checkpoint_path !== undefined && typeof value.authority_checkpoint_path !== 'string')
-    fail('record authority checkpoint option invalid');
-  if (value.scope_id !== undefined) text(value.scope_id, 'record scope_id option', 512);
-  const options = value as unknown as ResearchDecisionRecordOptions;
-  return options;
-}
 function canonicalDirectoryRecords(
   root: string,
   feature: ResearchDecisionConfig,
@@ -2913,19 +2866,6 @@ function canonicalDirectoryRecords(
         fail('record path is not canonical: ' + recordRelative, 'GAP-RESEARCH-DECISION-PATH-001');
       return { path: recordRelative, value };
     });
-}
-
-function parseRecordArgs(
-  expectedOrOptions: string | ResearchDecisionRecordOptions | undefined,
-  options: ResearchDecisionRecordOptions | undefined,
-): { readonly expectedDigest?: string; readonly options: ResearchDecisionRecordOptions } {
-  const optionRecord = asRecordOptions(expectedOrOptions);
-  if (optionRecord) {
-    const expected = optionRecord.expectedDigest ?? optionRecord.expected_digest;
-    return expected === undefined ? { options: optionRecord } : { expectedDigest: expected, options: optionRecord };
-  }
-  if (typeof expectedOrOptions === 'string') return { expectedDigest: expectedOrOptions, options: options ?? {} };
-  return { options: options ?? {} };
 }
 
 function existingRecord(root: string, relative: string): JsonRecord | null {
@@ -3012,33 +2952,6 @@ function researchChangeEventFromBytes(
     sha256(afterBytes),
     relative,
   );
-}
-
-function appendChange(
-  root: string,
-  feature: ResearchDecisionConfig,
-  input: JsonRecord,
-  operation: 'init' | 'finalize',
-  beforeBytes: string | null,
-  afterBytes: string,
-  relative: string,
-  locked = false,
-): DocumentationChangeEvent {
-  const event = researchChangeEventFromBytes(input, operation, beforeBytes, afterBytes, relative);
-  const write = () => {
-    ensureDirectory(root, path.posix.dirname(feature.paths.changelog));
-    const access = repositoryAccess(root);
-    const prior = access.fileExists(feature.paths.changelog, 'research decision changelog')
-      ? access.readText(feature.paths.changelog, 'research decision changelog')
-      : '';
-    const next = prior + JSON.stringify(event) + '\n';
-    const eventCount = prior === '' ? 0 : prior.split(/\r?\n/).filter((line) => line.length > 0).length;
-    if (eventCount >= MAX_CHANGELOG_EVENTS || Buffer.byteLength(next, 'utf8') > MAX_JSON_BYTES)
-      fail('research decision changelog exceeds bound', 'GAP-RESEARCH-DECISION-CHANGELOG-BOUND-001');
-    writeAtomic(root, feature.paths.changelog, next);
-    return event;
-  };
-  return locked ? write() : withLock(root, feature.paths.changelog, write);
 }
 
 function validateStoredRecord(
@@ -3202,50 +3115,6 @@ function validateSupersession(root: string, feature: ResearchDecisionConfig, val
     supersededId = priorDecision.supersedes;
   }
 }
-function sameStringSet(left: unknown, right: unknown): boolean {
-  return (
-    Array.isArray(left) &&
-    Array.isArray(right) &&
-    left.length === right.length &&
-    left.every((item) => typeof item === 'string' && right.includes(item))
-  );
-}
-
-function validateDecisionFreshness(root: string, feature: ResearchDecisionConfig, value: DecisionRecord): void {
-  const records = canonicalDirectoryRecords(root, feature, 'decision');
-  for (const entry of records) {
-    const prior = entry.value as DecisionRecord;
-    if (
-      prior.work_item_id !== value.work_item_id ||
-      prior.scope_id !== value.scope_id ||
-      prior.decision_type !== value.decision_type ||
-      prior.statement !== value.statement
-    )
-      continue;
-    if (prior.decision_id === value.decision_id) {
-      const bindingChanged =
-        prior.source_revision !== value.source_revision ||
-        !sameStringSet(prior.br_ids, value.br_ids) ||
-        !sameStringSet(prior.sr_ids, value.sr_ids) ||
-        !sameStringSet(prior.ac_ids, value.ac_ids) ||
-        !sameStringSet(prior.gap_ids, value.gap_ids);
-      if (bindingChanged && !value.revisit)
-        fail('decision bindings changed; create a superseding or revisit record', 'GAP-DECISION-STALE-001');
-      continue;
-    }
-    if (prior.status === 'accepted' && value.status === 'accepted' && value.supersedes !== prior.decision_id)
-      fail('accepted decision is duplicated without supersession', 'GAP-DECISION-STALE-001');
-    const bindingChanged =
-      prior.source_revision !== value.source_revision ||
-      !sameStringSet(prior.br_ids, value.br_ids) ||
-      !sameStringSet(prior.sr_ids, value.sr_ids) ||
-      !sameStringSet(prior.ac_ids, value.ac_ids) ||
-      !sameStringSet(prior.gap_ids, value.gap_ids);
-    if (bindingChanged && value.supersedes !== prior.decision_id)
-      fail('decision bindings changed; create a superseding or revisit record', 'GAP-DECISION-STALE-001');
-  }
-}
-
 function researchCollisionPath(feature: ResearchDecisionConfig, value: JsonRecord): string {
   const topic = scalarText(value.topic) ?? '';
   return path.posix.join(
@@ -3302,152 +3171,6 @@ function restoreAtomic(root: string, relative: string, content: string | null): 
 function restoreResearchFiles(root: string, files: readonly (readonly [string, string | null])[]): void {
   files.forEach(([relative, content]) => restoreAtomic(root, relative, content));
 }
-function recordUnderLock(
-  root: string,
-  feature: ResearchDecisionConfig,
-  relative: string,
-  value: JsonRecord,
-  expectedDigest: string | undefined,
-  kind: RecordKind,
-  options: ResearchDecisionRecordOptions,
-  expectedConfigDigest?: string,
-  captureUndo?: (files: readonly (readonly [string, string | null])[]) => void,
-): CanonicalRecordResult<CanonicalRecord> {
-  if (
-    options.expectedRevision !== undefined &&
-    activationCheckpointRevision(root, feature, text(value.work_item_id, 'record work_item_id', 256)) !==
-      options.expectedRevision
-  )
-    fail(kind + ' checkpoint revision is stale', 'GAP-RESEARCH-DECISION-CAS-001');
-  let targetRelative = relative;
-  let prior = existingRecord(root, targetRelative);
-  if (kind === 'research' && prior !== null && prior.topic !== value.topic) {
-    targetRelative = researchCollisionPath(feature, value);
-    prior = existingRecord(root, targetRelative);
-  }
-  const decisionContext: DecisionValidationContext = {
-    root,
-    feature,
-    authority_checkpoint_path: options.authority_checkpoint_path,
-    current_record_path: targetRelative,
-  };
-  ensureScope(prior, value, kind);
-  if (kind === 'research') validateResearchIdentity(root, feature, value, targetRelative);
-  if (kind === 'synthesis') validateSynthesisIdentity(root, feature, value, targetRelative);
-  if (prior !== null && prior.digest === value.digest) {
-    if (expectedDigest !== undefined && expectedDigest !== prior.digest)
-      fail(kind + ' record CAS digest is stale', 'GAP-RESEARCH-DECISION-CAS-001');
-    return {
-      record: validateStoredRecord(prior, kind, decisionContext),
-      replay: true,
-      path: targetRelative,
-      event: null,
-    };
-  }
-  enforceRecordCas(prior, value, expectedDigest, kind, decisionContext);
-  const validated = validateStoredRecord(value, kind, decisionContext);
-  if (kind === 'synthesis') {
-    validateSynthesisReferences(root, feature, validated as ResearchSynthesis);
-    validateSynthesisExternalValidation(root, feature, validated as ResearchSynthesis);
-  }
-  if (kind === 'decision') {
-    validateDecisionFreshness(root, feature, validated as DecisionRecord);
-    validateSupersession(root, feature, validated as DecisionRecord);
-  }
-  const write = () => {
-    const access = repositoryAccess(root);
-    const previousRecord = access.fileExists(targetRelative, 'record path')
-      ? access.readText(targetRelative, 'record path')
-      : null;
-    const previousChangelog = access.fileExists(feature.paths.changelog, 'research decision changelog')
-      ? access.readText(feature.paths.changelog, 'research decision changelog')
-      : null;
-    captureUndo?.([
-      [targetRelative, previousRecord],
-      [feature.paths.changelog, previousChangelog],
-    ]);
-    const nextRecord = JSON.stringify(value, null, 2) + '\n';
-    writeAtomic(root, targetRelative, nextRecord);
-    const event = appendChange(
-      root,
-      feature,
-      value,
-      prior ? 'finalize' : 'init',
-      previousRecord,
-      nextRecord,
-      targetRelative,
-      true,
-    );
-    if (expectedConfigDigest !== undefined) currentResearchFeature(root, expectedConfigDigest);
-    return { record: validated, replay: false, path: targetRelative, event };
-  };
-  return write();
-}
-
-function recordCanonical(
-  kind: RecordKind,
-  input: unknown,
-  expectedOrOptions?: string | ResearchDecisionRecordOptions,
-  options?: ResearchDecisionRecordOptions,
-): CanonicalRecordResult<CanonicalRecord> {
-  const parsed = parseRecordArgs(expectedOrOptions, options);
-  const root = requiredResearchRoot(parsed.options);
-  const gate = requireResearchWriteGate(parsed.options, root);
-  const snapshot = researchConfigSnapshot(root);
-  const feature = snapshot.feature;
-  const value = normalizeRecord(input, kind);
-  validateStoredRecord(value, kind);
-  const relative = recordPath(feature, kind, value);
-  let undo: readonly (readonly [string, string | null])[] | null = null;
-  const write = () =>
-    withLock(root, feature.paths.changelog, () => {
-      const currentFeature = currentResearchFeature(root, snapshot.digest);
-      requireStableResearchPath(feature.paths.changelog, currentFeature.paths.changelog, 'changelog');
-      const currentRelative = recordPath(currentFeature, kind, value);
-      requireStableResearchPath(relative, currentRelative, 'record');
-      return recordUnderLock(
-        root,
-        currentFeature,
-        currentRelative,
-        value,
-        parsed.expectedDigest,
-        kind,
-        parsed.options,
-        snapshot.digest,
-        (files) => {
-          undo = files;
-        },
-      );
-    });
-  const checkpointPaths: string[] = [];
-  if (parsed.options.expectedRevision !== undefined)
-    checkpointPaths.push(
-      path.posix.join(
-        feature.paths.activation_history,
-        safeSegment(value.work_item_id, 'activation work_item_id'),
-        'resume.json',
-      ),
-    );
-  if (kind === 'decision' && value.status === 'accepted')
-    checkpointPaths.push(
-      authorityCheckpointRelative(
-        feature,
-        value as unknown as DecisionRecord,
-        parsed.options.authority_checkpoint_path,
-      ),
-    );
-  const result = gate.store.withWorkingMutation(
-    root,
-    gate.generation,
-    () => withOrderedLocks(root, checkpointPaths, write),
-    () => {
-      if (undo !== null) restoreResearchFiles(root, undo);
-    },
-  );
-  currentResearchFeature(root, snapshot.digest);
-  return result;
-}
-
 export function validateResearchResult(value: unknown): ResearchResult {
   return validateResult(asRecord(value, 'ResearchResult'));
 }
@@ -3471,14 +3194,6 @@ export function validateDecisionRecord(value: unknown, options: ResearchDecision
   };
   return validateDecision(record, context);
 }
-export function recordResearchResult(
-  input: unknown,
-  expectedOrOptions?: string | ResearchDecisionRecordOptions,
-  options?: ResearchDecisionRecordOptions,
-): CanonicalRecordResult<ResearchResult> {
-  return recordCanonical('research', input, expectedOrOptions, options) as CanonicalRecordResult<ResearchResult>;
-}
-
 /** The host reads these fields from its persisted report, work state and maintenance generation. */
 export interface ObservedResearchBinding {
   readonly work_id: string;
@@ -4443,22 +4158,6 @@ export async function readObservedResearchResult(
       },
     ),
   );
-}
-
-export function recordResearchSynthesis(
-  input: unknown,
-  expectedOrOptions?: string | ResearchDecisionRecordOptions,
-  options?: ResearchDecisionRecordOptions,
-): CanonicalRecordResult<ResearchSynthesis> {
-  return recordCanonical('synthesis', input, expectedOrOptions, options) as CanonicalRecordResult<ResearchSynthesis>;
-}
-
-export function recordDecisionRecord(
-  input: unknown,
-  expectedOrOptions?: string | ResearchDecisionRecordOptions,
-  options?: ResearchDecisionRecordOptions,
-): CanonicalRecordResult<DecisionRecord> {
-  return recordCanonical('decision', input, expectedOrOptions, options) as CanonicalRecordResult<DecisionRecord>;
 }
 
 function findRecord(

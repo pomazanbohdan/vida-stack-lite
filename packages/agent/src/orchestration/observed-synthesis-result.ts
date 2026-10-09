@@ -4,6 +4,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import scopeSchema from '../../schemas/implementation-scope.v1.schema.json' with { type: 'json' };
 import acceptanceSchema from '../../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
 import { runtimeConfigDigest, type AgentRuntimeConfig } from '../config/runtime-config.js';
+import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
 import type { WorkState } from '../host-state.js';
@@ -298,10 +299,13 @@ export function buildObservedSynthesisResult(input: ObservedSynthesisResultInput
   );
   requireSynthesis(Array.isArray(output.ac_ids), 'synthesis AC IDs must be an array');
   const acIds: readonly unknown[] = output.ac_ids;
-  requireSynthesis(acIds.every((id): id is string => typeof id === 'string'), 'synthesis AC IDs must be strings');
   requireSynthesis(
-      canonicalJsonDigest([...acIds].sort((left, right) => left < right ? -1 : left > right ? 1 : 0)) ===
-        canonicalJsonDigest([...(scope.ac_ids as readonly string[])].sort()) &&
+    acIds.every((id): id is string => typeof id === 'string'),
+    'synthesis AC IDs must be strings',
+  );
+  requireSynthesis(
+    canonicalJsonDigest([...acIds].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))) ===
+      canonicalJsonDigest([...(scope.ac_ids as readonly string[])].sort()) &&
       acIds.every(
         (id) =>
           typeof id === 'string' &&
@@ -318,7 +322,7 @@ export function buildObservedSynthesisResult(input: ObservedSynthesisResultInput
       `synthesis ${key} are unsupported by admitted research`,
     );
   }
-  const pointer = path.posix.join(config.control.work_root, 'session-handoff.v1.sqlite');
+  const pointer = sessionHandoffDatabaseRelativePath(config);
   requireSynthesis(
     !path.posix.isAbsolute(pointer) && !pointer.includes('..') && !pointer.includes('\\') && !pointer.includes(':'),
     'persisted observation pointer is unsafe',

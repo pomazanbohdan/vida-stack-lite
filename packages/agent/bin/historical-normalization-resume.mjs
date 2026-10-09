@@ -93,7 +93,7 @@ export async function resumeHistoricalNormalization(args) {
   const { runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const { Database } = await import('bun:sqlite');
-  const { sessionHandoffDatabasePath } = await import('../src/orchestration/persistent-session-handoff.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
   const { buildObservedResearchResult } = await import('../src/orchestration/observed-research-result.ts');
   const { resumeHistoricalObservedResearchResult, validateObservedResearchRecordPlan } =

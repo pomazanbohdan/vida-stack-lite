@@ -8,8 +8,10 @@ const publicIngress = isBunRuntime ? await import('../src/contracts/public-ingre
 const repositoryAccess = isBunRuntime ? await import('../src/config/safe-repository-access.ts') : null;
 const workspaceIdentity = isBunRuntime ? await import('../src/workspace-identity.ts') : null;
 const yaml = isBunRuntime ? await import('yaml') : null;
+const initializationRecord = isBunRuntime ? await import('../src/config/initialization-record.ts') : null;
+const projectPaths = isBunRuntime ? await import('../src/config/project-paths.ts') : null;
 
-const receiptPath = '.agent/runtime-initialization.v1.json';
+const receiptPath = projectPaths?.RUNTIME_INITIALIZATION_PATH;
 const pendingReceiptPath = '.agent/runtime-initialization.pending.v1.json';
 const outputs = [
   ['AGENTS.template.md', 'AGENTS.md'],
@@ -411,7 +413,6 @@ function validateExistingReceipt(
     JSON.stringify(receipt.project_ids) !== JSON.stringify(selectedProjects.map((entry) => entry.id)) ||
     receipt.config_digest !== runtimeConfig.runtimeConfigDigest(config) ||
     receipt.integrations_digest !== publicIngress.canonicalJsonDigest(config.integrations) ||
-    receipt.schema_sha256 !== hash(rawSchema) ||
     JSON.stringify(receipt.templates) !== JSON.stringify(evidence)
   )
     throw new Error('Existing initialization receipt differs; reconciliation cannot replace it');
@@ -590,9 +591,7 @@ async function reconcileExistingInitialization(
 }
 
 function validateReceipt(rawSchema, receipt) {
-  const validate = new Ajv2020({ strict: true, allErrors: true }).compile(JSON.parse(rawSchema));
-  if (!validate(receipt))
-    throw new Error('Initialization receipt does not satisfy current v1: ' + JSON.stringify(validate.errors));
+  initializationRecord.validateRuntimeInitializationReceipt(receipt, rawSchema);
 }
 
 async function publishInitialization(access, projectRoot, rendered, receipt) {

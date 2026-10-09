@@ -1,3 +1,4 @@
+import { sameCoordinationStrings } from '../contracts/envelopes.js';
 import type {
   HistoricalTerminalSynthesisProvenance,
   HostStateSnapshot,
@@ -19,10 +20,7 @@ import {
   validateObservedActivationUseWritePlan,
   validateActivationUse,
 } from '../research-decision.js';
-import {
-  compareScopedSourceSnapshots,
-  type ScopedSourceSnapshot,
-} from './scoped-source-snapshot.js';
+import { compareScopedSourceSnapshots, type ScopedSourceSnapshot } from './scoped-source-snapshot.js';
 
 function requireSuspension(value: unknown, message: string): asserts value {
   if (!value) throw new Error(`local work suspension: ${message}`);
@@ -141,12 +139,13 @@ function requireReadonlyBookkeeping(
     )!;
     if (item.observation === null) {
       const profile = input.config.agents.profiles[stage.assignments[item.request.assignment_index]!.profile]!;
-  const exactTerminalTarget =
-    terminalSynthesisTarget !== undefined &&
-    terminalSynthesisTarget.actionId === item.request.action_id &&
+      const exactTerminalTarget =
+        terminalSynthesisTarget !== undefined &&
+        terminalSynthesisTarget.actionId === item.request.action_id &&
         terminalSynthesisTarget.issueId === item.issue_id;
       requireSuspension(
-        (exactTerminalTarget || input.config.agents.egress_policies[profile.egress_policy]!.allowed_hosts.length === 0) &&
+        (exactTerminalTarget ||
+          input.config.agents.egress_policies[profile.egress_policy]!.allowed_hosts.length === 0) &&
           !item.research_normalization,
         'readonly bookkeeping pending issue has egress or normalization',
       );
@@ -177,7 +176,7 @@ function requireReadonlyBookkeeping(
           binding.lease_thread_id === input.nativeSessionHandle &&
           binding.lease_generation === ticket.generation &&
           ticket.repository_id === input.identity.repository_id &&
-          canonicalJsonDigest(ticket.project_ids) === canonicalJsonDigest(input.identity.project_ids) &&
+          sameCoordinationStrings(ticket.project_ids, input.identity.project_ids) &&
           ticket.integrations_digest === input.identity.integrations_digest,
         'readonly bookkeeping original activation binding differs',
       );
@@ -424,9 +423,11 @@ function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
       const items = [...state.items, ...state.completed.flatMap((wave) => wave.items)],
         pending = items.filter((item) => item.issue_id !== null && item.observation === null),
         target = pending[0],
-        stage = target && input.config.workflows[target.request.workflow_id]?.stages.find(
-          (entry) => entry.id === target.request.stage_id,
-        );
+        stage =
+          target &&
+          input.config.workflows[target.request.workflow_id]?.stages.find(
+            (entry) => entry.id === target.request.stage_id,
+          );
       requireSuspension(
         pending.length === 1 &&
           target &&
@@ -439,15 +440,14 @@ function requireHistoricalPredicate(input: HistoricalSuspensionInput): void {
           !target.research_normalization &&
           !target.host_reservation &&
           state.source_scope?.digest === work.binding.work_source_revision &&
-          items.filter((item) => item !== target).every(
-            (item) => item.issue_id !== null && item.observation?.status === 'reported_complete',
-          ) &&
+          items
+            .filter((item) => item !== target)
+            .every((item) => item.issue_id !== null && item.observation?.status === 'reported_complete') &&
           work.execution.assignment_attempts.length === 0,
         'historical synthesis candidate is not one known-terminal unaccepted readonly action',
       );
       requireReadonlyBookkeeping(input, host, capture);
-    }
-    else
+    } else
       requireSuspension(
         input.predicate === 'unknown_readonly' &&
           input.journal.resume_status === 'issued_outcome_uncertain' &&
@@ -669,7 +669,7 @@ function suspendLocalWorkCore(
     ) &&
     ticket?.source_revision === work.binding.work_source_revision &&
     ticket.repository_id === identity.repository_id &&
-    canonicalJsonDigest(ticket.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+    sameCoordinationStrings(ticket.project_ids, identity.project_ids) &&
     ticket.integrations_digest === identity.integrations_digest &&
     ticket.expires_at !== null &&
     Date.parse(ticket.expires_at) <= Date.now() &&
@@ -713,21 +713,23 @@ function suspendLocalWorkCore(
         settledWriter ||
         Date.parse(claims[0]!.lease_expires_at) > Date.now()) &&
       claims[0]!.lease_expires_at === ticket.expires_at &&
-      canonicalJsonDigest([...claims[0]!.resources].sort()) === canonicalJsonDigest(expectedResources) &&
-      canonicalJsonDigest([...ticket.exclusive_resources].sort()) === canonicalJsonDigest(expectedResources) &&
-      canonicalJsonDigest([...ticket.active_resources].sort()) === canonicalJsonDigest(expectedResources) &&
+      sameCoordinationStrings([...claims[0]!.resources].sort(), expectedResources) &&
+      sameCoordinationStrings([...ticket.exclusive_resources].sort(), expectedResources) &&
+      sameCoordinationStrings([...ticket.active_resources].sort(), expectedResources) &&
       !host.ledger.tickets.some(
         (other) =>
           other.ticket_id !== ticket.ticket_id &&
-          !(terminalSynthesisCapture &&
+          !(
+            terminalSynthesisCapture &&
             other.status === 'queued' &&
             other.work_id === identity.work_id &&
             other.thread_id === nativeSessionHandle &&
             other.generation === lease.generation &&
             other.repository_id === identity.repository_id &&
-            canonicalJsonDigest(other.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+            sameCoordinationStrings(other.project_ids, identity.project_ids) &&
             other.integrations_digest === identity.integrations_digest &&
-            other.source_revision === work.binding.work_source_revision) &&
+            other.source_revision === work.binding.work_source_revision
+          ) &&
           (completedReadonly ||
             readonlyBookkeeping ||
             settledResearch ||
@@ -746,7 +748,7 @@ function suspendLocalWorkCore(
       item.thread_id === nativeSessionHandle &&
       item.generation === lease.generation &&
       item.repository_id === identity.repository_id &&
-      canonicalJsonDigest(item.project_ids) === canonicalJsonDigest(identity.project_ids) &&
+      sameCoordinationStrings(item.project_ids, identity.project_ids) &&
       item.integrations_digest === identity.integrations_digest &&
       item.source_revision === work.binding.work_source_revision,
   );
@@ -774,11 +776,11 @@ function suspendLocalWorkCore(
         ? 'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.'
         : readonlyBookkeeping
           ? 'Readonly observations, canonical artifact GAPs and pending UNKNOWN remain frozen; continuation needs normal admission.'
-        : unissuedPrepared || settledResearch
-          ? 'The original unissued frontier remains inert; continuation needs normal admission.'
-          : requestIntent === 'linked_correction'
-            ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
-            : 'Prior work awaits user testing; new work must be admitted separately.',
+          : unissuedPrepared || settledResearch
+            ? 'The original unissued frontier remains inert; continuation needs normal admission.'
+            : requestIntent === 'linked_correction'
+              ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
+              : 'Prior work awaits user testing; new work must be admitted separately.',
     },
   };
   const nextLedger = {
@@ -827,8 +829,7 @@ function suspendLocalWorkCore(
             decided_by: nativeSessionHandle,
             decision_pointer: userRequestPointer,
             created_at: now,
-          }))
-      ),
+          }))),
     ],
   };
   if (inspectOnly) return host;
