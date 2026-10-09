@@ -363,6 +363,7 @@ export class MastraSessionBridge {
       const effective = effectiveConfiguredFrontier({
         original: stored as ConfiguredFrontierReceipt,
         recovery: configuredRecovery,
+        runtimeCodeContinuations: args.ledger.hostState.readQualifiedRuntimeCodeContinuations(identity, attempt),
       });
       requireBridge(
         stored.request.action.kind === 'configured_frontier' &&
@@ -663,7 +664,15 @@ export class MastraSessionBridge {
     const receipt = this.#ledger.hostState.readDeliveredWorkContinuationReceipt(key.identity, key.attempt);
     requireBridge(receipt?.request.action.kind === 'configured_frontier', 'configured-frontier receipt missing');
     const recovery = this.#ledger.hostState.readFailedPrewriterRecoveryReceipt(key.identity, key.attempt);
-    const effective = effectiveConfiguredFrontier({ original: receipt as ConfiguredFrontierReceipt, recovery });
+    const runtimeCodeContinuations = this.#ledger.hostState.readQualifiedRuntimeCodeContinuations(
+      key.identity,
+      key.attempt,
+    );
+    const effective = effectiveConfiguredFrontier({
+      original: receipt as ConfiguredFrontierReceipt,
+      recovery,
+      runtimeCodeContinuations,
+    });
     requireBridge(
       receipt &&
         receipt.request.action.kind === 'configured_frontier' &&
@@ -687,7 +696,7 @@ export class MastraSessionBridge {
         host.work.execution.status === 'active',
       'configured-frontier current Work no longer matches its stored receipt',
     );
-    return { original: receipt as ConfiguredFrontierReceipt, recovery };
+    return { original: receipt as ConfiguredFrontierReceipt, recovery, runtimeCodeContinuations };
   }
 
   #reserve(

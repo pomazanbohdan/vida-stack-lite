@@ -3757,10 +3757,12 @@ export async function run(args = process.argv.slice(2)) {
               state,
               initialLineage.frontierCodeRebind,
               initialLineage.completedSourceReportRecovery,
+              initialLineage.runtimeCodeContinuations,
             );
             if (
               canonicalJsonDigest(
-                initialLineage.completedSourceReportRecovery?.record.request.currentRuntimeCodePaths ??
+                initialLineage.runtimeCodeContinuations?.at(-1)?.request.currentRuntimeCodePaths ??
+                  initialLineage.completedSourceReportRecovery?.record.request.currentRuntimeCodePaths ??
                   initialLineage.frontierCodeRebind.record.request.runtimeCodePaths,
               ) !== canonicalJsonDigest(inventory) ||
               runtime.digest !== work.binding.runtime_code_digest
@@ -5635,6 +5637,7 @@ export async function run(args = process.argv.slice(2)) {
           persistedJournal.state,
           initialSourceFrontierCodeRebind,
           completedSourceReportRecovery,
+          workflowHost.runtimeCodeContinuations,
         );
       }
       const engineBinding = { ...bridgeArgs, runId: expectedRunId };

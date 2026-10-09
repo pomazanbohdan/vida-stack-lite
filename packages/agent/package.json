@@ -43,6 +43,7 @@
     "bin/synthesis-observation-correction.mjs",
     "bin/read-only-dispatch-repair.mjs",
     "bin/runtime-code-rebind.mjs",
+    "bin/qualified-runtime-code-continuation.mjs",
     "bin/runtime-config-rebind.mjs",
     "bin/historical-normalization-resume.mjs",
     "bin/historical-terminal-synthesis-capture.mjs",

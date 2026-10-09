@@ -1457,7 +1457,14 @@ export function readInitialSourceContinuationSessionEngineSnapshot(
   );
   if (work || frontierCodeRebind || completedSourceReportRecovery || journalSource.digest !== currentScope.digest) {
     requireEngine(work, 'evolved initial-source Journal requires trusted current Host Work');
-    validateInitialSourceContinuationLineage(work, receipt, journal, frontierCodeRebind, completedSourceReportRecovery);
+    validateInitialSourceContinuationLineage(
+      work,
+      receipt,
+      journal,
+      frontierCodeRebind,
+      completedSourceReportRecovery,
+      hostSnapshot.runtimeCodeContinuations,
+    );
   }
   if (completedSourceReportRecovery) {
     validateCompletedSourceReportRecoveryCurrentWorkJoin(

@@ -1,4 +1,5 @@
 import { canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
+import { projectQualifiedRuntimeCodeAncestor } from './qualified-runtime-code-continuation.js';
 import type { CoordinationClaim, CoordinationTicket } from '../contracts/envelopes.js';
 import type { AssignmentAttempt, HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import { completedSourceJournalObservationMatches } from '../host-state.js';
@@ -1060,6 +1061,14 @@ export function readCompletedSourceReportRecoveryReceiptRecord(
 export function validateCompletedSourceReportRecoveryLineage(
   state: CompletedSourceReportRecoveryState,
 ): CompletedSourceReportRecoveryReceipt {
+  if (state.host.work && state.host.runtimeCodeContinuations?.length)
+    state = {
+      ...state,
+      host: {
+        ...state.host,
+        work: projectQualifiedRuntimeCodeAncestor(state.host.work, state.host.runtimeCodeContinuations),
+      },
+    };
   const receipt = validateCompletedSourceReportRecoveryReceipt(state.recoveryReceipt);
   const record = receipt.record,
     request = record.request;

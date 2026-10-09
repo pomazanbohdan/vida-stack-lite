@@ -2,6 +2,7 @@ import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.
 
 type InventoryAccess = Pick<SafeRepositoryAccess, 'fileExists' | 'listFiles' | 'readBytes'>;
 export const expectedJavascriptFiles: readonly string[];
+export function runtimeManifestExecutableInventory(inputs: unknown): string[];
 export const bunCoverageSources: readonly string[];
 export interface MaintainedSourceInventory {
   readonly typescriptSources: readonly string[];

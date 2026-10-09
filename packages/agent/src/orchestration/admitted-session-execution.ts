@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { projectQualifiedRuntimeCodeAncestor } from './qualified-runtime-code-continuation.js';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -108,6 +109,7 @@ export function assertAdmittedRuntimeCodeCurrent(
       journal!.state,
       initialView?.frontierCodeRebind,
       completedRecovery,
+      initialView?.runtimeCodeContinuations,
     );
     if (completedRecovery) {
       validateCompletedSourceReportRecoveryCurrentWorkJoin(
@@ -119,20 +121,25 @@ export function assertAdmittedRuntimeCodeCurrent(
       );
     }
     const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, currentPaths);
+    const adoptedCode = initialView?.runtimeCodeContinuations?.at(-1)?.request;
     const expectedCurrentCode =
+      adoptedCode?.currentRuntimeCodeDigest ??
       completedRecovery?.record.request.currentRuntimeCodeDigest ??
       initialView?.frontierCodeRebind?.current_runtime_code_digest ??
       receipt.request.currentRuntimeCodeDigest;
-    const expectedCurrentPaths = completedRecovery?.record.request.currentRuntimeCodePaths ?? currentPaths;
+    const expectedCurrentPaths =
+      adoptedCode?.currentRuntimeCodePaths ?? completedRecovery?.record.request.currentRuntimeCodePaths ?? currentPaths;
     requireExecution(
       current.digest === work.binding.runtime_code_digest &&
         current.digest === expectedCurrentCode &&
         canonicalJsonDigest(currentPaths) === canonicalJsonDigest(expectedCurrentPaths) &&
-        (!initialView?.frontierCodeRebind && !completedRecovery
-          ? receipt.request.currentRuntimeCodeDigest === current.digest
-          : completedRecovery
-            ? completedRecovery.record.request.currentRuntimeCodeDigest === current.digest
-            : initialView!.frontierCodeRebind!.current_runtime_code_digest === current.digest),
+        (adoptedCode
+          ? adoptedCode.currentRuntimeCodeDigest === current.digest
+          : !initialView?.frontierCodeRebind && !completedRecovery
+            ? receipt.request.currentRuntimeCodeDigest === current.digest
+            : completedRecovery
+              ? completedRecovery.record.request.currentRuntimeCodeDigest === current.digest
+              : initialView!.frontierCodeRebind!.current_runtime_code_digest === current.digest),
       'initial Source continuation does not bind the canonical runtime inventory and protected intake paths',
     );
   } else if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(currentPaths)) {
@@ -167,7 +174,7 @@ export function assertAdmittedRuntimeCodeCurrent(
         receipt.prior_work.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
         receipt.prior_work.binding.config_digest === request.priorConfigDigest &&
         (recovery?.successor_work.binding.runtime_code_digest ?? request.targetRuntimeCodeDigest) ===
-          work.binding.runtime_code_digest &&
+          projectQualifiedRuntimeCodeAncestor(work, host.runtimeCodeContinuations).binding.runtime_code_digest &&
         request.targetConfigDigest === runtimeConfigDigest(config) &&
         request.targetConfigDigest === work.binding.config_digest &&
         (recovery?.successor_work.binding.schema_digest ?? request.targetSchemaDigest) === schemaDigest &&

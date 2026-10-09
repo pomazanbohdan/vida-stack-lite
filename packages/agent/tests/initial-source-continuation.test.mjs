@@ -23,6 +23,7 @@ import {
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { validateInitialSourceFrontierCodeRebindReceipt } from '../src/orchestration/initial-source-frontier-code-rebind.ts';
+import { validateQualifiedRuntimeCodeContinuationRequest } from '../src/orchestration/qualified-runtime-code-continuation.ts';
 import {
   validateCompletedSourceReportRecoveryCurrentWorkJoin,
   validateCompletedSourceReportRecoveryReceipt,
@@ -2010,6 +2011,157 @@ registerFixtureTest(
         expect(continuationState(f)).toEqual(afterRecovery);
       }
 
+      // These injected endpoint proofs exercise Host consistency only, not native qualification.
+      /** @param {string} nextCode @param {string} label @returns {import('../src/orchestration/qualified-runtime-code-continuation.ts').QualifiedRuntimeCodeContinuationRequest} */
+      const codeFixtureRequest = (nextCode, label) => {
+        const current = continuationState(f),
+          previous = hostStore(f).readQualifiedRuntimeCodeContinuations(f.identity, 1).at(-1)?.request;
+        return validateQualifiedRuntimeCodeContinuationRequest({
+          schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
+          identity: f.identity,
+          attempt: 1,
+          nativeSessionHandle: executionLease.thread_id,
+          leaseGeneration: executionLease.generation,
+          expectedWork: current.workVersion,
+          expectedLedger: current.ledgerVersion,
+          expectedJournal: current.journalVersion,
+          expectedMaintenanceGeneration: hostStore(f).readHostStateSnapshot(f.identity).maintenanceGeneration,
+          originalSourceScopeDigest: sourceBefore.digest,
+          journalSourceScopeDigest: sourceAfter.digest,
+          oldRuntimeCodeDigest: current.work.binding.runtime_code_digest,
+          currentRuntimeCodeDigest: nextCode,
+          oldRuntimeCodePaths: request.currentRuntimeCodePaths,
+          currentRuntimeCodePaths: request.currentRuntimeCodePaths,
+          oldManifestRef:
+            previous?.currentManifestRef ??
+            (request.currentManifestRef.includes(':')
+              ? '.tmp/fixture/recovered-code-manifest.json'
+              : request.currentManifestRef),
+          oldManifestDigest: previous?.currentManifestDigest ?? request.currentManifestDigest,
+          oldInstallRef:
+            previous?.currentInstallRef ??
+            (request.currentInstallRef.includes(':')
+              ? '.tmp/fixture/recovered-code-install.json'
+              : request.currentInstallRef),
+          currentManifestRef: '.tmp/fixture/' + label + '-manifest.json',
+          currentManifestDigest: canonicalJsonDigest(label + '-manifest'),
+          currentInstallRef: '.tmp/fixture/' + label + '-install.json',
+          systemUpdateRef: '.tmp/fixture/' + label + '-install.json',
+          systemUpdateOperationId: 'fixture-' + label,
+          nativeSelfAttestationDigest: canonicalJsonDigest('fixture-' + label),
+        });
+      };
+      /** @param {import('../src/orchestration/qualified-runtime-code-continuation.ts').QualifiedRuntimeCodeContinuationRequest} candidate @returns {import('../src/orchestration/qualified-runtime-code-continuation.ts').QualifiedRuntimeCodeEndpoints} */
+      const codeFixtureProof = (candidate) => ({
+        oldRuntime: {
+          codeDigest: candidate.oldRuntimeCodeDigest,
+          codePaths: candidate.oldRuntimeCodePaths,
+          manifestRef: candidate.oldManifestRef,
+          manifestDigest: candidate.oldManifestDigest,
+          installRef: candidate.oldInstallRef,
+        },
+        currentRuntime: {
+          codeDigest: candidate.currentRuntimeCodeDigest,
+          codePaths: candidate.currentRuntimeCodePaths,
+          manifestRef: candidate.currentManifestRef,
+          manifestDigest: candidate.currentManifestDigest,
+          installRef: candidate.currentInstallRef,
+        },
+        systemUpdate: { ref: candidate.systemUpdateRef, operationId: candidate.systemUpdateOperationId },
+        nativeSelfAttestationDigest: candidate.nativeSelfAttestationDigest,
+      });
+      const beforeCodeAdoption = continuationState(f),
+        codeRequest = codeFixtureRequest(canonicalJsonDigest('fixture-next-code'), 'next-code');
+      /** @param {import('../src/orchestration/qualified-runtime-code-continuation.ts').QualifiedRuntimeCodeContinuationRequest} candidate */
+      const adopt = (candidate) => hostStore(f).commitQualifiedRuntimeCodeContinuation(candidate, codeFixtureProof);
+      for (const alteration of [
+        {
+          ...codeRequest,
+          expectedWork: { ...codeRequest.expectedWork, revision: codeRequest.expectedWork.revision + 1 },
+        },
+        {
+          ...codeRequest,
+          expectedLedger: { ...codeRequest.expectedLedger, revision: codeRequest.expectedLedger.revision + 1 },
+        },
+        {
+          ...codeRequest,
+          expectedJournal: { ...codeRequest.expectedJournal, revision: codeRequest.expectedJournal.revision + 1 },
+        },
+        { ...codeRequest, expectedMaintenanceGeneration: codeRequest.expectedMaintenanceGeneration + 1 },
+        { ...codeRequest, nativeSessionHandle: 'fixture:foreign-owner' },
+        { ...codeRequest, originalSourceScopeDigest: sourceAfter.digest },
+      ]) {
+        expect(() => adopt(alteration)).toThrow();
+        expect(continuationState(f)).toEqual(beforeCodeAdoption);
+      }
+      expect(() =>
+        hostStore(f).commitQualifiedRuntimeCodeContinuation(codeRequest, () => {
+          throw new Error('fixture endpoint interruption');
+        }),
+      ).toThrow(/fixture endpoint interruption/);
+      expect(continuationState(f)).toEqual(beforeCodeAdoption);
+      const firstCodeReceipt = adopt(codeRequest),
+        afterCodeAdoption = continuationState(f);
+      expect(firstCodeReceipt.rights_granted).toBe(false);
+      expect(firstCodeReceipt.runtime_acceptance).toBe(false);
+      expect(afterCodeAdoption.journal).toEqual(beforeCodeAdoption.journal);
+      expect(afterCodeAdoption.ledger).toEqual(beforeCodeAdoption.ledger);
+      expect(afterCodeAdoption.work.lease).toEqual(beforeCodeAdoption.work.lease);
+      expect(afterCodeAdoption.work.execution.assignment_attempts).toEqual(
+        beforeCodeAdoption.work.execution.assignment_attempts,
+      );
+      expect(adopt(codeRequest)).toEqual(firstCodeReceipt);
+      expect(continuationState(f)).toEqual(afterCodeAdoption);
+      const historyDatabase = new Database(path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite'));
+      try {
+        historyDatabase
+          .query(
+            'UPDATE agent_host_qualified_runtime_code_continuation SET work_revision=work_revision+100 WHERE request_id=?',
+          )
+          .run(firstCodeReceipt.request_digest);
+        expect(() => hostStore(f).readQualifiedRuntimeCodeContinuations(f.identity, 1)).toThrow(
+          /qualified runtime code history key differs/,
+        );
+      } finally {
+        historyDatabase
+          .query('UPDATE agent_host_qualified_runtime_code_continuation SET work_revision=? WHERE request_id=?')
+          .run(firstCodeReceipt.work_version.revision, firstCodeReceipt.request_digest);
+        historyDatabase.close(true);
+      }
+      const firstCodeHost = hostStore(f).readHostStateSnapshot(f.identity);
+      expect(
+        validateCompletedSourceReportRecoveryCurrentWorkJoin(
+          firstCodeHost,
+          currentJournal(f),
+          initialReceipt,
+          null,
+          recovery,
+        ),
+      ).toEqual(recovery);
+      expect(
+        readInitialSourceContinuationSessionEngineSnapshot(
+          {
+            repositoryRoot: f.root,
+            config: f.config,
+            selection: admittedInput(f).selection,
+            context: { ...admittedInput(f).context, scope_digest: sourceBefore.digest },
+            workflowId: 'task_execution',
+            runId: workRunId(afterCodeAdoption.work),
+          },
+          initialReceipt,
+          currentJournal(f),
+          firstCodeHost,
+          null,
+          recovery,
+        ).status,
+      ).toBe('suspended');
+      const retainedRuntime = codeFixtureRequest(request.currentRuntimeCodeDigest, 'restored-source-code');
+      adopt(retainedRuntime);
+      const adoptedState = continuationState(f);
+      expect(hostStore(f).readQualifiedRuntimeCodeContinuations(f.identity, 1)).toHaveLength(2);
+      expect(adoptedState.journal).toEqual(beforeCodeAdoption.journal);
+      expect(adoptedState.ledger).toEqual(beforeCodeAdoption.ledger);
+      expect(hostStore(f).readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(recovery);
       const resumedFollowup = requireRecord(await runAgent(args), 'recovered Source report engine resume');
       const nextJournalVersion = requireStateVersion(resumedFollowup.state_version, 'resumed follow-up state_version');
       expect(parseIssuedActions(resumedFollowup.issued_actions, 'resume issued actions')).toHaveLength(0);

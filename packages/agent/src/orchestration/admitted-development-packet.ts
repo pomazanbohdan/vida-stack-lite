@@ -13,6 +13,10 @@ import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { HostStateSnapshot, HostStateStore, WorkIdentity, WorkState } from '../host-state.js';
 import { completedSourceJournalObservationMatches } from '../host-state.js';
+import {
+  projectQualifiedRuntimeCodeAncestor,
+  type QualifiedRuntimeCodeContinuationReceipt,
+} from './qualified-runtime-code-continuation.js';
 import { compareScopedSourceSnapshots } from './scoped-source-snapshot.js';
 
 const arrayShape = (value: unknown): boolean => Array.isArray(value);
@@ -103,6 +107,7 @@ export interface AdmittedDevelopmentPacketInput {
         | 'readInitialSourceContinuationReceipt'
         | 'readInitialSourceFrontierCodeRebindReceipt'
         | 'readCompletedSourceReportRecoveryReceipt'
+        | 'readQualifiedRuntimeCodeContinuations'
       >
     >;
   readonly ledger: MastraSessionLedgerSnapshot;
@@ -121,6 +126,7 @@ export interface InitialSourceContinuationLineageView {
   readonly receipt: InitialSourceContinuationReceipt;
   readonly frontierCodeRebind: InitialSourceFrontierCodeRebindReceipt | null;
   readonly completedSourceReportRecovery: CompletedSourceReportRecoveryReceipt | null;
+  readonly runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[];
 }
 
 export type AcceptedSourceContinuation =
@@ -172,7 +178,11 @@ export function isInitialSourceContinuationReceipt(value: unknown): value is Ini
 export function isInitialSourceContinuationLineageView(value: unknown): value is InitialSourceContinuationLineageView {
   return (
     isPacketRecord(value) &&
-    Object.keys(value).sort().join(',') === 'completedSourceReportRecovery,frontierCodeRebind,receipt' &&
+    [
+      'completedSourceReportRecovery,frontierCodeRebind,receipt',
+      'completedSourceReportRecovery,frontierCodeRebind,receipt,runtimeCodeContinuations',
+    ].includes(Object.keys(value).sort().join(',')) &&
+    (value.runtimeCodeContinuations === undefined || Array.isArray(value.runtimeCodeContinuations)) &&
     isInitialSourceContinuationReceipt(value.receipt) &&
     (value.frontierCodeRebind === null ||
       (isPacketRecord(value.frontierCodeRebind) &&
@@ -200,6 +210,7 @@ export function readInitialSourceContinuationLineageView(
       | 'readInitialSourceContinuationReceipt'
       | 'readInitialSourceFrontierCodeRebindReceipt'
       | 'readCompletedSourceReportRecoveryReceipt'
+      | 'readQualifiedRuntimeCodeContinuations'
     >
   >,
   identity: WorkIdentity,
@@ -225,6 +236,9 @@ export function readInitialSourceContinuationLineageView(
     completedSourceReportRecovery: completedSourceReportRecovery
       ? validateCompletedSourceReportRecoveryReceipt(completedSourceReportRecovery)
       : null,
+    ...(sourceStore.readQualifiedRuntimeCodeContinuations
+      ? { runtimeCodeContinuations: sourceStore.readQualifiedRuntimeCodeContinuations(identity, attempt) }
+      : {}),
   };
 }
 
@@ -315,7 +329,9 @@ export function validateInitialSourceContinuationLineage(
   journalValue?: unknown,
   frontierCodeRebindValue?: unknown,
   completedSourceReportRecoveryValue?: unknown,
+  runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
 ): InitialSourceContinuationReceipt {
+  work = projectQualifiedRuntimeCodeAncestor(work, runtimeCodeContinuations);
   const receipt = validateInitialSourceContinuationReceipt(value);
   const { request, prior_work: original, successor_work: successor } = receipt;
   const completedSourceReportRecovery =
@@ -535,8 +551,11 @@ export function acceptedSourceAuthorizationRevision(
         journalValue,
         initial.frontierCodeRebind,
         initial.completedSourceReportRecovery,
+        initial.runtimeCodeContinuations,
       ).prior_work.binding.work_source_revision
-    : work.binding.work_source_revision;
+    : continuation && 'original' in continuation && 'recovery' in continuation
+      ? acceptedContractSourceRevision(work, { state: journalValue as MastraSessionLedgerState }, continuation)
+      : work.binding.work_source_revision;
   requirePacket(
     reference.scope_id === work.binding.scope_id &&
       reference.source_revision === sourceRevision &&
@@ -549,7 +568,7 @@ export function acceptedSourceAuthorizationRevision(
 /** Resolve immutable accepted contracts against a trusted current Host/journal and continuation view. */
 export function acceptedContractSourceRevision(
   work: WorkState,
-  ledger: MastraSessionLedgerSnapshot,
+  ledger: Pick<MastraSessionLedgerSnapshot, 'state'>,
   view?: AcceptedSourceContinuation | null,
 ): string {
   if (!view) return work.binding.work_source_revision;
@@ -561,10 +580,12 @@ export function acceptedContractSourceRevision(
       ledger.state,
       initial.frontierCodeRebind,
       initial.completedSourceReportRecovery,
+      initial.runtimeCodeContinuations,
     );
     return receipt.prior_work.binding.work_source_revision;
   }
   requirePacket('original' in view && 'recovery' in view, 'configured continuation view is missing');
+  work = projectQualifiedRuntimeCodeAncestor(work, view.runtimeCodeContinuations);
   const { original, recovery } = view;
   validateConfiguredFrontierReceiptStructure({ receipt: original });
   if (recovery) validateFailedPrewriterRecoveryReceipt(recovery);
@@ -775,7 +796,18 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     );
   }
   requirePacket(!(original && initial), 'multiple Host Source continuation records are ambiguous');
-  const acceptedContinuation = initial ?? (original ? { original, recovery: recovery || null } : null);
+  const acceptedContinuation =
+    initial ??
+    (original
+      ? {
+          original,
+          recovery: recovery || null,
+          runtimeCodeContinuations:
+            input.sourceStore?.readQualifiedRuntimeCodeContinuations?.(identity, ledger.state.attempt) ??
+            input.host.runtimeCodeContinuations ??
+            [],
+        }
+      : null);
   const acceptedSourceRevision = acceptedContractSourceRevision(work, ledger, acceptedContinuation);
   const originalObserved = original?.prior_journal.completed.flatMap((wave) => wave.items) ?? [];
   const currentOrOriginal = (item: (typeof ledger.state.items)[number]): boolean =>

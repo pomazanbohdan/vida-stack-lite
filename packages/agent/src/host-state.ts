@@ -151,6 +151,16 @@ import type {
 } from './orchestration/delivered-work-continuation.js';
 import { projectConfiguredPrewriterContinuationRequests } from './orchestration/delivered-work-continuation.js';
 import { validateInitialSourceContinuationLineage } from './orchestration/admitted-development-packet.js';
+import {
+  runtimeCodeContinuationProtectedWorkDigest,
+  validateQualifiedRuntimeCodeContinuationReceipt,
+  validateQualifiedRuntimeCodeContinuationRequest,
+  validateQualifiedRuntimeCodeContinuationState,
+  validateQualifiedRuntimeCodeEndpoints,
+  type QualifiedRuntimeCodeContinuationReceipt,
+  type QualifiedRuntimeCodeContinuationRequest,
+  type QualifiedRuntimeCodeEndpoints,
+} from './orchestration/qualified-runtime-code-continuation.js';
 import { validateFailedPrewriterRecoveryBasis } from './orchestration/failed-prewriter-recovery.js';
 import {
   validateFailedPrewriterRecoveryReceipt,
@@ -905,6 +915,7 @@ export interface HostStateSnapshot {
   readonly workVersion: StateVersion | null;
   readonly ledgerVersion: StateVersion | null;
   readonly maintenanceGeneration: number;
+  readonly runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[];
 }
 
 export interface TaskSourceMutationPolicyVerifier {
@@ -2019,6 +2030,49 @@ function checkedWork(
   return work;
 }
 /** Operational binding proof is exact and immutable; it never grants current assignment authority. */
+function storedQualifiedRuntimeCodeContinuations(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  attempt?: number,
+): QualifiedRuntimeCodeContinuationReceipt[] {
+  if (
+    !database
+      .query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_qualified_runtime_code_continuation'",
+      )
+      .get()
+  )
+    return [];
+  const rows = database
+    .query(
+      'SELECT payload,digest,request_id,attempt,work_revision FROM agent_host_qualified_runtime_code_continuation WHERE workspace_id=? AND work_id=? ORDER BY work_revision',
+    )
+    .all(workspaceId, workId) as {
+    payload: string;
+    digest: string;
+    request_id: string;
+    attempt: number;
+    work_revision: number;
+  }[];
+  return rows
+    .filter((row) => attempt === undefined || row.attempt === attempt)
+    .map((row) => {
+      const value: unknown = JSON.parse(row.payload);
+      requireState(canonicalJsonDigest(value) === row.digest, 'qualified runtime code history integrity differs');
+      const receipt = validateQualifiedRuntimeCodeContinuationReceipt(value);
+      requireState(
+        receipt.request_digest === row.request_id &&
+          Number.isSafeInteger(row.work_revision) &&
+          row.work_revision === receipt.work_version.revision &&
+          receipt.request.identity.work_id === workId &&
+          receipt.request.attempt === row.attempt,
+        'qualified runtime code history key differs',
+      );
+      return receipt;
+    });
+}
+
 function checkedStoredWork(
   database: Database,
   workspaceId: string,
@@ -2059,6 +2113,7 @@ function checkedStoredWork(
           readonly kind: 'completed-source-report-recovery';
           readonly receipt: CompletedSourceReportRecoveryReceipt;
         }
+      | { readonly kind: 'qualified-runtime-code'; readonly receipt: QualifiedRuntimeCodeContinuationReceipt }
     )[] = [];
   const table = database
     .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_runtime_code_rebind'")
@@ -2214,6 +2269,12 @@ function checkedStoredWork(
       records.push({ kind: 'failed-prewriter', receipt });
     }
   }
+  for (const receipt of storedQualifiedRuntimeCodeContinuations(
+    database,
+    workspaceId,
+    candidate.binding.lifecycle_work_id,
+  ))
+    records.push({ kind: 'qualified-runtime-code', receipt });
   if (pendingReceipt) {
     records.push(
       pendingReceipt.schema === 'FailedPrewriterRecoveryReceipt/v1'
@@ -2229,17 +2290,39 @@ function checkedStoredWork(
   }
   records.sort((a, b) => {
     const revision = (record: (typeof records)[number]) =>
-      record.kind === 'continuation'
+      record.kind === 'qualified-runtime-code'
         ? record.receipt.request.expectedWork.revision
-        : record.kind === 'initial-frontier-code'
-          ? record.receipt.record.prior_work_version.revision
-          : record.kind === 'completed-source-report-recovery'
+        : record.kind === 'continuation'
+          ? record.receipt.request.expectedWork.revision
+          : record.kind === 'initial-frontier-code'
             ? record.receipt.record.prior_work_version.revision
-            : record.receipt.prior_work_version.revision;
+            : record.kind === 'completed-source-report-recovery'
+              ? record.receipt.record.prior_work_version.revision
+              : record.receipt.prior_work_version.revision;
     return revision(b) - revision(a);
   });
   let expected = candidate.binding;
   for (const record of records) {
+    if (record.kind === 'qualified-runtime-code') {
+      const receipt = validateQualifiedRuntimeCodeContinuationReceipt(record.receipt),
+        request = receipt.request;
+      requireState(
+        sameJson(request.identity, workIdentity(candidate)) &&
+          receipt.protected_work_digest === runtimeCodeContinuationProtectedWorkDigest(candidate) &&
+          receipt.work_version.revision <= candidate.revision &&
+          expected.runtime_code_digest === request.currentRuntimeCodeDigest &&
+          expected.runtime_source_revision === request.currentRuntimeCodeDigest &&
+          (candidate.revision !== receipt.work_version.revision ||
+            canonicalJsonDigest(candidate) === receipt.work_version.digest),
+        'qualified runtime code binding history is not continuous',
+      );
+      expected = {
+        ...expected,
+        runtime_code_digest: request.oldRuntimeCodeDigest,
+        runtime_source_revision: request.oldRuntimeCodeDigest,
+      };
+      continue;
+    }
     if (record.kind === 'failed-prewriter') {
       const receipt = validateFailedPrewriterRecoveryReceipt(record.receipt);
       const original = database
@@ -5093,6 +5176,8 @@ export class HostStateStore {
           input.context.attempt,
           initialContinuation.continuation_id,
         ),
+        this.#readCompletedSourceReportRecoveryReceiptRow(identity, input.context.attempt),
+        host.runtimeCodeContinuations,
       );
       requireState(
         initialContinuation.request.currentSourceScope.digest === input.context.scope_digest &&
@@ -6604,12 +6689,210 @@ export class HostStateStore {
       workVersion: version(work),
       ledgerVersion: version(ledger),
       maintenanceGeneration: this.#maintenanceGeneration(),
+      ...(work
+        ? {
+            runtimeCodeContinuations: storedQualifiedRuntimeCodeContinuations(
+              this.#database,
+              this.#workspaceId,
+              identity.work_id,
+            ),
+          }
+        : {}),
     });
   }
   readHostStateSnapshot(identity: WorkIdentity): HostStateSnapshot {
     if (this.#database.inTransaction && this.#maintenanceSnapshotReadScopeActive) return this.#read(identity, true);
     requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
     return this.#database.transaction(() => this.#read(identity)).deferred();
+  }
+  readQualifiedRuntimeCodeContinuations(
+    identity: WorkIdentity,
+    attempt: number,
+  ): readonly QualifiedRuntimeCodeContinuationReceipt[] {
+    requireState(
+      !this.#database.inTransaction && Number.isSafeInteger(attempt) && attempt > 0,
+      'qualified code history inspection invalid',
+    );
+    return this.#database
+      .transaction(() =>
+        this.#read(identity).work
+          ? snapshot(
+              storedQualifiedRuntimeCodeContinuations(this.#database, this.#workspaceId, identity.work_id, attempt),
+            )
+          : [],
+      )
+      .deferred();
+  }
+  commitQualifiedRuntimeCodeContinuation(
+    input: QualifiedRuntimeCodeContinuationRequest,
+    verifyCurrent: (
+      request: QualifiedRuntimeCodeContinuationRequest,
+      host: HostStateSnapshot,
+      journal: { readonly version: StateVersion; readonly state: MastraSessionLedgerState },
+      lineage: {
+        readonly initial: InitialSourceContinuationReceipt | null;
+        readonly frontier: InitialSourceFrontierCodeRebindReceipt | null;
+        readonly completed: CompletedSourceReportRecoveryReceipt | null;
+        readonly configured: ConfiguredFrontierRecoveryView | null;
+      },
+    ) => QualifiedRuntimeCodeEndpoints,
+  ): QualifiedRuntimeCodeContinuationReceipt {
+    const request = validateQualifiedRuntimeCodeContinuationRequest(input),
+      requestId = canonicalJsonDigest(request);
+    requireState(
+      !this.#database.inTransaction &&
+        typeof verifyCurrent === 'function' &&
+        verifyCurrent.constructor.name !== 'AsyncFunction',
+      'qualified code adoption verifier invalid',
+    );
+    const existing = storedQualifiedRuntimeCodeContinuations(
+      this.#database,
+      this.#workspaceId,
+      request.identity.work_id,
+      request.attempt,
+    ).find((item) => item.request_digest === requestId);
+    if (existing) return snapshot(existing);
+    const readState = () => {
+      const host = this.#read(request.identity);
+      const row = this.#database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null;
+      requireState(
+        row &&
+          Number.isSafeInteger(row.revision) &&
+          row.revision > 0 &&
+          canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+        'qualified code adoption Journal invalid',
+      );
+      const initial = this.#readInitialSourceContinuationReceipt(request.identity, request.attempt),
+        original = this.#readDeliveredWorkContinuationReceipt(request.identity, request.attempt);
+      const lineage = {
+        initial,
+        frontier: initial
+          ? this.#readInitialSourceFrontierCodeRebindReceipt(request.identity, request.attempt, initial.continuation_id)
+          : null,
+        completed: this.#readCompletedSourceReportRecoveryReceiptRow(request.identity, request.attempt),
+        configured:
+          original?.request.action.kind === 'configured_frontier'
+            ? {
+                original: original as ConfiguredFrontierReceipt,
+                recovery: this.#readFailedPrewriterRecoveryReceipt(request.identity, request.attempt),
+              }
+            : null,
+      };
+      return {
+        host,
+        journal: {
+          version: { revision: row.revision, digest: row.digest },
+          state: JSON.parse(row.payload) as MastraSessionLedgerState,
+        },
+        lineage,
+      };
+    };
+    const verifyState = (state: ReturnType<typeof readState>) => {
+      const work = validateQualifiedRuntimeCodeContinuationState(request, state.host, state.journal);
+      requireState(this.#repositoryRoot, 'qualified code adoption root unavailable');
+      const config = loadRuntimeConfig(this.#repositoryRoot);
+      requireState(
+        runtimeConfigDigest(config) === work.binding.config_digest,
+        'qualified code adoption configuration changed',
+      );
+      const scope = state.journal.state.source_scope!;
+      const actual = snapshotDeclaredSources(
+        requireSafeRepositoryAccess(this.#repositoryRoot),
+        scope.entries.map((item) => item.path),
+      );
+      requireState(sameJson(actual, scope), 'qualified code adoption cannot absorb Source changes');
+      return validateQualifiedRuntimeCodeEndpoints(
+        verifyCurrent(request, state.host, state.journal, state.lineage),
+        request,
+      );
+    };
+    const first = readState(),
+      proof = verifyState(first);
+    return this.#transactionWithProducerFence(() => {
+      this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceAvailable();
+      this.#assertMaintenanceGeneration(request.expectedMaintenanceGeneration);
+      const current = readState(),
+        currentProof = verifyState(current);
+      requireState(
+        sameJson(first, current) && sameJson(proof, currentProof),
+        'qualified code adoption changed before CAS',
+      );
+      const work = current.host.work!;
+      const next: WorkState = {
+        ...work,
+        revision: work.revision + 1,
+        binding: {
+          ...work.binding,
+          runtime_code_digest: request.currentRuntimeCodeDigest,
+          runtime_source_revision: request.currentRuntimeCodeDigest,
+        },
+        lifecycle: {
+          ...work.lifecycle,
+          revision: work.lifecycle.revision + 1,
+          config_binding: { ...work.lifecycle.config_binding, runtime_code_digest: request.currentRuntimeCodeDigest },
+        },
+      };
+      const receipt = validateQualifiedRuntimeCodeContinuationReceipt({
+        schema: 'QualifiedRuntimeCodeContinuationReceipt/v1',
+        request,
+        request_digest: requestId,
+        endpoint_proof: currentProof,
+        protected_work_digest: runtimeCodeContinuationProtectedWorkDigest(work),
+        work_version: { revision: next.revision, digest: canonicalJsonDigest(next) },
+        status: 'adopted',
+        rights_granted: false,
+        accepted_result: false,
+        runtime_acceptance: false,
+      });
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_qualified_runtime_code_continuation (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_id TEXT NOT NULL,work_revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,request_id),UNIQUE(workspace_id,work_id,work_revision))',
+      );
+      this.#database
+        .query(
+          'INSERT INTO agent_host_qualified_runtime_code_continuation (workspace_id,work_id,attempt,request_id,work_revision,payload,digest) VALUES (?,?,?,?,?,?,?)',
+        )
+        .run(
+          this.#workspaceId,
+          request.identity.work_id,
+          request.attempt,
+          requestId,
+          next.revision,
+          canonicalJson(receipt),
+          canonicalJsonDigest(receipt),
+        );
+      const changed = this.#database
+        .query(
+          'UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=? AND id=? AND revision=? AND digest=?',
+        )
+        .run(
+          next.revision,
+          canonicalJson(next),
+          canonicalJsonDigest(next),
+          this.#workspaceId,
+          'work',
+          identityKey(request.identity),
+          request.expectedWork.revision,
+          request.expectedWork.digest,
+        );
+      requireState(
+        changed.changes === 1 && sameJson(this.#checkedWork(next), next),
+        'qualified code adoption Work CAS or history differs',
+      );
+      requireState(
+        sameJson(this.#read(request.identity).ledgerVersion, request.expectedLedger),
+        'qualified code adoption changed ownership',
+      );
+      return snapshot(receipt);
+    }).immediate();
   }
   withMaintenanceInspection<T>(receipt: MaintenanceFenceReceipt, inspect: () => T): T {
     requireState(
@@ -12006,9 +12289,11 @@ export class HostStateStore {
   readConfiguredFrontierRecoveryView(identity: WorkIdentity, attempt: number): ConfiguredFrontierRecoveryView | null {
     const original = this.readDeliveredWorkContinuationReceipt(identity, attempt);
     if (original?.request.action.kind !== 'configured_frontier') return null;
+    const runtimeCodeContinuations = this.readQualifiedRuntimeCodeContinuations(identity, attempt);
     return Object.freeze({
       original: original as ConfiguredFrontierReceipt,
       recovery: this.readFailedPrewriterRecoveryReceipt(identity, attempt),
+      ...(runtimeCodeContinuations.length ? { runtimeCodeContinuations } : {}),
     });
   }
 

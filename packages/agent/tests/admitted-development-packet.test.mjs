@@ -11,6 +11,12 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { configuredFrontierRepairFixture } from './helpers/configured-frontier-fixture.mjs';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
+import { configuredFrontierRecoveryViewDigest } from '../src/orchestration/failed-prewriter-transition.ts';
+import {
+  runtimeCodeContinuationProtectedWorkDigest,
+  validateQualifiedRuntimeCodeContinuationRequest,
+  validateQualifiedRuntimeCodeContinuationReceipt,
+} from '../src/orchestration/qualified-runtime-code-continuation.ts';
 
 const { repositoryRoot: root, config } = configuredTestContext();
 const projectId = config.projects[0].project_id;
@@ -599,6 +605,90 @@ describe('admitted development packet', () => {
     };
     expect(() => buildAdmittedDevelopmentPacket(current)).toThrow(/scope, acceptance or thread/);
     const packet = buildAdmittedDevelopmentPacket({ ...current, sourceStore });
+    const configuredStore = { ...sourceStore, readQualifiedRuntimeCodeContinuations: () => [] };
+    expect(buildAdmittedDevelopmentPacket({ ...current, sourceStore: configuredStore }).source_revision).toBe(
+      source.digest,
+    );
+    const baseView = { original: receipt, recovery: null };
+    expect(configuredFrontierRecoveryViewDigest({ ...baseView, runtimeCodeContinuations: [] })).toBe(
+      configuredFrontierRecoveryViewDigest(baseView),
+    );
+    const nextCode = canonicalJsonDigest('fixture-qualified-next-code');
+    const codeRequest = validateQualifiedRuntimeCodeContinuationRequest({
+      schema: 'QualifiedRuntimeCodeContinuationRequest/v1',
+      identity: receipt.request.identity,
+      attempt: receipt.attempt,
+      nativeSessionHandle: receipt.request.nativeSessionHandle,
+      leaseGeneration: 1,
+      expectedWork: receipt.work_version,
+      expectedLedger: receipt.ledger_version,
+      expectedJournal: receipt.journal_version,
+      expectedMaintenanceGeneration: 0,
+      originalSourceScopeDigest: work.binding.work_source_revision,
+      journalSourceScopeDigest: state.source_scope.digest,
+      oldRuntimeCodeDigest: work.binding.runtime_code_digest,
+      currentRuntimeCodeDigest: nextCode,
+      oldRuntimeCodePaths: ['packages/agent/bin/run.mjs'],
+      currentRuntimeCodePaths: ['packages/agent/bin/run.mjs'],
+      oldManifestRef: '.tmp/fixture/old.json',
+      oldManifestDigest: canonicalJsonDigest('fixture-old-manifest'),
+      oldInstallRef: '.tmp/fixture/old-install.json',
+      currentManifestRef: '.tmp/fixture/next.json',
+      currentManifestDigest: canonicalJsonDigest('fixture-next-manifest'),
+      currentInstallRef: '.tmp/fixture/next-install.json',
+      systemUpdateRef: '.tmp/fixture/next-install.json',
+      systemUpdateOperationId: 'fixture-next-operation',
+      nativeSelfAttestationDigest: canonicalJsonDigest('fixture-self'),
+    });
+    const nextWork = {
+      ...work,
+      revision: work.revision + 1,
+      binding: { ...work.binding, runtime_code_digest: nextCode, runtime_source_revision: nextCode },
+      lifecycle: {
+        ...work.lifecycle,
+        revision: work.lifecycle.revision + 1,
+        config_binding: { ...work.lifecycle.config_binding, runtime_code_digest: nextCode },
+      },
+    };
+    const codeReceipt = validateQualifiedRuntimeCodeContinuationReceipt({
+      schema: 'QualifiedRuntimeCodeContinuationReceipt/v1',
+      request: codeRequest,
+      request_digest: canonicalJsonDigest(codeRequest),
+      protected_work_digest: runtimeCodeContinuationProtectedWorkDigest(work),
+      work_version: { revision: nextWork.revision, digest: canonicalJsonDigest(nextWork) },
+      endpoint_proof: {
+        oldRuntime: {
+          codeDigest: codeRequest.oldRuntimeCodeDigest,
+          codePaths: codeRequest.oldRuntimeCodePaths,
+          manifestRef: codeRequest.oldManifestRef,
+          manifestDigest: codeRequest.oldManifestDigest,
+          installRef: codeRequest.oldInstallRef,
+        },
+        currentRuntime: {
+          codeDigest: codeRequest.currentRuntimeCodeDigest,
+          codePaths: codeRequest.currentRuntimeCodePaths,
+          manifestRef: codeRequest.currentManifestRef,
+          manifestDigest: codeRequest.currentManifestDigest,
+          installRef: codeRequest.currentInstallRef,
+        },
+        systemUpdate: { ref: codeRequest.systemUpdateRef, operationId: codeRequest.systemUpdateOperationId },
+        nativeSelfAttestationDigest: codeRequest.nativeSelfAttestationDigest,
+      },
+      status: 'adopted',
+      rights_granted: false,
+      accepted_result: false,
+      runtime_acceptance: false,
+    });
+    const adoptedView = { ...baseView, runtimeCodeContinuations: [codeReceipt] };
+    expect(configuredFrontierRecoveryViewDigest(adoptedView)).not.toBe(configuredFrontierRecoveryViewDigest(baseView));
+    const adoptedStore = { ...sourceStore, readQualifiedRuntimeCodeContinuations: () => [codeReceipt] };
+    expect(
+      buildAdmittedDevelopmentPacket({
+        ...current,
+        host: { ...current.host, work: nextWork },
+        sourceStore: adoptedStore,
+      }).source_revision,
+    ).toBe(source.digest);
     expect(packet.source_revision).toBe(source.digest);
     expect(packet.acceptance).toEqual(['AC-1: The scoped file is created.']);
     expect(packet.implementation_constraints.some((value) => value.includes('Baseline task synthesis summary'))).toBe(

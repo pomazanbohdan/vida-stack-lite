@@ -161,6 +161,7 @@ function sourcePreflightContinuationDigest(view: AcceptedSourceContinuation | nu
       initialReceipt: initialSourceContinuationRecord(view.receipt).digest,
       frontierCodeRebind: view.frontierCodeRebind?.record_digest ?? null,
       completedSourceReportRecovery: view.completedSourceReportRecovery?.record_digest ?? null,
+      ...(view.runtimeCodeContinuations ? { runtimeCodeContinuations: view.runtimeCodeContinuations } : {}),
     });
   return 'schema' in view ? initialSourceContinuationRecord(view).digest : configuredFrontierRecoveryViewDigest(view);
 }

@@ -397,7 +397,7 @@ function verifyCurrentUpdateOwner(root, request, update, self) {
   return { ref: request.systemUpdateRef, operationId: request.systemUpdateOperationId };
 }
 
-function verifyNativeEndpoints(root, config, access, request) {
+export function verifyQualifiedRuntimeCodeEndpoints(root, config, access, request) {
   const oldManifest = readNativeManifest(
       access,
       request.oldManifestRef,
@@ -461,6 +461,44 @@ function verifyNativeEndpoints(root, config, access, request) {
       update.runtime_accepted === false &&
       update.developer_unblocked === false,
     'system update version or acceptance state differs',
+  );
+  const formed = readStrictJson(
+    access,
+    '.agent/work/agent-local-release/formed.json',
+    'current formation pointer',
+  ).value;
+  const { digest: formationDigest, ...formationBody } = formed;
+  requireRecovery(
+    formed.schema === 'VidaLocalReleaseFormation/v1' &&
+      formed.authority === 'local_consistency_only' &&
+      formationDigest ===
+        createHash('sha256')
+          .update(JSON.stringify(formationBody, null, 2) + '\n')
+          .digest('hex') &&
+      formed.operation_id === request.systemUpdateOperationId &&
+      formed.version === self.package_version &&
+      formed.run_id === update.run_id &&
+      formed.artifact_id === update.artifact_id &&
+      typeof formed.request_id === 'string' &&
+      hashPattern.test(formed.request_id),
+    'current formation owner differs',
+  );
+  const formedResult = readStrictJson(
+    access,
+    '.agent/work/agent-local-release/' + formed.operation_id + '/ci/' + formed.request_id + '/result.json',
+    'current formed result',
+  );
+  requireRecovery(
+    createHash('sha256').update(formedResult.bytes).digest('hex') === formed.result_sha256 &&
+      formedResult.value.schema === 'VidaCIDeliveryResult/v1' &&
+      formedResult.value.operation_id === formed.operation_id &&
+      formedResult.value.request_id === formed.request_id &&
+      formedResult.value.manifest_sha256 === request.currentManifestDigest &&
+      formedResult.value.payload_id === self.resource_payload_id &&
+      same(formedResult.value.asset, currentManifest.value.asset) &&
+      Array.isArray(formedResult.value.checks) &&
+      formedResult.value.checks.some((check) => check.id === 'native-build' && check.status === 'passed'),
+    'current formed result does not qualify the selected native',
   );
   const before = snapshotRuntimeManifestSources(oldManifest.value, config.runtime.bundle, request.oldRuntimeCodePaths),
     target = snapshotRuntimeManifestSources(currentManifest.value, config.runtime.bundle, currentPaths),
@@ -539,7 +577,7 @@ function buildVerifiedCurrent(root, config, access, request, state) {
   verifyCurrentCas(request, state);
   const terminal = readTerminalProof(root, access, request, state),
     source = verifySourceDiff(root, access, request, state),
-    native = verifyNativeEndpoints(root, config, access, request),
+    native = verifyQualifiedRuntimeCodeEndpoints(root, config, access, request),
     value = {
       schema: 'CompletedSourceReportRecoveryVerifiedCurrent/v1',
       terminal,

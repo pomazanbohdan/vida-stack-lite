@@ -161,6 +161,30 @@ function parse(args) {
   );
   if (values['--basis'] === 'initial-source-frontier')
     requireRebind(['inspect', 'plan', 'apply'].includes(values['--mode']), 'initial-source frontier mode invalid');
+  if (values['--basis'] === 'execution-continuation') {
+    const expected = ['inspect', 'plan'].includes(values['--mode'])
+      ? [
+          '--kind',
+          '--basis',
+          '--mode',
+          '--project-root',
+          '--repair-id',
+          '--projects',
+          '--work-id',
+          '--attempt',
+          '--parent-manifest',
+          '--parent-install',
+          '--successor-manifest',
+          '--system-update',
+        ]
+      : ['--kind', '--basis', '--mode', '--project-root', '--repair-id'];
+    requireRebind(
+      ['inspect', 'plan', 'apply'].includes(values['--mode']) &&
+        JSON.stringify(Object.keys(values).sort()) === JSON.stringify(expected.sort()),
+      'execution continuation arguments invalid',
+    );
+    return values;
+  }
   const expected = ['inspect', 'plan'].includes(values['--mode'])
     ? values['--basis'] === 'initial-source-frontier'
       ? initialSourceFrontierPlanningKeys
@@ -2281,6 +2305,10 @@ async function runInitialSourceFrontierCodeRebind({ values, root, config, worksp
 /** Existing reconcile-artifacts CLI branch; no native call or approval is synthesized. */
 export async function runRuntimeCodeRebind(args) {
   const values = parse(args);
+  if (values['--basis'] === 'execution-continuation') {
+    const { runQualifiedRuntimeCodeContinuation } = await import('./qualified-runtime-code-continuation.mjs');
+    return runQualifiedRuntimeCodeContinuation(values);
+  }
   const root = values['--project-root'];
   const config = loadRuntimeConfig(root);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);

@@ -2247,6 +2247,29 @@ Current readers treat the initial receipt as an immutable ancestor. Host history
 proves the permitted code-only descendant; actual installed bytes must match
 the current Work binding. Existing active v1 records remain unchanged.
 
+## Qualified code continuation after an installed update
+
+The existing runtime-code owner exposes the additive `execution-continuation`
+basis. It accepts a new qualified native package for the same quiescent Work
+and attempt. Current Work/Ledger/Journal/maintenance versions, original owner,
+sole execution-only coordination and FIFO must match. A live or expired lease
+is retained. This operation does not renew it or acquire Source file claims.
+
+Verify old and current native inventories independently, actual installed self,
+the release owner's exact successful formation and the original protected
+intake, contracts, permission and Source. Work Source and evolved Journal
+Source remain distinct. Reject changed Source, config, unknown effects,
+started actions, foreign owners and conflicting contenders. Core causal Source
+patches require a separate supported Source transition.
+
+One Host transaction appends a strict qualified-code receipt and changes only
+the three runtime-code bindings and Work/lifecycle revisions. It preserves the
+Journal, Ledger, completed results, lease and historical receipts. Readers
+validate historical receipts against their own code ancestor, then validate the
+current code against the authenticated adoption history. Exact retry returns
+the stored receipt. Plan/apply returns current versions and one next action;
+it never reissues an action or grants Source rights or Runtime acceptance.
+
 ## Completed Source report recovery
 
 An already-executed Source action can retain an uncommitted completed report
