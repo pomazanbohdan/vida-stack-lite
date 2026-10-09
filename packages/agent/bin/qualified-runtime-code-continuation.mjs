@@ -28,6 +28,7 @@ import {
   validateQualifiedRuntimeCodeContinuationRequest,
   validateQualifiedRuntimeCodeContinuationState,
   validateQualifiedRuntimeCodeEndpoints,
+  validateQualifiedRuntimeCodePreparedPlanRefresh,
 } from '../src/orchestration/qualified-runtime-code-continuation.ts';
 import { currentNativeSelfAttestation } from './runtime-config-rebind.mjs';
 import { verifyQualifiedRuntimeCodeEndpoints } from './recover-completed-source-report.mjs';
@@ -47,14 +48,30 @@ function state(store, identity, attempt) {
 }
 
 /** Existing code-rebind owner; adoption never starts or reissues a workflow action. */
-export function runQualifiedRuntimeCodeContinuation(values) {
+export async function runQualifiedRuntimeCodeContinuation(values) {
+  if (values['--mode'] === 'inspect') return runQualifiedRuntimeCodeContinuationLocked(values);
+  const access = requireSafeRepositoryAccess(values['--project-root']),
+    directory = '.agent/work/' + values['--repair-id'];
+  if (values['--mode'] === 'plan') access.ensureDirectory(directory, 'qualified code plan owner');
+  else access.assertDirectory(directory, 'existing qualified code plan owner');
+  return access.withExclusiveLockAsync(
+    directory + '/.qualified-code-plan-owner',
+    'qualified code plan/apply owner',
+    () => runQualifiedRuntimeCodeContinuationLocked(values),
+  );
+}
+async function runQualifiedRuntimeCodeContinuationLocked(values) {
   const root = values['--project-root'],
     mode = values['--mode'],
     repairId = values['--repair-id'];
   const config = loadRuntimeConfig(root),
     access = requireSafeRepositoryAccess(root);
   const applying = mode === 'apply',
-    database = new Database(sessionHandoffDatabasePath(root, config), { readonly: !applying, strict: true });
+    refreshing = mode === 'refresh',
+    database = new Database(sessionHandoffDatabasePath(root, config), {
+      readonly: !applying && !refreshing,
+      strict: true,
+    });
   const relative = '.agent/work/' + repairId + '/qualified-runtime-code-continuation-plan.v1.json';
   try {
     const store = new HostStateStore(
@@ -274,6 +291,79 @@ export function runQualifiedRuntimeCodeContinuation(values) {
     else {
       const current = state(store, request.identity, request.attempt);
       verify(request, current.host, current.journal);
+      if (refreshing) {
+        const previous = json(access, relative, 'prepared code plan beforeimage'),
+          before = validateQualifiedRuntimeCodeContinuationRequest(previous.value),
+          expected = values['--expected-request-id'];
+        requireContinuation(
+          typeof expected === 'string' && /^[a-f0-9]{64}$/.test(expected),
+          'expected prior request ID invalid',
+        );
+        const oldId = canonicalJsonDigest(before),
+          historyRef = path.posix.dirname(relative) + '/qualified-code-plan-history/' + expected + '.json';
+        const encoded = JSON.stringify(request, null, 2) + '\n',
+          newBytes = Buffer.from(encoded);
+        if (oldId !== expected) {
+          requireContinuation(
+            oldId === canonicalJsonDigest(request) &&
+              access.fileExists(historyRef, 'retained prepared code plan history'),
+            'prepared refresh state is neither exact old nor new request',
+          );
+          const retained = json(access, historyRef, 'retained prepared code request');
+          requireContinuation(
+            canonicalJsonDigest(validateQualifiedRuntimeCodeContinuationRequest(retained.value)) === expected,
+            'retained prepared request ID differs',
+          );
+          validateQualifiedRuntimeCodePreparedPlanRefresh(retained.value, before);
+        } else {
+          validateQualifiedRuntimeCodePreparedPlanRefresh(before, request);
+          await store.withQualifiedRuntimeCodePlanRefresh(
+            before,
+            async () => {
+              requireContinuation(
+                access.readBytes(relative, 'prepared refresh CAS').equals(previous.bytes),
+                'prepared code plan changed before replacement',
+              );
+              const source = snapshotDeclaredSources(
+                access,
+                current.journal.state.source_scope.entries.map((entry) => entry.path),
+              );
+              requireContinuation(
+                same(source, current.journal.state.source_scope),
+                'prepared refresh Source changed before replacement',
+              );
+              validateQualifiedRuntimeCodeEndpoints(
+                verifyQualifiedRuntimeCodeEndpoints(root, config, access, request),
+                request,
+              );
+              access.ensureDirectory(path.posix.dirname(historyRef), 'prepared code plan history owner');
+              if (access.fileExists(historyRef, 'prepared code history presence'))
+                requireContinuation(
+                  access.readBytes(historyRef, 'exact prepared code history').equals(previous.bytes),
+                  'prepared code history differs',
+                );
+              else access.writeExclusive(historyRef, previous.bytes, 'retain exact prepared code plan beforeimage');
+              await access.replaceAtomicAsync(
+                relative,
+                sha(previous.bytes),
+                encoded,
+                'prepared code plan target refresh',
+              );
+            },
+            async () => {
+              const actual = access.readBytes(relative, 'prepared refresh conditional rollback');
+              if (actual.equals(previous.bytes)) return;
+              requireContinuation(actual.equals(newBytes), 'prepared refresh rollback target drifted');
+              await access.replaceAtomicAsync(
+                relative,
+                sha(newBytes),
+                previous.bytes.toString('utf8'),
+                'prepared refresh rollback',
+              );
+            },
+          );
+        }
+      }
       if (mode === 'plan') {
         const encoded = JSON.stringify(request, null, 2) + '\n';
         if (access.fileExists(relative, 'qualified code plan presence'))
@@ -292,7 +382,7 @@ export function runQualifiedRuntimeCodeContinuation(values) {
       schema: 'QualifiedRuntimeCodeContinuationResult/v1',
       status: receipt
         ? 'qualified_runtime_code_adopted'
-        : mode === 'plan'
+        : ['plan', 'refresh'].includes(mode)
           ? 'qualified_runtime_code_planned'
           : 'qualified_runtime_code_ready',
       request_id: canonicalJsonDigest(request),
@@ -301,7 +391,7 @@ export function runQualifiedRuntimeCodeContinuation(values) {
       journal_version: current.journal.version,
       next_action: receipt
         ? { kind: 'inspect', work_id: request.identity.work_id, attempt: request.attempt }
-        : mode === 'plan'
+        : ['plan', 'refresh'].includes(mode)
           ? { kind: 'apply', repair_id: repairId }
           : { kind: 'plan', repair_id: repairId },
       rights_granted: false,

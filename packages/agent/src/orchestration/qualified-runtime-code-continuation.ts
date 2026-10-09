@@ -222,6 +222,30 @@ export function validateQualifiedRuntimeCodeContinuationRequest(
   );
   return freezeJsonValue(request);
 }
+export function validateQualifiedRuntimeCodePreparedPlanRefresh(
+  beforeValue: unknown,
+  afterValue: unknown,
+): QualifiedRuntimeCodeContinuationRequest {
+  const before = validateQualifiedRuntimeCodeContinuationRequest(beforeValue),
+    after = validateQualifiedRuntimeCodeContinuationRequest(afterValue);
+  const targetFields = [
+    'currentRuntimeCodeDigest',
+    'currentRuntimeCodePaths',
+    'currentManifestRef',
+    'currentManifestDigest',
+    'currentInstallRef',
+    'systemUpdateRef',
+    'systemUpdateOperationId',
+    'nativeSelfAttestationDigest',
+  ];
+  const origin = (request: QualifiedRuntimeCodeContinuationRequest) =>
+    Object.fromEntries(Object.entries(request).filter(([key]) => !targetFields.includes(key)));
+  requireContinuation(
+    same(origin(before), origin(after)),
+    'prepared plan refresh changed original identity, parent, Source or CAS',
+  );
+  return after;
+}
 export function validateQualifiedRuntimeCodeEndpoints(
   value: unknown,
   request: QualifiedRuntimeCodeContinuationRequest,

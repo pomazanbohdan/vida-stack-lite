@@ -1,4 +1,5 @@
 import { Database } from 'bun:sqlite';
+import { isDeepStrictEqual } from 'node:util';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstatSync, realpathSync, statSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -916,6 +917,17 @@ export interface HostStateSnapshot {
   readonly ledgerVersion: StateVersion | null;
   readonly maintenanceGeneration: number;
   readonly runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[];
+}
+export interface GuardedArtifactMutation<T> {
+  readonly repositoryRoot: string;
+  readonly identity: WorkIdentity;
+  readonly attempt: number;
+  readonly expectedWork: StateVersion;
+  readonly expectedLedger: StateVersion;
+  readonly expectedJournal: StateVersion;
+  readonly expectedMaintenanceGeneration: number;
+  readonly action: () => T | Promise<T>;
+  readonly rollback: () => void | Promise<void>;
 }
 
 export interface TaskSourceMutationPolicyVerifier {
@@ -6163,17 +6175,62 @@ export class HostStateStore {
     }
   }
   /** Keep a historical record publication behind one checked Host writer fence. */
-  async withHistoricalNormalizationMutation<T>(input: {
-    readonly repositoryRoot: string;
-    readonly identity: WorkIdentity;
-    readonly attempt: number;
-    readonly expectedWork: StateVersion;
-    readonly expectedLedger: StateVersion;
-    readonly expectedJournal: StateVersion;
-    readonly expectedMaintenanceGeneration: number;
-    readonly action: () => T | Promise<T>;
-    readonly rollback: () => void | Promise<void>;
-  }): Promise<T> {
+  async withHistoricalNormalizationMutation<T>(input: GuardedArtifactMutation<T>): Promise<T> {
+    return this.#withGuardedArtifactMutation(input);
+  }
+  async withQualifiedRuntimeCodePlanRefresh<T>(
+    request: QualifiedRuntimeCodeContinuationRequest,
+    action: () => T | Promise<T>,
+    rollback: () => void | Promise<void>,
+  ): Promise<T> {
+    const original = validateQualifiedRuntimeCodeContinuationRequest(request);
+    requireState(this.#repositoryRoot, 'qualified plan refresh root unavailable');
+    return this.#withGuardedArtifactMutation({
+      repositoryRoot: this.#repositoryRoot,
+      identity: original.identity,
+      attempt: original.attempt,
+      expectedWork: original.expectedWork,
+      expectedLedger: original.expectedLedger,
+      expectedJournal: original.expectedJournal,
+      expectedMaintenanceGeneration: original.expectedMaintenanceGeneration,
+      action: async () => {
+        const host = this.#read(original.identity),
+          row = this.#database
+            .query(
+              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+            )
+            .get(this.#workspaceId, original.identity.work_id, original.attempt) as {
+            revision: number;
+            payload: string;
+            digest: string;
+          } | null;
+        requireState(
+          row && canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+          'qualified plan refresh Journal integrity differs',
+        );
+        validateQualifiedRuntimeCodeContinuationState(original, host, {
+          version: { revision: row.revision, digest: row.digest },
+          state: JSON.parse(row.payload) as MastraSessionLedgerState,
+        });
+        requireState(
+          !storedQualifiedRuntimeCodeContinuations(
+            this.#database,
+            this.#workspaceId,
+            original.identity.work_id,
+            original.attempt,
+          ).some(
+            (receipt) =>
+              receipt.request_digest === canonicalJsonDigest(original) ||
+              receipt.work_version.revision > original.expectedWork.revision,
+          ),
+          'qualified plan has an adopted successor',
+        );
+        return action();
+      },
+      rollback,
+    });
+  }
+  async #withGuardedArtifactMutation<T>(input: GuardedArtifactMutation<T>): Promise<T> {
     const guard = snapshot({
       repositoryRoot: input.repositoryRoot,
       identity: input.identity,
@@ -6823,7 +6880,7 @@ export class HostStateStore {
       const current = readState(),
         currentProof = verifyState(current);
       requireState(
-        sameJson(first, current) && sameJson(proof, currentProof),
+        isDeepStrictEqual(first, current) && sameJson(proof, currentProof),
         'qualified code adoption changed before CAS',
       );
       const work = current.host.work!;

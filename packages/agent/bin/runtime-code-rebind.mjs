@@ -153,7 +153,8 @@ function parse(args) {
   }
   requireRebind(
     values['--kind'] === 'runtime-code' &&
-      ['inspect', 'plan', 'apply', 'resume'].includes(values['--mode']) &&
+      (['inspect', 'plan', 'apply', 'resume'].includes(values['--mode']) ||
+        (values['--basis'] === 'execution-continuation' && values['--mode'] === 'refresh')) &&
       path.isAbsolute(values['--project-root'] ?? '') &&
       path.resolve(values['--project-root']) === values['--project-root'] &&
       identifier.test(values['--repair-id'] ?? ''),
@@ -162,7 +163,7 @@ function parse(args) {
   if (values['--basis'] === 'initial-source-frontier')
     requireRebind(['inspect', 'plan', 'apply'].includes(values['--mode']), 'initial-source frontier mode invalid');
   if (values['--basis'] === 'execution-continuation') {
-    const expected = ['inspect', 'plan'].includes(values['--mode'])
+    const expected = ['inspect', 'plan', 'refresh'].includes(values['--mode'])
       ? [
           '--kind',
           '--basis',
@@ -176,10 +177,11 @@ function parse(args) {
           '--parent-install',
           '--successor-manifest',
           '--system-update',
+          ...(values['--mode'] === 'refresh' ? ['--expected-request-id'] : []),
         ]
       : ['--kind', '--basis', '--mode', '--project-root', '--repair-id'];
     requireRebind(
-      ['inspect', 'plan', 'apply'].includes(values['--mode']) &&
+      ['inspect', 'plan', 'apply', 'refresh'].includes(values['--mode']) &&
         JSON.stringify(Object.keys(values).sort()) === JSON.stringify(expected.sort()),
       'execution continuation arguments invalid',
     );
