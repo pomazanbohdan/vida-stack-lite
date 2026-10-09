@@ -318,11 +318,15 @@ export function validateInitialSourceContinuationLineage(
 ): InitialSourceContinuationReceipt {
   const receipt = validateInitialSourceContinuationReceipt(value);
   const { request, prior_work: original, successor_work: successor } = receipt;
-  const frontierCodeRebind = validateInitialSourceFrontierCodeRebindJoin(work, receipt, frontierCodeRebindValue);
   const completedSourceReportRecovery =
     completedSourceReportRecoveryValue === undefined || completedSourceReportRecoveryValue === null
       ? null
       : validateCompletedSourceReportRecoveryReceipt(completedSourceReportRecoveryValue);
+  const frontierCodeRebind = validateInitialSourceFrontierCodeRebindJoin(
+    completedSourceReportRecovery?.record.prior_work ?? work,
+    receipt,
+    frontierCodeRebindValue,
+  );
   const recoveryRequest = completedSourceReportRecovery?.record.request;
   const currentRuntimeCodeDigest =
     recoveryRequest?.currentRuntimeCodeDigest ??
@@ -387,16 +391,16 @@ export function validateInitialSourceContinuationLineage(
       request.currentRuntimeCodeDigest === successor.binding.runtime_code_digest &&
       request.currentRuntimeCodeDigest === successor.binding.runtime_source_revision &&
       request.currentRuntimeCodeDigest ===
-        (recoveryRequest?.oldRuntimeCodeDigest ??
-          frontierCodeRebind?.record.prior_work.binding.runtime_code_digest ??
+        (frontierCodeRebind?.record.prior_work.binding.runtime_code_digest ??
+          recoveryRequest?.oldRuntimeCodeDigest ??
           work.binding.runtime_code_digest) &&
       request.currentRuntimeCodeDigest ===
-        (recoveryRequest?.oldRuntimeCodeDigest ??
-          frontierCodeRebind?.record.prior_work.binding.runtime_source_revision ??
+        (frontierCodeRebind?.record.prior_work.binding.runtime_source_revision ??
+          recoveryRequest?.oldRuntimeCodeDigest ??
           work.binding.runtime_source_revision) &&
       request.currentRuntimeCodeDigest ===
-        (recoveryRequest?.oldRuntimeCodeDigest ??
-          frontierCodeRebind?.record.prior_work.lifecycle.config_binding.runtime_code_digest ??
+        (frontierCodeRebind?.record.prior_work.lifecycle.config_binding.runtime_code_digest ??
+          recoveryRequest?.oldRuntimeCodeDigest ??
           work.lifecycle.config_binding.runtime_code_digest) &&
       request.currentRuntimeCodeDigest === successor.lifecycle.config_binding.runtime_code_digest &&
       currentRuntimeCodeDigest === work.binding.runtime_code_digest &&
