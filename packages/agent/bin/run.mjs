@@ -3208,6 +3208,17 @@ export async function run(args = process.argv.slice(2)) {
       cwd: bundleRoot,
     });
   }
+  if (args.includes('--recover-completed-source-report')) {
+    if (
+      args[0] !== '--recover-completed-source-report' ||
+      args[1] !== 'true' ||
+      args.includes('--report') ||
+      args.includes('--issue-wave')
+    )
+      throw Error('Completed Source report recovery requires its exact separate signal');
+    const { recoverCompletedSourceReport } = await import('./recover-completed-source-report.mjs');
+    return recoverCompletedSourceReport(args.slice(2));
+  }
   if (args.includes('--transition-failed-prewriter')) {
     if (args[0] !== '--transition-failed-prewriter' || args[1] !== 'true')
       throw Error('Failed prewriter transition requires its exact separate signal');
@@ -3541,6 +3552,7 @@ export async function run(args = process.argv.slice(2)) {
       await import('../src/orchestration/scoped-source-snapshot.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
     const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
+    const { completedSourceJournalObservationMatches } = await import('../src/host-state.ts');
     const project = loadProjectSetContext(values.project_root, config, values.repository, values.projects);
     const identity = {
       repository_id: project.repository_id,
@@ -3623,13 +3635,24 @@ export async function run(args = process.argv.slice(2)) {
               );
               const assignment = stage?.assignments[item.request.assignment_index];
               const profile = assignment && currentConfig.agents.profiles[assignment.profile];
+              const recoveredSource = initialLineage?.completedSourceReportRecovery;
+              const retainedSourceResult = Boolean(
+                recoveredSource &&
+                item.request.action_id === recoveredSource.action_id &&
+                item.issue_id === recoveredSource.issue_id &&
+                completedSourceJournalObservationMatches(work, item),
+              );
+              const retainedRequestScope = recoveredSource
+                ? recoveredSource.record.prior_journal.source_scope.digest
+                : state.source_scope.digest;
               if (
                 !assignment ||
                 !profile ||
-                profile.mutation_scope === 'repository_source' ||
+                (profile.mutation_scope === 'repository_source' && !retainedSourceResult) ||
                 item.request.role !== assignment.role ||
                 item.request.config_digest !== work.binding.config_digest ||
-                item.request.scope_digest !== state.source_scope.digest ||
+                (item.request.scope_digest !== state.source_scope.digest &&
+                  item.request.scope_digest !== retainedRequestScope) ||
                 !item.observation ||
                 item.observation.status !== 'reported_complete' ||
                 item.observation.output_digest !== canonicalJsonDigest(item.observation.summary)
@@ -3693,7 +3716,11 @@ export async function run(args = process.argv.slice(2)) {
             runtimeConfigDigest(currentConfig) !== work.binding.config_digest ||
             work.binding.repository_id !== values.repository ||
             JSON.stringify(work.binding.project_ids) !== JSON.stringify(values.projects) ||
-            state.source_scope?.digest !== values.scope_digest
+            (state.source_scope?.digest !== values.scope_digest &&
+              !(
+                initialLineage?.completedSourceReportRecovery &&
+                work.binding.work_source_revision === values.scope_digest
+              ))
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery configuration, projects or scope differs.');
           const source = snapshotDeclaredSources(
@@ -3711,7 +3738,8 @@ export async function run(args = process.argv.slice(2)) {
           const inventory = runtimePackageCodePaths(currentConfig.runtime.bundle);
           if (
             canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory) &&
-            !initialLineage?.frontierCodeRebind
+            !initialLineage?.frontierCodeRebind &&
+            !initialLineage?.completedSourceReportRecovery
           )
             fail(
               'GAP-VIDA-RUN-CONTEXT-001',
@@ -3722,16 +3750,19 @@ export async function run(args = process.argv.slice(2)) {
             currentConfig.runtime.bundle,
             inventory,
           );
-          if (initialLineage?.frontierCodeRebind) {
+          if (initialLineage?.frontierCodeRebind || initialLineage?.completedSourceReportRecovery) {
             validateInitialSourceContinuationLineage(
               work,
               initialLineage.receipt,
               state,
               initialLineage.frontierCodeRebind,
+              initialLineage.completedSourceReportRecovery,
             );
             if (
-              canonicalJsonDigest(initialLineage.frontierCodeRebind.record.request.runtimeCodePaths) !==
-                canonicalJsonDigest(inventory) ||
+              canonicalJsonDigest(
+                initialLineage.completedSourceReportRecovery?.record.request.currentRuntimeCodePaths ??
+                  initialLineage.frontierCodeRebind.record.request.runtimeCodePaths,
+              ) !== canonicalJsonDigest(inventory) ||
               runtime.digest !== work.binding.runtime_code_digest
             )
               fail(
@@ -3971,8 +4002,12 @@ export async function run(args = process.argv.slice(2)) {
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-    const { snapshotAdmittedTaskSources, snapshotDeclaredSources, snapshotRuntimePackageSources } =
-      await import('../src/orchestration/scoped-source-snapshot.ts');
+    const {
+      compareScopedSourceSnapshots,
+      snapshotAdmittedTaskSources,
+      snapshotDeclaredSources,
+      snapshotRuntimePackageSources,
+    } = await import('../src/orchestration/scoped-source-snapshot.ts');
     const context = {
       work_id: values.work_id,
       attempt: Number(values.attempt),
@@ -5461,7 +5496,8 @@ export async function run(args = process.argv.slice(2)) {
           changeKind: intake.change_kind,
         }).source;
       }
-      const storedScope = ledger.resume(context.work_id, context.attempt)?.state.source_scope;
+      const currentJournal = ledger.resume(context.work_id, context.attempt);
+      const storedScope = currentJournal?.state.source_scope;
       const scopePaths =
         values.scope_paths.length > 0
           ? values.scope_paths
@@ -5504,11 +5540,49 @@ export async function run(args = process.argv.slice(2)) {
             initialSourceContinuation.continuation_id,
           )
         : null;
+      const completedSourceReportRecovery = initialSourceContinuation
+        ? ledger.hostState.readCompletedSourceReportRecoveryReceipt(admissionIdentity, context.attempt)
+        : null;
       if (configuredContinuation && initialSourceContinuation)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Multiple Host producer continuation receipts are ambiguous.');
+      const pendingInitialSourceWriteReport = (() => {
+        if (!initialSourceContinuation || !values.report || !storedScope || !sourceSnapshot || !workflowHost.work)
+          return false;
+        try {
+          const observed = parseSessionBridgeObservation(readBoundedReport(values.report));
+          const pending =
+            currentJournal?.state.items.filter((item) => item.issue_id !== null && item.observation === null) ?? [];
+          if (pending.length !== 1) return false;
+          const item = pending[0];
+          if (!item) return false;
+          const changedPaths = compareScopedSourceSnapshots(storedScope, sourceSnapshot)
+            .map((change) => change.path)
+            .sort();
+          return (
+            item.host_reservation?.approvalAction === 'source.write' &&
+            observed.status === 'reported_complete' &&
+            item.request.action_id === observed.action_id &&
+            item.issue_id === observed.issue_id &&
+            item.host_reservation.receipt.attempt.attempt_id === observed.host_attempt_id &&
+            item.request.workflow_id === values.workflow &&
+            item.request.run_id === workflowHost.work.execution.run_id &&
+            item.request.config_digest === configDigest &&
+            item.request.scope_digest === initialSourceContinuation.request.currentSourceScope.digest &&
+            storedScope.digest === initialSourceContinuation.request.currentSourceScope.digest &&
+            changedPaths.length > 0 &&
+            Array.isArray(observed.changed_paths) &&
+            canonicalJsonDigest(changedPaths) === canonicalJsonDigest([...observed.changed_paths].sort()) &&
+            changedPaths.every((file) => workflowHost.work.lifecycle.scope.implementation_paths.includes(file))
+          );
+        } catch {
+          return false;
+        }
+      })();
       if (
         initialSourceContinuation &&
-        sourceSnapshot?.digest !== initialSourceContinuation.request.currentSourceScope.digest
+        sourceSnapshot?.digest !== initialSourceContinuation.request.currentSourceScope.digest &&
+        sourceSnapshot?.digest !== currentJournal?.state.source_scope?.digest &&
+        !pendingInitialSourceWriteReport
       )
         fail(
           'GAP-VIDA-RUN-CONTEXT-001',
@@ -5543,7 +5617,7 @@ export async function run(args = process.argv.slice(2)) {
         configuredContinuation?.prior_work.execution.run_id ??
         bridgeArgs.correctiveExecution?.engine_run_id ??
         sessionBridgeRunId(initialization.workspace_id, context, values.workflow);
-      const persistedJournal = ledger.resume(context.work_id, context.attempt);
+      const persistedJournal = currentJournal;
       if (persistedJournal && persistedJournal.state.run_id !== expectedRunId)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'The persisted attempt differs from the current launcher context.');
       if (initialSourceContinuation) {
@@ -5560,6 +5634,7 @@ export async function run(args = process.argv.slice(2)) {
           initialSourceContinuation,
           persistedJournal.state,
           initialSourceFrontierCodeRebind,
+          completedSourceReportRecovery,
         );
       }
       const engineBinding = { ...bridgeArgs, runId: expectedRunId };
@@ -5569,9 +5644,10 @@ export async function run(args = process.argv.slice(2)) {
           ? readInitialSourceContinuationSessionEngineSnapshot(
               engineBinding,
               initialSourceContinuation,
-              persistedJournal.state,
-              workflowHost.work,
+              persistedJournal,
+              workflowHost,
               initialSourceFrontierCodeRebind,
+              completedSourceReportRecovery,
             )
           : readSessionEngineSnapshot(engineBinding);
       const created = !workflowSnapshot;
@@ -5629,7 +5705,7 @@ export async function run(args = process.argv.slice(2)) {
           });
           reconciliationRequired = await unresolvedHostEffect(journal);
           status = 'reconciled';
-        } else if (values.issue_wave) {
+        } else if (values.issue_wave && journal.resume_status !== 'ready_to_resume') {
           if (
             initialSourceContinuation &&
             journal.state.items.some((item) => item.issue_id !== null && item.observation === null)

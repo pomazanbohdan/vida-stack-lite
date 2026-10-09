@@ -115,6 +115,22 @@ import {
   type InitialSourceContinuationVerifiedCurrent,
 } from './orchestration/initial-source-continuation.js';
 import {
+  buildCompletedSourceReportRecoverySuccessorWork,
+  readCompletedSourceReportRecoveryReceiptRecord,
+  snapshotCompletedSourceReportRecoveryReceipt,
+  validateCompletedSourceReportRecoveryLineage,
+  validateCompletedSourceReportRecoveryReceipt,
+  validateCompletedSourceReportRecoveryRecord,
+  validateCompletedSourceReportRecoveryRequest,
+  validateCompletedSourceReportRecoveryVerifiedCurrent,
+  type CompletedSourceReportRecoveryRecord,
+  type CompletedSourceReportRecoveryReceipt,
+  type CompletedSourceReportRecoveryRequest,
+  type CompletedSourceReportRecoveryState,
+  type CompletedSourceReportRecoveryVerifyCurrent,
+  type CompletedSourceReportRecoveryVerifiedCurrent,
+} from './orchestration/completed-source-report-recovery.js';
+import {
   resolveTaskSourceRoot,
   taskSourceGitArgv,
   validateTaskSourceBindingExchange,
@@ -1038,6 +1054,101 @@ export function completedSourceJournalObservationMatches(
   );
 }
 
+function buildCompletedSourceReportExecutionOnlyHandoff(
+  ledger: CoordinationLedger,
+  prior: CoordinationTicket,
+  identity: WorkIdentity,
+  actionId: string,
+  decisionPointer: string,
+): {
+  readonly nextLedger: CoordinationLedger;
+  readonly executionTicket: CoordinationTicket;
+  readonly executionClaim: CoordinationLedger['claims'][number];
+  readonly releasedTickets: readonly CoordinationTicket[];
+} {
+  const releaseTickets = ledger.tickets.filter(
+      (ticket) =>
+        ticket.ticket_id === prior.ticket_id ||
+        (identityKey(ticketIdentity(ticket)) === identityKey(identity) &&
+          ticket.thread_id === prior.thread_id &&
+          ticket.generation === prior.generation &&
+          ticket.status === 'queued' &&
+          ticket.claim_ids.length === 0 &&
+          ticket.active_resources.length === 0),
+    ),
+    releaseIds = new Set(releaseTickets.map((ticket) => ticket.ticket_id)),
+    now = new Date().toISOString(),
+    expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    ticketId = 'execution-ticket-' + canonicalJsonDigest({ prior: prior.ticket_id, action: actionId }).slice(0, 40),
+    claimId = 'execution-claim-' + canonicalJsonDigest({ ticketId }).slice(0, 40),
+    resources = ['execution:' + identity.work_id],
+    executionTicket: CoordinationTicket = {
+      ...prior,
+      ticket_id: ticketId,
+      sequence: ledger.next_sequence,
+      contour_keys: [...new Set([...prior.contour_keys.filter((key) => !key.startsWith('file:')), ...resources])],
+      exclusive_resources: resources,
+      active_resources: resources,
+      blocked_resources: [],
+      claim_ids: [claimId],
+      expires_at: expiry,
+      created_at: now,
+    },
+    executionClaim: CoordinationLedger['claims'][number] = {
+      schema: 'WorkstreamClaim/v1',
+      claim_id: claimId,
+      ticket_id: ticketId,
+      work_id: prior.work_id,
+      thread_id: prior.thread_id,
+      generation: prior.generation,
+      resources,
+      lease_expires_at: expiry,
+      status: 'active',
+      created_at: now,
+      renewed_at: now,
+    },
+    nextLedger: CoordinationLedger = {
+      ...ledger,
+      revision: ledger.revision + 1,
+      next_sequence: ledger.next_sequence + 1,
+      tickets: [
+        ...ledger.tickets.map((ticket) =>
+          releaseIds.has(ticket.ticket_id)
+            ? { ...ticket, status: 'released' as const, active_resources: [], blocked_resources: [], expires_at: null }
+            : ticket,
+        ),
+        executionTicket,
+      ],
+      claims: [
+        ...ledger.claims.map((claim) =>
+          releaseIds.has(claim.ticket_id) && claim.status === 'active'
+            ? { ...claim, status: 'released' as const, renewed_at: now }
+            : claim,
+        ),
+        executionClaim,
+      ],
+      operations: [
+        ...ledger.operations,
+        ...releaseTickets.map((ticket) => ({
+          schema: 'CoordinationOperation/v1' as const,
+          operation_id: 'source-terminal-release-' + ticketId + '-' + ticket.ticket_id,
+          kind: 'release' as const,
+          ticket_id: ticket.ticket_id,
+          work_id: ticket.work_id,
+          thread_id: ticket.thread_id,
+          source_revision: ticket.source_revision,
+          resources: [...ticket.exclusive_resources],
+          from_ledger_revision: ledger.revision,
+          to_ledger_revision: ledger.revision + 1,
+          decided_by: prior.thread_id,
+          decision_pointer: decisionPointer,
+          created_at: now,
+        })),
+      ],
+    };
+  return { nextLedger, executionTicket, executionClaim, releasedTickets: releaseTickets };
+}
+
 /**
  * The repository-side boundary for the Codex Desktop adapter.  The Desktop
  * issuer is deliberately not implemented here: it must provide the opaque
@@ -1916,7 +2027,8 @@ function checkedStoredWork(
     | RuntimeCodeRebindReceipt
     | DeliveredWorkContinuationReceipt
     | FailedPrewriterRecoveryReceipt
-    | InitialSourceContinuationReceipt,
+    | InitialSourceContinuationReceipt
+    | CompletedSourceReportRecoveryReceipt,
   continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
   observeAdmissionHistory?: (history: ContinuationAdmissionHistory) => void,
 ): WorkState {
@@ -1942,6 +2054,10 @@ function checkedStoredWork(
       | {
           readonly kind: 'initial-frontier-code';
           readonly receipt: InitialSourceFrontierCodeRebindReceipt;
+        }
+      | {
+          readonly kind: 'completed-source-report-recovery';
+          readonly receipt: CompletedSourceReportRecoveryReceipt;
         }
     )[] = [];
   const table = database
@@ -2061,6 +2177,26 @@ function checkedStoredWork(
       records.push({ kind: 'initial-frontier-code', receipt });
     }
   }
+  const completedReportRecoveryTable = database
+    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_completed_source_report_recovery'")
+    .get();
+  if (completedReportRecoveryTable) {
+    const rows = database
+      .query(
+        'SELECT payload,digest,attempt FROM agent_host_completed_source_report_recovery WHERE workspace_id=? AND work_id=?',
+      )
+      .all(workspaceId, candidate.binding?.lifecycle_work_id) as { payload: string; digest: string; attempt: number }[];
+    for (const row of rows) {
+      const receipt = readCompletedSourceReportRecoveryReceiptRecord(row.payload, row.digest);
+      requireState(
+        receipt.attempt === row.attempt &&
+          receipt.record.attempt === row.attempt &&
+          receipt.identity.work_id === candidate.binding?.lifecycle_work_id,
+        'completed Source report recovery history row identity differs',
+      );
+      records.push({ kind: 'completed-source-report-recovery', receipt });
+    }
+  }
   const recoveryTable = database
     .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'")
     .get();
@@ -2086,7 +2222,9 @@ function checkedStoredWork(
           ? { kind: 'runtime', receipt: pendingReceipt }
           : pendingReceipt.schema === 'InitialSourceContinuationReceipt/v1'
             ? { kind: 'initial-source', receipt: pendingReceipt }
-            : { kind: 'continuation', receipt: pendingReceipt },
+            : pendingReceipt.schema === 'CompletedSourceReportRecoveryReceipt/v1'
+              ? { kind: 'completed-source-report-recovery', receipt: pendingReceipt }
+              : { kind: 'continuation', receipt: pendingReceipt },
     );
   }
   records.sort((a, b) => {
@@ -2095,7 +2233,9 @@ function checkedStoredWork(
         ? record.receipt.request.expectedWork.revision
         : record.kind === 'initial-frontier-code'
           ? record.receipt.record.prior_work_version.revision
-          : record.receipt.prior_work_version.revision;
+          : record.kind === 'completed-source-report-recovery'
+            ? record.receipt.record.prior_work_version.revision
+            : record.receipt.prior_work_version.revision;
     return revision(b) - revision(a);
   });
   let expected = candidate.binding;
@@ -2126,6 +2266,115 @@ function checkedStoredWork(
         'failed prewriter binding history is not continuous',
       );
       expected = receipt.prior_work.binding;
+      continue;
+    }
+    if (record.kind === 'completed-source-report-recovery') {
+      const receipt = validateCompletedSourceReportRecoveryReceipt(record.receipt),
+        transition = receipt.record,
+        request = transition.request,
+        original = transition.prior_work,
+        successor = transition.successor_work,
+        targetBefore = original.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === request.hostAttemptId,
+        ),
+        targetAfter = successor.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === request.hostAttemptId,
+        ),
+        reservation = transition.original_reservation,
+        journalItem = [
+          ...transition.prior_journal.items,
+          ...transition.prior_journal.completed.flatMap((wave) => wave.items),
+        ].find((item) => item.request.action_id === request.actionId);
+      const stagedWork: WorkState = {
+          ...original,
+          revision: original.revision + 1,
+          lifecycle: { ...original.lifecycle, revision: original.lifecycle.revision + 1 },
+          execution: {
+            ...original.execution,
+            assignment_attempts: original.execution.assignment_attempts.map((attempt) =>
+              attempt.attempt_id === request.hostAttemptId ? transition.completed_attempt : attempt,
+            ),
+          },
+        },
+        progressProjection: WorkState = {
+          ...successor,
+          binding: original.binding,
+          lifecycle: {
+            ...successor.lifecycle,
+            source_revision: original.lifecycle.source_revision,
+            config_binding: original.lifecycle.config_binding,
+          },
+        };
+      requireState(
+        sameJson(request.identity, workIdentity(candidate)) &&
+          request.attempt === receipt.attempt &&
+          request.actionId === receipt.action_id &&
+          request.issueId === receipt.issue_id &&
+          receipt.request_digest === canonicalJsonDigest(request) &&
+          original.workspace_id === workspaceId &&
+          original.revision === transition.prior_work_version.revision &&
+          canonicalJsonDigest(original) === transition.prior_work_version.digest &&
+          sameJson(transition.prior_work_version, request.expectedWork) &&
+          targetBefore?.status === 'started' &&
+          targetBefore.result === null &&
+          targetBefore.result_digest === null &&
+          sameJson(targetBefore.lease, reservation?.receipt.attempt.lease) &&
+          targetBefore.request_digest === reservation?.receipt.attempt.request_digest &&
+          targetAfter?.status === 'completed' &&
+          sameJson(targetAfter, transition.completed_attempt) &&
+          sameJson(
+            targetAfter,
+            transition.successor_work.execution.assignment_attempts.find(
+              (attempt) => attempt.attempt_id === request.hostAttemptId,
+            ),
+          ) &&
+          successor.execution.assignment_attempts.length === original.execution.assignment_attempts.length &&
+          sameJson(
+            successor.execution.assignment_attempts,
+            original.execution.assignment_attempts.map((attempt) =>
+              attempt.attempt_id === request.hostAttemptId ? transition.completed_attempt : attempt,
+            ),
+          ) &&
+          journalItem?.issue_id === request.issueId &&
+          journalItem.observation === null &&
+          sameJson(journalItem.host_reservation, reservation) &&
+          transition.original_source_ticket.thread_id === transition.verified_current.terminal.ownerThreadId &&
+          transition.original_source_ticket.generation === request.leaseGeneration &&
+          transition.original_source_ticket.ticket_id === original.lease?.ticket_id &&
+          sameJson(
+            candidate.execution.assignment_attempts.slice(0, successor.execution.assignment_attempts.length),
+            successor.execution.assignment_attempts,
+          ),
+        'completed Source report recovery binding history is not continuous',
+      );
+      if (database.inTransaction && (sameJson(candidate, stagedWork) || sameJson(candidate, progressProjection))) {
+        // The only permitted pre-successor image is the started/null attempt completed
+        // inside this same producer-fenced transaction. The receipt row rolls back with it.
+        expected = original.binding;
+        continue;
+      }
+      requireState(
+        sameJson(successor.binding, expected),
+        'completed Source report recovery successor binding is not current',
+      );
+      for (const attempt of original.execution.assignment_attempts) {
+        const current = candidate.execution.assignment_attempts.find(
+            (entry) => entry.attempt_id === attempt.attempt_id,
+          ),
+          successorAttempt = successor.execution.assignment_attempts.find(
+            (entry) => entry.attempt_id === attempt.attempt_id,
+          ),
+          expectedAttempt = attempt.attempt_id === request.hostAttemptId ? transition.completed_attempt : attempt;
+        requireState(
+          successorAttempt &&
+            sameJson(successorAttempt, expectedAttempt) &&
+            current &&
+            sameJson(current, expectedAttempt),
+          'completed Source report recovery assignment transition changed',
+        );
+        bindings.set(attempt.attempt_id, original.binding);
+      }
+      expected = original.binding;
       continue;
     }
     if (record.kind === 'initial-frontier-code') {
@@ -2349,11 +2598,29 @@ function checkedStoredWork(
           )
             admissionArtifacts.push(artifact);
         }
+        const reportRecovery = records.find(
+          (entry): entry is Extract<(typeof records)[number], { kind: 'completed-source-report-recovery' }> =>
+            entry.kind === 'completed-source-report-recovery' &&
+            entry.receipt.record.request.identity.work_id === request.identity.work_id &&
+            entry.receipt.record.request.attempt === request.attempt,
+        );
         for (const attempt of original.execution.assignment_attempts) {
           const current = candidate.execution.assignment_attempts.find(
-            (entry) => entry.attempt_id === attempt.attempt_id,
+              (entry) => entry.attempt_id === attempt.attempt_id,
+            ),
+            recoveryPriorAttempt = reportRecovery?.receipt.record.prior_work.execution.assignment_attempts.find(
+              (entry) => entry.attempt_id === attempt.attempt_id,
+            ),
+            recoveredAttempt = reportRecovery?.receipt.record.completed_attempt;
+          requireState(
+            current &&
+              (sameJson(current, attempt) ||
+                (recoveryPriorAttempt &&
+                  sameJson(recoveryPriorAttempt, attempt) &&
+                  recoveredAttempt?.attempt_id === attempt.attempt_id &&
+                  sameJson(current, recoveredAttempt))),
+            'configured-frontier assignment changed outside the exact completed report transition',
           );
-          requireState(current && sameJson(current, attempt), 'configured-frontier terminal assignment result changed');
           bindings.set(attempt.attempt_id, original.binding);
         }
         expected = original.binding;
@@ -4921,18 +5188,24 @@ export class HostStateStore {
             journal && !journal.state.corrective_execution,
             'initial-source producer current Journal is missing or corrective',
           );
-          const currentWork = this.#read(identity).work;
-          requireState(currentWork, 'initial-source producer current Work is missing');
-          engine = readInitialSourceContinuationSessionEngineSnapshot(
-            engineBinding,
-            initialContinuation,
-            journal.state,
-            currentWork,
-            this.#readInitialSourceFrontierCodeRebindReceipt(
+          const currentHost = this.#read(identity),
+            frontierReceipt = this.#readInitialSourceFrontierCodeRebindReceipt(
               identity,
               input.context.attempt,
               initialContinuation.continuation_id,
             ),
+            completedRecoveryReceipt = this.#readCompletedSourceReportRecoveryReceiptRow(
+              identity,
+              input.context.attempt,
+            );
+          requireState(currentHost.work, 'initial-source producer current Work is missing');
+          engine = readInitialSourceContinuationSessionEngineSnapshot(
+            engineBinding,
+            initialContinuation,
+            journal,
+            currentHost,
+            frontierReceipt,
+            completedRecoveryReceipt,
           );
         } else if (configuredContinuation) {
           engine = readConfiguredContinuationSessionEngineSnapshot(
@@ -5142,18 +5415,24 @@ export class HostStateStore {
             journal && !journal.state.corrective_execution,
             'initial-source producer current Journal is missing or corrective',
           );
-          const currentWork = this.#read(identity).work;
-          requireState(currentWork, 'initial-source producer current Work is missing');
-          engine = readInitialSourceContinuationSessionEngineSnapshot(
-            binding,
-            initialContinuation,
-            journal.state,
-            currentWork,
-            this.#readInitialSourceFrontierCodeRebindReceipt(
+          const currentHost = this.#read(identity),
+            frontierReceipt = this.#readInitialSourceFrontierCodeRebindReceipt(
               identity,
               entry.input.context.attempt,
               initialContinuation.continuation_id,
             ),
+            completedRecoveryReceipt = this.#readCompletedSourceReportRecoveryReceiptRow(
+              identity,
+              entry.input.context.attempt,
+            );
+          requireState(currentHost.work, 'initial-source producer current Work is missing');
+          engine = readInitialSourceContinuationSessionEngineSnapshot(
+            binding,
+            initialContinuation,
+            journal,
+            currentHost,
+            frontierReceipt,
+            completedRecoveryReceipt,
           );
         } else if (continuation?.request.action.kind === 'configured_frontier') {
           engine = readConfiguredContinuationSessionEngineSnapshot(
@@ -11593,16 +11872,97 @@ export class HostStateStore {
     if (!rows.length) return null;
     const row = rows[0]!,
       receipt = readInitialSourceFrontierCodeRebindReceiptRecord(row.payload, row.digest);
+    const recovery = this.#readCompletedSourceReportRecoveryReceiptRow(identity, attempt),
+      currentCodeDigest =
+        recovery?.record.request.currentRuntimeCodeDigest ?? receipt.record.successor_work.binding.runtime_code_digest;
     requireState(
       row.attempt === attempt &&
         row.original_receipt_id === originalReceiptId &&
         receipt.record.attempt === attempt &&
         sameJson(receipt.record.identity, identity) &&
         receipt.original_receipt_id === originalReceiptId &&
-        receipt.record.successor_work.binding.runtime_code_digest === current.work.binding.runtime_code_digest,
+        currentCodeDigest === current.work.binding.runtime_code_digest &&
+        (!recovery ||
+          (recovery.record.request.initialContinuationId === originalReceiptId &&
+            recovery.record.request.frontierReceiptId === receipt.original_receipt_id)),
       'frontier rebind receipt or current Work history differs',
     );
     return snapshotInitialSourceFrontierCodeRebindReceipt(receipt);
+  }
+  #readCompletedSourceReportRecoveryReceiptRow(
+    identity: WorkIdentity,
+    attempt: number,
+  ): CompletedSourceReportRecoveryReceipt | null {
+    const table = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_completed_source_report_recovery'")
+      .get();
+    if (!table) return null;
+    const rows = this.#database
+      .query(
+        'SELECT payload,digest,attempt FROM agent_host_completed_source_report_recovery WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .all(this.#workspaceId, identity.work_id, attempt) as { payload: string; digest: string; attempt: number }[];
+    requireState(rows.length <= 1, 'completed Source report recovery receipt is ambiguous');
+    if (!rows.length) return null;
+    const row = rows[0]!,
+      receipt = readCompletedSourceReportRecoveryReceiptRecord(row.payload, row.digest);
+    requireState(
+      row.attempt === attempt &&
+        sameJson(receipt.identity, identity) &&
+        receipt.attempt === attempt &&
+        receipt.record.attempt === attempt,
+      'completed Source report recovery receipt row identity differs',
+    );
+    return validateCompletedSourceReportRecoveryReceipt(receipt);
+  }
+  readCompletedSourceReportRecoveryReceipt(
+    identity: WorkIdentity,
+    attempt: number,
+  ): CompletedSourceReportRecoveryReceipt | null {
+    requireState(
+      Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
+      'completed Source report recovery receipt inspection identity invalid',
+    );
+    return this.#database
+      .transaction(() => {
+        const host = this.#read(identity),
+          recoveryReceipt = this.#readCompletedSourceReportRecoveryReceiptRow(identity, attempt);
+        if (!recoveryReceipt) return null;
+        requireState(
+          host.work !== null && host.work !== undefined,
+          'completed Source report recovery receipt has no current Work',
+        );
+        const row = this.#database
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(this.#workspaceId, identity.work_id, attempt) as {
+          revision: number;
+          payload: string;
+          digest: string;
+        } | null;
+        requireState(
+          row !== null && canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+          'completed Source report recovery Journal is missing or corrupt',
+        );
+        const initialReceipt = this.#readInitialSourceContinuationReceipt(identity, attempt),
+          frontierReceipt = initialReceipt
+            ? this.#readInitialSourceFrontierCodeRebindReceipt(identity, attempt, initialReceipt.continuation_id)
+            : null,
+          state: CompletedSourceReportRecoveryState = {
+            host,
+            journal: {
+              version: { revision: row!.revision, digest: row!.digest },
+              state: JSON.parse(row!.payload) as MastraSessionLedgerState,
+            },
+            initialReceipt,
+            frontierReceipt,
+            recoveryReceipt,
+          };
+        validateCompletedSourceReportRecoveryLineage(state);
+        return snapshotCompletedSourceReportRecoveryReceipt(recoveryReceipt);
+      })
+      .deferred();
   }
   readInitialSourceContinuationReceipt(
     identity: WorkIdentity,
@@ -14524,8 +14884,10 @@ export class HostStateStore {
           claims[0]!.generation === lease.generation,
         'expired lease recovery owner, fencing identity or live expiry differs',
       );
+      const completedSourceRecovery = this.#readCompletedSourceReportRecoveryReceiptRow(input.identity, input.attempt);
       requireState(
-        work.lifecycle.phase === 'INTAKE' &&
+        (work.lifecycle.phase === 'INTAKE' ||
+          (completedSourceRecovery !== null && work.lifecycle.phase !== 'COMPLETE')) &&
           work.lifecycle.seal === null &&
           work.lifecycle.assurance.review_generation === 0 &&
           work.lifecycle.assurance.delivery_cycle_id === null &&
@@ -14575,6 +14937,23 @@ export class HostStateStore {
           Array.isArray(journal.items),
         'expired lease recovery journal identity changed',
       );
+      if (completedSourceRecovery) {
+        const initialReceipt = this.#readInitialSourceContinuationReceipt(input.identity, input.attempt);
+        const frontierReceipt = initialReceipt
+          ? this.#readInitialSourceFrontierCodeRebindReceipt(
+              input.identity,
+              input.attempt,
+              initialReceipt.continuation_id,
+            )
+          : null;
+        validateCompletedSourceReportRecoveryLineage({
+          host: before,
+          journal: { version: input.expectedJournal, state: journal as unknown as MastraSessionLedgerState },
+          initialReceipt,
+          frontierReceipt,
+          recoveryReceipt: completedSourceRecovery,
+        });
+      }
       requireState(
         !(journal.items as { host_reservation?: unknown }[]).some((entry) => entry.host_reservation),
         'issued writer-bound wave must advance before expired lease recovery',
@@ -15134,86 +15513,13 @@ export class HostStateStore {
       prior.exclusive_resources.some((resource) => resource.startsWith('file:')),
       'completed writer file ownership already reconciled',
     );
-    const releaseTickets = ledger.tickets.filter(
-      (ticket) =>
-        ticket.ticket_id === prior.ticket_id ||
-        (identityKey(ticketIdentity(ticket)) === identityKey(input.identity) &&
-          ticket.thread_id === prior.thread_id &&
-          ticket.generation === prior.generation &&
-          ticket.status === 'queued' &&
-          ticket.claim_ids.length === 0 &&
-          ticket.active_resources.length === 0),
+    const handoff = buildCompletedSourceReportExecutionOnlyHandoff(
+      ledger,
+      prior,
+      input.identity,
+      input.actionId,
+      work.contracts.scope.path,
     );
-    const releaseIds = new Set(releaseTickets.map((ticket) => ticket.ticket_id));
-    const now = new Date().toISOString(),
-      expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-    const ticketId =
-      'execution-ticket-' + canonicalJsonDigest({ prior: prior.ticket_id, action: input.actionId }).slice(0, 40);
-    const claimId = 'execution-claim-' + canonicalJsonDigest({ ticketId }).slice(0, 40),
-      resources = ['execution:' + input.identity.work_id];
-    const ticket = {
-      ...prior,
-      ticket_id: ticketId,
-      sequence: ledger.next_sequence,
-      contour_keys: [...new Set([...prior.contour_keys.filter((key) => !key.startsWith('file:')), ...resources])],
-      exclusive_resources: resources,
-      active_resources: resources,
-      blocked_resources: [],
-      claim_ids: [claimId],
-      expires_at: expiry,
-      created_at: now,
-    };
-    const nextLedger: CoordinationLedger = {
-      ...ledger,
-      revision: ledger.revision + 1,
-      next_sequence: ledger.next_sequence + 1,
-      tickets: [
-        ...ledger.tickets.map((ticket) =>
-          releaseIds.has(ticket.ticket_id)
-            ? { ...ticket, status: 'released' as const, active_resources: [], blocked_resources: [], expires_at: null }
-            : ticket,
-        ),
-        ticket,
-      ],
-      claims: [
-        ...ledger.claims.map((claim) =>
-          releaseIds.has(claim.ticket_id) && claim.status === 'active'
-            ? { ...claim, status: 'released' as const, renewed_at: now }
-            : claim,
-        ),
-        {
-          schema: 'WorkstreamClaim/v1',
-          claim_id: claimId,
-          ticket_id: ticketId,
-          work_id: prior.work_id,
-          thread_id: prior.thread_id,
-          generation: prior.generation,
-          resources,
-          lease_expires_at: expiry,
-          status: 'active',
-          created_at: now,
-          renewed_at: now,
-        },
-      ],
-      operations: [
-        ...ledger.operations,
-        ...releaseTickets.map((ticket) => ({
-          schema: 'CoordinationOperation/v1' as const,
-          operation_id: 'source-terminal-release-' + ticketId + '-' + ticket.ticket_id,
-          kind: 'release' as const,
-          ticket_id: ticket.ticket_id,
-          work_id: ticket.work_id,
-          thread_id: ticket.thread_id,
-          source_revision: ticket.source_revision,
-          resources: [...ticket.exclusive_resources],
-          from_ledger_revision: ledger.revision,
-          to_ledger_revision: ledger.revision + 1,
-          decided_by: prior.thread_id,
-          decision_pointer: work.contracts.scope.path,
-          created_at: now,
-        })),
-      ],
-    };
     return this.#commitHostState(
       {
         expectedWork: before.workVersion,
@@ -15224,12 +15530,472 @@ export class HostStateStore {
           ...work,
           revision: work.revision + 1,
           lifecycle: { ...work.lifecycle, revision: work.revision + 1 },
-          lease: { ticket_id: ticketId, thread_id: prior.thread_id, generation: prior.generation },
+          lease: {
+            ticket_id: handoff.executionTicket.ticket_id,
+            thread_id: prior.thread_id,
+            generation: prior.generation,
+          },
         },
-        nextLedger,
+        nextLedger: handoff.nextLedger,
       },
       { actionId: input.actionId, next: input.nextJournal, verifyCurrent: input.verifyCurrent },
     );
+  }
+
+  /** Complete only the exact retained Source report, rebind future execution, and release Source ownership atomically. */
+  commitCompletedSourceReportRecovery(
+    input: CompletedSourceReportRecoveryRequest,
+    verifyCurrent: CompletedSourceReportRecoveryVerifyCurrent,
+  ): CompletedSourceReportRecoveryReceipt {
+    const request = validateCompletedSourceReportRecoveryRequest(input);
+    requireState(
+      typeof verifyCurrent === 'function' &&
+        verifyCurrent.constructor.name !== 'AsyncFunction' &&
+        !this.#database.inTransaction,
+      'completed Source report recovery verifier or transaction invalid',
+    );
+    const existing = this.#readCompletedSourceReportRecoveryReceiptRow(request.identity, request.attempt);
+    if (existing) {
+      requireState(
+        existing.request_digest === canonicalJsonDigest(request),
+        'completed Source report recovery exact retry differs',
+      );
+      this.#assertMaintenanceGeneration(existing.maintenance_generation);
+      const current = this.readCompletedSourceReportRecoveryReceipt(request.identity, request.attempt);
+      const currentHost = this.readHostStateSnapshot(request.identity),
+        currentJournal = this.readWorkSessionJournal(request.identity);
+      requireState(
+        current &&
+          sameJson(currentHost.workVersion, current.work_version) &&
+          sameJson(currentHost.ledgerVersion, current.ledger_version) &&
+          sameJson(currentJournal?.version, current.journal_version),
+        'completed Source report recovery retry follows dependent Work, Ledger, or Journal progress',
+      );
+      return current;
+    }
+
+    return this.#transactionWithProducerFence(() => {
+      this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceGeneration(request.expectedMaintenanceGeneration);
+      const before = this.#read(request.identity),
+        priorWork = before.work,
+        priorLedger = before.ledger;
+      requireState(
+        priorWork && priorLedger && priorWork.execution.status === 'active' && priorWork.lease,
+        'completed Source report recovery requires the original active Work and Source lease',
+      );
+      matchesExpected(before.workVersion, request.expectedWork);
+      matchesExpected(before.ledgerVersion, request.expectedLedger);
+      requireState(
+        priorWork.binding.runtime_code_digest === request.oldRuntimeCodeDigest &&
+          priorWork.binding.runtime_source_revision === request.oldRuntimeCodeDigest &&
+          priorWork.lifecycle.config_binding.runtime_code_digest === request.oldRuntimeCodeDigest,
+        'completed Source report recovery old/current runtime binding differs',
+      );
+
+      const journalRow = this.#database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null;
+      requireState(
+        journalRow !== null &&
+          journalRow.revision === request.expectedJournal.revision &&
+          journalRow.digest === request.expectedJournal.digest &&
+          canonicalJsonDigest(JSON.parse(journalRow.payload)) === journalRow.digest,
+        'completed Source report recovery Journal CAS is stale or corrupt',
+      );
+      const priorJournal = JSON.parse(journalRow!.payload) as MastraSessionLedgerState;
+      requireState(
+        priorJournal.schema === 'MastraSessionLedger/v1' &&
+          priorJournal.workspace_id === this.#workspaceId &&
+          priorJournal.work_id === request.identity.work_id &&
+          priorJournal.attempt === request.attempt &&
+          priorJournal.run_id === priorWork.execution.run_id,
+        'completed Source report recovery Journal identity differs',
+      );
+      const priorItems = [...priorJournal.items, ...priorJournal.completed.flatMap((wave) => wave.items)],
+        itemMatches = priorItems.filter(
+          (item) => item.request.action_id === request.actionId && item.issue_id === request.issueId,
+        );
+      requireState(
+        itemMatches.length === 1,
+        'completed Source report recovery original action is missing or ambiguous',
+      );
+      const originalItem = itemMatches[0]!,
+        reservation = originalItem.host_reservation,
+        approvalAuthorization = reservation?.authorization,
+        ticket = priorLedger.tickets.find((entry) => entry.ticket_id === priorWork.lease!.ticket_id),
+        activeClaims = priorLedger.claims.filter(
+          (entry) => entry.ticket_id === priorWork.lease!.ticket_id && entry.status === 'active',
+        );
+      requireState(
+        originalItem.observation === null &&
+          originalItem.issue_id === request.issueId &&
+          reservation !== undefined &&
+          reservation.approvalAction === 'source.write' &&
+          reservation.authorization !== null &&
+          reservation.receipt.attempt.attempt_id === request.hostAttemptId &&
+          sameJson(reservation.receipt.identity, request.identity) &&
+          reservation.receipt.attempt.status === 'started' &&
+          reservation.receipt.attempt.result === null &&
+          reservation.receipt.attempt.result_digest === null &&
+          reservation.receipt.attempt.lease.generation === request.leaseGeneration &&
+          reservation.receipt.attempt.lease.ticket_id === priorWork.lease.ticket_id &&
+          reservation.receipt.attempt.lease.thread_id === priorWork.lease.thread_id &&
+          originalItem.request.stage_id === reservation.request.stageId &&
+          originalItem.request.assignment_index === reservation.request.assignmentIndex &&
+          originalItem.request.scope_digest === request.originalSourceScopeDigest &&
+          reservation.request.configDigest === priorWork.binding.config_digest &&
+          request.sourceReservationDigest === canonicalJsonDigest(reservation) &&
+          priorWork.lifecycle.references.filter(
+            (reference) =>
+              reference.kind === 'execution_approval' &&
+              reference.disposition === 'current' &&
+              reference.decision === 'approved' &&
+              reference.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+              reference.sha256 === request.originalSourceAuthorizationDigest,
+          ).length === 1 &&
+          priorJournal.source_scope?.digest === request.originalSourceScopeDigest &&
+          priorWork.binding.work_source_revision === request.originalSourceScopeDigest,
+        'completed Source report recovery reservation, started attempt, or original Source authorization differs',
+      );
+      const priorAttempt = priorWork.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === request.hostAttemptId,
+        ),
+        nextItems = [...request.nextJournal.items, ...request.nextJournal.completed.flatMap((wave) => wave.items)],
+        nextMatches = nextItems.filter(
+          (item) => item.request.action_id === request.actionId && item.issue_id === request.issueId,
+        );
+      requireState(
+        priorAttempt !== undefined &&
+          priorAttempt.status === 'started' &&
+          priorAttempt.result === null &&
+          priorAttempt.result_digest === null &&
+          sameJson(priorAttempt, reservation.receipt.attempt) &&
+          nextMatches.length === 1,
+        'completed Source report recovery prior Host attempt is not the exact started/null reservation attempt',
+      );
+      const reportItem = nextMatches[0]!,
+        observation = reportItem.observation;
+      requireState(
+        reportItem.request.action_id === request.actionId &&
+          reportItem.request.stage_id === originalItem.request.stage_id &&
+          reportItem.request.assignment_index === originalItem.request.assignment_index &&
+          sameJson(reportItem.request, originalItem.request) &&
+          sameJson(reportItem.host_reservation, reservation) &&
+          observation?.schema === 'VidaSessionObservation/v1' &&
+          observation.status === 'reported_complete' &&
+          observation.action_id === request.actionId &&
+          observation.issue_id === request.issueId &&
+          observation.host_attempt_id === request.hostAttemptId &&
+          observation.tool_call_ref === request.reportId &&
+          observation.output_digest === canonicalJsonDigest(observation.summary) &&
+          Array.isArray(observation.changed_paths) &&
+          sameJson([...observation.changed_paths!].sort(), request.reportSourcePaths) &&
+          request.reportDigest === canonicalJsonDigest(observation) &&
+          priorJournal.source_scope !== undefined &&
+          priorJournal.source_scope !== null &&
+          request.nextJournal.source_scope !== undefined &&
+          request.nextJournal.source_scope !== null &&
+          request.nextJournal.source_scope.digest === request.evolvedJournalSourceScopeDigest &&
+          sameJson(request.nextJournal, {
+            ...priorJournal,
+            source_scope: request.nextJournal.source_scope,
+            items: priorJournal.items.map((item) =>
+              item.request.action_id === request.actionId ? { ...item, observation } : item,
+            ),
+            completed: priorJournal.completed.map((wave) => ({
+              ...wave,
+              items: wave.items.map((item) =>
+                item.request.action_id === request.actionId ? { ...item, observation } : item,
+              ),
+            })),
+          }),
+        'completed Source report recovery exact reported-complete Journal body differs',
+      );
+      const sourceChanges = compareScopedSourceSnapshots(priorJournal.source_scope!, request.nextJournal.source_scope!),
+        actualChangedPaths = sourceChanges.map((entry) => entry.path).sort();
+      requireState(
+        actualChangedPaths.length > 0 &&
+          sameJson(actualChangedPaths, request.changedPaths) &&
+          request.changedPaths.every(
+            (file) =>
+              priorWork.binding.implementation_paths.includes(file) &&
+              ticket?.exclusive_resources.includes('file:' + file),
+          ),
+        'completed Source report recovery source-scope diff differs from original ownership',
+      );
+      requireState(
+        ticket?.status === 'active' &&
+          ticket.thread_id === priorWork.lease.thread_id &&
+          ticket.generation === request.leaseGeneration &&
+          ticket.ticket_id === priorWork.lease.ticket_id &&
+          ticket.expires_at !== null &&
+          timestamp(ticket.expires_at) <= Date.now() &&
+          ticket.exclusive_resources.some((resource) => resource.startsWith('file:')) &&
+          ticket.active_resources.some((resource) => resource.startsWith('file:')) &&
+          activeClaims.length === 1 &&
+          activeClaims[0]!.claim_id === ticket.claim_ids[0] &&
+          activeClaims[0]!.thread_id === ticket.thread_id &&
+          activeClaims[0]!.generation === request.leaseGeneration &&
+          activeClaims[0]!.lease_expires_at === ticket.expires_at &&
+          timestamp(activeClaims[0]!.lease_expires_at) <= Date.now() &&
+          sameJson(activeClaims[0]!.resources, ticket.active_resources),
+        'completed Source report recovery original Source ticket or claim differs',
+      );
+      this.#assertNoOverlappingActiveSourceOwner(priorLedger, ticket!);
+      requireState(
+        !priorLedger.tickets.some(
+          (entry) =>
+            entry.status === 'queued' &&
+            entry.sequence < ticket!.sequence &&
+            entry.exclusive_resources.some((resource) => ticket!.exclusive_resources.includes(resource)),
+        ),
+        'completed Source report recovery is behind an earlier FIFO Source owner',
+      );
+      requireState(
+        priorWork.execution.assignment_attempts.every(
+          (attempt) =>
+            attempt.attempt_id === request.hostAttemptId || !['started', 'uncertain'].includes(attempt.status),
+        ),
+        'completed Source report recovery has another started or unknown Host effect',
+      );
+      const { stored, approval } = this.#storedWorkflowApproval(approvalAuthorization!, 'commit_unknown');
+      requireState(
+        approval.attempt_id === request.hostAttemptId &&
+          approval.status === 'commit_unknown' &&
+          reservation.authorization.approval?.status === 'commit_unknown',
+        'completed Source report recovery Source-write approval is not commit_unknown',
+      );
+      const initialReceipt = this.#readInitialSourceContinuationReceipt(request.identity, request.attempt),
+        frontierReceipt = initialReceipt
+          ? this.#readInitialSourceFrontierCodeRebindReceipt(
+              request.identity,
+              request.attempt,
+              initialReceipt.continuation_id,
+            )
+          : null;
+      requireState(
+        initialReceipt !== null &&
+          initialReceipt.continuation_id === request.initialContinuationId &&
+          initialReceipt.request_digest === request.initialContinuationRequestDigest &&
+          initialReceipt.request.sourceAuthorizationSha256 === request.originalSourceAuthorizationDigest &&
+          (frontierReceipt?.original_receipt_id ?? null) === request.frontierReceiptId &&
+          (frontierReceipt ? canonicalJsonDigest(frontierReceipt.record.request) : null) ===
+            request.frontierRequestDigest,
+        'completed Source report recovery initial/frontier ancestry differs',
+      );
+      const state: CompletedSourceReportRecoveryState = {
+        host: before,
+        journal: { version: request.expectedJournal, state: priorJournal },
+        initialReceipt,
+        frontierReceipt,
+        recoveryReceipt: null,
+      };
+      const verifyAndBind = (): CompletedSourceReportRecoveryVerifiedCurrent => {
+        const proof = validateCompletedSourceReportRecoveryVerifiedCurrent(verifyCurrent(request, state), request);
+        requireState(
+          proof.terminal.nativeSessionHandle === request.nativeSessionHandle &&
+            proof.terminal.attempt === request.attempt &&
+            proof.terminal.actionId === request.actionId &&
+            proof.terminal.issueId === request.issueId &&
+            proof.terminal.hostAttemptId === request.hostAttemptId &&
+            proof.terminal.leaseGeneration === request.leaseGeneration &&
+            proof.terminal.quiescent === true &&
+            proof.terminal.outcome === 'reported_complete' &&
+            proof.terminal.callerObservationRef === request.terminalCallerObservationRef &&
+            proof.terminal.commandReceiptRef === request.terminalCommandReceiptRef &&
+            proof.terminal.reportId === request.reportId &&
+            proof.terminal.reportDigest === request.reportDigest &&
+            proof.terminal.sourceDiffDigest === request.sourceDiffDigest &&
+            sameJson(proof.terminal.reportSourcePaths, request.reportSourcePaths) &&
+            proof.source.reservationDigest === request.sourceReservationDigest &&
+            proof.source.authorizationDigest === request.originalSourceAuthorizationDigest &&
+            proof.source.originalScopeDigest === request.originalSourceScopeDigest &&
+            proof.source.evolvedScopeDigest === request.evolvedJournalSourceScopeDigest &&
+            proof.source.snapshotRef === request.sourceSnapshotRef &&
+            proof.source.diffRef === request.sourceDiffRef &&
+            sameJson(proof.source.changedPaths, request.changedPaths) &&
+            proof.oldRuntime.codeDigest === request.oldRuntimeCodeDigest &&
+            sameJson(proof.oldRuntime.codePaths, request.oldRuntimeCodePaths) &&
+            proof.oldRuntime.manifestRef === request.oldManifestRef &&
+            proof.oldRuntime.manifestDigest === request.oldManifestDigest &&
+            proof.oldRuntime.installRef === request.oldInstallRef &&
+            proof.currentRuntime.codeDigest === request.currentRuntimeCodeDigest &&
+            sameJson(proof.currentRuntime.codePaths, request.currentRuntimeCodePaths) &&
+            proof.currentRuntime.manifestRef === request.currentManifestRef &&
+            proof.currentRuntime.manifestDigest === request.currentManifestDigest &&
+            proof.currentRuntime.installRef === request.currentInstallRef &&
+            proof.systemUpdate.ref === request.systemUpdateRef &&
+            proof.systemUpdate.operationId === request.systemUpdateOperationId &&
+            proof.nativeSelfAttestationDigest === request.nativeSelfAttestationDigest &&
+            proof.terminal.ownerThreadId === ticket!.thread_id &&
+            ticket!.generation === proof.terminal.leaseGeneration,
+          'completed Source report recovery current terminal, source, code, or installation proof differs',
+        );
+        return proof;
+      };
+      const verifiedCurrent = verifyAndBind();
+      const completedReceipt = this.#finishAttemptInTransaction(
+          reservation.authorization.receipt,
+          'completed',
+          observation,
+        ),
+        staged = this.#read(request.identity),
+        completedAttempt = staged.work?.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === request.hostAttemptId,
+        );
+      requireState(
+        completedReceipt.attempt.status === 'completed' &&
+          completedAttempt?.status === 'completed' &&
+          sameJson(completedAttempt.result, observation) &&
+          completedAttempt.result_digest === request.reportDigest,
+        'completed Source report recovery Host attempt result differs from retained report',
+      );
+      const appliedApproval: WorkflowApprovalConsumptionRecord = {
+        ...approval,
+        status: 'applied',
+        terminal_at: new Date().toISOString(),
+      };
+      this.#governanceWrite('approval', canonicalJsonDigest(approval.binding), appliedApproval, stored);
+      const handoff = buildCompletedSourceReportExecutionOnlyHandoff(
+          priorLedger,
+          ticket!,
+          request.identity,
+          request.actionId,
+          request.terminalCommandReceiptRef,
+        ),
+        nextWork = buildCompletedSourceReportRecoverySuccessorWork(
+          priorWork,
+          request,
+          completedAttempt!,
+          handoff.executionTicket,
+        ),
+        successorJournalVersion: StateVersion = {
+          revision: request.expectedJournal.revision + 1,
+          digest: canonicalJsonDigest(request.nextJournal),
+        };
+      validatePair(nextWork, handoff.nextLedger);
+      const record: CompletedSourceReportRecoveryRecord = validateCompletedSourceReportRecoveryRecord({
+        schema: 'CompletedSourceReportRecoveryRecord/v1',
+        identity: request.identity,
+        attempt: request.attempt,
+        request,
+        request_digest: canonicalJsonDigest(request),
+        prior_work: priorWork,
+        prior_work_version: before.workVersion!,
+        prior_ledger_version: before.ledgerVersion!,
+        prior_journal: priorJournal,
+        prior_journal_version: request.expectedJournal,
+        original_reservation: reservation,
+        original_source_ticket: ticket!,
+        original_source_claim: activeClaims[0]!,
+        completed_attempt: completedAttempt!,
+        verified_current: verifiedCurrent,
+        successor_work: nextWork,
+        work_version: version(nextWork)!,
+        successor_ledger_version: version(handoff.nextLedger)!,
+        successor_journal: request.nextJournal,
+        journal_version: successorJournalVersion,
+        execution_ticket: handoff.executionTicket,
+        execution_claim: handoff.executionClaim,
+        source_write_rights: false,
+        runtime_acceptance: false,
+        status: 'completed_report_recovered',
+      } satisfies CompletedSourceReportRecoveryRecord);
+      const receipt = validateCompletedSourceReportRecoveryReceipt(
+        snapshotCompletedSourceReportRecoveryReceipt({
+          schema: 'CompletedSourceReportRecoveryReceipt/v1',
+          identity: request.identity,
+          attempt: request.attempt,
+          action_id: request.actionId,
+          issue_id: request.issueId,
+          report_id: request.reportId,
+          request_digest: canonicalJsonDigest(request),
+          record_digest: canonicalJsonDigest(record),
+          work_version: version(nextWork)!,
+          ledger_version: version(handoff.nextLedger)!,
+          journal_version: successorJournalVersion,
+          maintenance_generation: before.maintenanceGeneration,
+          status: 'completed_report_recovered',
+          source_write_rights: false,
+          runtime_acceptance: false,
+          record,
+        }),
+      );
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_completed_source_report_recovery (workspace_id TEXT,work_id TEXT,attempt INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
+      );
+      const encodedReceipt = canonicalJson(receipt),
+        inserted = this.#database
+          .query('INSERT INTO agent_host_completed_source_report_recovery VALUES(?,?,?,?,?)')
+          .run(
+            this.#workspaceId,
+            request.identity.work_id,
+            request.attempt,
+            encodedReceipt,
+            canonicalJsonDigest(receipt),
+          );
+      requireState(inserted.changes === 1, 'completed Source report recovery receipt already exists');
+      const after = this.#commitHostState(
+        {
+          expectedWork: staged.workVersion,
+          expectedLedger: before.ledgerVersion,
+          expectedMaintenanceGeneration: before.maintenanceGeneration,
+          expectedSessionJournal: { attempt: request.attempt, version: request.expectedJournal },
+          nextWork,
+          nextLedger: handoff.nextLedger,
+        },
+        {
+          actionId: request.actionId,
+          next: request.nextJournal,
+          verifyCurrent: () => {
+            const currentProof = verifyAndBind();
+            requireState(
+              sameJson(currentProof, verifiedCurrent),
+              'completed Source report recovery proof changed before Host CAS',
+            );
+          },
+        },
+        true,
+        [],
+        {
+          receipt,
+          progressWork: {
+            ...nextWork,
+            binding: priorWork.binding,
+            lifecycle: {
+              ...nextWork.lifecycle,
+              source_revision: priorWork.lifecycle.source_revision,
+              config_binding: priorWork.lifecycle.config_binding,
+            },
+          },
+        },
+      );
+      const committedJournal = this.#database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
+        revision: number;
+        payload: string;
+        digest: string;
+      } | null;
+      requireState(
+        sameJson(after.work, nextWork) &&
+          sameJson(after.ledgerVersion, receipt.ledger_version) &&
+          committedJournal !== null &&
+          sameJson({ revision: committedJournal.revision, digest: committedJournal.digest }, receipt.journal_version) &&
+          canonicalJsonDigest(JSON.parse(committedJournal.payload)) === committedJournal.digest,
+        'completed Source report recovery successor afterimage differs',
+      );
+      return snapshotCompletedSourceReportRecoveryReceipt(receipt);
+    }).immediate();
   }
 
   compareAndSwapHostState(input: {
@@ -15858,6 +16624,10 @@ export class HostStateStore {
     },
     internalTransaction = false,
     taskSourceResourceAdditions: readonly string[] = [],
+    sourceReportRecoveryProjection?: {
+      readonly receipt: CompletedSourceReportRecoveryReceipt;
+      readonly progressWork: WorkState;
+    },
   ): HostStateSnapshot {
     const { documentationContext, expectedSessionJournal, ...stateInput } = input;
     const data = snapshot(stateInput);
@@ -15939,7 +16709,35 @@ export class HostStateStore {
           terminalJournal.verifyCurrent();
         }
       }
-      this.#validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions);
+      if (sourceReportRecoveryProjection) {
+        const receipt = validateCompletedSourceReportRecoveryReceipt(sourceReportRecoveryProjection.receipt),
+          original = receipt.record.prior_work,
+          projected = sourceReportRecoveryProjection.progressWork;
+        requireState(
+          sameJson(receipt.record.successor_work, work) &&
+            sameJson(projected, {
+              ...work,
+              binding: original.binding,
+              lifecycle: {
+                ...work.lifecycle,
+                source_revision: original.lifecycle.source_revision,
+                config_binding: original.lifecycle.config_binding,
+              },
+            }) &&
+            sameJson(work.binding, {
+              ...original.binding,
+              runtime_code_digest: receipt.record.request.currentRuntimeCodeDigest,
+              runtime_source_revision: receipt.record.request.currentRuntimeCodeDigest,
+            }) &&
+            work.lifecycle.config_binding.runtime_code_digest === receipt.record.request.currentRuntimeCodeDigest &&
+            work.lifecycle.source_revision === original.lifecycle.source_revision &&
+            work.binding.work_source_revision === original.binding.work_source_revision &&
+            sameJson(work.contracts, original.contracts) &&
+            sameJson(work.artifacts, original.artifacts),
+          'completed Source report recovery progress projection differs from its receipt',
+        );
+        this.#validateProgress(before, projected, ledger, documentationContext, taskSourceResourceAdditions);
+      } else this.#validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions);
       if (work.lease) {
         const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id)!;
         requireState(

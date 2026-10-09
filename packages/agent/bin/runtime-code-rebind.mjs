@@ -1650,8 +1650,7 @@ function readInitialSourceFrontierPlan(root, repairId) {
       endpoint_proof: endpointProof,
     };
   requireRebind(
-    request.schema === 'InitialSourceFrontierCodeRebindRequest/v1' &&
-      parsed.digest === canonicalJsonDigest(body),
+    request.schema === 'InitialSourceFrontierCodeRebindRequest/v1' && parsed.digest === canonicalJsonDigest(body),
     'initial-source frontier plan digest differs',
   );
   return { ...body, digest: parsed.digest };
@@ -1687,10 +1686,7 @@ function frontierManifestPaths(manifest, bundle) {
   const paths = inputs
     .map((entry) => {
       requireRebind(
-        isPlainRecord(entry) &&
-          typeof entry.path === 'string' &&
-          entry.path.length > 0 &&
-          entry.path.length <= 512,
+        isPlainRecord(entry) && typeof entry.path === 'string' && entry.path.length > 0 && entry.path.length <= 512,
         'native runtime manifest path is invalid',
       );
       return `${bundle}/${entry.path}`;
@@ -1824,8 +1820,8 @@ function readInitialSourceFrontierNativeEndpoint({ root, config, access, request
       lifecycleRisk: work.lifecycle.risk,
     },
     receipt,
-    journal,
-    work,
+    state.journal,
+    state.host,
   );
   const currentStep = /^wave-(0|[1-9][0-9]*)$/.exec(journal.step_id ?? ''),
     waveIndex = currentStep ? Number(currentStep[1]) : -1,
@@ -1844,21 +1840,23 @@ function readInitialSourceFrontierNativeEndpoint({ root, config, access, request
     waveIndex >= 0 &&
       engine.status === 'suspended' &&
       engine.step_id === journal.step_id &&
-      currentActions.every((action) =>
-        action.mutation_scope === 'none' && !action.resolved_profile.tools_policy.source_write,
+      currentActions.every(
+        (action) => action.mutation_scope === 'none' && !action.resolved_profile.tools_policy.source_write,
       ),
     'initial-source frontier is not the current configured readonly wave',
   );
-  const currentRequests = currentActions.map((action) => buildSessionBridgeRequest({
-    runId: journal.run_id,
-    workflowId: work.binding.workflow_id,
-    configDigest,
-    context,
-    waveIndex,
-    action,
-    configuredContext: configuredContextForStage(root, config, work.binding.workflow_id, action.stage_id, context),
-    priorResults: engine.observations,
-  }));
+  const currentRequests = currentActions.map((action) =>
+    buildSessionBridgeRequest({
+      runId: journal.run_id,
+      workflowId: work.binding.workflow_id,
+      configDigest,
+      context,
+      waveIndex,
+      action,
+      configuredContext: configuredContextForStage(root, config, work.binding.workflow_id, action.stage_id, context),
+      priorResults: engine.observations,
+    }),
+  );
   const currentRequest = currentRequests[0];
   requireRebind(
     currentRequests.length === 1 && currentRequest,
@@ -1938,10 +1936,10 @@ function readInitialSourceFrontierNativeEndpoint({ root, config, access, request
       updateValue.developer_unblocked === false,
     'parent/target code, current native installation or system update differ',
   );
-  const registeredUpdate = /** @type {unknown} */ (
-      releaseState(releaseJournalFile(root, updateValue.operation_id))
-    ),
-    pendingUpdate = /** @type {unknown} */ (releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json')));
+  const registeredUpdate = /** @type {unknown} */ (releaseState(releaseJournalFile(root, updateValue.operation_id))),
+    pendingUpdate = /** @type {unknown} */ (
+      releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'))
+    );
   requireRebind(
     isPlainRecord(registeredUpdate) &&
       isPlainRecord(pendingUpdate) &&
@@ -2065,7 +2063,9 @@ function planInitialSourceFrontierCodeRebind({
     sourceScopeDigest = journalState.source_scope?.digest,
     oldRuntimeCodeDigest = host.work?.binding.runtime_code_digest;
   requireRebind(
-    lease && expectedWork && expectedLedger &&
+    lease &&
+      expectedWork &&
+      expectedLedger &&
       typeof sourceScopeDigest === 'string' &&
       typeof oldRuntimeCodeDigest === 'string',
     'initial-source frontier request owner, scope or CAS state is incomplete',
@@ -2165,7 +2165,10 @@ function initialSourceFrontierResult(status, plan, receipt) {
 async function runInitialSourceFrontierCodeRebind({ values, root, config, workspaceId }) {
   const mode = values['--mode'],
     repairId = values['--repair-id'];
-  requireRebind(typeof mode === 'string' && typeof repairId === 'string', 'initial-source frontier CLI arguments are incomplete');
+  requireRebind(
+    typeof mode === 'string' && typeof repairId === 'string',
+    'initial-source frontier CLI arguments are incomplete',
+  );
   const database = trustedDatabase(root, config, ['inspect', 'plan'].includes(mode));
   try {
     if (mode === 'inspect' || mode === 'plan') {

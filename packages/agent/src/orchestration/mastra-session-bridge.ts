@@ -554,18 +554,24 @@ export class MastraSessionBridge {
         ...(lifecycleRisk === undefined ? {} : { lifecycleRisk }),
       };
       requireBridge(currentIdentity, 'initial-source current ProjectContext identity is missing');
-      const currentWork = args.ledger.hostState.readHostStateSnapshot(currentIdentity).work;
-      requireBridge(currentWork, 'initial-source current Host Work is missing');
+      const currentHost = args.ledger.hostState.readHostStateSnapshot(currentIdentity);
+      requireBridge(currentHost.work, 'initial-source current Host Work is missing');
+      const frontierCodeRebind = args.ledger.hostState.readInitialSourceFrontierCodeRebindReceipt(
+        currentIdentity,
+        context.attempt,
+        initialReceipt.continuation_id,
+      );
+      const completedSourceReportRecovery = args.ledger.hostState.readCompletedSourceReportRecoveryReceipt(
+        currentIdentity,
+        context.attempt,
+      );
       readInitialSourceContinuationSessionEngineSnapshot(
         binding,
         initialReceipt,
-        currentJournal.state,
-        currentWork,
-        args.ledger.hostState.readInitialSourceFrontierCodeRebindReceipt(
-          currentIdentity,
-          context.attempt,
-          initialReceipt.continuation_id,
-        ),
+        currentJournal,
+        currentHost,
+        frontierCodeRebind,
+        completedSourceReportRecovery,
       );
     }
     const producer = args.ledger.beginSessionProducer({
@@ -712,19 +718,24 @@ export class MastraSessionBridge {
     );
     const journal = this.#ledger.resume(this.#context.work_id, this.#context.attempt);
     requireBridge(journal, 'initial-source current Journal is missing');
-    const currentWork = this.#ledger.hostState.readHostStateSnapshot(key.identity).work;
-    requireBridge(currentWork, 'initial-source current Host Work is missing');
+    const currentHost = this.#ledger.hostState.readHostStateSnapshot(key.identity);
+    requireBridge(currentHost.work, 'initial-source current Host Work is missing');
     const frontierCodeRebind = this.#ledger.hostState.readInitialSourceFrontierCodeRebindReceipt(
       key.identity,
       key.attempt,
       receipt.continuation_id,
     );
+    const completedSourceReportRecovery = this.#ledger.hostState.readCompletedSourceReportRecoveryReceipt(
+      key.identity,
+      key.attempt,
+    );
     return readInitialSourceContinuationSessionEngineSnapshot(
       this.#binding,
       receipt,
-      journal.state,
-      currentWork,
+      journal,
+      currentHost,
       frontierCodeRebind,
+      completedSourceReportRecovery,
     );
   }
 

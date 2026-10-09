@@ -28,6 +28,7 @@
     "bin/init.mjs",
     "bin/install.mjs",
     "bin/run.mjs",
+    "bin/recover-completed-source-report.mjs",
     "bin/continue-initial-source.mjs",
     "bin/recover-failed-prewriter-owner.mjs",
     "bin/transition-failed-prewriter.mjs",

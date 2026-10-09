@@ -4,7 +4,7 @@ import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type { AgentRuntimeConfig, WorkItemSelection } from '../config/runtime-config.js';
-import type { DeliveredWorkContinuationReceipt, WorkState } from '../host-state.js';
+import type { DeliveredWorkContinuationReceipt, HostStateSnapshot, WorkState } from '../host-state.js';
 import { runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import {
@@ -21,7 +21,7 @@ import { sessionActionsForWave } from './session-handoff.js';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
 import type { CorrectiveExecution } from './final-assurance.js';
-import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
+import type { MastraSessionLedgerSnapshot, MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { projectConfiguredPrewriterContinuationRequests } from './delivered-work-continuation.js';
 import type { ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
 import { effectiveConfiguredFrontier, type FailedPrewriterRecoveryReceipt } from './failed-prewriter-transition.js';
@@ -31,6 +31,10 @@ import {
 } from './initial-source-continuation.js';
 import type { InitialSourceFrontierCodeRebindReceipt } from './initial-source-frontier-code-rebind.js';
 import { validateInitialSourceContinuationLineage } from './admitted-development-packet.js';
+import {
+  validateCompletedSourceReportRecoveryCurrentWorkJoin,
+  type CompletedSourceReportRecoveryReceipt,
+} from './completed-source-report-recovery.js';
 
 interface UntrustedMastraStep {
   readonly status?: unknown;
@@ -1410,10 +1414,13 @@ interface InitialSourceEngineContinuation {
 export function readInitialSourceContinuationSessionEngineSnapshot(
   binding: SessionEngineBinding,
   value: unknown,
-  journal: MastraSessionLedgerState,
-  work?: WorkState,
+  journalSnapshot: MastraSessionLedgerSnapshot,
+  hostSnapshot: HostStateSnapshot,
   frontierCodeRebind?: InitialSourceFrontierCodeRebindReceipt | null,
+  completedSourceReportRecovery?: CompletedSourceReportRecoveryReceipt | null,
 ): SessionBridgeSnapshot {
+  const journal = journalSnapshot.state;
+  const work = hostSnapshot.work;
   const receipt = validateInitialSourceContinuationReceipt(value),
     request = receipt.request,
     prior = receipt.prior_work,
@@ -1448,9 +1455,18 @@ export function readInitialSourceContinuationSessionEngineSnapshot(
       journalSource !== null,
     'initial-source receipt, current binding or journal differs',
   );
-  if (work || frontierCodeRebind || journalSource.digest !== currentScope.digest) {
+  if (work || frontierCodeRebind || completedSourceReportRecovery || journalSource.digest !== currentScope.digest) {
     requireEngine(work, 'evolved initial-source Journal requires trusted current Host Work');
-    validateInitialSourceContinuationLineage(work, receipt, journal, frontierCodeRebind);
+    validateInitialSourceContinuationLineage(work, receipt, journal, frontierCodeRebind, completedSourceReportRecovery);
+  }
+  if (completedSourceReportRecovery) {
+    validateCompletedSourceReportRecoveryCurrentWorkJoin(
+      hostSnapshot,
+      journalSnapshot,
+      receipt,
+      frontierCodeRebind ?? null,
+      completedSourceReportRecovery,
+    );
   }
   const originalItem = priorJournal.items[0],
     originalRequest = parseSessionBridgeRequest(originalItem?.request);

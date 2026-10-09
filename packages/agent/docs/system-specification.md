@@ -2247,6 +2247,47 @@ Current readers treat the initial receipt as an immutable ancestor. Host history
 proves the permitted code-only descendant; actual installed bytes must match
 the current Work binding. Existing active v1 records remain unchanged.
 
+## Completed Source report recovery
+
+An already-executed Source action can retain an uncommitted completed report
+after its lease expires, including across a runtime update. Use one strict completed-report
+recovery operation for this case. It records the original action; it never
+reissues the writer or treats a stale lease as permission for a new Source effect.
+This is current target behavior; public installed results must prove availability.
+
+Bind the original Work, attempt, owner, issued action, Host reservation and
+approval to the exact report. Verify trusted same-thread controller evidence of
+actual completion and quiescence, the actual scoped Source difference, and fresh
+Work/Ledger/Journal/maintenance versions. Caller JSON alone does not authenticate
+a tool invocation. A missing terminal proof, another unresolved effect, foreign
+ownership or an earlier conflicting FIFO entry blocks the transition.
+The trusted active session/controller owns observation and same-thread custody
+under attributable human intent. Its transferred command/report records are
+bounded consistency evidence, not a new caller authenticator. Standalone
+invocation without that trusted session context does not establish this boundary.
+The retained Source ticket and its exact claim must both be expired. A live
+writer uses the ordinary report path.
+
+The existing Host transaction owner completes only that attempt and approval,
+persists its exact report and evolved Journal Source snapshot, releases the stale
+Source ticket and claims, and creates only an execution-only ticket for the same
+owner. Do not reacquire file claims through the paused-Source resume helper.
+Retain the original run, protected contracts, intake, Source permission and Work
+Source revision. The receipt preserves original code and reservation attribution
+for the already-executed action. Bind qualified current runtime code only for
+future execution; verify old and current native inventories independently.
+
+Readers join the immutable receipt, completed Host attempt and current/completed
+Journal observation after ordinary workflow advancement. The next normal wave
+may contain multiple read-only validators; it is not the unique initial frontier.
+Later expired execution-only ownership follows the existing same-owner Host
+rebind chain. Retain the original Work scope separately from the evolved Journal
+snapshot, and require the exact completed Source result before that recovery.
+Return current CAS and the supported next action without issuing it. Recovery
+grants no Source file ownership, task acceptance or user Runtime acceptance.
+An exact completed retry returns retained evidence; altered or uncertain effects
+remain denied. Keep existing active v1 contracts unchanged.
+
 ## Distribution, recovery and evidence boundaries
 
 Verification subprocesses consume any finite enclosing caller/host/case budget,

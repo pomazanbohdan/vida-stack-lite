@@ -14,7 +14,7 @@ Use short sentences and plain terms. Keep one main idea in each paragraph. Aim f
 | Build lane | `native-build -> emit-build -> upload`. It publishes formation files. It does not qualify the target. |
 | System command | Read actual installation and qualification status from the current release evidence and [installation owner](docs/installation.md). Keep user Runtime acceptance separate. |
 | Package qualification | Successful formation provenance, target and exact artifact integrity. No test suite at formation or installation. |
-| Aggregate numeric evidence | GAP. The current policy retains owned post-cutover gaps for 100% coverage, 100% mutation and CRAP below 5. A missing report is not a pass. |
+| Aggregate numeric evidence | GAP. Retain coverage/mutation deficits and current fixed-gate results. The accepted frozen-budget policy below awaits executable gate reconciliation. A missing report is not a pass. |
 | Mutation | A separate, explicitly authorized manual run. It is not part of an aggregate or CI/CD job. |
 | Lint closure | In progress. The complete Source lint profile and full Source TypeScript checks pass. The test/tooling lint profile still needs correction. Source checks do not prove a clean package. |
 | Precommit | The approved hook changes are in Source. Activation waits for completed checks. Pre-push remains separate. |
@@ -23,6 +23,69 @@ Use short sentences and plain terms. Keep one main idea in each paragraph. Aim f
 Read current operation details from the [release owner](../../tooling/agent/release-local.mjs), [installation guide](docs/installation.md), and current work receipts. Version text alone does not prove installed bytes. Source changes do not change an installed artifact.
 
 This file contains current rules and required checks. Keep dated runs, failed logs and audit history in their existing evidence stores. Preserve FAIL and UNKNOWN records.
+
+## New and modified files
+
+Apply this policy when authoring or changing production files. Inventory every
+maintained function in each new or modified file, including private functions,
+methods and closures. Include affected callers and public contracts in the test
+plan. Classify generated code, dependencies and non-production tooling explicitly;
+do not hide production functions through coverage exclusions.
+
+Feature and fix developers write, run and correct their own tests and repair
+defects within their authorized implementation scope. Independent verification
+remains a separate role. Developers' test results are development evidence; they
+do not replace independent review or grant Runtime acceptance.
+
+Vida-Test owns shared test patterns, audits and authorized test refactoring.
+During refactoring, Vida-Test sends discovered product/runtime defects and test
+tooling blockers to TeamLead with reproducible evidence and the actual versions.
+That report does not authorize Vida-Test to fix another developer's production
+contour. This escalation rule does not prohibit feature developers from making
+their own in-scope test and implementation corrections.
+
+Defer unchanged legacy files to the separately authorized improvement queue.
+Identify existing deficits inside a modified file and any affected dependency
+explicitly. Required missing proof remains a GAP; an unchanged-file deferral is
+not permission to waive an affected contract or present partial proof as pass.
+Do not turn a bounded task into an unrequested whole-repository cleanup.
+
+Before writing tests, map each function or owned behavior to its contract,
+plausible regression, fixture, applicable scenarios, concrete case references
+and results. Use Zero, One, Many, Boundary, Interface, Exception and Simple.
+Add Replay, Persistence and Cross-surface consistency where applicable. Check
+Fresh, Explicit, Persisted and Replay modes for stateful behavior. Explain each
+not-applicable decision from the contract. Category labels, placeholder strings
+and a broad suite pass are not scenario evidence.
+
+Combine focused unit tests with integration checks at supported CLI, SDK,
+database and subprocess boundaries. Use isolated fixtures and controlled external
+dependencies. Preserve real persistence, restart, CAS, failure-before-effect and
+UNKNOWN boundaries; synthetic approvals do not prove runtime authorization.
+Use deterministic property tests and independent models where they protect the
+contract. New test layers must add distinct regression confidence.
+
+Compare the maintained source AST inventory with fresh function, line, statement
+and branch coverage. Require exact 100% coverage for the selected new/modified
+production-file scope, with no missing function mappings. Executing a function
+alone does not establish meaningful assertions or complete scenario coverage.
+The existing AST inventory in `tooling/crap-gate.mjs` supplies a starting point;
+do not introduce a second independent inventory without a demonstrated need.
+
+Mutation qualification targets 100% confirmed Killed mutants in the selected
+scope and runs only with explicit manual authorization. Survived, NoCoverage,
+timeout, execution/compilation errors, missing partitions and uncertain outcomes
+cannot establish a passing result. A suspected equivalent mutant needs explicit
+reviewed disposition and remains a GAP under the current executable gate.
+Ordinary task authorization does not automatically launch mutation. Pending
+manual mutation proof is reported as pending, never as achieved qualification.
+
+For a demonstrated test bottleneck, record comparable whole-command timing,
+collection/setup and child outcomes, then research relevant current official
+documentation. Optimize the actual cause while retaining test selection,
+isolation, assertions, security and evidence. Do not increase a timeout merely
+to improve the reported result. Keep the focused-batch/one-completion-run policy
+below; no separate benchmark or ROI lane is required.
 
 ## Local execution policy
 
@@ -141,7 +204,7 @@ fixes in-process SDK disposal. Retain earlier uncertain cleanup roots.
 
 ## Evidence and quality gates
 
-Record the command, working directory, exact tool versions, current inputs, exit status and sanitized result. Retain full stdout and stderr separately. Bind reports to the actual current source and operation.
+Before each check, verify the actual executing VIDA CLI and involved runner versions. Use the supported `vida-agent version` command. Keep an adapter-reported version separate from the installed executable version and the Source manifest version. Record the executable, command, working directory, exact tool versions, current inputs, exit status and sanitized result. Retain full stdout and stderr separately. Bind reports to the actual current source and operation.
 
 | Evidence class | Meaning |
 | --- | --- |
@@ -153,9 +216,43 @@ Record the command, working directory, exact tool versions, current inputs, exit
 
 Static proof does not grant Runtime acceptance. A writer report, caller JSON or valid schema does not prove native tool origin, review independence or authorization.
 
-The ultimate aggregate targets are 100% coverage, 100% mutation and CRAP below 5 for every maintained function. Keep the accepted owned post-cutover gaps explicit. Do not lower these targets or report missing evidence as passed.
+The accepted targets are exact 100% coverage and 100% mutation qualification
+for maintained production functions, with task-scoped evidence as defined above.
+Keep accepted legacy deficits and missing manual runs explicit.
 
-Production functions target CRAP 1 for a pure transform, 2 for one meaningful decision and 3 for compact coordination. CRAP 4 is allowed only for a cohesive critical invariant whose branch order matters. It needs negative and mutation evidence. Low CRAP does not replace security, migration or persistence checks.
+These targets and frozen budgets govern development and truthful completion of
+its checks. They add no numeric barrier to the minimum native formation and
+installation profile or supported developer unblocking. Follow the lifecycle
+owner's formation and installation policy: do not run suites or repeat task
+checks or reviews solely for delivery or unblocking. Missing measurements remain
+pending or GAP; delivery does not turn them into PASS or Runtime acceptance.
+Causal functional defects still require correction by their current owner.
+Preserve Source rights, CAS, UNKNOWN custody and required artifact integrity.
+
+Compute each function's CRAP as `CC^2 * (1 - coverage)^3 + CC`, with coverage
+expressed as a ratio. Report complexity, coverage and CRAP separately. At full
+coverage CRAP equals cyclomatic complexity, so a universal CRAP ceiling must not
+force removal of required behavior or artificial splitting of a cohesive invariant.
+
+Freeze a justified function/risk complexity and CRAP budget in the existing task
+plan before implementation. Use the existing verified baseline for modified
+functions and a justified reviewed ceiling for new functions. The budget must
+retain security, data and lifecycle requirements. Reject deterioration against
+that baseline. Never recompute an increased allowance from the candidate itself;
+a necessary budget change needs explicit rationale and review in the same work.
+Missing baseline, ceiling or review is a GAP, not an unlimited allowance.
+CRAP 1/2/3 and cohesive-invariant 4 remain design guidance for simple functions.
+Numeric simplicity does not replace behavioral, security or recovery evidence.
+
+Implementation GAP: `tooling/crap-gate.mjs` still enforces the historical fixed
+`CRAP < 5` and `complexity <= 10` across its complete inventory. Incremental
+file selection and the accepted frozen-budget policy are not implemented by
+this documentation change. Keep the existing gate result truthful; do not
+bypass a failure, change a baseline automatically or claim the new gate is active.
+The scoped inventory/scenario enforcement and approved complete Bun Test
+migration also require their separately owned implementation and verification.
+Current Fuzz, ZOMBIES and V8 coverage commands still use Vitest. Keep unsupported
+coverage-provider/engine combinations as tooling GAPs, not successful coverage.
 
 V8 coverage includes packaged TypeScript outside the five Bun-native sources and public packaged `bin` entrypoints. The Bun-native lane binds LCOV and Istanbul counters to exact bytes. Separate production source, tests, tooling, dependencies and generated outputs in reports.
 

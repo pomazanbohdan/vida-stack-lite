@@ -25,6 +25,11 @@ import {
   validateInitialSourceFrontierCodeRebindReceipt,
   type InitialSourceFrontierCodeRebindReceipt,
 } from './initial-source-frontier-code-rebind.js';
+import {
+  validateCompletedSourceReportRecoveryCurrentWorkJoin,
+  validateCompletedSourceReportRecoveryReceipt,
+  type CompletedSourceReportRecoveryReceipt,
+} from './completed-source-report-recovery.js';
 import { validateFailedPrewriterRecoveryReceipt } from './failed-prewriter-transition.js';
 import {
   validateConfiguredFrontierReceiptStructure,
@@ -97,6 +102,7 @@ export interface AdmittedDevelopmentPacketInput {
         | 'readFailedPrewriterRecoveryReceipt'
         | 'readInitialSourceContinuationReceipt'
         | 'readInitialSourceFrontierCodeRebindReceipt'
+        | 'readCompletedSourceReportRecoveryReceipt'
       >
     >;
   readonly ledger: MastraSessionLedgerSnapshot;
@@ -114,6 +120,7 @@ function requirePacket(condition: unknown, message: string): asserts condition {
 export interface InitialSourceContinuationLineageView {
   readonly receipt: InitialSourceContinuationReceipt;
   readonly frontierCodeRebind: InitialSourceFrontierCodeRebindReceipt | null;
+  readonly completedSourceReportRecovery: CompletedSourceReportRecoveryReceipt | null;
 }
 
 export type AcceptedSourceContinuation =
@@ -165,11 +172,14 @@ export function isInitialSourceContinuationReceipt(value: unknown): value is Ini
 export function isInitialSourceContinuationLineageView(value: unknown): value is InitialSourceContinuationLineageView {
   return (
     isPacketRecord(value) &&
-    Object.keys(value).sort().join(',') === 'frontierCodeRebind,receipt' &&
+    Object.keys(value).sort().join(',') === 'completedSourceReportRecovery,frontierCodeRebind,receipt' &&
     isInitialSourceContinuationReceipt(value.receipt) &&
     (value.frontierCodeRebind === null ||
       (isPacketRecord(value.frontierCodeRebind) &&
-        value.frontierCodeRebind.schema === 'InitialSourceFrontierCodeRebindReceipt/v1'))
+        value.frontierCodeRebind.schema === 'InitialSourceFrontierCodeRebindReceipt/v1')) &&
+    (value.completedSourceReportRecovery === null ||
+      (isPacketRecord(value.completedSourceReportRecovery) &&
+        value.completedSourceReportRecovery.schema === 'CompletedSourceReportRecoveryReceipt/v1'))
   );
 }
 
@@ -177,13 +187,20 @@ function initialSourceContinuationParts(
   value: AcceptedSourceContinuation | null | undefined,
 ): InitialSourceContinuationLineageView | null {
   if (isInitialSourceContinuationLineageView(value)) return value;
-  return isInitialSourceContinuationReceipt(value) ? { receipt: value, frontierCodeRebind: null } : null;
+  return isInitialSourceContinuationReceipt(value)
+    ? { receipt: value, frontierCodeRebind: null, completedSourceReportRecovery: null }
+    : null;
 }
 
 /** Join the immutable initial receipt to the optional current Host-validated code-only descendant. */
 export function readInitialSourceContinuationLineageView(
   sourceStore: Partial<
-    Pick<HostStateStore, 'readInitialSourceContinuationReceipt' | 'readInitialSourceFrontierCodeRebindReceipt'>
+    Pick<
+      HostStateStore,
+      | 'readInitialSourceContinuationReceipt'
+      | 'readInitialSourceFrontierCodeRebindReceipt'
+      | 'readCompletedSourceReportRecoveryReceipt'
+    >
   >,
   identity: WorkIdentity,
   attempt: number,
@@ -200,7 +217,15 @@ export function readInitialSourceContinuationLineageView(
       attempt,
       receipt.continuation_id,
     ) ?? null;
-  return { receipt, frontierCodeRebind };
+  const completedSourceReportRecovery =
+    sourceStore.readCompletedSourceReportRecoveryReceipt?.call(sourceStore, identity, attempt) ?? null;
+  return {
+    receipt,
+    frontierCodeRebind,
+    completedSourceReportRecovery: completedSourceReportRecovery
+      ? validateCompletedSourceReportRecoveryReceipt(completedSourceReportRecovery)
+      : null,
+  };
 }
 
 function initialFrontierCodeRebindWorkCore(work: WorkState): Record<string, unknown> {
@@ -289,11 +314,20 @@ export function validateInitialSourceContinuationLineage(
   value: unknown,
   journalValue?: unknown,
   frontierCodeRebindValue?: unknown,
+  completedSourceReportRecoveryValue?: unknown,
 ): InitialSourceContinuationReceipt {
   const receipt = validateInitialSourceContinuationReceipt(value);
   const { request, prior_work: original, successor_work: successor } = receipt;
   const frontierCodeRebind = validateInitialSourceFrontierCodeRebindJoin(work, receipt, frontierCodeRebindValue);
-  const currentRuntimeCodeDigest = frontierCodeRebind?.current_runtime_code_digest ?? request.currentRuntimeCodeDigest;
+  const completedSourceReportRecovery =
+    completedSourceReportRecoveryValue === undefined || completedSourceReportRecoveryValue === null
+      ? null
+      : validateCompletedSourceReportRecoveryReceipt(completedSourceReportRecoveryValue);
+  const recoveryRequest = completedSourceReportRecovery?.record.request;
+  const currentRuntimeCodeDigest =
+    recoveryRequest?.currentRuntimeCodeDigest ??
+    frontierCodeRebind?.current_runtime_code_digest ??
+    request.currentRuntimeCodeDigest;
   const permission = request.sourceAuthorizationReference;
   const originalPermission = sourceAuthorizationReferences(original);
   const successorPermission = sourceAuthorizationReferences(successor);
@@ -353,12 +387,16 @@ export function validateInitialSourceContinuationLineage(
       request.currentRuntimeCodeDigest === successor.binding.runtime_code_digest &&
       request.currentRuntimeCodeDigest === successor.binding.runtime_source_revision &&
       request.currentRuntimeCodeDigest ===
-        (frontierCodeRebind?.record.prior_work.binding.runtime_code_digest ?? work.binding.runtime_code_digest) &&
+        (recoveryRequest?.oldRuntimeCodeDigest ??
+          frontierCodeRebind?.record.prior_work.binding.runtime_code_digest ??
+          work.binding.runtime_code_digest) &&
       request.currentRuntimeCodeDigest ===
-        (frontierCodeRebind?.record.prior_work.binding.runtime_source_revision ??
+        (recoveryRequest?.oldRuntimeCodeDigest ??
+          frontierCodeRebind?.record.prior_work.binding.runtime_source_revision ??
           work.binding.runtime_source_revision) &&
       request.currentRuntimeCodeDigest ===
-        (frontierCodeRebind?.record.prior_work.lifecycle.config_binding.runtime_code_digest ??
+        (recoveryRequest?.oldRuntimeCodeDigest ??
+          frontierCodeRebind?.record.prior_work.lifecycle.config_binding.runtime_code_digest ??
           work.lifecycle.config_binding.runtime_code_digest) &&
       request.currentRuntimeCodeDigest === successor.lifecycle.config_binding.runtime_code_digest &&
       currentRuntimeCodeDigest === work.binding.runtime_code_digest &&
@@ -398,7 +436,15 @@ export function validateInitialSourceContinuationLineage(
       successorIntake !== null &&
       currentIntake !== null &&
       samePacket(originalIntake, successorIntake) &&
-      samePacket(originalIntake, currentIntake),
+      samePacket(originalIntake, currentIntake) &&
+      (!completedSourceReportRecovery ||
+        (completedSourceReportRecovery.identity.work_id === request.identity.work_id &&
+          completedSourceReportRecovery.attempt === request.attempt &&
+          recoveryRequest?.initialContinuationId === receipt.continuation_id &&
+          recoveryRequest.initialContinuationRequestDigest === receipt.request_digest &&
+          recoveryRequest.oldRuntimeCodeDigest ===
+            (frontierCodeRebind?.current_runtime_code_digest ?? request.currentRuntimeCodeDigest) &&
+          recoveryRequest.currentRuntimeCodeDigest === work.binding.runtime_code_digest)),
     'initial continuation does not preserve the original Work, contracts, intake, permission or endpoint',
   );
 
@@ -479,8 +525,13 @@ export function acceptedSourceAuthorizationRevision(
   );
   const initial = initialSourceContinuationParts(continuation);
   const sourceRevision = initial
-    ? validateInitialSourceContinuationLineage(work, initial.receipt, journalValue, initial.frontierCodeRebind)
-        .prior_work.binding.work_source_revision
+    ? validateInitialSourceContinuationLineage(
+        work,
+        initial.receipt,
+        journalValue,
+        initial.frontierCodeRebind,
+        initial.completedSourceReportRecovery,
+      ).prior_work.binding.work_source_revision
     : work.binding.work_source_revision;
   requirePacket(
     reference.scope_id === work.binding.scope_id &&
@@ -505,6 +556,7 @@ export function acceptedContractSourceRevision(
       initial.receipt,
       ledger.state,
       initial.frontierCodeRebind,
+      initial.completedSourceReportRecovery,
     );
     return receipt.prior_work.binding.work_source_revision;
   }
@@ -709,6 +761,15 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     continuation?.request.action.kind === 'configured_frontier' ? (continuation as ConfiguredFrontierReceipt) : null;
   const recovery = original && input.sourceStore?.readFailedPrewriterRecoveryReceipt?.(identity, ledger.state.attempt);
   const initial = readInitialSourceContinuationLineageView(input.sourceStore ?? {}, identity, ledger.state.attempt);
+  if (initial?.completedSourceReportRecovery) {
+    validateCompletedSourceReportRecoveryCurrentWorkJoin(
+      input.host,
+      ledger,
+      initial.receipt,
+      initial.frontierCodeRebind,
+      initial.completedSourceReportRecovery,
+    );
+  }
   requirePacket(!(original && initial), 'multiple Host Source continuation records are ambiguous');
   const acceptedContinuation = initial ?? (original ? { original, recovery: recovery || null } : null);
   const acceptedSourceRevision = acceptedContractSourceRevision(work, ledger, acceptedContinuation);

@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test';
+import { test, expect, setSystemTime } from 'bun:test';
 import { runBoundedSubprocess, subprocessFailure } from './helpers/bounded-subprocess.mjs';
 import { pinnedEnvironment } from '../bin/bun.mjs';
 import { Database } from 'bun:sqlite';
@@ -23,12 +23,17 @@ import {
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { validateInitialSourceFrontierCodeRebindReceipt } from '../src/orchestration/initial-source-frontier-code-rebind.ts';
+import {
+  validateCompletedSourceReportRecoveryCurrentWorkJoin,
+  validateCompletedSourceReportRecoveryReceipt,
+} from '../src/orchestration/completed-source-report-recovery.ts';
 import { admitLocalSessionWork } from '../src/orchestration/local-work-admission.ts';
 import {
   MastraSessionBridge,
   buildSessionBridgeRequest,
   configuredContextForStage,
   parseSessionBridgeRequest,
+  parseSessionBridgeObservation,
 } from '../src/orchestration/mastra-session-bridge.ts';
 import {
   MastraSessionLedger,
@@ -40,6 +45,7 @@ import {
   readInitialSourceContinuationSessionEngineSnapshot,
 } from '../src/orchestration/session-engine-snapshot.ts';
 import { bindRuntimeInitialization } from '../src/runtime-initialization.ts';
+import { lifecyclePreparationObservationSchema } from '../src/orchestration/final-assurance.ts';
 import { run } from '../bin/run.mjs';
 import {
   validateInitialSourceContinuationReceipt,
@@ -60,6 +66,10 @@ import {
 /** @typedef {import('../src/orchestration/initial-source-continuation.ts').InitialSourceContinuationVerifiedCurrent} InitialSourceContinuationVerifiedCurrent */
 /** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindRequest} InitialSourceFrontierCodeRebindRequest */
 /** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindVerifiedCurrent} InitialSourceFrontierCodeRebindVerifiedCurrent */
+/** @typedef {import('../src/orchestration/completed-source-report-recovery.ts').CompletedSourceReportRecoveryRequest} CompletedSourceReportRecoveryRequest */
+/** @typedef {import('../src/orchestration/completed-source-report-recovery.ts').CompletedSourceReportRecoveryVerifiedCurrent} CompletedSourceReportRecoveryVerifiedCurrent */
+/** @typedef {import('../src/orchestration/completed-source-report-recovery.ts').CompletedSourceReportRecoveryState} CompletedSourceReportRecoveryState */
+/** @typedef {import('../src/orchestration/completed-source-report-recovery.ts').CompletedSourceReportRecoveryVerifyCurrent} CompletedSourceReportRecoveryVerifyCurrent */
 /** @typedef {import('../src/orchestration/local-work-admission.ts').LocalWorkAdmissionInput} LocalWorkAdmissionInput */
 /** @typedef {import('../src/orchestration/mastra-session-bridge.ts').MastraSessionBridge} MastraSessionBridgeType */
 /** @typedef {import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} SessionBridgeRequest */
@@ -616,6 +626,23 @@ function withExpiredOwner(f, callback) {
   return outcome.value;
 }
 
+/** @param {InitialWorkFixture} f */
+function holdExpiredOwnerClockForFixture(f) {
+  const before = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
+  const owner = before.ledger.tickets.find((ticket) => ticket.ticket_id === workLease(before.work).ticket_id);
+  if (!owner?.expires_at) throw new Error('Initial Source fixture owner lease is unavailable');
+  const originalClose = f.close;
+  const expiredAt = Date.parse(owner.expires_at) + 1;
+  setSystemTime(new Date(expiredAt));
+  f.close = async () => {
+    try {
+      await originalClose.call(f);
+    } finally {
+      setSystemTime();
+    }
+  };
+}
+
 /** @template T @param {InitialWorkFixture} f @param {() => Promise<T>} callback @returns {Promise<T>} */
 async function withExpiredOwnerAsync(f, callback) {
   const before = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
@@ -710,6 +737,13 @@ function expectedRunVersion(version) {
 function requireRecord(value, label) {
   if (!isPlainRecord(value)) throw new Error(label + ' must be a plain record');
   return value;
+}
+
+/** @param {string} filePath @returns {unknown} */
+function readJsonFixture(filePath) {
+  /** @type {unknown} */
+  const parsed = JSON.parse(readFileSync(filePath, 'utf8'));
+  return parsed;
 }
 
 /** @param {unknown} value @param {string} label @returns {string} */
@@ -1273,6 +1307,335 @@ function trustedHostFixtureVerifier(f, proof) {
   };
 }
 
+/** @typedef {object} CompletedSourceReportRecoveryFixture
+ * @property {CompletedSourceReportRecoveryRequest} request
+ * @property {string} reportPath
+ * @property {CompletedSourceReportRecoveryVerifyCurrent} verifyCurrent
+ */
+
+/** @param {InitialWorkFixture} f
+ * @param {ReturnType<typeof parseIssuedActions>[number]} writer
+ * @param {string} writerAttemptId
+ * @param {SessionBridgeObservation} observation
+ * @param {ScopedSourceSnapshot} sourceBefore
+ * @param {ScopedSourceSnapshot} sourceAfter
+ * @param {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindReceipt | null} frontierReceipt
+ * @param {string} reportPath
+ * @returns {CompletedSourceReportRecoveryFixture}
+ */
+function completedSourceReportRecoveryFixture(
+  f,
+  writer,
+  writerAttemptId,
+  observation,
+  sourceBefore,
+  sourceAfter,
+  frontierReceipt,
+  reportPath,
+) {
+  const before = continuationState(f),
+    initialReceipt = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1),
+    journalBefore = currentJournal(f),
+    pending = journalBefore.state.items.find((item) => item.request.action_id === writer.request.action_id),
+    workDirectory = '.agent/work/' + f.identity.work_id,
+    sourceSnapshotRef = workDirectory + '/completed-source-snapshot.fixture.json',
+    sourceDiffRef = workDirectory + '/completed-source-diff.fixture.json',
+    commandReceiptRef = workDirectory + '/completed-source-command.fixture.json',
+    reportRef = path.relative(f.root, reportPath).split(path.sep).join('/');
+  if (!initialReceipt || !pending?.host_reservation || !journalBefore.state.source_scope)
+    throw new Error('Completed Source report fixture lacks its original receipt, reservation or Journal scope');
+  if (journalBefore.state.source_scope.digest !== sourceBefore.digest)
+    throw new Error('Completed Source report fixture original Journal scope changed');
+  const sourceDiff = [...compareScopedSourceSnapshots(sourceBefore, sourceAfter)].sort((left, right) =>
+      left.path.localeCompare(right.path),
+    ),
+    changedPaths = sourceDiff.map((change) => change.path).sort((left, right) => left.localeCompare(right)),
+    reportSourcePaths = [...(observation.changed_paths ?? [])].sort((left, right) => left.localeCompare(right)),
+    nextJournal = {
+      ...journalBefore.state,
+      source_scope: sourceAfter,
+      items: journalBefore.state.items.map((item) =>
+        item.request.action_id === observation.action_id ? { ...item, observation } : item,
+      ),
+    };
+  if (pending.issue_id !== writer.issue_id || writerAttemptId !== pending.host_reservation.receipt.attempt.attempt_id)
+    throw new Error('Completed Source report fixture writer IDs differ');
+  if (canonicalJsonDigest(reportSourcePaths) !== canonicalJsonDigest(changedPaths))
+    throw new Error('Completed Source report fixture changed paths differ from the exact report');
+
+  const currentRuntimeCodePaths = [...runtimePackageCodePaths(f.config.runtime.bundle)].sort(),
+    currentRuntime = snapshotRuntimePackageSources(
+      runtimePackageAccess(),
+      f.config.runtime.bundle,
+      currentRuntimeCodePaths,
+    ),
+    systemUpdateOperationId = 'fixture-host-only-update-' + writer.request.action_id,
+    currentManifestRef = 'fixture://host-only/current-manifest',
+    currentInstallRef = 'fixture://host-only/current-install-marker',
+    systemUpdateRef = 'fixture://host-only/system-update-marker',
+    currentManifestDigest = canonicalJsonDigest({
+      fixture_only: true,
+      not_native_manifest: true,
+      code_digest: currentRuntime.digest,
+      code_paths: currentRuntimeCodePaths,
+    }),
+    nativeSelfAttestationDigest = canonicalJsonDigest({
+      fixture_only: true,
+      not_native_attestation: true,
+      code_digest: currentRuntime.digest,
+      systemUpdateOperationId,
+    }),
+    oldManifestRef = frontierReceipt?.record.request.successorManifestRef ?? 'fixture://host-only/prior-manifest',
+    oldManifestDigest =
+      frontierReceipt?.record.request.successorManifestDigest ??
+      canonicalJsonDigest({
+        fixture_only: true,
+        not_native_manifest: true,
+        prior_code_digest: before.work.binding.runtime_code_digest,
+        prior_code_paths: currentRuntimeCodePaths,
+      }),
+    oldInstallRef = frontierReceipt?.record.request.systemUpdateRef ?? 'fixture://host-only/prior-install-marker';
+  if (!frontierReceipt && before.work.binding.runtime_code_digest !== currentRuntime.digest)
+    throw new Error('Expiry-only fixture must retain the actual current runtime code binding');
+  // The callback proves only Host field binding against real fixture Source and
+  // package bytes. Fixture endpoint labels do not attest to a native install.
+  writeFileSync(path.join(f.root, sourceSnapshotRef), record(sourceAfter));
+  writeFileSync(path.join(f.root, sourceDiffRef), record(sourceDiff));
+
+  const reportId = observation.tool_call_ref,
+    reportDigest = canonicalJsonDigest(observation),
+    sourceDiffDigest = canonicalJsonDigest(sourceDiff),
+    request = {
+      schema: 'CompletedSourceReportRecoveryRequest/v1',
+      identity: f.identity,
+      attempt: 1,
+      actionId: writer.request.action_id,
+      issueId: writer.issue_id,
+      hostAttemptId: writerAttemptId,
+      nativeSessionHandle: initialReceipt.request.nativeSessionHandle,
+      leaseGeneration: pending.host_reservation.receipt.attempt.lease.generation,
+      expectedWork: before.workVersion,
+      expectedLedger: before.ledgerVersion,
+      expectedJournal: journalBefore.version,
+      expectedMaintenanceGeneration: before.maintenanceGeneration,
+      initialContinuationId: initialReceipt.continuation_id,
+      initialContinuationRequestDigest: initialReceipt.request_digest,
+      frontierReceiptId: frontierReceipt?.original_receipt_id ?? null,
+      frontierRequestDigest: frontierReceipt?.record.request_digest ?? null,
+      sourceReservationDigest: canonicalJsonDigest(pending.host_reservation),
+      originalSourceAuthorizationDigest: initialReceipt.request.sourceAuthorizationSha256,
+      originalSourceScopeDigest: sourceBefore.digest,
+      evolvedJournalSourceScopeDigest: sourceAfter.digest,
+      reportId,
+      reportDigest,
+      sourceDiffDigest,
+      reportSourcePaths,
+      nextJournal,
+      sourceSnapshotRef,
+      sourceDiffRef,
+      changedPaths,
+      oldRuntimeCodeDigest: before.work.binding.runtime_code_digest,
+      oldRuntimeCodePaths: frontierReceipt
+        ? [...frontierReceipt.record.request.runtimeCodePaths]
+        : currentRuntimeCodePaths,
+      currentRuntimeCodeDigest: currentRuntime.digest,
+      currentRuntimeCodePaths,
+      oldManifestRef,
+      oldManifestDigest,
+      oldInstallRef,
+      currentManifestRef,
+      currentManifestDigest,
+      currentInstallRef,
+      systemUpdateRef,
+      systemUpdateOperationId,
+      nativeSelfAttestationDigest,
+      terminalCallerObservationRef: reportRef,
+      terminalCommandReceiptRef: commandReceiptRef,
+    };
+  writeFileSync(
+    path.join(f.root, commandReceiptRef),
+    record({
+      schema: 'FixtureTerminalCommandReceipt/v1',
+      fixture_only: true,
+      status: 'completed',
+      action_id: request.actionId,
+      issue_id: request.issueId,
+      host_attempt_id: request.hostAttemptId,
+      report_id: reportId,
+      report_digest: reportDigest,
+      source_diff_digest: sourceDiffDigest,
+    }),
+  );
+
+  /** @type {CompletedSourceReportRecoveryVerifyCurrent} */
+  /**
+   * @param {CompletedSourceReportRecoveryRequest} candidate
+   * @param {CompletedSourceReportRecoveryState} state
+   * @returns {CompletedSourceReportRecoveryVerifiedCurrent}
+   */
+  const verifyCurrent = (candidate, state) => {
+    const initial = state.initialReceipt,
+      frontier = state.frontierReceipt;
+    if (
+      !initial ||
+      initial.continuation_id !== candidate.initialContinuationId ||
+      initial.request_digest !== candidate.initialContinuationRequestDigest ||
+      (candidate.frontierReceiptId === null
+        ? frontier !== null ||
+          candidate.frontierRequestDigest !== null ||
+          candidate.oldRuntimeCodeDigest !== initial.request.currentRuntimeCodeDigest
+        : !frontier ||
+          frontier.original_receipt_id !== candidate.frontierReceiptId ||
+          frontier.record.request_digest !== candidate.frontierRequestDigest ||
+          frontier.current_runtime_code_digest !== candidate.oldRuntimeCodeDigest ||
+          frontier.record.request.successorManifestRef !== candidate.oldManifestRef ||
+          frontier.record.request.successorManifestDigest !== candidate.oldManifestDigest ||
+          frontier.record.request.systemUpdateRef !== candidate.oldInstallRef ||
+          canonicalJsonDigest(frontier.record.request.runtimeCodePaths) !==
+            canonicalJsonDigest(candidate.oldRuntimeCodePaths)) ||
+      initial.request.nativeSessionHandle !== candidate.nativeSessionHandle
+    )
+      throw new Error('fixture endpoint callback: initial/frontier receipt or original owner changed');
+    const sourceReservation = state.journal.state.items.find(
+        (item) => item.request.action_id === candidate.actionId,
+      )?.host_reservation,
+      sourceAuthorizationRef = initial.request.sourceAuthorizationReference;
+    if (
+      !sourceReservation ||
+      canonicalJsonDigest(sourceReservation) !== candidate.sourceReservationDigest ||
+      sha256(readFileSync(path.join(f.root, sourceAuthorizationRef.path))) !==
+        candidate.originalSourceAuthorizationDigest ||
+      state.host.work?.binding.work_source_revision !== candidate.originalSourceScopeDigest ||
+      candidate.nextJournal.source_scope?.digest !== candidate.evolvedJournalSourceScopeDigest ||
+      canonicalJsonDigest(
+        candidate.nextJournal.items.find((item) => item.request.action_id === candidate.actionId)?.observation,
+      ) !== candidate.reportDigest
+    )
+      throw new Error('fixture endpoint callback: original Source reservation or permission changed');
+    const sourceNow = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents),
+      recordedSource = requireRecord(
+        readJsonFixture(path.join(f.root, candidate.sourceSnapshotRef)),
+        'recorded source snapshot',
+      ),
+      actualDiff = [...compareScopedSourceSnapshots(sourceBefore, sourceNow)].sort((left, right) =>
+        left.path.localeCompare(right.path),
+      ),
+      recordedDiff = requireArray(readJsonFixture(path.join(f.root, candidate.sourceDiffRef)), 'recorded source diff'),
+      report = parseSessionBridgeObservation(readJsonFixture(reportPath)),
+      caller = parseSessionBridgeObservation(
+        readJsonFixture(path.join(f.root, candidate.terminalCallerObservationRef)),
+      ),
+      command = requireRecord(
+        readJsonFixture(path.join(f.root, candidate.terminalCommandReceiptRef)),
+        'terminal command receipt',
+      );
+    if (
+      sourceNow.digest !== candidate.evolvedJournalSourceScopeDigest ||
+      canonicalJsonDigest(recordedSource) !== canonicalJsonDigest(sourceNow) ||
+      canonicalJsonDigest(recordedDiff) !== canonicalJsonDigest(actualDiff) ||
+      canonicalJsonDigest(actualDiff) !== candidate.sourceDiffDigest ||
+      canonicalJsonDigest(report) !== candidate.reportDigest ||
+      report.tool_call_ref !== candidate.reportId ||
+      report.action_id !== candidate.actionId ||
+      report.issue_id !== candidate.issueId ||
+      report.host_attempt_id !== candidate.hostAttemptId ||
+      canonicalJsonDigest([...(report.changed_paths ?? [])].sort((left, right) => left.localeCompare(right))) !==
+        canonicalJsonDigest(candidate.reportSourcePaths) ||
+      canonicalJsonDigest(caller) !== canonicalJsonDigest(report) ||
+      requireString(command.action_id, 'terminal command action_id') !== candidate.actionId ||
+      requireString(command.issue_id, 'terminal command issue_id') !== candidate.issueId ||
+      requireString(command.host_attempt_id, 'terminal command host_attempt_id') !== candidate.hostAttemptId ||
+      requireString(command.report_id, 'terminal command report_id') !== candidate.reportId ||
+      requireString(command.report_digest, 'terminal command report_digest') !== candidate.reportDigest ||
+      requireString(command.source_diff_digest, 'terminal command source_diff_digest') !== candidate.sourceDiffDigest
+    )
+      throw new Error('fixture endpoint callback: exact report, caller or Source bytes changed');
+
+    const currentRuntime = snapshotRuntimePackageSources(
+      runtimePackageAccess(),
+      f.config.runtime.bundle,
+      candidate.currentRuntimeCodePaths,
+    );
+    if (
+      currentRuntime.digest !== candidate.currentRuntimeCodeDigest ||
+      candidate.currentManifestDigest !==
+        canonicalJsonDigest({
+          fixture_only: true,
+          not_native_manifest: true,
+          code_digest: currentRuntime.digest,
+          code_paths: candidate.currentRuntimeCodePaths,
+        }) ||
+      candidate.nativeSelfAttestationDigest !==
+        canonicalJsonDigest({
+          fixture_only: true,
+          not_native_attestation: true,
+          code_digest: currentRuntime.digest,
+          systemUpdateOperationId: candidate.systemUpdateOperationId,
+        }) ||
+      (!frontier &&
+        (currentRuntime.digest !== candidate.oldRuntimeCodeDigest ||
+          canonicalJsonDigest(candidate.oldRuntimeCodePaths) !==
+            canonicalJsonDigest(candidate.currentRuntimeCodePaths) ||
+          candidate.oldManifestDigest !==
+            canonicalJsonDigest({
+              fixture_only: true,
+              not_native_manifest: true,
+              prior_code_digest: currentRuntime.digest,
+              prior_code_paths: candidate.currentRuntimeCodePaths,
+            })))
+    )
+      throw new Error('fixture endpoint callback: current Host-only Source/package bytes changed');
+
+    return {
+      schema: 'CompletedSourceReportRecoveryVerifiedCurrent/v1',
+      terminal: {
+        ownerId: candidate.nativeSessionHandle,
+        ownerThreadId: candidate.nativeSessionHandle,
+        nativeSessionHandle: candidate.nativeSessionHandle,
+        attempt: candidate.attempt,
+        actionId: candidate.actionId,
+        issueId: candidate.issueId,
+        hostAttemptId: candidate.hostAttemptId,
+        leaseGeneration: candidate.leaseGeneration,
+        quiescent: true,
+        outcome: 'reported_complete',
+        callerObservationRef: candidate.terminalCallerObservationRef,
+        commandReceiptRef: candidate.terminalCommandReceiptRef,
+        reportId: candidate.reportId,
+        reportDigest: candidate.reportDigest,
+        sourceDiffDigest: candidate.sourceDiffDigest,
+        reportSourcePaths: candidate.reportSourcePaths,
+      },
+      source: {
+        reservationDigest: candidate.sourceReservationDigest,
+        authorizationDigest: candidate.originalSourceAuthorizationDigest,
+        originalScopeDigest: candidate.originalSourceScopeDigest,
+        evolvedScopeDigest: candidate.evolvedJournalSourceScopeDigest,
+        snapshotRef: candidate.sourceSnapshotRef,
+        diffRef: candidate.sourceDiffRef,
+        changedPaths: candidate.changedPaths,
+      },
+      oldRuntime: {
+        codeDigest: candidate.oldRuntimeCodeDigest,
+        codePaths: candidate.oldRuntimeCodePaths,
+        manifestRef: candidate.oldManifestRef,
+        manifestDigest: candidate.oldManifestDigest,
+        installRef: candidate.oldInstallRef,
+      },
+      currentRuntime: {
+        codeDigest: currentRuntime.digest,
+        codePaths: candidate.currentRuntimeCodePaths,
+        manifestRef: candidate.currentManifestRef,
+        manifestDigest: candidate.currentManifestDigest,
+        installRef: candidate.currentInstallRef,
+      },
+      systemUpdate: { ref: candidate.systemUpdateRef, operationId: candidate.systemUpdateOperationId },
+      nativeSelfAttestationDigest: candidate.nativeSelfAttestationDigest,
+    };
+  };
+  return { request, reportPath, verifyCurrent };
+}
+
 /** @param {WorkState} work */
 function withoutFrontierCodeBinding(work) {
   return {
@@ -1323,6 +1686,476 @@ registerFixtureTest(
       expect(journal.state.items.every((item) => item.issue_id !== null)).toBe(true);
       expect(journal.state.items.every((item) => item.request.stage_id === 'review_source_prewrite')).toBe(true);
     }),
+);
+
+registerFixtureTest(
+  'recovers the exact completed Initial Source writer report into a readonly follow-up under current code',
+  async () => {
+    await withInitialWork(async (f) => {
+      holdExpiredOwnerClockForFixture(f);
+      const { args } = await prepareInitialSourceWaveOne(f);
+      let stateVersion = continuationState(f).journalVersion;
+      const prewriterIssue = requireRecord(
+        await runAgent([...args, ...expectedRunVersion(stateVersion), '--issue-wave', 'true']),
+        'Initial Source prewriter issue',
+      );
+      const prewriterActions = parseIssuedActions(prewriterIssue.issued_actions, 'Initial Source prewriter actions');
+      expect(prewriterActions.length).toBeGreaterThan(0);
+      expect(prewriterActions.every((action) => action.request.stage_id === 'review_source_prewrite')).toBe(true);
+      stateVersion = requireStateVersion(prewriterIssue.state_version, 'prewriter state_version');
+      for (const [index, action] of prewriterActions.entries()) {
+        const work = continuationState(f).work;
+        const journal = currentJournal(f);
+        const kind =
+          action.request.role === 'source-planner'
+            ? 'source_plan'
+            : action.request.role === 'security-prewriter'
+              ? 'implementation_policy'
+              : null;
+        if (!kind) throw new Error('Initial Source prewriter role has no typed preparation kind');
+        const evidenceRef = 'local://initial-source-prewriter/' + action.issue_id;
+        const preparationObservations =
+          kind === 'source_plan'
+            ? [
+                {
+                  mechanic: 'scope_acceptance_trace',
+                  actual: 'The admitted implementation paths and AC trace to the retained acceptance contract.',
+                  evidence_ref: evidenceRef,
+                },
+                {
+                  mechanic: 'verification_rollback',
+                  actual: 'Focused verification and source restoration are identified for this scoped change.',
+                  evidence_ref: evidenceRef,
+                },
+              ]
+            : [
+                {
+                  mechanic: 'root_cause_owner',
+                  actual: 'The source owner and root cause for this scoped change are identified.',
+                  evidence_ref: evidenceRef,
+                },
+                {
+                  mechanic: 'affected_callers',
+                  actual: 'Affected callers within the accepted change are identified.',
+                  evidence_ref: evidenceRef,
+                },
+                {
+                  mechanic: 'existing_primitives',
+                  actual: 'Existing Host and filesystem coordination primitives are retained.',
+                  evidence_ref: evidenceRef,
+                },
+                {
+                  mechanic: 'prewriter_security_gate',
+                  actual: 'The exact scoped write and its pre-effect gates are preserved.',
+                  evidence_ref: evidenceRef,
+                },
+              ];
+        const preparation = lifecyclePreparationObservationSchema.parse({
+          schema: 'LifecyclePreparationObservation/v1',
+          record_id: kind + '-' + action.request.action_id,
+          kind,
+          work_id: work.binding.lifecycle_work_id,
+          attempt: journal.state.attempt,
+          source_revision: work.binding.work_source_revision,
+          scope_id: work.binding.scope_id,
+          config_digest: work.binding.config_digest,
+          ac_ids: work.binding.ac_ids,
+          observed_at: new Date().toISOString(),
+          observer_id: 'fixture:initial-source-prewriter-' + index,
+          status: 'pass',
+          evidence_refs: [evidenceRef],
+          observations: preparationObservations,
+          gaps: [],
+        });
+        const summary = JSON.stringify(preparation);
+        const observation = {
+          schema: 'VidaSessionObservation/v1',
+          action_id: action.request.action_id,
+          issue_id: action.issue_id,
+          agent_id: preparation.observer_id,
+          tool_call_ref: 'fixture:initial-source-prewriter-call-' + action.issue_id,
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: preparation.evidence_refs,
+        };
+        const reportPath = path.join(
+          f.root,
+          '.agent',
+          'work',
+          f.identity.work_id,
+          'initial-source-prewriter-' + index + '.json',
+        );
+        writeFileSync(reportPath, record(observation));
+        const reported = requireRecord(
+          await runAgent([...args, ...expectedRunVersion(stateVersion), '--report', reportPath]),
+          'Initial Source prewriter report',
+        );
+        stateVersion = requireStateVersion(reported.state_version, 'prewriter report state_version');
+      }
+
+      const writerIssue = requireRecord(
+        await runAgent([...args, ...expectedRunVersion(stateVersion), '--issue-wave', 'true']),
+        'Initial Source writer issue',
+      );
+      const writerActions = parseIssuedActions(writerIssue.issued_actions, 'Initial Source writer actions');
+      expect(writerActions).toHaveLength(1);
+      const writer = firstValue(writerActions, 'Initial Source writer actions');
+      expect(writer.request.stage_id).toBe('develop_task');
+      const writerJournal = currentJournal(f);
+      const pendingWriter = writerJournal.state.items.find(
+        (item) => item.request.action_id === writer.request.action_id,
+      );
+      if (!pendingWriter?.host_reservation) throw new Error('Initial Source writer reservation is unavailable');
+      expect(pendingWriter.issue_id).toBe(writer.issue_id);
+      expect(pendingWriter.host_reservation.approvalAction).toBe('source.write');
+      const writerAttemptId = requireString(
+        pendingWriter.host_reservation.receipt.attempt.attempt_id,
+        'Initial Source writer attempt id',
+      );
+      const writerStateVersion = requireStateVersion(writerIssue.state_version, 'writer issue state_version');
+      const initialReceipt = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1);
+      if (!initialReceipt) throw new Error('Initial Source writer receipt is unavailable');
+      const beforeDrift = continuationState(f);
+      // Keep the ordinary live-owner lease; this case does not use expired-owner recovery.
+      const liveOwnerLease = workLease(beforeDrift.work);
+      const startedAttempt = beforeDrift.work.execution.assignment_attempts.find(
+        (attempt) => attempt.attempt_id === writerAttemptId,
+      );
+      expect(startedAttempt).toMatchObject({ status: 'started', result: null, result_digest: null });
+      expect(pendingWriter.observation).toBeNull();
+
+      const sourceBefore = writerJournal.state.source_scope;
+      if (!sourceBefore) throw new Error('Initial Source writer Journal scope is unavailable');
+      const changedPath = f.documents[0];
+      writeFileSync(
+        path.join(f.root, changedPath),
+        readFileSync(path.join(f.root, changedPath), 'utf8') + 'authorized source-writer output\n',
+      );
+      const sourceAfter = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
+      const changedPaths = compareScopedSourceSnapshots(sourceBefore, sourceAfter)
+        .map((change) => change.path)
+        .sort();
+      expect(changedPaths).toEqual([changedPath]);
+
+      await expectRejectedMessage(
+        runAgent([...args, ...expectedRunVersion(writerStateVersion), '--issue-wave', 'true']),
+        /Initial Source continuation does not match the current scoped Source snapshot/,
+      );
+      expect(continuationState(f)).toEqual(beforeDrift);
+
+      const writerSummary = 'The authorized source writer updated one implementation path.';
+      const writerObservation = {
+        schema: 'VidaSessionObservation/v1',
+        action_id: writer.request.action_id,
+        host_attempt_id: writerAttemptId,
+        changed_paths: changedPaths,
+        issue_id: writer.issue_id,
+        agent_id: 'fixture:initial-source-writer',
+        tool_call_ref: 'fixture:initial-source-writer-call',
+        status: 'reported_complete',
+        summary: writerSummary,
+        output_digest: canonicalJsonDigest(writerSummary),
+        evidence_refs: ['fixture://initial-source-writer'],
+      };
+      const writerReportPath = path.join(
+        f.root,
+        '.agent',
+        'work',
+        f.identity.work_id,
+        'initial-source-writer-report.json',
+      );
+      const invalidReports = [
+        { ...writerObservation, action_id: canonicalJsonDigest('foreign initial-source action') },
+        { ...writerObservation, issue_id: randomUUID() },
+        { ...writerObservation, host_attempt_id: canonicalJsonDigest('foreign initial-source attempt') },
+        { ...writerObservation, changed_paths: [...changedPaths, 'docs/outside-scope.md'].sort() },
+      ];
+      for (const invalid of invalidReports) {
+        writeFileSync(writerReportPath, record(invalid));
+        await expectRejectedMessage(
+          runAgent([...args, ...expectedRunVersion(writerStateVersion), '--report', writerReportPath]),
+          /Initial Source continuation does not match the current scoped Source snapshot/,
+        );
+        expect(continuationState(f)).toEqual(beforeDrift);
+      }
+
+      writeFileSync(writerReportPath, record(writerObservation));
+      const recoveryFixture = completedSourceReportRecoveryFixture(
+          f,
+          writer,
+          writerAttemptId,
+          writerObservation,
+          sourceBefore,
+          sourceAfter,
+          null,
+          writerReportPath,
+        ),
+        beforeRecovery = continuationState(f),
+        request = recoveryFixture.request,
+        commit = (candidate = request, verifyCurrent = recoveryFixture.verifyCurrent) =>
+          hostStore(f).commitCompletedSourceReportRecovery(candidate, verifyCurrent);
+      expect(() => commit()).toThrow(/completed Source report recovery original Source ticket or claim differs/);
+      expect(continuationState(f)).toEqual(beforeRecovery);
+      holdExpiredOwnerClockForFixture(f);
+
+      const retainedReportBytes = readFileSync(writerReportPath);
+      try {
+        writeFileSync(writerReportPath, record({ ...writerObservation, summary: 'altered report body' }));
+        expect(() => {
+          commit();
+        }).toThrow();
+      } finally {
+        writeFileSync(writerReportPath, retainedReportBytes);
+      }
+      expect(continuationState(f)).toEqual(beforeRecovery);
+
+      const sourceFile = path.join(f.root, changedPath);
+      const evolvedSourceBytes = readFileSync(sourceFile);
+      try {
+        writeFileSync(sourceFile, evolvedSourceBytes.toString('utf8') + 'tampered before report\n');
+        expect(() => {
+          commit();
+        }).toThrow();
+      } finally {
+        writeFileSync(sourceFile, evolvedSourceBytes);
+      }
+      expect(continuationState(f)).toEqual(beforeRecovery);
+
+      /** @type {CompletedSourceReportRecoveryVerifyCurrent} */
+      const alteredProof = (candidate, state) => ({
+        ...recoveryFixture.verifyCurrent(candidate, state),
+        nativeSelfAttestationDigest: canonicalJsonDigest('altered fixture proof'),
+      });
+      expect(() => {
+        commit(request, alteredProof);
+      }).toThrow();
+      expect(continuationState(f)).toEqual(beforeRecovery);
+      const recovery = validateCompletedSourceReportRecoveryReceipt(commit());
+      expect(recovery.status).toBe('completed_report_recovered');
+      expect(recovery.source_write_rights).toBe(false);
+      expect(recovery.runtime_acceptance).toBe(false);
+      expect(recovery.record.prior_work).toEqual(beforeRecovery.work);
+      expect(recovery.record.prior_work_version).toEqual(beforeRecovery.workVersion);
+      expect(recovery.record.prior_ledger_version).toEqual(beforeRecovery.ledgerVersion);
+      expect(recovery.record.prior_journal).toEqual(beforeRecovery.journal);
+      expect(recovery.record.prior_journal_version).toEqual(beforeRecovery.journalVersion);
+      expect(recovery.record.original_reservation).toEqual(pendingWriter.host_reservation);
+      expect(recovery.record.original_source_ticket).toEqual(
+        beforeRecovery.ledger.tickets.find(
+          (ticket) => ticket.ticket_id === pendingWriter.host_reservation?.receipt.attempt.lease.ticket_id,
+        ),
+      );
+      expect(recovery.record.completed_attempt).toMatchObject({
+        attempt_id: writerAttemptId,
+        status: 'completed',
+        result: writerObservation,
+        result_digest: canonicalJsonDigest(writerObservation),
+      });
+
+      const afterRecovery = continuationState(f),
+        completedReport = [
+          ...afterRecovery.journal.completed.flatMap((wave) => wave.items),
+          ...afterRecovery.journal.items,
+        ].find((item) => item.request.action_id === writer.request.action_id);
+      expect(afterRecovery.journal.source_scope?.digest).toBe(sourceAfter.digest);
+      expect(completedReport?.observation).toEqual(writerObservation);
+      expect(afterRecovery.work.binding.work_source_revision).toBe(sourceBefore.digest);
+      expect(afterRecovery.work.binding.runtime_code_digest).toBe(request.currentRuntimeCodeDigest);
+      expect(afterRecovery.work.lifecycle.scope).toEqual(beforeRecovery.work.lifecycle.scope);
+      const completedAttempt = afterRecovery.work.execution.assignment_attempts.find(
+        (attempt) => attempt.attempt_id === writerAttemptId,
+      );
+      expect(completedAttempt).toMatchObject({
+        status: 'completed',
+        result: writerObservation,
+        result_digest: canonicalJsonDigest(writerObservation),
+      });
+      const executionLease = workLease(afterRecovery.work);
+      expect(executionLease.thread_id).toBe(liveOwnerLease.thread_id);
+      expect(executionLease.ticket_id).not.toBe(liveOwnerLease.ticket_id);
+      const executionClaim = afterRecovery.ledger.claims.find(
+        (claim) => claim.ticket_id === executionLease.ticket_id && claim.status === 'active',
+      );
+      expect(executionClaim?.resources).toEqual(['execution:' + f.identity.work_id]);
+      expect(recovery.record.execution_ticket.thread_id).toBe(liveOwnerLease.thread_id);
+      expect(recovery.record.execution_ticket.exclusive_resources).toEqual(['execution:' + f.identity.work_id]);
+      expect(recovery.record.execution_claim.thread_id).toBe(liveOwnerLease.thread_id);
+      expect(recovery.record.execution_claim.resources).toEqual(['execution:' + f.identity.work_id]);
+      expect(afterRecovery.ledger.tickets.find((ticket) => ticket.ticket_id === liveOwnerLease.ticket_id)?.status).toBe(
+        'released',
+      );
+      expect(
+        afterRecovery.ledger.claims.some(
+          (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
+        ),
+      ).toBe(false);
+      expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(initialReceipt);
+      expect(
+        hostStore(f).readInitialSourceFrontierCodeRebindReceipt(f.identity, 1, initialReceipt.continuation_id),
+      ).toBeNull();
+      expect(hostStore(f).readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(recovery);
+
+      // Exact retry models a lost acknowledgement; it returns the same immutable receipt once.
+      expect(commit()).toEqual(recovery);
+      expect(continuationState(f)).toEqual(afterRecovery);
+
+      for (const altered of [
+        { ...request, expectedJournal: { ...request.expectedJournal, revision: request.expectedJournal.revision + 1 } },
+        { ...request, nativeSessionHandle: 'fixture:foreign-controller' },
+        { ...request, reportDigest: canonicalJsonDigest('altered report identity') },
+        { ...request, currentRuntimeCodeDigest: canonicalJsonDigest('altered current code') },
+      ]) {
+        expect(() => commit(altered)).toThrow();
+        expect(continuationState(f)).toEqual(afterRecovery);
+      }
+
+      const resumedFollowup = requireRecord(await runAgent(args), 'recovered Source report engine resume');
+      const nextJournalVersion = requireStateVersion(resumedFollowup.state_version, 'resumed follow-up state_version');
+      expect(parseIssuedActions(resumedFollowup.issued_actions, 'resume issued actions')).toHaveLength(0);
+      const beforeExpiredRecovery = continuationState(f);
+      expect(beforeExpiredRecovery.journalVersion).toEqual(nextJournalVersion);
+      holdExpiredOwnerClockForFixture(f);
+      const expiredRecoveryResult = requireRecord(
+        await runAgent([
+          ...args,
+          '--recover-expired-lease',
+          'true',
+          '--rebind-current-bundle',
+          'true',
+          '--native-session-handle',
+          executionLease.thread_id,
+          '--lease-generation',
+          String(executionLease.generation),
+          ...expectedRunVersion(beforeExpiredRecovery.journalVersion),
+        ]),
+        'same-attempt expired execution-lease recovery',
+      );
+      expect(expiredRecoveryResult.status).toBe('inspected');
+      expect(expiredRecoveryResult.attempt).toBe(1);
+      const inspectedLease = requireRecord(expiredRecoveryResult.lease, 'recovered execution-only lease');
+      const afterExpiredRecovery = continuationState(f),
+        currentHost = completeHostState(hostStore(f).readHostStateSnapshot(f.identity)),
+        currentRecovery = hostStore(f).readCompletedSourceReportRecoveryReceipt(f.identity, 1),
+        currentLease = workLease(afterExpiredRecovery.work),
+        currentTicket = afterExpiredRecovery.ledger.tickets.find(
+          (ticket) => ticket.ticket_id === currentLease.ticket_id,
+        ),
+        currentClaim = afterExpiredRecovery.ledger.claims.find(
+          (claim) => claim.ticket_id === currentLease.ticket_id && claim.status === 'active',
+        ),
+        leaseRebind = afterExpiredRecovery.ledger.rebinds.find(
+          (entry) =>
+            entry.work_id === f.identity.work_id &&
+            Number(entry.to_ledger_revision) > recovery.record.successor_ledger_version.revision,
+        );
+      if (!currentRecovery || !leaseRebind || !currentTicket || !currentClaim)
+        throw new Error('Expired recovery receipt or current execution lease chain is unavailable');
+      expect(currentRecovery).toEqual(recovery);
+      expect(expiredRecoveryResult.journal_version).toEqual(afterExpiredRecovery.journalVersion);
+      expect(inspectedLease).toMatchObject({
+        ticket_id: currentLease.ticket_id,
+        thread_id: executionLease.thread_id,
+        generation: currentLease.generation,
+        expired: false,
+      });
+      expect(afterExpiredRecovery.journalVersion).toEqual({
+        revision: beforeExpiredRecovery.journalVersion.revision + 1,
+        digest: beforeExpiredRecovery.journalVersion.digest,
+      });
+      expect({
+        attempt: afterExpiredRecovery.journal.attempt,
+        evolved: afterExpiredRecovery.journal.source_scope?.digest,
+        workSource: afterExpiredRecovery.work.binding.work_source_revision,
+      }).toEqual({
+        attempt: 1,
+        evolved: sourceAfter.digest,
+        workSource: sourceBefore.digest,
+      });
+      expect(currentLease.ticket_id).not.toBe(executionLease.ticket_id);
+      expect({ currentTicket, currentClaim, leaseRebind }).toMatchObject({
+        currentTicket: {
+          status: 'active',
+          thread_id: executionLease.thread_id,
+          exclusive_resources: ['execution:' + f.identity.work_id],
+          active_resources: ['execution:' + f.identity.work_id],
+        },
+        currentClaim: { status: 'active', resources: ['execution:' + f.identity.work_id] },
+        leaseRebind: {
+          previous_ticket_id: executionLease.ticket_id,
+          ticket_id: currentLease.ticket_id,
+          thread_id: executionLease.thread_id,
+          decided_by: executionLease.thread_id,
+          resources: ['execution:' + f.identity.work_id],
+          claimed_resources: ['execution:' + f.identity.work_id],
+        },
+      });
+      expect({
+        ticket: afterExpiredRecovery.ledger.tickets.find((ticket) => ticket.ticket_id === executionLease.ticket_id)
+          ?.status,
+        claim: afterExpiredRecovery.ledger.claims.find((claim) => claim.ticket_id === executionLease.ticket_id)?.status,
+      }).toEqual({ ticket: 'read_only', claim: 'recovered' });
+      expect(
+        validateCompletedSourceReportRecoveryCurrentWorkJoin(
+          currentHost,
+          { version: afterExpiredRecovery.journalVersion, state: afterExpiredRecovery.journal },
+          initialReceipt,
+          null,
+          recovery,
+        ),
+      ).toEqual(recovery);
+
+      for (const changes of [
+        { previous_ticket_id: 'fixture:foreign-ticket' },
+        { thread_id: 'fixture:foreign-thread' },
+        {
+          resources: ['execution:' + f.identity.work_id, 'file:' + changedPath],
+          claimed_resources: ['execution:' + f.identity.work_id, 'file:' + changedPath],
+        },
+      ]) {
+        const alteredLedger = {
+          ...currentHost.ledger,
+          rebinds: currentHost.ledger.rebinds.map((entry) =>
+            entry.rebind_id === leaseRebind.rebind_id ? { ...entry, ...changes } : entry,
+          ),
+        };
+        expect(() =>
+          validateCompletedSourceReportRecoveryCurrentWorkJoin(
+            { ...currentHost, ledger: alteredLedger },
+            { version: afterExpiredRecovery.journalVersion, state: afterExpiredRecovery.journal },
+            initialReceipt,
+            null,
+            recovery,
+          ),
+        ).toThrow();
+      }
+
+      const readonlyFollowup = requireRecord(
+        await runAgent([...args, ...expectedRunVersion(afterExpiredRecovery.journalVersion), '--issue-wave', 'true']),
+        'readonly Initial Source follow-up issue',
+      );
+      const followupActions = parseIssuedActions(readonlyFollowup.issued_actions, 'readonly follow-up actions');
+      expect(followupActions).toHaveLength(2);
+      expect(followupActions.every((action) => action.request.stage_id === 'validate_focused')).toBe(true);
+      const followupJournal = currentJournal(f);
+      expect(followupJournal.state.source_scope?.digest).toBe(sourceAfter.digest);
+      expect(followupJournal.state.items).toHaveLength(2);
+      expect(followupJournal.state.items.every((item) => item.host_reservation === undefined)).toBe(true);
+      expect(followupJournal.state.items.every((item) => item.request.stage_id === 'validate_focused')).toBe(true);
+      expect(followupActions.every((action) => action.request.action_id !== writer.request.action_id)).toBe(true);
+      expect(
+        continuationState(f).ledger.claims.some(
+          (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
+        ),
+      ).toBe(false);
+      expect(continuationState(f).work.lease).toEqual(currentLease);
+      expect(
+        continuationState(f).work.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === writerAttemptId,
+        ),
+      ).toEqual(completedAttempt);
+    });
+  },
 );
 
 registerFixtureTest(
@@ -1388,11 +2221,13 @@ registerFixtureTest(
         runId: workRunId(after.work),
       };
       expect(after.journal.source_scope?.digest).toBe(initialReceipt.request.currentSourceScope.digest);
+      const engineJournal = { version: after.journalVersion, state: after.journal };
+      const engineHost = hostStore(f).readHostStateSnapshot(f.identity);
       expect(() =>
-        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, after.journal, after.work),
+        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, engineJournal, engineHost),
       ).toThrow();
       expect(
-        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, after.journal, after.work, receipt)
+        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, engineJournal, engineHost, receipt)
           .run_id,
       ).toBe(binding.runId);
       expect(() =>
@@ -1405,7 +2240,7 @@ registerFixtureTest(
         }),
       ).toThrow();
       expect(() =>
-        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, after.journal, after.work, {
+        readInitialSourceContinuationSessionEngineSnapshot(binding, initialReceipt, engineJournal, engineHost, {
           ...receipt,
           current_runtime_code_digest: canonicalJsonDigest('changed-code'),
         }),

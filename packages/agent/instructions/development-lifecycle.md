@@ -616,11 +616,29 @@ narratives about absent legacy implementations. Formatter/TypeScript 7 hooks and
 pre-push coverage/CRAP remain proposals for discussion; do not install or activate
 hooks from this policy.
 
-Production functions target CRAP 1 for pure transforms, 2 for one meaningful
-decision and 3 for compact coordination. CRAP 4 is reserved for a cohesive
-critical invariant whose branch order matters, with negative and mutation
-evidence. The release gate is `CRAP < 5` for every maintained function; low
-CRAP never substitutes for security, migration or persistence counterexamples.
+Apply `TESTING.md#new-and-modified-files` to every new or modified production
+file. Developers author and correct the tests for their feature/fix within their
+owned scope; independent validation remains separate. Vida-Test escalates
+discovered product/runtime defects and test-tooling blockers during refactoring
+to TeamLead with reproducible evidence instead of taking over production fixes.
+Unchanged legacy improvement remains separately scoped, with affected gaps explicit.
+
+`TESTING.md#evidence-and-quality-gates` owns the frozen per-function/risk CRAP
+and complexity budget, non-regression baseline and independent coverage/mutation
+criteria. The historical fixed executable CRAP gate remains an implementation
+GAP until its separately qualified reconciliation. Do not claim a documentation
+update implements a gate, changes a current installed instruction, or qualifies
+missing numeric evidence. Verify actual runtime/runner versions for every check
+and distinguish adapter, Source and installed executable observations.
+
+Exact coverage/mutation targets and frozen budgets govern development and
+truthful completion of its checks. They add no numeric barrier to the minimum
+native formation/install profile or supported developer unblocking. Follow this
+protocol's formation and installation policy without suites or repeated task
+checks or reviews solely for those operations. Keep missing measurements pending
+or GAP, separate from delivery and Runtime acceptance. Causal functional defects,
+Source rights, CAS, UNKNOWN custody and integrity remain with their current
+owners and required controls.
 
 An explicit human standing instruction scoped to a Source repository may satisfy
 its Git commit/push permission requirement. Apply that repository's Sidecar

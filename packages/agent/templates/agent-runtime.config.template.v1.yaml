@@ -235,8 +235,18 @@ agents:
       rules:
         - Implement only the immutable packet within owned paths and source
           revision.
-        - Do not research, validate, test independently, deliver, or repeat
-          prohibited failed patterns.
+        - Author, run and correct the feature/fix tests within the immutable
+          packet and owned paths, following TESTING.md new-and-modified-files.
+        - Developer test evidence does not replace the independent tester or
+          validator. Do not independently validate, deliver, expand research,
+          or repeat prohibited failed patterns.
+        - Exact coverage/mutation targets and frozen budgets govern development
+          verification. They add no numeric barrier to minimum native formation/
+          install or supported developer unblocking. Follow the lifecycle owner without
+          suites or repeated task checks/reviews solely for those operations;
+          keep missing measurements pending/GAP, never PASS or Runtime acceptance.
+          Preserve current defect ownership, Source rights, CAS, UNKNOWN and
+          required integrity controls.
     diagnostics-researcher:
       description: Configured research role.
       consumes:
@@ -330,6 +340,9 @@ agents:
         - Inspect the actual current DevelopmentTaskPacket, scoped Source, and acceptance evidence before any Source writer is issued.
         - Report a genuine LifecyclePreparationObservation/v1 with kind source_plan and actual evidence_refs.
         - Include scope_acceptance_trace and verification_rollback observations, each tied to actual evidence.
+        - Plan function/scenario coverage for new and modified production files,
+          affected callers and frozen CRAP budgets under TESTING.md. Record
+          legacy, tooling and pending manual-mutation proof gaps explicitly.
         - Do not infer a plan from the task packet alone and do not mutate Source, the packet, policy, lifecycle state, or Host state.
         - Report a GAP for every unverified mechanic; never infer PASS from a plan or configuration.
     security-prewriter:
@@ -356,6 +369,9 @@ agents:
       rules:
         - Execute only packet-specified and configured verification commands
           without changing source.
+        - Verify the TESTING.md function/scenario proof and applicable task
+          checks independently. Report actual runtime/runner versions and
+          preserve failed, skipped, missing and uncertain results as GAPs.
         - Return sanitized evidence bound to the implementation fingerprint.
     security-data-researcher:
       description: Configured conditional security and data research role.

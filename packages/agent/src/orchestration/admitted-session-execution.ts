@@ -8,6 +8,7 @@ import {
 import { loadProjectSetContext } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import type { HostStateStore, WorkIdentity, WorkState } from '../host-state.js';
 import { createTrustedLocalSessionComposition, requireLiveLocalSessionAdmission } from '../runtime-kernel.js';
 import { snapshotRuntimePackageSources } from './scoped-source-snapshot.js';
@@ -21,6 +22,7 @@ import {
   readInitialSourceContinuationLineageView,
   validateInitialSourceContinuationLineage,
 } from './admitted-development-packet.js';
+import { validateCompletedSourceReportRecoveryCurrentWorkJoin } from './completed-source-report-recovery.js';
 
 function requireExecution(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -84,7 +86,8 @@ export function assertAdmittedRuntimeCodeCurrent(
   identity: WorkIdentity,
 ): { work_item: unknown; native_session_handle: string } {
   const intake = readAdmittedSessionIntake(repositoryRoot, store, identity);
-  const work = store.readHostStateSnapshot(identity).work!;
+  const host = store.readHostStateSnapshot(identity);
+  const work = host.work!;
   const config = loadRuntimeConfig(repositoryRoot);
   const currentPaths = runtimePackageCodePaths(config.runtime.bundle);
   const journal = store.readWorkSessionJournal(identity);
@@ -98,13 +101,38 @@ export function assertAdmittedRuntimeCodeCurrent(
   let runtimePaths: readonly string[] = currentPaths;
   if (initialReceipt) {
     const receipt = validateInitialSourceContinuationReceipt(initialReceipt);
-    validateInitialSourceContinuationLineage(work, receipt, journal!.state, initialView?.frontierCodeRebind);
+    const completedRecovery = initialView?.completedSourceReportRecovery ?? null;
+    validateInitialSourceContinuationLineage(
+      work,
+      receipt,
+      journal!.state,
+      initialView?.frontierCodeRebind,
+      completedRecovery,
+    );
+    if (completedRecovery) {
+      validateCompletedSourceReportRecoveryCurrentWorkJoin(
+        host,
+        { version: journal!.version, state: journal!.state as unknown as MastraSessionLedgerState },
+        receipt,
+        initialView?.frontierCodeRebind ?? null,
+        completedRecovery,
+      );
+    }
     const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, currentPaths);
+    const expectedCurrentCode =
+      completedRecovery?.record.request.currentRuntimeCodeDigest ??
+      initialView?.frontierCodeRebind?.current_runtime_code_digest ??
+      receipt.request.currentRuntimeCodeDigest;
+    const expectedCurrentPaths = completedRecovery?.record.request.currentRuntimeCodePaths ?? currentPaths;
     requireExecution(
       current.digest === work.binding.runtime_code_digest &&
-        (!initialView?.frontierCodeRebind
+        current.digest === expectedCurrentCode &&
+        canonicalJsonDigest(currentPaths) === canonicalJsonDigest(expectedCurrentPaths) &&
+        (!initialView?.frontierCodeRebind && !completedRecovery
           ? receipt.request.currentRuntimeCodeDigest === current.digest
-          : initialView.frontierCodeRebind.current_runtime_code_digest === current.digest),
+          : completedRecovery
+            ? completedRecovery.record.request.currentRuntimeCodeDigest === current.digest
+            : initialView!.frontierCodeRebind!.current_runtime_code_digest === current.digest),
       'initial Source continuation does not bind the canonical runtime inventory and protected intake paths',
     );
   } else if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(currentPaths)) {
