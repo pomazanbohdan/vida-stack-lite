@@ -649,9 +649,10 @@ function moveAndRemovePinnedLock(
 ): boolean {
   const native = linuxNativeBinding;
   reject(!native, label + ' requires the bundled Linux no-replace rename primitive');
-  const quarantineStem = Buffer.byteLength(name, 'utf8') <= 207
-    ? name
-    : 'vida-quarantine-' + createHash('sha256').update(name, 'utf8').digest('hex');
+  const quarantineStem =
+    Buffer.byteLength(name, 'utf8') <= 207
+      ? name
+      : 'vida-quarantine-' + createHash('sha256').update(name, 'utf8').digest('hex');
   const quarantineName = '.' + quarantineStem + '.' + randomUUID() + '.reclaimed';
   let moved = false;
   let removed = false;
@@ -1014,7 +1015,12 @@ function rejectLinuxOrphanBackups(parentFd: number, targetName: string, label: s
     label + ' is blocked by an unresolved private backup; target recovery is required',
   );
 }
-type LinuxCasLock = { readonly parentFd: number; readonly name: string; readonly lockName: string; readonly lockFd: number };
+type LinuxCasLock = {
+  readonly parentFd: number;
+  readonly name: string;
+  readonly lockName: string;
+  readonly lockFd: number;
+};
 function acquireLinuxCasLock(root: string, target: string, label: string): LinuxCasLock {
   const parent = openParent(root, safeRelative(root, target, label), label);
   try {
@@ -1408,10 +1414,7 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
     try {
       const afterStats = fstatSync(afterFd);
       regularFile(afterStats, label);
-      reject(
-        !sameFileIdentity(tempIdentity, afterStats),
-        label + ' post-commit identity or hash verification failed',
-      );
+      reject(!sameFileIdentity(tempIdentity, afterStats), label + ' post-commit identity or hash verification failed');
       reject(
         rawHash(readBoundedBuffer(afterFd, label)) !== desiredHash,
         label + ' post-commit identity or hash verification failed',
@@ -1464,14 +1467,7 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
         }
         if (linuxOrphanBackupNames(parent.fd, name).length > 0) {
           try {
-            recoverLinuxOrphanBackup(
-              native as LinuxNativeBinding,
-              parent.fd,
-              name,
-              expectedHash,
-              desiredHash,
-              label,
-            );
+            recoverLinuxOrphanBackup(native as LinuxNativeBinding, parent.fd, name, expectedHash, desiredHash, label);
           } catch (error) {
             recoveryError ??= error;
           }
@@ -1500,8 +1496,11 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
     }
   }
   if (operationFailed && recoveryError !== undefined)
-    throw new AggregateError([operationError, recoveryError], recoveryError instanceof Error
-      ? recoveryError.message : label + ' recovery failed', { cause: operationError });
+    throw new AggregateError(
+      [operationError, recoveryError],
+      recoveryError instanceof Error ? recoveryError.message : label + ' recovery failed',
+      { cause: operationError },
+    );
   if (operationFailed) throw operationError;
   if (recoveryError !== undefined) throw recoveryError;
 }
@@ -1543,7 +1542,10 @@ function recoverLinuxOrphanBackup(
         }
         const targetHash = Result.fromThrowable(
           () => {
-            const targetFd = openSync(childPath(parentFd, targetName), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+            const targetFd = openSync(
+              childPath(parentFd, targetName),
+              fsConstants.O_RDONLY | noFollow | nonBlockingFlag,
+            );
             try {
               const targetStats = fstatSync(targetFd);
               regularFile(targetStats, label);
@@ -1770,14 +1772,18 @@ function windowsReplaceAtomicUnlocked(
   const opened = windowsOpenParent(root, target, label);
   const tempName = '.' + opened.basename + '.' + randomUUID() + '.native.tmp';
   let tempFd: number | undefined;
-  let renamed = false;
   try {
     const currentFd = windowsNativeBinding!.openBeneath(
       opened.parentFd,
       opened.basename,
       windowsNativeOpenFlags(fsConstants.O_RDONLY),
     ).fd;
+    const currentIdentity = fstatSync(currentFd, { bigint: true });
     try {
+      reject(
+        !currentIdentity.isFile() || currentIdentity.nlink !== 1n,
+        label + ' target must be a regular single-link file',
+      );
       reject(rawHash(readBoundedBuffer(currentFd, label)) !== expectedHash, label + ' expected content hash is stale');
     } finally {
       closeQuietly(currentFd);
@@ -1789,9 +1795,36 @@ function windowsReplaceAtomicUnlocked(
     ).fd;
     windowsWriteAll(tempFd, bytes);
     fsyncSync(tempFd);
+    const stagedIdentity = fstatSync(tempFd, { bigint: true });
+    reject(
+      !stagedIdentity.isFile() || stagedIdentity.nlink !== 1n,
+      label + ' staging must be a regular single-link file',
+    );
+    for (const [name, identity, expected] of [
+      [opened.basename, currentIdentity, expectedHash],
+      [tempName, stagedIdentity, rawHash(bytes)],
+    ] as const) {
+      const fd = windowsNativeBinding!.openBeneath(
+        opened.parentFd,
+        name,
+        windowsNativeOpenFlags(fsConstants.O_RDONLY),
+      ).fd;
+      try {
+        const actual = fstatSync(fd, { bigint: true });
+        reject(
+          !actual.isFile() ||
+            actual.nlink !== 1n ||
+            actual.dev !== identity.dev ||
+            actual.ino !== identity.ino ||
+            rawHash(readBoundedBuffer(fd, label)) !== expected,
+          label + ' replacement input identity or content changed',
+        );
+      } finally {
+        closeQuietly(fd);
+      }
+    }
     try {
       windowsNativeBinding!.renameReplace(opened.parentFd, tempName, opened.parentFd, opened.basename);
-      renamed = true;
     } catch (error) {
       throw new Error(
         `${label} replacement outcome unknown; retry prohibited until authoritative reconciliation: ${String(error)}`,
@@ -1804,8 +1837,13 @@ function windowsReplaceAtomicUnlocked(
         windowsNativeOpenFlags(fsConstants.O_RDONLY),
       ).fd;
       try {
+        const resultIdentity = fstatSync(resultFd, { bigint: true });
         reject(
-          rawHash(readBoundedBuffer(resultFd, label)) !== rawHash(bytes),
+          !resultIdentity.isFile() ||
+            resultIdentity.nlink !== 1n ||
+            resultIdentity.dev !== stagedIdentity.dev ||
+            resultIdentity.ino !== stagedIdentity.ino ||
+            rawHash(readBoundedBuffer(resultFd, label)) !== rawHash(bytes),
           label + ' replacement verification failed',
         );
       } finally {
@@ -1818,10 +1856,7 @@ function windowsReplaceAtomicUnlocked(
     }
   } finally {
     if (tempFd !== undefined) closeQuietly(tempFd);
-    if (!renamed) {
-      // Retain an unverifiable temporary artifact rather than deleting a path
-      // after a failed native operation; recovery can inspect it safely.
-    }
+    // Retain staging after failure; a path-based cleanup could delete a substituted file.
     windowsCloseParent(opened);
   }
 }
@@ -2172,83 +2207,89 @@ async function linuxMoveNoReplaceAsync(
       { target, label: label + ' target' },
     ],
     () => {
-  const probe = (candidate: string): string | null => {
-    if (!linuxFileExistsUnlocked(root, candidate, label + ' hash probe')) return null;
-    return rawHash(readBytesUnlocked(root, candidate, label + ' hash probe'));
-  };
-  const sourceBefore = probe(source);
-  const targetBefore = probe(target);
-  if (sourceBefore === null && targetBefore === expectedHash) return 'already_moved';
-  if (sourceBefore !== expectedHash || targetBefore !== null)
-    throw new SafeRepositoryMoveError(
-      'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
-      label + ' source/target state is conflicting',
-    );
-  const from = openParent(root, sourceSegments, label + ' source');
-  const to = openParent(root, targetSegments, label + ' target');
-  let sourceFd = -1;
-  let targetFd = -1;
-  try {
-    sourceFd = openSync(childPath(from.fd, from.name), fsConstants.O_RDONLY | noFollow);
-    const sourceStats = fstatSync(sourceFd);
-    regularFile(sourceStats, label + ' source');
-    reject(rawHash(readBoundedBuffer(sourceFd, label + ' source')) !== expectedHash, label + ' source digest changed');
-    try {
-      linuxNativeBinding!.renameNoReplace(from.fd, from.name, to.fd, to.name);
-    } catch (error) {
-      const sourceAfter = probe(source);
-      const targetAfter = probe(target);
-      if (sourceAfter === null && targetAfter === expectedHash) return 'moved';
-      if (sourceAfter === expectedHash && targetAfter === null)
+      const probe = (candidate: string): string | null => {
+        if (!linuxFileExistsUnlocked(root, candidate, label + ' hash probe')) return null;
+        return rawHash(readBytesUnlocked(root, candidate, label + ' hash probe'));
+      };
+      const sourceBefore = probe(source);
+      const targetBefore = probe(target);
+      if (sourceBefore === null && targetBefore === expectedHash) return 'already_moved';
+      if (sourceBefore !== expectedHash || targetBefore !== null)
         throw new SafeRepositoryMoveError(
-          'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
-          label + ' move did not occur; retry only after revalidation',
+          'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
+          label + ' source/target state is conflicting',
+        );
+      const from = openParent(root, sourceSegments, label + ' source');
+      const to = openParent(root, targetSegments, label + ' target');
+      let sourceFd = -1;
+      let targetFd = -1;
+      try {
+        sourceFd = openSync(childPath(from.fd, from.name), fsConstants.O_RDONLY | noFollow);
+        const sourceStats = fstatSync(sourceFd);
+        regularFile(sourceStats, label + ' source');
+        reject(
+          rawHash(readBoundedBuffer(sourceFd, label + ' source')) !== expectedHash,
+          label + ' source digest changed',
+        );
+        try {
+          linuxNativeBinding!.renameNoReplace(from.fd, from.name, to.fd, to.name);
+        } catch (error) {
+          const sourceAfter = probe(source);
+          const targetAfter = probe(target);
+          if (sourceAfter === null && targetAfter === expectedHash) return 'moved';
+          if (sourceAfter === expectedHash && targetAfter === null)
+            throw new SafeRepositoryMoveError(
+              'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
+              label + ' move did not occur; retry only after revalidation',
+              { cause: error },
+            );
+          throw new SafeRepositoryMoveError(
+            'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
+            label + ' move outcome is unknown; reconcile hashes before retry',
+            { cause: error },
+          );
+        }
+        targetFd = openSync(childPath(to.fd, to.name), fsConstants.O_RDONLY | noFollow);
+        const targetStats = fstatSync(targetFd);
+        regularFile(targetStats, label + ' target');
+        reject(
+          !sameFileIdentity(sourceStats, targetStats),
+          label + ' moved target identity differs from opened source',
+        );
+        reject(
+          rawHash(readBoundedBuffer(targetFd, label + ' target')) !== expectedHash,
+          label + ' moved target digest differs',
+        );
+        fsyncSync(from.fd);
+        if (!sameFileIdentity(fstatSync(from.fd), fstatSync(to.fd))) fsyncSync(to.fd);
+        return 'moved';
+      } catch (error) {
+        if (error instanceof SafeRepositoryMoveError) throw error;
+        const sourceAfter = probe(source);
+        const targetAfter = probe(target);
+        if (sourceAfter === null && targetAfter === expectedHash)
+          throw new SafeRepositoryMoveError(
+            'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
+            label + ' move occurred but post-move verification or durability failed',
+            { cause: error },
+          );
+        if (sourceAfter === expectedHash && targetAfter === null)
+          throw new SafeRepositoryMoveError(
+            'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
+            label + ' move did not occur; retry only after revalidation',
+            { cause: error },
+          );
+        throw new SafeRepositoryMoveError(
+          'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
+          label + ' move outcome is unknown; reconcile hashes before retry',
           { cause: error },
         );
-      throw new SafeRepositoryMoveError(
-        'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
-        label + ' move outcome is unknown; reconcile hashes before retry',
-        { cause: error },
-      );
-    }
-    targetFd = openSync(childPath(to.fd, to.name), fsConstants.O_RDONLY | noFollow);
-    const targetStats = fstatSync(targetFd);
-    regularFile(targetStats, label + ' target');
-    reject(!sameFileIdentity(sourceStats, targetStats), label + ' moved target identity differs from opened source');
-    reject(
-      rawHash(readBoundedBuffer(targetFd, label + ' target')) !== expectedHash,
-      label + ' moved target digest differs',
-    );
-    fsyncSync(from.fd);
-    if (!sameFileIdentity(fstatSync(from.fd), fstatSync(to.fd))) fsyncSync(to.fd);
-    return 'moved';
-  } catch (error) {
-    if (error instanceof SafeRepositoryMoveError) throw error;
-    const sourceAfter = probe(source);
-    const targetAfter = probe(target);
-    if (sourceAfter === null && targetAfter === expectedHash)
-      throw new SafeRepositoryMoveError(
-        'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
-        label + ' move occurred but post-move verification or durability failed',
-        { cause: error },
-      );
-    if (sourceAfter === expectedHash && targetAfter === null)
-      throw new SafeRepositoryMoveError(
-        'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
-        label + ' move did not occur; retry only after revalidation',
-        { cause: error },
-      );
-    throw new SafeRepositoryMoveError(
-      'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
-      label + ' move outcome is unknown; reconcile hashes before retry',
-      { cause: error },
-    );
-  } finally {
-    if (targetFd >= 0) closeQuietly(targetFd);
-    if (sourceFd >= 0) closeQuietly(sourceFd);
-    closeQuietly(from.fd);
-    closeQuietly(to.fd);
-  }
+      } finally {
+        if (targetFd >= 0) closeQuietly(targetFd);
+        if (sourceFd >= 0) closeQuietly(sourceFd);
+        closeQuietly(from.fd);
+        closeQuietly(to.fd);
+      }
     },
   );
 }

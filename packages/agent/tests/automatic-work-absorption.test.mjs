@@ -862,7 +862,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
 test.each(['new-report', 'durable-expired', 'durable-drift'])(
   'accepted completed source report atomically releases file ownership for readonly assurance and exact retry: %s',
   (scenario) => {
-    const f = fixture(true);
+    const f = fixture(true, true);
     try {
       const initial = f.admit(f.prepare('writer', 'user:writer')),
         identity = {
@@ -1087,8 +1087,52 @@ test.each(['new-report', 'durable-expired', 'durable-drift'])(
   },
 );
 
-test('ten successive source writers release file rights while their work and Runtime acceptance remain incomplete', () => {
+test('source writer promotion rejects predecessor expiry at the Host CAS boundary without changes', () => {
   const f = fixture(true);
+  const originalCas = f.store.compareAndSwapHostState.bind(f.store);
+  const originalNow = Date.now;
+  try {
+    const initial = f.admit(f.prepare('expiring-writer', 'user:expiring-writer'));
+    const work = initial.host.work;
+    const identity = {
+      repository_id: work.binding.repository_id,
+      project_ids: work.binding.project_ids,
+      integrations_digest: work.binding.integrations_digest,
+      work_id: 'expiring-writer',
+    };
+    const ticket = initial.host.ledger.tickets.find((entry) => entry.ticket_id === work.lease.ticket_id);
+    const before = f.store.readHostStateSnapshot(identity);
+    f.store.compareAndSwapHostState = (input) => {
+      Date.now = () => Date.parse(ticket.expires_at) + 1;
+      try {
+        return originalCas(input);
+      } finally {
+        Date.now = originalNow;
+      }
+    };
+    expect(() =>
+      acquireLocalSourceWriterLease({
+        repositoryRoot: f.root,
+        config: f.config,
+        store: f.store,
+        identity,
+        nativeSessionHandle: 'session',
+        expectedWork: initial.host.workVersion,
+        expectedLedger: initial.host.ledgerVersion,
+        stageId: 'develop_change',
+        assignmentIndex: 0,
+      }),
+    ).toThrow(/live predecessor ticket and claim/);
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+  } finally {
+    Date.now = originalNow;
+    delete f.store.compareAndSwapHostState;
+    f.close();
+  }
+});
+
+test('ten successive source writers release file rights while their work and Runtime acceptance remain incomplete', () => {
+  const f = fixture(true, true);
   try {
     for (let index = 0; index < 10; index++) {
       const id = 'writer-' + index,
@@ -1414,11 +1458,13 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
       mode: 'baseline',
     };
     let called = false;
-    await Promise.resolve(expect(
-      runConsumerMigrationState(input, () => {
-        called = true;
-      }),
-    ).rejects.toThrow(/unknown or inflight/));
+    await Promise.resolve(
+      expect(
+        runConsumerMigrationState(input, () => {
+          called = true;
+        }),
+      ).rejects.toThrow(/unknown or inflight/),
+    );
     expect(called).toBe(false);
     const settled = openHostStateDatabase(workflowPath);
     settled.query('UPDATE mastra_workflow_snapshot SET snapshot=?').run(JSON.stringify({ status: 'suspended' }));
@@ -1439,12 +1485,14 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
     });
     const consumerFile = path.join(f.root, 'consumer-init-output.txt');
     writeFileSync(consumerFile, 'known init failure');
-    await Promise.resolve(expect(
-      runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
-        writeFileSync(consumerFile, 'original consumer bytes');
-        throw Error('fixture interruption after file restore');
-      }),
-    ).rejects.toThrow(/fixture interruption/));
+    await Promise.resolve(
+      expect(
+        runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
+          writeFileSync(consumerFile, 'original consumer bytes');
+          throw Error('fixture interruption after file restore');
+        }),
+      ).rejects.toThrow(/fixture interruption/),
+    );
     const restored = await runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
       expect(readFileSync(consumerFile, 'utf8')).toBe('original consumer bytes');
       return 'recovered-files';
@@ -1456,11 +1504,13 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
     corrupt.close();
     const bytesBefore = readFileSync(databasePath);
     let unexpectedCallback = false;
-    await Promise.resolve(expect(
-      runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
-        unexpectedCallback = true;
-      }),
-    ).rejects.toThrow(/admission metadata missing/));
+    await Promise.resolve(
+      expect(
+        runConsumerMigrationState({ ...input, mode: 'restore' }, () => {
+          unexpectedCallback = true;
+        }),
+      ).rejects.toThrow(/admission metadata missing/),
+    );
     expect(unexpectedCallback).toBe(false);
     expect(() =>
       inspectHostWorkspaceDatabase(databasePath, deriveWorkspaceId(f.config.repository.repository_id, f.root)),
@@ -1495,6 +1545,12 @@ test('second predecessor verification failure leaves every canonical row and raw
     expect(verified).toBe(2);
     expect(f.store.readWorkspaceSnapshot()).toEqual(before);
     expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journals);
+    for (const callback of [() => Promise.resolve(), () => Promise.reject(new Error('rejected current proof')), () => true]) {
+      f.store.admitSuccessorWork = (input) => admit({...input, verifyCurrent: callback});
+      expect(() => admitLocalSessionWork(f.prepare('next', 'user:next'))).toThrow(/synchronously/);
+      expect(f.store.readWorkspaceSnapshot()).toEqual(before);
+      expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journals);
+    }
   } finally {
     f.close();
   }
@@ -2474,7 +2530,9 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           f.database.exec(
             "CREATE TRIGGER reject_synthetic_rebind BEFORE INSERT ON agent_host_runtime_code_rebind BEGIN SELECT RAISE(ABORT,'synthetic receipt rollback'); END",
           );
-          await Promise.resolve(expect(reboundStore.rebindRuntimeCode(request)).rejects.toThrow('synthetic receipt rollback'));
+          await Promise.resolve(
+            expect(reboundStore.rebindRuntimeCode(request)).rejects.toThrow('synthetic receipt rollback'),
+          );
           expect(reboundStore.readHostStateSnapshot(identity)).toEqual(current);
           expect(
             f.database.query('SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE work_id=?').get(id),

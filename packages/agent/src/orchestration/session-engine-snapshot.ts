@@ -21,6 +21,7 @@ import { sessionActionsForWave } from './session-handoff.js';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
 import type { CorrectiveExecution } from './final-assurance.js';
+import type { QualifiedRuntimeCodeContinuationReceipt } from './qualified-runtime-code-continuation.js';
 import type { MastraSessionLedgerSnapshot, MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { projectConfiguredPrewriterContinuationRequests } from './delivered-work-continuation.js';
 import type { ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
@@ -839,6 +840,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   binding: SessionEngineBinding,
   receipt: ConfiguredFrontierReceipt,
   recovery: FailedPrewriterRecoveryReceipt | null = null,
+  runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
 ): SessionBridgeSnapshot {
   requireEngine(
     receipt?.schema === 'DeliveredWorkContinuationReceipt/v1' &&
@@ -859,7 +861,11 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       /^[a-f0-9]{64}$/.test(receipt.frontier_snapshot.snapshot_sha256),
     'configured continuation receipt identity or integrity binding differs',
   );
-  const effective = effectiveConfiguredFrontier({ original: receipt, recovery });
+  const effective = effectiveConfiguredFrontier({
+    original: receipt,
+    recovery,
+    ...(runtimeCodeContinuations === undefined ? {} : { runtimeCodeContinuations }),
+  });
   const request = receipt.request;
   requireEngine(request.action.kind === 'configured_frontier', 'configured continuation action differs');
   const action = request.action,

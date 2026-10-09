@@ -251,8 +251,12 @@ function unique(values: readonly string[], message: string): void {
   requireLifecycle(new Set(values).size === values.length, message);
 }
 function current(lifecycle: LifecycleState, kind: LifecycleArtifactKind): readonly LifecycleArtifactReference[] {
-  return lifecycle.references.filter((reference) => reference.kind === kind && reference.disposition === 'current' &&
-    (kind !== 'execution_approval' || reference.source_revision === lifecycle.source_revision));
+  return lifecycle.references.filter(
+    (reference) =>
+      reference.kind === kind &&
+      reference.disposition === 'current' &&
+      (kind !== 'execution_approval' || reference.source_revision === lifecycle.source_revision),
+  );
 }
 function requireCurrent(lifecycle: LifecycleState, ...kinds: LifecycleArtifactKind[]): void {
   for (const kind of kinds) requireLifecycle(current(lifecycle, kind).length > 0, `current ${kind} reference required`);
@@ -267,7 +271,11 @@ function pathList(values: readonly string[], name: string): void {
   );
   for (const value of values) requireLifecycle(safeWorkflowOwnedPath(value), `${name} contains an unsafe path`);
 }
-function validateReference(reference: LifecycleArtifactReference, work: LifecycleWorkState, admissionHistory: readonly LifecycleArtifactReference[]): void {
+function validateReference(
+  reference: LifecycleArtifactReference,
+  work: LifecycleWorkState,
+  admissionHistory: readonly LifecycleArtifactReference[],
+): void {
   requireLifecycle(reference.schema === 'LifecycleArtifactReference/v1', 'lifecycle reference schema invalid');
   requireLifecycle(schemaPattern.test(reference.artifact_schema), 'lifecycle artifact schema must be current v1');
   requireLifecycle(reference.record_id.trim().length > 0, 'lifecycle record id missing');
@@ -275,8 +283,8 @@ function validateReference(reference: LifecycleArtifactReference, work: Lifecycl
   requireLifecycle(digestPattern.test(reference.sha256), 'lifecycle artifact digest invalid');
   requireLifecycle(
     (reference.source_revision === work.lifecycle.source_revision ||
-      ['implementation_scope', 'acceptance_manifest', 'execution_approval'].includes(reference.kind) &&
-      admissionHistory.some(original => canonicalJsonDigest(original) === canonicalJsonDigest(reference))) &&
+      (['implementation_scope', 'acceptance_manifest', 'execution_approval'].includes(reference.kind) &&
+        admissionHistory.some((original) => canonicalJsonDigest(original) === canonicalJsonDigest(reference)))) &&
       reference.scope_id === work.lifecycle.scope.scope_id,
     'lifecycle artifact authority binding differs from current work',
   );
@@ -320,7 +328,10 @@ function validateReference(reference: LifecycleArtifactReference, work: Lifecycl
     requireLifecycle(reference.decision === 'pass', `${reference.kind} did not pass`);
 }
 
-export function validateLifecycleAggregate(work: LifecycleWorkState, admissionHistory: readonly LifecycleArtifactReference[] = []): LifecycleState {
+export function validateLifecycleAggregate(
+  work: LifecycleWorkState,
+  admissionHistory: readonly LifecycleArtifactReference[] = [],
+): LifecycleState {
   assertCanonicalJsonValue(work.lifecycle, '$.lifecycle');
   const lifecycle = work.lifecycle;
   requireLifecycle(lifecycle.schema === 'LifecycleState/v1', 'lifecycle schema invalid');
@@ -595,9 +606,6 @@ export function validateLifecycleProgress(
         after.lifecycle.assurance.delivery_cycle_id !== null,
       'delivery cycle can only open once during verification',
     );
-  const afterReferences = new Map(
-    after.lifecycle.references.map((reference) => [`${reference.kind}:${reference.record_id}`, reference]),
-  );
   const beforeReferences = new Set(
     before.lifecycle.references.map((reference) => `${reference.kind}:${reference.record_id}`),
   );
@@ -614,7 +622,17 @@ export function validateLifecycleProgress(
       before.lifecycle.phase === 'VERIFY' && added.some((reference) => reference.kind === 'review_packet'),
       'review generation requires a new review packet during verification',
     );
-  for (const reference of before.lifecycle.references) {
+  validateLifecycleReferencePreservation(before.lifecycle.references, after.lifecycle.references);
+}
+
+/** Preserve retained references while ordinary lifecycle admission validates new ones. */
+export function validateLifecycleReferencePreservation(
+  before: readonly LifecycleArtifactReference[],
+  after: readonly LifecycleArtifactReference[],
+): void {
+  const afterReferences = new Map(after.map((reference) => [`${reference.kind}:${reference.record_id}`, reference]));
+  requireLifecycle(afterReferences.size === after.length, 'duplicate lifecycle reference identity');
+  for (const reference of before) {
     const next = afterReferences.get(`${reference.kind}:${reference.record_id}`);
     requireLifecycle(next !== undefined, 'lifecycle references are append-only');
     if (canonicalJsonDigest(reference) !== canonicalJsonDigest(next))

@@ -26,6 +26,7 @@ import { validateInitialSourceFrontierCodeRebindReceipt } from '../src/orchestra
 import {
   validateQualifiedRuntimeCodeContinuationRequest,
   validateQualifiedRuntimeCodePreparedPlanRefresh,
+  projectQualifiedRuntimeCodeAncestor,
   refreshQualifiedRuntimeCodePreparedPlan,
 } from '../src/orchestration/qualified-runtime-code-continuation.ts';
 import {
@@ -2531,14 +2532,24 @@ function completedSourceRecoveryCase(refreshOnly) {
       adopt(retainedRuntime);
       const adoptedState = continuationState(f);
       expect(hostStore(f).readQualifiedRuntimeCodeContinuations(f.identity, 1)).toHaveLength(2);
+      const codeHistory = hostStore(f).readQualifiedRuntimeCodeContinuations(f.identity, 1);
+      expect(projectQualifiedRuntimeCodeAncestor(adoptedState.work, codeHistory).binding.runtime_code_digest).toBe(
+        codeRequest.oldRuntimeCodeDigest,
+      );
+      expect(
+        projectQualifiedRuntimeCodeAncestor(adoptedState.work, codeHistory, firstCodeReceipt.work_version.revision)
+          .binding.runtime_code_digest,
+      ).toBe(codeRequest.currentRuntimeCodeDigest);
+      expect(
+        projectQualifiedRuntimeCodeAncestor(adoptedState.work, codeHistory, adoptedState.workVersion.revision).binding
+          .runtime_code_digest,
+      ).toBe(retainedRuntime.currentRuntimeCodeDigest);
+      for (const anchor of [0, -1, 1.5, adoptedState.workVersion.revision + 1])
+        expect(() => projectQualifiedRuntimeCodeAncestor(adoptedState.work, codeHistory, anchor)).toThrow();
       expect(adoptedState.journal).toEqual(beforeCodeAdoption.journal);
       expect(adoptedState.ledger).toEqual(beforeCodeAdoption.ledger);
       expect(hostStore(f).readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(recovery);
-      const resumedFollowup = requireRecord(await runAgent(args), 'recovered Source report engine resume');
-      const nextJournalVersion = requireStateVersion(resumedFollowup.state_version, 'resumed follow-up state_version');
-      expect(parseIssuedActions(resumedFollowup.issued_actions, 'resume issued actions')).toHaveLength(0);
       const beforeExpiredRecovery = continuationState(f);
-      expect(beforeExpiredRecovery.journalVersion).toEqual(nextJournalVersion);
       holdExpiredOwnerClockForFixture(f);
       const expiredRecoveryResult = requireRecord(
         await runAgent([
@@ -2558,7 +2569,7 @@ function completedSourceRecoveryCase(refreshOnly) {
       expect(expiredRecoveryResult.status).toBe('inspected');
       expect(expiredRecoveryResult.attempt).toBe(1);
       const inspectedLease = requireRecord(expiredRecoveryResult.lease, 'recovered execution-only lease');
-      const afterExpiredRecovery = continuationState(f),
+      let afterExpiredRecovery = continuationState(f),
         currentHost = completeHostState(hostStore(f).readHostStateSnapshot(f.identity)),
         currentRecovery = hostStore(f).readCompletedSourceReportRecoveryReceipt(f.identity, 1),
         currentLease = workLease(afterExpiredRecovery.work),
@@ -2587,6 +2598,7 @@ function completedSourceRecoveryCase(refreshOnly) {
         revision: beforeExpiredRecovery.journalVersion.revision + 1,
         digest: beforeExpiredRecovery.journalVersion.digest,
       });
+      expect(afterExpiredRecovery.journal).toEqual(beforeExpiredRecovery.journal);
       expect({
         attempt: afterExpiredRecovery.journal.attempt,
         evolved: afterExpiredRecovery.journal.source_scope?.digest,
@@ -2619,6 +2631,79 @@ function completedSourceRecoveryCase(refreshOnly) {
           ?.status,
         claim: afterExpiredRecovery.ledger.claims.find((claim) => claim.ticket_id === executionLease.ticket_id)?.status,
       }).toEqual({ ticket: 'read_only', claim: 'recovered' });
+      const resumedFollowup = requireRecord(await runAgent(args), 'recovered Source report engine resume');
+      expect(resumedFollowup.mastra_run_id).toBe(beforeExpiredRecovery.journal.run_id);
+      expect(parseIssuedActions(resumedFollowup.issued_actions, 'resume issued actions')).toHaveLength(0);
+      afterExpiredRecovery = continuationState(f);
+      expect(afterExpiredRecovery.journal.items.every((item) => item.issue_id === null && !item.host_reservation)).toBe(
+        true,
+      );
+      for (const transition of [2, 3]) {
+        const prior = continuationState(f);
+        const priorLease = workLease(prior.work);
+        holdExpiredOwnerClockForFixture(f);
+        const approval = prior.work.lifecycle.references.find(
+          (reference) => reference.kind === 'execution_approval' && reference.decision === 'approved',
+        );
+        if (!approval) throw new Error('Repeated recovery fixture approval is unavailable');
+        // The first public recovery covers CLI ingress; these real Host transitions
+        // exercise repeated persisted lineage without repeating subprocess setup.
+        const recovered = hostStore(f).recoverExpiredLocalLease({
+          identity: f.identity,
+          attempt: 1,
+          nativeSessionHandle: priorLease.thread_id,
+          generation: priorLease.generation,
+          expectedWork: prior.workVersion,
+          expectedLedger: prior.ledgerVersion,
+          expectedJournal: prior.journalVersion,
+          expectedMaintenanceGeneration: prior.maintenanceGeneration,
+          verifyCurrent: () => ({
+            runtimeCodeDigest: prior.work.binding.runtime_code_digest,
+            authorityPointer: approval.record_id,
+          }),
+        });
+        expect(recovered.workVersion?.revision).toBe(prior.workVersion.revision + 1);
+        expect(
+          continuationState(f).ledger.rebinds.filter(
+            (entry) =>
+              entry.work_id === f.identity.work_id &&
+              Number(entry.to_ledger_revision) > recovery.record.successor_ledger_version.revision,
+          ),
+        ).toHaveLength(transition);
+        expect(
+          validateCompletedSourceReportRecoveryCurrentWorkJoin(
+            completeHostState(hostStore(f).readHostStateSnapshot(f.identity)),
+            currentJournal(f),
+            initialReceipt,
+            null,
+            recovery,
+          ),
+        ).toEqual(recovery);
+      }
+      afterExpiredRecovery = continuationState(f);
+      currentHost = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
+      currentLease = workLease(afterExpiredRecovery.work);
+      for (const verifier of [
+        () => Promise.resolve(),
+        () => Promise.reject(new Error('fixture asynchronous verifier denial')),
+        () => true,
+      ]) {
+        const malformedInput = {
+          identity: f.identity,
+          attempt: 1,
+          nativeSessionHandle: currentLease.thread_id,
+          generation: currentLease.generation,
+          expectedWork: afterExpiredRecovery.workVersion,
+          expectedLedger: afterExpiredRecovery.ledgerVersion,
+          expectedJournal: afterExpiredRecovery.journalVersion,
+          expectedMaintenanceGeneration: afterExpiredRecovery.maintenanceGeneration,
+          verifyCurrent: () => {},
+        };
+        Reflect.set(malformedInput, 'verifyCurrent', /** @type {unknown} */ (verifier));
+        expect(() => hostStore(f).renewActiveLocalLease(malformedInput)).toThrow(/synchronously/);
+        expect(continuationState(f)).toEqual(afterExpiredRecovery);
+      }
+      await Promise.resolve();
       expect(
         validateCompletedSourceReportRecoveryCurrentWorkJoin(
           currentHost,
@@ -2678,6 +2763,49 @@ function completedSourceRecoveryCase(refreshOnly) {
           (attempt) => attempt.attempt_id === writerAttemptId,
         ),
       ).toEqual(completedAttempt);
+      // Reader consistency: lifecycle admission owns validation of any appended proof.
+      // The public final-assurance fixture separately exercises that real admission.
+      const referenceHost = completeHostState(hostStore(f).readHostStateSnapshot(f.identity));
+      const retainedReferences = referenceHost.work.lifecycle.references;
+      const reference = retainedReferences[0];
+      if (!reference) throw Error('Recovery fixture retained reference is absent');
+      /** @param {readonly import('../src/lifecycle/lifecycle-state.ts').LifecycleArtifactReference[]} references */
+      const withReferences = (references) => ({
+        ...referenceHost,
+        work: { ...referenceHost.work, lifecycle: { ...referenceHost.work.lifecycle, references } },
+      });
+      /** @type {import('../src/lifecycle/lifecycle-state.ts').LifecycleArtifactReference} */
+      const appended = {
+        ...reference,
+        kind: 'platform_knowledge',
+        artifact_schema: 'LifecyclePreparationObservation/v1',
+        record_id: 'fixture:post-recovery-preparation',
+        path: '.agent/preparation.json',
+        decision: 'pass',
+      };
+      expect(() =>
+        validateCompletedSourceReportRecoveryCurrentWorkJoin(
+          withReferences([...retainedReferences, appended]),
+          followupJournal,
+          initialReceipt,
+          null,
+          recovery,
+        ),
+      ).not.toThrow();
+      for (const references of [
+        retainedReferences.slice(1),
+        [{ ...reference, sha256: '0'.repeat(64) }, ...retainedReferences.slice(1)],
+      ]) {
+        expect(() =>
+          validateCompletedSourceReportRecoveryCurrentWorkJoin(
+            withReferences(references),
+            followupJournal,
+            initialReceipt,
+            null,
+            recovery,
+          ),
+        ).toThrow();
+      }
     });
   };
 }

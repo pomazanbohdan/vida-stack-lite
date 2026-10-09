@@ -34,7 +34,10 @@ import {
   validateCompletedSourceReportRecoveryReceipt,
   type CompletedSourceReportRecoveryReceipt,
 } from './completed-source-report-recovery.js';
-import { validateFailedPrewriterRecoveryReceipt } from './failed-prewriter-transition.js';
+import {
+  projectRecoveryRuntimeCodeAncestor,
+  validateFailedPrewriterRecoveryReceipt,
+} from './failed-prewriter-transition.js';
 import {
   validateConfiguredFrontierReceiptStructure,
   type ConfiguredFrontierReceipt,
@@ -331,17 +334,33 @@ export function validateInitialSourceContinuationLineage(
   completedSourceReportRecoveryValue?: unknown,
   runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
 ): InitialSourceContinuationReceipt {
-  work = projectQualifiedRuntimeCodeAncestor(work, runtimeCodeContinuations);
+  const currentWork = work;
   const receipt = validateInitialSourceContinuationReceipt(value);
   const { request, prior_work: original, successor_work: successor } = receipt;
   const completedSourceReportRecovery =
     completedSourceReportRecoveryValue === undefined || completedSourceReportRecoveryValue === null
       ? null
       : validateCompletedSourceReportRecoveryReceipt(completedSourceReportRecoveryValue);
+  const retainedFrontier =
+    frontierCodeRebindValue === undefined || frontierCodeRebindValue === null
+      ? null
+      : validateInitialSourceFrontierCodeRebindReceipt(frontierCodeRebindValue);
   const frontierCodeRebind = validateInitialSourceFrontierCodeRebindJoin(
-    completedSourceReportRecovery?.record.prior_work ?? work,
+    completedSourceReportRecovery?.record.prior_work ??
+      projectQualifiedRuntimeCodeAncestor(
+        currentWork,
+        runtimeCodeContinuations,
+        retainedFrontier?.record.work_version.revision ?? receipt.work_version.revision,
+      ),
     receipt,
     frontierCodeRebindValue,
+  );
+  work = projectQualifiedRuntimeCodeAncestor(
+    currentWork,
+    runtimeCodeContinuations,
+    completedSourceReportRecovery?.record.work_version.revision ??
+      retainedFrontier?.record.work_version.revision ??
+      receipt.work_version.revision,
   );
   const recoveryRequest = completedSourceReportRecovery?.record.request;
   const currentRuntimeCodeDigest =
@@ -585,10 +604,15 @@ export function acceptedContractSourceRevision(
     return receipt.prior_work.binding.work_source_revision;
   }
   requirePacket('original' in view && 'recovery' in view, 'configured continuation view is missing');
-  work = projectQualifiedRuntimeCodeAncestor(work, view.runtimeCodeContinuations);
   const { original, recovery } = view;
   validateConfiguredFrontierReceiptStructure({ receipt: original });
-  if (recovery) validateFailedPrewriterRecoveryReceipt(recovery);
+  if (recovery) validateFailedPrewriterRecoveryReceipt(recovery, view.runtimeCodeContinuations);
+  work = projectRecoveryRuntimeCodeAncestor(
+    work,
+    view.runtimeCodeContinuations,
+    recovery?.work_version.revision ?? original.work_version.revision,
+    recovery,
+  );
   requirePacket(
     original.attempt === ledger.state.attempt &&
       original.request.identity.work_id === work.binding.lifecycle_work_id &&

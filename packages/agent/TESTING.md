@@ -377,6 +377,14 @@ A Host fixture with a supplied endpoint callback proves the Host transition
 only. It does not prove native endpoint qualification, installed public CLI
 behavior or developer admission. Keep those gaps explicit until observed.
 
+Recovery regression checks cover an accepted Source report before engine
+advancement, repeated execution-lease recovery, historical code updates around
+Source recovery, and later lifecycle-reference admission. Preserve the original
+writer/report and run. Exercise separate Host/TaskSource roots during renewal,
+unresolved file ownership during generic CAS, and asynchronous proof rejection
+before writes. Windows replacement checks include hardlinks and same-byte target,
+staging and result substitution. Git hook checks retain unrelated index entries.
+
 `native-delivery-evidence-repair.test.mjs` covers the fixed stale qualification
 reset. It checks the original uninstalled operation and archive, review, reverse,
 scope and CLEAR bytes and directory membership, complete protected dependency

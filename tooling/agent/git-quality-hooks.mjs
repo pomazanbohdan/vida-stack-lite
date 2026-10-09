@@ -301,7 +301,13 @@ function indexObjects(index) {
 }
 export function verifyStagedObjects(root, objects, index) {
   const staged = indexObjects(git(root, ['ls-files', '--stage', '-z'])), previous = indexObjects(index);
-  if (objects.some(([file, oid]) => staged.get(file)?.oid !== oid || staged.get(file)?.mode !== previous.get(file)?.mode))
+  const expected = new Map(previous);
+  for (const [file, oid] of objects) {
+    if (!previous.has(file)) throw new Error('Formatted input is absent from the captured index.');
+    expected.set(file, {...previous.get(file), oid});
+  }
+  if (staged.size !== expected.size || [...expected].some(([file, value]) =>
+    staged.get(file)?.oid !== value.oid || staged.get(file)?.mode !== value.mode))
     throw new Error('Staged bytes or mode changed after validation; commit denied.');
 }
 
@@ -342,11 +348,13 @@ async function main(mode) {
   const env = environment(pkg);
   if (mode === 'pre-commit') {
     const bun = installedBun(pkg, env);
+    const index = git(root, ['ls-files', '--stage', '-z']), objects = [];
     const selected = nul(git(root, ['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z']));
     const unstaged = new Set(nul(git(root, ['diff', '--name-only', '-z'])));
     if (selected.some((file) => unstaged.has(file)))
       throw new Error('Partially staged file: resolve staging before formatting.');
     stableInputs(root);
+    verifyStagedObjects(root, [], index);
     const formatter = installedTool(pkg, 'oxfmt', '0.64.0');
     const compiler = installedTool(pkg, 'typescript', '7.0.2');
     const linter = installedTool(pkg, 'oxlint', '1.79.0');
@@ -356,7 +364,6 @@ async function main(mode) {
         throw new Error('Formatting requires regular files.');
     if (files.length) {
       const args = [formatter, '--config', path.join(pkg, '.oxfmtrc.json')];
-      const index = git(root, ['ls-files', '--stage', '-z']);
       checked(bun, [...args, '--', ...files], root, env);
       const formatted = files.map((file) => readFileSync(path.join(root, file)).toString('base64'));
       checked(bun, [...args, '--check', '--', ...files], root, env);
@@ -365,12 +372,13 @@ async function main(mode) {
         files.some((file, i) => readFileSync(path.join(root, file)).toString('base64') !== formatted[i])
       )
         throw new Error('Index or formatted files changed; no restaging performed.');
-      const objects = files.map((file, index) => [file, git(root,
-        ['hash-object', '--path=' + file, '--stdin'], Buffer.from(formatted[index], 'base64')).trim()]);
+      objects.push(...files.map((file, position) => [file, git(root,
+        ['hash-object', '--path=' + file, '--stdin'], Buffer.from(formatted[position], 'base64')).trim()]));
       git(root, ['add', '--', ...files]);
       verifyStagedObjects(root, objects, index);
     }
     const before = stableInputs(root);
+    verifyStagedObjects(root, objects, index);
     const testFiles = nul(git(root, ['ls-files', '-z'])).filter(file =>
       maintained(file) && /(?:^|\/)tests\//.test(file) && /\.[cm]?[jt]sx?$/.test(file));
     await rejectFocusedTests(pkg, testFiles.map(file => path.join(root, file)));
@@ -378,6 +386,7 @@ async function main(mode) {
     checked(bun, [linter, '--config', path.join(pkg, 'oxlint.config.json'), '--type-aware', '--max-warnings', '0',
       'src', 'tests', 'tooling'], pkg, env);
     if (stableInputs(root) !== before) throw new Error('Checked inputs changed during pre-commit checks.');
+    verifyStagedObjects(root, objects, index);
     return;
   }
   if (mode !== 'pre-push') throw new Error('Expected pre-commit or pre-push.');

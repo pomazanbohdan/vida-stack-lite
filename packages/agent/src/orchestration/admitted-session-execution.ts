@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { projectQualifiedRuntimeCodeAncestor } from './qualified-runtime-code-continuation.js';
+import { projectRecoveryRuntimeCodeAncestor } from './failed-prewriter-transition.js';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -174,7 +174,12 @@ export function assertAdmittedRuntimeCodeCurrent(
         receipt.prior_work.binding.runtime_code_digest === request.priorRuntimeCodeDigest &&
         receipt.prior_work.binding.config_digest === request.priorConfigDigest &&
         (recovery?.successor_work.binding.runtime_code_digest ?? request.targetRuntimeCodeDigest) ===
-          projectQualifiedRuntimeCodeAncestor(work, host.runtimeCodeContinuations).binding.runtime_code_digest &&
+          projectRecoveryRuntimeCodeAncestor(
+            work,
+            host.runtimeCodeContinuations,
+            recovery?.work_version.revision ?? receipt.work_version.revision,
+            recovery,
+          ).binding.runtime_code_digest &&
         request.targetConfigDigest === runtimeConfigDigest(config) &&
         request.targetConfigDigest === work.binding.config_digest &&
         (recovery?.successor_work.binding.schema_digest ?? request.targetSchemaDigest) === schemaDigest &&

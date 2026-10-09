@@ -15,6 +15,7 @@ import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orc
 import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
+import { validateLifecycleReferencePreservation } from '../src/lifecycle/lifecycle-state.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 function fixture(sourceWriter = false, publicStore = false) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-absorption-'));
@@ -507,7 +508,11 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     denied(withVersion(originalVersion, '--prepare-assurance', preparation));
     writeFileSync(sourceFile, originalSource);
 
+    const retainedReferences = f.store.readHostStateSnapshot(identity).work.lifecycle.references;
     let response = publicRun(withVersion(originalVersion, '--prepare-assurance', preparation));
+    const preparedReferences = f.store.readHostStateSnapshot(identity).work.lifecycle.references;
+    expect(preparedReferences.length).toBeGreaterThan(retainedReferences.length);
+    expect(() => validateLifecycleReferencePreservation(retainedReferences, preparedReferences)).not.toThrow();
     expect(response.assurance_status).toBe('ready');
     expect(response.next_actions).toHaveLength(3);
     expect(f.store.readHostStateSnapshot(identity).work.lifecycle.references.filter(

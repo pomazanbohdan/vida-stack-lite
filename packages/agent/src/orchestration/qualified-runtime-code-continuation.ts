@@ -316,7 +316,13 @@ export function validateQualifiedRuntimeCodeContinuationReceipt(
 export function projectQualifiedRuntimeCodeAncestor(
   work: WorkState,
   values: readonly QualifiedRuntimeCodeContinuationReceipt[] | undefined,
+  anchorWorkRevision?: number,
 ): WorkState {
+  requireContinuation(
+    anchorWorkRevision === undefined ||
+      (Number.isSafeInteger(anchorWorkRevision) && anchorWorkRevision > 0 && anchorWorkRevision <= work.revision),
+    'historical code anchor revision is invalid',
+  );
   if (!values?.length) return work;
   let prior: QualifiedRuntimeCodeContinuationReceipt | null = null;
   for (const value of values) {
@@ -350,11 +356,18 @@ export function projectQualifiedRuntimeCodeAncestor(
       work.lifecycle.config_binding.runtime_code_digest === prior.request.currentRuntimeCodeDigest,
     'current Work differs from adopted code',
   );
-  const oldest = values[0]!.request.oldRuntimeCodeDigest;
+  const historical =
+    anchorWorkRevision === undefined
+      ? values[0]!.request.oldRuntimeCodeDigest
+      : (values.find((receipt) => receipt.work_version.revision > anchorWorkRevision)?.request.oldRuntimeCodeDigest ??
+        work.binding.runtime_code_digest);
   return {
     ...work,
-    binding: { ...work.binding, runtime_code_digest: oldest, runtime_source_revision: oldest },
-    lifecycle: { ...work.lifecycle, config_binding: { ...work.lifecycle.config_binding, runtime_code_digest: oldest } },
+    binding: { ...work.binding, runtime_code_digest: historical, runtime_source_revision: historical },
+    lifecycle: {
+      ...work.lifecycle,
+      config_binding: { ...work.lifecycle.config_binding, runtime_code_digest: historical },
+    },
   };
 }
 export function validateQualifiedRuntimeCodeContinuationState(

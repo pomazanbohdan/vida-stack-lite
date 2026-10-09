@@ -4353,7 +4353,7 @@ export async function resumeHistoricalObservedResearchResult(input: {
         expectedJournal: input.expectedJournal,
         expectedMaintenanceGeneration: input.expectedMaintenanceGeneration,
         action: publish,
-        rollback: undo,
+        rollback: () => undo(),
       }),
     ),
   );

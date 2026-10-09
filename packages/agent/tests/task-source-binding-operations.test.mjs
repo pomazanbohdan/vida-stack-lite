@@ -1475,6 +1475,27 @@ test('configured inspect and admitted packet/result read current TaskSource byte
     );
     expect(contextBytes).toEqual(taskBytes);
 
+    const renewFromBoundSource = (allowWriterChanges = false) => {
+      const current = configuredStore.readHostStateSnapshot(workIdentity),
+        currentJournal = configuredStore.readWorkSessionJournal(workIdentity);
+      return configuredStore.renewActiveLocalLease({identity: workIdentity, attempt: 1,
+        nativeSessionHandle: threadId, generation: current.work.lease.generation,
+        expectedWork: current.workVersion, expectedLedger: current.ledgerVersion,
+        expectedJournal: currentJournal.version, expectedMaintenanceGeneration: current.maintenanceGeneration,
+        verifyCurrent: (_work, state, sourceRoot) => {
+          expect(sourceRoot).toBe(taskRoot);
+          expect(configuredDatabase.inTransaction).toBe(true);
+          const observed = snapshotDeclaredSources(requireSafeRepositoryAccess(sourceRoot), ['src/task.ts']);
+          if (!allowWriterChanges && observed.digest !== state.source_scope.digest) throw Error('unauthorized Source drift');
+        }});
+    };
+    renewFromBoundSource();
+    const beforeIllegalDrift = configuredStore.readHostStateSnapshot(workIdentity);
+    writeFileSync(taskSourcePath, 'Unreported external Source change.\n');
+    expect(() => renewFromBoundSource()).toThrow(/unauthorized Source drift/);
+    expect(configuredStore.readHostStateSnapshot(workIdentity)).toEqual(beforeIllegalDrift);
+    writeFileSync(taskSourcePath, taskBytes);
+
     const currentHost = configuredStore.readHostStateSnapshot(workIdentity),
       synthStage = config.workflows[workflowId].stages.find((stage) =>
         stage.produces.includes('DevelopmentTaskPacket/v1'),
@@ -1632,6 +1653,7 @@ test('configured inspect and admitted packet/result read current TaskSource byte
         [writerRequest.action_id]: reservation,
       });
     writeFileSync(taskSourcePath, 'Authorized writer postimage.\n');
+    renewFromBoundSource(true);
     const updatedScope = snapshotDeclaredSources(requireSafeRepositoryAccess(taskRoot), ['src/task.ts']),
       writerSummary = 'Wrote the authorized TaskSource file.',
       writerObservation = {
@@ -1656,7 +1678,7 @@ test('configured inspect and admitted packet/result read current TaskSource byte
     configuredStore.commitCompletedSourceReport({
       identity: workIdentity,
       attempt: 1,
-      expectedJournal: issuedWriter.version,
+      expectedJournal: configuredStore.readWorkSessionJournal(workIdentity).version,
       actionId: writerRequest.action_id,
       nextJournal: nextWriterJournal,
       verifyCurrent: () => {
@@ -1671,6 +1693,7 @@ test('configured inspect and admitted packet/result read current TaskSource byte
     });
     expect(configuredStore.snapshotCurrentTaskSourceSources(workIdentity, threadId, ['src/task.ts'], 1))
       .toEqual(updatedScope);
+    renewFromBoundSource();
     const actionRow = configuredDatabase.query(
       'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
     ).get(workspaceId, sourceRequest.operation_id);
@@ -1686,6 +1709,9 @@ test('configured inspect and admitted packet/result read current TaskSource byte
     ).run(malformedPayload, malformedDigest, workspaceId, sourceRequest.operation_id);
     expect(() => configuredStore.readCurrentTaskSourceBinding(workIdentity, threadId, 1))
       .toThrow(/action\/preparation/);
+    const beforeMalformedRenewal = configuredStore.readHostStateSnapshot(workIdentity);
+    expect(() => renewFromBoundSource()).toThrow(/action\/preparation/);
+    expect(configuredStore.readHostStateSnapshot(workIdentity)).toEqual(beforeMalformedRenewal);
     expect(() => configuredStore.inspectTaskSourceBindingAction({
       request: sourceRequest,
       identity: workIdentity,

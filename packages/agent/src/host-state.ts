@@ -45,6 +45,7 @@ import {
 import {
   validateLifecycleAggregate,
   validateLifecycleProgress,
+  validateLifecycleReferencePreservation,
   transitionLifecycleState,
   type LifecycleArtifactReference,
   type DocumentationVerificationContext,
@@ -117,6 +118,7 @@ import {
 } from './orchestration/initial-source-continuation.js';
 import {
   buildCompletedSourceReportRecoverySuccessorWork,
+  isAcceptedCompletedSourceWave,
   readCompletedSourceReportRecoveryReceiptRecord,
   snapshotCompletedSourceReportRecoveryReceipt,
   validateCompletedSourceReportRecoveryLineage,
@@ -166,6 +168,7 @@ import {
 import { validateFailedPrewriterRecoveryBasis } from './orchestration/failed-prewriter-recovery.js';
 import {
   validateFailedPrewriterRecoveryReceipt,
+  projectRecoveryRuntimeCodeAncestor,
   validateFailedPrewriterTransitionRequest,
   failedPrewriterRecoveryRecord,
   snapshotFailedPrewriterRecoveryReceipt,
@@ -1328,6 +1331,19 @@ export class HostStateError extends Error {
 function requireState(condition: unknown, message: string): asserts condition {
   if (!condition) throw new HostStateError(message);
 }
+function synchronousProof<T>(result: T, message: string): T {
+  if (
+    ((typeof result === 'object' && result !== null) || typeof result === 'function') &&
+    typeof (result as { then?: unknown }).then === 'function'
+  ) {
+    void Promise.resolve(result).catch(() => undefined);
+    throw new HostStateError(message);
+  }
+  return result;
+}
+function requireSynchronousVerification(result: unknown, message: string): void {
+  requireState(synchronousProof(result, message) === undefined, message);
+}
 function parseStoredRecord(payload: string, label: string): Record<string, unknown> {
   const value: unknown = JSON.parse(payload);
   requireState(isPlainRecord(value), label + ' must be a JSON record');
@@ -2321,7 +2337,9 @@ function checkedStoredWork(
         request = receipt.request;
       requireState(
         sameJson(request.identity, workIdentity(candidate)) &&
-          receipt.protected_work_digest === runtimeCodeContinuationProtectedWorkDigest(candidate) &&
+          request.originalSourceScopeDigest === expected.work_source_revision &&
+          receipt.protected_work_digest ===
+            runtimeCodeContinuationProtectedWorkDigest({ ...candidate, binding: expected }) &&
           receipt.work_version.revision <= candidate.revision &&
           expected.runtime_code_digest === request.currentRuntimeCodeDigest &&
           expected.runtime_source_revision === request.currentRuntimeCodeDigest &&
@@ -2337,7 +2355,15 @@ function checkedStoredWork(
       continue;
     }
     if (record.kind === 'failed-prewriter') {
-      const receipt = validateFailedPrewriterRecoveryReceipt(record.receipt);
+      const receipt = validateFailedPrewriterRecoveryReceipt(
+        record.receipt,
+        storedQualifiedRuntimeCodeContinuations(
+          database,
+          workspaceId,
+          candidate.binding.lifecycle_work_id,
+          record.receipt.request.attempt,
+        ),
+      );
       const original = database
         .query(
           'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
@@ -2348,6 +2374,10 @@ function checkedStoredWork(
           receipt.request.attempt,
           receipt.original.request.action.request.action_id,
         ) as { payload: string; digest: string } | null;
+      validateLifecycleReferencePreservation(
+        receipt.successor_work.lifecycle.references,
+        candidate.lifecycle.references,
+      );
       requireState(
         original &&
           original.payload === canonicalJson(receipt.original) &&
@@ -3194,6 +3224,41 @@ function validateProgress(
       sameJson(old.execution.assignment_attempts, work.execution.assignment_attempts),
       'attempt history requires its dedicated transaction',
     );
+    for (const attempt of old.execution.assignment_attempts) {
+      if (attempt.status !== 'started' && attempt.status !== 'uncertain') continue;
+      const ticket = before.ledger?.tickets.find((entry) => entry.ticket_id === attempt.lease.ticket_id);
+      requireState(ticket, 'unresolved attempt has no retained ownership ticket');
+      const resources = ticket.exclusive_resources.filter((resource) => resource.startsWith('file:'));
+      if (resources.length === 0) continue;
+      const nextTicket = ledger.tickets.find((entry) => entry.ticket_id === ticket.ticket_id);
+      const priorClaims = before.ledger!.claims.filter(
+        (claim) => claim.ticket_id === ticket.ticket_id && claim.status === 'active',
+      );
+      requireState(
+        sameJson(work.lease, attempt.lease) &&
+          ticket.status === 'active' &&
+          nextTicket?.status === 'active' &&
+          nextTicket.thread_id === attempt.lease.thread_id &&
+          nextTicket.generation === attempt.lease.generation &&
+          resources.every(
+            (resource) => ticket.active_resources.includes(resource) && nextTicket.active_resources.includes(resource),
+          ) &&
+          priorClaims.length > 0 &&
+          resources.every((resource) => priorClaims.some((claim) => claim.resources.includes(resource))) &&
+          priorClaims.every((claim) =>
+            ledger.claims.some(
+              (next) =>
+                next.claim_id === claim.claim_id &&
+                next.status === 'active' &&
+                next.ticket_id === claim.ticket_id &&
+                next.thread_id === claim.thread_id &&
+                next.generation === claim.generation &&
+                claim.resources.every((resource) => next.resources.includes(resource)),
+            ),
+          ),
+        'unresolved Source attempt must retain its original file ownership',
+      );
+    }
     const bindingMatches =
       taskSourceResourceAdditions.length === 0
         ? sameJson(old.binding, work.binding)
@@ -5310,6 +5375,12 @@ export class HostStateStore {
             engineBinding,
             configuredContinuation as ConfiguredFrontierReceipt,
             this.#readFailedPrewriterRecoveryReceipt(identity, input.context.attempt),
+            storedQualifiedRuntimeCodeContinuations(
+              this.#database,
+              this.#workspaceId,
+              identity.work_id,
+              input.context.attempt,
+            ),
           );
         } else engine = readSessionEngineSnapshot(engineBinding);
         if (initialContinuation && input.phase === 'resume')
@@ -5537,6 +5608,12 @@ export class HostStateStore {
             binding,
             continuation as ConfiguredFrontierReceipt,
             this.#readFailedPrewriterRecoveryReceipt(identity, entry.input.context.attempt),
+            storedQualifiedRuntimeCodeContinuations(
+              this.#database,
+              this.#workspaceId,
+              identity.work_id,
+              entry.input.context.attempt,
+            ),
           );
         } else engine = readSessionEngineSnapshot(binding);
         if (!engine)
@@ -6036,8 +6113,8 @@ export class HostStateStore {
   #assertMaintenanceAcquisition(binding: MaintenanceFenceBinding, prior: MaintenanceFence | null): void {
     if (this.#verifyMaintenanceAcquisition) {
       this.#withMaintenanceSnapshotReadScope(() =>
-        requireState(
-          this.#verifyMaintenanceAcquisition!(snapshot(binding), snapshot(prior)) === undefined,
+        requireSynchronousVerification(
+          this.#verifyMaintenanceAcquisition!(snapshot(binding), snapshot(prior)),
           'maintenance acquisition verifier must be synchronous and throw on drift',
         ),
       );
@@ -6047,13 +6124,7 @@ export class HostStateStore {
     requireState(!this.#maintenanceSnapshotReadScopeActive, 'maintenance snapshot read scope cannot be re-entered');
     this.#maintenanceSnapshotReadScopeActive = true;
     try {
-      const result = callback();
-      requireState(
-        result === null ||
-          (typeof result !== 'object' && typeof result !== 'function') ||
-          typeof (result as { then?: unknown }).then !== 'function',
-        'maintenance snapshot read callback must be synchronous',
-      );
+      const result = synchronousProof(callback(), 'maintenance snapshot read callback must be synchronous');
       return result;
     } finally {
       this.#maintenanceSnapshotReadScopeActive = false;
@@ -7553,6 +7624,18 @@ export class HostStateStore {
 
   /** Resolve only a reported current binding; absence keeps the original Host root. */
   readCurrentTaskSourceBinding(identity: WorkIdentity, threadId: string, attempt?: number): TaskSourceBinding | null {
+    requireState(!this.#database.inTransaction, 'nested task source binding read forbidden');
+    return this.#database
+      .transaction(() => this.#resolveTaskSourceBinding(identity, threadId, attempt, true))
+      .deferred();
+  }
+
+  #resolveTaskSourceBinding(
+    identity: WorkIdentity,
+    threadId: string,
+    attempt: number | undefined,
+    verifyBytes: boolean,
+  ): TaskSourceBinding | null {
     const repositoryRoot = this.#repositoryRoot;
     requireState(
       repositoryRoot !== undefined &&
@@ -7561,193 +7644,187 @@ export class HostStateStore {
         threadId.length > 0,
       'task source binding read context is invalid',
     );
-    requireState(!this.#database.inTransaction, 'nested task source binding read forbidden');
-    return this.#database
-      .transaction(() => {
-        this.#assertMaintenanceAvailable();
-        const current = this.#read(identity),
-          work = current.work;
-        requireState(
-          work &&
-            work.execution.status === 'active' &&
-            work.lease?.thread_id === threadId &&
-            work.binding.lifecycle_work_id === identity.work_id &&
-            work.binding.repository_id === identity.repository_id &&
-            sameJson(work.binding.project_ids, identity.project_ids),
-          'task source binding has no matching current Host owner',
-        );
-        const config = loadRuntimeConfig(repositoryRoot),
-          projectContext = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids);
-        requireState(
-          work.binding.config_digest === runtimeConfigDigest(config),
-          'task source binding runtime configuration differs from current Host Work',
-        );
-        const operationsTable = this.#database
+    requireState(this.#database.inTransaction, 'task source binding resolution requires a transaction');
+    this.#assertMaintenanceAvailable();
+    const current = this.#read(identity),
+      work = current.work;
+    requireState(
+      work &&
+        work.execution.status === 'active' &&
+        work.lease?.thread_id === threadId &&
+        work.binding.lifecycle_work_id === identity.work_id &&
+        work.binding.repository_id === identity.repository_id &&
+        sameJson(work.binding.project_ids, identity.project_ids),
+      'task source binding has no matching current Host owner',
+    );
+    const config = loadRuntimeConfig(repositoryRoot),
+      projectContext = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids);
+    requireState(
+      work.binding.config_digest === runtimeConfigDigest(config),
+      'task source binding runtime configuration differs from current Host Work',
+    );
+    const operationsTable = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'")
+      .get();
+    const actionsTable = this.#database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'")
+      .get();
+    requireState(!actionsTable || operationsTable, 'task source action has no preparation storage');
+    if (actionsTable)
+      requireState(
+        !this.#database
           .query(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
+            'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
           )
-          .get();
-        const actionsTable = this.#database
-          .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'")
-          .get();
-        requireState(!actionsTable || operationsTable, 'task source action has no preparation storage');
-        if (actionsTable)
-          requireState(
-            !this.#database
-              .query(
-                'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
-              )
-              .get(this.#workspaceId),
-            'orphan task source action prevents Source root resolution',
-          );
-        const reservedTickets =
-          current.ledger?.tickets.filter(
-            (ticket) =>
-              ticket.work_id === identity.work_id &&
-              ticket.ticket_id.startsWith('task-source-ticket:') &&
-              ticket.status !== 'queued',
-          ) ?? [];
-        requireState(
-          reservedTickets.length === 0 || (operationsTable && actionsTable),
-          'reserved task source ticket has no effect storage',
-        );
-        if (!operationsTable || !actionsTable) return null;
-        const rows = this.#database
-          .query(
-            'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=?',
-          )
-          .all(this.#workspaceId) as {
-          operation_id: string;
-          revision: number;
-          payload: string;
-          digest: string;
-          request_id: string;
-          request_digest: string;
-        }[];
-        const workRows = rows.filter((row) => {
-          const operation = JSON.parse(row.payload) as Record<string, unknown>;
-          const request = validateTaskSourceBindingRequest(operation.request);
-          return request.work_id === identity.work_id;
-        });
-        requireState(
-          reservedTickets.every((ticket) =>
-            workRows.some(
-              (row) =>
-                taskSourceTicketId(
-                  validateTaskSourceBindingRequest(
-                    parseStoredRecord(row.payload, 'task source retained operation').request,
-                  ),
-                ) === ticket.ticket_id &&
-                this.#database
-                  .query(
-                    'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-                  )
-                  .get(this.#workspaceId, row.operation_id),
-            ),
-          ),
-          'reserved task source ticket has no retained effect record',
-        );
-        if (
-          !workRows.some((row) =>
+          .get(this.#workspaceId),
+        'orphan task source action prevents Source root resolution',
+      );
+    const reservedTickets =
+      current.ledger?.tickets.filter(
+        (ticket) =>
+          ticket.work_id === identity.work_id &&
+          ticket.ticket_id.startsWith('task-source-ticket:') &&
+          ticket.status !== 'queued',
+      ) ?? [];
+    requireState(
+      reservedTickets.length === 0 || (operationsTable && actionsTable),
+      'reserved task source ticket has no effect storage',
+    );
+    if (!operationsTable || !actionsTable) return null;
+    const rows = this.#database
+      .query(
+        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=?',
+      )
+      .all(this.#workspaceId) as {
+      operation_id: string;
+      revision: number;
+      payload: string;
+      digest: string;
+      request_id: string;
+      request_digest: string;
+    }[];
+    const workRows = rows.filter((row) => {
+      const operation = JSON.parse(row.payload) as Record<string, unknown>;
+      const request = validateTaskSourceBindingRequest(operation.request);
+      return request.work_id === identity.work_id;
+    });
+    requireState(
+      reservedTickets.every((ticket) =>
+        workRows.some(
+          (row) =>
+            taskSourceTicketId(
+              validateTaskSourceBindingRequest(
+                parseStoredRecord(row.payload, 'task source retained operation').request,
+              ),
+            ) === ticket.ticket_id &&
             this.#database
               .query(
                 'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
               )
               .get(this.#workspaceId, row.operation_id),
-          )
-        )
-          return null;
-        const journalRow = this.#database
+        ),
+      ),
+      'reserved task source ticket has no retained effect record',
+    );
+    if (
+      !workRows.some((row) =>
+        this.#database
           .query(
-            'SELECT attempt,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+            'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
           )
-          .get(this.#workspaceId, identity.work_id) as { attempt: number; payload: string; digest: string } | null;
-        requireState(
-          journalRow && (attempt === undefined || journalRow.attempt === attempt),
-          'task source binding Host journal attempt differs',
+          .get(this.#workspaceId, row.operation_id),
+      )
+    )
+      return null;
+    const journalRow = this.#database
+      .query(
+        'SELECT attempt,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
+      )
+      .get(this.#workspaceId, identity.work_id) as { attempt: number; payload: string; digest: string } | null;
+    requireState(
+      journalRow && (attempt === undefined || journalRow.attempt === attempt),
+      'task source binding Host journal attempt differs',
+    );
+    const currentAttempt = journalRow.attempt;
+    const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
+      durableSourceScope = validateTaskSourceJournalScope(journal.source_scope);
+    assertTaskSourceJournalScopeWithinWork(durableSourceScope, work);
+    requireState(
+      canonicalJsonDigest(journal) === journalRow.digest,
+      'task source binding Host journal or Source scope integrity differs',
+    );
+    let binding: TaskSourceBinding | null = null;
+    let uncertain = false;
+    for (const row of workRows) {
+      const operationRow = row as TaskSourceOperationRow,
+        operation = JSON.parse(row.payload) as Record<string, unknown>,
+        request = validateTaskSourceBindingRequest(operation.request);
+      requireState(
+        sameJson(request.project_ids, identity.project_ids),
+        'task source prepared operation identity differs during binding read',
+      );
+      const actionRow = this.#database
+        .query(
+          'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
+      if (!actionRow) continue;
+      const pair = validateTaskSourceActionPair(operationRow, actionRow),
+        action = pair.action;
+      if (request.operation === 'inspect') continue;
+      if (action.status === 'issued' || action.status === 'unknown') {
+        uncertain = true;
+        continue;
+      }
+      requireState(action.status === 'reported', 'task source action status is invalid');
+      const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
+      requireState(
+        report.status === 'observed' && report.binding !== null,
+        'reported task source binding has no valid retained observed result',
+      );
+      if (request.attempt !== currentAttempt || request.thread_id !== threadId) continue;
+      const next = report.binding;
+      const authority = operation.authority as {
+        source_authorization_sha256?: unknown;
+        source_scope_digest?: unknown;
+      };
+      requireState(
+        next.work_id === identity.work_id &&
+          next.attempt === currentAttempt &&
+          next.thread_id === threadId &&
+          next.canonical_host_root === this.#repositoryRoot &&
+          next.repository_id === identity.repository_id &&
+          sameJson(next.project_ids, identity.project_ids) &&
+          next.config_digest === work.binding.config_digest &&
+          next.source_scope.digest === work.binding.work_source_revision &&
+          authority.source_scope_digest === work.binding.work_source_revision &&
+          typeof authority.source_authorization_sha256 === 'string' &&
+          hashPattern.test(authority.source_authorization_sha256) &&
+          next.project_context_digest === projectContext.project_context_digest &&
+          next.common_dir === next.canonical_host_common_dir,
+        'reported task source binding differs from current Host identity, configuration or scope',
+      );
+      requireState(binding === null, 'multiple current task source bindings are ambiguous');
+      const stats = lstatSync(next.source_root);
+      requireState(
+        stats.isDirectory() && !stats.isSymbolicLink() && realpathSync.native(next.source_root) === next.source_root,
+        'reported task source root is not a physical canonical directory',
+      );
+      binding = validateTaskSourceBinding(next);
+    }
+    requireState(!uncertain, 'task source action outcome remains unknown; Source root resolution is blocked');
+    if (verifyBytes) {
+      const sourceRoot = binding?.source_root ?? repositoryRoot,
+        currentSource = snapshotDeclaredSources(
+          requireSafeRepositoryAccess(sourceRoot),
+          durableSourceScope!.entries.map((entry) => entry.path),
         );
-        const currentAttempt = journalRow.attempt;
-        const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
-          durableSourceScope = validateTaskSourceJournalScope(journal.source_scope);
-        assertTaskSourceJournalScopeWithinWork(durableSourceScope, work);
-        requireState(
-          canonicalJsonDigest(journal) === journalRow.digest,
-          'task source binding Host journal or Source scope integrity differs',
-        );
-        let binding: TaskSourceBinding | null = null;
-        let uncertain = false;
-        for (const row of workRows) {
-          const operationRow = row as TaskSourceOperationRow,
-            operation = JSON.parse(row.payload) as Record<string, unknown>,
-            request = validateTaskSourceBindingRequest(operation.request);
-          requireState(
-            sameJson(request.project_ids, identity.project_ids),
-            'task source prepared operation identity differs during binding read',
-          );
-          const actionRow = this.#database
-            .query(
-              'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-            )
-            .get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
-          if (!actionRow) continue;
-          const pair = validateTaskSourceActionPair(operationRow, actionRow),
-            action = pair.action;
-          if (request.operation === 'inspect') continue;
-          if (action.status === 'issued' || action.status === 'unknown') {
-            uncertain = true;
-            continue;
-          }
-          requireState(action.status === 'reported', 'task source action status is invalid');
-          const report = validateTaskSourceBindingExchange(request, action.recovery_report ?? action.report);
-          requireState(
-            report.status === 'observed' && report.binding !== null,
-            'reported task source binding has no valid retained observed result',
-          );
-          if (request.attempt !== currentAttempt || request.thread_id !== threadId) continue;
-          const next = report.binding;
-          const authority = operation.authority as {
-            source_authorization_sha256?: unknown;
-            source_scope_digest?: unknown;
-          };
-          requireState(
-            next.work_id === identity.work_id &&
-              next.attempt === currentAttempt &&
-              next.thread_id === threadId &&
-              next.canonical_host_root === this.#repositoryRoot &&
-              next.repository_id === identity.repository_id &&
-              sameJson(next.project_ids, identity.project_ids) &&
-              next.config_digest === work.binding.config_digest &&
-              next.source_scope.digest === work.binding.work_source_revision &&
-              authority.source_scope_digest === work.binding.work_source_revision &&
-              typeof authority.source_authorization_sha256 === 'string' &&
-              hashPattern.test(authority.source_authorization_sha256) &&
-              next.project_context_digest === projectContext.project_context_digest &&
-              next.common_dir === next.canonical_host_common_dir,
-            'reported task source binding differs from current Host identity, configuration or scope',
-          );
-          requireState(binding === null, 'multiple current task source bindings are ambiguous');
-          const stats = lstatSync(next.source_root);
-          requireState(
-            stats.isDirectory() &&
-              !stats.isSymbolicLink() &&
-              realpathSync.native(next.source_root) === next.source_root,
-            'reported task source root is not a physical canonical directory',
-          );
-          binding = validateTaskSourceBinding(next);
-        }
-        requireState(!uncertain, 'task source action outcome remains unknown; Source root resolution is blocked');
-        const sourceRoot = binding?.source_root ?? repositoryRoot,
-          currentSource = snapshotDeclaredSources(
-            requireSafeRepositoryAccess(sourceRoot),
-            durableSourceScope!.entries.map((entry) => entry.path),
-          );
-        requireState(
-          compareScopedSourceSnapshots(durableSourceScope!, currentSource).length === 0,
-          'current task Source bytes differ from the durable Host journal scope',
-        );
-        return binding;
-      })
-      .deferred();
+      requireState(
+        compareScopedSourceSnapshots(durableSourceScope!, currentSource).length === 0,
+        'current task Source bytes differ from the durable Host journal scope',
+      );
+    }
+    return binding;
   }
 
   /** Read original scoped bytes for historical release; this grants no current execution rights. */
@@ -9740,7 +9817,7 @@ export class HostStateStore {
       }
       matchesExpected(before.workVersion, null);
       matchesExpected(before.ledgerVersion, input.expectedLedger);
-      input.verifySuccessor();
+      requireSynchronousVerification(input.verifySuccessor(), 'successor proof must finish synchronously');
       validatePair(successor, incomingLedger);
       this.#validateProgress(before, successor, incomingLedger);
       const baseline = before.ledger;
@@ -9823,7 +9900,10 @@ export class HostStateStore {
           ),
           'reserved source action prevents absorption',
         );
-        input.verifyCurrent(snapshot(work), snapshot(journal), candidate.requestPointer);
+        requireSynchronousVerification(
+          input.verifyCurrent(snapshot(work), snapshot(journal), candidate.requestPointer),
+          'predecessor proof must finish synchronously',
+        );
         const ids = new Set(tickets.map((ticket) => ticket.ticket_id));
         const next = this.#checkedWork({
           ...work,
@@ -11891,7 +11971,10 @@ export class HostStateStore {
         receipt.request.recovery_id === row.recovery_id,
       'failed prewriter recovery row identity or checksum differs',
     );
-    validateFailedPrewriterRecoveryReceipt(receipt);
+    validateFailedPrewriterRecoveryReceipt(
+      receipt,
+      storedQualifiedRuntimeCodeContinuations(this.#database, this.#workspaceId, identity.work_id, attempt),
+    );
     const original = this.#database
       .query(
         'SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
@@ -12214,7 +12297,11 @@ export class HostStateStore {
     const row = rows[0]!,
       receipt = readInitialSourceFrontierCodeRebindReceiptRecord(row.payload, row.digest);
     const recovery = this.#readCompletedSourceReportRecoveryReceiptRow(identity, attempt),
-      historicalWork = projectQualifiedRuntimeCodeAncestor(current.work, current.runtimeCodeContinuations),
+      historicalWork = projectQualifiedRuntimeCodeAncestor(
+        current.work,
+        current.runtimeCodeContinuations,
+        recovery?.record.work_version.revision ?? receipt.record.work_version.revision,
+      ),
       currentCodeDigest =
         recovery?.record.request.currentRuntimeCodeDigest ?? receipt.record.successor_work.binding.runtime_code_digest;
     requireState(
@@ -12387,7 +12474,8 @@ export class HostStateStore {
     if (rows.length === 0) return null;
     const row = rows[0]!,
       receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt,
-      action = receipt.request.action;
+      action = receipt.request.action,
+      recovery = this.#readFailedPrewriterRecoveryReceipt(identity, attempt);
     requireState(
       row.payload === canonicalJson(receipt) &&
         row.digest === canonicalJsonDigest(receipt) &&
@@ -12395,9 +12483,13 @@ export class HostStateStore {
         receipt.attempt === attempt &&
         receipt.request_digest === canonicalJsonDigest(receipt.request) &&
         sameJson(
-          current.work.binding,
-          this.#readFailedPrewriterRecoveryReceipt(identity, attempt)?.successor_work.binding ??
-            receipt.successor_binding,
+          projectRecoveryRuntimeCodeAncestor(
+            current.work,
+            current.runtimeCodeContinuations,
+            recovery?.work_version.revision ?? receipt.work_version.revision,
+            recovery,
+          ).binding,
+          recovery?.successor_work.binding ?? receipt.successor_binding,
         ) &&
         (action.kind === 'configured_frontier'
           ? action.request.action_id === row.action_id
@@ -12425,7 +12517,8 @@ export class HostStateStore {
     requireState(rows.length <= 1, 'delivered-work continuation lookup is ambiguous for this attempt');
     if (rows.length === 0) return null;
     const row = rows[0]!,
-      receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
+      receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt,
+      bindingRecovery = this.#readFailedPrewriterRecoveryReceipt(identity, attempt);
     requireState(
       canonicalJsonDigest(receipt) === row.digest &&
         receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
@@ -12440,9 +12533,13 @@ export class HostStateStore {
             receipt.request.action.request.action_id === row.action_id)) &&
         current.work.binding &&
         sameJson(
-          current.work.binding,
-          this.#readFailedPrewriterRecoveryReceipt(identity, attempt)?.successor_work.binding ??
-            receipt.successor_binding,
+          projectRecoveryRuntimeCodeAncestor(
+            current.work,
+            current.runtimeCodeContinuations,
+            bindingRecovery?.work_version.revision ?? receipt.work_version.revision,
+            bindingRecovery,
+          ).binding,
+          bindingRecovery?.successor_work.binding ?? receipt.successor_binding,
         ),
       'delivered-work continuation lookup receipt or current Work binding differs',
     );
@@ -12571,6 +12668,7 @@ export class HostStateStore {
             },
             frontier,
             recovery,
+            current.runtimeCodeContinuations,
           );
         requireState(
           engine.run_id === journal.run_id &&
@@ -12698,7 +12796,10 @@ export class HostStateStore {
           row.payload === encoded.payload && row.digest === encoded.digest,
           'failed prewriter archive checksum differs',
         );
-        validateFailedPrewriterRecoveryReceipt(receipt);
+        validateFailedPrewriterRecoveryReceipt(
+          receipt,
+          storedQualifiedRuntimeCodeContinuations(this.#database, this.#workspaceId, workId, attempt),
+        );
         const item = receipt.prior_journal.items.find((item) => item.request.action_id === observation.action_id);
         if (!item) continue;
         requireState(
@@ -13824,7 +13925,7 @@ export class HostStateStore {
           canonicalJsonDigest(record) === existing.digest && record.request_digest === requestDigest,
           'stopped-source capture retry differs',
         );
-        input.verifyCurrent();
+        requireSynchronousVerification(input.verifyCurrent(), 'stopped Source proof must finish synchronously');
         const current = this.#read(input.identity);
         requireState(
           isPlainRecord(record.released_ticket) &&
@@ -14004,7 +14105,7 @@ export class HostStateStore {
           sameJson(changes, [...observation.changed_paths!].sort()),
         'candidate change outside original scope or observation differs',
       );
-      input.verifyCurrent();
+      requireSynchronousVerification(input.verifyCurrent(), 'stopped Source proof must finish synchronously');
       const authorization = reservation.authorization;
       requireState(authorization, 'bound local source approval required');
       const { stored, approval } = this.#storedWorkflowApproval(authorization, 'commit_unknown');
@@ -14242,7 +14343,7 @@ export class HostStateStore {
           canonicalJsonDigest(record) === existing.digest && record.request_digest === requestDigest,
           'retired-source capture retry differs',
         );
-        input.verifyCurrent();
+        requireSynchronousVerification(input.verifyCurrent(), 'retired Source proof must finish synchronously');
         requireState(
           current.work?.lease === null &&
             current.work.execution.status === 'suspended' &&
@@ -14529,7 +14630,7 @@ export class HostStateStore {
         }),
         'another uncertain Source writer remains unresolved',
       );
-      input.verifyCurrent();
+      requireSynchronousVerification(input.verifyCurrent(), 'retired Source proof must finish synchronously');
       const attempts = work.execution.assignment_attempts.map((entry) =>
           entry.attempt_id === attempt
             ? {
@@ -14610,7 +14711,7 @@ export class HostStateStore {
     expectedLedger: StateVersion;
     expectedJournal: StateVersion;
     expectedMaintenanceGeneration: number;
-    verifyCurrent: (work: WorkState, journal: Record<string, unknown>) => void;
+    verifyCurrent: (work: WorkState, journal: Record<string, unknown>, sourceRoot: string | undefined) => void;
   }): HostStateSnapshot {
     requireState(
       Number.isSafeInteger(input.attempt) &&
@@ -14701,12 +14802,25 @@ export class HostStateStore {
         'lease renewal journal identity changed',
       );
       requireState(
-        (journal.items as { host_reservation?: { receipt?: { attempt?: { lease?: unknown } } } }[]).every(
-          (entry) => !entry.host_reservation || sameJson(entry.host_reservation.receipt?.attempt?.lease, work.lease),
+        (journal.items as MastraSessionLedgerState['items']).every(
+          (entry) =>
+            !entry.host_reservation ||
+            sameJson(entry.host_reservation.receipt.attempt.lease, work.lease) ||
+            completedSourceJournalObservationMatches(work, entry),
         ),
         'lease renewal writer reservation fence differs',
       );
-      input.verifyCurrent(snapshot(work), snapshot(journal));
+      requireSynchronousVerification(
+        input.verifyCurrent(
+          snapshot(work),
+          snapshot(journal),
+          this.#repositoryRoot === undefined
+            ? undefined
+            : (this.#resolveTaskSourceBinding(input.identity, input.nativeSessionHandle, input.attempt, false)
+                ?.source_root ?? this.#repositoryRoot),
+        ),
+        'lease renewal current proof must finish synchronously',
+      );
       const expiry = new Date(
         Math.max(now + 60 * 60 * 1000, timestamp(ticket.expires_at), timestamp(claims[0]!.lease_expires_at)),
       ).toISOString();
@@ -14810,15 +14924,19 @@ export class HostStateStore {
         now = Date.now();
       validateFailedPrewriterRecoveryBasis({
         original: original as ConfiguredFrontierReceipt,
-        work,
+        work: projectQualifiedRuntimeCodeAncestor(
+          work,
+          before.runtimeCodeContinuations,
+          original.work_version.revision,
+        ),
         ledger,
         journal,
         nativeSessionHandle: request.nativeSessionHandle,
         now,
         leaseState: 'live',
       });
-      requireState(
-        input.verifyCurrent(request, snapshot(original as ConfiguredFrontierReceipt)) === undefined,
+      requireSynchronousVerification(
+        input.verifyCurrent(request, snapshot(original as ConfiguredFrontierReceipt)),
         'failed prewriter current endpoint proof must finish synchronously',
       );
       const binding = this.#configuredFrontierRepairBinding(original as ConfiguredFrontierReceipt);
@@ -14941,7 +15059,7 @@ export class HostStateStore {
         accepted_result: false,
         runtime_acceptance: false,
       };
-      validateFailedPrewriterRecoveryReceipt(receipt);
+      validateFailedPrewriterRecoveryReceipt(receipt, before.runtimeCodeContinuations);
       requireState(sameJson(this.#checkedWork(nextWork, receipt), nextWork), 'failed prewriter successor Work invalid');
       validatePair(nextWork, nextLedger);
       this.#database.exec(
@@ -15059,7 +15177,11 @@ export class HostStateStore {
         now = Date.now();
       validateFailedPrewriterRecoveryBasis({
         original: original as ConfiguredFrontierReceipt,
-        work,
+        work: projectQualifiedRuntimeCodeAncestor(
+          work,
+          before.runtimeCodeContinuations,
+          original.work_version.revision,
+        ),
         ledger,
         journal,
         nativeSessionHandle: input.nativeSessionHandle,
@@ -15070,7 +15192,7 @@ export class HostStateStore {
         snapshot(journal),
         snapshot(original as ConfiguredFrontierReceipt),
       );
-      requireState(verification === undefined, 'failed prewriter current proof must finish synchronously');
+      requireSynchronousVerification(verification, 'failed prewriter current proof must finish synchronously');
       const ticket = ledger.tickets.find((item) => item.ticket_id === work.lease!.ticket_id)!;
       const claim = ledger.claims.find((item) => item.ticket_id === ticket.ticket_id && item.status === 'active')!;
       const ticketId = 'ticket-' + randomUUID(),
@@ -15186,6 +15308,7 @@ export class HostStateStore {
     verifyCurrent: (
       work: WorkState,
       journal: Record<string, unknown>,
+      sourceRoot: string | undefined,
     ) => { runtimeCodeDigest: string; authorityPointer: string };
   }): HostStateSnapshot {
     requireState(
@@ -15298,22 +15421,22 @@ export class HostStateStore {
           recoveryReceipt: completedSourceRecovery,
         });
       }
-      requireState(
-        !(journal.items as { host_reservation?: unknown }[]).some((entry) => entry.host_reservation),
-        'issued writer-bound wave must advance before expired lease recovery',
+      const currentItems = journal.items as MastraSessionLedgerState['items'];
+      const acceptedCurrentSourceWave = isAcceptedCompletedSourceWave(
+        work,
+        journal as unknown as MastraSessionLedgerState,
+        completedSourceRecovery,
       );
-      const completed = journal.completed as {
-        items: { issue_id: unknown; observation: { status: string } | null; host_reservation?: unknown }[];
-      }[];
+      const completed = journal.completed as MastraSessionLedgerState['completed'];
       requireState(
-        Array.isArray(completed) &&
+        Array.isArray(journal.completed) &&
           completed.length > 0 &&
           completed.every(
             (wave) =>
               Array.isArray(wave.items) &&
               wave.items.length > 0 &&
               wave.items.every(
-                (item) =>
+                (item: MastraSessionLedgerState['items'][number]) =>
                   item.issue_id !== null &&
                   item.observation?.status === 'reported_complete' &&
                   (!item.host_reservation ||
@@ -15325,30 +15448,43 @@ export class HostStateStore {
           ),
         'expired recovery historical outcomes must already be accepted',
       );
+      const acceptedItems = [
+        ...completed.flatMap((wave) => wave.items),
+        ...(acceptedCurrentSourceWave ? currentItems : []),
+      ];
       requireState(
         work.execution.assignment_attempts.every((attempt) =>
-          completed
-            .flatMap((wave) => wave.items)
-            .some(
-              (item) =>
-                (item as unknown as MastraSessionLedgerState['items'][number]).host_reservation?.receipt.attempt
-                  .attempt_id === attempt.attempt_id &&
-                completedSourceJournalObservationMatches(
-                  work,
-                  item as unknown as MastraSessionLedgerState['items'][number],
-                ),
-            ),
+          acceptedItems.some(
+            (item) =>
+              (item as unknown as MastraSessionLedgerState['items'][number]).host_reservation?.receipt.attempt
+                .attempt_id === attempt.attempt_id &&
+              completedSourceJournalObservationMatches(
+                work,
+                item as unknown as MastraSessionLedgerState['items'][number],
+              ),
+          ),
         ),
         'expired execution recovery requires every writer result durably accepted',
       );
       requireState(
-        (journal.items as { issue_id: unknown; observation: unknown }[]).length > 0 &&
-          (journal.items as { issue_id: unknown; observation: unknown }[]).every(
-            (item) => item.issue_id === null && item.observation === null,
-          ),
-        'expired recovery requires an entirely unissued current wave',
+        acceptedCurrentSourceWave ||
+          (currentItems.length > 0 &&
+            currentItems.every(
+              (item) => item.issue_id === null && item.observation === null && item.host_reservation === undefined,
+            )),
+        'expired recovery requires an entirely unissued wave or the exact accepted Source report wave',
       );
-      const verified = input.verifyCurrent(snapshot(work), snapshot(journal));
+      const verified = synchronousProof(
+        input.verifyCurrent(
+          snapshot(work),
+          snapshot(journal),
+          this.#repositoryRoot === undefined
+            ? undefined
+            : (this.#resolveTaskSourceBinding(input.identity, input.nativeSessionHandle, input.attempt, false)
+                ?.source_root ?? this.#repositoryRoot),
+        ),
+        'expired recovery current proof must finish synchronously',
+      );
       const newRuntimeDigest = verified.runtimeCodeDigest;
       requireState(
         typeof verified.authorityPointer === 'string' &&
@@ -15462,6 +15598,32 @@ export class HostStateStore {
         },
         nextLedger,
       );
+      if (completedSourceRecovery) {
+        const initialReceipt = this.#readInitialSourceContinuationReceipt(input.identity, input.attempt);
+        const frontierReceipt = initialReceipt
+          ? this.#readInitialSourceFrontierCodeRebindReceipt(
+              input.identity,
+              input.attempt,
+              initialReceipt.continuation_id,
+            )
+          : null;
+        validateCompletedSourceReportRecoveryLineage({
+          host: {
+            ...before,
+            work: nextWork,
+            ledger: nextLedger,
+            workVersion: version(nextWork),
+            ledgerVersion: version(nextLedger),
+          },
+          journal: {
+            version: { revision: row.revision + 1, digest: row.digest },
+            state: journal as unknown as MastraSessionLedgerState,
+          },
+          initialReceipt,
+          frontierReceipt,
+          recoveryReceipt: completedSourceRecovery,
+        });
+      }
       for (const [kind, id, value, expected] of [
         ['work', identityKey(input.identity), nextWork, before.workVersion!],
         ['ledger', 'shared', nextLedger, before.ledgerVersion!],
@@ -16993,6 +17155,37 @@ export class HostStateStore {
       this.#assertMaintenanceGeneration(data.expectedMaintenanceGeneration);
       matchesExpected(before.workVersion, data.expectedWork);
       matchesExpected(before.ledgerVersion, data.expectedLedger);
+      const predecessorLease = before.work?.lease;
+      const predecessorTicket = before.ledger?.tickets.find(
+        (ticket) => ticket.ticket_id === predecessorLease?.ticket_id,
+      );
+      const successorTicket = ledger.tickets.find((ticket) => ticket.ticket_id === work.lease?.ticket_id);
+      if (
+        predecessorLease &&
+        successorTicket?.status === 'active' &&
+        successorTicket.active_resources.some((resource) => resource.startsWith('file:')) &&
+        (successorTicket.ticket_id !== predecessorLease.ticket_id ||
+          successorTicket.active_resources.some((resource) => !predecessorTicket?.active_resources.includes(resource)))
+      ) {
+        const predecessorClaims = before.ledger!.claims.filter(
+          (claim) => claim.ticket_id === predecessorTicket?.ticket_id && claim.status === 'active',
+        );
+        requireState(
+          predecessorTicket?.status === 'active' &&
+            predecessorTicket.thread_id === predecessorLease.thread_id &&
+            predecessorTicket.generation === predecessorLease.generation &&
+            predecessorTicket.expires_at !== null &&
+            timestamp(predecessorTicket.expires_at) > Date.now() &&
+            predecessorClaims.length === 1 &&
+            predecessorTicket.claim_ids.includes(predecessorClaims[0]!.claim_id) &&
+            predecessorClaims[0]!.work_id === before.work!.binding.lifecycle_work_id &&
+            predecessorClaims[0]!.thread_id === predecessorLease.thread_id &&
+            predecessorClaims[0]!.generation === predecessorLease.generation &&
+            sameJson(predecessorClaims[0]!.resources, predecessorTicket.active_resources) &&
+            timestamp(predecessorClaims[0]!.lease_expires_at) > Date.now(),
+          'source writer promotion requires live predecessor ticket and claim',
+        );
+      }
       if (expectedSessionJournal) {
         const journal = this.#database
           .query(
@@ -17050,7 +17243,10 @@ export class HostStateStore {
               }),
             'terminal writer journal transition differs from completed host outcome',
           );
-          terminalJournal.verifyCurrent();
+          requireSynchronousVerification(
+            terminalJournal.verifyCurrent(),
+            'terminal Source proof must finish synchronously',
+          );
         }
       }
       if (sourceReportRecoveryProjection) {

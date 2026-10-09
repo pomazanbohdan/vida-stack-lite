@@ -48,13 +48,15 @@ checks freshness before progress. Uncertain issued actions are not reissued.
 
 ## Dynamic engine requirements
 
-The engine core of `EPIC-CONFIGURABLE-AGENT-SYSTEM-001` is current P0.
+The engine core of `EPIC-CONFIGURABLE-AGENT-SYSTEM-001` is P2 development.
 The target includes dynamic child tasks, loops and adaptive model/effort routing.
 UI and full business task management are separate work. Task kinds remain the
 shared fixed set; configuration selects their flows, not new business task types.
 These requirements define the target. They do not certify implementation or
 installed readiness. Packet delivery and correction of known-failed read-only
-waves remain current prerequisites, alongside the accepted pre-commit work.
+waves remain current P0 bug work. Complete blocking defects first, then P1
+optimizations, before this P2 development. New completion profiles, routing,
+child execution and pre-commit expansion do not block the current bug delivery.
 
 | Concern | Required behavior |
 | --- | --- |
@@ -1627,6 +1629,17 @@ remain bound to that owner, current scoped source and unrevoked source-write
 authority. Renewal cannot acquire an expired or foreign fence or resolve an
 unknown effect.
 
+Renewal resolves the recorded TaskSource root inside the same Host transaction.
+Source comparison uses that root; configuration, scope and intake remain in the
+canonical Host root. Allowed writer edits retain their existing scoped check.
+An unresolved or malformed Source binding denies renewal without state changes.
+Generic CAS cannot release or transfer file ownership while any retained
+assignment is started or uncertain. Existing terminal completion or trusted
+no-effect reconciliation settles that fence without granting new rights.
+Synchronous proof callbacks must finish before transaction writes. Returned
+thenables are rejected and their rejection is observed; a void proof must return
+undefined. This rule also applies to exact retries and the final Source recheck.
+
 Expired accepted readonly work may use `--recover-expired-lease true` together
 with explicit `--rebind-current-bundle true`. Recovery requires an unsealed
 INTAKE work with a completely unissued current wave, no pending unknown native
@@ -2270,6 +2283,19 @@ current code against the authenticated adoption history. Exact retry returns
 the stored receipt. Plan/apply returns current versions and one next action;
 it never reissues an action or grants Source rights or Runtime acceptance.
 
+Use the immutable receipt's Work revision as the code-history anchor. A code
+adoption at that revision belongs to the receipt's current binding. Later
+adoptions do not change its historical binding. Validate the complete ordered
+history before selecting the ancestor; a revision anchor is not a waiver of
+identity, protected Work or endpoint continuity.
+
+A supported failed-prewriter Source recovery separates two code-history segments.
+Validate earlier adoptions against its exact prior Work and later adoptions
+against its successor. The recovery revision cannot also be a code adoption.
+Host, admission, packet and engine readers carry the same retained history.
+The recovery changes no original receipt, approval or accepted result. Missing
+or altered history denies; a caller-provided code digest is not a bridge.
+
 Before adoption, `refresh` retargets the SAME prepared plan under its original
 repair ID. It requires the prior request ID. Only the current runtime inventory,
 manifest, installation/update references and native self-attestation may change.
@@ -2328,6 +2354,16 @@ may contain multiple read-only validators; it is not the unique initial frontier
 Later expired execution-only ownership follows the existing same-owner Host
 rebind chain. Retain the original Work scope separately from the evolved Journal
 snapshot, and require the exact completed Source result before that recovery.
+The exact single-item accepted Source-report wave may recover its expired
+execution-only lease before ordinary engine advancement. Its reservation,
+completed Host result and retained receipt must match. Recovery preserves the
+Journal payload and never repeats the writer or report. Mixed, pending, failed,
+unknown or research-exposed waves remain ineligible. The ordinary next run
+advances the same Mastra run after recovery.
+Later lifecycle preparation may append references through the existing Host
+admission rules. Recovery readers preserve every anchored reference by identity
+and content, including the existing typed feedback-consumption transition.
+They do not require the entire reference list to remain unchanged.
 Return current CAS and the supported next action without issuing it. Recovery
 grants no Source file ownership, task acceptance or user Runtime acceptance.
 An exact completed retry returns retained evidence; altered or uncertain effects
@@ -2362,6 +2398,12 @@ retain the original fresh package and root-identity checks before and after
 awaiting it, before dispatching the lock or replacement helper. A cached native
 binding is not current attestation. Drift during the await must deny entry
 without changing payload, creating a lock sidecar or invoking the callback.
+
+Windows replacement requires regular single-link files. It records target and
+staging descriptor identities, reopens both paths before rename, and verifies
+the result against staging after rename. Use integer-preserving file identity.
+Same-byte substitution is a conflict. Failure after rename dispatch remains
+UNKNOWN; keep staging custody and never delete a substituted path during cleanup.
 
 Descriptor simulation preserves the Linux production contract while adapting
 Windows flush access only inside owned test fixtures. Temporary writable handles

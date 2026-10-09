@@ -1472,7 +1472,7 @@ function publicFailure(error) {
   // credentials or stack traces through the public diagnostic envelope.
   const reasons = [
     [
-      /failed prewriter (?:owner )?recovery:|issued writer outcome must settle before expired lease recovery|issued writer-bound wave must advance before expired lease recovery|expired recovery requires an entirely unissued current wave/,
+      /failed prewriter (?:owner )?recovery:|issued writer outcome must settle before expired lease recovery|issued writer-bound wave must advance before expired lease recovery|expired recovery requires an entirely unissued (?:current )?wave/,
       'current wave is outside the supported lease-recovery contract',
       'recovery eligibility',
       'Preserve the current reports and use a supported same-attempt wave disposition; do not repeat lease recovery.',
@@ -3553,6 +3553,7 @@ export async function run(args = process.argv.slice(2)) {
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
     const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
     const { completedSourceJournalObservationMatches } = await import('../src/host-state.ts');
+    const { isAcceptedCompletedSourceWave } = await import('../src/orchestration/completed-source-report-recovery.ts');
     const project = loadProjectSetContext(values.project_root, config, values.repository, values.projects);
     const identity = {
       repository_id: project.repository_id,
@@ -3589,7 +3590,12 @@ export async function run(args = process.argv.slice(2)) {
         expectedLedger: host.ledgerVersion,
         expectedJournal: { revision: Number(values.expected_revision), digest: values.expected_digest },
         expectedMaintenanceGeneration: host.maintenanceGeneration,
-        verifyCurrent: (work, state) => {
+        verifyCurrent: (work, state, sourceRoot) => {
+          const acceptedCurrentSourceWave = isAcceptedCompletedSourceWave(
+            work,
+            state,
+            initialLineage?.completedSourceReportRecovery,
+          );
           const currentConfig = loadRuntimeConfig(values.project_root);
           const approval = work.lifecycle.references.find(
             (reference) =>
@@ -3705,7 +3711,7 @@ export async function run(args = process.argv.slice(2)) {
               !profile ||
               item.request.role !== assignment.role ||
               item.request.config_digest !== work.binding.config_digest ||
-              (profile.mutation_scope === 'repository_source' && item.issue_id !== null)
+              (profile.mutation_scope === 'repository_source' && item.issue_id !== null && !acceptedCurrentSourceWave)
             )
               fail(
                 'GAP-VIDA-RUN-CONTEXT-001',
@@ -3724,7 +3730,7 @@ export async function run(args = process.argv.slice(2)) {
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery configuration, projects or scope differs.');
           const source = snapshotDeclaredSources(
-            access,
+            requireSafeRepositoryAccess(sourceRoot),
             state.source_scope.entries.map((entry) => entry.path),
           );
           if (source.digest !== state.source_scope.digest)
@@ -3800,6 +3806,7 @@ export async function run(args = process.argv.slice(2)) {
     }
   }
   if (values.renew_lease) {
+    const { completedSourceJournalObservationMatches } = await import('../src/host-state.ts');
     const { readLocalSourceWriteAuthorization } = await import('../src/orchestration/local-source-authorization.ts');
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
@@ -3843,10 +3850,11 @@ export async function run(args = process.argv.slice(2)) {
         expectedLedger: host.ledgerVersion,
         expectedJournal: { revision: Number(values.expected_revision), digest: values.expected_digest },
         expectedMaintenanceGeneration: host.maintenanceGeneration,
-        verifyCurrent: (work, state) => {
+        verifyCurrent: (work, state, sourceRoot) => {
           const currentConfig = loadRuntimeConfig(values.project_root);
           let currentWriterAuthority;
           for (const item of state.items) {
+            const settledWriter = item.host_reservation && completedSourceJournalObservationMatches(work, item);
             const stage = currentConfig.workflows[work.binding.workflow_id]?.stages.find(
               (entry) => entry.id === item.request.stage_id,
             );
@@ -3859,13 +3867,14 @@ export async function run(args = process.argv.slice(2)) {
               item.request.config_digest !== work.binding.config_digest ||
               (profile.mutation_scope === 'repository_source' &&
                 item.issue_id !== null &&
+                !settledWriter &&
                 (!item.host_reservation ||
                   item.host_reservation.receipt.identity.work_id !== work.binding.lifecycle_work_id ||
                   item.host_reservation.receipt.attempt.lease.ticket_id !== work.lease.ticket_id ||
                   item.host_reservation.receipt.attempt.lease.generation !== work.lease.generation))
             )
               fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal current request or issued writer binding is unsafe.');
-            if (profile.mutation_scope === 'repository_source' && item.issue_id !== null) {
+            if (profile.mutation_scope === 'repository_source' && item.issue_id !== null && !settledWriter) {
               const reference = work.lifecycle.references.find(
                 (entry) =>
                   entry.kind === 'execution_approval' &&
@@ -3900,7 +3909,7 @@ export async function run(args = process.argv.slice(2)) {
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal configuration, projects or scope differs.');
           const source = snapshotDeclaredSources(
-            access,
+            requireSafeRepositoryAccess(sourceRoot),
             state.source_scope.entries.map((entry) => entry.path),
           );
           const scopeBytes = access.readBytes(work.contracts.scope.path, 'renew bound scope'),
@@ -5525,12 +5534,8 @@ export async function run(args = process.argv.slice(2)) {
           : null;
       if (admittedSource && sourceSnapshot?.digest !== admittedSource.digest)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Accepted source scope changed before workflow start.');
-      const storedContinuation = ledger.hostState.readDeliveredWorkContinuationReceipt(
-        admissionIdentity,
-        context.attempt,
-      );
-      const configuredContinuation =
-        storedContinuation?.request.action.kind === 'configured_frontier' ? storedContinuation : null;
+      const configuredView = ledger.hostState.readConfiguredFrontierRecoveryView(admissionIdentity, context.attempt);
+      const configuredContinuation = configuredView?.original ?? null;
       const initialSourceContinuation = ledger.hostState.readInitialSourceContinuationReceipt(
         admissionIdentity,
         context.attempt,
@@ -5642,7 +5647,12 @@ export async function run(args = process.argv.slice(2)) {
       }
       const engineBinding = { ...bridgeArgs, runId: expectedRunId };
       let workflowSnapshot = configuredContinuation
-        ? readConfiguredContinuationSessionEngineSnapshot(engineBinding, configuredContinuation)
+        ? readConfiguredContinuationSessionEngineSnapshot(
+            engineBinding,
+            configuredContinuation,
+            configuredView.recovery,
+            configuredView.runtimeCodeContinuations,
+          )
         : initialSourceContinuation
           ? readInitialSourceContinuationSessionEngineSnapshot(
               engineBinding,

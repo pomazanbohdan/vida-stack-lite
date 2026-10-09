@@ -1,5 +1,6 @@
 import { canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
 import { projectQualifiedRuntimeCodeAncestor } from './qualified-runtime-code-continuation.js';
+import { validateLifecycleReferencePreservation } from '../lifecycle/lifecycle-state.js';
 import type { CoordinationClaim, CoordinationTicket } from '../contracts/envelopes.js';
 import type { AssignmentAttempt, HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import { completedSourceJournalObservationMatches } from '../host-state.js';
@@ -269,6 +270,7 @@ function recoveryWorkDescendantCore(work: WorkState): Record<string, unknown> {
   delete lifecycle.next_action;
   delete lifecycle.seal;
   delete lifecycle.assurance;
+  delete lifecycle.references;
   const configBinding = { ...work.lifecycle.config_binding } as unknown as Record<string, unknown>;
   delete configBinding.runtime_code_digest;
   lifecycle.config_binding = configBinding;
@@ -408,7 +410,7 @@ function validExpiredExecutionRebindChain(
       oldTicket.blocked_resources.length !== 0 ||
       !same(oldTicket.claim_ids, [previousClaimId]) ||
       !oldClaim ||
-      !recoveryExecutionClaimMatches(oldClaim, oldTicket, request, predecessorClaim.claim_id) ||
+      !recoveryExecutionClaimMatches(oldClaim, oldTicket, request, previousClaimId) ||
       oldClaim.status !== 'recovered' ||
       !Number.isFinite(Date.parse(oldClaim.lease_expires_at)) ||
       Date.parse(oldClaim.lease_expires_at) > Date.parse(rebind.created_at)
@@ -1058,18 +1060,44 @@ export function readCompletedSourceReportRecoveryReceiptRecord(
   return validateCompletedSourceReportRecoveryReceipt(value);
 }
 
+/** Recognize only the exact durably accepted writer wave; this grants no new issue. */
+export function isAcceptedCompletedSourceWave(
+  work: WorkState,
+  journal: MastraSessionLedgerState,
+  receipt: CompletedSourceReportRecoveryReceipt | null | undefined,
+): boolean {
+  const item = journal.items[0];
+  return Boolean(
+    receipt &&
+    journal.research_wave_exposure === undefined &&
+    journal.items.length === 1 &&
+    item &&
+    item.issue_id === receipt.issue_id &&
+    item.request.action_id === receipt.action_id &&
+    item.host_reservation &&
+    same(item.host_reservation, receipt.record.original_reservation) &&
+    item.observation?.status === 'reported_complete' &&
+    item.observation.host_attempt_id === receipt.record.request.hostAttemptId &&
+    completedSourceJournalObservationMatches(work, item),
+  );
+}
+
 export function validateCompletedSourceReportRecoveryLineage(
   state: CompletedSourceReportRecoveryState,
 ): CompletedSourceReportRecoveryReceipt {
+  const receipt = validateCompletedSourceReportRecoveryReceipt(state.recoveryReceipt);
   if (state.host.work && state.host.runtimeCodeContinuations?.length)
     state = {
       ...state,
       host: {
         ...state.host,
-        work: projectQualifiedRuntimeCodeAncestor(state.host.work, state.host.runtimeCodeContinuations),
+        work: projectQualifiedRuntimeCodeAncestor(
+          state.host.work,
+          state.host.runtimeCodeContinuations,
+          receipt.record.work_version.revision,
+        ),
       },
     };
-  const receipt = validateCompletedSourceReportRecoveryReceipt(state.recoveryReceipt);
   const record = receipt.record,
     request = record.request;
   requireRecovery(
@@ -1083,6 +1111,10 @@ export function validateCompletedSourceReportRecoveryLineage(
     'current Host, Journal, or initial lineage unavailable',
   );
   const initial = validateInitialSourceContinuationReceipt(state.initialReceipt);
+  validateLifecycleReferencePreservation(
+    record.successor_work.lifecycle.references,
+    state.host.work.lifecycle.references,
+  );
   requireRecovery(
     initial.continuation_id === request.initialContinuationId &&
       initial.request_digest === request.initialContinuationRequestDigest &&

@@ -363,6 +363,52 @@ describe('safe repository access completeness', () => {
     }
   });
 
+  test('Windows replacement rejects a hardlinked target without changing either name', async () => {
+    if (process.platform !== 'win32') return;
+    const repositoryRoot = root(), access = requireSafeRepositoryAccess(repositoryRoot);
+    writeFileSync(path.join(repositoryRoot, 'original.txt'), 'before');
+    linkSync(path.join(repositoryRoot, 'original.txt'), path.join(repositoryRoot, 'alias.txt'));
+    await expect(access.replaceAtomicAsync('original.txt', createHash('sha256').update('before').digest('hex'),
+      'after', 'hardlinked target')).rejects.toThrow(/single-link/);
+    expect(readFileSync(path.join(repositoryRoot, 'original.txt'), 'utf8')).toBe('before');
+    expect(readFileSync(path.join(repositoryRoot, 'alias.txt'), 'utf8')).toBe('before');
+  });
+
+  test.each(['target', 'staging', 'result'])('Windows replacement detects same-byte %s substitution', async (surface) => {
+    if (process.platform !== 'win32') return;
+    const repositoryRoot = root(), access = requireSafeRepositoryAccess(repositoryRoot);
+    const target = path.join(repositoryRoot, 'race.txt');
+    writeFileSync(target, 'before');
+    const binding = require(path.resolve('node_modules/@openclaw/fs-safe/dist/native.js')).getNativeBinding();
+    expect(binding).toBeDefined();
+    const originalOpen = binding.openBeneath, originalRename = binding.renameReplace;
+    let stageOpens = 0, replaced = false;
+    const substitute = (file) => {
+      const bytes = readFileSync(file);
+      renameSync(file, file + '.retained');
+      writeFileSync(file, bytes);
+      replaced = true;
+    };
+    binding.openBeneath = (...args) => {
+      if (/^\.race\.txt\.[^.]+\.native\.tmp$/.test(String(args[1]))) {
+        stageOpens++;
+        if (surface === 'target' && stageOpens === 1) substitute(target);
+        if (surface === 'staging' && stageOpens === 2) substitute(path.join(repositoryRoot, args[1]));
+      }
+      return originalOpen(...args);
+    };
+    binding.renameReplace = (...args) => {
+      originalRename(...args);
+      if (surface === 'result') substitute(target);
+    };
+    try {
+      await expect(access.replaceAtomicAsync('race.txt', createHash('sha256').update('before').digest('hex'),
+        'after', 'identity race')).rejects.toThrow(surface === 'result' ? /outcome unknown.*retry prohibited/ : /identity or content changed/);
+      expect(replaced).toBe(true);
+      expect(readFileSync(target, 'utf8')).toBe(surface === 'result' ? 'after' : 'before');
+    } finally { binding.openBeneath = originalOpen; binding.renameReplace = originalRename; }
+  });
+
   test('provider preserves safe reads and rejects unsafe paths', async () => {
     const repositoryRoot = root();
     const access = detectSafeRepositoryAccess(repositoryRoot);

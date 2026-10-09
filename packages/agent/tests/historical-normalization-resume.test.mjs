@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'vitest';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
-import { resumeHistoricalObservedResearchResult } from '../src/research-decision.ts';
+import { prepareObservedResearchRecord, resumeHistoricalObservedResearchResult } from '../src/research-decision.ts';
+import { buildObservedResearchResult } from '../src/orchestration/observed-research-result.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.mjs';
 
@@ -310,6 +312,95 @@ test('historical normalization restores the exact record and changelog pair afte
     delete host.store.withHistoricalNormalizationMutation;
     const resumed = await resumeHistoricalObservedResearchResult(input(f, host));
     assert.equal(resumed.replay, true);
+  } finally {
+    delete host.store.withHistoricalNormalizationMutation;
+    host.close();
+    f.dispose();
+  }
+});
+
+test('historical normalization restores an existing changelog beforeimage after publication failure', async () => {
+  const f = createHistoricalResearchFixture();
+  const host = createHostMutationFixture(f);
+  const originalMutation = host.store.withHistoricalNormalizationMutation.bind(host.store);
+  try {
+    removePublication(f);
+    writeFileSync(pathFor(f, f.changelogPath), '');
+    const body = {
+      ...f.plan,
+      changelog_pre_sha256: createHash('sha256').update('').digest('hex'),
+    };
+    delete body.digest;
+    const plan = { ...body, digest: canonicalJsonDigest(body) };
+    const before = host.store.readHostStateSnapshot(host.identity);
+    host.store.withHistoricalNormalizationMutation = (mutation) =>
+      originalMutation({
+        ...mutation,
+        action: async () => {
+          await mutation.action();
+          throw new Error('injected failure after existing changelog replacement');
+        },
+      });
+    await assert.rejects(
+      () => resumeHistoricalObservedResearchResult(input(f, host, { plan })),
+      /injected failure after existing changelog replacement/,
+    );
+    assert.equal(readFileSync(pathFor(f, f.changelogPath), 'utf8'), '');
+    assert.equal(readFileSync(pathFor(f, f.recordPath), 'utf8'), f.recordBytes);
+    const after = host.store.readHostStateSnapshot(host.identity);
+    assert.deepEqual(after.workVersion, before.workVersion);
+    assert.deepEqual(after.ledgerVersion, before.ledgerVersion);
+  } finally {
+    delete host.store.withHistoricalNormalizationMutation;
+    host.close();
+    f.dispose();
+  }
+});
+
+test('historical normalization restores both existing beforeimages after an observed update fails', async () => {
+  const f = createHistoricalResearchFixture();
+  const host = createHostMutationFixture(f);
+  const originalMutation = host.store.withHistoricalNormalizationMutation.bind(host.store);
+  try {
+    const recordBefore = readFileSync(pathFor(f, f.recordPath));
+    const changelogBefore = readFileSync(pathFor(f, f.changelogPath));
+    const summaryValue = JSON.parse(f.observation.summary);
+    summaryValue.recommendation.rationale = 'The second independently verified observation changes this rationale.';
+    const summary = JSON.stringify(summaryValue);
+    const observation = { ...f.observation, summary, output_digest: canonicalJsonDigest(summary) };
+    const result = buildObservedResearchResult({
+      config: f.config,
+      observation,
+      request: f.request,
+      issueId: observation.issue_id,
+      activationUse: f.activationUse,
+      work: f.work,
+      scopeBytes: f.scopeBytes,
+      acceptanceBytes: f.acceptanceBytes,
+      workItem: f.workItem,
+    });
+    const candidate = input(f, host, { result, observation, readCurrent: () => f.binding });
+    const plan = await prepareObservedResearchRecord(candidate);
+    assert.notEqual(plan.record_pre_sha256, null);
+    assert.notEqual(plan.changelog_pre_sha256, null);
+    const before = host.store.readHostStateSnapshot(host.identity);
+    host.store.withHistoricalNormalizationMutation = (mutation) =>
+      originalMutation({
+        ...mutation,
+        action: async () => {
+          await mutation.action();
+          throw new Error('injected failure after both existing replacements');
+        },
+      });
+    await assert.rejects(
+      () => resumeHistoricalObservedResearchResult({ ...candidate, plan }),
+      /injected failure after both existing replacements/,
+    );
+    assert.deepEqual(readFileSync(pathFor(f, f.recordPath)), recordBefore);
+    assert.deepEqual(readFileSync(pathFor(f, f.changelogPath)), changelogBefore);
+    const after = host.store.readHostStateSnapshot(host.identity);
+    assert.deepEqual(after.workVersion, before.workVersion);
+    assert.deepEqual(after.ledgerVersion, before.ledgerVersion);
   } finally {
     delete host.store.withHistoricalNormalizationMutation;
     host.close();

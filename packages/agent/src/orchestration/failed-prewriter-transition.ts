@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { validateLifecycleReferencePreservation } from '../lifecycle/lifecycle-state.js';
 import {
   canonicalJsonAtDepth,
   canonicalJsonDigest,
@@ -20,6 +21,7 @@ import {
 import { validateFailedPrewriterRecoveryBasis } from './failed-prewriter-recovery.js';
 import {
   projectQualifiedRuntimeCodeAncestor,
+  runtimeCodeContinuationProtectedWorkDigest,
   validateQualifiedRuntimeCodeContinuationReceipt,
   type QualifiedRuntimeCodeContinuationReceipt,
 } from './qualified-runtime-code-continuation.js';
@@ -222,6 +224,7 @@ export function validateFailedPrewriterTransitionRequest(
 /** Validate a durable transition without granting caller or execution authority. */
 export function validateFailedPrewriterRecoveryReceipt(
   receipt: FailedPrewriterRecoveryReceipt,
+  runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
 ): FailedPrewriterRecoveryReceipt {
   requireTransition(
     exactKeys(
@@ -256,7 +259,11 @@ export function validateFailedPrewriterRecoveryReceipt(
     );
   validateFailedPrewriterRecoveryBasis({
     original: receipt.original,
-    work: receipt.prior_work,
+    work: projectQualifiedRuntimeCodeAncestor(
+      receipt.prior_work,
+      runtimeCodeContinuations?.filter((entry) => entry.work_version.revision < receipt.work_version.revision),
+      receipt.original.work_version.revision,
+    ),
     ledger: receipt.prior_ledger,
     journal: receipt.prior_journal,
     nativeSessionHandle: request.nativeSessionHandle,
@@ -409,12 +416,48 @@ export function validateFailedPrewriterRecoveryReceipt(
   return receipt;
 }
 
+export function projectRecoveryRuntimeCodeAncestor(
+  work: WorkState,
+  values: readonly QualifiedRuntimeCodeContinuationReceipt[] | undefined,
+  anchorWorkRevision: number,
+  sourceRecovery?: FailedPrewriterRecoveryReceipt | null,
+): WorkState {
+  if (!sourceRecovery) return projectQualifiedRuntimeCodeAncestor(work, values, anchorWorkRevision);
+  const recovery = validateFailedPrewriterRecoveryReceipt(sourceRecovery, values),
+    revision = recovery.work_version.revision,
+    history = (values ?? []).map(validateQualifiedRuntimeCodeContinuationReceipt);
+  requireTransition(
+    anchorWorkRevision === revision &&
+      work.revision >= revision &&
+      !history.some((receipt) => receipt.work_version.revision === revision),
+    'code history overlaps the Source recovery revision',
+  );
+  projectQualifiedRuntimeCodeAncestor(
+    recovery.prior_work,
+    history.filter((receipt) => receipt.work_version.revision < revision),
+  );
+  const projected = projectQualifiedRuntimeCodeAncestor(
+    work,
+    history.filter((receipt) => receipt.work_version.revision > revision),
+    revision,
+  );
+  validateLifecycleReferencePreservation(recovery.successor_work.lifecycle.references, projected.lifecycle.references);
+  requireTransition(
+    same(projected.binding, recovery.successor_work.binding) &&
+      runtimeCodeContinuationProtectedWorkDigest(projected) ===
+        runtimeCodeContinuationProtectedWorkDigest(recovery.successor_work),
+    'code history does not preserve the Source recovery successor',
+  );
+  return projected;
+}
+
 export function effectiveConfiguredFrontier(view: ConfiguredFrontierRecoveryView): {
   currentSourceScope: ScopedSourceSnapshot;
   currentBinding: WorkState['binding'];
   requests: readonly SessionBridgeRequest[];
 } {
-  const recovery = view.recovery && validateFailedPrewriterRecoveryReceipt(view.recovery);
+  const recovery =
+    view.recovery && validateFailedPrewriterRecoveryReceipt(view.recovery, view.runtimeCodeContinuations);
   requireTransition(!recovery || same(recovery.original, view.original), 'recovery view original receipt differs');
   const base = recovery?.successor_work ?? view.original.successor_work;
   const adopted = view.runtimeCodeContinuations?.at(-1);
@@ -422,7 +465,7 @@ export function effectiveConfiguredFrontier(view: ConfiguredFrontierRecoveryView
   if (adopted) {
     const projected = {
       ...base,
-      revision: adopted.work_version.revision,
+      revision: Math.max(base.revision, adopted.work_version.revision),
       binding: {
         ...base.binding,
         runtime_code_digest: adopted.request.currentRuntimeCodeDigest,
@@ -437,7 +480,15 @@ export function effectiveConfiguredFrontier(view: ConfiguredFrontierRecoveryView
       },
     };
     requireTransition(
-      same(projectQualifiedRuntimeCodeAncestor(projected, view.runtimeCodeContinuations).binding, base.binding),
+      same(
+        projectRecoveryRuntimeCodeAncestor(
+          projected,
+          view.runtimeCodeContinuations,
+          recovery?.work_version.revision ?? view.original.work_version.revision,
+          recovery,
+        ).binding,
+        base.binding,
+      ),
       'configured code adoption does not retain its ancestor',
     );
     currentBinding = projected.binding;

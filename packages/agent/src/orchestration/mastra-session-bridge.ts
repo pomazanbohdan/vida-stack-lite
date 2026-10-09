@@ -360,10 +360,11 @@ export class MastraSessionBridge {
       requireBridge(stored, 'configured-frontier Host receipt is missing');
       requireBridge(stored.request.action.kind === 'configured_frontier', 'configured-frontier receipt kind differs');
       configuredRecovery = args.ledger.hostState.readFailedPrewriterRecoveryReceipt(identity, attempt);
+      const runtimeCodeContinuations = args.ledger.hostState.readQualifiedRuntimeCodeContinuations(identity, attempt);
       const effective = effectiveConfiguredFrontier({
         original: stored as ConfiguredFrontierReceipt,
         recovery: configuredRecovery,
-        runtimeCodeContinuations: args.ledger.hostState.readQualifiedRuntimeCodeContinuations(identity, attempt),
+        runtimeCodeContinuations,
       });
       requireBridge(
         stored.request.action.kind === 'configured_frontier' &&
@@ -400,7 +401,12 @@ export class MastraSessionBridge {
         runId,
         ...(args.lifecycleRisk === undefined ? {} : { lifecycleRisk: args.lifecycleRisk }),
       };
-      const preflight = readConfiguredContinuationSessionEngineSnapshot(binding, configuredReceipt, configuredRecovery);
+      const preflight = readConfiguredContinuationSessionEngineSnapshot(
+        binding,
+        configuredReceipt,
+        configuredRecovery,
+        runtimeCodeContinuations,
+      );
       requireBridge(
         preflight.status === 'suspended',
         'configured-frontier run has no resumable current graph frontier',
@@ -650,7 +656,12 @@ export class MastraSessionBridge {
     this.#assertEngineFile();
     const view = this.#configuredFrontier ? this.#readConfiguredFrontierView() : null;
     const snapshot = this.#configuredFrontier
-      ? readConfiguredContinuationSessionEngineSnapshot(this.#binding, view!.original, view!.recovery)
+      ? readConfiguredContinuationSessionEngineSnapshot(
+          this.#binding,
+          view!.original,
+          view!.recovery,
+          view!.runtimeCodeContinuations,
+        )
       : this.#initialSourceContinuation
         ? this.#readInitialSourceContinuationView()
         : readSessionEngineSnapshot({ ...this.#binding, correctiveExecution: this.#correctiveExecution });

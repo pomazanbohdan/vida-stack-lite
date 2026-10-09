@@ -4276,7 +4276,7 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     );
   });
 
-  test('completion records the started result after lease expiry or explicit revocation without new dispatch authority', () => {
+  test('completion after expiry preserves unresolved file ownership until every result is terminal', () => {
     store.compareAndSwapHostState(fixture());
     const first = store.claimWorkflowAttempt(attemptRequest());
     const second = store.claimWorkflowAttempt(attemptRequest(undefined, 1));
@@ -4297,12 +4297,19 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     const ticket = revoke.nextLedger.tickets[0];
     ticket.generation++;
     revokeTicket(revoke.nextLedger, ticket);
-    store.compareAndSwapHostState(revoke);
+    const beforeRevocation = store.readHostStateSnapshot(identity);
+    expect(() => store.compareAndSwapHostState(revoke)).toThrow(/unresolved Source attempt/);
+    expect(store.readHostStateSnapshot(identity)).toEqual(beforeRevocation);
     const revokedCompletion = store.completeWorkflowAttempt(second, 'finished');
     expect(revokedCompletion.attempt.status).toBe('completed');
+    const terminalRevoke = next();
+    terminalRevoke.nextWork.lease = null;
+    terminalRevoke.nextLedger.tickets[0].generation++;
+    revokeTicket(terminalRevoke.nextLedger, terminalRevoke.nextLedger.tickets[0]);
+    store.compareAndSwapHostState(terminalRevoke);
     const revokedSnapshot = store.readHostStateSnapshot(identity);
     const replay = { ...attemptRequest(revokedSnapshot, 1), lease: second.attempt.lease };
-    expect(store.claimWorkflowAttempt(replay)).toEqual(revokedCompletion);
+    expect(store.claimWorkflowAttempt(replay).attempt).toEqual(revokedCompletion.attempt);
     expect(() => store.claimWorkflowAttempt({ ...replay, lease: { ...replay.lease, generation: 99 } })).toThrow(
       /completed replay lease binding/,
     );

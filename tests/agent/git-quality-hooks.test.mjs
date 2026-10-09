@@ -196,6 +196,11 @@ test('staging validation uses Git path filters and rejects byte or mode changes'
   const objects = [[file, expected.stdout.trim()]];
   git(root, 'add', '--', file);
   verifyStagedObjects(root, objects, index);
+  writeFileSync(path.join(root, 'unrelated.txt'), 'concurrent index change\n');
+  git(root, 'add', '--', 'unrelated.txt');
+  assert.throws(() => verifyStagedObjects(root, objects, index), /Staged bytes or mode changed/);
+  git(root, 'rm', '--cached', '--', 'unrelated.txt');
+  verifyStagedObjects(root, objects, index);
   git(root, 'update-index', '--chmod=+x', '--', file);
   assert.throws(() => verifyStagedObjects(root, objects, index), /Staged bytes or mode changed/);
   git(root, 'update-index', '--chmod=-x', '--', file);

@@ -270,7 +270,13 @@ async function runQualifiedRuntimeCodeContinuationLocked(values) {
           initial.frontierCodeRebind,
           initial.completedSourceReportRecovery,
         );
-      } else readConfiguredContinuationSessionEngineSnapshot(binding, configured.original, configured.recovery);
+      } else
+        readConfiguredContinuationSessionEngineSnapshot(
+          binding,
+          configured.original,
+          configured.recovery,
+          configured.runtimeCodeContinuations,
+        );
       requireContinuation(
         same(
           snapshotDeclaredSources(

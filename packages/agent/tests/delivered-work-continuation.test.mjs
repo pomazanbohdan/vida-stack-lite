@@ -22,7 +22,12 @@ import { buildSessionBridgeRequest } from '../src/orchestration/mastra-session-b
 import { validateFailedPrewriterRecoveryBasis } from '../src/orchestration/failed-prewriter-recovery.ts';
 import { readConfiguredContinuationSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
 import { validateFailedPrewriterRecoveryReceipt, serializeFailedPrewriterRecoveryReceipt,
-  failedPrewriterRecoveryDigest, configuredFrontierRecoveryViewDigest } from '../src/orchestration/failed-prewriter-transition.ts';
+  failedPrewriterRecoveryDigest, configuredFrontierRecoveryViewDigest, effectiveConfiguredFrontier } from '../src/orchestration/failed-prewriter-transition.ts';
+import {
+  runtimeCodeContinuationProtectedWorkDigest,
+  validateQualifiedRuntimeCodeContinuationRequest,
+  validateQualifiedRuntimeCodeContinuationReceipt,
+} from '../src/orchestration/qualified-runtime-code-continuation.ts';
 import { transitionFailedPrewriter } from '../bin/transition-failed-prewriter.mjs';
 import {run as runAgent} from '../bin/run.mjs';
 import { acceptedContractSourceRevision } from '../src/orchestration/admitted-development-packet.ts';
@@ -82,6 +87,7 @@ test.each([0, 12])('failed prewriter transition preserves the failed wave and or
     repositoryRoot: root, identity: input.receipt.request.identity });
   seedFrontierHostFixture(f, input);
   await seedOriginalFrontierEngine(root, config, input);
+  const h1 = extraTickets === 0 ? seedQualifiedCodeReaderHop(f, 'H1') : null;
   const failed = structuredClone(input.receipt.successor_journal);
   failed.items = failed.items.map(item => {
     const issue_id = randomUUID(), summary = 'Known fixture packet failure';
@@ -94,7 +100,8 @@ test.each([0, 12])('failed prewriter transition preserves the failed wave and or
   const before = f.store.readHostStateSnapshot(f.identity), journal = f.store.readWorkSessionJournal(f.identity);
   const originalBytes = canonicalJson(input.receipt), changed = sourceScope(failed.source_scope.entries.map(item => ({
     ...item, bytes: item.bytes + 1, sha256: '9'.repeat(64) })));
-  const transition = { ...input.receipt.request.sourceTransition.transition, target_runtime_code_digest: 'd'.repeat(64) };
+  const transition = { ...input.receipt.request.sourceTransition.transition,
+    target_runtime_code_digest: h1?.request.currentRuntimeCodeDigest ?? 'd'.repeat(64) };
   const proof = { ...input.receipt.request.sourceTransition, transition, transition_digest: canonicalJsonDigest(transition) };
   const request = { schema: 'FailedPrewriterTransitionRequest/v1', recovery_id: 'fixture-failed-wave', identity: f.identity,
     attempt: 1, nativeSessionHandle: input.receipt.request.nativeSessionHandle,
@@ -147,6 +154,10 @@ test.each([0, 12])('failed prewriter transition preserves the failed wave and or
   const recovered = f.store.readFailedPrewriterRecoveryReceipt(f.identity, 1);
   expect(recovered.request).toEqual(request);
   const recoveryView = f.store.readConfiguredFrontierRecoveryView(f.identity, 1);
+  if (h1) {
+    expect(recovered.prior_work_version).toEqual(h1.work_version);
+    expect(effectiveConfiguredFrontier(recoveryView).currentBinding).toEqual(recovered.successor_work.binding);
+  }
   for (const value of [recovered, recovered.prior_ledger.tickets,
     recovered.successor_ledger.tickets.at(-1).exclusive_resources, recoveryView, recoveryView.original, recoveryView.recovery])
     expect(Object.isFrozen(value)).toBe(true);
@@ -178,7 +189,8 @@ test.each([0, 12])('failed prewriter transition preserves the failed wave and or
   const recoveredJournal = f.store.readWorkSessionJournal(f.identity);
   expect(acceptedContractSourceRevision(result.work, recoveredJournal, recoveryView)).toBe(input.receipt.prior_work.binding.work_source_revision);
   expect(acceptedContractSourceRevision(result.work, recoveredJournal)).toBe(changed.digest);
-  expect(() => acceptedContractSourceRevision(result.work, recoveredJournal, {...recoveryView, recovery: null})).toThrow(/original admission/);
+  expect(() => acceptedContractSourceRevision(result.work, recoveredJournal, {...recoveryView, recovery: null})).toThrow(
+    h1 ? /protected same-attempt descendant/ : /original admission/);
   expect(() => acceptedContractSourceRevision(result.work, {...recoveredJournal,
     state: {...recoveredJournal.state, run_id: 'foreign-run'}}, recoveryView)).toThrow(/original admission/);
   expect(recovered.prior_journal).toEqual(failed);
@@ -190,7 +202,7 @@ test.each([0, 12])('failed prewriter transition preserves the failed wave and or
   const currentEngine = readConfiguredContinuationSessionEngineSnapshot({
     ...input.prewriterBinding, context: { ...input.prewriterBinding.context, scope_digest: changed.digest },
     runId: input.receipt.prior_work.execution.run_id,
-  }, input.receipt, recovered);
+  }, input.receipt, recovered, recoveryView.runtimeCodeContinuations);
   expect(currentEngine.status).toBe('suspended');
   expect(currentEngine.run_id).toBe(input.receipt.prior_work.execution.run_id);
   expect(currentEngine.requests).toEqual(recovered.successor_journal.items.map(item => item.request));
@@ -282,6 +294,26 @@ test.each([0, 12])('failed prewriter transition preserves the failed wave and or
     expect(reopened.readConfiguredFrontierRecoveryView(f.identity, 1)).toEqual(recoveryView);
     expect(reopened.readHostStateSnapshot(f.identity).work.binding).toEqual(recovered.successor_work.binding);
   } finally {reopenedDb.close(true);}
+  if (h1) {
+    const h2 = seedQualifiedCodeReaderHop(f, 'H2');
+    const adopted = f.store.readConfiguredFrontierRecoveryView(f.identity, 1);
+    expect(adopted.runtimeCodeContinuations).toEqual([h1, h2]);
+    expect(effectiveConfiguredFrontier(adopted).currentBinding.runtime_code_digest).toBe(h2.request.currentRuntimeCodeDigest);
+    expect(f.store.readDeliveredWorkContinuationReceipt(f.identity, 1)).toEqual(input.receipt);
+    expect(f.store.readDeliveredWorkContinuation(f.identity, 1)).toBeNull();
+    const adoptedHost = f.store.readHostStateSnapshot(f.identity), adoptedJournal = f.store.readWorkSessionJournal(f.identity);
+    for (const mode of ['status', 'inspect', 'apply']) {
+      writeFileSync(path.join(root, requestPath), canonicalJson({...recordedInput, ...(mode === 'apply' ? {request} : {})}));
+      expect(transitionFailedPrewriter(['--mode', mode, '--project-root', root, '--request', requestPath]).status)
+        .toBe('failed_prewriter_transition_recorded');
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(adoptedHost);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(adoptedJournal);
+    }
+    expect(acceptedContractSourceRevision(f.store.readHostStateSnapshot(f.identity).work,
+      f.store.readWorkSessionJournal(f.identity), adopted)).toBe(input.receipt.prior_work.binding.work_source_revision);
+    expect(f.db.query('SELECT payload FROM agent_host_delivered_work_continuation WHERE workspace_id=?')
+      .get(workspaceId).payload).toBe(originalBytes);
+  }
 }, 90_000);
 
 test('public failed prewriter owner recovery inspects, denies a changed owner and applies without rewriting failed reports', async () => {
@@ -1367,6 +1399,61 @@ test('frontier repair joins prior Work with the exact run and accepted scope and
     authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(request) } };
   expect(() => continuationRepair.validateConfiguredFrontierReceiptStructure({ receipt })).toThrow();
 });
+
+/** Seed validated code history in an isolated reader fixture; this is not native adoption proof.
+ * @param {Awaited<ReturnType<typeof continuationFixture>>} f
+ * @param {'H1'|'H2'} label
+ */
+function seedQualifiedCodeReaderHop(f, label) {
+  const current = f.store.readHostStateSnapshot(f.identity), journal = f.store.readWorkSessionJournal(f.identity);
+  if (!current.work?.lease || !current.workVersion || !current.ledgerVersion || !journal?.state.source_scope)
+    throw new Error('Code reader fixture lacks retained Host state');
+  const work = current.work, prior = f.store.readQualifiedRuntimeCodeContinuations(f.identity, 1).at(-1);
+  const paths = prior?.request.currentRuntimeCodePaths ?? ['packages/agent/bin/run.mjs'];
+  const request = validateQualifiedRuntimeCodeContinuationRequest({
+    schema: 'QualifiedRuntimeCodeContinuationRequest/v1', identity: f.identity, attempt: 1,
+    nativeSessionHandle: work.lease.thread_id, leaseGeneration: work.lease.generation,
+    expectedWork: current.workVersion, expectedLedger: current.ledgerVersion, expectedJournal: journal.version,
+    expectedMaintenanceGeneration: current.maintenanceGeneration,
+    originalSourceScopeDigest: work.binding.work_source_revision, journalSourceScopeDigest: journal.state.source_scope.digest,
+    oldRuntimeCodeDigest: work.binding.runtime_code_digest, currentRuntimeCodeDigest: canonicalJsonDigest('fixture-code-' + label),
+    oldRuntimeCodePaths: paths, currentRuntimeCodePaths: paths,
+    oldManifestRef: prior?.request.currentManifestRef ?? '.tmp/fixture/old-manifest.json',
+    oldManifestDigest: prior?.request.currentManifestDigest ?? canonicalJsonDigest('fixture-old-manifest'),
+    oldInstallRef: prior?.request.currentInstallRef ?? '.tmp/fixture/old-install.json',
+    currentManifestRef: '.tmp/fixture/' + label + '-manifest.json', currentManifestDigest: canonicalJsonDigest(label + '-manifest'),
+    currentInstallRef: '.tmp/fixture/' + label + '-install.json', systemUpdateRef: '.tmp/fixture/' + label + '-install.json',
+    systemUpdateOperationId: 'fixture-update-' + label, nativeSelfAttestationDigest: canonicalJsonDigest(label + '-self'),
+  });
+  const next = {...work, revision: work.revision + 1,
+    binding: {...work.binding, runtime_code_digest: request.currentRuntimeCodeDigest, runtime_source_revision: request.currentRuntimeCodeDigest},
+    lifecycle: {...work.lifecycle, revision: work.revision + 1,
+      config_binding: {...work.lifecycle.config_binding, runtime_code_digest: request.currentRuntimeCodeDigest}}};
+  const endpoint = (current) => current ? {
+    codeDigest: request.currentRuntimeCodeDigest, codePaths: request.currentRuntimeCodePaths,
+    manifestRef: request.currentManifestRef, manifestDigest: request.currentManifestDigest, installRef: request.currentInstallRef,
+  } : {
+    codeDigest: request.oldRuntimeCodeDigest, codePaths: request.oldRuntimeCodePaths,
+    manifestRef: request.oldManifestRef, manifestDigest: request.oldManifestDigest, installRef: request.oldInstallRef,
+  };
+  const receipt = validateQualifiedRuntimeCodeContinuationReceipt({
+    schema: 'QualifiedRuntimeCodeContinuationReceipt/v1', request, request_digest: canonicalJsonDigest(request),
+    protected_work_digest: runtimeCodeContinuationProtectedWorkDigest(work),
+    work_version: {revision: next.revision, digest: canonicalJsonDigest(next)},
+    endpoint_proof: {oldRuntime: endpoint(false), currentRuntime: endpoint(true),
+      systemUpdate: {ref: request.systemUpdateRef, operationId: request.systemUpdateOperationId},
+      nativeSelfAttestationDigest: request.nativeSelfAttestationDigest},
+    status: 'adopted', rights_granted: false, accepted_result: false, runtime_acceptance: false,
+  });
+  f.db.transaction(() => {
+    f.db.exec('CREATE TABLE IF NOT EXISTS agent_host_qualified_runtime_code_continuation (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_id TEXT NOT NULL,work_revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,request_id),UNIQUE(workspace_id,work_id,work_revision))');
+    f.db.query("UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work'")
+      .run(next.revision, canonicalJson(next), canonicalJsonDigest(next), f.workspaceId);
+    f.db.query('INSERT INTO agent_host_qualified_runtime_code_continuation VALUES(?,?,?,?,?,?,?)')
+      .run(f.workspaceId, f.identity.work_id, 1, receipt.request_digest, next.revision, canonicalJson(receipt), canonicalJsonDigest(receipt));
+  }).immediate();
+  return receipt;
+}
 
 function seedFrontierHostFixture(f, input, staleDigest = false) {
   const { receipt } = input;
