@@ -1332,3 +1332,22 @@ Current instrumented parent data locates17.212s in writer in-process issue-wave,
 versus74ms kernel processing trace. Investigate its direct callchain and existing
 timing-owner reuse; do not remove live guard reads or add caches without cause.
 Frozen lineage/current final numerical prerequisites stay OPEN. Details: WORKv780.
+
+
+#### Current qualified test profiling and Bun reference v781–v790
+
+Teardown370a1d8 is strict-published. Silent CLI profiling is an observed Bun1.4.2
+limitation; inert programmatic Inspector and hook controls qualified, followed
+by one known-PASS scoped scenario42assertions and real private profile. Stacks
+identify glob compilation and durable CAS reads; idle attribution prevents
+selftime claims and no sync/live guard is removed. Minimal per-call compiled
+glob reuse has qualifiedRED, final9PASS90assertions and independent APPROVE.
+Bounded synthetic selection median55.315x is only that operation, not workflow
+speed. Cancelled oversized stateless benchmark remains no-result evidence.
+New project bun-test original skill is registered in sidecar and independently
+applied/reviewed; maintain it with verified practice changes while TESTING and
+lifecycle own policy. Details/corrected/failed/private receipts: WORKv781–v790.
+Root owns strict checkpoint/Git and final numeric/native checks. Next: investigate
+remaining wholewriter cost through current owned evidence, preserve durable CAS
+and fresh checks; continue exhaustive frozen correspondence and numeric custody
+reconciliation. No new full run, UNKNOWN replay or final gate/native claim.

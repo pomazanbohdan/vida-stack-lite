@@ -567,6 +567,23 @@ ordered intervals and visible write failure without a real workflow/CLI run.
 Use these observations to locate cost, never as uninstrumented speed, coverage,
 mutation or Runtime evidence. Preserve failed/UNKNOWN custody and all bounds.
 
+For a missing CPU profile, check the mechanism with an inert control before
+another expensive test. On the qualified Bun 1.4.2, CLI profiling flags can
+leave `bun test` successful without an artifact; upstream issue
+https://github.com/oven-sh/bun/issues/40184 and its open proposed fix do not
+establish installed support. Programmatic `node:inspector/promises` Session
+Profiler commands are documented and locally qualified in an inert test.
+An explicit ignored preload may bracket one selected case with global
+beforeEach/afterEach hooks; disconnect in finally, use an exclusive private
+output and report capture failure separately from the test outcome. Do not
+inherit profiling environment into CLI children. Require a nonempty observed
+artifact, not merely exit zero. Profiles cover the parent, not child execution.
+The Bun 1.4.2 idle-attribution defect in
+https://github.com/oven-sh/bun/issues/44077 also affects Inspector: stack samples
+are candidate attribution, not invocation counts or reliable wall/CPU self
+time. Keep actual phase/child elapsed receipts separate. No profiling result
+waives live checks, durable syncs, custody or numerical gates.
+
 Keep root help, per-command help and parsing declarations in parity. The CLI
 contract gate must detect an unlisted public command, alias or option, and a
 documented option that its parser cannot accept. Cover argument types, required

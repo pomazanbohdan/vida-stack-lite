@@ -6243,3 +6243,89 @@ one instrumented observation, no speedup/baseline claim. Runtime-rebind's tail
 phase lacks a closing mark due to its return; actual test/cleanup PASS supplies
 separate outcome proof. New blind v781 audits target that measured callchain and
 reuse of existing timing owners, no speculative cache or duplicate broad scan.
+
+
+### v781–v790 — qualified profiling, local glob reuse and project Bun Test skill
+
+Early-return teardown packet370a1d8 passed the complete strict hook and published
+01f70ed..370a1d8. Unrelated root bun.lock remains untouched. No old UNKNOWN root,
+process, numeric lock or release operation was opened/replayed/reclaimed.
+
+Two blind v781 audits locate repeated freshness computations but justify no live
+cache/removal; existing Initial Source phase observer cannot be transplanted into
+absorption fixtures by broadening its fixture authority. Root CLI CPU-profile
+attempt v782: selected existing runtime-rebind casePASS1/42assertions41.296s,
+42.96s whole; no profile exists. This is failed attribution, not failed behavior
+or successful profiling. Official Bun issue40184 and open PR40191 corroborate
+silent test-runner flags. Runtime remains qualified1.4.2, not newlyavailable1.4.3.
+
+Inert v783 programmatic node:inspector/promises controlPASS1/3assertions325ms,
+167samples4nodes with actual private profile. Elapsed302.789ms, CPU211.03ms,
+no idle node and max sample gap101.302ms independently corroborate issue44077.
+Private one-case hook controlPASS1/1assertion229ms validates global preload
+beforeEach/afterEach scope and exclusive private output/disconnect. No Source
+observer, public API, profiling environment inheritance or network inspector.
+Initial control command used nonexistent cwd and never launched; corrected
+owned directory creation precedes the actual qualified controls.
+
+One explicitly scoped v784 selected existing PASS runtime-rebind scenario with
+private scratch preloadPASS1/42assertions40,493.44ms case42.72s whole; actual
+nonempty15,849,061byte profile,72059nodes28727samples. Parent CPU user21.837s
+system9.990s, diagnostic elapsed40.490s; not child CPU or reliable sampled
+selftime. Current separate parent phases locate writer issue-wave15.411s;
+variation versus prior17.212s is not a speedup claim. Root does not equate
+profile clock origins with marker clock origins. Top leaf samples fsync9131,
+spawnSync3229, lstat1787, readdir1535, globRegExp588: samples are not call counts.
+Blind v785 fsync ancestry review finds CAS lock/reclaim durability, no proven
+unnecessary sync. Keep every live read, lock, sync and authorization barrier.
+Receipts/profiles: current BASE/writer-issue-programmatic-v784; research:
+bun-profile-capability-v783.md, profile-fsync-caller-audit-v785.md.
+
+Blind inventory plan and root focused inspection confirm per-file glob
+compilation and repeated include/exclude array reconstruction. Minimal existing
+helper refactor compiles selection rules once per invocation, reuses stateless
+RegExp arrays through isPackedFile/includedByPackageFiles, and compiles raw
+public-bin patterns once for that guard. No global cache, new matcher layer/API,
+filesystem/AST/hash pass, normalization/sorting or public-bin behavior change.
+Each inventory currently creates three small call-scoped sets; broader reuse
+remains a separate measured candidate. Exact output, duplicate paths, literal
+metacharacters, single/recursive glob, exclusions, empty input and in-place
+pattern changes have focused controls. RegExp Proxy counting is synchronous,
+no await/user callback, finally restored before assertions; serial scope.
+RED old11constructs>3; final exactcount requires3 per selector call. Existing
+public-bin positive mapping, directory-count and owned-access controls retained.
+Final scoped9PASS0FAIL90assertions402ms; glob-reuse-red-v786.log and
+glob-reuse-final-v787.log. Blind final glob-reuse-review-v787 APPROVES.
+No frozen ceiling is reset, no exhaustive current function correspondence or
+coverage/CRAP/mutation PASS is claimed by this tooling refactor.
+
+Oversized private stateless v787 microbenchmark was explicitly cancelled after
+131s observation, verified exact owned process170923/parent170918 before SIGTERM.
+It had no product/runtime fixture or issued business operation, and provides
+no timing result. Keep its cancelled receipt. Reduced v790 control has explicit
+20s outer bound, Source parity, alternating before/after order and five rounds
+of five selections on300synthetic paths with244current package patterns:
+median881.109ms original15.929ms candidate55.315x selection-only ratio.
+This is not wholeworkflow/test/native improvement, physical I/O evidence or
+final gate evidence. Original selected Source comes from HEAD370a1d8; no old
+artifact/runtime executable is run. Receipts: BASE/glob-benchmark-v790.
+
+User requests immediate project skill creation/maintenance. New original
+.agents/skills/bun-test/SKILL.md is a compact reference, with lifecycle/TESTING/
+package scripts retained as sole policy/command owners. Sidecar requires lead
+and blind agents to read it for Bun Test work. No .vida skill copy. TESTING
+owns current qualified profiling mechanism and limitations. Blind v788 baseline
+lacks usable current profile mechanism and proposes broader cache reuse; v789
+reference application resolves both, preserves UNKNOWN/final gates and APPROVES
+frontmatter/relative links/command discovery. These are reference application
+checks, not behavioral/numerical qualification. Keep future verified practice
+changes in this reference and authoritative owner in the same correction packet.
+
+Official research: Bun https://bun.com/docs/runtime/nodejs-compat, /test/lifecycle,
+/project/benchmarking, /blog/bun-v1.4; upstream issues40184/44077 and PR40191;
+MDN RegExp.test and Proxy.construct; Node fs.fsyncSync. General BUN_CPU_PROFILE
+is documented, but pinned test-runner use is unqualified and not adopted.
+Exhaustive frozen lineage, current exact four coverage metrics, dynamic CRAP
+and assertion-confirmed mutation100 remain OPEN. v747/v776 UNKNOWN custody
+remains held; no native qualification/cutover/unblock notice. Complete strict
+checkpoint and ordinary publication of this exact packet next.

@@ -188,19 +188,19 @@ function globRegExp(pattern: string): RegExp {
   return new RegExp(result + '$');
 }
 
-function isPackedFile(file: string, patterns: readonly string[]): boolean {
-  return patterns.some((pattern) => globRegExp(pattern).test(file));
+function isPackedFile(file: string, patterns: readonly RegExp[]): boolean {
+  return patterns.some((pattern) => pattern.test(file));
 }
 
-function includedByPackageFiles(file: string, patterns: readonly string[]): boolean {
-  const included = patterns.filter((pattern) => !pattern.startsWith('!'));
-  const excluded = patterns.filter((pattern) => pattern.startsWith('!')).map((pattern) => pattern.slice(1));
+function includedByPackageFiles(file: string, included: readonly RegExp[], excluded: readonly RegExp[]): boolean {
   return isPackedFile(file, included) && !isPackedFile(file, excluded);
 }
 
 /** One owner for package-files glob selection, including exclusions and recursive `**`. */
 export function selectMaintainedSourcePaths(files: readonly string[], patterns: readonly string[]): string[] {
-  return files.filter((file) => includedByPackageFiles(file, patterns)).sort(comparePaths);
+  const included = patterns.filter((pattern) => !pattern.startsWith('!')).map(globRegExp);
+  const excluded = patterns.filter((pattern) => pattern.startsWith('!')).map((pattern) => globRegExp(pattern.slice(1)));
+  return files.filter((file) => includedByPackageFiles(file, included, excluded)).sort(comparePaths);
 }
 
 function isInventoryManifest(value: unknown): value is InventoryManifest {
@@ -232,6 +232,7 @@ export function maintainedSourceInventory(
   const packageJson = inventoryManifest(bytes);
 
   const packagePatterns = packageJson.files.map((entry) => String(entry).replaceAll('\\', '/'));
+  const packedPatterns = packagePatterns.map(globRegExp);
   const allTypescriptSources = sourceFiles(path.join(root, 'src'), '.ts', root, [], access).sort(comparePaths);
   const allBinSources = sourceFiles(path.join(root, 'bin'), ['.mjs', '.ts'], root, [], access).sort(comparePaths);
   const typescriptSources = selectMaintainedSourcePaths(allTypescriptSources, packagePatterns);
@@ -241,7 +242,7 @@ export function maintainedSourceInventory(
     .map((entry) => String(entry).replaceAll('\\', '/').replace(/^\.\//u, ''))
     .sort(comparePaths);
   const missingPublicBins = publicBinSources.filter(
-    (file) => !allBinSources.includes(file) || !isPackedFile(file, packagePatterns),
+    (file) => !allBinSources.includes(file) || !isPackedFile(file, packedPatterns),
   );
   const v8CoverageSources = [
     ...new Set([...typescriptSources.filter((file) => !bunCoverageSources.includes(file)), ...binSources]),

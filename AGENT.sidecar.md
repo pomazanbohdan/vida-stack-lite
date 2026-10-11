@@ -123,6 +123,15 @@ exact diff and run affected checks before any authorized Source application.
 Only the designated writer applies changes. A structural match grants no
 execution, authorization, repair or UNKNOWN-replay rights.
 
+## Bun Test development
+
+For Bun Test authoring, migration, review, execution or optimization, the lead
+and delegated agents read [bun-test](.agents/skills/bun-test/SKILL.md) during
+bootstrap after the lifecycle and `packages/agent/TESTING.md`. The project skill
+is a maintained technique reference; those existing owners retain all policy,
+gate and command authority. Update the reference with verified changes in the
+same correction packet. Keep its original only in `.agents/skills`.
+
 ## Source package Git policy
 
 The Source repository owner's standing authorization permits ordinary non-force

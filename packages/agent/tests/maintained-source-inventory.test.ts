@@ -9,7 +9,51 @@ import {
   runtimeManifestExecutableInventory,
   runtimeExecutableInventory,
   standaloneBuildInputInventory,
+  selectMaintainedSourcePaths,
 } from '../tooling/maintained-source-inventory.ts';
+
+test.serial('package selection compiles patterns once per call and observes changed inputs', () => {
+  const files = Object.freeze(['src/nested/b.ts', 'src/a.ts', 'src/a.ts', 'src/private/no.ts', 'bin/main.ts']);
+  const patterns = ['src/**', 'bin/*.ts', '!src/private/**'];
+  const originalRegExp = globalThis.RegExp;
+  const observations: { selected: string[]; constructions: number }[] = [];
+  let constructions = 0;
+  globalThis.RegExp = new Proxy(originalRegExp, {
+    construct(target, args, newTarget): RegExp {
+      constructions += 1;
+      const result: unknown = Reflect.construct(target, args, newTarget);
+      if (!(result instanceof originalRegExp)) throw new Error('RegExp constructor returned a foreign value');
+      return result;
+    },
+  });
+  try {
+    observations.push({ selected: selectMaintainedSourcePaths(files, patterns), constructions });
+    patterns[0] = 'src/*.ts';
+    patterns[1] = '!bin/**';
+    const previous = constructions;
+    observations.push({
+      selected: selectMaintainedSourcePaths(files, patterns),
+      constructions: constructions - previous,
+    });
+  } finally {
+    globalThis.RegExp = originalRegExp;
+  }
+  expect(observations.map(({ selected }) => selected)).toEqual([
+    ['bin/main.ts', 'src/a.ts', 'src/a.ts', 'src/nested/b.ts'],
+    ['src/a.ts', 'src/a.ts'],
+  ]);
+  for (const observation of observations) expect(observation.constructions).toBe(patterns.length);
+  expect(files).toEqual(['src/nested/b.ts', 'src/a.ts', 'src/a.ts', 'src/private/no.ts', 'bin/main.ts']);
+});
+
+test('package selection retains literal metacharacters, exclusions and repeated stateless matching', () => {
+  const files = ['src/a+b.ts', 'src/ab.ts', 'src/a+bXts', 'src/deep/a+b.ts', 'src/a+b.ts'];
+  expect(selectMaintainedSourcePaths(files, ['src/a+b.ts'])).toEqual(['src/a+b.ts', 'src/a+b.ts']);
+  expect(selectMaintainedSourcePaths(files, ['src/*.ts', '!src/a+b.ts'])).toEqual(['src/ab.ts']);
+  expect(selectMaintainedSourcePaths(files, ['!src/**'])).toEqual([]);
+  expect(selectMaintainedSourcePaths(files, [])).toEqual([]);
+  expect(selectMaintainedSourcePaths([], ['src/**'])).toEqual([]);
+});
 
 test('initialization resource copying preserves sources and excludes exact custody sidecars', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-resource-copy-custody-'));
@@ -151,7 +195,7 @@ test('maintained bin inventory lists each directory once for MJS and TS sources'
       mkdirSync(path.dirname(target), { recursive: true });
       writeFileSync(target, contents);
     }
-    write('package.json', JSON.stringify({ files: ['bin/**', '!bin/excluded/**'] }));
+    write('package.json', JSON.stringify({ files: ['bin/**', '!bin/excluded/**'], bin: { vida: './bin/z.ts' } }));
     for (const file of ['bin/a.mjs', 'bin/z.ts', 'bin/nested/c.ts', 'bin/excluded/x.ts']) write(file, 'export {};\n');
     write('bin/readme.md', 'ignored\n');
     const safeAccess = requireSafeRepositoryAccess(root);
@@ -165,6 +209,7 @@ test('maintained bin inventory lists each directory once for MJS and TS sources'
     };
     const inventory = maintainedSourceInventory(root, access);
     expect(inventory.binSources).toEqual(['bin/a.mjs', 'bin/nested/c.ts', 'bin/z.ts']);
+    expect(inventory.publicBinSources).toEqual(['bin/z.ts']);
     expect([...counts.entries()].sort(([left], [right]) => left.localeCompare(right))).toEqual([
       ['bin', 1],
       ['bin/excluded', 1],
