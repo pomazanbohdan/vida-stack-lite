@@ -1318,3 +1318,17 @@ Next bounded correction: reviewed pre-existing runtime-rebind test early return
 skips teardown. Root remains the sole check/Git owner. Frozen lineage1228roles/
 66files stays non-executable; current numerical prerequisites and clean native
 qualification remain OPEN, with no replay or duplicated full qualification.
+
+
+#### Current actual cleanup qualification and measured next cost v780
+
+Diagnostic/membership01f70ed is strict-published. Runtime-rebind early return
+now closes its owned fixture through finally, preserving original/cleanup
+errors and UNKNOWN root retention; new actual root postcondition executes on
+that branch. Scoped lint0, exact existing Source casePASS1/42assertions46.46s,
+independent corrected-diff review approves. Keep60s/30s bounds unchanged and
+preserve prior failed/UNKNOWN operations. No full numeric/native claim.
+Current instrumented parent data locates17.212s in writer in-process issue-wave,
+versus74ms kernel processing trace. Investigate its direct callchain and existing
+timing-owner reuse; do not remove live guard reads or add caches without cause.
+Frozen lineage/current final numerical prerequisites stay OPEN. Details: WORKv780.

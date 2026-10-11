@@ -6196,3 +6196,50 @@ that lint stop. Root returns an explicitly unknown parsed value, retaining the
 same exact assertions without suppressions. Official rule researched:
 https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-unsafe-return .
 The rejected hook creates no commit; complete strict checkpoint correction next.
+
+
+### v780 — early-return fixture teardown and first attributed cost
+
+Diagnostic/membership checkpoint01f70ed passed the complete strict hook after
+the unknown JSON return correction and published b10fb4a..01f70ed to main.
+HEAD/origin0/0; unrelated root bun.lock retained.
+
+Bounded cleanup fix encloses the existing test body catch in an outer try and
+moves the one existing f.close(exact retainRoot flag) into its inner finally.
+The runtime-rebind early return now reaches close. The new real root-presence
+assertion requires absence after normal close and presence on owned UNKNOWN
+retention. The outer catch preserves both original and cleanup/postcondition
+errors in AggregateError; original throw undefined remains detectable through
+didFail. No explicit control-flow override inside finally, no new helper/layer,
+no transition/argument changes, no timeout changes. Formatting accounts for the
+large indentation diff; whitespace-insensitive diff38lines24insert14delete.
+
+Root scoped typed lint exits0, no diagnostics (early-return-scoped-lint-v780.log).
+Exact existing isolated Source test runtime-rebind PASS1/0FAIL42assertions,
+46,464.39ms case /48.37s wholecommand at unchanged60s bound. It exercises the
+actual early-return branch and new root-removal assertion. Receipt:
+early-return-runtime-rebind-v780.log. It is not a same-work validate replay,
+fullsuite/native/numeric proof or latency improvement claim. A transient Source
+CAS reader lock was visible during this owned run and absent at its known end;
+Root did not remove/reclaim it. The retained validate and numeric UNKNOWNs remain
+untouched. No generated replacement execution ID or new native invocation.
+
+Independent early-return-cleanup-review-v780 APPROVES current exact semantic
+diff. The review initially used an incomplete Git path and obtained emptydiff;
+Root rejects that comparison, supplies correct repo cwd/packages prefix, and
+the reviewer corrects its receipt with the actual38line diff. No earlier empty
+comparison is counted as approval evidence. Official Git diff path/index docs,
+MDN try/finally controlflow and Oxlint no-unsafe-finally were researched; no
+suppression or weakened gate is added.
+
+The current known-pass phase receipt is copied once from the owned private
+runtime-rebind tail into parent-phase-attribution-v780.json. Actual intervals:
+fixture/pre-admission1.625s, initial workflow before runs3.175s; six in-process
+calls3.226s,3.852s,17.212s,6.701s,0.888s,0.867s; separate public denied issue-wave
+7.368s (knownexit1, no signal/error/timeout). The third in-process call is writer
+issue-wave. Its kernel processing trace74ms cannot explain the17.212s whole
+call; do not equate within-budget kernel trace with whole CLI speed. This is
+one instrumented observation, no speedup/baseline claim. Runtime-rebind's tail
+phase lacks a closing mark due to its return; actual test/cleanup PASS supplies
+separate outcome proof. New blind v781 audits target that measured callchain and
+reuse of existing timing owners, no speculative cache or duplicate broad scan.

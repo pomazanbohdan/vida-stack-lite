@@ -2805,448 +2805,120 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
         return result;
       };
       try {
-        const id = 'corrective-public',
-          input = f.prepare(id, 'user:current-correction');
-        const context = input.context;
-        if (!context) throw new Error('corrective public fixture has no session execution context');
-        input.selection = { ...input.selection, kind: 'task', intent: 'task_execution' };
-        input.workItem = {
-          ...input.workItem,
-          canonical_kind: 'task',
-          intent: 'task_execution',
-          provider_type: 'Task',
-        };
-        input.sourceAuthorizationPath = `.agent/work/${id}/authorization.json`;
-        writeFileSync(
-          path.join(f.root, input.sourceAuthorizationPath),
-          JSON.stringify({
-            schema: 'LocalSourceWriteAuthorization/v1',
-            action: 'source.write',
-            user_instruction_ref: 'fixture:actual-owner-directive',
-            work_id: id,
-            attempt: 1,
-            scope_digest: input.context.scope_digest,
-            config_digest: runtimeConfigDigest(f.config),
-            workflow_id: 'task_execution',
-            stage_ids: ['develop_task'],
-            implementation_paths: ['AGENT.sidecar.md'],
-            native_session_handle: 'session',
-          }),
-        );
-        input.intakePath = `.agent/work/${id}/raw-intake.json`;
-        writeFileSync(
-          path.join(f.root, input.intakePath),
-          JSON.stringify({
-            schema: 'VidaLocalSessionIntake/v1',
-            work_item: input.workItem,
-            native_session_handle: input.nativeSessionHandle,
-            scope_path: input.scopePath,
-            acceptance_path: input.acceptancePath,
-            source_authorization_path: input.sourceAuthorizationPath,
-            runtime_code_paths: input.runtimeCodePaths,
-            route: input.route,
-            risk: input.risk,
-            change_kind: input.changeKind,
-          }),
-        );
-        const initial = admitLocalSessionWork(input),
-          work = initial.host.work,
-          identity = {
-            repository_id: work.binding.repository_id,
-            project_ids: work.binding.project_ids,
-            integrations_digest: work.binding.integrations_digest,
-            work_id: id,
+        try {
+          const id = 'corrective-public',
+            input = f.prepare(id, 'user:current-correction');
+          const context = input.context;
+          if (!context) throw new Error('corrective public fixture has no session execution context');
+          input.selection = { ...input.selection, kind: 'task', intent: 'task_execution' };
+          input.workItem = {
+            ...input.workItem,
+            canonical_kind: 'task',
+            intent: 'task_execution',
+            provider_type: 'Task',
           };
-        writeFileSync(
-          path.join(f.root, '.agent/runtime-initialization.v1.json'),
-          JSON.stringify({
-            schema: 'RuntimeInitialization/v1',
-            version: 1,
-            repository_id: f.config.repository.repository_id,
-            project_ids: ['sample'],
-            integrations_digest: canonicalJsonDigest(f.config.integrations),
-            workspace_id: f.store.workspaceId,
-            workspace_binding_status: 'pending',
-            bundle: f.config.runtime.bundle,
-            config_digest: runtimeConfigDigest(f.config),
-            schema_sha256: createHash('sha256')
-              .update(readFileSync(path.join(bundle, 'schemas/runtime-initialization.v1.schema.json')))
-              .digest('hex'),
-            templates: fixtureInitializationTemplates(f.root, bundle),
-            created_at: new Date().toISOString(),
-          }),
-        );
-        acquireLocalSourceWriterLease({
-          repositoryRoot: f.root,
-          config: f.config,
-          store: f.store,
-          identity,
-          nativeSessionHandle: 'session',
-          stageId: 'develop_task',
-          assignmentIndex: 0,
-          expectedWork: initial.host.workVersion,
-          expectedLedger: initial.host.ledgerVersion,
-        });
-        const args = [
-          '--project-root',
-          f.root,
-          '--repository',
-          f.config.repository.repository_id,
-          '--project',
-          'sample',
-          '--work-path',
-          'AGENT.sidecar.md',
-          '--work-id',
-          id,
-          '--attempt',
-          '1',
-          '--scope-digest',
-          work.binding.work_source_revision,
-          '--team',
-          'default-development',
-          '--kind',
-          'task',
-          '--intent',
-          'task_execution',
-          '--workflow',
-          'task_execution',
-        ];
-        const fixtureSource = snapshotDeclaredSources(
-          requireSafeRepositoryAccess(f.root),
-          work.lifecycle.scope.allowed_paths,
-        );
-
-        markPhase('initial_workflow_setup');
-        const fixtureHost = new HostStateStore(
-          f.database,
-          f.store.workspaceId,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          f.root,
-        );
-        const ledger = new MastraSessionLedger(f.database, f.store.workspaceId, f.config, f.root, fixtureHost);
-        const bridge = await MastraSessionBridge.open({
-          ledger,
-          projectIds: [input.selection.project],
-          repositoryRoot: f.root,
-          config: f.config,
-          selection: input.selection,
-          context: input.context,
-          workflowId: 'task_execution',
-          workspaceId: f.store.workspaceId,
-        });
-        await bridge.start(fixtureSource);
-        const sync = () => requireSessionJournal(ledger.resume(id, 1));
-        let journal = sync();
-        const observed = (
-          item: MastraSessionLedgerState['items'][number],
-          summary: string,
-          status: Parameters<MastraSessionLedger['report']>[3]['status'] = 'reported_complete',
-        ): Parameters<MastraSessionLedger['report']>[3] => {
-          if (!item.issue_id) throw new Error('issued fixture request has no issue id');
-          return {
-            schema: 'VidaSessionObservation/v1',
-            action_id: item.request.action_id,
-            issue_id: item.issue_id,
-            agent_id: item.request.stage_id + '-' + item.request.assignment_index,
-            tool_call_ref: 'local:original-' + item.request.action_id,
-            status,
-            summary,
-            output_digest: canonicalJsonDigest(summary),
-            evidence_refs: ['local://fixture/terminal'],
-          };
-        };
-        journal = requireSessionJournal(ledger.issueWave(id, 1, journal.version));
-        for (const item of journal.state.items)
-          journal = requireSessionJournal(
-            ledger.report(id, 1, journal.version, observed(item, 'Observed fixture synthesis'), fixtureSource),
-          );
-        const suspendedStepId = journal.state.step_id;
-        if (suspendedStepId === null) throw new Error('fixture Mastra Journal has no suspended step');
-        const suspendedObservations = journal.state.items.map((item) => {
-          if (!item.observation) throw new Error(`suspended item ${item.request.action_id} has no observation`);
-          return item.observation;
-        });
-        await bridge.resume(suspendedStepId, suspendedObservations, fixtureSource);
-        journal = sync();
-        journal = await runSourcePrewriterPublicActions({
-          args,
-          publicRun: runFixture,
-          sync,
-          repositoryRoot: f.root,
-          workId: id,
-          attempt: input.context.attempt,
-          work,
-        });
-        const issuedWriter = requireUnknownRecord(
-          await runFixture([
-            ...args,
-            '--issue-wave',
-            'true',
-            '--expected-revision',
-            String(journal.version.revision),
-            '--expected-digest',
-            journal.version.digest,
-          ]),
-          'issued writer result',
-        );
-        const issuedActions = requireUnknownRecordArray(issuedWriter.issued_actions, 'issued writer actions'),
-          issuedAction = issuedActions[0];
-        if (!issuedAction || typeof issuedAction.host_attempt_id !== 'string')
-          throw new Error('issued writer action has no Host attempt id');
-        expect(issuedActions).toHaveLength(1);
-        journal = sync();
-        const writerItem = journal.state.items[0];
-        if (!writerItem?.host_reservation) throw new Error('issued writer Journal item has no reservation');
-        const reservation = writerItem.host_reservation;
-        expect(reservation.approvalAction).toBe('source.write');
-        const claimed = reservation.receipt;
-        expect(issuedAction.host_attempt_id).toBe(claimed.attempt.attempt_id);
-        const writer = {
-          ...observed(writerItem, 'Actual isolated fixture writer terminal'),
-          host_attempt_id: claimed.attempt.attempt_id,
-          changed_paths: [],
-        };
-        const writerReport = path.join(f.root, '.agent/work/' + id + '/report-develop_task-0.json');
-        writeFileSync(writerReport, JSON.stringify(writer));
-        await runFixture([
-          ...args,
-          '--report',
-          writerReport,
-          '--expected-revision',
-          String(journal.version.revision),
-          '--expected-digest',
-          journal.version.digest,
-        ]);
-        journal = sync();
-        journal = requireSessionJournal(ledger.issueWave(id, 1, journal.version));
-        markPhase('initial_reports_and_block');
-        const report = async (
-          item: MastraSessionLedgerState['items'][number],
-          summary: string,
-          status: Parameters<MastraSessionLedger['report']>[3]['status'],
-          execute: (args: string[]) => unknown = publicRun,
-        ) => {
-          const observation = observed(item, summary, status),
-            file = path.join(
-              f.root,
-              '.agent/work/' + id + '/report-' + item.request.stage_id + '-' + item.request.assignment_index + '.json',
-            );
-          writeFileSync(file, JSON.stringify(observation));
-          await execute([
-            ...args,
-            '--report',
-            file,
-            '--expected-revision',
-            String(journal.version.revision),
-            '--expected-digest',
-            journal.version.digest,
-          ]);
-        };
-        const validatorItems = [...journal.state.items];
-        for (const item of validatorItems) {
-          const verdict = failureStage === 'validate' ? 'fail' : 'pass';
-          await report(
-            item,
-            JSON.stringify({
-              schema: 'VidaValidatorVerdict/v1',
-              verdict,
-              findings: verdict === 'fail' ? ['Actual fixture correctness defect'] : [],
-              evidence_refs: ['local://fixture/terminal'],
-            }),
-            verdict === 'fail' ? 'reported_failed' : 'reported_complete',
-            runFixture,
-          );
-          journal = sync();
-        }
-        if (failureStage === 'test') {
-          journal = requireSessionJournal(ledger.issueWave(id, 1, journal.version));
-          await report(
-            requireArrayItem(journal.state.items, 0, 'failed tester request'),
-            JSON.stringify({
-              schema: 'VidaTesterVerdict/v1',
-              status: 'fail',
-              evidence_refs: ['local://fixture/terminal'],
-            }),
-            'reported_failed',
-            runFixture,
-          );
-          journal = sync();
-        }
-        const original = journal.state;
-        expect(original.items.filter((item) => item.observation?.status === 'reported_failed')).toHaveLength(
-          failureStage === 'validate' ? 2 : 1,
-        );
-        expect(sync().resume_status).toBe('blocked');
-        const blockedBridgeSnapshot = await bridge.snapshot();
-        if (!blockedBridgeSnapshot) throw new Error('blocked execution bridge snapshot is missing');
-        expect(blockedBridgeSnapshot.status).toBe('suspended');
-        expect(original.run_id).toBe(requireWorkRunId(work));
-        if (failureStage === 'validate') {
-          const beforeHost = f.store.readHostStateSnapshot(identity),
-            beforeJournal = sync();
-          assertCompleteHostSnapshot(beforeHost);
-          const denied = publicCli.spawn([
-            ...args,
-            '--issue-wave',
-            'true',
-            '--expected-revision',
-            String(beforeJournal.version.revision),
-            '--expected-digest',
-            beforeJournal.version.digest,
-          ]);
-          expect(denied.status).toBe(1);
-          expect(denied.signal).toBeNull();
-          expect(denied.error).toBeUndefined();
-          const denialLines = denied.stderr
-            .trim()
-            .split(/\r?\n/u)
-            .filter((line) => line.startsWith('{"schema":"VidaAgentRunResult/v1"'));
-          expect(denialLines).toHaveLength(1);
-          const denial = parseJsonRecord(requireArrayItem(denialLines, 0, 'public denial result'));
-          expect(denial).toMatchObject({
-            schema: 'VidaAgentRunResult/v1',
-            status: 'blocked',
-            code: 'GAP-VIDA-RUN-EXECUTION-001',
-          });
-          expect(denied.stdout.trim()).toBe('');
-          expect(denial.issued_actions ?? []).toEqual([]);
-          expect(denial.next_actions ?? []).toEqual([]);
-          expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(beforeJournal);
-          expect(requireHostWork(f.store.readHostStateSnapshot(identity)).execution.assignment_attempts).toEqual(
-            beforeHost.work.execution.assignment_attempts,
-          );
-          expect(
-            snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), work.lifecycle.scope.allowed_paths),
-          ).toEqual(fixtureSource);
-          const deniedBridgeSnapshot = await bridge.snapshot();
-          if (!deniedBridgeSnapshot) throw new Error('denied execution bridge snapshot is missing');
-          expect(deniedBridgeSnapshot.status).toBe('suspended');
-        }
-        markPhase('correction_clear_preparation');
-        await bridge.close();
-        const originalVersion = requireJournalVersion(f.store.readWorkSessionJournal(identity));
-        const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
-        writeFileSync(
-          path.join(f.root, policyPath),
-          JSON.stringify({
-            schema: 'DocumentationPolicy/v1',
-            policy_id: 'corrective-public-fixture',
-            project_id: 'sample',
-            source_path: policyPath,
-            owner: 'fixture',
-            required: false,
-            canonical_roots: ['docs'],
-            map_paths: ['AGENT.sidecar.md'],
-            excluded_roots: [],
-            changelog_required: false,
-            changelog_path: null,
-            relations: ['documents'],
-            updated_at: new Date().toISOString(),
-          }),
-        );
-        const doc = {
-          repository_root: f.root,
-          repository_id: work.binding.repository_id,
-          project_id: 'sample',
-          work_id: id,
-          source_revision: work.binding.work_source_revision,
-          scope_paths: ['AGENT.sidecar.md'],
-        };
-        await executeDocumentationClearOperation(doc, 'baseline');
-        const clear = await executeDocumentationClearOperation(doc, 'closeout');
-        const mechanics = {
-          source_plan: ['scope_acceptance_trace', 'verification_rollback'],
-          platform_knowledge: ['platform_contracts', 'official_reference_lookup'],
-          implementation_policy: ['root_cause_owner', 'affected_callers', 'existing_primitives'],
-          change_impact_pre: ['affected_paths', 'invalidation', 'rollback'],
-          documentation_validation: ['current_inventory', 'current_clear'],
-        };
-        const prerequisites = Object.entries(mechanics).map(([kind, labels]) => {
-          const file = `.agent/work/${id}/${kind}.json`;
+          input.sourceAuthorizationPath = `.agent/work/${id}/authorization.json`;
           writeFileSync(
-            path.join(f.root, file),
+            path.join(f.root, input.sourceAuthorizationPath),
             JSON.stringify({
-              schema: 'LifecyclePreparationObservation/v1',
-              record_id: kind,
-              kind,
+              schema: 'LocalSourceWriteAuthorization/v1',
+              action: 'source.write',
+              user_instruction_ref: 'fixture:actual-owner-directive',
               work_id: id,
               attempt: 1,
-              source_revision: work.binding.work_source_revision,
-              scope_id: work.binding.scope_id,
-              config_digest: work.binding.config_digest,
-              ac_ids: work.binding.ac_ids,
-              observed_at: new Date().toISOString(),
-              observer_id: 'fixture-observer',
-              status: 'pass',
-              evidence_refs: ['local://fixture/current-source'],
-              observations: labels.map((mechanic) => ({
-                mechanic,
-                actual: 'Explicit isolated current contract fixture observation',
-                evidence_ref: 'local://fixture/current-source',
-              })),
-              gaps: [],
+              scope_digest: input.context.scope_digest,
+              config_digest: runtimeConfigDigest(f.config),
+              workflow_id: 'task_execution',
+              stage_ids: ['develop_task'],
+              implementation_paths: ['AGENT.sidecar.md'],
+              native_session_handle: 'session',
             }),
           );
-          return { kind, path: file };
-        });
-        const preparationPath = `.agent/work/${id}/preparation.json`;
-        writeFileSync(
-          path.join(f.root, preparationPath),
-          JSON.stringify({
-            schema: 'FinalAssurancePreparation/v1',
-            work_id: id,
-            attempt: 1,
-            prerequisites,
-            documentation_precheck_path: clear.path,
-            clear_path: clear.path,
-            delivery_manifest_path: `.agent/work/${id}/delivery.json`,
-          }),
-        );
-        const planPath = path.join(f.root, `.agent/work/${id}/correction-plan.json`);
-        writeFileSync(
-          planPath,
-          JSON.stringify({
-            schema: 'CorrectiveExecutionPlan/v1',
-            work_id: id,
-            attempt: 1,
-            stage_ids: ['develop_task', 'validate_focused', 'test_task'],
-            user_instruction_ref: 'fixture:actual-correction-owner',
-            preparation_path: preparationPath,
-          }),
-        );
-
-        if (scenario === 'runtime-rebind') {
-          prepareLifecycleForCorrection({
-            root: f.root,
-            config: f.config,
-            store: fixtureHost,
-            identity,
-            journal: requireSessionJournal(ledger.resume(id, 1)),
-            preparationPath,
-          });
-          let current = fixtureHost.readHostStateSnapshot(identity);
-          assertCompleteHostSnapshot(current);
-          const negative = original.items.find((item) => item.observation?.status === 'reported_failed');
-          if (!negative) throw new Error('original corrective Journal has no failed terminal observation');
-          const principal = 'synthetic-forward-rebind-verifier';
-          const verifier: RuntimeCodeRebindVerifier = {
-            principal,
-            verify: (request: RuntimeCodeRebindRequest) => ({
-              schema: 'VidaRuntimeCodeRebindAuthorization/v1',
-              request_digest: canonicalJsonDigest(request),
-              principal,
-              forward_operation_id: request.forwardOperationId,
-              parent_manifest_digest: request.parentManifestDigest,
-              successor_manifest_digest: request.successorManifestDigest,
-              ...(request.focusedFailureCorrection
-                ? { owner_correction_pointer: request.focusedFailureCorrection.ownerCorrectionPointer }
-                : {}),
+          input.intakePath = `.agent/work/${id}/raw-intake.json`;
+          writeFileSync(
+            path.join(f.root, input.intakePath),
+            JSON.stringify({
+              schema: 'VidaLocalSessionIntake/v1',
+              work_item: input.workItem,
+              native_session_handle: input.nativeSessionHandle,
+              scope_path: input.scopePath,
+              acceptance_path: input.acceptancePath,
+              source_authorization_path: input.sourceAuthorizationPath,
+              runtime_code_paths: input.runtimeCodePaths,
+              route: input.route,
+              risk: input.risk,
+              change_kind: input.changeKind,
             }),
-          };
-          const reboundStore = new HostStateStore(
+          );
+          const initial = admitLocalSessionWork(input),
+            work = initial.host.work,
+            identity = {
+              repository_id: work.binding.repository_id,
+              project_ids: work.binding.project_ids,
+              integrations_digest: work.binding.integrations_digest,
+              work_id: id,
+            };
+          writeFileSync(
+            path.join(f.root, '.agent/runtime-initialization.v1.json'),
+            JSON.stringify({
+              schema: 'RuntimeInitialization/v1',
+              version: 1,
+              repository_id: f.config.repository.repository_id,
+              project_ids: ['sample'],
+              integrations_digest: canonicalJsonDigest(f.config.integrations),
+              workspace_id: f.store.workspaceId,
+              workspace_binding_status: 'pending',
+              bundle: f.config.runtime.bundle,
+              config_digest: runtimeConfigDigest(f.config),
+              schema_sha256: createHash('sha256')
+                .update(readFileSync(path.join(bundle, 'schemas/runtime-initialization.v1.schema.json')))
+                .digest('hex'),
+              templates: fixtureInitializationTemplates(f.root, bundle),
+              created_at: new Date().toISOString(),
+            }),
+          );
+          acquireLocalSourceWriterLease({
+            repositoryRoot: f.root,
+            config: f.config,
+            store: f.store,
+            identity,
+            nativeSessionHandle: 'session',
+            stageId: 'develop_task',
+            assignmentIndex: 0,
+            expectedWork: initial.host.workVersion,
+            expectedLedger: initial.host.ledgerVersion,
+          });
+          const args = [
+            '--project-root',
+            f.root,
+            '--repository',
+            f.config.repository.repository_id,
+            '--project',
+            'sample',
+            '--work-path',
+            'AGENT.sidecar.md',
+            '--work-id',
+            id,
+            '--attempt',
+            '1',
+            '--scope-digest',
+            work.binding.work_source_revision,
+            '--team',
+            'default-development',
+            '--kind',
+            'task',
+            '--intent',
+            'task_execution',
+            '--workflow',
+            'task_execution',
+          ];
+          const fixtureSource = snapshotDeclaredSources(
+            requireSafeRepositoryAccess(f.root),
+            work.lifecycle.scope.allowed_paths,
+          );
+
+          markPhase('initial_workflow_setup');
+          const fixtureHost = new HostStateStore(
             f.database,
             f.store.workspaceId,
             undefined,
@@ -3254,326 +2926,648 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             undefined,
             undefined,
             f.root,
-            verifier,
           );
-          const request: RuntimeCodeRebindRequest = {
-            identity,
-            attempt: 1,
-            actionId: negative.request.action_id,
-            issueId: requireIssueId(negative),
-            nativeSessionHandle: 'session',
-            expectedWork: current.workVersion,
-            expectedLedger: current.ledgerVersion,
-            expectedJournal: requireSessionJournal(ledger.resume(id, 1)).version,
-            expectedMaintenanceGeneration: current.maintenanceGeneration,
-            oldRuntimeCodeDigest: current.work.binding.runtime_code_digest,
-            newRuntimeCodeDigest: canonicalJsonDigest('synthetic-fixture-successor-package'),
-            forwardOperationId: 'synthetic-forward-operation',
-            parentManifestDigest: canonicalJsonDigest('synthetic-parent-manifest'),
-            successorManifestDigest: canonicalJsonDigest('synthetic-successor-manifest'),
-            focusedFailureCorrection: {
-              ownerCorrectionPointer: 'synthetic-owner:correct-known-terminal-failures',
-            },
+          const ledger = new MastraSessionLedger(f.database, f.store.workspaceId, f.config, f.root, fixtureHost);
+          const bridge = await MastraSessionBridge.open({
+            ledger,
+            projectIds: [input.selection.project],
+            repositoryRoot: f.root,
+            config: f.config,
+            selection: input.selection,
+            context: input.context,
+            workflowId: 'task_execution',
+            workspaceId: f.store.workspaceId,
+          });
+          await bridge.start(fixtureSource);
+          const sync = () => requireSessionJournal(ledger.resume(id, 1));
+          let journal = sync();
+          const observed = (
+            item: MastraSessionLedgerState['items'][number],
+            summary: string,
+            status: Parameters<MastraSessionLedger['report']>[3]['status'] = 'reported_complete',
+          ): Parameters<MastraSessionLedger['report']>[3] => {
+            if (!item.issue_id) throw new Error('issued fixture request has no issue id');
+            return {
+              schema: 'VidaSessionObservation/v1',
+              action_id: item.request.action_id,
+              issue_id: item.issue_id,
+              agent_id: item.request.stage_id + '-' + item.request.assignment_index,
+              tool_call_ref: 'local:original-' + item.request.action_id,
+              status,
+              summary,
+              output_digest: canonicalJsonDigest(summary),
+              evidence_refs: ['local://fixture/terminal'],
+            };
           };
-          const oldAttempts = structuredClone(current.work.execution.assignment_attempts),
-            oldJournal = structuredClone(requireSessionJournal(ledger.resume(id, 1))),
-            priorImplementation = current.work.lifecycle.references.find(
-              (reference) => reference.kind === 'implementation_result' && reference.disposition === 'current',
+          journal = requireSessionJournal(ledger.issueWave(id, 1, journal.version));
+          for (const item of journal.state.items)
+            journal = requireSessionJournal(
+              ledger.report(id, 1, journal.version, observed(item, 'Observed fixture synthesis'), fixtureSource),
             );
-          expect(priorImplementation).toBeDefined();
-          f.database.exec(
-            'CREATE TABLE agent_host_runtime_code_rebind (workspace_id TEXT NOT NULL, work_id TEXT NOT NULL, attempt INTEGER NOT NULL, action_id TEXT NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,work_id,attempt,action_id))',
+          const suspendedStepId = journal.state.step_id;
+          if (suspendedStepId === null) throw new Error('fixture Mastra Journal has no suspended step');
+          const suspendedObservations = journal.state.items.map((item) => {
+            if (!item.observation) throw new Error(`suspended item ${item.request.action_id} has no observation`);
+            return item.observation;
+          });
+          await bridge.resume(suspendedStepId, suspendedObservations, fixtureSource);
+          journal = sync();
+          journal = await runSourcePrewriterPublicActions({
+            args,
+            publicRun: runFixture,
+            sync,
+            repositoryRoot: f.root,
+            workId: id,
+            attempt: input.context.attempt,
+            work,
+          });
+          const issuedWriter = requireUnknownRecord(
+            await runFixture([
+              ...args,
+              '--issue-wave',
+              'true',
+              '--expected-revision',
+              String(journal.version.revision),
+              '--expected-digest',
+              journal.version.digest,
+            ]),
+            'issued writer result',
           );
-          f.database.exec(
-            "CREATE TRIGGER reject_synthetic_rebind BEFORE INSERT ON agent_host_runtime_code_rebind BEGIN SELECT RAISE(ABORT,'synthetic receipt rollback'); END",
+          const issuedActions = requireUnknownRecordArray(issuedWriter.issued_actions, 'issued writer actions'),
+            issuedAction = issuedActions[0];
+          if (!issuedAction || typeof issuedAction.host_attempt_id !== 'string')
+            throw new Error('issued writer action has no Host attempt id');
+          expect(issuedActions).toHaveLength(1);
+          journal = sync();
+          const writerItem = journal.state.items[0];
+          if (!writerItem?.host_reservation) throw new Error('issued writer Journal item has no reservation');
+          const reservation = writerItem.host_reservation;
+          expect(reservation.approvalAction).toBe('source.write');
+          const claimed = reservation.receipt;
+          expect(issuedAction.host_attempt_id).toBe(claimed.attempt.attempt_id);
+          const writer = {
+            ...observed(writerItem, 'Actual isolated fixture writer terminal'),
+            host_attempt_id: claimed.attempt.attempt_id,
+            changed_paths: [],
+          };
+          const writerReport = path.join(f.root, '.agent/work/' + id + '/report-develop_task-0.json');
+          writeFileSync(writerReport, JSON.stringify(writer));
+          await runFixture([
+            ...args,
+            '--report',
+            writerReport,
+            '--expected-revision',
+            String(journal.version.revision),
+            '--expected-digest',
+            journal.version.digest,
+          ]);
+          journal = sync();
+          journal = requireSessionJournal(ledger.issueWave(id, 1, journal.version));
+          markPhase('initial_reports_and_block');
+          const report = async (
+            item: MastraSessionLedgerState['items'][number],
+            summary: string,
+            status: Parameters<MastraSessionLedger['report']>[3]['status'],
+            execute: (args: string[]) => unknown = publicRun,
+          ) => {
+            const observation = observed(item, summary, status),
+              file = path.join(
+                f.root,
+                '.agent/work/' +
+                  id +
+                  '/report-' +
+                  item.request.stage_id +
+                  '-' +
+                  item.request.assignment_index +
+                  '.json',
+              );
+            writeFileSync(file, JSON.stringify(observation));
+            await execute([
+              ...args,
+              '--report',
+              file,
+              '--expected-revision',
+              String(journal.version.revision),
+              '--expected-digest',
+              journal.version.digest,
+            ]);
+          };
+          const validatorItems = [...journal.state.items];
+          for (const item of validatorItems) {
+            const verdict = failureStage === 'validate' ? 'fail' : 'pass';
+            await report(
+              item,
+              JSON.stringify({
+                schema: 'VidaValidatorVerdict/v1',
+                verdict,
+                findings: verdict === 'fail' ? ['Actual fixture correctness defect'] : [],
+                evidence_refs: ['local://fixture/terminal'],
+              }),
+              verdict === 'fail' ? 'reported_failed' : 'reported_complete',
+              runFixture,
+            );
+            journal = sync();
+          }
+          if (failureStage === 'test') {
+            journal = requireSessionJournal(ledger.issueWave(id, 1, journal.version));
+            await report(
+              requireArrayItem(journal.state.items, 0, 'failed tester request'),
+              JSON.stringify({
+                schema: 'VidaTesterVerdict/v1',
+                status: 'fail',
+                evidence_refs: ['local://fixture/terminal'],
+              }),
+              'reported_failed',
+              runFixture,
+            );
+            journal = sync();
+          }
+          const original = journal.state;
+          expect(original.items.filter((item) => item.observation?.status === 'reported_failed')).toHaveLength(
+            failureStage === 'validate' ? 2 : 1,
           );
-          await Promise.resolve(
-            expect(reboundStore.rebindRuntimeCode(request)).rejects.toThrow('synthetic receipt rollback'),
+          expect(sync().resume_status).toBe('blocked');
+          const blockedBridgeSnapshot = await bridge.snapshot();
+          if (!blockedBridgeSnapshot) throw new Error('blocked execution bridge snapshot is missing');
+          expect(blockedBridgeSnapshot.status).toBe('suspended');
+          expect(original.run_id).toBe(requireWorkRunId(work));
+          if (failureStage === 'validate') {
+            const beforeHost = f.store.readHostStateSnapshot(identity),
+              beforeJournal = sync();
+            assertCompleteHostSnapshot(beforeHost);
+            const denied = publicCli.spawn([
+              ...args,
+              '--issue-wave',
+              'true',
+              '--expected-revision',
+              String(beforeJournal.version.revision),
+              '--expected-digest',
+              beforeJournal.version.digest,
+            ]);
+            expect(denied.status).toBe(1);
+            expect(denied.signal).toBeNull();
+            expect(denied.error).toBeUndefined();
+            const denialLines = denied.stderr
+              .trim()
+              .split(/\r?\n/u)
+              .filter((line) => line.startsWith('{"schema":"VidaAgentRunResult/v1"'));
+            expect(denialLines).toHaveLength(1);
+            const denial = parseJsonRecord(requireArrayItem(denialLines, 0, 'public denial result'));
+            expect(denial).toMatchObject({
+              schema: 'VidaAgentRunResult/v1',
+              status: 'blocked',
+              code: 'GAP-VIDA-RUN-EXECUTION-001',
+            });
+            expect(denied.stdout.trim()).toBe('');
+            expect(denial.issued_actions ?? []).toEqual([]);
+            expect(denial.next_actions ?? []).toEqual([]);
+            expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(beforeJournal);
+            expect(requireHostWork(f.store.readHostStateSnapshot(identity)).execution.assignment_attempts).toEqual(
+              beforeHost.work.execution.assignment_attempts,
+            );
+            expect(
+              snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), work.lifecycle.scope.allowed_paths),
+            ).toEqual(fixtureSource);
+            const deniedBridgeSnapshot = await bridge.snapshot();
+            if (!deniedBridgeSnapshot) throw new Error('denied execution bridge snapshot is missing');
+            expect(deniedBridgeSnapshot.status).toBe('suspended');
+          }
+          markPhase('correction_clear_preparation');
+          await bridge.close();
+          const originalVersion = requireJournalVersion(f.store.readWorkSessionJournal(identity));
+          const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
+          writeFileSync(
+            path.join(f.root, policyPath),
+            JSON.stringify({
+              schema: 'DocumentationPolicy/v1',
+              policy_id: 'corrective-public-fixture',
+              project_id: 'sample',
+              source_path: policyPath,
+              owner: 'fixture',
+              required: false,
+              canonical_roots: ['docs'],
+              map_paths: ['AGENT.sidecar.md'],
+              excluded_roots: [],
+              changelog_required: false,
+              changelog_path: null,
+              relations: ['documents'],
+              updated_at: new Date().toISOString(),
+            }),
           );
-          expect(reboundStore.readHostStateSnapshot(identity)).toEqual(current);
-          expect(
-            f.database
+          const doc = {
+            repository_root: f.root,
+            repository_id: work.binding.repository_id,
+            project_id: 'sample',
+            work_id: id,
+            source_revision: work.binding.work_source_revision,
+            scope_paths: ['AGENT.sidecar.md'],
+          };
+          await executeDocumentationClearOperation(doc, 'baseline');
+          const clear = await executeDocumentationClearOperation(doc, 'closeout');
+          const mechanics = {
+            source_plan: ['scope_acceptance_trace', 'verification_rollback'],
+            platform_knowledge: ['platform_contracts', 'official_reference_lookup'],
+            implementation_policy: ['root_cause_owner', 'affected_callers', 'existing_primitives'],
+            change_impact_pre: ['affected_paths', 'invalidation', 'rollback'],
+            documentation_validation: ['current_inventory', 'current_clear'],
+          };
+          const prerequisites = Object.entries(mechanics).map(([kind, labels]) => {
+            const file = `.agent/work/${id}/${kind}.json`;
+            writeFileSync(
+              path.join(f.root, file),
+              JSON.stringify({
+                schema: 'LifecyclePreparationObservation/v1',
+                record_id: kind,
+                kind,
+                work_id: id,
+                attempt: 1,
+                source_revision: work.binding.work_source_revision,
+                scope_id: work.binding.scope_id,
+                config_digest: work.binding.config_digest,
+                ac_ids: work.binding.ac_ids,
+                observed_at: new Date().toISOString(),
+                observer_id: 'fixture-observer',
+                status: 'pass',
+                evidence_refs: ['local://fixture/current-source'],
+                observations: labels.map((mechanic) => ({
+                  mechanic,
+                  actual: 'Explicit isolated current contract fixture observation',
+                  evidence_ref: 'local://fixture/current-source',
+                })),
+                gaps: [],
+              }),
+            );
+            return { kind, path: file };
+          });
+          const preparationPath = `.agent/work/${id}/preparation.json`;
+          writeFileSync(
+            path.join(f.root, preparationPath),
+            JSON.stringify({
+              schema: 'FinalAssurancePreparation/v1',
+              work_id: id,
+              attempt: 1,
+              prerequisites,
+              documentation_precheck_path: clear.path,
+              clear_path: clear.path,
+              delivery_manifest_path: `.agent/work/${id}/delivery.json`,
+            }),
+          );
+          const planPath = path.join(f.root, `.agent/work/${id}/correction-plan.json`);
+          writeFileSync(
+            planPath,
+            JSON.stringify({
+              schema: 'CorrectiveExecutionPlan/v1',
+              work_id: id,
+              attempt: 1,
+              stage_ids: ['develop_task', 'validate_focused', 'test_task'],
+              user_instruction_ref: 'fixture:actual-correction-owner',
+              preparation_path: preparationPath,
+            }),
+          );
+
+          if (scenario === 'runtime-rebind') {
+            prepareLifecycleForCorrection({
+              root: f.root,
+              config: f.config,
+              store: fixtureHost,
+              identity,
+              journal: requireSessionJournal(ledger.resume(id, 1)),
+              preparationPath,
+            });
+            let current = fixtureHost.readHostStateSnapshot(identity);
+            assertCompleteHostSnapshot(current);
+            const negative = original.items.find((item) => item.observation?.status === 'reported_failed');
+            if (!negative) throw new Error('original corrective Journal has no failed terminal observation');
+            const principal = 'synthetic-forward-rebind-verifier';
+            const verifier: RuntimeCodeRebindVerifier = {
+              principal,
+              verify: (request: RuntimeCodeRebindRequest) => ({
+                schema: 'VidaRuntimeCodeRebindAuthorization/v1',
+                request_digest: canonicalJsonDigest(request),
+                principal,
+                forward_operation_id: request.forwardOperationId,
+                parent_manifest_digest: request.parentManifestDigest,
+                successor_manifest_digest: request.successorManifestDigest,
+                ...(request.focusedFailureCorrection
+                  ? { owner_correction_pointer: request.focusedFailureCorrection.ownerCorrectionPointer }
+                  : {}),
+              }),
+            };
+            const reboundStore = new HostStateStore(
+              f.database,
+              f.store.workspaceId,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              f.root,
+              verifier,
+            );
+            const request: RuntimeCodeRebindRequest = {
+              identity,
+              attempt: 1,
+              actionId: negative.request.action_id,
+              issueId: requireIssueId(negative),
+              nativeSessionHandle: 'session',
+              expectedWork: current.workVersion,
+              expectedLedger: current.ledgerVersion,
+              expectedJournal: requireSessionJournal(ledger.resume(id, 1)).version,
+              expectedMaintenanceGeneration: current.maintenanceGeneration,
+              oldRuntimeCodeDigest: current.work.binding.runtime_code_digest,
+              newRuntimeCodeDigest: canonicalJsonDigest('synthetic-fixture-successor-package'),
+              forwardOperationId: 'synthetic-forward-operation',
+              parentManifestDigest: canonicalJsonDigest('synthetic-parent-manifest'),
+              successorManifestDigest: canonicalJsonDigest('synthetic-successor-manifest'),
+              focusedFailureCorrection: {
+                ownerCorrectionPointer: 'synthetic-owner:correct-known-terminal-failures',
+              },
+            };
+            const oldAttempts = structuredClone(current.work.execution.assignment_attempts),
+              oldJournal = structuredClone(requireSessionJournal(ledger.resume(id, 1))),
+              priorImplementation = current.work.lifecycle.references.find(
+                (reference) => reference.kind === 'implementation_result' && reference.disposition === 'current',
+              );
+            expect(priorImplementation).toBeDefined();
+            f.database.exec(
+              'CREATE TABLE agent_host_runtime_code_rebind (workspace_id TEXT NOT NULL, work_id TEXT NOT NULL, attempt INTEGER NOT NULL, action_id TEXT NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,work_id,attempt,action_id))',
+            );
+            f.database.exec(
+              "CREATE TRIGGER reject_synthetic_rebind BEFORE INSERT ON agent_host_runtime_code_rebind BEGIN SELECT RAISE(ABORT,'synthetic receipt rollback'); END",
+            );
+            await Promise.resolve(
+              expect(reboundStore.rebindRuntimeCode(request)).rejects.toThrow('synthetic receipt rollback'),
+            );
+            expect(reboundStore.readHostStateSnapshot(identity)).toEqual(current);
+            expect(
+              f.database
+                .query<{ payload: string; digest: string }, [string]>(
+                  'SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE work_id=?',
+                )
+                .get(id),
+            ).toBeNull();
+            f.database.exec('DROP TRIGGER reject_synthetic_rebind');
+            const rebound = await reboundStore.rebindRuntimeCode(request);
+            const reboundWork = requireHostWork(rebound);
+            expect(reboundWork.binding.runtime_code_digest).toBe(request.newRuntimeCodeDigest);
+            expect(reboundWork.execution.assignment_attempts).toEqual(oldAttempts);
+            expect(reboundWork.lifecycle.phase).toBe('EXECUTE');
+            expect(reboundWork.lifecycle.seal).toBeNull();
+            expect(reboundWork.lifecycle.assurance.correction_count).toBe(
+              requireHostWork(current).lifecycle.assurance.correction_count + 1,
+            );
+            expect(
+              reboundWork.lifecycle.references.find((reference) => reference.kind === 'execution_approval')
+                ?.disposition,
+            ).toBe('current');
+            if (!priorImplementation) throw new Error('current Work has no implementation evidence reference');
+            expect(
+              reboundWork.lifecycle.references.find(
+                (reference) =>
+                  reference.kind === 'implementation_result' && reference.record_id === priorImplementation.record_id,
+              )?.disposition,
+            ).toBe('retired');
+            expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(oldJournal);
+            const restarted = new HostStateStore(
+              f.database,
+              f.store.workspaceId,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              f.root,
+              verifier,
+            );
+            const databasePath = path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite');
+            expect(requireHostWork(restarted.readHostStateSnapshot(identity)).execution.assignment_attempts).toEqual(
+              oldAttempts,
+            );
+            expect(
+              requireInspectedWork(
+                inspectHostWorkspaceDatabase(f.root, path.relative(f.root, databasePath), f.store.workspaceId),
+                id,
+              ).execution.assignment_attempts,
+            ).toEqual(oldAttempts);
+            const row = f.database
               .query<{ payload: string; digest: string }, [string]>(
                 'SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE work_id=?',
               )
-              .get(id),
-          ).toBeNull();
-          f.database.exec('DROP TRIGGER reject_synthetic_rebind');
-          const rebound = await reboundStore.rebindRuntimeCode(request);
-          const reboundWork = requireHostWork(rebound);
-          expect(reboundWork.binding.runtime_code_digest).toBe(request.newRuntimeCodeDigest);
-          expect(reboundWork.execution.assignment_attempts).toEqual(oldAttempts);
-          expect(reboundWork.lifecycle.phase).toBe('EXECUTE');
-          expect(reboundWork.lifecycle.seal).toBeNull();
-          expect(reboundWork.lifecycle.assurance.correction_count).toBe(
-            requireHostWork(current).lifecycle.assurance.correction_count + 1,
-          );
-          expect(
-            reboundWork.lifecycle.references.find((reference) => reference.kind === 'execution_approval')?.disposition,
-          ).toBe('current');
-          if (!priorImplementation) throw new Error('current Work has no implementation evidence reference');
-          expect(
-            reboundWork.lifecycle.references.find(
-              (reference) =>
-                reference.kind === 'implementation_result' && reference.record_id === priorImplementation.record_id,
-            )?.disposition,
-          ).toBe('retired');
-          expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(oldJournal);
-          const restarted = new HostStateStore(
-            f.database,
-            f.store.workspaceId,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            f.root,
-            verifier,
-          );
-          const databasePath = path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite');
-          expect(requireHostWork(restarted.readHostStateSnapshot(identity)).execution.assignment_attempts).toEqual(
-            oldAttempts,
-          );
-          expect(
-            requireInspectedWork(
-              inspectHostWorkspaceDatabase(f.root, path.relative(f.root, databasePath), f.store.workspaceId),
-              id,
-            ).execution.assignment_attempts,
-          ).toEqual(oldAttempts);
-          const row = f.database
-            .query<{ payload: string; digest: string }, [string]>(
-              'SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE work_id=?',
-            )
-            .get(id);
-          if (!row) throw new Error('runtime-code rebind receipt is missing');
-          const receipt = parseJsonRecord(row.payload);
-          const bindingHistory = requireRecordField(receipt, 'binding_history');
-          const originalWork = parseWorkStateJson(JSON.stringify(requireRecordField(bindingHistory, 'original_work')));
-          expect(originalWork.binding).toEqual(requireHostWork(current).binding);
-          expect(bindingHistory.terminal_attempt_ids).toEqual(oldAttempts.map((attempt) => attempt.attempt_id));
-          const successorRow = f.database
-            .query<{ revision: number; payload: string; digest: string }, [string, string]>(
-              "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
-            )
-            .get(f.store.workspaceId, id);
-          if (!successorRow) throw new Error('runtime-code successor Work is missing');
-          f.database
-            .query(
-              "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
-            )
-            .run(
-              current.work.revision,
-              canonicalJson(current.work),
-              canonicalJsonDigest(current.work),
-              f.store.workspaceId,
-              id,
+              .get(id);
+            if (!row) throw new Error('runtime-code rebind receipt is missing');
+            const receipt = parseJsonRecord(row.payload);
+            const bindingHistory = requireRecordField(receipt, 'binding_history');
+            const originalWork = parseWorkStateJson(
+              JSON.stringify(requireRecordField(bindingHistory, 'original_work')),
             );
-          expect(() => restarted.readHostStateSnapshot(identity)).toThrow('runtime binding history authority differs');
-          expect(() =>
-            inspectHostWorkspaceDatabase(f.root, path.relative(f.root, databasePath), f.store.workspaceId),
-          ).toThrow('runtime binding history authority differs');
-          f.database
-            .query(
-              "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
-            )
-            .run(successorRow.revision, successorRow.payload, successorRow.digest, f.store.workspaceId, id);
-          expect(requireHostWork(restarted.readHostStateSnapshot(identity)).binding.runtime_code_digest).toBe(
-            request.newRuntimeCodeDigest,
-          );
-          expect(
-            requireInspectedWork(
+            expect(originalWork.binding).toEqual(requireHostWork(current).binding);
+            expect(bindingHistory.terminal_attempt_ids).toEqual(oldAttempts.map((attempt) => attempt.attempt_id));
+            const successorRow = f.database
+              .query<{ revision: number; payload: string; digest: string }, [string, string]>(
+                "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+              )
+              .get(f.store.workspaceId, id);
+            if (!successorRow) throw new Error('runtime-code successor Work is missing');
+            f.database
+              .query(
+                "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+              )
+              .run(
+                current.work.revision,
+                canonicalJson(current.work),
+                canonicalJsonDigest(current.work),
+                f.store.workspaceId,
+                id,
+              );
+            expect(() => restarted.readHostStateSnapshot(identity)).toThrow(
+              'runtime binding history authority differs',
+            );
+            expect(() =>
               inspectHostWorkspaceDatabase(f.root, path.relative(f.root, databasePath), f.store.workspaceId),
-              id,
-            ).binding.runtime_code_digest,
-          ).toBe(request.newRuntimeCodeDigest);
-          const bad = structuredClone(receipt);
-          requireRecordField(bad, 'binding_history').terminal_attempt_ids = ['foreign-terminal-attempt'];
-          f.database
-            .query('UPDATE agent_host_runtime_code_rebind SET payload=?,digest=? WHERE work_id=?')
-            .run(canonicalJson(bad), canonicalJsonDigest(bad), id);
-          expect(() => restarted.readHostStateSnapshot(identity)).toThrow('unknown or unlisted');
-          f.database
-            .query('UPDATE agent_host_runtime_code_rebind SET payload=?,digest=? WHERE work_id=?')
-            .run(row.payload, row.digest, id);
-          expect(requireHostWork(restarted.readHostStateSnapshot(identity)).binding.runtime_code_digest).toBe(
-            request.newRuntimeCodeDigest,
-          );
-          return;
-        }
+            ).toThrow('runtime binding history authority differs');
+            f.database
+              .query(
+                "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND json_extract(payload,'$.binding.lifecycle_work_id')=?",
+              )
+              .run(successorRow.revision, successorRow.payload, successorRow.digest, f.store.workspaceId, id);
+            expect(requireHostWork(restarted.readHostStateSnapshot(identity)).binding.runtime_code_digest).toBe(
+              request.newRuntimeCodeDigest,
+            );
+            expect(
+              requireInspectedWork(
+                inspectHostWorkspaceDatabase(f.root, path.relative(f.root, databasePath), f.store.workspaceId),
+                id,
+              ).binding.runtime_code_digest,
+            ).toBe(request.newRuntimeCodeDigest);
+            const bad = structuredClone(receipt);
+            requireRecordField(bad, 'binding_history').terminal_attempt_ids = ['foreign-terminal-attempt'];
+            f.database
+              .query('UPDATE agent_host_runtime_code_rebind SET payload=?,digest=? WHERE work_id=?')
+              .run(canonicalJson(bad), canonicalJsonDigest(bad), id);
+            expect(() => restarted.readHostStateSnapshot(identity)).toThrow('unknown or unlisted');
+            f.database
+              .query('UPDATE agent_host_runtime_code_rebind SET payload=?,digest=? WHERE work_id=?')
+              .run(row.payload, row.digest, id);
+            expect(requireHostWork(restarted.readHostStateSnapshot(identity)).binding.runtime_code_digest).toBe(
+              request.newRuntimeCodeDigest,
+            );
+            return;
+          }
 
-        markPhase('correction_prepare_and_inspect');
-        // TEST-only accepted reports reached Host through the real configured session APIs above.
-        // Prepare once, then observe the public Host authorization API in this same SQLite isolate.
-        const beforeAuthorization = prepareLifecycleForCorrection({
-            root: f.root,
-            config: f.config,
-            store: fixtureHost,
-            identity,
-            journal: requireSessionJournal(ledger.resume(id, 1)),
-            preparationPath,
-          }),
-          currentJournal = requireSessionJournal(ledger.resume(id, 1));
-        assertCompleteHostSnapshot(beforeAuthorization);
-        expect(beforeAuthorization.work.lifecycle.phase).toBe('VERIFY');
-        expect(beforeAuthorization.work.lease).not.toBeNull();
-        const cacheObservation = observeMetadataReads(f.database, () =>
-          fixtureHost.authorizeCorrectiveExecution({
-            identity,
-            attempt: 1,
-            expectedWork: beforeAuthorization.workVersion,
-            expectedLedger: beforeAuthorization.ledgerVersion,
-            expectedJournal: currentJournal.version,
-            stageIds: ['develop_task', 'validate_focused', 'test_task'],
-            userInstructionRef: 'fixture:actual-correction-owner',
-            config: f.config,
-          }),
-        );
-        expect(cacheObservation.error).toBeUndefined();
-        expect(cacheObservation.result).toBeDefined();
-        expectCorrectiveAuthorizationMetadata(cacheObservation.reads);
-
-        if (scenario === 'validate') {
-          const inspectionExecution = requireCorrectiveExecution(cacheObservation.result),
-            inspectionInput = {
-              repositoryRoot: f.root,
+          markPhase('correction_prepare_and_inspect');
+          // TEST-only accepted reports reached Host through the real configured session APIs above.
+          // Prepare once, then observe the public Host authorization API in this same SQLite isolate.
+          const beforeAuthorization = prepareLifecycleForCorrection({
+              root: f.root,
               config: f.config,
-              projectIds: identity.project_ids,
-              integrationsDigest: identity.integrations_digest,
-              workId: id,
-              attempt: 1,
-            },
-            authorizedJournal = requireSessionJournal(ledger.resume(id, 1)),
-            inspectionRows = () => ({
-              host: f.database
-                .query(
-                  "SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind IN ('work','ledger') ORDER BY kind,id",
-                )
-                .all(f.store.workspaceId),
-              journal: f.database
-                .query<
-                  {
-                    workspace_id: string;
-                    work_id: string;
-                    attempt: number;
-                    revision: number;
-                    payload: string;
-                    digest: string;
-                  },
-                  [string, string, number]
-                >(
-                  'SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-                )
-                .all(f.store.workspaceId, id, 1),
+              store: fixtureHost,
+              identity,
+              journal: requireSessionJournal(ledger.resume(id, 1)),
+              preparationPath,
             }),
-            originalInspectionRows = inspectionRows(),
-            originalInspectionState = authorizedJournal.state,
-            originalJournalRow = originalInspectionRows.journal[0];
-          if (!originalJournalRow) throw new Error('original corrective inspection journal row is missing');
-          const saveInspectionState = (state: typeof originalInspectionState) =>
-              f.database
-                .query(
-                  'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
-                )
-                .run(JSON.stringify(state), canonicalJsonDigest(state), f.store.workspaceId, id, 1),
-            restoreInspectionState = () =>
-              f.database
-                .query(
-                  'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
-                )
-                .run(originalJournalRow.payload, originalJournalRow.digest, f.store.workspaceId, id, 1),
-            denyInspectionVariant = (state: typeof originalInspectionState, message: string) => {
-              try {
-                saveInspectionState(state);
-                const retainedRows = inspectionRows();
-                expect(() => inspectLocalSession(inspectionInput)).toThrow(message);
-                expect(inspectionRows()).toEqual(retainedRows);
-              } finally {
-                restoreInspectionState();
-              }
-              expect(inspectionRows()).toEqual(originalInspectionRows);
-            };
-          expect(inspectLocalSession(inspectionInput)).toMatchObject({
-            status: 'inspected',
-            work_id: id,
-            attempt: 1,
-          });
-          expect(inspectionRows()).toEqual(originalInspectionRows);
-          denyInspectionVariant(
-            { ...originalInspectionState, corrective_execution: null },
-            'work and journal run differ',
+            currentJournal = requireSessionJournal(ledger.resume(id, 1));
+          assertCompleteHostSnapshot(beforeAuthorization);
+          expect(beforeAuthorization.work.lifecycle.phase).toBe('VERIFY');
+          expect(beforeAuthorization.work.lease).not.toBeNull();
+          const cacheObservation = observeMetadataReads(f.database, () =>
+            fixtureHost.authorizeCorrectiveExecution({
+              identity,
+              attempt: 1,
+              expectedWork: beforeAuthorization.workVersion,
+              expectedLedger: beforeAuthorization.ledgerVersion,
+              expectedJournal: currentJournal.version,
+              stageIds: ['develop_task', 'validate_focused', 'test_task'],
+              userInstructionRef: 'fixture:actual-correction-owner',
+              config: f.config,
+            }),
           );
-          denyInspectionVariant(
-            {
-              ...originalInspectionState,
-              corrective_execution: { ...inspectionExecution, engine_run_id: randomUUID() },
-            },
-            'corrective session binding differs',
-          );
-          denyInspectionVariant(
-            {
-              ...originalInspectionState,
-              corrective_execution: { ...inspectionExecution, base_run_id: 'foreign-base-run' },
-            },
-            'corrective session binding differs',
-          );
-          denyInspectionVariant(
-            {
-              ...originalInspectionState,
-              corrective_execution: {
-                ...inspectionExecution,
-                correction_generation: inspectionExecution.correction_generation + 1,
+          expect(cacheObservation.error).toBeUndefined();
+          expect(cacheObservation.result).toBeDefined();
+          expectCorrectiveAuthorizationMetadata(cacheObservation.reads);
+
+          if (scenario === 'validate') {
+            const inspectionExecution = requireCorrectiveExecution(cacheObservation.result),
+              inspectionInput = {
+                repositoryRoot: f.root,
+                config: f.config,
+                projectIds: identity.project_ids,
+                integrationsDigest: identity.integrations_digest,
+                workId: id,
+                attempt: 1,
               },
-            },
-            'corrective session binding differs',
-          );
-          denyInspectionVariant({ ...originalInspectionState, attempt: 2 }, 'journal identity is invalid');
-          denyInspectionVariant(
-            {
-              ...originalInspectionState,
-              corrective_execution: {
-                ...inspectionExecution,
-                authorization: {
-                  ...inspectionExecution.authorization,
-                  path: inspectionExecution.authorization.path + '.foreign',
+              authorizedJournal = requireSessionJournal(ledger.resume(id, 1)),
+              inspectionRows = () => ({
+                host: f.database
+                  .query(
+                    "SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind IN ('work','ledger') ORDER BY kind,id",
+                  )
+                  .all(f.store.workspaceId),
+                journal: f.database
+                  .query<
+                    {
+                      workspace_id: string;
+                      work_id: string;
+                      attempt: number;
+                      revision: number;
+                      payload: string;
+                      digest: string;
+                    },
+                    [string, string, number]
+                  >(
+                    'SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+                  )
+                  .all(f.store.workspaceId, id, 1),
+              }),
+              originalInspectionRows = inspectionRows(),
+              originalInspectionState = authorizedJournal.state,
+              originalJournalRow = originalInspectionRows.journal[0];
+            if (!originalJournalRow) throw new Error('original corrective inspection journal row is missing');
+            const saveInspectionState = (state: typeof originalInspectionState) =>
+                f.database
+                  .query(
+                    'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
+                  )
+                  .run(JSON.stringify(state), canonicalJsonDigest(state), f.store.workspaceId, id, 1),
+              restoreInspectionState = () =>
+                f.database
+                  .query(
+                    'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=?',
+                  )
+                  .run(originalJournalRow.payload, originalJournalRow.digest, f.store.workspaceId, id, 1),
+              denyInspectionVariant = (state: typeof originalInspectionState, message: string) => {
+                try {
+                  saveInspectionState(state);
+                  const retainedRows = inspectionRows();
+                  expect(() => inspectLocalSession(inspectionInput)).toThrow(message);
+                  expect(inspectionRows()).toEqual(retainedRows);
+                } finally {
+                  restoreInspectionState();
+                }
+                expect(inspectionRows()).toEqual(originalInspectionRows);
+              };
+            expect(inspectLocalSession(inspectionInput)).toMatchObject({
+              status: 'inspected',
+              work_id: id,
+              attempt: 1,
+            });
+            expect(inspectionRows()).toEqual(originalInspectionRows);
+            denyInspectionVariant(
+              { ...originalInspectionState, corrective_execution: null },
+              'work and journal run differ',
+            );
+            denyInspectionVariant(
+              {
+                ...originalInspectionState,
+                corrective_execution: { ...inspectionExecution, engine_run_id: randomUUID() },
+              },
+              'corrective session binding differs',
+            );
+            denyInspectionVariant(
+              {
+                ...originalInspectionState,
+                corrective_execution: { ...inspectionExecution, base_run_id: 'foreign-base-run' },
+              },
+              'corrective session binding differs',
+            );
+            denyInspectionVariant(
+              {
+                ...originalInspectionState,
+                corrective_execution: {
+                  ...inspectionExecution,
+                  correction_generation: inspectionExecution.correction_generation + 1,
                 },
               },
-            },
-            'consumed Host correction authority missing',
-          );
-          const inspectionAuthorityPath = path.join(f.root, inspectionExecution.authorization.path),
-            inspectionAuthorityBytes = readFileSync(inspectionAuthorityPath);
-          try {
-            writeFileSync(inspectionAuthorityPath, Buffer.concat([inspectionAuthorityBytes, Buffer.from(' ')]));
-            const retainedRows = inspectionRows();
-            expect(() => inspectLocalSession(inspectionInput)).toThrow('corrective authority bytes differ');
-            expect(inspectionRows()).toEqual(retainedRows);
-          } finally {
-            writeFileSync(inspectionAuthorityPath, inspectionAuthorityBytes);
+              'corrective session binding differs',
+            );
+            denyInspectionVariant({ ...originalInspectionState, attempt: 2 }, 'journal identity is invalid');
+            denyInspectionVariant(
+              {
+                ...originalInspectionState,
+                corrective_execution: {
+                  ...inspectionExecution,
+                  authorization: {
+                    ...inspectionExecution.authorization,
+                    path: inspectionExecution.authorization.path + '.foreign',
+                  },
+                },
+              },
+              'consumed Host correction authority missing',
+            );
+            const inspectionAuthorityPath = path.join(f.root, inspectionExecution.authorization.path),
+              inspectionAuthorityBytes = readFileSync(inspectionAuthorityPath);
+            try {
+              writeFileSync(inspectionAuthorityPath, Buffer.concat([inspectionAuthorityBytes, Buffer.from(' ')]));
+              const retainedRows = inspectionRows();
+              expect(() => inspectLocalSession(inspectionInput)).toThrow('corrective authority bytes differ');
+              expect(inspectionRows()).toEqual(retainedRows);
+            } finally {
+              writeFileSync(inspectionAuthorityPath, inspectionAuthorityBytes);
+            }
+            expect(inspectionRows()).toEqual(originalInspectionRows);
           }
-          expect(inspectionRows()).toEqual(originalInspectionRows);
-        }
 
-        // The CLI retry is a read-only retrieval: run.mjs calls retrieveCorrectiveAuthorization
-        // first and returns that existing authorization before any preparation or write.
-        markPhase('public_authorize_deny_resume');
-        const authorized = publicRun([
-          ...args,
-          '--correct',
-          planPath,
-          '--expected-revision',
-          String(originalVersion.revision),
-          '--expected-digest',
-          originalVersion.digest,
-        ]);
-        const authorizedExecution = requireCorrectiveExecution(authorized.corrective_execution),
-          cachedExecution = requireCorrectiveExecution(cacheObservation.result);
-        expect(authorizedExecution).toEqual(cachedExecution);
-        expect(requireHostWork(f.store.readHostStateSnapshot(identity)).lifecycle.assurance.correction_count).toBe(1);
-        const originalPlan = readFileSync(planPath);
-        const changedPlan = parseJsonRecord(originalPlan.toString('utf8'));
-        changedPlan.user_instruction_ref = 'fixture:changed-owner';
-        writeFileSync(planPath, JSON.stringify(changedPlan));
-        expect(() =>
-          publicRun([
+          // The CLI retry is a read-only retrieval: run.mjs calls retrieveCorrectiveAuthorization
+          // first and returns that existing authorization before any preparation or write.
+          markPhase('public_authorize_deny_resume');
+          const authorized = publicRun([
             ...args,
             '--correct',
             planPath,
@@ -3581,258 +3575,274 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             String(originalVersion.revision),
             '--expected-digest',
             originalVersion.digest,
-          ]),
-        ).toThrow('blocked');
-        writeFileSync(planPath, originalPlan);
-        expect(authorized.status).toBe('correction_authorized');
-        const baseRunId = authorizedExecution.base_run_id;
-        if (baseRunId === null) throw new Error('corrective execution omitted its base run id');
-        const originalRunId = requireWorkRunId(work);
-        expect(baseRunId).toBe(originalRunId);
-        expect(authorizedExecution.engine_run_id).not.toBe(originalRunId);
-        expect(
-          f.store
-            .readHostStateSnapshot(identity)
-            .work?.lifecycle.references.find((ref) => ref.kind === 'correction_authorization')?.disposition,
-        ).toBe('retired');
-        const resumed = publicRun(args);
-        const resumedRunId = resumed.mastra_run_id;
-        if (typeof resumedRunId !== 'string') throw new Error('corrective resume omitted Mastra run id');
-        expect(resumedRunId).toBe(authorizedExecution.engine_run_id);
-        const resumedActions = requireUnknownRecordArray(resumed.next_actions, 'corrective resume next actions');
-        expect(resumedActions.map((action) => requireRecordField(action, 'request').stage_id)).toEqual([
-          'develop_task',
-        ]);
-        if (scenario === 'success') {
-          const current = requireSessionJournal(ledger.resume(id, 1));
-          const currentRunId = current.state.run_id;
-          if (!currentRunId) throw new Error('suspended correction Journal has no workflow run id');
-          const engine = new Database(path.join(f.root, f.config.control.work_root, 'mastra-workflows.v1.sqlite'));
-          const originalSnapshot = engine
-            .query<{ snapshot: string; parsed: string }, [string]>(
-              'SELECT snapshot,json(snapshot) AS parsed FROM mastra_workflow_snapshot WHERE run_id=?',
-            )
-            .get(currentRunId);
-          if (!originalSnapshot) throw new Error('suspended engine snapshot is missing');
-          try {
-            const substituted = parseJsonRecord(originalSnapshot.parsed);
-            const snapshotContext = requireRecordField(substituted, 'context');
-            const stepId = current.state.step_id;
-            if (stepId === null) throw new Error('suspended engine snapshot has no current step');
-            const step = requireRecordField(snapshotContext, stepId);
-            const suspendPayload = requireRecordField(step, 'suspendPayload');
-            const requests = suspendPayload.requests;
-            if (!Array.isArray(requests) || !isPlainRecord(requests[0]))
-              throw new Error('suspended engine snapshot has no corrective request');
-            const correctiveExecution = requests[0].corrective_execution;
-            if (!isPlainRecord(correctiveExecution))
-              throw new Error('suspended engine snapshot has no corrective execution');
-            correctiveExecution.stage_ids = ['test_task'];
-            engine
-              .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
-              .run(JSON.stringify(substituted), currentRunId);
-            expect(() =>
-              readSessionEngineSnapshot({
+          ]);
+          const authorizedExecution = requireCorrectiveExecution(authorized.corrective_execution),
+            cachedExecution = requireCorrectiveExecution(cacheObservation.result);
+          expect(authorizedExecution).toEqual(cachedExecution);
+          expect(requireHostWork(f.store.readHostStateSnapshot(identity)).lifecycle.assurance.correction_count).toBe(1);
+          const originalPlan = readFileSync(planPath);
+          const changedPlan = parseJsonRecord(originalPlan.toString('utf8'));
+          changedPlan.user_instruction_ref = 'fixture:changed-owner';
+          writeFileSync(planPath, JSON.stringify(changedPlan));
+          expect(() =>
+            publicRun([
+              ...args,
+              '--correct',
+              planPath,
+              '--expected-revision',
+              String(originalVersion.revision),
+              '--expected-digest',
+              originalVersion.digest,
+            ]),
+          ).toThrow('blocked');
+          writeFileSync(planPath, originalPlan);
+          expect(authorized.status).toBe('correction_authorized');
+          const baseRunId = authorizedExecution.base_run_id;
+          if (baseRunId === null) throw new Error('corrective execution omitted its base run id');
+          const originalRunId = requireWorkRunId(work);
+          expect(baseRunId).toBe(originalRunId);
+          expect(authorizedExecution.engine_run_id).not.toBe(originalRunId);
+          expect(
+            f.store
+              .readHostStateSnapshot(identity)
+              .work?.lifecycle.references.find((ref) => ref.kind === 'correction_authorization')?.disposition,
+          ).toBe('retired');
+          const resumed = publicRun(args);
+          const resumedRunId = resumed.mastra_run_id;
+          if (typeof resumedRunId !== 'string') throw new Error('corrective resume omitted Mastra run id');
+          expect(resumedRunId).toBe(authorizedExecution.engine_run_id);
+          const resumedActions = requireUnknownRecordArray(resumed.next_actions, 'corrective resume next actions');
+          expect(resumedActions.map((action) => requireRecordField(action, 'request').stage_id)).toEqual([
+            'develop_task',
+          ]);
+          if (scenario === 'success') {
+            const current = requireSessionJournal(ledger.resume(id, 1));
+            const currentRunId = current.state.run_id;
+            if (!currentRunId) throw new Error('suspended correction Journal has no workflow run id');
+            const engine = new Database(path.join(f.root, f.config.control.work_root, 'mastra-workflows.v1.sqlite'));
+            const originalSnapshot = engine
+              .query<{ snapshot: string; parsed: string }, [string]>(
+                'SELECT snapshot,json(snapshot) AS parsed FROM mastra_workflow_snapshot WHERE run_id=?',
+              )
+              .get(currentRunId);
+            if (!originalSnapshot) throw new Error('suspended engine snapshot is missing');
+            try {
+              const substituted = parseJsonRecord(originalSnapshot.parsed);
+              const snapshotContext = requireRecordField(substituted, 'context');
+              const stepId = current.state.step_id;
+              if (stepId === null) throw new Error('suspended engine snapshot has no current step');
+              const step = requireRecordField(snapshotContext, stepId);
+              const suspendPayload = requireRecordField(step, 'suspendPayload');
+              const requests = suspendPayload.requests;
+              if (!Array.isArray(requests) || !isPlainRecord(requests[0]))
+                throw new Error('suspended engine snapshot has no corrective request');
+              const correctiveExecution = requests[0].corrective_execution;
+              if (!isPlainRecord(correctiveExecution))
+                throw new Error('suspended engine snapshot has no corrective execution');
+              correctiveExecution.stage_ids = ['test_task'];
+              engine
+                .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+                .run(JSON.stringify(substituted), currentRunId);
+              expect(() =>
+                readSessionEngineSnapshot({
+                  repositoryRoot: f.root,
+                  config: f.config,
+                  selection: input.selection,
+                  context,
+                  workflowId: 'task_execution',
+                  runId: currentRunId,
+                  correctiveExecution: requireCorrectiveExecution(current.state.corrective_execution),
+                }),
+              ).toThrow(/frontier requests/);
+              expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(current);
+            } finally {
+              engine
+                .query('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
+                .run(originalSnapshot.snapshot, currentRunId);
+              engine.close();
+            }
+          }
+          markPhase('public_issue_wave');
+          const issued = publicRun([
+            ...args,
+            '--issue-wave',
+            'true',
+            '--expected-revision',
+            String(requireStateVersionValue(resumed.state_version).revision),
+            '--expected-digest',
+            requireStateVersionValue(resumed.state_version).digest,
+          ]);
+          markPhase('post_issue_recovery');
+          const correctiveActions = requireUnknownRecordArray(issued.issued_actions, 'corrective issue-wave actions'),
+            correctiveAction = correctiveActions[0];
+          if (!correctiveAction || typeof correctiveAction.host_attempt_id !== 'string')
+            throw new Error('corrective issue-wave action is missing its Host attempt id');
+          const issuedRequest = requireRecordField(correctiveAction, 'request');
+          expect(correctiveActions).toHaveLength(1);
+          expect(requireCorrectiveExecution(issuedRequest.corrective_execution)).toEqual(authorizedExecution);
+          const currentAttempts = requireHostWork(f.store.readHostStateSnapshot(identity)).execution
+            .assignment_attempts;
+          const boundHost = new HostStateStore(
+            f.database,
+            f.store.workspaceId,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            f.root,
+          );
+          expect(() => boundHost.assertCorrectiveExecutionForWork(id, 2, authorizedExecution)).toThrow(
+            'corrective authority contract differs',
+          );
+          expect(currentAttempts).toHaveLength(2);
+          const correctiveAttempt = requireArrayItem(currentAttempts, 1, 'corrective Host assignment attempt');
+          expect(correctiveAttempt.correction_generation).toBe(1);
+          expect(correctiveAttempt.previous_attempt_id).toBe(claimed.attempt.attempt_id);
+          expect(
+            requireArrayItem(
+              requireHostWork(f.store.readHostStateSnapshot(identity)).execution.assignment_attempts,
+              0,
+              'original Host assignment attempt',
+            ).attempt_id,
+          ).toBe(claimed.attempt.attempt_id);
+          const recoveryRecord = parseJsonRecord(
+              f.database
+                .query<{ payload: string }, [string]>(
+                  'SELECT payload FROM agent_host_corrective_recovery WHERE work_id=?',
+                )
+                .get(id)?.payload ?? '',
+            ),
+            originalJournalRecord = requireRecordField(recoveryRecord, 'original_journal');
+          expect(parseMastraSessionLedgerState(originalJournalRecord.state)).toEqual(original);
+          if (failureStage === 'validate') {
+            journal = requireSessionJournal(ledger.resume(id, 1));
+            const correctionWriter = journal.state.items[0];
+            if (!correctionWriter) throw new Error('corrective writer Journal item is missing');
+            const corrected = {
+              ...observed(correctionWriter, 'Observed corrective writer terminal'),
+              host_attempt_id: correctiveAction.host_attempt_id,
+              changed_paths: [],
+            };
+            const correctionReport = path.join(f.root, '.agent/work/' + id + '/correction-writer-report.json');
+            writeFileSync(correctionReport, JSON.stringify(corrected));
+            publicRun([
+              ...args,
+              '--report',
+              correctionReport,
+              '--expected-revision',
+              String(journal.version.revision),
+              '--expected-digest',
+              journal.version.digest,
+            ]);
+            journal = requireSessionJournal(ledger.resume(id, 1));
+            expect(journal.state.items.map((item) => item.request.stage_id)).toEqual([
+              'validate_focused',
+              'validate_focused',
+            ]);
+            publicRun([
+              ...args,
+              '--issue-wave',
+              'true',
+              '--expected-revision',
+              String(journal.version.revision),
+              '--expected-digest',
+              journal.version.digest,
+            ]);
+            journal = requireSessionJournal(ledger.resume(id, 1));
+            for (const item of [...journal.state.items]) {
+              await report(
+                item,
+                JSON.stringify({
+                  schema: 'VidaValidatorVerdict/v1',
+                  verdict: 'pass',
+                  findings: [],
+                  evidence_refs: ['local://fixture/terminal'],
+                }),
+                'reported_complete',
+                runFixture,
+              );
+              journal = requireSessionJournal(ledger.resume(id, 1));
+            }
+            expect(journal.state.items.map((item) => item.request.stage_id)).toEqual(['test_task']);
+            publicRun([
+              ...args,
+              '--issue-wave',
+              'true',
+              '--expected-revision',
+              String(journal.version.revision),
+              '--expected-digest',
+              journal.version.digest,
+            ]);
+            journal = requireSessionJournal(ledger.resume(id, 1));
+            const testerItem = requireArrayItem(journal.state.items, 0, 'corrective tester Journal item');
+            await report(
+              testerItem,
+              JSON.stringify({
+                schema: 'VidaTesterVerdict/v1',
+                status: scenario === 'success' ? 'pass' : 'fail',
+                evidence_refs: ['local://fixture/terminal'],
+              }),
+              scenario === 'success' ? 'reported_complete' : 'reported_failed',
+              runFixture,
+            );
+            journal = requireSessionJournal(ledger.resume(id, 1));
+            expect(journal.resume_status).toBe('blocked');
+            if (scenario === 'success') expect(journal.state.step_id).toBeNull();
+            expect(journal.state.attempt).toBe(1);
+            expect(journal.state.work_id).toBe(id);
+            const completedWriter = journal.state.completed
+              .flatMap((wave) => wave.items)
+              .find((item) => item.request.stage_id === 'develop_task');
+            if (!completedWriter?.observation) throw new Error('corrective writer completion is missing');
+            expect(completedWriter.observation.host_attempt_id).toBe(correctiveAction.host_attempt_id);
+            if (scenario === 'success') {
+              const binding = {
                 repositoryRoot: f.root,
                 config: f.config,
                 selection: input.selection,
                 context,
                 workflowId: 'task_execution',
-                runId: currentRunId,
-                correctiveExecution: requireCorrectiveExecution(current.state.corrective_execution),
-              }),
-            ).toThrow(/frontier requests/);
-            expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(current);
-          } finally {
-            engine
-              .query('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
-              .run(originalSnapshot.snapshot, currentRunId);
-            engine.close();
+                runId: authorizedExecution.engine_run_id,
+              };
+              expect(() => readSessionEngineSnapshot(binding)).toThrow(/execution prefix/);
+              const before = requireSessionJournal(ledger.resume(id, 1));
+              const completedEngineSnapshot = readSessionEngineSnapshot({
+                ...binding,
+                correctiveExecution: authorizedExecution,
+              });
+              if (!completedEngineSnapshot) throw new Error('completed corrective engine snapshot is missing');
+              expect(completedEngineSnapshot.status).toBe('success');
+              const witness = await createStagedRuntimeWitness({
+                repositoryRoot: f.root,
+                payloadManifestSha256: canonicalJsonDigest({ fixture: 'corrective completion' }),
+                workId: id,
+                attempt: 1,
+                lifecycleRisk: input.risk,
+                selection: input.selection,
+              });
+              expect(witness.mastra_status).toBe('success');
+              expect(witness.run_id).toBe(authorizedExecution.engine_run_id);
+              expect(witness.ledger_state).toEqual(before.state);
+              expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(before);
+            }
           }
+          markPhase('terminal_assertions_cleanup');
+        } catch (error) {
+          failure = error;
+          didFail = true;
+        } finally {
+          f.close({ retainRoot: retainFixtureRootOnUnknown });
+          expect(existsSync(f.root)).toBe(retainFixtureRootOnUnknown);
         }
-        markPhase('public_issue_wave');
-        const issued = publicRun([
-          ...args,
-          '--issue-wave',
-          'true',
-          '--expected-revision',
-          String(requireStateVersionValue(resumed.state_version).revision),
-          '--expected-digest',
-          requireStateVersionValue(resumed.state_version).digest,
-        ]);
-        markPhase('post_issue_recovery');
-        const correctiveActions = requireUnknownRecordArray(issued.issued_actions, 'corrective issue-wave actions'),
-          correctiveAction = correctiveActions[0];
-        if (!correctiveAction || typeof correctiveAction.host_attempt_id !== 'string')
-          throw new Error('corrective issue-wave action is missing its Host attempt id');
-        const issuedRequest = requireRecordField(correctiveAction, 'request');
-        expect(correctiveActions).toHaveLength(1);
-        expect(requireCorrectiveExecution(issuedRequest.corrective_execution)).toEqual(authorizedExecution);
-        const currentAttempts = requireHostWork(f.store.readHostStateSnapshot(identity)).execution.assignment_attempts;
-        const boundHost = new HostStateStore(
-          f.database,
-          f.store.workspaceId,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          f.root,
-        );
-        expect(() => boundHost.assertCorrectiveExecutionForWork(id, 2, authorizedExecution)).toThrow(
-          'corrective authority contract differs',
-        );
-        expect(currentAttempts).toHaveLength(2);
-        const correctiveAttempt = requireArrayItem(currentAttempts, 1, 'corrective Host assignment attempt');
-        expect(correctiveAttempt.correction_generation).toBe(1);
-        expect(correctiveAttempt.previous_attempt_id).toBe(claimed.attempt.attempt_id);
-        expect(
-          requireArrayItem(
-            requireHostWork(f.store.readHostStateSnapshot(identity)).execution.assignment_attempts,
-            0,
-            'original Host assignment attempt',
-          ).attempt_id,
-        ).toBe(claimed.attempt.attempt_id);
-        const recoveryRecord = parseJsonRecord(
-            f.database
-              .query<{ payload: string }, [string]>(
-                'SELECT payload FROM agent_host_corrective_recovery WHERE work_id=?',
-              )
-              .get(id)?.payload ?? '',
-          ),
-          originalJournalRecord = requireRecordField(recoveryRecord, 'original_journal');
-        expect(parseMastraSessionLedgerState(originalJournalRecord.state)).toEqual(original);
-        if (failureStage === 'validate') {
-          journal = requireSessionJournal(ledger.resume(id, 1));
-          const correctionWriter = journal.state.items[0];
-          if (!correctionWriter) throw new Error('corrective writer Journal item is missing');
-          const corrected = {
-            ...observed(correctionWriter, 'Observed corrective writer terminal'),
-            host_attempt_id: correctiveAction.host_attempt_id,
-            changed_paths: [],
-          };
-          const correctionReport = path.join(f.root, '.agent/work/' + id + '/correction-writer-report.json');
-          writeFileSync(correctionReport, JSON.stringify(corrected));
-          publicRun([
-            ...args,
-            '--report',
-            correctionReport,
-            '--expected-revision',
-            String(journal.version.revision),
-            '--expected-digest',
-            journal.version.digest,
-          ]);
-          journal = requireSessionJournal(ledger.resume(id, 1));
-          expect(journal.state.items.map((item) => item.request.stage_id)).toEqual([
-            'validate_focused',
-            'validate_focused',
-          ]);
-          publicRun([
-            ...args,
-            '--issue-wave',
-            'true',
-            '--expected-revision',
-            String(journal.version.revision),
-            '--expected-digest',
-            journal.version.digest,
-          ]);
-          journal = requireSessionJournal(ledger.resume(id, 1));
-          for (const item of [...journal.state.items]) {
-            await report(
-              item,
-              JSON.stringify({
-                schema: 'VidaValidatorVerdict/v1',
-                verdict: 'pass',
-                findings: [],
-                evidence_refs: ['local://fixture/terminal'],
-              }),
-              'reported_complete',
-              runFixture,
-            );
-            journal = requireSessionJournal(ledger.resume(id, 1));
-          }
-          expect(journal.state.items.map((item) => item.request.stage_id)).toEqual(['test_task']);
-          publicRun([
-            ...args,
-            '--issue-wave',
-            'true',
-            '--expected-revision',
-            String(journal.version.revision),
-            '--expected-digest',
-            journal.version.digest,
-          ]);
-          journal = requireSessionJournal(ledger.resume(id, 1));
-          const testerItem = requireArrayItem(journal.state.items, 0, 'corrective tester Journal item');
-          await report(
-            testerItem,
-            JSON.stringify({
-              schema: 'VidaTesterVerdict/v1',
-              status: scenario === 'success' ? 'pass' : 'fail',
-              evidence_refs: ['local://fixture/terminal'],
-            }),
-            scenario === 'success' ? 'reported_complete' : 'reported_failed',
-            runFixture,
+      } catch (cleanupFailure) {
+        if (didFail)
+          throw new AggregateError(
+            [failure, cleanupFailure],
+            'Public correction failed; owned fixture cleanup also failed',
           );
-          journal = requireSessionJournal(ledger.resume(id, 1));
-          expect(journal.resume_status).toBe('blocked');
-          if (scenario === 'success') expect(journal.state.step_id).toBeNull();
-          expect(journal.state.attempt).toBe(1);
-          expect(journal.state.work_id).toBe(id);
-          const completedWriter = journal.state.completed
-            .flatMap((wave) => wave.items)
-            .find((item) => item.request.stage_id === 'develop_task');
-          if (!completedWriter?.observation) throw new Error('corrective writer completion is missing');
-          expect(completedWriter.observation.host_attempt_id).toBe(correctiveAction.host_attempt_id);
-          if (scenario === 'success') {
-            const binding = {
-              repositoryRoot: f.root,
-              config: f.config,
-              selection: input.selection,
-              context,
-              workflowId: 'task_execution',
-              runId: authorizedExecution.engine_run_id,
-            };
-            expect(() => readSessionEngineSnapshot(binding)).toThrow(/execution prefix/);
-            const before = requireSessionJournal(ledger.resume(id, 1));
-            const completedEngineSnapshot = readSessionEngineSnapshot({
-              ...binding,
-              correctiveExecution: authorizedExecution,
-            });
-            if (!completedEngineSnapshot) throw new Error('completed corrective engine snapshot is missing');
-            expect(completedEngineSnapshot.status).toBe('success');
-            const witness = await createStagedRuntimeWitness({
-              repositoryRoot: f.root,
-              payloadManifestSha256: canonicalJsonDigest({ fixture: 'corrective completion' }),
-              workId: id,
-              attempt: 1,
-              lifecycleRisk: input.risk,
-              selection: input.selection,
-            });
-            expect(witness.mastra_status).toBe('success');
-            expect(witness.run_id).toBe(authorizedExecution.engine_run_id);
-            expect(witness.ledger_state).toEqual(before.state);
-            expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(before);
-          }
-        }
-        markPhase('terminal_assertions_cleanup');
-      } catch (error) {
-        failure = error;
-        didFail = true;
+        throw cleanupFailure;
       }
-      let cleanupFailure: unknown,
-        cleanupFailed = false;
-      try {
-        f.close({ retainRoot: retainFixtureRootOnUnknown });
-      } catch (error) {
-        cleanupFailure = error;
-        cleanupFailed = true;
-      }
-      if (didFail && cleanupFailed)
-        throw new AggregateError(
-          [failure, cleanupFailure],
-          'Public correction failed; owned fixture cleanup also failed',
-        );
       if (didFail) throw failure;
-      if (cleanupFailed) throw cleanupFailure;
     },
     60000,
   );
