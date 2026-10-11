@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.ts';
 
 type Mode = 'baseline' | 'closeout' | 'verify';
 
@@ -18,6 +19,11 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 // Development CLI checks execute package Source; spawned children do not prove native formation or coverage.
 const bundle = process.env.VIDA_CLEAR_BUNDLE ?? packageRoot;
 if (!path.isAbsolute(bundle)) throw new Error('VIDA_CLEAR_BUNDLE must name an absolute CLI package root');
+const unknownFixtureRoots = new Set<string>();
+const disposeFixture = (root: string): void => {
+  if (unknownFixtureRoots.has(root)) console.error(`Preserved UNKNOWN CLEAR fixture at ${root}`);
+  else rmSync(root, { recursive: true, force: true });
+};
 const write = (root: string, relative: string, content: string): void => {
   const file = path.join(root, relative);
   mkdirSync(path.dirname(file), { recursive: true });
@@ -43,6 +49,13 @@ const run = (root: string, mode: Mode): RunResult => {
     ],
     { cwd: bundle, encoding: 'utf8', timeout: 30_000 },
   );
+  if (isUnknownSynchronousChild(result)) {
+    unknownFixtureRoots.add(root);
+    throw new Error(
+      `UNKNOWN CLEAR child: pid=${result.pid} status=${result.status} signal=${result.signal} error=${String(result.error)}; retained fixture=${root}`,
+      { cause: result.error },
+    );
+  }
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 };
 const sha = (value: string): string => createHash('sha256').update(value).digest('hex');
@@ -123,7 +136,7 @@ test('public CLEAR uses package policy schema without local assets and rejects c
     const denialShadow = run(root, 'baseline');
     expect(denialShadow.status, denialShadow.stderr).toBe(0);
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    disposeFixture(root);
   }
 }, 60_000);
 
@@ -201,7 +214,7 @@ test('authorized new document passes baseline but closeout requires existence an
     expect(verify.status, verify.stderr).toBe(0);
     expect((JSON.parse(verify.stdout ?? '') as { status: string }).status).toBe('verified');
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    disposeFixture(root);
   }
 }, 60_000);
 
@@ -272,7 +285,7 @@ test('public documentation CLEAR command binds baseline and closeout to current 
     writeFileSync(closeoutPath, JSON.stringify(tampered) + '\n');
     expect(run(root, 'verify').status).toBe(1);
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    disposeFixture(root);
   }
 }, 60_000);
 
@@ -362,6 +375,6 @@ test('deletion requires a typed event and removal of stale map links, then a new
       'documentation-clear-doc-clear-test-closeout-0001',
     );
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    disposeFixture(root);
   }
 }, 60_000);

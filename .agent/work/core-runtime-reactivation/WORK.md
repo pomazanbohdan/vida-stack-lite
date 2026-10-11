@@ -5999,3 +5999,64 @@ the four unchanged passing cases and prior metadata check retain their separate
 scoped receipts. It is not a new five-case full PASS or measured speedup.
 Independent persisted-depth-review-v769.md approves Source database threading
 and the regression design with static-only/Root-reported evidence distinctions.
+
+
+### v773–v774 — test optimization audit and synchronous-child custody correction
+
+User asks to optimize tests and research each actual error/bottleneck. Four blind
+Luna audits review disjoint capture, subprocess, fixture and AST/matrix contours;
+a fifth independent reviewer checks the causal correction and its incremental
+public-runner case. Root remains the sole maintained writer/check/Git owner.
+Reports live in typed-correction-v179/{capture,subprocess,fixture,inventory}-
+optimization-v773.md and clear-custody-review-v774.md; review is static, not
+agent execution proof.
+
+No duplicate Babel AST/read/hash pass was found within the audit operation:
+existing CapturedInputs feeds inventory, test links and scenario drafts. Keep it.
+The two coverage captures protect a real preflight-to-lock Source drift boundary;
+direct reuse or deleting a capture is rejected. A reuse design needs exact live
+membership/bytes/config/tool/import-resolution checks, with no demonstrated
+latency benefit yet. The27CLEAR children protect distinct transitions and
+denials; merging them or switching spawn APIs has no qualified benefit. Repeated
+immutable source-fixture seeding is a plausible P1 candidate, not measured
+closure: cached v662 Source counts are not current executable-inventory equality
+or setup timing. Do not cache live producer-fenced checks or mutable fixtures.
+
+Actual test defect: documentation-clear run() dropped spawnSync error/signal and
+all four finally blocks deleted the consumer root, including uncertain outcomes.
+Root adds one shared test-only synchronous-child classifier, also consumed by the
+existing public CLI fixture runner instead of its local predicate. Error, signal
+or noninteger status retains custody; integer exit1 remains ordinary denial.
+CLEAR throws a diagnostic with child identity/result/cause and preserved path,
+then its cleanup retains UNKNOWN roots. Existing30s child/60s case bounds, CLI
+arguments, assertions and consumer isolation remain; no product Source/schema/
+loader or authorization/CAS/UNKNOWN operation is changed. TESTING documents the
+single evidence boundary and controlled-fixture limitation.
+
+Causal exact timeout RED:0PASS1FAIL7assertions53ms, retained=false. GREEN
+controlled isolated namespaces:4PASS0FAIL32assertions124ms for timeout error
+with integer status, signal with integer status, missing status and ordinary
+denial. The tests invoke the real existing CLEAR case while only mocking its
+child return; outer terminal uncertainty preserves its own fixture. A direct
+public-runner case verifies original result identity, callback progression and
+existing receipt fields for all four outcomes. Its initial generated-program
+newline escaping FAIL is retained (public-cli-custody-green-v774.log is FAIL,
+not GREEN); corrected exactcase PASS1/0FAIL5assertions44ms. Unchanged four
+control cases are not rerun as a second full completion command. Actual CLEAR
+behavior completion:4PASS0FAIL38assertions27.08s. No measured speedup claim.
+Receipts:clear-custody-red-v773.log,clear-custody-green-v774.log,
+public-cli-custody-correction-v774.log,clear-custody-behavior-v774.log.
+
+Official references checked for these actual causes: Node24.19 child_process
+spawnSync result/error/signal/timeout semantics
+(https://nodejs.org/download/release/v24.19.0/docs/api/child_process.html),
+Bun lifecycle/runtime/Transpiler and Babel parser/traverse documentation per
+audit notes, and template literal escape evaluation for the generated child
+(https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals).
+Current Bun docs inform design only; local evidence uses pinnedBun1.4.2.
+
+Current exact coverage and dynamic CRAP remain unavailable after retained v747
+UNKNOWN, mutation is not measured, exhaustive frozen lineage remains OPEN.
+Partial1084roles57files stays non-executable. No new full numeric run, old-root
+access/replay, lock reclamation, build/install suite or native acceptance claim.
+Continue dependency-ready reviewed lineage and evidenced P0/P1 corrections.

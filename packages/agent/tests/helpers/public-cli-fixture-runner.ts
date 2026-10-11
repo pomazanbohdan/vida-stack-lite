@@ -2,6 +2,7 @@ import { appendFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { pinnedEnvironment, readPin } from '../../bin/bun.ts';
+import { isUnknownSynchronousChild } from './synchronous-child-outcome.ts';
 
 interface PublicCliFixtureRunnerOptions {
   readonly bundleRoot: string;
@@ -17,10 +18,6 @@ function operationFor(args: readonly string[]): string {
   return 'other';
 }
 
-function isUnknown(result: SpawnSyncReturns<string>): boolean {
-  return Boolean(result.error) || Boolean(result.signal) || result.status === null;
-}
-
 function makeTimingRecord(
   args: readonly string[],
   result: SpawnSyncReturns<string>,
@@ -29,7 +26,7 @@ function makeTimingRecord(
   fixtureRoot: string,
 ): Record<string, unknown> {
   const error = result.error as NodeJS.ErrnoException | undefined;
-  const unknown = isUnknown(result);
+  const unknown = isUnknownSynchronousChild(result);
   return {
     schema: 'PrivatePublicCliFixtureTiming/v1',
     operation: operationFor(args),
@@ -78,7 +75,7 @@ export function createNativeTsPublicCliFixtureRunner(options: PublicCliFixtureRu
         timeout: 30000,
       });
       const elapsedMs = Number(process.hrtime.bigint() - startedNs) / 1_000_000;
-      if (isUnknown(result)) options.onUnknown();
+      if (isUnknownSynchronousChild(result)) options.onUnknown();
       const record = makeTimingRecord(args, result, startedAt, elapsedMs, options.fixtureRoot);
       mkdirSync(path.dirname(options.diagnosticReceiptPath), { recursive: true });
       appendFileSync(options.diagnosticReceiptPath, JSON.stringify(record) + '\n', { mode: 0o600 });

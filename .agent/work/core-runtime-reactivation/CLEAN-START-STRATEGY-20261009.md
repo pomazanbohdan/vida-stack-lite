@@ -1268,3 +1268,20 @@ The partial945-role lineage stays non-executable; finish exhaustive reviewed
 correspondence and genuine baseline custody separately. Exact100% four metrics,
 assertion-confirmed Killed100% and dynamic frozen-cap CRAP still precede real
 formed-native isolated Runtime. No schema/loader cutover or unblock notices.
+
+
+#### Current bounded test optimization checkpoint v773–v774
+
+Four blind Luna audits preserve the existing shared AST/hash capture, distinct
+CLEAR transition children and real preflight/locked Source-drift guard. No
+measured benefit justifies replacing those mechanisms. Root corrects actual
+CLEAR test cleanup of UNKNOWN child outcomes through one shared test-only
+classifier reused by the public CLI fixture runner. Controlled custody4PASS,
+public-runner receipt1PASS and actual CLEAR behavior4PASS38assertions27.08s;
+independent review approves. Details/failed receipts/references: WORK v773–v774.
+No speedup or numeric/native completion claim. Immutable fixture seeding remains
+an unmeasured P1 candidate; live integrity/ownership boundaries cannot be cached.
+Current partial lineage is1084roles57Sourcefiles, non-executable. Continue
+exhaustive frozen correspondence; reconcile retained v747 numerical custody
+before any new full run. Exact100% four coverage metrics, assertion-confirmed
+Killed100% and dynamic frozen CRAP still precede clean native qualification.

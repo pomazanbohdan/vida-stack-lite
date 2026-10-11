@@ -547,6 +547,14 @@ and package-schema checks, not native formation or installed Runtime acceptance.
 The coverage preload does not propagate to spawned CLI children, so their
 behavioral assertions do not establish instrumented function execution.
 
+CLEAR and public CLI fixture runners share the synchronous child-outcome
+classifier. An error, signal or missing integer status is UNKNOWN: fail the
+case with its child diagnostic and retain the consumer root. Integer exit 1
+remains an ordinary terminal denial. `tests/documentation-clear-custody.test.ts`
+checks the actual CLEAR fixture cleanup and public runner receipts in isolated
+mocked-child namespaces; it does not qualify real process interruption or CLI
+coverage. Keep the existing child and case bounds.
+
 Keep root help, per-command help and parsing declarations in parity. The CLI
 contract gate must detect an unlisted public command, alias or option, and a
 documented option that its parser cannot accept. Cover argument types, required
