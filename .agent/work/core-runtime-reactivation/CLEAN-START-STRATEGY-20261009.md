@@ -1351,3 +1351,20 @@ Root owns strict checkpoint/Git and final numeric/native checks. Next: investiga
 remaining wholewriter cost through current owned evidence, preserve durable CAS
 and fresh checks; continue exhaustive frozen correspondence and numeric custody
 reconciliation. No new full run, UNKNOWN replay or final gate/native claim.
+
+
+#### Current portable-root and frozen-correspondence checkpoint v791–v795
+
+Glob/skill1c5fa9e is strict-published. Three blind scoped audits preserve distinct
+trust/freshness boundaries and identify a shared URL AST shape for next work.
+One standard portable-root parser consolidation is qualified through bounded
+Bun/Node parity and before/after33PASS43assertions, no inventedRED or speedclaim.
+Same18function roles, guardCC4to3 underunchanged old3/CRAP12 ceiling. Independent
+Source+semanticjoin APPROVE adds17retained1NEW: partial1246roles67files
+(997retained249NEW1removed), previous ceilings/bindings preserved. Sixdeferred
+files74roles and global correspondence remain GAP; partialnonexec/no default
+plan. Root owns strict checkpoint/Git, current numerical/native prerequisites
+remain OPEN with no UNKNOWN replay. Details/receipt paths: WORKv791–v795.
+Next: shared URL AST shape owner with exact scanner-selection/anchor-policy
+separation, then remaining coherent frozen constraints; retain durable CAS and
+live guards. Do not add tests to formation/install or duplicate whole scans.

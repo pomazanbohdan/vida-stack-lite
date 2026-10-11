@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 980,
-    "new": 248,
+    "retained": 997,
+    "new": 249,
     "removed": 1,
-    "current_roles": 1228,
-    "source_files": 66
+    "current_roles": 1246,
+    "source_files": 67
   },
   "source_bindings": [
     {
@@ -280,6 +280,10 @@
     {
       "file": "src/orchestration/admitted-session-execution.ts",
       "sha256": "d779e33fd5622ea7130e711c0a8d730c16e7872b1b5d624bb7e1e8e5d2e35449"
+    },
+    {
+      "file": "bin/project-mapping-contract.ts",
+      "sha256": "044e8df72a8f559bdb22db24f3cec8dae45807a6c4063b2c5e9e5ae2be8a1482"
     }
   ],
   "baseline_functions": [
@@ -22488,6 +22492,363 @@
         "bodyEndLine": 346,
         "bodyEndColumn": 25
       }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireRelativeProjectRoot#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireRelativeProjectRoot#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireRelativeProjectRoot role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 5,
+        "column": 0,
+        "start": 184,
+        "end": 394,
+        "bodyLine": 5,
+        "bodyColumn": 77,
+        "bodyEndLine": 8,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requirePortableProjectRoot#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requirePortableProjectRoot#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requirePortableProjectRoot role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart. Portable prefix grammar now uses the standard win32 root parser plus unchanged backslash denial; exact old complexity3/CRAP12 ceilings retained.",
+      "current_source_address": {
+        "line": 10,
+        "column": 0,
+        "start": 396,
+        "end": 610,
+        "bodyLine": 10,
+        "bodyColumn": 57,
+        "bodyEndLine": 13,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireNormalizedProjectRoot#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireNormalizedProjectRoot#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireNormalizedProjectRoot role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 15,
+        "column": 0,
+        "start": 612,
+        "end": 901,
+        "bodyLine": 15,
+        "bodyColumn": 64,
+        "bodyEndLine": 21,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireNormalizedProjectRoot#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireNormalizedProjectRoot#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireNormalizedProjectRoot role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 18,
+        "column": 47,
+        "start": 758,
+        "end": 806,
+        "bodyLine": 18,
+        "bodyColumn": 57,
+        "bodyEndLine": 18,
+        "bodyEndColumn": 95
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:normalizeProjectRoot#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:normalizeProjectRoot#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:normalizeProjectRoot role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 23,
+        "column": 0,
+        "start": 903,
+        "end": 1170,
+        "bodyLine": 23,
+        "bodyColumn": 54,
+        "bodyEndLine": 29,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireMappingText#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireMappingText#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireMappingText role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 31,
+        "column": 0,
+        "start": 1172,
+        "end": 1356,
+        "bodyLine": 31,
+        "bodyColumn": 69,
+        "bodyEndLine": 33,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:splitProjectMapping#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:splitProjectMapping#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:splitProjectMapping role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 35,
+        "column": 0,
+        "start": 1358,
+        "end": 1620,
+        "bodyLine": 35,
+        "bodyColumn": 66,
+        "bodyEndLine": 40,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireProjectId#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireProjectId#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireProjectId role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 42,
+        "column": 0,
+        "start": 1622,
+        "end": 1789,
+        "bodyLine": 42,
+        "bodyColumn": 44,
+        "bodyEndLine": 44,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:normalizedMappingRoot#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:normalizedMappingRoot#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:normalizedMappingRoot role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 46,
+        "column": 0,
+        "start": 1791,
+        "end": 1921,
+        "bodyLine": 46,
+        "bodyColumn": 67,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:parseProjectMapping#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:parseProjectMapping#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:parseProjectMapping role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 50,
+        "column": 0,
+        "start": 1923,
+        "end": 2149,
+        "bodyLine": 50,
+        "bodyColumn": 67,
+        "bodyEndLine": 55,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireExplicitMultiProjectRoots#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireExplicitMultiProjectRoots#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireExplicitMultiProjectRoots role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 57,
+        "column": 0,
+        "start": 2151,
+        "end": 2427,
+        "bodyLine": 57,
+        "bodyColumn": 91,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireExplicitMultiProjectRoots#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireExplicitMultiProjectRoots#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireExplicitMultiProjectRoots role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 58,
+        "column": 43,
+        "start": 2287,
+        "end": 2317,
+        "bodyLine": 58,
+        "bodyColumn": 54,
+        "bodyEndLine": 58,
+        "bodyEndColumn": 73
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireUniqueProjectIds#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireUniqueProjectIds#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireUniqueProjectIds role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 62,
+        "column": 0,
+        "start": 2429,
+        "end": 2634,
+        "bodyLine": 62,
+        "bodyColumn": 76,
+        "bodyEndLine": 65,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:requireUniqueProjectIds#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:requireUniqueProjectIds#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:requireUniqueProjectIds role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 63,
+        "column": 27,
+        "start": 2534,
+        "end": 2553,
+        "bodyLine": 63,
+        "bodyColumn": 38,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 46
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:projectMappings#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:projectMappings#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:projectMappings role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 67,
+        "column": 7,
+        "start": 2643,
+        "end": 3018,
+        "bodyLine": 67,
+        "bodyColumn": 66,
+        "bodyEndLine": 73,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:projectMappings#0/binding:normalized/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:projectMappings#0/binding:normalized/closure:CallExpression:arguments[0]#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:projectMappings role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 70,
+        "column": 34,
+        "start": 2849,
+        "end": 2899,
+        "bodyLine": 70,
+        "bodyColumn": 46,
+        "bodyEndLine": 70,
+        "bodyEndColumn": 83
+      }
+    },
+    {
+      "identity": "bin/init-core.mjs#fn:projectMappings#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/project-mapping-contract.ts#fn:projectMappings#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/init-core.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Baseline bin/init-core.mjs declares the same fn:projectMappings role for project-mapping validation and normalization; current declaration is its TypeScript module counterpart.",
+      "current_source_address": {
+        "line": 72,
+        "column": 25,
+        "start": 2966,
+        "end": 3014,
+        "bodyLine": 72,
+        "bodyColumn": 42,
+        "bodyEndLine": 72,
+        "bodyEndColumn": 73
+      }
     }
   ],
   "new_functions": [
@@ -25981,7 +26342,7 @@
       "identity": "bin/transition-failed-prewriter.ts#fn:transitionIdentity#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "rationale": "This is a new exact-shape WorkIdentity parser, separate from the old entrypoint’s inline identity checks.",
+      "rationale": "This is a new exact-shape WorkIdentity parser, separate from the old entrypoint\u2019s inline identity checks.",
       "current_source_address": {
         "line": 127,
         "column": 0,
@@ -26408,6 +26769,22 @@
         "bodyEndLine": 108,
         "bodyEndColumn": 1
       }
+    },
+    {
+      "identity": "bin/project-mapping-contract.ts#fn:mappingTexts#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Extracts array and element validation from projectMappings into a new declared role; baseline projectMappings performs array validation and maps entries inline.",
+      "current_source_address": {
+        "line": 75,
+        "column": 0,
+        "start": 3020,
+        "end": 3529,
+        "bodyLine": 75,
+        "bodyColumn": 48,
+        "bodyEndLine": 85,
+        "bodyEndColumn": 1
+      }
     }
   ],
   "removed_functions": [
@@ -26452,7 +26829,9 @@
     ".tmp/tooling-research/typed-correction-v179/lineage-repair-ingress-root-corrected-v777.json",
     ".tmp/tooling-research/typed-correction-v179/lineage-current-rows-v776.json",
     ".tmp/tooling-research/typed-correction-v179/lineage-bindings-v776.json",
-    ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v777.md"
+    ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v777.md",
+    ".tmp/tooling-research/typed-correction-v179/portable-root-lineage-v794/current-rows.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-project-routes-root-corrected-v777.json"
   ],
   "current_source_commit": "f8d1925",
   "scope_review_v746": {
@@ -26470,5 +26849,19 @@
     "review": "Six blind proposals, three independent semantic reviews and Root exact-callback corrections. Source bindings govern staged inspector bytes over parent f57163a. Global correspondence and quality remain incomplete.",
     "input": ".tmp/tooling-research/typed-correction-v179/root-reviewed-small-lineage-v777.json",
     "independent_review": ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v777.md"
+  },
+  "scope_review_v794": {
+    "status": "APPROVED_SOURCE_LINEAGE_ONLY_NOT_EXHAUSTIVE",
+    "source_parent": "1c5fa9e",
+    "scope": [
+      "bin/project-mapping-contract.ts"
+    ],
+    "counts": {
+      "retained": 17,
+      "new": 1,
+      "current_roles": 18
+    },
+    "note": "Source binding governs staged current bytes; previous rows and ceilings unchanged. Non-executable partial, no numerical/native evidence.",
+    "review_receipt": ".tmp/tooling-research/typed-correction-v179/portable-root-source-lineage-review-v795.md"
   }
 }

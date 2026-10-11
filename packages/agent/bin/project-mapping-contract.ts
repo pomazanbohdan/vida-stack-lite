@@ -8,7 +8,7 @@ function requireRelativeProjectRoot(value: unknown): asserts value is string {
 }
 
 function requirePortableProjectRoot(value: string): void {
-  if (path.posix.isAbsolute(value) || value.includes('\\') || /^[A-Za-z]:/.test(value))
+  if (path.win32.parse(value).root !== '' || value.includes('\\'))
     throw new Error('Project root must be a non-empty safe repository-relative path');
 }
 

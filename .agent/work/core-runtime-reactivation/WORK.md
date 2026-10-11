@@ -6329,3 +6329,68 @@ Exhaustive frozen lineage, current exact four coverage metrics, dynamic CRAP
 and assertion-confirmed mutation100 remain OPEN. v747/v776 UNKNOWN custody
 remains held; no native qualification/cutover/unblock notice. Complete strict
 checkpoint and ordinary publication of this exact packet next.
+
+
+### v791–v795 — portable prefix owner and next reviewed lineage partition
+
+Packet1c5fa9e passed complete strict checkpoint-v790 and published370a1d8..1c5fa9e
+to main. HEAD/origin0/0 after push; unrelated root bun.lock retained. Project
+Bun Test skill now participates in bootstrap and is reused by the blind agents.
+
+Three blind bounded audits inspect smallest deferred contours. Mapping/init
+review confirms current role correspondence and keeps recordOption's local
+unsupported-key invariant; no unchecked assignment or cap raise. Readonly audit
+proposes same-invocation project context reuse but fresh producer-fence context
+and persisted untrusted-plan validation are distinct guards, retained pending
+causal review. Import-anchor audit identifies duplicate inner URL AST shape in
+anchors and forward candidate resources; shared semantic owner is the next
+planned correction, not implemented here. No numerical benefit is inferred
+from an extra AST scan alone and no functions are split solely for a cap.
+Reports: *-budget-plan-v791.md and shared-url-shape-plan-v792.md under BASE.
+
+Root proposes legitimate standard-parser consolidation: portable root guard
+uses path.win32.parse(value).root !== empty plus unchanged backslash denial,
+instead of separate POSIX-root, ASCII-drive-prefix and backslash probes. Its
+input has already passed nonempty-string validation; normalization, project
+slugs, duplicates, unknown/accessor/sparse mapping entries and downstream schema
+guards stay unchanged. Independent portable-root-parser-plan-v792 supports
+equivalence, with Node24.19 official path.parse/win32 and Bun node:path docs.
+This is parser reuse, not a new helper, cap raise, unsafe type cast or a latency
+claim. Win32 parsing is host-independent; Linux Source checks do not qualify
+a real Windows/native target.
+
+Before mutation, inert grammar parity control checks16105strings over11tokens
+through depth4, separately in Bun1.4.2 and Node24.19,0mismatches each. It includes
+slash, drive letters/colon, backslash, dot, NUL, newline and Unicode. This is a
+bounded API comparison, not exhaustive strings/coverage. Add bareC:, lowerdrive
+and repeatedslash negatives to existing parser table. Actual pre-change
+characterization33PASS43assertions905ms; actual candidate33PASS43assertions819ms
+including downstream initializer no-authority-on-rejection check. Both pass:
+behavior-preserving refactor, no fabricated RED or local speedup claim. Logs:
+portable-root-characterization-v793.log, portable-root-final-v794.log and
+portable-root-probe-v793/{bun,node}.log. No old UNKNOWN fixture is replayed.
+
+One selected Babel inventory capture confirms same18current roles; portable
+guardCC4to3, exact genuine old cap3 and CRAP12 preserved. Reuse previous corrected
+project-routes role proposal and genuine frozen seed, independently verify
+17old callable roles moved from b549951 bin/init-core.mjs and genuine NEW
+mappingTexts extraction. One selected Source binding hash accompanies fresh
+addresses; no whole AST/hash scan. Existing1228roles66files and all ceilings/
+dispositions unchanged. Qualified selected join adds17retained1NEW, combined
+1246roles67files997retained249NEW1removed. Whole deferred files now6/74roles;
+unmatched global predecessors remain GAP. Partial stays SOURCE_LINEAGE_ONLY_
+NON_EXECUTABLE_NOT_EXHAUSTIVE; no default executable CRAP plan is activated.
+
+Blind portable-root-source-lineage-review-v795 APPROVES current Source diff,
+actual old/current callable correspondence, exact prior arrays/bindings and
+unchanged ceilings. Three reviewer reports were saved in a literal BASE folder;
+Root moves only these owned ignored reports to the declared expanded path after
+completion and confirms destination absence, no content rewrite or Source
+change. Actual report is read before admission; a claimed path alone is not
+review proof. Private current-row/join inputs: portable-root-lineage-v794.
+
+Current exact coverage, dynamic frozen CRAP, assertion-confirmed Killed100 and
+clean formed-native Runtime remain OPEN. v747 numeric and v776 corrective
+UNKNOWN custody remains held. No old DB/lease/attempt/state restoration, active
+schema/loader cutover or unblock notices. Root remains sole checks/Git owner;
+strict checkpoint and ordinary publication of this exact correction next.
