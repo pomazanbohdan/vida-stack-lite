@@ -1285,3 +1285,21 @@ Current partial lineage is1084roles57Sourcefiles, non-executable. Continue
 exhaustive frozen correspondence; reconcile retained v747 numerical custody
 before any new full run. Exact100% four coverage metrics, assertion-confirmed
 Killed100% and dynamic frozen CRAP still precede clean native qualification.
+
+
+#### Current scoped lineage and inspection checkpoint v775–v777
+
+Reviewed selected partial now1228roles66files:980retained248NEW1removed. Sixblind
+proposal groups, three semantic reviews and independent final join add144roles/
+9files, preserving all prior ceilings. Sevenover-capfiles92roles remain deferred;
+unmatched global old roles remain GAP, no default executable plan is activated.
+Only the inspector changes: validated journal projection removes duplicate
+checks and unreachable array fallback, samecallbackCC52to49 underfrozen50.
+Fresh physical workspace identity, single DB snapshot and all guards remain.
+Actual direct inspection PASS1/13assertions. Broader public corrective validate
+FAIL at60s parent deadline, childSIGTERM after427ms, retainedUNKNOWN root
+/tmp/vida-absorption-cIgIKa; preserve custody without replay or timeout increase.
+Research confirms Bun's parent timeout kills spawned children; evaluate actual
+setup/previous-CLI cost using current attributable timing, no redundant full run.
+Details/corrections/failed receipts: WORK v775–v777. Final numerical gates and
+clean formed-native qualification remain OPEN.

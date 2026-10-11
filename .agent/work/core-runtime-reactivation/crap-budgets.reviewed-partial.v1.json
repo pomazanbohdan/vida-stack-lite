@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 881,
-    "new": 203,
+    "retained": 980,
+    "new": 248,
     "removed": 1,
-    "current_roles": 1084,
-    "source_files": 57
+    "current_roles": 1228,
+    "source_files": 66
   },
   "source_bindings": [
     {
@@ -244,6 +244,42 @@
     {
       "file": "src/config/project-upgrade-storage.ts",
       "sha256": "688a291d2cd0fa3bf2eb7fa6620070c933223456458e90a1c084142c44f783ed"
+    },
+    {
+      "file": "src/orchestration/inspect-local-session.ts",
+      "sha256": "e8d5f03db3b1d7a3ffc13cb173f897ecd0fe4ce197ed6d56937846e3f655cfc2"
+    },
+    {
+      "file": "bin/forward-review-proof.ts",
+      "sha256": "4e4ddde2080bbb6b91fea3033a40be81bd392824dfc9731377d329592dde552f"
+    },
+    {
+      "file": "bin/scope.ts",
+      "sha256": "951ac2bfd6cdbfb0f3a4a56bdf7108cf5f2e7afd4134d92a6096b2e62c33b098"
+    },
+    {
+      "file": "bin/transition-failed-prewriter.ts",
+      "sha256": "06e529b43f57a15131a05d927c96d8d2dcce1569f9f49dcfcd21e1bffe0945e0"
+    },
+    {
+      "file": "bin/recover-failed-prewriter-owner.ts",
+      "sha256": "39e44aff572c19cdb3f65021580a2ef6a9ccedd37e6019936a2047d92990386b"
+    },
+    {
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "sha256": "5ce5ecd8b39a1c3cac50d17dbdbd0c61d1ff42ff4d774cf7ec48297f1bbaa4a9"
+    },
+    {
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "sha256": "b17285597c916cbab8b3b08cba564b6319b2570376275e8c3f0ff48938af6818"
+    },
+    {
+      "file": "src/contracts/public-ingress.ts",
+      "sha256": "e1dab9dce71902a42582dc9fb378fe61fb9fd942705e4823bda9fee6005a8f85"
+    },
+    {
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "sha256": "d779e33fd5622ea7130e711c0a8d730c16e7872b1b5d624bb7e1e8e5d2e35449"
     }
   ],
   "baseline_functions": [
@@ -20373,6 +20409,2085 @@
         "bodyEndLine": 67,
         "bodyEndColumn": 1
       }
+    },
+    {
+      "identity": "bin/forward-review-proof.mjs#binding:sha/binding:sha#0",
+      "current_identity": "bin/forward-review-proof.ts#fn:sha#0",
+      "file": "bin/forward-review-proof.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same module-local SHA-256 digest over byte/string inputs.",
+      "current_source_address": {
+        "line": 27,
+        "column": 0,
+        "start": 488,
+        "end": 599,
+        "bodyLine": 27,
+        "bodyColumn": 49,
+        "bodyEndLine": 29,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.mjs#binding:json/binding:json#0",
+      "current_identity": "bin/forward-review-proof.ts#fn:json#0",
+      "file": "bin/forward-review-proof.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same canonical pretty-printed JSON bytes with terminal newline.",
+      "current_source_address": {
+        "line": 31,
+        "column": 0,
+        "start": 601,
+        "end": 703,
+        "bodyLine": 31,
+        "bodyColumn": 38,
+        "bodyEndLine": 33,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.mjs#binding:keys/binding:keys#0",
+      "current_identity": "bin/forward-review-proof.ts#fn:keys#0",
+      "file": "bin/forward-review-proof.mjs",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Same exact-object-key-set predicate using sorted key equality.",
+      "current_source_address": {
+        "line": 39,
+        "column": 0,
+        "start": 857,
+        "end": 1053,
+        "bodyLine": 39,
+        "bodyColumn": 93,
+        "bodyEndLine": 41,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.mjs#fn:read#0",
+      "current_identity": "bin/forward-review-proof.ts#fn:read#0",
+      "file": "bin/forward-review-proof.mjs",
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "Same receipt-path confinement, symlink/file checks, JSON canonical-byte validation and parsed-byte return.",
+      "current_source_address": {
+        "line": 43,
+        "column": 0,
+        "start": 1055,
+        "end": 1982,
+        "bodyLine": 43,
+        "bodyColumn": 101,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.mjs#fn:read#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/forward-review-proof.ts#fn:read#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/forward-review-proof.mjs",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Retained independently inventoried path-segment some predicate in read: rejects empty, dot, dot-dot and colon segments in genuine b549951 and current Source. This is not a JSON-decoding callback or a parent allowance transfer.",
+      "current_source_address": {
+        "line": 48,
+        "column": 29,
+        "start": 1323,
+        "end": 1393,
+        "bodyLine": 48,
+        "bodyColumn": 39,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 99
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.mjs#fn:verifyForwardReviewSet#0",
+      "current_identity": "bin/forward-review-proof.ts#fn:verifyForwardReviewSet#0",
+      "file": "bin/forward-review-proof.mjs",
+      "baseline_complexity": 38,
+      "baseline_coverage": 0,
+      "baseline_crap": 1482,
+      "max_complexity": 38,
+      "max_crap": 1482,
+      "rationale": "Same three-kind review-set consistency gate and cross-record actor/history/call uniqueness, now delegating split predicates.",
+      "current_source_address": {
+        "line": 172,
+        "column": 7,
+        "start": 5059,
+        "end": 6856,
+        "bodyLine": 178,
+        "bodyColumn": 8,
+        "bodyEndLine": 214,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:journalItems#0",
+      "current_identity": "src/orchestration/inspect-local-session.ts#fn:journalItems#0",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Both b549951 and current journalItems validate the persisted journal item shape and project issue, observation and action/stage fields. The genuine b549951 source at packages/agent/src/orchestration/inspect-local-session.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 24,
+        "column": 0,
+        "start": 1321,
+        "end": 2093,
+        "bodyLine": 24,
+        "bodyColumn": 38,
+        "bodyEndLine": 43,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:journalItems#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/inspect-local-session.ts#fn:journalItems#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Both b549951 and current journalItems validate the persisted journal item shape and project issue, observation and action/stage fields. The genuine b549951 source at packages/agent/src/orchestration/inspect-local-session.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 27,
+        "column": 19,
+        "start": 1524,
+        "end": 2089,
+        "bodyLine": 27,
+        "bodyColumn": 29,
+        "bodyEndLine": 42,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:readRow#0",
+      "current_identity": "src/orchestration/inspect-local-session.ts#fn:readRow#0",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Both versions read one persisted row, parse and digest-check its payload, and return its revision, digest and value. The genuine b549951 source at packages/agent/src/orchestration/inspect-local-session.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 45,
+        "column": 0,
+        "start": 2095,
+        "end": 2807,
+        "bodyLine": 50,
+        "bodyColumn": 14,
+        "bodyEndLine": 64,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0",
+      "current_identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "The top-level persisted-state inspection remains the same snapshot reader for Work, Ledger and Journal, including identity and lease checks. The genuine b549951 source at packages/agent/src/orchestration/inspect-local-session.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 67,
+        "column": 7,
+        "start": 2901,
+        "end": 9000,
+        "bodyLine": 74,
+        "bodyColumn": 3,
+        "bodyEndLine": 192,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "baseline_complexity": 50,
+      "baseline_coverage": 0,
+      "baseline_crap": 2550,
+      "max_complexity": 50,
+      "max_crap": 2550,
+      "rationale": "This remains the transaction callback owned by inspectLocalSession, reading and validating the same committed Work, Ledger and Journal snapshot. The genuine b549951 source at packages/agent/src/orchestration/inspect-local-session.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 86,
+        "column": 19,
+        "start": 3561,
+        "end": 8873,
+        "bodyLine": 86,
+        "bodyColumn": 25,
+        "bodyEndLine": 186,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0/closure:CallExpression:arguments[0]#0/binding:ticket/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0/closure:CallExpression:arguments[0]#0/binding:ticket/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "This optional lookup remains the lease ticket expiry parse used to derive the inspected lease expiration state. The genuine b549951 source at packages/agent/src/orchestration/inspect-local-session.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 145,
+        "column": 49,
+        "start": 6934,
+        "end": 6981,
+        "bodyLine": 145,
+        "bodyColumn": 60,
+        "bodyEndLine": 145,
+        "bodyEndColumn": 96
+      }
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0/closure:CallExpression:arguments[0]#0/binding:pending/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0/closure:CallExpression:arguments[0]#0/binding:pending/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "This callback remains the pending journal item filter/map that projects unresolved issue actions. The genuine b549951 source at packages/agent/src/orchestration/inspect-local-session.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 160,
+        "column": 18,
+        "start": 7702,
+        "end": 7763,
+        "bodyLine": 160,
+        "bodyColumn": 28,
+        "bodyEndLine": 160,
+        "bodyEndColumn": 79
+      }
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0/closure:CallExpression:arguments[0]#0/binding:pending/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/inspect-local-session.ts#fn:inspectLocalSession#0/closure:CallExpression:arguments[0]#0/binding:pending/closure:CallExpression:arguments[0]#1",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "This callback remains the pending journal item filter/map that projects unresolved issue actions. The genuine b549951 source at packages/agent/src/orchestration/inspect-local-session.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 161,
+        "column": 15,
+        "start": 7780,
+        "end": 7934,
+        "bodyLine": 161,
+        "bodyColumn": 26,
+        "bodyEndLine": 165,
+        "bodyEndColumn": 11
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:requireResume#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:requireResume#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "Both versions use this assertion helper to reject a failed paused-work resume precondition with the same domain error prefix. The genuine b549951 source at packages/agent/src/orchestration/resume-paused-local-work.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 6,
+        "column": 0,
+        "start": 336,
+        "end": 493,
+        "bodyLine": 6,
+        "bodyColumn": 79,
+        "bodyEndLine": 8,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#binding:same/binding:same#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#binding:same/binding:same#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Both versions use this local digest equality predicate for exact CAS tuple and journal version comparison. The genuine b549951 source at packages/agent/src/orchestration/resume-paused-local-work.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 9,
+        "column": 13,
+        "start": 507,
+        "end": 607,
+        "bodyLine": 9,
+        "bodyColumn": 57,
+        "bodyEndLine": 9,
+        "bodyEndColumn": 113
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/binding:prior/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:selectPausedLocalOwner#0/binding:prior/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 6,
+      "baseline_coverage": 1,
+      "baseline_crap": 6,
+      "max_complexity": 6,
+      "max_crap": 6,
+      "rationale": "Retained independently inventoried owner-selection predicate from genuine b549951 resumePausedLocalWork, moved under selectPausedLocalOwner: binding:prior/closure:CallExpression:arguments[0]#0. Direct old/current callable comparison confirms the same ticket/release/claim/resource/contender role. Each closure keeps its own published cap; the extracted parent remains NEW.",
+      "current_source_address": {
+        "line": 73,
+        "column": 6,
+        "start": 3005,
+        "end": 3340,
+        "bodyLine": 74,
+        "bodyColumn": 8,
+        "bodyEndLine": 79,
+        "bodyEndColumn": 36
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/binding:release/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:selectPausedLocalOwner#0/binding:release/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 1,
+      "baseline_crap": 3,
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "Retained independently inventoried owner-selection predicate from genuine b549951 resumePausedLocalWork, moved under selectPausedLocalOwner: binding:release/closure:CallExpression:arguments[0]#0. Direct old/current callable comparison confirms the same ticket/release/claim/resource/contender role. Each closure keeps its own published cap; the extracted parent remains NEW.",
+      "current_source_address": {
+        "line": 82,
+        "column": 4,
+        "start": 3395,
+        "end": 3547,
+        "bodyLine": 83,
+        "bodyColumn": 6,
+        "bodyEndLine": 85,
+        "bodyEndColumn": 49
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/binding:oldClaim/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:selectPausedLocalOwner#0/binding:oldClaim/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "Retained independently inventoried owner-selection predicate from genuine b549951 resumePausedLocalWork, moved under selectPausedLocalOwner: binding:oldClaim/closure:CallExpression:arguments[0]#0. Direct old/current callable comparison confirms the same ticket/release/claim/resource/contender role. Each closure keeps its own published cap; the extracted parent remains NEW.",
+      "current_source_address": {
+        "line": 87,
+        "column": 38,
+        "start": 3592,
+        "end": 3670,
+        "bodyLine": 87,
+        "bodyColumn": 49,
+        "bodyEndLine": 87,
+        "bodyEndColumn": 116
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:selectPausedLocalOwner#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Retained independently inventoried owner-selection predicate from genuine b549951 resumePausedLocalWork, moved under selectPausedLocalOwner: closure:CallExpression:arguments[0]#0. Direct old/current callable comparison confirms the same ticket/release/claim/resource/contender role. Each closure keeps its own published cap; the extracted parent remains NEW.",
+      "current_source_address": {
+        "line": 93,
+        "column": 38,
+        "start": 3824,
+        "end": 3887,
+        "bodyLine": 93,
+        "bodyColumn": 52,
+        "bodyEndLine": 93,
+        "bodyEndColumn": 101
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/closure:CallExpression:arguments[0]#2",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:selectPausedLocalOwner#0/closure:CallExpression:arguments[0]#1",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "Retained independently inventoried owner-selection predicate from genuine b549951 resumePausedLocalWork, moved under selectPausedLocalOwner: closure:CallExpression:arguments[0]#1. Direct old/current callable comparison confirms the same ticket/release/claim/resource/contender role. Each closure keeps its own published cap; the extracted parent remains NEW.",
+      "current_source_address": {
+        "line": 95,
+        "column": 8,
+        "start": 3939,
+        "end": 4029,
+        "bodyLine": 95,
+        "bodyColumn": 22,
+        "bodyEndLine": 95,
+        "bodyEndColumn": 98
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/binding:contenders/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:selectPausedLocalOwner#0/binding:contenders/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 1,
+      "baseline_crap": 3,
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "Retained independently inventoried owner-selection predicate from genuine b549951 resumePausedLocalWork, moved under selectPausedLocalOwner: binding:contenders/closure:CallExpression:arguments[0]#0. Direct old/current callable comparison confirms the same ticket/release/claim/resource/contender role. Each closure keeps its own published cap; the extracted parent remains NEW.",
+      "current_source_address": {
+        "line": 103,
+        "column": 4,
+        "start": 4281,
+        "end": 4522,
+        "bodyLine": 104,
+        "bodyColumn": 6,
+        "bodyEndLine": 106,
+        "bodyEndColumn": 97
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/binding:contenders/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:selectPausedLocalOwner#0/binding:contenders/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Retained independently inventoried owner-selection predicate from genuine b549951 resumePausedLocalWork, moved under selectPausedLocalOwner: binding:contenders/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0. Direct old/current callable comparison confirms the same ticket/release/claim/resource/contender role. Each closure keeps its own published cap; the extracted parent remains NEW.",
+      "current_source_address": {
+        "line": 106,
+        "column": 38,
+        "start": 4463,
+        "end": 4521,
+        "bodyLine": 106,
+        "bodyColumn": 52,
+        "bodyEndLine": 106,
+        "bodyEndColumn": 96
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 25,
+      "baseline_coverage": 1,
+      "baseline_crap": 25,
+      "max_complexity": 25,
+      "max_crap": 25,
+      "rationale": "The original resume operation remains the owner of pause-state/CAS validation, lease reacquisition, ledger update and resume result; extracted selection helpers do not inherit its parent allowance. The genuine b549951 source at packages/agent/src/orchestration/resume-paused-local-work.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 113,
+        "column": 7,
+        "start": 4766,
+        "end": 9512,
+        "bodyLine": 131,
+        "bodyColumn": 2,
+        "bodyEndLine": 247,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/resume-paused-local-work.ts#fn:resumePausedLocalWork#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/resume-paused-local-work.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "This callback remains the assignment-attempt scan that blocks resume when an attempt is started or uncertain. The genuine b549951 source at packages/agent/src/orchestration/resume-paused-local-work.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 161,
+        "column": 8,
+        "start": 6611,
+        "end": 6686,
+        "bodyLine": 161,
+        "bodyColumn": 21,
+        "bodyEndLine": 161,
+        "bodyEndColumn": 83
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:requireExecution#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:requireExecution#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Both versions use this assertion helper to stop admitted-session execution when a required predicate fails. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 26,
+        "column": 0,
+        "start": 1223,
+        "end": 1352,
+        "bodyLine": 26,
+        "bodyColumn": 82,
+        "bodyEndLine": 28,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntake#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntake#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions read the bound Host work snapshot and delegate to the protected intake reader. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 31,
+        "column": 7,
+        "start": 1467,
+        "end": 1866,
+        "bodyLine": 35,
+        "bodyColumn": 87,
+        "bodyEndLine": 39,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntakeForWork#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntakeForWork#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "baseline_crap": 56,
+      "max_complexity": 7,
+      "max_crap": 56,
+      "rationale": "Both versions validate protected intake bytes, work digest, native handle and canonical runtime path inventory. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 42,
+        "column": 7,
+        "start": 1983,
+        "end": 3688,
+        "bodyLine": 45,
+        "bodyColumn": 87,
+        "bodyEndLine": 79,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntakeForWork#0/binding:intakeRef/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntakeForWork#0/binding:intakeRef/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "This callback remains the intake artifact lookup constrained by the local-session-intake ID and schema. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 48,
+        "column": 4,
+        "start": 2267,
+        "end": 2367,
+        "bodyLine": 48,
+        "bodyColumn": 14,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 104
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntakeForWork#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntakeForWork#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "This callback remains the same no-authority/null or deny-write service supplied to trusted local-session composition. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 67,
+        "column": 8,
+        "start": 3185,
+        "end": 3428,
+        "bodyLine": 68,
+        "bodyColumn": 10,
+        "bodyEndLine": 72,
+        "bodyEndColumn": 92
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntakeForWork#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionIntakeForWork#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "This callback remains the same no-authority/null or deny-write service supplied to trusted local-session composition. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 72,
+        "column": 33,
+        "start": 3369,
+        "end": 3427,
+        "bodyLine": 72,
+        "bodyColumn": 43,
+        "bodyEndLine": 72,
+        "bodyEndColumn": 91
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:assertAdmittedRuntimeCodeCurrent#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:assertAdmittedRuntimeCodeCurrent#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 44,
+      "baseline_coverage": 0,
+      "baseline_crap": 1980,
+      "max_complexity": 44,
+      "max_crap": 1980,
+      "rationale": "Both versions verify the admitted runtime package closure against the protected intake and continuation evidence before returning work item/session handle. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 82,
+        "column": 7,
+        "start": 3774,
+        "end": 9509,
+        "bodyLine": 86,
+        "bodyColumn": 57,
+        "bodyEndLine": 187,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:assertAdmittedRuntimeCodeCurrent#0/binding:intakeRef/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:assertAdmittedRuntimeCodeCurrent#0/binding:intakeRef/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "This callback remains the intake artifact lookup constrained by the local-session-intake ID and schema. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 143,
+        "column": 8,
+        "start": 6965,
+        "end": 7062,
+        "bodyLine": 143,
+        "bodyColumn": 17,
+        "bodyEndLine": 143,
+        "bodyEndColumn": 105
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionExecutionContext#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionExecutionContext#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Both versions construct the fresh execution context from current config, Host lease, task-source binding and admitted runtime checks. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 190,
+        "column": 7,
+        "start": 9600,
+        "end": 12142,
+        "bodyLine": 195,
+        "bodyColumn": 2,
+        "bodyEndLine": 248,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionExecutionContext#0/binding:successorBound/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:readAdmittedSessionExecutionContext#0/binding:successorBound/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "This callback remains the check for a no-effect assignment retry tied to the active successor lease. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 237,
+        "column": 4,
+        "start": 11601,
+        "end": 11818,
+        "bodyLine": 238,
+        "bodyColumn": 6,
+        "bodyEndLine": 240,
+        "bodyEndColumn": 98
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 251,
+        "column": 7,
+        "start": 12241,
+        "end": 15599,
+        "bodyLine": 256,
+        "bodyColumn": 2,
+        "bodyEndLine": 335,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:runtimeSource/binding:runtimeSource#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:runtimeSource/binding:runtimeSource#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 263,
+        "column": 24,
+        "start": 12559,
+        "end": 12726,
+        "bodyLine": 263,
+        "bodyColumn": 30,
+        "bodyEndLine": 266,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:resolveWorkflowWorkItem#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:resolveWorkflowWorkItem#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 275,
+        "column": 31,
+        "start": 13091,
+        "end": 13232,
+        "bodyLine": 275,
+        "bodyColumn": 48,
+        "bodyEndLine": 278,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:resolveWorkExecutionContext#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:resolveWorkExecutionContext#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 279,
+        "column": 35,
+        "start": 13269,
+        "end": 14674,
+        "bodyLine": 279,
+        "bodyColumn": 48,
+        "bodyEndLine": 310,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:resolveWorkExecutionContext#0/binding:ticket/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:resolveWorkExecutionContext#0/binding:ticket/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 283,
+        "column": 52,
+        "start": 13541,
+        "end": 13587,
+        "bodyLine": 283,
+        "bodyColumn": 62,
+        "bodyEndLine": 283,
+        "bodyEndColumn": 98
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:resolveIdentity#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:resolveIdentity#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 311,
+        "column": 23,
+        "start": 14699,
+        "end": 14709,
+        "bodyLine": 311,
+        "bodyColumn": 29,
+        "bodyEndLine": 311,
+        "bodyEndColumn": 33
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:verifyApproval#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:verifyApproval#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 312,
+        "column": 22,
+        "start": 14733,
+        "end": 14743,
+        "bodyLine": 312,
+        "bodyColumn": 28,
+        "bodyEndLine": 312,
+        "bodyEndColumn": 32
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:casWriter#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:casWriter#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 314,
+        "column": 17,
+        "start": 14800,
+        "end": 14901,
+        "bodyLine": 314,
+        "bodyColumn": 23,
+        "bodyEndLine": 316,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:dispatchWorkflowAssignment#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:dispatchWorkflowAssignment#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 317,
+        "column": 34,
+        "start": 14937,
+        "end": 15049,
+        "bodyLine": 317,
+        "bodyColumn": 40,
+        "bodyEndLine": 319,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:validateWorkflowAssignmentResult#0",
+      "current_identity": "src/orchestration/admitted-session-execution.ts#fn:openAdmittedSessionExecution#0/binding:composition/property:validateWorkflowAssignmentResult#0",
+      "file": "src/orchestration/admitted-session-execution.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Both versions compose the opaque admitted execution capability and provide the same runtime, workflow, lease, approval and result-validation service roles. The genuine b549951 source at packages/agent/src/orchestration/admitted-session-execution.ts contains the corresponding role; identity is retained on semantic behavior, not inferred from ordinal or body hash.",
+      "current_source_address": {
+        "line": 320,
+        "column": 40,
+        "start": 15091,
+        "end": 15377,
+        "bodyLine": 320,
+        "bodyColumn": 65,
+        "bodyEndLine": 327,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.mjs#binding:requireTransition/binding:requireTransition#0",
+      "current_identity": "bin/transition-failed-prewriter.ts#binding:requireTransition/binding:requireTransition#0",
+      "file": "bin/transition-failed-prewriter.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Both assert transition preconditions and raise the failed-prewriter transition error.",
+      "current_source_address": {
+        "line": 26,
+        "column": 86,
+        "start": 1468,
+        "end": 1569,
+        "bodyLine": 26,
+        "bodyColumn": 110,
+        "bodyEndLine": 28,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.mjs#binding:same/binding:same#0",
+      "current_identity": "bin/transition-failed-prewriter.ts#binding:same/binding:same#0",
+      "file": "bin/transition-failed-prewriter.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both compare values through canonical JSON digests for transition identity checks.",
+      "current_source_address": {
+        "line": 30,
+        "column": 13,
+        "start": 1636,
+        "end": 1736,
+        "bodyLine": 30,
+        "bodyColumn": 57,
+        "bodyEndLine": 30,
+        "bodyEndColumn": 113
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.mjs#fn:transitionFailedPrewriter#0",
+      "current_identity": "bin/transition-failed-prewriter.ts#fn:transitionFailedPrewriter#0",
+      "file": "bin/transition-failed-prewriter.mjs",
+      "baseline_complexity": 18,
+      "baseline_coverage": 0,
+      "baseline_crap": 342,
+      "max_complexity": 18,
+      "max_crap": 342,
+      "rationale": "Both implement the public failed-prewriter transition command, validate its input and coordinate persisted recovery state.",
+      "current_source_address": {
+        "line": 222,
+        "column": 7,
+        "start": 9147,
+        "end": 16373,
+        "bodyLine": 222,
+        "bodyColumn": 85,
+        "bodyEndLine": 389,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.mjs#fn:transitionFailedPrewriter#0/binding:intakeRef/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/transition-failed-prewriter.ts#fn:transitionFailedPrewriter#0/binding:intakeRef/closure:CallExpression:arguments[0]#0",
+      "file": "bin/transition-failed-prewriter.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both select the local-session-intake artifact reference from the original work artifacts.",
+      "current_source_address": {
+        "line": 306,
+        "column": 57,
+        "start": 12995,
+        "end": 13048,
+        "bodyLine": 306,
+        "bodyColumn": 67,
+        "bodyEndLine": 306,
+        "bodyEndColumn": 110
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.mjs#fn:transitionFailedPrewriter#0/binding:inspectEndpoint/binding:inspectEndpoint#0",
+      "current_identity": "bin/transition-failed-prewriter.ts#fn:transitionFailedPrewriter#0/binding:inspectEndpoint/binding:inspectEndpoint#0",
+      "file": "bin/transition-failed-prewriter.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both reload and inspect the configured native endpoint within the transition command.",
+      "current_source_address": {
+        "line": 309,
+        "column": 28,
+        "start": 13230,
+        "end": 13817,
+        "bodyLine": 310,
+        "bodyColumn": 6,
+        "bodyEndLine": 325,
+        "bodyEndColumn": 8
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.mjs#fn:transitionFailedPrewriter#0/binding:result/property:verifyCurrent#0",
+      "current_identity": "bin/transition-failed-prewriter.ts#fn:transitionFailedPrewriter#0/binding:result/property:verifyCurrent#0",
+      "file": "bin/transition-failed-prewriter.mjs",
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Both supply the transition callback that rechecks the current endpoint and project context before the state change.",
+      "current_source_address": {
+        "line": 357,
+        "column": 21,
+        "start": 15130,
+        "end": 15928,
+        "bodyLine": 357,
+        "bodyColumn": 44,
+        "bodyEndLine": 374,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.mjs#binding:requireRecovery/binding:requireRecovery#0",
+      "current_identity": "bin/recover-failed-prewriter-owner.ts#fn:requireRecovery#0",
+      "file": "bin/recover-failed-prewriter-owner.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Both enforce recovery-command preconditions with the same recovery-specific failure behavior.",
+      "current_source_address": {
+        "line": 36,
+        "column": 0,
+        "start": 1841,
+        "end": 2003,
+        "bodyLine": 36,
+        "bodyColumn": 81,
+        "bodyEndLine": 38,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.mjs#binding:same/binding:same#0",
+      "current_identity": "bin/recover-failed-prewriter-owner.ts#fn:same#0",
+      "file": "bin/recover-failed-prewriter-owner.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both compare structured owner and configuration values using canonical JSON digests.",
+      "current_source_address": {
+        "line": 39,
+        "column": 0,
+        "start": 2004,
+        "end": 2128,
+        "bodyLine": 39,
+        "bodyColumn": 54,
+        "bodyEndLine": 41,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.mjs#binding:keys/binding:keys#0",
+      "current_identity": "bin/recover-failed-prewriter-owner.ts#fn:keys#0",
+      "file": "bin/recover-failed-prewriter-owner.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Both return sorted own-property names for exact request shape validation.",
+      "current_source_address": {
+        "line": 42,
+        "column": 0,
+        "start": 2129,
+        "end": 2232,
+        "bodyLine": 42,
+        "bodyColumn": 54,
+        "bodyEndLine": 44,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.mjs#fn:recoverFailedPrewriterOwner#0/binding:verifyCurrent/binding:verifyCurrent#0/binding:approval/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/recover-failed-prewriter-owner.ts#fn:retainedSourceApproval#0/binding:approval/closure:CallExpression:arguments[0]#0",
+      "file": "bin/recover-failed-prewriter-owner.mjs",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Both select only a current approved execution-approval reference for LocalSourceWriteAuthorization/v1.",
+      "current_source_address": {
+        "line": 123,
+        "column": 4,
+        "start": 5388,
+        "end": 5585,
+        "bodyLine": 124,
+        "bodyColumn": 6,
+        "bodyEndLine": 127,
+        "bodyEndColumn": 65
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.mjs#fn:recoverFailedPrewriterOwner#0",
+      "current_identity": "bin/recover-failed-prewriter-owner.ts#fn:recoverFailedPrewriterOwner#0",
+      "file": "bin/recover-failed-prewriter-owner.mjs",
+      "baseline_complexity": 18,
+      "baseline_coverage": 0,
+      "baseline_crap": 342,
+      "max_complexity": 18,
+      "max_crap": 342,
+      "rationale": "Both are the public failed-prewriter owner-recovery command, binding the original work, authority and configured frontier before recovery.",
+      "current_source_address": {
+        "line": 140,
+        "column": 7,
+        "start": 5985,
+        "end": 11982,
+        "bodyLine": 140,
+        "bodyColumn": 69,
+        "bodyEndLine": 265,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.mjs#fn:recoverFailedPrewriterOwner#0/binding:verifyCurrent/binding:verifyCurrent#0",
+      "current_identity": "bin/recover-failed-prewriter-owner.ts#fn:recoverFailedPrewriterOwner#0/binding:verifyCurrent/binding:verifyCurrent#0",
+      "file": "bin/recover-failed-prewriter-owner.mjs",
+      "baseline_complexity": 17,
+      "baseline_coverage": 0,
+      "baseline_crap": 306,
+      "max_complexity": 17,
+      "max_crap": 306,
+      "rationale": "Both verify current config, admitted intake, original session and retained Source authorization inside owner recovery.",
+      "current_source_address": {
+        "line": 184,
+        "column": 26,
+        "start": 8246,
+        "end": 10237,
+        "bodyLine": 188,
+        "bodyColumn": 15,
+        "bodyEndLine": 219,
+        "bodyEndColumn": 5
+      }
+    },
+    {
+      "identity": "bin/scope.mjs#fn:inspectScope#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/scope.ts#fn:assertProjectPaths#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/scope.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current assertProjectPaths predicate callback is the same selected-project membership predicate previously nested in inspectScope.",
+      "current_source_address": {
+        "line": 87,
+        "column": 25,
+        "start": 3498,
+        "end": 3562,
+        "bodyLine": 87,
+        "bodyColumn": 40,
+        "bodyEndLine": 87,
+        "bodyEndColumn": 89
+      }
+    },
+    {
+      "identity": "bin/scope.mjs#fn:inspectScope#0/binding:fold/binding:fold#0",
+      "current_identity": "bin/scope.ts#fn:uniqueScopePaths#0/binding:fold/binding:fold#0",
+      "file": "bin/scope.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "The current fold callback is the same platform-aware case-folding callback previously nested in inspectScope; its separately captured baseline ceiling belongs to this callback.",
+      "current_source_address": {
+        "line": 105,
+        "column": 15,
+        "start": 4226,
+        "end": 4305,
+        "bodyLine": 105,
+        "bodyColumn": 35,
+        "bodyEndLine": 105,
+        "bodyEndColumn": 93
+      }
+    },
+    {
+      "identity": "bin/scope.mjs#fn:inspectScope#0",
+      "current_identity": "bin/scope.ts#fn:inspectScope#0",
+      "file": "bin/scope.mjs",
+      "baseline_complexity": 15,
+      "baseline_coverage": 0,
+      "baseline_crap": 240,
+      "max_complexity": 15,
+      "max_crap": 240,
+      "rationale": "Baseline bin/scope.mjs declares inspectScope as the same public operation. Argument parsing, dependency loading, and path loops are partly extracted into new current helpers; the original inspectScope role retains only its own baseline ceiling.",
+      "current_source_address": {
+        "line": 110,
+        "column": 7,
+        "start": 4428,
+        "end": 5317,
+        "bodyLine": 110,
+        "bodyColumn": 60,
+        "bodyEndLine": 122,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:readSourceExecutionContext#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:readSourceExecutionContext#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:readSourceExecutionContext#0: current read of the admitted task source binding and projection into SourceExecutionContext/v1 has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 51,
+        "column": 0,
+        "start": 2184,
+        "end": 3104,
+        "bodyLine": 57,
+        "bodyColumn": 29,
+        "bodyEndLine": 75,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:createTaskSourceMutationPolicyRequest#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:createTaskSourceMutationPolicyRequest#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:createTaskSourceMutationPolicyRequest#0: current delegation that builds the exact Host-validated mutation-policy DTO has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 78,
+        "column": 7,
+        "start": 3199,
+        "end": 3536,
+        "bodyLine": 83,
+        "bodyColumn": 36,
+        "bodyEndLine": 85,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:requireOperation#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:requireOperation#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:requireOperation#0: current guard that raises the task-source operation GAP on a failed predicate has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 87,
+        "column": 0,
+        "start": 3538,
+        "end": 3779,
+        "bodyLine": 87,
+        "bodyColumn": 82,
+        "bodyEndLine": 93,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:validDigest#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:validDigest#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:validDigest#0: current 64-hex digest type predicate has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 95,
+        "column": 0,
+        "start": 3781,
+        "end": 3906,
+        "bodyLine": 95,
+        "bodyColumn": 54,
+        "bodyEndLine": 97,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:assertExistingTaskSourceHostDatabase#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:assertExistingTaskSourceHostDatabase#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "baseline_crap": 56,
+      "max_complexity": 7,
+      "max_crap": 56,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:assertExistingTaskSourceHostDatabase#0: current canonical path and safe existing Host database admission guard has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 99,
+        "column": 7,
+        "start": 3915,
+        "end": 4800,
+        "bodyLine": 99,
+        "bodyColumn": 105,
+        "bodyEndLine": 120,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:readRequest#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:readRequest#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:readRequest#0: current bounded canonical request-path read and task-source request validation has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 122,
+        "column": 0,
+        "start": 4802,
+        "end": 5758,
+        "bodyLine": 122,
+        "bodyColumn": 93,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:readRequest#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:readRequest#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:readRequest#0/closure:CallExpression:arguments[0]#0: current nested path-segment validity predicate within the request/report path guard has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 129,
+        "column": 36,
+        "start": 5140,
+        "end": 5188,
+        "bodyLine": 129,
+        "bodyColumn": 46,
+        "bodyEndLine": 129,
+        "bodyEndColumn": 84
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:readReport#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:readReport#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 11,
+      "baseline_coverage": 0,
+      "baseline_crap": 132,
+      "max_complexity": 11,
+      "max_crap": 132,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:readReport#0: current bounded canonical report-path read and envelope validation has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 144,
+        "column": 0,
+        "start": 5760,
+        "end": 7177,
+        "bodyLine": 150,
+        "bodyColumn": 2,
+        "bodyEndLine": 180,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:readReport#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:readReport#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:readReport#0/closure:CallExpression:arguments[0]#0: current nested path-segment validity predicate within the request/report path guard has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 157,
+        "column": 36,
+        "start": 6218,
+        "end": 6266,
+        "bodyLine": 157,
+        "bodyColumn": 46,
+        "bodyEndLine": 157,
+        "bodyEndColumn": 84
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 30,
+      "baseline_coverage": 0,
+      "baseline_crap": 930,
+      "max_complexity": 30,
+      "max_crap": 930,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0: current fresh Host, owner, source-scope, authorization, and implementation-path validation has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 182,
+        "column": 0,
+        "start": 7179,
+        "end": 12254,
+        "bodyLine": 190,
+        "bodyColumn": 90,
+        "bodyEndLine": 284,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0: current nested path-segment validity predicate within the request/report path guard has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 223,
+        "column": 30,
+        "start": 9314,
+        "end": 9799,
+        "bodyLine": 223,
+        "bodyColumn": 41,
+        "bodyEndLine": 235,
+        "bodyEndColumn": 5
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0: current nested path-segment validity predicate within the request/report path guard has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 230,
+        "column": 34,
+        "start": 9589,
+        "end": 9636,
+        "bodyLine": 230,
+        "bodyColumn": 44,
+        "bodyEndLine": 230,
+        "bodyEndColumn": 81
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#1",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#1: current nested path-segment validity predicate within the request/report path guard has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 232,
+        "column": 10,
+        "start": 9683,
+        "end": 9773,
+        "bodyLine": 232,
+        "bodyColumn": 23,
+        "bodyEndLine": 232,
+        "bodyEndColumn": 100
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/binding:approval/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/binding:approval/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/binding:approval/closure:CallExpression:arguments[0]#0: current nested path-segment validity predicate within the request/report path guard has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 239,
+        "column": 4,
+        "start": 9928,
+        "end": 10076,
+        "bodyLine": 240,
+        "bodyColumn": 6,
+        "bodyEndLine": 242,
+        "bodyEndColumn": 39
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1: current nested path-segment validity predicate within the request/report path guard has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 275,
+        "column": 36,
+        "start": 11764,
+        "end": 12058,
+        "bodyLine": 275,
+        "bodyColumn": 49,
+        "bodyEndLine": 280,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1/binding:stage/closure:OptionalCallExpression:arguments[0]#0: current nested optional stage/assignment eligibility predicate in current-source authorization has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 276,
+        "column": 79,
+        "start": 11858,
+        "end": 11887,
+        "bodyLine": 276,
+        "bodyColumn": 89,
+        "bodyEndLine": 276,
+        "bodyEndColumn": 108
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:currentSourceAuthority#0/closure:CallExpression:arguments[0]#1/closure:OptionalCallExpression:arguments[0]#0: current nested optional stage/assignment eligibility predicate in current-source authorization has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 278,
+        "column": 10,
+        "start": 11940,
+        "end": 12038,
+        "bodyLine": 278,
+        "bodyColumn": 26,
+        "bodyEndLine": 278,
+        "bodyEndColumn": 108
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 13,
+      "baseline_coverage": 0,
+      "baseline_crap": 182,
+      "max_complexity": 13,
+      "max_crap": 182,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0: current mode router for prepare, inspect, issue, report, and recovery operations has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 287,
+        "column": 7,
+        "start": 12369,
+        "end": 16567,
+        "bodyLine": 292,
+        "bodyColumn": 47,
+        "bodyEndLine": 391,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/binding:verifyCurrent/binding:verifyCurrent#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/binding:verifyCurrent/binding:verifyCurrent#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/binding:verifyCurrent/binding:verifyCurrent#0: current current configuration and ProjectContext revalidation callback before Host effects has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "current_source_address": {
+        "line": 344,
+        "column": 22,
+        "start": 14704,
+        "end": 15582,
+        "bodyLine": 348,
+        "bodyColumn": 12,
+        "bodyEndLine": 365,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:reject#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:reject#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The current role checks a list of validation conditions and raises the supplied rejection message; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 79,
+        "column": 0,
+        "start": 2931,
+        "end": 3063,
+        "bodyLine": 79,
+        "bodyColumn": 71,
+        "bodyEndLine": 81,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:defined#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:defined#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role returns the first non-undefined value in a fallback list; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 82,
+        "column": 0,
+        "start": 3064,
+        "end": 3197,
+        "bodyLine": 82,
+        "bodyColumn": 59,
+        "bodyEndLine": 84,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:defined#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:defined#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role finds the first defined fallback value; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 83,
+        "column": 21,
+        "start": 3146,
+        "end": 3188,
+        "bodyLine": 83,
+        "bodyColumn": 44,
+        "bodyEndLine": 83,
+        "bodyEndColumn": 63
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:errorText#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:errorText#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The current role converts validator errors into the public ingress error string; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 85,
+        "column": 0,
+        "start": 3198,
+        "end": 3475,
+        "bodyLine": 85,
+        "bodyColumn": 69,
+        "bodyEndLine": 88,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:errorText#0/binding:rows/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:errorText#0/binding:rows/closure:CallExpression:arguments[0]#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The current role maps each validator error row into its instance-path and message text; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 86,
+        "column": 33,
+        "start": 3302,
+        "end": 3333,
+        "bodyLine": 86,
+        "bodyColumn": 44,
+        "bodyEndLine": 86,
+        "bodyEndColumn": 64
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:errorText#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:errorText#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role selects the available error array or the empty fallback; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 87,
+        "column": 18,
+        "start": 3371,
+        "end": 3460,
+        "bodyLine": 87,
+        "bodyColumn": 29,
+        "bodyEndLine": 87,
+        "bodyEndColumn": 107
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:computeWriteOperationHash#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:computeWriteOperationHash#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role builds the canonical digest binding the write operation, payload, principal, scope, and registry; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 89,
+        "column": 7,
+        "start": 3483,
+        "end": 4236,
+        "bodyLine": 99,
+        "bodyColumn": 11,
+        "bodyEndLine": 113,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:validateAuthorizationRequest#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:validateAuthorizationRequest#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The current role validates canonical JSON and the authorization request schema; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 114,
+        "column": 7,
+        "start": 4244,
+        "end": 4553,
+        "bodyLine": 114,
+        "bodyColumn": 90,
+        "bodyEndLine": 121,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:rfc3339TimestampMilliseconds#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:rfc3339TimestampMilliseconds#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 16,
+      "baseline_coverage": 1,
+      "baseline_crap": 16,
+      "max_complexity": 16,
+      "max_crap": 16,
+      "rationale": "The current role parses timestamp fields, including date and leap-second validity, into milliseconds; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 169,
+        "column": 7,
+        "start": 5794,
+        "end": 6824,
+        "bodyLine": 169,
+        "bodyColumn": 76,
+        "bodyEndLine": 192,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:isStrictRfc3339Timestamp#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:isStrictRfc3339Timestamp#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The current role exposes the strict timestamp validity predicate; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 193,
+        "column": 7,
+        "start": 6832,
+        "end": 6957,
+        "bodyLine": 193,
+        "bodyColumn": 74,
+        "bodyEndLine": 195,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:assertFresh#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:assertFresh#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role checks governed-write timestamps for ordering, expiration, and freshness; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 196,
+        "column": 0,
+        "start": 6958,
+        "end": 7985,
+        "bodyLine": 196,
+        "bodyColumn": 104,
+        "bodyEndLine": 212,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:assertFresh#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:assertFresh#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role parses each supplied freshness timestamp through the shared RFC3339 converter; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 199,
+        "column": 22,
+        "start": 7210,
+        "end": 7235,
+        "bodyLine": 199,
+        "bodyColumn": 33,
+        "bodyEndLine": 199,
+        "bodyEndColumn": 47
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:validateGovernedWriteRequest#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:validateGovernedWriteRequest#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role validates the governed request schema, operation/scope binding, and evidence freshness; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 213,
+        "column": 7,
+        "start": 7993,
+        "end": 9670,
+        "bodyLine": 213,
+        "bodyColumn": 83,
+        "bodyEndLine": 261,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:validateGovernedWriteIntent#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:validateGovernedWriteIntent#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role validates the pre-authorization governed intent, timestamps, and payload; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 262,
+        "column": 7,
+        "start": 9678,
+        "end": 10244,
+        "bodyLine": 262,
+        "bodyColumn": 81,
+        "bodyEndLine": 275,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:buildGovernedWriteRequest#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:buildGovernedWriteRequest#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role binds the intent to matching authorization and approval evidence, then freezes the validated request; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 276,
+        "column": 7,
+        "start": 10252,
+        "end": 11855,
+        "bodyLine": 280,
+        "bodyColumn": 24,
+        "bodyEndLine": 307,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:freezeJsonValue#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:freezeJsonValue#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 7,
+      "baseline_coverage": 1,
+      "baseline_crap": 7,
+      "max_complexity": 7,
+      "max_crap": 7,
+      "rationale": "The current role recursively freezes object-valued JSON members while avoiding cycles; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 308,
+        "column": 7,
+        "start": 11863,
+        "end": 12361,
+        "bodyLine": 308,
+        "bodyColumn": 78,
+        "bodyEndLine": 320,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:computeGovernedWriteRequestDigest#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:computeGovernedWriteRequestDigest#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role computes the request digest after excluding the ingress token; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 321,
+        "column": 7,
+        "start": 12369,
+        "end": 12553,
+        "bodyLine": 321,
+        "bodyColumn": 87,
+        "bodyEndLine": 324,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:toAuthorizationReceipt#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:toAuthorizationReceipt#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The current role builds the authorization receipt only when the request has an operation hash; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 325,
+        "column": 7,
+        "start": 12561,
+        "end": 13311,
+        "bodyLine": 329,
+        "bodyColumn": 36,
+        "bodyEndLine": 347,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:toAuthorizationReceipt#0/binding:build/binding:build#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:toAuthorizationReceipt#0/binding:build/binding:build#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The current role constructs receipt fields from the request and issuance context; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 330,
+        "column": 16,
+        "start": 12730,
+        "end": 13230,
+        "bodyLine": 330,
+        "bodyColumn": 45,
+        "bodyEndLine": 345,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/contracts/public-ingress.ts#fn:toAuthorizationReceipt#0/closure:ArrayExpression:elements[0]#0",
+      "current_identity": "src/contracts/public-ingress.ts#fn:toAuthorizationReceipt#0/closure:ArrayExpression:elements[0]#0",
+      "file": "src/contracts/public-ingress.ts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The current role provides the undefined result for a request without an operation hash; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
+      "current_source_address": {
+        "line": 346,
+        "column": 10,
+        "start": 13242,
+        "end": 13257,
+        "bodyLine": 346,
+        "bodyColumn": 16,
+        "bodyEndLine": 346,
+        "bodyEndColumn": 25
+      }
     }
   ],
   "new_functions": [
@@ -23573,6 +25688,726 @@
         "bodyEndLine": 348,
         "bodyEndColumn": 1
       }
+    },
+    {
+      "identity": "bin/forward-review-proof.ts#fn:isRecord#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Current generic record type guard has no independently inventoried old role.",
+      "current_source_address": {
+        "line": 35,
+        "column": 0,
+        "start": 705,
+        "end": 855,
+        "bodyLine": 35,
+        "bodyColumn": 68,
+        "bodyEndLine": 37,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.ts#fn:reviewKind#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Current standalone kind extraction was inline in the old set gate; extracted helper is NEW under the parent-extraction rule.",
+      "current_source_address": {
+        "line": 65,
+        "column": 0,
+        "start": 1984,
+        "end": 2185,
+        "bodyLine": 65,
+        "bodyColumn": 43,
+        "bodyEndLine": 70,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.ts#fn:isReviewItem#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Current standalone evidence item shape/digest validation was inline in old set gate; extracted helper is NEW under parent-extraction rule.",
+      "current_source_address": {
+        "line": 72,
+        "column": 0,
+        "start": 2187,
+        "end": 2616,
+        "bodyLine": 72,
+        "bodyColumn": 57,
+        "bodyEndLine": 83,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.ts#fn:validReviewBinding#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Current validation helper factors checks previously inline in old set gate; independently inventoried extracted role is NEW.",
+      "current_source_address": {
+        "line": 85,
+        "column": 0,
+        "start": 2618,
+        "end": 3051,
+        "bodyLine": 90,
+        "bodyColumn": 11,
+        "bodyEndLine": 100,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.ts#fn:validReviewAttribution#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Current validation helper factors checks previously inline in old set gate; independently inventoried extracted role is NEW.",
+      "current_source_address": {
+        "line": 102,
+        "column": 0,
+        "start": 3053,
+        "end": 3380,
+        "bodyLine": 102,
+        "bodyColumn": 74,
+        "bodyEndLine": 111,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.ts#fn:validReview#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Current validation helper factors checks previously inline in old set gate; independently inventoried extracted role is NEW.",
+      "current_source_address": {
+        "line": 113,
+        "column": 0,
+        "start": 3382,
+        "end": 3843,
+        "bodyLine": 113,
+        "bodyColumn": 114,
+        "bodyEndLine": 130,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.ts#fn:validReverse#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Current validation helper factors checks previously inline in old set gate; independently inventoried extracted role is NEW.",
+      "current_source_address": {
+        "line": 132,
+        "column": 0,
+        "start": 3845,
+        "end": 4578,
+        "bodyLine": 138,
+        "bodyColumn": 11,
+        "bodyEndLine": 159,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:assertReleasedClaim#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This current assertion helper extracts released claim, release provenance or history checks that b549951 performed inline inside resumePausedLocalWork; it has no old independent function boundary. Classified NEW for lineage; no baseline allowance is inherited.",
+      "current_source_address": {
+        "line": 15,
+        "column": 0,
+        "start": 797,
+        "end": 1247,
+        "bodyLine": 15,
+        "bodyColumn": 81,
+        "bodyEndLine": 25,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:assertOwnerRelease#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This current assertion helper extracts released claim, release provenance or history checks that b549951 performed inline inside resumePausedLocalWork; it has no old independent function boundary. Classified NEW for lineage; no baseline allowance is inherited.",
+      "current_source_address": {
+        "line": 26,
+        "column": 0,
+        "start": 1248,
+        "end": 1669,
+        "bodyLine": 26,
+        "bodyColumn": 85,
+        "bodyEndLine": 35,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:assertReleaseHistory#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This current assertion helper extracts released claim, release provenance or history checks that b549951 performed inline inside resumePausedLocalWork; it has no old independent function boundary. Classified NEW for lineage; no baseline allowance is inherited.",
+      "current_source_address": {
+        "line": 36,
+        "column": 0,
+        "start": 1670,
+        "end": 2665,
+        "bodyLine": 36,
+        "bodyColumn": 115,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:assertReleaseHistory#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This closure belongs to the extracted selectPausedLocalOwner helper; its behavior was inline under b549951 resumePausedLocalWork and is not a retained closure allowance. Classified NEW for lineage; no baseline allowance is inherited.",
+      "current_source_address": {
+        "line": 50,
+        "column": 29,
+        "start": 2192,
+        "end": 2279,
+        "bodyLine": 50,
+        "bodyColumn": 44,
+        "bodyEndLine": 50,
+        "bodyEndColumn": 116
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:assertReleaseHistory#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This closure belongs to the extracted selectPausedLocalOwner helper; its behavior was inline under b549951 resumePausedLocalWork and is not a retained closure allowance. Classified NEW for lineage; no baseline allowance is inherited.",
+      "current_source_address": {
+        "line": 52,
+        "column": 27,
+        "start": 2331,
+        "end": 2378,
+        "bodyLine": 52,
+        "bodyColumn": 38,
+        "bodyEndLine": 52,
+        "bodyEndColumn": 74
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:assertReleaseHistory#0/closure:CallExpression:arguments[0]#2",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This closure belongs to the extracted selectPausedLocalOwner helper; its behavior was inline under b549951 resumePausedLocalWork and is not a retained closure allowance. Classified NEW for lineage; no baseline allowance is inherited.",
+      "current_source_address": {
+        "line": 54,
+        "column": 8,
+        "start": 2435,
+        "end": 2601,
+        "bodyLine": 55,
+        "bodyColumn": 10,
+        "bodyEndLine": 56,
+        "bodyEndColumn": 97
+      }
+    },
+    {
+      "identity": "src/orchestration/resume-paused-local-work.ts#fn:selectPausedLocalOwner#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This current helper selects the released ticket, release event, claim and contenders that b549951 checked inline inside resumePausedLocalWork; no independently tracked old function exists for this extracted callable boundary. Classified NEW for lineage; no baseline allowance is inherited.",
+      "current_source_address": {
+        "line": 63,
+        "column": 7,
+        "start": 2770,
+        "end": 4660,
+        "bodyLine": 69,
+        "bodyColumn": 2,
+        "bodyEndLine": 110,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:committedTransitionJournalVersion#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This new helper validates and retrieves the journal version from a committed recovery receipt; old transition code has no such standalone operation.",
+      "current_source_address": {
+        "line": 35,
+        "column": 0,
+        "start": 1923,
+        "end": 2461,
+        "bodyLine": 38,
+        "bodyColumn": 47,
+        "bodyEndLine": 43,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:transitionOptions#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This packages CLI option parsing and validation in its own current callable; the old transition entrypoint contained that logic inline, which is not an old independent function.",
+      "current_source_address": {
+        "line": 102,
+        "column": 0,
+        "start": 4543,
+        "end": 5520,
+        "bodyLine": 102,
+        "bodyColumn": 71,
+        "bodyEndLine": 119,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:transitionProjectIds#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This is a new typed project-id validator separated from the transition entrypoint; old source has no standalone callable for it.",
+      "current_source_address": {
+        "line": 122,
+        "column": 0,
+        "start": 5581,
+        "end": 5731,
+        "bodyLine": 122,
+        "bodyColumn": 65,
+        "bodyEndLine": 124,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:transitionProjectIds#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This callback is an inline element-type predicate nested in the new project-id validator; old source performs no equivalent standalone validation callback.",
+      "current_source_address": {
+        "line": 123,
+        "column": 45,
+        "start": 5693,
+        "end": 5727,
+        "bodyLine": 123,
+        "bodyColumn": 55,
+        "bodyEndLine": 123,
+        "bodyEndColumn": 79
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:transitionIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This is a new exact-shape WorkIdentity parser, separate from the old entrypoint’s inline identity checks.",
+      "current_source_address": {
+        "line": 127,
+        "column": 0,
+        "start": 5787,
+        "end": 6453,
+        "bodyLine": 127,
+        "bodyColumn": 58,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:transitionStringFields#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This new generic required-string-field predicate has no independent old callable counterpart.",
+      "current_source_address": {
+        "line": 147,
+        "column": 0,
+        "start": 6617,
+        "end": 6845,
+        "bodyLine": 150,
+        "bodyColumn": 56,
+        "bodyEndLine": 152,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:transitionStringFields#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This callback is an inline required-key predicate nested in the new string-field validator; no old independent callable corresponds.",
+      "current_source_address": {
+        "line": 151,
+        "column": 20,
+        "start": 6802,
+        "end": 6841,
+        "bodyLine": 151,
+        "bodyColumn": 29,
+        "bodyEndLine": 151,
+        "bodyEndColumn": 59
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:transitionInput#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This parses the current versioned transition request into a typed input; old source performed its request validation inline rather than through an independent parser.",
+      "current_source_address": {
+        "line": 155,
+        "column": 0,
+        "start": 6932,
+        "end": 8573,
+        "bodyLine": 155,
+        "bodyColumn": 79,
+        "bodyEndLine": 205,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/transition-failed-prewriter.ts#fn:isConfiguredFrontierReceipt#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This new receipt discriminator centralizes configured-frontier checks; old source contains no standalone callable with this role.",
+      "current_source_address": {
+        "line": 208,
+        "column": 0,
+        "start": 8687,
+        "end": 9008,
+        "bodyLine": 210,
+        "bodyColumn": 40,
+        "bodyEndLine": 217,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:compareText#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This provides a dedicated comparator for deterministic option-key ordering; the previous command performed key ordering inline.",
+      "current_source_address": {
+        "line": 45,
+        "column": 0,
+        "start": 2233,
+        "end": 2345,
+        "bodyLine": 45,
+        "bodyColumn": 58,
+        "bodyEndLine": 47,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:isWorkIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This validates the exact typed WorkIdentity shape as a new independent predicate; the old recovery entrypoint did not define this callable.",
+      "current_source_address": {
+        "line": 48,
+        "column": 0,
+        "start": 2346,
+        "end": 2789,
+        "bodyLine": 48,
+        "bodyColumn": 63,
+        "bodyEndLine": 58,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:isWorkIdentity#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This callback is an inline element-type predicate nested in the new WorkIdentity validator; old source has no independent counterpart.",
+      "current_source_address": {
+        "line": 54,
+        "column": 28,
+        "start": 2644,
+        "end": 2687,
+        "bodyLine": 54,
+        "bodyColumn": 47,
+        "bodyEndLine": 54,
+        "bodyEndColumn": 71
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:isStateVersion#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This validates typed state-version records for recovery request parsing; old recovery had no independent state-version validator.",
+      "current_source_address": {
+        "line": 59,
+        "column": 0,
+        "start": 2790,
+        "end": 3065,
+        "bodyLine": 59,
+        "bodyColumn": 63,
+        "bodyEndLine": 67,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:hasRecoveryEnvelopeShape#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This adds a dedicated exact-key envelope shape check for the current inspect/apply request variants.",
+      "current_source_address": {
+        "line": 68,
+        "column": 0,
+        "start": 3066,
+        "end": 3238,
+        "bodyLine": 68,
+        "bodyColumn": 106,
+        "bodyEndLine": 70,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:hasRecoveryBaseFields#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This validates the shared typed recovery request fields as an extracted callable absent from old source.",
+      "current_source_address": {
+        "line": 71,
+        "column": 0,
+        "start": 3239,
+        "end": 3690,
+        "bodyLine": 71,
+        "bodyColumn": 112,
+        "bodyEndLine": 81,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:hasRecoveryApplyVersions#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This validates the apply-only expected version fields as a new independent callable.",
+      "current_source_address": {
+        "line": 86,
+        "column": 0,
+        "start": 3835,
+        "end": 4219,
+        "bodyLine": 86,
+        "bodyColumn": 116,
+        "bodyEndLine": 94,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:parseRecoveryRequest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This parses distinct typed inspect/apply request forms as a new independent callable; prior code validated a single input inline.",
+      "current_source_address": {
+        "line": 95,
+        "column": 0,
+        "start": 4220,
+        "end": 5264,
+        "bodyLine": 95,
+        "bodyColumn": 90,
+        "bodyEndLine": 120,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:retainedSourceApproval#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This extracts retained human Source approval lookup and validation into a standalone helper; old code kept that behavior inline in verifyCurrent.",
+      "current_source_address": {
+        "line": 121,
+        "column": 0,
+        "start": 5265,
+        "end": 5816,
+        "bodyLine": 121,
+        "bodyColumn": 66,
+        "bodyEndLine": 134,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/recover-failed-prewriter-owner.ts#fn:recoveryRequestEnvelope#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This new helper removes the mode discriminator to construct the persisted request envelope.",
+      "current_source_address": {
+        "line": 135,
+        "column": 0,
+        "start": 5817,
+        "end": 5976,
+        "bodyLine": 135,
+        "bodyColumn": 89,
+        "bodyEndLine": 138,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#binding:scopeOptionsByName/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New callback indexes cliCommandContracts.scope options; baseline scope.mjs validates against an inline option-name array and has no option-map callback.",
+      "current_source_address": {
+        "line": 15,
+        "column": 73,
+        "start": 478,
+        "end": 511,
+        "bodyLine": 15,
+        "bodyColumn": 85,
+        "bodyEndLine": 15,
+        "bodyEndColumn": 106
+      }
+    },
+    {
+      "identity": "bin/scope.ts#binding:scopeRepeatedValues/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New callbacks derive repeatable option names from the shared command contract; baseline scope.mjs appends values through direct branches.",
+      "current_source_address": {
+        "line": 17,
+        "column": 43,
+        "start": 595,
+        "end": 624,
+        "bodyLine": 17,
+        "bodyColumn": 55,
+        "bodyEndLine": 17,
+        "bodyEndColumn": 72
+      }
+    },
+    {
+      "identity": "bin/scope.ts#binding:scopeRepeatedValues/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New callbacks derive repeatable option names from the shared command contract; baseline scope.mjs appends values through direct branches.",
+      "current_source_address": {
+        "line": 17,
+        "column": 78,
+        "start": 630,
+        "end": 653,
+        "bodyLine": 17,
+        "bodyColumn": 90,
+        "bodyEndLine": 17,
+        "bodyEndColumn": 101
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:recordScopeOption#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Factors scalar option assignment and duplicate rejection out of the prior inline argument loop; no independently declared baseline role exists.",
+      "current_source_address": {
+        "line": 21,
+        "column": 0,
+        "start": 713,
+        "end": 987,
+        "bodyLine": 21,
+        "bodyColumn": 79,
+        "bodyEndLine": 25,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:appendRepeatedScopeValue#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Factors repeated option insertion out of the prior inline argument loop; baseline has only inline project/path branches.",
+      "current_source_address": {
+        "line": 27,
+        "column": 0,
+        "start": 989,
+        "end": 1207,
+        "bodyLine": 27,
+        "bodyColumn": 101,
+        "bodyEndLine": 31,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:assertRequiredScopeArguments#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Adds a contract-driven required-option check; baseline scope.mjs did not iterate option descriptors or enforce a separate required set.",
+      "current_source_address": {
+        "line": 33,
+        "column": 0,
+        "start": 1209,
+        "end": 1515,
+        "bodyLine": 33,
+        "bodyColumn": 101,
+        "bodyEndLine": 38,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:parseScopeArguments#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Extracts parsing into a separately declared role and adds arity/required checks; baseline parsing is inline within inspectScope.",
+      "current_source_address": {
+        "line": 40,
+        "column": 0,
+        "start": 1517,
+        "end": 2305,
+        "bodyLine": 40,
+        "bodyColumn": 70,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:requireScopeRoot#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Extracts absolute-root validation and resolution from inspectScope; baseline performs those statements inline.",
+      "current_source_address": {
+        "line": 59,
+        "column": 0,
+        "start": 2307,
+        "end": 2522,
+        "bodyLine": 59,
+        "bodyColumn": 60,
+        "bodyEndLine": 62,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:loadScopeDependencies#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Isolates dynamic dependency imports from inspectScope; baseline imports them inline in the retained inspectScope body.",
+      "current_source_address": {
+        "line": 64,
+        "column": 0,
+        "start": 2524,
+        "end": 3196,
+        "bodyLine": 64,
+        "bodyColumn": 39,
+        "bodyEndLine": 78,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:assertProjectPaths#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Extracts selected-project path authorization from inspectScope; baseline contains the loop inline. The nested predicate callback is likewise part of this extracted helper.",
+      "current_source_address": {
+        "line": 80,
+        "column": 0,
+        "start": 3198,
+        "end": 3636,
+        "bodyLine": 85,
+        "bodyColumn": 2,
+        "bodyEndLine": 90,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:assertRepositoryPaths#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Extracts repository-path membership validation from inspectScope; baseline contains the loop inline.",
+      "current_source_address": {
+        "line": 92,
+        "column": 0,
+        "start": 3638,
+        "end": 4057,
+        "bodyLine": 96,
+        "bodyColumn": 2,
+        "bodyEndLine": 101,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/scope.ts#fn:uniqueScopePaths#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Extracts path concatenation, platform folding, and duplicate detection from inspectScope; baseline performs these operations inline. The moved fold callback had its own baseline identity under inspectScope and is referenced as that transferred old role.",
+      "current_source_address": {
+        "line": 103,
+        "column": 0,
+        "start": 4059,
+        "end": 4419,
+        "bodyLine": 103,
+        "bodyColumn": 95,
+        "bodyEndLine": 108,
+        "bodyEndColumn": 1
+      }
     }
   ],
   "removed_functions": [
@@ -23608,7 +26443,16 @@
     ".tmp/tooling-research/typed-correction-v179/lineage-upgrade-storage-v765.json",
     ".tmp/tooling-research/typed-correction-v179/lineage-current-rows-v767.json",
     ".tmp/tooling-research/typed-correction-v179/lineage-bindings-v767.json",
-    ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v767.md"
+    ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v767.md",
+    ".tmp/tooling-research/typed-correction-v179/lineage-cli-foundations-root-corrected-v777.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-session-inspection-root-corrected-v777.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-repair-routes-root-corrected-v777.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-project-routes-root-corrected-v777.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-continuation-binding-root-corrected-v777.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-repair-ingress-root-corrected-v777.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-current-rows-v776.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-bindings-v776.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v777.md"
   ],
   "current_source_commit": "f8d1925",
   "scope_review_v746": {
@@ -23620,5 +26464,11 @@
     "review": "Six blind bounded proposals, three independent semantic reviews, Root own-counter correction, and independent v767139-role join review approve the selected partition, unchanged prior rows, exact genuine retained caps, prospective NEW10/10 and source addresses/bindings. Three read-only-dispatch roles deferred for CC3>frozen2. Global lineage remains incomplete. Parent commit f8d1925; explicit documentation-clear source binding governs the staged reporter bytes.",
     "input": ".tmp/tooling-research/typed-correction-v179/root-reviewed-small-lineage-v767.json",
     "independent_review": ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v767.md"
+  },
+  "scope_review_v777": {
+    "status": "REVIEWED_SELECTED_SOURCE_LINEAGE_NON_EXECUTABLE",
+    "review": "Six blind proposals, three independent semantic reviews and Root exact-callback corrections. Source bindings govern staged inspector bytes over parent f57163a. Global correspondence and quality remain incomplete.",
+    "input": ".tmp/tooling-research/typed-correction-v179/root-reviewed-small-lineage-v777.json",
+    "independent_review": ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v777.md"
   }
 }

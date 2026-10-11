@@ -81,6 +81,16 @@ test('readonly local inspection validates decoded rows and retains uncertain jou
       workId: 'fixture-inspection',
       attempt: 1,
     };
+    expect(inspectLocalSession(input)).toMatchObject({
+      status: 'inspected',
+      recovery_required: false,
+      pending_actions: [],
+      journal_version: null,
+      work_version: null,
+      ledger_version: null,
+    });
+    expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual([]);
+    expect(database.query('SELECT * FROM agent_host_state').all()).toEqual([]);
     const state = {
       schema: 'MastraSessionLedger/v1',
       workspace_id: workspaceId,

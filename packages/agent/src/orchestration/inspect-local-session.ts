@@ -108,6 +108,8 @@ export function inspectLocalSession(input: {
             !Array.isArray(journalState.items))
         )
           throw new Error('local session inspection: journal identity is invalid');
+        // The unchanged identity guard above admits only a plain record or an absent journal.
+        const inspectedJournal = journalState as Record<string, unknown> | null;
         if (
           work &&
           (!validWork(workState) ||
@@ -122,23 +124,23 @@ export function inspectLocalSession(input: {
         if (ledgerState && (ledgerState.workspace_id !== workspaceId || ledgerState.revision !== ledger!.revision))
           throw new Error('local session inspection: coordination ledger is invalid');
         const inspectedWork = work ? (workState as WorkState) : null;
-        if (inspectedWork && journal && isPlainRecord(journalState)) {
-          if (journalState.corrective_execution != null) {
-            if (typeof journalState.run_id !== 'string')
+        if (inspectedWork && inspectedJournal) {
+          if (inspectedJournal.corrective_execution != null) {
+            if (typeof inspectedJournal.run_id !== 'string')
               throw new Error('local session inspection: work and journal run differ');
             validateWorkSessionBinding(
               inspectedWork,
               {
                 attempt: input.attempt,
-                run_id: journalState.run_id,
-                corrective_execution: correctiveExecutionSchema.parse(journalState.corrective_execution),
+                run_id: inspectedJournal.run_id,
+                corrective_execution: correctiveExecutionSchema.parse(inspectedJournal.corrective_execution),
               },
               input.repositoryRoot,
             );
-          } else if (journalState.run_id !== inspectedWork.execution.run_id)
+          } else if (inspectedJournal.run_id !== inspectedWork.execution.run_id)
             throw new Error('local session inspection: work and journal run differ');
         }
-        const items = journal && isPlainRecord(journalState) ? journalItems(journalState.items) : [];
+        const items = inspectedJournal ? journalItems(inspectedJournal.items) : [];
         const lease = inspectedWork?.lease ?? null;
         const ticket = ledgerState?.tickets.find((entry) => entry.ticket_id === lease?.ticket_id);
         if (
@@ -154,14 +156,13 @@ export function inspectLocalSession(input: {
         )
           throw new Error('local session inspection: work lease ticket is stale or foreign');
         const expired = !ticket?.expires_at || Date.parse(ticket.expires_at) <= Date.now();
-        const pending =
-          items
-            .filter((item) => item.issue_id !== null && item.observation === null)
-            .map((item) => ({
-              action_id: item.request.action_id,
-              issue_id: item.issue_id,
-              stage_id: item.request.stage_id,
-            })) ?? [];
+        const pending = items
+          .filter((item) => item.issue_id !== null && item.observation === null)
+          .map((item) => ({
+            action_id: item.request.action_id,
+            issue_id: item.issue_id,
+            stage_id: item.request.stage_id,
+          }));
         return {
           schema: 'VidaLocalSessionInspection/v1',
           status: 'inspected',

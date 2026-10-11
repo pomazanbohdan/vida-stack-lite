@@ -6060,3 +6060,79 @@ UNKNOWN, mutation is not measured, exhaustive frozen lineage remains OPEN.
 Partial1084roles57files stays non-executable. No new full numeric run, old-root
 access/replay, lock reclamation, build/install suite or native acceptance claim.
 Continue dependency-ready reviewed lineage and evidenced P0/P1 corrections.
+
+
+v774 publication: strict indexed checkpoint f57163a PASS without bypass, ordinary
+push origin/main succeeds, exact0/0 after fetch/push. Only unrelated root bun.lock
+is untracked. The custody packet is published; no full quality claim.
+
+### v775–v777 — bounded frozen correspondence and inspection simplification
+
+Root selects16small remaining Source files, binds236roles once, reuses15current
+v662 inventories and refreshes only changed inspect-local-session.ts. No stale
+test/link fields copied as current proof. Six blind Luna proposal groups, three
+independent semantic reviews and one final independent join review cover the
+selected roles. Root is sole maintained writer. Reports and source-bound rows
+live under typed-correction-v179/lineage-*-v775/v776/v777.
+
+Actual frozen excess: inspector transaction callback52>published50. The journal
+identity guard already rejects any present non-plain/foreign journal before
+projection. Root reuses its validated nullable record instead of two repeated
+isPlainRecord terms, and removes the unreachable nullish fallback after array
+filter/map. The original guard, all binding/lease/ledger checks, one deferred
+read transaction, cleanup and both deriveWorkspaceId calls remain. The latter
+rechecks physical root identity after opening the admitted DB; Root rejected
+removing it after causal advisor found the live lstat/realpath boundary. No new
+helper or syntax split; same8callable IDs, callbackCC49<=unchanged50. Only that
+file's Source inventory/hash is refreshed to v776.
+
+Focused actual readonly inspection completion PASS1/0FAIL13assertions2.63s,
+including added empty-row/no-write assertions plus existing malformed journal,
+Work and Ledger denials. inspect-simplification-v776.log is the receipt.
+Broader current public same-work validate completion is FAIL1/error1 at original
+60s parent bound,65assertion observations,61.60s whole command. Final issue-wave
+child is SIGTERM after427.043ms, not its30s child timeout; original private
+timing row records timed_out=false and retained /tmp/vida-absorption-cIgIKa.
+Bun logs killing one dangling child at the parent deadline. Preserve this
+UNKNOWN root and original receipts; no retries, new-ID replay or timeout raise.
+This is not a passing whole corrective flow or a confirmed mutant kill. Source
+inspection assertions before the interrupted issue-wave are partial observations
+only. Receipt:inspect-corrective-binding-v776.log, latest owned timing row at
+2026-10-11T22:01:23.238Z. Separate causal read-only audit uses this current
+receipt and supplied old timing log only, never old operational roots.
+
+Official current documentation researched: SQLite read transactions
+(https://www.sqlite.org/lang_transaction.html), ECMAScript map return contract
+(https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.map),
+Bun test parent-timeout child killing (https://bun.com/docs/test/writing-tests).
+Bun1.4.3 is available per official release, but current proof is pinned1.4.2;
+release improvements are not local qualification or a cure for this timeout.
+No package/runtime change is made from that availability fact.
+
+Root preserves original UNREVIEWED proposal receipts and fixes their exact
+callable ancestry in separately named root-corrected-v777 copies. Forward
+read's path-segment some callback retains its own published callback, not a
+fictional JSON-decoding role. Seven old independently inventoried selection
+callbacks move under selectPausedLocalOwner and retain only their own caps;
+its extracted parent stays NEW. Assignment-attempt callback keeps old#0; Root
+rejects an initial review suggestion old#2 after checking actual bodies and
+the seed: old#1/#2 are the two resource-every predicates. Reviewer corrects it.
+Empty proposal scope metadata is populated from its actual assigned roles.
+
+Mechanical draft initially FAIL on mistaken private input_receipts field name;
+Root reads the tracked schema keys and corrects the private join utility. No
+tracked artifact was written from that failure. Qualified join accounts for all
+236selected roles and defers7wholefiles92roles with cap excesses unchanged:
+module-directory-anchors, runtime-import-bindings, reconcile-readonly-dispatch,
+init, project-mapping-contract, repair-delivered-work-continuation, and Source
+read-only-dispatch-repair. Do not reclassify retained roles NEW or raise caps.
+Unmatched old apply/checkedRow/callback roles remain global movement/removal GAPs;
+no new removal claims are made.
+
+Final independent lineage-join-review-v777.md APPROVES selected non-executable
+partial join: +144roles9files (99retained45NEW), combined1228roles66files
+(980retained248NEW1removed). All1084previous rows/bindings/caps preserved, exact
+seed allowances copied, selected addresses/hashes bound. It is static lineage,
+not an exhaustive/default CRAP plan, dynamic CRAP value, test or Runtime proof.
+Final exact coverage, dynamic frozen CRAP, confirmedKilled mutation and both
+retained numerical/current corrective UNKNOWN reconciliations remain OPEN.
