@@ -17,6 +17,9 @@ import path from 'node:path';
 import { materializeResources, resourceDigest } from '../bin/standalone-resources.ts';
 import type { ResourceIndexEntry } from '../bin/standalone-resources.ts';
 
+// Keep these references before mock.module updates Bun's live ESM bindings.
+const originalFsExports = Object.freeze({ ...fs });
+
 function fixture() {
   const cache = mkdtempSync(path.join(tmpdir(), 'vida-resource-custody-'));
   const bytes = Buffer.from('captured resource bytes');
@@ -164,7 +167,7 @@ test('unknown stage identity and cleanup custody retains stages and locks', asyn
   let identityFailureRoot: string | undefined = identityFailure.cache;
   let cleanupFailureRoot: string | undefined;
   await mock.module('node:fs', () => ({
-    ...fs,
+    ...originalFsExports,
     lstatSync(file: Parameters<typeof fs.lstatSync>[0], options: Parameters<typeof fs.lstatSync>[1]) {
       if (
         identityFailureRoot &&
@@ -172,7 +175,7 @@ test('unknown stage identity and cleanup custody retains stages and locks', asyn
         path.basename(String(file)).startsWith('.pending-')
       )
         throw undefined;
-      return fs.lstatSync(file, options);
+      return originalFsExports.lstatSync(file, options);
     },
     rmSync(file: Parameters<typeof fs.rmSync>[0], options: Parameters<typeof fs.rmSync>[1]) {
       if (
@@ -181,41 +184,56 @@ test('unknown stage identity and cleanup custody retains stages and locks', asyn
         path.basename(String(file)).startsWith('.pending-')
       )
         throw null;
-      return fs.rmSync(file, options);
+      return originalFsExports.rmSync(file, options);
     },
   }));
   try {
-    const isolated = (await import(
-      '../bin/standalone-resources.ts?identity-inspection-' + randomUUID()
-    )) as typeof import('../bin/standalone-resources.ts');
-    assert.strictEqual(await rejectedValue(isolated.materializeResources(identityFailure)), undefined);
-    const stageName = readdirSync(identityFailure.cache).find((name) => name.startsWith('.pending-'));
-    assert.ok(stageName);
-    assert.ok(fs.lstatSync(path.join(identityFailure.cache, stageName)).isDirectory());
-    assert.equal(readdirSync(identityFailure.cache).filter((name) => name.endsWith('.lock')).length, 1);
-
-    identityFailureRoot = undefined;
-    const cleanupFailure = fixture();
-    cleanupFailureRoot = cleanupFailure.cache;
-    let materializationError: unknown;
     try {
-      await isolated.materializeResources({
-        ...cleanupFailure,
-        loadFiles: async () => {
-          throw undefined;
-        },
-      });
-    } catch (error) {
-      materializationError = error;
+      const isolated = (await import(
+        '../bin/standalone-resources.ts?identity-inspection-' + randomUUID()
+      )) as typeof import('../bin/standalone-resources.ts');
+      assert.strictEqual(await rejectedValue(isolated.materializeResources(identityFailure)), undefined);
+      const stageName = readdirSync(identityFailure.cache).find((name) => name.startsWith('.pending-'));
+      assert.ok(stageName);
+      assert.ok(fs.lstatSync(path.join(identityFailure.cache, stageName)).isDirectory());
+      assert.equal(readdirSync(identityFailure.cache).filter((name) => name.endsWith('.lock')).length, 1);
+
+      identityFailureRoot = undefined;
+      const cleanupFailure = fixture();
+      cleanupFailureRoot = cleanupFailure.cache;
+      let materializationError: unknown;
+      try {
+        await isolated.materializeResources({
+          ...cleanupFailure,
+          loadFiles: async () => {
+            throw undefined;
+          },
+        });
+      } catch (error) {
+        materializationError = error;
+      }
+      assert.ok(materializationError instanceof AggregateError);
+      assert.deepEqual(materializationError.errors, [undefined, null]);
+      assert.equal(readdirSync(cleanupFailure.cache).filter((name) => name.startsWith('.pending-')).length, 1);
+      assert.equal(readdirSync(cleanupFailure.cache).filter((name) => name.endsWith('.lock')).length, 1);
+      cleanupFailureRoot = undefined;
+      originalFsExports.rmSync(cleanupFailure.cache, { recursive: true, force: true });
+    } finally {
+      try {
+        await mock.module('node:fs', () => originalFsExports);
+      } finally {
+        mock.restore();
+      }
     }
-    assert.ok(materializationError instanceof AggregateError);
-    assert.deepEqual(materializationError.errors, [undefined, null]);
-    assert.equal(readdirSync(cleanupFailure.cache).filter((name) => name.startsWith('.pending-')).length, 1);
-    assert.equal(readdirSync(cleanupFailure.cache).filter((name) => name.endsWith('.lock')).length, 1);
-    cleanupFailureRoot = undefined;
-    fs.rmSync(cleanupFailure.cache, { recursive: true, force: true });
+
+    const restoredFs = await import('node:fs');
+    assert.strictEqual(restoredFs.lstatSync, originalFsExports.lstatSync);
+    assert.strictEqual(restoredFs.rmSync, originalFsExports.rmSync);
+    assert.strictEqual(restoredFs.readFileSync, originalFsExports.readFileSync);
+    const probe = path.join(identityFailure.cache, 'restored-fs-probe.txt');
+    originalFsExports.writeFileSync(probe, 'original filesystem export');
+    assert.equal(restoredFs.readFileSync(probe, 'utf8'), 'original filesystem export');
   } finally {
-    mock.restore();
-    fs.rmSync(identityFailure.cache, { recursive: true, force: true });
+    originalFsExports.rmSync(identityFailure.cache, { recursive: true, force: true });
   }
 });

@@ -312,10 +312,15 @@ const defaultEvaluation: EvaluationResult = {
 };
 
 const actualMastraWorkflows = await import('@mastra/core/workflows');
-const realCreateWorkflow = actualMastraWorkflows.createWorkflow;
+const originalMastraWorkflowExports = { ...actualMastraWorkflows };
+const realCreateWorkflow = originalMastraWorkflowExports.createWorkflow;
+let configuredWorkflowTestDoublesActive = false;
 await mock.module('@mastra/core/workflows', () => ({
-  ...actualMastraWorkflows,
-  createWorkflow: (...args: Parameters<typeof actualMastraWorkflows.createWorkflow>) => {
+  ...originalMastraWorkflowExports,
+  createWorkflow: (...args: Parameters<typeof realCreateWorkflow>) => {
+    if (!configuredWorkflowTestDoublesActive) {
+      return realCreateWorkflow(...args);
+    }
     const workflow = realCreateWorkflow(...args);
     const createRun = workflow.createRun.bind(workflow);
     Object.defineProperty(workflow, 'createRun', {
@@ -340,16 +345,39 @@ await mock.module('@mastra/core/workflows', () => ({
 }));
 
 const actualGovernanceBoundary = await import('../src/governance/edictum-boundary.ts');
+const originalGovernanceBoundaryExports = { ...actualGovernanceBoundary };
 await mock.module('../src/governance/edictum-boundary.ts', () => ({
-  ...actualGovernanceBoundary,
-  createFileOperationReservationStore: async () => ({}),
-  createCompositionRootControlKernel: () => ({}),
-  createGovernanceGuard: () => ({
-    evaluate: (tool: string, args: Record<string, unknown>) =>
-      governanceFault.evaluate?.(tool, args) ?? Promise.resolve({ ...defaultEvaluation, toolName: tool }),
-    rejectPreparation: (error: Error): Promise<never> => Promise.reject(error),
-  }),
-  createFileWorkflowHostCapabilityWithProof: async () => ({}),
+  ...originalGovernanceBoundaryExports,
+  createFileOperationReservationStore: (
+    ...args: Parameters<typeof originalGovernanceBoundaryExports.createFileOperationReservationStore>
+  ) => {
+    return configuredWorkflowTestDoublesActive
+      ? Promise.resolve({})
+      : originalGovernanceBoundaryExports.createFileOperationReservationStore(...args);
+  },
+  createCompositionRootControlKernel: (
+    ...args: Parameters<typeof originalGovernanceBoundaryExports.createCompositionRootControlKernel>
+  ) => {
+    return configuredWorkflowTestDoublesActive
+      ? {}
+      : originalGovernanceBoundaryExports.createCompositionRootControlKernel(...args);
+  },
+  createGovernanceGuard: (...args: Parameters<typeof originalGovernanceBoundaryExports.createGovernanceGuard>) => {
+    return configuredWorkflowTestDoublesActive
+      ? {
+          evaluate: (tool: string, args: Record<string, unknown>) =>
+            governanceFault.evaluate?.(tool, args) ?? Promise.resolve({ ...defaultEvaluation, toolName: tool }),
+          rejectPreparation: (error: Error): Promise<never> => Promise.reject(error),
+        }
+      : originalGovernanceBoundaryExports.createGovernanceGuard(...args);
+  },
+  createFileWorkflowHostCapabilityWithProof: (
+    ...args: Parameters<typeof originalGovernanceBoundaryExports.createFileWorkflowHostCapabilityWithProof>
+  ) => {
+    return configuredWorkflowTestDoublesActive
+      ? Promise.resolve({})
+      : originalGovernanceBoundaryExports.createFileWorkflowHostCapabilityWithProof(...args);
+  },
 }));
 
 const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
@@ -392,76 +420,83 @@ function fixtureIntegrationsDigest() {
 }
 
 beforeEach(async () => {
-  engineFault.rejection = null;
-  engineFault.pending = [];
-  governanceFault.evaluate = null;
-  root = await mkdtemp(path.join(tmpdir(), 'configured-workflow-unit-'));
-  await mkdir(path.join(root, 'runtime'), { recursive: true });
-  await mkdir(path.join(root, 'docs'), { recursive: true });
-  const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
-  await mkdir(path.join(root, 'docs/agent-instructions'), { recursive: true });
-  await writeFile(
-    path.join(root, policyPath),
-    `${JSON.stringify(
-      {
-        schema: 'DocumentationPolicy/v1',
-        policy_id: 'configured-workflow-fixture',
-        project_id: 'example-project',
-        source_path: policyPath,
-        owner: 'workflow-test',
-        required: false,
-        canonical_roots: ['docs'],
-        map_paths: ['AGENT.sidecar.md'],
-        excluded_roots: [],
-        changelog_required: false,
-        changelog_path: null,
-        relations: ['documents'],
-        updated_at: '2026-09-28T00:00:00.000Z',
-      },
-      null,
-      2,
-    )}\n`,
-  );
-  createInitializationBundle(bundle, root, ['schemas', 'instructions', 'TESTING.md'], 'runtime');
-  yaml = (await readFile(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
-    .replaceAll('{{BUNDLE}}', 'runtime')
-    .replaceAll('{{REPOSITORY}}', 'example-repository')
-    .replaceAll('{{PROJECT}}', 'example-project');
-  await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), yaml);
-  await writeFile(path.join(root, 'AGENTS.md'), '# Generic test entry\n');
-  await writeFile(path.join(root, 'AGENT.sidecar.md'), '# Isolated project fixture\n');
-  config = loadRuntimeConfig(root);
-  fixtureProjectIntegrationsDigest = loadProjectSetContext(
-    root,
-    config,
-    config.repository.repository_id,
-    [...config.projects.map((entry) => entry.project_id)].sort(),
-  ).integrations_digest;
-  calls = [];
-  resolverCalls = 0;
-  workItem = {
-    schema: 'WorkItem/v1',
-    id: 'fixture-work',
-    provider: 'internal',
-    provider_type: 'Research',
-    canonical_kind: 'research',
-    intent: 'information_research',
-    project_id: 'example-project',
-    title: 'Research fixture',
-    description: '',
-    labels: [],
-    risk_flags: [],
-  };
-  contextState = {
-    checkpointRevision: 1,
-    checkpointDigest: 'c'.repeat(64),
-    runtimeRevision: 1,
-    ledgerRevision: 1,
-    expiresAt: new Date(Date.now() + 3600000).toISOString(),
-  };
+  configuredWorkflowTestDoublesActive = true;
+  try {
+    engineFault.rejection = null;
+    engineFault.pending = [];
+    governanceFault.evaluate = null;
+    root = await mkdtemp(path.join(tmpdir(), 'configured-workflow-unit-'));
+    await mkdir(path.join(root, 'runtime'), { recursive: true });
+    await mkdir(path.join(root, 'docs'), { recursive: true });
+    const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
+    await mkdir(path.join(root, 'docs/agent-instructions'), { recursive: true });
+    await writeFile(
+      path.join(root, policyPath),
+      `${JSON.stringify(
+        {
+          schema: 'DocumentationPolicy/v1',
+          policy_id: 'configured-workflow-fixture',
+          project_id: 'example-project',
+          source_path: policyPath,
+          owner: 'workflow-test',
+          required: false,
+          canonical_roots: ['docs'],
+          map_paths: ['AGENT.sidecar.md'],
+          excluded_roots: [],
+          changelog_required: false,
+          changelog_path: null,
+          relations: ['documents'],
+          updated_at: '2026-09-28T00:00:00.000Z',
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    createInitializationBundle(bundle, root, ['schemas', 'instructions', 'TESTING.md'], 'runtime');
+    yaml = (await readFile(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
+      .replaceAll('{{BUNDLE}}', 'runtime')
+      .replaceAll('{{REPOSITORY}}', 'example-repository')
+      .replaceAll('{{PROJECT}}', 'example-project');
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), yaml);
+    await writeFile(path.join(root, 'AGENTS.md'), '# Generic test entry\n');
+    await writeFile(path.join(root, 'AGENT.sidecar.md'), '# Isolated project fixture\n');
+    config = loadRuntimeConfig(root);
+    fixtureProjectIntegrationsDigest = loadProjectSetContext(
+      root,
+      config,
+      config.repository.repository_id,
+      [...config.projects.map((entry) => entry.project_id)].sort(),
+    ).integrations_digest;
+    calls = [];
+    resolverCalls = 0;
+    workItem = {
+      schema: 'WorkItem/v1',
+      id: 'fixture-work',
+      provider: 'internal',
+      provider_type: 'Research',
+      canonical_kind: 'research',
+      intent: 'information_research',
+      project_id: 'example-project',
+      title: 'Research fixture',
+      description: '',
+      labels: [],
+      risk_flags: [],
+    };
+    contextState = {
+      checkpointRevision: 1,
+      checkpointDigest: 'c'.repeat(64),
+      runtimeRevision: 1,
+      ledgerRevision: 1,
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+    };
+  } catch (error) {
+    configuredWorkflowTestDoublesActive = false;
+    throw error;
+  }
 });
 
 afterEach(async () => {
+  configuredWorkflowTestDoublesActive = false;
   if (root) await rm(root, { recursive: true, force: true });
 });
 

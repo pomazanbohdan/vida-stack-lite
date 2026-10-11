@@ -668,7 +668,7 @@ function makePrewriterHostFixture({
       ),
       priorResults: [],
     }),
-    synthesisIssueId = 'prewriter-synthesis-issue-' + workId,
+    synthesisIssueId = 'e04b9a12-6c3f-4e52-a18d-79c1f3b62480',
     initialJournal = {
       schema: 'MastraSessionLedger/v1',
       workspace_id: workspaceId,
@@ -2104,7 +2104,7 @@ test('configured inspect and admitted packet/result read current TaskSource byte
         }),
         priorResults: [],
       }),
-      synthesisIssueId = 'task-source-synthesis-issue',
+      synthesisIssueId = '7f83a148-7c1d-4f87-9d5e-2b51a1d6c901',
       synthesisSummary = 'Use only the validated TaskSource root for source reads.',
       synthesisObservation = {
         schema: 'VidaSessionObservation/v1',
@@ -2177,7 +2177,7 @@ test('configured inspect and admitted packet/result read current TaskSource byte
     const developerSummary = 'Wrote the admitted TaskSource file.',
       developerObservation = {
         schema: 'VidaSessionObservation/v1',
-        issue_id: 'task-source-developer-issue',
+        issue_id: '42a8cc63-3b7c-4a91-8e62-f07b5134d2a8',
         action_id: developerRequest.action_id,
         agent_id: 'fixture:task-source-developer',
         tool_call_ref: 'fixture:task-source-developer-call',
@@ -2481,11 +2481,13 @@ test('configured inspect and admitted packet/result read current TaskSource byte
   }
 });
 
-test('real Host reports attach the source plan and high-risk policy in either report order with exact retry', async () => {
-  for (const reportOrder of [
-    ['source-planner', 'security-prewriter'],
-    ['security-prewriter', 'source-planner'],
-  ]) {
+test.each([
+  ['source-planner', 'security-prewriter'],
+  ['security-prewriter', 'source-planner'],
+] as const)(
+  'real Host reports attach source plan and high-risk policy: %s then %s with exact retry',
+  async (firstRole, secondRole) => {
+    const reportOrder = [firstRole, secondRole];
     const fixture = makePrewriterHostFixture();
     try {
       let journal = fixture.ledger.resume(fixture.workId, 1);
@@ -2541,8 +2543,8 @@ test('real Host reports attach the source plan and high-risk policy in either re
     } finally {
       fixture.close();
     }
-  }
-});
+  },
+);
 
 test('low lifecycle risk still attaches security policy when the admitted packet has the high flag', async () => {
   const fixture = makePrewriterHostFixture({ lifecycleRisk: 'low', packetRiskFlags: ['high'] });

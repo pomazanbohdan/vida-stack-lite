@@ -5715,3 +5715,83 @@ row-budget assertion now1PASS/5assertions in2.70s. Receipt sqlite-proxy-green-v7
 No production SQLite/CAS/size guard change. Own coverage launcher/test PIDs were
 observed absent after UNKNOWN; this is not reconciliation of any spawned fixture
 operation. Run lock, snapshot and uncertain fixture custody remain untouched.
+
+
+### v752–v758 — scoped test optimization and causal repairs
+
+Root retained the v747 full-run UNKNOWN lock/snapshot without replay. Five blind
+Luna research/review scopes used current official Bun mock/parallel/timeout/SQLite,
+SQLite AUTOINCREMENT/file-format and Node24 stream/child-process documentation;
+references and bounded findings are in typed-correction-v179/*-v754-report.md,
+merge-sqlite-v754-review.md and mock-isolation-v754-review.md. A streaming runner
+proposal remains scratch-only: backpressure, bounded output and exact pinned Bun
+compatibility need qualified checks before application. No new suite, dependency,
+AST inventory, runtime installation or numeric acceptance was added.
+
+Root fixed two genuine existing-storage product defects: exact bigint sequence
+values now use the shared canonical integer encoding, and post-merge sequence
+ownership/equality uses the combined Host/Mastra table set in one target query.
+Unknown sequence owners, malformed integers, bounds, row multiplicity, BLOB,
+transaction and final integrity checks remain. Existing-merge unit RED6PASS2FAIL
+then current11PASS0FAIL16assertions/2.63s. Independent Source/test review found no
+blocker. Four new callable roles (two named helpers and two callbacks) need the
+same exhaustive lineage/budget process; this Source file is outside the unchanged
+945-role reviewed partial. No allowance was raised or executable plan fabricated.
+The new file joins ordinary membership exactly once; command-contract2PASS.
+
+Current test capture traverses the selected tests' literal runtime imports once,
+reuses captured Source/test bytes, caches Bun.Transpiler by loader and hashes each
+unique input once across the existing quality projections. Exact repository
+`tooling/agent/**` imports use reserved `_repository/tooling/agent/**` identities;
+imports back into packages reuse canonical Source identities. Sibling escapes,
+reserved namespace collisions and unknown declared modules deny. One shared
+fs-safe root-bounded descriptor reader admits regular single-link files, reads
+bounded bytes, rechecks descriptor identity/timestamps and retains read/close
+failures. Published-baseline selection is not expanded. External generated modules
+outside the checkout keep their prior live-loader boundary; this is not a claim
+of whole-filesystem frozen module admission. Final projection/validator20PASS,
+174assertions/2.51s after two preserved intermediate failures; independent review
+records the exact boundary. No accepted coverage/CRAP report is inferred.
+
+Configured workflow module doubles now call immutable saved originals outside
+serial fixture bodies; coupled no-isolate semantics7PASS37assertions/3.60s. The
+node:fs custody fixture explicitly restores its module override, since Bun's
+mock.restore does not do so: meaningful identity RED then entirefile4PASS/150ms,
+including intentional custody warning. Host report-order cases now have separate
+names and unchanged5000ms bounds, assertions and per-order fresh persistence.
+An initial split run had one timeout while another owned probe spun; the later
+uncontended targeted run2PASS19assertions/7.94s (cases3.43s/3.25s). Different run
+conditions do not establish quantified speedup. UUID fixtures now satisfy the
+existing v4-shaped contract. No authorization, CAS or UNKNOWN guard was weakened.
+
+Runtime mock fallback correction and historical synthesis fixture work remain
+uncommitted in the current working tree until their shared writer joins. The
+fallback previously used an updated ESM namespace recursively; its owned pure
+probe PID157856 spun and Root terminated only that process with SIGTERM, exit143.
+That receipt remains UNKNOWN, not assertion-confirmed Killed. Immutable original
+call capture then focused1PASS1assertion/1.90s. The historical fixture reproducer
+still fails before custody assertions because a synthesis action is treated as a
+native research report; Root keeps the Source research admission guard and fixes
+only test material construction. No old operational fixture was read/replayed.
+Current numeric coverage, dynamic CRAP and mutation score remain unavailable.
+
+
+v759–v760 completion delta: the first strict checkpoint rejected an overbroad
+Bun.Loader annotation (CSS is not a transpiler JavaScript loader); Root narrowed
+to the four documented actual JS/TS loaders. The second rejected unsafe generic
+arrayContaining and seven async matcher declaration warnings. Root uses typed
+membership assertions and the existing shared expectRejection helper, preserving
+actual awaited rejection before cleanup. Updated affectedfiles23PASS174assertions
+in5.53s; both rejected checkpoint logs remain. No suppression or hook bypass.
+
+The shared historical fixture now constructs activation-only synthesis material
+through the same foundation builder, with the correct plan/synthesizer activation
+before hashing. The caller branches before any research observation/result is
+built, preserves exact action/issue/current observation, and requires the pending
+synthesis action. Source admission remains unchanged. Causal RED0PASS1FAIL then
+selected2PASS18assertions/14.97s; direct representative callers4PASS62assertions/
+9.43s. Independent fixture/mock review found no blocker. The test-only native
+mock now throws on recursive fallback rather than spinning a shared worker; its
+immutable real callable and synchronous semantics remain. These are scoped
+regressions; final numeric coverage/CRAP/mutation and old UNKNOWN reconciliation
+remain OPEN. No real native Runtime or schema/loader cutover was attempted.

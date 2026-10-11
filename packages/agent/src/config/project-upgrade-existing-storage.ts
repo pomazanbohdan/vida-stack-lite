@@ -90,6 +90,11 @@ function requireMerge(ok: unknown, message: string): asserts ok {
   if (!ok) throw new Error('Existing storage merge: ' + message);
 }
 
+function canonicalIntegerValue(value: number | bigint): { integer_decimal: string } {
+  requireMerge(typeof value === 'bigint' || Number.isSafeInteger(value), 'SQLite integer is not safely representable');
+  return { integer_decimal: BigInt(value).toString() };
+}
+
 function digest(bytes: Uint8Array): string {
   return new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
 }
@@ -122,9 +127,13 @@ function tableNames(objects: readonly SchemaObject[]): string[] {
 function canonicalSqlValues(values: readonly SqlValue[]): unknown[] {
   return values.map((value) => {
     if (value instanceof Uint8Array) return { blob_base64: Buffer.from(value).toString('base64') };
-    if (typeof value === 'bigint') return { integer_decimal: value.toString() };
+    if (typeof value === 'bigint') return canonicalIntegerValue(value);
     return value;
   });
+}
+
+function canonicalSequenceRows(rows: readonly SequenceRow[]): unknown[] {
+  return rows.map(({ name, seq }) => ({ name, seq: canonicalIntegerValue(seq) }));
 }
 
 /** Stable logical closure, including exact BLOB bytes, integer values, and row multiplicity. */
@@ -340,13 +349,13 @@ function assertMergedRowsAndSchema(target: Database, inventory: ExistingMergeInv
     rowsDigest(target, inventory.mastraTables) === inventory.mastraRowsDigest,
     'Mastra logical rows differ after import',
   );
-  requireMerge(
-    canonicalJson(sequenceRows(target, inventory.hostTables)) === canonicalJson(inventory.hostSequences),
-    'Host ID sequences changed during merge',
+  const targetSequences = sequenceRows(target, [...inventory.hostTables, ...inventory.mastraTables]);
+  const expectedSequences = [...inventory.hostSequences, ...inventory.mastraSequences].sort((a, b) =>
+    a.name.localeCompare(b.name),
   );
   requireMerge(
-    canonicalJson(sequenceRows(target, inventory.mastraTables)) === canonicalJson(inventory.mastraSequences),
-    'Mastra ID sequences differ after import',
+    canonicalJson(canonicalSequenceRows(targetSequences)) === canonicalJson(canonicalSequenceRows(expectedSequences)),
+    'Host and Mastra ID sequences changed during merge',
   );
   requireMerge(integrityOk(target), 'integrity check failed');
   const finalSchema = schema(target);

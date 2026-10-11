@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   canonicalTestSelection,
+  capturedModuleAbsolutePath,
   coverageInputs,
   instrumentSource,
   isExternalModulePath,
@@ -328,6 +329,12 @@ function verifyLoadedInputs(
   manifest: DecodedManifest,
   report: DecodedReport,
 ) {
+  const actualModulePaths = new Set<string>();
+  for (const entry of current.module_inputs) {
+    const absolute = capturedModuleAbsolutePath(root, entry.path);
+    if (actualModulePaths.has(absolute)) throw new Error('Captured module paths alias the same runtime file.');
+    actualModulePaths.add(absolute);
+  }
   const sourcePaths = Object.keys(record(child.coverage, 'process coverage counters')).map((file) =>
     path.relative(root, path.resolve(file)).replaceAll('\\', '/'),
   );

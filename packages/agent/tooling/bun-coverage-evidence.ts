@@ -1,10 +1,11 @@
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { open, readdir, readFile } from 'node:fs/promises';
-import { constants as fsConstants } from 'node:fs';
+import { readdir, readFile } from 'node:fs/promises';
+import { closeSync, fstatSync } from 'node:fs';
 import type { Dirent } from 'node:fs';
 import path from 'node:path';
+import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
 import { instrumentSource as instrumentCapturedSource } from './source-instrumentation.ts';
 import { maintainedSourceInventory, selectMaintainedSourcePaths } from './maintained-source-inventory.ts';
 import type { PublishedFixtureIdentity } from './published-coverage-inputs.js';
@@ -73,6 +74,8 @@ type QualityInputCapture = {
   testSelection: TestSelection;
   contractInputs: string[];
   inputBytes: Map<string, Buffer>;
+  inputDigests: Map<string, InputDigest>;
+  runtimeToolPaths: string[];
   publishedContract?: PublishedContract;
 };
 const maxInputFileBytes = 4 * 1024 * 1024;
@@ -112,6 +115,63 @@ export const coverageToolInputs: string[] = [
 
 export const sha256 = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 export const canonicalJson = (value: unknown): string | undefined => JSON.stringify(value);
+export const repositoryToolingInputPrefix = '_repository/tooling/agent';
+
+export function repositoryRootForPackage(packageRoot: string): string | null {
+  const packageBase = path.resolve(packageRoot);
+  if (path.basename(packageBase) !== 'agent' || path.basename(path.dirname(packageBase)) !== 'packages') return null;
+  return path.resolve(packageBase, '../..');
+}
+
+export function canonicalCapturedModulePath(packageRoot: string, absolutePath: string): string | null {
+  const packageBase = path.resolve(packageRoot);
+  const target = path.resolve(absolutePath);
+  const packageRelative = path.relative(packageBase, target);
+  if (packageRelative.split(path.sep)[0] === '_repository') return null;
+  if (
+    packageRelative !== '' &&
+    packageRelative !== '..' &&
+    !packageRelative.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(packageRelative)
+  )
+    return packageRelative.split(path.sep).join('/');
+  const repositoryBase = repositoryRootForPackage(packageBase);
+  if (!repositoryBase) return null;
+  const repositoryRelative = path.relative(repositoryBase, target);
+  const repositoryToolingPrefix = `tooling${path.sep}agent${path.sep}`;
+  if (repositoryRelative.startsWith(repositoryToolingPrefix) && !path.isAbsolute(repositoryRelative))
+    return `${repositoryToolingInputPrefix}/${repositoryRelative.slice(repositoryToolingPrefix.length).split(path.sep).join('/')}`;
+  return null;
+}
+
+export function capturedModuleAbsolutePath(packageRoot: string, logicalPath: string): string {
+  if (
+    typeof logicalPath !== 'string' ||
+    logicalPath.length === 0 ||
+    logicalPath.includes('\\') ||
+    logicalPath.includes('\0') ||
+    path.posix.isAbsolute(logicalPath) ||
+    path.win32.parse(logicalPath).root !== '' ||
+    logicalPath.split('/').some((part) => part === '' || part === '.' || part === '..')
+  )
+    throw new Error(`Captured module path is malformed: ${String(logicalPath)}`);
+  if (
+    logicalPath === '_repository' ||
+    (logicalPath.startsWith('_repository/') && !logicalPath.startsWith(`${repositoryToolingInputPrefix}/`))
+  )
+    throw new Error(`Captured module path is outside admitted roots: ${logicalPath}`);
+  const packageBase = path.resolve(packageRoot);
+  const repositoryPrefix = `${repositoryToolingInputPrefix}/`;
+  if (logicalPath.startsWith(repositoryPrefix) && !repositoryRootForPackage(packageBase))
+    throw new Error(`Captured module path is outside admitted roots: ${logicalPath}`);
+  const absolute = logicalPath.startsWith(repositoryPrefix)
+    ? path.resolve(packageBase, '../..', 'tooling/agent', logicalPath.slice(repositoryPrefix.length))
+    : path.resolve(packageBase, ...logicalPath.split('/'));
+  if (canonicalCapturedModulePath(packageBase, absolute) !== logicalPath)
+    throw new Error(`Captured module path is outside admitted roots: ${logicalPath}`);
+  return absolute;
+}
+
 export function isExternalModulePath(value: unknown): boolean {
   if (typeof value !== 'string' || value.length === 0) return false;
   if (path.posix.isAbsolute(value) || path.win32.isAbsolute(value) || /[\\\0]/u.test(value)) return false;
@@ -433,30 +493,51 @@ async function walkFiles(root: string, directory: string, depth = 0): Promise<st
   return (await Promise.all(nested)).flat().sort();
 }
 
-async function readBoundedInput(absolute: string): Promise<Buffer> {
-  const noFollow = fsConstants.O_NOFOLLOW ?? 0;
-  const handle = await open(absolute, fsConstants.O_RDONLY | noFollow);
-  try {
-    const before = await handle.stat();
-    if (!before.isFile() || before.size > maxInputFileBytes)
-      throw new Error(`Coverage input file limit exceeded: ${absolute}`);
-    const chunks: Buffer[] = [];
-    let total = 0;
-    while (total <= maxInputFileBytes) {
-      const buffer = Buffer.allocUnsafe(Math.min(64 * 1024, maxInputFileBytes + 1 - total));
-      const { bytesRead } = await handle.read(buffer, 0, buffer.length, null);
-      if (bytesRead === 0) break;
-      total += bytesRead;
-      if (total > maxInputFileBytes) throw new Error(`Coverage input grew beyond its byte limit: ${absolute}`);
-      chunks.push(buffer.subarray(0, bytesRead));
-    }
-    const after = await handle.stat();
-    if (total !== before.size || after.size !== before.size || after.mtimeMs !== before.mtimeMs)
-      throw new Error(`Coverage input changed during bounded read: ${absolute}`);
-    return Buffer.concat(chunks, total);
-  } finally {
-    await handle.close();
+function readBoundedInput(absolute: string, boundaryRoot: string, label: string, allowMissing: boolean): Buffer | null {
+  const opened = openRootFileSync({
+    absolutePath: absolute,
+    rootPath: boundaryRoot,
+    boundaryLabel: label,
+    maxBytes: maxInputFileBytes,
+    rejectHardlinks: true,
+    rejectSymlinks: true,
+    allowedType: 'file',
+  });
+  if (!opened.ok) {
+    const code = (opened.error as NodeJS.ErrnoException | undefined)?.code;
+    if (allowMissing && opened.reason === 'path' && (code === 'ENOENT' || code === 'ENOTDIR')) return null;
+    throw new Error(`Coverage input rejected (${opened.reason}): ${absolute}`, { cause: opened.error });
   }
+  const failures: unknown[] = [];
+  let result: Buffer | undefined;
+  try {
+    const before = fstatSync(opened.fd, { bigint: true });
+    if (!before.isFile() || before.nlink !== 1n || before.size > BigInt(maxInputFileBytes))
+      throw new Error(`${label} file limit exceeded: ${absolute}`);
+    result = readFileDescriptorBoundedSync(opened.fd, maxInputFileBytes);
+    const after = fstatSync(opened.fd, { bigint: true });
+    if (
+      !after.isFile() ||
+      after.dev !== before.dev ||
+      after.ino !== before.ino ||
+      after.nlink !== before.nlink ||
+      after.size !== before.size ||
+      after.mtimeNs !== before.mtimeNs ||
+      after.ctimeNs !== before.ctimeNs ||
+      result.length !== Number(before.size)
+    )
+      throw new Error(`${label} changed during bounded read: ${absolute}`);
+  } catch (error) {
+    failures.push(error);
+  }
+  try {
+    closeSync(opened.fd);
+  } catch (error) {
+    failures.push(error);
+  }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1) throw new AggregateError(failures, `${label} read and close failed: ${absolute}`);
+  return result!;
 }
 
 function selectTestSelection(
@@ -509,12 +590,170 @@ async function readQualityInputs(root: string, files: string[]): Promise<Map<str
   const result = new Map<string, Buffer>();
   let total = 0;
   for (const file of files) {
-    const bytes = await readBoundedInput(path.join(root, file));
+    const bytes = readBoundedInput(
+      capturedModuleAbsolutePath(root, file),
+      capturedModuleBoundaryRoot(root, file),
+      'Coverage input',
+      false,
+    );
+    if (!bytes) throw new Error(`Coverage input is missing: ${file}`);
     total += bytes.byteLength;
     if (total > maxInputBytes) throw new Error('Coverage input aggregate byte limit exceeded.');
     result.set(file, bytes);
   }
   return result;
+}
+
+function capturedModuleBoundaryRoot(packageRoot: string, logicalPath: string): string {
+  return logicalPath.startsWith(`${repositoryToolingInputPrefix}/`) ? path.resolve(packageRoot, '../..') : packageRoot;
+}
+
+const runtimeSourceExtension = /\.(?:[cm]?js|jsx|[cm]?ts|tsx)$/u;
+const importResolutionExtensions = [
+  '.ts',
+  '.tsx',
+  '.mts',
+  '.cts',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.json',
+  '.txt',
+  '.yaml',
+  '.yml',
+  '.toml',
+  '.svg',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.wasm',
+  '.xml',
+  '.csv',
+  '.md',
+];
+const declaredRuntimeRoots = ['src', 'bin', 'tests', 'tooling'];
+const resourceRoots = ['schemas', 'templates', 'instructions'];
+
+function importScanLoader(file: string): 'ts' | 'tsx' | 'js' | 'jsx' {
+  const extension = path.extname(file);
+  return extension === '.tsx' ? 'tsx' : extension === '.jsx' ? 'jsx' : /^(?:\.[mc]?ts)$/u.test(extension) ? 'ts' : 'js';
+}
+
+function importScanSource(file: string): boolean {
+  return runtimeSourceExtension.test(file);
+}
+
+function importCandidates(packageRoot: string, importer: string, specifier: string): string[] {
+  if (!specifier || /[\\\0]/u.test(specifier) || path.posix.isAbsolute(specifier) || path.win32.isAbsolute(specifier))
+    throw new Error(`Unsupported local runtime import from ${importer}: ${specifier}`);
+  const importerPath = capturedModuleAbsolutePath(packageRoot, importer);
+  const resolvedAbsolute = path.resolve(path.dirname(importerPath), specifier);
+  const resolved = canonicalCapturedModulePath(packageRoot, resolvedAbsolute);
+  if (!resolved) throw new Error(`Local runtime import is outside admitted package roots: ${importer} -> ${specifier}`);
+  const root = resolved.split('/')[0] ?? '';
+  if (
+    !resolved.startsWith(`${repositoryToolingInputPrefix}/`) &&
+    ![...declaredRuntimeRoots, ...resourceRoots].includes(root)
+  )
+    throw new Error(`Local runtime import is outside admitted package roots: ${importer} -> ${specifier}`);
+  const extension = path.posix.extname(resolved);
+  const candidates = new Set<string>(extension ? [resolved] : []);
+  const sourceAliases: Record<string, string[]> = {
+    '.js': ['.ts', '.tsx', '.mts', '.cts'],
+    '.jsx': ['.tsx', '.ts'],
+    '.mjs': ['.mts', '.ts'],
+    '.cjs': ['.cts', '.ts'],
+  };
+  for (const replacement of sourceAliases[extension] ?? [])
+    candidates.add(resolved.slice(0, -extension.length) + replacement);
+  if (!extension) {
+    for (const suffix of importResolutionExtensions) candidates.add(resolved + suffix);
+    for (const suffix of importResolutionExtensions) candidates.add(path.posix.join(resolved, 'index' + suffix));
+  }
+  return [...candidates];
+}
+
+function readDiscoveredRuntimeInput(packageRoot: string, logicalPath: string): Buffer | null {
+  return readBoundedInput(
+    capturedModuleAbsolutePath(packageRoot, logicalPath),
+    capturedModuleBoundaryRoot(packageRoot, logicalPath),
+    'Coverage runtime module',
+    true,
+  );
+}
+
+async function captureSelectedTestRuntimeClosure(
+  root: string,
+  selectedTests: readonly string[],
+  sourcePaths: readonly string[],
+  testPaths: readonly string[],
+  inputBytes: Map<string, Buffer>,
+): Promise<string[]> {
+  const scanners = new Map<Bun.Loader, Bun.Transpiler>();
+  const sources = new Set(sourcePaths);
+  const tests = new Set(testPaths);
+  const visited = new Set<string>();
+  const queued = [...selectedTests];
+  const runtimeTools = new Set<string>();
+  let capturedBytes = [...inputBytes.values()].reduce((total, bytes) => total + bytes.byteLength, 0);
+  while (queued.length) {
+    const importer = queued.pop();
+    if (!importer || visited.has(importer)) continue;
+    visited.add(importer);
+    const bytes = inputBytes.get(importer);
+    if (!bytes) throw new Error(`Coverage input snapshot is missing: ${importer}`);
+    if (!importScanSource(importer)) continue;
+    const loader = importScanLoader(importer);
+    let scanner = scanners.get(loader);
+    if (!scanner) {
+      scanner = new Bun.Transpiler({ loader, target: 'bun' });
+      scanners.set(loader, scanner);
+    }
+    const source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    const requests = scanner.scanImports(source);
+    if (requests.some((request) => request.path === 'vitest'))
+      throw new Error(`Bun Test qualification cannot include a Vitest-owned test before migration: ${importer}`);
+    for (const request of requests) {
+      const specifier = request.path;
+      if (!specifier.startsWith('.')) {
+        if (
+          specifier.startsWith('/') ||
+          path.win32.isAbsolute(specifier) ||
+          [...declaredRuntimeRoots, ...resourceRoots].some((directory) => specifier.startsWith(directory + '/'))
+        )
+          throw new Error(`Unsupported package-local runtime import from ${importer}: ${specifier}`);
+        continue;
+      }
+      let resolved: string | undefined;
+      for (const candidate of importCandidates(root, importer, specifier)) {
+        if (inputBytes.has(candidate)) {
+          resolved = candidate;
+          break;
+        }
+        const discovered = readDiscoveredRuntimeInput(root, candidate);
+        if (discovered) {
+          capturedBytes += discovered.byteLength;
+          if (capturedBytes > maxInputBytes) throw new Error('Coverage input aggregate byte limit exceeded.');
+          if (inputBytes.size + 1 > maxInputPaths) throw new Error('Coverage input path limit exceeded.');
+          inputBytes.set(candidate, discovered);
+          resolved = candidate;
+          break;
+        }
+      }
+      if (!resolved) throw new Error(`Unresolved package-local runtime import: ${importer} -> ${specifier}`);
+      const firstPathPart = resolved.split('/')[0] ?? '';
+      if (
+        !sources.has(resolved) &&
+        !tests.has(resolved) &&
+        !(resourceRoots.includes(firstPathPart) && inputBytes.has(resolved))
+      )
+        runtimeTools.add(resolved);
+      if (importScanSource(resolved)) queued.push(resolved);
+    }
+  }
+  return [...runtimeTools].sort();
 }
 
 // Types above keep the three projections bound to one captured input snapshot.
@@ -583,26 +822,20 @@ async function captureQualityInputBase(
   const inputBytes = await readQualityInputs(root, allInputs);
   if (selectionMode === 'published-baseline-bun-native')
     verifyPublishedBaselineInputs(root, inputBytes, sources, testInputsAll);
-  const sourceInputs = qualityInputDigests(sources, inputBytes);
-  const testInputs = qualityInputDigests(testInputsAll, inputBytes);
-  const importScanners = new Map<Bun.Loader, Bun.Transpiler>();
-  for (const entry of testSelection.tests) {
-    const bytes = inputBytes.get(entry);
-    if (!bytes) throw new Error(`Coverage input snapshot is missing: ${entry}`);
-    const source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    const extension = path.extname(entry);
-    const loader: Bun.Loader =
-      extension === '.tsx' ? 'tsx' : extension === '.jsx' ? 'jsx' : /^\.[mc]?ts$/u.test(extension) ? 'ts' : 'js';
-    let scanner = importScanners.get(loader);
-    if (!scanner) {
-      scanner = new Bun.Transpiler({ loader, target: 'bun' });
-      importScanners.set(loader, scanner);
-    }
-    // Syntactic module requests only: conservatively deny shadowed require too.
-    // Scan the captured bytes; strings/comments and erased types are not imports.
-    if (scanner.scanImports(source).some((request) => request.path === 'vitest'))
-      throw new Error(`Bun Test qualification cannot include a Vitest-owned test before migration: ${entry}`);
-  }
+  const runtimeToolPaths =
+    selectionMode === 'current'
+      ? await captureSelectedTestRuntimeClosure(root, testSelection.tests, sources, testInputsAll, inputBytes)
+      : [];
+  const digestPaths = [...new Set([...sources, ...testInputsAll, ...tools, ...runtimeToolPaths])];
+  const inputDigests = new Map(
+    digestPaths.map((file) => {
+      const bytes = inputBytes.get(file);
+      if (!bytes) throw new Error(`Coverage input snapshot is missing: ${file}`);
+      return [file, { path: file, sha256: sha256(bytes) }];
+    }),
+  );
+  const sourceInputs = qualityInputDigests(sources, inputBytes, inputDigests);
+  const testInputs = qualityInputDigests(testInputsAll, inputBytes, inputDigests);
   return {
     sources: sourceInputs,
     testInputs,
@@ -610,14 +843,22 @@ async function captureQualityInputBase(
     testSelection,
     contractInputs,
     inputBytes,
+    inputDigests,
+    runtimeToolPaths,
     ...(selectionMode === 'published-baseline-bun-native'
       ? { publishedContract: capturePublishedBaselineContract(root) }
       : {}),
   };
 }
 
-function qualityInputDigests(files: readonly string[], inputBytes: Map<string, Buffer>): InputDigest[] {
+function qualityInputDigests(
+  files: readonly string[],
+  inputBytes: Map<string, Buffer>,
+  knownDigests?: Map<string, InputDigest>,
+): InputDigest[] {
   return files.map((file) => {
+    const known = knownDigests?.get(file);
+    if (known) return known;
     const bytes = inputBytes.get(file);
     if (!bytes) throw new Error(`Coverage input snapshot is missing: ${file}`);
     return { path: file, sha256: sha256(bytes) };
@@ -629,14 +870,19 @@ function projectQualityInputCapture(
   additionalToolInputs: readonly string[],
   selectionMode: 'current' | 'published-baseline-bun-native',
 ): CoverageInputs {
-  const tools = qualityToolInputPaths(additionalToolInputs, capture.contractInputs, selectionMode);
+  const tools = [
+    ...new Set([
+      ...qualityToolInputPaths(additionalToolInputs, capture.contractInputs, selectionMode),
+      ...capture.runtimeToolPaths,
+    ]),
+  ].sort();
   const sourceJson = canonicalJson(capture.sources);
   if (sourceJson === undefined) throw new Error('Coverage source identity is not serializable.');
   const sourceFingerprint = sha256(sourceJson);
   const testJson = canonicalJson({ selection: capture.testSelection, files: capture.testInputs });
   if (testJson === undefined) throw new Error('Coverage test identity is not serializable.');
   const testFingerprint = sha256(testJson);
-  const toolInputs = qualityInputDigests(tools, capture.inputBytes);
+  const toolInputs = qualityInputDigests(tools, capture.inputBytes, capture.inputDigests);
   const toolJson = canonicalJson(toolInputs);
   if (toolJson === undefined) throw new Error('Coverage tool identity is not serializable.');
   const projectedPaths = [

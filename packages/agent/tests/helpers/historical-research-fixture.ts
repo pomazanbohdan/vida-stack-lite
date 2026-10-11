@@ -36,9 +36,48 @@ type HistoricalResearchFixtureOptions = {
   readonly result?: ResearchResult;
 };
 
+type HistoricalResearchActivationMode = 'research' | 'synthesis';
+type HistoricalResearchFixtureFoundation = {
+  readonly root: string;
+  readonly config: ReturnType<typeof loadRuntimeConfig>;
+  readonly feature: ReturnType<typeof loadRuntimeConfig>['research_decision'];
+  readonly binding: ObservedResearchBinding;
+  readonly work: WorkState;
+  readonly workItem: FixtureWorkItem;
+  readonly request: SessionBridgeRequest;
+  readonly activationUse: ActivationUse;
+  readonly activationPlan: ObservedActivationUseWritePlan;
+  readonly scopeBytes: Buffer;
+  readonly acceptanceBytes: Buffer;
+  readonly historyPath: string;
+  readonly historyBytes: string;
+  readonly write: (relative: string, bytes: string | Uint8Array) => void;
+  readonly dispose: () => void;
+};
+type HistoricalResearchReportFixture = HistoricalResearchFixtureFoundation & {
+  readonly observation: SessionBridgeObservation;
+  readonly result: ResearchResult;
+  readonly plan: ObservedResearchRecordPlan;
+  readonly recordPath: string;
+  readonly recordBytes: string;
+  readonly changelogPath: string;
+  readonly changelogBytes: string;
+};
+
 const sha = (value: string | Uint8Array): string => createHash('sha256').update(value).digest('hex');
 
-export function createHistoricalResearchFixture(overrides: HistoricalResearchFixtureOptions = {}) {
+function createHistoricalResearchFixtureInternal(
+  overrides: HistoricalResearchFixtureOptions,
+  activationMode: 'research',
+): HistoricalResearchReportFixture;
+function createHistoricalResearchFixtureInternal(
+  overrides: HistoricalResearchFixtureOptions,
+  activationMode: 'synthesis',
+): HistoricalResearchFixtureFoundation;
+function createHistoricalResearchFixtureInternal(
+  overrides: HistoricalResearchFixtureOptions,
+  activationMode: HistoricalResearchActivationMode,
+): HistoricalResearchFixtureFoundation | HistoricalResearchReportFixture {
   const { repositoryRoot } = configuredTestContext();
   const root = mkdtempSync(path.join(os.tmpdir(), 'vida-historical-research-'));
   writeFileSync(
@@ -171,19 +210,22 @@ export function createHistoricalResearchFixture(overrides: HistoricalResearchFix
     },
     artifacts: [],
   };
-  const feature = overrides.feature ?? config.research_decision;
+  const feature = overrides.feature ?? config.research_decision,
+    activationPhase = activationMode === 'synthesis' ? 'plan' : 'trace',
+    activationLane = activationMode === 'synthesis' ? 'synthesizer' : 'researcher',
+    activationArtifactKind = activationMode === 'synthesis' ? 'synthesis' : 'research';
   const resolved = resolveInstructionActivation(
     {
       intent: 'research_intent',
       risk: 'medium',
-      lane: 'researcher',
-      phase: 'trace',
-      lifecycle_phase: 'trace',
+      lane: activationLane,
+      phase: activationPhase,
+      lifecycle_phase: activationPhase,
       contour: scopeId,
       scope_id: scopeId,
       work_item_id: workId,
       source_revision: sourceRevision,
-      artifact_kind: 'research',
+      artifact_kind: activationArtifactKind,
       triggers: ['research_intent'],
       required_instruction_ids: [],
     },
@@ -196,8 +238,8 @@ export function createHistoricalResearchFixture(overrides: HistoricalResearchFix
     source_revision: sourceRevision,
     scope_id: scopeId,
     risk: 'medium',
-    phase: 'trace',
-    lane: 'researcher',
+    phase: activationPhase,
+    lane: activationLane,
     trigger: 'research_intent',
     required_instruction_ids: [],
     instruction_ids: resolved.deterministic_order,
@@ -229,6 +271,45 @@ export function createHistoricalResearchFixture(overrides: HistoricalResearchFix
     scope_digest: sourceRevision,
     bindings_manifest_ref: 'e'.repeat(64),
   };
+  const historyPath = path.posix.join(feature.paths.activation_history, workId, 'instruction-activation-history.jsonl'),
+    historyBytes = canonicalJson(activationUse) + '\n',
+    activationBody: Omit<ObservedActivationUseWritePlan, 'digest'> = {
+      schema: 'ObservedActivationUseWritePlan/v1',
+      binding,
+      use_digest: activationUse.digest,
+      history_path: historyPath,
+      history_pre_sha256: null,
+      history_sha256: sha(historyBytes),
+    },
+    activationPlan: ObservedActivationUseWritePlan = {
+      ...activationBody,
+      digest: canonicalJsonDigest(activationBody),
+    };
+  const write = (relative: string, bytes: string | Uint8Array): void => {
+    const target = path.join(root, ...relative.split('/'));
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, bytes);
+  };
+  if (activationMode === 'synthesis') {
+    write(historyPath, historyBytes);
+    return {
+      root,
+      config,
+      feature,
+      binding,
+      work,
+      workItem,
+      request,
+      activationUse,
+      activationPlan,
+      scopeBytes,
+      acceptanceBytes,
+      historyPath,
+      historyBytes,
+      write,
+      dispose: () => rmSync(root, { recursive: true, force: true }),
+    };
+  }
   const sourceRefs: readonly ResearchSourceRef[] = [
     {
       source_id: 'source-one',
@@ -363,8 +444,6 @@ export function createHistoricalResearchFixture(overrides: HistoricalResearchFix
     timestamp: result.updated_at,
   };
   const changelogBytes = canonicalJson(event) + '\n';
-  const historyPath = path.posix.join(feature.paths.activation_history, workId, 'instruction-activation-history.jsonl');
-  const historyBytes = canonicalJson(activationUse) + '\n';
   const researchBody: Omit<ObservedResearchRecordPlan, 'digest'> = {
     schema: 'ObservedResearchRecordPlan/v1',
     binding,
@@ -379,23 +458,6 @@ export function createHistoricalResearchFixture(overrides: HistoricalResearchFix
     before_digest: null,
   };
   const plan: ObservedResearchRecordPlan = { ...researchBody, digest: canonicalJsonDigest(researchBody) };
-  const activationBody: Omit<ObservedActivationUseWritePlan, 'digest'> = {
-    schema: 'ObservedActivationUseWritePlan/v1',
-    binding,
-    use_digest: activationUse.digest,
-    history_path: historyPath,
-    history_pre_sha256: null,
-    history_sha256: sha(historyBytes),
-  };
-  const activationPlan: ObservedActivationUseWritePlan = {
-    ...activationBody,
-    digest: canonicalJsonDigest(activationBody),
-  };
-  const write = (relative: string, bytes: string | Uint8Array): void => {
-    const target = path.join(root, ...relative.split('/'));
-    mkdirSync(path.dirname(target), { recursive: true });
-    writeFileSync(target, bytes);
-  };
   write(recordPath, recordBytes);
   write(plan.changelog_path, changelogBytes);
   write(historyPath, historyBytes);
@@ -423,4 +485,12 @@ export function createHistoricalResearchFixture(overrides: HistoricalResearchFix
     write,
     dispose: () => rmSync(root, { recursive: true, force: true }),
   };
+}
+
+export function createHistoricalResearchFixture(overrides: HistoricalResearchFixtureOptions = {}) {
+  return createHistoricalResearchFixtureInternal(overrides, 'research');
+}
+
+export function createHistoricalResearchActivationFixture(overrides: HistoricalResearchFixtureOptions = {}) {
+  return createHistoricalResearchFixtureInternal(overrides, 'synthesis');
 }

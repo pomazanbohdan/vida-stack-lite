@@ -4,7 +4,13 @@ import { fileURLToPath } from 'node:url';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parsePublishedFixtureIdentity } from './published-coverage-inputs.js';
-import { capturedModuleInputs, instrumentSource } from './bun-coverage-evidence.ts';
+import {
+  capturedModuleAbsolutePath,
+  capturedModuleInputs,
+  canonicalCapturedModulePath,
+  instrumentSource,
+  repositoryRootForPackage,
+} from './bun-coverage-evidence.ts';
 
 type FileCoverageData = import('istanbul-lib-instrument').FileCoverageData;
 type SourceDigest = { path: string; sha256: string };
@@ -32,6 +38,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 const root = path.resolve(process.env.VIDA_BUN_COVERAGE_ROOT ?? process.cwd());
+const repositoryRoot = repositoryRootForPackage(root);
 const preloadPath = fileURLToPath(import.meta.url);
 const digest = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 const manifestPath = process.env.VIDA_BUN_COVERAGE_MANIFEST;
@@ -135,7 +142,7 @@ const moduleInputs = new Map(
   manifest.module_inputs.map((entry) => {
     if (!isRecord(entry) || typeof entry.path !== 'string' || typeof entry.sha256 !== 'string')
       throw new Error('Captured module input identity is invalid.');
-    return [path.resolve(root, entry.path), { path: entry.path, sha256: entry.sha256 }];
+    return [capturedModuleAbsolutePath(root, entry.path), { path: entry.path, sha256: entry.sha256 }];
   }),
 );
 if (moduleInputs.size !== manifest.module_inputs.length)
@@ -244,6 +251,18 @@ function loadSnapshotModule(file: string) {
     const loader = moduleLoader(file);
     return { contents: capturedModuleContents(bytes, loader), loader, resolveDir: path.dirname(file) };
   }
+  const repositoryLogicalPath = canonicalCapturedModulePath(root, file);
+  const relativeToRepository = repositoryRoot ? path.relative(repositoryRoot, file) : '..';
+  const isRepositoryPath =
+    repositoryRoot !== null &&
+    relativeToRepository !== '..' &&
+    !relativeToRepository.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relativeToRepository);
+  const isOutsidePackage = relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative);
+  if (isOutsidePackage && isRepositoryPath && !repositoryLogicalPath?.startsWith('_repository/tooling/agent/'))
+    throw new Error('Uncaptured repository module requested by test execution: ' + file);
+  if (repositoryLogicalPath?.startsWith('_repository/tooling/agent/'))
+    throw new Error('Uncaptured repository tooling module requested by test execution: ' + repositoryLogicalPath);
   const admitted = declaredModuleRoots.some((directory) => relative.startsWith(directory + '/'));
   if (admitted) throw new Error('Uncaptured declared module input requested by test execution: ' + file);
   const bytes = readFileSync(file);
@@ -257,13 +276,22 @@ function loadSnapshotModule(file: string) {
   return { contents: capturedModuleContents(bytes, loader), loader, resolveDir: path.dirname(file) };
 }
 
-const escapedRoot = root.replace(/[|\\{}()[\]^$+?.*]/gu, '\\$&');
 const separatorPattern = String.raw`[/\\]`;
-const packageModuleFilter = new RegExp(`^${escapedRoot}${separatorPattern}(?!node_modules${separatorPattern}).+`, 'u');
+const escapedRoot = root.replace(/[|\\{}()[\]^$+?.*]/gu, '\\$&');
+const packageModuleFilter = new RegExp(
+  `^${escapedRoot}${separatorPattern}(?!.*${separatorPattern}node_modules${separatorPattern}).+`,
+  'u',
+);
+const repositoryModuleFilter = repositoryRoot
+  ? new RegExp(
+      `^${repositoryRoot.replace(/[|\\{}()[\]^$+?.*]/gu, '\\$&')}${separatorPattern}(?!.*${separatorPattern}node_modules${separatorPattern}).+`,
+      'u',
+    )
+  : packageModuleFilter;
 Bun.plugin({
   name: 'vida-agent-unified-istanbul-snapshot',
   setup(build) {
-    build.onLoad({ filter: packageModuleFilter }, (args) => loadSnapshotModule(path.resolve(args.path)));
+    build.onLoad({ filter: repositoryModuleFilter }, (args) => loadSnapshotModule(path.resolve(args.path)));
   },
 });
 

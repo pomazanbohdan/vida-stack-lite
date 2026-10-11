@@ -8,6 +8,12 @@ import { expect, test } from 'bun:test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
+import {
+  capturedModuleAbsolutePath,
+  canonicalCapturedModulePath,
+  repositoryRootForPackage,
+  repositoryToolingInputPrefix,
+} from '../tooling/bun-coverage-evidence.ts';
 import { createSyntheticCoverageFixture, type SyntheticFixture } from './synthetic-coverage-fixture.ts';
 
 const expectedFixtureSources = [
@@ -18,6 +24,26 @@ const expectedFixtureSources = [
   'src/orchestration/session-handoff.ts',
   'src/runtime-kernel.ts',
 ];
+
+test('maps only the canonical repository tooling namespace to its checkout path', () => {
+  const packageRoot = path.resolve('/synthetic/repository/packages/agent');
+  const actual = path.resolve('/synthetic/repository/tooling/agent/release-assurance.ts');
+  const logical = `${repositoryToolingInputPrefix}/release-assurance.ts`;
+  expect(canonicalCapturedModulePath(packageRoot, actual)).toBe(logical);
+  expect(capturedModuleAbsolutePath(packageRoot, logical)).toBe(actual);
+  expect(
+    canonicalCapturedModulePath(packageRoot, path.resolve('/synthetic/repository/tooling/sibling/escape.ts')),
+  ).toBeNull();
+  expect(
+    canonicalCapturedModulePath(packageRoot, path.resolve(packageRoot, '_repository/tooling/agent/escape.ts')),
+  ).toBeNull();
+  expect(() => capturedModuleAbsolutePath(packageRoot, '_repository/tooling/sibling/escape.ts')).toThrow(
+    /outside admitted roots/u,
+  );
+  const nonstandardPackageRoot = path.resolve('/synthetic/not-the-agent-package');
+  expect(repositoryRootForPackage(nonstandardPackageRoot)).toBeNull();
+  expect(() => capturedModuleAbsolutePath(nonstandardPackageRoot, logical)).toThrow(/outside admitted roots/u);
+});
 
 function record(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value))

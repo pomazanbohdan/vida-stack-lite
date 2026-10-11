@@ -37,7 +37,10 @@ import {
   isPlainRecord,
 } from '../src/contracts/public-ingress.ts';
 import { validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
-import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.ts';
+import {
+  createHistoricalResearchActivationFixture,
+  createHistoricalResearchFixture,
+} from './helpers/historical-research-fixture.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import {
@@ -1615,10 +1618,21 @@ async function sourceCorrectionRebindWithNative(runtime: StandaloneRuntime): Pro
   const bunPath = new URL('../bin/bun.ts', import.meta.url).href;
   if (!sourceCorrectionNativeRuntime.mocked) {
     const original = await import('../bin/bun.ts');
+    const originalStandaloneRuntime = original.standaloneRuntime;
+    let resolvingOriginal = false;
     await mock.module(bunPath, () => ({
       ...original,
-      standaloneRuntime: (env: Parameters<typeof original.standaloneRuntime>[0]) =>
-        sourceCorrectionNativeRuntime.value ?? original.standaloneRuntime(env),
+      standaloneRuntime: (env: Parameters<typeof original.standaloneRuntime>[0]) => {
+        const runtime = sourceCorrectionNativeRuntime.value;
+        if (runtime !== null) return runtime;
+        if (resolvingOriginal) throw Error('Source correction native mock fallback is recursive');
+        resolvingOriginal = true;
+        try {
+          return originalStandaloneRuntime(env);
+        } finally {
+          resolvingOriginal = false;
+        }
+      },
     }));
     sourceCorrectionNativeRuntime.mocked = true;
   }
@@ -1628,6 +1642,17 @@ async function sourceCorrectionRebindWithNative(runtime: StandaloneRuntime): Pro
   if (!isSourceCorrectionRebindRunner(loaded)) throw Error('Source correction rebind entrypoint is unavailable');
   return loaded;
 }
+
+test('source correction native mock falls back to the original runtime declaration after override closes', async () => {
+  const previousPath = process.env.PATH ?? '';
+  await sourceCorrectionRebindWithNative({ root: tmpdir(), executable: process.execPath });
+  sourceCorrectionNativeRuntime.value = null;
+  process.env.PATH = previousPath;
+  sourceCorrectionNativeRuntime.previousPath = undefined;
+
+  const bunModule = await import('../bin/bun.ts');
+  expect(bunModule.standaloneRuntime({})).toBeNull();
+});
 
 function sourceCorrectionNativeFixture(
   f: RuntimeFixture,
@@ -5245,6 +5270,55 @@ function seedHistoricalResearchLineage(
     const pending = index === pendingIndex,
       normalized = index !== unnormalizedIndex && !pending;
     let updatedItem: MastraLedgerItem = item;
+    if (index === activationOnlyIndex) {
+      if (!pending || item.request.stage_id !== 'synthesize_task')
+        throw Error('Activation-only lineage fixture requires the pending synthesis action');
+      const activation = createHistoricalResearchActivationFixture({
+        config: original.config,
+        feature: original.config.research_decision,
+        request: item.request,
+        binding: {
+          work_id: request.identity.work_id,
+          attempt: state.attempt,
+          run_id: state.run_id,
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          scope_id: work.binding.scope_id,
+          scope_digest: requiredSourceScope(state).digest,
+          source_revision: work.binding.work_source_revision,
+          source_scope_digest: requiredSourceScope(state).digest,
+          config_digest: work.binding.config_digest,
+          maintenance_generation: original.maintenanceGeneration,
+          lease_ticket_id: requiredWorkLease(work).ticket_id,
+          lease_thread_id: requiredWorkLease(work).thread_id,
+          lease_generation: requiredWorkLease(work).generation,
+        },
+      });
+      try {
+        materials.push({
+          scopeBytes: activation.scopeBytes,
+          acceptanceBytes: activation.acceptanceBytes,
+          workItem: activation.workItem,
+        });
+        const activationPayload = withoutDigest(activation.activationPlan);
+        const activationBody = {
+          ...activationPayload,
+          history_pre_sha256: history === '' ? null : sha(history),
+          history_sha256: sha(history + activation.historyBytes),
+        };
+        const activationPlan = { ...activationBody, digest: canonicalJsonDigest(activationBody) };
+        history += activation.historyBytes;
+        f.put(activation.historyPath, history);
+        updatedItem = {
+          ...item,
+          research_activation: { plan: activationPlan, use: activation.activationUse },
+        };
+        replaceFixtureJournalItem(state, item.request.action_id, updatedItem);
+      } finally {
+        activation.dispose();
+      }
+      continue;
+    }
     const record = createHistoricalResearchFixture({
       config: original.config,
       feature: original.config.research_decision,
@@ -5267,20 +5341,6 @@ function seedHistoricalResearchLineage(
         lease_generation: requiredWorkLease(work).generation,
       },
     });
-    if (index === activationOnlyIndex) {
-      const usePayload = withoutDigest(record.activationUse);
-      const synthesisUse = {
-        ...usePayload,
-        phase: 'plan',
-        lane: 'synthesizer',
-        digest: canonicalJsonDigest({ ...usePayload, phase: 'plan', lane: 'synthesizer' }),
-      };
-      record.activationUse = synthesisUse;
-      record.historyBytes = canonicalJson(synthesisUse) + '\n';
-      const planPayload = withoutDigest(record.activationPlan);
-      const activationBody = { ...planPayload, use_digest: synthesisUse.digest };
-      record.activationPlan = { ...activationBody, digest: canonicalJsonDigest(activationBody) };
-    }
     try {
       materials.push({
         scopeBytes: record.scopeBytes,
