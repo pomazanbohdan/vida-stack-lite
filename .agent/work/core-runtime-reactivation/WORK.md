@@ -5567,3 +5567,68 @@ records the one syntax owner and static-only evidence. Current packet staged
 static verification is pending; exact coverage/frozen CRAP/confirmed-Killed and
 formed isolated native Runtime remain OPEN. No build/install, loader/schema
 cutover, old operational access or unblock notices.
+
+### v735–v740 — blind lineage review, durable partial join and shared timestamp repair
+
+Strict staged parser/callback checkpoint20dcd81 passed without bypass and was
+published to origin/main. Root bun.lock remains unrelated, untracked and preserved.
+Six independent blind Luna reviews cover13small Source files. Root corrected
+approval/policy proposals that attempted to transfer an old retained parent's
+allowance to a new extracted helper. New inventory callables are distinct from
+new engine capabilities; existing parent functions remain separately retained.
+Root read actual Source roles and published bodies for relocation candidates.
+Independent join review confirms89current rows=65retained+24new with no overlap.
+
+The selected union now has802retained/29new/1removed,831bound current roles across
+30Source files. Every copied published CC/CRAP ceiling stays exact. New callable
+allowances remain the prospective10/10 policy fixed before current measurement.
+Private receipts: typed-correction-v179/root-reviewed-small-lineage-v736.json and
+root-reviewed-lineage-join-v736.json. Durable operational checkpoint:
+crap-budgets.reviewed-partial.v1.json. It deliberately has a different schema from
+VidaCrapBudgetPlan/v1 and is NON_EXECUTABLE/NOT_EXHAUSTIVE. It cannot substitute
+for missing genuine baseline coverage custody or current numeric evidence.
+The old policy-transition role is retained despite current upgrade-inactive and
+storage-admission call changes; Source lineage is not unchanged behavior proof.
+
+A disjoint Luna writer added tests/documentation-policy.test.ts without the heavy
+transition fixture. Initial8-case run7PASS1FAIL identified a wrong expected error
+message in the new test; corrected8PASS109assertions. Blind independent review
+then found a product defect: formats.date-time=true disables Ajv format checking,
+while Date.parse normalizes impossible dates and accepts date-only/timezoneless
+values. Exact new negative case v739RED0PASS1FAIL confirms an impossible date
+returned a policy instead of throwing. Root's one causal Source correction reuses
+rfc3339TimestampMilliseconds from the already imported shared public-ingress owner,
+preserving timestamp error text, validation order and caller identity boundaries.
+No new parser/dependency or active schema/loader change.
+
+Direct final file10PASS115assertions/487ms; fixed-seed safe-path property64runs.
+Fresh owned public transition fixture1PASS11assertions/7.04s case under unchanged
+30s,8.42s runner. Its genuine baseline/one audited cycle/repeated resume/rollback
+controls remain. Scoped typed lint PASS0 before and after the Source correction;
+independent delta review finds no blocker. Pure value scenarios explicitly leave
+persistence/CAS/UNKNOWN/admission to their existing callers/lifecycle owners.
+Official Ajv format documentation snapshot: ajv-formats-v737.html.
+Exact receipts: policy-calendar-red-v739.log, policy-calendar-green-v739.log,
+policy-static-v739.log and policy-integration-v739/result.log in typed-correction-v179.
+One scoped maintained inventory/read/digest refresh updates only policy.ts's
+three rows/binding; root-reviewed-lineage-join-v740.json preserves the other
+scopes. The tracked partial uses that refreshed binding. No full audit/hash pass.
+
+Readonly ordinary-test assessment confirms final coverage already selects every
+supported current test suffix from one capture. Ordinary test:pinned still has
+curated literal membership and a four-phase public chain. Broad discovery needs
+phase contract parity evidence; no new selection framework or duplicate suite
+was introduced. This remains a bounded P1 follow-up. Exact coverage, exhaustive
+frozen budget plan, assertion-confirmed Killed and formed clean isolated native
+Runtime remain OPEN; Windows physical target remains GAP. No build/install,
+old operational access/UNKNOWN replay, schema/loader cutover or unblock notices.
+
+Strict staged attemptv740 rejected the new negative fixture with TS2704: deleting
+owner from Partial<DocumentationPolicy> still deletes a readonly property. Writer
+uses a mutable Record<string,unknown> malformed image instead, without a cast or
+assertion change. Receipt checkpoint-commit-v740.log remains FAIL; no hook bypass.
+Bounded reuse of v729 captured test paths and current script bytes separately
+confirms two duplicate public ordinary/repair members: completed-source-report-
+recovery-cli.test.ts and completed-readonly-capture.test.ts. There are134literal
+members/132unique paths across the four public phases. Minimal duplicate removal
+is a concrete P1 follow-up; broad discovery still needs command-contract parity.

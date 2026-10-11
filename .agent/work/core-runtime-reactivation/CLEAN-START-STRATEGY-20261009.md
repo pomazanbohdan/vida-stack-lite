@@ -1207,7 +1207,26 @@ Global exhaustive correspondence and exact coverage/CRAP/mutation remain OPEN.
 
 Test tooling now shares TS/JSX filename policy for selected .test.tsx and focused
 aliases, with helper bytes included in existing config binding. Affected90PASS,
-then changed configuration controls4PASS; callback controls3PASS. Finish staged
-statics/publication, then continue the existing exhaustive function/scenario/
+then changed configuration controls4PASS; callback controls3PASS. Their strict
+staged checkpoint20dcd81 passed and was published. Continue the existing exhaustive function/scenario/
 budget plan and remaining bundle/native requirements. No duplicate audit/gates,
 baseline run, test suites in formation/install or P2 expansion.
+
+#### Dependency-ready selected lineage and policy correction v735–v740
+
+The tracked operational checkpoint crap-budgets.reviewed-partial.v1.json preserves
+selected reviewed Source lineage:802retained/29new/1removed,831bound current roles,
+30Source files. Six blind small-scope reviews and independent join review added
+89roles/13files, without a full AST/hash scan. Retained parents keep their own
+allowances; new extracted callable boundaries are distinct from P2 capabilities.
+This partial checkpoint is never the default executable CRAP plan. Exhaustive
+partitions, genuine baseline custody and all final numeric proof remain required.
+
+Blind policy test review found a current date-time contract defect. Use the existing
+strict RFC3339 shared parser rather than Date.parse's calendar normalization.
+Exact regression RED then direct10PASS/115assertions and public transition
+1PASS/11assertions; scoped typed lint0 and independent delta review pass. Refresh
+only policy.ts's three rows/binding, preserving all allowances and other scopes.
+Ordinary phase literal membership remains a separate bounded P1 assessment;
+current final coverage selection already discovers the supported current test set.
+No duplicate full qualification, active schema/loader switch or old-state access.

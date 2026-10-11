@@ -2,7 +2,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import path from 'node:path';
 import schema from '../../schemas/documentation-policy.v1.schema.json' with { type: 'json' };
-import { freezeJsonValue } from '../contracts/public-ingress.js';
+import { freezeJsonValue, rfc3339TimestampMilliseconds } from '../contracts/public-ingress.js';
 import { snapshotRuntimeConfig } from '../config/runtime-config.js';
 
 export interface DocumentationPolicy {
@@ -51,7 +51,8 @@ export function validateDocumentationPolicy(value: unknown, expectedPath: string
   if (!validator(policy)) throw new Error('documentation policy schema invalid');
   if (policy.source_path !== documentationRelativePath(expectedPath))
     throw new Error('documentation policy source path differs from config');
-  if (Number.isNaN(Date.parse(policy.updated_at))) throw new Error('documentation policy timestamp invalid');
+  if (rfc3339TimestampMilliseconds(policy.updated_at) === null)
+    throw new Error('documentation policy timestamp invalid');
   for (const key of ['canonical_roots', 'map_paths', 'excluded_roots'] as const)
     policy[key].forEach(documentationRelativePath);
   if (typeof policy.changelog_path === 'string') documentationRelativePath(policy.changelog_path);

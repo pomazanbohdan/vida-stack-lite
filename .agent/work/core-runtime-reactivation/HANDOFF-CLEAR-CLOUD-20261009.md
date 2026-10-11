@@ -772,7 +772,7 @@ Current Work details and failed/terminal receipts: WORK v702–v718. Preserve kn
 per-scope v662 freshness, existing ceilings, exact gates and retained UNKNOWN.
 
 
-#### Current shared/static checkpoint v720–v734
+#### Current shared/static checkpoint v720–v740
 
 Corrective preparation reuses packet-validated original planning evidence through
 trusted context. Two duplicated journal indexes share a linear join; broad
@@ -785,12 +785,31 @@ Strict staged checkpoint a09c3d6 passed without bypass and was published to
 origin/main. CLI runtime/types use maintained TS owners; local dist does not
 supply staged imports. Root bun.lock remains unstaged/preserved. New callback
 controls3PASS. Auditor/guard share filename syntax with selected .test.tsx,
-90PASS; helper config-binding follow-up4PASS. This latest packet awaits staged
-statics/publication. No Source inventory/instrumentation scope expansion.
+90PASS; helper config-binding follow-up4PASS. Their strict staged checkpoint
+20dcd81 passed without bypass and was published. No Source inventory/
+instrumentation scope expansion.
 
 Reviewed Source-lineage replacements bind evidence7retained/4new/1removed and
 packet87retained/four closure remaps, with exact frozen ceilings. They are not
-the exhaustive executable plan or numeric qualification. Frozen correspondence,
+the exhaustive executable plan or numeric qualification.
+
+Six blind scope reviews and independent join review add89selected roles across
+13files. The durable operational checkpoint
+crap-budgets.reviewed-partial.v1.json now preserves802retained/29new/1removed,
+831bound current roles across30Source files. It is non-executable and incomplete;
+retained parent allowances never transfer to separately extracted helpers.
+All published ceilings stay frozen; new callables use the prior10/10 policy.
+
+Independent test review exposed a policy timestamp defect: Date.parse accepted
+impossible dates and missing timezones despite the current date-time contract.
+policy.ts now reuses the existing strict calendar-valid RFC3339 parser. Exact
+negative case RED, then direct10PASS/115assertions; public policy transition
+1PASS/11assertions under its unchanged30s bound. Scoped typed lint0 and independent
+delta review passed. Only the changed policy's three inventory rows were refreshed;
+the other selected Source bindings were reused. These are Source development
+proofs, not the complete numerical or native Runtime qualification.
+
+Frozen correspondence,
 exact coverage/CRAP/assertion-confirmed Killed and isolated formed native Runtime
 remain OPEN. No build/install, active schema/loader cutover, Runtime acceptance
 or old unblock notices. Current WORK owns exact receipts, mappings and limits.
