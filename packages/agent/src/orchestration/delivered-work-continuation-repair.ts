@@ -49,7 +49,7 @@ export function deliveredWorkContinuationRecord(receipt: DeliveredWorkContinuati
   const payload = serializeDeliveredWorkContinuationReceipt(receipt);
   return { payload, digest: createHash('sha256').update(payload).digest('hex') };
 }
-export interface FrontierRepairCurrent {
+interface FrontierRepairCurrent {
   readonly work: WorkState;
   readonly work_version: StateVersion;
   readonly ledger: CoordinationLedger;

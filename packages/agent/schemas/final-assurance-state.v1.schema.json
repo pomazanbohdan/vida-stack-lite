@@ -121,18 +121,11 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "review",
-              "reverse"
-            ]
+            "enum": ["review", "reverse"]
           },
           "perspective": {
             "type": "string",
-            "enum": [
-              "correctness",
-              "security",
-              "assurance"
-            ]
+            "enum": ["correctness", "security", "assurance"]
           },
           "issue_id": {
             "anyOf": [
@@ -224,10 +217,7 @@
                       },
                       "verdict": {
                         "type": "string",
-                        "enum": [
-                          "pass",
-                          "fail"
-                        ]
+                        "enum": ["pass", "fail"]
                       },
                       "evidence_refs": {
                         "minItems": 1,
@@ -241,11 +231,7 @@
                       },
                       "perspective": {
                         "type": "string",
-                        "enum": [
-                          "correctness",
-                          "security",
-                          "assurance"
-                        ]
+                        "enum": ["correctness", "security", "assurance"]
                       },
                       "findings": {
                         "maxItems": 64,
@@ -261,31 +247,18 @@
                         "properties": {
                           "scope_and_trace": {
                             "type": "string",
-                            "enum": [
-                              "pass",
-                              "fail"
-                            ]
+                            "enum": ["pass", "fail"]
                           },
                           "tests_security_rollback": {
                             "type": "string",
-                            "enum": [
-                              "pass",
-                              "fail"
-                            ]
+                            "enum": ["pass", "fail"]
                           },
                           "evidence_invalidation_binding": {
                             "type": "string",
-                            "enum": [
-                              "pass",
-                              "fail"
-                            ]
+                            "enum": ["pass", "fail"]
                           }
                         },
-                        "required": [
-                          "scope_and_trace",
-                          "tests_security_rollback",
-                          "evidence_invalidation_binding"
-                        ],
+                        "required": ["scope_and_trace", "tests_security_rollback", "evidence_invalidation_binding"],
                         "additionalProperties": false
                       }
                     },
@@ -372,10 +345,7 @@
                       },
                       "verdict": {
                         "type": "string",
-                        "enum": [
-                          "pass",
-                          "fail"
-                        ]
+                        "enum": ["pass", "fail"]
                       },
                       "evidence_refs": {
                         "minItems": 1,
@@ -401,31 +371,18 @@
                         "properties": {
                           "scope_and_trace": {
                             "type": "string",
-                            "enum": [
-                              "pass",
-                              "fail"
-                            ]
+                            "enum": ["pass", "fail"]
                           },
                           "tests_security_rollback": {
                             "type": "string",
-                            "enum": [
-                              "pass",
-                              "fail"
-                            ]
+                            "enum": ["pass", "fail"]
                           },
                           "evidence_invalidation_binding": {
                             "type": "string",
-                            "enum": [
-                              "pass",
-                              "fail"
-                            ]
+                            "enum": ["pass", "fail"]
                           }
                         },
-                        "required": [
-                          "scope_and_trace",
-                          "tests_security_rollback",
-                          "evidence_invalidation_binding"
-                        ],
+                        "required": ["scope_and_trace", "tests_security_rollback", "evidence_invalidation_binding"],
                         "additionalProperties": false
                       }
                     },
@@ -458,23 +415,12 @@
             ]
           }
         },
-        "required": [
-          "action_id",
-          "kind",
-          "perspective",
-          "issue_id",
-          "target_agent_id",
-          "observation"
-        ],
+        "required": ["action_id", "kind", "perspective", "issue_id", "target_agent_id", "observation"],
         "additionalProperties": false
       }
     }
   },
-  "required": [
-    "schema",
-    "packet",
-    "actions"
-  ],
+  "required": ["schema", "packet", "actions"],
   "additionalProperties": false,
   "$id": "https://vida-agent.invalid/schemas/final-assurance-state.v1.schema.json",
   "title": "Final assurance state v1"

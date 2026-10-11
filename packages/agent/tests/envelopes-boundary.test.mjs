@@ -1,10 +1,23 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { describe, expect, mock, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 
-afterEach(() => {
-  vi.resetModules();
-  vi.doUnmock('../src/contracts/public-ingress.ts');
-  vi.doUnmock('@cedar-policy/cedar-wasm/nodejs');
-});
+function runIsolatedMockCase(name) {
+  const child = spawnSync(
+    process.execPath,
+    ['test', '--test-name-pattern', name, 'tests/envelopes-boundary.test.mjs'],
+    {
+      cwd: process.cwd(),
+      env: { ...process.env, ENVELOPES_BOUNDARY_ISOLATED_CASE: name },
+      encoding: 'utf8',
+      timeout: 120_000,
+    },
+  );
+  const output = `${child.stdout ?? ''}\n${child.stderr ?? ''}`;
+  expect(child.error).toBeUndefined();
+  expect(child.signal).toBe(null);
+  expect(child.status).toBe(0);
+  expect(output).toContain(`BUN_TEST_CASE_COMPLETE:${name}`);
+}
 
 describe('runtime envelope canonicalization boundary', () => {
   test('consumes only the exact current revision binding and rejects unsafe workflow paths', async () => {
@@ -141,12 +154,14 @@ describe('runtime envelope canonicalization boundary', () => {
     });
   });
   test('normalizes a non-Error canonicalizer failure before rejecting', async () => {
-    vi.doMock('../src/contracts/public-ingress.ts', () => ({
+    const name = 'normalizes a non-Error canonicalizer failure before rejecting';
+    if (process.env.ENVELOPES_BOUNDARY_ISOLATED_CASE !== name) return runIsolatedMockCase(name);
+    mock.module('../src/contracts/public-ingress.ts', () => ({
       assertCanonicalJsonValue: () => {
         throw 'string canonical failure';
       },
     }));
-    const envelopes = await import('../src/contracts/envelopes.ts?string-canonical-error');
+    const envelopes = await import('../src/contracts/envelopes.ts');
 
     expect(() =>
       envelopes.validateRuntimeEnvelope({
@@ -158,21 +173,25 @@ describe('runtime envelope canonicalization boundary', () => {
         payload: {},
       }),
     ).toThrow('runtime envelope rejected: string canonical failure');
+    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
   });
   test('normalizes a non-Error authorization failure before denying', async () => {
-    vi.doMock('../src/contracts/public-ingress.ts', () => ({
+    const name = 'normalizes a non-Error authorization failure before denying';
+    if (process.env.ENVELOPES_BOUNDARY_ISOLATED_CASE !== name) return runIsolatedMockCase(name);
+    mock.module('../src/contracts/public-ingress.ts', () => ({
       canonicalJsonDigest: () => 'a'.repeat(64),
       toAuthorizationReceipt: () => undefined,
       validateAuthorizationRequest: () => {
         throw 'string authorization failure';
       },
     }));
-    const cedar = await import('../src/authorization/cedar-boundary.ts?string-authorization-error');
+    const cedar = await import('../src/authorization/cedar-boundary.ts');
 
     expect(cedar.authorizeProject({}, undefined, undefined, 'ignored-root', '', '')).toEqual({
       decision: 'deny',
       diagnostics: ['string authorization failure'],
     });
+    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
   });
   test('rejects unauthenticated configured Cedar runtime snapshots', async () => {
     const cedar = await import('../src/authorization/cedar-boundary.ts?config-authenticity-error');
@@ -185,7 +204,9 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('preserves Cedar execution failure diagnostics and request validation', async () => {
-    vi.doMock('@cedar-policy/cedar-wasm/nodejs', () => ({
+    const name = 'preserves Cedar execution failure diagnostics and request validation';
+    if (process.env.ENVELOPES_BOUNDARY_ISOLATED_CASE !== name) return runIsolatedMockCase(name);
+    mock.module('@cedar-policy/cedar-wasm/nodejs', () => ({
       isAuthorized: (value) => {
         if (value.validateRequest !== true) throw new Error('validateRequest flag missing');
         return {
@@ -194,7 +215,7 @@ describe('runtime envelope canonicalization boundary', () => {
         };
       },
     }));
-    const cedar = await import('../src/authorization/cedar-boundary.ts?execution-failure');
+    const cedar = await import('../src/authorization/cedar-boundary.ts');
     const { configuredTestContext } = await import('./configured-context.mjs');
     const { repositoryRoot: root, config, context: project } = configuredTestContext();
     const request = {
@@ -231,5 +252,6 @@ describe('runtime envelope canonicalization boundary', () => {
       decision: 'deny',
       diagnostics: ['cedar execution failure'],
     });
+    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
   });
 });

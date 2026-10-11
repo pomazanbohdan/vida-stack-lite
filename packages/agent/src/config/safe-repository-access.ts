@@ -22,9 +22,16 @@ import { Result } from 'neverthrow';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { root as createFsSafeRoot, type Root as FsSafeRoot } from '@openclaw/fs-safe';
+import { getFsSafeNativeConfig } from '@openclaw/fs-safe/config';
 import { assertNoSymlinkParentsSync, openRootFileSync, sameFileIdentity } from '@openclaw/fs-safe/advanced';
 import { withFileLock } from '@openclaw/fs-safe/file-lock';
 import { FsSafeError } from '@openclaw/fs-safe/errors';
+import {
+  fsSafeVersion,
+  fsSafeIntegrity,
+  fsSafePackageManifest,
+  fsSafePackageTreeSha256ByNativeTarget,
+} from './fs-safe-attestation.js';
 type LinuxNativeBinding = {
   readonly cloneFileExclusive: (sourceFd: number, targetRootFd: number, targetRelPath: string) => number;
   readonly renameNoReplace: (
@@ -90,87 +97,6 @@ function fail(message: string): never {
   throw new Error(`safe repository access unavailable: ${message}`);
 }
 
-const fsSafePackageManifest = [
-  'dist/absolute-path.js',
-  'dist/advanced.js',
-  'dist/async-lock.js',
-  'dist/atomic.js',
-  'dist/bounded-read.js',
-  'dist/deny-mutations.js',
-  'dist/device-path.js',
-  'dist/directory-durability.js',
-  'dist/directory-guard.js',
-  'dist/error-detail.js',
-  'dist/errors.js',
-  'dist/file-identity.js',
-  'dist/file-lock-sync.js',
-  'dist/file-lock.js',
-  'dist/filename.js',
-  'dist/fs.js',
-  'dist/fsync.js',
-  'dist/guarded-mkdir.js',
-  'dist/guarded-mutation.js',
-  'dist/home-dir.js',
-  'dist/index.js',
-  'dist/install-path.js',
-  'dist/json-stringify.js',
-  'dist/local-file-access.js',
-  'dist/local-roots.js',
-  'dist/lock-config.js',
-  'dist/mode.js',
-  'dist/move-path.js',
-  'dist/native-config.js',
-  'dist/native-operations.js',
-  'dist/native-pinned-write.js',
-  'dist/native.js',
-  'dist/opened-realpath.js',
-  'dist/path-policy.js',
-  'dist/path.js',
-  'dist/permission-exec.js',
-  'dist/permissions-windows.js',
-  'dist/permissions.js',
-  'dist/pinned-open.js',
-  'dist/pinned-operation.js',
-  'dist/pinned-write.js',
-  'dist/read-open-flags.js',
-  'dist/read-opened-file.js',
-  'dist/regular-file.js',
-  'dist/replace-directory.js',
-  'dist/replace-file-copy-' + String.fromCharCode(102, 97, 108, 108, 98, 97, 99, 107) + '.js',
-  'dist/replace-file-descriptor.js',
-  'dist/replace-file.js',
-  'dist/root-context.js',
-  'dist/root-errors.js',
-  'dist/root-file.js',
-  'dist/root-impl.js',
-  'dist/root-path-existing.js',
-  'dist/root-path-symlink.js',
-  'dist/root-path.js',
-  'dist/root-paths.js',
-  'dist/root-walk.js',
-  'dist/root.js',
-  'dist/safe-path-segment.js',
-  'dist/secure-temp-dir.js',
-  'dist/short-path.js',
-  'dist/sibling-temp.js',
-  'dist/sidecar-lock-acquire.js',
-  'dist/sidecar-lock-handle.js',
-  'dist/sidecar-lock-policy.js',
-  'dist/sidecar-lock-reclaim.js',
-  'dist/sidecar-lock.js',
-  'dist/string-coerce.js',
-  'dist/symlink-parents.js',
-  'dist/temp-cleanup.js',
-  'dist/temp-target.js',
-  'dist/test-hooks.js',
-  'dist/text-atomic.js',
-  'dist/timing.js',
-  'dist/trash.js',
-  'dist/windows-command.js',
-  'dist/windows-owner.js',
-  'dist/write-queue.js',
-  'package.json',
-] as const;
 function readFsSafePackageFile(root: string, relative: string): Buffer {
   const opened = openRootFileSync({
     absolutePath: path.join(root, relative),
@@ -196,7 +122,7 @@ function resolveFsSafePackageRoot(): string {
     version?: unknown;
   };
   reject(
-    any(metadata.name !== '@openclaw/fs-safe', metadata.version !== '0.5.6'),
+    any(metadata.name !== '@openclaw/fs-safe', metadata.version !== fsSafeVersion),
     'fs-safe package identity is invalid',
   );
   return root;
@@ -217,23 +143,41 @@ function fsSafeNativeTarget(): string {
   reject(!target, 'fs-safe native target is unsupported');
   return target!;
 }
-const fsSafePackageTreeSha256ByNativeTarget: Readonly<Record<string, string>> = {
-  'win32-x64-msvc': '8ade0dda968904ccbf92a0cbcb7ddd6496a866b39e90f5d90f934679e5619063',
-  'linux-x64-gnu': 'e783c09fcf3eda857742d927942ecccf458aa97d07fb9b48e1734727d376803d',
-  'linux-x64-musl': '615339660db2723a5d2eadb3743773870faee7c112aa1570a726fe83b6e96712',
-  'linux-arm64-gnu': 'b05b16995295bbb9be61c1a9a66eb3b967a66ce12b2f0e2e424e156f4a587a53',
-  'linux-arm64-musl': '1d070034384e79c951de5687ea4df7a427f5fc2a69f4bb3ae6b1353773364320',
-};
+function resolveFsSafeNativePackageRoot(root: string, nativeTarget: string): string {
+  const name = '@openclaw/fs-safe-' + nativeTarget;
+  const packageRequire = createRequire(path.join(root, 'dist', 'native.js'));
+  const entry = realpathSync(packageRequire.resolve(name));
+  const nativeRoot = path.dirname(entry);
+  const metadata = JSON.parse(readFsSafePackageFile(nativeRoot, 'package.json').toString('utf8')) as {
+    name?: unknown;
+    version?: unknown;
+    main?: unknown;
+  };
+  reject(
+    any(metadata.name !== name, metadata.version !== fsSafeVersion, metadata.main !== 'fs-safe-native.node'),
+    'fs-safe native package identity is invalid',
+  );
+  reject(entry !== path.join(nativeRoot, 'fs-safe-native.node'), 'fs-safe native entry is invalid');
+  return nativeRoot;
+}
 function fsSafePackageTreeHash(root: string, nativeTarget: string): string {
-  const files = [...fsSafePackageManifest, 'dist/native/' + nativeTarget + '/fs-safe-native.node'].sort();
+  const nativeRoot = resolveFsSafeNativePackageRoot(root, nativeTarget);
+  const files = [
+    ...fsSafePackageManifest.map((relative) => ({ root, relative, logical: relative })),
+    ...['package.json', 'fs-safe-native.node'].map((relative) => ({
+      root: nativeRoot,
+      relative,
+      logical: 'native/' + nativeTarget + '/' + relative,
+    })),
+  ].sort((left, right) => (left.logical < right.logical ? -1 : Number(left.logical > right.logical)));
   const digest = createHash('sha256');
   let totalBytes = 0;
-  files.forEach((relative) => {
-    const bytes = readFsSafePackageFile(root, relative);
+  files.forEach((file) => {
+    const bytes = readFsSafePackageFile(file.root, file.relative);
     totalBytes += bytes.byteLength;
     reject(totalBytes > fsSafePackageMaxBytes, 'fs-safe package size bound exceeded');
     const fileHash = createHash('sha256').update(bytes).digest('hex');
-    digest.update('file\0' + relative + '\0' + bytes.byteLength + '\0' + fileHash + '\0');
+    digest.update('file\0' + file.logical + '\0' + bytes.byteLength + '\0' + fileHash + '\0');
   });
   return digest.digest('hex');
 }
@@ -242,6 +186,11 @@ const fsSafePackageNativeTarget = fsSafeNativeTarget();
 const fsSafePackageAttested =
   fsSafePackageTreeHash(fsSafePackageRoot, fsSafePackageNativeTarget) ===
   fsSafePackageTreeSha256ByNativeTarget[fsSafePackageNativeTarget];
+function matchesAttestedNativeBinding(binding: unknown): boolean {
+  if (!binding) return false;
+  const nativeRoot = resolveFsSafeNativePackageRoot(fsSafePackageRoot, fsSafePackageNativeTarget);
+  return binding === moduleRequire(path.join(nativeRoot, 'fs-safe-native.node'));
+}
 function loadLinuxNativeBinding(): LinuxNativeBinding | undefined {
   if (!fsSafePackageAttested || process.platform !== 'linux') return undefined;
   const nativeModule = moduleRequire(path.join(fsSafePackageRoot, 'dist', 'native.js')) as {
@@ -254,6 +203,7 @@ function loadLinuxNativeBinding(): LinuxNativeBinding | undefined {
   const available = all(
     process.platform === 'linux',
     packageStillAttested,
+    packageStillAttested && matchesAttestedNativeBinding(binding),
     typeof binding?.cloneFileExclusive === 'function',
     typeof binding?.renameNoReplace === 'function',
     typeof binding?.renameReplace === 'function',
@@ -271,6 +221,7 @@ function loadWindowsNativeBinding(): WindowsNativeBinding | undefined {
     expected !== undefined && fsSafePackageTreeHash(fsSafePackageRoot, fsSafePackageNativeTarget) === expected;
   const available = all(
     packageStillAttested,
+    packageStillAttested && matchesAttestedNativeBinding(binding),
     typeof binding?.renameNoReplace === 'function',
     typeof binding?.renameReplace === 'function',
     typeof binding?.openBeneath === 'function',
@@ -279,6 +230,18 @@ function loadWindowsNativeBinding(): WindowsNativeBinding | undefined {
     typeof binding?.sha256File === 'function',
   );
   return [undefined, binding][Number(available)];
+}
+function assertFsSafeNativeCreateEnabled(label: string): void {
+  reject(
+    getFsSafeNativeConfig().mode === 'off',
+    label + ' requires the pinned fs-safe native provider to remain enabled',
+  );
+}
+function assertLinuxNativeProviderCurrent(label: string): void {
+  reject(
+    !linuxNativeBinding || loadLinuxNativeBinding() !== linuxNativeBinding,
+    label + ' requires the currently attested Linux native provider',
+  );
 }
 export interface ExclusiveRepositoryCreation {
   readonly ensureDirectory: (target: string, label: string) => Promise<string>;
@@ -296,7 +259,11 @@ export interface SafeRepositoryAccess {
   readonly containment?: 'kernel-atomic' | 'best-effort' | 'unavailable';
   readonly assurance_profile?: 'linux-kernel-atomic-v1' | 'windows-best-effort-v1';
   readonly filesystem?: 'linux-native' | 'ntfs' | 'refs' | 'unknown';
-  readonly package?: { readonly name: '@openclaw/fs-safe'; readonly version: '0.5.6'; readonly integrity: string };
+  readonly package?: {
+    readonly name: '@openclaw/fs-safe';
+    readonly version: typeof fsSafeVersion;
+    readonly integrity: string;
+  };
   readonly residual_risks?: readonly string[];
   readonly compareReserveReplace: (
     target: string,
@@ -308,6 +275,10 @@ export interface SafeRepositoryAccess {
   readonly prepareExclusiveCreation: () => Promise<ExclusiveRepositoryCreation>;
   readonly readText: (target: string, label: string) => string;
   readonly readBytes: (target: string, label: string) => Buffer;
+  /** No-follow bounded byte capture without CAS locks or writes; not a stable or multi-file snapshot. */
+  readonly readCapturedBytes: (target: string, label: string, maxBytes?: number) => Buffer;
+  /** Optional cooperative stable read under one per-file CAS lock; null is twice-observed absence. */
+  readonly readStableBytes?: (target: string, label: string) => Buffer | null;
   readonly fileExists: (target: string, label: string) => boolean;
   readonly listFiles: (target: string, label: string) => readonly string[];
   readonly removeFile: (target: string, label: string) => void;
@@ -323,6 +294,9 @@ export interface SafeRepositoryAccess {
   readonly ensureDirectoryAsync: (target: string, label: string) => Promise<string>;
   readonly writeExclusive: (target: string, contents: string, label: string) => void;
   readonly writeExclusiveAsync: (target: string, contents: string, label: string) => Promise<void>;
+  /** Publish complete bytes with the pinned Root.create no-replace contract. */
+  readonly writeExclusiveAtomicAsync: (target: string, contents: string, label: string) => Promise<void>;
+  readonly writeExclusiveBytesAsync: (target: string, contents: Uint8Array, label: string) => Promise<void>;
   readonly replaceAtomic: (target: string, expectedHash: string, contents: string, label: string) => void;
   readonly replaceAtomicAsync: (target: string, expectedHash: string, contents: string, label: string) => Promise<void>;
   // The target is a resource; locking uses its `.lock` sidecar without changing resource bytes.
@@ -376,8 +350,8 @@ const linuxHandleProvider = all(
 );
 const fsSafeWindowsPackage = {
   name: '@openclaw/fs-safe' as const,
-  version: '0.5.6' as const,
-  integrity: 'sha512-0M1vz1PEFAgCwTxhB1lt/B7z+TRTTWmlYJ3dSbdhjZp2AcfM7rXPGjQVJqHXpzpsb9SRxvKGrAM454Uul/Xy5g==',
+  version: fsSafeVersion,
+  integrity: fsSafeIntegrity,
 };
 const fsSafeWindowsProvider = all(
   process.platform === 'win32',
@@ -391,8 +365,21 @@ function lockOwnerPayload(fd: number, label: string): void {
   writeFileSync(fd, JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid, label }), 'utf8');
   fsyncSync(fd);
 }
+function publishOwnedLockPayload(fd: number, label: string): void {
+  try {
+    lockOwnerPayload(fd, label);
+  } catch (error) {
+    // The caller has not received this descriptor. Retain the uncertain sidecar, but close its owned handle.
+    try {
+      closeQuietly(fd);
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Lock owner payload and descriptor close failed');
+    }
+    throw error;
+  }
+}
 function lockOwnerPid(fd: number): number | null {
-  const value: unknown = JSON.parse(readBoundedBuffer(fd, 'lock owner').toString('utf8'));
+  const value: unknown = JSON.parse(readBoundedBuffer(fd, 'lock owner', maxRepositoryReadBytes, true).toString('utf8'));
   const record = value as { schema?: unknown; owner_pid?: unknown };
   return choose(
     all(
@@ -422,7 +409,11 @@ type ReclaimGuardOwnerState = {
   readonly owner: ReclaimGuardOwner | null;
   readonly mtimeMs: number;
 };
-type ReclaimGuard = { readonly parentFd: number; readonly guardName: string; readonly ownerToken: string };
+type ReclaimGuard = {
+  readonly parentFd: number;
+  readonly guardName: string;
+  readonly ownerToken: string;
+};
 type LockRemovalPredicate = (stats: Stats, ownerPid: number | null) => boolean;
 const reclaimGuardOwnerFile = 'owner.json';
 const reclaimGuardSchema = 'SafeRepositoryAccessReclaimGuard/v1';
@@ -455,7 +446,7 @@ function readReclaimGuardOwner(guardPath: string, label: string): ReclaimGuardOw
     any(ownerStats.isSymbolicLink(), !ownerStats.isFile(), ownerStats.nlink !== 1, ownerStats.size > 4096),
     label + ' reclaim guard owner is unsafe',
   );
-  const fd = openSync(ownerPath, fsConstants.O_RDONLY | noFollow);
+  const fd = openSync(ownerPath, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
   try {
     const opened = fstatSync(fd);
     reject(!sameFileIdentity(ownerStats, opened), label + ' reclaim guard owner identity changed');
@@ -646,6 +637,7 @@ function moveAndRemovePinnedLock(
   expected: Stats,
   predicate: LockRemovalPredicate,
   readOwner = true,
+  pinnedReadFd?: number,
 ): boolean {
   const native = linuxNativeBinding;
   reject(!native, label + ' requires the bundled Linux no-replace rename primitive');
@@ -665,7 +657,8 @@ function moveAndRemovePinnedLock(
       throw error;
     }
     const quarantinePath = childPath(parentFd, quarantineName);
-    const quarantineFd = openSync(quarantinePath, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+    // Borrow only a caller-owned read descriptor; its lifetime encloses this removal.
+    const quarantineFd = pinnedReadFd ?? openSync(quarantinePath, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
     try {
       const movedStats = fstatSync(quarantineFd);
       const pathStats = lstatSync(quarantinePath);
@@ -686,7 +679,7 @@ function moveAndRemovePinnedLock(
       removed = true;
       return true;
     } finally {
-      closeQuietly(quarantineFd);
+      if (pinnedReadFd === undefined) closeQuietly(quarantineFd);
     }
   } finally {
     choose(
@@ -708,19 +701,26 @@ function removeStaleLock(parentFd: number, name: string, label: string): boolean
   return choose(
     all(before.isFile(), before.nlink === 1, Date.now() - before.mtimeMs >= staleLockAgeMs),
     () => {
-      const fd = openSync(target, fsConstants.O_RDONLY | noFollow);
+      const fd = openSync(target, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
       try {
         const opened = fstatSync(fd);
         const owner = lockOwnerPid(fd);
         reject(!sameFileIdentity(before, opened), 'lock identity changed');
         reject(any(owner === null, processIsAlive(owner as number)), 'lock owner is alive');
-        return moveAndRemovePinnedLock(parentFd, name, label, opened, (stats, ownerPid) =>
-          all(
-            stats.isFile(),
-            stats.nlink === 1,
-            Date.now() - stats.mtimeMs >= staleLockAgeMs,
-            ownerPid !== null && !processIsAlive(ownerPid),
-          ),
+        return moveAndRemovePinnedLock(
+          parentFd,
+          name,
+          label,
+          opened,
+          (stats, ownerPid) =>
+            all(
+              stats.isFile(),
+              stats.nlink === 1,
+              Date.now() - stats.mtimeMs >= staleLockAgeMs,
+              ownerPid !== null && !processIsAlive(ownerPid),
+            ),
+          true,
+          fd,
         );
       } finally {
         closeQuietly(fd);
@@ -762,7 +762,7 @@ function openExclusiveLockAt(parentFd: number, name: string, label: string): Ope
     () => undefined,
   );
   const fd = openSync(target, fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow, 0o600);
-  lockOwnerPayload(fd, label);
+  publishOwnedLockPayload(fd, label);
   return { fd, parentFd, name };
 }
 function openExclusiveLock(root: string, target: string, label: string): OpenedExclusiveLock {
@@ -794,7 +794,7 @@ function releaseExclusiveLock(parentFd: number, name: string, fd: number): void 
   try {
     const owner = fstatSync(fd);
     try {
-      const currentFd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow);
+      const currentFd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
       try {
         choose(
           all(sameFileIdentity(owner, fstatSync(currentFd)), lockOwnerPid(currentFd) === process.pid),
@@ -805,6 +805,8 @@ function releaseExclusiveLock(parentFd: number, name: string, fd: number): void 
               'exclusive lock release',
               owner,
               (_stats, ownerPid) => ownerPid === process.pid,
+              true,
+              currentFd,
             );
           },
           () => undefined,
@@ -819,38 +821,44 @@ function releaseExclusiveLock(parentFd: number, name: string, fd: number): void 
     releaseReclaimGuard(guard, 'exclusive lock release');
   }
 }
-function readBoundedBufferStep(fd: number, label: string, total: number, chunks: readonly Buffer[]): Buffer {
-  const remaining = maxRepositoryReadBytes - total;
-  const buffer = Buffer.allocUnsafe(Math.min(boundedReadChunkBytes, remaining + 1));
-  const bytesRead = readSync(fd, buffer, 0, buffer.length, null);
-  const nextTotal = total + bytesRead;
-  reject(nextTotal > maxRepositoryReadBytes, label + ' exceeds the bounded repository read size');
-  const nextChunks = chunks.concat(
-    choose(
-      bytesRead === buffer.length,
-      () => buffer,
-      () => buffer.subarray(0, bytesRead),
-    ),
-  );
-  return choose(
-    bytesRead === 0,
-    () => Buffer.concat(nextChunks, nextTotal),
-    () => readBoundedBufferStep(fd, label, nextTotal, nextChunks),
-  );
-}
-function readBoundedBuffer(fd: number, label: string): Buffer {
-  return readBoundedBufferStep(fd, label, 0, []);
+function readBoundedBuffer(
+  fd: number,
+  label: string,
+  limit = maxRepositoryReadBytes,
+  positional = false,
+  initialSize = boundedReadChunkBytes - 1,
+): Buffer {
+  // Size is an allocation hint only: continue to EOF to include growth and
+  // retain the one-byte overflow probe after accepting exactly the bound.
+  let buffer = Buffer.allocUnsafe(Math.min(boundedReadChunkBytes, limit + 1, Math.max(1, initialSize + 1)));
+  const chunks: Buffer[] = [];
+  let total = 0;
+  let used = 0;
+  while (true) {
+    const bytesRead = readSync(fd, buffer, used, buffer.length - used, positional ? total : null);
+    total += bytesRead;
+    used += bytesRead;
+    reject(total > limit, label + ' exceeds the bounded repository read size');
+    if (bytesRead === 0) {
+      if (used > 0) chunks.push(buffer.subarray(0, used));
+      return Buffer.concat(chunks, total);
+    }
+    if (used === buffer.length) {
+      chunks.push(buffer);
+      buffer = Buffer.allocUnsafe(Math.min(boundedReadChunkBytes, limit - total + 1));
+      used = 0;
+    }
+  }
 }
 function readBoundedText(fd: number, label: string): string {
   return readBoundedBuffer(fd, label).toString('utf8');
 }
 function assertAncestorChain(root: string, label: string): void {
-  const chain = Array.from({ length: 64 }, (_, index) =>
-    Array.from({ length: index + 1 }, () => undefined).reduce(
-      (value) => path.dirname(value as string),
-      path.resolve(root),
-    ),
-  );
+  let cursor = path.resolve(root);
+  const chain = Array.from({ length: 64 }, () => {
+    cursor = path.dirname(cursor);
+    return cursor;
+  });
   chain
     .filter((cursor, index) => any(index === 0, chain[index - 1] !== cursor))
     .forEach((cursor) => {
@@ -966,28 +974,23 @@ function openFile(
     );
   }
 }
-function readTextUnlocked(root: string, target: string, label: string): string {
-  const opened = openFile(root, safeRelative(root, target, label), label, fsConstants.O_RDONLY, undefined, true);
+function readBytesUnlocked(root: string, target: string, label: string, limit = maxRepositoryReadBytes): Buffer {
+  const parent = openParent(root, safeRelative(root, target, label), label);
   try {
-    const stats = fstatSync(opened.fd);
-    regularFile(stats, label);
-    reject(stats.size > maxRepositoryReadBytes, label + ' exceeds the bounded repository read size');
-    return readBoundedText(opened.fd, label);
+    return readBytesAtParent(parent.fd, parent.name, label, limit);
   } finally {
-    closeQuietly(opened.fd);
-    closeQuietly(opened.parentFd);
+    closeQuietly(parent.fd);
   }
 }
-function readBytesUnlocked(root: string, target: string, label: string): Buffer {
-  const opened = openFile(root, safeRelative(root, target, label), label, fsConstants.O_RDONLY, undefined, true);
+function readBytesAtParent(parentFd: number, name: string, label: string, limit = maxRepositoryReadBytes): Buffer {
+  const fd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
   try {
-    const stats = fstatSync(opened.fd);
+    const stats = fstatSync(fd);
     regularFile(stats, label);
-    reject(stats.size > maxRepositoryReadBytes, label + ' exceeds the bounded repository read size');
-    return readBoundedBuffer(opened.fd, label);
+    reject(stats.size > limit, label + ' exceeds the bounded repository read size');
+    return readBoundedBuffer(fd, label, limit, false, stats.size);
   } finally {
-    closeQuietly(opened.fd);
-    closeQuietly(opened.parentFd);
+    closeQuietly(fd);
   }
 }
 function linuxCasLockName(targetName: string): string {
@@ -1026,37 +1029,45 @@ function acquireLinuxCasLock(root: string, target: string, label: string): Linux
   try {
     const lockName = linuxCasLockName(parent.name);
     const lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
-    try {
-      fsyncSync(lockFd);
-      return { parentFd: parent.fd, name: parent.name, lockName, lockFd };
-    } catch (error) {
-      try {
-        releaseExclusiveLock(parent.fd, lockName, lockFd);
-      } finally {
-        closeQuietly(lockFd);
-      }
-      throw error;
-    }
+    return { parentFd: parent.fd, name: parent.name, lockName, lockFd };
   } catch (error) {
     closeQuietly(parent.fd);
     throw error;
   }
 }
 function releaseLinuxCasLock(lock: LinuxCasLock, release: boolean): void {
-  try {
-    if (release) releaseExclusiveLock(lock.parentFd, lock.lockName, lock.lockFd);
-  } finally {
+  finalizeOwnedLock(lock.parentFd, lock.lockName, lock.lockFd, release, []);
+}
+function finalizeOwnedLock(
+  parentFd: number,
+  name: string,
+  lockFd: number,
+  release: boolean,
+  failures: unknown[],
+): void {
+  if (release) {
     try {
-      closeQuietly(lock.lockFd);
-    } finally {
-      closeQuietly(lock.parentFd);
+      releaseExclusiveLock(parentFd, name, lockFd);
+    } catch (error) {
+      failures.push(error);
     }
+  }
+  for (const fd of [lockFd, parentFd]) {
+    try {
+      closeQuietly(fd);
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1) {
+    throw new AggregateError(failures, 'Owned lock operation or cleanup failed', { cause: failures[0] });
   }
 }
 function withLinuxCasLocks<T>(
   root: string,
   targets: readonly { readonly target: string; readonly label: string }[],
-  operation: () => T,
+  operation: (locks: readonly LinuxCasLock[]) => T,
 ): T {
   const ordered = targets
     .map((item) => ({ ...item, key: safeRelative(root, item.target, item.label).join('/') }))
@@ -1073,7 +1084,7 @@ function withLinuxCasLocks<T>(
       lockKeys.add(item.key);
       rejectLinuxOrphanBackups(lock.parentFd, lock.name, item.label);
     }
-    result = operation();
+    result = operation(locks);
   } catch (error) {
     failures.push(error);
   }
@@ -1092,10 +1103,43 @@ function withLinuxCasLocks<T>(
   return result;
 }
 function readText(root: string, target: string, label: string): string {
-  return withLinuxCasLocks(root, [{ target, label }], () => readTextUnlocked(root, target, label));
+  return readBytes(root, target, label).toString('utf8');
 }
 function readBytes(root: string, target: string, label: string): Buffer {
-  return withLinuxCasLocks(root, [{ target, label }], () => readBytesUnlocked(root, target, label));
+  return withLinuxCasLocks(root, [{ target, label }], (locks) => {
+    // The single target is acquired before invoking the callback; acquisition failure never calls it.
+    const lock = locks[0]!;
+    return readBytesAtParent(lock.parentFd, lock.name, label);
+  });
+}
+
+function linuxReadStableBytes(root: string, target: string, label: string): Buffer | null {
+  let acquired = false;
+  try {
+    return withLinuxCasLocks(root, [{ target, label }], (locks) => {
+      acquired = true;
+      const lock = locks[0]!;
+      if (!linuxFileExistsAtParent(lock.parentFd, lock.name)) {
+        reject(linuxFileExistsAtParent(lock.parentFd, lock.name), 'scoped source appeared during snapshot');
+        return null;
+      }
+      const first = readBytesAtParent(lock.parentFd, lock.name, label);
+      reject(!linuxFileExistsAtParent(lock.parentFd, lock.name), 'scoped source disappeared during snapshot');
+      const second = readBytesAtParent(lock.parentFd, lock.name, label);
+      reject(!first.equals(second), 'scoped source changed during snapshot');
+      return first;
+    });
+  } catch (error) {
+    // An absent parent cannot own a lock. Probe its safe chain twice, never translate a read failure.
+    if (!acquired && error !== null && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+      reject(
+        linuxFileExists(root, target, label) || linuxFileExists(root, target, label),
+        'scoped source appeared during snapshot',
+      );
+      return null;
+    }
+    throw error;
+  }
 }
 function openOrCreateDirectoryAt(parentFd: number, segment: string): number {
   const target = childPath(parentFd, segment);
@@ -1165,15 +1209,19 @@ function directoryIdentity(root: string, target: string, label: string): string 
     () => windowsDirectoryIdentity(root, target, label),
   );
 }
-function boundedContentBytes(contents: string, label: string): Buffer {
-  const bytes = Buffer.from(contents, 'utf8');
+function repositoryContentBytes(contents: string | Uint8Array, label: string): Buffer {
+  reject(typeof contents !== 'string' && !(contents instanceof Uint8Array), label + ' content type is invalid');
+  return typeof contents === 'string' ? Buffer.from(contents, 'utf8') : Buffer.from(contents);
+}
+function boundedContentBytes(contents: string | Uint8Array, label: string): Buffer {
+  const bytes = repositoryContentBytes(contents, label);
   reject(
     bytes.length > maxRepositoryReadBytes,
     label + ' replacement content exceeds the bounded repository read size',
   );
   return bytes;
 }
-function writeExclusiveUnlocked(root: string, target: string, contents: string, label: string): void {
+function writeExclusiveUnlocked(root: string, target: string, contents: string | Uint8Array, label: string): void {
   const bytes = boundedContentBytes(contents, label);
   const opened = openFile(
     root,
@@ -1191,19 +1239,20 @@ function writeExclusiveUnlocked(root: string, target: string, contents: string, 
     closeQuietly(opened.parentFd);
   }
 }
-function writeExclusive(root: string, target: string, contents: string, label: string): void {
+function writeExclusive(root: string, target: string, contents: string | Uint8Array, label: string): void {
   withLinuxCasLocks(root, [{ target, label }], () => writeExclusiveUnlocked(root, target, contents, label));
 }
 function withExclusiveLock<T>(root: string, target: string, label: string, operation: () => T): T {
   const opened = openExclusiveLock(root, target, label);
+  const failures: unknown[] = [];
+  let result!: T;
   try {
-    fsyncSync(opened.fd);
-    return operation();
-  } finally {
-    releaseExclusiveLock(opened.parentFd, opened.name, opened.fd);
-    closeQuietly(opened.fd);
-    closeQuietly(opened.parentFd);
+    result = operation();
+  } catch (error) {
+    failures.push(error);
   }
+  finalizeOwnedLock(opened.parentFd, opened.name, opened.fd, true, failures);
+  return result;
 }
 async function withExclusiveLockAsync<T>(
   root: string,
@@ -1212,14 +1261,15 @@ async function withExclusiveLockAsync<T>(
   operation: () => Promise<T>,
 ): Promise<T> {
   const opened = openExclusiveLock(root, target, label);
+  const failures: unknown[] = [];
+  let result!: T;
   try {
-    fsyncSync(opened.fd);
-    return await operation();
-  } finally {
-    releaseExclusiveLock(opened.parentFd, opened.name, opened.fd);
-    closeQuietly(opened.fd);
-    closeQuietly(opened.parentFd);
+    result = await operation();
+  } catch (error) {
+    failures.push(error);
   }
+  finalizeOwnedLock(opened.parentFd, opened.name, opened.fd, true, failures);
+  return result;
 }
 function rawHash(value: string | Buffer): string {
   const bytes = choose<Buffer>(
@@ -1370,7 +1420,6 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
   let recoveryError: unknown;
   try {
     lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
-    fsyncSync(lockFd);
     recoverLinuxOrphanBackup(native as LinuxNativeBinding, parent.fd, name, expectedHash, desiredHash, label);
     const currentFd = openSync(childPath(parent.fd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
     const initialStats = fstatSync(currentFd);
@@ -1627,12 +1676,17 @@ function fsSafeRelative(root: string, target: string, label: string): string {
 function fsSafeAbsolute(root: string, target: string, label: string): string {
   return path.resolve(root, fsSafeRelative(root, target, label));
 }
-function fsSafeOpen(root: string, target: string, label: string): { fd: number; stat: Stats } {
+function fsSafeOpen(
+  root: string,
+  target: string,
+  label: string,
+  limit = maxRepositoryReadBytes,
+): { fd: number; stat: Stats } {
   const opened = openRootFileSync({
     absolutePath: fsSafeAbsolute(root, target, label),
     rootPath: root,
     boundaryLabel: label,
-    maxBytes: maxRepositoryReadBytes,
+    maxBytes: limit,
     rejectHardlinks: true,
     rejectSymlinks: true,
     allowedType: 'file',
@@ -1650,10 +1704,10 @@ function fsSafeReadText(root: string, target: string, label: string): string {
     closeQuietly(opened.fd);
   }
 }
-function fsSafeReadBytes(root: string, target: string, label: string): Buffer {
-  const opened = fsSafeOpen(root, target, label);
+function fsSafeReadBytes(root: string, target: string, label: string, limit = maxRepositoryReadBytes): Buffer {
+  const opened = fsSafeOpen(root, target, label, limit);
   try {
-    return readBoundedBuffer(opened.fd, label);
+    return readBoundedBuffer(opened.fd, label, limit);
   } finally {
     closeQuietly(opened.fd);
   }
@@ -1692,7 +1746,12 @@ function windowsOpenParent(
   root: string,
   target: string,
   label: string,
-): { readonly rootFd: number; readonly parentFd: number; readonly parentRelative: string; readonly basename: string } {
+): {
+  readonly rootFd: number;
+  readonly parentFd: number;
+  readonly parentRelative: string;
+  readonly basename: string;
+} {
   const segments = safeRelative(root, target, label);
   reject(segments.length < 1, label + ' target is empty');
   const rootHandle = windowsOpenRoot(root, label);
@@ -1740,7 +1799,7 @@ function windowsEnsureDirectory(root: string, target: string, label: string): st
     closeQuietly(opened.fd);
   }
 }
-function windowsWriteExclusive(root: string, target: string, contents: string, label: string): void {
+function windowsWriteExclusive(root: string, target: string, contents: string | Uint8Array, label: string): void {
   reject(!windowsNativeBinding, label + ' requires the pinned native provider');
   const bytes = boundedContentBytes(contents, label);
   const opened = windowsOpenParent(root, target, label);
@@ -1933,13 +1992,23 @@ async function windowsWithExclusiveLockAsync<T>(
     messagePrefix: label + ' lock acquisition',
   });
   const trustedRoot =
-    lockRoot ?? (await createFsSafeRoot(root, { symlinks: 'reject', hardlinks: 'reject', mkdir: false, mode: 0o600 }));
+    lockRoot ??
+    (await createFsSafeRoot(root, {
+      symlinks: 'reject',
+      hardlinks: 'reject',
+      mkdir: false,
+      mode: 0o600,
+    }));
   let entered = false;
   try {
     return await withFileLock(
       absolute,
       {
-        payload: async () => ({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid, label }),
+        payload: async () => ({
+          schema: 'SafeRepositoryAccessLock/v1',
+          owner_pid: process.pid,
+          label,
+        }),
         staleRecovery: 'fail-closed',
         timeoutMs: 0,
         lockRoot: trustedRoot,
@@ -2098,6 +2167,18 @@ function fsSafeListFiles(root: string, target: string, label: string): readonly 
   reject(any(!stats.isDirectory(), stats.isSymbolicLink()), label + ' must be a real directory');
   return readdirSync(absolutePath);
 }
+function linuxFileExistsAtParent(parentFd: number, name: string): boolean {
+  let fd = -1;
+  try {
+    fd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  } finally {
+    if (fd >= 0) closeQuietly(fd);
+  }
+}
 function linuxFileExistsUnlocked(root: string, target: string, label: string): boolean {
   const absolute = path.resolve(root, target);
   const relative = path.relative(root, absolute);
@@ -2106,16 +2187,7 @@ function linuxFileExistsUnlocked(root: string, target: string, label: string): b
   try {
     const parent = openParent(root, segments, label);
     parentFd = parent.fd;
-    let fd = -1;
-    try {
-      fd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
-      return true;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
-      throw error;
-    } finally {
-      if (fd >= 0) closeQuietly(fd);
-    }
+    return linuxFileExistsAtParent(parent.fd, parent.name);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
     throw error;
@@ -2124,8 +2196,14 @@ function linuxFileExistsUnlocked(root: string, target: string, label: string): b
   }
 }
 function linuxFileExists(root: string, target: string, label: string): boolean {
+  // The canonical root marker is advisory metadata, never a product CAS target.
+  // Probe it without writing a sidecar; all metadata byte/descendant access stays denied.
+  if (target === '.git') return linuxFileExistsUnlocked(root, target, label);
   try {
-    return withLinuxCasLocks(root, [{ target, label }], () => linuxFileExistsUnlocked(root, target, label));
+    return withLinuxCasLocks(root, [{ target, label }], (locks) => {
+      const lock = locks[0]!;
+      return linuxFileExistsAtParent(lock.parentFd, lock.name);
+    });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
     throw error;
@@ -2153,7 +2231,6 @@ function linuxRemoveFile(root: string, target: string, label: string): void {
     let lockFd = -1;
     try {
       lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
-      fsyncSync(lockFd);
       rejectLinuxOrphanBackups(parent.fd, parent.name, label);
       let targetFd = -1;
       try {
@@ -2307,7 +2384,12 @@ function windowsAccess(root: string): SafeRepositoryAccess {
   const createHandle = async (): Promise<FsSafeRoot> => {
     if (!handle) {
       checkCreateCapability();
-      handle = createFsSafeRoot(root, { symlinks: 'reject', hardlinks: 'reject', mkdir: false, mode: 0o600 });
+      handle = createFsSafeRoot(root, {
+        symlinks: 'reject',
+        hardlinks: 'reject',
+        mkdir: false,
+        mode: 0o600,
+      });
     }
     return handle;
   };
@@ -2367,6 +2449,8 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     },
     readText: (target, label) => fsSafeReadText(root, target, label),
     readBytes: (target, label) => fsSafeReadBytes(root, target, label),
+    readCapturedBytes: (target, label, limit = maxRepositoryReadBytes) =>
+      fsSafeReadBytes(root, target, label, captureReadLimit(limit)),
     fileExists: (target, label) => fsSafeFileExists(root, target, label),
     listFiles: (target, label) => fsSafeListFiles(root, target, label),
     removeFile: (target, label) => windowsRemoveFile(root, target, label),
@@ -2378,6 +2462,19 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     ensureDirectoryAsync: async (target, label) => windowsEnsureDirectory(root, target, label),
     writeExclusive: (target, contents, label) => windowsWriteExclusive(root, target, contents, label),
     writeExclusiveAsync: async (target, contents, label) => windowsWriteExclusive(root, target, contents, label),
+    writeExclusiveAtomicAsync: async (target, contents, label) => {
+      assertFsSafeNativeCreateEnabled(label);
+      reject(!windowsNativeBinding, label + ' requires the pinned native atomic create provider');
+      checkCreateCapability();
+      const opened = await createHandle();
+      const relative = checkParents(target, label);
+      assertFsSafeNativeCreateEnabled(label);
+      checkCreateCapability();
+      await opened.create(relative, boundedContentBytes(contents, label), { mkdir: false, mode: 0o600 });
+      assertFsSafeNativeCreateEnabled(label);
+      checkCreateCapability();
+    },
+    writeExclusiveBytesAsync: async (target, contents, label) => windowsWriteExclusive(root, target, contents, label),
     replaceAtomic: (target, expectedHash, contents, label) =>
       windowsReplaceAtomic(root, target, expectedHash, contents, label),
     replaceAtomicAsync: async (target, expectedHash, contents, label) => {
@@ -2426,6 +2523,13 @@ function compareReserveReplace(
     status: 'applied',
   };
 }
+function captureReadLimit(limit: number): number {
+  reject(
+    !Number.isSafeInteger(limit) || limit <= 0 || limit > maxRepositoryReadBytes,
+    'capture read bound must be a positive safe integer no greater than 8 MiB',
+  );
+  return limit;
+}
 function canonicalRepositoryRoot(repositoryRoot: string): string {
   reject(
     any(typeof repositoryRoot !== 'string', !path.isAbsolute(repositoryRoot)),
@@ -2445,7 +2549,7 @@ function linuxAccess(root: string): SafeRepositoryAccess {
     ancestor_binding: 'directory-handle',
     atomic_replace: 'fsync-temp-rename',
     residual_risks: [
-      'Linux readText, readBytes, fileExists, writeExclusive, replaceAtomic, removeFile, and moveNoReplaceAsync coordinate through the target .cas.lock; listFiles remains advisory.',
+      'Linux readText, readBytes, ordinary fileExists, writeExclusive, replaceAtomic, removeFile, and moveNoReplaceAsync coordinate through the target .cas.lock; the canonical root .git existence marker and listFiles remain advisory.',
       'The attested descriptor-relative renameReplace publishes a synced sibling temp atomically, so raw readers see complete old or new bytes on successful replacement; they do not wait for recovery and may see private siblings in directory listings.',
       'The pinned native binding has no conditional replace keyed to the displaced inode; target compare-and-swap therefore requires cooperative .cas.lock writers, and uncooperative same-privilege mutation between the final identity check and rename is outside that guarantee.',
     ],
@@ -2460,6 +2564,9 @@ function linuxAccess(root: string): SafeRepositoryAccess {
     },
     readText: (target, label) => readText(root, target, label),
     readBytes: (target, label) => readBytes(root, target, label),
+    readCapturedBytes: (target, label, limit = maxRepositoryReadBytes) =>
+      readBytesUnlocked(root, target, label, captureReadLimit(limit)),
+    readStableBytes: (target, label) => linuxReadStableBytes(root, target, label),
     fileExists: (target, label) => linuxFileExists(root, target, label),
     listFiles: (target, label) => linuxListFiles(root, target, label),
     removeFile: (target, label) => linuxRemoveFile(root, target, label),
@@ -2473,6 +2580,31 @@ function linuxAccess(root: string): SafeRepositoryAccess {
     ensureDirectoryAsync: async (target, label) => ensureDirectory(root, target, label),
     writeExclusive: (target, contents, label) => writeExclusive(root, target, contents, label),
     writeExclusiveAsync: async (target, contents, label) => writeExclusive(root, target, contents, label),
+    writeExclusiveAtomicAsync: async (target, contents, label) => {
+      assertFsSafeNativeCreateEnabled(label);
+      assertLinuxNativeProviderCurrent(label);
+      const identity = linuxDirectoryIdentity(root, '.', label);
+      const bytes = boundedContentBytes(contents, label);
+      const opened = await createFsSafeRoot(root, {
+        symlinks: 'reject',
+        hardlinks: 'reject',
+        mkdir: false,
+        mode: 0o600,
+      });
+      reject(linuxDirectoryIdentity(root, '.', label) !== identity, label + ' root changed during atomic-create setup');
+      const relative = fsSafeRelative(root, target, label);
+      assertFsSafeNativeCreateEnabled(label);
+      assertLinuxNativeProviderCurrent(label);
+      await opened.create(relative, bytes, { mkdir: false, mode: 0o600 });
+      assertFsSafeNativeCreateEnabled(label);
+      assertLinuxNativeProviderCurrent(label);
+      reject(linuxDirectoryIdentity(root, '.', label) !== identity, label + ' root changed during atomic publication');
+      reject(
+        rawHash(fsSafeReadBytes(root, target, label)) !== rawHash(bytes),
+        label + ' atomic publication afterimage differs',
+      );
+    },
+    writeExclusiveBytesAsync: async (target, contents, label) => writeExclusive(root, target, contents, label),
     replaceAtomic: (target, expectedHash, contents, label) =>
       replaceAtomicLinux(root, target, expectedHash, contents, label),
     replaceAtomicAsync: async (target, expectedHash, contents, label) =>
@@ -2498,5 +2630,14 @@ export function requireSafeRepositoryAccess(repositoryRoot: string): SafeReposit
   const access = detectSafeRepositoryAccess(repositoryRoot);
   access.assertAvailable();
   return access;
+}
+/** Nullable exact text image for CAS/dependency capture; invalid UTF-8 is never substituted. */
+export function readRepositoryTextImage(access: SafeRepositoryAccess, target: string, label: string): string | null {
+  const bytes = access.readStableBytes
+    ? access.readStableBytes(target, label)
+    : access.fileExists(target, label)
+      ? access.readBytes(target, label)
+      : null;
+  return bytes === null ? null : new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
 }
 export const safeRepositoryProviderAvailable = linuxHandleProvider || fsSafeWindowsProvider;

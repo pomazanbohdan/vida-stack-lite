@@ -8,35 +8,55 @@ import {
   readFileSync,
   readdirSync,
   renameSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { runtimePackageAccess } from '../src/config/runtime-config.ts';
+import { validateResearchResult, validateResearchSynthesis } from '../src/research-decision.ts';
 
+/** @typedef {import('../src/research-decision.ts').ResearchResult} ResearchResult */
+/** @typedef {import('../src/research-decision.ts').ResearchSynthesis} ResearchSynthesis */
+/** @typedef {{path: string, before_sha256: string, after_sha256: string, before_digest: string, after_digest: string, old_source_id: string, new_source_id: string, before: string, after: string, result_id: string}} ResearchRepairChange */
+/** @typedef {{schema: 'VidaResearchSourceIdentityRepairPlan/v1', repair_id: string, actor: string, work_item_id: string, records_root: string, changelog_path: string, old_source_id: string, changes: ResearchRepairChange[], changelog_before_sha256: string, changelog_after_sha256: string, changelog_before: string, changelog_after: string, dependent_synthesis_paths: [], timestamp: string, digest: string}} ResearchRepairPlan */
+/** @typedef {{path: string, raw: Buffer, value: ResearchResult}} ParsedResearchRecord */
+/** @typedef {{repairId: string, actor: string, timestamp: string, records: Array<{path: string, raw: Buffer}>, recordsRoot: string, changelogPath: string, changelogBefore: string, runtimeRoot: string}} DeriveResearchRepairInput */
+
+/** @param {string | Uint8Array} bytes */
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+/** @param {unknown} value */
 const json = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+/** @param {unknown} value @returns {string} */
 const stable = (value) =>
   Array.isArray(value)
     ? `[${value.map(stable).join(',')}]`
-    : value && typeof value === 'object'
+    : isRecord(value)
       ? `{${Object.keys(value)
           .sort()
           .map((key) => `${JSON.stringify(key)}:${stable(value[key])}`)
           .join(',')}}`
-      : JSON.stringify(value);
+      : (JSON.stringify(value) ?? 'undefined');
+/** @param {unknown} value */
 const digest = (value) => sha(Buffer.from(stable(value)));
-const fail = (message) => {
+/** @param {unknown} error @returns {boolean} */
+function isMissingFileError(error) {
+  return isRecord(error) && error.code === 'ENOENT';
+}
+/** @param {string} message @returns {never} */
+function fail(message) {
   throw new Error(`vida research repair: ${message}`);
-};
+}
+/** @param {string} file */
 function stat(file) {
   try {
     return lstatSync(file);
   } catch (error) {
-    if (error.code === 'ENOENT') return null;
+    if (isMissingFileError(error)) return null;
     throw error;
   }
 }
+/** @param {string} root */
 function projectRoot(root) {
   const absolute = path.resolve(root);
   let current = path.parse(absolute).root;
@@ -49,11 +69,13 @@ function projectRoot(root) {
   }
   return absolute;
 }
+/** @param {string} file */
 function bytes(file) {
   const info = stat(file);
   if (!info?.isFile() || info.isSymbolicLink()) fail(`unsafe or absent file: ${file}`);
   return readFileSync(file);
 }
+/** @param {string} root @param {string} relative */
 function at(root, relative) {
   if (
     typeof relative !== 'string' ||
@@ -69,45 +91,181 @@ function at(root, relative) {
     const info = stat(parent);
     if (!info?.isDirectory() || info.isSymbolicLink()) fail('unsafe parent directory');
   }
-  return path.join(parent, relative.split('/').at(-1));
+  return path.join(parent, requiredLeaf(relative.split('/')));
 }
+/** @param {string[]} parts @returns {string} */
+function requiredLeaf(parts) {
+  const leaf = parts.at(-1);
+  if (!leaf) fail('unsafe relative path');
+  return leaf;
+}
+/** @param {Buffer} raw @param {string} schema @returns {Record<string, unknown>} */
 function parseRecord(raw, schema) {
+  /** @type {unknown} */
   let value;
   try {
     value = JSON.parse(raw.toString('utf8'));
   } catch {
     fail('invalid JSON record');
   }
-  if (value?.schema !== schema || !/^[a-f0-9]{64}$/.test(value.digest) || !raw.equals(json(value)))
-    fail('record shape or encoding differs');
+  if (!isCanonicalResearchRecord(value, raw, schema)) fail('record shape or encoding differs');
   const { digest: actual, ...body } = value;
   if (actual !== digest(body)) fail('record digest differs');
   return value;
 }
+/** @param {unknown} value @param {Buffer} raw @param {string} schema @returns {value is Record<string, unknown>} */
+function isCanonicalResearchRecord(value, raw, schema) {
+  return (
+    isRecord(value) &&
+    value.schema === schema &&
+    typeof value.digest === 'string' &&
+    /^[a-f0-9]{64}$/.test(value.digest) &&
+    raw.equals(json(value))
+  );
+}
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+/** @param {unknown} value @returns {value is string} */
+function isString(value) {
+  return typeof value === 'string';
+}
+/** @param {unknown} value @returns {value is ResearchRepairChange} */
+function isResearchRepairChange(value) {
+  return (
+    isRecord(value) &&
+    Object.keys(value).sort().join(',') ===
+      'after,after_digest,after_sha256,before,before_digest,before_sha256,new_source_id,old_source_id,path,result_id' &&
+    [
+      'path',
+      'before_sha256',
+      'after_sha256',
+      'before_digest',
+      'after_digest',
+      'old_source_id',
+      'new_source_id',
+      'before',
+      'after',
+      'result_id',
+    ].every((key) => isString(value[key]))
+  );
+}
+/** @param {unknown} value @returns {value is ResearchRepairPlan} */
+function isResearchRepairPlan(value) {
+  if (!isRecord(value)) return false;
+  const keys = [
+    'schema',
+    'repair_id',
+    'actor',
+    'work_item_id',
+    'records_root',
+    'changelog_path',
+    'old_source_id',
+    'changes',
+    'changelog_before_sha256',
+    'changelog_after_sha256',
+    'changelog_before',
+    'changelog_after',
+    'dependent_synthesis_paths',
+    'timestamp',
+    'digest',
+  ];
+  return (
+    Object.keys(value).sort().join(',') === [...keys].sort().join(',') &&
+    value.schema === 'VidaResearchSourceIdentityRepairPlan/v1' &&
+    [
+      'repair_id',
+      'actor',
+      'work_item_id',
+      'records_root',
+      'changelog_path',
+      'old_source_id',
+      'changelog_before_sha256',
+      'changelog_after_sha256',
+      'changelog_before',
+      'changelog_after',
+      'timestamp',
+      'digest',
+    ].every((key) => isString(value[key])) &&
+    Array.isArray(value.changes) &&
+    value.changes.length === 2 &&
+    value.changes.every(isResearchRepairChange) &&
+    Array.isArray(value.dependent_synthesis_paths) &&
+    value.dependent_synthesis_paths.length === 0
+  );
+}
+/** @param {string} runtimeRoot @param {'ResearchResult/v1' | 'ResearchSynthesis/v1'} schema */
 function schemaValidator(runtimeRoot, schema) {
   const runtime = path.resolve(runtimeRoot);
   const require = createRequire(path.join(runtime, 'package.json'));
-  const Ajv2020 = require('ajv/dist/2020').default;
+  const Ajv2020 = ajv2020Constructor(require('ajv/dist/2020'));
   const name = schema === 'ResearchResult/v1' ? 'research-result' : 'research-synthesis';
-  const definition = JSON.parse(bytes(path.join(runtime, 'schemas', `${name}.v1.schema.json`)));
+  const definition = readAjvSchema(path.join(runtime, 'schemas', `${name}.v1.schema.json`));
   return new Ajv2020({ strict: false, allErrors: true }).compile(definition);
 }
+/** @param {unknown} value @returns {Ajv2020Constructor} */
+function ajv2020Constructor(value) {
+  if (!isAjv2020Module(value)) fail('schema validator is unavailable');
+  return value.default;
+}
+/** @param {string} file @returns {import('ajv').AnySchema} */
+function readAjvSchema(file) {
+  /** @type {unknown} */
+  const definition = JSON.parse(bytes(file).toString('utf8'));
+  if (!isAjvSchema(definition)) fail('current schema definition is invalid');
+  return definition;
+}
+/** @typedef {typeof import('ajv').default} Ajv2020Constructor */
+/** @param {unknown} value @returns {value is {default: Ajv2020Constructor}} */
+function isAjv2020Module(value) {
+  return (isRecord(value) || typeof value === 'function') && 'default' in value && typeof value.default === 'function';
+}
+/** @param {unknown} value @returns {value is import('ajv').AnySchema} */
+function isAjvSchema(value) {
+  return typeof value === 'boolean' || isRecord(value);
+}
+/** @param {unknown} value @returns {value is {parse: (source: string) => unknown}} */
+function isYamlModule(value) {
+  return isRecord(value) && 'parse' in value && typeof value.parse === 'function';
+}
+/** @overload @param {Buffer} raw @param {'ResearchResult/v1'} schema @param {string} runtimeRoot @returns {ResearchResult} */
+/** @overload @param {Buffer} raw @param {'ResearchSynthesis/v1'} schema @param {string} runtimeRoot @returns {ResearchSynthesis} */
+/** @param {Buffer} raw @param {'ResearchResult/v1' | 'ResearchSynthesis/v1'} schema @param {string} runtimeRoot @returns {ResearchResult | ResearchSynthesis} */
 function validateRecord(raw, schema, runtimeRoot) {
   const value = parseRecord(raw, schema);
   if (!schemaValidator(runtimeRoot, schema)(value)) fail(`${schema} violates current schema`);
-  return value;
+  return validateSourceRecord(value, schema);
 }
+/** @param {Record<string, unknown>} value @param {'ResearchResult/v1' | 'ResearchSynthesis/v1'} schema @returns {ResearchResult | ResearchSynthesis} */
+function validateSourceRecord(value, schema) {
+  return schema === 'ResearchResult/v1' ? validateResearchResult(value) : validateResearchSynthesis(value);
+}
+/** @param {string} project @param {string} runtimeRoot @returns {{research_records: string, changelog: string}} */
 function configuredPaths(project, runtimeRoot) {
   const require = createRequire(path.join(path.resolve(runtimeRoot), 'package.json'));
-  const YAML = require('yaml');
+  /** @type {unknown} */
+  const yamlModule = require('yaml');
+  if (!isYamlModule(yamlModule)) fail('runtime configuration parser is unavailable');
+  const YAML = yamlModule;
+  /** @type {unknown} */
   const config = YAML.parse(bytes(at(project, 'agent-runtime.config.v1.yaml')).toString('utf8'));
-  const paths = config?.research_decision?.paths;
-  if (!paths || typeof paths.research_records !== 'string' || typeof paths.changelog !== 'string')
+  const paths = configuredResearchPaths(config);
+  const researchRecords = paths.research_records;
+  const changelog = paths.changelog;
+  if (typeof researchRecords !== 'string' || typeof changelog !== 'string')
     fail('configured research paths unavailable');
-  at(project, paths.research_records);
-  at(project, paths.changelog);
-  return paths;
+  at(project, researchRecords);
+  at(project, changelog);
+  return { research_records: researchRecords, changelog };
 }
+/** @param {unknown} config @returns {Record<string, unknown>} */
+function configuredResearchPaths(config) {
+  if (!isRecord(config) || !isRecord(config.research_decision) || !isRecord(config.research_decision.paths))
+    fail('configured research paths unavailable');
+  return config.research_decision.paths;
+}
+/** @param {string} root @param {string} recordsRoot @param {Set<string>} resultIds @param {string} runtimeRoot @returns {string[]} */
 function dependencyPaths(root, recordsRoot, resultIds, runtimeRoot) {
   const folder = at(root, recordsRoot);
   const info = stat(folder);
@@ -120,22 +278,39 @@ function dependencyPaths(root, recordsRoot, resultIds, runtimeRoot) {
   }
   return synthesis.sort();
 }
+/** @template T @param {T[]} values @param {string} message @returns {[T, T]} */
+function exactPair(values, message) {
+  const first = values[0];
+  const second = values[1];
+  if (values.length !== 2 || !first || !second) fail(message);
+  return [first, second];
+}
+/** @param {ResearchResult} result @param {string} oldId @param {string} newId @returns {ResearchResult} */
 function replaceReferences(result, oldId, newId) {
+  /** @param {readonly string[]} list */
   const replace = (list) => list.map((value) => (value === oldId ? newId : value));
-  const next = structuredClone(result);
-  const source = next.source_refs.find((item) => item.source_id === oldId);
-  if (!source || next.source_refs.filter((item) => item.source_id === oldId).length !== 1)
-    fail('ambiguous source ID within result');
-  source.source_id = newId;
-  for (const finding of next.findings) finding.source_ids = replace(finding.source_ids);
-  for (const conflict of next.conflicts) conflict.source_ids = replace(conflict.source_ids);
-  for (const option of next.options) option.evidence_refs = replace(option.evidence_refs);
-  if (next.recommendation) next.recommendation.evidence_refs = replace(next.recommendation.evidence_refs);
-  const { digest: ignored, ...body } = next;
+  const matches = result.source_refs.filter((item) => item.source_id === oldId);
+  if (matches.length !== 1) fail('ambiguous source ID within result');
+  const next = {
+    ...result,
+    source_refs: result.source_refs.map((item) =>
+      item.source_id === oldId ? { ...item, source_id: newId } : { ...item },
+    ),
+    findings: result.findings.map((item) => ({ ...item, source_ids: replace(item.source_ids) })),
+    conflicts: result.conflicts.map((item) => ({ ...item, source_ids: replace(item.source_ids) })),
+    options: result.options.map((item) => ({ ...item, evidence_refs: replace(item.evidence_refs) })),
+    recommendation: result.recommendation
+      ? { ...result.recommendation, evidence_refs: replace(result.recommendation.evidence_refs) }
+      : null,
+  };
+  const { digest: _oldDigest, ...body } = next;
+  void _oldDigest;
   next.digest = digest(body);
   return next;
 }
 
+/** @param {DeriveResearchRepairInput} input */
+/** @param {DeriveResearchRepairInput} input @returns {ResearchRepairPlan} */
 function deriveRepairPlan({
   repairId,
   actor,
@@ -146,44 +321,46 @@ function deriveRepairPlan({
   changelogBefore,
   runtimeRoot,
 }) {
+  const [firstInput, secondInput] = exactPair(records, 'repair identity or exact two-file contour invalid');
   if (
     !/^[a-z0-9][a-z0-9._-]{0,79}$/.test(repairId) ||
     typeof actor !== 'string' ||
     !actor.trim() ||
     !/^\d{4}-\d{2}-\d{2}T/.test(timestamp) ||
-    !Array.isArray(records) ||
-    records.length !== 2 ||
-    records[0].path === records[1].path
+    firstInput.path === secondInput.path
   )
     fail('repair identity or exact two-file contour invalid');
-  records = records.map(({ path: relative, raw }) => {
+  const checkedRecords = records.map(({ path: relative, raw }) => {
     if (!relative.startsWith(`${recordsRoot}/`) || !relative.endsWith('.research.json'))
       fail('repair path escapes configured research records');
     return { path: relative, raw, value: validateRecord(raw, 'ResearchResult/v1', runtimeRoot) };
   });
+  const [first, second] = exactPair(checkedRecords, 'repair records disappeared during validation');
   if (
-    records[0].value.work_item_id !== records[1].value.work_item_id ||
-    records[0].value.scope_id !== records[1].value.scope_id ||
-    records[0].value.source_revision !== records[1].value.source_revision ||
-    records[0].value.result_id === records[1].value.result_id
+    first.value.work_item_id !== second.value.work_item_id ||
+    first.value.scope_id !== second.value.scope_id ||
+    first.value.source_revision !== second.value.source_revision ||
+    first.value.result_id === second.value.result_id
   )
     fail('repair records do not share one distinct-result scope');
-  const firstSources = new Map(records[0].value.source_refs.map((item) => [item.source_id, item]));
-  const conflicts = records[1].value.source_refs.filter(
+  const firstSources = new Map(first.value.source_refs.map((item) => [item.source_id, item]));
+  const conflicts = second.value.source_refs.filter(
     (item) =>
       firstSources.has(item.source_id) &&
       stable({ source_kind: item.source_kind, locator: item.locator, digest: item.digest ?? null }) !==
         stable({
-          source_kind: firstSources.get(item.source_id).source_kind,
-          locator: firstSources.get(item.source_id).locator,
-          digest: firstSources.get(item.source_id).digest ?? null,
+          source_kind: firstSources.get(item.source_id)?.source_kind,
+          locator: firstSources.get(item.source_id)?.locator,
+          digest: firstSources.get(item.source_id)?.digest ?? null,
         }),
   );
   if (conflicts.length !== 1) fail('expected exactly one source-ID provenance conflict');
-  const oldId = conflicts[0].source_id;
-  const changes = records.map(({ path: relative, raw, value }) => {
+  const conflict = conflicts[0];
+  if (!conflict) throw new Error('vida research repair: source conflict disappeared');
+  const oldId = conflict.source_id;
+  const changes = checkedRecords.map(({ path: relative, raw, value }) => {
     const source = value.source_refs.find((item) => item.source_id === oldId);
-    if (!source) fail('both results must bind conflicting source ID');
+    if (!source) throw new Error('vida research repair: both results must bind conflicting source ID');
     const identity = { source_kind: source.source_kind, locator: source.locator, digest: source.digest ?? null };
     const newId = `src-${digest(identity)}`;
     if (value.source_refs.some((item) => item.source_id === newId && item.source_id !== oldId))
@@ -203,14 +380,15 @@ function deriveRepairPlan({
       result_id: value.result_id,
     };
   });
-  if (changes[0].new_source_id === changes[1].new_source_id) fail('new source identities still collide');
+  const [firstChange, secondChange] = exactPair(changes, 'repair changes disappeared during validation');
+  if (firstChange.new_source_id === secondChange.new_source_id) fail('new source identities still collide');
   if (!changelogBefore.endsWith('\n')) fail('changelog is incomplete');
   const events = changes.map((item) => ({
     schema: 'DocumentationChangeEvent/v1',
     event_id: `documentation-event-${digest({ repairId, path: item.path, after: item.after_digest }).slice(0, 48)}`,
     logical_edit_id: `ResearchResult/v1:${item.path}`,
-    work_id: records[0].value.work_item_id,
-    source_revision: records[0].value.source_revision,
+    work_id: first.value.work_item_id,
+    source_revision: first.value.source_revision,
     operation: 'finalize',
     document_id: item.result_id,
     path_before: item.path,
@@ -222,11 +400,15 @@ function deriveRepairPlan({
     timestamp,
   }));
   const changelogAfter = changelogBefore + events.map((event) => stable(event) + '\n').join('');
+  /** @type {ResearchRepairPlan['schema']} */
+  const schema = 'VidaResearchSourceIdentityRepairPlan/v1';
+  /** @type {ResearchRepairPlan['dependent_synthesis_paths']} */
+  const dependentSynthesisPaths = [];
   const body = {
-    schema: 'VidaResearchSourceIdentityRepairPlan/v1',
+    schema,
     repair_id: repairId,
     actor,
-    work_item_id: records[0].value.work_item_id,
+    work_item_id: first.value.work_item_id,
     records_root: recordsRoot,
     changelog_path: changelogPath,
     old_source_id: oldId,
@@ -235,13 +417,17 @@ function deriveRepairPlan({
     changelog_after_sha256: sha(Buffer.from(changelogAfter)),
     changelog_before: changelogBefore,
     changelog_after: changelogAfter,
-    dependent_synthesis_paths: [],
+    dependent_synthesis_paths: dependentSynthesisPaths,
     timestamp,
   };
   return { ...body, digest: digest(body) };
 }
 
 /** Specific current-v1 repair plan for one observed cross-result source-ID provenance conflict. */
+/**
+ * @param {{root: string, repairId: string, actor: string, timestamp: string, recordPaths: string[], recordsRoot: string, changelogPath: string, runtimeRoot?: string}} input
+ * @returns {ResearchRepairPlan}
+ */
 export function planResearchSourceIdentityRepair({
   root,
   repairId,
@@ -273,6 +459,7 @@ export function planResearchSourceIdentityRepair({
   });
 }
 
+/** @param {string} file @param {string} beforeSha @param {string} afterSha @param {Buffer} content */
 function replaceCas(file, beforeSha, afterSha, content) {
   const current = bytes(file);
   if (sha(current) === afterSha) return;
@@ -293,23 +480,24 @@ function replaceCas(file, beforeSha, afterSha, content) {
     if (stat(pending)) unlinkSync(pending);
   }
 }
+/** @param {string} file @param {string} repairId @param {'record_0' | 'record_1' | 'changelog' | 'complete'} phase */
 function journal(file, repairId, phase) {
   const expected = ['record_0', 'record_1', 'changelog', 'complete'];
   const raw = stat(file) ? bytes(file).toString('utf8') : '';
   if (raw && !raw.endsWith('\n')) fail('incomplete repair journal');
+  /** @type {unknown[]} */
   const events = raw
     ? raw
         .trimEnd()
         .split('\n')
-        .map((line) => JSON.parse(line))
+        .map((line) => {
+          /** @type {unknown} */
+          const event = JSON.parse(line);
+          return event;
+        })
     : [];
   if (
-    events.some(
-      (event, index) =>
-        event.schema !== 'VidaResearchRepairEvent/v1' ||
-        event.repair_id !== repairId ||
-        event.phase !== expected[index],
-    ) ||
+    events.some((event, index) => !isResearchRepairJournalEvent(event, repairId, expected[index] ?? '')) ||
     events.length > expected.length
   )
     fail('repair journal drift');
@@ -324,8 +512,37 @@ function journal(file, repairId, phase) {
     closeSync(fd);
   }
 }
+/** @param {unknown} value @param {string} repairId @param {string} phase @returns {boolean} */
+function isResearchRepairJournalEvent(value, repairId, phase) {
+  return (
+    isRecord(value) &&
+    value.schema === 'VidaResearchRepairEvent/v1' &&
+    value.repair_id === repairId &&
+    value.phase === phase
+  );
+}
+/** Shared exact-byte/digest/shape parser; callers retain their file-access boundary. */
+/** @param {Buffer} raw @returns {ResearchRepairPlan} */
+export function parseResearchRepairPlan(raw) {
+  const value = parseRecord(raw, 'VidaResearchSourceIdentityRepairPlan/v1');
+  if (!isResearchRepairPlan(value)) throw new Error('vida research repair: repair plan shape invalid');
+  return value;
+}
+/** @param {string} file @returns {ResearchRepairPlan} */
+function readResearchRepairPlan(file) {
+  return parseResearchRepairPlan(bytes(file));
+}
+/** @param {number} index @returns {'record_0' | 'record_1'} */
+function repairRecordPhase(index) {
+  if (index === 0) return 'record_0';
+  if (index === 1) return 'record_1';
+  fail('repair record phase is outside the exact two-record plan');
+}
 
 /** Journaled exact-byte CAS; the caller must provide a quiesced isolated work root. */
+/**
+ * @param {{root: string, repairId: string, runtimeRoot?: string, resume?: boolean, onPhase?: (phase: string) => void}} input
+ */
 export function applyResearchSourceIdentityRepair({
   root,
   repairId,
@@ -335,10 +552,7 @@ export function applyResearchSourceIdentityRepair({
 }) {
   const project = projectRoot(root);
   const workRoot = at(project, `.agent/work/${repairId}`);
-  const plan = parseRecord(
-    bytes(path.join(workRoot, 'repair-plan.v1.json')),
-    'VidaResearchSourceIdentityRepairPlan/v1',
-  );
+  const plan = readResearchRepairPlan(path.join(workRoot, 'repair-plan.v1.json'));
   if (plan.repair_id !== repairId || plan.changes.length !== 2 || plan.dependent_synthesis_paths.length)
     fail('repair plan scope invalid');
   const configured = configuredPaths(project, runtimeRoot);
@@ -357,8 +571,8 @@ export function applyResearchSourceIdentityRepair({
   });
   if (!json(rebuilt).equals(json(plan))) fail('repair plan differs from deterministic transformation');
   const allowedRoot = at(project, plan.records_root);
-  if (!stat(allowedRoot)?.isDirectory() || stat(allowedRoot).isSymbolicLink())
-    fail('configured research records root is unsafe');
+  const allowedInfo = stat(allowedRoot);
+  if (!allowedInfo?.isDirectory() || allowedInfo.isSymbolicLink()) fail('configured research records root is unsafe');
   for (const item of plan.changes)
     if (!item.path.startsWith(`${plan.records_root}/`) || item.path === plan.changelog_path)
       fail('repair path escapes research records');
@@ -383,9 +597,11 @@ export function applyResearchSourceIdentityRepair({
     fail('new dependent synthesis blocks repair');
   const journalPath = path.join(workRoot, 'repair-journal.v1.jsonl');
   plan.changes.forEach((item, index) => {
+    /** @type {'record_0' | 'record_1'} */
+    const phase = repairRecordPhase(index);
     replaceCas(at(project, item.path), item.before_sha256, item.after_sha256, Buffer.from(item.after));
-    journal(journalPath, repairId, `record_${index}`);
-    onPhase?.(`record_${index}`);
+    journal(journalPath, repairId, phase);
+    onPhase?.(phase);
   });
   replaceCas(
     at(project, plan.changelog_path),

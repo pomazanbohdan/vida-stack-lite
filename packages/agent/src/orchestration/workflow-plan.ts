@@ -29,6 +29,17 @@ export interface CompiledDevelopmentWorkflow {
   readonly terminal_stages: readonly string[];
 }
 
+/** Return the original wave indexes that the bridge actually installs as workflow steps. */
+export function executableWorkflowWaveIndices(
+  plan: Pick<CompiledDevelopmentWorkflow, 'waves'>,
+  correctiveStageIds?: readonly string[],
+): readonly number[] {
+  return plan.waves.flatMap((wave, waveIndex) => {
+    if (correctiveStageIds && !wave.some((stage) => correctiveStageIds.includes(stage.id))) return [];
+    return wave.every((stage) => stage.assignments.length === 0) ? [] : [waveIndex];
+  });
+}
+
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(message);
 }
@@ -88,31 +99,31 @@ function configuredReadOnlySourcePrewriter(
   const securityRiskFlags = securityPrewriter?.risk_flags ?? [];
   return Boolean(
     stage &&
-      stage.kind === 'validate' &&
-      stage.mode === 'parallel' &&
-      stage.required_after.length === 1 &&
-      stage.required_after[0] === 'synthesize_task' &&
-      stageRiskFlags.length === 0 &&
-      stage.assignments.length === 2 &&
-      stage.assignments[0]?.role === 'source-planner' &&
-      stage.assignments[1]?.role === 'security-prewriter' &&
-      sourcePlanner?.profile === 'architect' &&
-      !sourcePlanner.risk_flags?.length &&
-      securityPrewriter?.profile === 'reviewer-security' &&
-      securityRiskFlags.length === sourcePrewriterRiskFlags.length &&
-      sourcePrewriterRiskFlags.every((risk) => securityRiskFlags.includes(risk)) &&
-      stage.consumes.length === 1 &&
-      stage.consumes[0] === 'DevelopmentTaskPacket/v1' &&
-      stage.produces.length === 1 &&
-      stage.produces[0] === 'LifecyclePreparationObservation/v1' &&
-      team.roles['source-planner'] === 'architect' &&
-      team.roles['security-prewriter'] === 'reviewer-security' &&
-      config.agents.profiles.architect?.mutation_scope === 'none' &&
-      config.agents.profiles.architect?.tools_policy === 'read_only' &&
-      config.agents.profiles['reviewer-security']?.mutation_scope === 'none' &&
-      developerStages.length === 1 &&
-      developerStages[0]!.required_after.length === 1 &&
-      developerStages[0]!.required_after[0] === sourcePrewriterId,
+    stage.kind === 'validate' &&
+    stage.mode === 'parallel' &&
+    stage.required_after.length === 1 &&
+    stage.required_after[0] === 'synthesize_task' &&
+    stageRiskFlags.length === 0 &&
+    stage.assignments.length === 2 &&
+    stage.assignments[0]?.role === 'source-planner' &&
+    stage.assignments[1]?.role === 'security-prewriter' &&
+    sourcePlanner?.profile === 'architect' &&
+    !sourcePlanner.risk_flags?.length &&
+    securityPrewriter?.profile === 'reviewer-security' &&
+    securityRiskFlags.length === sourcePrewriterRiskFlags.length &&
+    sourcePrewriterRiskFlags.every((risk) => securityRiskFlags.includes(risk)) &&
+    stage.consumes.length === 1 &&
+    stage.consumes[0] === 'DevelopmentTaskPacket/v1' &&
+    stage.produces.length === 1 &&
+    stage.produces[0] === 'LifecyclePreparationObservation/v1' &&
+    team.roles['source-planner'] === 'architect' &&
+    team.roles['security-prewriter'] === 'reviewer-security' &&
+    config.agents.profiles.architect?.mutation_scope === 'none' &&
+    config.agents.profiles.architect?.tools_policy === 'read_only' &&
+    config.agents.profiles['reviewer-security']?.mutation_scope === 'none' &&
+    developerStages.length === 1 &&
+    developerStages[0]!.required_after.length === 1 &&
+    developerStages[0]!.required_after[0] === sourcePrewriterId,
   );
 }
 

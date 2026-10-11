@@ -1,62 +1,96 @@
 #!/usr/bin/env bun
+import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli-contracts.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { constants, closeSync, fsyncSync, lstatSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
-import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
-import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
-import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { applyResearchSourceIdentityRepair, planResearchSourceIdentityRepair } from './repair-research-records.mjs';
-import { runReadOnlyDispatchRepair } from './reconcile-readonly-dispatch.mjs';
-import { runRuntimeCodeRebind } from './runtime-code-rebind.mjs';
-import { runRuntimeConfigRebind } from './runtime-config-rebind.mjs';
-import { runDocumentationPolicyTransition } from './documentation-policy-transition.mjs';
-import { runSynthesisQualificationRepair } from './reconcile-synthesis-qualification.mjs';
-import { runSynthesisObservationCorrection } from './synthesis-observation-correction.mjs';
-import { runWorkStateRepair } from './repair-work-state.mjs';
+/** @typedef {import('../src/config/runtime-config.ts').AgentRuntimeConfig} AgentRuntimeConfig */
+/** @typedef {import('../src/host-state.ts').MaintenanceFence} MaintenanceFence */
+/** @typedef {import('../src/host-state.ts').MaintenanceFenceBinding} MaintenanceFenceBinding */
+/** @typedef {import('../src/host-state.ts').MaintenanceReleaseVerifier} MaintenanceReleaseVerifier */
 
+/** @param {string | Uint8Array} bytes */
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+/** @param {unknown} value */
 const json = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+/** @type {(condition: unknown, message: string) => asserts condition} */
 const required = (condition, message) => {
   if (!condition) throw new Error(`vida repair artifacts: ${message}`);
 };
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+/** @param {unknown} value @returns {value is string} */
+function isString(value) {
+  return typeof value === 'string';
+}
+/** @param {unknown} value @returns {value is string[]} */
+function isStringArray(value) {
+  return Array.isArray(value) && value.every(isString);
+}
+/** @returns {NonNullable<typeof reconcileCliContracts['research-records']>} */
+function researchContract() {
+  const contract = reconcileCliContracts['research-records'];
+  required(contract, 'research records contract unavailable');
+  return contract;
+}
+
+/** @param {string[]} args @param {number} index @returns {string} */
+function argAt(args, index) {
+  return args[index] ?? '';
+}
+
+/** @param {Record<string, string>} values @param {string} key @returns {string} */
+function selectedOption(values, key) {
+  return values[key] ?? '';
+}
+
+/** @param {string[]} args @returns {Record<string, string>} */
 function parse(args) {
+  /** @type {Record<string, string>} */
   const value = {};
+  const genericContract = researchContract();
   for (let i = 0; i < args.length; i += 2) {
+    const key = argAt(args, i),
+      optionValue = argAt(args, i + 1);
     required(
-      ['--mode', '--project-root', '--repair-id', '--actor', '--timestamp', '--records'].includes(args[i]) &&
-        args[i + 1] &&
-        !value[args[i]],
+      Object.values(genericContract.optionsByMode ?? {})
+        .flat()
+        .includes(key) &&
+        optionValue &&
+        !value[key],
       'invalid arguments',
     );
-    value[args[i]] = args[i + 1];
+    value[key] = optionValue;
   }
+  const mode = selectedOption(value, '--mode');
   required(
-    ['inspect', 'plan', 'apply', 'resume', 'restore'].includes(value['--mode']) &&
+    genericContract.modes.includes(mode) &&
       path.isAbsolute(value['--project-root'] ?? '') &&
       /^[a-z0-9][a-z0-9._-]{0,79}$/.test(value['--repair-id'] ?? ''),
     'mode, root or repair id invalid',
   );
-  if (['inspect', 'plan'].includes(value['--mode']))
+  const expectedOptions = reconcileExpectedOptions('research-records', mode, value);
+  required(expectedOptions, 'research mode is not declared');
+  required(
+    JSON.stringify(Object.keys(value).sort()) === JSON.stringify(expectedOptions.sort()),
+    'arguments differ from the declared mode',
+  );
+  if (['inspect', 'plan'].includes(mode))
     required(
       value['--actor']?.trim() && value['--timestamp']?.trim() && value['--records'],
       'planning attribution or records missing',
     );
-  else
-    required(
-      !value['--actor'] && !value['--timestamp'] && !value['--records'],
-      'apply and resume use the frozen plan only',
-    );
   return value;
 }
+/** @param {string} file @returns {Buffer} */
 function regular(file) {
   const info = lstatSync(file);
   required(info.isFile() && !info.isSymbolicLink() && info.nlink === 1, 'unsafe regular file');
   return readFileSync(file);
 }
+/** @param {string} root @param {ReturnType<typeof import('./repair-research-records.mjs').planResearchSourceIdentityRepair>} plan */
 function evidenceComplete(root, plan) {
   const journal = regular(path.join(root, `.agent/work/${plan.repair_id}/repair-journal.v1.jsonl`)).toString('utf8');
   required(
@@ -72,13 +106,18 @@ function evidenceComplete(root, plan) {
     'repaired changelog bytes differ',
   );
 }
-function boundMaintenance(root, config, plan, selectorBytes) {
-  const selector = JSON.parse(selectorBytes.toString('utf8'));
+/** @param {string} root @param {ReturnType<typeof import('../src/config/runtime-config.ts').loadRuntimeConfig>} config @param {ReturnType<typeof import('./repair-research-records.mjs').planResearchSourceIdentityRepair>} plan @param {Buffer} selectorBytes @param {typeof import('../src/contracts/public-ingress.ts').canonicalJsonDigest} canonicalJsonDigest */
+function boundMaintenance(root, config, plan, selectorBytes, canonicalJsonDigest) {
+  /** @type {unknown} */
+  const selectorValue = JSON.parse(selectorBytes.toString('utf8'));
+  required(isRecord(selectorValue), 'active selector record malformed');
+  const selector = selectorValue;
   required(
-    selector.payload_manifest_sha256 && /^[a-f0-9]{64}$/.test(selector.payload_manifest_sha256),
+    isString(selector.payload_manifest_sha256) && /^[a-f0-9]{64}$/.test(selector.payload_manifest_sha256),
     'active bundle digest unavailable',
   );
   const projectIds = config.projects.map((item) => item.project_id).sort();
+  /** @type {MaintenanceFenceBinding} */
   const binding = {
     schema: 'MaintenanceFenceBinding/v1',
     project_ids: projectIds,
@@ -98,6 +137,7 @@ function boundMaintenance(root, config, plan, selectorBytes) {
     }),
     bundle_digest: selector.payload_manifest_sha256,
   };
+  /** @type {MaintenanceReleaseVerifier} */
   const verifier = {
     principal: 'vida-agent-local-artifact-repair',
     projectIds,
@@ -117,63 +157,87 @@ function boundMaintenance(root, config, plan, selectorBytes) {
 }
 
 /** Bundle-owned narrow current-v1 reconciliation; no historical ledger or observation rewrite. */
+/** @param {string[]} args @param {{onPhase?: (phase: string) => void}} [options] */
 export async function runReconcileArtifacts(args, { onPhase } = {}) {
   const kindIndex = args.indexOf('--kind'),
     kind = kindIndex >= 0 ? args[kindIndex + 1] : undefined;
-  if (kind === 'native-delivery-evidence') {
-    const { runNativeDeliveryEvidenceRepair } = await import('./repair-native-delivery-evidence.mjs');
-    return runNativeDeliveryEvidenceRepair(args, { onPhase });
+  if (kind !== undefined) {
+    const contract = reconcileCliContracts[kind];
+    required(contract, 'unsupported artifact repair kind');
+    const phaseOptions = onPhase === undefined ? {} : { onPhase };
+    /** @type {Record<string, (argv: string[]) => unknown>} */
+    const handlerTable = {
+      projectUpgrade: async (argv) => (await import('./project-upgrade-repair.ts')).runProjectUpgradeRepair(argv),
+      native: async (argv) =>
+        (await import('./repair-native-delivery-evidence.mjs')).runNativeDeliveryEvidenceRepair(argv, phaseOptions),
+      delivered: async (argv) =>
+        (await import('./repair-delivered-work-continuation.mjs')).runDeliveredWorkContinuationRepair(argv),
+      retarget: async (argv) => (await import('./repair-release-retarget.mjs')).runReleaseRetarget(argv, phaseOptions),
+      preparation: async (argv) => (await import('./release-preparation.mjs')).runReleasePreparation(argv),
+      workState: async (argv) => (await import('./repair-work-state.mjs')).runWorkStateRepair(argv),
+      documentationPolicy: async (argv) =>
+        (await import('./documentation-policy-transition.mjs')).runDocumentationPolicyTransition(argv, phaseOptions),
+      runtimeConfig: async (argv) =>
+        (await import('./runtime-config-rebind.mjs')).runRuntimeConfigRebind(argv, phaseOptions),
+      synthesisQualification: async (argv) =>
+        (await import('./reconcile-synthesis-qualification.mjs')).runSynthesisQualificationRepair(argv, phaseOptions),
+      synthesisObservation: async (argv) =>
+        (await import('./synthesis-observation-correction.mjs')).runSynthesisObservationCorrection(argv),
+      runtimeCode: async (argv) => (await import('./runtime-code-rebind.mjs')).runRuntimeCodeRebind(argv),
+      readonlyDispatch: async (argv) =>
+        (await import('./reconcile-readonly-dispatch.mjs')).runReadOnlyDispatchRepair(argv),
+    };
+    const handlerName = contract.handler;
+    required(typeof handlerName === 'string', 'artifact repair handler is unavailable');
+    const handler = handlerTable[handlerName];
+    required(handler, 'artifact repair handler is unavailable');
+    return handler(args);
   }
-  if (kind === 'delivered-work-continuation') {
-    const { runDeliveredWorkContinuationRepair } = await import('./repair-delivered-work-continuation.mjs');
-    return runDeliveredWorkContinuationRepair(args);
-  }
-  if (kind === 'release-retarget') {
-    const { runReleaseRetarget } = await import('./repair-release-retarget.mjs');
-    return runReleaseRetarget(args, { onPhase });
-  }
-  if (kind === 'release-preparation') {
-    const { runReleasePreparation } = await import('./release-preparation.mjs');
-    return runReleasePreparation(args);
-  }
-  if (kind === 'work-state') return runWorkStateRepair(args);
-  if (kind === 'documentation-policy') return runDocumentationPolicyTransition(args, { onPhase });
-  if (['runtime-config', 'runtime-config-delivery'].includes(kind)) return runRuntimeConfigRebind(args, { onPhase });
-  if (kind === 'synthesis-qualification') return runSynthesisQualificationRepair(args, { onPhase });
-  if (kind === 'synthesis-observation-correction') return runSynthesisObservationCorrection(args);
-  if (kind === 'runtime-code') return runRuntimeCodeRebind(args);
-  if (kind === 'readonly-dispatch') return runReadOnlyDispatchRepair(args);
-  if (kind !== undefined) required(false, 'unsupported artifact repair kind');
   const values = parse(args);
-  const root = path.resolve(values['--project-root']);
+  const { createCliHostStateStore, closeWorkspaceDatabaseWithAdmission, openCliHostStateDatabase } =
+    await import('./workspace-database-cli.ts');
+  const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
+  const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
+  const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
+  const { applyResearchSourceIdentityRepair, planResearchSourceIdentityRepair, parseResearchRepairPlan } =
+    await import('./repair-research-records.mjs');
+  const root = path.resolve(selectedOption(values, '--project-root'));
   const access = requireSafeRepositoryAccess(root);
   const config = loadRuntimeConfig(root);
-  const repairId = values['--repair-id'];
+  const repairId = selectedOption(values, '--repair-id');
   const workRoot = path.join(root, '.agent', 'work', repairId);
-  if (values['--mode'] === 'restore') {
-    const selector = JSON.parse(
+  if (selectedOption(values, '--mode') === 'restore') {
+    /** @type {unknown} */
+    const selectorValue = JSON.parse(
       access.readBytes('.agent/active-runtime-selector.v1.json', 'active runtime selector').toString('utf8'),
     );
-    const cutoff = `.agent/cutover/${selector.generation}/cutoff-witness.json`;
+    required(isRecord(selectorValue), 'active selector record unavailable');
+    const generation = selectorValue.generation;
+    required(isString(generation), 'active selector generation unavailable');
+    const cutoff = `.agent/cutover/${generation}/cutoff-witness.json`;
     required(
       !access.fileExists(cutoff, 'first-work cutoff'),
       'restore is forbidden after the first-work cutoff; resume forward',
     );
     throw new Error('vida reconcile artifacts: pre-cutoff restore requires a separately bound undo plan');
   }
-  if (['inspect', 'plan'].includes(values['--mode'])) {
-    const recordPaths = JSON.parse(regular(path.resolve(values['--records'])).toString('utf8'));
-    required(Array.isArray(recordPaths) && recordPaths.length === 2, 'exact two-record input required');
+  if (['inspect', 'plan'].includes(selectedOption(values, '--mode'))) {
+    /** @type {unknown} */
+    const recordPathsValue = JSON.parse(regular(path.resolve(selectedOption(values, '--records'))).toString('utf8'));
+    required(isStringArray(recordPathsValue) && recordPathsValue.length === 2, 'exact two-record input required');
+    const recordPaths = recordPathsValue;
     const plan = planResearchSourceIdentityRepair({
       root,
       repairId,
-      actor: values['--actor'],
-      timestamp: values['--timestamp'],
+      actor: selectedOption(values, '--actor'),
+      timestamp: selectedOption(values, '--timestamp'),
       recordPaths,
       recordsRoot: config.research_decision.paths.research_records,
       changelogPath: config.research_decision.paths.changelog,
     });
-    if (values['--mode'] === 'inspect')
+    if (selectedOption(values, '--mode') === 'inspect')
       return {
         status: 'repairable_current_v1',
         repair_id: repairId,
@@ -198,10 +262,10 @@ export async function runReconcileArtifacts(args, { onPhase } = {}) {
       changed_paths: plan.changes.map((item) => item.path),
     };
   }
-  const plan = JSON.parse(regular(path.join(workRoot, 'repair-plan.v1.json')).toString('utf8'));
+  const plan = parseResearchRepairPlan(regular(path.join(workRoot, 'repair-plan.v1.json')));
   required(plan.repair_id === repairId, 'frozen repair identity differs');
   const selectorBytes = access.readBytes('.agent/active-runtime-selector.v1.json', 'active runtime selector');
-  const { binding, verifier } = boundMaintenance(root, config, plan, selectorBytes);
+  const { binding, verifier } = boundMaintenance(root, config, plan, selectorBytes, canonicalJsonDigest);
   // Persist the capability before acquisition so interruption cannot strand an owned fence.
   const tokenPath = `.agent/work/${repairId}/research-repair-fence-token.txt`;
   let token;
@@ -212,14 +276,14 @@ export async function runReconcileArtifacts(args, { onPhase } = {}) {
       'saved research repair fence token invalid',
     );
   } else {
-    required(values['--mode'] === 'apply', 'research repair fence token must exist for resume');
+    required(selectedOption(values, '--mode') === 'apply', 'research repair fence token must exist for resume');
     token = randomUUID();
     access.writeExclusive(tokenPath, `${token}\n`, 'research repair fence token');
   }
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
-  const database = openHostStateDatabase(sessionHandoffDatabasePath(root, config));
+  const database = openCliHostStateDatabase(root, sessionHandoffDatabasePath(root, config), workspaceId);
   try {
-    const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, verifier, root);
+    const store = createCliHostStateStore(database, workspaceId, undefined, undefined, undefined, verifier, root);
     const receipt = store.acquireMaintenanceFenceWithRecordedToken(binding, token);
     store.assertMaintenanceFence(receipt);
     const lock = path.join(workRoot, 'repair-lock.v1.json');
@@ -227,22 +291,34 @@ export async function runReconcileArtifacts(args, { onPhase } = {}) {
     try {
       hasLock = lstatSync(lock).isFile();
     } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
+      if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') throw error;
     }
-    const result = applyResearchSourceIdentityRepair({ root, repairId, resume: hasLock, onPhase });
+    const result = applyResearchSourceIdentityRepair({
+      root,
+      repairId,
+      resume: hasLock,
+      ...(onPhase === undefined ? {} : { onPhase }),
+    });
     evidenceComplete(root, plan);
     await store.releaseMaintenanceFence(receipt);
     return { ...result, maintenance_generation: receipt.fence.generation, selector_sha256: sha(selectorBytes) };
   } finally {
-    database.close();
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   try {
-    console.log(JSON.stringify(await runReconcileArtifacts(process.argv.slice(2))));
+    if (process.argv[2] === '--help') {
+      const { cliMetadataResult } = await import('./cli-metadata.ts');
+      console.log(JSON.stringify(cliMetadataResult(['reconcile-artifacts', ...process.argv.slice(2)], {})));
+    } else {
+      console.log(JSON.stringify(await runReconcileArtifacts(process.argv.slice(2))));
+    }
   } catch (error) {
-    console.error(JSON.stringify({ status: 'blocked', message: error.message }));
+    console.error(
+      JSON.stringify({ status: 'blocked', message: error instanceof Error ? error.message : String(error) }),
+    );
     process.exitCode = 1;
   }
 }

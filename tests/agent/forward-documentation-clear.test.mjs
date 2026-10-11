@@ -4,13 +4,13 @@ import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { ensureForwardLifecycleClear } from '../../controllers/forward-lifecycle-clear.mjs';
-import { scanForwardResources } from '../../controllers/forward-payload-runtime.mjs';
-import { requireSafeRepositoryAccess } from '../../../../vida-agent/src/config/safe-repository-access.ts';
-import { snapshotDeclaredSources } from '../../../../vida-agent/src/orchestration/scoped-source-snapshot.ts';
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..'),
+import { ensureForwardLifecycleClear } from '../../tooling/agent/controllers/forward-lifecycle-clear.mjs';
+import { scanForwardResources } from '../../tooling/agent/controllers/forward-payload-runtime.mjs';
+import { requireSafeRepositoryAccess } from '../../packages/agent/src/config/safe-repository-access.ts';
+import { snapshotDeclaredSources } from '../../packages/agent/src/orchestration/scoped-source-snapshot.ts';
+const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..'),
   scratch = path.join(repo, '.tmp') + path.sep;
-const parser = createRequire(path.join(repo, 'vida-agent/package.json'))('@babel/parser');
+const parser = createRequire(path.join(repo, 'packages/agent/package.json'))('@babel/parser');
 assert.deepEqual(scanForwardResources('new URL(destination)', parser), []);
 assert.deepEqual(scanForwardResources("new URL('../../schemas/example.json', import.meta.url)", parser), [
   '../../schemas/example.json',

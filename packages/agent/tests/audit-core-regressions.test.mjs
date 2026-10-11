@@ -10,7 +10,7 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { main } from '../bin/run.mjs';
-import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
+import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.ts';
 import { citedResearchConstraints } from '../src/orchestration/admitted-development-packet.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

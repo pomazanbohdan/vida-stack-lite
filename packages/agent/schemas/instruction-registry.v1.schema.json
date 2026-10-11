@@ -3,15 +3,7 @@
   "$id": "https://vida-agent.invalid/schemas/instruction-registry.v1.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema",
-    "registry_id",
-    "revision",
-    "source_revision",
-    "instructions",
-    "updated_at",
-    "digest"
-  ],
+  "required": ["schema", "registry_id", "revision", "source_revision", "instructions", "updated_at", "digest"],
   "properties": {
     "$schema": {
       "const": "https://json-schema.org/draft/2020-12/schema"
@@ -83,12 +75,7 @@
             "pattern": "^[a-f0-9]{64}$"
           },
           "activation_class": {
-            "enum": [
-              "always_on",
-              "lane_entry",
-              "triggered_domain",
-              "closure_reflection"
-            ]
+            "enum": ["always_on", "lane_entry", "triggered_domain", "closure_reflection"]
           },
           "triggers": {
             "type": "array",
@@ -127,17 +114,10 @@
             "maximum": 4194304
           },
           "privacy": {
-            "enum": [
-              "public",
-              "internal",
-              "sensitive_redacted"
-            ]
+            "enum": ["public", "internal", "sensitive_redacted"]
           },
           "status": {
-            "enum": [
-              "active",
-              "disabled"
-            ]
+            "enum": ["active", "disabled"]
           },
           "content": {
             "type": "string",

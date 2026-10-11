@@ -21,12 +21,16 @@ function fixture(role = 'developer-orchestrator') {
   const runId = 'source-preflight-run-' + randomUUID();
   const workflowId = Object.keys(config.workflows).find((id) =>
     config.workflows[id].stages.some((stage) =>
-      stage.assignments.some((assignment) => config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source'),
+      stage.assignments.some(
+        (assignment) => config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source',
+      ),
     ),
   );
   assert.ok(workflowId, 'configured workflow has a Source-writing assignment');
   const sourceStage = config.workflows[workflowId].stages.find((stage) =>
-    stage.assignments.some((assignment) => config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source'),
+    stage.assignments.some(
+      (assignment) => config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source',
+    ),
   );
   const assignmentIndex = sourceStage.assignments.findIndex(
     (assignment) => config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source',
@@ -85,8 +89,16 @@ function fixture(role = 'developer-orchestrator') {
     status: 'pass',
     evidence_refs: ['source-plan.md'],
     observations: [
-      { mechanic: 'scope_acceptance_trace', actual: 'Current scope paths and AC-1 trace to the admitted acceptance contract.', evidence_ref: 'source-plan.md' },
-      { mechanic: 'verification_rollback', actual: 'Focused verification and source restoration were identified for the scoped edit.', evidence_ref: 'source-plan.md' },
+      {
+        mechanic: 'scope_acceptance_trace',
+        actual: 'Current scope paths and AC-1 trace to the admitted acceptance contract.',
+        evidence_ref: 'source-plan.md',
+      },
+      {
+        mechanic: 'verification_rollback',
+        actual: 'Focused verification and source restoration were identified for the scoped edit.',
+        evidence_ref: 'source-plan.md',
+      },
     ],
     gaps: [],
   };
@@ -130,7 +142,13 @@ function fixture(role = 'developer-orchestrator') {
     config_digest: configDigest,
     workflow_id: workflowId,
     stage_id: sourceStage.id,
-    assignment_id: canonicalJsonDigest({ binding, run_id: runId, input_digest: inputDigest, stage_id: sourceStage.id, assignment_index: assignmentIndex }),
+    assignment_id: canonicalJsonDigest({
+      binding,
+      run_id: runId,
+      input_digest: inputDigest,
+      stage_id: sourceStage.id,
+      assignment_index: assignmentIndex,
+    }),
     assignment_index: assignmentIndex,
     request_digest: 'b'.repeat(64),
     attempt_id: '',
@@ -218,9 +236,21 @@ function fixture(role = 'developer-orchestrator') {
       risk: 'low',
       change_kind: 'fix',
       config_binding: { config_digest: configDigest, schema_digest: 'schema-1', runtime_code_digest: 'runtime-1' },
-      scope: { scope_id: scope.scope_id, allowed_paths: allowedPaths, fingerprint_paths: allowedPaths, implementation_paths: implementationPaths, documentation_paths: [] },
+      scope: {
+        scope_id: scope.scope_id,
+        allowed_paths: allowedPaths,
+        fingerprint_paths: allowedPaths,
+        implementation_paths: implementationPaths,
+        documentation_paths: [],
+      },
       seal: null,
-      assurance: { epoch: 'epoch-1', review_generation: 0, correction_count: 0, review_failure_count: 0, delivery_cycle_id: null },
+      assurance: {
+        epoch: 'epoch-1',
+        review_generation: 0,
+        correction_count: 0,
+        review_failure_count: 0,
+        delivery_cycle_id: null,
+      },
       references: [sourcePlanReference],
     },
     artifacts: [],
@@ -259,9 +289,20 @@ function fixture(role = 'developer-orchestrator') {
     acceptanceBytes,
     preparations: [{ reference: sourcePlanReference, bytes: sourcePlanBytes }],
     workflowHostCapability,
-    assertCurrent: () => { currentChecks += 1; },
+    assertCurrent: () => {
+      currentChecks += 1;
+    },
   };
-  return { repositoryRoot, config, context, request, hostApproval, hostApprovalPrincipal, runId, currentChecks: () => currentChecks };
+  return {
+    repositoryRoot,
+    config,
+    context,
+    request,
+    hostApproval,
+    hostApprovalPrincipal,
+    runId,
+    currentChecks: () => currentChecks,
+  };
 }
 
 test('configured Source producer passes the pending Edictum gate without reserving a Host attempt', async () => {
@@ -280,32 +321,36 @@ test('configured Source producer passes the pending Edictum gate without reservi
 
 test('configured Cedar denial stops the Source producer before any Host attempt marker', async () => {
   const value = fixture('researcher');
-  await Promise.resolve(assert.rejects(
-    produceSourceWritePreflightApproval({
-      repositoryRoot: value.repositoryRoot,
-      context: value.context,
-      request: value.request,
-      hostApprovalPrincipal: value.hostApprovalPrincipal,
-      hostApproval: value.hostApproval,
-    }),
-    /configured Cedar policy denied Source write/,
-  ));
+  await Promise.resolve(
+    assert.rejects(
+      produceSourceWritePreflightApproval({
+        repositoryRoot: value.repositoryRoot,
+        context: value.context,
+        request: value.request,
+        hostApprovalPrincipal: value.hostApprovalPrincipal,
+        hostApproval: value.hostApproval,
+      }),
+      /configured Cedar policy denied Source write/,
+    ),
+  );
   assert.equal(value.currentChecks(), 1);
   assert.deepEqual(value.context.hostSnapshot.work.execution.assignment_attempts, []);
 });
 
 test('missing Host-local permission blocks even when configured Cedar and Edictum policy pass', async () => {
   const value = fixture();
-  await Promise.resolve(assert.rejects(
-    produceSourceWritePreflightApproval({
-      repositoryRoot: value.repositoryRoot,
-      context: value.context,
-      request: value.request,
-      hostApprovalPrincipal: value.hostApprovalPrincipal,
-      hostApproval: null,
-    }),
-    /Host-local permission receipt is missing/,
-  ));
+  await Promise.resolve(
+    assert.rejects(
+      produceSourceWritePreflightApproval({
+        repositoryRoot: value.repositoryRoot,
+        context: value.context,
+        request: value.request,
+        hostApprovalPrincipal: value.hostApprovalPrincipal,
+        hostApproval: null,
+      }),
+      /Host-local permission receipt is missing/,
+    ),
+  );
   assert.equal(value.currentChecks(), 2);
   assert.deepEqual(value.context.hostSnapshot.work.execution.assignment_attempts, []);
 });
@@ -313,17 +358,18 @@ test('missing Host-local permission blocks even when configured Cedar and Edictu
 test('a stale Host configuration digest stops the Source producer before Host attempt reservation', async () => {
   const value = fixture();
   value.request.config_digest = '0'.repeat(64);
-  await Promise.resolve(assert.rejects(
-    produceSourceWritePreflightApproval({
-      repositoryRoot: value.repositoryRoot,
-      context: value.context,
-      request: value.request,
-      hostApprovalPrincipal: value.hostApprovalPrincipal,
-      hostApproval: value.hostApproval,
-    }),
-    /configuration differs from the current Host request/,
-  ));
+  await Promise.resolve(
+    assert.rejects(
+      produceSourceWritePreflightApproval({
+        repositoryRoot: value.repositoryRoot,
+        context: value.context,
+        request: value.request,
+        hostApprovalPrincipal: value.hostApprovalPrincipal,
+        hostApproval: value.hostApproval,
+      }),
+      /configuration differs from the current Host request/,
+    ),
+  );
   assert.equal(value.currentChecks(), 1);
   assert.deepEqual(value.context.hostSnapshot.work.execution.assignment_attempts, []);
 });
-

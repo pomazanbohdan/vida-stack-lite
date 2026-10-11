@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
-import { maintainedSourceInventory } from './tooling/maintained-source-inventory.mjs';
+import { maintainedSourceInventory } from './tooling/maintained-source-inventory.ts';
 
 const sourceRoot = fileURLToPath(new URL('./src/', import.meta.url)).replaceAll('\\', '/');
 const maintainedSources = maintainedSourceInventory(fileURLToPath(new URL('./', import.meta.url))).v8CoverageSources;

@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
+import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -189,7 +190,9 @@ function captureInput(f) {
     ticket = before.ledger.tickets.find((entry) => entry.status === 'active'),
     claim = before.ledger.claims.find((entry) => entry.ticket_id === ticket.ticket_id && entry.status === 'active'),
     row = f.db
-      .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+      .query(
+        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
       .get(workspace, identity.work_id, 1),
     journal = JSON.parse(row.payload),
     now = new Date(Date.now() + 60_000).toISOString(),
@@ -414,39 +417,45 @@ test.each([
   ['not_blocked', /not a blocked unaccepted candidate/],
   ['denial', /original report denial differs/],
   ['report_body_mismatch', /retained synthesis body, follow-up or report body differs/],
-])('public capture CLI denies %s before Host effects', async (mode, expected) => {
-  const f = publicCaptureFixture({ mode });
-  if (mode === 'unsafe_reference') {
-    f.request.body_ref = '../outside.json';
-    writeFileSync(path.join(f.root, '.tmp/request.json'), json(f.request));
-  }
-  const tracked = [
-      '.tmp/request.json',
-      '.tmp/body.json',
-      '.tmp/input.json',
-      '.tmp/report.json',
-      '.tmp/report-body.json',
-    ],
-    before = tracked.map((relative) => readFileSync(path.join(f.root, relative)));
-  await Promise.resolve(expect(
-    run([
-      '--capture-historical-terminal-synthesis',
-      'true',
-      '--mode',
-      'inspect',
-      '--project-root',
-      f.root,
-      '--native-session-handle',
-      'fixture-thread',
-      '--baseline-config',
-      'baseline.yaml',
-      '--request',
-      '.tmp/request.json',
-    ]),
-  ).rejects.toThrow(expected));
-  expect(tracked.map((relative) => readFileSync(path.join(f.root, relative)))).toEqual(before);
-  expect(existsSync(path.join(f.root, '.agent/work/session-handoff.v1.sqlite'))).toBe(false);
-}, 30000);
+])(
+  'public capture CLI denies %s before Host effects',
+  async (mode, expected) => {
+    const f = publicCaptureFixture({ mode });
+    if (mode === 'unsafe_reference') {
+      f.request.body_ref = '../outside.json';
+      writeFileSync(path.join(f.root, '.tmp/request.json'), json(f.request));
+    }
+    const tracked = [
+        '.tmp/request.json',
+        '.tmp/body.json',
+        '.tmp/input.json',
+        '.tmp/report.json',
+        '.tmp/report-body.json',
+      ],
+      before = tracked.map((relative) => readFileSync(path.join(f.root, relative)));
+    await Promise.resolve(
+      expect(
+        run([
+          '--capture-historical-terminal-synthesis',
+          'true',
+          '--mode',
+          'inspect',
+          '--project-root',
+          f.root,
+          '--native-session-handle',
+          'fixture-thread',
+          '--baseline-config',
+          'baseline.yaml',
+          '--request',
+          '.tmp/request.json',
+        ]),
+      ).rejects.toThrow(expected),
+    );
+    expect(tracked.map((relative) => readFileSync(path.join(f.root, relative)))).toEqual(before);
+    expect(existsSync(path.join(f.root, '.agent/work/session-handoff.v1.sqlite'))).toBe(false);
+  },
+  30000,
+);
 
 test('known-terminal custody and original-owner release commit atomically and exact retry preserves rights', () => {
   const f = fixture();
@@ -455,7 +464,9 @@ test('known-terminal custody and original-owner release commit atomically and ex
       receipt = f.store.captureHistoricalTerminalSynthesisAndRelease(input).receipt,
       after = f.store.readHostStateSnapshot(identity),
       journalAfter = f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1);
     expect(receipt.terminal_status).toBe('known_terminal_unaccepted');
     expect(receipt.task_status).toBe('unfinished');
@@ -486,7 +497,143 @@ test('known-terminal custody and original-owner release commit atomically and ex
       }),
     ).toThrow(/exact retry differs/);
     expect(f.store.readHostStateSnapshot(identity)).toEqual(after);
-  } finally {}
+  } finally {
+  }
+});
+
+test('exact terminal synthesis receipt verification is read-only and binds all request bytes', () => {
+  const f = fixture();
+  try {
+    const input = captureInput(f),
+      receipt = f.store.captureHistoricalTerminalSynthesisAndRelease(input).receipt,
+      hostBefore = f.store.readHostStateSnapshot(identity),
+      journalBefore = f.db
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(workspace, identity.work_id, 1),
+      readOnlyDatabase = new Database(path.join(f.root, 'host.db'), { readonly: true, strict: true });
+    databases.push(readOnlyDatabase);
+    const readOnlyStore = new HostStateStore(
+        readOnlyDatabase,
+        workspace,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true,
+      ),
+      verified = readOnlyStore.readHistoricalTerminalSynthesisCaptureForRequest(input);
+    expect(verified?.receipt).toEqual(receipt);
+    expect(verified?.snapshot).toEqual(hostBefore);
+    expect(() =>
+      readOnlyStore.readHistoricalTerminalSynthesisCaptureForRequest({
+        ...input,
+        bodyBytes: Buffer.from('changed terminal body'),
+      }),
+    ).toThrow(/exact retry differs/);
+    expect(() =>
+      readOnlyStore.readHistoricalTerminalSynthesisCaptureForRequest({
+        ...input,
+        bodyBytes: new Uint8Array(65537),
+      }),
+    ).toThrow(/body is invalid or oversized/);
+    const advancedLedger = { ...hostBefore.ledger, revision: hostBefore.ledger.revision + 1 },
+      ledgerPayload = json(advancedLedger);
+    f.db
+      .query(
+        "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared'",
+      )
+      .run(advancedLedger.revision, ledgerPayload, canonicalJsonDigest(advancedLedger), workspace);
+    expect(() => readOnlyStore.readHistoricalTerminalSynthesisCaptureForRequest(input)).toThrow(
+      /dependent Host or Journal write/,
+    );
+    expect(f.store.readHostStateSnapshot(identity).work.lease).toBeNull();
+    expect(
+      f.db
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(workspace, identity.work_id, 1),
+    ).toEqual(journalBefore);
+    expect(f.store.readHistoricalTerminalSynthesisCapture(identity, 1, input.actionId)).toEqual(receipt);
+  } finally {
+  }
+});
+
+test('read-only terminal synthesis verification preserves pending and UNKNOWN producer custody', () => {
+  for (const status of ['reserved', 'commit_unknown']) {
+    const f = fixture(),
+      input = captureInput(f),
+      receipt = f.store.captureHistoricalTerminalSynthesisAndRelease(input).receipt,
+      marker = {
+        schema: 'OperationReservation/v1',
+        store_id: 'vida-session-producers',
+        operation_key: 'b'.repeat(64),
+        request_digest: 'c'.repeat(64),
+        revision: 1,
+        fencing_token: randomUUID(),
+        status,
+        created_at: new Date().toISOString(),
+        ...(status === 'commit_unknown' ? { terminal_revision: 2 } : {}),
+      },
+      generation = randomUUID(),
+      revision = status === 'reserved' ? 1 : 2;
+    f.db.query('INSERT INTO agent_host_governance_stores VALUES(?,?,?,?)').run(
+      workspace,
+      marker.store_id,
+      generation,
+      canonicalJsonDigest({
+        workspace_id: workspace,
+        store_id: marker.store_id,
+        kind: 'store',
+        record_key: generation,
+        revision: 1,
+        payload: null,
+      }),
+    );
+    f.db.query('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)').run(
+      workspace,
+      marker.store_id,
+      'operation',
+      marker.operation_key,
+      revision,
+      json(marker),
+      canonicalJsonDigest({
+        workspace_id: workspace,
+        store_id: marker.store_id,
+        kind: 'operation',
+        record_key: marker.operation_key,
+        revision,
+        payload: marker,
+      }),
+    );
+    const before = f.store.readHostStateSnapshot(identity),
+      markersBefore = f.db.query('SELECT * FROM agent_host_governance ORDER BY store_id,record_key').all(),
+      readOnlyDatabase = new Database(path.join(f.root, 'host.db'), { readonly: true, strict: true });
+    databases.push(readOnlyDatabase);
+    const reader = new HostStateStore(
+      readOnlyDatabase,
+      workspace,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      true,
+    );
+    expect(() => reader.readHistoricalTerminalSynthesisCaptureForRequest(input)).toThrow(/pending or unknown/);
+    expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+    expect(f.db.query('SELECT * FROM agent_host_governance ORDER BY store_id,record_key').all()).toEqual(markersBefore);
+    expect(f.store.readHistoricalTerminalSynthesisCapture(identity, 1, input.actionId)).toEqual(receipt);
+  }
 });
 
 test('terminal synthesis releases only the original owner and preserves same-owner queued tickets and operations', () => {
@@ -501,12 +648,15 @@ test('terminal synthesis releases only the original owner and preserves same-own
       after = result.snapshot,
       retainedQueued = after.ledger.tickets.find((entry) => entry.ticket_id === queued.ticket_id);
     expect(after.work.lease).toBeNull();
-    expect(after.ledger.tickets.find((entry) => entry.ticket_id === before.work.lease.ticket_id).status).toBe('released');
+    expect(after.ledger.tickets.find((entry) => entry.ticket_id === before.work.lease.ticket_id).status).toBe(
+      'released',
+    );
     expect(retainedQueued).toEqual(queued);
     expect(after.ledger.operations.slice(0, priorOperations.length)).toEqual(priorOperations);
     expect(after.ledger.operations).toHaveLength(priorOperations.length + 1);
     expect(after.ledger.operations.at(-1).ticket_id).toBe(before.work.lease.ticket_id);
-  } finally {}
+  } finally {
+  }
 });
 
 test('terminal synthesis exact retry denies after a completed maintenance generation without changing Host or Journal', async () => {
@@ -515,10 +665,12 @@ test('terminal synthesis exact retry denies after a completed maintenance genera
     const input = captureInput(f),
       receipt = f.store.captureHistoricalTerminalSynthesisAndRelease(input).receipt,
       hostBeforeMaintenance = f.db
-        .query("SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id")
+        .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
         .all(workspace),
       journalBeforeMaintenance = f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1),
       maintenance = new HostStateStore(f.db, workspace, undefined, undefined, undefined, {
         principal: 'fixture:maintenance-host',
@@ -544,19 +696,24 @@ test('terminal synthesis exact retry denies after a completed maintenance genera
       fence = maintenance.acquireMaintenanceFence(binding);
     await maintenance.releaseMaintenanceFence(fence);
     expect(maintenance.readMaintenanceFence().generation).toBe(receipt.request.expected_maintenance_generation + 1);
-    expect(() => f.store.captureHistoricalTerminalSynthesisAndRelease(input)).toThrow(/maintenance generation is stale or missing/);
+    expect(() => f.store.captureHistoricalTerminalSynthesisAndRelease(input)).toThrow(
+      /maintenance generation is stale or missing/,
+    );
     expect(
       f.db
-        .query("SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id")
+        .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
         .all(workspace),
     ).toEqual(hostBeforeMaintenance);
     expect(
       f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1),
     ).toEqual(journalBeforeMaintenance);
     expect(f.store.readHistoricalTerminalSynthesisCapture(identity, 1, input.actionId)).toEqual(receipt);
-  } finally {}
+  } finally {
+  }
 });
 
 test.each(['changed queued ticket', 'extra release operation'])(
@@ -568,7 +725,9 @@ test.each(['changed queued ticket', 'extra release operation'])(
       const input = captureInput(f),
         before = f.store.readHostStateSnapshot(identity),
         journalBefore = f.db
-          .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
           .get(workspace, identity.work_id, 1);
       if (change === 'changed queued ticket') {
         input.nextLedger.tickets = input.nextLedger.tickets.map((entry) =>
@@ -583,11 +742,14 @@ test.each(['changed queued ticket', 'extra release operation'])(
       expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
       expect(
         f.db
-          .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
           .get(workspace, identity.work_id, 1),
       ).toEqual(journalBefore);
       expect(f.store.readHistoricalTerminalSynthesisCapture(identity, 1, input.actionId)).toBeNull();
-    } finally {}
+    } finally {
+    }
   },
 );
 
@@ -597,7 +759,9 @@ test('stale Work, Ledger, Journal or maintenance versions and foreign owner deny
     const input = captureInput(f),
       before = f.store.readHostStateSnapshot(identity),
       journalBefore = f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1);
     for (const stale of [
       { ...input, expectedWork: { ...input.expectedWork, revision: input.expectedWork.revision + 1 } },
@@ -612,11 +776,14 @@ test('stale Work, Ledger, Journal or maintenance versions and foreign owner deny
     expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
     expect(
       f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1),
     ).toEqual(journalBefore);
     expect(f.store.readHistoricalTerminalSynthesisCapture(identity, 1, input.actionId)).toBeNull();
-  } finally {}
+  } finally {
+  }
 });
 
 test('queued overlapping FIFO ownership blocks terminal custody release without effects', () => {
@@ -626,17 +793,22 @@ test('queued overlapping FIFO ownership blocks terminal custody release without 
     const input = captureInput(f),
       before = f.store.readHostStateSnapshot(identity),
       journalBefore = f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1);
     expect(() => f.store.captureHistoricalTerminalSynthesisAndRelease(input)).toThrow(/FIFO release differs/);
     expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
     expect(
       f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1),
     ).toEqual(journalBefore);
     expect(f.store.readHistoricalTerminalSynthesisCapture(identity, 1, input.actionId)).toBeNull();
-  } finally {}
+  } finally {
+  }
 });
 
 test('invalid terminal provenance or predecessor bindings deny before Host or Journal effects', () => {
@@ -645,7 +817,9 @@ test('invalid terminal provenance or predecessor bindings deny before Host or Jo
     const input = captureInput(f),
       before = f.store.readHostStateSnapshot(identity),
       journalBefore = f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1),
       invalid = [
         { ...input.provenance, denial_reason_gap: 'GAP-FOREIGN' },
@@ -668,11 +842,14 @@ test('invalid terminal provenance or predecessor bindings deny before Host or Jo
     expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
     expect(
       f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1),
     ).toEqual(journalBefore);
     expect(f.store.readHistoricalTerminalSynthesisCapture(identity, 1, input.actionId)).toBeNull();
-  } finally {}
+  } finally {
+  }
 });
 
 test('Host transaction rolls back owner release when immutable custody publication fails, then exact request can resume', () => {
@@ -681,16 +858,22 @@ test('Host transaction rolls back owner release when immutable custody publicati
     const input = captureInput(f),
       before = f.store.readHostStateSnapshot(identity),
       journalBefore = f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1);
     f.db.exec(
       "CREATE TABLE agent_host_historical_terminal_synthesis_capture (workspace_id TEXT,work_id TEXT,attempt INTEGER,action_id TEXT,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt,action_id)); CREATE TRIGGER fail_historical_terminal_capture BEFORE INSERT ON agent_host_historical_terminal_synthesis_capture BEGIN SELECT RAISE(FAIL,'injected custody publication fault'); END;",
     );
-    expect(() => f.store.captureHistoricalTerminalSynthesisAndRelease(input)).toThrow(/injected custody publication fault/);
+    expect(() => f.store.captureHistoricalTerminalSynthesisAndRelease(input)).toThrow(
+      /injected custody publication fault/,
+    );
     expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
     expect(
       f.db
-        .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
         .get(workspace, identity.work_id, 1),
     ).toEqual(journalBefore);
     expect(f.store.readHistoricalTerminalSynthesisCapture(identity, 1, input.actionId)).toBeNull();
@@ -698,5 +881,6 @@ test('Host transaction rolls back owner release when immutable custody publicati
     const result = f.store.captureHistoricalTerminalSynthesisAndRelease(input);
     expect(result.receipt.terminal_status).toBe('known_terminal_unaccepted');
     expect(f.store.readHostStateSnapshot(identity).work.lease).toBeNull();
-  } finally {}
+  } finally {
+  }
 });

@@ -1,6 +1,10 @@
-import { Database } from 'bun:sqlite';
-import { lstatSync } from 'node:fs';
-import { sessionHandoffDatabasePath } from '../config/project-paths.js';
+import type { Database } from 'bun:sqlite';
+import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
+import {
+  openAdmittedWorkspaceDatabase,
+  closeWorkspaceDatabaseWithAdmission,
+} from '../config/storage-read-admission.js';
+import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import workSchema from '../../schemas/work-state.v1.schema.json' with { type: 'json' };
@@ -8,7 +12,7 @@ import { canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.
 import { coordinationLedgerDigest, sameCoordinationStrings, type CoordinationLedger } from '../contracts/envelopes.js';
 import type { WorkState } from '../host-state.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
-import type { AgentRuntimeConfig } from '../config/runtime-config.js';
+import { assertProjectUpgradeInactive, type AgentRuntimeConfig } from '../config/runtime-config.js';
 
 type Row = { revision: number; payload: string; digest: string; value: unknown };
 const AjvConstructor = Ajv2020 as unknown as new (options: object) => {
@@ -67,11 +71,15 @@ export function inspectLocalSession(input: {
   readonly workId: string;
   readonly attempt: number;
 }) {
-  const databasePath = sessionHandoffDatabasePath(input.repositoryRoot, input.config);
-  const stat = lstatSync(databasePath);
-  if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1)
-    throw new Error('local session inspection: database path is unsafe');
-  const db = new Database(databasePath, { readonly: true });
+  const access = requireSafeRepositoryAccess(input.repositoryRoot);
+  assertProjectUpgradeInactive(access);
+  const workspaceId = deriveWorkspaceId(input.config.repository.repository_id, input.repositoryRoot);
+  const db = openAdmittedWorkspaceDatabase(
+    input.repositoryRoot,
+    sessionHandoffDatabaseRelativePath(input.config),
+    workspaceId,
+    true,
+  );
   try {
     return db
       .transaction(() => {
@@ -167,6 +175,7 @@ export function inspectLocalSession(input: {
       })
       .deferred();
   } finally {
-    db.close(true);
+    closeWorkspaceDatabaseWithAdmission(db);
+    assertProjectUpgradeInactive(access);
   }
 }

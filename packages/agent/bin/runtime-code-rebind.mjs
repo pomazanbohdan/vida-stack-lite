@@ -1,10 +1,15 @@
-import { Database } from 'bun:sqlite';
+import {
+  createCliHostStateStore,
+  closeWorkspaceDatabaseWithAdmission,
+  openCliWorkspaceDatabase,
+} from './workspace-database-cli.ts';
 import { createHash } from 'node:crypto';
 import { closeSync, constants, fsyncSync, lstatSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
-import { coordinationLedgerDigest } from '../src/contracts/envelopes.ts';
+import { readWorkspaceMastraSqlRow } from '../src/config/host-persisted-row.ts';
+import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-session-ledger-codec.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import {
   loadRuntimeConfig,
@@ -16,12 +21,17 @@ import {
 } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { selectCorrectiveEvidence, validateWorkSessionBinding } from '../src/orchestration/final-assurance.ts';
-import { HostStateStore } from '../src/host-state.ts';
+
 import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
-import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
+import {
+  openConfiguredMastraSessionLedger,
+  mastraLedgerStatus,
+} from '../src/orchestration/persistent-session-handoff.ts';
 import { resumePausedLocalWork } from '../src/orchestration/resume-paused-local-work.ts';
 import {
+  compareRuntimeEndpointSnapshots,
   compareScopedSourceSnapshots,
+  parseScopedSourceSnapshot,
   snapshotDeclaredSources,
   snapshotRuntimePackageSources,
   snapshotRuntimeManifestSources,
@@ -37,6 +47,7 @@ import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.t
 import {
   projectHistoricalTerminalReviewAction,
   projectConfiguredFrontierContinuationAction,
+  validateClosedConfigTransitionProof,
   validateClosedConfigRebindProof,
   validateContinuationSourceChangePaths,
   validateDeliveredWorkContinuationRequest,
@@ -58,6 +69,11 @@ import {
   validateInitialSourceFrontierCodeRebindVerifiedCurrent,
 } from '../src/orchestration/initial-source-frontier-code-rebind.ts';
 import { parseWorkItemSelection } from './continue-initial-source.mjs';
+import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli-contracts.ts';
+import {
+  parseRuntimeCodeRebindRequest,
+  parseRuntimeRebindStateVersion,
+} from '../src/orchestration/runtime-code-rebind-contract.ts';
 
 /** @typedef {import('../src/config/runtime-config.ts').AgentRuntimeConfig} AgentRuntimeConfig */
 /** @typedef {import('../src/config/runtime-config.ts').WorkItemSelection} WorkItemSelection */
@@ -65,13 +81,35 @@ import { parseWorkItemSelection } from './continue-initial-source.mjs';
 /** @typedef {import('../src/host-state.ts').HostStateSnapshot} HostStateSnapshot */
 /** @typedef {import('../src/host-state.ts').WorkIdentity} WorkIdentity */
 /** @typedef {import('../src/host-state.ts').StateVersion} StateVersion */
+/** @typedef {import('../src/host-state.ts').RuntimeCodeRebindRequest} RuntimeCodeRebindRequest */
+/** @typedef {import('../src/orchestration/delivered-work-continuation.ts').DeliveredWorkContinuationRequest} DeliveredWorkContinuationRequest */
+/** @typedef {import('../src/orchestration/delivered-work-continuation.ts').ConfiguredRuntimeEndpointTransition} ConfiguredRuntimeEndpointTransition */
+/** @typedef {import('../src/host-state.ts').RuntimeCodeRebindVerifier} RuntimeCodeRebindVerifier */
 /** @typedef {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerState} MastraSessionLedgerState */
 /** @typedef {import('../src/orchestration/scoped-source-snapshot.ts').ScopedSourceSnapshot} ScopedSourceSnapshot */
+/** @typedef {import('../src/orchestration/scoped-source-snapshot.ts').ScopedSourceEntry} ScopedSourceEntry */
+/** @typedef {import('../src/orchestration/scoped-source-snapshot.ts').ScopedSourceChange} ScopedSourceChange */
+/** @typedef {{readonly path: string; readonly after: ScopedSourceEntry}} CommittedSourceChange */
 /** @typedef {import('../src/orchestration/initial-source-continuation.ts').InitialSourceContinuationReceipt} InitialSourceContinuationReceipt */
 /** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindRequest} InitialSourceFrontierCodeRebindRequest */
 /** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindVerifiedCurrent} InitialSourceFrontierCodeRebindVerifiedCurrent */
 /** @typedef {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindReceipt} InitialSourceFrontierCodeRebindReceipt */
 /** @typedef {import('bun:sqlite').Database} SqliteDatabase */
+/** @typedef {string} RuntimeCodeRebindKey */
+/** @typedef {Record<RuntimeCodeRebindKey, string>} RuntimeCodeRebindArgs */
+/** @typedef {RuntimeCodeRebindArgs & { "--mode": string; "--project-root": string; "--repair-id": string }} ParsedRuntimeCodeRebindArgs */
+/** @type {ReadonlySet<string>} */
+const runtimeCodeRebindKeys = declaredRuntimeCodeOptions();
+/** @returns {ReadonlySet<string>} */
+function declaredRuntimeCodeOptions() {
+  const byBasis = reconcileCliContracts['runtime-code']?.optionsByBasisMode;
+  requireRebind(byBasis, 'runtime-code command contract is missing');
+  return new Set(Object.values(byBasis).flatMap((byMode) => Object.values(byMode).flat()));
+}
+/** @param {string} value @returns {value is RuntimeCodeRebindKey} */
+function isRuntimeCodeRebindKey(value) {
+  return runtimeCodeRebindKeys.has(value);
+}
 
 /**
  * @typedef {object} InitialSourceFrontierPlan
@@ -81,137 +119,233 @@ import { parseWorkItemSelection } from './continue-initial-source.mjs';
  * @property {InitialSourceFrontierCodeRebindVerifiedCurrent} endpoint_proof
  * @property {string} digest
  */
+/** @typedef {import('../src/orchestration/delivered-work-continuation.ts').DeliveredContinuationProof} DeliveredContinuationProof */
+/** @typedef {{schema: 'VidaRuntimeCodeRebindPlan/v1', repair_id: string, actor: string, timestamp: string, runtime_code_paths: readonly string[], lease_transition: 'resume_paused'|'already_active', request: RuntimeCodeRebindRequest, digest: string}} RuntimeCodeRebindPlan */
+/** @typedef {{schema: 'VidaDeliveredWorkContinuationPlan/v1', repair_id: string, actor: string, timestamp: string, source_transition_id: string, runtime_code_paths: readonly string[], request: DeliveredWorkContinuationRequest, digest: string}} DeliveredContinuationPlan */
+/** @typedef {{database: SqliteDatabase, root: string, config: AgentRuntimeConfig, workspaceId: string, projectIds: readonly string[], workId: string, attempt: number, nativeHandle: string, repairId: string, actor: string, timestamp: string, sourceTransitionId: string, ownerNoCallPointer: string, parentManifestRef: string, successorManifestRef: string, systemUpdateRef: string, sourceCorrectionRef: string}} ConfiguredFrontierPlanInput */
+/** @typedef {Omit<ConfiguredFrontierPlanInput, 'parentManifestRef'|'successorManifestRef'|'systemUpdateRef'|'sourceCorrectionRef'> & {actionId: string, issueId: string, forwardOperationId: string}} DeliveredContinuationPlanInput */
+/** @typedef {{schema: string, native_session_handle: string, work_item: {canonical_kind: string, intent: string, project_id: string, risk_flags: readonly string[], labels: readonly string[]}, runtime_code_paths?: readonly string[], source_authorization_path: string}} RebindIntake */
+/** @typedef {{work_item: unknown, runtime_code_paths?: readonly string[], native_session_handle: string} & Partial<Pick<RebindIntake, 'schema'|'source_authorization_path'>>} RuntimeEndpointIntake */
 
 /** @param {unknown} ok @param {string} message @returns {asserts ok} */
 function requireRebind(ok, message) {
   if (!ok) throw new Error(`vida runtime-code rebind: ${message}`);
 }
+/** @param {unknown} value @param {string} message @returns {Record<string, unknown>} */
+function rebindRecord(value, message) {
+  requireRebind(isPlainRecord(value), message);
+  return value;
+}
+/** @param {unknown} value @returns {value is string[]} */
+function stringArray(value) {
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+/** @param {unknown} value @param {string} message @returns {string[]} */
+function requiredStringArray(value, message) {
+  requireRebind(stringArray(value), message);
+  return value;
+}
+/** @param {Record<string, unknown>} value @param {readonly string[]} keys @returns {boolean} */
+function rebindExactKeys(value, keys) {
+  return (
+    Reflect.ownKeys(value).every((key) => typeof key === 'string' && keys.includes(key)) &&
+    keys.every((key) => Object.hasOwn(value, key))
+  );
+}
+/** @param {unknown} value @param {string} label @returns {{payload: string, digest: string}|null} */
+function sqlitePayloadRow(value, label) {
+  if (value === null || value === undefined) return null;
+  const row = rebindRecord(value, `${label} row is invalid`);
+  requireRebind(typeof row.payload === 'string' && typeof row.digest === 'string', `${label} row fields are invalid`);
+  return { payload: row.payload, digest: row.digest };
+}
+/** @param {string} payload @param {string} label @returns {Record<string, unknown>} */
+function parsedRecord(payload, label) {
+  return rebindRecord(JSON.parse(payload), `${label} payload is invalid`);
+}
+/** @param {Record<string, unknown>} value @param {string} key @param {string} label */
+function requiredStringField(value, key, label) {
+  const field = value[key];
+  requireRebind(typeof field === 'string', `${label} is invalid`);
+  return field;
+}
+/** @param {unknown} value @returns {boolean} */
+function sqliteRowExists(value) {
+  return value !== null && value !== undefined;
+}
+/** @param {unknown} value @returns {RebindIntake['work_item']} */
+function parseRebindWorkItem(value) {
+  const item = rebindRecord(value, 'protected local intake work item missing');
+  return {
+    ...item,
+    canonical_kind: requiredStringField(item, 'canonical_kind', 'protected local intake kind'),
+    intent: requiredStringField(item, 'intent', 'protected local intake intent'),
+    project_id: requiredStringField(item, 'project_id', 'protected local intake project'),
+    risk_flags: requiredStringArray(item.risk_flags, 'protected local intake risk flags'),
+    labels: requiredStringArray(item.labels, 'protected local intake labels'),
+  };
+}
+/** @param {unknown} value @returns {RebindIntake} */
+function parseRebindIntake(value) {
+  const record = rebindRecord(value, 'protected local intake shape invalid');
+  const schema = requiredStringField(record, 'schema', 'protected local intake schema'),
+    nativeSessionHandle = requiredStringField(record, 'native_session_handle', 'protected local intake owner'),
+    sourceAuthorizationPath = requiredStringField(
+      record,
+      'source_authorization_path',
+      'protected local intake authority path',
+    ),
+    item = parseRebindWorkItem(record.work_item),
+    runtimeCodePaths =
+      record.runtime_code_paths === undefined
+        ? undefined
+        : requiredStringArray(record.runtime_code_paths, 'protected local intake runtime paths');
+  return {
+    ...record,
+    schema,
+    native_session_handle: nativeSessionHandle,
+    source_authorization_path: sourceAuthorizationPath,
+    work_item: item,
+    ...(runtimeCodePaths === undefined ? {} : { runtime_code_paths: runtimeCodePaths }),
+  };
+}
+/** @param {unknown} value @returns {RuntimeCodeRebindPlan} */
+function parseRuntimeCodeRebindPlan(value) {
+  const record = rebindRecord(value, 'frozen plan shape invalid');
+  requireRebind(
+    rebindExactKeys(record, [
+      'schema',
+      'repair_id',
+      'actor',
+      'timestamp',
+      'runtime_code_paths',
+      'lease_transition',
+      'request',
+      'digest',
+    ]) &&
+      record.schema === 'VidaRuntimeCodeRebindPlan/v1' &&
+      typeof record.repair_id === 'string' &&
+      typeof record.actor === 'string' &&
+      typeof record.timestamp === 'string' &&
+      Array.isArray(record.runtime_code_paths) &&
+      record.runtime_code_paths.every((entry) => typeof entry === 'string') &&
+      (record.lease_transition === 'resume_paused' || record.lease_transition === 'already_active') &&
+      typeof record.digest === 'string',
+    'frozen plan fields are invalid',
+  );
+  const request = parseRuntimeCodeRebindRequest(record.request);
+  /** @satisfies {RuntimeCodeRebindPlan} */
+  const plan = {
+    schema: 'VidaRuntimeCodeRebindPlan/v1',
+    repair_id: record.repair_id,
+    actor: record.actor,
+    timestamp: record.timestamp,
+    runtime_code_paths: record.runtime_code_paths,
+    lease_transition: record.lease_transition,
+    request,
+    digest: record.digest,
+  };
+  return plan;
+}
+/** @param {unknown} value @returns {DeliveredContinuationPlan} */
+function parseDeliveredContinuationPlan(value) {
+  const record = rebindRecord(value, 'delivered continuation plan shape invalid');
+  requireRebind(
+    rebindExactKeys(record, [
+      'schema',
+      'repair_id',
+      'actor',
+      'timestamp',
+      'source_transition_id',
+      'runtime_code_paths',
+      'request',
+      'digest',
+    ]) &&
+      record.schema === 'VidaDeliveredWorkContinuationPlan/v1' &&
+      typeof record.repair_id === 'string' &&
+      typeof record.actor === 'string' &&
+      typeof record.timestamp === 'string' &&
+      typeof record.source_transition_id === 'string' &&
+      Array.isArray(record.runtime_code_paths) &&
+      record.runtime_code_paths.every((entry) => typeof entry === 'string') &&
+      typeof record.digest === 'string',
+    'delivered continuation plan fields are invalid',
+  );
+  /** @satisfies {DeliveredContinuationPlan} */
+  const plan = {
+    schema: 'VidaDeliveredWorkContinuationPlan/v1',
+    repair_id: record.repair_id,
+    actor: record.actor,
+    timestamp: record.timestamp,
+    source_transition_id: record.source_transition_id,
+    runtime_code_paths: record.runtime_code_paths,
+    request: validateDeliveredWorkContinuationRequest(record.request),
+    digest: record.digest,
+  };
+  return plan;
+}
+/** @param {string | Uint8Array} bytes */
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const identifier = /^[a-z0-9][a-z0-9._-]{0,79}$/;
 const hash = /^[a-f0-9]{64}$/;
-const planningKeys = [
-  '--kind',
-  '--mode',
-  '--project-root',
-  '--repair-id',
-  '--actor',
-  '--timestamp',
-  '--projects',
-  '--work-id',
-  '--attempt',
-  '--action-id',
-  '--issue-id',
-  '--native-handle',
-  '--forward-operation-id',
-  '--owner-no-call-ref',
-];
-const deliveredContinuationPlanningKeys = planningKeys.concat(['--basis', '--source-transition-id']);
-const configuredFrontierPlanningKeys = planningKeys
-  .filter((key) => !['--action-id', '--issue-id', '--forward-operation-id'].includes(key))
-  .concat([
-    '--basis',
-    '--source-transition-id',
-    '--parent-manifest',
-    '--successor-manifest',
-    '--system-update',
-    '--source-correction',
-  ]);
-const synthesisPlanningKeys = planningKeys
-  .filter((key) => key !== '--owner-no-call-ref')
-  .concat(['--basis', '--correction-id', '--owner-correction-ref']);
-const focusedPlanningKeys = planningKeys
-  .filter((key) => key !== '--owner-no-call-ref')
-  .concat(['--basis', '--owner-correction-ref']);
-const applyingKeys = ['--kind', '--mode', '--project-root', '--repair-id'];
-const initialSourceFrontierPlanningKeys = [
-  '--kind',
-  '--basis',
-  '--mode',
-  '--project-root',
-  '--repair-id',
-  '--projects',
-  '--work-id',
-  '--attempt',
-  '--action-id',
-  '--parent-manifest',
-  '--successor-manifest',
-  '--system-update',
-];
-const initialSourceFrontierApplyingKeys = ['--kind', '--basis', '--mode', '--project-root', '--repair-id'];
+/** @param {string} id */
 const planPath = (id) => `.agent/work/${id}/runtime-code-rebind-plan.v1.json`;
+/** @param {string} id */
 const initialSourceFrontierPlanPath = (id) => `.agent/work/${id}/initial-source-frontier-code-rebind-plan.v1.json`;
+/** @param {string} id */
 const deliveredContinuationPlanPath = (id) => `.agent/work/${id}/delivered-work-continuation-plan.v1.json`;
 
-function parse(args) {
-  requireRebind(args.length % 2 === 0, 'arguments must be paired');
-  const values = {};
-  for (let index = 0; index < args.length; index += 2) {
-    requireRebind(
-      args[index]?.startsWith('--') && args[index + 1] && !Object.hasOwn(values, args[index]),
-      'arguments invalid',
-    );
-    values[args[index]] = args[index + 1];
-  }
-  requireRebind(
-    values['--kind'] === 'runtime-code' &&
-      (['inspect', 'plan', 'apply', 'resume'].includes(values['--mode']) ||
-        (values['--basis'] === 'execution-continuation' && values['--mode'] === 'refresh')) &&
-      path.isAbsolute(values['--project-root'] ?? '') &&
-      path.resolve(values['--project-root']) === values['--project-root'] &&
-      identifier.test(values['--repair-id'] ?? ''),
-    'kind, mode, root or repair ID invalid',
-  );
-  if (values['--basis'] === 'initial-source-frontier')
-    requireRebind(['inspect', 'plan', 'apply'].includes(values['--mode']), 'initial-source frontier mode invalid');
-  if (values['--basis'] === 'execution-continuation') {
-    const expected = ['inspect', 'plan', 'refresh'].includes(values['--mode'])
-      ? [
-          '--kind',
-          '--basis',
-          '--mode',
-          '--project-root',
-          '--repair-id',
-          '--projects',
-          '--work-id',
-          '--attempt',
-          '--parent-manifest',
-          '--parent-install',
-          '--successor-manifest',
-          '--system-update',
-          ...(values['--mode'] === 'refresh' ? ['--expected-request-id'] : []),
-        ]
-      : ['--kind', '--basis', '--mode', '--project-root', '--repair-id'];
-    requireRebind(
-      ['inspect', 'plan', 'apply', 'refresh'].includes(values['--mode']) &&
-        JSON.stringify(Object.keys(values).sort()) === JSON.stringify(expected.sort()),
-      'execution continuation arguments invalid',
-    );
-    return values;
-  }
-  const expected = ['inspect', 'plan'].includes(values['--mode'])
-    ? values['--basis'] === 'initial-source-frontier'
-      ? initialSourceFrontierPlanningKeys
-      : values['--basis'] === 'configured-frontier-continuation'
-        ? configuredFrontierPlanningKeys
-        : values['--basis'] === 'delivered-config-continuation'
-          ? deliveredContinuationPlanningKeys
-          : values['--basis'] === 'known-terminal-verify'
-            ? focusedPlanningKeys
-            : values['--basis'] === 'synthesis-correction'
-              ? synthesisPlanningKeys
-              : planningKeys
-    : values['--basis'] === 'initial-source-frontier'
-      ? initialSourceFrontierApplyingKeys
-      : applyingKeys;
-  requireRebind(
-    JSON.stringify(Object.keys(values).sort()) === JSON.stringify([...expected].sort()),
-    'missing or unexpected arguments',
-  );
-  return values;
+/** @param {RuntimeCodeRebindArgs} values @param {string} key @returns {string} */
+function runtimeCodeOption(values, key) {
+  return values[key] ?? '';
+}
+/** @param {RuntimeCodeRebindArgs} values @param {RuntimeCodeRebindKey} key @returns {string} */
+function requiredRuntimeCodeOption(values, key) {
+  const value = values[key];
+  requireRebind(typeof value === 'string' && value.length > 0, `required option ${key} is missing`);
+  return value;
 }
 
-/** @param {string} root @param {AgentRuntimeConfig} config @param {boolean} readonly @returns {SqliteDatabase} */
-function trustedDatabase(root, config, readonly) {
+/** @param {readonly string[]} args @returns {ParsedRuntimeCodeRebindArgs} */
+function parse(args) {
+  requireRebind(args.length % 2 === 0, 'arguments must be paired');
+  /** @type {RuntimeCodeRebindArgs} */
+  const values = /** @type {RuntimeCodeRebindArgs} */ (Object.create(null));
+  for (let index = 0; index < args.length; index += 2) {
+    const key = args[index];
+    const value = args[index + 1];
+    requireRebind(
+      key !== undefined &&
+        isRuntimeCodeRebindKey(key) &&
+        value !== undefined &&
+        value.length > 0 &&
+        !Object.hasOwn(values, key),
+      'arguments invalid',
+    );
+    values[key] = value;
+  }
+  const mode = runtimeCodeOption(values, '--mode'),
+    root = runtimeCodeOption(values, '--project-root'),
+    repairId = runtimeCodeOption(values, '--repair-id');
+  requireRebind(
+    values['--kind'] === 'runtime-code' &&
+      (['inspect', 'plan', 'apply', 'resume'].includes(mode) ||
+        (values['--basis'] === 'execution-continuation' && mode === 'refresh')) &&
+      path.isAbsolute(root) &&
+      path.resolve(root) === root &&
+      identifier.test(repairId),
+    'kind, mode, root or repair ID invalid',
+  );
+  const expected = reconcileExpectedOptions('runtime-code', mode, values);
+  requireRebind(
+    expected !== undefined && JSON.stringify(Object.keys(values).sort()) === JSON.stringify([...expected].sort()),
+    'missing or unexpected arguments',
+  );
+  return { ...values, '--mode': mode, '--project-root': root, '--repair-id': repairId };
+}
+
+/** @param {string} root @param {AgentRuntimeConfig} config @param {string} workspaceId @param {boolean} readonly @returns {SqliteDatabase} */
+function trustedDatabase(root, config, workspaceId, readonly) {
   const access = requireSafeRepositoryAccess(root);
   access.assertDirectory(config.control.work_root, 'runtime-code rebind work root');
   const relative = sessionHandoffDatabaseRelativePath(config);
@@ -222,7 +356,7 @@ function trustedDatabase(root, config, readonly) {
     stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1,
     'database must be a single-link regular file',
   );
-  return new Database(file, { readonly, strict: true });
+  return openCliWorkspaceDatabase(root, file, workspaceId, readonly);
 }
 
 /**
@@ -237,12 +371,38 @@ function validatedJson(access, relative, label) {
   return { bytes, value: JSON.parse(bytes.toString('utf8')) };
 }
 
-/** Source-repository adapter: actual local commit bytes, never remote-publication authority. */
+/** @param {unknown} changes @returns {boolean} */
+function validCommittedChangeList(changes) {
+  return Array.isArray(changes) && changes.length <= 1024;
+}
+
+/** @param {ScopedSourceEntry} entry */
+function validCommittedEndpoint(entry) {
+  return entry.exists
+    ? typeof entry.bytes === 'number' &&
+        Number.isSafeInteger(entry.bytes) &&
+        entry.bytes >= 0 &&
+        entry.bytes <= 8 * 1024 * 1024 &&
+        typeof entry.sha256 === 'string' &&
+        hash.test(entry.sha256)
+    : entry.bytes === null && entry.sha256 === null;
+}
+/** @param {ReadonlyMap<string, ScopedSourceEntry>} entries @param {string} relative @returns {ScopedSourceEntry} */
+function committedEndpoint(entries, relative) {
+  const entry = entries.get(relative);
+  requireRebind(entry, 'committed Source path is absent from the selected scope');
+  return entry;
+}
+
+/** Source-repository adapter: actual local commit bytes, never remote-publication authority.
+ * @param {string} root @param {string} commit @param {readonly CommittedSourceChange[]} changes
+ */
 export function assertCommittedSourceChanges(root, commit, changes) {
   requireRebind(
-    /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(commit) && Array.isArray(changes) && changes.length <= 1024,
+    /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(commit) && validCommittedChangeList(changes),
     'committed Source proof input is invalid',
   );
+  /** @type {Map<string, ScopedSourceEntry>} */
   const selected = new Map();
   for (const change of changes) {
     const entry = change?.after;
@@ -257,12 +417,7 @@ export function assertCommittedSourceChanges(root, commit, changes) {
         !/[\\\p{Cc}]/u.test(change.path) &&
         change.path.split('/').every((part) => part && part !== '.' && part !== '..') &&
         typeof entry.exists === 'boolean' &&
-        (entry.exists
-          ? Number.isSafeInteger(entry.bytes) &&
-            entry.bytes >= 0 &&
-            entry.bytes <= 8 * 1024 * 1024 &&
-            hash.test(entry.sha256)
-          : entry.bytes === null && entry.sha256 === null),
+        validCommittedEndpoint(entry),
       'committed Source entry is invalid',
     );
     requireRebind(
@@ -274,6 +429,7 @@ export function assertCommittedSourceChanges(root, commit, changes) {
   requireRebind(selected.size <= 512, 'committed Source scope exceeds its bound');
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
   Object.assign(env, { GIT_NO_LAZY_FETCH: '1', GIT_NO_REPLACE_OBJECTS: '1', GIT_OPTIONAL_LOCKS: '0' });
+  /** @param {readonly string[]} args @param {string | Uint8Array} [input] */
   const git = (args, input) => {
     const result = spawnSync('git', ['--no-replace-objects', '--literal-pathspecs', '-C', root, ...args], {
       windowsHide: true,
@@ -312,23 +468,23 @@ export function assertCommittedSourceChanges(root, commit, changes) {
         selected.has(relative) &&
         !modes.has(relative) &&
         metadata[1] === 'blob' &&
-        ['100644', '100755'].includes(metadata[0]),
+        ['100644', '100755'].includes(metadata[0] ?? ''),
       'committed Source path is not an exact regular blob',
     );
     modes.set(relative, metadata[0]);
   }
   requireRebind(
-    paths.every((relative) => modes.has(relative) === selected.get(relative).exists),
+    paths.every((relative) => modes.has(relative) === committedEndpoint(selected, relative).exists),
     'committed Source existence differs',
   );
-  const present = paths.filter((relative) => selected.get(relative).exists);
+  const present = paths.filter((relative) => committedEndpoint(selected, relative).exists);
   if (present.length > 0) {
     const stream = git(['cat-file', '--batch'], present.map((relative) => commit + ':' + relative + '\n').join(''));
     let offset = 0,
       totalBytes = 0;
     for (const relative of present) {
       const end = stream.indexOf(10, offset),
-        entry = selected.get(relative);
+        entry = committedEndpoint(selected, relative);
       requireRebind(end >= offset, 'committed Source blob header is absent');
       const header = stream.subarray(offset, end).toString('ascii').split(' '),
         size = Number(header[2]);
@@ -352,6 +508,32 @@ export function assertCommittedSourceChanges(root, commit, changes) {
   return { commit, checked_paths: paths.length, remote_publication_verified: false };
 }
 
+/** @param {{value: unknown}} manifest @param {readonly string[]} paths @returns {ScopedSourceEntry[]} */
+function forwardManifestEntries(manifest, paths) {
+  requireRebind(
+    isPlainRecord(manifest.value) && Array.isArray(manifest.value.files),
+    'forward manifest file inventory invalid',
+  );
+  /** @type {unknown[]} */
+  const files = manifest.value.files;
+  return paths.map((relative) => {
+    const matches = files.filter((entry) => isPlainRecord(entry) && entry.path === relative);
+    const entry = matches[0];
+    requireRebind(
+      matches.length === 1 &&
+        isPlainRecord(entry) &&
+        typeof entry.size === 'number' &&
+        Number.isSafeInteger(entry.size) &&
+        typeof entry.sha256 === 'string' &&
+        hash.test(entry.sha256),
+      'runtime path missing from exact forward manifest',
+    );
+    return { path: relative, exists: true, bytes: entry.size, sha256: entry.sha256 };
+  });
+}
+
+/** @param {string} root @param {string} operationChain @param {readonly string[]} paths
+ * @param {string} oldDigest @param {string} newDigest */
 function forwardLineage(root, operationChain, paths, oldDigest, newDigest) {
   const operationIds = operationChain.split(',');
   requireRebind(
@@ -367,6 +549,7 @@ function forwardLineage(root, operationChain, paths, oldDigest, newDigest) {
     const intent = validatedJson(access, `${prefix}/forward-intent.v1.json`, 'forward intent').value;
     const parent = validatedJson(access, `${prefix}/parent-payload.manifest.v1.json`, 'parent manifest');
     const successor = validatedJson(access, `${prefix}/successor-payload.manifest.v1.json`, 'successor manifest');
+    requireRebind(isPlainRecord(intent), 'forward operation intent invalid');
     requireRebind(
       intent.schema === 'VidaForwardUpdateMaintenance/v1' &&
         intent.operation_id === operationId &&
@@ -377,31 +560,36 @@ function forwardLineage(root, operationChain, paths, oldDigest, newDigest) {
     return { parent, successor };
   });
   requireRebind(
-    operations.every(
-      (operation, index) => index === 0 || sha(operations[index - 1].successor.bytes) === sha(operation.parent.bytes),
-    ),
+    operations.every((operation, index) => {
+      if (index === 0) return true;
+      const previous = operations[index - 1];
+      requireRebind(previous, 'forward operation predecessor is missing');
+      return sha(previous.successor.bytes) === sha(operation.parent.bytes);
+    }),
     'forward operations do not form one exact manifest chain',
   );
-  const parent = operations[0].parent;
-  const successor = operations.at(-1).successor;
+  const first = operations[0],
+    last = operations.at(-1);
+  requireRebind(first, 'forward operation manifest chain is empty');
+  requireRebind(last, 'forward operation manifest chain is empty');
+  const parent = first.parent;
+  const successor = last.successor;
   const selector = validatedJson(access, '.agent/active-runtime-selector.v1.json', 'active runtime selector').value;
   const oldManifestDigest = sha(parent.bytes);
   const newManifestDigest = sha(successor.bytes);
+  requireRebind(isPlainRecord(selector), 'active runtime selector invalid');
   requireRebind(
     selector.payload_manifest_sha256 === newManifestDigest,
     'installed forward lineage or selector differs',
   );
-  const entriesFor = (manifest) =>
-    paths.map((relative) => {
-      const matches = manifest.value.files.filter((entry) => entry.path === relative);
-      requireRebind(
-        matches.length === 1 && Number.isSafeInteger(matches[0].size) && hash.test(matches[0].sha256),
-        'runtime path missing from exact forward manifest',
-      );
-      return { path: relative, exists: true, bytes: matches[0].size, sha256: matches[0].sha256 };
-    });
-  const from = canonicalJsonDigest({ schema: 'ScopedSourceSnapshot/v1', entries: entriesFor(parent) });
-  const to = canonicalJsonDigest({ schema: 'ScopedSourceSnapshot/v1', entries: entriesFor(successor) });
+  const from = canonicalJsonDigest({
+    schema: 'ScopedSourceSnapshot/v1',
+    entries: forwardManifestEntries(parent, paths),
+  });
+  const to = canonicalJsonDigest({
+    schema: 'ScopedSourceSnapshot/v1',
+    entries: forwardManifestEntries(successor, paths),
+  });
   requireRebind(
     from === oldDigest && to === newDigest && from !== to,
     'runtime-code digests differ from forward manifests',
@@ -409,16 +597,111 @@ function forwardLineage(root, operationChain, paths, oldDigest, newDigest) {
   return { parentManifestDigest: oldManifestDigest, successorManifestDigest: newManifestDigest };
 }
 
-function checkedRow(database, table, where, args, digest = canonicalJsonDigest) {
-  const row = database.query(`SELECT revision,payload,digest FROM ${table} WHERE ${where}`).get(...args);
-  requireRebind(row && Number.isSafeInteger(row.revision) && row.revision > 0, `${table} row missing`);
-  const value = JSON.parse(row.payload);
-  requireRebind(digest(value) === row.digest, `${table} row digest differs`);
-  return { value, version: { revision: row.revision, digest: row.digest } };
+/** @param {SqliteDatabase} database @param {string} workspaceId @param {string} workId @param {number} attempt */
+function checkedJournalRow(database, workspaceId, workId, attempt) {
+  const row = readWorkspaceMastraSqlRow(database, workspaceId, workId, attempt);
+  requireRebind(row, 'agent_host_mastra_session_ledger row missing');
+  return { value: parseMastraSessionLedgerState(row.value), version: { revision: row.revision, digest: row.digest } };
 }
 
-/** Read-only plan; only exact installed forward bytes may change the intake-pinned runtime digest. */
-export function planRuntimeCodeRebind({
+/** @param {import('../src/host-state.ts').HostWorkSessionSnapshot} captured */
+function requireCapturedWorkSession(captured) {
+  requireRebind(captured.host.work, 'agent_host_state Work missing');
+  requireRebind(captured.host.ledger, 'agent_host_state Ledger missing');
+  requireRebind(captured.host.workVersion, 'agent_host_state Work version missing');
+  requireRebind(captured.host.ledgerVersion, 'agent_host_state Ledger version missing');
+  requireRebind(captured.journal, 'agent_host_mastra_session_ledger row missing');
+  return {
+    work: { value: captured.host.work, version: captured.host.workVersion },
+    ledger: { value: captured.host.ledger, version: captured.host.ledgerVersion },
+    journal: { value: captured.journal.state, version: captured.journal.version },
+    maintenanceGeneration: captured.host.maintenanceGeneration,
+  };
+}
+
+/** @param {AgentRuntimeConfig} config @param {import('../src/orchestration/persistent-session-handoff.ts').MastraLedgerItem | undefined} item */
+function runtimeCodeAssignment(config, item) {
+  const stage = config.workflows[item?.request.workflow_id ?? '']?.stages.find(
+    (entry) => entry.id === item?.request.stage_id,
+  );
+  const assignment = stage?.assignments[item?.request.assignment_index ?? -1];
+  const profile = config.agents.profiles[assignment?.profile ?? ''];
+  const toolPolicy = config.agents.tool_policies[profile?.tools_policy ?? ''];
+  return { assignment, profile, toolPolicy };
+}
+
+/** @param {MastraSessionLedgerState} state @param {AgentRuntimeConfig} config @param {import('../src/host-state.ts').WorkState} work */
+function runtimeCodeCorrectiveEvidence(state, config, work) {
+  const workflow = config.workflows[work.binding.workflow_id];
+  requireRebind(workflow, 'current corrective workflow is unavailable');
+  return selectCorrectiveEvidence(state, workflow);
+}
+
+/**
+ * @typedef {object} RuntimeCodeRebindPlanInput
+ * @property {SqliteDatabase} database
+ * @property {string} root
+ * @property {AgentRuntimeConfig} config
+ * @property {string} workspaceId
+ * @property {readonly string[]} projectIds
+ * @property {string} workId
+ * @property {number} attempt
+ * @property {string} actionId
+ * @property {string} issueId
+ * @property {string} nativeHandle
+ * @property {string} repairId
+ * @property {string} actor
+ * @property {string} timestamp
+ * @property {string} forwardOperationId
+ * @property {string} [ownerNoCallPointer]
+ * @property {string} [correctionId]
+ * @property {string} [ownerCorrectionPointer]
+ * @property {boolean} [focusedFailureCorrection]
+ */
+/** @param {string | undefined} ownerCorrectionPointer @param {string | undefined} ownerNoCallPointer @param {string | undefined} correctionId */
+function validFocusedRuntimeCodePointer(ownerCorrectionPointer, ownerNoCallPointer, correctionId) {
+  return (
+    typeof ownerCorrectionPointer === 'string' &&
+    ownerCorrectionPointer.trim().length > 0 &&
+    ownerCorrectionPointer.length <= 2048 &&
+    ownerNoCallPointer === undefined &&
+    correctionId === undefined
+  );
+}
+/** @param {string | undefined} ownerCorrectionPointer @param {string | undefined} ownerNoCallPointer @param {string | undefined} correctionId */
+function validSynthesisRuntimeCodePointer(ownerCorrectionPointer, ownerNoCallPointer, correctionId) {
+  return (
+    identifier.test(correctionId ?? '') &&
+    typeof ownerCorrectionPointer === 'string' &&
+    ownerCorrectionPointer.length > 0 &&
+    ownerCorrectionPointer.length <= 2048 &&
+    !/\p{Cc}/u.test(ownerCorrectionPointer) &&
+    ownerNoCallPointer === undefined
+  );
+}
+/** @param {string | undefined} ownerCorrectionPointer @param {string | undefined} ownerNoCallPointer */
+function validNoCallRuntimeCodePointer(ownerCorrectionPointer, ownerNoCallPointer) {
+  return (
+    typeof ownerNoCallPointer === 'string' &&
+    ownerNoCallPointer.length > 0 &&
+    ownerNoCallPointer.length <= 2048 &&
+    !/\p{Cc}/u.test(ownerNoCallPointer) &&
+    ownerCorrectionPointer === undefined
+  );
+}
+/** @param {boolean | undefined} focusedFailureCorrection @param {string | undefined} ownerCorrectionPointer @param {string | undefined} correctionId @param {string | undefined} ownerNoCallPointer */
+function validRuntimeCodePointer(focusedFailureCorrection, ownerCorrectionPointer, correctionId, ownerNoCallPointer) {
+  return focusedFailureCorrection
+    ? validFocusedRuntimeCodePointer(ownerCorrectionPointer, ownerNoCallPointer, correctionId)
+    : correctionId
+      ? validSynthesisRuntimeCodePointer(ownerCorrectionPointer, ownerNoCallPointer, correctionId)
+      : validNoCallRuntimeCodePointer(ownerCorrectionPointer, ownerNoCallPointer);
+}
+
+/** Read-only plan; only exact installed forward bytes may change the intake-pinned runtime digest.
+ * @param {RuntimeCodeRebindPlanInput} input
+ */
+function planRuntimeCodeRebind({
   database,
   root,
   config,
@@ -450,24 +733,7 @@ export function planRuntimeCodeRebind({
       typeof nativeHandle === 'string' &&
       nativeHandle.length > 0 &&
       nativeHandle.length <= 256 &&
-      (focusedFailureCorrection
-        ? typeof ownerCorrectionPointer === 'string' &&
-          ownerCorrectionPointer.trim().length > 0 &&
-          ownerCorrectionPointer.length <= 2048 &&
-          ownerNoCallPointer === undefined &&
-          correctionId === undefined
-        : correctionId
-          ? identifier.test(correctionId) &&
-            typeof ownerCorrectionPointer === 'string' &&
-            ownerCorrectionPointer.length > 0 &&
-            ownerCorrectionPointer.length <= 2048 &&
-            !/\p{Cc}/u.test(ownerCorrectionPointer) &&
-            ownerNoCallPointer === undefined
-          : typeof ownerNoCallPointer === 'string' &&
-            ownerNoCallPointer.length > 0 &&
-            ownerNoCallPointer.length <= 2048 &&
-            !/\p{Cc}/u.test(ownerNoCallPointer) &&
-            ownerCorrectionPointer === undefined) &&
+      validRuntimeCodePointer(focusedFailureCorrection, ownerCorrectionPointer, correctionId, ownerNoCallPointer) &&
       typeof actor === 'string' &&
       actor.trim() === actor &&
       actor.length > 0 &&
@@ -488,60 +754,69 @@ export function planRuntimeCodeRebind({
     integrations_digest: project.integrations_digest,
     work_id: workId,
   };
-  const key = JSON.stringify([identity.repository_id, identity.project_ids, identity.integrations_digest, workId]);
-  const work = checkedRow(database, 'agent_host_state', "workspace_id=? AND kind='work' AND id=?", [workspaceId, key]);
-  const ledger = checkedRow(
+  const captured = createCliHostStateStore(
     database,
-    'agent_host_state',
-    "workspace_id=? AND kind='ledger' AND id='shared'",
-    [workspaceId],
-    coordinationLedgerDigest,
-  );
-  const journal = checkedRow(
-    database,
-    'agent_host_mastra_session_ledger',
-    'workspace_id=? AND work_id=? AND attempt=?',
-    [workspaceId, workId, attempt],
-  );
+    workspaceId,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    root,
+  ).readWorkSessionSnapshot(identity, attempt);
+  const { work, ledger, journal, maintenanceGeneration } = requireCapturedWorkSession(captured);
   const owner = work.value;
   const state = journal.value;
   const item = [...state.items, ...state.completed.flatMap((wave) => wave.items)].find(
     (entry) => entry.request?.action_id === actionId,
   );
-  const stage = config.workflows[item?.request.workflow_id]?.stages.find(
-    (entry) => entry.id === item?.request.stage_id,
-  );
-  const assignment = stage?.assignments[item?.request.assignment_index];
-  const profile = config.agents.profiles[assignment?.profile];
-  const toolPolicy = config.agents.tool_policies[profile?.tools_policy];
+  const { assignment, profile, toolPolicy } = runtimeCodeAssignment(config, item);
   const dispatchRow =
     focusedFailureCorrection || correctionId
       ? null
-      : database
-          .query(
-            'SELECT payload,digest FROM agent_host_readonly_dispatch_activation WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=?',
-          )
-          .get(workspaceId, workId, attempt, actionId);
-  const dispatch = dispatchRow && JSON.parse(dispatchRow.payload);
+      : sqlitePayloadRow(
+          database
+            .query(
+              'SELECT payload,digest FROM agent_host_readonly_dispatch_activation WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=?',
+            )
+            .get(workspaceId, workId, attempt, actionId),
+          'read-only dispatch activation',
+        );
+  const dispatch = dispatchRow === null ? null : parsedRecord(dispatchRow.payload, 'read-only dispatch activation');
+  const dispatchGeneration =
+    dispatch && typeof dispatch.generation === 'number' && Number.isSafeInteger(dispatch.generation)
+      ? dispatch.generation
+      : undefined;
   const repairRow =
-    dispatch &&
-    Number.isSafeInteger(dispatch.generation) &&
-    database
-      .query(
-        'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=?',
-      )
-      .get(workspaceId, workId, attempt, actionId, dispatch.generation);
-  const repair = repairRow && JSON.parse(repairRow.payload);
-  const { digest: _repairDigest, ...repairBody } = repair ?? {};
+    dispatch !== null && dispatchGeneration !== undefined
+      ? sqlitePayloadRow(
+          database
+            .query(
+              'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=?',
+            )
+            .get(workspaceId, workId, attempt, actionId, dispatchGeneration),
+          'read-only dispatch repair',
+        )
+      : null;
+  const repair = repairRow ? parsedRecord(repairRow.payload, 'read-only dispatch repair') : null;
+  const repairBody = repair ? Object.fromEntries(Object.entries(repair).filter(([key]) => key !== 'digest')) : {};
   const correctionRow =
-    correctionId &&
-    database
-      .query(
-        'SELECT payload,digest FROM agent_host_synthesis_observation_correction WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
-      )
-      .get(workspaceId, workId, attempt, actionId);
-  const correction = correctionRow && JSON.parse(correctionRow.payload);
-  const { digest: _correctionDigest, ...correctionBody } = correction ?? {};
+    correctionId !== undefined
+      ? sqlitePayloadRow(
+          database
+            .query(
+              'SELECT payload,digest FROM agent_host_synthesis_observation_correction WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+            )
+            .get(workspaceId, workId, attempt, actionId),
+          'synthesis correction',
+        )
+      : null;
+  const correction = correctionRow === null ? null : parsedRecord(correctionRow.payload, 'synthesis correction');
+  const correctionBody = correction
+    ? Object.fromEntries(Object.entries(correction).filter(([key]) => key !== 'digest'))
+    : {};
+  const correctionOriginalItem = correction
+    ? rebindRecord(correction.original_item, 'synthesis correction original item missing')
+    : null;
   const paused = owner.execution.status === 'suspended' && owner.lease === null;
   const prior =
     paused &&
@@ -592,7 +867,7 @@ export function planRuntimeCodeRebind({
           state.attempt === attempt &&
           state.workspace_id === workspaceId &&
           state.source_scope?.digest === owner.binding.work_source_revision &&
-          selectCorrectiveEvidence(state, config.workflows[owner.binding.workflow_id]).failed.some(
+          runtimeCodeCorrectiveEvidence(state, config, owner).failed.some(
             (entry) => entry.request.action_id === actionId && entry.issue_id === issueId,
           )
       : owner.schema === 'WorkState/v1' &&
@@ -624,6 +899,7 @@ export function planRuntimeCodeRebind({
           (correctionId
             ? correction &&
               correctionRow &&
+              correction !== null &&
               correction.schema === 'VidaSynthesisObservationCorrectionPlan/v1' &&
               correction.digest === correctionRow.digest &&
               correction.digest === canonicalJsonDigest(correctionBody) &&
@@ -637,18 +913,23 @@ export function planRuntimeCodeRebind({
               correction.attempt === attempt &&
               correction.action_id === actionId &&
               correction.prior_issue_id === issueId &&
-              correction.original_item.issue_id === issueId &&
-              correction.original_item.observation?.status === 'reported_complete' &&
-              canonicalJsonDigest(correction.original_item.request) === canonicalJsonDigest(item.request) &&
+              correctionOriginalItem &&
+              correctionOriginalItem.issue_id === issueId &&
+              isPlainRecord(correctionOriginalItem.observation) &&
+              rebindRecord(correctionOriginalItem.observation, 'corrected observation missing').status ===
+                'reported_complete' &&
+              canonicalJsonDigest(correctionOriginalItem.request) === canonicalJsonDigest(item.request) &&
               correction.config_digest === runtimeConfigDigest(config) &&
               correction.source_digest === state.source_scope.digest
             : dispatch &&
+              dispatchRow &&
               canonicalJsonDigest(dispatch) === dispatchRow.digest &&
               dispatch.schema === 'VidaReadOnlyDispatchActivation/v1' &&
               dispatch.logical_action_id === actionId &&
               dispatch.issue_id === issueId &&
               repair &&
               repair.schema === 'VidaReadOnlyDispatchRepairPlan/v1' &&
+              repairRow &&
               repairRow.digest === repair.digest &&
               repair.digest === canonicalJsonDigest(repairBody) &&
               dispatch.plan_digest === repair.digest &&
@@ -671,6 +952,7 @@ export function planRuntimeCodeRebind({
               repair.source_digest === state.source_scope.digest),
     'current owner, journal or issued replacement differs',
   );
+  requireRebind(state.source_scope, 'declared task source is missing');
   validateWorkSessionBinding(owner, state, root);
   const access = requireSafeRepositoryAccess(root);
   requireRebind(
@@ -686,7 +968,7 @@ export function planRuntimeCodeRebind({
   requireRebind(intake, 'exact intake reference missing');
   const intakeBytes = access.readBytes(intake.path, 'runtime-code rebind intake');
   requireRebind(sha(intakeBytes) === intake.sha256, 'intake bytes differ');
-  const intakeValue = JSON.parse(intakeBytes.toString('utf8'));
+  const intakeValue = parsedRecord(intakeBytes.toString('utf8'), 'runtime-code rebind intake');
   const paths = runtimePackageCodePaths(config.runtime.bundle);
   requireRebind(
     canonicalJsonDigest(intakeValue.runtime_code_paths) === canonicalJsonDigest(paths),
@@ -700,7 +982,15 @@ export function planRuntimeCodeRebind({
   const oldDigest = owner.binding.runtime_code_digest;
   const newDigest = current.digest;
   const lineage = forwardLineage(root, forwardOperationId, paths, oldDigest, newDigest);
-  const request = {
+  const correctionDigest =
+    correctionId === undefined
+      ? undefined
+      : requiredStringField(
+          rebindRecord(correction, 'synthesis correction is missing'),
+          'digest',
+          'synthesis correction digest',
+        );
+  const request = parseRuntimeCodeRebindRequest({
     identity,
     attempt,
     actionId,
@@ -709,15 +999,7 @@ export function planRuntimeCodeRebind({
     expectedWork: work.version,
     expectedLedger: ledger.version,
     expectedJournal: journal.version,
-    expectedMaintenanceGeneration: new HostStateStore(
-      database,
-      workspaceId,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      root,
-    ).readHostStateSnapshot(identity).maintenanceGeneration,
+    expectedMaintenanceGeneration: maintenanceGeneration,
     oldRuntimeCodeDigest: oldDigest,
     newRuntimeCodeDigest: newDigest,
     forwardOperationId,
@@ -726,9 +1008,10 @@ export function planRuntimeCodeRebind({
     ...(focusedFailureCorrection
       ? { focusedFailureCorrection: { ownerCorrectionPointer } }
       : correctionId
-        ? { synthesisCorrection: { correctionId, correctionDigest: correction.digest, ownerCorrectionPointer } }
+        ? { synthesisCorrection: { correctionId, correctionDigest, ownerCorrectionPointer } }
         : { ownerNoCallPointer }),
-  };
+  });
+  /** @satisfies {Omit<RuntimeCodeRebindPlan, 'digest'>} */
   const body = {
     schema: 'VidaRuntimeCodeRebindPlan/v1',
     repair_id: repairId,
@@ -741,11 +1024,12 @@ export function planRuntimeCodeRebind({
   return { ...body, digest: canonicalJsonDigest(body) };
 }
 
+/** @param {string} root @param {string} repairId @returns {RuntimeCodeRebindPlan} */
 function readPlan(root, repairId) {
   const file = path.join(root, planPath(repairId));
   const stat = lstatSync(file);
   requireRebind(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'plan path unsafe');
-  const plan = JSON.parse(readFileSync(file, 'utf8'));
+  const plan = parseRuntimeCodeRebindPlan(JSON.parse(readFileSync(file, 'utf8')));
   const { digest, ...body } = plan;
   requireRebind(
     plan.schema === 'VidaRuntimeCodeRebindPlan/v1' &&
@@ -756,6 +1040,7 @@ function readPlan(root, repairId) {
   return plan;
 }
 
+/** @param {string} root @param {string} repairId @param {RuntimeCodeRebindPlan} plan */
 function writePlan(root, repairId, plan) {
   const access = requireSafeRepositoryAccess(root);
   access.ensureDirectory(`.agent/work/${repairId}`, 'runtime-code rebind evidence');
@@ -769,11 +1054,12 @@ function writePlan(root, repairId, plan) {
   }
 }
 
+/** @param {string} root @param {string} repairId @returns {DeliveredContinuationPlan} */
 function readDeliveredContinuationPlan(root, repairId) {
   const file = path.join(root, deliveredContinuationPlanPath(repairId));
   const stat = lstatSync(file);
   requireRebind(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'delivered continuation plan path unsafe');
-  const plan = JSON.parse(readFileSync(file, 'utf8')),
+  const plan = parseDeliveredContinuationPlan(JSON.parse(readFileSync(file, 'utf8'))),
     { digest, ...body } = plan;
   requireRebind(
     plan.schema === 'VidaDeliveredWorkContinuationPlan/v1' &&
@@ -785,6 +1071,7 @@ function readDeliveredContinuationPlan(root, repairId) {
   return plan;
 }
 
+/** @param {string} root @param {string} repairId @param {DeliveredContinuationPlan} plan */
 function writeDeliveredContinuationPlan(root, repairId, plan) {
   const access = requireSafeRepositoryAccess(root);
   access.ensureDirectory(`.agent/work/${repairId}`, 'delivered continuation evidence');
@@ -798,28 +1085,137 @@ function writeDeliveredContinuationPlan(root, repairId, plan) {
   }
 }
 
-function sourceTransitionAuthorizedPaths(root, config, transitionId, proof) {
+/** @param {Record<string, unknown>} request @returns {readonly ScopedSourceChange[]} */
+function exactSourceCorrectionChanges(request) {
+  const before = parseScopedSourceSnapshot(request.old_source),
+    after = parseScopedSourceSnapshot(request.new_source),
+    changes = compareRuntimeEndpointSnapshots(before, after),
+    accepted = request.source_changes,
+    allowedPaths = request.authorized_changed_paths;
+  requireRebind(
+    changes.length > 0 &&
+      Array.isArray(accepted) &&
+      canonicalJsonDigest(accepted) === canonicalJsonDigest(changes) &&
+      Array.isArray(allowedPaths) &&
+      allowedPaths.every((entry) => typeof entry === 'string') &&
+      changes.every((change) => allowedPaths.includes(change.path)),
+    'closed Source correction changes differ from their exact endpoint images',
+  );
+  return changes;
+}
+
+/** @param {string} root @param {AgentRuntimeConfig} config @param {string} transitionId @param {import('../src/orchestration/delivered-work-continuation.ts').ClosedConfigTransitionProof} proof @returns {readonly ScopedSourceChange[]} */
+function sourceTransitionAuthorizedChanges(root, config, transitionId, proof) {
   const access = requireSafeRepositoryAccess(root),
     sidecarPath = `${config.control.work_root}/${transitionId}/runtime-config-source-correction-repair.v1.json`,
-    artifact = validatedJson(access, sidecarPath, 'closed Source correction artifact').value,
-    { digest, ...body } = artifact;
+    artifactValue = validatedJson(access, sidecarPath, 'closed Source correction artifact').value;
+  const artifact = rebindRecord(artifactValue, 'closed Source correction artifact shape invalid');
+  const digest = artifact.digest,
+    body = Object.fromEntries(Object.entries(artifact).filter(([key]) => key !== 'digest'));
+  const request = rebindRecord(artifact.request, 'closed Source correction request missing'),
+    completion = rebindRecord(artifact.completion, 'closed Source correction completion missing');
+  const changes = exactSourceCorrectionChanges(request);
   requireRebind(
     artifact.schema === 'RuntimeConfigSourceCorrectionRepair/v1' &&
       artifact.operation_id === transitionId &&
       artifact.status === 'applied' &&
       digest === canonicalJsonDigest(body) &&
-      artifact.request?.operation_id === transitionId &&
-      artifact.completion &&
+      request.operation_id === transitionId &&
       proof.transition.operation_path ===
         `${config.control.work_root}/${transitionId}/runtime-config-delivery-operation.v1.json` &&
-      canonicalJsonDigest(artifact.completion) === proof.transition_digest &&
-      Array.isArray(artifact.request.authorized_changed_paths),
+      canonicalJsonDigest(completion) === proof.transition_digest &&
+      completion.request_digest === canonicalJsonDigest(request) &&
+      changes.length > 0,
     'retained Source correction artifact differs from its closed transition proof',
   );
-  return [...artifact.request.authorized_changed_paths].sort();
+  return changes;
+}
+
+/** @param {unknown} value @returns {value is string} */
+function isSafePublishedSourcePath(value) {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= 512 &&
+    !value.startsWith('/') &&
+    !/^[A-Za-z]:/.test(value) &&
+    !/[\\\p{Cc}]/u.test(value) &&
+    value.split('/').every((part) => part && part !== '.' && part !== '..')
+  );
+}
+/** @param {unknown} candidate @param {Map<string, string>} published */
+function addPublishedSourceEntry(candidate, published) {
+  const entry = rebindRecord(candidate, 'published Source correction entry is invalid');
+  requireRebind(
+    entry &&
+      Object.keys(entry).sort().join(',') === 'path,sha256' &&
+      isSafePublishedSourcePath(entry.path) &&
+      typeof entry.sha256 === 'string' &&
+      hash.test(entry.sha256) &&
+      !published.has(entry.path),
+    'published Source correction entry is invalid',
+  );
+  published.set(entry.path, entry.sha256);
+}
+/** @param {Record<string, unknown>} publicationValue @param {WorkIdentity} identity @param {AgentRuntimeConfig} config @returns {Record<string, unknown> & {entries: unknown[]}} */
+function requirePublishedSourceInventory(publicationValue, identity, config) {
+  const source = rebindRecord(publicationValue.source_inventory, 'published Source inventory missing');
+  const entries = source.entries;
+  const commit = publicationValue.commit;
+  requireRebind(
+    typeof commit === 'string' &&
+      /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(commit) &&
+      isPlainRecord(publicationValue.project) &&
+      publicationValue.project.repository_id === identity.repository_id &&
+      publicationValue.project.config_digest === runtimeConfigDigest(config) &&
+      Array.isArray(entries) &&
+      entries.length > 0 &&
+      entries.length <= 4096 &&
+      source.source_binding === sha(Buffer.from(JSON.stringify(entries))),
+    'published Source correction is invalid',
+  );
+  requireRebind(typeof commit === 'string', 'published Source commit is invalid');
+  requireRebind(Array.isArray(entries), 'published Source entries are invalid');
+  return { ...source, entries };
+}
+/** @param {Record<string, unknown> & {entries: unknown[]}} source @returns {Map<string, string>} */
+function publishedSourceMap(source) {
+  /** @type {Map<string, string>} */
+  const published = new Map();
+  for (const candidate of source.entries) addPublishedSourceEntry(candidate, published);
+  return published;
+}
+/** @param {readonly {path: string, sha256: string | null, exists: boolean}[]} targets @param {ReadonlyMap<string, string>} published */
+function requirePublishedRuntimeTargets(targets, published) {
+  requireRebind(
+    targets.every((entry) => (entry.exists ? published.get(entry.path) === entry.sha256 : !published.has(entry.path))),
+    'runtime endpoint diff is outside the published correction',
+  );
+}
+/** @param {SafeRepositoryAccess} access @param {string} root @param {import('../src/host-state.ts').WorkState} work @param {MastraSessionLedgerState} journal @param {ReadonlyMap<string, string>} published @param {readonly import('../src/orchestration/scoped-source-snapshot.ts').ScopedSourceEntry[]} runtimeSourceTargets @param {string} commit */
+function verifyPublishedTaskSource(access, root, work, journal, published, runtimeSourceTargets, commit) {
+  const currentSourceScope = snapshotDeclaredSources(access, [...work.lifecycle.scope.allowed_paths].sort());
+  requireRebind(
+    currentSourceScope && journal.source_scope,
+    'current Source scope or original Journal snapshot is missing',
+  );
+  const authorizedSourceChanges = compareScopedSourceSnapshots(journal.source_scope, currentSourceScope);
+  validateContinuationSourceChangePaths(work, authorizedSourceChanges);
+  requireRebind(
+    authorizedSourceChanges.every((change) =>
+      change.after.exists ? published.get(change.path) === change.after.sha256 : !published.has(change.path),
+    ),
+    'current task Source changes differ from the correction byte record',
+  );
+  assertCommittedSourceChanges(root, commit, [
+    ...runtimeSourceTargets.map((entry) => ({ path: entry.path, after: entry })),
+    ...authorizedSourceChanges,
+  ]);
+  return { currentSourceScope, authorizedSourceChanges };
 }
 
 /** Shared exact native/Source endpoint verification; this grants no Host rights. */
+/** @param {{root: string, config: AgentRuntimeConfig, workspaceId: string, identity: WorkIdentity, work: import('../src/host-state.ts').WorkState, journal: MastraSessionLedgerState, intake: RuntimeEndpointIntake, intakeRef: {path: string, sha256: string}, access: SafeRepositoryAccess, sourceTransitionId: string, parentManifestRef: string, successorManifestRef: string, systemUpdateRef: string, sourceCorrectionRef: string}} args */
 export function verifyConfiguredNativeEndpoint({
   root,
   config,
@@ -849,12 +1245,22 @@ export function verifyConfiguredNativeEndpoint({
     successor = validatedJson(access, successorManifestRef, 'current native manifest'),
     update = validatedJson(access, systemUpdateRef, 'native system update'),
     publication = validatedJson(access, sourceCorrectionRef, 'published causal Source correction'),
-    runtimePaths = runtimePackageCodePaths(config.runtime.bundle),
-    beforeCode = snapshotRuntimeManifestSources(parent.value, config.runtime.bundle, intake.runtime_code_paths),
+    runtimePaths = requiredStringArray(
+      runtimePackageCodePaths(config.runtime.bundle),
+      'runtime code paths are missing',
+    ),
+    beforeCode = snapshotRuntimeManifestSources(
+      parent.value,
+      config.runtime.bundle,
+      requiredStringArray(intake.runtime_code_paths, 'original intake runtime code paths are missing'),
+    ),
     targetCode = snapshotRuntimeManifestSources(successor.value, config.runtime.bundle, runtimePaths),
     currentCode = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, runtimePaths),
-    native = successor.value,
-    installation = update.value.installation_observation;
+    native = rebindRecord(successor.value, 'current native manifest shape invalid'),
+    nativeAsset = rebindRecord(native.asset, 'current native manifest executable asset missing'),
+    updateValue = rebindRecord(update.value, 'native update shape invalid'),
+    publicationValue = rebindRecord(publication.value, 'published Source correction shape invalid'),
+    installation = rebindRecord(updateValue.installation_observation, 'native installation observation missing');
   requireRebind(
     beforeCode.digest === work.binding.runtime_code_digest &&
       targetCode.digest === currentCode.digest &&
@@ -863,86 +1269,52 @@ export function verifyConfiguredNativeEndpoint({
       native.pin === self.bun_version &&
       native.version === self.package_version &&
       native.payloadId === self.resource_payload_id &&
-      native.asset?.sha256 === self.executable_sha256 &&
-      native.asset?.bytes === self.executable_bytes &&
-      update.value.status === 'CURRENT_SYSTEM_REPAIR_CHECKPOINT_UPDATED' &&
-      identifier.test(update.value.operation_id) &&
-      installation?.schema === 'VidaNativeInstallationResult/v1' &&
+      nativeAsset.sha256 === self.executable_sha256 &&
+      nativeAsset.bytes === self.executable_bytes &&
+      updateValue.status === 'CURRENT_SYSTEM_REPAIR_CHECKPOINT_UPDATED' &&
+      typeof updateValue.operation_id === 'string' &&
+      identifier.test(updateValue.operation_id) &&
+      installation.schema === 'VidaNativeInstallationResult/v1' &&
+      typeof installation.action === 'string' &&
       ['install', 'update'].includes(installation.action) &&
       installation.runtime_accepted === false &&
       installation.cleanup_complete === true &&
+      typeof installation.sha256 === 'string' &&
       installation.sha256.toLowerCase() === self.executable_sha256 &&
       installation.bytes === self.executable_bytes &&
       installation.version === self.package_version &&
+      typeof installation.path === 'string' &&
       path.resolve(installation.path) === path.resolve(self.executable_path) &&
-      path.resolve(update.value.entry) === path.resolve(self.executable_path) &&
-      update.value.version === self.package_version &&
-      update.value.runtime_accepted === false &&
-      update.value.developer_unblocked === false,
+      typeof updateValue.entry === 'string' &&
+      path.resolve(updateValue.entry) === path.resolve(self.executable_path) &&
+      updateValue.version === self.package_version &&
+      updateValue.runtime_accepted === false &&
+      updateValue.developer_unblocked === false,
     'native endpoints, current package or actual installation differ',
   );
-  const registeredUpdate = releaseState(releaseJournalFile(root, update.value.operation_id)),
+  const registeredUpdate = releaseState(releaseJournalFile(root, updateValue.operation_id)),
     pendingUpdate = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
   requireRebind(
-    registeredUpdate.operation_id === update.value.operation_id &&
+    registeredUpdate.operation_id === updateValue.operation_id &&
       pendingUpdate.operation_id === registeredUpdate.operation_id &&
       registeredUpdate.version === self.package_version &&
       pendingUpdate.version === registeredUpdate.version &&
       ['awaiting_assurance', 'qualified', 'packed', 'installing', 'successful'].includes(registeredUpdate.status),
     'native endpoint observation has no matching current release-owner operation',
   );
-  const source = publication.value.source_inventory;
-  requireRebind(
-    /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(publication.value.commit) &&
-      publication.value.project?.repository_id === identity.repository_id &&
-      publication.value.project?.config_digest === runtimeConfigDigest(config) &&
-      source &&
-      Array.isArray(source.entries) &&
-      source.entries.length > 0 &&
-      source.entries.length <= 4096 &&
-      source.source_binding === sha(Buffer.from(JSON.stringify(source.entries))),
-    'published Source correction is invalid',
-  );
-  const published = new Map();
-  for (const entry of source.entries) {
-    requireRebind(
-      entry &&
-        Object.keys(entry).sort().join(',') === 'path,sha256' &&
-        typeof entry.path === 'string' &&
-        entry.path.length > 0 &&
-        entry.path.length <= 512 &&
-        !entry.path.startsWith('/') &&
-        !/^[A-Za-z]:/.test(entry.path) &&
-        !/[\\\p{Cc}]/u.test(entry.path) &&
-        entry.path.split('/').every((part) => part && part !== '.' && part !== '..') &&
-        hash.test(entry.sha256) &&
-        !published.has(entry.path),
-      'published Source correction entry is invalid',
-    );
-    published.set(entry.path, entry.sha256);
-  }
+  const source = requirePublishedSourceInventory(publicationValue, identity, config);
+  const published = publishedSourceMap(source);
   const runtimeSourceTargets = runtimeEndpointSourceTargets(config.runtime.bundle, beforeCode, targetCode, currentCode);
-  requireRebind(
-    runtimeSourceTargets.every((entry) =>
-      entry.exists ? published.get(entry.path) === entry.sha256 : !published.has(entry.path),
-    ),
-    'runtime endpoint diff is outside the published correction',
+  requirePublishedRuntimeTargets(runtimeSourceTargets, published);
+  const { currentSourceScope, authorizedSourceChanges } = verifyPublishedTaskSource(
+    access,
+    root,
+    work,
+    journal,
+    published,
+    runtimeSourceTargets,
+    requiredStringField(publicationValue, 'commit', 'published Source commit is invalid'),
   );
-  const currentSourceScope = snapshotDeclaredSources(access, [...work.lifecycle.scope.allowed_paths].sort()),
-    authorizedSourceChanges = compareScopedSourceSnapshots(journal.source_scope, currentSourceScope);
-  validateContinuationSourceChangePaths(work, authorizedSourceChanges);
-  requireRebind(
-    authorizedSourceChanges.every((change) =>
-      change.after.exists ? published.get(change.path) === change.after.sha256 : !published.has(change.path),
-    ),
-    'current task Source changes differ from the correction byte record',
-  );
-  // The byte report is a hint. Actual regular Git objects prove the commit bytes;
-  // remote publication and installation-call provenance are not inferred from it.
-  assertCommittedSourceChanges(root, publication.value.commit, [
-    ...runtimeSourceTargets.map((entry) => ({ path: entry.path, after: entry })),
-    ...authorizedSourceChanges,
-  ]);
   const targetConfigDigest = runtimeConfigDigest(config);
   const transition = {
     schema: 'ConfiguredRuntimeEndpointTransition/v1',
@@ -964,7 +1336,7 @@ export function verifyConfiguredNativeEndpoint({
     successor_manifest_digest: sha(successor.bytes),
     parent_manifest_ref: parentManifestRef,
     successor_manifest_ref: successorManifestRef,
-    system_update_operation_id: update.value.operation_id,
+    system_update_operation_id: updateValue.operation_id,
     system_update_ref: systemUpdateRef,
     system_update_sha256: sha(update.bytes),
     source_correction_ref: sourceCorrectionRef,
@@ -997,13 +1369,15 @@ export function verifyConfiguredNativeEndpoint({
     publication,
     currentSourceScope,
     authorizedSourceChanges,
+    systemUpdateOperationId: updateValue.operation_id,
     self,
     sourceTransition,
   };
 }
 
 /** Plan a same-attempt unissued continuation from actual config and native endpoint evidence. */
-export function planConfiguredFrontierContinuation({
+/** @param {ConfiguredFrontierPlanInput} args @returns {DeliveredContinuationPlan} */
+function planConfiguredFrontierContinuation({
   database,
   root,
   config,
@@ -1051,15 +1425,11 @@ export function planConfiguredFrontierContinuation({
       integrations_digest: project.integrations_digest,
       work_id: workId,
     },
-    store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
-    state = store.readHostStateSnapshot(identity),
-    work = state.work,
-    journalRow = checkedRow(
-      database,
-      'agent_host_mastra_session_ledger',
-      'workspace_id=? AND work_id=? AND attempt=?',
-      [workspaceId, workId, attempt],
-    ),
+    store = createCliHostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+    captured = store.readWorkSessionSnapshot(identity, attempt),
+    state = captured.host,
+    { work: capturedWork, journal: journalRow } = requireCapturedWorkSession(captured),
+    work = capturedWork.value,
     journal = journalRow.value;
   requireRebind(
     work &&
@@ -1089,7 +1459,7 @@ export function planConfiguredFrontierContinuation({
     );
   requireRebind(intakeRef, 'original protected intake is missing');
   const intakeFile = validatedJson(access, intakeRef.path, 'original protected intake'),
-    intake = intakeFile.value;
+    intake = parseRebindIntake(intakeFile.value);
   requireRebind(
     sha(intakeFile.bytes) === intakeRef.sha256 &&
       intake.schema === 'VidaLocalSessionIntake/v1' &&
@@ -1131,7 +1501,7 @@ export function planConfiguredFrontierContinuation({
     targetCode,
     parent,
     successor,
-    update,
+    systemUpdateOperationId,
     currentSourceScope,
     authorizedSourceChanges,
     sourceTransition,
@@ -1151,14 +1521,7 @@ export function planConfiguredFrontierContinuation({
     systemUpdateRef,
     sourceCorrectionRef,
   });
-  const selection = {
-    team: work.binding.team_id,
-    kind: intake.work_item.canonical_kind,
-    intent: intake.work_item.intent,
-    project: intake.work_item.project_id,
-    risk_flags: intake.work_item.risk_flags,
-    labels: intake.work_item.labels,
-  };
+  const selection = parseWorkItemSelection(intake.work_item, work.binding.team_id);
   requireRebind(
     project.project_ids.includes(selection.project) &&
       selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
@@ -1194,7 +1557,7 @@ export function planConfiguredFrontierContinuation({
     targetProjectContextDigest: project.project_context_digest,
     priorRuntimeCodeDigest: beforeCode.digest,
     targetRuntimeCodeDigest: targetCode.digest,
-    forwardOperationId: update.value.operation_id,
+    forwardOperationId: systemUpdateOperationId,
     parentManifestDigest: sha(parent.bytes),
     successorManifestDigest: sha(successor.bytes),
     currentSourceScope,
@@ -1203,6 +1566,7 @@ export function planConfiguredFrontierContinuation({
     action,
     originalRequestPointer: ownerNoCallPointer,
   });
+  /** @satisfies {Omit<DeliveredContinuationPlan, 'digest'>} */
   const body = {
     schema: 'VidaDeliveredWorkContinuationPlan/v1',
     repair_id: repairId,
@@ -1215,6 +1579,7 @@ export function planConfiguredFrontierContinuation({
   return { ...body, digest: canonicalJsonDigest(body) };
 }
 
+/** @param {DeliveredContinuationPlanInput} args @returns {Promise<DeliveredContinuationPlan>} */
 async function planDeliveredWorkContinuation({
   database,
   root,
@@ -1264,15 +1629,11 @@ async function planDeliveredWorkContinuation({
       integrations_digest: project.integrations_digest,
       work_id: workId,
     },
-    store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
-    state = store.readHostStateSnapshot(identity),
-    work = state.work,
-    journalRow = checkedRow(
-      database,
-      'agent_host_mastra_session_ledger',
-      'workspace_id=? AND work_id=? AND attempt=?',
-      [workspaceId, workId, attempt],
-    ),
+    store = createCliHostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+    captured = store.readWorkSessionSnapshot(identity, attempt),
+    state = captured.host,
+    { work: capturedWork, journal: journalRow } = requireCapturedWorkSession(captured),
+    work = capturedWork.value,
     journal = journalRow.value;
   requireRebind(
     work &&
@@ -1310,25 +1671,26 @@ async function planDeliveredWorkContinuation({
       capture.runtime_acceptance === false,
     'exact retained terminal body, owner or original request pointer is unavailable',
   );
-  const sourceTransition = await runRuntimeConfigRebind([
-    '--kind',
-    'runtime-config-delivery',
-    '--mode',
-    'repair-transition',
-    '--project-root',
-    root,
-    '--repair-id',
-    sourceTransitionId,
-  ]);
-  requireRebind(sourceTransition.status === 'closed_config_transition_proven', 'Source transition did not close');
-  const sourceChangedPaths = sourceTransitionAuthorizedPaths(root, config, sourceTransitionId, sourceTransition),
+  const sourceTransition = validateClosedConfigTransitionProof(
+    await runRuntimeConfigRebind([
+      '--kind',
+      'runtime-config-delivery',
+      '--mode',
+      'repair-transition',
+      '--project-root',
+      root,
+      '--repair-id',
+      sourceTransitionId,
+    ]),
+  );
+  const sourceChanges = sourceTransitionAuthorizedChanges(root, config, sourceTransitionId, sourceTransition),
     sourceAccess = requireSafeRepositoryAccess(root),
     intakeRef = work.artifacts.find(
       (ref) => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1',
     );
   requireRebind(intakeRef, 'original local session intake is missing');
   const intakeBytes = sourceAccess.readBytes(intakeRef.path, 'original local session intake'),
-    intake = JSON.parse(intakeBytes.toString('utf8'));
+    intake = parseRebindIntake(JSON.parse(intakeBytes.toString('utf8')));
   requireRebind(
     sha(intakeBytes) === intakeRef.sha256 &&
       intake.schema === 'VidaLocalSessionIntake/v1' &&
@@ -1367,17 +1729,11 @@ async function planDeliveredWorkContinuation({
   );
   const authorizedSourceChanges = compareScopedSourceSnapshots(journal.source_scope, currentSourceScope);
   requireRebind(
-    authorizedSourceChanges.every((change) => sourceChangedPaths.includes(change.path)),
-    'current Work source drift is outside the accepted Source beforeimage paths',
+    canonicalJsonDigest(authorizedSourceChanges) ===
+      canonicalJsonDigest(sourceChanges.filter((change) => allowedScopePaths.includes(change.path))),
+    'current Work source changes differ from the exact accepted Source beforeimage transition',
   );
-  const selection = {
-    team: work.binding.team_id,
-    kind: intake.work_item?.canonical_kind,
-    intent: intake.work_item?.intent,
-    project: intake.work_item?.project_id,
-    risk_flags: intake.work_item?.risk_flags,
-    labels: intake.work_item?.labels,
-  };
+  const selection = parseWorkItemSelection(intake.work_item, work.binding.team_id);
   requireRebind(
     project.project_ids.includes(intake.work_item.project_id) &&
       selectWorkflow(config, selection).workflow_id === work.binding.workflow_id,
@@ -1455,6 +1811,7 @@ async function planDeliveredWorkContinuation({
     action,
     originalRequestPointer: ownerNoCallPointer,
   });
+  /** @satisfies {Omit<DeliveredContinuationPlan, 'digest'>} */
   const body = {
     schema: 'VidaDeliveredWorkContinuationPlan/v1',
     repair_id: repairId,
@@ -1468,6 +1825,7 @@ async function planDeliveredWorkContinuation({
 }
 
 /** Apply one frozen delivered-work plan through the Host owner/CAS boundary. */
+/** @param {{database: SqliteDatabase, root: string, workspaceId: string, plan: DeliveredContinuationPlan, rebuildPlan: () => Promise<DeliveredContinuationPlan> | DeliveredContinuationPlan}} args */
 export async function applyDeliveredWorkContinuationPlan({ database, root, workspaceId, plan, rebuildPlan }) {
   requireRebind(
     plan?.schema === 'VidaDeliveredWorkContinuationPlan/v1' &&
@@ -1483,6 +1841,7 @@ export async function applyDeliveredWorkContinuationPlan({ database, root, works
       }) === plan.digest,
     'frozen delivered continuation plan is invalid',
   );
+  /** @satisfies {import('../src/orchestration/delivered-work-continuation.ts').DeliveredWorkContinuationVerifier} */
   const verifier = {
     principal: 'vida-agent-delivered-work-continuation',
     verify: async (request, snapshot) => {
@@ -1500,13 +1859,13 @@ export async function applyDeliveredWorkContinuationPlan({ database, root, works
       return {
         schema: 'VidaDeliveredWorkContinuationAuthorization/v1',
         request_digest: canonicalJsonDigest(request),
-        principal: verifier.principal,
+        principal: 'vida-agent-delivered-work-continuation',
         transition_digest: request.sourceTransition.transition_digest,
         action_digest: canonicalJsonDigest(request.action),
       };
     },
   };
-  const store = new HostStateStore(
+  const store = createCliHostStateStore(
     database,
     workspaceId,
     undefined,
@@ -1521,7 +1880,9 @@ export async function applyDeliveredWorkContinuationPlan({ database, root, works
   return store.continueDeliveredWork(plan.request);
 }
 
+/** @param {RuntimeCodeRebindPlan|DeliveredContinuationPlan} left @param {RuntimeCodeRebindPlan|DeliveredContinuationPlan} right @returns {boolean} */
 function sameRepairIntent(left, right) {
+  /** @param {RuntimeCodeRebindPlan|DeliveredContinuationPlan} plan */
   const stable = (plan) => {
     const {
       expectedWork: _expectedWork,
@@ -1540,6 +1901,21 @@ function sameRepairIntent(left, right) {
   return canonicalJsonDigest(stable(left)) === canonicalJsonDigest(stable(right));
 }
 
+/** @param {RuntimeCodeRebindPlan['request']} request */
+function runtimeCodePlanCorrectionOptions(request) {
+  return {
+    ...(request.ownerNoCallPointer === undefined ? {} : { ownerNoCallPointer: request.ownerNoCallPointer }),
+    ...(request.synthesisCorrection === undefined ? {} : { correctionId: request.synthesisCorrection.correctionId }),
+    ...(request.focusedFailureCorrection
+      ? { ownerCorrectionPointer: request.focusedFailureCorrection.ownerCorrectionPointer }
+      : request.synthesisCorrection
+        ? { ownerCorrectionPointer: request.synthesisCorrection.ownerCorrectionPointer }
+        : {}),
+    ...(request.focusedFailureCorrection ? { focusedFailureCorrection: true } : {}),
+  };
+}
+
+/** @param {SqliteDatabase} database @param {string} root @param {AgentRuntimeConfig} config @param {string} workspaceId @param {RuntimeCodeRebindPlan} plan @returns {RuntimeCodeRebindPlan} */
 function currentPlan(database, root, config, workspaceId, plan) {
   const request = plan.request;
   return planRuntimeCodeRebind({
@@ -1557,11 +1933,7 @@ function currentPlan(database, root, config, workspaceId, plan) {
     actor: plan.actor,
     timestamp: plan.timestamp,
     forwardOperationId: request.forwardOperationId,
-    ownerNoCallPointer: request.ownerNoCallPointer,
-    correctionId: request.synthesisCorrection?.correctionId,
-    ownerCorrectionPointer:
-      request.focusedFailureCorrection?.ownerCorrectionPointer ?? request.synthesisCorrection?.ownerCorrectionPointer,
-    focusedFailureCorrection: Boolean(request.focusedFailureCorrection),
+    ...runtimeCodePlanCorrectionOptions(request),
   });
 }
 
@@ -1733,7 +2105,7 @@ function frontierManifestPaths(manifest, bundle) {
 }
 
 /**
- * @param {{root: string, config: AgentRuntimeConfig, access: SafeRepositoryAccess, request: InitialSourceFrontierCodeRebindRequest, state: {host: HostStateSnapshot, journal: {version: StateVersion, state: MastraSessionLedgerState}, initialReceipt: InitialSourceContinuationReceipt}}} args
+ * @param {{root: string, config: AgentRuntimeConfig, access: SafeRepositoryAccess, request: InitialSourceFrontierCodeRebindRequest, state: import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindState}} args
  * @returns {InitialSourceFrontierCodeRebindVerifiedCurrent}
  */
 function readInitialSourceFrontierNativeEndpoint({ root, config, access, request, state }) {
@@ -1856,7 +2228,7 @@ function readInitialSourceFrontierNativeEndpoint({ root, config, access, request
       lifecycleRisk: work.lifecycle.risk,
     },
     receipt,
-    state.journal,
+    { ...state.journal, resume_status: mastraLedgerStatus(journal) },
     state.host,
   );
   const currentStep = /^wave-(0|[1-9][0-9]*)$/.exec(journal.step_id ?? ''),
@@ -2005,7 +2377,7 @@ function readInitialSourceFrontierNativeEndpoint({ root, config, access, request
 }
 
 /**
- * @param {{root: string, config: AgentRuntimeConfig, access: SafeRepositoryAccess, request: InitialSourceFrontierCodeRebindRequest, state: {host: HostStateSnapshot, journal: {version: StateVersion, state: MastraSessionLedgerState}, initialReceipt: InitialSourceContinuationReceipt}}} args
+ * @param {{root: string, config: AgentRuntimeConfig, access: SafeRepositoryAccess, request: InitialSourceFrontierCodeRebindRequest, state: import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindState}} args
  * @returns {InitialSourceFrontierCodeRebindVerifiedCurrent}
  */
 function verifyInitialSourceFrontierNativeEndpoint({ root, config, access, request, state }) {
@@ -2053,7 +2425,7 @@ function planInitialSourceFrontierCodeRebind({
       Number.isSafeInteger(attempt) &&
       attempt > 0 &&
       hash.test(actionId) &&
-      Array.isArray(projectIds) &&
+      stringArray(projectIds) &&
       projectIds.length > 0 &&
       projectIds.length <= 64 &&
       projectIds.every((id, index) => {
@@ -2079,9 +2451,10 @@ function planInitialSourceFrontierCodeRebind({
       integrations_digest: project.integrations_digest,
       work_id: workId,
     },
-    store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
-    host = store.readHostStateSnapshot(identity),
-    journalRow = store.readWorkSessionJournal(identity),
+    store = createCliHostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+    captured = store.readWorkSessionSnapshot(identity, attempt),
+    host = captured.host,
+    journalRow = captured.journal,
     initialReceipt = store.readInitialSourceContinuationReceipt(identity, attempt);
   requireRebind(journalRow && journalRow.attempt === attempt, 'initial-source frontier Host journal is missing');
   const journalValue = journalRow.state;
@@ -2091,7 +2464,11 @@ function planInitialSourceFrontierCodeRebind({
   );
   const journalState = journalValue;
   requireRebind(initialReceipt, 'initial-source continuation receipt is missing');
-  const state = { host, journal: { version: journalRow.version, state: journalState }, initialReceipt },
+  const state = {
+      host,
+      journal: { version: journalRow.version, state: journalState, resume_status: mastraLedgerStatus(journalState) },
+      initialReceipt,
+    },
     runtimePaths = [...runtimePackageCodePaths(config.runtime.bundle)].sort();
   const lease = host.work?.lease,
     expectedWork = host.workVersion,
@@ -2205,7 +2582,7 @@ async function runInitialSourceFrontierCodeRebind({ values, root, config, worksp
     typeof mode === 'string' && typeof repairId === 'string',
     'initial-source frontier CLI arguments are incomplete',
   );
-  const database = trustedDatabase(root, config, ['inspect', 'plan'].includes(mode));
+  const database = trustedDatabase(root, config, workspaceId, ['inspect', 'plan'].includes(mode));
   try {
     if (mode === 'inspect' || mode === 'plan') {
       const projectIds = values['--projects'],
@@ -2251,7 +2628,7 @@ async function runInitialSourceFrontierCodeRebind({ values, root, config, worksp
         integrations_digest: project.integrations_digest,
         work_id: plan.request.identity.work_id,
       },
-      store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
+      store = createCliHostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root),
       existing = store.readInitialSourceFrontierCodeRebindReceipt(
         identity,
         plan.request.attempt,
@@ -2288,14 +2665,19 @@ async function runInitialSourceFrontierCodeRebind({ values, root, config, worksp
         canonicalJsonDigest(currentPlan.endpoint_proof) === canonicalJsonDigest(plan.endpoint_proof),
       'initial-source frontier plan differs from fresh Host or native evidence',
     );
-    const receipt = store.commitReadOnlyFrontierRuntimeCode(plan.request, (request, state) =>
-      verifyInitialSourceFrontierNativeEndpoint({
-        root,
-        config,
-        access: requireSafeRepositoryAccess(root),
-        request,
-        state,
-      }),
+    const receipt = store.commitReadOnlyFrontierRuntimeCode(
+      plan.request,
+      (
+        /** @type {InitialSourceFrontierCodeRebindRequest} */ request,
+        /** @type {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindState} */ state,
+      ) =>
+        verifyInitialSourceFrontierNativeEndpoint({
+          root,
+          config,
+          access: requireSafeRepositoryAccess(root),
+          request,
+          state,
+        }),
     );
     const persisted = store.readInitialSourceFrontierCodeRebindReceipt(
       identity,
@@ -2310,53 +2692,94 @@ async function runInitialSourceFrontierCodeRebind({ values, root, config, worksp
     );
     return initialSourceFrontierResult('rebound', plan, persisted);
   } finally {
-    database.close();
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }
 
+/** @param {RuntimeCodeRebindArgs} values @param {string} basis */
+function runtimeCodePlanOptions(values, basis) {
+  return {
+    projectIds: requiredRuntimeCodeOption(values, '--projects').split(','),
+    workId: requiredRuntimeCodeOption(values, '--work-id'),
+    attempt: Number(requiredRuntimeCodeOption(values, '--attempt')),
+    actionId: requiredRuntimeCodeOption(values, '--action-id'),
+    issueId: requiredRuntimeCodeOption(values, '--issue-id'),
+    nativeHandle: requiredRuntimeCodeOption(values, '--native-handle'),
+    repairId: requiredRuntimeCodeOption(values, '--repair-id'),
+    actor: requiredRuntimeCodeOption(values, '--actor'),
+    timestamp: requiredRuntimeCodeOption(values, '--timestamp'),
+    forwardOperationId: requiredRuntimeCodeOption(values, '--forward-operation-id'),
+    ...(values['--owner-no-call-ref'] ? { ownerNoCallPointer: values['--owner-no-call-ref'] } : {}),
+    ...(values['--correction-id'] ? { correctionId: values['--correction-id'] } : {}),
+    ...(values['--owner-correction-ref'] ? { ownerCorrectionPointer: values['--owner-correction-ref'] } : {}),
+    ...(basis === 'known-terminal-verify' ? { focusedFailureCorrection: true } : {}),
+  };
+}
+/** @param {DeliveredContinuationProof} sourceProof @param {DeliveredContinuationPlanInput} sourceArgs */
+function rebuildRuntimeContinuationPlan(sourceProof, sourceArgs) {
+  if (sourceProof.status === 'closed_config_rebind_proven') {
+    return planConfiguredFrontierContinuation({
+      ...sourceArgs,
+      parentManifestRef: sourceProof.transition.parent_manifest_ref,
+      successorManifestRef: sourceProof.transition.successor_manifest_ref,
+      systemUpdateRef: sourceProof.transition.system_update_ref,
+      sourceCorrectionRef: sourceProof.transition.source_correction_ref,
+    });
+  }
+  return planDeliveredWorkContinuation(sourceArgs);
+}
+
+/** @param {string} mode @param {string} root @param {RuntimeCodeRebindPlan} plan */
+function writeRuntimeCodePlanWhenRequested(mode, root, plan) {
+  if (mode === 'plan') writePlan(root, plan.repair_id, plan);
+}
+
 /** Existing reconcile-artifacts CLI branch; no native call or approval is synthesized. */
+/** @param {readonly string[]} args */
 export async function runRuntimeCodeRebind(args) {
   const values = parse(args);
   if (values['--basis'] === 'execution-continuation') {
     const { runQualifiedRuntimeCodeContinuation } = await import('./qualified-runtime-code-continuation.mjs');
     return runQualifiedRuntimeCodeContinuation(values);
   }
-  const root = values['--project-root'];
+  const root = requiredRuntimeCodeOption(values, '--project-root');
+  const mode = requiredRuntimeCodeOption(values, '--mode'),
+    basis = values['--basis'] ?? '';
   const config = loadRuntimeConfig(root);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
   if (values['--basis'] === 'initial-source-frontier')
     return runInitialSourceFrontierCodeRebind({ values, root, config, workspaceId });
-  const database = trustedDatabase(root, config, ['inspect', 'plan'].includes(values['--mode']));
+  const database = trustedDatabase(root, config, workspaceId, ['inspect', 'plan'].includes(mode));
   try {
-    if (['inspect', 'plan'].includes(values['--mode'])) {
-      if (['delivered-config-continuation', 'configured-frontier-continuation'].includes(values['--basis'])) {
-        const planner =
-          values['--basis'] === 'configured-frontier-continuation'
-            ? planConfiguredFrontierContinuation
-            : planDeliveredWorkContinuation;
-        const plan = await planner({
+    if (['inspect', 'plan'].includes(mode)) {
+      if (['delivered-config-continuation', 'configured-frontier-continuation'].includes(basis)) {
+        const plannerInput = {
           database,
           root,
           config,
           workspaceId,
-          projectIds: values['--projects'].split(','),
-          workId: values['--work-id'],
-          attempt: Number(values['--attempt']),
-          actionId: values['--action-id'],
-          issueId: values['--issue-id'],
-          nativeHandle: values['--native-handle'],
-          repairId: values['--repair-id'],
-          actor: values['--actor'],
-          timestamp: values['--timestamp'],
-          forwardOperationId: values['--forward-operation-id'],
-          sourceTransitionId: values['--source-transition-id'],
-          ownerNoCallPointer: values['--owner-no-call-ref'],
-          parentManifestRef: values['--parent-manifest'],
-          successorManifestRef: values['--successor-manifest'],
-          systemUpdateRef: values['--system-update'],
-          sourceCorrectionRef: values['--source-correction'],
-        });
-        if (values['--mode'] === 'plan') writeDeliveredContinuationPlan(root, plan.repair_id, plan);
+          projectIds: requiredRuntimeCodeOption(values, '--projects').split(','),
+          workId: requiredRuntimeCodeOption(values, '--work-id'),
+          attempt: Number(requiredRuntimeCodeOption(values, '--attempt')),
+          actionId: requiredRuntimeCodeOption(values, '--action-id'),
+          issueId: requiredRuntimeCodeOption(values, '--issue-id'),
+          nativeHandle: requiredRuntimeCodeOption(values, '--native-handle'),
+          repairId: requiredRuntimeCodeOption(values, '--repair-id'),
+          actor: requiredRuntimeCodeOption(values, '--actor'),
+          timestamp: requiredRuntimeCodeOption(values, '--timestamp'),
+          forwardOperationId: requiredRuntimeCodeOption(values, '--forward-operation-id'),
+          sourceTransitionId: requiredRuntimeCodeOption(values, '--source-transition-id'),
+          ownerNoCallPointer: requiredRuntimeCodeOption(values, '--owner-no-call-ref'),
+          parentManifestRef: requiredRuntimeCodeOption(values, '--parent-manifest'),
+          successorManifestRef: requiredRuntimeCodeOption(values, '--successor-manifest'),
+          systemUpdateRef: requiredRuntimeCodeOption(values, '--system-update'),
+          sourceCorrectionRef: requiredRuntimeCodeOption(values, '--source-correction'),
+        };
+        const plan =
+          basis === 'configured-frontier-continuation'
+            ? planConfiguredFrontierContinuation(plannerInput)
+            : await planDeliveredWorkContinuation(plannerInput);
+        if (mode === 'plan') writeDeliveredContinuationPlan(root, plan.repair_id, plan);
         return {
           status: values['--mode'] === 'plan' ? 'planned' : 'continuation_ready',
           repair_id: plan.repair_id,
@@ -2374,22 +2797,9 @@ export async function runRuntimeCodeRebind(args) {
         root,
         config,
         workspaceId,
-        projectIds: values['--projects'].split(','),
-        workId: values['--work-id'],
-        attempt: Number(values['--attempt']),
-        actionId: values['--action-id'],
-        issueId: values['--issue-id'],
-        nativeHandle: values['--native-handle'],
-        repairId: values['--repair-id'],
-        actor: values['--actor'],
-        timestamp: values['--timestamp'],
-        forwardOperationId: values['--forward-operation-id'],
-        ownerNoCallPointer: values['--owner-no-call-ref'],
-        correctionId: values['--correction-id'],
-        ownerCorrectionPointer: values['--owner-correction-ref'],
-        focusedFailureCorrection: values['--basis'] === 'known-terminal-verify',
+        ...runtimeCodePlanOptions(values, basis),
       });
-      if (values['--mode'] === 'plan') writePlan(root, plan.repair_id, plan);
+      writeRuntimeCodePlanWhenRequested(mode, root, plan);
       return {
         status: values['--mode'] === 'plan' ? 'planned' : 'rebindable_current_v1',
         repair_id: plan.repair_id,
@@ -2399,13 +2809,13 @@ export async function runRuntimeCodeRebind(args) {
         retained_issue_id: plan.request.issueId,
       };
     }
-    if (['apply', 'resume'].includes(values['--mode'])) {
+    if (['apply', 'resume'].includes(mode)) {
       const access = requireSafeRepositoryAccess(root),
         deliveredPlanRelative = deliveredContinuationPlanPath(values['--repair-id']);
       if (access.fileExists(deliveredPlanRelative, 'delivered continuation plan presence')) {
-        const plan = readDeliveredContinuationPlan(root, values['--repair-id']),
-          normal = plan.request.sourceTransition.status === 'closed_config_rebind_proven',
-          transition = normal ? plan.request.sourceTransition.transition : null,
+        const plan = readDeliveredContinuationPlan(root, requiredRuntimeCodeOption(values, '--repair-id')),
+          sourceProof = plan.request.sourceTransition,
+          transition = sourceProof.status === 'closed_config_rebind_proven' ? sourceProof.transition : null,
           sourceArgs = {
             database,
             root,
@@ -2415,13 +2825,9 @@ export async function runRuntimeCodeRebind(args) {
             workId: plan.request.identity.work_id,
             attempt: plan.request.attempt,
             actionId:
-              plan.request.action.kind === 'historical_terminal_review'
-                ? plan.request.action.capture.action_id
-                : undefined,
+              plan.request.action.kind === 'historical_terminal_review' ? plan.request.action.capture.action_id : '',
             issueId:
-              plan.request.action.kind === 'historical_terminal_review'
-                ? plan.request.action.capture.issue_id
-                : undefined,
+              plan.request.action.kind === 'historical_terminal_review' ? plan.request.action.capture.issue_id : '',
             nativeHandle: plan.request.nativeSessionHandle,
             repairId: plan.repair_id,
             actor: plan.actor,
@@ -2439,8 +2845,7 @@ export async function runRuntimeCodeRebind(args) {
             root,
             workspaceId,
             plan,
-            rebuildPlan: () =>
-              normal ? planConfiguredFrontierContinuation(sourceArgs) : planDeliveredWorkContinuation(sourceArgs),
+            rebuildPlan: () => rebuildRuntimeContinuationPlan(sourceProof, sourceArgs),
           });
         return {
           status: result.status,
@@ -2458,19 +2863,25 @@ export async function runRuntimeCodeRebind(args) {
         };
       }
     }
-    const plan = readPlan(root, values['--repair-id']);
-    const receiptTable = database
-      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_runtime_code_rebind'")
-      .get();
-    const existing =
-      receiptTable &&
+    const plan = readPlan(root, requiredRuntimeCodeOption(values, '--repair-id'));
+    const receiptTable = sqliteRowExists(
       database
-        .query(
-          'SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_runtime_code_rebind'")
+        .get(),
+    );
+    const existing = receiptTable
+      ? sqlitePayloadRow(
+          database
+            .query(
+              'SELECT payload,digest FROM agent_host_runtime_code_rebind WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+            )
+            .get(workspaceId, plan.request.identity.work_id, plan.request.attempt, plan.request.actionId),
+          'runtime-code rebind receipt',
         )
-        .get(workspaceId, plan.request.identity.work_id, plan.request.attempt, plan.request.actionId);
+      : null;
     if (existing) {
-      const receipt = JSON.parse(existing.payload);
+      const receipt = parsedRecord(existing.payload, 'runtime-code rebind receipt');
+      const priorWorkVersion = parseRuntimeRebindStateVersion(receipt.prior_work_version);
       const project = loadProjectSetContext(
         root,
         config,
@@ -2483,7 +2894,7 @@ export async function runRuntimeCodeRebind(args) {
         integrations_digest: project.integrations_digest,
         work_id: plan.request.identity.work_id,
       };
-      const snapshot = new HostStateStore(
+      const snapshot = createCliHostStateStore(
         database,
         workspaceId,
         undefined,
@@ -2492,12 +2903,7 @@ export async function runRuntimeCodeRebind(args) {
         undefined,
         root,
       ).readHostStateSnapshot(identity);
-      const journal = checkedRow(
-        database,
-        'agent_host_mastra_session_ledger',
-        'workspace_id=? AND work_id=? AND attempt=?',
-        [workspaceId, identity.work_id, plan.request.attempt],
-      );
+      const journal = checkedJournalRow(database, workspaceId, identity.work_id, plan.request.attempt);
       const item = journal.value.items.find((entry) => entry.request.action_id === plan.request.actionId);
       requireRebind(
         canonicalJsonDigest(plan.runtime_code_paths) ===
@@ -2518,16 +2924,16 @@ export async function runRuntimeCodeRebind(args) {
       );
       const effectiveRequest = {
         ...plan.request,
-        expectedWork: receipt.prior_work_version,
+        expectedWork: priorWorkVersion,
         expectedLedger: snapshot.ledgerVersion,
       };
       requireRebind(
         canonicalJsonDigest(receipt) === existing.digest &&
           receipt.request_digest === canonicalJsonDigest(effectiveRequest) &&
           receipt.issue_id === plan.request.issueId &&
-          snapshot.workVersion?.revision === receipt.prior_work_version.revision + 1 &&
+          snapshot.workVersion?.revision === priorWorkVersion.revision + 1 &&
           (plan.lease_transition === 'already_active' ||
-            (receipt.prior_work_version.revision === plan.request.expectedWork.revision + 1 &&
+            (priorWorkVersion.revision === plan.request.expectedWork.revision + 1 &&
               snapshot.ledgerVersion?.revision === plan.request.expectedLedger.revision + 1)) &&
           snapshot.work?.binding.runtime_code_digest === plan.request.newRuntimeCodeDigest &&
           snapshot.work?.lease?.thread_id === plan.request.nativeSessionHandle &&
@@ -2558,6 +2964,8 @@ export async function runRuntimeCodeRebind(args) {
         );
         const ledger = openConfiguredMastraSessionLedger(root);
         try {
+          const resumedJournal = ledger.resume(plan.request.identity.work_id, plan.request.attempt);
+          requireRebind(resumedJournal?.state.source_scope, 'resumed owner Source snapshot is missing');
           const resumed = resumePausedLocalWork({
             store: ledger.hostState,
             ledger,
@@ -2568,7 +2976,7 @@ export async function runRuntimeCodeRebind(args) {
             expectedJournal: plan.request.expectedJournal,
             nativeSessionHandle: plan.request.nativeSessionHandle,
             configDigest: runtimeConfigDigest(config),
-            sourceDigest: ledger.resume(plan.request.identity.work_id, plan.request.attempt)?.state.source_scope.digest,
+            sourceDigest: resumedJournal.state.source_scope.digest,
           });
           requireRebind(resumed.status === 'resumed', 'resumed owner needs journal inspection before rebind');
         } finally {
@@ -2588,6 +2996,7 @@ export async function runRuntimeCodeRebind(args) {
     } else {
       requireRebind(effective.digest === plan.digest, 'frozen rebind plan differs from current state');
     }
+    /** @type {RuntimeCodeRebindVerifier} */
     const verifier = {
       principal: 'vida-agent-forward-runtime-code-rebind',
       verify: (request) => {
@@ -2606,17 +3015,36 @@ export async function runRuntimeCodeRebind(args) {
           actor: plan.actor,
           timestamp: plan.timestamp,
           forwardOperationId: request.forwardOperationId,
-          ownerNoCallPointer: request.ownerNoCallPointer,
-          correctionId: request.synthesisCorrection?.correctionId,
-          ownerCorrectionPointer:
-            request.focusedFailureCorrection?.ownerCorrectionPointer ??
-            request.synthesisCorrection?.ownerCorrectionPointer,
-          focusedFailureCorrection: Boolean(request.focusedFailureCorrection),
+          ...runtimeCodePlanCorrectionOptions(request),
         });
         requireRebind(
           current.digest === effective.digest && canonicalJsonDigest(current.request) === canonicalJsonDigest(request),
           'frozen rebind plan differs from current state',
         );
+        if (request.focusedFailureCorrection) {
+          return {
+            schema: 'VidaRuntimeCodeRebindAuthorization/v1',
+            request_digest: canonicalJsonDigest(request),
+            principal: verifier.principal,
+            forward_operation_id: request.forwardOperationId,
+            parent_manifest_digest: request.parentManifestDigest,
+            successor_manifest_digest: request.successorManifestDigest,
+            owner_correction_pointer: request.focusedFailureCorrection.ownerCorrectionPointer,
+          };
+        }
+        if (request.synthesisCorrection) {
+          return {
+            schema: 'VidaRuntimeCodeRebindAuthorization/v1',
+            request_digest: canonicalJsonDigest(request),
+            principal: verifier.principal,
+            forward_operation_id: request.forwardOperationId,
+            parent_manifest_digest: request.parentManifestDigest,
+            successor_manifest_digest: request.successorManifestDigest,
+            owner_correction_pointer: request.synthesisCorrection.ownerCorrectionPointer,
+            synthesis_correction_digest: request.synthesisCorrection.correctionDigest,
+          };
+        }
+        requireRebind(typeof request.ownerNoCallPointer === 'string', 'runtime rebind owner no-call proof is missing');
         return {
           schema: 'VidaRuntimeCodeRebindAuthorization/v1',
           request_digest: canonicalJsonDigest(request),
@@ -2624,18 +3052,20 @@ export async function runRuntimeCodeRebind(args) {
           forward_operation_id: request.forwardOperationId,
           parent_manifest_digest: request.parentManifestDigest,
           successor_manifest_digest: request.successorManifestDigest,
-          ...(request.focusedFailureCorrection
-            ? { owner_correction_pointer: request.focusedFailureCorrection.ownerCorrectionPointer }
-            : request.synthesisCorrection
-              ? {
-                  owner_correction_pointer: request.synthesisCorrection.ownerCorrectionPointer,
-                  synthesis_correction_digest: request.synthesisCorrection.correctionDigest,
-                }
-              : { owner_no_call_pointer: request.ownerNoCallPointer }),
+          owner_no_call_pointer: request.ownerNoCallPointer,
         };
       },
     };
-    const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root, verifier);
+    const store = createCliHostStateStore(
+      database,
+      workspaceId,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      root,
+      verifier,
+    );
     const saved = await store.rebindRuntimeCode(effective.request);
     requireRebind(
       saved.work?.binding.runtime_code_digest === plan.request.newRuntimeCodeDigest,
@@ -2650,6 +3080,6 @@ export async function runRuntimeCodeRebind(args) {
       journal_version: plan.request.expectedJournal,
     };
   } finally {
-    database.close();
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }

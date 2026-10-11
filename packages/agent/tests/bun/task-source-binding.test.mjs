@@ -55,7 +55,11 @@ function gitObservation(root, commonDir, branch, head) {
   );
 }
 
-function bindingFor(taskRequest = request(), root = taskRequest.source_root ?? taskRequest.canonical_host_root, commonDir = hostCommonDir) {
+function bindingFor(
+  taskRequest = request(),
+  root = taskRequest.source_root ?? taskRequest.canonical_host_root,
+  commonDir = hostCommonDir,
+) {
   return createTaskSourceBinding({
     request: taskRequest,
     source_scope: sourceScope,
@@ -134,12 +138,14 @@ describe('TaskSourceBinding/v1', () => {
       const binding = bindingFor(taskRequest);
       expect(binding.branch_ref).toBe('refs/heads/codex/task-source');
       expect(validateTaskSourceBinding(binding)).toEqual(binding);
-      expect(() => createTaskSourceBinding({
-        request: taskRequest,
-        source_scope: sourceScope,
-        canonical_host_common_dir: hostCommonDir,
-        git: gitObservation(hostRoot, hostCommonDir, 'foreign/branch', 'b'.repeat(40)),
-      })).toThrow(/does not match/);
+      expect(() =>
+        createTaskSourceBinding({
+          request: taskRequest,
+          source_scope: sourceScope,
+          canonical_host_common_dir: hostCommonDir,
+          git: gitObservation(hostRoot, hostCommonDir, 'foreign/branch', 'b'.repeat(40)),
+        }),
+      ).toThrow(/does not match/);
     }
 
     for (const branchRef of [
@@ -152,7 +158,9 @@ describe('TaskSourceBinding/v1', () => {
       'refs/heads/a?b',
       'refs/heads/a\\b',
     ]) {
-      expect(() => validateTaskSourceBindingRequest(request({ operation: 'propose-create', branch_ref: branchRef }))).toThrow(/branch ref/);
+      expect(() =>
+        validateTaskSourceBindingRequest(request({ operation: 'propose-create', branch_ref: branchRef })),
+      ).toThrow(/branch ref/);
     }
 
     expect(validateTaskSourceBindingRequest(request()).branch_ref).toBeUndefined();
@@ -163,21 +171,27 @@ describe('TaskSourceBinding/v1', () => {
     expect(() =>
       parseTaskSourceGitObservation(sourceRoot, [hostRoot, hostCommonDir, 'main', 'b'.repeat(40)], hostRoot),
     ).toThrow(/does not match/);
-    expect(() => bindingFor(request({ source_root: sourceRoot }), sourceRoot, path.join(sourceRoot, '.git'))).toThrow(/common directory/);
+    expect(() => bindingFor(request({ source_root: sourceRoot }), sourceRoot, path.join(sourceRoot, '.git'))).toThrow(
+      /common directory/,
+    );
 
     const mismatchedAttempt = request({ attempt: 3 });
     expect(() => validateTaskSourceBindingRequest(mismatchedAttempt)).toThrow(/journal attempt/);
     expect(() => validateTaskSourceBindingRequest({ ...request(), authorize: true })).toThrow(/unexpected/);
-    expect(() => validateTaskSourceBindingRequest(request({ project_ids: ['plugin', 'agent'] }))).toThrow(/noncanonical/);
+    expect(() => validateTaskSourceBindingRequest(request({ project_ids: ['plugin', 'agent'] }))).toThrow(
+      /noncanonical/,
+    );
     expect(() => validateTaskSourceBindingRequest(request({ project_ids: ['agent', 'agent'] }))).toThrow(/project IDs/);
 
     const malformedScope = { ...sourceScope, digest: '0'.repeat(64) };
-    expect(() => createTaskSourceBinding({
-      request: request({ source_root: sourceRoot }),
-      source_scope: malformedScope,
-      canonical_host_common_dir: hostCommonDir,
-      git: gitObservation(sourceRoot, hostCommonDir, null, 'b'.repeat(40)),
-    })).toThrow(/source scope digest/);
+    expect(() =>
+      createTaskSourceBinding({
+        request: request({ source_root: sourceRoot }),
+        source_scope: malformedScope,
+        canonical_host_common_dir: hostCommonDir,
+        git: gitObservation(sourceRoot, hostCommonDir, null, 'b'.repeat(40)),
+      }),
+    ).toThrow(/source scope digest/);
   });
 
   test('matches report IDs, operation and Host CAS to the exact request without granting authority', () => {
@@ -194,15 +208,21 @@ describe('TaskSourceBinding/v1', () => {
       binding,
     };
     expect(validateTaskSourceBindingExchange(taskRequest, report)).toEqual(report);
-    expect(() => validateTaskSourceBindingExchange(taskRequest, { ...report, request_id: 'foreign-request' })).toThrow(/request ID/);
-    expect(() => validateTaskSourceBindingExchange(taskRequest, {
-      ...report,
-      expected_host: { ...taskRequest.expected_host, ledger: { revision: 96, digest: 'c'.repeat(64) } },
-    })).toThrow(/CAS references/);
-    expect(() => validateTaskSourceBindingExchange(taskRequest, {
-      ...report,
-      binding: { ...binding, config_digest: '0'.repeat(64) },
-    })).toThrow(/configuration/);
+    expect(() => validateTaskSourceBindingExchange(taskRequest, { ...report, request_id: 'foreign-request' })).toThrow(
+      /request ID/,
+    );
+    expect(() =>
+      validateTaskSourceBindingExchange(taskRequest, {
+        ...report,
+        expected_host: { ...taskRequest.expected_host, ledger: { revision: 96, digest: 'c'.repeat(64) } },
+      }),
+    ).toThrow(/CAS references/);
+    expect(() =>
+      validateTaskSourceBindingExchange(taskRequest, {
+        ...report,
+        binding: { ...binding, config_digest: '0'.repeat(64) },
+      }),
+    ).toThrow(/configuration/);
 
     const unknown = {
       schema: 'TaskSourceBindingReport/v1',

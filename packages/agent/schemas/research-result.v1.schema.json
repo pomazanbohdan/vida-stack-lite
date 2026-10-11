@@ -86,14 +86,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "source_id",
-          "source_kind",
-          "locator",
-          "title",
-          "claim",
-          "retrieved_at"
-        ],
+        "required": ["source_id", "source_kind", "locator", "title", "claim", "retrieved_at"],
         "properties": {
           "source_id": {
             "type": "string",
@@ -110,10 +103,7 @@
             "maxLength": 512
           },
           "version_or_date": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 256
           },
           "claim": {
@@ -127,25 +117,16 @@
             "pattern": "^(?:(?:(?:\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-8])))|(?:(?:\\d{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]|[13579][26])00))-02-29)T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?(?:Z|[+-](?:0\\d|1\\d|2[0-3]):[0-5]\\d)|(?:(?:1972-06-30|1972-12-31|1973-12-31|1974-12-31|1975-12-31|1976-12-31|1977-12-31|1978-12-31|1979-12-31|1981-06-30|1982-06-30|1983-06-30|1985-06-30|1987-12-31|1989-12-31|1990-12-31|1992-06-30|1993-06-30|1994-06-30|1995-12-31|1997-06-30|1998-12-31|2005-12-31|2008-12-31|2012-06-30|2015-06-30|2016-12-31))T23:59:60(?:\\.\\d{1,9})?(?:Z|\\+00:00))$"
           },
           "independence_group": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 256
           },
           "digest": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "pattern": "^[a-f0-9]{64}$"
           },
           "source_kind": {
             "type": "string",
-            "enum": [
-              "internal",
-              "external"
-            ]
+            "enum": ["internal", "external"]
           }
         }
       }
@@ -156,13 +137,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "finding_id",
-          "statement",
-          "source_ids",
-          "evidence_class",
-          "status"
-        ],
+        "required": ["finding_id", "statement", "source_ids", "evidence_class", "status"],
         "properties": {
           "finding_id": {
             "type": "string",
@@ -186,20 +161,10 @@
             }
           },
           "evidence_class": {
-            "enum": [
-              "Decision",
-              "Code",
-              "Static",
-              "Runtime",
-              "GAP"
-            ]
+            "enum": ["Decision", "Code", "Static", "Runtime", "GAP"]
           },
           "status": {
-            "enum": [
-              "confirmed",
-              "tentative",
-              "unknown"
-            ]
+            "enum": ["confirmed", "tentative", "unknown"]
           }
         }
       }
@@ -210,11 +175,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "uncertainty_id",
-          "statement",
-          "material"
-        ],
+        "required": ["uncertainty_id", "statement", "material"],
         "properties": {
           "uncertainty_id": {
             "type": "string",
@@ -238,12 +199,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "conflict_id",
-          "statement",
-          "source_ids",
-          "status"
-        ],
+        "required": ["conflict_id", "statement", "source_ids", "status"],
         "properties": {
           "conflict_id": {
             "type": "string",
@@ -267,11 +223,7 @@
             }
           },
           "status": {
-            "enum": [
-              "open",
-              "reconciled",
-              "accepted_unknown"
-            ]
+            "enum": ["open", "reconciled", "accepted_unknown"]
           }
         }
       }
@@ -281,13 +233,7 @@
       "maxItems": 5,
       "uniqueItems": true,
       "items": {
-        "enum": [
-          "Decision",
-          "Code",
-          "Static",
-          "Runtime",
-          "GAP"
-        ]
+        "enum": ["Decision", "Code", "Static", "Runtime", "GAP"]
       }
     },
     "br_ids": {
@@ -337,12 +283,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "option_id",
-          "label",
-          "description",
-          "evidence_refs"
-        ],
+        "required": ["option_id", "label", "description", "evidence_refs"],
         "properties": {
           "option_id": {
             "type": "string",
@@ -372,16 +313,9 @@
       }
     },
     "recommendation": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
-      "required": [
-        "option_id",
-        "rationale",
-        "evidence_refs"
-      ],
+      "required": ["option_id", "rationale", "evidence_refs"],
       "properties": {
         "option_id": {
           "type": "string",
@@ -417,10 +351,7 @@
       ],
       "properties": {
         "status": {
-          "enum": [
-            "pass",
-            "blocked"
-          ]
+          "enum": ["pass", "blocked"]
         },
         "required_questions": {
           "type": "array",
@@ -465,13 +396,7 @@
         "external_validation": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "required",
-            "source_count",
-            "minimum_sources",
-            "status",
-            "live_check"
-          ],
+          "required": ["required", "source_count", "minimum_sources", "status", "live_check"],
           "properties": {
             "required": {
               "type": "boolean"
@@ -487,28 +412,17 @@
               "maximum": 64
             },
             "status": {
-              "enum": [
-                "pass",
-                "blocked",
-                "not_required"
-              ]
+              "enum": ["pass", "blocked", "not_required"]
             },
             "live_check": {
-              "type": [
-                "boolean",
-                "null"
-              ]
+              "type": ["boolean", "null"]
             }
           }
         }
       }
     },
     "readiness": {
-      "enum": [
-        "ready",
-        "blocked",
-        "informational"
-      ]
+      "enum": ["ready", "blocked", "informational"]
     },
     "actor": {
       "type": "string",
@@ -523,12 +437,12 @@
     "created_at": {
       "type": "string",
       "minLength": 1,
-            "pattern": "^(?:(?:(?:\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-8])))|(?:(?:\\d{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]|[13579][26])00))-02-29)T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?(?:Z|[+-](?:0\\d|1\\d|2[0-3]):[0-5]\\d)|(?:(?:1972-06-30|1972-12-31|1973-12-31|1974-12-31|1975-12-31|1976-12-31|1977-12-31|1978-12-31|1979-12-31|1981-06-30|1982-06-30|1983-06-30|1985-06-30|1987-12-31|1989-12-31|1990-12-31|1992-06-30|1993-06-30|1994-06-30|1995-12-31|1997-06-30|1998-12-31|2005-12-31|2008-12-31|2012-06-30|2015-06-30|2016-12-31))T23:59:60(?:\\.\\d{1,9})?(?:Z|\\+00:00))$"
+      "pattern": "^(?:(?:(?:\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-8])))|(?:(?:\\d{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]|[13579][26])00))-02-29)T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?(?:Z|[+-](?:0\\d|1\\d|2[0-3]):[0-5]\\d)|(?:(?:1972-06-30|1972-12-31|1973-12-31|1974-12-31|1975-12-31|1976-12-31|1977-12-31|1978-12-31|1979-12-31|1981-06-30|1982-06-30|1983-06-30|1985-06-30|1987-12-31|1989-12-31|1990-12-31|1992-06-30|1993-06-30|1994-06-30|1995-12-31|1997-06-30|1998-12-31|2005-12-31|2008-12-31|2012-06-30|2015-06-30|2016-12-31))T23:59:60(?:\\.\\d{1,9})?(?:Z|\\+00:00))$"
     },
     "updated_at": {
       "type": "string",
       "minLength": 1,
-            "pattern": "^(?:(?:(?:\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-8])))|(?:(?:\\d{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]|[13579][26])00))-02-29)T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?(?:Z|[+-](?:0\\d|1\\d|2[0-3]):[0-5]\\d)|(?:(?:1972-06-30|1972-12-31|1973-12-31|1974-12-31|1975-12-31|1976-12-31|1977-12-31|1978-12-31|1979-12-31|1981-06-30|1982-06-30|1983-06-30|1985-06-30|1987-12-31|1989-12-31|1990-12-31|1992-06-30|1993-06-30|1994-06-30|1995-12-31|1997-06-30|1998-12-31|2005-12-31|2008-12-31|2012-06-30|2015-06-30|2016-12-31))T23:59:60(?:\\.\\d{1,9})?(?:Z|\\+00:00))$"
+      "pattern": "^(?:(?:(?:\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|02-(?:0[1-9]|1\\d|2[0-8])))|(?:(?:\\d{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]|[13579][26])00))-02-29)T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,9})?(?:Z|[+-](?:0\\d|1\\d|2[0-3]):[0-5]\\d)|(?:(?:1972-06-30|1972-12-31|1973-12-31|1974-12-31|1975-12-31|1976-12-31|1977-12-31|1978-12-31|1979-12-31|1981-06-30|1982-06-30|1983-06-30|1985-06-30|1987-12-31|1989-12-31|1990-12-31|1992-06-30|1993-06-30|1994-06-30|1995-12-31|1997-06-30|1998-12-31|2005-12-31|2008-12-31|2012-06-30|2015-06-30|2016-12-31))T23:59:60(?:\\.\\d{1,9})?(?:Z|\\+00:00))$"
     },
     "digest": {
       "type": "string",
@@ -555,11 +469,7 @@
         },
         "risk": {
           "type": "string",
-          "enum": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "enum": ["low", "medium", "high"]
         },
         "phase": {
           "type": "string",
@@ -572,13 +482,7 @@
           "maxLength": 128
         },
         "trigger": {
-          "enum": [
-            "research_intent",
-            "domain_question",
-            "external_fact",
-            "api_assumption",
-            "provider_change"
-          ]
+          "enum": ["research_intent", "domain_question", "external_fact", "api_assumption", "provider_change"]
         },
         "required_instruction_ids": {
           "type": "array",
@@ -612,10 +516,7 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "instruction_id",
-              "source_sha256"
-            ],
+            "required": ["instruction_id", "source_sha256"],
             "properties": {
               "instruction_id": {
                 "type": "string",

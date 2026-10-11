@@ -10,8 +10,12 @@ import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.sc
 
 type RecordValue = Record<string, unknown>;
 type ScopeProjection = RecordValue & { documentation_paths?: readonly string[] };
-type PolicyProjection = RecordValue & { schema: 'DocumentationPolicy/v1'; source_path: string; map_paths: readonly string[] };
-const compareStrings = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0;
+type PolicyProjection = RecordValue & {
+  schema: 'DocumentationPolicy/v1';
+  source_path: string;
+  map_paths: readonly string[];
+};
+const compareStrings = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
 const sha = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 const digest = (value: unknown): string => sha(canonicalize(value)!);
 const Constructor = Ajv2020 as unknown as new (options: object) => {
@@ -23,7 +27,9 @@ const validPolicy = new Constructor({
   allErrors: true,
   formats: { 'date-time': true },
 }).compile<PolicyProjection>(policySchema);
-const validTransition = new Constructor({ strict: true, allErrors: true }).compile<RecordValue & { plan: RecordValue }>(transitionSchema);
+const validTransition = new Constructor({ strict: true, allErrors: true }).compile<RecordValue & { plan: RecordValue }>(
+  transitionSchema,
+);
 const validEvent = new Constructor({
   strict: true,
   allErrors: true,
@@ -161,7 +167,9 @@ export function verifySelectedForwardPolicyProof(input: LeafProof): string {
   requireProof(
     digest(addedPaths) ===
       digest(
-        scope.documentation_paths.filter((file) => !oldDocuments.some((entry) => entry.path === file)).sort(compareStrings),
+        scope.documentation_paths
+          .filter((file) => !oldDocuments.some((entry) => entry.path === file))
+          .sort(compareStrings),
       ),
     'policy addition differs from accepted documentation target',
   );

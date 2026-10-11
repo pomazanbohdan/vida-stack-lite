@@ -21,12 +21,84 @@ const INTERNAL_PREFIX = 'VIDA_CONTROLLER_OBSERVATION_';
 const NESTED_ROLES = new Set(['qualifier-repair-inspect', 'qualifier-repair-plan', 'qualifier-repair-apply']);
 const packageRoot = path.resolve(import.meta.dirname, '..');
 
+/** @typedef {'qualifier-repair-inspect' | 'qualifier-repair-plan' | 'qualifier-repair-apply'} NestedRole */
+/** @typedef {{ readonly schema: typeof RESERVATION_SCHEMA; readonly status: 'active'; readonly run_id: string; readonly token: string; readonly observations_root: string; readonly expected_nested: string[]; readonly created_at: string }} ObservationReservation */
+/** @typedef {{ readonly role: string; readonly capture_status: string }} NestedObservationSummary */
+/** @typedef {Error & { readonly code?: string; readonly errno?: number | string; readonly syscall?: string; readonly path?: string }} ChildError */
+/** @typedef {{ readonly status: number | null; readonly signal: NodeJS.Signals | null; readonly stdout: Buffer | Uint8Array | string | null; readonly stderr: Buffer | Uint8Array | string | null; readonly error?: unknown }} ChildResult */
+/** @typedef {{ readonly executable: string; readonly args: string[]; readonly cwd: string; readonly env: NodeJS.ProcessEnv; readonly timeout?: number | undefined; readonly maxBuffer?: number | undefined }} ChildInvocation */
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** @param {unknown} value @returns {value is string[]} */
+function isStringArray(value) {
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
+/** @param {unknown} value @returns {value is ObservationReservation} */
+function isObservationReservation(value) {
+  return (
+    isRecord(value) &&
+    value.schema === RESERVATION_SCHEMA &&
+    value.status === 'active' &&
+    typeof value.run_id === 'string' &&
+    typeof value.token === 'string' &&
+    typeof value.observations_root === 'string' &&
+    isStringArray(value.expected_nested) &&
+    typeof value.created_at === 'string'
+  );
+}
+
+/** @param {unknown} error @returns {error is ChildError} */
+function isChildError(error) {
+  return error instanceof Error && validErrorCodeFields(error) && validErrorLocationFields(error);
+}
+
+/** @param {Error} error */
+function validErrorCodeFields(error) {
+  return (
+    (!('code' in error) || error.code === undefined || typeof error.code === 'string') &&
+    (!('errno' in error) ||
+      error.errno === undefined ||
+      typeof error.errno === 'number' ||
+      typeof error.errno === 'string')
+  );
+}
+
+/** @param {Error} error */
+function validErrorLocationFields(error) {
+  return (
+    (!('syscall' in error) || error.syscall === undefined || typeof error.syscall === 'string') &&
+    (!('path' in error) || error.path === undefined || typeof error.path === 'string')
+  );
+}
+
+/** @param {unknown} error @param {string} code */
+function hasErrorCode(error, code) {
+  return isRecord(error) && error.code === code;
+}
+
+/** @param {unknown} value @returns {value is NestedRole} */
+function isNestedRole(value) {
+  return typeof value === 'string' && NESTED_ROLES.has(value);
+}
+
+/** @param {unknown} value @returns {value is { readonly capture_status: string; readonly role: string }} */
+function isNestedReceipt(value) {
+  return isRecord(value) && typeof value.capture_status === 'string' && typeof value.role === 'string';
+}
+
+/** @param {string} message @returns {never} */
 function fail(message) {
   throw new Error(`Development controller observation blocked: ${message}`);
 }
 
+/** @param {string} value @returns {string} */
 function physicalDirectory(value) {
-  if (!path.isAbsolute(value ?? '') || path.resolve(value) !== value || realpathSync(value) !== value)
+  if (!path.isAbsolute(value) || path.resolve(value) !== value || realpathSync(value) !== value)
     fail('path is not a canonical physical directory');
   let current = value;
   for (;;) {
@@ -39,6 +111,7 @@ function physicalDirectory(value) {
   return value;
 }
 
+/** @param {string} controllerRoot */
 function observationRoot(controllerRoot) {
   physicalDirectory(controllerRoot);
   const root = path.join(controllerRoot, 'observations');
@@ -47,6 +120,7 @@ function observationRoot(controllerRoot) {
   return root;
 }
 
+/** @param {string} file @param {unknown} value */
 function durableExclusive(file, value) {
   const descriptor = openSync(file, 'wx', 0o600);
   try {
@@ -57,6 +131,7 @@ function durableExclusive(file, value) {
   }
 }
 
+/** @param {string} observations @param {string} runId @param {string} token @returns {{ readonly active: string; readonly reservation: ObservationReservation }} */
 function readReservation(observations, runId, token) {
   physicalDirectory(observations);
   const active = path.join(observations, 'active');
@@ -64,19 +139,19 @@ function readReservation(observations, runId, token) {
   const file = path.join(active, 'reservation.json');
   const info = lstatSync(file);
   if (!info.isFile() || info.isSymbolicLink()) fail('active reservation is not a regular file');
+  /** @type {unknown} */
   const reservation = JSON.parse(readFileSync(file, 'utf8'));
   if (
-    reservation.schema !== RESERVATION_SCHEMA ||
-    reservation.status !== 'active' ||
+    !isObservationReservation(reservation) ||
     reservation.run_id !== runId ||
     reservation.token !== token ||
-    reservation.observations_root !== observations ||
-    !Array.isArray(reservation.expected_nested)
+    reservation.observations_root !== observations
   )
     fail('active reservation identity differs');
   return { active, reservation };
 }
 
+/** @returns {{ readonly executable: string; readonly runtime: string | null; readonly node_version: string; readonly bun_version: string | null; readonly pinned_bun_version: string }} */
 function runtimeContext() {
   return {
     executable: process.execPath,
@@ -87,8 +162,15 @@ function runtimeContext() {
   };
 }
 
+/** @param {unknown} error */
 function errorRecord(error) {
   if (!error) return null;
+  return normalizedErrorRecord(error);
+}
+
+/** @param {unknown} error */
+function normalizedErrorRecord(error) {
+  if (!isChildError(error)) return unrecognizedErrorRecord(error);
   return {
     name: error.name ?? null,
     message: error.message ?? String(error),
@@ -99,12 +181,27 @@ function errorRecord(error) {
   };
 }
 
+/** @param {unknown} error */
+function unrecognizedErrorRecord(error) {
+  let message = 'Unrecognized child error';
+  try {
+    message = typeof error === 'string' ? error : (JSON.stringify(error) ?? message);
+  } catch {
+    // Preserve a bounded fallback if an unknown error value cannot be serialized.
+  }
+  return { name: 'Error', message, code: null, errno: null, syscall: null, path: null };
+}
+
+/** @param {Buffer | Uint8Array | string | null | undefined} value */
 function capturedBytes(value) {
   if (Buffer.isBuffer(value)) return value;
   if (value instanceof Uint8Array) return Buffer.from(value);
-  return Buffer.from(value ?? '');
+  if (typeof value === 'string') return Buffer.from(value);
+  return Buffer.alloc(0);
 }
 
+/** @typedef {{ readonly observationId: string; readonly parentId?: string | null | undefined; readonly role: string; readonly executable: string; readonly args: string[]; readonly cwd: string; readonly timeout?: number | undefined; readonly maxBuffer?: number | undefined; readonly startedAt: string; readonly startedClock: number; readonly result: ChildResult }} ChildReceiptInput */
+/** @param {ChildReceiptInput} input */
 function childReceipt({
   observationId,
   parentId = null,
@@ -140,7 +237,7 @@ function childReceipt({
     exit_code: result.status ?? null,
     signal: result.signal ?? null,
     spawn_error: errorRecord(result.error),
-    timed_out: result.error?.code === 'ETIMEDOUT',
+    timed_out: hasErrorCode(result.error, 'ETIMEDOUT'),
     stdout_bytes: stdout.length,
     stderr_bytes: stderr.length,
     stdout_base64: stdout.toString('base64'),
@@ -149,11 +246,13 @@ function childReceipt({
   };
 }
 
+/** @param {ChildInvocation} invocation @returns {{ readonly result: ChildResult; readonly receipt: ReturnType<typeof childReceipt> }} */
 function runChild({ executable, args, cwd, env, timeout, maxBuffer }) {
   const startedClock = performance.now(),
     startedAt = new Date().toISOString();
   let result;
   try {
+    /** @type {import('node:child_process').SpawnSyncOptionsWithBufferEncoding} */
     const options = { cwd, env, encoding: null, windowsHide: true };
     if (timeout !== undefined) options.timeout = timeout;
     if (maxBuffer !== undefined) options.maxBuffer = maxBuffer;
@@ -178,18 +277,20 @@ function runChild({ executable, args, cwd, env, timeout, maxBuffer }) {
   };
 }
 
+/** @param {unknown} nestedChildren @returns {NestedRole[]} */
 function validateNestedChildren(nestedChildren) {
-  if (!Array.isArray(nestedChildren)) fail('nested child declaration is malformed');
+  if (!isStringArray(nestedChildren)) fail('nested child declaration is malformed');
   const sorted = [...nestedChildren].sort();
   if (
     new Set(sorted).size !== sorted.length ||
-    sorted.some((role) => !NESTED_ROLES.has(role)) ||
+    sorted.some((role) => !isNestedRole(role)) ||
     (sorted.length !== 0 && sorted.join('|') !== [...NESTED_ROLES].sort().join('|'))
   )
     fail('nested child declaration differs');
-  return sorted;
+  return sorted.filter(isNestedRole);
 }
 
+/** @param {string} active @param {Buffer} expectedBytes */
 function removeReservation(active, expectedBytes) {
   physicalDirectory(active);
   const file = path.join(active, 'reservation.json');
@@ -199,6 +300,7 @@ function removeReservation(active, expectedBytes) {
 }
 
 /** Run one independent controller child under a durable reservation for sensitive operator evidence. */
+/** @param {ChildInvocation & { readonly controllerRoot: string; readonly nestedChildren?: readonly unknown[] }} request */
 export function invokeObservedControllerChild({
   controllerRoot,
   executable,
@@ -217,7 +319,8 @@ export function invokeObservedControllerChild({
   try {
     mkdirSync(active, { mode: 0o700 });
   } catch (error) {
-    if (error?.code === 'EEXIST') fail('another or unresolved compound invocation owns the observation reservation');
+    if (hasErrorCode(error, 'EEXIST'))
+      fail('another or unresolved compound invocation owns the observation reservation');
     throw error;
   }
   const runRoot = path.join(observations, runId);
@@ -231,20 +334,15 @@ export function invokeObservedControllerChild({
     created_at: new Date().toISOString(),
   };
   const reservationBytes = Buffer.from(JSON.stringify(reservation) + '\n');
-  try {
-    durableExclusive(path.join(active, 'reservation.json'), reservation);
-    mkdirSync(runRoot, { mode: 0o700 });
-    mkdirSync(path.join(runRoot, 'nested'), { mode: 0o700 });
-    durableExclusive(path.join(runRoot, 'invocation.json'), {
-      schema: 'DevelopmentControllerObservationInvocation/v1',
-      run_id: runId,
-      expected_nested: expectedNested,
-      created_at: reservation.created_at,
-    });
-  } catch (error) {
-    // The exclusive active directory remains as a fail-closed custody marker.
-    throw error;
-  }
+  durableExclusive(path.join(active, 'reservation.json'), reservation);
+  mkdirSync(runRoot, { mode: 0o700 });
+  mkdirSync(path.join(runRoot, 'nested'), { mode: 0o700 });
+  durableExclusive(path.join(runRoot, 'invocation.json'), {
+    schema: 'DevelopmentControllerObservationInvocation/v1',
+    run_id: runId,
+    expected_nested: expectedNested,
+    created_at: reservation.created_at,
+  });
 
   const childEnv = { ...env };
   for (const key of Object.keys(childEnv)) if (key.startsWith(INTERNAL_PREFIX)) delete childEnv[key];
@@ -267,7 +365,9 @@ export function invokeObservedControllerChild({
       nestedSummary.push({ role, capture_status: 'UNKNOWN' });
       continue;
     }
+    /** @type {unknown} */
     const nested = JSON.parse(readFileSync(file, 'utf8'));
+    if (!isNestedReceipt(nested)) fail('nested observation receipt is malformed');
     if (nested.role !== role || nested.capture_status !== 'complete') nestedComplete = false;
     nestedSummary.push({ role, capture_status: nested.capture_status ?? 'UNKNOWN' });
   }
@@ -296,6 +396,7 @@ export function invokeObservedControllerChild({
   return { ...result, observation_complete: complete };
 }
 
+/** @returns {{ readonly observations: string; readonly runId: string; readonly token: string; readonly runRoot: string; readonly active: string; readonly reservation: ObservationReservation }} */
 function internalContext() {
   const observations = process.env[`${INTERNAL_PREFIX}ROOT`],
     runId = process.env[`${INTERNAL_PREFIX}RUN_ID`],
@@ -316,6 +417,7 @@ function internalContext() {
 }
 
 /** Capture one fixed qualification child under its active parent reservation. */
+/** @param {{ readonly role: string; readonly executable: string; readonly args: string[]; readonly cwd: string; readonly timeout?: number; readonly maxBuffer?: number }} request */
 export function invokeNestedObservedControllerChild({ role, executable, args, cwd, timeout, maxBuffer }) {
   if (!NESTED_ROLES.has(role)) fail('nested role is undeclared');
   const context = internalContext();

@@ -1,0 +1,237 @@
+import { createHash } from 'node:crypto';
+import { describe, expect, test } from 'bun:test';
+import * as fc from 'fast-check';
+import {
+  serviceOperationLaunchCapabilityDigest,
+  serviceOperationLaunchCapabilityMatches,
+  serviceOperationLaunchClaimMatches,
+} from '../../src/config/service-operation-launch-capability.js';
+
+const workspaceId = 'a'.repeat(64);
+const requestDigest = 'b'.repeat(64);
+const operationId = 'release-operation';
+const capability = '11111111-1111-4111-8111-111111111111';
+const otherCapability = '22222222-2222-4222-8222-222222222222';
+const pid = 7312;
+const issuedDigest = 'bd7662a5eeb41614e720d477abfcb2272e19a8a70a93b7e3bc8560d44ad326e9';
+
+type ClaimImage = NonNullable<Parameters<typeof serviceOperationLaunchClaimMatches>[0]>;
+
+function launchingImage(overrides: Partial<ClaimImage> = {}): ClaimImage {
+  return {
+    workspace_id: workspaceId,
+    owner_kind: 'release-pack-worker',
+    operation_id: operationId,
+    request_digest: requestDigest,
+    owner_token: issuedDigest,
+    phase: 'launching',
+    launch_pid: pid,
+    ...overrides,
+  };
+}
+
+describe('service operation launch predicates', () => {
+  test('digest matches an independent fixed SHA-256 vector', () => {
+    expect(serviceOperationLaunchCapabilityDigest(capability)).toBe(issuedDigest);
+    expect(issuedDigest).toBe(createHash('sha256').update(capability, 'utf8').digest('hex'));
+  });
+
+  test('accepts lowercase UUID-shaped tokens at the zero and nonzero boundaries', () => {
+    expect(serviceOperationLaunchCapabilityDigest('00000000-0000-0000-0000-000000000000')).toBe(
+      '12b9377cbe7e5c94e8a70d9d23929523d14afa954793130f8a3959c7b849aca8',
+    );
+    expect(serviceOperationLaunchCapabilityDigest('ffffffff-ffff-ffff-ffff-ffffffffffff')).toMatch(/^[a-f0-9]{64}$/u);
+  });
+
+  test('rejects uppercase and malformed UUID-shaped capability inputs', () => {
+    expect(() => serviceOperationLaunchCapabilityDigest('11111111-1111-4111-8111-11111111111A')).toThrow(
+      'Service operation launch capability is invalid.',
+    );
+    expect(() => serviceOperationLaunchCapabilityDigest('11111111111141118111111111111111')).toThrow(
+      'Service operation launch capability is invalid.',
+    );
+    expect(() => serviceOperationLaunchCapabilityDigest('11111111-1111-4111-8111-111111111111-')).toThrow(
+      'Service operation launch capability is invalid.',
+    );
+  });
+
+  test('capability matching accepts only the exact token for the exact lowercase digest', () => {
+    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, capability)).toBe(true);
+    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, otherCapability)).toBe(false);
+    expect(serviceOperationLaunchCapabilityMatches(issuedDigest.toUpperCase(), capability)).toBe(false);
+  });
+
+  test('capability matching rejects null, short, long, and non-hex expected digests', () => {
+    expect(serviceOperationLaunchCapabilityMatches(null, capability)).toBe(false);
+    expect(serviceOperationLaunchCapabilityMatches('a'.repeat(63), capability)).toBe(false);
+    expect(serviceOperationLaunchCapabilityMatches('a'.repeat(65), capability)).toBe(false);
+    expect(serviceOperationLaunchCapabilityMatches(`${'a'.repeat(63)}g`, capability)).toBe(false);
+  });
+
+  test('capability matching rejects malformed and wrong-runtime-type capability values', () => {
+    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, 'UPPERCASE-UUID')).toBe(false);
+    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, null)).toBe(false);
+    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, 7312)).toBe(false);
+    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, {})).toBe(false);
+  });
+
+  test('deterministic bounded UUID property: the issued token matches and a distinct token does not', () => {
+    const hex = '0123456789abcdef'.split('');
+    const uuid = fc
+      .array(fc.constantFrom(...hex), { minLength: 32, maxLength: 32 })
+      .map(
+        (digits) =>
+          `${digits.slice(0, 8).join('')}-${digits.slice(8, 12).join('')}-${digits.slice(12, 16).join('')}-${digits.slice(16, 20).join('')}-${digits.slice(20).join('')}`,
+      );
+
+    fc.assert(
+      fc.property(uuid, uuid, (issued, other) => {
+        fc.pre(issued !== other);
+        const digest = serviceOperationLaunchCapabilityDigest(issued);
+        expect(serviceOperationLaunchCapabilityMatches(digest, issued)).toBe(true);
+        expect(serviceOperationLaunchCapabilityMatches(digest, other)).toBe(false);
+      }),
+      { seed: 20261010, numRuns: 50 },
+    );
+  });
+
+  test('exact launching reservation accepts its one-shot child capability', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage(),
+        workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        pid,
+        capability,
+      ),
+    ).toBe(true);
+  });
+
+  test('null prior reservation denies a claim', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        null,
+        workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        pid,
+        capability,
+      ),
+    ).toBe(false);
+  });
+
+  test('workspace mismatch alone denies a claim', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage(),
+        'c'.repeat(64),
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        pid,
+        capability,
+      ),
+    ).toBe(false);
+  });
+
+  test('owner-kind mismatch alone denies a claim', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage(),
+        workspaceId,
+        'release-worker',
+        operationId,
+        requestDigest,
+        pid,
+        capability,
+      ),
+    ).toBe(false);
+  });
+
+  test('operation mismatch alone denies a claim', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage(),
+        workspaceId,
+        'release-pack-worker',
+        'different-operation',
+        requestDigest,
+        pid,
+        capability,
+      ),
+    ).toBe(false);
+  });
+
+  test('request digest mismatch alone denies a claim', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage(),
+        workspaceId,
+        'release-pack-worker',
+        operationId,
+        'd'.repeat(64),
+        pid,
+        capability,
+      ),
+    ).toBe(false);
+  });
+
+  test('non-launching phase alone denies a claim', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage({ phase: 'prepared' }),
+        workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        pid,
+        capability,
+      ),
+    ).toBe(false);
+  });
+
+  test('PID mismatch alone denies a claim', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage(),
+        workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        pid + 1,
+        capability,
+      ),
+    ).toBe(false);
+  });
+
+  test('owner-token mismatch alone denies a claim', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage({ owner_token: 'a'.repeat(64) }),
+        workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        pid,
+        capability,
+      ),
+    ).toBe(false);
+  });
+
+  test('consumed reservation denies replay of its previously issued capability', () => {
+    expect(
+      serviceOperationLaunchClaimMatches(
+        launchingImage({ owner_token: otherCapability, phase: 'in_flight', launch_pid: null }),
+        workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        pid,
+        capability,
+      ),
+    ).toBe(false);
+  });
+});

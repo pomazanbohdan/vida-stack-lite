@@ -83,12 +83,12 @@ include distribution files, types and maps, exclude dependencies, and do not
 measure contribution to the standalone binary. Recent repository activity is
 maintenance evidence, not a support guarantee.
 
-| Package | Published version | Unpacked bytes | Runtime dependencies | Fit for VIDA |
-| --- | --- | ---: | ---: | --- |
-| [Edictum](https://github.com/edictum-ai/edictum-ts) | 0.5.0, 2026-04-15 | 1,415,362 | 1 | Current finite contract source; repository remains active |
-| [CASL](https://github.com/stalniy/casl) | 7.0.1, 2026-07-06 | 182,661 | 1 | Authorization overlaps existing Cedar; lacks execution/session workflow contract |
-| [Casbin](https://github.com/apache/casbin-node-casbin) | 5.51.1, 2026-06-25 | 509,727 | 5 | Another authorization engine; does not replace the needed guard and evidence flow |
-| [governance-sdk](https://github.com/lua-ai-global/governance) | 0.20.0, 2026-08-09 | 1,033,827 | 0 | Closest policy alternative with Mastra integration; host still supplies counters and stage evidence |
+| Package                                                       | Published version  | Unpacked bytes | Runtime dependencies | Fit for VIDA                                                                                        |
+| ------------------------------------------------------------- | ------------------ | -------------: | -------------------: | --------------------------------------------------------------------------------------------------- |
+| [Edictum](https://github.com/edictum-ai/edictum-ts)           | 0.5.0, 2026-04-15  |      1,415,362 |                    1 | Current finite contract source; repository remains active                                           |
+| [CASL](https://github.com/stalniy/casl)                       | 7.0.1, 2026-07-06  |        182,661 |                    1 | Authorization overlaps existing Cedar; lacks execution/session workflow contract                    |
+| [Casbin](https://github.com/apache/casbin-node-casbin)        | 5.51.1, 2026-06-25 |        509,727 |                    5 | Another authorization engine; does not replace the needed guard and evidence flow                   |
+| [governance-sdk](https://github.com/lua-ai-global/governance) | 0.20.0, 2026-08-09 |      1,033,827 |                    0 | Closest policy alternative with Mastra integration; host still supplies counters and stage evidence |
 
 No alternative package is selected. Replacing one governance dependency with
 another does not achieve the requested Mastra + VIDA ownership boundary.
@@ -99,15 +99,15 @@ direct-call policy evaluation. Package selection is not runtime qualification.
 
 ### Function migration
 
-| Current function | Target owner and work |
-| --- | --- |
-| Configured stage sequence, pause and continuation | Existing Mastra workflow primitives; one engine |
-| Read evidence and required stage result checks | VIDA contract checks over the existing execution context |
-| Direct `evaluateGovernance` and guarded invocation | Small VIDA guard; preserve no-effect evaluation and pre/post result semantics |
-| Configured attempt, execution and per-tool counters | Local policy session; no new durable ledger or default caps |
-| Canonical request/result, identity and approval validation | Reuse current VIDA validators and Cedar |
-| Approval consumption, reservation, commit-unknown, CAS and finalization | Reuse HostState and current prepare/execute/finalize/abort functions |
-| SDK and persisted v1 projections | Preserve existing supported operations and wire shapes; do not rename stored fields |
+| Current function                                                        | Target owner and work                                                               |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Configured stage sequence, pause and continuation                       | Existing Mastra workflow primitives; one engine                                     |
+| Read evidence and required stage result checks                          | VIDA contract checks over the existing execution context                            |
+| Direct `evaluateGovernance` and guarded invocation                      | Small VIDA guard; preserve no-effect evaluation and pre/post result semantics       |
+| Configured attempt, execution and per-tool counters                     | Local policy session; no new durable ledger or default caps                         |
+| Canonical request/result, identity and approval validation              | Reuse current VIDA validators and Cedar                                             |
+| Approval consumption, reservation, commit-unknown, CAS and finalization | Reuse HostState and current prepare/execute/finalize/abort functions                |
+| SDK and persisted v1 projections                                        | Preserve existing supported operations and wire shapes; do not rename stored fields |
 
 The adapter compiles the existing typed configuration directly; no YAML round
 trip or generic condition interpreter remains. One Mastra snapshot holds stage
@@ -132,15 +132,15 @@ current runtime pin. HostState already uses `bun:sqlite`; package and native
 formation already use `Bun.build`, and embedded tar resources use `Bun.Archive`.
 These are existing implementations, not new migration work.
 
-| Existing contour | Native candidate or retained boundary |
-| --- | --- |
-| SQLite WF07/WF08 | Reuse [bun:sqlite transactions](https://bun.sh/docs/runtime/sqlite); retain short write locks, bound queries and CAS |
-| Bun-only CLI and helpers | Use [Bun.spawn](https://bun.sh/docs/runtime/child-process) where it preserves argv, streaming, cancellation, terminal status and child custody |
-| Ordinary file reads/writes | Use [Bun.file/Bun.write](https://bun.sh/docs/runtime/file-io); descriptor-bound no-follow, fsync and atomic publication still need the current safe filesystem boundary |
-| Integrity hashing | Evaluate [Bun.CryptoHasher](https://bun.sh/docs/runtime/hashing) in Bun-only paths; preserve exact SHA-256 bytes and incremental order; never substitute Bun.hash |
-| Version comparison | [Bun.semver.order](https://bun.sh/docs/runtime/semver) may follow the existing strict version parser; permissive range parsing cannot replace it |
-| Native resources | [Bun.Archive](https://bun.sh/docs/runtime/archive) already serves tar resources; it does not supply the required ZIP-reader contract |
-| Test and dependency tooling | Reuse pinned Bun, frozen lock and cache. Preserve measured coverage/mutation contracts; API availability does not prove equivalent counters |
+| Existing contour            | Native candidate or retained boundary                                                                                                                                   |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SQLite WF07/WF08            | Reuse [bun:sqlite transactions](https://bun.sh/docs/runtime/sqlite); retain short write locks, bound queries and CAS                                                    |
+| Bun-only CLI and helpers    | Use [Bun.spawn](https://bun.sh/docs/runtime/child-process) where it preserves argv, streaming, cancellation, terminal status and child custody                          |
+| Ordinary file reads/writes  | Use [Bun.file/Bun.write](https://bun.sh/docs/runtime/file-io); descriptor-bound no-follow, fsync and atomic publication still need the current safe filesystem boundary |
+| Integrity hashing           | Evaluate [Bun.CryptoHasher](https://bun.sh/docs/runtime/hashing) in Bun-only paths; preserve exact SHA-256 bytes and incremental order; never substitute Bun.hash       |
+| Version comparison          | [Bun.semver.order](https://bun.sh/docs/runtime/semver) may follow the existing strict version parser; permissive range parsing cannot replace it                        |
+| Native resources            | [Bun.Archive](https://bun.sh/docs/runtime/archive) already serves tar resources; it does not supply the required ZIP-reader contract                                    |
+| Test and dependency tooling | Reuse pinned Bun, frozen lock and cache. Preserve measured coverage/mutation contracts; API availability does not prove equivalent counters                             |
 
 No active HTTP/TLS/WebSocket server or worker_threads migration was found in the
 agent Source. `fetch` is already a Web API. A `node:` import executed by Bun does
@@ -162,13 +162,13 @@ The target `.vida` layout and upgrade behavior are specified in
 Implementation remains part of CLEAR; moving a directory or rerunning the current
 create-only initializer does not implement a migration.
 
-| Primary reference | Applicable pattern |
-| --- | --- |
-| [JSON Schema dialect](https://json-schema.org/understanding-json-schema/reference/schema) and [schema identity](https://json-schema.org/understanding-json-schema/structuring) | `$schema` identifies the validation dialect; `$id` identifies a schema. Neither replaces the artifact's `Type/vN` tag. Resolve bundled schemas locally |
-| [Kubernetes storage version migration](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/) | Declaring a new storage version does not migrate existing records. Conversion and completed storage migration are separate evidence; no Kubernetes dependency is required |
-| [SQLite user_version](https://sqlite.org/pragma.html#pragma_user_version) | An application-owned database format marker. Do not use SQLite's internal schema_version as a product migration counter; preserve component ownership in the shared DB |
-| [SQLite atomic commit](https://sqlite.org/atomiccommit.html) | Use transactional database updates and durable recovery. This does not make external Markdown/YAML changes part of a database transaction |
-| [Expand and contract](https://www.prisma.io/docs/guides/database/data-migration) | Prepare the converter and validated target before retiring old storage. Keep older-format readers inside migration only; do not add a second ordinary runtime path or a Prisma dependency |
+| Primary reference                                                                                                                                                              | Applicable pattern                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [JSON Schema dialect](https://json-schema.org/understanding-json-schema/reference/schema) and [schema identity](https://json-schema.org/understanding-json-schema/structuring) | `$schema` identifies the validation dialect; `$id` identifies a schema. Neither replaces the artifact's `Type/vN` tag. Resolve bundled schemas locally                                    |
+| [Kubernetes storage version migration](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/)                             | Declaring a new storage version does not migrate existing records. Conversion and completed storage migration are separate evidence; no Kubernetes dependency is required                 |
+| [SQLite user_version](https://sqlite.org/pragma.html#pragma_user_version)                                                                                                      | An application-owned database format marker. Do not use SQLite's internal schema_version as a product migration counter; preserve component ownership in the shared DB                    |
+| [SQLite atomic commit](https://sqlite.org/atomiccommit.html)                                                                                                                   | Use transactional database updates and durable recovery. This does not make external Markdown/YAML changes part of a database transaction                                                 |
+| [Expand and contract](https://www.prisma.io/docs/guides/database/data-migration)                                                                                               | Prepare the converter and validated target before retiring old storage. Keep older-format readers inside migration only; do not add a second ordinary runtime path or a Prisma dependency |
 
 Reuse one current repair operation, exact beforeimages, maintenance fencing and
 resume. Managed Markdown adds versioned frontmatter; user-authored bodies and
@@ -840,7 +840,7 @@ partial/UNKNOWN refusal. This does not change transactional runtime durability.
 Demand-driven native discovery uses only the resources needed by existing public
 commands; full runtime routes retain the complete physical dependency closure.
 The installer-protected input contract is re-exported by install.mjs and declared
-in the pure cli-metadata.mjs module. Every
+in the pure cli-metadata.ts module. Every
 selected view retains exact regular inventory, bytes and publication checks.
 [Node filesystem documentation](https://nodejs.org/api/fs.html#fslstatsyncpath-options)
 defines lstat with throwIfNoEntry=false; using that one current observation removes

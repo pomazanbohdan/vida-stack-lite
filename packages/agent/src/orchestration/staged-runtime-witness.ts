@@ -1,17 +1,22 @@
 import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
-import { Database } from 'bun:sqlite';
 import path from 'node:path';
 import {
   loadRuntimeConfig,
+  assertProjectUpgradeInactive,
   runtimeConfigDigest,
   selectWorkflow,
   type WorkItemSelection,
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
+import {
+  openAdmittedWorkspaceDatabase,
+  closeWorkspaceDatabaseWithAdmission,
+} from '../config/storage-read-admission.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { validateResearchJournalItem, type MastraSessionLedgerState } from './persistent-session-handoff.js';
+import { parseMastraSessionLedgerState } from './mastra-session-ledger-codec.js';
 import { correctiveExecutionSchema } from './final-assurance.js';
 import { parseSessionBridgeRequest, parseSessionBridgeObservation } from './mastra-session-bridge.js';
 import { readSessionEngineSnapshot } from './session-engine-snapshot.js';
@@ -73,9 +78,10 @@ export async function createStagedRuntimeWitness(input: {
     Buffer.from(configBytes.toString('utf8'), 'utf8').equals(configBytes),
     'staged configuration is not UTF-8',
   );
-  return withHostStateExclusiveTransaction(path.join(repositoryRoot, databasePath), () => {
-    const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
-    const database = new Database(path.join(repositoryRoot, databasePath), { readonly: true, strict: true });
+  const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
+  return withHostStateExclusiveTransaction({ repositoryRoot, databaseRelativePath: databasePath, workspaceId }, () => {
+    assertProjectUpgradeInactive(access);
+    const database = openAdmittedWorkspaceDatabase(repositoryRoot, databasePath, workspaceId, true);
     let snapshot;
     try {
       const governance = database
@@ -107,7 +113,7 @@ export async function createStagedRuntimeWitness(input: {
         )
         .get(workspaceId, workId, attempt) as { revision: number; payload: string; digest: string } | null;
       requireWitness(row && Number.isSafeInteger(row.revision) && row.revision > 0, 'persisted journal is absent');
-      const state = JSON.parse(row.payload) as MastraSessionLedgerState;
+      const state = parseMastraSessionLedgerState(JSON.parse(row.payload));
       requireWitness(
         state.schema === 'MastraSessionLedger/v1' &&
           state.workspace_id === workspaceId &&
@@ -161,7 +167,8 @@ export async function createStagedRuntimeWitness(input: {
         resume_status: state.step_id === null ? 'complete' : 'ready',
       };
     } finally {
-      database.close(true);
+      closeWorkspaceDatabaseWithAdmission(database);
+      assertProjectUpgradeInactive(access);
     }
     requireWitness(
       snapshot !== null &&

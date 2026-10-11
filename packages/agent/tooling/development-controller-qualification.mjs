@@ -6,23 +6,74 @@ import path from 'node:path';
 import { invokeNestedObservedControllerChild } from '../bin/development-controller-observation.mjs';
 import { initializeProjectFromBundle } from '../bin/init-core.mjs';
 import { initializeProject } from '../bin/init.mjs';
-import { inspectScope } from '../bin/scope.mjs';
+import { inspectScope } from '../bin/scope.ts';
 import { run } from '../bin/run.mjs';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
+import packageMetadata from '../package.json' with { type: 'json' };
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const parent = path.dirname(packageRoot),
   before = process.env.VIDA_CONTROLLER_QUALIFICATION_BINDING;
 if (!/^[a-f0-9]{64}$/.test(before ?? '')) throw new Error('Parent qualification binding is missing.');
 const scratch = mkdtempSync(path.join(parent, 'qualification-'));
+/** @param {string} file @param {unknown} value */
 const save = (file, value) => {
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(value) + '\n');
 };
+/** @param {import('../src/host-state.ts').StateVersion} version */
 const expected = (version) => ['--expected-revision', String(version.revision), '--expected-digest', version.digest];
+/**
+ * @typedef {{ readonly revision: number; readonly digest: string }} ControllerStateVersion
+ * @typedef {{ readonly request: { readonly action_id: string; readonly stage_id: string }; readonly issue_id: string; readonly host_attempt_id?: string }} ControllerIssuedAction
+ * @typedef {{ readonly status: string; readonly resume_status: string; readonly state_version: ControllerStateVersion; readonly issued_actions: readonly ControllerIssuedAction[] }} ControllerRunPacket
+ * @typedef {{ readonly status: string }} ControllerCommandResult
+ */
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+/** @param {unknown} value @returns {value is ControllerRunPacket} */
+function isControllerRunPacket(value) {
+  if (!isRecord(value) || !isRecord(value.state_version) || !Array.isArray(value.issued_actions)) return false;
+  if (
+    typeof value.status !== 'string' ||
+    typeof value.resume_status !== 'string' ||
+    !Number.isSafeInteger(value.state_version.revision) ||
+    typeof value.state_version.digest !== 'string' ||
+    !/^[a-f0-9]{64}$/.test(value.state_version.digest)
+  )
+    return false;
+  return value.issued_actions.every(
+    (item) =>
+      isRecord(item) &&
+      typeof item.issue_id === 'string' &&
+      isRecord(item.request) &&
+      typeof item.request.action_id === 'string' &&
+      typeof item.request.stage_id === 'string' &&
+      (!Object.hasOwn(item, 'host_attempt_id') || typeof item.host_attempt_id === 'string'),
+  );
+}
+/** @param {unknown} value @returns {ControllerRunPacket} */
+function requireControllerRunPacket(value) {
+  if (!isControllerRunPacket(value)) throw new Error('Controller qualification expected a standard run packet.');
+  return value;
+}
+/** @param {string} json @returns {ControllerCommandResult} */
+function parseControllerCommandResult(json) {
+  const value = /** @type {unknown} */ (JSON.parse(json));
+  if (!isRecord(value) || typeof value.status !== 'string')
+    throw new Error('Controller qualification child returned an invalid command result.');
+  return { status: value.status };
+}
+/** @param {Buffer | Uint8Array | string | null} stderr @returns {string} */
+function childErrorMessage(stderr) {
+  if (stderr === null) return '';
+  return typeof stderr === 'string' ? stderr : Buffer.from(stderr).toString('utf8');
+}
 let ledger;
 try {
   assert.equal(Bun.version, '1.4.2');
@@ -42,11 +93,14 @@ try {
   if (!original || !path.isAbsolute(original)) throw new Error('Qualification target binding is missing.');
   const root = path.join(scratch, 'source');
   mkdirSync(root);
-  for (const name of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', 'docs'])
-    cpSync(path.join(original, name), path.join(root, name), { recursive: true });
+  /** @type {readonly string[]} */
+  const copiedRootEntries = ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', 'docs'];
+  for (const name of copiedRootEntries) cpSync(path.join(original, name), path.join(root, name), { recursive: true });
   const resources = path.join(root, 'packages/agent');
   mkdirSync(resources, { recursive: true });
-  for (const name of ['templates', 'schemas', 'instructions', 'package.json', 'TESTING.md'])
+  /** @type {readonly string[]} */
+  const copiedPackageEntries = ['templates', 'schemas', 'instructions', 'package.json', 'TESTING.md'];
+  for (const name of copiedPackageEntries)
     cpSync(path.join(packageRoot, name), path.join(resources, name), { recursive: true });
   const originalConfig = loadRuntimeConfig(original);
   for (const project of originalConfig.projects) {
@@ -78,12 +132,13 @@ try {
     '--path',
     newPath,
   ]);
-  const source = inspected.source ?? inspected.snapshot ?? inspected;
-  const scopeDigest = inspected.scope_digest ?? source.digest;
+  const source = inspected;
+  const scopeDigest = source.digest;
   assert.match(scopeDigest, /^[a-f0-9]{64}$/);
   const work = 'controller-qualified-task',
     session = 'controller-qualification-session',
     pointer = 'fixture:actual-controller-qualification';
+  /** @param {string} name */
   const relative = (name) => `.agent/work/${work}/${name}`;
   const scope = {
     schema: 'ImplementationScope/v1',
@@ -185,11 +240,14 @@ try {
     '--workflow',
     'task_execution',
   ];
-  let packet = await run([...base, '--intake', path.join(root, relative('intake.json'))]);
+  let packet = requireControllerRunPacket(await run([...base, '--intake', path.join(root, relative('intake.json'))]));
   assert.equal(packet.resume_status, 'ready');
-  packet = await run([...base, ...expected(packet.state_version), '--issue-wave', 'true']);
+  packet = requireControllerRunPacket(await run([...base, ...expected(packet.state_version), '--issue-wave', 'true']));
   assert.equal(packet.issued_actions.length, 1);
+  const intakeAction = packet.issued_actions[0];
+  assert.ok(intakeAction);
   const reportFile = path.join(root, relative('report.json'));
+  /** @param {ControllerIssuedAction} item @param {string} summary @param {Record<string, unknown>} [extra] */
   async function report(item, summary, extra = {}) {
     save(reportFile, {
       schema: 'VidaSessionObservation/v1',
@@ -203,10 +261,10 @@ try {
       evidence_refs: ['fixture:actual-local-execution'],
       ...extra,
     });
-    return run([...base, ...expected(packet.state_version), '--report', reportFile]);
+    return requireControllerRunPacket(await run([...base, ...expected(packet.state_version), '--report', reportFile]));
   }
   packet = await report(
-    packet.issued_actions[0],
+    intakeAction,
     'Actual scoped task synthesis: add the declared bin file; no external research claim.',
   );
   // Changing the approval's paths cannot grant an undeclared target write.
@@ -214,8 +272,9 @@ try {
   save(authorizationFile, { ...authorization, implementation_paths: ['packages/agent/bin/undeclared.mjs'] });
   await assert.rejects(() => run([...base, ...expected(packet.state_version), '--issue-wave', 'true']));
   writeFileSync(authorizationFile, exactAuthorization);
-  packet = await run([...base, ...expected(packet.state_version), '--issue-wave', 'true']);
+  packet = requireControllerRunPacket(await run([...base, ...expected(packet.state_version), '--issue-wave', 'true']));
   const writer = packet.issued_actions[0];
+  assert.ok(writer);
   assert.ok(writer.host_attempt_id);
   assert.equal(writer.request.stage_id, 'develop_task');
   writeFileSync(path.join(root, newPath), 'export const qualifiedControllerAddition = true;\n', { flag: 'wx' });
@@ -226,6 +285,7 @@ try {
   assert.equal(packet.status, 'resumed'); // The accepted report immediately advances to readonly assurance.
   ledger = openConfiguredMastraSessionLedger(root);
   const durable = ledger.resume(work, 1);
+  assert.ok(durable);
   assert.ok(
     [...durable.state.completed.flatMap((w) => w.items), ...durable.state.items].some(
       (item) =>
@@ -240,8 +300,10 @@ try {
     integrations_digest: project.integrations_digest,
     work_id: work,
   });
+  assert.ok(host.work);
+  assert.ok(host.ledger);
   assert.equal(
-    host.work.execution.assignment_attempts.find((a) => a.attempt_id === writer.host_attempt_id).status,
+    host.work.execution.assignment_attempts.find((a) => a.attempt_id === writer.host_attempt_id)?.status,
     'completed',
   );
   assert.equal(host.work.execution.status, 'active');
@@ -277,7 +339,7 @@ try {
   }
   const repairOperation = 'controller-native-repair',
     releaseRoot = `.agent/work/agent-local-release/${repairOperation}`,
-    version = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')).version,
+    version = packageMetadata.version,
     archive = Buffer.from('synthetic immutable-controller repair archive'),
     archivePath = path.join(repairRoot, '.tmp/releases', repairOperation, `vida-agent-${version}.tgz`),
     archiveHash = sha(archive);
@@ -315,6 +377,7 @@ try {
     tarball_sha256: archiveHash,
     sealed_fingerprint: sha(JSON.stringify([oldBinding, archiveHash])),
   });
+  /** @param {'inspect' | 'plan' | 'apply'} mode */
   const repairCommand = (mode) => {
     const args = [
       path.join(packageRoot, 'bin/reconcile-artifacts.mjs'),
@@ -337,8 +400,9 @@ try {
     });
     assert.equal(result.error, undefined);
     assert.equal(result.signal, null);
-    assert.equal(result.status, 0, result.stderr?.toString('utf8'));
-    return JSON.parse(result.stdout.toString('utf8'));
+    assert.equal(result.status, 0, childErrorMessage(result.stderr));
+    assert.ok(Buffer.isBuffer(result.stdout));
+    return parseControllerCommandResult(result.stdout.toString('utf8'));
   };
   assert.equal(repairCommand('inspect').status, 'stale_qualification_repairable');
   assert.equal(repairCommand('plan').status, 'planned');

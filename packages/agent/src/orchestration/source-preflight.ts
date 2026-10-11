@@ -39,7 +39,7 @@ export function requiresSourcePrewriterSecurityReview(
   return lifecycleRisk === 'high' || packetRiskFlags.some((flag) => sourcePrewriterSecurityRiskFlags.has(flag));
 }
 
-export interface SourcePreflightArtifactInput {
+interface SourcePreflightArtifactInput {
   readonly reference: LifecycleArtifactReference;
   readonly bytes: Uint8Array;
 }

@@ -1,4 +1,12 @@
 import path from 'node:path';
+import {
+  parseWorkflowSessionReservationData,
+  workflowWorkItemSchema,
+  workExecutionContextSchema,
+  workflowAttemptReceiptSchema,
+  type WorkExecutionContext,
+} from './orchestration/workflow-session-reservation-contract.js';
+export type { WorkExecutionContext } from './orchestration/workflow-session-reservation-contract.js';
 import z from 'zod';
 import type {
   AssignmentAttempt,
@@ -100,81 +108,6 @@ const workflowPreparers = new WeakMap<
   object,
   (request: WorkflowPreparationRequest) => Promise<PreparedWorkflowExecution>
 >();
-const workflowWorkItemSchema = z
-  .object({
-    schema: z.literal('WorkItem/v1'),
-    id: z.string().min(1),
-    provider: z.string().min(1),
-    provider_type: z.string().min(1),
-    canonical_kind: z.enum(['epic', 'feature', 'pbi', 'story', 'bug', 'task', 'research']),
-    intent: z.enum([
-      'information_research',
-      'implementation_new',
-      'implementation_change',
-      'bug_fix',
-      'task_execution',
-    ]),
-    project_id: z.string().min(1),
-    title: z.string().min(1),
-    description: z.string(),
-    labels: z.array(z.string().min(1)).max(64),
-    risk_flags: z.array(z.string().min(1)).max(64),
-  })
-  .strict();
-
-const workContextDigestSchema = z.string().regex(/^[a-f0-9]{64}$/);
-const workContextTextSchema = z.string().min(1).max(2048);
-const workExecutionContextSchema = z
-  .object({
-    schema: z.literal('WorkExecutionContext/v1'),
-    binding: z
-      .object({
-        repository_id: workContextTextSchema,
-        project_ids: z.array(workContextTextSchema).min(1),
-        integrations_digest: workContextDigestSchema,
-        team_id: workContextTextSchema,
-        workflow_id: workContextTextSchema,
-        provider_work_item_id: workContextTextSchema,
-        lifecycle_work_id: workContextTextSchema,
-        work_item_digest: workContextDigestSchema,
-        work_source_revision: workContextTextSchema,
-        scope_id: workContextTextSchema,
-        scope_contract_digest: workContextDigestSchema,
-        acceptance_manifest_digest: workContextDigestSchema,
-        ac_ids: z.array(workContextTextSchema).min(1),
-        implementation_paths: z.array(workContextTextSchema),
-        allowed_resources: z.array(workContextTextSchema),
-        config_digest: workContextDigestSchema,
-        runtime_source_revision: workContextTextSchema,
-        schema_digest: workContextDigestSchema,
-        runtime_code_digest: workContextDigestSchema,
-      })
-      .strict(),
-    permit: z
-      .object({
-        context_digest: workContextDigestSchema,
-        checkpoint_revision: z.number().int().positive(),
-        checkpoint_digest: workContextDigestSchema,
-        runtime_current_revision: z.number().int().positive(),
-        stage_id: workContextTextSchema.nullable(),
-        assignment_index: z.number().int().nonnegative().nullable(),
-        dispatch_authorized: z.boolean(),
-        lease: z
-          .object({
-            thread_id: workContextTextSchema,
-            ticket_id: workContextTextSchema,
-            generation: z.number().int().positive(),
-            ledger_revision: z.number().int().positive(),
-            expires_at: z.iso.datetime({ offset: true }),
-            active_resources: z.array(workContextTextSchema),
-            blocked_resources: z.array(workContextTextSchema),
-          })
-          .strict(),
-      })
-      .strict(),
-  })
-  .strict();
-export type WorkExecutionContext = z.infer<typeof workExecutionContextSchema>;
 export interface WorkExecutionContextRequest {
   readonly authentication: Readonly<TrustedHostAuthentication>;
   readonly project: ProjectContext;
@@ -223,7 +156,7 @@ export interface WorkflowPreparationRequest {
 }
 
 /** `internal/Migration` is a reconciler-only carrier, never external ingress. */
-export function assertOrdinaryWorkItemIngress(workItem: z.infer<typeof workflowWorkItemSchema>): void {
+function assertOrdinaryWorkItemIngress(workItem: z.infer<typeof workflowWorkItemSchema>): void {
   requireCondition(
     !(workItem.provider === 'internal' && workItem.provider_type === 'Migration'),
     'internal/Migration work items are reconciler-only and cannot enter the ordinary runtime',
@@ -364,6 +297,23 @@ export interface RuntimeKernel {
 
 function requireCondition(condition: boolean, message: string): void {
   if (!condition) throw new Error(message);
+}
+/** Abort only through the Host's unstarted check; a committed UNKNOWN marker cannot be cleared. */
+async function withUnstartedWorkflowCleanup<T>(
+  validate: () => Promise<T>,
+  abort: () => Promise<unknown>,
+  message: string,
+): Promise<T> {
+  try {
+    return await validate();
+  } catch (error) {
+    try {
+      await abort();
+    } catch (abortError) {
+      throw new AggregateError([error, abortError], message);
+    }
+    throw error;
+  }
 }
 function text(value: unknown, label: string): asserts value is string {
   requireCondition(typeof value === 'string' && value.trim().length > 0, label + ' is required');
@@ -699,7 +649,7 @@ export interface TrustedHostLauncherCapability {
   readonly [trustedHostLauncherBrand]: true;
 }
 
-export interface TrustedHostAuthentication {
+interface TrustedHostAuthentication {
   readonly schema: 'TrustedHostAuthentication/v1';
   readonly repositoryRoot: string;
   readonly repositoryId: string;
@@ -1473,89 +1423,6 @@ function assertWorkContextProgress(previous: WorkExecutionContext, current: Work
   );
 }
 
-const workflowAttemptReceiptSchema = z
-  .object({
-    identity: z
-      .object({
-        repository_id: workContextTextSchema,
-        project_ids: z.array(workContextTextSchema).min(1),
-        integrations_digest: workContextDigestSchema,
-        work_id: workContextTextSchema,
-      })
-      .strict(),
-    workVersion: z.object({ revision: z.number().int().positive(), digest: workContextDigestSchema }).strict(),
-    maintenanceGeneration: z.number().int().nonnegative(),
-    attempt: z
-      .object({
-        assignment_id: workContextDigestSchema,
-        attempt_id: workContextDigestSchema,
-        previous_attempt_id: workContextDigestSchema.nullable(),
-        request_digest: workContextDigestSchema,
-        stage_id: workContextTextSchema,
-        assignment_index: z.number().int().nonnegative(),
-        correction_generation: z.number().int().nonnegative(),
-        correction_authorization: z
-          .object({
-            schema: workContextTextSchema.regex(/^[A-Za-z][A-Za-z0-9]*\/v1$/),
-            path: workContextTextSchema,
-            sha256: workContextDigestSchema,
-          })
-          .strict()
-          .nullable(),
-        lease: z
-          .object({
-            ticket_id: workContextTextSchema,
-            thread_id: workContextTextSchema,
-            generation: z.number().int().positive(),
-          })
-          .strict(),
-        status: z.enum(['started', 'completed', 'uncertain', 'no_effect']),
-        result: z.unknown(),
-        result_digest: workContextDigestSchema.nullable(),
-        reconciliation: z
-          .object({
-            schema: z.literal('WorkflowAttemptReconciliationAuthorization/v1'),
-            principal: workContextTextSchema,
-            work_binding_digest: workContextDigestSchema,
-            work_version: z.object({ revision: z.number().int().positive(), digest: workContextDigestSchema }).strict(),
-            ledger_version: z
-              .object({ revision: z.number().int().positive(), digest: workContextDigestSchema })
-              .strict(),
-            attempt_id: workContextDigestSchema,
-            request_digest: workContextDigestSchema,
-            outcome: z.enum(['completed', 'no_effect']),
-            result_digest: workContextDigestSchema.nullable(),
-            provider_evidence: z
-              .object({
-                schema: workContextTextSchema.regex(/^[A-Za-z][A-Za-z0-9]*\/v1$/),
-                path: workContextTextSchema,
-                sha256: workContextDigestSchema,
-              })
-              .strict(),
-            decision: z
-              .object({
-                schema: z.enum(['DecisionRecord/v1', 'WorkflowAttemptRecoveryDecision/v1']),
-                path: workContextTextSchema,
-                sha256: workContextDigestSchema,
-              })
-              .strict()
-              .nullable(),
-            retry_lease: z
-              .object({
-                ticket_id: workContextTextSchema,
-                thread_id: workContextTextSchema,
-                generation: z.number().int().positive(),
-              })
-              .strict()
-              .nullable(),
-          })
-          .strict()
-          .nullable(),
-      })
-      .strict(),
-  })
-  .strict();
-
 function validateAttemptReceipt(
   value: unknown,
   invocation: TrustedWorkflowAssignment,
@@ -1901,44 +1768,44 @@ function issueWorkflowExecutionCapability(
           ? null
           : await attempts.claimWorkflowAssignmentWithApproval!(invocation, requestDigest, approvalAction);
       const claimed = authorization?.receipt ?? (await attempts.claimWorkflowAssignment(invocation, requestDigest));
-      let receipt: WorkflowAttemptReceipt;
-      try {
-        receipt = validateAttemptReceipt(claimed, invocation, requestDigest, attempts.reconciliationPrincipal);
-        if (authorization !== null)
+      return withUnstartedWorkflowCleanup(
+        async () => {
+          const receipt = validateAttemptReceipt(claimed, invocation, requestDigest, attempts.reconciliationPrincipal);
+          if (authorization !== null)
+            requireCondition(
+              receipt.attempt.status === 'completed'
+                ? authorization.approval === null
+                : authorization.approval?.status === 'reserved',
+              'workflow approval reservation receipt invalid',
+            );
+          const currentContext = await resolve(request, request.stageId, request.assignmentIndex);
           requireCondition(
-            receipt.attempt.status === 'completed'
-              ? authorization.approval === null
-              : authorization.approval?.status === 'reserved',
-            'workflow approval reservation receipt invalid',
+            receipt.attempt.reconciliation !== null ||
+              currentContext.workContext.permit.checkpoint_revision > receipt.workVersion.revision ||
+              (currentContext.workContext.permit.checkpoint_revision === receipt.workVersion.revision &&
+                currentContext.workContext.permit.checkpoint_digest === receipt.workVersion.digest),
+            'workflow attempt work version is not current',
           );
-        const currentContext = await resolve(request, request.stageId, request.assignmentIndex);
-        requireCondition(
-          receipt.attempt.reconciliation !== null ||
-            currentContext.workContext.permit.checkpoint_revision > receipt.workVersion.revision ||
-            (currentContext.workContext.permit.checkpoint_revision === receipt.workVersion.revision &&
-              currentContext.workContext.permit.checkpoint_digest === receipt.workVersion.digest),
-          'workflow attempt work version is not current',
-        );
-      } catch (error) {
-        try {
+          const reservation: WorkflowSessionReservation = {
+            schema: 'WorkflowSessionReservation/v1',
+            request,
+            invocation,
+            receipt,
+            requestDigest,
+            approvalAction,
+            authorization,
+          };
+          parseWorkflowSessionReservationData(reservation);
+          return freezeJsonValue(reservation);
+        },
+        async () => {
           if (authorization?.approval?.status === 'reserved')
             await attempts.abortUnstartedWorkflowAttempt!(authorization);
           else if (authorization === null && claimed.attempt.status === 'started')
             await attempts.abortUnstartedWorkflowAttempt(claimed);
-        } catch {
-          // A failed abort retains the attempt for explicit reconciliation.
-        }
-        throw error;
-      }
-      return freezeJsonValue({
-        schema: 'WorkflowSessionReservation/v1' as const,
-        request,
-        invocation,
-        receipt,
-        requestDigest,
-        approvalAction,
-        authorization,
-      });
+        },
+        'Workflow reservation validation and abort failed',
+      );
     });
   workflowSessionReservers.set(capability, async (request) => {
     const reserved = await reserveAssignment(request);
@@ -1947,16 +1814,21 @@ function issueWorkflowExecutionCapability(
       'workflow session action was already completed or requires reconciliation',
     );
     if (reserved.approvalAction === null) return reserved;
-    await serializeState(async () => {
-      const fresh = await resolve(request, request.stageId, request.assignmentIndex);
-      requireCondition(
-        canonicalJsonDigest(fresh.workItem) === request.workItemDigest &&
-          workContextAuthorityDigest(fresh.workContext) === request.workContextDigest,
-        'workflow approval context changed before native session issue',
-      );
-      pinContext(fresh.workContext);
-    });
-    const entered = await serializeState(async () => attempts.beginWorkflowAttemptEffect!(reserved.authorization!));
+    const entered = await withUnstartedWorkflowCleanup(
+      () =>
+        serializeState(async () => {
+          const fresh = await resolve(request, request.stageId, request.assignmentIndex);
+          requireCondition(
+            canonicalJsonDigest(fresh.workItem) === request.workItemDigest &&
+              workContextAuthorityDigest(fresh.workContext) === request.workContextDigest,
+            'workflow approval context changed before native session issue',
+          );
+          pinContext(fresh.workContext);
+          return attempts.beginWorkflowAttemptEffect!(reserved.authorization!);
+        }),
+      () => serializeState(async () => attempts.abortUnstartedWorkflowAttempt!(reserved.authorization!)),
+      'Workflow effect entry and unstarted abort failed',
+    );
     return freezeJsonValue({ ...reserved, authorization: entered });
   });
   workflowSessionCompleters.set(capability, async (reservation, observed) => {

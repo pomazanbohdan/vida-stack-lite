@@ -99,25 +99,55 @@ export function createHistoricalResearchFixture(overrides = {}) {
   };
   /** @type {import('../../src/host-state.ts').WorkState['binding']} */
   const workBinding = {
-    repository_id: config.repository.repository_id, project_ids: config.projects.map(project => project.project_id),
-    integrations_digest: canonicalJsonDigest(config.integrations), team_id: 'default-development',
-    provider_work_item_id: workItem.id, work_item_digest: canonicalJsonDigest(workItem), workflow_id: workflowId,
-    config_digest: binding.config_digest, work_source_revision: sourceRevision, scope_id: scopeId,
-    lifecycle_work_id: workId, scope_contract_digest: sha(scopeBytes), acceptance_manifest_digest: sha(acceptanceBytes),
-    ac_ids: ['AC-1'], implementation_paths: ['docs/research.md'], allowed_resources: ['file:docs/research.md'],
-    runtime_source_revision: 'a'.repeat(64), runtime_code_digest: 'a'.repeat(64), schema_digest: 'c'.repeat(64),
+    repository_id: config.repository.repository_id,
+    project_ids: config.projects.map((project) => project.project_id),
+    integrations_digest: canonicalJsonDigest(config.integrations),
+    team_id: 'default-development',
+    provider_work_item_id: workItem.id,
+    work_item_digest: canonicalJsonDigest(workItem),
+    workflow_id: workflowId,
+    config_digest: binding.config_digest,
+    work_source_revision: sourceRevision,
+    scope_id: scopeId,
+    lifecycle_work_id: workId,
+    scope_contract_digest: sha(scopeBytes),
+    acceptance_manifest_digest: sha(acceptanceBytes),
+    ac_ids: ['AC-1'],
+    implementation_paths: ['docs/research.md'],
+    allowed_resources: ['file:docs/research.md'],
+    runtime_source_revision: 'a'.repeat(64),
+    runtime_code_digest: 'a'.repeat(64),
+    schema_digest: 'c'.repeat(64),
   };
   /** @type {import('../../src/host-state.ts').WorkState} */
   const work = {
     schema: 'WorkState/v1',
-    workspace_id: deriveWorkspaceId(config.repository.repository_id, root), revision: 1,
+    workspace_id: deriveWorkspaceId(config.repository.repository_id, root),
+    revision: 1,
     lease: { ticket_id: binding.lease_ticket_id, thread_id: threadId, generation: 1 },
-    execution: { run_id: binding.run_id, status: 'active', input_digest: canonicalJsonDigest(workItem), phase: 'research', assignment_attempts: [] },
-    contracts: { scope: {schema: 'ImplementationScope/v1', path: 'scope.json', sha256: sha(scopeBytes)},
-      acceptance: {schema: 'AcceptanceManifest/v1', path: 'acceptance.json', sha256: sha(acceptanceBytes)}, decisions: [] },
+    execution: {
+      run_id: binding.run_id,
+      status: 'active',
+      input_digest: canonicalJsonDigest(workItem),
+      phase: 'research',
+      assignment_attempts: [],
+    },
+    contracts: {
+      scope: { schema: 'ImplementationScope/v1', path: 'scope.json', sha256: sha(scopeBytes) },
+      acceptance: { schema: 'AcceptanceManifest/v1', path: 'acceptance.json', sha256: sha(acceptanceBytes) },
+      decisions: [],
+    },
     binding: workBinding,
-    lifecycle: {...lifecycleFor(workBinding), scope: {scope_id: scopeId, allowed_paths: ['docs/research.md'],
-      fingerprint_paths: ['docs/research.md'], implementation_paths: ['docs/research.md'], documentation_paths: []}},
+    lifecycle: {
+      ...lifecycleFor(workBinding),
+      scope: {
+        scope_id: scopeId,
+        allowed_paths: ['docs/research.md'],
+        fingerprint_paths: ['docs/research.md'],
+        implementation_paths: ['docs/research.md'],
+        documentation_paths: [],
+      },
+    },
     artifacts: [],
   };
   const feature = overrides.feature ?? config.research_decision;
@@ -161,7 +191,7 @@ export function createHistoricalResearchFixture(overrides = {}) {
     pointer: 'WORK.md',
     timestamp,
   };
-  const defaultActivationUse = {...activationInputBody, digest: canonicalJsonDigest(activationInputBody)};
+  const defaultActivationUse = { ...activationInputBody, digest: canonicalJsonDigest(activationInputBody) };
   const activationUse = overrides.activationUse ?? defaultActivationUse;
   /** @type {import('../../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} */
   const request = overrides.request ?? {

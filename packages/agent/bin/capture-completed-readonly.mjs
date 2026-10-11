@@ -1,26 +1,38 @@
-import { Database } from 'bun:sqlite';
-import Ajv2020 from 'ajv/dist/2020.js';
-import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
+import {
+  closeWorkspaceDatabaseWithAdmission,
+  createCliHostStateStore,
+  openCliWorkspaceDatabase,
+} from './workspace-database-cli.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.js';
 import { loadProjectSetContext } from '../src/config/project-context.js';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.js';
-import { coordinationLedgerDigest } from '../src/contracts/envelopes.js';
 import {
   openConfiguredMastraSessionLedger,
+  mastraLedgerStatus,
   sessionHandoffDatabasePath,
   validateResearchJournalItem,
 } from '../src/orchestration/persistent-session-handoff.js';
+import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-session-ledger-codec.js';
+import { createSessionActionProjector } from '../src/orchestration/session-handoff.js';
 import {
+  buildSessionBridgeRequest,
+  configuredContextForStage,
   parseSessionBridgeObservation,
   parseSessionBridgeRequest,
+  parseSessionBridgeRunState,
   sessionBridgeDatabasePath,
   sessionBridgeRunId,
 } from '../src/orchestration/mastra-session-bridge.js';
 import { suspendCompletedReadOnlyWork } from '../src/orchestration/suspend-local-work.js';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.js';
-import { assertAdmittedRuntimeCodeCurrent } from '../src/orchestration/admitted-session-execution.js';
+import { parseScopedSourceSnapshot } from '../src/orchestration/scoped-source-snapshot.js';
+import {
+  assertAdmittedRuntimeCodeCurrent,
+  readAdmittedSessionIntakeForWork,
+} from '../src/orchestration/admitted-session-execution.js';
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.js';
+import { workflowWorkItemSchema } from '../src/orchestration/workflow-session-reservation-contract.js';
 import { checkedMaintenanceFence } from '../src/host-state.js';
 import { deriveWorkspaceId } from '../src/workspace-identity.js';
 import { cooperativeReadonlyAssignments } from './runtime-config-rebind.mjs';
@@ -28,12 +40,515 @@ import { verifyForwardCandidateAdmission } from './forward-candidate-admission.m
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+/** @type {(condition: unknown, message: string) => asserts condition} */
 const requireCapture = (value, message) => {
   if (!value) throw Error('completed readonly capture: ' + message);
 };
+/** @typedef {import('../src/host-state.js').HostStateSnapshot} HostStateSnapshot */
+/** @typedef {import('../src/host-state.js').HostStateStore} HostStateStore */
+/** @typedef {import('../src/host-state.js').StateVersion} StateVersion */
+/** @typedef {import('../src/contracts/envelopes.js').CoordinationLedger} CoordinationLedger */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.js').MastraSessionLedgerState} MastraSessionLedgerState */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.js').MastraLedgerItem} MastraLedgerItem */
+/** @typedef {import('../src/host-state.js').WorkState} WorkState */
+/** @typedef {import('../src/orchestration/scoped-source-snapshot.js').ScopedSourceSnapshot} ScopedSourceSnapshot */
+/** @typedef {{work_id: string, project_ids: [string], attempt: number, native_session_handle: string, user_request_pointer: string, expected_work: StateVersion, expected_ledger: StateVersion, expected_journal: StateVersion, reports: string[]}} CaptureRequest */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.js').MastraSessionLedgerSnapshot} CapturedJournal */
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+/** @param {unknown} value @returns {value is StateVersion} */
+function isStateVersion(value) {
+  return (
+    isRecord(value) &&
+    Object.keys(value).sort().join(',') === 'digest,revision' &&
+    Number.isSafeInteger(value.revision) &&
+    Number(value.revision) >= 0 &&
+    typeof value.digest === 'string'
+  );
+}
+/** @param {unknown} value @returns {value is CaptureRequest} */
+function isCaptureRequest(value) {
+  return (
+    hasCaptureRequestKeys(value) && hasCaptureIdentity(value) && hasCaptureVersions(value) && hasCaptureReports(value)
+  );
+}
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function hasCaptureRequestKeys(value) {
+  return (
+    isRecord(value) &&
+    Object.keys(value).sort().join(',') ===
+      'attempt,expected_journal,expected_ledger,expected_work,native_session_handle,project_ids,reports,user_request_pointer,work_id'
+  );
+}
+/** @param {Record<string, unknown>} value */
+function hasCaptureIdentity(value) {
+  return hasCaptureWorkIdentity(value) && hasCaptureAttribution(value);
+}
+/** @param {Record<string, unknown>} value */
+function hasCaptureWorkIdentity(value) {
+  return (
+    typeof value.work_id === 'string' &&
+    /^[a-z0-9][a-z0-9._-]{0,79}$/.test(value.work_id) &&
+    Array.isArray(value.project_ids) &&
+    value.project_ids.length === 1 &&
+    typeof value.project_ids[0] === 'string' &&
+    Number.isSafeInteger(value.attempt) &&
+    Number(value.attempt) > 0
+  );
+}
+/** @param {Record<string, unknown>} value */
+function hasCaptureAttribution(value) {
+  return (
+    typeof value.native_session_handle === 'string' &&
+    value.native_session_handle.trim().length > 0 &&
+    typeof value.user_request_pointer === 'string' &&
+    value.user_request_pointer.trim().length > 0
+  );
+}
+/** @param {Record<string, unknown>} value */
+function hasCaptureVersions(value) {
+  return (
+    isStateVersion(value.expected_work) &&
+    isStateVersion(value.expected_ledger) &&
+    isStateVersion(value.expected_journal)
+  );
+}
+/** @param {Record<string, unknown>} value */
+function hasCaptureReports(value) {
+  return (
+    Array.isArray(value.reports) &&
+    value.reports.length > 0 &&
+    value.reports.length <= 32 &&
+    value.reports.every((entry) => typeof entry === 'string')
+  );
+}
+/** @param {HostStateSnapshot} snapshot @returns {asserts snapshot is HostStateSnapshot & {work: WorkState, ledger: CoordinationLedger, workVersion: StateVersion, ledgerVersion: StateVersion}} */
+function requireCompleteHostSnapshot(snapshot) {
+  if (!snapshot.work || !snapshot.ledger || !snapshot.workVersion || !snapshot.ledgerVersion)
+    throw new Error('completed readonly capture: current Host snapshot is incomplete');
+}
+/** @param {unknown} value @param {number} maximum @returns {unknown[]} */
+function snapshotRequests(value, maximum) {
+  if (!isRecord(value) || !isRecord(value.suspendPayload) || !isUnknownArray(value.suspendPayload.requests)) return [];
+  requireCapture(value.suspendPayload.requests.length <= maximum, 'original suspended request collection differs');
+  return value.suspendPayload.requests;
+}
+/** @param {Record<string, unknown>} context @param {readonly MastraLedgerItem[]} items */
+function requireCurrentSnapshotFrontier(context, items) {
+  const current = new Map(items.map((item) => [item.request.action_id, item.request]));
+  requireCapture(
+    current.size > 0 && current.size === items.length,
+    'current journal request identities are duplicated',
+  );
+  const waves = Object.entries(context)
+    .filter(([key]) => /^wave-[0-9]+$/u.test(key))
+    .map(([key, value]) => ({ waveIndex: Number(key.slice(5)), key, value }))
+    .sort((left, right) => left.waveIndex - right.waveIndex);
+  const frontiers = waves.filter(({ value }) => isRecord(value) && value.status === 'suspended');
+  requireCapture(frontiers.length === 1, 'original suspended frontier is missing or ambiguous');
+  const frontier = frontiers[0];
+  requireCapture(frontier, 'original suspended frontier is missing');
+  const requests = snapshotRequests(frontier.value, current.size).map((entry) => parseSessionBridgeRequest(entry));
+  requireCapture(
+    requests.length === current.size &&
+      new Set(requests.map((entry) => entry.action_id)).size === requests.length &&
+      requests.every(
+        (entry) =>
+          entry.wave_index === frontier.waveIndex &&
+          current.has(entry.action_id) &&
+          canonicalJsonDigest(current.get(entry.action_id)) === canonicalJsonDigest(entry),
+      ),
+    'current suspended requests and journal entries differ',
+  );
+  return { frontier, waves, requests };
+}
+/** @param {readonly {step_id: string, items: readonly MastraLedgerItem[]}[]} completed @param {number} frontierWave */
+function groupCompletedSnapshotItems(completed, frontierWave) {
+  /** @type {Map<number, {item: MastraLedgerItem, issued: ReturnType<typeof parseSessionBridgeRequest>}[]>} */
+  const groups = new Map();
+  for (const step of completed) {
+    for (const item of step.items) {
+      const issued = parseSessionBridgeRequest(item.request),
+        group = groups.get(issued.wave_index) ?? [];
+      requireCapture(
+        step.step_id === `wave-${issued.wave_index}` &&
+          issued.wave_index < frontierWave &&
+          canonicalJsonDigest(issued) === canonicalJsonDigest(item.request) &&
+          item.issue_id !== null &&
+          item.observation !== null,
+        'completed journal wave lacks an accepted issue and observation',
+      );
+      group.push({ item, issued });
+      groups.set(issued.wave_index, group);
+    }
+  }
+  requireCapture(
+    completed.length === groups.size && new Set(completed.map((step) => step.step_id)).size === completed.length,
+    'completed journal step identities differ',
+  );
+  return groups;
+}
+/** @param {unknown} value @param {number} waveIndex @param {string} key @param {readonly {step_id: string, items: readonly MastraLedgerItem[]}[]} completed */
+function requireSuccessfulSnapshotStep(value, waveIndex, key, completed) {
+  requireCapture(
+    key === `wave-${waveIndex}` &&
+      completed.some((step) => step.step_id === key) &&
+      isRecord(value) &&
+      Object.hasOwn(value, 'payload') &&
+      Object.hasOwn(value, 'resumePayload') &&
+      Object.hasOwn(value, 'output') &&
+      !Object.hasOwn(value, 'suspendPayload'),
+    'completed workflow wave shape or step identity differs',
+  );
+  return /** @type {Record<string, unknown>} */ (value);
+}
+/** @param {unknown} value @param {unknown} prior @param {{workId: string, attempt: number, workflowId: string, configDigest: string, scopeDigest: string, selection: unknown}} binding */
+function requireSnapshotWaveInput(value, prior, binding) {
+  const input = parseSessionBridgeRunState(value);
+  requireCapture(
+    canonicalJsonDigest(input) === canonicalJsonDigest(value) &&
+      canonicalJsonDigest(input) === canonicalJsonDigest(prior) &&
+      input.work_id === binding.workId &&
+      input.attempt === binding.attempt &&
+      input.workflow_id === binding.workflowId &&
+      input.config_digest === binding.configDigest &&
+      input.scope_digest === binding.scopeDigest &&
+      canonicalJsonDigest(input.selection) === canonicalJsonDigest(binding.selection),
+    'workflow wave input identity differs',
+  );
+  return input;
+}
+/** @param {Record<string, unknown>} step */
+function requireSnapshotResumePayload(step) {
+  const resume = step.resumePayload;
+  requireCapture(
+    isRecord(resume) && Object.keys(resume).sort().join(',') === 'observations' && isUnknownArray(resume.observations),
+    'completed workflow resume identity differs',
+  );
+  return /** @type {{observations: unknown[]}} */ (resume);
+}
+/** @param {unknown} value @param {unknown} prior @param {number} waveIndex @param {string} key @param {readonly {step_id: string, items: readonly MastraLedgerItem[]}[]} completed @param {{workId: string, attempt: number, workflowId: string, configDigest: string, scopeDigest: string, selection: unknown}} binding */
+function requireCompletedSnapshotWave(value, prior, waveIndex, key, completed, binding) {
+  const step = requireSuccessfulSnapshotStep(value, waveIndex, key, completed),
+    input = requireSnapshotWaveInput(step.payload, prior, binding),
+    resume = requireSnapshotResumePayload(step);
+  return { step, input, resume };
+}
+/** @param {unknown} value @param {{workId: string, attempt: number, workflowId: string, configDigest: string, scopeDigest: string}} binding */
+function requireInitialSnapshotInput(value, binding) {
+  const input = parseSessionBridgeRunState(value);
+  requireCapture(
+    canonicalJsonDigest(input) === canonicalJsonDigest(value) &&
+      input.work_id === binding.workId &&
+      input.attempt === binding.attempt &&
+      input.workflow_id === binding.workflowId &&
+      input.config_digest === binding.configDigest &&
+      input.scope_digest === binding.scopeDigest &&
+      input.observations.length === 0,
+    'original workflow input identity differs',
+  );
+  return input;
+}
+/** @param {{observations: unknown[]}} resume @param {readonly {item: MastraLedgerItem, issued: ReturnType<typeof parseSessionBridgeRequest>}[]} group */
+function requireCompletedSnapshotObservations(resume, group) {
+  const observations = resume.observations.map((raw) => parseSessionBridgeObservation(raw));
+  requireCapture(
+    observations.every(
+      (entry, index) => canonicalJsonDigest(entry) === canonicalJsonDigest(resume.observations[index]),
+    ) &&
+      observations.length === group.length &&
+      new Set(observations.map((entry) => entry.action_id)).size === observations.length &&
+      observations.every((observation) => {
+        const matches = group.filter(({ item }) => item.request.action_id === observation.action_id),
+          match = matches[0];
+        return (
+          observation.status === 'reported_complete' &&
+          observation.output_digest === canonicalJsonDigest(observation.summary) &&
+          observation.host_attempt_id === undefined &&
+          matches.length === 1 &&
+          match?.item.issue_id === observation.issue_id &&
+          canonicalJsonDigest(match.item.observation) === canonicalJsonDigest(observation)
+        );
+      }),
+    'completed workflow observations and journal issues differ',
+  );
+  return observations;
+}
+/** @param {number} waveIndex @param {ReturnType<typeof parseSessionBridgeRunState>} input @param {{runId: string, workflowId: string, configDigest: string, scopeDigest: string, workId: string, attempt: number, correctiveExecution: import('../src/orchestration/mastra-session-bridge.js').SessionBridgeRequest['corrective_execution'], config: ReturnType<typeof loadRuntimeConfig>, root: string, lifecycleRisk: WorkState['lifecycle']['risk'], actionProjector: ReturnType<typeof createSessionActionProjector>}} binding */
+function expectedCompletedSnapshotRequests(waveIndex, input, binding) {
+  const context = { work_id: binding.workId, attempt: binding.attempt, scope_digest: binding.scopeDigest };
+  return binding.actionProjector.actionsForWave(context, waveIndex, [], binding.correctiveExecution).map((action) =>
+    buildSessionBridgeRequest({
+      runId: binding.runId,
+      workflowId: binding.workflowId,
+      configDigest: binding.configDigest,
+      context,
+      waveIndex,
+      action,
+      configuredContext: configuredContextForStage(
+        binding.root,
+        binding.config,
+        binding.workflowId,
+        action.stage_id,
+        context,
+      ),
+      priorResults: input.observations,
+      ...(binding.correctiveExecution ? { correctiveExecution: binding.correctiveExecution } : {}),
+    }),
+  );
+}
+/** @param {ReturnType<typeof buildSessionBridgeRequest>[]} expected @param {readonly {item: MastraLedgerItem, issued: ReturnType<typeof parseSessionBridgeRequest>}[]} group */
+function assertCompletedSnapshotRequests(expected, group) {
+  requireCapture(
+    expected.length === group.length &&
+      expected.every((request) => {
+        const matches = group.filter(({ issued }) => issued.action_id === request.action_id),
+          match = matches[0];
+        return (
+          matches.length === 1 &&
+          match !== undefined &&
+          canonicalJsonDigest(match.issued) === canonicalJsonDigest(request)
+        );
+      }),
+    'completed workflow requests and journal actions differ',
+  );
+}
+/** @param {ReturnType<typeof buildSessionBridgeRequest>[]} expected @param {readonly ReturnType<typeof parseSessionBridgeRequest>[]} actual */
+function assertSnapshotRequestSequence(expected, actual) {
+  requireCapture(
+    expected.length > 0 &&
+      expected.length === actual.length &&
+      expected.every((request, index) => canonicalJsonDigest(request) === canonicalJsonDigest(actual[index])),
+    'snapshot workflow requests differ from configured actions',
+  );
+}
+/** @param {readonly number[]} actual @param {readonly number[]} executable @param {number} frontierWave */
+function assertExecutableSnapshotPrefix(actual, executable, frontierWave) {
+  const prefix = executable.filter((waveIndex) => waveIndex <= frontierWave);
+  requireCapture(
+    prefix.length > 0 &&
+      prefix[prefix.length - 1] === frontierWave &&
+      canonicalJsonDigest(prefix) === canonicalJsonDigest(actual),
+    'snapshot omits an executable configured workflow step',
+  );
+}
+/** @param {Record<string, unknown>} context @param {{waveIndex: number}} frontier @param {readonly {waveIndex: number}[]} successful @param {unknown} prior @param {readonly ReturnType<typeof parseSessionBridgeRequest>[]} requests @param {readonly MastraLedgerItem[]} currentItems @param {{runId: string, workflowId: string, configDigest: string, scopeDigest: string, workId: string, attempt: number, selection: unknown, correctiveExecution: import('../src/orchestration/mastra-session-bridge.js').SessionBridgeRequest['corrective_execution'], config: ReturnType<typeof loadRuntimeConfig>, root: string, lifecycleRisk: WorkState['lifecycle']['risk'], actionProjector: ReturnType<typeof createSessionActionProjector>}} binding */
+function assertSnapshotFrontierFollowsCompleted(context, frontier, successful, prior, requests, currentItems, binding) {
+  const waveIndices = Object.keys(context)
+      .filter((key) => /^wave-[0-9]+$/u.test(key))
+      .map((key) => Number(key.slice(5)))
+      .sort((left, right) => left - right),
+    successIndices = successful.map((entry) => entry.waveIndex),
+    frontierStep = context[`wave-${frontier.waveIndex}`];
+  requireCapture(
+    waveIndices.length === successful.length + 1 &&
+      waveIndices[waveIndices.length - 1] === frontier.waveIndex &&
+      successIndices.every((waveIndex, index) => waveIndex === waveIndices[index]),
+    'snapshot workflow wave order differs',
+  );
+  requireCapture(
+    isRecord(frontierStep) && Object.hasOwn(frontierStep, 'payload'),
+    'current suspended workflow step does not follow completed waves',
+  );
+  const input = requireSnapshotWaveInput(frontierStep.payload, prior, binding),
+    expected = expectedCompletedSnapshotRequests(frontier.waveIndex, input, binding);
+  assertSnapshotRequestSequence(expected, requests);
+  assertSnapshotRequestSequence(
+    expected,
+    currentItems.map((item) => parseSessionBridgeRequest(item.request)),
+  );
+}
+/** @param {Record<string, unknown>} context @param {readonly MastraLedgerItem[]} currentItems @param {readonly {step_id: string, items: readonly MastraLedgerItem[]}[]} completed @param {{runId: string, workflowId: string, configDigest: string, scopeDigest: string, workId: string, attempt: number, selection: ReturnType<typeof parseSessionBridgeRunState>['selection'], correctiveExecution: import('../src/orchestration/mastra-session-bridge.js').SessionBridgeRequest['corrective_execution'], config: ReturnType<typeof loadRuntimeConfig>, root: string, lifecycleRisk: WorkState['lifecycle']['risk']}} binding */
+function assertSnapshotJournalRequestClosure(context, currentItems, completed, binding) {
+  const { frontier, waves, requests } = requireCurrentSnapshotFrontier(context, currentItems),
+    groups = groupCompletedSnapshotItems(completed, frontier.waveIndex),
+    successful = waves.filter(({ value }) => isRecord(value) && value.status === 'success'),
+    actionProjector = createSessionActionProjector(
+      binding.config,
+      binding.selection,
+      binding.workflowId,
+      binding.lifecycleRisk,
+    ),
+    projectedBinding = { ...binding, actionProjector };
+  requireCapture(
+    waves.length === successful.length + 1 && successful.length === groups.size,
+    'completed journal and workflow waves differ',
+  );
+  let prior = requireInitialSnapshotInput(context.input, binding);
+  for (const { waveIndex, key, value } of successful) {
+    const checked = requireCompletedSnapshotWave(value, prior, waveIndex, key, completed, binding),
+      group = groups.get(waveIndex) ?? [],
+      observations = requireCompletedSnapshotObservations(checked.resume, group);
+    assertCompletedSnapshotRequests(
+      expectedCompletedSnapshotRequests(waveIndex, checked.input, projectedBinding),
+      group,
+    );
+    prior = parseSessionBridgeRunState(checked.step.output);
+    requireCapture(
+      canonicalJsonDigest(prior) === canonicalJsonDigest(checked.step.output) &&
+        canonicalJsonDigest(prior) ===
+          canonicalJsonDigest({ ...checked.input, observations: [...checked.input.observations, ...observations] }),
+      'completed workflow output chain differs',
+    );
+  }
+  const executable = actionProjector.executableWaveIndices(binding.correctiveExecution?.stage_ids);
+  assertExecutableSnapshotPrefix(
+    waves.map((entry) => entry.waveIndex),
+    executable,
+    frontier.waveIndex,
+  );
+  assertSnapshotFrontierFollowsCompleted(
+    context,
+    frontier,
+    successful,
+    prior,
+    requests,
+    currentItems,
+    projectedBinding,
+  );
+}
+/** @param {unknown} value @returns {value is {path: string, old_sha256: string, new_sha256: string}} */
+function isForwardFileChange(value) {
+  return (
+    isRecord(value) &&
+    typeof value.path === 'string' &&
+    typeof value.old_sha256 === 'string' &&
+    typeof value.new_sha256 === 'string'
+  );
+}
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isForwardUpdateEvent(value) {
+  return (
+    isRecord(value) &&
+    typeof value.schema === 'string' &&
+    typeof value.operation_id === 'string' &&
+    typeof value.lock_sha256 === 'string' &&
+    typeof value.phase === 'string' &&
+    typeof value.path === 'string'
+  );
+}
+/** @param {unknown} value @returns {value is {work_id: string, attempt: number, config_digest: string, scope_digest: string, workflow_id: string, selection: ReturnType<typeof parseSessionBridgeRunState>['selection']}} */
+function isWorkflowInput(value) {
+  return (
+    isRecord(value) &&
+    typeof value.work_id === 'string' &&
+    typeof value.attempt === 'number' &&
+    Number.isSafeInteger(value.attempt) &&
+    typeof value.config_digest === 'string' &&
+    typeof value.scope_digest === 'string' &&
+    typeof value.workflow_id === 'string'
+  );
+}
+/** @template T @param {T | null | undefined} value @param {string} message @returns {T} */
+function requireCaptureValue(value, message) {
+  if (value === null || value === undefined) throw new Error(`completed readonly capture: ${message}`);
+  return value;
+}
+/** @param {unknown} value @returns {string[]} */
+function requireStringArray(value) {
+  if (!Array.isArray(value) || !value.every((entry) => typeof entry === 'string'))
+    throw new Error('completed readonly capture: owner release resources are invalid');
+  return value;
+}
+/** @param {unknown} value @returns {Record<string, unknown> & {changed: Array<{path: string, old_sha256: string, new_sha256: string}>}} */
+function requireForwardIntent(value) {
+  if (!isRecord(value) || !Array.isArray(value.changed) || !value.changed.every(isForwardFileChange))
+    throw new Error('completed readonly capture: terminal forward intent is invalid');
+  return { ...value, changed: value.changed.filter(isForwardFileChange) };
+}
+/** @param {unknown} snapshot @returns {{snapshot: Record<string, unknown>, context: Record<string, unknown>, input: {work_id: string, attempt: number, config_digest: string, scope_digest: string, workflow_id: string, selection: ReturnType<typeof parseSessionBridgeRunState>['selection']}}} */
+function requireWorkflowSnapshot(snapshot) {
+  if (!isRecord(snapshot) || !isRecord(snapshot.context) || !isWorkflowInput(snapshot.context.input))
+    throw new Error('completed readonly capture: original workflow input is invalid');
+  return { snapshot, context: snapshot.context, input: snapshot.context.input };
+}
+/** @param {WorkState | null | undefined} value @returns {WorkState} */
+function requireSuspendedReleasedWork(value) {
+  if (!value || value.lease !== null || value.execution.status !== 'suspended')
+    throw new Error('completed readonly capture: owner closure missing');
+  return value;
+}
+/** @param {Array<Record<string, unknown>>} releases @returns {Record<string, unknown>} */
+function requireSingleRelease(releases) {
+  if (releases.length !== 1 || !releases[0])
+    throw new Error('completed readonly capture: exact owner release proof is missing');
+  return releases[0];
+}
+/** @param {unknown} event @param {string} operationId @param {string} lockDigest @param {string} filePath @returns {boolean} */
+function isPublishedForwardUpdate(event, operationId, lockDigest, filePath) {
+  return (
+    isForwardUpdateEvent(event) &&
+    event.schema === 'VidaForwardUpdateEvent/v1' &&
+    event.operation_id === operationId &&
+    event.lock_sha256 === lockDigest &&
+    event.phase === 'file_replaced' &&
+    event.path === filePath
+  );
+}
+/** @param {CoordinationLedger['tickets'][number]} ticket @param {Record<string, unknown>} release @param {{work_id: string}} identity @param {string} nativeSessionHandle @returns {boolean} */
+function isReleasedCaptureTicket(ticket, release, identity, nativeSessionHandle) {
+  return (
+    ticket.ticket_id === release.ticket_id &&
+    ticket.status === 'released' &&
+    ticket.work_id === identity.work_id &&
+    ticket.thread_id === nativeSessionHandle
+  );
+}
+/** @param {CoordinationLedger['claims'][number]} claim @param {{work_id: string}} identity @param {string} nativeSessionHandle @returns {boolean} */
+function isReleasedCaptureClaim(claim, identity, nativeSessionHandle) {
+  return claim.status === 'released' && claim.work_id === identity.work_id && claim.thread_id === nativeSessionHandle;
+}
+/** @param {MastraLedgerItem} item @returns {boolean} */
+function isCompletedUnreservedCaptureItem(item) {
+  return (
+    item.issue_id !== null &&
+    item.observation?.status === 'reported_complete' &&
+    !item.host_reservation &&
+    !item.research_normalization
+  );
+}
+/** @param {MastraLedgerItem} item @returns {boolean} */
+function isReportedCompleteCaptureItem(item) {
+  return item.issue_id !== null && item.observation?.status === 'reported_complete';
+}
+/** @param {unknown} left @param {unknown} right */
 const equal = (left, right) => canonicalJsonDigest(left) === canonicalJsonDigest(right);
 
+/** @param {string} root @param {WorkState} work @param {ReturnType<typeof parseSessionBridgeRunState>['selection']} selection @param {string} workflowId @param {string} configDigest @param {string} scopeDigest @param {string} workId */
+function requireAdmittedSnapshotSelection(root, work, selection, workflowId, configDigest, scopeDigest, workId) {
+  const admitted = workflowWorkItemSchema.parse(readAdmittedSessionIntakeForWork(root, work).work_item),
+    selectionMatches =
+      canonicalJsonDigest({
+        kind: admitted.canonical_kind,
+        intent: admitted.intent,
+        project: admitted.project_id,
+        risk_flags: admitted.risk_flags,
+        labels: admitted.labels,
+      }) ===
+      canonicalJsonDigest({
+        kind: selection.kind,
+        intent: selection.intent,
+        project: selection.project,
+        risk_flags: selection.risk_flags,
+        labels: selection.labels,
+      });
+  requireCapture(
+    admitted.id === work.binding.provider_work_item_id &&
+      admitted.id === workId &&
+      canonicalJsonDigest(admitted) === work.binding.work_item_digest &&
+      work.binding.team_id === selection.team &&
+      work.binding.workflow_id === workflowId &&
+      work.binding.config_digest === configDigest &&
+      work.binding.work_source_revision === scopeDigest &&
+      selectionMatches,
+    'original admitted work selection differs',
+  );
+}
+
 /** Fixed admitted administrative route. Captured completion is not canonical acceptance. */
+/** @param {{root: string, payloadRoot: string, operationId: string, requestPath: string}} input @param {{onPhase?: (phase: string) => void}} [options] */
 export async function runCompletedReadOnlyCapture({ root, payloadRoot, operationId, requestPath }, { onPhase } = {}) {
   root = path.resolve(root);
   payloadRoot = path.resolve(payloadRoot);
@@ -50,40 +565,18 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
     access = requireSafeRepositoryAccess(root);
   const requestBytes = access.readBytes(requestPath, 'attributed completed readonly capture');
   requireCapture(requestBytes.length <= 65536, 'request exceeds bound');
-  const request = JSON.parse(requestBytes);
-  requireCapture(
-    Object.keys(request).sort().join(',') ===
-      [
-        'work_id',
-        'project_ids',
-        'attempt',
-        'native_session_handle',
-        'user_request_pointer',
-        'expected_work',
-        'expected_ledger',
-        'expected_journal',
-        'reports',
-      ]
-        .sort()
-        .join(',') &&
-      typeof request.work_id === 'string' &&
-      /^[a-z0-9][a-z0-9._-]{0,79}$/.test(request.work_id) &&
-      Array.isArray(request.project_ids) &&
-      request.project_ids.length === 1 &&
-      typeof request.project_ids[0] === 'string' &&
-      Number.isSafeInteger(request.attempt) &&
-      request.attempt > 0 &&
-      typeof request.native_session_handle === 'string' &&
-      request.native_session_handle.trim() &&
-      typeof request.user_request_pointer === 'string' &&
-      request.user_request_pointer.trim() &&
-      Array.isArray(request.reports) &&
-      request.reports.length > 0 &&
-      request.reports.length <= 32,
-    'request identity or fields invalid',
-  );
-  let ledger = null,
-    store = null;
+  /** @type {unknown} */
+  const parsedRequest = JSON.parse(requestBytes.toString('utf8'));
+  requireCapture(isCaptureRequest(parsedRequest), 'request identity or fields invalid');
+  const request = parsedRequest;
+  /** @type {ReturnType<typeof openConfiguredMastraSessionLedger> | null} */
+  let ledger = null;
+  /** @type {HostStateStore | null} */
+  let store = null;
+  /** @type {HostStateSnapshot} */
+  let host;
+  /** @type {CapturedJournal | null} */
+  let journal = null;
   try {
     const context = loadProjectSetContext(root, config, config.repository.repository_id, request.project_ids);
     const identity = {
@@ -101,13 +594,18 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
       workId: identity.work_id,
       attempt: request.attempt,
     });
-    let maintenance;
-    const fenceDatabase = new Database(sessionHandoffDatabasePath(root, config), { readonly: true, strict: true });
+    /** @type {ReturnType<typeof checkedMaintenanceFence> | null} */
+    let maintenance = null;
+    const fenceDatabase = openCliWorkspaceDatabase(root, sessionHandoffDatabasePath(root, config), workspaceId, true);
     try {
-      const row = fenceDatabase
-        .query('SELECT revision,payload,digest FROM agent_host_maintenance WHERE workspace_id=?')
-        .get(workspaceId);
-      if (row) {
+      const rowValue = queryDatabaseRow(
+        fenceDatabase,
+        'SELECT revision,payload,digest FROM agent_host_maintenance WHERE workspace_id=?',
+        [workspaceId],
+      );
+      if (rowValue) {
+        requireCapture(isMaintenanceFenceRow(rowValue), 'maintenance inspection row is malformed');
+        const row = rowValue;
         maintenance = checkedMaintenanceFence(JSON.parse(row.payload));
         requireCapture(
           maintenance.workspace_id === workspaceId &&
@@ -117,14 +615,17 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
         );
       }
     } finally {
-      fenceDatabase.close();
+      closeWorkspaceDatabaseWithAdmission(fenceDatabase);
     }
-    let host;
     if (inspected.lease === null) {
       if (maintenance?.status === 'held') {
+        /** @type {unknown} */
         const intent = JSON.parse(
-          access.readBytes(`.agent/cutover/${operationId}/forward-intent.v1.json`, 'terminal held-fence intent'),
+          access
+            .readBytes(`.agent/cutover/${operationId}/forward-intent.v1.json`, 'terminal held-fence intent')
+            .toString('utf8'),
         );
+        requireCapture(isRecord(intent), 'terminal held-fence intent is malformed');
         requireCapture(
           maintenance.binding.operation_id === operationId &&
             maintenance.binding.bundle_digest === intent.old_payload_manifest_sha256 &&
@@ -139,40 +640,23 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
           inspected.execution_status === 'suspended',
         'incomplete capture conflicts with held global fence',
       );
-      const database = new Database(sessionHandoffDatabasePath(root, config), { readonly: true, strict: true });
+      const database = openCliWorkspaceDatabase(root, sessionHandoffDatabasePath(root, config), workspaceId, true);
       try {
-        const key = JSON.stringify([
-          identity.repository_id,
-          identity.project_ids,
-          identity.integrations_digest,
-          identity.work_id,
-        ]);
-        const workRow = database
-          .query("SELECT payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND id=?")
-          .get(workspaceId, key);
-        const ledgerRow = database
-          .query("SELECT payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'")
-          .get(workspaceId);
-        requireCapture(workRow && ledgerRow, 'terminal host state missing');
-        const work = JSON.parse(workRow.payload),
-          coordination = JSON.parse(ledgerRow.payload),
-          validator = new Ajv2020({ allErrors: true });
+        const terminalStore = createCliHostStateStore(database, workspaceId);
+        const snapshot = terminalStore.readTerminalHostStateSnapshot(identity, maintenance ?? null);
         requireCapture(
-          validator.compile(workSchema)(work) &&
-            canonicalJsonDigest(work) === inspected.work_version.digest &&
-            workRow.digest === inspected.work_version.digest &&
-            coordinationLedgerDigest(coordination) === inspected.ledger_version.digest &&
-            ledgerRow.digest === inspected.ledger_version.digest,
+          snapshot.work &&
+            snapshot.ledger &&
+            snapshot.workVersion &&
+            snapshot.ledgerVersion &&
+            canonicalJsonDigest(snapshot.work) === inspected.work_version.digest &&
+            snapshot.workVersion.digest === inspected.work_version.digest &&
+            snapshot.ledgerVersion.digest === inspected.ledger_version.digest,
           'terminal host schema or snapshot drift',
         );
-        host = {
-          work,
-          ledger: coordination,
-          workVersion: inspected.work_version,
-          ledgerVersion: inspected.ledger_version,
-        };
+        host = snapshot;
       } finally {
-        database.close();
+        closeWorkspaceDatabaseWithAdmission(database);
       }
     } else {
       requireCapture(maintenance?.status !== 'held', 'incomplete capture conflicts with held global fence');
@@ -181,41 +665,42 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
       host = store.readHostStateSnapshot(identity);
     }
     const terminal = host.work?.lease === null;
-    let journal;
     if (terminal) {
       // After owner closure, publication may hold the global fence and change
       // scoped source bytes. Observe the exact persisted completion read-only;
       // never reopen the working journal or grant maintenance working access.
-      const database = new Database(sessionHandoffDatabasePath(root, config), { readonly: true, strict: true });
+      const database = openCliWorkspaceDatabase(root, sessionHandoffDatabasePath(root, config), workspaceId, true);
       try {
-        const row = database
-          .query(
-            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-          )
-          .get(workspaceId, request.work_id, request.attempt);
-        requireCapture(
-          row && Number.isSafeInteger(row.revision) && row.revision > 0,
-          'terminal original journal missing',
+        const rowValue = queryDatabaseRow(
+          database,
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          [workspaceId, request.work_id, request.attempt],
         );
-        const state = JSON.parse(row.payload);
+        requireCapture(isPositiveRevisionPayloadRow(rowValue), 'terminal original journal missing');
+        const row = rowValue;
+        const state = parseMastraSessionLedgerState(JSON.parse(row.payload));
         requireCapture(
           state.schema === 'MastraSessionLedger/v1' &&
             state.workspace_id === workspaceId &&
             state.work_id === request.work_id &&
             state.attempt === request.attempt &&
             row.digest === canonicalJsonDigest(state) &&
-            Array.isArray(state.items) &&
-            Array.isArray(state.completed) &&
+            hasMastraLedgerCollections(state) &&
             [...state.items, ...state.completed.flatMap((step) => step.items)].every((item) =>
               validateResearchJournalItem(item, state),
             ),
           'terminal journal identity or closure invalid',
         );
-        journal = { state, version: { revision: row.revision, digest: row.digest } };
+        journal = {
+          state,
+          version: { revision: row.revision, digest: row.digest },
+          resume_status: mastraLedgerStatus(state),
+        };
       } finally {
-        database.close();
+        closeWorkspaceDatabaseWithAdmission(database);
       }
     } else {
+      if (!ledger || !store) throw new Error('completed readonly capture: active ledger is unavailable');
       requireCapture(
         store.readMaintenanceFence()?.status !== 'held',
         'incomplete capture conflicts with held global fence',
@@ -223,6 +708,7 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
       journal = ledger.resume(request.work_id, request.attempt);
     }
     requireCapture(journal, 'original attempt missing');
+    requireCompleteHostSnapshot(host);
     requireCapture(
       host.work &&
         host.ledger &&
@@ -237,13 +723,9 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
         host.work.execution.assignment_attempts.every((entry) => !['started', 'uncertain'].includes(entry.status)),
       'current original work/config or activity differs',
     );
+    const sourceScope = parseScopedSourceSnapshot(journal.state.source_scope);
     requireCapture(
-      journal.state.source_scope?.schema === 'ScopedSourceSnapshot/v1' &&
-        journal.state.source_scope.digest ===
-          canonicalJsonDigest({
-            schema: journal.state.source_scope.schema,
-            entries: journal.state.source_scope.entries,
-          }),
+      sourceScope.digest === canonicalJsonDigest({ schema: sourceScope.schema, entries: sourceScope.entries }),
       'original source binding invalid',
     );
     if (!terminal)
@@ -251,28 +733,38 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
         equal(
           snapshotDeclaredSources(
             access,
-            journal.state.source_scope.entries.map((entry) => entry.path),
+            sourceScope.entries.map((entry) => entry.path),
           ),
-          journal.state.source_scope,
+          sourceScope,
         ),
         'original source bytes differ',
       );
-    const original = new Database(sessionBridgeDatabasePath(root, config), { readonly: true, strict: true });
+    const original = openCliWorkspaceDatabase(root, sessionBridgeDatabasePath(root, config), workspaceId, true);
     try {
-      const rows = original
-        .query('SELECT workflow_name,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?')
-        .all(journal.state.run_id);
+      const rows = queryDatabaseRows(
+        original,
+        'SELECT workflow_name,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?',
+        [journal.state.run_id],
+      );
+      requireCapture(isUnknownArray(rows), 'original suspended snapshot rows are malformed');
       requireCapture(rows.length === 1, 'original suspended snapshot missing/ambiguous');
-      const snapshot = JSON.parse(rows[0].snapshot),
-        input = snapshot.context?.input;
+      const row = rows[0];
+      requireCapture(isWorkflowSnapshotRow(row), 'original suspended snapshot row is malformed');
+      const exactRow = requireCaptureValue(row, 'original suspended snapshot missing');
+      /** @type {unknown} */
+      const snapshotValue = JSON.parse(exactRow.snapshot);
+      const checkedSnapshot = requireWorkflowSnapshot(snapshotValue);
+      const snapshot = checkedSnapshot.snapshot;
+      const snapshotContext = checkedSnapshot.context;
+      const input = checkedSnapshot.input;
       requireCapture(
         snapshot.status === 'suspended' &&
           snapshot.runId === journal.state.run_id &&
           input?.work_id === request.work_id &&
           input.attempt === request.attempt &&
           input.config_digest === runtimeConfigDigest(config) &&
-          input.scope_digest === journal.state.source_scope.digest &&
-          rows[0].workflow_name === input.workflow_id &&
+          input.scope_digest === sourceScope.digest &&
+          exactRow.workflow_name === input.workflow_id &&
           sessionBridgeRunId(
             workspaceId,
             { work_id: request.work_id, attempt: request.attempt, scope_digest: input.scope_digest },
@@ -280,40 +772,50 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
           ) === journal.state.run_id,
         'original run/config/source differs',
       );
-      for (const item of [...journal.state.completed.flatMap((step) => step.items), ...journal.state.items]) {
-        const issued = parseSessionBridgeRequest(item.request),
-          wave = snapshot.context?.[`wave-${issued.wave_index}`];
+      requireAdmittedSnapshotSelection(
+        root,
+        host.work,
+        input.selection,
+        input.workflow_id,
+        input.config_digest,
+        input.scope_digest,
+        request.work_id,
+      );
+      const retainedItems = [...journal.state.completed.flatMap((step) => step.items), ...journal.state.items];
+      assertSnapshotJournalRequestClosure(snapshotContext, journal.state.items, journal.state.completed, {
+        runId: journal.state.run_id,
+        workflowId: input.workflow_id,
+        configDigest: input.config_digest,
+        scopeDigest: input.scope_digest,
+        workId: request.work_id,
+        attempt: request.attempt,
+        selection: input.selection,
+        correctiveExecution: journal.state.corrective_execution ?? undefined,
+        config,
+        root,
+        lifecycleRisk: host.work.lifecycle.risk,
+      });
+      for (const item of retainedItems) {
+        const issued = parseSessionBridgeRequest(item.request);
         requireCapture(
           !item.host_reservation &&
             issued.run_id === journal.state.run_id &&
             issued.workflow_id === input.workflow_id &&
             issued.config_digest === input.config_digest &&
             issued.scope_digest === input.scope_digest &&
-            cooperativeReadonlyAssignments(config, issued) &&
-            issued.action_id ===
-              canonicalJsonDigest({
-                context: { work_id: request.work_id, attempt: request.attempt, scope_digest: input.scope_digest },
-                workflow_id: issued.workflow_id,
-                wave_index: issued.wave_index,
-                stage_id: issued.stage_id,
-                assignment_index: issued.assignment_index,
-              }) &&
-            wave?.suspendPayload?.requests?.filter((entry) => entry.action_id === issued.action_id).length === 1 &&
-            equal(
-              wave.suspendPayload.requests.find((entry) => entry.action_id === issued.action_id),
-              issued,
-            ),
+            cooperativeReadonlyAssignments(config, issued),
           'original issued action is not proven readonly',
         );
       }
     } finally {
-      original.close();
+      closeWorkspaceDatabaseWithAdmission(original);
     }
+    const checkedJournal = journal;
+    requireCapture(checkedJournal, 'original attempt missing');
     const observations = request.reports.map((file) => {
-      requireCapture(typeof file === 'string', 'report pointer invalid');
       const bytes = access.readBytes(file, 'actual completed native observation');
       requireCapture(bytes.length <= 65536, 'report exceeds bound');
-      const observation = parseSessionBridgeObservation(JSON.parse(bytes));
+      const observation = parseSessionBridgeObservation(JSON.parse(bytes.toString('utf8')));
       requireCapture(
         observation.status === 'reported_complete' && observation.host_attempt_id === undefined,
         'completed readonly observation required',
@@ -325,7 +827,7 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
       'capture action duplicated',
     );
     const pending = observations.filter((observation) => {
-      const item = journal.state.items.find((entry) => entry.request.action_id === observation.action_id);
+      const item = checkedJournal.state.items.find((entry) => entry.request.action_id === observation.action_id);
       requireCapture(
         item && item.issue_id === observation.issue_id && !item.research_normalization,
         'exact open original issue required',
@@ -355,36 +857,41 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
         `.agent/cutover/${operationId}/forward-intent.v1.json`,
         'terminal forward intent',
       );
-      const intent = JSON.parse(intentBytes),
-        prefix = access
-          .readBytes(`.agent/cutover/${operationId}/forward-journal.v1.jsonl`, 'terminal prefix journal')
-          .toString('utf8')
-          .trim()
-          .split('\n')
-          .filter(Boolean)
-          .map(JSON.parse);
+      /** @type {unknown} */
+      const intentValue = JSON.parse(intentBytes.toString('utf8'));
+      const changes = requireForwardIntent(intentValue).changed;
+      const prefix = access
+        .readBytes(`.agent/cutover/${operationId}/forward-journal.v1.jsonl`, 'terminal prefix journal')
+        .toString('utf8')
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => {
+          /** @type {unknown} */
+          const event = JSON.parse(line);
+          return event;
+        });
       const current = snapshotDeclaredSources(
         access,
-        journal.state.source_scope.entries.map((entry) => entry.path),
+        sourceScope.entries.map((entry) => entry.path),
       );
       for (const entry of current.entries) {
-        const prior = journal.state.source_scope.entries.find((value) => value.path === entry.path);
+        const prior = requireCaptureValue(
+          sourceScope.entries.find((value) => value.path === entry.path),
+          'terminal source baseline is missing',
+        );
         if (equal(entry, prior)) continue;
-        const change = intent.changed.find((value) => value.path === entry.path);
+        const change = requireCaptureValue(
+          changes.find((value) => value.path === entry.path),
+          'terminal source change is undeclared',
+        );
         requireCapture(
           change &&
             prior.exists &&
             entry.exists &&
             change.old_sha256 === prior.sha256 &&
             change.new_sha256 === entry.sha256 &&
-            prefix.some(
-              (event) =>
-                event.schema === 'VidaForwardUpdateEvent/v1' &&
-                event.operation_id === operationId &&
-                event.lock_sha256 === admitted.intent_sha256 &&
-                event.phase === 'file_replaced' &&
-                event.path === entry.path,
-            ),
+            prefix.some((event) => isPublishedForwardUpdate(event, operationId, admitted.intent_sha256, entry.path)),
           'terminal source drift is not declared published prefix',
         );
       }
@@ -398,46 +905,35 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
           journal: journal.version.digest,
         }).slice(0, 40);
       const release = host.ledger.operations.filter((entry) => entry.operation_id === releaseId);
+      const releaseRecord = requireSingleRelease(release);
+      const releaseResources = requireStringArray(releaseRecord.resources);
       requireCapture(
         pending.length === 0 &&
           host.work.execution.status === 'suspended' &&
           host.workVersion.revision === request.expected_work.revision + 1 &&
           host.ledgerVersion.revision === request.expected_ledger.revision + 1 &&
           release.length === 1 &&
-          release[0].kind === 'release' &&
-          release[0].work_id === identity.work_id &&
-          release[0].thread_id === request.native_session_handle &&
-          release[0].decided_by === request.native_session_handle &&
-          release[0].decision_pointer === request.user_request_pointer &&
-          release[0].source_revision === host.work.binding.work_source_revision &&
-          release[0].from_ledger_revision === request.expected_ledger.revision &&
-          release[0].to_ledger_revision === request.expected_ledger.revision + 1 &&
+          releaseRecord.kind === 'release' &&
+          releaseRecord.work_id === identity.work_id &&
+          releaseRecord.thread_id === request.native_session_handle &&
+          releaseRecord.decided_by === request.native_session_handle &&
+          releaseRecord.decision_pointer === request.user_request_pointer &&
+          releaseRecord.source_revision === host.work.binding.work_source_revision &&
+          releaseRecord.from_ledger_revision === request.expected_ledger.revision &&
+          releaseRecord.to_ledger_revision === request.expected_ledger.revision + 1 &&
           equal(
-            [...release[0].resources].sort(),
+            [...releaseResources].sort(),
             host.work.binding.implementation_paths.map((value) => 'file:' + value).sort(),
           ) &&
-          host.ledger.tickets.some(
-            (ticket) =>
-              ticket.ticket_id === release[0].ticket_id &&
-              ticket.status === 'released' &&
-              ticket.work_id === identity.work_id &&
-              ticket.thread_id === request.native_session_handle,
+          host.ledger.tickets.some((ticket) =>
+            isReleasedCaptureTicket(ticket, releaseRecord, identity, request.native_session_handle),
           ) &&
-          host.ledger.claims.filter((claim) => claim.ticket_id === release[0].ticket_id).length === 1 &&
+          host.ledger.claims.filter((claim) => claim.ticket_id === releaseRecord.ticket_id).length === 1 &&
           host.ledger.claims
-            .filter((claim) => claim.ticket_id === release[0].ticket_id)
-            .every(
-              (claim) =>
-                claim.status === 'released' &&
-                claim.work_id === identity.work_id &&
-                claim.thread_id === request.native_session_handle,
-            ) &&
-          [...journal.state.completed.flatMap((step) => step.items), ...journal.state.items].every(
-            (item) =>
-              item.issue_id !== null &&
-              item.observation?.status === 'reported_complete' &&
-              !item.host_reservation &&
-              !item.research_normalization,
+            .filter((claim) => claim.ticket_id === releaseRecord.ticket_id)
+            .every((claim) => isReleasedCaptureClaim(claim, identity, request.native_session_handle)) &&
+          [...journal.state.completed.flatMap((step) => step.items), ...journal.state.items].every((item) =>
+            isCompletedUnreservedCaptureItem(item),
           ),
         'terminal capture or exact owner release proof differs',
       );
@@ -459,6 +955,7 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
       };
     }
     if (pending.length) {
+      store = requireCaptureValue(store, 'active Host store is unavailable');
       requireCapture(
         equal(host.workVersion, request.expected_work) && equal(host.ledgerVersion, request.expected_ledger),
         'capture owner compare-and-swap version differs',
@@ -481,24 +978,19 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
         equal(
           snapshotDeclaredSources(
             access,
-            journal.state.source_scope.entries.map((entry) => entry.path),
+            sourceScope.entries.map((entry) => entry.path),
           ),
-          journal.state.source_scope,
+          sourceScope,
         ),
         'original source changed before observation',
       );
-      journal = ledger.report(
-        request.work_id,
-        request.attempt,
-        journal.version,
-        observation,
-        journal.state.source_scope,
-      );
+      const activeLedger = requireCaptureValue(ledger, 'active session ledger is unavailable');
+      journal = activeLedger.report(request.work_id, request.attempt, journal.version, observation, sourceScope);
       onPhase?.('observation_captured');
     }
     requireCapture(
-      [...journal.state.completed.flatMap((step) => step.items), ...journal.state.items].every(
-        (item) => item.issue_id !== null && item.observation?.status === 'reported_complete',
+      [...journal.state.completed.flatMap((step) => step.items), ...journal.state.items].every((item) =>
+        isReportedCompleteCaptureItem(item),
       ),
       'other issued activity remains unknown/failed',
     );
@@ -509,13 +1001,16 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
         equal(
           snapshotDeclaredSources(
             access,
-            journal.state.source_scope.entries.map((entry) => entry.path),
+            sourceScope.entries.map((entry) => entry.path),
           ),
-          journal.state.source_scope,
+          sourceScope,
         ),
       'original request/config/source changed before owner release',
     );
+    store = requireCaptureValue(store, 'active Host store is unavailable');
+    ledger = requireCaptureValue(ledger, 'active session ledger is unavailable');
     host = store.readHostStateSnapshot(identity);
+    requireCompleteHostSnapshot(host);
     requireCapture(
       host.work.lease === null ||
         (equal(host.workVersion, request.expected_work) && equal(host.ledgerVersion, request.expected_ledger)),
@@ -533,15 +1028,12 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
       documentationContext: {
         repository_root: root,
         repository_id: identity.repository_id,
-        project_id: identity.project_ids[0],
+        project_id: identity.project_ids[0] ?? '',
         work_id: request.work_id,
       },
     });
     onPhase?.('owner_released');
-    requireCapture(
-      released.work.lease === null && released.work.execution.status === 'suspended',
-      'owner closure missing',
-    );
+    requireSuspendedReleasedWork(released.work);
     return {
       status: 'captured_normalization_pending',
       work_id: request.work_id,
@@ -560,6 +1052,7 @@ export async function runCompletedReadOnlyCapture({ root, payloadRoot, operation
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  /** @type {unknown} */
   const values = Object.fromEntries(
     Array.from({ length: (process.argv.length - 2) / 2 }, (_, index) => [
       process.argv[2 + index * 2],
@@ -567,15 +1060,72 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     ]),
   );
   try {
+    requireCapture(isStringRecord(values), 'capture arguments are malformed');
+    const root = values['--project-root'];
+    const payloadRoot = values['--payload-root'];
+    const operationId = values['--forward-operation'];
+    const requestPath = values['--capture-request'];
+    requireCapture(
+      typeof root === 'string' &&
+        typeof payloadRoot === 'string' &&
+        typeof operationId === 'string' &&
+        typeof requestPath === 'string',
+      'capture arguments are incomplete',
+    );
     const result = await runCompletedReadOnlyCapture({
-      root: values['--project-root'],
-      payloadRoot: values['--payload-root'],
-      operationId: values['--forward-operation'],
-      requestPath: values['--capture-request'],
+      root,
+      payloadRoot,
+      operationId,
+      requestPath,
     });
     console.log(JSON.stringify(result));
   } catch (error) {
-    console.error(JSON.stringify({ status: 'blocked', message: error.message }));
+    console.error(
+      JSON.stringify({ status: 'blocked', message: error instanceof Error ? error.message : String(error) }),
+    );
     process.exitCode = 1;
   }
+}
+
+/** @param {unknown} value @returns {value is {revision: number, payload: string, digest: string}} */
+function isMaintenanceFenceRow(value) {
+  return (
+    isRecord(value) &&
+    Number.isSafeInteger(value.revision) &&
+    typeof value.payload === 'string' &&
+    typeof value.digest === 'string'
+  );
+}
+/** @param {unknown} value @returns {value is {revision: number, payload: string, digest: string}} */
+function isPositiveRevisionPayloadRow(value) {
+  return isMaintenanceFenceRow(value) && value.revision > 0;
+}
+/** @param {unknown} value @returns {value is {workflow_name: string, snapshot: string}} */
+function isWorkflowSnapshotRow(value) {
+  return isRecord(value) && typeof value.workflow_name === 'string' && typeof value.snapshot === 'string';
+}
+/** @param {unknown} value @returns {value is Record<string, string>} */
+function isStringRecord(value) {
+  return isRecord(value) && Object.values(value).every((entry) => typeof entry === 'string');
+}
+/** @param {MastraSessionLedgerState} value @returns {boolean} */
+function hasMastraLedgerCollections(value) {
+  return Array.isArray(value.items) && Array.isArray(value.completed);
+}
+/** @param {unknown} value @returns {value is unknown[]} */
+function isUnknownArray(value) {
+  return Array.isArray(value);
+}
+/** @typedef {import('bun:sqlite').Database} Database */
+/** @param {Database} database @param {string} sql @param {(string | number)[]} bindings @returns {unknown} */
+function queryDatabaseRow(database, sql, bindings) {
+  /** @type {unknown} */
+  const row = database.query(sql).get(...bindings);
+  return row;
+}
+/** @param {Database} database @param {string} sql @param {(string | number)[]} bindings @returns {unknown} */
+function queryDatabaseRows(database, sql, bindings) {
+  /** @type {unknown} */
+  const rows = database.query(sql).all(...bindings);
+  return rows;
 }

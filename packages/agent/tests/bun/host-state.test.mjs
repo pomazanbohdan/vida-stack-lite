@@ -154,7 +154,9 @@ test('trusted host composition rejects missing governance before loading project
       casWriter: () => undefined,
     },
   });
-  await Promise.resolve(expect(createTrustedHostComposition(launcher)).rejects.toThrow(/host governance capability is required/));
+  await Promise.resolve(
+    expect(createTrustedHostComposition(launcher)).rejects.toThrow(/host governance capability is required/),
+  );
 });
 /** @param {import('../../src/host-state.js').WorkState['binding']} binding
  * @param {number} revision
@@ -419,9 +421,11 @@ test('bundled work-state repair plans atomically, resumes exact postimages and r
 
 test('stored repair decoder rejects malformed changes, foreign identity and extra fields without Host mutation', () => {
   const original = store.compareAndSwapHostState(fixture());
-  store.repairRequestTransitionFields({mode: 'plan', operationId: 'decoder-regression', actor: 'fixture-owner'});
+  store.repairRequestTransitionFields({ mode: 'plan', operationId: 'decoder-regression', actor: 'fixture-owner' });
   /** @type {import('bun:sqlite').Statement<{payload: string, digest: string}>} */
-  const query = database.query('SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?');
+  const query = database.query(
+    'SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?',
+  );
   const row = query.get(workspace, 'decoder-regression');
   if (!row) throw Error('Frozen repair operation missing');
   /** @type {unknown} */
@@ -431,25 +435,33 @@ test('stored repair decoder rejects malformed changes, foreign identity and extr
   const changes = body.changes;
   const first = changes[0];
   if (!isPlainRecord(first)) throw Error('Frozen repair change missing');
-  const variants = [null, {...body, changes: {}}, {...body, changes: []}, {...body, extra: true},
-    {...body, changes: [{...first, before: null}]},
-    {...body, changes: [{...first, identity: {...identity, work_id: 'foreign'}}]}];
+  const variants = [
+    null,
+    { ...body, changes: {} },
+    { ...body, changes: [] },
+    { ...body, extra: true },
+    { ...body, changes: [{ ...first, before: null }] },
+    { ...body, changes: [{ ...first, identity: { ...identity, work_id: 'foreign' } }] },
+  ];
   for (const candidate of variants) {
     const payload = JSON.stringify(candidate);
     const digest = createHash('sha256').update(payload).digest('hex');
-    database.query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?')
+    database
+      .query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?')
       .run(payload, digest, workspace, 'decoder-regression');
-    expect(() => store.repairRequestTransitionFields({mode: 'apply', operationId: 'decoder-regression'})).toThrow();
+    expect(() => store.repairRequestTransitionFields({ mode: 'apply', operationId: 'decoder-regression' })).toThrow();
     expect(store.readHostStateSnapshot(identity)).toEqual(original);
-    expect(query.get(workspace, 'decoder-regression')).toEqual({payload, digest});
+    expect(query.get(workspace, 'decoder-regression')).toEqual({ payload, digest });
   }
 });
 
 test('stored repair plan retry validates its transformation before returning a frozen plan', () => {
   const original = store.compareAndSwapHostState(fixture());
-  store.repairRequestTransitionFields({mode: 'plan', operationId: 'decoder-retry', actor: 'fixture-owner'});
+  store.repairRequestTransitionFields({ mode: 'plan', operationId: 'decoder-retry', actor: 'fixture-owner' });
   /** @type {import('bun:sqlite').Statement<{payload: string, digest: string}>} */
-  const query = database.query('SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?');
+  const query = database.query(
+    'SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?',
+  );
   const row = query.get(workspace, 'decoder-retry');
   if (!row) throw Error('Frozen repair operation missing');
   /** @type {unknown} */
@@ -460,37 +472,55 @@ test('stored repair plan retry validates its transformation before returning a f
   const first = changes[0];
   if (!isPlainRecord(first) || !isPlainRecord(first.after) || !isPlainRecord(first.after.lifecycle))
     throw Error('Frozen repair afterimage missing');
-  const changed = {...candidate, changes: [{...first, after: {...first.after,
-    lifecycle: {...first.after.lifecycle, next_action: 'Unrelated frozen instruction.'}}}]};
-  const payload = JSON.stringify(changed), digest = createHash('sha256').update(payload).digest('hex');
-  database.query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?')
+  const changed = {
+    ...candidate,
+    changes: [
+      {
+        ...first,
+        after: {
+          ...first.after,
+          lifecycle: { ...first.after.lifecycle, next_action: 'Unrelated frozen instruction.' },
+        },
+      },
+    ],
+  };
+  const payload = JSON.stringify(changed),
+    digest = createHash('sha256').update(payload).digest('hex');
+  database
+    .query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?')
     .run(payload, digest, workspace, 'decoder-retry');
-  expect(() => store.repairRequestTransitionFields({mode: 'plan', operationId: 'decoder-retry', actor: 'fixture-owner'}))
-    .toThrow(/frozen transformation differs/);
+  expect(() =>
+    store.repairRequestTransitionFields({ mode: 'plan', operationId: 'decoder-retry', actor: 'fixture-owner' }),
+  ).toThrow(/frozen transformation differs/);
   expect(store.readHostStateSnapshot(identity)).toEqual(original);
-  expect(query.get(workspace, 'decoder-retry')).toEqual({payload, digest});
+  expect(query.get(workspace, 'decoder-retry')).toEqual({ payload, digest });
 });
 
 test('restored repair plan retry rejects a changed restored list without canonicalizing its custody', () => {
   store.compareAndSwapHostState(fixture());
-  store.repairRequestTransitionFields({mode: 'plan', operationId: 'decoder-restored', actor: 'fixture-owner'});
-  store.repairRequestTransitionFields({mode: 'apply', operationId: 'decoder-restored'});
-  store.repairRequestTransitionFields({mode: 'restore', operationId: 'decoder-restored'});
+  store.repairRequestTransitionFields({ mode: 'plan', operationId: 'decoder-restored', actor: 'fixture-owner' });
+  store.repairRequestTransitionFields({ mode: 'apply', operationId: 'decoder-restored' });
+  store.repairRequestTransitionFields({ mode: 'restore', operationId: 'decoder-restored' });
   const before = store.readHostStateSnapshot(identity);
   /** @type {import('bun:sqlite').Statement<{payload: string, digest: string}>} */
-  const query = database.query('SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?');
+  const query = database.query(
+    'SELECT payload,digest FROM agent_host_work_state_repair WHERE workspace_id=? AND operation_id=?',
+  );
   const row = query.get(workspace, 'decoder-restored');
   if (!row) throw Error('Restored operation missing');
   /** @type {unknown} */
   const body = JSON.parse(row.payload);
   if (!isPlainRecord(body)) throw Error('Restored operation malformed');
-  const payload = JSON.stringify({...body, restored: []}), digest = createHash('sha256').update(payload).digest('hex');
-  database.query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?')
+  const payload = JSON.stringify({ ...body, restored: [] }),
+    digest = createHash('sha256').update(payload).digest('hex');
+  database
+    .query('UPDATE agent_host_work_state_repair SET payload=?,digest=? WHERE workspace_id=? AND operation_id=?')
     .run(payload, digest, workspace, 'decoder-restored');
-  expect(() => store.repairRequestTransitionFields({mode: 'plan', operationId: 'decoder-restored', actor: 'fixture-owner'}))
-    .toThrow(/restored list differs/);
+  expect(() =>
+    store.repairRequestTransitionFields({ mode: 'plan', operationId: 'decoder-restored', actor: 'fixture-owner' }),
+  ).toThrow(/restored list differs/);
   expect(store.readHostStateSnapshot(identity)).toEqual(before);
-  expect(query.get(workspace, 'decoder-restored')).toEqual({payload, digest});
+  expect(query.get(workspace, 'decoder-restored')).toEqual({ payload, digest });
 });
 
 test('readonly canonical workspace inspection preserves populated governance and database bytes', async () => {
@@ -1316,9 +1346,7 @@ for (const rootName of ['literal%20', 'standalone%', 'fragment#', 'space path', 
         const physical = new Database(enginePath, { strict: true });
         try {
           expect(
-            physical
-              .query('SELECT run_id FROM mastra_workflow_snapshot WHERE run_id=?')
-              .get(engine.run_id),
+            physical.query('SELECT run_id FROM mastra_workflow_snapshot WHERE run_id=?').get(engine.run_id),
           ).toEqual({ run_id: engine.run_id });
         } finally {
           physical.close(true);
@@ -1394,12 +1422,14 @@ test(
         });
       }
       const observations = journal.state.items.map((item) => item.observation);
-      await Promise.resolve(expect(
-        bridge.resume(
-          first.step_id,
-          observations.map((item) => ({ ...item, agent_id: 'foreign' })),
-        ),
-      ).rejects.toThrow(/resume intent/));
+      await Promise.resolve(
+        expect(
+          bridge.resume(
+            first.step_id,
+            observations.map((item) => ({ ...item, agent_id: 'foreign' })),
+          ),
+        ).rejects.toThrow(/resume intent/),
+      );
       expect(f.rows()).toEqual(before);
       const next = await bridge.resume(first.step_id, observations);
       expect(next.step_id).not.toBe(first.step_id);
@@ -1479,7 +1509,9 @@ test(
             .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
             .run(JSON.stringify(substituted), engine.run_id);
           await Promise.resolve(expect(bridge.snapshot()).rejects.toThrow(/execution path|suspended path/));
-          await Promise.resolve(expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/execution path|suspended path/));
+          await Promise.resolve(
+            expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/execution path|suspended path/),
+          );
           expect(f.rows()).toEqual(before);
         }
         persisted
@@ -1738,9 +1770,11 @@ for (const phase of ['before-init', 'before-start', 'before-resume', 'before-jou
       expect(terminal).toBe(true);
       const restarted = openConfiguredMastraSessionLedger(f.args.repositoryRoot);
       handles.push(restarted.sessionProducerBinding().database);
-      await Promise.resolve(expect(MastraSessionBridge.open({ ...f.args, ledger: restarted })).rejects.toThrow(
-        /producer is pending or unknown/,
-      ));
+      await Promise.resolve(
+        expect(MastraSessionBridge.open({ ...f.args, ledger: restarted })).rejects.toThrow(
+          /producer is pending or unknown/,
+        ),
+      );
       expect(f.rows()).toEqual(retained);
       if (phase === 'before-journal') {
         expect(existsSync(f.enginePath)).toBe(true);
@@ -2695,7 +2729,9 @@ describe('host-owned durable maintenance fence', () => {
     expect(() => store.importReconciledHostState([seed.nextWork], seed.nextLedger, binding, receipt)).toThrow(
       /imported work lease blocks maintenance/,
     );
-    await Promise.resolve(expect(store.releaseMaintenanceFence(receipt)).rejects.toThrow(/closure verification failed/));
+    await Promise.resolve(
+      expect(store.releaseMaintenanceFence(receipt)).rejects.toThrow(/closure verification failed/),
+    );
     expect(store.readMaintenanceFence().status).toBe('held');
   });
 
@@ -3012,11 +3048,13 @@ describe('host-owned reconciliation rollback gate', () => {
       /governance write blocked during reconciliation restore/,
     );
     let callbackCalled = false;
-    await Promise.resolve(expect(
-      store.consumeApproval('approvals', approvalBinding(), async () => {
-        callbackCalled = true;
-      }),
-    ).rejects.toThrow(/governance write blocked during reconciliation restore/));
+    await Promise.resolve(
+      expect(
+        store.consumeApproval('approvals', approvalBinding(), async () => {
+          callbackCalled = true;
+        }),
+      ).rejects.toThrow(/governance write blocked during reconciliation restore/),
+    );
     expect(callbackCalled).toBe(false);
     expect(store.inspectOperation('operations', operationKey)?.status).toBe('applied');
     expect(store.readHostStateSnapshot(identity)).toEqual(saved);
@@ -3036,9 +3074,11 @@ describe('host SQLite governance persistence', () => {
       expect(() => store.reserveOperation(storeId, operationKey, requestDigest)).toThrow(/namespace/);
     expect(() => store.reserveOperation('operations', 'invalid', requestDigest)).toThrow(/namespace/);
     expect(() => store.reserveOperation('operations', operationKey, 'invalid')).toThrow(/digest/);
-    await Promise.resolve(expect(
-      store.consumeApproval('approvals', { ...approvalBinding(), extra: true }, async () => {}),
-    ).rejects.toThrow(/record/));
+    await Promise.resolve(
+      expect(store.consumeApproval('approvals', { ...approvalBinding(), extra: true }, async () => {})).rejects.toThrow(
+        /record/,
+      ),
+    );
     expect(governanceRows()).toEqual([]);
     expect(database.query('SELECT * FROM agent_host_governance_stores').all()).toEqual([]);
   });
@@ -3129,19 +3169,23 @@ describe('host SQLite governance persistence', () => {
       "CREATE TRIGGER reject_governance_update BEFORE UPDATE ON agent_host_governance BEGIN SELECT RAISE(ABORT,'injected transition failure'); END",
     );
     let calls = 0;
-    await Promise.resolve(expect(
-      store.consumeApproval('approvals', approvalBinding(), async () => {
-        calls++;
-      }),
-    ).rejects.toThrow(/injected/));
+    await Promise.resolve(
+      expect(
+        store.consumeApproval('approvals', approvalBinding(), async () => {
+          calls++;
+        }),
+      ).rejects.toThrow(/injected/),
+    );
     expect(calls).toBe(0);
     expect(JSON.parse(governanceRows()[0].payload).status).toBe('reserved');
     database.exec('DROP TRIGGER reject_governance_update');
-    await Promise.resolve(expect(
-      store.consumeApproval('approvals', approvalBinding(), async () => {
-        calls++;
-      }),
-    ).rejects.toThrow(/replay/));
+    await Promise.resolve(
+      expect(
+        store.consumeApproval('approvals', approvalBinding(), async () => {
+          calls++;
+        }),
+      ).rejects.toThrow(/replay/),
+    );
     expect(calls).toBe(0);
   });
   test('approval commits its unknown marker before callback and never replays a successful or throwing callback', async () => {
@@ -3155,14 +3199,18 @@ describe('host SQLite governance persistence', () => {
     expect(JSON.parse(governanceRows()[0].payload).status).toBe('applied');
     const generation = JSON.parse(governanceRows()[0].payload).store_generation;
     reopenStore();
-    await Promise.resolve(expect(store.consumeApproval('approvals', approvalBinding(), apply)).rejects.toThrow(/replay/));
+    await Promise.resolve(
+      expect(store.consumeApproval('approvals', approvalBinding(), apply)).rejects.toThrow(/replay/),
+    );
     const second = { ...approvalBinding(), approval_id: 'approval-2' };
-    await Promise.resolve(expect(
-      store.consumeApproval('approvals', second, async () => {
-        calls++;
-        throw new Error('external outcome unknown');
-      }),
-    ).rejects.toThrow(/external outcome/));
+    await Promise.resolve(
+      expect(
+        store.consumeApproval('approvals', second, async () => {
+          calls++;
+          throw new Error('external outcome unknown');
+        }),
+      ).rejects.toThrow(/external outcome/),
+    );
     expect(governanceRows().map((row) => JSON.parse(row.payload).store_generation)).toEqual([generation, generation]);
     reopenStore();
     await Promise.resolve(expect(store.consumeApproval('approvals', second, apply)).rejects.toThrow(/replay/));
@@ -3173,18 +3221,22 @@ describe('host SQLite governance persistence', () => {
       "CREATE TRIGGER reject_approval_final BEFORE UPDATE ON agent_host_governance WHEN NEW.revision=3 BEGIN SELECT RAISE(ABORT,'final commit failure'); END",
     );
     let calls = 0;
-    await Promise.resolve(expect(
-      store.consumeApproval('approvals', approvalBinding(), async () => {
-        calls++;
-      }),
-    ).rejects.toThrow(/final commit/));
+    await Promise.resolve(
+      expect(
+        store.consumeApproval('approvals', approvalBinding(), async () => {
+          calls++;
+        }),
+      ).rejects.toThrow(/final commit/),
+    );
     reopenStore();
     expect(JSON.parse(governanceRows()[0].payload).status).toBe('commit_unknown');
-    await Promise.resolve(expect(
-      store.consumeApproval('approvals', approvalBinding(), async () => {
-        calls++;
-      }),
-    ).rejects.toThrow(/replay/));
+    await Promise.resolve(
+      expect(
+        store.consumeApproval('approvals', approvalBinding(), async () => {
+          calls++;
+        }),
+      ).rejects.toThrow(/replay/),
+    );
     expect(calls).toBe(1);
   });
   test('another connection cannot consume an approval while its callback is in flight', async () => {
@@ -3199,11 +3251,13 @@ describe('host SQLite governance persistence', () => {
         release = resolve;
       });
     });
-    await Promise.resolve(expect(
-      other.consumeApproval('approvals', approvalBinding(), async () => {
-        calls++;
-      }),
-    ).rejects.toThrow(/replay/));
+    await Promise.resolve(
+      expect(
+        other.consumeApproval('approvals', approvalBinding(), async () => {
+          calls++;
+        }),
+      ).rejects.toThrow(/replay/),
+    );
     release();
     await pending;
     expect(calls).toBe(1);
@@ -3573,11 +3627,13 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
             expect(JSON.parse(row.payload).status).toBe('commit_unknown');
           });
         } else {
-          await Promise.resolve(expect(
-            host.workflowHostCapability.consumeApproval(approval, async () => {
-              throw new Error('persisted approval must not invoke another callback');
-            }),
-          ).rejects.toThrow(/replay/));
+          await Promise.resolve(
+            expect(
+              host.workflowHostCapability.consumeApproval(approval, async () => {
+                throw new Error('persisted approval must not invoke another callback');
+              }),
+            ).rejects.toThrow(/replay/),
+          );
         }
         const graph = createConfiguredMastra(
           root,
@@ -3728,9 +3784,11 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     const persisted = store.readHostStateSnapshot(identity);
     reopenStore();
 
-    await Promise.resolve(expect(new HostStateStore(database, workspace).reconcileWorkflowAttempt(request)).rejects.toThrow(
-      /verifier required/,
-    ));
+    await Promise.resolve(
+      expect(new HostStateStore(database, workspace).reconcileWorkflowAttempt(request)).rejects.toThrow(
+        /verifier required/,
+      ),
+    );
     const reopened = verifyingStore(database, () => {
       throw new Error('exact replay must not reverify');
     });
@@ -3752,9 +3810,11 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
 
   test('local no-effect helper replays the exact completed retry fence after a lost acknowledgement', async () => {
     const prepared = await prepareLocalNoEffectRetryFixture({ loseFinalAcknowledgement: true });
-    await Promise.resolve(expect(reconcileUnissuedLocalSessionAction(prepared.input)).rejects.toThrow(
-      'simulated lost retry-fence acknowledgement',
-    ));
+    await Promise.resolve(
+      expect(reconcileUnissuedLocalSessionAction(prepared.input)).rejects.toThrow(
+        'simulated lost retry-fence acknowledgement',
+      ),
+    );
     const persisted = prepared.hostStore.readHostStateSnapshot(identity);
     const journalBeforeReplay = clone(prepared.journal);
     const callsBeforeReplay = { ...prepared.calls };
@@ -3836,7 +3896,9 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
         ...reconciliationAuthorization(input, state),
         [field]: '9'.repeat(64),
       }));
-      await Promise.resolve(expect(verified.reconcileWorkflowAttempt(request)).rejects.toThrow(/differs from transition/));
+      await Promise.resolve(
+        expect(verified.reconcileWorkflowAttempt(request)).rejects.toThrow(/differs from transition/),
+      );
       expect(store.readHostStateSnapshot(identity)).toEqual(before);
     },
   );
@@ -3887,10 +3949,13 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       { ...request, outcome: 'unknown' },
       { ...request, result: 'not-no-effect' },
     ];
-    for (const input of invalid) await Promise.resolve(expect(verified.reconcileWorkflowAttempt(input)).rejects.toThrow());
-    await Promise.resolve(expect(
-      verified.reconcileWorkflowAttempt({ ...request, decision: { ...decision, sha256: '9'.repeat(64) } }),
-    ).rejects.toThrow(/reconciliation decision is not bound to work/));
+    for (const input of invalid)
+      await Promise.resolve(expect(verified.reconcileWorkflowAttempt(input)).rejects.toThrow());
+    await Promise.resolve(
+      expect(
+        verified.reconcileWorkflowAttempt({ ...request, decision: { ...decision, sha256: '9'.repeat(64) } }),
+      ).rejects.toThrow(/reconciliation decision is not bound to work/),
+    );
     expect(calls).toBe(0);
     expect(store.readHostStateSnapshot(identity)).toEqual(before);
   });
@@ -3904,7 +3969,9 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     database.exec(
       "CREATE TRIGGER fail_resolution BEFORE UPDATE ON agent_host_state WHEN OLD.kind='work' BEGIN SELECT RAISE(ABORT, 'injected reconciliation failure'); END",
     );
-    await Promise.resolve(expect(verified.reconcileWorkflowAttempt(request)).rejects.toThrow(/injected reconciliation failure/));
+    await Promise.resolve(
+      expect(verified.reconcileWorkflowAttempt(request)).rejects.toThrow(/injected reconciliation failure/),
+    );
     expect(store.readHostStateSnapshot(identity)).toEqual(before);
     database.exec('DROP TRIGGER fail_resolution');
     const otherDb = new Database(databasePath, { strict: true });
@@ -3986,9 +4053,11 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     });
     const initial = store.compareAndSwapHostState(fixture());
     const invocation = protectedInvocation(initial);
-    await Promise.resolve(expect(
-      store.claimWorkflowAssignmentWithApproval(invocation, '5'.repeat(64), 'source.write', 'approvals'),
-    ).rejects.toThrow(/approval denied/));
+    await Promise.resolve(
+      expect(
+        store.claimWorkflowAssignmentWithApproval(invocation, '5'.repeat(64), 'source.write', 'approvals'),
+      ).rejects.toThrow(/approval denied/),
+    );
     expect(store.readHostStateSnapshot(identity)).toEqual(initial);
     expect(governanceRows()).toHaveLength(0);
     allowed = true;
@@ -4126,9 +4195,11 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     database.exec(
       "CREATE TRIGGER fail_protected_claim BEFORE UPDATE ON agent_host_state WHEN OLD.kind='work' BEGIN SELECT RAISE(ABORT, 'injected protected claim failure'); END",
     );
-    await Promise.resolve(expect(
-      store.claimWorkflowAssignmentWithApproval(invocation, '5'.repeat(64), 'source.write', 'approvals'),
-    ).rejects.toThrow(/injected protected claim failure/));
+    await Promise.resolve(
+      expect(
+        store.claimWorkflowAssignmentWithApproval(invocation, '5'.repeat(64), 'source.write', 'approvals'),
+      ).rejects.toThrow(/injected protected claim failure/),
+    );
     expect(store.readHostStateSnapshot(identity)).toEqual(initial);
     expect(governanceRows()).toHaveLength(0);
     database.exec('DROP TRIGGER fail_protected_claim');
@@ -4172,9 +4243,11 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       (receipt) => ({ ...receipt, evidence_digest: '0'.repeat(64) }),
     ]) {
       alter = change;
-      await Promise.resolve(expect(
-        store.claimWorkflowAssignmentWithApproval(invocation, '5'.repeat(64), 'source.write', 'approvals'),
-      ).rejects.toThrow(/approval receipt binding invalid/));
+      await Promise.resolve(
+        expect(
+          store.claimWorkflowAssignmentWithApproval(invocation, '5'.repeat(64), 'source.write', 'approvals'),
+        ).rejects.toThrow(/approval receipt binding invalid/),
+      );
       expect(store.readHostStateSnapshot(identity)).toEqual(initial);
       expect(governanceRows()).toHaveLength(0);
     }
@@ -4362,7 +4435,9 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     promote.nextWork.lease = { ticket_id: 'ticket-work', thread_id: 'thread', generation: 1 };
     expect(() => store.compareAndSwapHostState(promote)).toThrow(/current WorkState\/v1/);
     expect(store.readHostStateSnapshot(identity)).toEqual(imported);
-    await Promise.resolve(expect(store.rebindMigratedWork(request)).rejects.toThrow(/trusted migration rebind verifier required/));
+    await Promise.resolve(
+      expect(store.rebindMigratedWork(request)).rejects.toThrow(/trusted migration rebind verifier required/),
+    );
     const principal = 'trusted:migration-host';
     const receipt = {
       schema: 'MigrationRebind/v1',
@@ -4425,27 +4500,35 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       },
     });
     expect(await replayStore.rebindMigratedWork(request)).toEqual(accepted);
-    await Promise.resolve(expect(
-      replayStore.rebindMigratedWork({
-        ...request,
-        expectedWork: { ...request.expectedWork, digest: '0'.repeat(64) },
-      }),
-    ).rejects.toThrow(/replay binding/));
-    await Promise.resolve(expect(
-      replayStore.rebindMigratedWork({
-        ...request,
-        expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 },
-      }),
-    ).rejects.toThrow(/replay binding/));
-    await Promise.resolve(expect(
-      replayStore.rebindMigratedWork({
-        ...request,
-        expectedLedger: { ...request.expectedLedger, digest: '0'.repeat(64) },
-      }),
-    ).rejects.toThrow(/replay binding/));
-    await Promise.resolve(expect(replayStore.rebindMigratedWork({ ...request, decisionPointer: 'WORK.md#changed' })).rejects.toThrow(
-      /replay binding/,
-    ));
+    await Promise.resolve(
+      expect(
+        replayStore.rebindMigratedWork({
+          ...request,
+          expectedWork: { ...request.expectedWork, digest: '0'.repeat(64) },
+        }),
+      ).rejects.toThrow(/replay binding/),
+    );
+    await Promise.resolve(
+      expect(
+        replayStore.rebindMigratedWork({
+          ...request,
+          expectedWork: { ...request.expectedWork, revision: request.expectedWork.revision + 1 },
+        }),
+      ).rejects.toThrow(/replay binding/),
+    );
+    await Promise.resolve(
+      expect(
+        replayStore.rebindMigratedWork({
+          ...request,
+          expectedLedger: { ...request.expectedLedger, digest: '0'.repeat(64) },
+        }),
+      ).rejects.toThrow(/replay binding/),
+    );
+    await Promise.resolve(
+      expect(replayStore.rebindMigratedWork({ ...request, decisionPointer: 'WORK.md#changed' })).rejects.toThrow(
+        /replay binding/,
+      ),
+    );
     const active = next(accepted);
     active.nextWork.execution.status = 'active';
     active.nextWork.lease = promote.nextWork.lease;
@@ -4739,7 +4822,9 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     database.exec(
       "CREATE TRIGGER deny_migration_gate_close BEFORE UPDATE ON agent_host_reconciliation BEGIN SELECT RAISE(ABORT, 'injected migration gate failure'); END",
     );
-    await Promise.resolve(expect(verified.rebindMigratedWork(request)).rejects.toThrow(/injected migration gate failure/));
+    await Promise.resolve(
+      expect(verified.rebindMigratedWork(request)).rejects.toThrow(/injected migration gate failure/),
+    );
     expect(store.readHostStateSnapshot(identity)).toEqual(imported);
     expect(store.readReconciliationGate()).toEqual(gate);
     database.exec('DROP TRIGGER deny_migration_gate_close');

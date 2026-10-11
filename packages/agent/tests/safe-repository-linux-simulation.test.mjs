@@ -1,4 +1,4 @@
-import { afterAll, afterEach, describe, expect, test, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, mock, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -8,33 +8,25 @@ const isolated = process.env.LINUX_SIMULATION_ISOLATED === '1';
 const underStryker = process.env.STRYKER_MUTATOR_WORKER !== undefined;
 if (!isolated && !underStryker) {
   test('runs Linux descriptor simulation in an isolated Bun process', () => {
-    const child = spawnSync(
-      'bun',
-      [
-        'x',
-        '--bun',
-        'vitest',
-        'run',
-        '--config',
-        'vitest.config.mjs',
-        'tests/safe-repository-linux-simulation.test.mjs',
-      ],
-      {
-        cwd: process.cwd(),
-        env: { ...process.env, LINUX_SIMULATION_ISOLATED: '1' },
-        encoding: 'utf8',
-        timeout: 120_000,
-      },
-    );
+    const child = spawnSync(process.execPath, ['test', 'tests/safe-repository-linux-simulation.test.mjs'], {
+      cwd: process.cwd(),
+      env: { ...process.env, LINUX_SIMULATION_ISOLATED: '1' },
+      encoding: 'utf8',
+      timeout: 120_000,
+    });
     if (!child.error && !child.signal && Number.isInteger(child.status) && child.status !== 0)
       console.error(`${child.stdout}\n${child.stderr}`);
     expect(child.error).toBeUndefined();
+    expect(child.signal).toBe(null);
     expect(child.status).toBe(0);
-    expect(`${child.stdout}\n${child.stderr}`).toMatch(/Tests\s+18 passed/);
+    expect(`${child.stdout ?? ''}\n${child.stderr ?? ''}`).toContain(
+      'BUN_TEST_SUITE_COMPLETE:Linux descriptor-bound safe repository simulation',
+    );
   }, 180_000);
 } else {
-  const realFs = await vi.importActual('node:fs');
-  const realNodeModule = await vi.importActual('node:module');
+  const realFs = Object.freeze({ ...(await import('node:fs')) });
+  const realNodeModule = Object.freeze({ ...(await import('node:module')) });
+  const actualFsSafeRoot = Object.freeze({ ...(await import('@openclaw/fs-safe/root')) });
   const realRequire = realNodeModule.createRequire(import.meta.url);
   const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
   const roots = [];
@@ -243,7 +235,7 @@ if (!isolated && !underStryker) {
     },
     readdirSync(value, options) {
       if (recoveryProbeArmed && ++recoveryProbeCalls === recoveryProbeFailureAt)
-        throw Object.assign(new Error('simulated recovery listing failure'), {code: 'EIO'});
+        throw Object.assign(new Error('simulated recovery listing failure'), { code: 'EIO' });
       return realFs.readdirSync(translatedPath(value), options);
     },
     renameSync(from, to) {
@@ -273,11 +265,7 @@ if (!isolated && !underStryker) {
       cloneFailuresRemaining -= 1;
       throw Object.assign(new Error('simulated clone failure'), { code: 'EIO' });
     }
-    if (
-      traversalRecoveryActive &&
-      !traversalRecoveryAttempted &&
-      path.basename(source).endsWith('.cas-old')
-    ) {
+    if (traversalRecoveryActive && !traversalRecoveryAttempted && path.basename(source).endsWith('.cas-old')) {
       traversalRecoveryAttempted = true;
       traversalRecoveryActive = false;
       try {
@@ -308,7 +296,11 @@ if (!isolated && !underStryker) {
   }
 
   function renameNoReplace(sourceRootFd, sourceRelPath, targetRootFd, targetRelPath) {
-    if ([sourceRelPath, targetRelPath].some((value) => value.split('/').some((part) => Buffer.byteLength(part, 'utf8') > 255)))
+    if (
+      [sourceRelPath, targetRelPath].some((value) =>
+        value.split('/').some((part) => Buffer.byteLength(part, 'utf8') > 255),
+      )
+    )
       throw Object.assign(new Error('simulated Linux component exceeds NAME_MAX'), { code: 'ENAMETOOLONG' });
     const sourceRoot = fdPaths.get(sourceRootFd);
     const targetRoot = fdPaths.get(targetRootFd);
@@ -366,17 +358,23 @@ if (!isolated && !underStryker) {
       throw Object.assign(new Error('simulated native replacement outcome unknown'), { code: 'EIO' });
   }
 
+  const simulatedNativeBinding = Object.freeze({ cloneFileExclusive, renameNoReplace, renameReplace });
+  let candidateNativeBinding = simulatedNativeBinding;
+  const nativeLibc = process.report?.getReport?.()?.header?.glibcVersionRuntime ? 'gnu' : 'musl';
+  const selectedNativeEntry = realFs.realpathSync(
+    realRequire.resolve('@openclaw/fs-safe-linux-' + process.arch + '-' + nativeLibc),
+  );
+  const selectedNativeLoader = path.join(path.dirname(realRequire.resolve('@openclaw/fs-safe')), 'native.js');
   function fakeRequire(specifier) {
-    if (typeof specifier === 'string' && /[\\/]native[.]js$/.test(specifier)) {
-      return { getNativeBinding: () => ({ cloneFileExclusive, renameNoReplace, renameReplace }) };
-    }
+    if (specifier === selectedNativeLoader) return { getNativeBinding: () => candidateNativeBinding };
+    if (specifier === selectedNativeEntry) return simulatedNativeBinding;
     return realRequire(specifier);
   }
   fakeRequire.resolve = realRequire.resolve.bind(realRequire);
 
-  vi.doMock('node:fs', () => fakeFs);
-  vi.doMock('node:module', () => ({ ...realNodeModule, createRequire: () => fakeRequire }));
-  vi.doMock('@openclaw/fs-safe/advanced', () => ({
+  mock.module('node:fs', () => fakeFs);
+  mock.module('node:module', () => ({ ...realNodeModule, createRequire: () => fakeRequire }));
+  mock.module('@openclaw/fs-safe/advanced', () => ({
     assertNoSymlinkParentsSync: () => undefined,
     openRootFileSync: ({ absolutePath, rootPath }) => {
       const resolvedRoot = realFs.realpathSync(rootPath);
@@ -391,12 +389,13 @@ if (!isolated && !underStryker) {
     },
     sameFileIdentity: (left, right) => left.dev === right.dev && left.ino === right.ino,
   }));
-  vi.doMock('@openclaw/fs-safe/atomic', () => ({ replaceFileAtomicSync: () => undefined }));
-  vi.doMock('@openclaw/fs-safe/file-lock', () => ({
+  mock.module('@openclaw/fs-safe/atomic', () => ({ replaceFileAtomicSync: () => undefined }));
+  mock.module('@openclaw/fs-safe/file-lock', () => ({
     withFileLock: async (_target, _options, operation) => operation(),
     withFileLockSync: (_target, _options, operation) => operation(),
   }));
-  vi.doMock('@openclaw/fs-safe/root', () => ({
+  mock.module('@openclaw/fs-safe/root', () => ({
+    ...actualFsSafeRoot,
     root: async () => {
       throw new Error('unused in Linux simulation');
     },
@@ -448,16 +447,22 @@ if (!isolated && !underStryker) {
   });
 
   afterAll(() => {
-    vi.doUnmock('node:fs');
-    vi.doUnmock('node:module');
-    vi.doUnmock('@openclaw/fs-safe/advanced');
-    vi.doUnmock('@openclaw/fs-safe/atomic');
-    vi.doUnmock('@openclaw/fs-safe/file-lock');
-    vi.doUnmock('@openclaw/fs-safe/root');
     Object.defineProperty(process, 'platform', originalPlatform);
+    process.stdout.write('BUN_TEST_SUITE_COMPLETE:Linux descriptor-bound safe repository simulation\n');
   });
 
   describe('Linux descriptor-bound safe repository simulation', () => {
+    test('rejects a native candidate that differs from the selected simulated module identity', async () => {
+      const repositoryRoot = temporaryRoot();
+      candidateNativeBinding = { ...simulatedNativeBinding };
+      try {
+        const denied = await import('../src/config/safe-repository-access.ts?linux-simulation-native-mismatch');
+        expect(() => denied.requireSafeRepositoryAccess(repositoryRoot)).toThrow(/provider is not available/);
+        expect(realFs.readdirSync(repositoryRoot)).toEqual([]);
+      } finally {
+        candidateNativeBinding = simulatedNativeBinding;
+      }
+    });
     test('releases CAS locks at the filename byte boundary without stranding custody', () => {
       const repositoryRoot = temporaryRoot();
       const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
@@ -592,9 +597,9 @@ if (!isolated && !underStryker) {
       traversalRecoveryActive = true;
       renameReplaceFailureMode = 'remove-target';
 
-      expect(() => access.replaceAtomic('data/recovery.txt', hash('before'), 'first-writer', 'failed replacement')).toThrow(
-        /failed|simulated/,
-      );
+      expect(() =>
+        access.replaceAtomic('data/recovery.txt', hash('before'), 'first-writer', 'failed replacement'),
+      ).toThrow(/failed|simulated/);
       expect(traversalRecoveryAttempted).toBe(true);
       expect(traversalRecoveryError).toBeInstanceOf(Error);
       expect(traversalRecoveryError.message).toMatch(/lock/);
@@ -612,13 +617,18 @@ if (!isolated && !underStryker) {
         recoveryProbeCalls = 0;
         recoveryProbeArmed = false;
         let caught;
-        try { access.replaceAtomic('data/probe.txt', hash('before'), 'after', 'probe replacement'); }
-        catch (error) { caught = error; }
+        try {
+          access.replaceAtomic('data/probe.txt', hash('before'), 'after', 'probe replacement');
+        } catch (error) {
+          caught = error;
+        }
         expect(caught).toBeInstanceOf(AggregateError);
         expect(caught.errors[0].message).toBe('simulated native replacement failure');
         expect(caught.errors[1].message).toBe('simulated recovery listing failure');
         expect(caught.cause).toBe(caught.errors[0]);
-        expect(realFs.readdirSync(path.join(repositoryRoot, 'data')).some(name => name.endsWith('.cas.lock'))).toBe(true);
+        expect(realFs.readdirSync(path.join(repositoryRoot, 'data')).some((name) => name.endsWith('.cas.lock'))).toBe(
+          true,
+        );
         recoveryProbeFailureAt = 0;
         recoveryProbeArmed = false;
       }
@@ -1083,7 +1093,9 @@ if (!isolated && !underStryker) {
           expect(realFs.readFileSync(path.join(repositoryRoot, 'data', backup), 'utf8')).toBe(
             mode === 'foreign' ? 'foreign' : '',
           );
-          expect(() => access.replaceAtomic('data/fallback.txt', hash('before'), 'after', 'uncertain recovery')).toThrow();
+          expect(() =>
+            access.replaceAtomic('data/fallback.txt', hash('before'), 'after', 'uncertain recovery'),
+          ).toThrow();
         }
       }
     });
@@ -1132,8 +1144,9 @@ if (!isolated && !underStryker) {
 
       access.writeExclusive('data/unlinked-temp.txt', 'before', 'prepublication substitution');
       substituteTargetBeforePublication = path.join(data, 'unlinked-temp.txt');
-      expect(() => access.replaceAtomic('data/unlinked-temp.txt', hash('before'), 'after', 'prepublication substitution'))
-        .toThrow(/path or content changed|orphan backup recovery is ambiguous/);
+      expect(() =>
+        access.replaceAtomic('data/unlinked-temp.txt', hash('before'), 'after', 'prepublication substitution'),
+      ).toThrow(/path or content changed|orphan backup recovery is ambiguous/);
       expect(realFs.readFileSync(path.join(data, 'unlinked-temp.txt'), 'utf8')).toBe('foreign');
       expect(() => access.readText('data/unlinked-temp.txt', 'unresolved prepublication backup')).toThrow();
       const preservedBackup = realFs

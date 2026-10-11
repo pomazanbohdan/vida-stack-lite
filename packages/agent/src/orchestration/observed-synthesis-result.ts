@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
-import scopeSchema from '../../schemas/implementation-scope.v1.schema.json' with { type: 'json' };
+import { validateImplementationScope as validScope } from '../contracts/implementation-scope.js';
 import acceptanceSchema from '../../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
 import { runtimeConfigDigest, type AgentRuntimeConfig } from '../config/runtime-config.js';
 import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
@@ -31,7 +31,6 @@ const Ajv = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: bo
   compile(schema: object): (value: unknown) => boolean;
 };
 const validator = new Ajv({ strict: true, allErrors: true });
-const validScope = validator.compile(scopeSchema);
 const validAcceptance = validator.compile(acceptanceSchema);
 const sha256 = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 const substantiveKeys = [

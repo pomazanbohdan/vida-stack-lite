@@ -1831,7 +1831,9 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
           !stage.risk_flags?.length || stage.risk_flags.some((risk) => workItem.risk_flags.includes(risk));
         const expected = stageMatchesRisk
           ? stage.assignments.filter(
-              (assignment) => !assignment.risk_flags?.length || assignment.risk_flags.some((risk) => workItem.risk_flags.includes(risk)),
+              (assignment) =>
+                !assignment.risk_flags?.length ||
+                assignment.risk_flags.some((risk) => workItem.risk_flags.includes(risk)),
             )
           : [];
         expect(result.stageOutputs[stage.id].map((value) => value.role)).toEqual(expected.map((a) => a.role));
@@ -1864,11 +1866,13 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
     const result = await configuredGraph(await compose()).dispatch(workItem.id);
     expect(result.failedAssignments).toEqual([]);
     expect(result.stageOutputs.review_source_prewrite.map((value) => value.role)).toEqual(['source-planner']);
-    expect(calls.filter((call) => call.stage.id === 'review_source_prewrite').map((call) => call.assignment.role)).toEqual([
+    expect(
+      calls.filter((call) => call.stage.id === 'review_source_prewrite').map((call) => call.assignment.role),
+    ).toEqual(['source-planner']);
+    const developer = calls.find((call) => call.stage.kind === 'develop');
+    expect(developer?.input.stage_outputs.review_source_prewrite.map((value) => value.role)).toEqual([
       'source-planner',
     ]);
-    const developer = calls.find((call) => call.stage.kind === 'develop');
-    expect(developer?.input.stage_outputs.review_source_prewrite.map((value) => value.role)).toEqual(['source-planner']);
     expect(calls.some((call) => call.stage.kind === 'validate')).toBe(true);
   });
 
@@ -1948,7 +1952,10 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
     for (const risk of ['security', 'data_loss', 'migration', 'high']) {
       const compiled = compileDevelopmentWorkflow(config, 'default-development', 'implementation_new', [risk]);
       expect(
-        compiled.waves.flat().find((stage) => stage.id === 'review_source_prewrite')?.assignments.map((assignment) => assignment.role),
+        compiled.waves
+          .flat()
+          .find((stage) => stage.id === 'review_source_prewrite')
+          ?.assignments.map((assignment) => assignment.role),
       ).toEqual(['source-planner', 'security-prewriter']);
     }
 
@@ -2008,7 +2015,10 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
   });
 
   test.each([
-    ['planner absent', (stage) => (stage.assignments = stage.assignments.filter((assignment) => assignment.role !== 'source-planner'))],
+    [
+      'planner absent',
+      (stage) => (stage.assignments = stage.assignments.filter((assignment) => assignment.role !== 'source-planner')),
+    ],
     [
       'planner replaced by another read-only role',
       (stage) => {
@@ -2046,13 +2056,13 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
 
   test('rejects a pre-development validator that produces ValidationReceipt/v1', async () => {
     const fixture = parse(yaml);
-    const stage = fixture.workflows.implementation_new.stages.find(
-      (value) => value.id === 'review_source_prewrite',
-    );
+    const stage = fixture.workflows.implementation_new.stages.find((value) => value.id === 'review_source_prewrite');
     stage.assignments[0].role = 'security-data-validator';
     stage.produces = ['ValidationReceipt/v1'];
     await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
-    expect(() => loadRuntimeConfig(root)).toThrow(/cannot produce its stage artifacts|requires the configured read-only source planner/);
+    expect(() => loadRuntimeConfig(root)).toThrow(
+      /cannot produce its stage artifacts|requires the configured read-only source planner/,
+    );
     expect(calls).toHaveLength(0);
   });
 

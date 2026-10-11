@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import type { SafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { assertCanonicalJsonValue, canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import type { HostStateSnapshot, HostStateStore, WorkIdentity } from '../host-state.js';
-import { expectedJavascriptFiles } from '../../tooling/maintained-source-inventory.mjs';
+import { expectedJavascriptFiles } from '../../tooling/maintained-source-inventory.js';
 
-type SourceReader = Pick<SafeRepositoryAccess, 'fileExists' | 'readBytes'>;
+type SourceReader = Pick<SafeRepositoryAccess, 'fileExists' | 'readBytes' | 'readStableBytes'>;
 
 /** Retain declared logical identities while reading runtime bytes from the installed package. */
 export function snapshotRuntimePackageSources(
@@ -18,10 +18,17 @@ export function snapshotRuntimePackageSources(
     requireSnapshot(relative.startsWith(prefix), 'runtime source is outside the configured package identity');
     return relative.slice(prefix.length);
   };
+  const stableRead = reader.readStableBytes;
   return snapshotDeclaredSources(
     {
       fileExists: (relative, purpose) => reader.fileExists(packagePath(relative), purpose),
       readBytes: (relative, purpose) => reader.readBytes(packagePath(relative), purpose),
+      ...(stableRead === undefined
+        ? {}
+        : {
+            readStableBytes: (relative: string, purpose: string) =>
+              stableRead.call(reader, packagePath(relative), purpose),
+          }),
     },
     paths,
   );
@@ -40,6 +47,94 @@ export interface ScopedSourceSnapshot {
   readonly digest: string;
 }
 
+const persistedScopePathPattern = /^[A-Za-z]:/;
+const persistedScopeDigestPattern = /^[a-f0-9]{64}$/;
+
+function validPersistedScopeText(value: string): boolean {
+  return (
+    value.length > 0 &&
+    value.length <= 512 &&
+    !value.includes('\\') &&
+    !value.startsWith('/') &&
+    !value.endsWith('/') &&
+    !persistedScopePathPattern.test(value) &&
+    !Array.from(value).some((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code === 127;
+    })
+  );
+}
+
+function validPersistedScopePath(value: unknown, prior: string | undefined): value is string {
+  return (
+    typeof value === 'string' &&
+    validPersistedScopeText(value) &&
+    value.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..') &&
+    (prior === undefined || prior < value)
+  );
+}
+
+function validPersistedScopeBytes(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
+function isAbsentPersistedScopeEntry(value: Record<string, unknown>): boolean {
+  return value.exists === false && value.bytes === null && value.sha256 === null;
+}
+
+function parsePersistedScopeEntry(value: unknown, prior: string | undefined): ScopedSourceEntry | null {
+  if (!isPlainRecord(value) || !hasExactKeys(value, ['bytes', 'exists', 'path', 'sha256'])) return null;
+  const path = value.path;
+  if (!validPersistedScopePath(path, prior)) return null;
+  if (value.exists === true) {
+    if (
+      !validPersistedScopeBytes(value.bytes) ||
+      typeof value.sha256 !== 'string' ||
+      !persistedScopeDigestPattern.test(value.sha256)
+    )
+      return null;
+    return { path, exists: true, bytes: value.bytes, sha256: value.sha256 };
+  }
+  if (isAbsentPersistedScopeEntry(value)) return { path, exists: false, bytes: null, sha256: null };
+  return null;
+}
+
+function parsePersistedScopeEntries(value: unknown): readonly ScopedSourceEntry[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 512) return null;
+  const entries: ScopedSourceEntry[] = [];
+  for (const raw of value) {
+    const parsed = parsePersistedScopeEntry(raw, entries.at(-1)?.path);
+    if (parsed === null) return null;
+    entries.push(parsed);
+  }
+  return entries;
+}
+
+/** Validate persisted source-scope data without granting path ownership or Source rights. */
+export function parseScopedSourceSnapshot(candidate: unknown): ScopedSourceSnapshot {
+  assertCanonicalJsonValue(candidate, '$.source_scope');
+  requireSnapshot(
+    isPlainRecord(candidate) && hasExactKeys(candidate, ['digest', 'entries', 'schema']),
+    'task source journal scope shape is invalid',
+  );
+  const entries = parsePersistedScopeEntries(candidate.entries);
+  requireSnapshot(
+    candidate.schema === 'ScopedSourceSnapshot/v1' &&
+      entries !== null &&
+      typeof candidate.digest === 'string' &&
+      persistedScopeDigestPattern.test(candidate.digest) &&
+      candidate.digest === canonicalJsonDigest({ schema: candidate.schema, entries }),
+    'task source journal scope entries are invalid',
+  );
+  const scope: ScopedSourceSnapshot = {
+    schema: 'ScopedSourceSnapshot/v1',
+    entries,
+    digest: candidate.digest,
+  };
+  compareScopedSourceSnapshots(scope, scope);
+  return scope;
+}
+
 export interface ScopedSourceChange {
   readonly path: string;
   readonly kind: 'changed' | 'appeared' | 'disappeared';
@@ -48,8 +143,12 @@ export interface ScopedSourceChange {
 }
 
 function hasExactKeys(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value) &&
-    JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort())
+  );
 }
 
 const sourceHash = /^[a-f0-9]{64}$/;
@@ -60,17 +159,31 @@ export function snapshotRuntimeManifestSources(
   bundlePath: string,
   paths: readonly string[],
 ): ScopedSourceSnapshot {
-  requireSnapshot(manifest !== null && typeof manifest === 'object' && !Array.isArray(manifest), 'runtime manifest is invalid');
+  requireSnapshot(
+    manifest !== null && typeof manifest === 'object' && !Array.isArray(manifest),
+    'runtime manifest is invalid',
+  );
   const value = manifest as Record<string, unknown>;
-  requireSnapshot(value.schema === 'VidaStandaloneBuild/v1' && Array.isArray(value.inputs) &&
-    value.inputs.length > 0 && value.inputs.length <= 2048, 'runtime manifest inputs are invalid');
+  requireSnapshot(
+    value.schema === 'VidaStandaloneBuild/v1' &&
+      Array.isArray(value.inputs) &&
+      value.inputs.length > 0 &&
+      value.inputs.length <= 2048,
+    'runtime manifest inputs are invalid',
+  );
   canonicalPaths([bundlePath]);
   const inputs = new Map<string, { bytes: number; sha256: string }>();
   for (const input of value.inputs) {
-    requireSnapshot(hasExactKeys(input, ['path', 'bytes', 'sha256']) &&
-      typeof input.path === 'string' && Number.isSafeInteger(input.bytes) && (input.bytes as number) >= 0 &&
-      (input.bytes as number) <= 8 * 1024 * 1024 && typeof input.sha256 === 'string' && sourceHash.test(input.sha256),
-    'runtime manifest input shape is invalid');
+    requireSnapshot(
+      hasExactKeys(input, ['path', 'bytes', 'sha256']) &&
+        typeof input.path === 'string' &&
+        Number.isSafeInteger(input.bytes) &&
+        (input.bytes as number) >= 0 &&
+        (input.bytes as number) <= 8 * 1024 * 1024 &&
+        typeof input.sha256 === 'string' &&
+        sourceHash.test(input.sha256),
+      'runtime manifest input shape is invalid',
+    );
     canonicalPaths([input.path]);
     requireSnapshot(!inputs.has(input.path), 'runtime manifest input paths contain duplicates');
     inputs.set(input.path, { bytes: input.bytes as number, sha256: input.sha256 });
@@ -94,27 +207,46 @@ export function compareRuntimeEndpointSnapshots(
   after: ScopedSourceSnapshot,
 ): readonly ScopedSourceChange[] {
   for (const snapshot of [before, after]) {
-    requireSnapshot(hasExactKeys(snapshot, ['schema', 'entries', 'digest']) &&
-      snapshot.schema === 'ScopedSourceSnapshot/v1' && Boolean(Array.isArray(snapshot.entries)) &&
-      typeof snapshot.digest === 'string' && sourceHash.test(snapshot.digest), 'runtime endpoint shape is invalid');
+    requireSnapshot(
+      hasExactKeys(snapshot, ['schema', 'entries', 'digest']) &&
+        snapshot.schema === 'ScopedSourceSnapshot/v1' &&
+        Boolean(Array.isArray(snapshot.entries)) &&
+        typeof snapshot.digest === 'string' &&
+        sourceHash.test(snapshot.digest),
+      'runtime endpoint shape is invalid',
+    );
     const paths = canonicalPaths(snapshot.entries.map((entry) => entry.path));
     let totalBytes = 0;
-    requireSnapshot(snapshot.entries.every((entry, index) => {
-      if (!hasExactKeys(entry, ['path', 'exists', 'bytes', 'sha256']) || entry.path !== paths[index] ||
-        typeof entry.exists !== 'boolean') return false;
-      if (!entry.exists) return entry.bytes === null && entry.sha256 === null;
-      if (!Number.isSafeInteger(entry.bytes) || (entry.bytes as number) < 0 ||
-        (entry.bytes as number) > 8 * 1024 * 1024 || typeof entry.sha256 !== 'string' || !sourceHash.test(entry.sha256)) return false;
-      totalBytes += entry.bytes as number;
-      return totalBytes <= 64 * 1024 * 1024;
-    }) && snapshot.digest === canonicalJsonDigest({ schema: snapshot.schema, entries: snapshot.entries }),
-    'runtime endpoint entries or digest are invalid');
+    requireSnapshot(
+      snapshot.entries.every((entry, index) => {
+        if (
+          !hasExactKeys(entry, ['path', 'exists', 'bytes', 'sha256']) ||
+          entry.path !== paths[index] ||
+          typeof entry.exists !== 'boolean'
+        )
+          return false;
+        if (!entry.exists) return entry.bytes === null && entry.sha256 === null;
+        if (
+          !Number.isSafeInteger(entry.bytes) ||
+          (entry.bytes as number) < 0 ||
+          (entry.bytes as number) > 8 * 1024 * 1024 ||
+          typeof entry.sha256 !== 'string' ||
+          !sourceHash.test(entry.sha256)
+        )
+          return false;
+        totalBytes += entry.bytes as number;
+        return totalBytes <= 64 * 1024 * 1024;
+      }) && snapshot.digest === canonicalJsonDigest({ schema: snapshot.schema, entries: snapshot.entries }),
+      'runtime endpoint entries or digest are invalid',
+    );
   }
   const paths = canonicalPaths([...new Set([...before.entries, ...after.entries].map((entry) => entry.path))]);
   const expand = (snapshot: ScopedSourceSnapshot): ScopedSourceSnapshot => {
     const entriesByPath = new Map(snapshot.entries.map((entry) => [entry.path, entry]));
-    const entries = paths.map((relative) => entriesByPath.get(relative) ??
-      Object.freeze({ path: relative, exists: false, bytes: null, sha256: null }));
+    const entries = paths.map(
+      (relative) =>
+        entriesByPath.get(relative) ?? Object.freeze({ path: relative, exists: false, bytes: null, sha256: null }),
+    );
     const body = { schema: snapshot.schema, entries };
     return { ...body, digest: canonicalJsonDigest(body) };
   };
@@ -129,21 +261,30 @@ export function runtimeEndpointSourceTargets(
   installed: ScopedSourceSnapshot,
 ): readonly ScopedSourceEntry[] {
   canonicalPaths([bundlePath]);
-  requireSnapshot(target.digest === installed.digest && compareRuntimeEndpointSnapshots(target, installed).length === 0,
-    'runtime target differs from the installed package');
+  requireSnapshot(
+    target.digest === installed.digest && compareRuntimeEndpointSnapshots(target, installed).length === 0,
+    'runtime target differs from the installed package',
+  );
   const changes = compareRuntimeEndpointSnapshots(before, target),
     generated = new Set(expectedJavascriptFiles.map((relative: string) => `${bundlePath}/dist/src/${relative}`)),
-    entries = new Map(target.entries.map(entry => [entry.path, entry])),
+    entries = new Map(target.entries.map((entry) => [entry.path, entry])),
     targets = new Map<string, ScopedSourceEntry>();
-  const sourceSchemaPrefix = `${bundlePath}/schemas/`, copiedSchemaPrefix = `${bundlePath}/dist/schemas/`;
+  const sourceSchemaPrefix = `${bundlePath}/schemas/`,
+    copiedSchemaPrefix = `${bundlePath}/dist/schemas/`;
   for (const entry of target.entries) {
-    if (!entry.exists || (!entry.path.startsWith(sourceSchemaPrefix) && !entry.path.startsWith(copiedSchemaPrefix))) continue;
+    if (!entry.exists || (!entry.path.startsWith(sourceSchemaPrefix) && !entry.path.startsWith(copiedSchemaPrefix)))
+      continue;
     const copied = entry.path.startsWith(copiedSchemaPrefix),
       name = entry.path.slice(copied ? copiedSchemaPrefix.length : sourceSchemaPrefix.length),
       counterpart = entries.get(`${copied ? sourceSchemaPrefix : copiedSchemaPrefix}${name}`);
-    requireSnapshot(!name.includes('/') && name.endsWith('.schema.json') && counterpart?.exists &&
-      counterpart.bytes === entry.bytes && counterpart.sha256 === entry.sha256,
-    'copied schema target does not match its maintained Source pair');
+    requireSnapshot(
+      !name.includes('/') &&
+        name.endsWith('.schema.json') &&
+        counterpart?.exists &&
+        counterpart.bytes === entry.bytes &&
+        counterpart.sha256 === entry.sha256,
+      'copied schema target does not match its maintained Source pair',
+    );
   }
   for (const change of changes) {
     requireSnapshot(change.path.startsWith(`${bundlePath}/`), 'runtime path differs from the package identity');
@@ -153,23 +294,31 @@ export function runtimeEndpointSourceTargets(
     }
     const copiedPrefix = `${bundlePath}/dist/schemas/`;
     if (change.path.startsWith(copiedPrefix)) {
-      const name = change.path.slice(copiedPrefix.length), sourcePath = `${bundlePath}/schemas/${name}`;
+      const name = change.path.slice(copiedPrefix.length),
+        sourcePath = `${bundlePath}/schemas/${name}`;
       requireSnapshot(!name.includes('/') && name.endsWith('.schema.json'), 'copied schema path is not maintained');
       const source = entries.get(sourcePath);
       if (!change.after.exists) {
         requireSnapshot(!source || !source.exists, 'copied schema removal differs from its maintained Source');
         targets.set(sourcePath, Object.freeze({ path: sourcePath, exists: false, bytes: null, sha256: null }));
       } else {
-        requireSnapshot(source?.exists && source.bytes === change.after.bytes && source.sha256 === change.after.sha256,
-          'copied schema bytes differ from the maintained Source');
+        requireSnapshot(
+          source?.exists && source.bytes === change.after.bytes && source.sha256 === change.after.sha256,
+          'copied schema bytes differ from the maintained Source',
+        );
         targets.set(sourcePath, source);
       }
       continue;
     }
-    requireSnapshot(!change.path.startsWith(`${bundlePath}/dist/`), 'runtime output is outside the maintained generated inventory');
+    requireSnapshot(
+      !change.path.startsWith(`${bundlePath}/dist/`),
+      'runtime output is outside the maintained generated inventory',
+    );
     targets.set(change.path, change.after);
   }
-  return Object.freeze([...targets.values()].sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
+  return Object.freeze(
+    [...targets.values()].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)),
+  );
 }
 
 /** Re-read declared task files through the Host-validated current TaskSource binding. */
@@ -209,7 +358,7 @@ function canonicalPaths(paths: readonly string[]): readonly string[] {
     Boolean(Array.isArray(paths)) && paths.length > 0 && paths.length <= 512,
     'scoped source paths must be a nonempty bounded list',
   );
-  const result = [...paths].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+  const result = [...paths].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
   requireSnapshot(
     result.every(
       (value) =>
@@ -220,7 +369,7 @@ function canonicalPaths(paths: readonly string[]): readonly string[] {
         !value.startsWith('/') &&
         !value.endsWith('/') &&
         !/^[A-Za-z]:/.test(value) &&
-        !Array.from(value).some(character => character.charCodeAt(0) < 32) &&
+        !Array.from(value).some((character) => character.charCodeAt(0) < 32) &&
         value.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..'),
     ),
     'scoped source path is not canonical repository-relative',
@@ -229,39 +378,53 @@ function canonicalPaths(paths: readonly string[]): readonly string[] {
   return result;
 }
 
-/** Cooperative evidence read. It never prevents a human or native tool from editing a file. */
-export function snapshotDeclaredSources(reader: SourceReader, paths: readonly string[]): ScopedSourceSnapshot {
-  const entries: ScopedSourceEntry[] = [];
-  let totalBytes = 0;
-  for (const relativePath of canonicalPaths(paths)) {
-    const exists = reader.fileExists(relativePath, 'scoped source existence');
-    if (!exists) {
-      requireSnapshot(
-        !reader.fileExists(relativePath, 'scoped source stable absence'),
-        'scoped source appeared during snapshot',
-      );
-      entries.push(Object.freeze({ path: relativePath, exists: false, bytes: null, sha256: null }));
-      continue;
-    }
-    const first = reader.readBytes(relativePath, 'scoped source first read');
+function readScopedSourceBytes(reader: SourceReader, relativePath: string, remainingBytes: number): Buffer | null {
+  const stableRead = reader.readStableBytes;
+  let first: Buffer | null;
+  if (stableRead !== undefined) first = stableRead.call(reader, relativePath, 'scoped source stable read');
+  else if (reader.fileExists(relativePath, 'scoped source existence'))
+    first = reader.readBytes(relativePath, 'scoped source first read');
+  else {
     requireSnapshot(
-      Buffer.isBuffer(first) && first.length <= 8 * 1024 * 1024,
-      'scoped source exceeds per-file byte limit',
+      !reader.fileExists(relativePath, 'scoped source stable absence'),
+      'scoped source appeared during snapshot',
     );
-    totalBytes += first.length;
-    requireSnapshot(totalBytes <= 64 * 1024 * 1024, 'scoped source exceeds total byte limit');
+    return null;
+  }
+  if (first === null) return null;
+  requireSnapshot(
+    Buffer.isBuffer(first) && first.length <= 8 * 1024 * 1024,
+    'scoped source exceeds per-file byte limit',
+  );
+  requireSnapshot(first.length <= remainingBytes, 'scoped source exceeds total byte limit');
+  if (stableRead === undefined) {
     requireSnapshot(
       reader.fileExists(relativePath, 'scoped source second existence'),
       'scoped source disappeared during snapshot',
     );
     const second = reader.readBytes(relativePath, 'scoped source second read');
     requireSnapshot(first.equals(second), 'scoped source changed during snapshot');
+  }
+  return first;
+}
+
+/** Cooperative evidence read. It never prevents a human or native tool from editing a file. */
+export function snapshotDeclaredSources(reader: SourceReader, paths: readonly string[]): ScopedSourceSnapshot {
+  const entries: ScopedSourceEntry[] = [];
+  let totalBytes = 0;
+  for (const relativePath of canonicalPaths(paths)) {
+    const bytes = readScopedSourceBytes(reader, relativePath, 64 * 1024 * 1024 - totalBytes);
+    if (bytes === null) {
+      entries.push(Object.freeze({ path: relativePath, exists: false, bytes: null, sha256: null }));
+      continue;
+    }
+    totalBytes += bytes.length;
     entries.push(
       Object.freeze({
         path: relativePath,
         exists: true,
-        bytes: first.length,
-        sha256: createHash('sha256').update(first).digest('hex'),
+        bytes: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
       }),
     );
   }

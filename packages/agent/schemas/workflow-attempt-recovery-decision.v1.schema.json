@@ -3,7 +3,22 @@
   "$id": "https://vida-agent.invalid/schemas/workflow-attempt-recovery-decision.v1.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "work_id", "work_item_id", "source_revision", "scope_id", "ac_ids", "action_id", "host_attempt_id", "provider_evidence", "outcome", "retry_lease", "decided_by", "decided_at", "reason"],
+  "required": [
+    "schema",
+    "work_id",
+    "work_item_id",
+    "source_revision",
+    "scope_id",
+    "ac_ids",
+    "action_id",
+    "host_attempt_id",
+    "provider_evidence",
+    "outcome",
+    "retry_lease",
+    "decided_by",
+    "decided_at",
+    "reason"
+  ],
   "properties": {
     "schema": { "const": "WorkflowAttemptRecoveryDecision/v1" },
     "work_id": { "type": "string", "minLength": 1, "maxLength": 256 },
@@ -14,7 +29,9 @@
     "action_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "host_attempt_id": { "type": "string", "minLength": 1, "maxLength": 256 },
     "provider_evidence": {
-      "type": "object", "additionalProperties": false, "required": ["schema", "path", "sha256"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "path", "sha256"],
       "properties": {
         "schema": { "const": "LocalSessionNoEffectEvidence/v1" },
         "path": { "type": "string", "minLength": 1, "maxLength": 2048 },
@@ -23,7 +40,8 @@
     },
     "outcome": { "const": "no_effect" },
     "retry_lease": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "required": ["ticket_id", "thread_id", "generation"],
       "properties": {
         "ticket_id": { "type": "string", "minLength": 1 },

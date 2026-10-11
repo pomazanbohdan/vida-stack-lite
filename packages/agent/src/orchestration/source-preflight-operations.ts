@@ -948,18 +948,6 @@ export function attachObservedSourcePreparation(input: {
   return host;
 }
 
-/** Backward-compatible name for callers that only had the high-risk review hook. */
-export function attachObservedPrewriterPreparation(input: {
-  readonly repositoryRoot: string;
-  readonly hostState: HostStateStore;
-  readonly workId: string;
-  readonly attempt: number;
-  readonly journal: MastraSessionLedgerSnapshot;
-  readonly observation: SessionBridgeObservation;
-}): HostStateSnapshot {
-  return attachObservedSourcePreparation(input);
-}
-
 function currentReadEvidence(context: SourcePolicyCommonInput, operationBinding: unknown): Record<string, unknown> {
   const snapshot = context.hostSnapshot;
   return {

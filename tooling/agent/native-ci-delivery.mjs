@@ -1,8 +1,8 @@
+import { fsSafeArchiveEntry } from '../../packages/agent/tooling/fs-safe-archive-entry.ts';
 // Repository-owned CI producer. Importing this module never builds or installs.
 import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import {
   releaseDigest as sha,
   releaseJSON as json,
@@ -19,11 +19,216 @@ import {
   minimumNativeDeliveryChecks,
   validateCIDeliveryRequest,
   encodeCIDeliveryResult,
+  validateDependencyCache,
 } from './release-ci-evidence.mjs';
 
+/** @typedef {{ schema: 'VidaCIDeliveryRequest/v1', operation_id: string, version: string, repository_id: string, project_ids: string[], target: string, source_binding: string, request_id: string }} NativeCIRequest */
+/** @typedef {{ id: number, key: string, ref: string, version: string, size_in_bytes: number, restore: 'hit'|'miss', matched_key: string|null, save: 'confirmed', save_action: 'skipped'|'success' }} DependencyCache */
+/** @typedef {{ request: NativeCIRequest, run_id: string, run_attempt: number, source_commit: string, dependency_cache: DependencyCache }} NativeCIIdentity */
+/** @typedef {{ path: string, size: number }} PackedFile */
+/** @typedef {{ name: string, version: string, filename: string, files: PackedFile[] }} PackMetadata */
+/** @typedef {{ file: string, sha256: string, bytes: number }} NativeAsset */
+/** @typedef {{ path: string, bytes: number, sha256: string }} NativeManifestInput */
+/** @typedef {{ schema: 'VidaStandaloneBuild/v1', version: string, pin: string, target: string, inputs: NativeManifestInput[], asset: NativeAsset, payloadId: string }} NativeManifest */
+/** @typedef {{ operation_id: string, version: string, source_binding: string, archive_sha256: string, manifest_sha256: string, pack_metadata: PackMetadata[], manifest: NativeManifest }} NativeCandidate */
+/** @typedef {{ schema: 'VidaCIPhaseResult/v2', request_id: string, run_id: string, run_attempt: number, source_binding: string, archive_sha256: string, phase: string, status: 'passed', dependency_cache: DependencyCache }} NativeCIReceipt */
+/** @typedef {{ request: NativeCIRequest, run_id: string, run_attempt: number, source_commit: string, dependency_cache: DependencyCache, root: string, source: string, checkout: string, packageRoot: string, manifest: { version: string, engines: { bun: string, node: string } } }} NativeCIContext */
+/** @typedef {{ exact?: string, prefix?: string, includes?: string[], oneOf?: MessageExpectation[] }} MessageObjectExpectation */
+/** @typedef {string|MessageObjectExpectation} MessageExpectation */
+/** @typedef {{ kind: 'json', keys?: string[], fields?: Record<string, string|number|boolean|null>, message: MessageExpectation }} JsonDenialExpectation */
+/** @typedef {{ kind: 'line', message: MessageObjectExpectation }} LineDenialExpectation */
+/** @typedef {JsonDenialExpectation|LineDenialExpectation} DenialExpectation */
+/** @typedef {{ command?: string, args?: string[], code?: number|null, signal?: string|null, stdout?: string, stderr?: string }} CommandRecord */
+/** @typedef {{ cwd?: string, env?: NodeJS.ProcessEnv, log?: string, windowsVerbatimArguments?: boolean }} CommandOptions */
+/** @typedef {(command: string, args: string[], options?: CommandOptions) => Promise<string>} CommandExecutor */
+/** @typedef {CommandExecutor & { denied?: (command: string, args: string[], options: CommandOptions, expected: DenialExpectation) => Promise<CommandRecord> }} NativeCICommandRunner */
+
+/** @type {(value: unknown, message: string) => asserts value} */
 const requireCI = (value, message) => {
   if (!value) throw Error('GAP-VIDA-CI-DELIVERY-001: ' + message);
 };
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+const isRecord = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
+/** @param {unknown} value @returns {value is string[]} */
+const isStringArray = (value) => Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+/** @param {unknown} value @returns {boolean} */
+function dependencyCacheFields(value) {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'number' &&
+    typeof value.key === 'string' &&
+    typeof value.ref === 'string' &&
+    typeof value.version === 'string' &&
+    typeof value.size_in_bytes === 'number'
+  );
+}
+/** @param {unknown} value @returns {boolean} */
+function dependencyCacheState(value) {
+  return (
+    isRecord(value) &&
+    (value.restore === 'hit' || value.restore === 'miss') &&
+    (value.matched_key === null || typeof value.matched_key === 'string') &&
+    value.save === 'confirmed' &&
+    (value.save_action === 'skipped' || value.save_action === 'success')
+  );
+}
+/** @param {unknown} value @returns {value is DependencyCache} */
+function isDependencyCache(value) {
+  return isRecord(value) && dependencyCacheFields(value) && dependencyCacheState(value);
+}
+/** @param {unknown} value @returns {value is NativeCIRequest} */
+function isNativeCIRequest(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'VidaCIDeliveryRequest/v1' &&
+    typeof value.operation_id === 'string' &&
+    typeof value.version === 'string' &&
+    typeof value.repository_id === 'string' &&
+    isStringArray(value.project_ids) &&
+    typeof value.target === 'string' &&
+    typeof value.source_binding === 'string' &&
+    typeof value.request_id === 'string'
+  );
+}
+/** @param {unknown} value @returns {value is PackedFile} */
+function isPackedFile(value) {
+  return isRecord(value) && typeof value.path === 'string' && typeof value.size === 'number';
+}
+/** @param {unknown} value @returns {value is PackMetadata} */
+function isPackMetadata(value) {
+  return (
+    isRecord(value) &&
+    typeof value.name === 'string' &&
+    typeof value.version === 'string' &&
+    typeof value.filename === 'string' &&
+    Array.isArray(value.files) &&
+    value.files.every(isPackedFile)
+  );
+}
+/** @param {unknown} value @returns {value is NativeAsset} */
+function isNativeAsset(value) {
+  return (
+    isRecord(value) &&
+    typeof value.file === 'string' &&
+    typeof value.sha256 === 'string' &&
+    typeof value.bytes === 'number'
+  );
+}
+/** @param {unknown} value @returns {value is NativeManifestInput} */
+function isNativeManifestInput(value) {
+  return (
+    isRecord(value) &&
+    typeof value.path === 'string' &&
+    typeof value.bytes === 'number' &&
+    typeof value.sha256 === 'string'
+  );
+}
+/** @param {unknown} value @returns {value is NativeManifest} */
+function isNativeManifest(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'VidaStandaloneBuild/v1' &&
+    typeof value.version === 'string' &&
+    typeof value.pin === 'string' &&
+    typeof value.target === 'string' &&
+    Array.isArray(value.inputs) &&
+    value.inputs.every(isNativeManifestInput) &&
+    isNativeAsset(value.asset) &&
+    typeof value.payloadId === 'string'
+  );
+}
+/** @param {unknown} value @returns {value is NativeCandidate} */
+function isNativeCandidate(value) {
+  return (
+    isRecord(value) &&
+    typeof value.operation_id === 'string' &&
+    typeof value.version === 'string' &&
+    typeof value.source_binding === 'string' &&
+    typeof value.archive_sha256 === 'string' &&
+    typeof value.manifest_sha256 === 'string' &&
+    Array.isArray(value.pack_metadata) &&
+    value.pack_metadata.every(isPackMetadata) &&
+    isNativeManifest(value.manifest)
+  );
+}
+/** @param {unknown} value @returns {value is NativeCIReceipt} */
+function isNativeCIReceipt(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'VidaCIPhaseResult/v2' &&
+    typeof value.request_id === 'string' &&
+    typeof value.run_id === 'string' &&
+    typeof value.run_attempt === 'number' &&
+    typeof value.source_binding === 'string' &&
+    typeof value.archive_sha256 === 'string' &&
+    typeof value.phase === 'string' &&
+    value.status === 'passed' &&
+    isDependencyCache(value.dependency_cache)
+  );
+}
+/** @param {unknown} value @returns {value is CommandRecord} */
+function isCommandRecord(value) {
+  return (
+    isRecord(value) &&
+    typeof value.command === 'string' &&
+    isStringArray(value.args) &&
+    (value.code === null || typeof value.code === 'number') &&
+    (value.signal === null || typeof value.signal === 'string') &&
+    typeof value.stdout === 'string' &&
+    typeof value.stderr === 'string'
+  );
+}
+/** @param {unknown} value @returns {value is import('../../packages/agent/tooling/release-dependency-types.js').AgentExtractArchiveModule} */
+function isArchiveModule(value) {
+  return isRecord(value) && typeof value.extractArchive === 'function';
+}
+/** @param {string} root @returns {{version:string,engines:{bun:string,node:string}}} */
+function readPackageManifest(root) {
+  const value = parseUnknownJSON(physical(root, 'packages/agent/package.json', 1024 * 1024).toString('utf8'));
+  requireCI(
+    isRecord(value) &&
+      typeof value.version === 'string' &&
+      isRecord(value.engines) &&
+      typeof value.engines.bun === 'string' &&
+      typeof value.engines.node === 'string',
+    'CI package manifest is malformed',
+  );
+  return { version: value.version, engines: { bun: value.engines.bun, node: value.engines.node } };
+}
+/** @param {string} text @returns {PackMetadata[]} */
+function readPackMetadata(text) {
+  const value = /** @type {unknown} */ (parsePackOutput(text));
+  requireCI(Array.isArray(value) && value.every(isPackMetadata), 'CI pack metadata is malformed');
+  return value;
+}
+/** @param {Buffer} bytes @returns {NativeManifest} */
+function readNativeManifest(bytes) {
+  const value = parseUnknownJSON(bytes.toString('utf8'));
+  requireCI(isNativeManifest(value), 'CI native manifest JSON is malformed');
+  return value;
+}
+/** @param {NativeCIContext} ctx */
+function emitNativeBuildFailureDiagnostics(ctx) {
+  const value = parseUnknownJSON(physical(ctx.root, 'logs/native-build/2.json', 8 * 1024 * 1024).toString('utf8'));
+  requireCI(
+    isRecord(value) && typeof value.stdout === 'string' && typeof value.stderr === 'string',
+    'native build diagnostic receipt is malformed',
+  );
+  process.stdout.write(value.stdout);
+  process.stderr.write(value.stderr);
+}
+/** @param {string} text @returns {unknown} */
+function parseUnknownJSON(text) {
+  return /** @type {unknown} */ (JSON.parse(text));
+}
+/** @param {unknown} value @param {(input: unknown) => input is NativeCIRequest} guard */
+function checkedRequest(value, guard = isNativeCIRequest) {
+  requireCI(guard(value), 'CI request JSON is malformed');
+  const request = /** @type {NativeCIRequest} */ (value);
+  validateCIDeliveryRequest(request);
+  return request;
+}
+/** @param {NativeCIRequest} request */
 const profileFor = (request) => ({
   issuer: 'github-actions',
   repository_id: request.repository_id,
@@ -31,8 +236,26 @@ const profileFor = (request) => ({
   target: request.target,
   required_checks: [...minimumNativeDeliveryChecks],
 });
+/** @param {NodeJS.ProcessEnv} env @returns {DependencyCache} */
+function dependencyCacheEvidence(env) {
+  const evidence = {
+    id: Number(env.VIDA_CI_CACHE_ID),
+    key: env.VIDA_CI_CACHE_KEY,
+    ref: env.VIDA_CI_CACHE_REF,
+    version: env.VIDA_CI_CACHE_VERSION,
+    size_in_bytes: Number(env.VIDA_CI_CACHE_BYTES),
+    restore: env.VIDA_CI_CACHE_RESTORE,
+    matched_key: env.VIDA_CI_CACHE_MATCHED_KEY || null,
+    save: env.VIDA_CI_CACHE_SAVE,
+    save_action: env.VIDA_CI_CACHE_SAVE_ACTION,
+  };
+  requireCI(isDependencyCache(evidence), 'dependency cache JSON environment is malformed');
+  validateDependencyCache(evidence);
+  return evidence;
+}
 
 /** Environment consistency is a local CI fence, never human authorization. */
+/** @param {{ env: NodeJS.ProcessEnv, platform: string, arch: string, bun: string|undefined }} input @returns {NativeCIIdentity} */
 export function validateNativeCIInvocation({ env, platform, arch, bun }) {
   requireCI(
     env.CI === 'true' && env.GITHUB_ACTIONS === 'true' && env.VIDA_NATIVE_CI_ENABLED === 'true',
@@ -46,9 +269,9 @@ export function validateNativeCIInvocation({ env, platform, arch, bun }) {
     env.GITHUB_REPOSITORY === 'pomazanbohdan/vida-stack-lite' &&
       env.GITHUB_REPOSITORY_ID === '1340911900' &&
       env.GITHUB_JOB === 'native-windows-x64' &&
-      /^\d+$/.test(env.GITHUB_RUN_ID) &&
-      /^[1-9]\d*$/.test(env.GITHUB_RUN_ATTEMPT) &&
-      /^[a-f0-9]{40}$/.test(env.CI_SOURCE_COMMIT) &&
+      /^\d+$/.test(/** @type {string} */ (env.GITHUB_RUN_ID)) &&
+      /^[1-9]\d*$/.test(/** @type {string} */ (env.GITHUB_RUN_ATTEMPT)) &&
+      /^[a-f0-9]{40}$/.test(/** @type {string} */ (env.CI_SOURCE_COMMIT)) &&
       env.CI_SOURCE_COMMIT === env.GITHUB_SHA &&
       env.GITHUB_WORKFLOW_REF ===
         'pomazanbohdan/vida-stack-lite/.github/workflows/agent-native-delivery.yml@refs/heads/main',
@@ -58,8 +281,7 @@ export function validateNativeCIInvocation({ env, platform, arch, bun }) {
     typeof env.CI_REQUEST === 'string' && Buffer.byteLength(env.CI_REQUEST) <= 8 * 1024 * 1024,
     'CI request missing or oversized',
   );
-  const request = JSON.parse(env.CI_REQUEST);
-  validateCIDeliveryRequest(request);
+  const request = checkedRequest(parseUnknownJSON(/** @type {string} */ (env.CI_REQUEST)));
   requireCI(
     request.repository_id === 'vida-agent' &&
       json(request.project_ids) === json(['agent']) &&
@@ -68,9 +290,10 @@ export function validateNativeCIInvocation({ env, platform, arch, bun }) {
   );
   return {
     request,
-    run_id: env.GITHUB_RUN_ID,
+    run_id: /** @type {string} */ (env.GITHUB_RUN_ID),
     run_attempt: Number(env.GITHUB_RUN_ATTEMPT),
-    source_commit: env.CI_SOURCE_COMMIT,
+    source_commit: /** @type {string} */ (env.CI_SOURCE_COMMIT),
+    dependency_cache: dependencyCacheEvidence(env),
   };
 }
 
@@ -83,7 +306,9 @@ const receiptFields = [
   'archive_sha256',
   'phase',
   'status',
+  'dependency_cache',
 ];
+/** @param {{ identity: NativeCIIdentity, candidate: NativeCandidate, receipts: NativeCIReceipt[], phases?: readonly string[] }} input */
 export function validateNativeCIReceipts({ identity, candidate, receipts, phases = nativeDeliveryChecks }) {
   requireCI(
     Array.isArray(receipts) && receipts.length === phases.length,
@@ -94,12 +319,13 @@ export function validateNativeCIReceipts({ identity, candidate, receipts, phases
     requireCI(record && typeof record === 'object' && !Array.isArray(record), 'malformed CI phase observation');
     requireCI(
       json(Object.keys(record).sort()) === json(receiptFields.slice().sort()) &&
-        record.schema === 'VidaCIPhaseResult/v1' &&
+        record.schema === 'VidaCIPhaseResult/v2' &&
         record.request_id === identity.request.request_id &&
         record.run_id === identity.run_id &&
         record.run_attempt === identity.run_attempt &&
         record.source_binding === identity.request.source_binding &&
         record.archive_sha256 === candidate.archive_sha256 &&
+        json(record.dependency_cache) === json(identity.dependency_cache) &&
         record.phase === phases[index] &&
         record.status === 'passed',
       'failed/changed/UNKNOWN CI phase observation',
@@ -107,12 +333,14 @@ export function validateNativeCIReceipts({ identity, candidate, receipts, phases
   }
 }
 
+/** @param {string} root @param {string} relative @param {number} [maximum] @returns {Buffer} */
 function physical(root, relative, maximum = ciArchiveLimit) {
   const file = releasePath(root, relative),
     stat = lstatSync(file);
   requireCI(stat.isFile() && stat.nlink === 1 && stat.size <= maximum, 'unsafe/oversized CI file');
   return readFileSync(file);
 }
+/** @param {string} root @param {string} relative @param {Buffer|object} value */
 function exclusive(root, relative, value) {
   const directory = path.posix.dirname(relative);
   if (directory !== '.') releaseDirectory(root, directory);
@@ -121,6 +349,7 @@ function exclusive(root, relative, value) {
     mode: 0o600,
   });
 }
+/** @returns {NativeCIContext} */
 function context() {
   const identity = validateNativeCIInvocation({
     env: process.env,
@@ -128,9 +357,9 @@ function context() {
     arch: process.arch,
     bun: process.versions.bun,
   });
-  const source = realpathSync(process.env.VIDA_CI_SOURCE_ROOT),
-    checkout = realpathSync(process.env.GITHUB_WORKSPACE);
-  const temporary = realpathSync(process.env.RUNNER_TEMP);
+  const source = realpathSync(/** @type {string} */ (process.env.VIDA_CI_SOURCE_ROOT)),
+    checkout = realpathSync(/** @type {string} */ (process.env.GITHUB_WORKSPACE));
+  const temporary = realpathSync(/** @type {string} */ (process.env.RUNNER_TEMP));
   const root = releaseDirectory(temporary, 'vida-ci-operation-' + identity.run_id + '-' + identity.run_attempt);
   requireCI(source.startsWith(temporary + path.sep) && source !== checkout, 'isolated CI Source mirror required');
   for (const tree of [source, checkout])
@@ -138,15 +367,25 @@ function context() {
       releaseSourceBinding(tree).source_binding === identity.request.source_binding,
       'CI Source differs from current request',
     );
-  const manifest = JSON.parse(physical(source, 'packages/agent/package.json', 1024 * 1024));
+  const manifest = readPackageManifest(source);
   requireCI(
     manifest.version === identity.request.version && manifest.engines.bun === '1.4.2',
     'CI package identity differs',
   );
-  return { ...identity, root, source, checkout, packageRoot: path.join(source, 'packages/agent'), manifest };
+  return {
+    ...identity,
+    root,
+    source,
+    checkout,
+    packageRoot: path.join(source, 'packages/agent'),
+    manifest,
+  };
 }
+/** @param {NativeCIContext} ctx @returns {NativeCandidate} */
 function candidateFor(ctx) {
-  const candidate = JSON.parse(physical(ctx.root, 'candidate.json', 8 * 1024 * 1024));
+  const candidateValue = parseUnknownJSON(physical(ctx.root, 'candidate.json', 8 * 1024 * 1024).toString('utf8'));
+  requireCI(isNativeCandidate(candidateValue), 'CI candidate JSON is malformed');
+  const candidate = candidateValue;
   requireCI(
     candidate.operation_id === ctx.request.operation_id &&
       candidate.version === ctx.request.version &&
@@ -155,7 +394,9 @@ function candidateFor(ctx) {
       candidate.manifest.pin === '1.4.2',
     'CI candidate identity differs',
   );
-  const archive = physical(ctx.root, 'output/' + candidate.pack_metadata[0].filename);
+  const pack = candidate.pack_metadata[0];
+  requireCI(pack, 'CI candidate pack metadata is missing');
+  const archive = physical(ctx.root, 'output/' + pack.filename);
   const manifest = physical(ctx.root, 'package/dist/standalone/manifest.json', 8 * 1024 * 1024);
   const asset = physical(ctx.root, 'package/dist/standalone/' + candidate.manifest.asset.file);
   requireCI(
@@ -170,6 +411,7 @@ function candidateFor(ctx) {
 const nativePrerequisiteFailure =
   /Cannot find module|Cannot find package|ERR_MODULE_NOT_FOUND|ModuleNotFound|Error loading shared library|failed to load.*(?:\.node|dll)/i;
 
+/** @param {string} actual @param {MessageExpectation} expected @returns {boolean} */
 function messageMatches(actual, expected) {
   if (typeof expected === 'string') return actual === expected;
   if (expected.exact !== undefined) return actual === expected.exact;
@@ -179,19 +421,22 @@ function messageMatches(actual, expected) {
   return false;
 }
 
+/** @param {string} stderr @param {JsonDenialExpectation} expected */
 function structuredDenial(stderr, expected) {
   let value;
   try {
-    value = JSON.parse(stderr.trim());
+    value = parseUnknownJSON(stderr.trim());
   } catch {
     return false;
   }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  if (expected.keys && json(Object.keys(value).sort()) !== json([...expected.keys].sort())) return false;
-  if (Object.entries(expected.fields ?? {}).some(([key, field]) => value[key] !== field)) return false;
-  return typeof value.message === 'string' && messageMatches(value.message, expected.message);
+  if (!isRecord(value)) return false;
+  const denial = value;
+  if (expected.keys && json(Object.keys(denial).sort()) !== json([...expected.keys].sort())) return false;
+  if (Object.entries(expected.fields ?? {}).some(([key, field]) => denial[key] !== field)) return false;
+  return typeof denial.message === 'string' && messageMatches(denial.message, expected.message);
 }
 
+/** @param {string} stderr @returns {string[]} */
 function errorLines(stderr) {
   return stderr
     .split(/\r?\n/)
@@ -199,23 +444,31 @@ function errorLines(stderr) {
     .filter((line) => line && !/^\d+\s*\|/.test(line) && !/^at\s/.test(line));
 }
 
+/** @param {CommandRecord|undefined|null} record */
 export function nativeCIDenialDiagnostics(record) {
   const stdout = typeof record?.stdout === 'string' ? record.stdout.slice(-2048) : '';
   const stderr = typeof record?.stderr === 'string' ? record.stderr.slice(-2048) : '';
   const command = typeof record?.command === 'string' ? JSON.stringify(record.command) : 'unknown';
   const args = Array.isArray(record?.args) ? JSON.stringify(record.args) : 'unknown';
-  const exitCode = Number.isInteger(record?.code) ? String(record.code) : 'unknown';
+  const exitCode = denialExitCode(record);
   const signal = record?.signal === null ? 'null' : typeof record?.signal === 'string' ? record.signal : 'unknown';
   return `command: ${command}\nargs: ${args}\nexit code: ${exitCode}\nsignal: ${signal}\nstdout tail:\n${stdout}\nstderr tail:\n${stderr}`;
 }
 
+/** @param {CommandRecord|undefined|null} record @returns {string} */
+function denialExitCode(record) {
+  return typeof record?.code === 'number' && Number.isInteger(record.code) ? String(record.code) : 'unknown';
+}
+
+/** @param {string} message @param {CommandRecord} record @param {unknown} cause */
 function nativeCIDenialError(message, record, cause) {
   return new Error(`${message}\n${nativeCIDenialDiagnostics(record)}`, { cause });
 }
 
+/** @param {CommandRecord} record @param {DenialExpectation} expected */
 export function validateNativeCIDenial(record, expected) {
   requireCI(
-    Number.isInteger(record?.code) && record.signal === null,
+    hasTerminalDenialObservation(record),
     'expected denial lacks actual terminal observation; FAIL/UNKNOWN retained',
   );
   requireCI(record.code === 1, 'expected denial observed a different integer exit; known FAIL');
@@ -233,11 +486,18 @@ export function validateNativeCIDenial(record, expected) {
   requireCI(matches, 'expected denial message or structured contract did not match');
 }
 
+/** @param {CommandRecord|undefined|null} record @returns {boolean} */
+function hasTerminalDenialObservation(record) {
+  return typeof record?.code === 'number' && Number.isInteger(record.code) && record.signal === null;
+}
+
+/** @param {Record<string, string>} fields @param {MessageExpectation} message @param {string[]} [keys] @returns {JsonDenialExpectation} */
 function jsonDenial(fields, message, keys = [...Object.keys(fields), 'message']) {
   return { kind: 'json', keys, fields, message };
 }
 
-const nativeCICommandDenials = new Map([
+/** @type {Array<[string, DenialExpectation]>} */
+const nativeCICommandDenialEntries = [
   [
     'run',
     jsonDenial(
@@ -256,7 +516,9 @@ const nativeCICommandDenials = new Map([
     'scope',
     jsonDenial(
       { schema: 'VidaAgentCommandResult/v1', status: 'blocked', code: 'GAP-VIDA-SCOPE-001' },
-      { prefix: 'scope requires --project-root ABSOLUTE --repository ID --project ID --path RELATIVE' },
+      {
+        prefix: 'scope requires --project-root ABSOLUTE --repository ID --project ID --path RELATIVE',
+      },
     ),
   ],
   [
@@ -266,8 +528,10 @@ const nativeCICommandDenials = new Map([
       { prefix: 'development-controller prepare --target ABS --controller-root NEW_ABS' },
     ),
   ],
-]);
+];
+const nativeCICommandDenials = new Map(nativeCICommandDenialEntries);
 
+/** @param {Iterable<string>} commands @param {Record<string, string>} [bin] */
 export function validateNativeCICommandDenialInventory(commands, bin) {
   const expectedCommands = [...nativeCICommandDenials.keys()].sort(),
     advertisedCommands = [...commands].sort();
@@ -280,13 +544,7 @@ export function validateNativeCICommandDenialInventory(commands, bin) {
   return nativeCICommandDenials;
 }
 
-function cliError(message) {
-  return jsonDenial(
-    { schema: 'VidaAgentCommandResult/v1', status: 'blocked', code: 'GAP-VIDA-CLI-001' },
-    { exact: message },
-  );
-}
-
+/** @param {string} message */
 export const nativeCIUnadmittedWorkflowDenial = jsonDenial(
   { schema: 'VidaAgentRunResult/v1', status: 'blocked', code: 'GAP-VIDA-RUN-WORKFLOW-001' },
   {
@@ -295,12 +553,15 @@ export const nativeCIUnadmittedWorkflowDenial = jsonDenial(
   },
 );
 
+/** @param {CommandRecord} record */
 export function validateNativeCIUnadmittedRun(record) {
   validateNativeCIDenial(record, nativeCIUnadmittedWorkflowDenial);
 }
+/** @param {NativeCIContext} ctx @param {string} phase @param {CommandExecutor} [execute] @returns {NativeCICommandRunner} */
 export function createNativeCICommandRunner(ctx, phase, execute = runCommand) {
   let count = 0;
   releaseDirectory(ctx.root, 'logs/' + phase);
+  /** @type {NativeCICommandRunner} */
   const invoke = (command, args, options = {}) =>
     execute(command, args, {
       cwd: ctx.root,
@@ -315,71 +576,90 @@ export function createNativeCICommandRunner(ctx, phase, execute = runCommand) {
     } catch (error) {
       commandError = error;
     }
+    /** @type {unknown} */
     let observed;
     try {
-      observed = JSON.parse(physical(ctx.root, name, 8 * 1024 * 1024));
+      observed = parseUnknownJSON(physical(ctx.root, name, 8 * 1024 * 1024).toString('utf8'));
     } catch (receiptError) {
       throw new Error('expected denial receipt is missing or unreadable; FAIL/UNKNOWN retained', {
         cause: commandError ?? receiptError,
       });
     }
+    /** @type {CommandRecord} */
+    let observedRecord = {};
     try {
-      requireCI(observed.command === command && json(observed.args) === json(args), 'rejection child differs');
-      validateNativeCIDenial(observed, expected);
+      requireCI(isCommandRecord(observed), 'rejection command receipt is malformed');
+      observedRecord = /** @type {CommandRecord} */ (observed);
+      requireCI(
+        observedRecord.command === command && json(observedRecord.args) === json(args),
+        'rejection child differs',
+      );
+      validateNativeCIDenial(observedRecord, expected);
       if (!commandError) requireCI(false, 'expected rejection returned success');
     } catch (validationError) {
-      throw nativeCIDenialError(validationError.message, observed, commandError ?? validationError);
+      throw nativeCIDenialError(
+        /** @type {Error} */ (validationError).message,
+        observedRecord,
+        commandError ?? validationError,
+      );
     }
-    return observed;
+    return observedRecord;
   };
   return invoke;
 }
+/** @param {NativeCIContext} ctx @param {string} phase */
 function runner(ctx, phase) {
   return createNativeCICommandRunner(ctx, phase);
 }
+/** @param {NativeCIContext} ctx @param {NativeCICommandRunner} invoke */
 async function nativeBuild(ctx, invoke) {
-  const node = realpathSync(process.env.VIDA_CI_NODE_EXECUTABLE);
+  const node = realpathSync(/** @type {string} */ (process.env.VIDA_CI_NODE_EXECUTABLE));
   requireCI((await invoke(node, ['--version'])).trim() === 'v' + ctx.manifest.engines.node, 'CI Node pin differs');
   const npm = findNpmCli(node);
   requireCI((await invoke(node, [npm, '--version'])).trim() === '11.17.0', 'CI npm pin differs');
   try {
     await invoke(process.execPath, ['run', 'ci:pinned'], { cwd: ctx.packageRoot });
   } catch (error) {
-    const diagnostics = JSON.parse(physical(ctx.root, 'logs/native-build/2.json', 8 * 1024 * 1024));
-    process.stdout.write(diagnostics.stdout);
-    process.stderr.write(diagnostics.stderr);
+    emitNativeBuildFailureDiagnostics(ctx);
     throw error;
   }
   releaseDirectory(ctx.root, 'output');
-  const packed = parsePackOutput(
+  const packed = readPackMetadata(
     await invoke(
       node,
       [npm, 'pack', '--ignore-scripts', '--json', '--pack-destination', path.join(ctx.root, 'output')],
       { cwd: ctx.packageRoot },
     ),
   );
+  requireCI(packed.length === 1, 'CI pack metadata cardinality differs');
+  const packedEntry = packed[0];
   requireCI(
-    packed.length === 1 &&
-      packed[0].name === 'vida-agent' &&
-      packed[0].version === ctx.request.version &&
-      packed[0].filename === 'vida-agent-' + ctx.request.version + '.tgz',
+    packedEntry &&
+      packedEntry.name === 'vida-agent' &&
+      packedEntry.version === ctx.request.version &&
+      packedEntry.filename === 'vida-agent-' + ctx.request.version + '.tgz',
     'CI native pack identity differs',
   );
-  const archive = physical(ctx.root, 'output/' + packed[0].filename);
-  const require = createRequire(path.join(ctx.packageRoot, 'package.json'));
-  const { extractArchive } = await import(pathToFileURL(require.resolve('@openclaw/fs-safe/archive')).href);
+  const archive = physical(ctx.root, 'output/' + packedEntry.filename);
+  const archiveModule = /** @type {unknown} */ (await import(pathToFileURL(fsSafeArchiveEntry(ctx.packageRoot)).href));
+  requireCI(isArchiveModule(archiveModule), 'qualified archive API is malformed');
+  const { extractArchive } = archiveModule;
   releaseDirectory(ctx.root, 'package');
   await extractArchive({
-    archivePath: path.join(ctx.root, 'output', packed[0].filename),
+    archivePath: path.join(ctx.root, 'output', packedEntry.filename),
     destDir: path.join(ctx.root, 'package'),
     kind: 'tar',
     tarGzip: true,
     timeoutMs: 0,
     stripComponents: 1,
-    limits: { maxArchiveBytes: ciArchiveLimit, maxExtractedBytes: 512 * 1024 * 1024, maxEntryBytes: ciArchiveLimit },
+    limits: {
+      maxArchiveBytes: ciArchiveLimit,
+      maxExtractedBytes: 512 * 1024 * 1024,
+      maxEntryBytes: ciArchiveLimit,
+    },
   });
   const manifestBytes = physical(ctx.root, 'package/dist/standalone/manifest.json', 8 * 1024 * 1024);
-  const manifest = JSON.parse(manifestBytes);
+  const manifest = readNativeManifest(manifestBytes);
   requireCI(
     manifest.schema === 'VidaStandaloneBuild/v1' &&
       manifest.version === ctx.request.version &&
@@ -411,6 +691,7 @@ async function nativeBuild(ctx, invoke) {
   });
 }
 
+/** @param {NativeCIContext} ctx */
 async function emitBuild(ctx) {
   const phaseName = 'emit-build';
   const intent = 'phases/' + phaseName + '.intent.json';
@@ -433,20 +714,18 @@ async function emitBuild(ctx) {
     'CI build artifact output identity is unsafe',
   );
   const candidateBytes = physical(ctx.root, 'candidate.json', 8 * 1024 * 1024);
-  const candidate = JSON.parse(candidateBytes.toString('utf8'));
+  const candidate = parseUnknownJSON(candidateBytes.toString('utf8'));
+  requireCI(isNativeCandidate(candidate), 'CI candidate JSON is malformed');
   const receiptBytes = physical(ctx.root, 'phases/native-build.result.json', 1024 * 1024);
-  const receipt = JSON.parse(receiptBytes.toString('utf8'));
-  validateNativeCIReceipts({ identity: ctx, candidate, receipts: [receipt], phases: ['native-build'] });
-  const pack = candidate.pack_metadata?.[0];
-  requireCI(
-    Array.isArray(candidate.pack_metadata) &&
-      candidate.pack_metadata.length === 1 &&
-      pack?.name === 'vida-agent' &&
-      pack.version === ctx.request.version &&
-      pack.filename === 'vida-agent-' + ctx.request.version + '.tgz' &&
-      path.basename(pack.filename) === pack.filename,
-    'CI native build pack identity differs',
-  );
+  const receipt = parseUnknownJSON(receiptBytes.toString('utf8'));
+  requireCI(isNativeCIReceipt(receipt), 'CI phase receipt JSON is malformed');
+  validateNativeCIReceipts({
+    identity: ctx,
+    candidate,
+    receipts: [receipt],
+    phases: ['native-build'],
+  });
+  const pack = requireNativePackMetadata(candidate, ctx);
   requireCI(
     candidate.manifest?.schema === 'VidaStandaloneBuild/v1' &&
       candidate.manifest.version === ctx.request.version &&
@@ -456,7 +735,9 @@ async function emitBuild(ctx) {
     'CI native build manifest identity differs',
   );
   const manifestBytes = physical(ctx.root, 'package/dist/standalone/manifest.json', 8 * 1024 * 1024);
-  const manifest = JSON.parse(manifestBytes.toString('utf8'));
+  const manifestValue = parseUnknownJSON(manifestBytes.toString('utf8'));
+  requireCI(isNativeManifest(manifestValue), 'CI native manifest JSON is malformed');
+  const manifest = manifestValue;
   const assetBytes = physical(ctx.root, 'package/dist/standalone/' + manifest.asset.file, ciArchiveLimit);
   const archiveBytes = physical(ctx.root, 'output/' + pack.filename, ciArchiveLimit);
   const installerBytes = physical(ctx.source, 'packages/agent/tooling/install-windows.ps1', 1024 * 1024);
@@ -482,11 +763,12 @@ async function emitBuild(ctx) {
   const packedAsset = packedFiles.filter((file) => file?.path === 'dist/standalone/' + manifest.asset.file);
   requireCI(
     packedManifest.length === 1 &&
-      packedManifest[0].size === manifestBytes.length &&
+      packedManifest[0]?.size === manifestBytes.length &&
       packedAsset.length === 1 &&
-      packedAsset[0].size === assetBytes.length,
+      packedAsset[0]?.size === assetBytes.length,
     'CI native pack inventory differs',
   );
+  /** @type {Array<[string, Buffer, number]>} */
   const files = [
     [pack.filename, archiveBytes, ciArchiveLimit],
     [manifest.asset.file, assetBytes, ciArchiveLimit],
@@ -558,7 +840,7 @@ async function emitBuild(ctx) {
     'CI build artifact output inventory changed during emission',
   );
   writeFileSync(
-    process.env.GITHUB_OUTPUT,
+    /** @type {string} */ (process.env.GITHUB_OUTPUT),
     'directory=' +
       outputDirectory +
       '\n' +
@@ -578,6 +860,7 @@ async function emitBuild(ctx) {
     request: ctx.request,
     candidate,
     profile: profileFor(ctx.request),
+    dependency_cache: ctx.dependency_cache,
     observation: {
       issuer: 'github-actions',
       run_id: ctx.run_id,
@@ -588,7 +871,7 @@ async function emitBuild(ctx) {
   });
   exclusive(ctx.root, 'output/result.json', result);
   writeFileSync(
-    process.env.GITHUB_OUTPUT,
+    /** @type {string} */ (process.env.GITHUB_OUTPUT),
     'formation_directory=' +
       path.join(ctx.root, 'output') +
       '\n' +
@@ -612,6 +895,22 @@ async function emitBuild(ctx) {
     }).trim(),
   );
 }
+
+/** @param {NativeCandidate} candidate @param {NativeCIContext} ctx @returns {PackMetadata} */
+function requireNativePackMetadata(candidate, ctx) {
+  const pack = candidate.pack_metadata?.[0];
+  requireCI(
+    Array.isArray(candidate.pack_metadata) &&
+      candidate.pack_metadata.length === 1 &&
+      pack?.name === 'vida-agent' &&
+      pack.version === ctx.request.version &&
+      pack.filename === 'vida-agent-' + ctx.request.version + '.tgz' &&
+      path.basename(pack.filename) === pack.filename,
+    'CI native build pack identity differs',
+  );
+  return pack;
+}
+/** @param {NativeCIContext} ctx @param {string} name */
 async function phase(ctx, name) {
   requireCI(name === 'native-build', 'only native formation is supported; tests belong to development tasks');
   const intent = 'phases/native-build.intent.json';
@@ -628,10 +927,10 @@ async function phase(ctx, name) {
   });
   console.log(json({ phase: name, status: 'issued', request_id: ctx.request.request_id }).trim());
   await nativeBuild(ctx, runner(ctx, name));
-  context();
-  const candidate = candidateFor(ctx);
-  exclusive(ctx.root, 'phases/native-build.result.json', {
-    schema: 'VidaCIPhaseResult/v1',
+  const completedContext = context();
+  const candidate = candidateFor(completedContext);
+  exclusive(completedContext.root, 'phases/native-build.result.json', {
+    schema: 'VidaCIPhaseResult/v2',
     request_id: ctx.request.request_id,
     run_id: ctx.run_id,
     run_attempt: ctx.run_attempt,
@@ -639,6 +938,7 @@ async function phase(ctx, name) {
     archive_sha256: candidate.archive_sha256,
     phase: name,
     status: 'passed',
+    dependency_cache: completedContext.dependency_cache,
   });
   console.log(json({ phase: name, status: 'passed', request_id: ctx.request.request_id }).trim());
 }
@@ -648,14 +948,14 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const ctx = context();
     const args = process.argv.slice(2);
     if (args.length === 2 && args[0] === '--phase' && args[1] === 'emit-build') await emitBuild(ctx);
-    else if (args.length === 2 && args[0] === '--phase') await phase(ctx, args[1]);
+    else if (args.length === 2 && args[0] === '--phase') await phase(ctx, /** @type {string} */ (args[1]));
     else throw Error('GAP-VIDA-CI-DELIVERY-001: fixed formation phase required');
   } catch (error) {
     console.error(
       JSON.stringify({
         status: 'blocked',
         code: 'GAP-VIDA-CI-DELIVERY-001',
-        message: error.message,
+        message: /** @type {Error} */ (error).message,
         custody: 'retain issued intent and bytes; no automatic cleanup/reissue',
       }),
     );

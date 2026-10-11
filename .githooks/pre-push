@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 root=$(git rev-parse --show-toplevel)
-exec node "$root/tooling/agent/git-quality-hooks.mjs" pre-push "$@"
+exec bun --no-env-file --no-install --config="$root/packages/agent/bunfig.toml" "$root/packages/agent/tooling/git-quality-hooks.ts" pre-push "$@"

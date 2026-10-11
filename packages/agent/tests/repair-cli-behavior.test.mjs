@@ -237,9 +237,11 @@ test('research identity dispatcher plans exact rewrites and rejects dependencies
   const before = paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'));
   const dependent = synthesis(context, results);
   writeFileSync(path.join(context.root, `${context.records}/dependent.synthesis.json`), json(dependent));
-  await Promise.resolve(expect(runReconcileArtifacts(planning(context, 'inspect', ['--records', recordsFile]))).rejects.toThrow(
-    'dependent synthesis',
-  ));
+  await Promise.resolve(
+    expect(runReconcileArtifacts(planning(context, 'inspect', ['--records', recordsFile]))).rejects.toThrow(
+      'dependent synthesis',
+    ),
+  );
   expect(paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'))).toEqual(before);
   expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
 });
@@ -253,9 +255,11 @@ test('research identity dispatcher fails closed on third-party post-plan bytes',
   await runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile]));
   const beforeSecond = readFileSync(path.join(context.root, paths[1]), 'utf8');
   writeFileSync(path.join(context.root, paths[0]), 'third-party bytes\n');
-  await Promise.resolve(expect(
-    runReconcileArtifacts(['--mode', 'apply', '--project-root', context.root, '--repair-id', 'repair-test']),
-  ).rejects.toThrow('third-party bytes'));
+  await Promise.resolve(
+    expect(
+      runReconcileArtifacts(['--mode', 'apply', '--project-root', context.root, '--repair-id', 'repair-test']),
+    ).rejects.toThrow('third-party bytes'),
+  );
   expect(readFileSync(path.join(context.root, paths[0]), 'utf8')).toBe('third-party bytes\n');
   expect(readFileSync(path.join(context.root, paths[1]), 'utf8')).toBe(beforeSecond);
   expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
@@ -728,18 +732,20 @@ test('synthesis observation dispatcher plans the real provenance collision and p
   expect(database.query('SELECT payload FROM agent_host_mastra_session_ledger').get().payload).toBe(row.payload);
   writeFileSync(path.join(context.root, 'packages/agent/TESTING.md'), 'changed source\n');
   await Promise.resolve(expect(runReconcileArtifacts(args('inspect'))).rejects.toThrow('declared source changed'));
-  await Promise.resolve(expect(
-    runReconcileArtifacts([
-      '--kind',
-      'synthesis-observation-correction',
-      '--mode',
-      'apply',
-      '--project-root',
-      context.root,
-      '--correction-id',
-      'correction-test',
-    ]),
-  ).rejects.toThrow('declared source changed'));
+  await Promise.resolve(
+    expect(
+      runReconcileArtifacts([
+        '--kind',
+        'synthesis-observation-correction',
+        '--mode',
+        'apply',
+        '--project-root',
+        context.root,
+        '--correction-id',
+        'correction-test',
+      ]),
+    ).rejects.toThrow('declared source changed'),
+  );
   expect(database.query('SELECT payload FROM agent_host_mastra_session_ledger').get().payload).toBe(row.payload);
   database.close();
   expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
@@ -823,14 +829,16 @@ test('synthesis qualification database CAS rejects a journal revision changed af
     '--repair-id',
     'repair-test',
   ];
-  await Promise.resolve(expect(
-    runReconcileArtifacts(args, {
-      onPhase: (phase) => {
-        if (phase === 'changelog')
-          database.query('UPDATE agent_host_mastra_session_ledger SET revision=revision+1').run();
-      },
-    }),
-  ).rejects.toThrow('Mastra journal CAS changed'));
+  await Promise.resolve(
+    expect(
+      runReconcileArtifacts(args, {
+        onPhase: (phase) => {
+          if (phase === 'changelog')
+            database.query('UPDATE agent_host_mastra_session_ledger SET revision=revision+1').run();
+        },
+      }),
+    ).rejects.toThrow('Mastra journal CAS changed'),
+  );
   expect(database.query("SELECT payload,revision FROM agent_host_state WHERE kind='work'").get()).toEqual(workBefore);
   const journalAfter = database.query('SELECT payload,revision FROM agent_host_mastra_session_ledger').get();
   expect(journalAfter.payload).toBe(journalBefore.payload);
@@ -929,13 +937,15 @@ test('research identity dispatcher resumes an interrupted exact two-record publi
   await runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile]));
   const plan = JSON.parse(readFileSync(path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json'), 'utf8'));
   const args = ['--mode', 'apply', '--project-root', context.root, '--repair-id', 'repair-test'];
-  await Promise.resolve(expect(
-    runReconcileArtifacts(args, {
-      onPhase: (phase) => {
-        if (phase === 'record_0') throw new Error('injected interruption');
-      },
-    }),
-  ).rejects.toThrow('injected interruption'));
+  await Promise.resolve(
+    expect(
+      runReconcileArtifacts(args, {
+        onPhase: (phase) => {
+          if (phase === 'record_0') throw new Error('injected interruption');
+        },
+      }),
+    ).rejects.toThrow('injected interruption'),
+  );
   expect(readFileSync(path.join(context.root, paths[0]), 'utf8')).toBe(plan.changes[0].after);
   expect(readFileSync(path.join(context.root, paths[1]), 'utf8')).toBe(plan.changes[1].before);
   expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
@@ -977,13 +987,15 @@ test('synthesis qualification dispatcher resumes partial publication without dup
     '--repair-id',
     'repair-test',
   ];
-  await Promise.resolve(expect(
-    runReconcileArtifacts(args, {
-      onPhase: (phase) => {
-        if (phase === 'record_0') throw new Error('injected interruption');
-      },
-    }),
-  ).rejects.toThrow('injected interruption'));
+  await Promise.resolve(
+    expect(
+      runReconcileArtifacts(args, {
+        onPhase: (phase) => {
+          if (phase === 'record_0') throw new Error('injected interruption');
+        },
+      }),
+    ).rejects.toThrow('injected interruption'),
+  );
   expect(
     await runReconcileArtifacts([
       '--kind',

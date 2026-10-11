@@ -17,7 +17,9 @@ const resource = 'file:src/task.ts';
 
 function deferred() {
   let resolve;
-  const promise = new Promise((done) => { resolve = done; });
+  const promise = new Promise((done) => {
+    resolve = done;
+  });
   return { promise, resolve };
 }
 
@@ -88,10 +90,18 @@ function workAndLedger(expiresAt) {
     binding,
     contracts: {
       scope: { schema: 'ImplementationScope/v1', path: '.agent/scope.json', sha256: binding.scope_contract_digest },
-      acceptance: { schema: 'AcceptanceManifest/v1', path: '.agent/acceptance.json', sha256: binding.acceptance_manifest_digest },
+      acceptance: {
+        schema: 'AcceptanceManifest/v1',
+        path: '.agent/acceptance.json',
+        sha256: binding.acceptance_manifest_digest,
+      },
       decisions: [],
     },
-    lease: { ticket_id: activeTicket.ticket_id, thread_id: activeTicket.thread_id, generation: activeTicket.generation },
+    lease: {
+      ticket_id: activeTicket.ticket_id,
+      thread_id: activeTicket.thread_id,
+      generation: activeTicket.generation,
+    },
     execution: {
       run_id: 'run-task-source-expiry',
       input_digest: 'a'.repeat(64),
@@ -108,10 +118,26 @@ function workAndLedger(expiresAt) {
       route: 'R3',
       risk: 'high',
       change_kind: 'fix',
-      config_binding: { config_digest: binding.config_digest, schema_digest: binding.schema_digest, runtime_code_digest: binding.runtime_code_digest },
-      scope: { scope_id: binding.scope_id, allowed_paths: ['src/task.ts'], fingerprint_paths: ['src/task.ts'], implementation_paths: ['src/task.ts'], documentation_paths: [] },
+      config_binding: {
+        config_digest: binding.config_digest,
+        schema_digest: binding.schema_digest,
+        runtime_code_digest: binding.runtime_code_digest,
+      },
+      scope: {
+        scope_id: binding.scope_id,
+        allowed_paths: ['src/task.ts'],
+        fingerprint_paths: ['src/task.ts'],
+        implementation_paths: ['src/task.ts'],
+        documentation_paths: [],
+      },
       seal: null,
-      assurance: { epoch: 'epoch-1', review_generation: 0, correction_count: 0, review_failure_count: 0, delivery_cycle_id: null },
+      assurance: {
+        epoch: 'epoch-1',
+        review_generation: 0,
+        correction_count: 0,
+        review_failure_count: 0,
+        delivery_cycle_id: null,
+      },
       references: [],
     },
     artifacts: [],
@@ -157,17 +183,9 @@ function createFixture({ expiresAt, policyVerifier }) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-task-source-coordination-'));
   mkdirSync(path.join(root, '.git'));
   const database = openHostStateDatabase(path.join(root, 'host.sqlite'));
-  const store = new HostStateStore(
-    database,
-    workspaceId,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    root,
-    undefined,
-    { verify: policyVerifier },
-  );
+  const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root, undefined, {
+    verify: policyVerifier,
+  });
   const seed = workAndLedger(expiresAt);
   const initial = store.compareAndSwapHostState({
     expectedWork: null,
@@ -189,14 +207,9 @@ function createFixture({ expiresAt, policyVerifier }) {
   database.exec(
     'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt))',
   );
-  database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(
-    workspaceId,
-    identity.work_id,
-    1,
-    1,
-    canonicalJson(journal),
-    canonicalJsonDigest(journal),
-  );
+  database
+    .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+    .run(workspaceId, identity.work_id, 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
   const request = {
     schema: 'TaskSourceBindingRequest/v1',
     operation: 'propose-create',
@@ -323,14 +336,16 @@ function createFixture({ expiresAt, policyVerifier }) {
         items: [],
         completed: [],
       };
-      database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(
-        workspaceId,
-        peerIdentity.work_id,
-        1,
-        1,
-        canonicalJson(peerJournalState),
-        canonicalJsonDigest(peerJournalState),
-      );
+      database
+        .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+        .run(
+          workspaceId,
+          peerIdentity.work_id,
+          1,
+          1,
+          canonicalJson(peerJournalState),
+          canonicalJsonDigest(peerJournalState),
+        );
       const targetAfterPeerAdmission = store.readHostStateSnapshot(identity);
       request.expected_host = {
         ...request.expected_host,
@@ -375,8 +390,16 @@ test('TaskSource uses a canonical FIFO reservation, then promotes the same ticke
     expect(ticket?.claim_ids).toEqual([]);
     expect(ticket?.blocked_resources).toContain(`branch:${fixture.request.branch_ref}`);
     expect(target.work.lease.ticket_id).toBe('ticket-task-source-expiry');
-    expect(fixture.database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_claim'").get()).toBeNull();
-    expect(fixture.database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'").get()).toBeNull();
+    expect(
+      fixture.database
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_claim'")
+        .get(),
+    ).toBeNull();
+    expect(
+      fixture.database
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'")
+        .get(),
+    ).toBeNull();
 
     const peerBeforeRelease = fixture.store.readHostStateSnapshot(peer.identity);
     const released = suspendLocalWork({
@@ -397,7 +420,9 @@ test('TaskSource uses a canonical FIFO reservation, then promotes the same ticke
       },
     });
     expect(released.work.execution.status).toBe('suspended');
-    expect(released.ledger.tickets.find((entry) => entry.ticket_id === 'ticket-task-source-peer')?.status).toBe('released');
+    expect(released.ledger.tickets.find((entry) => entry.ticket_id === 'ticket-task-source-peer')?.status).toBe(
+      'released',
+    );
 
     const issued = await fixture.store.issueTaskSourceBindingOperation({ request: fixture.request, identity });
     expect(issued.status).toBe('issued');
@@ -408,8 +433,12 @@ test('TaskSource uses a canonical FIFO reservation, then promotes the same ticke
     expect(ticket?.status).toBe('active');
     expect(ticket?.sequence).toBe(3);
     expect(target.work.lease.ticket_id).toBe(ownTicketId);
-    expect(target.ledger.claims.filter((claim) => claim.ticket_id === ownTicketId && claim.status === 'active')).toHaveLength(1);
-    expect(target.ledger.tickets.find((entry) => entry.ticket_id === 'ticket-task-source-expiry')?.status).toBe('released');
+    expect(
+      target.ledger.claims.filter((claim) => claim.ticket_id === ownTicketId && claim.status === 'active'),
+    ).toHaveLength(1);
+    expect(target.ledger.tickets.find((entry) => entry.ticket_id === 'ticket-task-source-expiry')?.status).toBe(
+      'released',
+    );
   } finally {
     fixture.close();
   }
@@ -417,7 +446,8 @@ test('TaskSource uses a canonical FIFO reservation, then promotes the same ticke
 
 test('issue rechecks canonical owner expiry after async policy before writing action or exposing argv', async () => {
   const expiresAt = new Date(Date.now() + 500).toISOString();
-  const policyEntered = deferred(), resumePolicy = deferred();
+  const policyEntered = deferred(),
+    resumePolicy = deferred();
   const fixture = createFixture({
     expiresAt,
     policyVerifier: async ({ request }) => {
@@ -432,7 +462,12 @@ test('issue rechecks canonical owner expiry after async policy before writing ac
     const issue = fixture.store.issueTaskSourceBindingOperation({ request: fixture.request, identity });
     const policyWait = await Promise.race([
       policyEntered.promise.then(() => 'entered'),
-      issue.then(() => 'returned', (error) => { throw error; }),
+      issue.then(
+        () => 'returned',
+        (error) => {
+          throw error;
+        },
+      ),
     ]);
     expect(policyWait).toBe('entered');
     const remaining = Date.parse(expiresAt) - Date.now();
@@ -444,9 +479,19 @@ test('issue rechecks canonical owner expiry after async policy before writing ac
     const after = fixture.store.readHostStateSnapshot(identity);
     expect(after.workVersion).toEqual(before.workVersion);
     expect(after.ledgerVersion).toEqual(before.ledgerVersion);
-    expect(fixture.store.readWorkSessionJournal(identity)?.version).toEqual(fixture.request.expected_host.journal.version);
-    expect(fixture.database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'").get()).toBeNull();
-    expect(fixture.database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_claim'").get()).toBeNull();
+    expect(fixture.store.readWorkSessionJournal(identity)?.version).toEqual(
+      fixture.request.expected_host.journal.version,
+    );
+    expect(
+      fixture.database
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'")
+        .get(),
+    ).toBeNull();
+    expect(
+      fixture.database
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_claim'")
+        .get(),
+    ).toBeNull();
   } finally {
     resumePolicy.resolve();
     fixture.close();

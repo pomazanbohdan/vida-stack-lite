@@ -7,11 +7,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import {
-  buildSessionBridgeRequest,
-  configuredContextForStage,
-} from '../src/orchestration/mastra-session-bridge.ts';
+import { buildSessionBridgeRequest, configuredContextForStage } from '../src/orchestration/mastra-session-bridge.ts';
 import { readConfiguredContinuationSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
+import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-session-ledger-codec.ts';
 import {
   projectConfiguredFrontierContinuationAction,
   projectConfiguredPrewriterContinuationRequests,
@@ -108,14 +106,22 @@ function fixture({ afterBoundary = false } = {}) {
       work_source_revision: originalScope.digest,
       config_digest: priorConfigDigest,
     },
-    execution: { run_id: runId, input_digest: '4'.repeat(64), phase: 'execute', status: 'active', assignment_attempts: [] },
+    execution: {
+      run_id: runId,
+      input_digest: '4'.repeat(64),
+      phase: 'execute',
+      status: 'active',
+      assignment_attempts: [],
+    },
     lifecycle: { risk: 'high' },
-    artifacts: [{
-      artifact_id: 'local-session-intake',
-      schema: 'VidaLocalSessionIntake/v1',
-      path: 'accepted-intake.json',
-      sha256: createHash('sha256').update(intakeBytes).digest('hex'),
-    }],
+    artifacts: [
+      {
+        artifact_id: 'local-session-intake',
+        schema: 'VidaLocalSessionIntake/v1',
+        path: 'accepted-intake.json',
+        sha256: createHash('sha256').update(intakeBytes).digest('hex'),
+      },
+    ],
   };
   const input = {
     work_id: workId,
@@ -171,7 +177,13 @@ function fixture({ afterBoundary = false } = {}) {
       undefined,
       'high',
     )[0],
-    oldDeveloperRequest = requestFor(boundaryWave, developerAction, oldContext, priorConfigDigest, oldState.observations),
+    oldDeveloperRequest = requestFor(
+      boundaryWave,
+      developerAction,
+      oldContext,
+      priorConfigDigest,
+      oldState.observations,
+    ),
     journal = {
       schema: 'MastraSessionLedger/v1',
       workspace_id: work.workspace_id,
@@ -255,7 +267,7 @@ function fixture({ afterBoundary = false } = {}) {
       },
       request,
       prior_work: work,
-      prior_journal: journal,
+      prior_journal: parseMastraSessionLedgerState(journal),
       historical_capture: null,
       frontier_snapshot: {
         snapshot_bytes_base64: beforeBytes.toString('base64'),
@@ -269,7 +281,8 @@ function fixture({ afterBoundary = false } = {}) {
     };
 
   const waveContexts = { input };
-  let persistedStatus = 'suspended', suspendedPaths = { [journal.step_id]: [boundaryWave] };
+  let persistedStatus = 'suspended',
+    suspendedPaths = { [journal.step_id]: [boundaryWave] };
   if (afterBoundary) {
     let prefixState = input;
     for (const wave of completed) {
@@ -321,14 +334,12 @@ function fixture({ afterBoundary = false } = {}) {
         undefined,
         'high',
       ),
-      laterRequests = laterActions.map((action) => requestFor(
-        developerWave,
-        action,
-        currentContext,
-        targetConfigDigest,
-        boundaryOutput.observations,
-      )),
-      executedWaves = [...plan.waves.entries()].filter(([, wave]) => !wave.every((stage) => stage.assignments.length === 0)),
+      laterRequests = laterActions.map((action) =>
+        requestFor(developerWave, action, currentContext, targetConfigDigest, boundaryOutput.observations),
+      ),
+      executedWaves = [...plan.waves.entries()].filter(
+        ([, wave]) => !wave.every((stage) => stage.assignments.length === 0),
+      ),
       executionIndex = executedWaves.findIndex(([index]) => index === developerWave);
     waveContexts[`wave-${developerWave}`] = {
       status: 'suspended',
@@ -366,7 +377,9 @@ function fixture({ afterBoundary = false } = {}) {
   const database = new Database(databasePath, { create: true, strict: true });
   try {
     database.exec('CREATE TABLE mastra_workflow_snapshot (workflow_name TEXT,run_id TEXT,snapshot TEXT)');
-    database.query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,?)').run(workflowId, runId, JSON.stringify(persisted));
+    database
+      .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,?)')
+      .run(workflowId, runId, JSON.stringify(persisted));
   } finally {
     database.close();
   }
@@ -389,7 +402,8 @@ function rewritePersisted(fixtureValue, mutate) {
   mutate(changed);
   const database = new Database(fixtureValue.databasePath, { strict: true });
   try {
-    database.query('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
+    database
+      .query('UPDATE mastra_workflow_snapshot SET snapshot=? WHERE run_id=?')
       .run(JSON.stringify(changed), fixtureValue.receipt.prior_work.execution.run_id);
   } finally {
     database.close();
@@ -406,8 +420,12 @@ test('configured continuation retains the original run and presents the current 
     observations: value.originalObservations,
   });
   expect(snapshot.requests).toEqual(value.currentRequests);
-  expect(snapshot.requests.every((request) => request.config_digest === value.receipt.request.targetConfigDigest)).toBe(true);
-  expect(snapshot.requests.every((request) => request.scope_digest === value.receipt.request.currentSourceScope.digest)).toBe(true);
+  expect(snapshot.requests.every((request) => request.config_digest === value.receipt.request.targetConfigDigest)).toBe(
+    true,
+  );
+  expect(
+    snapshot.requests.every((request) => request.scope_digest === value.receipt.request.currentSourceScope.digest),
+  ).toBe(true);
 });
 
 test('configured continuation accepts only the completed current wave and resumes the current developer suffix after restart', () => {
@@ -418,7 +436,9 @@ test('configured continuation accepts only the completed current wave and resume
   expect(first.run_id).toBe(value.receipt.prior_work.execution.run_id);
   expect(first.step_id).toBe(`wave-${value.developerWave}`);
   expect(first.requests.length).toBeGreaterThan(0);
-  expect(first.requests.every((request) => request.config_digest === runtimeConfigDigest(value.binding.config))).toBe(true);
+  expect(first.requests.every((request) => request.config_digest === runtimeConfigDigest(value.binding.config))).toBe(
+    true,
+  );
   expect(first.requests.every((request) => request.scope_digest === value.binding.context.scope_digest)).toBe(true);
   expect(first.observations).toEqual([...value.originalObservations, ...value.currentObservations]);
 });
@@ -426,21 +446,31 @@ test('configured continuation accepts only the completed current wave and resume
 test('configured continuation rejects missing, changed and mismatched beforeimage receipts', () => {
   const value = fixture();
   expect(() => readConfiguredContinuationSessionEngineSnapshot(value.binding, null)).toThrow();
-  expect(() => readConfiguredContinuationSessionEngineSnapshot(value.binding, {
-    ...value.receipt,
-    frontier_snapshot: { ...value.receipt.frontier_snapshot, snapshot_sha256: '0'.repeat(64) },
-  })).toThrow(/beforeimage encoding or digest/);
-  expect(() => readConfiguredContinuationSessionEngineSnapshot(value.binding, {
-    ...value.receipt,
-    request: { ...value.receipt.request, targetConfigDigest: '9'.repeat(64) },
-  })).toThrow(/receipt identity or integrity/);
+  expect(() =>
+    readConfiguredContinuationSessionEngineSnapshot(value.binding, {
+      ...value.receipt,
+      frontier_snapshot: { ...value.receipt.frontier_snapshot, snapshot_sha256: '0'.repeat(64) },
+    }),
+  ).toThrow(/beforeimage encoding or digest/);
+  expect(() =>
+    readConfiguredContinuationSessionEngineSnapshot(value.binding, {
+      ...value.receipt,
+      request: { ...value.receipt.request, targetConfigDigest: '9'.repeat(64) },
+    }),
+  ).toThrow(/receipt identity or integrity/);
 });
 
 test('configured continuation rejects original input or successful prefix drift after the boundary', () => {
   for (const mutate of [
-    (snapshot, value) => { snapshot.context.input.config_digest = value.receipt.request.targetConfigDigest; },
-    (snapshot) => { snapshot.context['wave-0'].output.observations[0].summary = 'changed old prefix'; },
-    (snapshot) => { snapshot.context[`wave-${snapshot.context.input.attempt}`] = { status: 'success' }; },
+    (snapshot, value) => {
+      snapshot.context.input.config_digest = value.receipt.request.targetConfigDigest;
+    },
+    (snapshot) => {
+      snapshot.context['wave-0'].output.observations[0].summary = 'changed old prefix';
+    },
+    (snapshot) => {
+      snapshot.context[`wave-${snapshot.context.input.attempt}`] = { status: 'success' };
+    },
   ]) {
     const value = fixture({ afterBoundary: true });
     rewritePersisted(value, (snapshot) => mutate(snapshot, value));
@@ -450,12 +480,25 @@ test('configured continuation rejects original input or successful prefix drift 
 
 test('configured continuation rejects partial, failed, mismatched and stale-digest current reports', () => {
   const mutations = [
-    (snapshot, value) => { snapshot.context[`wave-${value.boundaryWave}`].resumePayload.observations.pop(); },
-    (snapshot, value) => { snapshot.context[`wave-${value.boundaryWave}`].resumePayload.observations[0].status = 'reported_failed'; },
-    (snapshot, value) => { snapshot.context[`wave-${value.boundaryWave}`].resumePayload.observations[0].action_id = 'f'.repeat(64); },
-    (snapshot, value) => { snapshot.context[`wave-${value.boundaryWave}`].resumePayload.observations[0].output_digest = 'e'.repeat(64); },
-    (snapshot, value) => { snapshot.context[`wave-${value.boundaryWave}`].output.config_digest = value.receipt.request.priorConfigDigest; },
-    (snapshot, value) => { snapshot.context[`wave-${value.boundaryWave}`].output.scope_digest = value.receipt.prior_journal.source_scope.digest; },
+    (snapshot, value) => {
+      snapshot.context[`wave-${value.boundaryWave}`].resumePayload.observations.pop();
+    },
+    (snapshot, value) => {
+      snapshot.context[`wave-${value.boundaryWave}`].resumePayload.observations[0].status = 'reported_failed';
+    },
+    (snapshot, value) => {
+      snapshot.context[`wave-${value.boundaryWave}`].resumePayload.observations[0].action_id = 'f'.repeat(64);
+    },
+    (snapshot, value) => {
+      snapshot.context[`wave-${value.boundaryWave}`].resumePayload.observations[0].output_digest = 'e'.repeat(64);
+    },
+    (snapshot, value) => {
+      snapshot.context[`wave-${value.boundaryWave}`].output.config_digest = value.receipt.request.priorConfigDigest;
+    },
+    (snapshot, value) => {
+      snapshot.context[`wave-${value.boundaryWave}`].output.scope_digest =
+        value.receipt.prior_journal.source_scope.digest;
+    },
   ];
   for (const mutate of mutations) {
     const value = fixture({ afterBoundary: true });

@@ -1,3 +1,4 @@
+import type { fsSafeVersion } from './fs-safe-attestation.js';
 import { constants as fsConstants } from 'node:fs';
 import path from 'node:path';
 import {
@@ -21,7 +22,11 @@ export interface NativeNoFollowCapability {
   readonly containment: 'kernel-atomic' | 'best-effort';
   readonly assurance_profile: 'linux-kernel-atomic-v1' | 'windows-best-effort-v1';
   readonly filesystem: 'linux-native' | 'ntfs' | 'refs' | 'unknown';
-  readonly package?: { readonly name: '@openclaw/fs-safe'; readonly version: '0.5.6'; readonly integrity: string };
+  readonly package?: {
+    readonly name: '@openclaw/fs-safe';
+    readonly version: typeof fsSafeVersion;
+    readonly integrity: string;
+  };
   readonly residual_risks?: readonly string[];
   readonly attested: boolean;
 }

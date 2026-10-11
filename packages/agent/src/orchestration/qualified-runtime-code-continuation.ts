@@ -1,7 +1,12 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import type { SafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { canonicalJsonAtDepth, canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
+import {
+  canonicalJsonAtDepth,
+  canonicalJsonDigest,
+  freezeJsonValue,
+  isPlainRecord,
+} from '../contracts/public-ingress.js';
 import { canonicalJsonComponents } from '../contracts/canonical-json-core.js';
 import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';

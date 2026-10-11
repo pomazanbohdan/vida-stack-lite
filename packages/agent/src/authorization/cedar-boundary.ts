@@ -189,4 +189,3 @@ export function assertConfiguredCedarPolicy(policy: string, cedarSchema: string)
     'configured Cedar policy/schema semantic validation failed',
   );
 }
-export type { ProjectAuthorizationRequest } from '../contracts/public-ingress.js';

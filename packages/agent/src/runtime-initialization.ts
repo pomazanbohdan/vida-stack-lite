@@ -1,10 +1,90 @@
 import { canonicalJsonDigest } from './contracts/public-ingress.js';
-import { loadRuntimeConfig, runtimeConfigDigest } from './config/runtime-config.js';
+import {
+  activeRuntimeConfigurationSource,
+  assertProjectUpgradeInactive,
+  assertLoadedRuntimeConfig,
+  loadRuntimeConfig,
+  runtimeConfigDigest,
+} from './config/runtime-config.js';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './config/safe-repository-access.js';
 import { HostStateStore } from './host-state.js';
 import { canonicalRepositoryRoot, deriveWorkspaceId } from './workspace-identity.js';
 import { readRuntimeInitializationReceipt } from './config/initialization-record.js';
-import { RUNTIME_INITIALIZATION_PATH } from './config/project-paths.js';
+import {
+  LEGACY_RUNTIME_CONFIGURATION_PATH,
+  PROJECT_CONFIGURATION_PATHS,
+  RUNTIME_INITIALIZATION_PATH,
+  runtimeConfigurationSourceFor,
+} from './config/project-paths.js';
+import { bindProjectInitialization } from './config/project-initialization-binding.js';
+import {
+  readProjectInitializationReceipt,
+  type ProjectInitializationReceipt,
+} from './config/project-initialization-record.js';
+import type { AgentRuntimeConfig } from './config/runtime-config.js';
+
+export type RuntimeInitializationAuthority =
+  | {
+      readonly format: 'RuntimeInitialization/v1';
+      readonly receipt: ReturnType<typeof readRuntimeInitializationReceipt>['receipt'];
+      readonly binding: {
+        readonly repository_id: string;
+        readonly project_ids: readonly string[];
+        readonly workspace_id: string;
+        readonly config_digest: string;
+        readonly integrations_digest: string;
+      };
+    }
+  | {
+      readonly format: 'RuntimeInitialization/v2';
+      readonly receipt: ProjectInitializationReceipt;
+      readonly binding: {
+        readonly repository_id: string;
+        readonly project_ids: readonly string[];
+        readonly workspace_id: string;
+        readonly config_digest: string;
+      };
+    };
+
+/** Read the receipt selected by the already loaded configuration without changing the legacy SDK reader. */
+export function readRuntimeInitializationAuthority(
+  repositoryRoot: string,
+  config: AgentRuntimeConfig,
+): RuntimeInitializationAuthority {
+  const root = canonicalRepositoryRoot(repositoryRoot);
+  const access = requireSafeRepositoryAccess(root);
+  assertLoadedRuntimeConfig(config, root);
+  assertProjectUpgradeInactive(access);
+  const selected = activeRuntimeConfigurationSource(access);
+  const loaded = runtimeConfigurationSourceFor(config);
+  if (selected !== loaded) fail('runtime configuration selection changed');
+  if (selected === LEGACY_RUNTIME_CONFIGURATION_PATH) {
+    const receipt = readRuntimeInitializationReceipt(access).receipt;
+    return {
+      format: 'RuntimeInitialization/v1',
+      receipt,
+      binding: {
+        repository_id: receipt.repository_id,
+        project_ids: receipt.project_ids,
+        workspace_id: receipt.workspace_id,
+        config_digest: receipt.config_digest,
+        integrations_digest: receipt.integrations_digest,
+      },
+    };
+  }
+  if (selected !== PROJECT_CONFIGURATION_PATHS.project) fail('runtime configuration selection is unsupported');
+  const receipt = readProjectInitializationReceipt(access).receipt;
+  return {
+    format: 'RuntimeInitialization/v2',
+    receipt,
+    binding: {
+      repository_id: receipt.repository_id,
+      project_ids: receipt.project_ids,
+      workspace_id: receipt.workspace_id,
+      config_digest: receipt.current_config_digest,
+    },
+  };
+}
 
 export class RuntimeInitializationBindingError extends Error {
   readonly code = 'GAP-RUNTIME-INIT-BIND-001';
@@ -42,10 +122,28 @@ async function withBindingLock<T>(
 
 /** Host-owned pending -> bound transition. The receipt is never edited by callers. */
 export async function bindRuntimeInitialization(repositoryRoot: string, store: HostStateStore): Promise<unknown> {
+  return bindRuntimeInitializationForSelectedSource(repositoryRoot, store);
+}
+
+async function bindRuntimeInitializationForSelectedSource(
+  repositoryRoot: string,
+  store: HostStateStore,
+): Promise<unknown> {
   if (!HostStateStore.isHostStateStore(store)) fail('trusted HostStateStore is required');
   const root = canonicalRepositoryRoot(repositoryRoot);
-  const receiptPath = RUNTIME_INITIALIZATION_PATH;
   const access = requireSafeRepositoryAccess(root);
+  try {
+    assertProjectUpgradeInactive(access);
+    if (activeRuntimeConfigurationSource(access) === PROJECT_CONFIGURATION_PATHS.project)
+      return await bindProjectInitialization(root, store);
+  } catch (error) {
+    if (error instanceof RuntimeInitializationBindingError) throw error;
+    throw new RuntimeInitializationBindingError(
+      `runtime initialization binding failed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
+  const receiptPath = RUNTIME_INITIALIZATION_PATH;
   try {
     return await withBindingLock(access, receiptPath, async () => {
       if (!access.fileExists(receiptPath, 'runtime initialization receipt'))

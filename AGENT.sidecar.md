@@ -4,24 +4,45 @@ This project-owned sidecar configures the existing Git repository. It is not a
 portable runtime instruction owner. The repository has exactly two products:
 `agent` at `packages/agent` and `plugin` at `packages/plugin`.
 
+## Agent bootstrap: search tools
+
+During the mandatory `AGENTS.md` -> `AGENT.sidecar.md` bootstrap, the lead and
+every delegated agent load the [structural search policy](#structural-code-search)
+before searching or reading implementation files. Select the tool by purpose:
+
+| Purpose                                                                      | Tool                                             |
+| ---------------------------------------------------------------------------- | ------------------------------------------------ |
+| File names, symbol names, messages and configuration text                    | `rg`, `rg --files`                               |
+| Call shapes, repeated syntax and refactoring candidates                      | `ast-grep run` or `ast-grep scan`                |
+| Navigation to declarations, imports and direct members before reading bodies | `ast-grep outline`                               |
+| Maintained function inventory and identities; type and semantic checks       | Existing Babel inventory and TypeScript compiler |
+
+Delegation includes the repository root and this bootstrap pointer, including
+for blind agents. Agents read the relevant project skill before using
+`ast-grep`; inspect only the selected paths and reuse current results. If the
+CLI is unavailable or its version differs from the pin, report that limitation
+and use the existing tools without claiming an ast-grep check. Syntax findings
+remain review candidates; all validation and evidence gates stay with their
+current owners.
+
 ## Source and ownership map
 
-| Layer or concern                             | Authoritative source                                                                                                              | Owner            |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| Repository layout and distribution intent    | Current attributable user decision in `.agent/work/core-cloud-continuation-20261002/WORK.md#native-only-public-delivery-decision` | Repository owner |
-| Agent system behavior                        | `packages/agent/docs/system-specification.md`                                                                                     | Agent maintainer |
-| Agent lifecycle and verification             | `packages/agent/instructions/`, `packages/agent/TESTING.md`                                                                       | Agent maintainer |
-| Agent installation guide                     | `packages/agent/docs/installation.md` (derived guide, not a second specification)                                                 | Agent maintainer |
-| Agent research evidence                      | `packages/agent/docs/research/` (facts and open questions, not runtime receipts)                                                  | Agent maintainer |
-| Agent implementation and executable evidence | `packages/agent/src/`, `packages/agent/bin/`, `packages/agent/schemas/`, `packages/agent/tests/`, `packages/agent/tooling/`       | Agent maintainer |
-| Plugin business intent                       | `packages/plugin/docs/business-requirements.md`                                                                                   | Plugin owner     |
-| Plugin system behavior                       | `packages/plugin/docs/system-specification.md`                                                                                    | Plugin owner     |
-| Plugin acceptance                            | `packages/plugin/docs/acceptance.md`                                                                                              | Plugin owner     |
-| Plugin code and verification                 | `packages/plugin/`, as declared by its current system specification                                                               | Plugin owner     |
-| Repository-only migration verification       | `tooling/agent/`, `tests/agent/`                                                                                                  | Agent maintainer |
-| Repository-only CI evidence join             | `tooling/agent/release-ci-evidence.mjs` and its trusted session/controller observation boundary                                   | Agent maintainer |
+| Layer or concern                                                    | Authoritative source                                                                                                                | Owner            |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Repository layout and distribution intent                           | Current attributable user decision in `.agent/work/core-cloud-continuation-20261002/WORK.md#native-only-public-delivery-decision`   | Repository owner |
+| Agent system behavior                                               | `packages/agent/docs/system-specification.md`                                                                                       | Agent maintainer |
+| Agent lifecycle and verification                                    | `packages/agent/instructions/`, `packages/agent/TESTING.md`                                                                         | Agent maintainer |
+| Agent installation guide                                            | `packages/agent/docs/installation.md` (derived guide, not a second specification)                                                   | Agent maintainer |
+| Agent research evidence                                             | `packages/agent/docs/research/` (facts and open questions, not runtime receipts)                                                    | Agent maintainer |
+| Agent implementation and executable evidence                        | `packages/agent/src/`, `packages/agent/bin/`, `packages/agent/schemas/`, `packages/agent/tests/`, `packages/agent/tooling/`         | Agent maintainer |
+| Plugin business intent                                              | `packages/plugin/docs/business-requirements.md`                                                                                     | Plugin owner     |
+| Plugin system behavior                                              | `packages/plugin/docs/system-specification.md`                                                                                      | Plugin owner     |
+| Plugin acceptance                                                   | `packages/plugin/docs/acceptance.md`                                                                                                | Plugin owner     |
+| Plugin code and verification                                        | `packages/plugin/`, as declared by its current system specification                                                                 | Plugin owner     |
+| Repository-only migration verification                              | `tooling/agent/`, `tests/agent/`                                                                                                    | Agent maintainer |
+| Repository-only CI evidence join                                    | `tooling/agent/release-ci-evidence.mjs` and its trusted session/controller observation boundary                                     | Agent maintainer |
 | Native build artifact and Windows install/update/uninstall delivery | `.github/workflows/agent-native-delivery.yml`, `tooling/agent/native-ci-delivery.mjs`, `packages/agent/tooling/install-windows.ps1` | Agent maintainer |
-| Project registry and configuration           | Root `agent-runtime.config.v1.yaml` and bound documentation policy                                                                | Repository owner |
+| Project registry and configuration                                  | Root `agent-runtime.config.v1.yaml` and bound documentation policy                                                                  | Repository owner |
 
 Plugin canonical documents are filled by the Plugin owner under a fresh scope.
 Their absence is an explicit setup gap, not permission to import old work as law.
@@ -56,6 +77,46 @@ One writer owns overlapping shared root configuration and workspace files.
   live under `.tmp/`, outside sealed package payloads. Measure control latency
   separately from actual elapsed execution time.
 
+## Structural code search
+
+Use `ast-grep` as an additional development tool for structural searches and
+compact file outlines. Its CLI is pinned to `@ast-grep/cli@0.50.0`; verify
+`ast-grep --version` before use. Installation is global on the development host,
+not an Agent/Core runtime dependency.
+
+Project skill owners are [ast-grep](.agents/skills/ast-grep/SKILL.md) and
+[ast-grep-outline](.agents/skills/ast-grep-outline/SKILL.md). Read the relevant skill
+before use. `.agents/skills` contains the original project-scoped skill
+directories; upstream revision and license are recorded in
+`.agents/skills/ast-grep.upstream.json`. The repository owner owns their adoption;
+upstream instructions supplement this sidecar and the current lifecycle.
+
+Select candidate paths with `rg --files` or the existing maintained inventory,
+then search only the needed files. Use `--lang ts` for TS and `--lang tsx` for
+TSX. Test each new pattern on matching and nonmatching fixtures before applying
+it to Source. Include optional calls, generics, computed members and nested
+closures when relevant. Use `outline` for navigation, not a second function
+inventory. Keep plain-text searches on `rg` and reuse current results.
+
+Matches are syntax candidates for review. They do not establish symbol binding,
+types, dataflow, function ownership, safe deduplication or valid syntax after
+parser recovery. Preserve the Babel AST inventory, function/test links, reviewed
+scenario matrices, Ajv, Bun coverage and all exact coverage, complexity/CRAP and
+assertion-confirmed mutation gates. Do not add a duplicate full scan or suite.
+
+Prefer JSON output. Its line numbers are zero-based and byte offsets require
+UTF-8-aware conversion before joining Babel/JavaScript offsets. Multi-node
+captures can include punctuation. `run` returns 0 for matches and 1 for no
+matches; inspect stderr and the result body to distinguish no matches from an
+input error. An error-severity `scan` finding returns 1. Rule snapshots cover
+labels/spans/fixes; assert the rule-level diagnostic message separately. Current
+0.50.0 SARIF output is not qualified for standards-compliant export; use JSON.
+
+Search is read-only by default. Preview rewrites in owned fixtures, review the
+exact diff and run affected checks before any authorized Source application.
+Only the designated writer applies changes. A structural match grants no
+execution, authorization, repair or UNKNOWN-replay rights.
+
 ## Source package Git policy
 
 The Source repository owner's standing authorization permits ordinary non-force
@@ -64,6 +125,11 @@ its CI formation. Preserve unrelated staged files, Git history and remote state.
 Use the declared Source/commit byte binding at CI ingress. An unchanged selected
 artifact needs no new Source publication solely for installation. Git authority
 is not user Runtime acceptance or permission to rewrite consumer configuration.
+
+Completed correction packets must be committed and pushed after their applicable
+checks under the development-lifecycle self-development protocol. This Source
+repository's standing Git authorization applies; no separate per-packet approval
+is required. Keep unfinished work explicit and preserve unrelated staged changes.
 
 Formation, qualification and installation sequencing has one owner:
 the installed development-lifecycle instruction's self-development protocol.

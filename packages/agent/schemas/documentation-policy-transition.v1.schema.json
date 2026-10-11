@@ -23,12 +23,7 @@
       "minimum": 1
     },
     "phase": {
-      "enum": [
-        "planned",
-        "fenced",
-        "applied",
-        "abandoned_no_effect"
-      ]
+      "enum": ["planned", "fenced", "applied", "abandoned_no_effect"]
     },
     "maintenance_released": {
       "type": "boolean"
@@ -159,12 +154,7 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "path",
-              "bytes",
-              "sha256",
-              "size"
-            ],
+            "required": ["path", "bytes", "sha256", "size"],
             "properties": {
               "path": {
                 "type": "string",
@@ -363,10 +353,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "path",
-          "bytes"
-        ],
+        "required": ["path", "bytes"],
         "properties": {
           "path": {
             "type": "string",
@@ -389,11 +376,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "path",
-            "sha256",
-            "checkpoint_digest"
-          ],
+          "required": ["path", "sha256", "checkpoint_digest"],
           "properties": {
             "path": {
               "type": "string",

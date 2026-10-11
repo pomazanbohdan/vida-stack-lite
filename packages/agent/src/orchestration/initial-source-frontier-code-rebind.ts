@@ -6,7 +6,12 @@ import {
   freezeJsonValue,
   isPlainRecord,
 } from '../contracts/public-ingress.js';
-import { coordinationLedgerJson, coordinationLedgerDigest, validateCoordinationLedgerV1, type CoordinationLedger } from '../contracts/envelopes.js';
+import {
+  coordinationLedgerJson,
+  coordinationLedgerDigest,
+  validateCoordinationLedgerV1,
+  type CoordinationLedger,
+} from '../contracts/envelopes.js';
 import type { HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { InitialSourceContinuationReceipt } from './initial-source-continuation.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
@@ -117,8 +122,14 @@ function encodeEnvelope(value: Record<string, unknown>, keys: readonly string[],
     '{' +
     [...keys]
       .sort()
-      .map((key) => JSON.stringify(key) + ':' + (key === 'prior_ledger'
-        ? coordinationLedgerJson(value[key], depth + 1) : canonicalJsonAtDepth(value[key], depth + 1)))
+      .map(
+        (key) =>
+          JSON.stringify(key) +
+          ':' +
+          (key === 'prior_ledger'
+            ? coordinationLedgerJson(value[key], depth + 1)
+            : canonicalJsonAtDepth(value[key], depth + 1)),
+      )
       .join(',') +
     '}'
   );
@@ -226,18 +237,6 @@ export interface InitialSourceFrontierCodeRebindReceipt {
   readonly runtime_acceptance: false;
   readonly status: 'rebound';
 }
-export interface InitialSourceFrontierCodeRebindHostApi {
-  commitReadOnlyFrontierRuntimeCode(
-    request: InitialSourceFrontierCodeRebindRequest,
-    verifyCurrent: InitialSourceFrontierCodeRebindVerifyCurrent,
-  ): InitialSourceFrontierCodeRebindReceipt;
-  readInitialSourceFrontierCodeRebindReceipt(
-    identity: WorkIdentity,
-    attempt: number,
-    originalReceiptId: string,
-  ): InitialSourceFrontierCodeRebindReceipt | null;
-}
-
 export function validateInitialSourceFrontierCodeRebindRequest(value: unknown): InitialSourceFrontierCodeRebindRequest {
   exactEnvelope(value, requestKeys, 'request');
   const request = value as unknown as InitialSourceFrontierCodeRebindRequest;
@@ -320,7 +319,7 @@ export function initialSourceFrontierCodeRebindWorkProjection(work: WorkState): 
   delete value.lifecycle.config_binding.runtime_code_digest;
   return value;
 }
-export function serializeInitialSourceFrontierCodeRebindRecord(
+function serializeInitialSourceFrontierCodeRebindRecord(
   record: InitialSourceFrontierCodeRebindRecord,
   depth = 0,
 ): string {
@@ -335,7 +334,7 @@ export function initialSourceFrontierCodeRebindRecord(record: InitialSourceFront
   requireFrontier(Buffer.byteLength(payload, 'utf8') <= byteLimit, 'record exceeds its 64 MiB limit');
   return { payload, digest: createHash('sha256').update(payload).digest('hex') };
 }
-export function validateInitialSourceFrontierCodeRebindRecord(value: unknown): InitialSourceFrontierCodeRebindRecord {
+function validateInitialSourceFrontierCodeRebindRecord(value: unknown): InitialSourceFrontierCodeRebindRecord {
   exactEnvelope(value, recordKeys, 'record');
   const record = value as unknown as InitialSourceFrontierCodeRebindRecord;
   requireFrontier(validateCoordinationLedgerV1(record.prior_ledger).ok, 'stored prior Ledger is invalid');
@@ -385,26 +384,7 @@ export function validateInitialSourceFrontierCodeRebindRecord(value: unknown): I
   serializeInitialSourceFrontierCodeRebindRecord(record);
   return record;
 }
-export function readInitialSourceFrontierCodeRebindRecord(
-  payload: string,
-  recordDigest: string,
-): InitialSourceFrontierCodeRebindRecord {
-  requireFrontier(
-    typeof payload === 'string' && Buffer.byteLength(payload, 'utf8') <= byteLimit && digest(recordDigest),
-    'stored record exceeds its bound or has an invalid digest',
-  );
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(payload);
-  } catch {
-    throw new Error('initial-source frontier code rebind: stored record JSON is invalid');
-  }
-  const record = validateInitialSourceFrontierCodeRebindRecord(parsed),
-    encoded = initialSourceFrontierCodeRebindRecord(record);
-  requireFrontier(encoded.payload === payload && encoded.digest === recordDigest, 'stored record checksum differs');
-  return record;
-}
-export function serializeInitialSourceFrontierCodeRebindReceipt(
+function serializeInitialSourceFrontierCodeRebindReceipt(
   receipt: InitialSourceFrontierCodeRebindReceipt,
   depth = 0,
 ): string {

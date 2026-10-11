@@ -1,4 +1,10 @@
-import { mkdirSync, lstatSync, readFileSync, readdirSync } from 'node:fs';
+import { standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
+import {
+  assertReconcileOptionKeys,
+  reconcileAllowedOptions,
+  reconcileCliContracts,
+} from './reconcile-cli-contracts.ts';
+import { mkdirSync, lstatSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { root as safeRoot } from '@openclaw/fs-safe/root';
 import { extractArchive } from '@openclaw/fs-safe/archive';
@@ -11,6 +17,8 @@ import {
   releaseDirectory,
   releaseIdPattern,
   releaseState,
+  readReleaseBytes as read,
+  parseReleasePackMetadata as packMetadata,
   releaseSourceBinding,
   selectedTarball,
   packedDistribution,
@@ -19,31 +27,53 @@ import {
   retargetStateRelative,
 } from './local-release-artifacts.mjs';
 
+/** @typedef {readonly [number, number, number, number, number]} FileIdentity */
+/** @typedef {{path: string, sha256?: string|null, identity: FileIdentity|null, kind?: 'directory'}} ReadObservation */
+/** @typedef {{path: string, sha256: string}} SourceInput */
+/** @typedef {{source_binding: string, entries: SourceInput[], observations?: ReadObservation[]}} SourceBinding */
+/** @typedef {Record<string, unknown>} JsonRecord */
+/** @typedef {{operation_id: string, version: string, status: 'awaiting_assurance', source_binding: string, tarball_sha256: string, pack_metadata: [PackMetadataEntry], install_started?: unknown} & Record<string, unknown>} EligibleRelease */
+/** @typedef {{path: string, size: number} & Record<string, unknown>} PackFile */
+/** @typedef {{schema: string, operation_id: string, version: string, source_binding: string, archive: string, pack_metadata: [PackMetadataEntry]} & Record<string, unknown>} NativeCandidate */
+/** @typedef {{schema: string, version: string, pin: string, target: string, inputs: Array<{path: string, bytes: number, sha256: string}>, payloadId: string, asset: {file: string, bytes: number, sha256: string}} & Record<string, unknown>} StandaloneManifest */
+/** @typedef {{filename: string, files: PackFile[]} & Record<string, unknown>} PackMetadataEntry */
+/** @typedef {{schema: 'VidaNativeRetargetStage/v1', operation_id: string, version: string, source_binding: string, pack_metadata: [PackMetadataEntry], archive_sha256: string, entries: Array<{path: string, sha256: string}>, digest: string} & Record<string, unknown>} RetargetSeal */
+/** @typedef {{path: string, sha256: string, copy: string}} CustodyEntry */
+/** @typedef {{schema: 'VidaReleaseRetargetPlan/v1', operation_id: string, version: string, actor: string, source_binding: string, candidate_digest: string, before: ReadObservation[], custody: CustodyEntry[], release_after: EligibleRelease, archive_before: string, archive_after: string, digest: string} & Record<string, unknown>} RetargetPlan */
+/** @typedef {{schema: 'VidaReleaseRetargetState/v1', operation_id: string, plan_digest: string, phase: string, release_after_sha256: string, digest: string} & Record<string, unknown>} RetargetState */
+
 const binaryLimit = 512 * 1024 * 1024;
 const textLimit = 8 * 1024 * 1024;
+/** @param {string} operation @returns {string} */
 const base = (operation) => '.agent/work/agent-local-release/' + operation;
+/** @param {string} operation @returns {string} */
 const repair = (operation) => base(operation) + '/retarget';
+/** @param {string} operation @param {string} name @returns {string} */
 const archivePath = (operation, name) => '.tmp/releases/' + operation + '/' + name;
+/** @template {object} T @param {T} body @returns {T & {digest: string}} */
 const sealed = (body) => ({ ...body, digest: sha(json(body)) });
+/** @param {unknown} value @returns {value is JsonRecord} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+/** @param {unknown} value @param {readonly string[]} expected @returns {asserts value is JsonRecord} */
 function keys(value, expected) {
   require(value &&
     typeof value === 'object' &&
     !Array.isArray(value) &&
     Object.keys(value).sort().join() === expected.slice().sort().join(), 'repair contract fields differ');
 }
-function read(root, relative, limit = textLimit) {
-  const file = releasePath(root, relative),
-    stat = lstatSync(file);
-  require(stat.isFile() && stat.size <= limit, 'repair file unsafe or oversized');
-  return readFileSync(file);
-}
-const object = (root, relative) => JSON.parse(read(root, relative));
+
+/** @param {string} root @param {string} relative @returns {unknown} */
+const object = (root, relative) => JSON.parse(read(root, relative).toString('utf8'));
+/** @param {unknown} value @param {string} schema @param {readonly string[]} expected @returns {JsonRecord} */
 function unseal(value, schema, expected) {
   keys(value, [...expected, 'digest']);
   const { digest, ...body } = value;
   require(value.schema === schema && digest === sha(json(body)), 'repair seal differs');
   return value;
 }
+/** @param {string} root @param {string} relative @param {boolean} [directory] @returns {FileIdentity|null} */
 function identity(root, relative, directory = false) {
   const file = releasePath(root, relative, true),
     stat = lstatSync(file, { throwIfNoEntry: false });
@@ -51,6 +81,7 @@ function identity(root, relative, directory = false) {
   require(directory ? stat.isDirectory() : stat.isFile(), 'repair input must be regular');
   return [stat.dev, stat.ino, stat.size, stat.mtimeMs, stat.ctimeMs];
 }
+/** @param {string} root @param {string} relative @param {number} [limit] @returns {ReadObservation} */
 function observation(root, relative, limit = textLimit) {
   const before = identity(root, relative);
   if (!before) return { path: relative, sha256: null, identity: null };
@@ -58,27 +89,35 @@ function observation(root, relative, limit = textLimit) {
   require(json(before) === json(identity(root, relative)), 'repair input changed during read');
   return { path: relative, sha256: sha(bytes), identity: before };
 }
+/** @param {string} root @param {readonly ReadObservation[]} observations */
 function sameObservations(root, observations) {
   for (const entry of observations)
     require(json(identity(root, entry.path, entry.kind === 'directory')) ===
       json(entry.identity), 'repair input changed: ' + entry.path);
 }
+/** @param {string} root @param {string} expected @returns {ReadObservation[]} */
 function sourceObservations(root, expected) {
   const source = releaseSourceBinding(root, true);
   require(source.source_binding === expected, 'frozen Source differs');
+  require(source.observations, 'source observations missing');
   return source.observations;
 }
+/** @param {string} root @returns {Promise<Awaited<ReturnType<typeof safeRoot>>>} */
 async function access(root) {
   releasePath(root, 'packages/agent/package.json');
   return safeRoot(root, { hardlinks: 'reject', symlinks: 'reject', maxBytes: binaryLimit, mode: 0o600 });
 }
+/** @param {string} root @param {string} relative */
 function reserve(root, relative) {
   releaseDirectory(root, path.posix.dirname(relative));
   // Root.copyIn overwrites. Only this exclusive reservation grants ownership of its destinations.
   mkdirSync(releasePath(root, relative, true), { mode: 0o700 });
 }
+/** @param {string} root @param {string} relative @returns {ReadObservation[]} */
 function inventory(root, relative) {
+  /** @type {ReadObservation[]} */
   const result = [];
+  /** @param {string} current */
   const walk = (current) => {
     for (const name of readdirSync(releasePath(root, current)).sort()) {
       const child = current + '/' + name,
@@ -90,18 +129,45 @@ function inventory(root, relative) {
   walk(relative);
   return result;
 }
+/** @param {string} root @param {string} operation @returns {EligibleRelease} */
 function eligible(root, operation) {
   require(releaseIdPattern.test(operation), 'operation invalid');
   const state = releaseState(releasePath(root, base(operation) + '/release.json'));
   const pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
   const manifest = object(root, 'packages/agent/package.json');
+  require(isRecord(manifest), 'package manifest invalid');
+  assertEligibleIdentity(state, pending, manifest, operation);
+  assertEligibleMetadata(state);
+  return {
+    ...state,
+    status: state.status,
+    source_binding: state.source_binding,
+    tarball_sha256: state.tarball_sha256,
+    pack_metadata: packMetadata(state.pack_metadata),
+  };
+}
+
+/** @param {ReturnType<typeof releaseState>} state @param {ReturnType<typeof releaseState>} pending @param {JsonRecord} manifest @param {string} operation @returns {asserts state is ReturnType<typeof releaseState> & {status: 'awaiting_assurance'}} */
+function assertEligibleIdentity(state, pending, manifest, operation) {
   require(state.operation_id === operation &&
     pending.operation_id === operation &&
     state.version === pending.version &&
     state.version === manifest.version &&
     state.status === 'awaiting_assurance' &&
     !state.install_started, 'original operation is not eligible');
-  return state;
+}
+/** @param {ReturnType<typeof releaseState>} state @returns {asserts state is ReturnType<typeof releaseState> & {source_binding: string, tarball_sha256: string, pack_metadata: unknown[]}} */
+function assertEligibleMetadata(state) {
+  require(Array.isArray(state.pack_metadata) &&
+    typeof state.source_binding === 'string' &&
+    /^[a-f0-9]{64}$/.test(state.source_binding) &&
+    typeof state.tarball_sha256 === 'string' &&
+    /^[a-f0-9]{64}$/.test(state.tarball_sha256), 'original operation is not eligible');
+}
+
+/** @param {unknown} value @returns {string} */
+function archiveName(value) {
+  return packMetadata(value)[0].filename;
 }
 
 const candidateFields = ['schema', 'operation_id', 'version', 'source_binding', 'archive', 'pack_metadata'];
@@ -114,60 +180,143 @@ const candidateSealFields = [
   'archive_sha256',
   'entries',
 ];
+/** @param {JsonRecord} sealValue @param {string} operation */
+function assertCandidateSealFields(sealValue, operation) {
+  require(sealValue.operation_id === operation &&
+    typeof sealValue.version === 'string' &&
+    typeof sealValue.source_binding === 'string' &&
+    /^[a-f0-9]{64}$/.test(sealValue.source_binding) &&
+    typeof sealValue.archive_sha256 === 'string' &&
+    /^[a-f0-9]{64}$/.test(sealValue.archive_sha256) &&
+    Array.isArray(sealValue.entries), 'candidate seal fields invalid');
+}
+
+/** @param {string} root @param {string} operation @returns {{seal: RetargetSeal, observations: ReadObservation[]}} */
 function candidateSeal(root, operation) {
-  const seal = unseal(
+  const sealValue = unseal(
     object(root, repair(operation) + '/candidate/seal.json'),
     'VidaNativeRetargetStage/v1',
     candidateSealFields,
+  );
+  assertCandidateSealFields(sealValue, operation);
+  const seal = /** @type {RetargetSeal} */ (
+    /** @type {unknown} */ ({ ...sealValue, pack_metadata: packMetadata(sealValue.pack_metadata) })
   );
   require(seal.operation_id === operation, 'candidate operation differs');
   const folder = repair(operation) + '/candidate';
   const actual = inventory(root, folder).filter((entry) => entry.path !== folder + '/seal.json');
   require(json(actual.map(({ path: file, sha256 }) => ({ path: file, sha256 }))) ===
     json(seal.entries), 'candidate stage changed');
-  return { seal, observations: actual.concat(observation(root, folder + '/seal.json')) };
+  return {
+    seal: /** @type {RetargetSeal} */ (seal),
+    observations: actual.concat(observation(root, folder + '/seal.json')),
+  };
+}
+
+/** @param {JsonRecord} value @param {string} key @param {string} label @returns {string} */
+function nativeString(value, key, label) {
+  const result = value[key];
+  require(typeof result === 'string', label);
+  return result;
+}
+/** @param {JsonRecord} value @param {string} key @param {string} label @returns {number} */
+function nativeBytes(value, key, label) {
+  const result = value[key];
+  require(typeof result === 'number' && Number.isSafeInteger(result), label);
+  return result;
+}
+/** @param {unknown} value @returns {StandaloneManifest['asset']} */
+function nativeAsset(value) {
+  keys(value, ['file', 'bytes', 'sha256']);
+  return {
+    file: nativeString(value, 'file', 'candidate native asset fields invalid'),
+    bytes: nativeBytes(value, 'bytes', 'candidate native asset fields invalid'),
+    sha256: nativeString(value, 'sha256', 'candidate native asset fields invalid'),
+  };
+}
+/** @param {unknown} value @returns {StandaloneManifest['inputs'][number]} */
+function nativeInput(value) {
+  keys(value, ['path', 'bytes', 'sha256']);
+  return {
+    path: nativeString(value, 'path', 'candidate input fields invalid'),
+    bytes: nativeBytes(value, 'bytes', 'candidate input fields invalid'),
+    sha256: nativeString(value, 'sha256', 'candidate input fields invalid'),
+  };
+}
+/** @param {unknown} value @returns {StandaloneManifest['inputs']} */
+function nativeInputs(value) {
+  require(Array.isArray(value) && value.length > 0, 'candidate build input inventory differs');
+  const inputs = value.map(nativeInput);
+  require(new Set(inputs.map(observationPath)).size === inputs.length, 'candidate build input inventory differs');
+  return inputs;
+}
+/** @param {unknown} value @param {string} version @returns {StandaloneManifest} */
+function nativeManifest(value, version) {
+  keys(value, ['schema', 'version', 'pin', 'target', 'inputs', 'payloadId', 'asset']);
+  const manifest = {
+    schema: nativeString(value, 'schema', 'candidate native manifest fields invalid'),
+    version: nativeString(value, 'version', 'candidate native manifest fields invalid'),
+    pin: nativeString(value, 'pin', 'candidate native manifest fields invalid'),
+    target: nativeString(value, 'target', 'candidate native manifest fields invalid'),
+    payloadId: nativeString(value, 'payloadId', 'candidate native manifest fields invalid'),
+    inputs: nativeInputs(value.inputs),
+    asset: nativeAsset(value.asset),
+  };
+  require(manifest.schema === 'VidaStandaloneBuild/v1' &&
+    manifest.version === version &&
+    manifest.pin === '1.4.2' &&
+    /^bun-(windows|linux|darwin)-(x64|arm64)(-baseline)?$/.test(manifest.target), 'candidate native manifest differs');
+  require(/^[a-f0-9]{64}$/.test(manifest.payloadId), 'candidate build input inventory differs');
+  require(manifest.asset.file ===
+    'vida-agent-' +
+      manifest.target +
+      (manifest.target.startsWith('bun-windows-') ? '.exe' : ''), 'candidate target asset name differs');
+  return manifest;
+}
+/** @param {string} packageRoot @param {StandaloneManifest} manifest @param {string} folder @param {ReadObservation[]} observations */
+function assertNativeBuildInputs(packageRoot, manifest, folder, observations) {
+  const expected = standaloneBuildInputInventory(packageRoot);
+  require(json(manifest.inputs.map(observationPath)) ===
+    json(expected), 'candidate complete build input inventory differs');
+  const observedByPath = new Map(observations.map((item) => [item.path, item]));
+  for (const entry of manifest.inputs) {
+    const observed = observedByPath.get(folder + '/payload/' + releaseRelative(entry.path));
+    require(observed &&
+      observed.identity &&
+      observed.sha256 === entry.sha256 &&
+      observed.identity[2] === entry.bytes, 'candidate build input bytes differ');
+  }
 }
 
 /** Read only: exact sealed archive-owned bytes; no generated Source output or qualification. */
+/** @param {{root: string, operation: string, published?: boolean}} input @returns {{operation_id: string, version: string, source_binding: string, candidate_digest: string, pack_metadata: [PackMetadataEntry], archive_sha256: string, manifest: StandaloneManifest, manifest_sha256: string, asset: StandaloneManifest['asset'] & {path: string, relative: string, target: string}, observations: ReadObservation[]}} */
 export function readNativeRetargetCandidate({ root, operation, published = false }) {
   require(releaseIdPattern.test(operation), 'operation invalid');
   if (published) assertReleaseRetargetSettled(root, operation);
   const { seal, observations } = candidateSeal(root, operation);
   const source = releaseSourceBinding(root, true);
-  require(seal.version === object(root, 'packages/agent/package.json').version &&
+  const packageManifest = object(root, 'packages/agent/package.json');
+  require(isRecord(packageManifest) &&
+    seal.version === packageManifest.version &&
     seal.source_binding === source.source_binding, 'candidate Source differs');
   const folder = repair(operation) + '/candidate';
   const manifestPath = folder + '/payload/dist/standalone/manifest.json';
   const manifestBytes = read(root, manifestPath);
-  const manifest = JSON.parse(manifestBytes);
-  keys(manifest, ['schema', 'version', 'pin', 'target', 'inputs', 'payloadId', 'asset']);
-  keys(manifest.asset, ['file', 'bytes', 'sha256']);
-  require(manifest.schema === 'VidaStandaloneBuild/v1' &&
-    manifest.version === seal.version &&
-    manifest.pin === '1.4.2' &&
-    /^bun-(windows|linux|darwin)-(x64|arm64)(-baseline)?$/.test(manifest.target), 'candidate native manifest differs');
-  require(/^[a-f0-9]{64}$/.test(manifest.payloadId) &&
-    Array.isArray(manifest.inputs) &&
-    manifest.inputs.length > 0 &&
-    new Set(manifest.inputs.map((entry) => entry.path)).size ===
-      manifest.inputs.length, 'candidate build input inventory differs');
-  for (const entry of manifest.inputs) {
-    keys(entry, ['path', 'bytes', 'sha256']);
-    const observed = observations.find((item) => item.path === folder + '/payload/' + releaseRelative(entry.path));
-    require(observed &&
-      observed.sha256 === entry.sha256 &&
-      observed.identity[2] === entry.bytes, 'candidate build input bytes differ');
-  }
+  /** @type {unknown} */
+  const manifestValue = JSON.parse(manifestBytes.toString('utf8'));
+  const manifest = nativeManifest(manifestValue, seal.version);
+  assertNativeBuildInputs(releasePath(root, folder + '/payload'), manifest, folder, observations);
   const relative = 'dist/standalone/' + releaseRelative(manifest.asset?.file);
   const assetPath = folder + '/payload/' + relative;
   const assetObserved = observations.find((entry) => entry.path === assetPath);
   const archiveObserved = observations.find((entry) => entry.path === folder + '/archive.tgz');
-  require(assetObserved?.identity[2] === manifest.asset.bytes &&
+  require(assetObserved?.identity &&
+    assetObserved.identity[2] === manifest.asset.bytes &&
     assetObserved?.sha256 === manifest.asset.sha256 &&
     archiveObserved?.sha256 === seal.archive_sha256, 'candidate native bytes differ');
   if (published) {
     const state = releaseState(releasePath(root, base(operation) + '/release.json'));
-    const canonicalArchive = observation(root, archivePath(operation, seal.pack_metadata[0].filename), binaryLimit);
+    const canonicalArchive = observation(root, archivePath(operation, archiveName(seal.pack_metadata)), binaryLimit);
     require(state.operation_id === operation &&
       state.version === seal.version &&
       state.source_binding === seal.source_binding &&
@@ -184,11 +333,13 @@ export function readNativeRetargetCandidate({ root, operation, published = false
       canonicalArchive,
     );
   }
+  require(source.observations, 'Source observations missing');
   observations.push(...source.observations);
   return {
     operation_id: operation,
     version: seal.version,
     source_binding: seal.source_binding,
+    candidate_digest: seal.digest,
     pack_metadata: seal.pack_metadata,
     archive_sha256: seal.archive_sha256,
     manifest,
@@ -199,18 +350,38 @@ export function readNativeRetargetCandidate({ root, operation, published = false
 }
 
 /** Recheck the same read observation after an asynchronous controller boundary without a second byte scan. */
+/** @param {string} root @param {{observations: ReadObservation[]}} candidate */
 export function recheckNativeRetargetCandidate(root, candidate) {
   sameObservations(root, candidate.observations);
 }
 
+/** @param {unknown} candidateValue @param {string} operation @returns {NativeCandidate} */
+function nativeCandidate(candidateValue, operation) {
+  keys(candidateValue, candidateFields);
+  require(candidateValue.schema === 'VidaNativeRetargetCandidate/v1' &&
+    candidateValue.operation_id === operation &&
+    typeof candidateValue.version === 'string' &&
+    typeof candidateValue.source_binding === 'string' &&
+    /^[a-f0-9]{64}$/.test(candidateValue.source_binding) &&
+    typeof candidateValue.archive === 'string', 'candidate identity differs');
+  return {
+    ...candidateValue,
+    schema: candidateValue.schema,
+    operation_id: candidateValue.operation_id,
+    version: candidateValue.version,
+    source_binding: candidateValue.source_binding,
+    archive: candidateValue.archive,
+    pack_metadata: packMetadata(candidateValue.pack_metadata),
+  };
+}
+
 /** Consume an already formed archive. This does not build, execute, install or qualify it. */
+/** @param {{root: string, operation: string, candidateFile: string}} input @returns {Promise<{status: 'staged', operation_id: string, version: string}>} */
 export async function stageNativeRetargetCandidate({ root, operation, candidateFile }) {
   require(typeof candidateFile === 'string' &&
     !path.isAbsolute(candidateFile), 'candidate input must be repository relative');
-  const candidate = object(root, releaseRelative(candidateFile));
-  keys(candidate, candidateFields);
-  require(candidate.schema === 'VidaNativeRetargetCandidate/v1' &&
-    candidate.operation_id === operation, 'candidate identity differs');
+  const candidateValue = object(root, releaseRelative(candidateFile));
+  const candidate = nativeCandidate(candidateValue, operation);
   const original = eligible(root, operation);
   require(packedDistribution(original.pack_metadata) === 'npm' &&
     candidate.version === original.version &&
@@ -277,23 +448,19 @@ export async function stageNativeRetargetCandidate({ root, operation, candidateF
   require(payload.length === files.length, 'candidate payload inventory differs');
   for (const entry of payload) {
     const relative = entry.path.slice((folder + '/payload/').length);
-    require(files.some(
-      (file) => file.path === relative && file.size === entry.identity[2],
-    ), 'candidate payload differs');
+    require(entry.identity &&
+      files.some((file) => file.path === relative && file.size === entry.identity?.[2]), 'candidate payload differs');
     if (!relative.startsWith('dist/'))
       require(sha(read(root, 'packages/agent/' + relative, binaryLimit)) ===
         entry.sha256, 'candidate packaged Source differs');
   }
-  const native = object(root, folder + '/payload/dist/standalone/manifest.json');
-  require(native.schema === 'VidaStandaloneBuild/v1' &&
-    native.version === candidate.version &&
-    native.pin === '1.4.2' &&
-    typeof native.target === 'string' &&
-    /^bun-(?:windows|linux|darwin)-(?:x64|arm64)(?:-baseline)?$/.test(native.target), 'native manifest differs');
+  const native = nativeManifest(object(root, folder + '/payload/dist/standalone/manifest.json'), candidate.version);
+  assertNativeBuildInputs(path.join(root, 'packages/agent'), native, folder, payload);
   const asset = payload.find(
     (entry) => entry.path === folder + '/payload/dist/standalone/' + releaseRelative(native.asset?.file),
   );
   require(asset &&
+    asset.identity &&
     asset.sha256 === native.asset.sha256 &&
     asset.identity[2] === native.asset.bytes, 'native asset differs');
   sameObservations(root, [input]);
@@ -317,11 +484,12 @@ export async function stageNativeRetargetCandidate({ root, operation, candidateF
 }
 
 // Preserve receipt files and their referenced logs. Source-seal entries are Source inputs, not receipts.
+/** @param {string} root @param {string} operation @param {EligibleRelease} original @returns {string[]} */
 function retainedFiles(root, operation, original) {
   const files = new Set([
     base(operation) + '/release.json',
     '.agent/work/agent-local-release/pending.json',
-    archivePath(operation, original.pack_metadata[0].filename),
+    archivePath(operation, archiveName(original.pack_metadata)),
   ]);
   const success = '.agent/work/agent-local-release/successful.json';
   if (identity(root, success)) files.add(success);
@@ -332,6 +500,7 @@ function retainedFiles(root, operation, original) {
       inventory(root, relative).forEach((entry) => files.add(entry.path));
     else files.add(relative);
   }
+  /** @param {unknown} value */
   const visit = (value) => {
     if (!value || typeof value !== 'object') return;
     for (const [key, child] of Object.entries(value)) {
@@ -371,16 +540,25 @@ const planFields = [
   'archive_after',
 ];
 const stateFields = ['schema', 'operation_id', 'plan_digest', 'phase', 'release_after_sha256'];
-function loadPlan(root, operation) {
-  const plan = unseal(object(root, repair(operation) + '/plan.json'), 'VidaReleaseRetargetPlan/v1', planFields);
+/** @param {unknown} value @returns {string} */
+function observationPath(value) {
+  require(isRecord(value) && typeof value.path === 'string', 'observation path is invalid');
+  return value.path;
+}
+
+/** @param {JsonRecord} plan @param {string} operation */
+function assertPlanAttribution(plan, operation) {
   require(plan.operation_id === operation &&
     releaseIdPattern.test(operation) &&
     typeof plan.actor === 'string' &&
     plan.actor.trim() &&
-    plan.actor.length <= 256 &&
-    Array.isArray(plan.before) &&
+    plan.actor.length <= 256, 'repair plan identity or closure differs');
+}
+/** @param {JsonRecord} plan @param {string} operation @returns {asserts plan is JsonRecord & {custody: unknown[]}} */
+function assertPlanClosure(plan, operation) {
+  require(Array.isArray(plan.before) &&
     plan.before.length === 3 &&
-    json(plan.before.map((entry) => entry.path)) ===
+    json(plan.before.map(observationPath)) ===
       json([
         '.agent/work/agent-local-release/pending.json',
         '.agent/work/agent-local-release/successful.json',
@@ -389,16 +567,41 @@ function loadPlan(root, operation) {
     Array.isArray(plan.custody) &&
     plan.custody.length > 0 &&
     plan.custody.length <= 4096, 'repair plan identity or closure differs');
+}
+/** @param {ReadObservation} entry @param {string} copy @returns {CustodyEntry} */
+function retainedCustodyEntry(entry, copy) {
+  require(typeof entry.sha256 === 'string' && /^[a-f0-9]{64}$/.test(entry.sha256), 'retained custody source missing');
+  return { path: entry.path, sha256: entry.sha256, copy };
+}
+/** @param {JsonRecord|null} state @param {string} operation @param {string} planDigest @param {string} afterHash @returns {asserts state is (JsonRecord & {phase: string})|null} */
+function assertRepairPhase(state, operation, planDigest, afterHash) {
+  require(state === null ||
+    (state.operation_id === operation &&
+      state.plan_digest === planDigest &&
+      typeof state.phase === 'string' &&
+      ['planning', 'custody', 'archive', 'release', 'complete'].includes(state.phase) &&
+      state.release_after_sha256 === afterHash), 'repair phase UNKNOWN');
+}
+
+/** @param {string} root @param {string} operation @returns {RetargetPlan} */
+function loadPlan(root, operation) {
+  const plan = unseal(object(root, repair(operation) + '/plan.json'), 'VidaReleaseRetargetPlan/v1', planFields);
+  assertPlanAttribution(plan, operation);
+  assertPlanClosure(plan, operation);
   for (const [index, entry] of plan.custody.entries()) {
     keys(entry, ['path', 'sha256', 'copy']);
+    require(typeof entry.path === 'string' &&
+      typeof entry.sha256 === 'string' &&
+      typeof entry.copy === 'string', 'custody fields invalid');
     releaseRelative(entry.path);
     require(entry.copy === repair(operation) + '/custody/files/' + index &&
       /^[a-f0-9]{64}$/.test(entry.sha256), 'custody entry differs');
   }
-  require(new Set(plan.custody.map((entry) => entry.path.toLowerCase())).size ===
+  require(new Set(plan.custody.map((entry) => observationPath(entry).toLowerCase())).size ===
     plan.custody.length, 'custody aliases');
-  return plan;
+  return /** @type {RetargetPlan} */ (plan);
 }
+/** @param {Awaited<ReturnType<typeof safeRoot>>} api @param {string} operation @param {RetargetPlan} plan @param {string} phase */
 async function savePhase(api, operation, plan, phase) {
   await api.write(
     retargetStateRelative(operation),
@@ -413,6 +616,7 @@ async function savePhase(api, operation, plan, phase) {
     ),
   );
 }
+/** @param {string} root @param {string} operation @returns {ReadObservation[]} */
 function pointers(root, operation) {
   return [
     '.agent/work/agent-local-release/pending.json',
@@ -420,6 +624,7 @@ function pointers(root, operation) {
     base(operation) + '/release.json',
   ].map((file) => observation(root, file));
 }
+/** @param {{root: string, operation: string}} input @returns {Promise<Record<string, unknown>>} */
 export async function inspectReleaseRetarget({ root, operation }) {
   const original = eligible(root, operation);
   const file = repair(operation) + '/plan.json';
@@ -436,17 +641,20 @@ export async function inspectReleaseRetarget({ root, operation }) {
   return { status: 'requires_staged_candidate', operation_id: operation, version: original.version, qualified: false };
 }
 
+/** @param {string} root @param {string} operation @param {RetargetPlan} plan @returns {RetargetState|null} */
 function planningState(root, operation, plan) {
   if (!identity(root, retargetStateRelative(operation))) return null;
   const state = unseal(object(root, retargetStateRelative(operation)), 'VidaReleaseRetargetState/v1', stateFields);
   require(state.operation_id === operation &&
     state.plan_digest === plan.digest &&
     state.release_after_sha256 === sha(json(plan.release_after)), 'planning reservation differs');
-  return state;
+  return /** @type {RetargetState} */ (state);
 }
+/** @param {string} root @param {string} operation @returns {boolean} */
 function custodyAbsent(root, operation) {
   return !lstatSync(releasePath(root, repair(operation) + '/custody', true), { throwIfNoEntry: false });
 }
+/** @param {string} root @param {string} operation @param {RetargetPlan} plan @param {{onPhase?: ((phase: string) => unknown)|undefined}} [options] @param {ReadObservation[]} [frozenInputs] @param {{seal: RetargetSeal, observations: ReadObservation[]}} [frozenCandidate] @returns {Promise<Record<string, unknown>>} */
 async function finishPlanning(root, operation, plan, { onPhase } = {}, frozenInputs, frozenCandidate) {
   const { seal, observations: staged } = frozenCandidate ?? candidateSeal(root, operation),
     original = eligible(root, operation);
@@ -509,6 +717,7 @@ async function finishPlanning(root, operation, plan, { onPhase } = {}, frozenInp
   return { status: 'planned', operation_id: operation, version: plan.version };
 }
 
+/** @param {{root: string, operation: string, actor: unknown}} input @param {{onPhase?: ((phase: string) => unknown)|undefined}} [options] @returns {Promise<Record<string, unknown>>} */
 export async function planReleaseRetarget({ root, operation, actor }, { onPhase } = {}) {
   require(typeof actor === 'string' && actor.trim() && actor.length <= 256, 'repair actor missing');
   const existing = repair(operation) + '/plan.json';
@@ -524,7 +733,7 @@ export async function planReleaseRetarget({ root, operation, actor }, { onPhase 
   require(packedDistribution(original.pack_metadata) === 'npm' &&
     seal.version === original.version, 'original or candidate binding differs');
   const sources = sourceObservations(root, seal.source_binding);
-  const archive = archivePath(operation, original.pack_metadata[0].filename);
+  const archive = archivePath(operation, archiveName(original.pack_metadata));
   selectedTarball(original.pack_metadata, path.dirname(releasePath(root, archive)), original.version);
   require(sha(read(root, archive, binaryLimit)) === original.tarball_sha256, 'original archive differs');
   const before = pointers(root, operation),
@@ -533,17 +742,15 @@ export async function planReleaseRetarget({ root, operation, actor }, { onPhase 
     );
   const api = await access(root),
     custody = repair(operation) + '/custody';
-  const preserved = retained.map((entry, i) => ({
-    path: entry.path,
-    sha256: entry.sha256,
-    copy: custody + '/files/' + i,
-  }));
+  const preserved = retained.map((entry, i) => retainedCustodyEntry(entry, custody + '/files/' + i));
   const release_after = {
     ...original,
     pack_metadata: seal.pack_metadata,
     source_binding: seal.source_binding,
     tarball_sha256: seal.archive_sha256,
   };
+  const releaseAfter = /** @type {EligibleRelease} */ (/** @type {unknown} */ (release_after));
+  /** @type {RetargetPlan} */
   const plan = sealed({
     schema: 'VidaReleaseRetargetPlan/v1',
     operation_id: operation,
@@ -553,7 +760,7 @@ export async function planReleaseRetarget({ root, operation, actor }, { onPhase 
     candidate_digest: seal.digest,
     before,
     custody: preserved,
-    release_after,
+    release_after: releaseAfter,
     archive_before: original.tarball_sha256,
     archive_after: seal.archive_sha256,
   });
@@ -569,6 +776,7 @@ export async function planReleaseRetarget({ root, operation, actor }, { onPhase 
 }
 
 /** Known-phase reconciliation only. The optional observer is a fault-test seam, never a CLI input. */
+/** @param {{root: string, operation: string}} input @param {{onPhase?: ((phase: string) => unknown)|undefined}} [options] @returns {Promise<Record<string, unknown>>} */
 export async function applyReleaseRetarget({ root, operation }, { onPhase } = {}) {
   const plan = loadPlan(root, operation);
   const phase = planningState(root, operation, plan);
@@ -617,7 +825,7 @@ export async function applyReleaseRetarget({ root, operation }, { onPhase } = {}
     packedDistribution(original.pack_metadata) === 'npm' &&
     packedDistribution(seal.pack_metadata) === 'native' &&
     json(expected) === json(plan.release_after), 'frozen three-field continuity differs');
-  const archive = archivePath(operation, plan.release_after.pack_metadata[0].filename);
+  const archive = archivePath(operation, archiveName(plan.release_after.pack_metadata));
   const observedArchive = observation(root, archive, binaryLimit);
   const publication = observation(root, repair(operation) + '/custody/publication.tgz', binaryLimit);
   require(observedArchive.sha256 === plan.archive_before ||
@@ -634,8 +842,11 @@ export async function applyReleaseRetarget({ root, operation }, { onPhase } = {}
     for (const pointer of plan.before.slice(0, 2))
       require(current.find((entry) => entry.path === pointer.path)?.sha256 ===
         pointer.sha256, 'original pointer changed');
-    const releaseHash = current[2].sha256,
-      beforeHash = plan.before[2].sha256,
+    const currentRelease = current[2];
+    const beforeRelease = plan.before[2];
+    require(currentRelease && beforeRelease, 'release pointer observations missing');
+    const releaseHash = currentRelease.sha256,
+      beforeHash = beforeRelease.sha256,
       afterHash = sha(json(plan.release_after));
     require(releaseHash === beforeHash || releaseHash === afterHash, 'release UNKNOWN');
     require(original.version === plan.version, 'original version changed');
@@ -643,11 +854,7 @@ export async function applyReleaseRetarget({ root, operation }, { onPhase } = {}
     const state = identity(root, stateFile)
       ? unseal(object(root, stateFile), 'VidaReleaseRetargetState/v1', stateFields)
       : null;
-    require(state === null ||
-      (state.operation_id === operation &&
-        state.plan_digest === plan.digest &&
-        ['planning', 'custody', 'archive', 'release', 'complete'].includes(state.phase) &&
-        state.release_after_sha256 === afterHash), 'repair phase UNKNOWN');
+    assertRepairPhase(state, operation, plan.digest, afterHash);
     // A missing initial ACK is known only while all frozen preimages still hold.
     require(state ||
       (releaseHash === beforeHash && observedArchive.sha256 === plan.archive_before), 'missing phase after effects');
@@ -681,19 +888,205 @@ export async function applyReleaseRetarget({ root, operation }, { onPhase } = {}
   });
 }
 
-export async function runReleaseRetarget(args, options) {
-  const values = {};
-  for (let i = 0; i < args.length; i += 2) {
-    require(['--kind', '--mode', '--project-root', '--operation', '--actor'].includes(args[i]) &&
-      args[i + 1] &&
-      !Object.hasOwn(values, args[i]), 'retarget arguments invalid');
-    values[args[i]] = args[i + 1];
+/**
+ * @typedef {{operation_id: string, version: string, plan_digest: string,
+ *   previous: EligibleRelease, previous_archive_sha256: string,
+ *   current: EligibleRelease, current_archive_sha256: string}} CompletedRetargetHandoff
+ */
+
+/** @param {string} root @param {string} operation @returns {{plan: RetargetPlan, planBefore: ReadObservation, stateBefore: ReadObservation}|null} */
+function completedRetargetPlan(root, operation) {
+  require(releaseIdPattern.test(operation), 'operation invalid');
+  const planBefore = observation(root, repair(operation) + '/plan.json');
+  if (planBefore.identity === null) return null;
+  assertReleaseRetargetSettled(root, operation);
+  const plan = loadPlan(root, operation),
+    stateBefore = observation(root, retargetStateRelative(operation)),
+    state = planningState(root, operation, plan);
+  require(state?.phase === 'complete', 'retarget handoff is not at its exact complete phase');
+  return { plan, planBefore, stateBefore };
+}
+
+/** @param {string} operation @param {RetargetPlan} plan @param {ReturnType<typeof readNativeRetargetCandidate>} published */
+function assertCompletedCandidate(operation, plan, published) {
+  require(published.candidate_digest === plan.candidate_digest &&
+    published.operation_id === operation &&
+    published.version === plan.version &&
+    published.source_binding === plan.source_binding &&
+    published.archive_sha256 === plan.archive_after, 'completed retarget candidate differs from the frozen plan');
+}
+
+/** @param {string} root @param {string} operation @param {RetargetPlan} plan @param {ReturnType<typeof readNativeRetargetCandidate>} published @returns {{previous: EligibleRelease, observations: ReadObservation[]}} */
+function completedRetargetCustody(root, operation, plan, published) {
+  return {
+    previous: completedRetargetPreviousRelease(root, operation, plan, published),
+    observations: completedRetargetCustodyObservations(root, operation, plan, published),
+  };
+}
+
+/** @param {string} root @param {string} operation @param {RetargetPlan} plan @param {ReturnType<typeof readNativeRetargetCandidate>} published @returns {ReadObservation[]} */
+function completedRetargetCustodyObservations(root, operation, plan, published) {
+  const custodySealPath = repair(operation) + '/custody/seal.json';
+  const custodySeal = unseal(object(root, custodySealPath), 'VidaReleaseRetargetCustody/v1', [
+    'schema',
+    'operation_id',
+    'entries',
+  ]);
+  require(custodySeal.operation_id === operation &&
+    json(custodySeal.entries) === json(plan.custody), 'completed retarget custody seal differs');
+  const observations = [
+    ...published.observations,
+    observation(root, custodySealPath),
+    ...sourceObservations(root, plan.source_binding),
+  ];
+  for (const entry of plan.custody) {
+    const copy = observation(root, entry.copy, binaryLimit);
+    require(copy.sha256 === entry.sha256, 'completed retarget custody copy differs');
+    observations.push(copy);
+    if (!plan.before.some((before) => before.path === entry.path) && !entry.path.endsWith('.tgz')) {
+      const retained = observation(root, entry.path);
+      require(retained.sha256 === entry.sha256, 'completed retarget retained receipt differs');
+      observations.push(retained);
+    }
   }
+  return observations;
+}
+
+/** @param {string} root @param {string} operation @param {RetargetPlan} plan @param {ReturnType<typeof readNativeRetargetCandidate>} published @returns {EligibleRelease} */
+function completedRetargetPreviousRelease(root, operation, plan, published) {
+  const previousReleasePath = base(operation) + '/release.json';
+  const previousCopy = plan.custody.find((entry) => entry.path === previousReleasePath);
+  require(previousCopy &&
+    previousCopy.sha256 ===
+      plan.before[2]?.sha256, 'completed retarget previous release custody differs from the frozen before pointer');
+  const previousState = releaseState(releasePath(root, previousCopy.copy));
+  require(previousState.operation_id === operation &&
+    previousState.version === plan.version &&
+    previousState.status === 'awaiting_assurance' &&
+    !previousState.install_started &&
+    previousState.tarball_sha256 === plan.archive_before &&
+    packedDistribution(previousState.pack_metadata) === 'npm' &&
+    packedDistribution(published.pack_metadata) === 'native', 'completed retarget previous release image differs');
+  const previous = /** @type {EligibleRelease} */ ({
+    ...previousState,
+    status: previousState.status,
+    source_binding: previousState.source_binding,
+    tarball_sha256: previousState.tarball_sha256,
+    pack_metadata: packMetadata(previousState.pack_metadata),
+  });
+  const previousArchivePath = archivePath(operation, archiveName(previous.pack_metadata));
+  const previousArchive = plan.custody.find((entry) => entry.path === previousArchivePath);
+  require(previousArchive?.sha256 === plan.archive_before, 'completed retarget previous archive receipt differs');
+  return previous;
+}
+
+/** @param {RetargetPlan} plan @param {ReturnType<typeof readNativeRetargetCandidate>} published @param {EligibleRelease} previous */
+function assertCompletedContinuity(plan, published, previous) {
+  const expectedCurrent = {
+    ...previous,
+    pack_metadata: published.pack_metadata,
+    source_binding: published.source_binding,
+    tarball_sha256: published.archive_sha256,
+  };
+  require(published.version === plan.version &&
+    json(expectedCurrent) === json(plan.release_after), 'completed retarget three-field continuity differs');
+}
+
+/** @param {string} root @param {string} operation @param {RetargetPlan} plan @param {ReadObservation[]} observations @returns {EligibleRelease} */
+function completedRetargetAfterimage(root, operation, plan, observations) {
+  const current = eligible(root, operation);
+  require(current.version === plan.version &&
+    json(current) === json(plan.release_after), 'completed retarget release afterimage differs');
+  const currentPointers = pointers(root, operation);
+  require(plan.before.length === 3 &&
+    currentPointers.length === 3 &&
+    plan.before[0]?.sha256 === currentPointers[0]?.sha256 &&
+    plan.before[1]?.sha256 === currentPointers[1]?.sha256 &&
+    currentPointers[2]?.sha256 === sha(json(plan.release_after)), 'completed retarget before/after pointers differ');
+  observations.push(...currentPointers);
+  const currentArchivePath = archivePath(operation, archiveName(current.pack_metadata));
+  const currentArchive = observation(root, currentArchivePath, binaryLimit);
+  const publication = observation(root, repair(operation) + '/custody/publication.tgz', binaryLimit);
+  require(currentArchive.sha256 === plan.archive_after &&
+    (publication.sha256 === plan.archive_after ||
+      publication.sha256 === null), 'completed retarget archive afterimage differs');
+  observations.push(currentArchive, publication);
+  return current;
+}
+
+/** Recheck only the exact completed npm-to-native receipt. This function has no repair effects. */
+/** @param {{root: string, operation: string}} input @returns {Promise<CompletedRetargetHandoff|null>} */
+export async function verifyCompletedReleaseRetargetHandoff({ root, operation }) {
+  const completed = completedRetargetPlan(root, operation);
+  if (!completed) return null;
+  const { plan, planBefore, stateBefore } = completed,
+    published = readNativeRetargetCandidate({ root, operation, published: true });
+  assertCompletedCandidate(operation, plan, published);
+  const custody = completedRetargetCustody(root, operation, plan, published),
+    observations = custody.observations.concat(planBefore, stateBefore);
+  assertCompletedContinuity(plan, published, custody.previous);
+  const current = completedRetargetAfterimage(root, operation, plan, observations);
+  sameObservations(root, observations);
+  return Object.freeze({
+    operation_id: operation,
+    version: plan.version,
+    plan_digest: plan.digest,
+    previous: freezeReleaseImage(custody.previous),
+    previous_archive_sha256: plan.archive_before,
+    current: freezeReleaseImage(current),
+    current_archive_sha256: plan.archive_after,
+  });
+}
+
+/** @param {EligibleRelease} image @returns {EligibleRelease} */
+function freezeReleaseImage(image) {
+  for (const metadata of image.pack_metadata) {
+    for (const file of metadata.files) Object.freeze(file);
+    Object.freeze(metadata.files);
+    Object.freeze(metadata);
+  }
+  Object.freeze(image.pack_metadata);
+  return Object.freeze(image);
+}
+
+/** @param {unknown} key @param {unknown} value @param {Record<string, string>} values @param {string[]} allowedOptions @returns {{key: string, value: string}} */
+function retargetArgument(key, value, values, allowedOptions) {
+  require(typeof key === 'string' &&
+    typeof value === 'string' &&
+    value.length > 0 &&
+    allowedOptions.includes(key) &&
+    !Object.hasOwn(values, key), 'retarget arguments invalid');
+  return { key, value };
+}
+
+/** @param {readonly string[]} args @param {{onPhase?: ((phase: string) => unknown)|undefined}} options @returns {Promise<Record<string, unknown>>} */
+export async function runReleaseRetarget(args, options) {
+  /** @type {Record<string, string>} */
+  const values = {};
+  const allowedOptions = reconcileAllowedOptions('release-retarget');
+  require(args.length % 2 === 0, 'retarget argument pairs differ');
+  for (let i = 0; i < args.length; i += 2) {
+    const key = args[i];
+    const value = args[i + 1];
+    const pair = retargetArgument(key, value, values, allowedOptions);
+    values[pair.key] = pair.value;
+  }
+  assertReconcileOptionKeys(values, 'release-retarget', values['--mode'], 'retarget arguments differ from declaration');
+  const rootArg = values['--project-root'];
+  const operationArg = values['--operation'];
+  const modeArg = values['--mode'];
+  const contract = reconcileCliContracts['release-retarget'];
+  require(contract, 'retarget command declaration missing');
   require(values['--kind'] === 'release-retarget' &&
-    path.isAbsolute(values['--project-root'] ?? '') &&
-    releaseIdPattern.test(values['--operation'] ?? '') &&
-    ['inspect', 'plan', 'apply', 'resume'].includes(values['--mode']), 'retarget operation arguments invalid');
-  const input = { root: values['--project-root'], operation: values['--operation'], actor: values['--actor'] };
+    typeof rootArg === 'string' &&
+    typeof operationArg === 'string' &&
+    typeof modeArg === 'string' &&
+    path.isAbsolute(rootArg) &&
+    releaseIdPattern.test(operationArg) &&
+    contract.modes.includes(modeArg), 'retarget operation arguments invalid');
+  const root = rootArg;
+  const operation = operationArg;
+  const input = { root, operation, actor: values['--actor'] };
   if (values['--mode'] === 'inspect') {
     require(!input.actor, 'inspect accepts no actor');
     return inspectReleaseRetarget(input);

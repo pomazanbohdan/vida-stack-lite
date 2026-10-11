@@ -24,7 +24,8 @@ function fixture(options = {}) {
   } = options;
   const lifecycleRisk = lifecycleRiskOverride ?? (highRisk ? 'high' : 'low');
   const taskRiskFlags = taskRiskFlagsOverride ?? (highRisk ? ['security'] : []);
-  const securityRequired = lifecycleRisk === 'high' ||
+  const securityRequired =
+    lifecycleRisk === 'high' ||
     taskRiskFlags.some((flag) => ['security', 'data_loss', 'migration', 'high'].includes(flag));
   const ids = ['AC-1'],
     allowedPaths = ['packages/agent/src'],
@@ -43,7 +44,12 @@ function fixture(options = {}) {
     mode: 'parallel',
     assignments: [
       { role: 'source-planner', profile: 'architect', contour: 'requirements' },
-      { role: 'security-prewriter', profile: 'reviewer-security', contour: 'security_data', risk_flags: ['security', 'data_loss', 'migration', 'high'] },
+      {
+        role: 'security-prewriter',
+        profile: 'reviewer-security',
+        contour: 'security_data',
+        risk_flags: ['security', 'data_loss', 'migration', 'high'],
+      },
     ],
     consumes: ['DevelopmentTaskPacket/v1'],
     produces: ['LifecyclePreparationObservation/v1'],
@@ -68,7 +74,18 @@ function fixture(options = {}) {
       'workflow-1': {
         stages: [
           ...(securityRequired && reviewerLocation === 'prewrite'
-            ? [{ id: 'synthesize_task', kind: 'synthesize', mode: 'single', assignments: [{ role: 'synthesizer', profile: 'source-writer' }], consumes: [], produces: ['DevelopmentTaskPacket/v1'], required_after: [] }, prewriter]
+            ? [
+                {
+                  id: 'synthesize_task',
+                  kind: 'synthesize',
+                  mode: 'single',
+                  assignments: [{ role: 'synthesizer', profile: 'source-writer' }],
+                  consumes: [],
+                  produces: ['DevelopmentTaskPacket/v1'],
+                  required_after: [],
+                },
+                prewriter,
+              ]
             : []),
           {
             id: 'source',
@@ -158,9 +175,16 @@ function fixture(options = {}) {
     };
   };
   const writerItem = makeJournalItem(writerActionId, 'developer', 'source', 0, 'source preparation observed');
-  const reviewerItem = reviewerLocation === 'postwrite'
-    ? makeJournalItem(reviewerActionId, 'security-reviewer', 'postwrite_security', 0, 'security review observed')
-    : makeJournalItem(reviewerActionId, 'security-prewriter', 'review_source_prewrite', 1, 'security review observed');
+  const reviewerItem =
+    reviewerLocation === 'postwrite'
+      ? makeJournalItem(reviewerActionId, 'security-reviewer', 'postwrite_security', 0, 'security review observed')
+      : makeJournalItem(
+          reviewerActionId,
+          'security-prewriter',
+          'review_source_prewrite',
+          1,
+          'security review observed',
+        );
   const journalItems = securityRequired && includeSecurityObservation ? [writerItem, reviewerItem] : [writerItem];
   const journal = {
     version: { revision: 1 },
@@ -481,9 +505,10 @@ function replacePreparationRecord(fixtureValue, kind, change) {
   change(record);
   entry.bytes = Buffer.from(JSON.stringify(record));
   entry.reference = { ...entry.reference, sha256: sha(entry.bytes) };
-  fixtureValue.input.hostSnapshot.work.lifecycle.references = fixtureValue.input.hostSnapshot.work.lifecycle.references.map(
-    (reference) => (reference.kind === kind ? entry.reference : reference),
-  );
+  fixtureValue.input.hostSnapshot.work.lifecycle.references =
+    fixtureValue.input.hostSnapshot.work.lifecycle.references.map((reference) =>
+      reference.kind === kind ? entry.reference : reference,
+    );
   fixtureValue.input.hostSnapshot.workVersion = {
     ...fixtureValue.input.hostSnapshot.workVersion,
     digest: canonicalJsonDigest(fixtureValue.input.hostSnapshot.work),
@@ -499,7 +524,10 @@ test('fully bound current preflight passes before Host attempt reservation', () 
   const value = fixture();
   const result = validateSourceWritePreflight(value.input);
   assert.equal(result.length, 5);
-  assert.equal(result.every((reference) => value.input.hostSnapshot.work.lifecycle.references.includes(reference)), true);
+  assert.equal(
+    result.every((reference) => value.input.hostSnapshot.work.lifecycle.references.includes(reference)),
+    true,
+  );
   assertNoAttemptMarker(value);
 });
 
@@ -629,7 +657,10 @@ test('Cedar mismatch, invalid Edictum gate, expired local receipt, stale packet,
 
   const syntheticAllow = fixture();
   syntheticAllow.input.edictumEvaluation = { ...syntheticAllow.input.edictumEvaluation, action: 'allow' };
-  assert.throws(() => validateSourceWritePreflight(syntheticAllow.input), /configured Edictum runtime.write evaluation/);
+  assert.throws(
+    () => validateSourceWritePreflight(syntheticAllow.input),
+    /configured Edictum runtime.write evaluation/,
+  );
   assertNoAttemptMarker(syntheticAllow);
 
   const edictumForeignOperation = fixture();
@@ -637,7 +668,10 @@ test('Cedar mismatch, invalid Edictum gate, expired local receipt, stale packet,
     ...edictumForeignOperation.input.edictumOperation,
     operation_hash: '0'.repeat(64),
   };
-  assert.throws(() => validateSourceWritePreflight(edictumForeignOperation.input), /configured Edictum runtime.write evaluation/);
+  assert.throws(
+    () => validateSourceWritePreflight(edictumForeignOperation.input),
+    /configured Edictum runtime.write evaluation/,
+  );
   assertNoAttemptMarker(edictumForeignOperation);
 
   const expired = fixture();
@@ -665,7 +699,10 @@ test('Cedar mismatch, invalid Edictum gate, expired local receipt, stale packet,
   assertNoAttemptMarker(stalePacket);
 
   const foreignLease = fixture();
-  foreignLease.input.request = { ...foreignLease.input.request, lease: { ...foreignLease.input.request.lease, thread_id: 'other-thread' } };
+  foreignLease.input.request = {
+    ...foreignLease.input.request,
+    lease: { ...foreignLease.input.request.lease, thread_id: 'other-thread' },
+  };
   assert.throws(() => validateSourceWritePreflight(foreignLease.input), /pending Host request differs/);
   assertNoAttemptMarker(foreignLease);
 

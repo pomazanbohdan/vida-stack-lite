@@ -96,10 +96,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "instruction_id",
-          "source_sha256"
-        ],
+        "required": ["instruction_id", "source_sha256"],
         "properties": {
           "instruction_id": {
             "type": "string",
@@ -114,11 +111,7 @@
       "minItems": 1
     },
     "cache_status": {
-      "enum": [
-        "cold",
-        "hit",
-        "refreshed"
-      ]
+      "enum": ["cold", "hit", "refreshed"]
     },
     "actor": {
       "type": "string",
@@ -141,11 +134,7 @@
     },
     "risk": {
       "type": "string",
-      "enum": [
-        "low",
-        "medium",
-        "high"
-      ]
+      "enum": ["low", "medium", "high"]
     }
   }
 }

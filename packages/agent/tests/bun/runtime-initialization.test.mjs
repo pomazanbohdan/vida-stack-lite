@@ -115,9 +115,11 @@ test('foreign or stale receipt is rejected without replacing the pending bytes',
 test('fails closed when the host store or persisted receipt does not match deterministic workspace identity', async () => {
   const bytes = readFileSync(receiptPath);
   await Promise.resolve(expect(bindRuntimeInitialization(root, {})).rejects.toThrow('trusted HostStateStore'));
-  await Promise.resolve(expect(bindRuntimeInitialization(root, new HostStateStore(database, 'f'.repeat(64)))).rejects.toThrow(
-    'trusted host workspace differs',
-  ));
+  await Promise.resolve(
+    expect(bindRuntimeInitialization(root, new HostStateStore(database, 'f'.repeat(64)))).rejects.toThrow(
+      'trusted host workspace differs',
+    ),
+  );
   expect(readFileSync(receiptPath)).toEqual(bytes);
   rmSync(receiptPath);
   await Promise.resolve(expect(bindRuntimeInitialization(root, store)).rejects.toThrow('unavailable'));
@@ -126,7 +128,9 @@ test('fails closed when the host store or persisted receipt does not match deter
 test('competing workspace is denied after the first bind', async () => {
   await bindRuntimeInitialization(root, store);
   const bytes = readFileSync(receiptPath);
-  await Promise.resolve(expect(bindRuntimeInitialization(root, new HostStateStore(database, 'f'.repeat(64)))).rejects.toThrow());
+  await Promise.resolve(
+    expect(bindRuntimeInitialization(root, new HostStateStore(database, 'f'.repeat(64)))).rejects.toThrow(),
+  );
   expect(readFileSync(receiptPath)).toEqual(bytes);
 });
 

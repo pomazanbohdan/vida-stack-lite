@@ -1,11 +1,15 @@
+import {
+  createCliHostStateStore,
+  closeWorkspaceDatabaseWithAdmission,
+  openCliWorkspaceDatabase,
+} from './workspace-database-cli.ts';
 import path from 'node:path';
-import { Database } from 'bun:sqlite';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { HostStateStore } from '../src/host-state.ts';
+
 import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
 import { compareScopedSourceSnapshots } from '../src/orchestration/scoped-source-snapshot.ts';
 import { readAdmittedSessionIntakeForWork } from '../src/orchestration/admitted-session-execution.ts';
@@ -18,33 +22,84 @@ import {
 } from '../src/orchestration/failed-prewriter-transition.ts';
 import { verifyConfiguredNativeEndpoint } from './runtime-code-rebind.mjs';
 
+/** @type {(condition: unknown, message: string) => asserts condition} */
 const requireTransition = (condition, message) => {
   if (!condition) throw Error(`failed prewriter transition: ${message}`);
 };
+/** @param {unknown} left @param {unknown} right */
 const same = (left, right) => canonicalJsonDigest(left) === canonicalJsonDigest(right);
 
-/** Correct only a fully known failed readonly wave after a qualified whole native update. */
-export function transitionFailedPrewriter(args) {
+/** @param {import('../src/host-state.ts').HostStateStore} store
+ * @param {import('../src/orchestration/failed-prewriter-transition.ts').FailedPrewriterTransitionRequest} request
+ */
+function committedTransitionJournalVersion(store, request) {
+  const receipt = store.readFailedPrewriterRecoveryReceipt(request.identity, request.attempt);
+  if (!receipt || !same(receipt.request, request))
+    throw Error('failed prewriter transition: committed recovery receipt differs from its request');
+  return receipt.journal_version;
+}
+
+/** @typedef {import('../src/host-state.ts').WorkIdentity} WorkIdentity */
+/** @typedef {import('../src/host-state.ts').DeliveredWorkContinuationReceipt} DeliveredWorkContinuationReceipt */
+/** @typedef {import('../src/orchestration/delivered-work-continuation-repair.ts').ConfiguredFrontierReceipt} ConfiguredFrontierReceipt */
+/** @typedef {{mode: 'inspect' | 'apply' | 'status', root: string, requestPath: string}} TransitionOptions */
+/** @typedef {Record<string, unknown> & {schema: 'FailedPrewriterTransitionInput/v1', identity: WorkIdentity, attempt: number, nativeSessionHandle: string, recovery_id: string, sourceTransitionId: string, parentManifestRef: string, successorManifestRef: string, systemUpdateRef: string, sourceCorrectionRef: string}} TransitionInput */
+
+/** @param {readonly string[]} args @returns {TransitionOptions} */
+function transitionOptions(args) {
   requireTransition(args.length === 6, 'mode, root and input are required');
-  const values = {};
+  /** @type {Map<string, string>} */
+  const values = new Map();
   for (let index = 0; index < args.length; index += 2) {
-    requireTransition(!Object.hasOwn(values, args[index]) && args[index + 1], 'arguments invalid');
-    values[args[index]] = args[index + 1];
+    const key = args[index],
+      value = args[index + 1];
+    requireTransition(key !== undefined && !values.has(key) && value, 'arguments invalid');
+    values.set(key, value);
   }
+  const mode = values.get('--mode'),
+    root = values.get('--project-root'),
+    requestPath = values.get('--request');
+  requireTransition([...values.keys()].sort().join(',') === '--mode,--project-root,--request', 'argument set invalid');
+  requireTransition(mode === 'inspect' || mode === 'apply' || mode === 'status', 'argument set invalid');
+  requireTransition(root !== undefined && path.isAbsolute(root) && requestPath !== undefined, 'argument set invalid');
+  return { mode, root, requestPath };
+}
+
+/** @param {unknown} value @returns {value is string[]} */
+function transitionProjectIds(value) {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+/** @param {unknown} value @returns {WorkIdentity} */
+function transitionIdentity(value) {
+  requireTransition(isPlainRecord(value), 'project identity invalid');
   requireTransition(
-    Object.keys(values).sort().join(',') === '--mode,--project-root,--request' &&
-      ['inspect', 'apply', 'status'].includes(values['--mode']) &&
-      path.isAbsolute(values['--project-root']),
-    'argument set invalid',
+    Object.keys(value).sort().join(',') === 'integrations_digest,project_ids,repository_id,work_id',
+    'project identity invalid',
   );
-  const root = values['--project-root'],
-    access = requireSafeRepositoryAccess(root);
-  const bytes = access.readBytes(values['--request'], 'failed prewriter transition input');
-  requireTransition(bytes.length > 0 && bytes.length <= 1024 * 1024, 'input exceeds bound');
-  const input = JSON.parse(bytes.toString('utf8')),
-    inspecting = values['--mode'] !== 'apply';
+  const { repository_id, project_ids, integrations_digest, work_id } = value;
   requireTransition(
-    Object.keys(input).sort().join(',') ===
+    typeof repository_id === 'string' &&
+      transitionProjectIds(project_ids) &&
+      typeof integrations_digest === 'string' &&
+      typeof work_id === 'string',
+    'project identity invalid',
+  );
+  return { repository_id, project_ids, integrations_digest, work_id };
+}
+
+/** @template {string} K @param {Record<string, unknown>} value @param {readonly K[]} keys
+ * @returns {value is Record<string, unknown> & Record<K, string>}
+ */
+function transitionStringFields(value, keys) {
+  return keys.every((key) => typeof value[key] === 'string');
+}
+
+/** @param {unknown} value @param {boolean} inspecting @returns {TransitionInput} */
+function transitionInput(value, inspecting) {
+  requireTransition(isPlainRecord(value), 'input shape invalid');
+  requireTransition(
+    Object.keys(value).sort().join(',') ===
       [
         'schema',
         'identity',
@@ -59,9 +114,50 @@ export function transitionFailedPrewriter(args) {
         ...(!inspecting ? ['request'] : []),
       ]
         .sort()
-        .join(',') && input.schema === 'FailedPrewriterTransitionInput/v1',
+        .join(',') && value.schema === 'FailedPrewriterTransitionInput/v1',
     'input shape invalid',
   );
+  requireTransition(
+    transitionStringFields(value, [
+      'nativeSessionHandle',
+      'recovery_id',
+      'sourceTransitionId',
+      'parentManifestRef',
+      'successorManifestRef',
+      'systemUpdateRef',
+      'sourceCorrectionRef',
+    ]),
+    'input fields invalid',
+  );
+  requireTransition(
+    typeof value.attempt === 'number' && Number.isSafeInteger(value.attempt) && value.attempt > 0,
+    'input attempt invalid',
+  );
+  return { ...value, schema: value.schema, identity: transitionIdentity(value.identity), attempt: value.attempt };
+}
+
+/** @param {DeliveredWorkContinuationReceipt | null} receipt @returns {receipt is ConfiguredFrontierReceipt} */
+function isConfiguredFrontierReceipt(receipt) {
+  return (
+    receipt !== null &&
+    receipt.request.action.kind === 'configured_frontier' &&
+    receipt.historical_capture === null &&
+    receipt.frontier_snapshot !== undefined
+  );
+}
+
+/** Correct only a fully known failed readonly wave after a qualified whole native update.
+ * @param {readonly string[]} args
+ */
+export function transitionFailedPrewriter(args) {
+  const { mode, root, requestPath } = transitionOptions(args),
+    access = requireSafeRepositoryAccess(root);
+  const bytes = access.readBytes(requestPath, 'failed prewriter transition input');
+  requireTransition(bytes.length > 0 && bytes.length <= 1024 * 1024, 'input exceeds bound');
+  /** @type {unknown} */
+  const parsed = JSON.parse(bytes.toString('utf8'));
+  const inspecting = mode !== 'apply',
+    input = transitionInput(parsed, inspecting);
   const config = loadRuntimeConfig(root),
     project = loadProjectSetContext(root, config, input.identity.repository_id, input.identity.project_ids);
   requireTransition(
@@ -76,9 +172,9 @@ export function transitionFailedPrewriter(args) {
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
   const file = sessionHandoffDatabasePath(root, config);
   access.readBytes(path.relative(root, file).split(path.sep).join('/'), 'configured Host database');
-  const database = new Database(file, { readonly: inspecting, strict: true });
+  const database = openCliWorkspaceDatabase(root, file, workspaceId, inspecting);
   try {
-    const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root);
+    const store = createCliHostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root);
     const recorded = store.readFailedPrewriterRecoveryReceipt(input.identity, input.attempt);
     if (recorded) {
       requireTransition(
@@ -87,7 +183,9 @@ export function transitionFailedPrewriter(args) {
           (inspecting || same(input.request, recorded.request)),
         'recorded recovery intent differs',
       );
-      const current = store.readHostStateSnapshot(input.identity);
+      const snapshot = store.readWorkSessionSnapshot(input.identity, input.attempt),
+        current = snapshot.host;
+      requireTransition(snapshot.journal, 'selected recovery journal is unavailable');
       const view = store.readConfiguredFrontierRecoveryView(input.identity, input.attempt);
       requireTransition(
         view?.recovery &&
@@ -97,9 +195,9 @@ export function transitionFailedPrewriter(args) {
       );
       return {
         status: 'failed_prewriter_transition_recorded',
-        work_version: current.workVersion,
-        ledger_version: current.ledgerVersion,
-        journal_version: store.readWorkSessionJournal(input.identity).version,
+        work_version: recorded.work_version,
+        ledger_version: recorded.ledger_version,
+        journal_version: recorded.journal_version,
         request: recorded.request,
         failed_reports_preserved: true,
         rights_granted: false,
@@ -107,12 +205,19 @@ export function transitionFailedPrewriter(args) {
         effects_reissued: false,
       };
     }
-    requireTransition(values['--mode'] !== 'status', 'recovery has no recorded result');
+    requireTransition(mode !== 'status', 'recovery has no recorded result');
     const original = store.readDeliveredWorkContinuationReceipt(input.identity, input.attempt);
-    const host = store.readHostStateSnapshot(input.identity),
-      journal = store.readWorkSessionJournal(input.identity);
+    const snapshot = store.readWorkSessionSnapshot(input.identity, input.attempt),
+      host = snapshot.host,
+      journal = snapshot.journal;
     requireTransition(
-      original?.request.action.kind === 'configured_frontier' && host.work && host.ledger && journal,
+      isConfiguredFrontierReceipt(original) &&
+        host.work &&
+        host.ledger &&
+        host.workVersion &&
+        host.ledgerVersion &&
+        journal &&
+        journal.state.source_scope,
       'original continuation unavailable',
     );
     validateFailedPrewriterRecoveryBasis({
@@ -193,7 +298,7 @@ export function transitionFailedPrewriter(args) {
             same(current.sourceTransition, fresh.sourceTransition) &&
             current.targetProjectContextDigest === freshProject.project_context_digest &&
             freshProject.integrations_digest === input.identity.integrations_digest &&
-            access.readBytes(values['--request'], 'transition input stability').equals(bytes),
+            access.readBytes(requestPath, 'transition input stability').equals(bytes),
           'current native/Source proof changed',
         );
       },
@@ -202,13 +307,13 @@ export function transitionFailedPrewriter(args) {
       status: 'failed_prewriter_transition_applied',
       work_version: result.workVersion,
       ledger_version: result.ledgerVersion,
-      journal_version: store.readWorkSessionJournal(input.identity).version,
+      journal_version: committedTransitionJournalVersion(store, request),
       failed_reports_preserved: true,
       readonly_wave_unissued: true,
       rights_granted: false,
       runtime_accepted: false,
     };
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }

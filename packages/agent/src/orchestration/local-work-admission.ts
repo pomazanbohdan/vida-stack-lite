@@ -3,7 +3,7 @@ import { sameCoordinationStrings } from '../contracts/envelopes.js';
 import { createHash } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
 import acceptanceSchema from '../../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
-import scopeSchema from '../../schemas/implementation-scope.v1.schema.json' with { type: 'json' };
+import { validateImplementationScope as validScope } from '../contracts/implementation-scope.js';
 import {
   type AgentRuntimeConfig,
   type WorkItemSelection,
@@ -42,7 +42,6 @@ const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean
   compile(schema: object): (value: unknown) => boolean;
 };
 const validator = new Ajv2020Constructor({ strict: true, allErrors: true });
-const validScope = validator.compile(scopeSchema);
 const validAcceptance = validator.compile(acceptanceSchema);
 const digest = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 
@@ -513,7 +512,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   const predecessors: Parameters<HostStateStore['admitSuccessorWork']>[0]['predecessors'][number][] = [];
   const verifyPredecessor = (
     work: NonNullable<HostStateSnapshot['work']>,
-    journal: Readonly<Record<string, unknown>>,
+    journal: MastraSessionLedgerState,
     requestPointer: string,
   ) => {
     requireAdmission(work.binding.config_digest === configDigest, 'predecessor configured rights are stale');
@@ -530,10 +529,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       'predecessor request attribution invalid',
     );
     type PredecessorItem = MastraSessionLedgerState['items'][number];
-    const items: PredecessorItem[] = [
-      ...(journal.items as PredecessorItem[]),
-      ...(journal.completed as { items: PredecessorItem[] }[]).flatMap((wave) => wave.items),
-    ];
+    const items: PredecessorItem[] = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)];
     requireAdmission(
       items.every((item) => {
         const assignment = config.workflows[work.binding.workflow_id]?.stages.find(
@@ -742,7 +738,7 @@ export function acquireLocalSourceWriterLease(input: {
     source = snapshotDeclaredSources(sourceAccess, work.lifecycle.scope.allowed_paths);
   const correctiveJournal =
     work.lifecycle.assurance.correction_count > 0 ? input.store.readWorkSessionJournal(input.identity) : null;
-  const correctiveState = correctiveJournal?.state as unknown as MastraSessionLedgerState | undefined;
+  const correctiveState = correctiveJournal?.state;
   requireAdmission(
     correctiveState
       ? correctiveState.corrective_execution?.correction_generation === work.lifecycle.assurance.correction_count &&

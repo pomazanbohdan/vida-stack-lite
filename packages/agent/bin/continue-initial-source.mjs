@@ -1,3 +1,8 @@
+import {
+  createCliHostStateStore,
+  closeWorkspaceDatabaseWithAdmission,
+  openCliWorkspaceDatabase,
+} from './workspace-database-cli.ts';
 // @ts-check
 /**
  * @typedef {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess} SafeRepositoryAccess
@@ -15,7 +20,6 @@
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { lstatSync, realpathSync } from 'node:fs';
-import { Database } from 'bun:sqlite';
 import { parseSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge.ts';
 import {
   canonicalJsonDigest,
@@ -33,7 +37,7 @@ import {
 } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { HostStateStore } from '../src/host-state.ts';
+
 import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
 import { readAdmittedSessionIntakeForWork } from '../src/orchestration/admitted-session-execution.ts';
 import { readLocalSourceWriteAuthorization } from '../src/orchestration/local-source-authorization.ts';
@@ -365,8 +369,9 @@ function isInitialUnissuedJournal(value) {
 }
 /** @param {HostStateStoreType} store @param {WorkIdentity} identity @returns {InitialSourceContinuationState} */
 function readCurrentState(store, identity) {
-  const host = store.readHostStateSnapshot(identity);
-  const journal = store.readWorkSessionJournal(identity);
+  const captured = store.readWorkSessionSnapshot(identity);
+  const host = captured.host;
+  const journal = captured.journal;
   if (
     !host.work ||
     !host.ledger ||
@@ -688,9 +693,9 @@ export function continueInitialSource(args) {
     'configured Host database is outside the project root',
   );
   access.readBytes(hostRelative, 'configured Host database');
-  const database = new Database(hostFile, { readonly: inspecting, strict: true });
+  const database = openCliWorkspaceDatabase(root, hostFile, workspaceId, inspecting);
   try {
-    const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root);
+    const store = createCliHostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root);
     const retained = store.readInitialSourceContinuationReceipt(identity, attempt);
     if (retained) {
       const receipt = validateInitialSourceContinuationReceipt(retained);
@@ -778,6 +783,6 @@ export function continueInitialSource(args) {
     const receipt = validateInitialSourceContinuationReceipt(store.continueInitialSource(request, verifyApply));
     return receiptResult('initial_source_continuation_applied', receipt);
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }

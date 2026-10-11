@@ -12,7 +12,7 @@ import {
 } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { preparedFixture } from './documentation-policy-transition.test.mjs';
+import { preparedFixture } from './helpers/documentation-policy-fixture.ts';
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 test('sealed public admin denies altered authority, root, closure and target before database effects', async () => {
@@ -20,7 +20,11 @@ test('sealed public admin denies altered authority, root, closure and target bef
   const payload = path.join(f.root, 'admitted-source'),
     bundle = path.join(payload, 'vida-agent');
   mkdirSync(payload);
-  cpSync(f.bundle, bundle, { recursive: true, filter: (file) => path.basename(file) !== 'node_modules' });
+  cpSync(f.bundle, bundle, {
+    recursive: true,
+    filter: (file) =>
+      !['node_modules', '.tmp'].includes(path.basename(file)) && !/^\..+\.cas\.lock(?:\.|$)/u.test(path.basename(file)),
+  });
   // This private test payload uses current source; its synthetic review tuple is setup only.
   for (const file of ['bin/forward-candidate-admission.mjs', 'bin/documentation-policy-transition.mjs'])
     writeFileSync(path.join(bundle, file), readFileSync(path.join(f.bundle, file)));

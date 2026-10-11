@@ -34,7 +34,6 @@ async function controllerInspectionFailure(controllerRoot) {
   return failure;
 }
 
-
 function io() {
   const logs = [];
   const errors = [];
@@ -58,7 +57,6 @@ async function invokeMain(args = [], execute) {
 }
 
 const contractNextAction = 'Next action: inspect the exact work and check its issued contract before retrying.';
-
 
 describe('development controller root diagnostics', () => {
   test('maps an absent physical root to a path-free domain error with ENOENT cause', async () => {

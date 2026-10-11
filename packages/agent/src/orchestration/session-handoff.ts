@@ -7,7 +7,11 @@ import {
   type WorkItemSelection,
 } from '../config/runtime-config.js';
 import { assertCanonicalJsonValue, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
-import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
+import {
+  compileDevelopmentWorkflow,
+  executableWorkflowWaveIndices,
+  type WorkflowLifecycleRisk,
+} from './workflow-plan.js';
 import type { CorrectiveExecution } from './final-assurance.js';
 
 /** A serialized instruction for the orchestrating session. This module never issues an agent tool call. */
@@ -201,81 +205,110 @@ export function sessionActionsForWave(
   correctiveExecution?: CorrectiveExecution,
   lifecycleRisk?: WorkflowLifecycleRisk,
 ): readonly SessionAgentAction[] {
+  return createSessionActionProjector(config, selection, workflowId, lifecycleRisk).actionsForWave(
+    context,
+    waveIndex,
+    outcomes,
+    correctiveExecution,
+  );
+}
+
+/** Create a scope-local projection from one compiler-owned plan. Not part of the top-level SDK surface. */
+export function createSessionActionProjector(
+  config: AgentRuntimeConfig,
+  selection: WorkItemSelection,
+  workflowId: string,
+  lifecycleRisk?: WorkflowLifecycleRisk,
+) {
   const compiled = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags, lifecycleRisk);
-  const wave = compiled.waves[waveIndex];
-  requireCondition(wave !== undefined, 'session handoff wave is unavailable');
-  const selectedWave = correctiveExecution
-    ? wave.filter((stage) => correctiveExecution.stage_ids.includes(stage.id))
-    : wave;
-  return selectedWave
-    .flatMap((stage) =>
-      stage.assignments.map((assignment) => {
-        const index = config.workflows[workflowId]!.stages.find(
-          (configuredStage) => configuredStage.id === stage.id,
-        )!.assignments.indexOf(assignment);
-        requireCondition(index >= 0, 'session assignment is not in the configured stage');
-        const profile = config.agents.profiles[assignment.profile];
-        const instructions = config.agents.role_instructions[assignment.role];
-        requireCondition(profile, 'session handoff profile is unavailable');
-        requireCondition(instructions, 'session handoff role instructions are unavailable');
-        const toolPolicy = config.agents.tool_policies[profile.tools_policy];
-        const egressPolicy = config.agents.egress_policies[profile.egress_policy];
-        requireCondition(toolPolicy, 'session handoff tool policy is unavailable');
-        requireCondition(egressPolicy, 'session handoff egress policy is unavailable');
-        return {
-          action_id: canonicalJsonDigest({
-            ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
-            context,
-            workflow_id: workflowId,
-            wave_index: waveIndex,
-            stage_id: stage.id,
-            assignment_index: index,
+  return {
+    executableWaveIndices: (correctiveStageIds?: readonly string[]) =>
+      executableWorkflowWaveIndices(compiled, correctiveStageIds),
+    waveHasStageKind: (waveIndex: number, kind: string) =>
+      compiled.waves[waveIndex]?.some((stage) => stage.kind === kind) ?? false,
+    actionsForWave: (
+      context: SessionHandoffContext,
+      waveIndex: number,
+      outcomes: readonly SessionAgentOutcome[],
+      correctiveExecution?: CorrectiveExecution,
+    ): readonly SessionAgentAction[] => {
+      assertLoadedRuntimeConfig(config);
+      const wave = compiled.waves[waveIndex];
+      requireCondition(wave !== undefined, 'session handoff wave is unavailable');
+      const selectedWave = correctiveExecution
+        ? wave.filter((stage) => correctiveExecution.stage_ids.includes(stage.id))
+        : wave;
+      return selectedWave
+        .flatMap((stage) =>
+          stage.assignments.map((assignment) => {
+            const index = config.workflows[workflowId]!.stages.find(
+              (configuredStage) => configuredStage.id === stage.id,
+            )!.assignments.indexOf(assignment);
+            requireCondition(index >= 0, 'session assignment is not in the configured stage');
+            const profile = config.agents.profiles[assignment.profile];
+            const instructions = config.agents.role_instructions[assignment.role];
+            requireCondition(profile, 'session handoff profile is unavailable');
+            requireCondition(instructions, 'session handoff role instructions are unavailable');
+            const toolPolicy = config.agents.tool_policies[profile.tools_policy];
+            const egressPolicy = config.agents.egress_policies[profile.egress_policy];
+            requireCondition(toolPolicy, 'session handoff tool policy is unavailable');
+            requireCondition(egressPolicy, 'session handoff egress policy is unavailable');
+            return {
+              action_id: canonicalJsonDigest({
+                ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
+                context,
+                workflow_id: workflowId,
+                wave_index: waveIndex,
+                stage_id: stage.id,
+                assignment_index: index,
+              }),
+              ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
+              work_id: context.work_id,
+              attempt: context.attempt,
+              scope_digest: context.scope_digest,
+              wave_index: waveIndex,
+              action_order: 0,
+              assignment_index: index,
+              stage_id: stage.id,
+              stage_kind: stage.kind,
+              stage_mode: stage.mode,
+              required_after: stage.required_after,
+              role: assignment.role,
+              ...(assignment.contour ? { contour: assignment.contour } : {}),
+              model: profile.model,
+              reasoning: profile.reasoning,
+              mutation_scope: profile.mutation_scope,
+              context_skill_refs: stage.context_skill_refs ?? [],
+              resolved_profile: {
+                schema: 'ResolvedAgentProfile/v1' as const,
+                config_digest: runtimeConfigDigest(config),
+                profile_id: assignment.profile,
+                model: profile.model,
+                reasoning: profile.reasoning,
+                execution_mode: profile.execution_mode,
+                mutation_scope: profile.mutation_scope,
+                tools_policy: {
+                  id: profile.tools_policy,
+                  source_write: toolPolicy.source_write,
+                  allowed_tools: toolPolicy.allowed_tools,
+                },
+                egress_policy: {
+                  id: profile.egress_policy,
+                  allowed_hosts: egressPolicy.allowed_hosts,
+                },
+                enforcement_status: 'not_asserted' as const,
+              },
+              role_description: instructions.description,
+              role_rules: instructions.rules,
+              consumes: stage.consumes,
+              produces: stage.produces,
+              prior_outcomes: outcomes,
+            };
           }),
-          ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
-          work_id: context.work_id,
-          attempt: context.attempt,
-          scope_digest: context.scope_digest,
-          wave_index: waveIndex,
-          action_order: 0,
-          assignment_index: index,
-          stage_id: stage.id,
-          stage_kind: stage.kind,
-          stage_mode: stage.mode,
-          required_after: stage.required_after,
-          role: assignment.role,
-          ...(assignment.contour ? { contour: assignment.contour } : {}),
-          model: profile.model,
-          reasoning: profile.reasoning,
-          mutation_scope: profile.mutation_scope,
-          context_skill_refs: stage.context_skill_refs ?? [],
-          resolved_profile: {
-            schema: 'ResolvedAgentProfile/v1' as const,
-            config_digest: runtimeConfigDigest(config),
-            profile_id: assignment.profile,
-            model: profile.model,
-            reasoning: profile.reasoning,
-            execution_mode: profile.execution_mode,
-            mutation_scope: profile.mutation_scope,
-            tools_policy: {
-              id: profile.tools_policy,
-              source_write: toolPolicy.source_write,
-              allowed_tools: toolPolicy.allowed_tools,
-            },
-            egress_policy: {
-              id: profile.egress_policy,
-              allowed_hosts: egressPolicy.allowed_hosts,
-            },
-            enforcement_status: 'not_asserted' as const,
-          },
-          role_description: instructions.description,
-          role_rules: instructions.rules,
-          consumes: stage.consumes,
-          produces: stage.produces,
-          prior_outcomes: outcomes,
-        };
-      }),
-    )
-    .map((action, action_order) => ({ ...action, action_order }));
+        )
+        .map((action, action_order) => ({ ...action, action_order }));
+    },
+  };
 }
 
 /** The only configured slot pair allowed to share one caller-reported tool invocation. */

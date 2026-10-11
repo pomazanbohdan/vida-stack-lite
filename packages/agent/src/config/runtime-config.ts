@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, readFileSync } from 'node:fs';
-import { runtimeExecutableInventory } from '../../tooling/maintained-source-inventory.mjs';
+import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { runtimeExecutableInventory } from '../../tooling/maintained-source-inventory.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -8,11 +8,28 @@ import type { ErrorObject } from 'ajv';
 import { Composer, CST, Parser, type Document } from 'yaml';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './safe-repository-access.js';
 import {
+  INITIALIZED_PROJECT_PATHS,
   LEGACY_RUNTIME_CONFIGURATION_PATH,
   PROJECT_CONFIGURATION_PATHS,
+  PROJECT_INITIALIZATION_PATH,
+  PROJECT_UPGRADE_OPERATION_PATH,
+  PROJECT_ACTIVATION_PATH,
+  PROJECT_WORKSPACE_DATABASE_PATH,
+  bindLoadedConfigurationSource,
+  projectUpgradeHistoryPath,
   type RuntimeConfigurationSource,
 } from './project-paths.js';
+import {
+  assertCompletedProjectActivationHistory,
+  projectInitializationIdentityDigest,
+  validateProjectActivation,
+  type ProjectActivationOutput,
+} from './project-activation.js';
+import { composeProjectConfigurationInputs, projectConfigurationInputDigest } from './project-configuration.js';
+import { assertCurrentProjectConfigurationBinding } from './project-configuration-rebind.js';
+import { validateProjectInitializationReceipt } from './project-initialization-record.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
+import { isCanonicalJsonNumber } from '../contracts/canonical-json-core.js';
 import researchResultSchema from '../../schemas/research-result.v1.schema.json' with { type: 'json' };
 import researchSynthesisSchema from '../../schemas/research-synthesis.v1.schema.json' with { type: 'json' };
 
@@ -25,8 +42,51 @@ export {
 } from './host-capability.js';
 
 const CONFIG_FILE = LEGACY_RUNTIME_CONFIGURATION_PATH;
+const PROJECT_LOADER_BUNDLE_FILES = [
+  'runtime-package/bin/project-upgrade-repair.ts',
+  'runtime-package/src/config/project-activation.ts',
+  'runtime-package/src/config/project-configuration.ts',
+  'runtime-package/src/config/project-configuration-rebind.ts',
+  'runtime-package/src/config/project-initialization-binding.ts',
+  'runtime-package/src/config/project-initialization-record.ts',
+  'runtime-package/src/config/project-layout.ts',
+  'runtime-package/src/config/project-paths.ts',
+  'runtime-package/src/config/project-upgrade-artifacts.ts',
+  'runtime-package/src/config/project-upgrade-existing-storage-admission.ts',
+  'runtime-package/src/config/project-upgrade-existing-storage.ts',
+  'runtime-package/src/config/project-upgrade-storage.ts',
+  'runtime-package/src/config/project-upgrade.ts',
+  'runtime-package/src/config/safe-repository-access.ts',
+  'runtime-package/src/config/service-operation-custody.ts',
+  'runtime-package/src/config/service-operation-launch-capability.ts',
+  'runtime-package/src/config/storage-read-admission.ts',
+  'runtime-package/src/config/workspace-database.ts',
+  'runtime-package/src/config/runtime-config.ts',
+  'runtime-package/src/runtime-initialization.ts',
+  'runtime-package/src/documentation/policy.ts',
+  'runtime-package/src/host-state.ts',
+  'runtime-package/schemas/agent-runtime-config.v1.schema.json',
+  'runtime-package/schemas/documentation-policy.v1.schema.json',
+  'runtime-package/schemas/project-configuration.v1.schema.json',
+  'runtime-package/schemas/config-rebind-operation.v1.schema.json',
+  'runtime-package/schemas/runtime-initialization.v2.schema.json',
+] as const;
+
+/** Check the selected runtime package contains the complete project-format reader and repair closure. */
+export function assertProjectConfigurationBundleCapability(): void {
+  const paths = new Set(runtimePackageCodePaths('runtime-package'));
+  assertCondition(
+    PROJECT_LOADER_BUNDLE_FILES.every((file) => paths.has(file)),
+    'runtime bundle does not contain the complete project configuration capability',
+  );
+}
+
+/** Select only after the caller's project-upgrade barrier check. */
+export function activeRuntimeConfigurationSource(access: SafeRepositoryAccess): RuntimeConfigurationSource {
+  return selectedRuntimeConfigurationSource(access);
+}
 const CONFIG_SCHEMA_ID = 'https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json';
-const CONFIG_SCHEMA_SHA256 = 'ed7c14b68f51c103aa06172b057a7c60cf58af69fa6727bad6aa11d9180d40e9';
+const CONFIG_SCHEMA_SHA256 = '06d39c1510f57f56a53b2a5411f4f5c29e41f0e5326aa4c8af22e93cabba784e';
 const CONFIG_SCHEMA_FILE = fileURLToPath(new URL('../../schemas/agent-runtime-config.v1.schema.json', import.meta.url));
 const resourceRoot = path.dirname(path.dirname(CONFIG_SCHEMA_FILE));
 const RUNTIME_PACKAGE_ROOT = existsSync(path.join(resourceRoot, 'package.json'))
@@ -41,9 +101,17 @@ export function runtimePackageAccess(): SafeRepositoryAccess {
   return access;
 }
 /** Logical inventory paths never expose a developer home or consumer checkout. */
-export function runtimePackageCodePaths(bundle: string): readonly string[] {
+export function runtimePackageCodePaths(
+  bundle: string,
+  access: SafeRepositoryAccess = runtimePackageAccess(),
+): readonly string[] {
+  assertCondition(
+    path.resolve(access.repository_root) === realpathSync(RUNTIME_PACKAGE_ROOT),
+    'runtime package access root differs',
+  );
+  // Discovery keeps the existing scanner; byte consumers retain live SafeAccess checks.
   return runtimeExecutableInventory(
-    runtimePackageAccess().repository_root,
+    access.repository_root,
     resourceRoot === RUNTIME_PACKAGE_ROOT ? 'source' : 'dist',
   ).map((file) => bundle + '/' + file);
 }
@@ -468,7 +536,7 @@ function credentialLiteral(key: string, child: unknown): boolean {
 }
 
 function cacheMatches(cached: CachedConfig | undefined, digest: string): boolean {
-  return [Boolean(cached), cached?.bytes_sha256 === digest].every(Boolean);
+  return [Boolean(cached), cached?.source_digest === digest].every(Boolean);
 }
 
 function formatAjvErrors(errors: ErrorObject[] | null | undefined): string {
@@ -514,7 +582,7 @@ function snapshotJson(
           choose(
             kind === 'number',
             () => {
-              assertCondition(Number.isFinite(value), label + ' must contain finite numbers');
+              assertCondition(isCanonicalJsonNumber(value), label + ' must contain canonical JSON numbers');
               return value as number;
             },
             () => {
@@ -1547,7 +1615,7 @@ export function validateRuntimeConfig(
 }
 
 interface CachedConfig {
-  readonly bytes_sha256: string;
+  readonly source_digest: string;
   readonly config: AgentRuntimeConfig;
 }
 const configCache = new Map<string, CachedConfig>();
@@ -1557,6 +1625,9 @@ const loadedConfigDigests = new WeakMap<object, string>();
 
 export function assertLoadedRuntimeConfig(config: AgentRuntimeConfig, repositoryRoot?: string): void {
   assertCondition(authorizedRuntimeConfigs.has(config), 'runtime config must come from loadRuntimeConfig');
+  const boundRoot = authorizedRuntimeConfigRoots.get(config);
+  assertCondition(boundRoot !== undefined, 'runtime config repository binding is missing');
+  assertProjectUpgradeInactive(requireSafeRepositoryAccess(boundRoot!));
   if (repositoryRoot !== undefined) {
     assertCondition(path.isAbsolute(repositoryRoot), 'runtime config root must be absolute');
     assertCondition(
@@ -1567,22 +1638,247 @@ export function assertLoadedRuntimeConfig(config: AgentRuntimeConfig, repository
 }
 
 export function loadRuntimeConfig(repositoryRoot: string): AgentRuntimeConfig {
+  return loadRuntimeConfigForSelectedSource(repositoryRoot);
+}
+
+function loadRuntimeConfigForSelectedSource(repositoryRoot: string): AgentRuntimeConfig {
   assertCondition(path.isAbsolute(repositoryRoot), 'repository root must be absolute');
   const root = path.resolve(repositoryRoot);
-  const target = resolveConfigPath(root, CONFIG_FILE, 'runtime config');
-  const raw = requireSafeRepositoryAccess(root).readText(target, 'runtime config');
-  const bytesSha256 = createHash('sha256').update(raw, 'utf8').digest('hex');
+  const access = requireSafeRepositoryAccess(root);
+  assertProjectUpgradeInactive(access);
+  const selection = selectRuntimeConfigurationSource(access);
+  const source = selection.source;
   const cached = configCache.get(root);
-  return choose(
-    cacheMatches(cached, bytesSha256),
+  const loaded =
+    source === CONFIG_FILE
+      ? readLegacyRuntimeConfiguration(access, root, cached)
+      : readProjectRuntimeConfiguration(access, root, selection, cached);
+  const config = choose(
+    cacheMatches(cached, loaded.source_digest),
     () => (cached as CachedConfig).config,
-    () => {
-      const config = validateRuntimeConfig(parseRuntimeConfigDocument(raw), root);
-      authorizedRuntimeConfigs.add(config);
-      authorizedRuntimeConfigRoots.set(config, root);
-      configCache.set(root, { bytes_sha256: bytesSha256, config });
-      return config;
-    },
+    () => loaded.config,
+  );
+  if (!authorizedRuntimeConfigs.has(config)) authorizedRuntimeConfigs.add(config);
+  authorizedRuntimeConfigRoots.set(config, root);
+  bindLoadedConfigurationSource(config, source);
+  if (!cacheMatches(cached, loaded.source_digest))
+    configCache.set(root, { source_digest: loaded.source_digest, config });
+  assertProjectUpgradeInactive(access);
+  assertCondition(
+    recheckRuntimeConfigurationSelection(access, selection),
+    'runtime configuration source changed during its read.',
+  );
+  return config;
+}
+
+interface RuntimeConfigurationSelection {
+  readonly source: RuntimeConfigurationSource;
+  readonly activation?: ReturnType<typeof validateProjectActivation>;
+  readonly activation_bytes?: string;
+  readonly history_path?: string;
+  readonly history_bytes?: string;
+  readonly outputs?: readonly ProjectActivationOutput[];
+}
+
+const PROJECT_UPGRADE_OUTPUT_EVIDENCE_PATHS = Object.freeze([
+  PROJECT_UPGRADE_OPERATION_PATH,
+  PROJECT_INITIALIZATION_PATH,
+  ...Object.values(PROJECT_CONFIGURATION_PATHS),
+  INITIALIZED_PROJECT_PATHS.sidecar,
+  INITIALIZED_PROJECT_PATHS.projectPolicy,
+  INITIALIZED_PROJECT_PATHS.documentationPolicy,
+  PROJECT_WORKSPACE_DATABASE_PATH,
+  PROJECT_WORKSPACE_DATABASE_PATH + '-wal',
+  PROJECT_WORKSPACE_DATABASE_PATH + '-shm',
+  PROJECT_WORKSPACE_DATABASE_PATH + '-journal',
+  '.vida/layout.v1.json',
+]);
+
+function isProjectUpgradeStagingName(name: string): boolean {
+  return name.startsWith('.upgrade-intent-') || name.startsWith('.activation-');
+}
+
+function isProjectUpgradeDatabaseStagingName(name: string): boolean {
+  return name.startsWith('.upgrade-') && name.endsWith('.sqlite');
+}
+
+function hasProjectUpgradeStagingEvidence(access: SafeRepositoryAccess): boolean {
+  const projectStaging =
+    access.fileExists('.vida', 'project upgrade staging directory') &&
+    access.listFiles('.vida', 'project upgrade staging directory').some(isProjectUpgradeStagingName);
+  const workRoot = INITIALIZED_PROJECT_PATHS.work;
+  const databaseStaging =
+    access.fileExists(workRoot, 'project upgrade database staging directory') &&
+    access.listFiles(workRoot, 'project upgrade database staging directory').some(isProjectUpgradeDatabaseStagingName);
+  return projectStaging || databaseStaging;
+}
+
+function hasProjectUpgradeOutputEvidence(access: SafeRepositoryAccess): boolean {
+  if (!access.fileExists('.vida', 'project upgrade output directory')) return false;
+  const fixedOutputExists = PROJECT_UPGRADE_OUTPUT_EVIDENCE_PATHS.some((file) =>
+    access.fileExists(file, 'project upgrade output evidence'),
+  );
+  if (fixedOutputExists) return true;
+  const instructionDirectory = INITIALIZED_PROJECT_PATHS.instructions;
+  const publishedInstructions =
+    access.fileExists(instructionDirectory, 'project upgrade instruction output') &&
+    access.listFiles(instructionDirectory, 'project upgrade instruction output').length > 0;
+  return publishedInstructions || hasProjectUpgradeStagingEvidence(access);
+}
+
+function selectRuntimeConfigurationSource(access: SafeRepositoryAccess): RuntimeConfigurationSelection {
+  if (!access.fileExists(PROJECT_ACTIVATION_PATH, 'project activation')) {
+    assertCondition(
+      !hasProjectUpgradeOutputEvidence(access),
+      'Project activation is missing while current .vida outputs remain; recover the existing upgrade before configuration access.',
+    );
+    return { source: CONFIG_FILE };
+  }
+  assertProjectConfigurationBundleCapability();
+  const activationBytes = access.readText(PROJECT_ACTIVATION_PATH, 'project activation');
+  const activation = validateProjectActivation(JSON.parse(activationBytes) as unknown);
+  const historyPath = projectUpgradeHistoryPath(activation.operation_id);
+  const historyBytes = access.readText(historyPath, 'completed project upgrade history');
+  const outputs = assertCompletedProjectActivationHistory(
+    historyBytes,
+    activationBytes,
+    activation,
+    access.repository_root,
+  );
+  return {
+    source: PROJECT_CONFIGURATION_PATHS.project,
+    activation,
+    activation_bytes: activationBytes,
+    history_path: historyPath,
+    history_bytes: historyBytes,
+    outputs,
+  };
+}
+
+function selectedRuntimeConfigurationSource(access: SafeRepositoryAccess): RuntimeConfigurationSource {
+  return selectRuntimeConfigurationSource(access).source;
+}
+
+function recheckRuntimeConfigurationSelection(
+  access: SafeRepositoryAccess,
+  selection: RuntimeConfigurationSelection,
+): boolean {
+  if (selection.source === CONFIG_FILE)
+    return (
+      !access.fileExists(PROJECT_ACTIVATION_PATH, 'project activation') && !hasProjectUpgradeOutputEvidence(access)
+    );
+  return (
+    access.readText(PROJECT_ACTIVATION_PATH, 'project activation') === selection.activation_bytes &&
+    access.readText(selection.history_path!, 'completed project upgrade history') === selection.history_bytes
+  );
+}
+
+function readLegacyRuntimeConfiguration(
+  access: SafeRepositoryAccess,
+  root: string,
+  cached: CachedConfig | undefined,
+): {
+  readonly source_digest: string;
+  readonly config: AgentRuntimeConfig;
+} {
+  const target = resolveConfigPath(root, CONFIG_FILE, 'runtime config');
+  const raw = access.readText(target, 'runtime config');
+  const sourceDigest = CONFIG_FILE + ':' + createHash('sha256').update(raw, 'utf8').digest('hex');
+  return {
+    source_digest: sourceDigest,
+    config: cacheMatches(cached, sourceDigest)
+      ? cached!.config
+      : validateRuntimeConfig(parseRuntimeConfigDocument(raw), root),
+  };
+}
+
+function readProjectRuntimeConfiguration(
+  access: SafeRepositoryAccess,
+  root: string,
+  selection: RuntimeConfigurationSelection,
+  cached: CachedConfig | undefined,
+): {
+  readonly source_digest: string;
+  readonly config: AgentRuntimeConfig;
+} {
+  const activationBytes = selection.activation_bytes!;
+  const activation = selection.activation!;
+  const inputs = {
+    project: access.readText(PROJECT_CONFIGURATION_PATHS.project, 'project runtime config'),
+    agents: access.readText(PROJECT_CONFIGURATION_PATHS.agents, 'project agent config'),
+    flows: access.readText(PROJECT_CONFIGURATION_PATHS.flows, 'project flow config'),
+  };
+  const inputDigest = projectConfigurationInputDigest(inputs);
+  const receiptBytes = access.readBytes(PROJECT_INITIALIZATION_PATH, 'project initialization receipt');
+  const receiptText = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(receiptBytes);
+  assertCondition(Buffer.from(receiptText, 'utf8').equals(receiptBytes), 'Project initialization UTF-8 differs.');
+  const receipt = validateProjectInitializationReceipt(JSON.parse(receiptText) as unknown);
+  assertProjectInputIdentity(inputDigest, receipt, activation);
+  assertProjectOutputClosure(access, selection.outputs!, receipt.prepared_artifacts);
+  const sourceDigest = new Bun.CryptoHasher('sha256')
+    .update(PROJECT_CONFIGURATION_PATHS.project + '\0')
+    .update(activationBytes)
+    .update('\0')
+    .update(selection.history_bytes!)
+    .update('\0')
+    .update(inputDigest)
+    .update('\0')
+    .update(receiptBytes)
+    .digest('hex');
+  const config = cacheMatches(cached, sourceDigest)
+    ? cached!.config
+    : composeProjectConfigurationInputs(inputs, root, PROJECT_CONFIGURATION_PATHS.project).config;
+  assertCurrentProjectConfigurationBinding(access, config, inputDigest, receipt, inputs);
+  return { source_digest: sourceDigest, config };
+}
+
+function assertProjectInputIdentity(
+  inputDigest: string,
+  receipt: ReturnType<typeof validateProjectInitializationReceipt>,
+  activation: ReturnType<typeof validateProjectActivation>,
+): void {
+  assertCondition(
+    inputDigest === receipt.current_input_digest &&
+      receipt.operation_id === activation.operation_id &&
+      receipt.bundle_digest === activation.bundle_digest &&
+      receipt.input_digest === activation.input_digest &&
+      receipt.config_digest === activation.config_digest &&
+      projectInitializationIdentityDigest(receipt) === activation.receipt_identity_digest,
+    'activated project configuration differs from its exact initialization closure',
+  );
+}
+
+function assertProjectOutputClosure(
+  access: SafeRepositoryAccess,
+  outputs: readonly ProjectActivationOutput[],
+  preparedArtifacts: ReturnType<typeof validateProjectInitializationReceipt>['prepared_artifacts'],
+): void {
+  const initialization = outputs.filter((output) => output.path === PROJECT_INITIALIZATION_PATH);
+  const isConfigInput = (file: string): boolean => Object.values(PROJECT_CONFIGURATION_PATHS).includes(file as never);
+  const prepared = outputs
+    .filter((output) => output.path !== PROJECT_INITIALIZATION_PATH && !isConfigInput(output.path))
+    .map(({ path: file, sha256 }) => ({ path: file, sha256 }));
+  const expected = preparedArtifacts.filter((output) => !isConfigInput(output.path));
+  assertCondition(initialization.length === 1, 'activated project initialization output is missing or duplicated');
+  assertCondition(
+    canonicalJsonDigest(prepared) === canonicalJsonDigest(expected),
+    'activated project output closure differs from its receipt',
+  );
+  for (const output of outputs) {
+    if (output.path !== PROJECT_INITIALIZATION_PATH && !isConfigInput(output.path)) {
+      const digest = new Bun.CryptoHasher('sha256')
+        .update(access.readBytes(output.path, 'activated project output'))
+        .digest('hex');
+      assertCondition(digest === output.sha256, 'activated project output changed: ' + output.path);
+    }
+  }
+}
+
+/** Cooperative read barrier shared by configuration and direct storage readers. */
+export function assertProjectUpgradeInactive(access: SafeRepositoryAccess): void {
+  assertCondition(
+    !access.fileExists(PROJECT_UPGRADE_OPERATION_PATH, 'active project upgrade'),
+    'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
   );
 }
 

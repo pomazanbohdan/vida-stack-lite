@@ -637,8 +637,11 @@ payload, destination, rollback and installed observations. Only attributable
 user testing can establish Runtime acceptance; changed inputs invalidate only
 their affected proof.
 
-Commit follows current-version post-presentation acceptance; push requires the user's
-separate explicit command.
+Source repositories apply their scoped standing Git authorization through the
+project Sidecar and the development-lifecycle instruction, including required
+commit and push at correction-packet closeout. For consumer projects, commit
+follows current-version post-presentation acceptance; push requires the user's
+separate explicit command unless their attributable standing instruction applies.
 
 Communicate with the user using approximately 80% ASD-STE100 principles: short sentences, plain words, consistent terms and one idea per paragraph. Preserve the user's language and required technical precision. This is an approximate style target, not a claim of formal ASD-STE100 compliance.
 

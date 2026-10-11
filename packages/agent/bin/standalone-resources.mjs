@@ -17,20 +17,36 @@ import {
 import path from 'node:path';
 import { open as openAsync } from 'node:fs/promises';
 
+/** @typedef {{ readonly path: string; readonly sha256: string; readonly bytes: number }} ResourceIndexEntry */
+/** @typedef {Map<string, Blob>} EmbeddedResourceFiles */
+/** @typedef {{ readonly name: string; isSymbolicLink(): boolean; isDirectory(): boolean; isFile(): boolean }} ResourceDirectoryEntry */
+
+/** @param {string | Uint8Array} bytes */
 export const resourceDigest = (bytes) => createHash('sha256').update(bytes).digest('hex');
+/** @param {string} file */
 export const resourceEntryExists = (file) => lstatSync(file, { throwIfNoEntry: false }) !== undefined;
 
+/** @param {string} value */
 export function resourcePath(value) {
   assert.ok(typeof value === 'string' && value.length > 0 && !path.isAbsolute(value), 'Resource path must be relative');
-  assert.ok(
-    value
-      .split('/')
-      .every((part) => part && part !== '.' && part !== '..' && !/[\\:\x00-\x1f]/.test(part) && !/[. ]$/.test(part)),
-    'Resource path is unsafe',
-  );
+  assert.ok(value.split('/').every(isSafeResourceComponent), 'Resource path is unsafe');
   return value;
 }
 
+/** @param {string} part */
+function isSafeResourceComponent(part) {
+  return Boolean(
+    part && part !== '.' && part !== '..' && !/[\\:]/.test(part) && !hasControlCharacter(part) && !/[. ]$/.test(part),
+  );
+}
+
+/** @param {string} value */
+function hasControlCharacter(value) {
+  for (let index = 0; index < value.length; index++) if (value.charCodeAt(index) < 32) return true;
+  return false;
+}
+
+/** @param {string} directory @param {boolean} [create] */
 export function resourceDirectory(directory, create = false) {
   assert.equal(path.resolve(directory), directory, 'Resource directory must be canonical and absolute');
   const parent = path.dirname(directory);
@@ -40,13 +56,19 @@ export function resourceDirectory(directory, create = false) {
     try {
       mkdirSync(directory, { mode: 0o700 });
     } catch (error) {
-      if (error.code !== 'EEXIST') throw error;
+      if (!hasErrorCode(error, 'EEXIST')) throw error;
     }
     info = lstatSync(directory);
   }
   assert.ok(info?.isDirectory() && !info.isSymbolicLink(), 'Resource directory is linked or missing');
 }
 
+/** @param {unknown} error @param {string} code */
+function hasErrorCode(error, code) {
+  return error instanceof Error && 'code' in error && error.code === code;
+}
+
+/** @param {string} directory */
 function privateDirectory(directory) {
   resourceDirectory(directory);
   // Standard POSIX metadata is available only on those runtimes. This is not a Windows ACL or sandbox claim.
@@ -56,6 +78,7 @@ function privateDirectory(directory) {
   }
 }
 
+/** @param {string} root @param {string} relative */
 export function readResource(root, relative) {
   const file = path.join(root, resourcePath(relative));
   resourceDirectory(path.dirname(file));
@@ -87,10 +110,73 @@ export function readResource(root, relative) {
   }
 }
 
+/** @param {unknown} value @returns {value is ResourceIndexEntry} */
+function isResourceIndexEntry(value) {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'path' in value &&
+    typeof value.path === 'string' &&
+    'sha256' in value &&
+    typeof value.sha256 === 'string' &&
+    'bytes' in value &&
+    typeof value.bytes === 'number'
+  );
+}
+
+/** @param {unknown} value @returns {value is readonly ResourceIndexEntry[]} */
+function isResourceIndex(value) {
+  return Array.isArray(value) && value.every(isResourceIndexEntry);
+}
+
+/** @param {unknown} value @returns {value is EmbeddedResourceFiles} */
+function isEmbeddedResourceFiles(value) {
+  return value instanceof Map && [...value].every(([name, blob]) => typeof name === 'string' && blob instanceof Blob);
+}
+
+/** @param {unknown} value @returns {value is ResourceDirectoryEntry} */
+function isResourceDirectoryEntry(value) {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'name' in value &&
+    typeof value.name === 'string' &&
+    'isSymbolicLink' in value &&
+    typeof value.isSymbolicLink === 'function' &&
+    'isDirectory' in value &&
+    typeof value.isDirectory === 'function' &&
+    'isFile' in value &&
+    typeof value.isFile === 'function'
+  );
+}
+
+/** @param {string} directory @returns {ResourceDirectoryEntry[]} */
+function readDirectoryEntries(directory) {
+  /** @type {unknown} */
+  const entries = readdirSync(directory, { withFileTypes: true });
+  if (!Array.isArray(entries)) throw new Error('Resource directory listing is invalid');
+  /** @type {ResourceDirectoryEntry[]} */
+  const selected = [];
+  for (const entry of entries) {
+    if (!isResourceDirectoryEntry(entry)) throw new Error('Resource directory entry is invalid');
+    selected.push(entry);
+  }
+  return selected;
+}
+
+/** @param {string} prefix @param {string} name */
+function resourceChildPath(prefix, name) {
+  return prefix + name;
+}
+
+/** @param {readonly ResourceIndexEntry[]} index */
 function inventory(index) {
-  assert.ok(Array.isArray(index) && index.length > 0, 'Resource inventory is empty');
-  const files = new Map(),
-    directories = new Set();
+  assert.ok(index.length > 0, 'Resource inventory is empty');
+  /** @type {Map<string, ResourceIndexEntry>} */
+  const typedFiles = new Map();
+  /** @type {Set<string>} */
+  const typedDirectories = new Set();
+  /** @type {Set<string>} */
   const folded = new Set();
   for (const entry of index) {
     const relative = resourcePath(entry.path);
@@ -102,34 +188,37 @@ function inventory(index) {
       'Resource inventory is invalid',
     );
     folded.add(relative.toLowerCase());
-    files.set(relative, entry);
+    typedFiles.set(relative, entry);
     const parts = relative.split('/');
     parts.pop();
-    for (let length = 1; length <= parts.length; length++) directories.add(parts.slice(0, length).join('/'));
+    for (let length = 1; length <= parts.length; length++) typedDirectories.add(parts.slice(0, length).join('/'));
   }
   assert.ok(
-    [...directories].every((relative) => !files.has(relative)),
+    [...typedDirectories].every((relative) => !typedFiles.has(relative)),
     'Resource file/directory collision',
   );
-  return { files, directories };
+  return { files: typedFiles, directories: typedDirectories };
 }
 
+/** @param {string} root @param {readonly ResourceIndexEntry[]} index */
 export function verifyResourceTree(root, index) {
   privateDirectory(root);
-  const { files, directories } = inventory(index),
-    found = new Set();
+  const { files, directories } = inventory(index);
+  /** @type {Set<string>} */
+  const found = new Set();
+  /** @param {string} directory @param {string} [prefix] */
   function visit(directory, prefix = '') {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const relative = prefix + entry.name,
-        file = path.join(directory, entry.name);
-      assert.ok(!entry.isSymbolicLink(), 'Resource tree contains a link');
-      if (entry.isDirectory()) {
+    for (const currentEntry of readDirectoryEntries(directory)) {
+      const relative = resourceChildPath(prefix, currentEntry.name);
+      const file = path.join(directory, currentEntry.name);
+      assert.ok(!currentEntry.isSymbolicLink(), 'Resource tree contains a link');
+      if (currentEntry.isDirectory()) {
         assert.ok(directories.has(relative), 'Resource tree contains an unknown directory');
         privateDirectory(file);
         visit(file, relative + '/');
       } else {
         const expected = files.get(relative);
-        assert.ok(entry.isFile() && expected, 'Resource tree contains an unknown file');
+        assert.ok(currentEntry.isFile() && expected, 'Resource tree contains an unknown file');
         const bytes = readResource(root, relative);
         assert.ok(
           bytes.length === expected.bytes && resourceDigest(bytes) === expected.sha256,
@@ -144,6 +233,30 @@ export function verifyResourceTree(root, index) {
   return root;
 }
 
+/** @param {string} version @param {string} payloadId */
+function assertResourceIdentity(version, payloadId) {
+  assert.ok(/^\d+\.\d+\.\d+$/.test(version) && /^[a-f0-9]{64}$/.test(payloadId), 'Resource identity is invalid');
+}
+
+/** @param {string} cache @param {string} privateRoot */
+function assertResourceCacheRoot(cache, privateRoot) {
+  assert.ok(
+    cache === privateRoot || cache.startsWith(privateRoot + path.sep),
+    'Resource cache escapes its private root',
+  );
+}
+
+/**
+ * @param {{
+ *   cache: string;
+ *   privateRoot?: string;
+ *   version: string;
+ *   payloadId: string;
+ *   index: unknown;
+ *   loadFiles: () => Promise<unknown>;
+ *   waitMs?: number;
+ * }} options
+ */
 export async function materializeResources({
   cache,
   privateRoot = cache,
@@ -153,13 +266,11 @@ export async function materializeResources({
   loadFiles,
   waitMs = 30_000,
 }) {
-  assert.ok(/^\d+\.\d+\.\d+$/.test(version) && /^[a-f0-9]{64}$/.test(payloadId), 'Resource identity is invalid');
+  assert.ok(isResourceIndex(index) && index.length > 0, 'Resource inventory is empty or invalid');
+  assertResourceIdentity(version, payloadId);
   assert.ok(Number.isSafeInteger(waitMs) && waitMs >= 0, 'Resource wait bound is invalid');
   inventory(index);
-  assert.ok(
-    cache === privateRoot || cache.startsWith(privateRoot + path.sep),
-    'Resource cache escapes its private root',
-  );
+  assertResourceCacheRoot(cache, privateRoot);
   resourceDirectory(cache, true);
   const checkCache = () => {
     for (let current = cache; ; current = path.dirname(current)) {
@@ -178,7 +289,7 @@ export async function materializeResources({
       descriptor = openSync(lock, 'wx', 0o600);
       break;
     } catch (error) {
-      if (error.code !== 'EEXIST') throw error;
+      if (!hasErrorCode(error, 'EEXIST')) throw error;
       const info = lstatSync(lock, { throwIfNoEntry: false });
       if (!info) continue;
       assert.ok(info.isFile() && !info.isSymbolicLink() && info.nlink === 1, 'Resource lock is unsafe');
@@ -195,8 +306,11 @@ export async function materializeResources({
   try {
     if (resourceEntryExists(destination)) return verifyResourceTree(destination, index);
     const stage = mkdtempSync(path.join(cache, '.pending-' + version + '-'));
-    const files = await loadFiles();
-    assert.ok(files instanceof Map && files.size === index.length, 'Embedded archive inventory differs');
+    const loadedFiles = await loadFiles();
+    if (!isEmbeddedResourceFiles(loadedFiles) || loadedFiles.size !== index.length)
+      throw new Error('Embedded archive inventory differs');
+    const files = loadedFiles;
+    /** @param {ResourceIndexEntry} entry */
     const writeEntry = async (entry) => {
       const blob = files.get(entry.path);
       assert.ok(blob, 'Embedded resource is missing');

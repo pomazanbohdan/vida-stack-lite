@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 import { initializeProject } from '../bin/init.mjs';
-import { inspectScope } from '../bin/scope.mjs';
+import { inspectScope } from '../bin/scope.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import {
   compareScopedSourceSnapshots,
@@ -37,7 +37,9 @@ describe('cooperative scoped source evidence', () => {
     files.set(`${bundle}/dist/src/runtime.js`, 'current generated export');
     const target = capture();
     expect(snapshots.runtimeEndpointSourceTargets(bundle, before, target, capture())).toEqual([]);
-    expect(compareScopedSourceSnapshots(before, target).map(change => change.path)).toEqual([`${bundle}/dist/src/runtime.js`]);
+    expect(compareScopedSourceSnapshots(before, target).map((change) => change.path)).toEqual([
+      `${bundle}/dist/src/runtime.js`,
+    ]);
     files.set(`${bundle}/dist/src/runtime.js`, 'different installed bytes');
     expect(() => snapshots.runtimeEndpointSourceTargets(bundle, before, target, capture())).toThrow();
     files.set(`${bundle}/dist/src/runtime.js`, 'current generated export');
@@ -45,13 +47,17 @@ describe('cooperative scoped source evidence', () => {
     files.set(`${bundle}/dist/schemas/probe.schema.json`, '{"type":"string"}');
     files.set(`${bundle}/src/index.ts`, 'changed maintained source');
     const withSchema = capture();
-    expect(snapshots.runtimeEndpointSourceTargets(bundle, before, withSchema, capture()).map(entry => entry.path)).toEqual([
-      `${bundle}/schemas/probe.schema.json`, `${bundle}/src/index.ts`,
-    ]);
+    expect(
+      snapshots.runtimeEndpointSourceTargets(bundle, before, withSchema, capture()).map((entry) => entry.path),
+    ).toEqual([`${bundle}/schemas/probe.schema.json`, `${bundle}/src/index.ts`]);
     files.set(`${bundle}/schemas/probe.schema.json`, '{"type":"boolean"}');
-    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, withSchema, capture(), capture())).toThrow(/copied schema/);
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, withSchema, capture(), capture())).toThrow(
+      /copied schema/,
+    );
     files.delete(`${bundle}/schemas/probe.schema.json`);
-    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, withSchema, capture(), capture())).toThrow(/copied schema/);
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, withSchema, capture(), capture())).toThrow(
+      /copied schema/,
+    );
     files.set(`${bundle}/schemas/probe.schema.json`, '{"type":"string"}');
     files.set(`${bundle}/dist/schemas/probe.schema.json`, '{"type":"number"}');
     expect(() => snapshots.runtimeEndpointSourceTargets(bundle, before, capture(), capture())).toThrow(/copied schema/);
@@ -60,14 +66,23 @@ describe('cooperative scoped source evidence', () => {
     files.set(`${bundle}/schemas/probe.schema.json`, '{}');
     files.set(`${bundle}/dist/schemas/probe.schema.json`, '{}');
     files.set(`${bundle}/dist/src/unlisted.js`, 'unlisted output');
-    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, target, capture(), capture())).toThrow(/maintained generated inventory/);
+    expect(() => snapshots.runtimeEndpointSourceTargets(bundle, target, capture(), capture())).toThrow(
+      /maintained generated inventory/,
+    );
   });
   test('retains distinct runtime endpoint inventories and derives appeared and disappeared bytes', () => {
     const prefix = 'packages/agent';
-    const files = new Map([['src/old.ts', 'old'], ['src/shared.ts', 'before']]);
+    const files = new Map([
+      ['src/old.ts', 'old'],
+      ['src/shared.ts', 'before'],
+    ]);
     const manifest = (values) => ({
       schema: 'VidaStandaloneBuild/v1',
-      inputs: snapshotDeclaredSources(reader(values), [...values.keys()]).entries.map(({ path, bytes, sha256 }) => ({ path, bytes, sha256 })),
+      inputs: snapshotDeclaredSources(reader(values), [...values.keys()]).entries.map(({ path, bytes, sha256 }) => ({
+        path,
+        bytes,
+        sha256,
+      })),
     });
     const paths = (values) => [...values.keys()].map((name) => `${prefix}/${name}`);
     const beforeManifest = manifest(files);
@@ -99,7 +114,9 @@ describe('cooperative scoped source evidence', () => {
       [{ ...before.entries[0], extra: true }],
     ]) {
       const body = { schema: before.schema, entries };
-      expect(() => snapshots.compareRuntimeEndpointSnapshots({ ...body, digest: canonicalJsonDigest(body) }, after)).toThrow();
+      expect(() =>
+        snapshots.compareRuntimeEndpointSnapshots({ ...body, digest: canonicalJsonDigest(body) }, after),
+      ).toThrow();
     }
     for (const invalid of [
       { ...beforeManifest, schema: 'other' },
@@ -113,7 +130,19 @@ describe('cooperative scoped source evidence', () => {
       { ...beforeManifest, inputs: [{ ...beforeManifest.inputs[0], path: '../outside.ts' }] },
       { ...beforeManifest, inputs: [{ ...beforeManifest.inputs[0], bytes: -1 }] },
       { ...beforeManifest, inputs: [{ ...beforeManifest.inputs[0], sha256: 'wrong' }] },
-    ]) expect(() => snapshots.snapshotRuntimeManifestSources(invalid, prefix, paths(new Map([['src/old.ts', 'old'], ['src/shared.ts', 'before']])))).toThrow();
+    ])
+      expect(() =>
+        snapshots.snapshotRuntimeManifestSources(
+          invalid,
+          prefix,
+          paths(
+            new Map([
+              ['src/old.ts', 'old'],
+              ['src/shared.ts', 'before'],
+            ]),
+          ),
+        ),
+      ).toThrow();
     expect(() => snapshots.snapshotRuntimeManifestSources(beforeManifest, prefix, ['foreign/src/old.ts'])).toThrow();
   });
   test('public scope resolves equal, nested, shared and repository-evidence paths without widening selectors', async () => {
@@ -149,7 +178,7 @@ describe('cooperative scoped source evidence', () => {
       spawnSync(
         process.execPath,
         [
-          path.join(packageRoot, 'bin/scope.mjs'),
+          path.join(packageRoot, 'bin/scope.ts'),
           ...base,
           ...projects.flatMap((project) => ['--project', project]),
           ...args,

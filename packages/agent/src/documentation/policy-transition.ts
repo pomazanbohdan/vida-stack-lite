@@ -1,15 +1,17 @@
-import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
-import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { parseDocumentationPolicyTransitionEnvelope } from './transition-proof.js';
 import eventSchema from '../../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
 import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
+import { assertProjectUpgradeInactive, loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
+import {
+  openAdmittedWorkspaceDatabase,
+  closeWorkspaceDatabaseWithAdmission,
+} from '../config/storage-read-admission.js';
 
 type Entry = { path: string; bytes: string; sha256: string; size: number };
 type RecordValue = Record<string, unknown>;
@@ -91,6 +93,7 @@ export function documentationPolicyTransitionPreimages(
   currentPolicyBytes: Uint8Array,
 ): Entry[] {
   const access = requireSafeRepositoryAccess(input.repository_root);
+  assertProjectUpgradeInactive(access);
   const file = documentationPolicyTransitionPath(input.work_id);
   if (!access.fileExists(file, 'policy transition dependency')) return [];
   const operation = parseDocumentationPolicyTransition(access.readBytes(file, 'policy transition dependency'));
@@ -209,14 +212,10 @@ export function documentationPolicyTransitionPreimages(
   // Read-only database access verifies the real fence; a caller's phase/token is insufficient.
   const databasePath = sessionHandoffDatabaseRelativePath(config);
   access.readBytes(databasePath, 'existing transition fence database');
-  const db = new Database(path.join(input.repository_root, databasePath), {
-    readonly: true,
-    strict: true,
-  });
+  const workspaceId = deriveWorkspaceId(input.repository_id, input.repository_root);
+  const db = openAdmittedWorkspaceDatabase(input.repository_root, databasePath, workspaceId, true);
   try {
-    const row = db
-      .query('SELECT payload,digest FROM agent_host_maintenance WHERE workspace_id=?')
-      .get(deriveWorkspaceId(input.repository_id, input.repository_root)) as {
+    const row = db.query('SELECT payload,digest FROM agent_host_maintenance WHERE workspace_id=?').get(workspaceId) as {
       payload: string;
       digest: string;
     } | null;
@@ -232,7 +231,7 @@ export function documentationPolicyTransitionPreimages(
       'maintenance status differs',
     );
   } finally {
-    db.close(true);
+    closeWorkspaceDatabaseWithAdmission(db);
   }
   return entries;
 }

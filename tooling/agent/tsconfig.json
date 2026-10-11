@@ -1,0 +1,9 @@
+{
+  "extends": "../../packages/agent/tsconfig.checked-js.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "typeRoots": ["../../packages/agent/node_modules/@types"]
+  },
+  "include": ["**/*.mjs", "**/*.ts"],
+  "exclude": []
+}

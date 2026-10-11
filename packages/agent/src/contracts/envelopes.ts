@@ -53,9 +53,7 @@ export function validateRuntimeEnvelope(value: unknown): RuntimeEnvelope {
   assertDataOnlyJson(value);
   reject(
     [!validator(value)],
-      `runtime envelope rejected: ${(validator.errors ?? [])
-      .map((error) => error.message)
-      .join('; ')}`,
+    `runtime envelope rejected: ${(validator.errors ?? []).map((error) => error.message).join('; ')}`,
   );
   return value as RuntimeEnvelope;
 }
@@ -85,8 +83,6 @@ export const localToolEnvelope = z
     input: z.record(z.string(), z.unknown()),
   })
   .strict();
-
-export type LocalToolEnvelope = z.infer<typeof localToolEnvelope>;
 
 /** A typed ledger has record/resource limits, not the node budget of one ingress message. */
 export function coordinationLedgerJson(value: unknown, depth = 0): string {
@@ -166,7 +162,7 @@ export interface CoordinationLedger {
   readonly retirements: readonly Readonly<Record<string, unknown>>[];
 }
 
-export interface CoordinationLedgerValidationIssue {
+interface CoordinationLedgerValidationIssue {
   readonly code: string;
   readonly path: string;
   readonly message: string;

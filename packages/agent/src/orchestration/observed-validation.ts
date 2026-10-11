@@ -89,15 +89,16 @@ export function issueObservedValidationReceipt(input: {
     'packet binding differs',
   );
   validateImplementationResult(packet, implementationResult);
-  const source = input.sourceStore && input.host
-    ? snapshotAdmittedTaskSources({
-        store: input.sourceStore,
-        host: input.host,
-        canonicalHostRoot: repositoryRoot,
-        paths: packet.owned_paths,
-        attempt: journal.state.attempt,
-      })
-    : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
+  const source =
+    input.sourceStore && input.host
+      ? snapshotAdmittedTaskSources({
+          store: input.sourceStore,
+          host: input.host,
+          canonicalHostRoot: repositoryRoot,
+          paths: packet.owned_paths,
+          attempt: journal.state.attempt,
+        })
+      : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireValidation(
     source.digest === implementationResult.implementation_fingerprint,
     'source changed after implementation evidence',

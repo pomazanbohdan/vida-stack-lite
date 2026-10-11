@@ -513,9 +513,11 @@ test.each([false, true])(
         const forwardDir = path.join(root, '.agent', 'cutover', forwardId);
         const manifestSha = (value) => createHash('sha256').update(record(value)).digest('hex');
         const beforeDenied = ledger.hostState.readHostStateSnapshot(identity);
-        await Promise.resolve(expect(run([...continuing, ...expected(pausedVersion), '--issue-wave', 'true'])).rejects.toThrow(
-          'Admitted runtime code changed',
-        ));
+        await Promise.resolve(
+          expect(run([...continuing, ...expected(pausedVersion), '--issue-wave', 'true'])).rejects.toThrow(
+            'Admitted runtime code changed',
+          ),
+        );
         expect(ledger.resume(workId, 1).version).toEqual(pausedVersion);
         expect(ledger.hostState.readHostStateSnapshot(identity).workVersion).toEqual(beforeDenied.workVersion);
         expect(ledger.hostState.readHostStateSnapshot(identity).ledgerVersion).toEqual(beforeDenied.ledgerVersion);
@@ -567,9 +569,11 @@ test.each([false, true])(
         ];
         const selectorFile = path.join(root, '.agent', 'active-runtime-selector.v1.json');
         writeFileSync(selectorFile, record({ payload_manifest_sha256: '0'.repeat(64) }));
-        await Promise.resolve(expect(runReconcileArtifacts(['--mode', 'inspect', ...rebind])).rejects.toThrow(
-          'installed forward lineage or selector differs',
-        ));
+        await Promise.resolve(
+          expect(runReconcileArtifacts(['--mode', 'inspect', ...rebind])).rejects.toThrow(
+            'installed forward lineage or selector differs',
+          ),
+        );
         writeFileSync(selectorFile, record({ payload_manifest_sha256: manifestSha(successorManifest) }));
         pauseFixtureOwner('after-forward');
         const pausedForInstall = ledger.hostState.readHostStateSnapshot(identity);
@@ -591,9 +595,11 @@ test.each([false, true])(
         db.query(
           'UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=? WHERE work_id=? AND logical_action_id=?',
         ).run(JSON.stringify(forged), forged.digest, workId, original[1].request.action_id);
-        await Promise.resolve(expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow(
-          'current owner, journal or issued replacement differs',
-        ));
+        await Promise.resolve(
+          expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow(
+            'current owner, journal or issued replacement differs',
+          ),
+        );
         expect(ledger.hostState.readHostStateSnapshot(identity).workVersion).toEqual(stateBeforeTamper.workVersion);
         expect(ledger.hostState.readHostStateSnapshot(identity).ledgerVersion).toEqual(stateBeforeTamper.ledgerVersion);
         expect(ledger.resume(workId, 1).version).toEqual(journalBeforeTamper);
@@ -602,7 +608,9 @@ test.each([false, true])(
         ).run(storedRepair.payload, storedRepair.digest, workId, original[1].request.action_id);
         db.close();
         writeFileSync(runtimeFile, Buffer.concat([newBytes, Buffer.from('// unplanned drift\n')]));
-        await Promise.resolve(expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow());
+        await Promise.resolve(
+          expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow(),
+        );
         writeFileSync(runtimeFile, newBytes);
         if (simulateCrashAfterResume) {
           const resumedBeforeRebind = resumePausedLocalWork({

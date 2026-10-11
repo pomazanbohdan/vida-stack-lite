@@ -1,8 +1,10 @@
+import { projectMappings } from './project-mapping-contract.ts';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 const isBunRuntime = typeof Bun !== 'undefined';
-const Ajv2020 = isBunRuntime ? (await import('ajv/dist/2020.js')).default : null;
+/** @type {typeof import('ajv/dist/2020.js').Ajv2020 | null} */
+const Ajv2020 = isBunRuntime ? (await import('ajv/dist/2020.js')).Ajv2020 : null;
 const runtimeConfig = isBunRuntime ? await import('../src/config/runtime-config.ts') : null;
 const publicIngress = isBunRuntime ? await import('../src/contracts/public-ingress.ts') : null;
 const repositoryAccess = isBunRuntime ? await import('../src/config/safe-repository-access.ts') : null;
@@ -10,9 +12,31 @@ const workspaceIdentity = isBunRuntime ? await import('../src/workspace-identity
 const yaml = isBunRuntime ? await import('yaml') : null;
 const initializationRecord = isBunRuntime ? await import('../src/config/initialization-record.ts') : null;
 const projectPaths = isBunRuntime ? await import('../src/config/project-paths.ts') : null;
+const documentationPolicy = isBunRuntime ? await import('../src/documentation/policy.ts') : null;
 
-const receiptPath = projectPaths?.RUNTIME_INITIALIZATION_PATH;
+/** @typedef {import('../src/config/runtime-config.ts').AgentRuntimeConfig} AgentRuntimeConfig */
+/** @typedef {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess} SafeRepositoryAccess */
+/** @typedef {import('../src/config/initialization-record.ts').RuntimeInitializationReceipt} RuntimeInitializationReceipt */
+/** @typedef {ReturnType<typeof import('../src/documentation/policy.ts').validateDocumentationPolicy>} DocumentationPolicy */
+/** @typedef {{ readonly id: string; readonly root: string }} ProjectMapping */
+/** @typedef {{ readonly id: string; readonly root: string | null }} ParsedProjectMapping */
+/** @typedef {{ template: string; template_sha256: string; output: string; output_sha256: string; content: string }} RenderedTemplate */
+/** @typedef {Omit<RenderedTemplate, 'content'>} TemplateEvidence */
+/** @typedef {{ readonly projectRoot: string; readonly repository: string; readonly projectMappings: readonly string[]; readonly reconcileExisting?: boolean }} InitializationRequest */
+/** @typedef {{ readonly access: SafeRepositoryAccess; readonly packageAccess: SafeRepositoryAccess; readonly bundle: string; readonly canonicalRoot: string; readonly selectedProjects: ProjectMapping[] }} InitializationContext */
+
+/** @template T @param {T | null} module @returns {T} */
+function requireRuntimeModule(module) {
+  if (module === null) throw new Error('Project initialization requires the pinned Bun runtime.');
+  return module;
+}
+
+/** @returns {string} */
+function initializationReceiptPath() {
+  return requireRuntimeModule(projectPaths).RUNTIME_INITIALIZATION_PATH;
+}
 const pendingReceiptPath = '.agent/runtime-initialization.pending.v1.json';
+/** @type {readonly [readonly [string, string], readonly [string, string], readonly [string, string], readonly [string, string]]} */
 const outputs = [
   ['AGENTS.template.md', 'AGENTS.md'],
   ['AGENT.sidecar.template.md', 'AGENT.sidecar.md'],
@@ -27,99 +51,39 @@ const requiredInstructions = [
   'requirement-routing.md',
   'knowledge-graph.md',
 ];
+/** @template T @param {readonly T[]} values @param {number} index @param {string} label @returns {T} */
+function requireEntry(values, index, label) {
+  const entry = values[index];
+  if (entry === undefined) throw new Error(`${label} is missing`);
+  return entry;
+}
+/** @param {string | Uint8Array} bytes */
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
+/** @param {string} raw @param {Record<string, string>} values */
 function render(raw, values) {
-  const text = raw.replace(/\{\{([A-Z_]+)\}\}/g, (_match, key) => {
-    if (!Object.hasOwn(values, key)) throw new Error('Unknown template parameter: ' + key);
-    return values[key];
-  });
+  /** @type {(match: string, key: string) => string} */
+  const replaceTemplateValue = (_match, key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(values, key);
+    if (typeof descriptor?.value !== 'string') throw new Error('Unknown template parameter: ' + key);
+    return descriptor.value;
+  };
+  const text = raw.replace(/\{\{([A-Z_]+)\}\}/g, replaceTemplateValue);
   if (/\{\{|\}\}/.test(text)) throw new Error('Malformed template parameter');
   return text;
 }
 
-function requireRelativeProjectRoot(value) {
-  if (typeof value !== 'string' || !value)
-    throw new Error('Project root must be a non-empty safe repository-relative path');
-}
-
-function requirePortableProjectRoot(value) {
-  if (path.posix.isAbsolute(value) || value.includes('\\'))
-    throw new Error('Project root must be a non-empty safe repository-relative path');
-}
-
-function requireNormalizedProjectRoot(normalized) {
-  if (
-    normalized !== '.' &&
-    (!normalized || normalized.split('/').some((part) => !part || part === '.' || part === '..'))
-  )
-    throw new Error('Project root must be a non-empty safe repository-relative path');
-}
-
-function normalizeProjectRoot(value) {
-  requireRelativeProjectRoot(value);
-  requirePortableProjectRoot(value);
-  const normalized = value === '.' ? '.' : value.replace(/\/+$/u, '');
-  requireNormalizedProjectRoot(normalized);
-  return normalized;
-}
-
-function requireMappingText(entry) {
-  if (typeof entry !== 'string' || !entry) throw new Error('Project mapping must be PROJECT_ID=RELATIVE_ROOT');
-}
-
-function splitProjectMapping(entry) {
-  const separator = entry.indexOf('=');
-  const id = separator < 0 ? entry : entry.slice(0, separator);
-  const root = separator < 0 ? null : entry.slice(separator + 1);
-  return { id, root };
-}
-
-function requireProjectId(id) {
-  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) throw new Error('Project id must be a lowercase slug of 1–64 characters');
-}
-
-function normalizedMappingRoot(root) {
-  return root === null ? null : normalizeProjectRoot(root);
-}
-
-function parseProjectMapping(entry) {
-  requireMappingText(entry);
-  const { id, root } = splitProjectMapping(entry);
-  requireProjectId(id);
-  return { id, root: normalizedMappingRoot(root) };
-}
-
-function requireExplicitMultiProjectRoots(mappings) {
-  if (mappings.length > 1 && mappings.some((entry) => entry.root === null))
-    throw new Error('Multi-project initialization requires every --project as PROJECT_ID=RELATIVE_ROOT');
-}
-
-function requireUniqueProjectIds(mappings) {
-  if (new Set(mappings.map((entry) => entry.id)).size !== mappings.length)
-    throw new Error('Project ids must be unique');
-}
-
-function projectMappings(value) {
-  if (!Array.isArray(value) || value.length === 0)
-    throw new Error('Projects must be a non-empty explicit project mapping set');
-  const mappings = value.map(parseProjectMapping);
-  requireExplicitMultiProjectRoots(mappings);
-  const normalized = mappings.map((entry) => ({ ...entry, root: entry.root ?? '.' }));
-  requireUniqueProjectIds(normalized);
-  return normalized.sort((left, right) => left.id.localeCompare(right.id));
-}
-
+/** @param {string} root @param {string} relative */
 function withinProject(root, relative) {
   return root === '.' ? relative : relative === '.' ? root : `${root}/${relative}`;
 }
 
+/** @param {AgentRuntimeConfig} config @param {readonly ProjectMapping[]} mappings @returns {AgentRuntimeConfig} */
 function expandProjectSet(config, mappings) {
-  const [projectTemplate] = config.projects;
-  const [integrationTemplate] = config.integrations.providers;
+  const projectTemplate = config.projects[0];
+  const integrationTemplate = config.integrations.providers[0];
   if (!projectTemplate || !integrationTemplate) throw new Error('Neutral template must define one project integration');
-  const expanded = structuredClone(config);
-  expanded.projects = mappings.map(({ id: project, root }) => ({
+  const projects = mappings.map(({ id: project, root }) => ({
     ...structuredClone(projectTemplate),
     project_id: project,
     title: project,
@@ -132,34 +96,47 @@ function expandProjectSet(config, mappings) {
     ledger_root: withinProject(root, projectTemplate.ledger_root),
     code_selectors: projectTemplate.code_selectors.map((selector) => withinProject(root, selector)),
   }));
-  expanded.integrations.providers = mappings.map(({ id: project }) => ({
-    ...structuredClone(integrationTemplate),
-    id: `local-${project}`,
-    project_id: project,
-    namespace: project,
-  }));
-  expanded.teams = Object.fromEntries(
-    Object.entries(config.teams).map(([name, team]) => [
-      name,
-      {
-        ...structuredClone(team),
-        allowed_projects: mappings.map((entry) => entry.id),
-      },
-    ]),
-  );
-  return expanded;
+  const providers = mappings.map(({ id: project }) => ({
+      ...structuredClone(integrationTemplate),
+      id: `local-${project}`,
+      project_id: project,
+      namespace: project,
+    })),
+    teams = Object.fromEntries(
+      Object.entries(config.teams).map(([name, team]) => [
+        name,
+        {
+          ...structuredClone(team),
+          allowed_projects: mappings.map((entry) => entry.id),
+        },
+      ]),
+    );
+  return {
+    ...structuredClone(config),
+    projects,
+    integrations: { ...config.integrations, providers },
+    teams,
+  };
 }
 
+/** @param {unknown} value @param {string} label */
 function requireCanonicalAbsolute(value, label) {
-  if (!path.isAbsolute(value ?? '') || path.resolve(value) !== value)
+  if (typeof value !== 'string' || !path.isAbsolute(value) || path.resolve(value) !== value)
     throw new Error(`Initialization requires an explicit canonical absolute ${label}`);
 }
 
+/** @param {unknown} repository */
 function requireRepositorySlug(repository) {
   if (typeof repository !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(repository))
     throw new Error('Repository must be a lowercase slug of 1–64 characters');
 }
 
+/** @param {unknown} value @returns {value is { readonly name: string }} */
+function isPackageManifest(value) {
+  return typeof value === 'object' && value !== null && 'name' in value && typeof value.name === 'string';
+}
+
+/** @param {string} projectRoot @param {string} bundleRoot */
 function portableBundlePath(projectRoot, bundleRoot) {
   const bundle = path.relative(projectRoot, bundleRoot).replaceAll(path.sep, '/');
   if (
@@ -171,18 +148,25 @@ function portableBundlePath(projectRoot, bundleRoot) {
   return bundle;
 }
 
-function initializationContext({ projectRoot, repository, mappings, bundleRoot }) {
+function requireInitializationRuntime() {
   if (!isBunRuntime) throw new Error('Project initialization requires the pinned Bun runtime.');
+}
+
+/** @param {{ readonly projectRoot: string; readonly repository: string; readonly mappings: readonly string[]; readonly bundleRoot: string }} request @returns {InitializationContext} */
+function initializationContext({ projectRoot, repository, mappings, bundleRoot }) {
+  requireInitializationRuntime();
   requireCanonicalAbsolute(projectRoot, 'project root');
   requireRepositorySlug(repository);
   requireCanonicalAbsolute(bundleRoot, 'runtime bundle root');
   const selectedProjects = projectMappings(mappings);
   const bundle = portableBundlePath(projectRoot, bundleRoot);
-  const access = repositoryAccess.requireSafeRepositoryAccess(projectRoot);
-  const packageAccess = repositoryAccess.requireSafeRepositoryAccess(bundleRoot);
+  const access = requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(projectRoot);
+  const packageAccess = requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(bundleRoot);
+  /** @type {unknown} */
   const packageManifest = JSON.parse(packageAccess.readText('package.json', 'runtime package identity'));
-  if (packageManifest.name !== 'vida-agent') throw new Error('Runtime package identity differs');
-  const canonicalRoot = workspaceIdentity.canonicalRepositoryRoot(projectRoot);
+  if (!isPackageManifest(packageManifest) || packageManifest.name !== 'vida-agent')
+    throw new Error('Runtime package identity differs');
+  const canonicalRoot = requireRuntimeModule(workspaceIdentity).canonicalRepositoryRoot(projectRoot);
   if (canonicalRoot !== projectRoot)
     throw new Error('Initialization requires an explicit canonical physical project root');
   access.directoryIdentity('.', 'project root');
@@ -190,8 +174,9 @@ function initializationContext({ projectRoot, repository, mappings, bundleRoot }
   return { access, packageAccess, bundle, canonicalRoot, selectedProjects };
 }
 
+/** @param {SafeRepositoryAccess} access */
 function existingInitialization(access) {
-  const required = [...outputs.map(([, output]) => output), receiptPath];
+  const required = [...outputs.map(([, output]) => output), initializationReceiptPath()];
   const existing = required.filter((output) => access.fileExists(output, 'initialization output'));
   if (
     (existing.length > 0 && existing.length < required.length) ||
@@ -217,11 +202,12 @@ function existingInitialization(access) {
     : null;
 }
 
+/** @param {SafeRepositoryAccess} packageAccess @param {string} bundle @param {string} repository @param {readonly ProjectMapping[]} selectedProjects @param {string} [createdAt] @returns {RenderedTemplate[]} */
 function renderTemplates(packageAccess, bundle, repository, selectedProjects, createdAt = new Date().toISOString()) {
   const values = {
     REPOSITORY: repository,
     PROJECTS: selectedProjects.map((entry) => entry.id).join(', '),
-    PROJECT: selectedProjects[0].id,
+    PROJECT: requireEntry(selectedProjects, 0, 'Project mapping').id,
     BUNDLE: bundle,
     CREATED_AT: createdAt,
   };
@@ -238,38 +224,56 @@ function renderTemplates(packageAccess, bundle, repository, selectedProjects, cr
   });
 }
 
+/** @param {RenderedTemplate[]} rendered @param {readonly ProjectMapping[]} selectedProjects @returns {{ readonly config: AgentRuntimeConfig; readonly validatedConfig: AgentRuntimeConfig }} */
 function configureRenderedTemplates(rendered, selectedProjects) {
-  const templateConfig = runtimeConfig.parseRuntimeConfigYaml(rendered[2].content);
+  const configTemplate = requireEntry(rendered, 2, 'Runtime configuration template');
+  const templateConfig = requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(configTemplate.content);
   const config = expandProjectSet(templateConfig, selectedProjects);
-  rendered[2].content = yaml.stringify(config);
-  rendered[2].output_sha256 = hash(rendered[2].content);
-  return { config, validatedConfig: runtimeConfig.parseRuntimeConfigYaml(rendered[2].content) };
+  configTemplate.content = requireRuntimeModule(yaml).stringify(config);
+  configTemplate.output_sha256 = hash(configTemplate.content);
+  return {
+    config,
+    validatedConfig: requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(configTemplate.content),
+  };
 }
 
-function validateProjectDocumentationPolicy(packageAccess, bundle, config, content) {
-  const relative = config.paths.defaults.documentation_policy_path;
-  if (relative !== outputs[3][1])
-    throw new Error('Generated documentation policy path differs from the configured default');
+/** @param {SafeRepositoryAccess} packageAccess */
+function projectDocumentationPolicySchema(packageAccess) {
+  /** @type {unknown} */
   const schema = JSON.parse(
     packageAccess.readText('schemas/documentation-policy.v1.schema.json', 'documentation policy schema'),
   );
-  const validator = new Ajv2020({ strict: true, allErrors: true, formats: { 'date-time': true } }).compile(schema);
-  let policy;
+  if (typeof schema !== 'object' || schema === null || Array.isArray(schema))
+    throw new Error('Documentation policy schema is invalid');
+  return schema;
+}
+
+/** @param {SafeRepositoryAccess} packageAccess @param {AgentRuntimeConfig} config @param {string} content @returns {DocumentationPolicy} */
+function validateProjectDocumentationPolicy(packageAccess, config, content) {
+  const relative = config.paths.defaults.documentation_policy_path;
+  if (relative !== outputs[3][1])
+    throw new Error('Generated documentation policy path differs from the configured default');
+  const schema = projectDocumentationPolicySchema(packageAccess);
+  const selectedSchemaValidator = new (requireRuntimeModule(Ajv2020))({
+    strict: true,
+    allErrors: true,
+    formats: { 'date-time': true },
+  }).compile(schema);
+  /** @type {unknown} */
+  let value;
   try {
-    policy = JSON.parse(content);
+    value = JSON.parse(content);
   } catch {
     throw new Error('Documentation policy is not JSON');
   }
-  if (!validator(policy)) throw new Error('Documentation policy does not satisfy current v1 schema');
-  if (
-    policy.source_path !== relative ||
-    ![config.config_id, config.repository.repository_id].includes(policy.project_id)
-  )
+  if (!selectedSchemaValidator(value)) throw new Error('Documentation policy does not satisfy selected v1 schema');
+  const policy = requireRuntimeModule(documentationPolicy).validateDocumentationPolicy(value, relative);
+  if (![config.config_id, config.repository.repository_id].includes(policy.project_id))
     throw new Error('Documentation policy identity differs from the configured repository');
-  if (Number.isNaN(Date.parse(policy.updated_at))) throw new Error('Documentation policy timestamp invalid');
   return policy;
 }
 
+/** @param {AgentRuntimeConfig} validatedConfig @param {string} bundle @param {string} repository @param {readonly ProjectMapping[]} selectedProjects */
 function validateGeneratedBindings(validatedConfig, bundle, repository, selectedProjects) {
   if (
     [
@@ -291,6 +295,7 @@ function validateGeneratedBindings(validatedConfig, bundle, repository, selected
   }
 }
 
+/** @param {AgentRuntimeConfig} validatedConfig @param {string} bundle @param {string} repository @param {readonly ProjectMapping[]} selectedProjects */
 function validateExistingBindings(validatedConfig, bundle, repository, selectedProjects) {
   const configured = validatedConfig.projects
     .map((entry) => ({ id: entry.project_id, root: entry.project_root }))
@@ -306,6 +311,7 @@ function validateExistingBindings(validatedConfig, bundle, repository, selectedP
   }
 }
 
+/** @param {SafeRepositoryAccess} access @param {AgentRuntimeConfig} validatedConfig @param {SafeRepositoryAccess} packageAccess */
 function requireConfiguredDirectories(access, validatedConfig, packageAccess) {
   for (const project of validatedConfig.projects)
     access.assertDirectory(project.project_root, 'configured project root ' + project.project_id);
@@ -313,6 +319,7 @@ function requireConfiguredDirectories(access, validatedConfig, packageAccess) {
     packageAccess.readText(`instructions/${instruction}`, 'configured runtime instruction');
 }
 
+/** @param {SafeRepositoryAccess} access @param {AgentRuntimeConfig} validatedConfig @param {readonly RenderedTemplate[]} rendered @returns {Set<string>} */
 function requireConfiguredMarkers(access, validatedConfig, rendered) {
   const generatedPaths = new Set(rendered.map((entry) => entry.output));
   for (const marker of validatedConfig.repository.root_markers) {
@@ -322,6 +329,7 @@ function requireConfiguredMarkers(access, validatedConfig, rendered) {
   return generatedPaths;
 }
 
+/** @param {SafeRepositoryAccess} access @param {AgentRuntimeConfig} validatedConfig @param {ReadonlySet<string>} generatedPaths @param {SafeRepositoryAccess} packageAccess */
 function requireConfiguredKnowledge(access, validatedConfig, generatedPaths, packageAccess) {
   for (const source of validatedConfig.knowledge.sources.filter((entry) => entry.kind === 'local')) {
     if (!generatedPaths.has(source.location)) {
@@ -333,12 +341,20 @@ function requireConfiguredKnowledge(access, validatedConfig, generatedPaths, pac
   }
 }
 
+/** @param {SafeRepositoryAccess} access @param {AgentRuntimeConfig} validatedConfig @param {readonly RenderedTemplate[]} rendered @param {SafeRepositoryAccess} packageAccess */
 function validateGeneratedReferences(access, validatedConfig, rendered, packageAccess) {
   requireConfiguredDirectories(access, validatedConfig, packageAccess);
   const generatedPaths = requireConfiguredMarkers(access, validatedConfig, rendered);
   requireConfiguredKnowledge(access, validatedConfig, generatedPaths, packageAccess);
 }
 
+/**
+ * @param {SafeRepositoryAccess} packageAccess @param {string} bundle @param {string} canonicalRoot
+ * @param {AgentRuntimeConfig} config @param {AgentRuntimeConfig} validatedConfig
+ * @param {readonly (RenderedTemplate | TemplateEvidence)[]} rendered
+ * @param {'generated' | 'adopted_existing'} [provenance] @param {string} [createdAt]
+ * @returns {{ readonly rawSchema: string; readonly receipt: RuntimeInitializationReceipt }}
+ */
 function buildReceipt(
   packageAccess,
   bundle,
@@ -350,24 +366,34 @@ function buildReceipt(
   createdAt = new Date().toISOString(),
 ) {
   const rawSchema = packageAccess.readText('schemas/runtime-initialization.v1.schema.json', 'initialization schema');
+  /** @type {RuntimeInitializationReceipt} */
   const receipt = {
     schema: 'RuntimeInitialization/v1',
     version: 1,
     provenance,
     repository_id: validatedConfig.repository.repository_id,
-    project_ids: [...validatedConfig.projects.map((entry) => entry.project_id)].sort(),
-    integrations_digest: publicIngress.canonicalJsonDigest(validatedConfig.integrations),
-    workspace_id: workspaceIdentity.deriveWorkspaceId(validatedConfig.repository.repository_id, canonicalRoot),
+    project_ids: validatedConfig.projects.map((entry) => entry.project_id).sort(),
+    integrations_digest: requireRuntimeModule(publicIngress).canonicalJsonDigest(validatedConfig.integrations),
+    workspace_id: requireRuntimeModule(workspaceIdentity).deriveWorkspaceId(
+      validatedConfig.repository.repository_id,
+      canonicalRoot,
+    ),
     workspace_binding_status: 'pending',
     bundle,
-    config_digest: runtimeConfig.runtimeConfigDigest(config),
+    config_digest: requireRuntimeModule(runtimeConfig).runtimeConfigDigest(config),
     schema_sha256: hash(rawSchema),
-    templates: rendered.map(({ content: _content, ...entry }) => entry),
+    templates: rendered.map(({ template, template_sha256, output, output_sha256 }) => ({
+      template,
+      template_sha256,
+      output,
+      output_sha256,
+    })),
     created_at: createdAt,
   };
   return { rawSchema, receipt };
 }
 
+/** @param {SafeRepositoryAccess} access @param {string} bundle @param {SafeRepositoryAccess} packageAccess @returns {TemplateEvidence[]} */
 function existingOutputEvidence(access, bundle, packageAccess) {
   return outputs.map(([template, output]) => {
     const templateBytes = packageAccess.readBytes(`templates/${template}`, 'initialization template');
@@ -382,15 +408,21 @@ function existingOutputEvidence(access, bundle, packageAccess) {
   });
 }
 
+/** @param {SafeRepositoryAccess} access @param {readonly TemplateEvidence[]} evidence @param {string} configDigest @param {string} projectRoot */
 function requireUnchangedExistingOutputs(access, evidence, configDigest, projectRoot) {
   for (const entry of evidence) {
     if (hash(access.readBytes(entry.output, 'existing project integration file')) !== entry.output_sha256)
       throw new Error(`Project integration file changed during reconciliation: ${entry.output}`);
   }
-  if (runtimeConfig.runtimeConfigDigest(runtimeConfig.loadRuntimeConfig(projectRoot)) !== configDigest)
+  if (
+    requireRuntimeModule(runtimeConfig).runtimeConfigDigest(
+      requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot),
+    ) !== configDigest
+  )
     throw new Error('Project configuration changed during reconciliation');
 }
 
+/** @param {SafeRepositoryAccess} access @param {string} projectRoot @param {string} bundle @param {string} canonicalRoot @param {string} repository @param {readonly ProjectMapping[]} selectedProjects @param {SafeRepositoryAccess} packageAccess @returns {RuntimeInitializationReceipt} */
 function validateExistingReceipt(
   access,
   projectRoot,
@@ -401,30 +433,34 @@ function validateExistingReceipt(
   packageAccess,
 ) {
   const rawSchema = packageAccess.readText('schemas/runtime-initialization.v1.schema.json', 'initialization schema');
-  const receipt = JSON.parse(access.readText(receiptPath, 'existing initialization receipt'));
-  validateReceipt(rawSchema, receipt);
-  const config = runtimeConfig.loadRuntimeConfig(projectRoot);
+  const receipt = validateReceipt(
+    rawSchema,
+    JSON.parse(access.readText(initializationReceiptPath(), 'existing initialization receipt')),
+  );
+  const config = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
   validateExistingBindings(config, bundle, repository, selectedProjects);
   const evidence = existingOutputEvidence(access, bundle, packageAccess);
   if (
-    receipt.workspace_id !== workspaceIdentity.deriveWorkspaceId(repository, canonicalRoot) ||
+    receipt.workspace_id !== requireRuntimeModule(workspaceIdentity).deriveWorkspaceId(repository, canonicalRoot) ||
     receipt.repository_id !== repository ||
     receipt.bundle !== bundle ||
     JSON.stringify(receipt.project_ids) !== JSON.stringify(selectedProjects.map((entry) => entry.id)) ||
-    receipt.config_digest !== runtimeConfig.runtimeConfigDigest(config) ||
-    receipt.integrations_digest !== publicIngress.canonicalJsonDigest(config.integrations) ||
+    receipt.config_digest !== requireRuntimeModule(runtimeConfig).runtimeConfigDigest(config) ||
+    receipt.integrations_digest !== requireRuntimeModule(publicIngress).canonicalJsonDigest(config.integrations) ||
     JSON.stringify(receipt.templates) !== JSON.stringify(evidence)
   )
     throw new Error('Existing initialization receipt differs; reconciliation cannot replace it');
   return receipt;
 }
 
+/** @param {SafeRepositoryAccess} access @param {Buffer} bytes @param {RuntimeInitializationReceipt} receipt */
 async function archivePendingIntent(access, bytes, receipt) {
   const archive = `.agent/initialization-provenance/${receipt.created_at.replace(/[^0-9]/g, '')}.v1.json`;
   await access.ensureDirectoryAsync('.agent/initialization-provenance', 'inactive initialization provenance');
   await access.moveNoReplaceAsync(pendingReceiptPath, archive, hash(bytes), 'archive completed initialization intent');
 }
 
+/** @param {SafeRepositoryAccess} access @param {string} projectRoot @param {string} bundle @param {string} canonicalRoot @param {string} repository @param {readonly ProjectMapping[]} selectedProjects @param {SafeRepositoryAccess} packageAccess */
 async function resumePendingInitialization(
   access,
   projectRoot,
@@ -435,9 +471,10 @@ async function resumePendingInitialization(
   packageAccess,
 ) {
   const pendingBytes = access.readBytes(pendingReceiptPath, 'pending initialization intent');
-  const intent = JSON.parse(pendingBytes.toString('utf8'));
+  /** @type {unknown} */
+  const parsedIntent = JSON.parse(pendingBytes.toString('utf8'));
   const rawSchema = packageAccess.readText('schemas/runtime-initialization.v1.schema.json', 'initialization schema');
-  validateReceipt(rawSchema, intent);
+  const intent = validateReceipt(rawSchema, parsedIntent);
   if (intent.provenance !== 'generated' || intent.workspace_binding_status !== 'pending')
     throw new Error('Pending initialization intent is not a generated recovery intent');
   const rendered = renderTemplates(packageAccess, bundle, repository, selectedProjects, intent.created_at);
@@ -454,7 +491,7 @@ async function resumePendingInitialization(
   ).receipt;
   if (JSON.stringify(intent) !== JSON.stringify(planned))
     throw new Error('Pending initialization intent differs from the requested identity or current templates');
-  if (access.fileExists(receiptPath, 'initialization receipt')) {
+  if (access.fileExists(initializationReceiptPath(), 'initialization receipt')) {
     const receipt = validateExistingReceipt(
       access,
       projectRoot,
@@ -467,7 +504,11 @@ async function resumePendingInitialization(
     if (receipt.created_at !== intent.created_at)
       throw new Error('Canonical receipt belongs to a different initialization operation');
     await archivePendingIntent(access, pendingBytes, intent);
-    return { status: 'resumed_initialization', receipt: receiptPath, config_digest: receipt.config_digest };
+    return {
+      status: 'resumed_initialization',
+      receipt: initializationReceiptPath(),
+      config_digest: receipt.config_digest,
+    };
   }
   const existing = rendered
     .filter((entry) => access.fileExists(entry.output, 'initialization output'))
@@ -478,13 +519,14 @@ async function resumePendingInitialization(
       return { output: entry.output, output_sha256: hash(bytes) };
     });
   const effectiveConfig = access.fileExists(outputs[2][1], 'owner runtime configuration')
-    ? runtimeConfig.loadRuntimeConfig(projectRoot)
+    ? requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot)
     : validatedConfig;
   validateExistingBindings(effectiveConfig, bundle, repository, selectedProjects);
+  const policyTemplate = requireEntry(rendered, 3, 'Documentation policy template');
   const policy = access.fileExists(outputs[3][1], 'owner documentation policy')
     ? access.readText(outputs[3][1], 'owner documentation policy')
-    : rendered[3].content;
-  validateProjectDocumentationPolicy(packageAccess, bundle, effectiveConfig, policy);
+    : policyTemplate.content;
+  validateProjectDocumentationPolicy(packageAccess, effectiveConfig, policy);
   const missing = rendered.filter((entry) => !existing.some((before) => before.output === entry.output));
   validateGeneratedReferences(access, effectiveConfig, missing, packageAccess);
   const requireUnchanged = () => {
@@ -505,9 +547,12 @@ async function resumePendingInitialization(
     await creator.writeExclusive(entry.output, entry.content, 'known missing initialization output');
     existing.push({ output: entry.output, output_sha256: entry.output_sha256 });
   }
-  const installed = runtimeConfig.loadRuntimeConfig(projectRoot);
+  const installed = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
   const evidence = existingOutputEvidence(access, bundle, packageAccess);
-  const provenance = evidence.every((entry, index) => entry.output_sha256 === intent.templates[index].output_sha256)
+  const provenance = evidence.every(
+    (entry, index) =>
+      entry.output_sha256 === requireEntry(intent.templates, index, 'Initialization template evidence').output_sha256,
+  )
     ? 'generated'
     : 'adopted_existing';
   const receipt = buildReceipt(
@@ -522,11 +567,20 @@ async function resumePendingInitialization(
   ).receipt;
   validateReceipt(rawSchema, receipt);
   requireUnchanged();
-  await creator.writeExclusive(receiptPath, JSON.stringify(receipt, null, 2) + '\n', 'initialization receipt');
+  await creator.writeExclusive(
+    initializationReceiptPath(),
+    JSON.stringify(receipt, null, 2) + '\n',
+    'initialization receipt',
+  );
   await archivePendingIntent(access, pendingBytes, intent);
-  return { status: 'resumed_initialization', receipt: receiptPath, config_digest: receipt.config_digest };
+  return {
+    status: 'resumed_initialization',
+    receipt: initializationReceiptPath(),
+    config_digest: receipt.config_digest,
+  };
 }
 
+/** @param {SafeRepositoryAccess} access @param {string} projectRoot @param {string} bundle @param {string} canonicalRoot @param {string} repository @param {readonly ProjectMapping[]} selectedProjects @param {SafeRepositoryAccess} packageAccess */
 async function reconcileExistingInitialization(
   access,
   projectRoot,
@@ -549,7 +603,7 @@ async function reconcileExistingInitialization(
   const present = outputs
     .map(([, output]) => output)
     .filter((output) => access.fileExists(output, 'existing project integration file'));
-  if (access.fileExists(receiptPath, 'initialization receipt')) {
+  if (access.fileExists(initializationReceiptPath(), 'initialization receipt')) {
     const receipt = validateExistingReceipt(
       access,
       projectRoot,
@@ -559,15 +613,14 @@ async function reconcileExistingInitialization(
       selectedProjects,
       packageAccess,
     );
-    return { status: 'existing', receipt: receiptPath, config_digest: receipt.config_digest };
+    return { status: 'existing', receipt: initializationReceiptPath(), config_digest: receipt.config_digest };
   }
   if (present.length !== outputs.length)
     throw new Error('Reconciliation requires all existing project integration files');
-  const validatedConfig = runtimeConfig.loadRuntimeConfig(projectRoot);
+  const validatedConfig = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
   validateExistingBindings(validatedConfig, bundle, repository, selectedProjects);
   validateProjectDocumentationPolicy(
     packageAccess,
-    bundle,
     validatedConfig,
     access.readText(outputs[3][1], 'existing documentation policy'),
   );
@@ -586,14 +639,20 @@ async function reconcileExistingInitialization(
   const creator = await access.prepareExclusiveCreation();
   requireUnchangedExistingOutputs(access, evidence, receipt.config_digest, projectRoot);
   await creator.ensureDirectory('.agent', 'initialization receipt directory');
-  await creator.writeExclusive(receiptPath, JSON.stringify(receipt, null, 2) + '\n', 'initialization receipt');
-  return { status: 'reconciled_existing', receipt: receiptPath, config_digest: receipt.config_digest };
+  await creator.writeExclusive(
+    initializationReceiptPath(),
+    JSON.stringify(receipt, null, 2) + '\n',
+    'initialization receipt',
+  );
+  return { status: 'reconciled_existing', receipt: initializationReceiptPath(), config_digest: receipt.config_digest };
 }
 
+/** @param {string} rawSchema @param {unknown} receipt @returns {RuntimeInitializationReceipt} */
 function validateReceipt(rawSchema, receipt) {
-  initializationRecord.validateRuntimeInitializationReceipt(receipt, rawSchema);
+  return requireRuntimeModule(initializationRecord).validateRuntimeInitializationReceipt(receipt, rawSchema);
 }
 
+/** @param {SafeRepositoryAccess} access @param {string} projectRoot @param {readonly RenderedTemplate[]} rendered @param {RuntimeInitializationReceipt} receipt */
 async function publishInitialization(access, projectRoot, rendered, receipt) {
   const creator = await access.prepareExclusiveCreation();
   await creator.ensureDirectory('.agent', 'pending initialization directory');
@@ -606,23 +665,26 @@ async function publishInitialization(access, projectRoot, rendered, receipt) {
     }
     await creator.writeExclusive(entry.output, entry.content, 'project integration file');
   }
-  const installed = runtimeConfig.loadRuntimeConfig(projectRoot);
-  if (runtimeConfig.runtimeConfigDigest(installed) !== receipt.config_digest)
+  const installed = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
+  if (requireRuntimeModule(runtimeConfig).runtimeConfigDigest(installed) !== receipt.config_digest)
     throw new Error('Project configuration changed during initialization');
   await creator.ensureDirectory('.agent', 'initialization receipt directory');
-  await creator.writeExclusive(receiptPath, JSON.stringify(receipt, null, 2) + '\n', 'initialization receipt');
+  await creator.writeExclusive(
+    initializationReceiptPath(),
+    JSON.stringify(receipt, null, 2) + '\n',
+    'initialization receipt',
+  );
   await archivePendingIntent(access, Buffer.from(intent), receipt);
   return {
     status: 'initialized',
-    receipt: receiptPath,
+    receipt: initializationReceiptPath(),
     config_digest: receipt.config_digest,
   };
 }
 
-export async function initializeProjectFromBundle(
-  { projectRoot, repository, projectMappings: mappings, reconcileExisting = false },
-  bundleRoot,
-) {
+/** @param {InitializationRequest} request @param {string} bundleRoot */
+export async function initializeProjectFromBundle(request, bundleRoot) {
+  const { projectRoot, repository, projectMappings: mappings, reconcileExisting = false } = request;
   const { access, packageAccess, bundle, canonicalRoot, selectedProjects } = initializationContext({
     projectRoot,
     repository,
@@ -645,7 +707,11 @@ export async function initializeProjectFromBundle(
   const rendered = renderTemplates(packageAccess, bundle, repository, selectedProjects, createdAt);
   const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects);
   validateGeneratedBindings(validatedConfig, bundle, repository, selectedProjects);
-  validateProjectDocumentationPolicy(packageAccess, bundle, validatedConfig, rendered[3].content);
+  validateProjectDocumentationPolicy(
+    packageAccess,
+    validatedConfig,
+    requireEntry(rendered, 3, 'Documentation policy template').content,
+  );
   validateGeneratedReferences(access, validatedConfig, rendered, packageAccess);
   const { rawSchema, receipt } = buildReceipt(
     packageAccess,

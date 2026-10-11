@@ -39,7 +39,7 @@ P1 також може впорядковувати внутрішню реал�
 
 ### Прийняті межі тестування
 
-Задачі Vida-Test, Bun runner/coverage, CRAP, mutation та погоджений pre-commit входять до P1. Root інтегрує зміни без повторення вже завершеного policy patch. Нові hooks поза погодженим scope — P2. Тести пишемо та виконуємо після реалізації всього P0–P1 scope; formation/install без suites.
+Задачі Vida-Test, Bun runner/coverage, CRAP, mutation та погоджений pre-commit входять до P1. Root інтегрує зміни без повторення вже завершеного policy patch. Нові hooks поза погодженим scope — P2. Чинне доповнення людини: тести пишемо паралельно з причинними Source/TS patches; affected stable cases перевіряє один owner, фінальні suites/numeric gates — після стабілізації scope. Formation/install без suites.
 
 
 Порядок визначає користь для нового виконання та залежності. Це пріоритети, не видані waves або окремі версії.
@@ -57,11 +57,10 @@ P1 також може впорядковувати внутрішню реал�
 | 9 | Нативні можливості Bun | Окреме дослідження Luna: фактичні Node call sites, офіційні Bun API, семантика й пріоритетні заміни. Root переносить код пакетами за користю для чинного runtime. Спільні зміни SQLite, subprocess, кешу та тестового tooling виконуються в їхніх уже наявних задачах; без дубльованих реалізацій і host-залежності |
 | 10 | Єдиний каталог `.vida` та upgrade | Лише ініціалізований агент: config, instructions і work state; Source лишається в `packages`. Component schema/composer, pure v1 converter і спільний DB/config path owner інтегровано; Source static checks проходять. Bundle-owned upgrade, active loader/init, atomic activation та exact resume pending. Не активувати старий архів |
 
-P1 validation також узгоджує числовий діапазон config schema та
-`runtimeConfigDigest`: schema приймає unsafe integers, canonical digest їх
-відхиляє. Новий converter зберігає наявні значення; він не активує loader або
-нові права. Це статично підтверджена крайова невідповідність, не відтворений
-блокер поточного workspace.
+P1 numeric domain Source узгоджено: schema/canonical snapshot/revision boundary
+відхиляють unsafe integers; scoped Ajv regression має PASS. Фінальний connected
+proof і доставка pending. Converter зберігає accepted values; активний loader
+і нові права цим не активуються. Не повторювати вже інтегрований domain patch.
 
 Єдина БД означає одну налаштовану БД на workspace, а не спільну БД всіх незалежних
 репозиторіїв. Шлях задає конфігурація. Інвентаризація охоплює також службові
@@ -108,20 +107,22 @@ storage/CLI сценарії приєднуються до реалізован�
 
 ### Правило тестування поточного P0–P1 контуру
 
-Остання пряма вказівка людини 9 жовтня задає виняток для цього контуру:
-спочатку реалізувати весь погоджений обсяг, потім написати й доопрацювати
-тести повністю, виконати coverage, CRAP та mutation testing. Під час реалізації
-не запускаємо окремий обов'язковий test-authoring/test-run цикл після кожної
-правки. Загальну політику інших задач у TESTING.md цей локальний виняток не змінює.
+Чинне доповнення людини від 10 жовтня: тести пишемо паралельно з причинними
+код-корекціями й connected TS migration. Під час редагування — статичні checks;
+один owner запускає affected stable cases без повтору незмінених PASS. Повний
+погоджений scope, coverage, CRAP та mutation перевіряємо після стабілізації
+Source/tooling/tests. Не потрібен окремий full suite після кожної правки;
+formation/install не запускають suites. Політика інших задач має свого owner
+у TESTING.md; exact quality вимоги цього контуру не послаблено.
 
 Порядок:
 
 1. Погодити й зафіксувати склад P0–P1, affected production files/callers та AC.
    Перед реалізацією зафіксувати наявний baseline і обґрунтовані CRAP/complexity
    budgets; не виводити збільшений дозвіл із вже зміненого коду.
-2. Завершити реалізацію погодженого контуру, включно з потрібним test tooling.
-   Писати й доопрацьовувати його behavioral/regression тести на наступному етапі.
-3. На завершеному коді написати весь потрібний набір: unit, integration,
+2. Завершити реалізацію погодженого контуру, включно з потрібним test tooling;
+   behavioral/regression тести писати паралельно з causal patches і TS migration.
+3. На стабільному коді завершити весь потрібний набір: unit, integration,
    property/ZOMBIES та застосовні persistence/concurrency/fault/security cases.
    Зіставити maintained functions і AC з конкретними assertions та сценаріями.
 4. Провести повну застосовну перевірку погодженого контуру на Bun, потім coverage,
@@ -168,6 +169,18 @@ SQL indexes, bounded reads, діагностика та reuse доказів у�
 читання → видалення перехідного коду. Легкі незалежні виправлення йдуть поруч.
 Кількість етапів не задає кількість поставок; інтегруємо готові сумісні зміни.
 
+Уточнення 2026-10-10 за [перевіреним зовнішнім аудитом](../core-runtime-reactivation/EXTERNAL-ARCHITECTURE-AUDIT-20261010.md):
+BL-FLOW006/007 shared-validator slice завершує вже початий session bridge
+contract extraction і два runtime back-edges без нової схеми чи execution owner.
+Audit18:F4/OPT01–04/14 diagnostics slice використовує чинні read-only inspect
+views і command contracts для reason/evidence/allowed existing route IDs, без
+нових прав або generic repair engine. DB01–08/11 bounded-read slice перевіряє
+законну unrelated-history denial на чинному256-row/8MiB census перед indexed
+owner predicate/pagination; incomplete/cap exhaustion не absence PASS.
+Це уточнення наявних scopes, не closure і не нові IDs. WF07/WF08 target однієї
+workspace DB збережено; різні transactions і filesystem не стають одним commit.
+Нові DAG/effects/routes/telemetry framework лишаються P2 за власними prerequisites.
+
 Підстава: чинні `host-state.ts`, `mastra-session-bridge.ts`, `research-decision.ts`,
 `tooling/agent/git-quality-hooks.mjs` та `TESTING.md#new-and-modified-files`.
 Перевірені офіційні механізми: [Bun SQLite](https://bun.com/docs/runtime/sqlite)
@@ -201,3 +214,12 @@ SQL indexes, bounded reads, діагностика та reuse доказів у�
 - Frozen CRAP policy vs legacy fixed <5/complexity10 executable gate: known unimplemented policy enforcement/GAP; виконання погодженої політики включено до P1 testing. Це не доказ false accepted runtime. Concrete wrongful gate decision → P0; нова політика поза погодженим scope — P2.
 - Mutation full capture/CAS coverage та numeric deficits — missing proof, не license запускати mutation/новий framework. Required changed-risk checks лишаються з чинним developer.
 - Linux/Windows actual target proof, fresh issued assurance, current ownership/admission і DocFlow — відкриті потрібні докази; planning update не дає PASS.
+
+- 2026-10-10, нове пряме доручення: усі26 direct Agent/Core pins узгоджені з lock/install; strict Knip6.41 pre-commit приєднано до одного raw staged snapshot без restage/install/suites. Активація не є closure: unused/unresolved findings блокують commit. Captured63 findings класифіковано у поточному WORK/ignored evidence, без нового full scan та blanket suppressions; preserved local src-check і stale provenance/coverage tests не видаляти заради green. Existing export surface, dynamic dependency ownership і test drift — погоджений P1, не нові engine capabilities. Lexical alias guard correction/review завершено, локальний precommit активовано без prepush; Source/checked-JS і bounded qualification не замінюють фінальні100% coverage/frozen CRAP/confirmed-Killed докази.
+- 2026-10-10, поточний cleanup:63→7 Knip findings; internal exports/dead code та shared implementation-scope validator інтегровані після blind-review. Залишаються4 збережені локальні src-check файли,2 старі тести без чинного producer і1 CI observer/caller GAP; strict gate лишається FAIL. Точкові Bun8 PASS і статичні PASS не закривають повну міграцію/числові гейти. Service-custody-v8 продовжується в тому самому P0 scope, з обома producers; runtime activation/unblock pending.
+
+- 2026-10-10, current dispatch: custody/fresh-merge producers, read-only retarget verifier and function/scenario auditor joined with causal corrections and split named behavior proofs; current Source/checked-JS/scoped native types and lint pass. Exact four-metric100%, frozen CRAP and assertion-confirmed Killed still pending. Whole TS-only is FAIL; raw-index filename integration and fresh full lifecycle/interruption tests are private next packets. Existing DB upgrade remains blocked by unproved legacy-opener exclusion; no toggle, loader/schema/runtime activation or unblock claim. Six useful Luna scopes use blind reviews/private immutable candidates and one Root integrator/verifier. See current CLEAR practical queue and WORK for measured limits; no percentage or task closure inferred from authored code.
+
+- Same dispatch follow-up: raw-index TS-only filename gate joined, two bounded controls/static PASS; actual commit remains FAIL on preserved staged JS and index unchanged. CI cache directory now shared at job scope for both frozen installs; static YAML PASS, live formation/cache proof GAP. Next private packets cover fresh lifecycle/interruption and one ledger schema discovery instead of seven reads; scope help syntax parity is a bounded P1 follow-up. No full numerical/runtime/task closure inferred.
+
+- Current measured delta:26 native files registered once; fresh-process same-ID UNKNOWN recovery PASS (63 assertions), existing-storage admission4 PASS, configuration contract migration10 PASS, inline throw-assertion audit2 PASS and optional CLI contract3 PASS. Ledger metadata regression12 PASS; public corrective cache-hit fixture remains under Root verification. Four synchronous upgrade read duplicates removed; effectful callback revalidation retained. Root native CI configured typed lint and release-adapter closure remain open. One behavioral verifier serializes shared package CAS use; six blind Luna scopes prepare private candidates/reviews. Frozen baseline, exhaustive correspondence, exact numeric gates, legacy exclusion and actual runtime qualification remain open; no task closure or percentage inferred from these bounded proofs.

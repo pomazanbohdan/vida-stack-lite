@@ -61,10 +61,7 @@
     },
     "verdict": {
       "type": "string",
-      "enum": [
-        "pass",
-        "fail"
-      ]
+      "enum": ["pass", "fail"]
     },
     "evidence_refs": {
       "minItems": 1,
@@ -90,31 +87,18 @@
       "properties": {
         "scope_and_trace": {
           "type": "string",
-          "enum": [
-            "pass",
-            "fail"
-          ]
+          "enum": ["pass", "fail"]
         },
         "tests_security_rollback": {
           "type": "string",
-          "enum": [
-            "pass",
-            "fail"
-          ]
+          "enum": ["pass", "fail"]
         },
         "evidence_invalidation_binding": {
           "type": "string",
-          "enum": [
-            "pass",
-            "fail"
-          ]
+          "enum": ["pass", "fail"]
         }
       },
-      "required": [
-        "scope_and_trace",
-        "tests_security_rollback",
-        "evidence_invalidation_binding"
-      ],
+      "required": ["scope_and_trace", "tests_security_rollback", "evidence_invalidation_binding"],
       "additionalProperties": false
     }
   },

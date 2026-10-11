@@ -63,8 +63,19 @@ Compare the maintained source AST inventory with fresh function, line, statement
 and branch coverage. Require exact 100% coverage for the selected new/modified
 production-file scope, with no missing function mappings. Executing a function
 alone does not establish meaningful assertions or complete scenario coverage.
-The existing AST inventory in `tooling/crap-gate.mjs` supplies a starting point;
-do not introduce a second independent inventory without a demonstrated need.
+The shared AST inventory in `tooling/function-inventory.ts` supplies the
+function identities and complexity values used by the CRAP gate and Git quality
+hook. Do not add another inventory. Every retained CRAP budget row binds its
+published `identity` to one reviewed `current_identity`; these pairs must be
+one-to-one and exhaustive. Unpaired current functions require new-function
+budgets, and unpaired published functions require removal dispositions. Do not
+infer correspondence from matching ordinals or body hashes.
+
+Published CRAP evidence uses the standard Bun coverage report with its run
+manifest, immutable input snapshot, and process receipts. The evidence must bind
+the published Source, selected tests, pinned runtime, and exact coverage-tool
+bytes. A synthetic function table or source fingerprint alone is not coverage
+evidence.
 
 Mutation qualification targets 100% confirmed Killed mutants in the selected
 scope and runs only with explicit manual authorization. Survived, NoCoverage,
@@ -118,7 +129,9 @@ The final CLEAR P0–P1 regression scope includes these distinct contracts:
   publish a partial root identity. Reuse the existing inventory equivalence case
   and cover interrupted root inspection without invoking build or installation.
 
-Run agent behavior, property, ZOMBIES, concurrency, fault, schema, integration and security checks locally. Run coverage and CRAP locally.
+Run agent behavior, property, ZOMBIES, concurrency, fault, schema, integration,
+and security checks locally. The coverage command runs the selected Bun Test
+files, checks coverage, and checks CRAP budgets in one invocation.
 
 CI/CD forms and publishes the exact package and its provenance/integrity metadata. Formation and installation run no test suites. Keep behavior, security, data, coverage, CRAP and mutation checks in development tasks. Do not add local delivery tests, compiler probes or copied-package installation harnesses. Synthetic artifact-state fixtures test their development task only.
 
@@ -133,8 +146,7 @@ cases as a second completion command. Workers do not launch duplicate suites.
 After a failed full run, retain that result and recheck only affected behavior.
 
 Pass exact file paths with name filters. A name filter alone may still load
-unrelated files; see the official [Vitest filtering guide](https://vitest.dev/guide/filtering.html)
-and [Bun test runner guide](https://bun.sh/docs/test).
+unrelated files; see the official [Bun test runner guide](https://bun.sh/docs/test).
 
 Run the final applicable behavior check before numeric checks on stable Source. Keep one writer for coverage, CRAP and mutation outputs. For a case timeout during concurrent heavy runs, inspect its child outcome and run that exact case alone before changing its bound. Preserve the original failed or UNKNOWN result.
 
@@ -142,11 +154,30 @@ Use current generated SDK outputs only when their inputs match. Missing or stale
 
 Use supported temporary directories or explicit owned fixture roots. Keep Source-workspace scratch in ignored `.tmp`, outside the package payload. Preserve fixtures when a child outcome is UNKNOWN.
 
-Tests and comments describe current supported behavior. Do not include narratives about absent legacy implementations. Precommit activation has human authorization. Complete and verify its formatter, Source type, lint, focused-test and staged-byte checks before activation. This authorization does not activate pre-push coverage, CRAP or mutation checks.
+Tests and comments describe current supported behavior. Do not include narratives about absent legacy implementations. Human authorization covers the strict Knip precommit gate. Qualify its staged snapshot, tool/config failures, formatter check, Source/checked-JS typechecks, lint and focused-test enforcement. Hook activation proves enforcement, not quality closure: existing findings must continue to block commits. This authorization does not activate pre-push coverage, CRAP or mutation checks.
 
 ## Commands and pins
 
 Run commands from `packages/agent`. Use the pinned launcher and frozen lockfile. The launcher must select Bun 1.4.2. A global Bun version must not change the pin.
+
+The frozen `b549951` CRAP baseline uses the four-file Bun native coverage set
+declared by that commit's `test:coverage:pinned` command and
+`tooling/run-bun-native-coverage.mjs`. In an isolated checkout at exactly that
+commit with the current quality tooling overlaid, run
+`bun tooling/run-bun-coverage.ts --published-baseline=b549951`. The report
+records this baseline-only selection and fingerprints every published test
+input, including files outside the selected four. The CRAP gate verifies those
+bytes against `b549951`. This report supplies frozen baseline evidence; the
+current coverage gate accepts only the full current test set.
+
+Select current coverage tests by supported test suffixes within the captured
+test tree. Resolve selection once into exact paths and hashes for the run;
+membership rules do not replace its immutable manifest. Keep ordinary command
+phases and mutation source-to-test mappings distinct. A mutation partition
+describes applicability, not merely file membership. Do not apply current
+selection rules to the four published baseline tests. Capture TypeScript
+declarations as tool inputs, but exclude `.d.ts`, `.d.mts` and `.d.cts` from
+runtime module inputs regardless of their basenames.
 
 For a focused check, use:
 
@@ -154,7 +185,94 @@ For a focused check, use:
 node bin/bun.mjs test tests/FILE.test.mjs --test-name-pattern "CASE_PATTERN"
 ```
 
+The published fixture protocol is owned by
+`.agent/work/core-runtime-reactivation/BASELINE-FIXTURE-PROTOCOL-20261010.md`.
+Direct child capture completeness is separate from fixture success and parent
+module loads. Known requested interruption in a published producer test is not
+mutation Killed; timeout/error/unobserved output never qualifies. Sync UTF8 proof
+binds returned text, not raw OS bytes. Fixture coverage scratch has no admission
+authority. Captured fixture files are read-only, but their directories permit
+real CAS sidecars. Same-UID modes do not establish immutability: compare all
+captured bytes in both roots after successful execution and again at consumer
+admission, using the already captured buffers. Declared external dependency
+links retain the existing dependency trust scope.
+
 ## Lint and type contracts
+
+Maintained handwritten implementations, CLI/bootstrap Source, development tools,
+tests and helpers must migrate to native TypeScript. New files use TypeScript.
+Strict `checkJs` is transitional and does not satisfy TS-only completion.
+The planned `quality:ts-only:pinned` gate enumerates declared Source roots and
+rejects JS/MJS/CJS/JSX implementations, including untracked or Git-ignored Source.
+Generated JavaScript is allowed only at declared compiler/SDK/delivery output
+boundaries; native shell/PowerShell adapters retain their platform contract.
+The gate runs before costly final suites and stays FAIL while legacy violations
+remain. Do not add legacy exceptions or reduce selection to make it pass.
+
+Migrate a file with imports/callers, native types, named regression and explicit
+frozen function correspondence. Path/extension changes cannot reset retained
+complexity or CRAP allowances. Source purity, typing and behavioral/numeric
+evidence are separate required checks.
+
+The strict quality command must include native TypeScript tests and helpers,
+using the combined checked project to avoid redundant CLI/tooling/test compiles.
+The focused test project remains available. A filename-only pass cannot certify
+that a test's types compile. Before moving public CLI/bootstrap paths, verify
+the generated artifact's exact Source binding, manifest/exports closure and
+actual supported version/help/dispatch routes.
+
+Scenario matrices may reuse explicitly reviewed contract applicability profiles
+and scenario definitions, while retaining exact function IDs and unique named
+test cases. Profiles do not attest to assertions or executed behavior. Generated
+drafts stay unreviewed; missing/empty cases, duplicate names, unknown profiles,
+stale hashes and unjustified N/A fail closed. Update affected slices and shared
+profile consumers rather than reconstructing each function's matrix separately.
+
+The function/test audit reuses captured Babel ASTs for Source, tests and its
+bounded package-local `tests/` and `tooling/` export-resolution closure. Helper
+bytes and resolver bounds bind the configuration hash; each helper is parsed and
+hashed once and never adds a product function row. Already selected test modules
+reuse their captured ASTs and test hashes as export-resolution subjects. Package
+JSON/schema defaults are validated as UTF-8/JSON data, hashed once and never
+parsed with Babel or inventoried as functions; named JSON exports stay unsupported.
+Package-owned Stryker configuration remains a captured JS export subject. Source,
+tests, helpers, matrices and configuration use lossless fatal UTF-8 decoding.
+Parser metrics count actual invocations, including failed attempts. Helper bodies do not transfer
+execution or assertion evidence to Source. Runtime values, class identities and
+function rows are distinct: a direct `new` links only an explicit inventoried
+constructor, and constants do not create function links. Erased type syntax and
+type-only exports cannot supply runtime evidence. Missing, unsafe, ambiguous or
+unsupported used runtime imports remain blocking; do not suppress diagnostics
+to release queue jobs. Repository `tooling/agent/` export subjects require an
+explicit canonical repository ancestor of `packages/agent`; links and other
+external subtrees remain denied. Reexports back to captured package Sources reuse
+their existing function identities, bytes and ASTs.
+
+Static namespace links also support one top-level `const` identifier initialized
+directly by `await import()` with a relative string literal. Relative module
+paths start with `./` or `../`; bare dot-prefixed names and exact `.`/`..` are
+unsupported. Options, phase modifiers, wrappers, mutable bindings, writes and
+lexical shadows cannot supply these links. Literal same-target Bun module mocks
+withhold awaited namespace links; named aliases and Bun namespace imports share
+the existing binding resolver. Nonliteral or indirect mock flows are not modeled,
+and existing static-import mock behavior is unchanged. All links remain static
+evidence; generated scenario applicability stays unreviewed. Resolver edges and
+helper ASTs use the existing capture, without a second scan or parser.
+
+Capture uses bounded no-follow descriptor reads without CAS sidecars. Source,
+tests, matrices and tool configuration have an 8 MiB file bound; auxiliary
+resolution inputs have a 1 MiB file bound and an 8 MiB aggregate bound. Growth
+of an opened file must obey the same bound. Linux and Windows use the existing
+attested provider and never fall back after a provider failure. Other platforms
+use the library's rooted, identity-checked bounded descriptor reader; simulated
+platform tests do not qualify a native OS. Neither reader promises an immutable
+file image against concurrent in-place writes or a multi-file snapshot.
+
+The CLI captures its manifest once and uses those exact bytes for Source
+selection, configuration hashing and JSON export shape. Reuse the inventory's
+validated JSON image, including its supported BOM, without a second JSON parse.
+Cache access objects only within one capture. These static links do not prove
+execution, coverage, assertions, reviewed applicability or mutation outcomes.
 
 Fix every lint error and warning. Do not disable rules, lower severity, add suppression comments or accept a baseline to hide a defect. Use `--max-warnings 0` for the final lint gate and the approved precommit checks.
 
@@ -164,6 +282,10 @@ Type shared fixture state and helpers with the existing production contracts. Gi
 
 Check changed shared MJS helpers with strict `checkJs --noEmit` as well as lint.
 A zero-lint result does not prove that their TypeScript contracts compile.
+The full typecheck runs the Source project and one combined CLI/tooling project
+in `tsconfig.checked-js.json`. This avoids compiling their shared imports twice.
+The separate CLI and tooling commands remain available for focused checks.
+Source retains its stricter prohibition on TypeScript import extensions.
 Keep mutable test seeds separate from readonly production snapshots. Use the
 complete current Work contract for valid research fixtures, and check nullable
 Host state, journal versions and original request pointers before use.
@@ -179,49 +301,59 @@ Counter values must be non-negative safe integers; do not coerce malformed
 values into covered evidence. Each provided location requires a valid start
 with an integer line of at least1 and an integer column of at least0. Reject
 invalid locations before mapping; do not skip them or substitute column0.
+The pinned Istanbul implicit false arm of an `if` without `else` has the exact
+empty location `{start:{},end:{}}`. Accept this sentinel only as the second arm
+of a two-arm `if` when the complete branch map matches the canonical map
+generated from captured Source bytes. It still requires its own covered counter;
+unbound empty coordinates, map drift and forged locations deny. Reuse the
+validator's transient canonical Source maps in CRAP validation; do not generate
+a duplicate instrumentation pass or substitute decoded report maps.
 Check coordinates against the actual source line length. A large integer column
 must not move a statement into a later function or remove it from the denominator.
 Missing function/file/statement coverage stays uncovered. Keep source-fingerprint
 checks, exact function mapping and nested statement ownership. A clean lint or
 type result for the gate does not prove that product coverage or CRAP passed.
 
-The precommit checks use pinned Bun, Oxfmt, full Source TypeScript with `--noEmit`, type-aware Oxlint and AST checks for focused tests. The AST check must detect Bun `test.only` and aliases, while allowing comments and strings. After formatting and `git add`, verify the staged object and mode against the captured checked bytes with Git's path filters. Include the root instructions, sidecar, YAML and attributes in checked inputs. Reject partial staging before tools run.
-Compare every captured maintained input with its staged object, including files
-hidden by `assume-unchanged` or `skip-worktree`. Use indexed attributes for Git
-path filters. Reject a missing file or the first mismatch before checks; verify
-the index and mode again afterward. A clean `git diff` alone is insufficient.
+The precommit checks use pinned Bun, Node-hosted Knip, Oxfmt `--check`, full Source and checked-JS TypeScript with `--noEmit`, type-aware Oxlint and the shared AST guard for focused tests. Knip runs once with all-code workspace/test entries, zero allowed issues, and configuration/tag hints treated as errors. Do not use production/strict mode to drop tests or dev dependencies, blanket ignores, issue baselines, cache-based freshness, autofix, or `--no-exit-code`. Public SDK entry exports remain supported API roots.
 
-While fixing lint, capture complete machine-readable diagnostics in the owned ignored output directory. Read counts, rule groups and bounded examples. Do not print the full report. Recheck changed files and their callers; run the complete current profile once after the correction batch is stable. Require zero errors and zero warnings before claiming lint closure or activating the hook.
+Capture the active Git index once and materialize its raw object bytes in one owned temporary tree. Reuse it for every precommit check; do not read changed worktree bytes, run checkout filters, format files, or invoke `git add`. Valid partial staging is supported. Preserve indexed paths and modes, including assume-unchanged/skip-worktree entries and staged deletions. Reject conflicts, links, unsafe paths, missing tools/config, or any check failure. Compare the live index with its captured bytes and identity after checks, including failures; preserve concurrent index/worktree changes. Cleanup must prove temporary-root ownership and fail closed on uncertain cleanup. The focused-test guard detects Bun `test.only` and aliases while allowing comments and strings. Include root instructions, sidecar, YAML, attributes and package manifests/configuration in the common staged tree.
+
+While fixing lint, capture complete machine-readable diagnostics in the owned ignored output directory. Read counts, rule groups and bounded examples. Do not print the full report. Recheck changed files and their callers; run the complete current profile once after the correction batch is stable. Require zero errors and zero warnings before claiming lint closure. An activated gate must reject outstanding diagnostics.
 
 ## Completion commands
 
 Use the current scripts for the applicable completion checks.
 
-| Check | Command |
-| --- | --- |
-| Toolchain and input layout | `node bin/bun.mjs run test:toolchain:pinned` and `node bin/bun.mjs run preflight:pinned` |
-| Configuration | `node bin/bun.mjs run test:config:pinned` |
-| Ordinary agent phase | `node bin/bun.mjs run test:pinned` |
-| Repair and recovery | `node bin/bun.mjs run test:repair:pinned` |
-| HostState and lifecycle | `node bin/bun.mjs run test:host-state:pinned` |
-| Public run entrypoint | `node bin/bun.mjs run test:run-entrypoint:pinned` |
-| Resource integrity | `node bin/bun.mjs run test:resources:pinned` |
-| Fuzz | `node bin/bun.mjs run test:fuzz:pinned` |
-| ZOMBIES | `node bin/bun.mjs run test:zombies:pinned` |
-| Deep properties | `node bin/bun.mjs run test:deep:pinned` |
-| Static quality | `node bin/bun.mjs run quality:static:pinned` |
-| Full Source types | `node bin/bun.mjs node_modules/typescript/bin/tsc --project tsconfig.json --noEmit` |
-| Coverage | `node bin/bun.mjs run test:coverage:pinned`, then `node bin/bun.mjs run coverage:gate:pinned` |
-| CRAP | `node bin/bun.mjs run crap:pinned` |
-| Format | `node bin/bun.mjs run format:check:pinned` |
-| Final applicable local matrix | `node bin/bun.mjs run local:candidate:pinned` |
-| Portable local subset | `node bin/bun.mjs run verify:portable:pinned` |
+| Check                         | Command                                                                                  |
+| ----------------------------- | ---------------------------------------------------------------------------------------- |
+| Toolchain and input layout    | `node bin/bun.mjs run test:toolchain:pinned` and `node bin/bun.mjs run preflight:pinned` |
+| Configuration                 | `node bin/bun.mjs run test:config:pinned`                                                |
+| Ordinary agent phase          | `node bin/bun.mjs run test:pinned`                                                       |
+| Repair and recovery           | `node bin/bun.mjs run test:repair:pinned`                                                |
+| HostState and lifecycle       | `node bin/bun.mjs run test:host-state:pinned`                                            |
+| Public run entrypoint         | `node bin/bun.mjs run test:run-entrypoint:pinned`                                        |
+| Resource integrity            | `node bin/bun.mjs run test:resources:pinned`                                             |
+| Fuzz                          | `node bin/bun.mjs run test:fuzz:pinned`                                                  |
+| ZOMBIES                       | `node bin/bun.mjs run test:zombies:pinned`                                               |
+| Deep properties               | `node bin/bun.mjs run test:deep:pinned`                                                  |
+| Static quality                | `node bin/bun.mjs run quality:static:pinned`                                             |
+| Full Source types             | `node bin/bun.mjs node_modules/typescript/bin/tsc --project tsconfig.json --noEmit`      |
+| Coverage and CRAP             | `node bin/bun.mjs run test:coverage:pinned`                                              |
+| Saved coverage report         | `node bin/bun.mjs run coverage:gate:pinned`                                              |
+| Saved CRAP budget report      | `node bin/bun.mjs run crap:pinned`                                                       |
+| Format                        | `node bin/bun.mjs run format:check:pinned`                                               |
+| Final applicable local matrix | `node bin/bun.mjs run local:candidate:pinned`                                            |
+| Portable local subset         | `node bin/bun.mjs run verify:portable:pinned`                                            |
 
 `npm test` selects four disjoint agent phases: ordinary tests, repair, HostState and run entrypoint. It does not build or install. `verify` is a local subset. It does not install dependencies or a bundle. `ci:pinned` is delivery preparation; run it only through the delivery lane.
 
 Launch `test:mutation:pinned` only with its separate manual authorization. An inventory check does not prove that mutants ran or were killed.
 
-Run Vitest suites that import Bun-only state under the pinned Bun host. A Node import failure executes no tests. Use the package's configured test resolver, fixture factories and maintained `bunfig.toml`.
+Run the selected coverage files with Bun Test under the pinned Bun host. A test
+with a Vitest import fails closed until it is migrated. Do not treat that
+failure as coverage evidence. Keep any remaining Vitest tests under the pinned
+Bun host. Use the package's configured test resolver, fixture factories, and
+maintained `bunfig.toml`.
 
 Test the public CLI through the existing pinned child-process helper. Assert
 terminal status, signal, spawn error, public JSON envelope and persisted state
@@ -235,19 +367,27 @@ fixes in-process SDK disposal. Retain earlier uncertain cleanup roots.
 
 Before each check, verify the actual executing VIDA CLI and involved runner versions. Use the supported `vida-agent version` command. Keep an adapter-reported version separate from the installed executable version and the Source manifest version. Record the executable, command, working directory, exact tool versions, current inputs, exit status and sanitized result. Retain full stdout and stderr separately. Bind reports to the actual current source and operation.
 
-| Evidence class | Meaning |
-| --- | --- |
-| Decision | Attributable accepted intent. |
-| Code | Implemented behavior. |
-| Static | Tests, inspection or integrity checks for declared inputs. |
-| Runtime | Actual installed behavior and attributable user testing. |
-| GAP | Required evidence is missing, stale, skipped, failed, partial or uncertain. |
+| Evidence class | Meaning                                                                     |
+| -------------- | --------------------------------------------------------------------------- |
+| Decision       | Attributable accepted intent.                                               |
+| Code           | Implemented behavior.                                                       |
+| Static         | Tests, inspection or integrity checks for declared inputs.                  |
+| Runtime        | Actual installed behavior and attributable user testing.                    |
+| GAP            | Required evidence is missing, stale, skipped, failed, partial or uncertain. |
 
 Static proof does not grant Runtime acceptance. A writer report, caller JSON or valid schema does not prove native tool origin, review independence or authorization.
 
 The accepted targets are exact 100% coverage and 100% mutation qualification
 for maintained production functions, with task-scoped evidence as defined above.
 Keep accepted legacy deficits and missing manual runs explicit.
+
+`bun tooling/crap-gate.ts --inventory` reports maintained function identities
+and static complexity for budget planning. Its `MaintainedFunctionInventory/v1`
+output declares `mode: static-inventory-only` and
+`qualification: not-performed`. It does not measure coverage, check a frozen
+CRAP plan, or establish a numeric quality PASS. The coverage and CRAP gates run
+only when their tool files are invoked directly; importing them does not run a
+gate or coverage collection.
 
 These targets and frozen budgets govern development and truthful completion of
 its checks. They add no numeric barrier to the minimum native formation and
@@ -273,17 +413,62 @@ Missing baseline, ceiling or review is a GAP, not an unlimited allowance.
 CRAP 1/2/3 and cohesive-invariant 4 remain design guidance for simple functions.
 Numeric simplicity does not replace behavioral, security or recovery evidence.
 
-Implementation GAP: `tooling/crap-gate.mjs` still enforces the historical fixed
-`CRAP < 5` and `complexity <= 10` across its complete inventory. Incremental
-file selection and the accepted frozen-budget policy are not implemented by
-this documentation change. Keep the existing gate result truthful; do not
-bypass a failure, change a baseline automatically or claim the new gate is active.
-The scoped inventory/scenario enforcement and approved complete Bun Test
-migration also require their separately owned implementation and verification.
-Current Fuzz, ZOMBIES and V8 coverage commands still use Vitest. Keep unsupported
-coverage-provider/engine combinations as tooling GAPs, not successful coverage.
+The CRAP gate uses the frozen budget plan bound to the reviewed baseline. A
+missing baseline or plan is a GAP. The gate must fail closed. Never derive a
+budget from candidate results. The Bun Test runner rejects tests that import
+Vitest until those tests are migrated.
 
-V8 coverage includes packaged TypeScript outside the five Bun-native sources and public packaged `bin` entrypoints. The Bun-native lane binds LCOV and Istanbul counters to exact bytes. Separate production source, tests, tooling, dependencies and generated outputs in reports.
+The baseline coverage report may record less than 100% coverage; its measured
+per-function fractions determine the frozen baseline CRAP values. It still
+requires a genuine Bun Test run with matching published Source and test
+bytes, exact quality-tool inputs, pinned runtime executable digest, manifest,
+immutable input snapshot, and complete process receipts and counters. Validate
+that provenance through the shared side-effect-free report validator. Current
+captured tools remain the sole measurement and admission authority. Under the
+user-authorized TEST-013 fixture protocol, the frozen four published tests may
+execute their published tools only as sealed, isolated test subjects. Bind the
+fixture tree separately from current measurement tools, retain exact published
+bytes and selection, and require child command/input/terminal receipts; missing
+observation remains a GAP. This exception does not permit historical tools to
+produce or admit accepted quality evidence, or any historical operational state
+replay. See the baseline fixture protocol in the current CLEAR work directory.
+The unfinished b549951 checkpoint has one intrinsic inventory assertion failure.
+A typed historical reference may admit its complete measurements only under the
+protocol's exact JUnit, expected child-output and terminal predicate. It retains
+`suite_passed=false` and `quality_passed=false`; all other failed/unknown runs
+deny. Current mode rejects historical-reference metadata. This does not supply
+a passing mutation baseline or runtime acceptance, change any original test or
+derive candidate budgets. The implementation and genuine admission remain
+required; this policy change supplies neither.
+Outside that bounded fixture role, do not execute baseline tools. Missing genuine report or plan stays
+a GAP. The current candidate report must continue to meet exact 100% in every
+coverage metric.
+
+The coverage child serves maintained Source, selected tests, helpers and declared
+local tooling modules from its sealed per-run snapshot. Each intercepted module
+path and digest is listed in the process receipt, and every selected test must
+appear there. Generated local modules outside `src`, `bin`, `tests` and `tooling`
+may load live bytes; the receipt classifies and hashes those bytes separately.
+The runner process itself remains checkout-loaded and fingerprinted. The captured
+preload is passed as a Bun CLI option, so test-spawned child processes do not
+inherit the coverage preload. Installed
+npm dependencies, Bun runtime files, non-module filesystem reads, generated
+resources and inherited environment are outside byte-snapshot custody. Published
+baseline environment and Bun config files are captured and supplied from the
+snapshot. This evidence assumes trusted selected tests; it does not authenticate
+live Istanbul counters against adversarial in-process test code.
+
+Coverage uses the pinned Istanbul public API with Bun Test. It binds every
+maintained TypeScript and CLI source file to the selected test, tool, manifest,
+lock, and Bun version inputs. It reports functions, lines, statements, and
+branches. The exact coverage gate requires 100% for each metric.
+
+Current instrumentation uses the public Babel/Istanbul `programVisitor` adapter.
+Private methods retain their original private syntax and body locations while
+receiving ordinary Istanbul function counters; getters/setters, static, async
+and generator methods remain in the Babel inventory. Missing or ambiguous
+function mapping still denies admission. Do not exclude private methods, infer
+function execution from statement counters or replace them with field closures.
 
 Use deterministic seeds. Record platform skips as GAPs. A descriptor simulation does not qualify a native OS target. Do not create a benchmark, ROI or token-accounting lane to score a correction.
 
@@ -319,6 +504,21 @@ no credentials or network. Require exit zero, no project initialization or file
 mutation, and the same help for compatibility aliases. Measure response time
 against the lifecycle's two-second target; retain the actual slow result for
 optimization. Test invalid input separately from informational help requests.
+
+The native help owner derives canonical nested cases from actual public help,
+checks their kind/mode/basis and option contracts, and invokes every declared
+compatibility executable as well as its dispatcher alias. Command aliases are
+exhaustive; nested alias cases are representative per alias, not a claim of the
+full alias-by-route Cartesian product. Reject surplus selectors before runtime
+loading. Informational direct entrypoints must work without a rebuilt dist;
+defer operational runtime imports until an actual operation is requested.
+
+Bundle freshness checks continue to use locked byte reads at every existing
+upgrade barrier. Linux locked reads may reuse their owned parent descriptor for
+the target read, retaining CAS exclusion, no-follow/single-link bounds, unresolved
+backup denial and cleanup ownership. Unlocked capture is not a replacement for
+that contract. Report operation-count savings separately from measured latency;
+retain failed fixtures and the unchanged recovery bound when a case times out.
 
 Check actual public envelopes, exit codes and empty stdout on denial. Preserve the supported next action and redact unknown error details. Recognized CLI argument codes must not acquire misleading lease, CAS or Source messages from usage text. Pair each negative with a real positive boundary control.
 
@@ -582,3 +782,237 @@ prerequisite probes. Check runtime resources when the development task requires
 them. Keep prepared, available, qualified, installed and accepted states
 separate. Obtain attributable user testing of the delivered version. A copied
 file, report or version string does not grant Runtime acceptance.
+
+Coverage refuses nonempty ambient `BUN_OPTIONS`; all Bun execution options must
+come from the recorded runner selection and its pinned preload.
+
+The final CRAP subprocess executes the captured tooling closure against the original package root. Its five-minute hard deadline and unknown termination retain the run lock for explicit reconciliation. Runtime plugin path admission accepts both Windows and POSIX separators. These are static implementation guarantees pending the final Bun behavior checks.
+
+### Lock pathname replacement and informational CLI isolation
+
+Linux lock release, stale reclaim and reclaim-guard owner reads must open with
+`O_NOFOLLOW | O_NONBLOCK` before descriptor checks. A FIFO substituted after
+`lstat` must deny without blocking, preserve the replacement and original lock
+payload, and restore an uncertain quarantined guard. Actual FIFO fixtures run
+in bounded native children; timeout/compile/runtime failures are not Killed
+mutation evidence. Failed or nonterminal fixtures retain custody.
+
+Owned lock removal may borrow a caller-held read descriptor, but rereads the
+owner with bounded positional reads after rename and keeps every inode/path,
+nlink, pre-unlink, fsync and restoration check. Only the descriptor owner closes
+the borrowed handle. Short reads continue to EOF with the existing byte bound.
+
+Direct `run --help` and `reconcile-artifacts --help` must succeed from their
+metadata-only closure with no runtime files or workspace effects. Run help waits
+for its actual stdout write completion before explicit entrypoint exit;
+reconcile help uses natural exit. Normal operations retain runtime validation.
+The complete public help matrix keeps its existing per-child 2s limit.
+
+Knip's sole new binary exception is the POSIX system utility `mkfifo`, used only
+by owned Linux FIFO fixtures, with creation exit checked and a bounded child.
+This exact `ignoreBinaries` entry suppresses no file, export or npm dependency;
+configuration/tag hints and all project issues still fail at zero. Do not use
+this fixture requirement to introduce blanket ignores or drop maintained tests.
+
+### Bounded read allocation and canonical Git marker
+
+Actual short syscalls must fill and reuse a bounded slab rather than retaining
+one full slab per short read. Bound target read-buffer backing storage by the
+accepted payload plus one 64 KiB slab; this is not a total-process peak-memory
+claim. Exercise many fragmented reads, binary bytes, EOF, under-bound growth,
+exact-bound acceptance, one-byte overflow and positional lock-owner rereads.
+An already-owned descriptor's initial size is only an allocation hint; it must
+not become an EOF condition or remove the one-byte overflow probe. Returned
+bytes own their storage independently of the working slabs.
+
+The canonical root `.git` existence marker is an advisory no-follow,
+nonblocking probe without content reads or CAS sidecar writes. Missing, file,
+directory and symlink marker cases need real filesystem fixtures. Metadata
+bytes and descendants, including mixed-case descendant spellings, stay denied.
+Ordinary file existence keeps per-file CAS, contention and foreign owner/payload
+custody. Marker probes do not authorize Git metadata mutations or stable reads.
+
+### Fresh UNKNOWN storage refusal and move afterimages
+
+After retained journal schema, operation ID/root and fresh-mode validation,
+missing/default reconciliation consent must refuse UNKNOWN bootstrap write or
+move before schema reconstruction, package hashing or Host open. Keep the same
+effect-adjacent guard and every explicit-true owner, schema, bundle and afterimage
+check. Malformed/foreign journals still deny first; activation consent retains
+its earlier priority. Existing storage keeps its exclusion blocker.
+
+Observe actual bundle reads on default general/fresh/direct database resumes;
+require zero extra reads and exact journal bytes unchanged. Explicit same-ID
+reconciliation must still perform current preflight. For bootstrap move lost
+ACK, make the actual no-replace move before injecting failure: require retained
+UNKNOWN, frozen target bytes/device/inode, absent staging, replacement-ID denial
+and one total move call/effect after reconciliation. A Host maintenance-fence
+generation is N/A at this bootstrap-only phase because no Host fence exists yet;
+exact frozen database bytes and physical identity are the applicable invariants.
+
+### Finite native dependency admission
+
+Run the maintained native positive control before interpreting denied variants:
+it must produce the complete ordered dependency edges. A denied variant must
+change the intended unique Source occurrence; an unrelated earlier denial does
+not prove the tested boundary. Validate full root/target/metadata/binary/hash/
+safe-read/ABI relationships and reject additional helper calls or aliases.
+Exact call-node exceptions never authorize a generic computed loader.
+
+Module value bindings distinguish imported assertion functions from global
+require. Cover optional and literal-computed resolver forms, exported runtime
+bindings and type-only/ambient declarations without treating erased declarations
+as runtime ownership. Exact package directory locator exceptions apply only to
+their declared top-level immutable binding, decoder, URL and module identity;
+nested, extra and file-resource URL nodes retain ordinary resource treatment.
+Preserve original URL semantics on Windows UNC paths as well as POSIX paths.
+
+Reuse the parsed AST and inventory for these checks. Keep one scanner test owner,
+one mutation owner and one final verifier. Behavioral denial regressions do not
+establish assertion-confirmed Killed, complete coverage or Runtime acceptance.
+
+### Fresh CLI timing custody
+
+The existing upgrade lifecycle preload supports opt-in observe-only child timing.
+Clear inherited stop variables and bind the new fixture's exact root/operation.
+Observe-only mode installs no stop or validator consumer. Register observers
+before importing the stop-only upgrade consumer; reject incomplete stop tuples.
+Preserve original values/errors/native Promise identity. Keep package and
+consumer counters separate, and distinguish readBytes from readText operations.
+Their returned bytes and elapsed times do not count raw physical syscalls.
+
+Emit bounded synchronous aggregate progress with in-flight state; SIGKILL cannot
+flush an exit handler. Timing and optional access trace share48KiB within the
+existing64KiB stderr cap. Label preload startup and observer activity; do not
+interpret instrumented wall time as uninstrumented latency qualification.
+
+File UNKNOWN refusal requires full journal schema/digest/root/operation/progress
+validation before the shared consent guard. Assert no extra package byte reads,
+unchanged journal and afterimage bytes/device/inode, and no second effect. Exact
+same-operation explicit consent retains live package/schema/owner/fence/CAS and
+complete history/activation proofs. Keep child45s and each existing parent test
+bound unchanged; passing another scope does not erase a timed-out receipt.
+
+### Owned read filesystem timing custody
+
+VIDA_UPGRADE_IO_TIMING=1 enables the existing fresh CLI diagnostic preload only
+when VIDA_UPGRADE_BUNDLE_TIMING=1 is also explicit. The parent clears inherited
+stop, timing and access-trace variables before supplying its own fixture tuple.
+The filesystem observer is installed before Source consumer imports. Plain
+wrappers retain original arguments, receiver, values, errors and function
+metadata; they keep scalar aggregates rather than retained call buffers.
+The read scope unwinds before diagnostic writes. Timing and access tracing share
+the existing bounded stderr budget, including any truncation marker.
+
+Filesystem numbers describe inclusive JavaScript API calls during package
+readBytes. They are not raw syscall evidence, can overlap for nested calls,
+and omit the native helper's internal syscalls. A SIGKILL leaves partial
+progress, not final call counts or proof of zero in-flight work at termination.
+Expected ENOENT probes count as failed API calls, not failed product operations.
+Keep diagnostic overhead separate from uninstrumented latency acceptance.
+Do not remove lock/reclaim flushes or reuse live bundle proofs across effects
+from timing evidence alone.
+
+### Acquired read namespace custody
+
+Linux readBytes, readText, ordinary fileExists and the acquired-lock path of
+readStableBytes use the parent descriptor and basename owned by that CAS lock.
+A root pathname replacement after lock acquisition must not move observations
+to a different namespace. Text decoding retains the existing UTF-8 replacement
+behavior; strict text-image validation stays with its existing reader.
+
+Stable capture retains its two existence probes and two byte reads in order.
+Twice-observed absence returns null; appearance, disappearance, byte drift and
+read failure reject while closing owned descriptors and releasing the exact
+lock. The missing-parent pre-lock fallback still probes the safe pathname twice.
+Regular single-link/no-follow/nonblocking/bounded EOF checks, orphan backups,
+lock/reclaim flushes and the advisory canonical root .git probe remain in force.
+
+Regression fixtures replace the root only after an actual CAS descriptor open.
+They assert original bytes or absence through the moved parent, unchanged
+replacement bytes, one root traversal and cleanup in the original namespace.
+Same-parent faults assert appearance/disappearance/byte drift and original EIO.
+Failed fixture roots retain custody and are not reused as later test inputs.
+
+### Release consent and no-effect recovery custody
+
+The shared resume consent guard rejects UNKNOWN release without explicit
+same-operation consent after complete journal/root/ID/progress validation and
+before package-bound verification. Keep the effect-adjacent release guard.
+Explicit consent still verifies the live owner, bundle, fence and activation
+closure; a held release beforeimage never authorizes another release call.
+
+A typed activation move no-effect fixture verifies the real staging digest and
+absent target before provider denial. Assert retained activation_staged, exact
+staging bytes/device/inode and held fence; a foreign ID cannot change them.
+The same operation can retry the unissued move and must publish the same inode
+with one successful move. Its new two-attempt test has a90s bound. Existing
+60s completion and45s child bounds are unchanged.
+
+A release-before-effect fault throws before the original Host release method.
+Assert UNKNOWN, exact held fence/journal/activation, no history and no repeated
+release under default false, foreign ID or explicit true. Keep its expected
+UNKNOWN fixture without teardown/replay; a passing refusal case does not make
+its operation terminal. Regression failures are not mutation Killed evidence.
+
+The direct fresh-resume history fast path is still separately reviewed: normal
+retirement history is retiring/completed. A schema-valid non-retirement history
+cannot authorize retirement or release, but may reach late refusal after extra
+package/Host reads. Do not claim universal zero-read refusal for that unsupported
+placement from the canonical/general-resume evidence.
+
+### Conflicting UNKNOWN publication afterimages
+
+File publication and activation-staging conflict cases use a real successful
+write followed by lost acknowledgement, then change one byte in place and
+fsync the same inode. Default and foreign-ID resume must deny before package
+verification. Explicit same-ID reconciliation must deny a conflicting image
+without another write/move, changing journal bytes, replacing file identity,
+releasing the held fence, publishing activation or creating history.
+
+The file conflict is rejected by assertFileSet before the narrower UNKNOWN
+afterimage predicate. Activation staging with an absent target is rejected by
+its own afterimage predicate. These are separate reviewed regression scenarios;
+their expected nonterminal roots remain retained and must never be replayed.
+Passing refusal is neither completion nor assertion-confirmed mutation Killed.
+
+### Initial atomic intent publication custody
+
+Initial publication shares one operation lock across fresh and existing planners.
+When canonical intent is absent, refuse an existing .vida/work directory;
+otherwise acknowledge creating that supported directory before invoking atomic
+intent create. Keep it after failure. It is a conservative no-reissue barrier
+for supported planners, not a complete operation or an atomic reservation against
+arbitrary external filesystem actors. Existing canonical and retained legacy
+staging recovery paths retain their previous validation and phase rules.
+
+An absent-canonical UNKNOWN test must block read-only replacement inspection and
+public repeated publication without another provider call or bundle verification.
+Recovery must still report no complete retained intent; do not relabel directory
+custody as intent_prepared or promise automatic repair. Exact canonical bytes
+after a real atomic-create lost ACK may commit planned and recover the same ID
+without another create. Preserve schema/ownership/token/beforeimage checks and
+UNKNOWN versus typed no-effect distinctions. Emit retained fixture identity
+before assertions and discard read-only inspection return values in toThrow
+callbacks to avoid dumping complete operation byte images on regression failure.
+
+Conflicting canonical bytes after a real create and lost ACK must deny planned
+inspection and same-ID recovery before package verification or product effects.
+Keep the foreign bytes/device/inode, the committed plan's exact beforeimages,
+the no-reissue directory and absent database/activation/history. A refused parse
+must not authorize journal replacement, another create or a replacement ID.
+
+### Typed no-effect retirement and unchanged completion bounds
+
+The retirement denial fixture validates the real retiring journal digest and
+absent history before a typed SAFE_REPOSITORY_MOVE_NOT_APPLIED result. Verify
+CAS restores released with the same frozen plan/token/activation and revision
+one beyond the captured retiring record. A foreign ID preserves the journal,
+activation and released fence. Same-ID retry completes history with two move
+calls, one effect and one original fence release. CAS phase restoration can
+replace the journal inode; do not assert old inode preservation for that write.
+
+The new two-attempt retirement case uses90s, like the activation denial case.
+Existing lost-ACK retirement retains its60s bound. A timeout remains FAIL, not
+Killed, completion or evidence for raising the bound. Keep its fixture even if
+late callbacks finish; never inspect/replay retained failed roots.

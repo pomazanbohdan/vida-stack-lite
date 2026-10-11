@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { test, expect } from 'vitest';
 
 const candidateRoot = fileURLToPath(new URL('../', import.meta.url));
-const gate = path.join(candidateRoot, 'tooling', 'coverage-gate.mjs');
+const gate = path.join(candidateRoot, 'tooling', 'coverage-gate.ts');
 
 test('coverage provenance binds selected tests and rejects a stale Bun native report', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-coverage-provenance-'));

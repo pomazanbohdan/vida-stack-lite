@@ -1,6 +1,6 @@
 import { canonicalJson, freezeJsonValue } from '../contracts/public-ingress.js';
 
-export interface PolicyRuleResult {
+interface PolicyRuleResult {
   readonly ruleId: string;
   readonly contractType: string;
   readonly passed: boolean;
@@ -96,7 +96,7 @@ export class GovernanceDenied extends Error {
   }
 }
 
-export class GovernanceToolError extends Error {
+class GovernanceToolError extends Error {
   constructor(result: unknown) {
     super(String(result));
     this.name = 'EdictumToolError';

@@ -1,5 +1,7 @@
-import { installerProtectedFiles } from './cli-metadata.mjs';
-export { installerProtectedFiles } from './cli-metadata.mjs';
+import { projectMappings } from './project-mapping-contract.ts';
+import { cliCommandContracts } from './cli-command-contracts.ts';
+import { installerProtectedFiles } from './cli-metadata.ts';
+export { installerProtectedFiles } from './cli-metadata.ts';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync } from 'node:fs';
@@ -11,6 +13,7 @@ const bundleRoot = fileURLToPath(new URL('../', import.meta.url));
 
 const stableVersion = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
+/** @param {string} root */
 function packedLockfilePath(root) {
   directoryChain(root);
   const lockfile = path.join(root, 'bun.lock');
@@ -24,6 +27,7 @@ function packedLockfilePath(root) {
   return 'dist/portable/bun.lock';
 }
 
+/** @param {string} [root] @returns {Buffer} */
 export function readPortableLock(root = bundleRoot) {
   const file = path.join(root, packedLockfilePath(root));
   const info = lstatSync(file);
@@ -32,6 +36,7 @@ export function readPortableLock(root = bundleRoot) {
   return readFileSync(file);
 }
 
+/** @param {string} directory */
 function directoryChain(directory) {
   for (let current = path.resolve(directory); ; current = path.dirname(current)) {
     const stat = lstatSync(current);
@@ -40,6 +45,7 @@ function directoryChain(directory) {
   }
 }
 
+/** @param {string} root */
 function snapshot(root) {
   directoryChain(root);
   return installerProtectedFiles
@@ -55,81 +61,196 @@ function snapshot(root) {
     .join(':');
 }
 
-function argumentsFor(args, _root) {
-  const values = { projects: [] };
-  let check = false;
-  for (let index = 0; index < args.length; index++) {
-    const key = args[index];
-    if (key === '--check' && !check) {
-      check = true;
-      continue;
-    }
-    if (
-      !['--project-root', '--repository', '--project'].includes(key) ||
-      (key !== '--project' && Object.hasOwn(values, key)) ||
-      !args[index + 1]
-    ) {
-      throw new Error(
-        'Usage: install.mjs [--check | --project-root ABSOLUTE_PATH --repository SLUG --project PROJECT_ID=RELATIVE_ROOT [--project PROJECT_ID=RELATIVE_ROOT]]',
-      );
-    }
-    if (key === '--project') values.projects.push(args[++index]);
-    else values[key] = args[++index];
-  }
-  const count = Object.keys(values).length - 1;
+/** @typedef {{node?: string, npm?: string}} InstallEngines */
+/** @typedef {{engines?: InstallEngines, dependencies?: Record<string, string>}} InstallManifest */
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** @param {unknown} value @returns {value is Record<string, string>} */
+function isStringRecord(value) {
+  return isRecord(value) && Object.values(value).every((entry) => typeof entry === 'string');
+}
+
+/** @param {string} root @returns {unknown} */
+function readManifestValue(root) {
+  /** @type {unknown} */
+  const value = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  return value;
+}
+
+/** @param {unknown} value @returns {InstallEngines|undefined} */
+function readManifestEngines(value) {
+  if (!isRecord(value)) return undefined;
+  const rawEngines = value.engines;
+  if (rawEngines === undefined) return undefined;
+  if (!isRecord(rawEngines)) throw new Error('package.json engines must contain an object.');
   if (
-    (check && (count || values.projects.length)) ||
-    ((count || values.projects.length) && (count !== 2 || !values.projects.length))
-  )
-    throw new Error('Initialization arguments must be all present, without --check.');
-  if (count) {
-    const projectRoot = values['--project-root'];
-    if (!path.isAbsolute(projectRoot) || path.resolve(projectRoot) !== projectRoot) {
-      throw new Error('Initialization requires a canonical absolute project root.');
-    }
-    if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(values['--repository'] ?? '')) {
-      throw new Error('Repository must be a lowercase slug of 1–64 characters.');
-    }
-    const projects = values.projects;
-    if (
-      projects.length === 0 ||
-      !projects.every((entry) => /^[a-z0-9][a-z0-9-]{0,63}(?:=[^\\/=][^\\]*)?$/.test(entry)) ||
-      new Set(projects.map((entry) => entry.split('=', 1)[0])).size !== projects.length ||
-      (projects.length > 1 && projects.some((entry) => !entry.includes('=')))
-    ) {
-      throw new Error('Projects must be unique lowercase slugs of 1–64 characters.');
-    }
-    directoryChain(projectRoot);
+    (rawEngines.node !== undefined && typeof rawEngines.node !== 'string') ||
+    (rawEngines.npm !== undefined && typeof rawEngines.npm !== 'string')
+  ) {
+    throw new Error('package.json engines.node and engines.npm must be strings.');
   }
   return {
-    check,
-    init: count
-      ? [
-          '--project-root',
-          values['--project-root'],
-          '--repository',
-          values['--repository'],
-          ...values.projects.flatMap((entry) => ['--project', entry]),
-        ]
-      : [],
+    ...(typeof rawEngines.node === 'string' ? { node: rawEngines.node } : {}),
+    ...(typeof rawEngines.npm === 'string' ? { npm: rawEngines.npm } : {}),
   };
 }
 
+/** @param {unknown} value @returns {Record<string, string>|undefined} */
+function readManifestDependencies(value) {
+  if (!isRecord(value)) return undefined;
+  const dependencies = value.dependencies;
+  if (dependencies === undefined) return undefined;
+  if (!isStringRecord(dependencies))
+    throw new Error('package.json dependencies must map package names to version strings.');
+  return dependencies;
+}
+
+/** @param {string} root @returns {InstallManifest} */
+function readInstallManifest(root) {
+  const value = readManifestValue(root);
+  if (!isRecord(value)) throw new Error('package.json must contain an object.');
+  const engines = readManifestEngines(value);
+  const dependencies = readManifestDependencies(value);
+  return {
+    ...(engines ? { engines } : {}),
+    ...(dependencies ? { dependencies } : {}),
+  };
+}
+
+/** @typedef {{projects: string[], '--project-root'?: string, '--repository'?: string}} InstallValues */
+/** @typedef {{check: boolean, init: string[]}} InstallArguments */
+/** @typedef {(typeof cliCommandContracts.install.options)[number]} InstallOption */
+
+const installOptionsByName = new Map(cliCommandContracts.install.options.map((option) => [option.name, option]));
+
+function invalidInstallArguments() {
+  return new Error(`Usage: ${cliCommandContracts.install.syntax}`);
+}
+
+/** @param {InstallValues} values @param {string} key @param {string|undefined} value @param {InstallOption|undefined} option */
+function recordInstallOption(values, key, value, option) {
+  if (option?.arity !== 1 || (!option.repeatable && Object.hasOwn(values, key)) || !value)
+    throw invalidInstallArguments();
+  if (option.repeatable) values.projects.push(value);
+  else if (key === '--project-root' || key === '--repository') values[key] = value;
+  else throw invalidInstallArguments();
+}
+
+/** @param {readonly string[]} args */
+function collectInstallArguments(args) {
+  /** @type {InstallValues} */
+  const values = { projects: [] };
+  let check = false;
+  for (let index = 0; index < args.length; index++) {
+    const key = args[index] ?? '';
+    const option = installOptionsByName.get(key);
+    if (option?.arity === 0) {
+      if (check) throw invalidInstallArguments();
+      check = true;
+      continue;
+    }
+    recordInstallOption(values, key, args[index + 1], option);
+    index += 1;
+  }
+  return { values, check };
+}
+
+/** @param {InstallValues} values @param {boolean} check */
+function validateInstallCombination(values, check) {
+  const count = Object.keys(values).length - 1;
+  const hasInitialization = count > 0 || values.projects.length > 0;
+  if ((check && hasInitialization) || (hasInitialization && (count !== 2 || values.projects.length === 0))) {
+    throw new Error('Initialization arguments must be all present, without --check.');
+  }
+  return count;
+}
+
+/** @param {InstallValues} values */
+function requireInstallProjectRoot(values) {
+  const projectRoot = values['--project-root'];
+  if (!projectRoot || !path.isAbsolute(projectRoot) || path.resolve(projectRoot) !== projectRoot)
+    throw new Error('Initialization requires a canonical absolute project root.');
+  return projectRoot;
+}
+
+/** @param {InstallValues} values */
+function validateInstallIdentity(values) {
+  requireInstallProjectRoot(values);
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(values['--repository'] ?? ''))
+    throw new Error('Repository must be a lowercase slug of 1–64 characters.');
+}
+
+/** @param {InstallValues} values @param {number} count */
+function validateInstallInitialization(values, count) {
+  if (!count) return;
+  validateInstallIdentity(values);
+  projectMappings(values.projects);
+  directoryChain(requireInstallProjectRoot(values));
+}
+
+/** @param {InstallValues} values @param {number} count */
+function initializationArgv(values, count) {
+  if (!count) return [];
+  const projectRoot = values['--project-root'];
+  const repository = values['--repository'];
+  if (!projectRoot || !repository) throw new Error('Initialization arguments must be all present, without --check.');
+  return [
+    '--project-root',
+    projectRoot,
+    '--repository',
+    repository,
+    ...values.projects.flatMap((entry) => ['--project', entry]),
+  ];
+}
+
+/** @param {readonly string[]} args @returns {InstallArguments} */
+function argumentsFor(args) {
+  const { values, check } = collectInstallArguments(args);
+  const count = validateInstallCombination(values, check);
+  validateInstallInitialization(values, count);
+  return { check, init: initializationArgv(values, count) };
+}
+
+/** @param {number | null} status @returns {number} */
+function failedProcessExitCode(status) {
+  return typeof status === 'number' && Number.isInteger(status) && status > 0 ? status : 1;
+}
+
+/** @param {{error?: Error|null, signal?: NodeJS.Signals|null, status: number|null}} result @param {string} label */
 function requireSuccess(result, label) {
   if (result.error || result.signal || result.status !== 0) {
-    const error = new Error(label + ' failed.');
-    error.exitCode = Number.isInteger(result.status) && result.status > 0 ? result.status : 1;
-    throw error;
+    throw Object.assign(new Error(label + ' failed.'), {
+      exitCode: failedProcessExitCode(result.status),
+    });
   }
 }
 
+/** @param {string} root @param {string} npmCli @param {string} node @param {string|undefined} executable @param {number} timeoutMs @returns {Parameters<typeof runPinnedBun>[1]} */
+function installBunOptions(root, npmCli, node, executable, timeoutMs) {
+  return {
+    root,
+    cwd: root,
+    npmCli,
+    node,
+    ...(executable === undefined ? {} : { executable }),
+    timeoutMs,
+  };
+}
+
+/** @typedef {{root?: string, nodeVersion?: string, node?: string, spawn?: typeof spawnSync, runBun?: typeof runPinnedBun, bunExecutable?: string, bunTimeoutMs?: number}} InstallOptions */
+
+/** @param {readonly string[]} args @param {InstallOptions} [options] */
 export function install(args, options = {}) {
   const embedded = standaloneRuntime();
   const root = path.resolve(options.root ?? embedded?.root ?? bundleRoot);
   if (embedded && root !== embedded.root) throw new Error('Embedded installer package root differs.');
-  const { check, init } = argumentsFor(args, root);
+  const { check, init } = argumentsFor(args);
   const before = snapshot(root);
-  const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const manifest = readInstallManifest(root);
   if (embedded) {
     const unchanged = () => {
       if (snapshot(root) !== before) throw new Error('Installer inputs changed; stop and reconcile before retrying.');
@@ -163,7 +284,7 @@ export function install(args, options = {}) {
     };
   }
   const nodeVersion = options.nodeVersion ?? process.versions.node;
-  if (!stableVersion.test(manifest.engines?.node ?? '') || nodeVersion !== manifest.engines.node) {
+  if (!stableVersion.test(manifest.engines?.node ?? '') || nodeVersion !== manifest.engines?.node) {
     throw new Error('Node version must equal package.json engines.node: ' + manifest.engines?.node);
   }
   const npmMajor = /^(0|[1-9]\d*)\.x$/.exec(manifest.engines?.npm ?? '');
@@ -181,7 +302,7 @@ export function install(args, options = {}) {
   requireSuccess(probe, 'Node-adjacent npm prerequisite check');
   const npmVersion = String(probe.stdout ?? '').trim();
   if (!stableVersion.test(npmVersion) || npmVersion.split('.')[0] !== npmMajor[1]) {
-    throw new Error('npm version must satisfy package.json engines.npm: ' + manifest.engines.npm);
+    throw new Error('npm version must satisfy package.json engines.npm: ' + manifest.engines?.npm);
   }
   const unchanged = () => {
     if (snapshot(root) !== before) throw new Error('Installer inputs changed; stop and reconcile before retrying.');
@@ -216,14 +337,7 @@ export function install(args, options = {}) {
         ),
     );
   const run = options.runBun ?? runPinnedBun;
-  const bunOptions = {
-    root,
-    cwd: root,
-    npmCli,
-    node,
-    executable: options.bunExecutable,
-    timeoutMs: options.bunTimeoutMs ?? 300_000,
-  };
+  const bunOptions = installBunOptions(root, npmCli, node, options.bunExecutable, options.bunTimeoutMs ?? 300_000);
   let status;
   unchanged();
   if (init.length) {
@@ -244,9 +358,15 @@ export function install(args, options = {}) {
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   try {
+    if (process.argv[2] === '--help') {
+      const { cliMetadataResult } = await import('./cli-metadata.ts');
+      console.log(JSON.stringify(cliMetadataResult(['install', '--help'], {})));
+      process.exit(0);
+    }
     console.log(JSON.stringify(install(process.argv.slice(2))));
   } catch (error) {
-    console.error(error.message);
-    process.exitCode = error.exitCode ?? 1;
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode =
+      error instanceof Error && 'exitCode' in error && typeof error.exitCode === 'number' ? error.exitCode : 1;
   }
 }

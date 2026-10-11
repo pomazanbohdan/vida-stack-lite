@@ -1,28 +1,32 @@
 import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
-import { sessionBridgeDatabasePath } from '../config/project-paths.js';
+import { sessionBridgeDatabasePath, sessionBridgeDatabaseRelativePath } from '../config/project-paths.js';
 export { sessionBridgeDatabasePath } from '../config/project-paths.js';
-import { pathToFileURL } from 'node:url';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
+import { openBunSqliteClient } from './bun-sqlite-client.js';
 import z from 'zod';
 import { type AgentRuntimeConfig, type WorkItemSelection, runtimeConfigDigest } from '../config/runtime-config.js';
 import { loadProjectSetContext } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
+import { assertProjectUpgradeInactive } from '../config/runtime-config.js';
+import { deriveWorkspaceId } from '../workspace-identity.js';
+import { acquireStorageReadAdmission } from '../config/storage-read-admission.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { WorkIdentity } from '../host-state.js';
 import {
   validateInitialSourceContinuationReceipt,
   type InitialSourceContinuationReceipt,
 } from './initial-source-continuation.js';
-import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
-import { buildConfiguredContext, type ConfiguredContext } from './configured-context.js';
+import type { WorkflowLifecycleRisk } from './workflow-plan.js';
+import { configuredContextForStage } from './configured-context.js';
+export { configuredContextForStage } from './configured-context.js';
 import { parseObservedValidatorVerdict } from './observed-validation.js';
 import { parseObservedTesterVerdict } from './observed-testing.js';
-import { sessionActionsForWave, type SessionAgentAction, type SessionHandoffContext } from './session-handoff.js';
-import { correctiveExecutionSchema, type CorrectiveExecution } from './final-assurance.js';
+import { createSessionActionProjector, type SessionHandoffContext } from './session-handoff.js';
+import { correctiveExecutionSchema, type CorrectiveExecution } from './corrective-execution-contract.js';
 import { MastraSessionLedger } from './persistent-session-handoff.js';
 import {
   readConfiguredContinuationSessionEngineSnapshot,
@@ -37,167 +41,26 @@ import {
   type ConfiguredFrontierRecoveryView,
 } from './failed-prewriter-transition.js';
 import type { ScopedSourceSnapshot } from './scoped-source-snapshot.js';
-
-const observationSchema = z
-  .object({
-    schema: z.literal('VidaSessionObservation/v1'),
-    action_id: z.string().regex(/^[a-f0-9]{64}$/),
-    host_attempt_id: z
-      .string()
-      .regex(/^[a-f0-9]{64}$/)
-      .optional(),
-    changed_paths: z.array(z.string().min(1).max(512)).optional(),
-    issue_id: z.string().uuid(),
-    agent_id: z.string().min(1).max(256),
-    tool_call_ref: z.string().min(1).max(256),
-    status: z.enum(['reported_complete', 'reported_failed']),
-    summary: z.string().min(1).max(4096),
-    output_digest: z.string().regex(/^[a-f0-9]{64}$/),
-    evidence_refs: z.array(z.string().min(1).max(512)),
-  })
-  .strict();
-
-export type SessionBridgeObservation = z.infer<typeof observationSchema>;
-
-export function parseSessionBridgeObservation(value: unknown): SessionBridgeObservation {
-  return observationSchema.parse(value);
-}
-
-const runStateSchema = z.object({
-  work_id: z.string(),
-  attempt: z.number().int().positive(),
-  workflow_id: z.string(),
-  scope_digest: z.string(),
-  config_digest: z.string(),
-  selection: z.custom<WorkItemSelection>(),
-  observations: z.array(observationSchema),
-});
-
-export function parseSessionBridgeRunState(value: unknown): z.infer<typeof runStateSchema> {
-  return runStateSchema.parse(value);
-}
-
-const requestSchema = z
-  .object({
-    schema: z.literal('VidaSessionRequest/v1'),
-    run_id: z.string(),
-    workflow_id: z.string(),
-    wave_index: z.number().int().nonnegative(),
-    action_id: z.string().regex(/^[a-f0-9]{64}$/),
-    assignment_index: z.number().int().nonnegative(),
-    stage_id: z.string(),
-    role: z.string(),
-    config_digest: z.string().regex(/^[a-f0-9]{64}$/),
-    scope_digest: z.string().regex(/^[a-f0-9]{64}$/),
-    bindings_manifest_ref: z.string().regex(/^[a-f0-9]{64}$/),
-    corrective_execution: correctiveExecutionSchema.optional(),
-    configured_context_digest: z
-      .string()
-      .regex(/^[a-f0-9]{64}$/)
-      .optional(),
-    configured_context_files: z
-      .array(
-        z
-          .object({
-            path: z.string().min(1).max(512),
-            sha256: z.string().regex(/^[a-f0-9]{64}$/),
-          })
-          .strict(),
-      )
-      .optional(),
-  })
-  .strict();
-
-export type SessionBridgeRequest = z.infer<typeof requestSchema>;
-
-/** Pure persisted-request validation; does not initialize workflow storage. */
-export function parseSessionBridgeRequest(value: unknown): SessionBridgeRequest {
-  return requestSchema.parse(value);
-}
-
-export function buildSessionBridgeRequest(args: {
-  runId: string;
-  workflowId: string;
-  configDigest: string;
-  context: SessionHandoffContext;
-  waveIndex: number;
-  action: SessionAgentAction;
-  configuredContext: ConfiguredContext | null;
-  priorResults: readonly SessionBridgeObservation[];
-  correctiveExecution?: CorrectiveExecution;
-}): SessionBridgeRequest {
-  const {
-    runId,
-    workflowId,
-    configDigest,
-    context,
-    waveIndex,
-    action,
-    configuredContext,
-    priorResults,
-    correctiveExecution,
-  } = args;
-  return {
-    ...(configuredContext ? { configured_context_digest: configuredContext.digest } : {}),
-    ...(configuredContext
-      ? {
-          configured_context_files: configuredContext.entries
-            .filter((entry) => entry.sha256 !== null)
-            .map((entry) => ({ path: entry.location, sha256: entry.sha256 as string })),
-        }
-      : {}),
-    schema: 'VidaSessionRequest/v1',
-    ...(correctiveExecution ? { corrective_execution: correctiveExecution } : {}),
-    run_id: runId,
-    workflow_id: workflowId,
-    wave_index: waveIndex,
-    action_id: action.action_id,
-    assignment_index: action.assignment_index,
-    stage_id: action.stage_id,
-    role: action.role,
-    config_digest: configDigest,
-    scope_digest: context.scope_digest,
-    bindings_manifest_ref: canonicalJsonDigest({
-      config_digest: configDigest,
-      scope_digest: context.scope_digest,
-      work_id: context.work_id,
-      attempt: context.attempt,
-      action_id: action.action_id,
-      stage_id: action.stage_id,
-      configured_context_digest: configuredContext?.digest ?? null,
-      wave_index: waveIndex,
-      prior_results: priorResults.map((entry) => entry.output_digest),
-    }),
-  };
-}
-
-export function configuredContextForStage(
-  repositoryRoot: string,
-  config: AgentRuntimeConfig,
-  workflowId: string,
-  stageId: string,
-  context: SessionHandoffContext,
-): ConfiguredContext | null {
-  const stage = config.workflows[workflowId]?.stages.find((entry) => entry.id === stageId);
-  requireBridge(stage, 'Configured context stage is missing');
-  const sourceIds = stage.context_source_ids ?? [];
-  const skillRefs = stage.context_skill_refs ?? [];
-  return sourceIds.length + skillRefs.length === 0
-    ? null
-    : buildConfiguredContext(repositoryRoot, config, {
-        work_id: context.work_id,
-        attempt: context.attempt,
-        source_ids: sourceIds,
-        skill_refs: skillRefs,
-      });
-}
+import {
+  observationSchema,
+  requestSchema,
+  runStateSchema,
+  parseSessionBridgeRequest,
+  parseSessionBridgeObservation,
+  buildSessionBridgeRequest,
+  requireBridge,
+} from './mastra-session-bridge-contract.js';
+import type { SessionBridgeObservation, SessionBridgeRequest } from './mastra-session-bridge-contract.js';
+export {
+  parseSessionBridgeObservation,
+  parseSessionBridgeRequest,
+  parseSessionBridgeRunState,
+  buildSessionBridgeRequest,
+} from './mastra-session-bridge-contract.js';
+export type { SessionBridgeObservation, SessionBridgeRequest } from './mastra-session-bridge-contract.js';
 
 const suspendSchema = z.object({ requests: z.array(requestSchema).min(1) });
 const resumeSchema = z.object({ observations: z.array(observationSchema).min(1) });
-
-function requireBridge(condition: unknown, message: string): asserts condition {
-  if (!condition) throw new Error(message);
-}
 
 export function sessionBridgeRunId(workspaceId: string, context: SessionHandoffContext, workflowId: string): string {
   return 'vida-' + canonicalJsonDigest({ workspaceId, context, workflowId });
@@ -219,6 +82,61 @@ interface InitialSourceContinuationKey {
 }
 
 /** Mastra owns stage order; the session ledger only issues and records effects. */
+function workflowDatabaseIdentity(file: string): string {
+  const stat = lstatSync(file);
+  requireBridge(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'Mastra database path is unsafe');
+  return stat.dev + ':' + stat.ino;
+}
+
+async function initializeWorkflowStorage(
+  repositoryRoot: string,
+  config: AgentRuntimeConfig,
+  assertProducer: () => unknown,
+): Promise<LibSQLStore> {
+  assertProducer();
+  const access = requireSafeRepositoryAccess(repositoryRoot);
+  assertProjectUpgradeInactive(access);
+  const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
+  const relative = sessionBridgeDatabaseRelativePath(config);
+  const admission = acquireStorageReadAdmission(repositoryRoot, workspaceId, relative);
+  try {
+    access.ensureDirectory(config.control.work_root, 'Mastra workflow storage root');
+    const databasePath = sessionBridgeDatabasePath(repositoryRoot, config);
+    if (!access.fileExists(relative, 'Mastra workflow database'))
+      await access.writeExclusiveAsync(relative, '', 'fresh Mastra database');
+    assertProducer();
+    const before = workflowDatabaseIdentity(databasePath);
+    const client = openBunSqliteClient(repositoryRoot, relative, workspaceId, admission);
+    let storage: LibSQLStore | undefined;
+    try {
+      storage = new LibSQLStore({ id: 'vida-workflow-state', client });
+      assertProducer();
+      await storage.init();
+      assertProducer();
+      requireBridge(
+        workflowDatabaseIdentity(databasePath) === before,
+        'Mastra database was substituted during initialization',
+      );
+      return storage;
+    } catch (error) {
+      try {
+        if (storage) await storage.close();
+        else await client.close();
+      } catch (cleanup) {
+        throw new AggregateError([error, cleanup], 'Mastra initialization and storage close failed');
+      }
+      throw error;
+    }
+  } catch (error) {
+    try {
+      admission.close();
+    } catch (cleanup) {
+      throw new AggregateError([error, cleanup], 'Mastra admission and initialization cleanup failed');
+    }
+    throw error;
+  }
+}
+
 export class MastraSessionBridge {
   readonly #workflow: ReturnType<typeof createWorkflow<string, typeof runStateSchema, typeof runStateSchema>>;
   readonly #storage: LibSQLStore;
@@ -286,44 +204,58 @@ export class MastraSessionBridge {
     configuredFrontier?: { readonly identity: WorkIdentity; readonly attempt: number };
     initialSourceContinuation?: { readonly identity: WorkIdentity; readonly attempt: number };
   }): Promise<MastraSessionBridge> {
-    const { repositoryRoot, config, selection, context, workflowId, workspaceId } = args;
-    requireBridge(args.ledger instanceof MastraSessionLedger, 'Actual configured producer ledger is required');
-    const bound = MastraSessionLedger.prototype.sessionProducerBinding.call(args.ledger);
+    const repositoryRoot = args.repositoryRoot;
+    const config = args.config;
+    const workflowId = args.workflowId;
+    const workspaceId = args.workspaceId;
+    const ledger = args.ledger;
+    const {
+      selection,
+      context,
+      lifecycleRisk,
+      correctiveExecution: suppliedCorrection,
+      configuredFrontier,
+      initialSourceContinuation,
+      projectIds,
+    } = structuredClone({
+      selection: args.selection,
+      context: args.context,
+      lifecycleRisk: args.lifecycleRisk,
+      correctiveExecution: args.correctiveExecution,
+      configuredFrontier: args.configuredFrontier,
+      initialSourceContinuation: args.initialSourceContinuation,
+      projectIds: args.projectIds,
+    });
+    requireBridge(ledger instanceof MastraSessionLedger, 'Actual configured producer ledger is required');
+    const bound = MastraSessionLedger.prototype.sessionProducerBinding.call(ledger);
     requireBridge(
       bound.repositoryRoot === repositoryRoot &&
         bound.workspaceId === workspaceId &&
         runtimeConfigDigest(bound.config) === runtimeConfigDigest(config),
       'Producer ledger binding differs',
     );
-    const correctiveExecution = args.correctiveExecution
-      ? correctiveExecutionSchema.parse(args.correctiveExecution)
-      : undefined;
+    const correctiveExecution = suppliedCorrection ? correctiveExecutionSchema.parse(suppliedCorrection) : undefined;
     let currentIdentity: WorkIdentity | undefined;
     let initialReceipt: InitialSourceContinuationReceipt | null = null;
-    if (args.configuredFrontier) {
-      requireBridge(!args.initialSourceContinuation, 'configured and initial-source receipts cannot share one run');
+    if (configuredFrontier) {
+      requireBridge(!initialSourceContinuation, 'configured and initial-source receipts cannot share one run');
     } else {
-      const currentProject = loadProjectSetContext(
-        repositoryRoot,
-        config,
-        config.repository.repository_id,
-        args.projectIds,
-      );
+      const currentProject = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds);
       currentIdentity = {
         repository_id: currentProject.repository_id,
         project_ids: currentProject.project_ids,
         integrations_digest: currentProject.integrations_digest,
         work_id: context.work_id,
       };
-      if (args.initialSourceContinuation) {
+      if (initialSourceContinuation) {
         requireBridge(
-          args.initialSourceContinuation.attempt === context.attempt &&
-            canonicalJsonDigest(args.initialSourceContinuation.identity) === canonicalJsonDigest(currentIdentity),
+          initialSourceContinuation.attempt === context.attempt &&
+            canonicalJsonDigest(initialSourceContinuation.identity) === canonicalJsonDigest(currentIdentity),
           'initial-source continuation identity differs from current ProjectContext',
         );
       }
-      initialReceipt = args.ledger.readInitialSourceContinuationReceipt(currentIdentity, context.attempt);
-      requireBridge(!args.initialSourceContinuation || initialReceipt, 'initial-source Host receipt is missing');
+      initialReceipt = ledger.readInitialSourceContinuationReceipt(currentIdentity, context.attempt);
+      requireBridge(!initialSourceContinuation || initialReceipt, 'initial-source Host receipt is missing');
       requireBridge(!initialReceipt || !correctiveExecution, 'initial-source continuation cannot use a corrective run');
     }
     const baseRunId = sessionBridgeRunId(workspaceId, context, workflowId);
@@ -341,23 +273,23 @@ export class MastraSessionBridge {
     let configuredReceipt: ConfiguredFrontierReceipt | undefined;
     let configuredRecovery: FailedPrewriterRecoveryReceipt | null = null;
     let runId = correctiveExecution?.engine_run_id ?? initialReceipt?.prior_work.execution.run_id ?? baseRunId;
-    if (args.configuredFrontier) {
+    if (configuredFrontier) {
       requireBridge(!correctiveExecution, 'configured frontier cannot use a corrective run');
-      const { identity, attempt } = args.configuredFrontier;
+      const { identity, attempt } = configuredFrontier;
       requireBridge(
         Number.isSafeInteger(attempt) &&
           attempt > 0 &&
           identity.work_id === context.work_id &&
           identity.repository_id === bound.config.repository.repository_id &&
-          identity.project_ids.length === args.projectIds.length &&
-          identity.project_ids.every((projectId, index) => projectId === args.projectIds[index]),
+          identity.project_ids.length === projectIds.length &&
+          identity.project_ids.every((projectId, index) => projectId === projectIds[index]),
         'configured-frontier work identity differs from the producer binding',
       );
-      const stored = args.ledger.hostState.readDeliveredWorkContinuationReceipt(identity, attempt);
+      const stored = ledger.hostState.readDeliveredWorkContinuationReceipt(identity, attempt);
       requireBridge(stored, 'configured-frontier Host receipt is missing');
       requireBridge(stored.request.action.kind === 'configured_frontier', 'configured-frontier receipt kind differs');
-      configuredRecovery = args.ledger.hostState.readFailedPrewriterRecoveryReceipt(identity, attempt);
-      const runtimeCodeContinuations = args.ledger.hostState.readQualifiedRuntimeCodeContinuations(identity, attempt);
+      configuredRecovery = ledger.hostState.readFailedPrewriterRecoveryReceipt(identity, attempt);
+      const runtimeCodeContinuations = ledger.hostState.readQualifiedRuntimeCodeContinuations(identity, attempt);
       const effective = effectiveConfiguredFrontier({
         original: stored as ConfiguredFrontierReceipt,
         recovery: configuredRecovery,
@@ -379,7 +311,7 @@ export class MastraSessionBridge {
         'configured-frontier receipt binding differs from the current producer request',
       );
       runId = stored.prior_work.execution.run_id!;
-      const host = args.ledger.hostState.readHostStateSnapshot(identity);
+      const host = ledger.hostState.readHostStateSnapshot(identity);
       requireBridge(
         host.work &&
           host.workVersion &&
@@ -396,7 +328,7 @@ export class MastraSessionBridge {
         context,
         workflowId,
         runId,
-        ...(args.lifecycleRisk === undefined ? {} : { lifecycleRisk: args.lifecycleRisk }),
+        ...(lifecycleRisk === undefined ? {} : { lifecycleRisk }),
       };
       const preflight = readConfiguredContinuationSessionEngineSnapshot(
         binding,
@@ -409,9 +341,9 @@ export class MastraSessionBridge {
         'configured-frontier run has no resumable current graph frontier',
       );
     }
-    const lifecycleRisk =
-        configuredReceipt?.prior_work.lifecycle.risk ?? initialReceipt?.prior_work.lifecycle.risk ?? args.lifecycleRisk,
-      plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags, lifecycleRisk);
+    const effectiveLifecycleRisk =
+      configuredReceipt?.prior_work.lifecycle.risk ?? initialReceipt?.prior_work.lifecycle.risk ?? lifecycleRisk;
+    const actionProjector = createSessionActionProjector(config, selection, workflowId, effectiveLifecycleRisk);
     const configDigest = runtimeConfigDigest(config);
     const workflow = createWorkflow({
       id: workflowId,
@@ -419,9 +351,7 @@ export class MastraSessionBridge {
       outputSchema: runStateSchema,
       description: 'Configured VIDA session workflow with durable agent handoff.',
     });
-    for (const [waveIndex, wave] of plan.waves.entries()) {
-      if (correctiveExecution && !wave.some((stage) => correctiveExecution.stage_ids.includes(stage.id))) continue;
-      if (wave.every((stage) => stage.assignments.length === 0)) continue;
+    for (const waveIndex of actionProjector.executableWaveIndices(correctiveExecution?.stage_ids)) {
       workflow.then(
         createStep({
           id: 'wave-' + waveIndex,
@@ -448,7 +378,7 @@ export class MastraSessionBridge {
                 inputData.scope_digest === initialReceipt.prior_journal.source_scope?.digest &&
                 isDeepStrictEqual(inputData.selection, selection) &&
                 inputData.observations.length === 0,
-              initialJournal = initialReceipt ? args.ledger.resume(context.work_id, context.attempt) : null,
+              initialJournal = initialReceipt ? ledger.resume(context.work_id, context.attempt) : null,
               initialItem =
                 initialJournal?.state.step_id === 'wave-0' && initialJournal.state.items.length === 1
                   ? initialJournal.state.items[0]
@@ -464,8 +394,11 @@ export class MastraSessionBridge {
                 initialItem.observation.issue_id === initialItem.issue_id &&
                 initialItem.observation.action_id === initialReceipt!.request.currentInitialRequest.action_id &&
                 initialItem.observation.output_digest === canonicalJsonDigest(initialItem.observation.summary) &&
-                isDeepStrictEqual(initialItem.request, initialReceipt!.request.currentInitialRequest) &&
-                isDeepStrictEqual(resumeData.observations, [initialItem.observation]),
+                isDeepStrictEqual(
+                  parseSessionBridgeRequest(initialItem.request),
+                  initialReceipt!.request.currentInitialRequest,
+                ) &&
+                isDeepStrictEqual(resumeData.observations, [parseSessionBridgeObservation(initialItem.observation)]),
               retainedInputResume =
                 !!resumeData && (configuredBoundaryInput || (initialBoundaryInput && initialResumeMatches));
             requireBridge(
@@ -476,16 +409,7 @@ export class MastraSessionBridge {
               inputData.scope_digest === context.scope_digest || retainedInputResume,
               'Mastra source scope changed during attempt',
             );
-            const actions = sessionActionsForWave(
-              config,
-              selection,
-              context,
-              workflowId,
-              waveIndex,
-              [],
-              correctiveExecution,
-              lifecycleRisk,
-            );
+            const actions = actionProjector.actionsForWave(context, waveIndex, [], correctiveExecution);
             requireBridge(actions.length > 0, 'Mastra wave has no executable assignments');
             const requests = actions.map((action) =>
               buildSessionBridgeRequest({
@@ -546,7 +470,7 @@ export class MastraSessionBridge {
     }
     workflow.commit();
     if (initialReceipt) {
-      const currentJournal = args.ledger.resume(context.work_id, context.attempt);
+      const currentJournal = ledger.resume(context.work_id, context.attempt);
       requireBridge(currentJournal, 'initial-source Host receipt has no current Journal');
       const binding: SessionEngineBinding = {
         repositoryRoot,
@@ -558,14 +482,14 @@ export class MastraSessionBridge {
         ...(lifecycleRisk === undefined ? {} : { lifecycleRisk }),
       };
       requireBridge(currentIdentity, 'initial-source current ProjectContext identity is missing');
-      const currentHost = args.ledger.hostState.readHostStateSnapshot(currentIdentity);
+      const currentHost = ledger.hostState.readHostStateSnapshot(currentIdentity);
       requireBridge(currentHost.work, 'initial-source current Host Work is missing');
-      const frontierCodeRebind = args.ledger.hostState.readInitialSourceFrontierCodeRebindReceipt(
+      const frontierCodeRebind = ledger.hostState.readInitialSourceFrontierCodeRebindReceipt(
         currentIdentity,
         context.attempt,
         initialReceipt.continuation_id,
       );
-      const completedSourceReportRecovery = args.ledger.hostState.readCompletedSourceReportRecoveryReceipt(
+      const completedSourceReportRecovery = ledger.hostState.readCompletedSourceReportRecoveryReceipt(
         currentIdentity,
         context.attempt,
       );
@@ -578,38 +502,20 @@ export class MastraSessionBridge {
         completedSourceReportRecovery,
       );
     }
-    const producer = args.ledger.beginSessionProducer({
+    const producer = ledger.beginSessionProducer({
       selection,
       context,
       workflowId,
       runId,
-      projectIds: args.projectIds,
+      projectIds,
       phase: 'initialize',
     });
-    args.ledger.hostState.assertSessionProducerCurrent(producer);
-    const access = requireSafeRepositoryAccess(repositoryRoot);
-    access.ensureDirectory(config.control.work_root, 'Mastra workflow storage root');
-    const databasePath = sessionBridgeDatabasePath(repositoryRoot, config);
-    let physicalBefore: { dev: number; ino: number } | undefined;
+    ledger.hostState.assertSessionProducerCurrent(producer);
+    const storage = await initializeWorkflowStorage(repositoryRoot, config, () =>
+      ledger.hostState.assertSessionProducerCurrent(producer),
+    );
     try {
-      const stat = lstatSync(databasePath);
-      requireBridge(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'Mastra database path is unsafe');
-      physicalBefore = { dev: stat.dev, ino: stat.ino };
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    }
-    const storage = new LibSQLStore({ id: 'vida-workflow-state', url: pathToFileURL(databasePath).href });
-    try {
-      args.ledger.hostState.assertSessionProducerCurrent(producer);
-      await storage.init();
-      const physicalAfter = lstatSync(databasePath);
-      requireBridge(
-        physicalAfter.isFile() &&
-          !physicalAfter.isSymbolicLink() &&
-          physicalAfter.nlink === 1 &&
-          (!physicalBefore || (physicalAfter.dev === physicalBefore.dev && physicalAfter.ino === physicalBefore.ino)),
-        'Mastra database was substituted during initialization',
-      );
+      ledger.hostState.assertSessionProducerCurrent(producer);
       new Mastra({ workflows: { configuredWorkflow: workflow }, storage, logger: false });
       const bridge = new MastraSessionBridge(
         workflow,
@@ -620,11 +526,11 @@ export class MastraSessionBridge {
         workflowId,
         runId,
         repositoryRoot,
-        args.ledger,
-        args.projectIds,
-        lifecycleRisk,
+        ledger,
+        projectIds,
+        effectiveLifecycleRisk,
         correctiveExecution,
-        args.configuredFrontier,
+        configuredFrontier,
         initialReceipt
           ? {
               identity: currentIdentity!,
@@ -634,13 +540,17 @@ export class MastraSessionBridge {
             }
           : undefined,
       );
-      args.ledger.hostState.settleSessionProducer(
+      ledger.hostState.settleSessionProducer(
         producer,
-        args.ledger.resume(context.work_id, context.attempt)?.version ?? null,
+        ledger.resume(context.work_id, context.attempt)?.version ?? null,
       );
       return bridge;
     } catch (error) {
-      await storage.close();
+      try {
+        await storage.close();
+      } catch (cleanup) {
+        throw new AggregateError([error, cleanup], 'Mastra initialization and storage close failed');
+      }
       throw error;
     }
   }

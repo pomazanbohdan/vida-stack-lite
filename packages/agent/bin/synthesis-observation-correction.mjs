@@ -1,34 +1,78 @@
-import { Database } from 'bun:sqlite';
+import {
+  createCliHostStateStore,
+  closeWorkspaceDatabaseWithAdmission,
+  openCliWorkspaceDatabase,
+} from './workspace-database-cli.ts';
+import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli-contracts.ts';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
-import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import { coordinationLedgerDigest } from '../src/contracts/envelopes.ts';
+import {
+  canonicalJson,
+  canonicalJsonDigest,
+  isPlainRecord,
+  assertCanonicalJsonValue,
+} from '../src/contracts/public-ingress.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { qualifiedResearchSourceCatalog, qualifyLegacySynthesisCitations } from '../src/research-source-catalog.ts';
+import { validateResearchSynthesis } from '../src/research-decision.ts';
 import {
   admittedResearchResultsForSynthesis,
   synthesisSourceCatalog,
 } from '../src/orchestration/observed-synthesis-result.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
+import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-session-ledger-codec.ts';
 
+/** @typedef {import('bun:sqlite').Database} SqliteDatabase */
+/** @typedef {import('bun:sqlite').SQLQueryBindings} SqliteQueryBinding */
+/** @typedef {import('../src/config/runtime-config.ts').AgentRuntimeConfig} AgentRuntimeConfig */
+/** @typedef {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess} SafeRepositoryAccess */
+/** @typedef {import('../src/host-state.ts').StateVersion} StateVersion */
+/** @typedef {import('../src/host-state.ts').WorkIdentity} WorkIdentity */
+/** @typedef {import('../src/host-state.ts').WorkState} WorkState */
+/** @typedef {import('../src/contracts/envelopes.ts').CoordinationLedger} CoordinationLedger */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerState} MastraSessionLedgerState */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.ts').MastraLedgerItem} MastraLedgerItem */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.ts').SynthesisObservationCorrectionPlan} SynthesisObservationCorrectionPlan */
+/** @typedef {import('../src/research-decision.ts').ResearchSynthesis} ResearchSynthesis */
+
+/** @type {(condition: unknown, message: string) => asserts condition} */
 const requireCorrection = (condition, message) => {
   if (!condition) throw new Error(`synthesis observation correction: ${message}`);
 };
+/** @param {SqliteDatabase} database @param {string} table @param {string} where @param {SqliteQueryBinding[]} args @param {(value: unknown) => string} [digest] @returns {{value: unknown; version: StateVersion}} */
 const checked = (database, table, where, args, digest = canonicalJsonDigest) => {
-  const row = database.query(`SELECT revision,payload,digest FROM ${table} WHERE ${where}`).get(...args);
-  requireCorrection(row && Number.isSafeInteger(row.revision) && row.revision > 0, `${table} row is missing`);
+  const row = checkedCorrectionRow(
+    database.query(`SELECT revision,payload,digest FROM ${table} WHERE ${where}`).get(...args),
+    table,
+  );
+  /** @type {unknown} */
   const value = JSON.parse(row.payload);
   requireCorrection(row.digest === digest(value), `${table} checksum differs`);
   return { value, version: { revision: row.revision, digest: row.digest } };
 };
 
+/** @param {unknown} row @param {string} table @returns {{revision: number; payload: string; digest: string}} */
+function checkedCorrectionRow(row, table) {
+  requireCorrection(
+    isPlainRecord(row) &&
+      typeof row.revision === 'number' &&
+      Number.isSafeInteger(row.revision) &&
+      row.revision > 0 &&
+      typeof row.payload === 'string' &&
+      typeof row.digest === 'string',
+    `${table} row is missing or malformed`,
+  );
+  return { revision: row.revision, payload: row.payload, digest: row.digest };
+}
+
 /** Plan only the observed, unnormalized synthesis collision. The native report stays historical truth. */
-export function planSynthesisObservationCorrection({
+/** @param {{database: SqliteDatabase; repositoryRoot: string; config: AgentRuntimeConfig; workspaceId: string; projectIds: readonly string[]; workId: string; attempt: number; actionId: string; issueId: string; nativeHandle: string; ownerCorrectionPointer: string; correctionId: string; actor: string; timestamp: string}} input */
+function planSynthesisObservationCorrection({
   database,
   repositoryRoot,
   config,
@@ -65,57 +109,43 @@ export function planSynthesisObservationCorrection({
     'correction identity or owner attribution invalid',
   );
   const project = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds);
-  const identity = {
-    repository_id: project.repository_id,
-    project_ids: project.project_ids,
+  const hostIdentity = {
+    repository_id: config.repository.repository_id,
+    project_ids: projectIds,
     integrations_digest: project.integrations_digest,
     work_id: workId,
   };
-  const key = JSON.stringify([
-    identity.repository_id,
-    identity.project_ids,
-    identity.integrations_digest,
-    identity.work_id,
-  ]);
-  const work = checked(database, 'agent_host_state', "workspace_id=? AND kind='work' AND id=?", [workspaceId, key]);
-  const ledger = checked(
+  const { owner, ledger, workVersion, ledgerVersion } = currentHostCorrectionState(
     database,
-    'agent_host_state',
-    "workspace_id=? AND kind='ledger' AND id='shared'",
-    [workspaceId],
-    coordinationLedgerDigest,
+    repositoryRoot,
+    workspaceId,
+    hostIdentity,
   );
   const journal = checked(database, 'agent_host_mastra_session_ledger', 'workspace_id=? AND work_id=? AND attempt=?', [
     workspaceId,
     workId,
     attempt,
   ]);
-  const owner = work.value,
-    state = journal.value;
-  const item = state.items?.length === 1 ? state.items[0] : null;
-  const stage = config.workflows[item?.request.workflow_id]?.stages.find(
-    (entry) => entry.id === item?.request.stage_id,
-  );
-  const assignment = stage?.assignments[item?.request.assignment_index];
-  const profile = config.agents.profiles[assignment?.profile];
-  const toolPolicy = config.agents.tool_policies[profile?.tools_policy];
-  const releasedTicket = [...ledger.value.tickets]
+  const state = parseMastraSessionLedgerState(journal.value);
+  const item = soleCorrectionItem(state);
+  const { stage, assignment, profile, toolPolicy } = correctionAssignment(config, item);
+  const releasedTicket = [...ledger.tickets]
     .reverse()
     .find(
       (ticket) =>
         ticket.work_id === workId &&
         ticket.thread_id === nativeHandle &&
-        ticket.repository_id === identity.repository_id &&
+        ticket.repository_id === hostIdentity.repository_id &&
         canonicalJsonDigest(ticket.project_ids) === canonicalJsonDigest(projectIds) &&
-        ticket.integrations_digest === identity.integrations_digest &&
+        ticket.integrations_digest === hostIdentity.integrations_digest &&
         ticket.status === 'released',
     );
   const releasedClaim =
     releasedTicket &&
-    ledger.value.claims.some((claim) => claim.ticket_id === releasedTicket.ticket_id && claim.status === 'released');
+    ledger.claims.some((claim) => claim.ticket_id === releasedTicket.ticket_id && claim.status === 'released');
   const release =
     releasedTicket &&
-    ledger.value.operations.some(
+    ledger.operations.some(
       (operation) =>
         operation.kind === 'release' &&
         operation.ticket_id === releasedTicket.ticket_id &&
@@ -126,7 +156,7 @@ export function planSynthesisObservationCorrection({
       owner.workspace_id === workspaceId &&
       owner.binding.lifecycle_work_id === workId &&
       canonicalJsonDigest(owner.binding.project_ids) === canonicalJsonDigest(projectIds) &&
-      owner.binding.integrations_digest === identity.integrations_digest &&
+      owner.binding.integrations_digest === hostIdentity.integrations_digest &&
       owner.binding.config_digest === runtimeConfigDigest(config) &&
       owner.execution.run_id === state.run_id &&
       owner.execution.status === 'suspended' &&
@@ -180,9 +210,10 @@ export function planSynthesisObservationCorrection({
   });
   const catalog = synthesisSourceCatalog(researchResults);
   const full = qualifiedResearchSourceCatalog(catalog.result_refs, researchResults);
+  /** @type {ResearchSynthesis} */
   let summary;
   try {
-    summary = JSON.parse(item.observation.summary);
+    summary = validateResearchSynthesis(JSON.parse(item.observation.summary));
   } catch {
     throw new Error('synthesis observation correction: old summary is not structured JSON');
   }
@@ -200,9 +231,9 @@ export function planSynthesisObservationCorrection({
     actor,
     timestamp,
     workspace_id: workspaceId,
-    repository_id: identity.repository_id,
+    repository_id: hostIdentity.repository_id,
     project_ids: projectIds,
-    integrations_digest: identity.integrations_digest,
+    integrations_digest: hostIdentity.integrations_digest,
     work_id: workId,
     attempt,
     action_id: actionId,
@@ -213,19 +244,60 @@ export function planSynthesisObservationCorrection({
     source_digest: state.source_scope.digest,
     predecessor_refs: catalog.result_refs,
     catalog_digest: canonicalJsonDigest(catalog),
-    expected_work: work.version,
-    expected_ledger: ledger.version,
+    expected_work: workVersion,
+    expected_ledger: ledgerVersion,
     expected_journal: journal.version,
     original_item: item,
   };
   return { ...body, digest: canonicalJsonDigest(body) };
 }
 
+/** @param {SqliteDatabase} database @param {string} repositoryRoot @param {string} workspaceId @param {WorkIdentity} identity @returns {{owner: WorkState; ledger: CoordinationLedger; workVersion: StateVersion; ledgerVersion: StateVersion}} */
+function currentHostCorrectionState(database, repositoryRoot, workspaceId, identity) {
+  const hostState = createCliHostStateStore(
+    database,
+    workspaceId,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    repositoryRoot,
+    undefined,
+    undefined,
+    undefined,
+    true,
+  );
+  const snapshot = hostState.readHostStateSnapshot(identity);
+  const { work, ledger, workVersion, ledgerVersion } = snapshot;
+  requireCorrection(work && ledger && workVersion && ledgerVersion, 'current Host state is missing');
+  return { owner: work, ledger, workVersion, ledgerVersion };
+}
+
+/** @param {MastraSessionLedgerState} state @returns {MastraLedgerItem} */
+function soleCorrectionItem(state) {
+  const item = state.items.length === 1 ? state.items[0] : null;
+  requireCorrection(item, 'synthesis correction journal item is missing');
+  return item;
+}
+
+/** @param {AgentRuntimeConfig} config @param {MastraLedgerItem} item */
+function correctionAssignment(config, item) {
+  const stage = config.workflows[item.request.workflow_id]?.stages.find((entry) => entry.id === item.request.stage_id);
+  const assignment = stage?.assignments[item.request.assignment_index];
+  const profile = assignment && config.agents.profiles[assignment.profile];
+  const toolPolicy = profile && config.agents.tool_policies[profile.tools_policy];
+  return { stage, assignment, profile, toolPolicy };
+}
+
+/** @param {string} id */
 const planPath = (id) => `.agent/work/${id}/synthesis-observation-correction-plan.v1.json`;
 
+/** @param {SafeRepositoryAccess} access @param {string} correctionId @returns {SynthesisObservationCorrectionPlan} */
 function storedPlan(access, correctionId) {
   const raw = access.readText(planPath(correctionId), 'synthesis observation correction plan');
+  /** @type {unknown} */
   const plan = JSON.parse(raw);
+  requireCorrection(isCorrectionPlan(plan), 'stored synthesis correction plan shape invalid');
   const { digest, ...body } = plan;
   requireCorrection(
     raw === `${JSON.stringify(plan, null, 2)}\n` &&
@@ -237,45 +309,151 @@ function storedPlan(access, correctionId) {
   return plan;
 }
 
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return isPlainRecord(value);
+}
+
+/** @param {unknown} value @returns {value is StateVersion} */
+function isStateVersion(value) {
+  return (
+    isRecord(value) &&
+    Number.isSafeInteger(value.revision) &&
+    Number(value.revision) > 0 &&
+    typeof value.digest === 'string' &&
+    /^[a-f0-9]{64}$/.test(value.digest)
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasCorrectionPlanIdentity(value) {
+  const strings = [
+    'correction_id',
+    'actor',
+    'timestamp',
+    'workspace_id',
+    'repository_id',
+    'integrations_digest',
+    'work_id',
+    'action_id',
+    'prior_issue_id',
+    'native_session_handle',
+    'owner_correction_pointer',
+    'config_digest',
+    'source_digest',
+    'catalog_digest',
+    'digest',
+  ];
+  return strings.every((key) => typeof value[key] === 'string');
+}
+
+/** @param {Record<string, unknown>} value */
+function hasCorrectionPlanVersions(value) {
+  return (
+    Number.isSafeInteger(value.attempt) &&
+    Number(value.attempt) > 0 &&
+    Array.isArray(value.project_ids) &&
+    value.project_ids.every((id) => typeof id === 'string') &&
+    isStateVersion(value.expected_work) &&
+    isStateVersion(value.expected_ledger) &&
+    isStateVersion(value.expected_journal)
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasCorrectionPlanLineage(value) {
+  return (
+    Array.isArray(value.predecessor_refs) &&
+    value.predecessor_refs.every(
+      (ref) => isRecord(ref) && typeof ref.result_id === 'string' && typeof ref.digest === 'string',
+    )
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasCorrectionPlanItem(value) {
+  try {
+    const parsed = parseMastraSessionLedgerState({
+      schema: 'MastraSessionLedger/v1',
+      workspace_id: value.workspace_id,
+      work_id: value.work_id,
+      attempt: value.attempt,
+      run_id: 'correction-plan-validation',
+      step_id: null,
+      items: [value.original_item],
+      completed: [],
+    });
+    return parsed.items.length === 1 && typeof value.original_item === 'object' && value.original_item !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** @param {unknown} value @returns {value is SynthesisObservationCorrectionPlan} */
+function isCorrectionPlan(value) {
+  if (
+    !isRecord(value) ||
+    Reflect.ownKeys(value).length !== 23 ||
+    value.schema !== 'VidaSynthesisObservationCorrectionPlan/v1'
+  )
+    return false;
+  try {
+    assertCanonicalJsonValue(value, '$.synthesis_observation_correction_plan');
+  } catch {
+    return false;
+  }
+  return (
+    hasCorrectionPlanIdentity(value) &&
+    hasCorrectionPlanVersions(value) &&
+    hasCorrectionPlanLineage(value) &&
+    hasCorrectionPlanItem(value)
+  );
+}
+
+/** @param {readonly string[]} args @returns {Record<string, string>} */
 function argumentsForCorrection(args) {
   requireCorrection(args.length % 2 === 0, 'arguments must be paired');
+  /** @type {Record<string, string>} */
   const values = {};
   for (let index = 0; index < args.length; index += 2) {
+    const key = args[index],
+      value = args[index + 1];
     requireCorrection(
-      args[index]?.startsWith('--') && args[index + 1] && !Object.hasOwn(values, args[index]),
+      typeof key === 'string' &&
+        key.startsWith('--') &&
+        typeof value === 'string' &&
+        value.length > 0 &&
+        !Object.hasOwn(values, key),
       'arguments are missing or duplicate',
     );
-    values[args[index]] = args[index + 1];
+    values[key] = value;
   }
-  const planning = [
-    '--kind',
-    '--mode',
-    '--project-root',
-    '--correction-id',
-    '--projects',
-    '--work-id',
-    '--attempt',
-    '--action-id',
-    '--issue-id',
-    '--native-handle',
-    '--owner-correction-pointer',
-    '--actor',
-    '--timestamp',
-  ];
-  const applying = ['--kind', '--mode', '--project-root', '--correction-id'];
-  const expected = ['inspect', 'plan'].includes(values['--mode']) ? planning : applying;
+  const mode = requiredArgument(values, '--mode'),
+    projectRoot = requiredArgument(values, '--project-root'),
+    correctionId = requiredArgument(values, '--correction-id');
+  const expected = reconcileExpectedOptions('synthesis-observation-correction', mode, values) ?? [];
+  const contract = reconcileCliContracts['synthesis-observation-correction'];
+  requireCorrection(contract !== undefined, 'synthesis correction CLI contract is absent');
   requireCorrection(
     values['--kind'] === 'synthesis-observation-correction' &&
-      ['inspect', 'plan', 'apply', 'resume'].includes(values['--mode']) &&
-      path.isAbsolute(values['--project-root'] ?? '') &&
-      path.resolve(values['--project-root']) === values['--project-root'] &&
-      /^[a-z0-9][a-z0-9._-]{0,79}$/.test(values['--correction-id'] ?? '') &&
+      contract.modes.includes(mode) &&
+      path.isAbsolute(projectRoot) &&
+      path.resolve(projectRoot) === projectRoot &&
+      /^[a-z0-9][a-z0-9._-]{0,79}$/.test(correctionId) &&
       canonicalJson(Object.keys(values).sort()) === canonicalJson(expected.sort()),
     'synthesis correction arguments invalid',
   );
   return values;
 }
 
+/** @param {Record<string, string>} values @param {string} key @returns {string} */
+function requiredArgument(values, key) {
+  const value = values[key];
+  requireCorrection(typeof value === 'string' && value.length > 0, `required argument ${key} is missing`);
+  return value;
+}
+
+/** @param {string} root @param {AgentRuntimeConfig} config @returns {string} */
 function databasePath(root, config) {
   const access = requireSafeRepositoryAccess(root);
   access.assertDirectory(config.control.work_root, 'synthesis correction work root');
@@ -291,17 +469,18 @@ function databasePath(root, config) {
 }
 
 /** The packaged reconcile-artifacts entrypoint owns the public preparation and correction. */
+/** @param {readonly string[]} args */
 export async function runSynthesisObservationCorrection(args) {
   const values = argumentsForCorrection(args);
-  const root = values['--project-root'];
+  const root = requiredArgument(values, '--project-root');
   const config = loadRuntimeConfig(root);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
   const access = requireSafeRepositoryAccess(root);
-  const mode = values['--mode'];
-  const correctionId = values['--correction-id'];
+  const mode = requiredArgument(values, '--mode');
+  const correctionId = requiredArgument(values, '--correction-id');
   const file = databasePath(root, config);
   if (mode === 'inspect' || mode === 'plan') {
-    const database = new Database(file, { readonly: true, create: false });
+    const database = openCliWorkspaceDatabase(root, file, workspaceId, true);
     let plan;
     try {
       plan = planSynthesisObservationCorrection({
@@ -309,19 +488,19 @@ export async function runSynthesisObservationCorrection(args) {
         repositoryRoot: root,
         config,
         workspaceId,
-        projectIds: values['--projects'].split(','),
-        workId: values['--work-id'],
-        attempt: Number(values['--attempt']),
-        actionId: values['--action-id'],
-        issueId: values['--issue-id'],
-        nativeHandle: values['--native-handle'],
-        ownerCorrectionPointer: values['--owner-correction-pointer'],
+        projectIds: requiredArgument(values, '--projects').split(','),
+        workId: requiredArgument(values, '--work-id'),
+        attempt: Number(requiredArgument(values, '--attempt')),
+        actionId: requiredArgument(values, '--action-id'),
+        issueId: requiredArgument(values, '--issue-id'),
+        nativeHandle: requiredArgument(values, '--native-handle'),
+        ownerCorrectionPointer: requiredArgument(values, '--owner-correction-pointer'),
         correctionId,
-        actor: values['--actor'],
-        timestamp: values['--timestamp'],
+        actor: requiredArgument(values, '--actor'),
+        timestamp: requiredArgument(values, '--timestamp'),
       });
     } finally {
-      database.close();
+      closeWorkspaceDatabaseWithAdmission(database);
     }
     if (mode === 'plan') {
       await access.ensureDirectoryAsync(`.agent/work/${correctionId}`, 'synthesis correction work root');
@@ -353,7 +532,7 @@ export async function runSynthesisObservationCorrection(args) {
         retained_native_outcome: 'reported_complete',
       };
     }
-    const freshDatabase = new Database(file, { readonly: true, create: false });
+    const freshDatabase = openCliWorkspaceDatabase(root, file, workspaceId, true);
     try {
       const fresh = planSynthesisObservationCorrection({
         database: freshDatabase,
@@ -373,7 +552,7 @@ export async function runSynthesisObservationCorrection(args) {
       });
       requireCorrection(fresh.digest === plan.digest, 'synthesis correction preimages changed');
     } finally {
-      freshDatabase.close();
+      closeWorkspaceDatabaseWithAdmission(freshDatabase);
     }
     const snapshot = ledger.correctObservedSynthesis(plan);
     return {

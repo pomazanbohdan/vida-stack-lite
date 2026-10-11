@@ -1,24 +1,30 @@
-import { Database } from 'bun:sqlite';
+import type { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type { AgentRuntimeConfig, WorkItemSelection } from '../config/runtime-config.js';
-import type { DeliveredWorkContinuationReceipt, HostStateSnapshot, WorkState } from '../host-state.js';
-import { runtimeConfigDigest } from '../config/runtime-config.js';
+import type { HostStateSnapshot, WorkState } from '../host-state.js';
+import { assertProjectUpgradeInactive, runtimeConfigDigest } from '../config/runtime-config.js';
+import { workspaceDatabaseFileIdentity } from '../config/workspace-database.js';
+import {
+  openAdmittedWorkspaceDatabase,
+  closeWorkspaceDatabaseWithAdmission,
+} from '../config/storage-read-admission.js';
+import { deriveWorkspaceId } from '../workspace-identity.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { sessionBridgeDatabaseRelativePath } from '../config/project-paths.js';
 import {
   buildSessionBridgeRequest,
-  configuredContextForStage,
   parseSessionBridgeRequest,
   parseSessionBridgeObservation,
   parseSessionBridgeRunState,
-  type SessionBridgeSnapshot,
   type SessionBridgeRequest,
-} from './mastra-session-bridge.js';
+} from './mastra-session-bridge-contract.js';
+import { configuredContextForStage } from './configured-context.js';
+import type { SessionBridgeSnapshot } from './mastra-session-bridge.js';
 import type { SessionHandoffContext } from './session-handoff.js';
-import { sessionActionsForWave } from './session-handoff.js';
+import { createSessionActionProjector, sessionActionsForWave } from './session-handoff.js';
 import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
 import type { CorrectiveExecution } from './final-assurance.js';
@@ -138,10 +144,10 @@ export function assertUnpreparedSessionEngineAbsent(input: {
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const relative = sessionBridgeDatabaseRelativePath(config);
   requireEngine(access.fileExists(relative, 'existing preparation engine'), 'preparation engine unavailable');
-  const target = path.join(repositoryRoot, relative),
-    before = lstatSync(target);
-  requireEngine(before.isFile() && !before.isSymbolicLink() && before.nlink === 1, 'preparation engine path unsafe');
-  const database = new Database(target, { readonly: true, strict: true });
+  const target = path.join(repositoryRoot, relative);
+  assertProjectUpgradeInactive(access);
+  const database = openAdmittedWorkspaceDatabase(repositoryRoot, relative, workspaceId, true);
+  const before = workspaceDatabaseFileIdentity(database);
   try {
     requireEngine(
       database
@@ -210,7 +216,8 @@ export function assertUnpreparedSessionEngineAbsent(input: {
       );
     }
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
+    assertProjectUpgradeInactive(access);
     const after = lstatSync(target);
     requireEngine(
       after.isFile() &&
@@ -270,192 +277,27 @@ function validRetainedSourceScope(value: unknown): value is NonNullable<MastraSe
   );
 }
 
-export interface RetainedTerminalSessionEngineSnapshot {
-  readonly schema: 'RetainedTerminalSessionEngineSnapshot/v1';
-  readonly run_id: string;
-  readonly workflow_id: string;
-  readonly prior_config_digest: string;
-  readonly prior_scope_digest: string;
-  readonly snapshot_digest: string;
-  readonly observations: readonly SessionBridgeSnapshot['observations'][number][];
-}
-
-/**
- * Read the original successful Mastra run for a Host-retained historical
- * continuation. This deliberately accepts the old binding from the checked
- * Host receipt; it never opens Mastra storage or changes the old snapshot.
- */
-export function readRetainedTerminalSessionEngineSnapshot(
-  binding: SessionEngineBinding,
-  receipt: DeliveredWorkContinuationReceipt,
-): RetainedTerminalSessionEngineSnapshot {
-  const prior = receipt.prior_journal,
-    work = receipt.prior_work,
-    request = receipt.request,
-    action = request.action;
-  requireEngine(
-    receipt.schema === 'DeliveredWorkContinuationReceipt/v1' &&
-      receipt.status === 'action_ready' &&
-      action.kind === 'historical_terminal_review' &&
-      request.schema === 'DeliveredWorkContinuationRequest/v1' &&
-      receipt.attempt === request.attempt &&
-      binding.context.work_id === request.identity.work_id &&
-      binding.context.attempt === request.attempt &&
-      binding.context.scope_digest === request.currentSourceScope.digest &&
-      binding.workflowId === action.workflow_id &&
-      binding.runId === work.execution.run_id &&
-      work.execution.run_id === prior.run_id &&
-      work.binding.workflow_id === action.workflow_id &&
-      work.binding.config_digest === request.priorConfigDigest &&
-      work.binding.work_source_revision === prior.source_scope?.digest &&
-      runtimeConfigDigest(binding.config) === request.targetConfigDigest &&
-      prior.corrective_execution == null &&
-      prior.research_wave_exposure === undefined &&
-      prior.items.length === 0 &&
-      prior.step_id === null &&
-      prior.completed.length > 0,
-    'retained terminal Host/Journal binding differs',
-  );
-  const priorRequests = prior.completed.flatMap((wave) => wave.items.map((item) => item.request));
-  requireEngine(
-    priorRequests.length > 0 &&
-      priorRequests.every(
-        (item) =>
-          item.run_id === prior.run_id &&
-          item.workflow_id === action.workflow_id &&
-          item.config_digest === request.priorConfigDigest &&
-          item.scope_digest === prior.source_scope?.digest,
-      ) &&
-      prior.completed.every((wave) =>
-        wave.items.every(
-          (item) =>
-            item.issue_id !== null &&
-            item.observation !== null &&
-            item.host_reservation === undefined &&
-            item.research_activation === undefined &&
-            item.research_normalization === undefined,
-        ),
-      ),
-    'retained terminal journal contains unresolved or foreign actions',
-  );
-
-  const relative = sessionBridgeDatabaseRelativePath(binding.config);
-  const access = requireSafeRepositoryAccess(binding.repositoryRoot);
-  requireEngine(access.fileExists(relative, 'retained terminal engine'), 'retained terminal engine unavailable');
-  const target = path.join(binding.repositoryRoot, relative),
-    before = lstatSync(target);
-  requireEngine(before.isFile() && !before.isSymbolicLink() && before.nlink === 1, 'database path is unsafe');
-  const database = new Database(target, { readonly: true, strict: true });
-  try {
-    requireEngine(
-      database
-        .query('PRAGMA quick_check')
-        .all()
-        .every((row) => Object.values(row as Record<string, unknown>)[0] === 'ok'),
-      'retained terminal engine corrupt',
-    );
-    requireEngine(
-      database.query("SELECT name FROM sqlite_master WHERE name='mastra_workflow_snapshot' AND type='table'").get(),
-      'snapshot table is missing',
-    );
-    const rows = database
-      .query('SELECT workflow_name,run_id,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?')
-      .all(prior.run_id) as { workflow_name: string; run_id: string; snapshot: string }[];
-    requireEngine(
-      rows.length === 1 && rows[0]!.workflow_name === action.workflow_id && rows[0]!.run_id === prior.run_id,
-      'retained terminal engine identity is missing or ambiguous',
-    );
-    const persisted = decodeMastraSnapshot(rows[0]!.snapshot);
-    requireEngine(
-      persisted &&
-        persisted.runId === prior.run_id &&
-        persisted.status === 'success' &&
-        persisted.context &&
-        typeof persisted.context === 'object' &&
-        !arrayShape(persisted.context) &&
-        Object.keys(persisted.suspendedPaths ?? {}).length === 0,
-      'retained original run is not a successful terminal snapshot',
-    );
-    const parsePriorState = (value: unknown) => {
-      const state = parseSessionBridgeRunState(value);
-      requireEngine(
-        isDeepStrictEqual(state, value) &&
-          state.work_id === request.identity.work_id &&
-          state.attempt === request.attempt &&
-          state.workflow_id === action.workflow_id &&
-          state.scope_digest === prior.source_scope?.digest &&
-          state.config_digest === request.priorConfigDigest &&
-          isDeepStrictEqual(state.selection, binding.selection),
-        'retained terminal run context differs',
-      );
-      return state;
-    };
-    let state = parsePriorState(persisted.context.input);
-    requireEngine(state.observations.length === 0, 'retained terminal initial observations are not empty');
-    const waveIds = Object.keys(persisted.context).filter((key) => /^wave-\d+$/.test(key));
-    requireEngine(waveIds.length === prior.completed.length, 'retained terminal wave count differs from its Journal');
-    const expectedObservationIds = new Set<string>();
-    for (const [position, wave] of prior.completed.entries()) {
-      const row = decodeMastraStep(persisted.context[wave.step_id]);
-      requireEngine(
-        /^wave-\d+$/.test(wave.step_id) &&
-          waveIds[position] === wave.step_id &&
-          row?.status === 'success' &&
-          isDeepStrictEqual(parsePriorState(row.payload), state),
-        'retained terminal wave prefix or input differs',
-      );
-      const expectedRequests = wave.items.map((item) => parseSessionBridgeRequest(item.request)),
-        persistedRequests = row.suspendPayload?.requests;
-      requireEngine(
-        persistedRequests === undefined ||
-          (arrayShape(persistedRequests) &&
-            isDeepStrictEqual(persistedRequests.map(parseSessionBridgeRequest), expectedRequests)),
-        'retained terminal original request bodies differ from Host Journal',
-      );
-      const observations = wave.items.map((item) => item.observation!);
-      requireEngine(
-        observations.every((observation) => {
-          const id = observation.action_id;
-          if (expectedObservationIds.has(id)) return false;
-          expectedObservationIds.add(id);
-          return observation.output_digest === canonicalJsonDigest(observation.summary);
-        }) && isDeepStrictEqual(row.resumePayload?.observations, observations),
-        'retained terminal original observations differ from Host Journal',
-      );
-      const output = parsePriorState(row.output);
-      requireEngine(
-        isDeepStrictEqual(output.observations, [...state.observations, ...observations]),
-        'retained terminal wave output differs from Host Journal',
-      );
-      state = output;
-    }
-    const result = parsePriorState(persisted.result),
-      journalObservations = prior.completed.flatMap((wave) => wave.items.map((item) => item.observation!));
-    requireEngine(
-      isDeepStrictEqual(result, state) && isDeepStrictEqual(result.observations, journalObservations),
-      'retained terminal result differs from Host Journal',
-    );
-    return {
-      schema: 'RetainedTerminalSessionEngineSnapshot/v1',
-      run_id: prior.run_id,
-      workflow_id: action.workflow_id,
-      prior_config_digest: request.priorConfigDigest,
-      prior_scope_digest: prior.source_scope!.digest,
-      snapshot_digest: canonicalJsonDigest(persisted),
-      observations: result.observations,
-    };
-  } finally {
-    database.close(true);
-    const after = lstatSync(target);
-    requireEngine(
-      after.isFile() &&
-        !after.isSymbolicLink() &&
-        after.nlink === 1 &&
-        after.dev === before.dev &&
-        after.ino === before.ino,
-      'database was substituted',
-    );
-  }
+/** Read-only persisted evidence for the retained engine reader; this grants no Host rights. */
+export interface RetainedSessionEngineWorkEvidence {
+  readonly schema: WorkState['schema'];
+  readonly workspace_id: WorkState['workspace_id'];
+  readonly binding: Readonly<
+    Pick<
+      WorkState['binding'],
+      | 'config_digest'
+      | 'workflow_id'
+      | 'lifecycle_work_id'
+      | 'work_source_revision'
+      | 'project_ids'
+      | 'work_item_digest'
+      | 'team_id'
+    >
+  >;
+  readonly execution: Readonly<Pick<WorkState['execution'], 'run_id'>>;
+  readonly lifecycle: Readonly<Pick<WorkState['lifecycle'], 'risk'>>;
+  readonly artifacts: readonly Readonly<
+    Pick<WorkState['artifacts'][number], 'artifact_id' | 'schema' | 'path' | 'sha256'>
+  >[];
 }
 
 /**
@@ -465,7 +307,7 @@ export function readRetainedTerminalSessionEngineSnapshot(
  */
 export function readRetainedUnissuedSessionEngineSnapshot(
   binding: SessionEngineBinding,
-  retained: { readonly work: WorkState; readonly journal: MastraSessionLedgerState },
+  retained: { readonly work: RetainedSessionEngineWorkEvidence; readonly journal: MastraSessionLedgerState },
 ): SessionBridgeSnapshot {
   const { work, journal } = retained,
     scope = journal.source_scope,
@@ -583,10 +425,11 @@ export function readRetainedUnissuedSessionEngineSnapshot(
 
   const relative = sessionBridgeDatabaseRelativePath(binding.config);
   requireEngine(access.fileExists(relative, 'retained unissued engine'), 'retained unissued engine unavailable');
-  const target = path.join(binding.repositoryRoot, relative),
-    before = lstatSync(target);
-  requireEngine(before.isFile() && !before.isSymbolicLink() && before.nlink === 1, 'database path is unsafe');
-  const database = new Database(target, { readonly: true, strict: true });
+  const target = path.join(binding.repositoryRoot, relative);
+  assertProjectUpgradeInactive(access);
+  const workspaceId = deriveWorkspaceId(binding.config.repository.repository_id, binding.repositoryRoot);
+  const database = openAdmittedWorkspaceDatabase(binding.repositoryRoot, relative, workspaceId, true);
+  const before = workspaceDatabaseFileIdentity(database);
   try {
     requireEngine(
       database
@@ -682,7 +525,10 @@ export function readRetainedUnissuedSessionEngineSnapshot(
     ) => {
       const requests = candidates.map((candidate) => {
         const parsed = parseSessionBridgeRequest(candidate);
-        requireEngine(isDeepStrictEqual(parsed, candidate), 'retained unissued request body is not canonical');
+        requireEngine(
+          canonicalJson(parsed) === canonicalJson(candidate),
+          'retained unissued request body is not canonical',
+        );
         requireEngine(
           parsed.run_id === oldRunId &&
             parsed.workflow_id === oldWorkflowId &&
@@ -744,7 +590,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
         );
         const observation = parseSessionBridgeObservation(entry.observation);
         requireEngine(
-          isDeepStrictEqual(observation, entry.observation) &&
+          canonicalJson(observation) === canonicalJson(entry.observation) &&
             observation.issue_id === entry.issue_id &&
             observation.action_id === entry.request.action_id &&
             observation.status === 'reported_complete' &&
@@ -805,7 +651,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
       isDeepStrictEqual(
         state.observations,
         journal.completed.flatMap((wave: MastraSessionLedgerState['completed'][number]) =>
-          wave.items.map((item) => item.observation!),
+          wave.items.map((item) => parseSessionBridgeObservation(item.observation)),
         ),
       ),
       'retained unissued observation count differs from Journal prefix',
@@ -818,7 +664,8 @@ export function readRetainedUnissuedSessionEngineSnapshot(
       observations: state.observations,
     };
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
+    assertProjectUpgradeInactive(access);
     const after = lstatSync(target);
     requireEngine(
       after.isFile() &&
@@ -954,13 +801,11 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     access.fileExists(relative, 'configured continuation engine'),
     'configured continuation engine unavailable',
   );
-  const target = path.join(binding.repositoryRoot, relative),
-    before = lstatSync(target);
-  requireEngine(
-    before.isFile() && !before.isSymbolicLink() && before.nlink === 1,
-    'configured continuation database path is unsafe',
-  );
-  const database = new Database(target, { readonly: true, strict: true });
+  const target = path.join(binding.repositoryRoot, relative);
+  assertProjectUpgradeInactive(access);
+  const workspaceId = deriveWorkspaceId(binding.config.repository.repository_id, binding.repositoryRoot);
+  const database = openAdmittedWorkspaceDatabase(binding.repositoryRoot, relative, workspaceId, true);
+  const before = workspaceDatabaseFileIdentity(database);
   let persisted: UntrustedMastraSnapshot;
   try {
     requireEngine(
@@ -1023,7 +868,8 @@ export function readConfiguredContinuationSessionEngineSnapshot(
       'configured continuation original engine snapshot identity differs',
     );
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
+    assertProjectUpgradeInactive(access);
     const after = lstatSync(target);
     requireEngine(
       after.isFile() &&
@@ -1172,7 +1018,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     const expected = wave.items.map((item) => {
       const parsed = parseSessionBridgeRequest(item.request);
       requireEngine(
-        isDeepStrictEqual(parsed, item.request) &&
+        canonicalJson(parsed) === canonicalJson(item.request) &&
           parsed.run_id === oldRunId &&
           parsed.workflow_id === action.workflow_id &&
           parsed.wave_index === waveIndex &&
@@ -1217,7 +1063,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     const observations = wave.items.map((item) => {
       const parsed = parseSessionBridgeObservation(item.observation);
       requireEngine(
-        isDeepStrictEqual(parsed, item.observation) &&
+        canonicalJson(parsed) === canonicalJson(item.observation) &&
           parsed.issue_id === item.issue_id &&
           parsed.action_id === item.request.action_id &&
           parsed.status === 'reported_complete' &&
@@ -1262,34 +1108,22 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     'configured continuation current prewriter output or context binding differs',
   );
 
-  const plan = compileDevelopmentWorkflow(
+  const actionProjector = createSessionActionProjector(
       binding.config,
-      binding.selection.team,
+      binding.selection,
       action.workflow_id,
-      binding.selection.risk_flags,
       priorWork.lifecycle.risk,
     ),
-    executedWaves = [...plan.waves.entries()].filter(
-      ([, wave]) => !wave.every((stage) => stage.assignments.length === 0),
-    ),
-    currentExecuted = executedWaves.filter(([index]) => index > boundaryWave);
+    executedWaves = actionProjector.executableWaveIndices(),
+    currentExecuted = executedWaves.filter((index) => index > boundaryWave);
   requireEngine(
     currentExecuted.length > 0 &&
-      currentExecuted[0]![0] === boundaryWave + 1 &&
-      currentExecuted[0]![1].some((stage) => stage.kind === 'develop'),
+      currentExecuted[0] === boundaryWave + 1 &&
+      actionProjector.waveHasStageKind(currentExecuted[0]!, 'develop'),
     'configured continuation current developer suffix is missing',
   );
   const expectedCurrentRequests = (waveIndex: number, state: RunState): SessionBridgeRequest[] => {
-    const actions = sessionActionsForWave(
-      binding.config,
-      binding.selection,
-      context,
-      action.workflow_id,
-      waveIndex,
-      [],
-      undefined,
-      priorWork.lifecycle.risk,
-    );
+    const actions = actionProjector.actionsForWave(context, waveIndex, []);
     requireEngine(actions.length > 0, 'configured continuation current suffix wave has no assignments');
     return actions.map((currentAction) =>
       buildSessionBridgeRequest({
@@ -1316,7 +1150,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     'configured continuation wave identity is malformed',
   );
   const presentIndexes = waveIds.map((key) => Number(key.slice(5))).sort((left, right) => left - right);
-  const suffixRows = currentExecuted.map(([index]) => ({
+  const suffixRows = currentExecuted.map((index) => ({
     index,
     row: decodeMastraStep(persisted.context['wave-' + index]),
   }));
@@ -1371,7 +1205,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     'configured continuation current graph wave sequence differs',
   );
   if (frontier) {
-    const pathIndex = executedWaves.findIndex(([index]) => index === frontier!.index),
+    const pathIndex = executedWaves.findIndex((index) => index === frontier!.index),
       paths = persisted.suspendedPaths;
     requireEngine(
       pathIndex >= 0 &&
@@ -1582,7 +1416,9 @@ export function readInitialSourceContinuationSessionEngineSnapshot(
   }
   const snapshot = readSessionEngineSnapshotInternal(binding, { receipt, journal });
   requireEngine(snapshot, 'initial-source retained engine snapshot is missing');
-  const completedObservations = journal.completed.flatMap((wave) => wave.items.map((item) => item.observation!));
+  const completedObservations = journal.completed.flatMap((wave) =>
+    wave.items.map((item) => parseSessionBridgeObservation(item.observation)),
+  );
   if (journal.step_id === null) {
     requireEngine(
       journal.items.length === 0 &&
@@ -1623,7 +1459,9 @@ export function readInitialSourceContinuationSessionEngineSnapshot(
         'initial-source engine frontier differs from current Host journal',
       );
     } else {
-      const currentObservations = journal.items.map((item) => item.observation),
+      const currentObservations = journal.items.map((item) =>
+          item.observation === null ? null : parseSessionBridgeObservation(item.observation),
+        ),
         currentWaveComplete =
           journal.items.length > 0 &&
           journal.items.every(
@@ -1661,11 +1499,16 @@ function readSessionEngineSnapshotInternal(
   const { repositoryRoot, config, selection, context, workflowId, runId } = binding;
   const relative = sessionBridgeDatabaseRelativePath(config);
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  if (!access.fileExists(relative, 'persisted session engine')) return null;
-  const target = path.join(repositoryRoot, relative),
-    before = lstatSync(target);
-  requireEngine(before.isFile() && !before.isSymbolicLink() && before.nlink === 1, 'database path is unsafe');
-  const database = new Database(target, { readonly: true, strict: true });
+  assertProjectUpgradeInactive(access);
+  if (!access.fileExists(relative, 'persisted session engine')) {
+    assertProjectUpgradeInactive(access);
+    return null;
+  }
+  const target = path.join(repositoryRoot, relative);
+  assertProjectUpgradeInactive(access);
+  const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
+  const database = openAdmittedWorkspaceDatabase(repositoryRoot, relative, workspaceId, true);
+  const before = workspaceDatabaseFileIdentity(database);
   try {
     requireEngine(
       database.query("SELECT name FROM sqlite_master WHERE name='mastra_workflow_snapshot' AND type='table'").get(),
@@ -1766,7 +1609,7 @@ function readSessionEngineSnapshotInternal(
         const observation = parseSessionBridgeObservation(currentInitialItem.observation),
           resumeValues = originalStep.resumePayload?.observations;
         requireEngine(
-          isDeepStrictEqual(observation, currentInitialItem.observation) &&
+          isDeepStrictEqual(observation, { ...currentInitialItem.observation }) &&
             observation.issue_id === currentInitialItem.issue_id &&
             observation.action_id === request.currentInitialRequest.action_id &&
             observation.status === 'reported_complete' &&
@@ -1847,29 +1690,18 @@ function readSessionEngineSnapshotInternal(
             Number.isSafeInteger(suspendedIndexes[0]),
       'suspended path differs',
     );
-    const correction = binding.correctiveExecution;
-    const executedWaves = [
-      ...compileDevelopmentWorkflow(
-        config,
-        selection.team,
-        workflowId,
-        selection.risk_flags,
-        binding.lifecycleRisk,
-      ).waves.entries(),
-    ].filter(
-      ([, wave]) =>
-        (!correction || wave.some((stage) => correction.stage_ids.includes(stage.id))) &&
-        !wave.every((stage) => stage.assignments.length === 0),
-    );
+    const correction = binding.correctiveExecution,
+      actionProjector = createSessionActionProjector(config, selection, workflowId, binding.lifecycleRisk),
+      executedWaves = actionProjector.executableWaveIndices(correction?.stage_ids);
     const waveIds = Object.keys(persisted.context).filter((key) => key.startsWith('wave-'));
     const presentWaves = executedWaves.slice(0, waveIds.length);
     requireEngine(
-      waveIds.length <= executedWaves.length && presentWaves.every(([index]) => waveIds.includes('wave-' + index)),
+      waveIds.length <= executedWaves.length && presentWaves.every((index) => waveIds.includes('wave-' + index)),
       'configured execution prefix differs',
     );
     let prior = input;
     let incomplete: string | null = null;
-    for (const [position, [waveIndex]] of presentWaves.entries()) {
+    for (const [position, waveIndex] of presentWaves.entries()) {
       const id = 'wave-' + waveIndex;
       const recorded = decodeMastraStep(persisted.context[id]);
       requireEngine(recorded, 'recorded wave is missing');
@@ -1886,16 +1718,7 @@ function readSessionEngineSnapshotInternal(
       }
       const output = parseState(recorded.output);
       const appended = output.observations.slice(prior.observations.length);
-      const actions = sessionActionsForWave(
-        config,
-        selection,
-        context,
-        workflowId,
-        waveIndex,
-        [],
-        correction,
-        binding.lifecycleRisk,
-      );
+      const actions = actionProjector.actionsForWave(context, waveIndex, [], correction);
       requireEngine(
         isDeepStrictEqual(output.observations.slice(0, prior.observations.length), prior.observations) &&
           appended.length === actions.length &&
@@ -1921,21 +1744,12 @@ function readSessionEngineSnapshotInternal(
     );
     if (step) {
       const waveIndex = Number(step[0].slice(5));
-      const executionIndex = executedWaves.findIndex(([index]) => index === waveIndex);
+      const executionIndex = executedWaves.findIndex((index) => index === waveIndex);
       requireEngine(
         executionIndex >= 0 && isDeepStrictEqual(paths[step[0]], [executionIndex]),
         'configured suspended execution path differs',
       );
-      const actions = sessionActionsForWave(
-        config,
-        selection,
-        context,
-        workflowId,
-        waveIndex,
-        [],
-        correction,
-        binding.lifecycleRisk,
-      );
+      const actions = actionProjector.actionsForWave(context, waveIndex, [], correction);
       requireEngine(
         actions.length === requests.length &&
           actions.every((action, index) => {
@@ -1972,7 +1786,8 @@ function readSessionEngineSnapshotInternal(
       observations: state.observations,
     };
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
+    assertProjectUpgradeInactive(access);
     const after = lstatSync(target);
     requireEngine(
       after.isFile() &&

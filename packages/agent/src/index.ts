@@ -50,6 +50,15 @@ export {
   type ResolvedPathProfile,
 } from './config/project-context.js';
 export { bindRuntimeInitialization, RuntimeInitializationBindingError } from './runtime-initialization.js';
+export { bindProjectInitialization } from './config/project-initialization-binding.js';
+export {
+  inspectProjectUpgrade,
+  planProjectUpgradeRepair,
+  recoverProjectUpgradeIntent,
+  resumeFreshProjectUpgrade,
+  type ProjectUpgradeOperation,
+  type ProjectUpgradeAttribution,
+} from './config/project-upgrade.js';
 export { canonicalRepositoryRoot, deriveWorkspaceId, WorkspaceIdentityError } from './workspace-identity.js';
 export {
   compileConfiguredEdictumWorkflow,

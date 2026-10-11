@@ -4,6 +4,8 @@ import { deriveWorkspaceId } from '../workspace-identity.js';
 import { loadProjectSetContext } from '../config/project-context.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
+import { closeWorkspaceDatabaseWithAdmission } from '../config/storage-read-admission.js';
+import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { compareScopedSourceSnapshots, type ScopedSourceSnapshot } from './scoped-source-snapshot.js';
 import {
@@ -15,7 +17,11 @@ import {
   type WorkIdentity,
 } from '../host-state.js';
 import { readLocalSourceWriteAuthorization } from './local-source-authorization.js';
-import { openConfiguredMastraSessionLedger, sessionHandoffDatabasePath } from './persistent-session-handoff.js';
+import {
+  openConfiguredMastraSessionLedger,
+  sessionHandoffDatabasePath,
+  type MastraSessionLedgerState,
+} from './persistent-session-handoff.js';
 import { validateTaskSourceBindingRequest, type TaskSourceBindingRequest } from './task-source-binding.js';
 import type { TaskSourceMutationPolicyRequest } from './source-preflight-operations.js';
 import {
@@ -177,7 +183,7 @@ function currentSourceAuthority(
   repositoryRoot: string,
   request: TaskSourceBindingRequest,
   currentWork: NonNullable<HostStateSnapshot['work']>,
-  journal: Readonly<Record<string, unknown>>,
+  journal: MastraSessionLedgerState,
   config: ReturnType<typeof loadRuntimeConfig>,
   identity: WorkIdentity,
   initialContinuation: InitialSourceContinuationLineageView | null,
@@ -197,13 +203,10 @@ function currentSourceAuthority(
       request.thread_id === work.lease?.thread_id &&
       request.work_id === work.binding.lifecycle_work_id &&
       request.attempt === request.expected_host.journal.attempt &&
-      request.attempt === (journal.attempt as number),
+      request.attempt === journal.attempt,
     'task source request does not match the current Host configuration, ProjectContext or owner',
   );
-  const sourceScope = journal.source_scope as
-    | { readonly schema?: unknown; readonly digest?: unknown; readonly entries?: unknown }
-    | null
-    | undefined;
+  const sourceScope = journal.source_scope;
   requireOperation(
     sourceScope?.schema === 'ScopedSourceSnapshot/v1' &&
       validDigest(sourceScope.digest) &&
@@ -322,7 +325,11 @@ export async function executeTaskSourceBindingOperation(input: {
       ledger.close();
     }
   }
-  const database = openHostStateDatabase(databasePath);
+  const database = openHostStateDatabase(
+    root,
+    sessionHandoffDatabaseRelativePath(config),
+    deriveWorkspaceId(config.repository.repository_id, root),
+  );
   try {
     const store = new HostStateStore(
         database,
@@ -337,7 +344,7 @@ export async function executeTaskSourceBindingOperation(input: {
       verifyCurrent = (context: {
         readonly work: NonNullable<HostStateSnapshot['work']>;
         readonly ledger: NonNullable<HostStateSnapshot['ledger']>;
-        readonly journal: Readonly<Record<string, unknown>>;
+        readonly journal: MastraSessionLedgerState;
       }) => {
         const currentConfig = loadRuntimeConfig(root),
           currentProject = loadProjectSetContext(root, currentConfig, request.repository_id, request.project_ids);
@@ -379,6 +386,6 @@ export async function executeTaskSourceBindingOperation(input: {
       report: report.report,
     });
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }

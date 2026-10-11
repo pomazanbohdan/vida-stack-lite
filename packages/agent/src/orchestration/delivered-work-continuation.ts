@@ -1,6 +1,11 @@
 import { sameCoordinationStrings } from '../contracts/envelopes.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import { assertLoadedRuntimeConfig, runtimeConfigDigest, type AgentRuntimeConfig, type WorkItemSelection } from '../config/runtime-config.js';
+import {
+  assertLoadedRuntimeConfig,
+  runtimeConfigDigest,
+  type AgentRuntimeConfig,
+  type WorkItemSelection,
+} from '../config/runtime-config.js';
 import type { HostStateSnapshot, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { MaintenanceFence } from '../host-state.js';
 import type { CoordinationLedger } from '../contracts/envelopes.js';
@@ -17,7 +22,7 @@ import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { sessionActionsForWave, type SessionHandoffContext } from './session-handoff.js';
 import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
 
-export interface RuntimeConfigDeliveryTransition {
+interface RuntimeConfigDeliveryTransition {
   readonly schema: 'RuntimeConfigDeliveryTransition/v1';
   readonly operation_path: string;
   readonly operation_sha256: string;
@@ -117,9 +122,7 @@ export interface HistoricalTerminalReviewAction {
   readonly request: SessionBridgeRequest;
 }
 
-export type DeliveredWorkContinuationAction =
-  | ConfiguredFrontierContinuationAction
-  | HistoricalTerminalReviewAction;
+export type DeliveredWorkContinuationAction = ConfiguredFrontierContinuationAction | HistoricalTerminalReviewAction;
 
 /** The exact finite continuation offer accepted by HostState. */
 export interface DeliveredWorkContinuationRequest {
@@ -181,36 +184,85 @@ export function validateConfiguredFrontierOwnerRelease(input: {
   readonly nativeSessionHandle: string;
 }) {
   const { work, ledger, identity, nativeSessionHandle } = input,
-    resources = [`execution:${identity.work_id}`, ...work.binding.implementation_paths.map(path => `file:${path}`)].sort(),
-    candidates = ledger.tickets.filter(ticket => ticket.work_id === identity.work_id && ticket.thread_id === nativeSessionHandle &&
-      ticket.source_revision === work.binding.work_source_revision).sort((left, right) => right.sequence - left.sequence),
+    resources = [
+      `execution:${identity.work_id}`,
+      ...work.binding.implementation_paths.map((path) => `file:${path}`),
+    ].sort(),
+    candidates = ledger.tickets
+      .filter(
+        (ticket) =>
+          ticket.work_id === identity.work_id &&
+          ticket.thread_id === nativeSessionHandle &&
+          ticket.source_revision === work.binding.work_source_revision,
+      )
+      .sort((left, right) => right.sequence - left.sequence),
     ticket = candidates[0],
-    claims = ticket ? ledger.claims.filter(claim => claim.ticket_id === ticket.ticket_id) : [],
-    releases = ticket ? ledger.operations.filter(operation => operation.ticket_id === ticket.ticket_id && operation.kind === 'release') : [],
+    claims = ticket ? ledger.claims.filter((claim) => claim.ticket_id === ticket.ticket_id) : [],
+    releases = ticket
+      ? ledger.operations.filter(
+          (operation) => operation.ticket_id === ticket.ticket_id && operation.kind === 'release',
+        )
+      : [],
     release = releases[0];
   const same = (left: unknown, right: unknown) => canonicalJsonDigest(left) === canonicalJsonDigest(right);
-  requireContinuation(ticket && release && candidates.filter(entry => entry.sequence === ticket.sequence).length === 1 &&
-    resources.length === new Set(resources).size && resources.every(resource => work.binding.allowed_resources.includes(resource)) &&
-    ticket.schema === 'CoordinationTicket/v1' && ticket.status === 'released' && ticket.repository_id === identity.repository_id && same(ticket.project_ids, identity.project_ids) &&
-    ticket.integrations_digest === identity.integrations_digest && ticket.expires_at === null && ticket.active_resources.length === 0 &&
-    ticket.blocked_resources.length === 0 && sameCoordinationStrings(ticket.exclusive_resources, resources) &&
-    claims.length === 1 && ticket.claim_ids.length === 1 && ticket.claim_ids[0] === claims[0]!.claim_id &&
-    claims[0]!.schema === 'WorkstreamClaim/v1' && claims[0]!.status === 'released' && claims[0]!.generation === ticket.generation &&
-    claims[0]!.work_id === identity.work_id && claims[0]!.thread_id === nativeSessionHandle && sameCoordinationStrings(claims[0]!.resources, resources) &&
-    releases.length === 1 && release.schema === 'CoordinationOperation/v1' &&
-    typeof release.decided_by === 'string' && release.decided_by.trim().length > 0 &&
-    typeof release.created_at === 'string' && Number.isFinite(Date.parse(release.created_at)) && release.work_id === identity.work_id && release.thread_id === nativeSessionHandle &&
-    release.source_revision === work.binding.work_source_revision && Array.isArray(release.resources) && sameCoordinationStrings(release.resources, resources) &&
-    typeof release.decision_pointer === 'string' && release.decision_pointer.trim().length > 0 &&
-    typeof release.from_ledger_revision === 'number' && Number.isSafeInteger(release.from_ledger_revision) && release.from_ledger_revision >= 1 &&
-    typeof release.to_ledger_revision === 'number' && Number.isSafeInteger(release.to_ledger_revision) &&
-    release.to_ledger_revision === release.from_ledger_revision + 1 && release.to_ledger_revision <= ledger.revision &&
-    !ledger.operations.some(operation => operation.ticket_id === ticket.ticket_id &&
-      (typeof operation.to_ledger_revision !== 'number' || operation.to_ledger_revision > (release.to_ledger_revision as number))) &&
-    !ledger.tickets.some(other => other.ticket_id !== ticket.ticket_id &&
-      ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(other.status) &&
-      other.exclusive_resources.some(resource => resources.includes(resource))),
-  'configured frontier original release, resources or FIFO changed');
+  requireContinuation(
+    ticket &&
+      release &&
+      candidates.filter((entry) => entry.sequence === ticket.sequence).length === 1 &&
+      resources.length === new Set(resources).size &&
+      resources.every((resource) => work.binding.allowed_resources.includes(resource)) &&
+      ticket.schema === 'CoordinationTicket/v1' &&
+      ticket.status === 'released' &&
+      ticket.repository_id === identity.repository_id &&
+      same(ticket.project_ids, identity.project_ids) &&
+      ticket.integrations_digest === identity.integrations_digest &&
+      ticket.expires_at === null &&
+      ticket.active_resources.length === 0 &&
+      ticket.blocked_resources.length === 0 &&
+      sameCoordinationStrings(ticket.exclusive_resources, resources) &&
+      claims.length === 1 &&
+      ticket.claim_ids.length === 1 &&
+      ticket.claim_ids[0] === claims[0]!.claim_id &&
+      claims[0]!.schema === 'WorkstreamClaim/v1' &&
+      claims[0]!.status === 'released' &&
+      claims[0]!.generation === ticket.generation &&
+      claims[0]!.work_id === identity.work_id &&
+      claims[0]!.thread_id === nativeSessionHandle &&
+      sameCoordinationStrings(claims[0]!.resources, resources) &&
+      releases.length === 1 &&
+      release.schema === 'CoordinationOperation/v1' &&
+      typeof release.decided_by === 'string' &&
+      release.decided_by.trim().length > 0 &&
+      typeof release.created_at === 'string' &&
+      Number.isFinite(Date.parse(release.created_at)) &&
+      release.work_id === identity.work_id &&
+      release.thread_id === nativeSessionHandle &&
+      release.source_revision === work.binding.work_source_revision &&
+      Array.isArray(release.resources) &&
+      sameCoordinationStrings(release.resources, resources) &&
+      typeof release.decision_pointer === 'string' &&
+      release.decision_pointer.trim().length > 0 &&
+      typeof release.from_ledger_revision === 'number' &&
+      Number.isSafeInteger(release.from_ledger_revision) &&
+      release.from_ledger_revision >= 1 &&
+      typeof release.to_ledger_revision === 'number' &&
+      Number.isSafeInteger(release.to_ledger_revision) &&
+      release.to_ledger_revision === release.from_ledger_revision + 1 &&
+      release.to_ledger_revision <= ledger.revision &&
+      !ledger.operations.some(
+        (operation) =>
+          operation.ticket_id === ticket.ticket_id &&
+          (typeof operation.to_ledger_revision !== 'number' ||
+            operation.to_ledger_revision > (release.to_ledger_revision as number)),
+      ) &&
+      !ledger.tickets.some(
+        (other) =>
+          other.ticket_id !== ticket.ticket_id &&
+          ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(other.status) &&
+          other.exclusive_resources.some((resource) => resources.includes(resource)),
+      ),
+    'configured frontier original release, resources or FIFO changed',
+  );
   return { ticket, claim: claims[0]!, release, resources };
 }
 
@@ -219,11 +271,16 @@ export function validateContinuationSourceChangePaths(work: WorkState, changes: 
   const allowed = new Set(work.lifecycle.scope.allowed_paths),
     implementation = work.binding.implementation_paths,
     documentation = work.lifecycle.scope.documentation_paths ?? [];
-  requireContinuation(implementation.every(relative => allowed.has(relative)) && documentation.every(relative => allowed.has(relative)),
-    'continuation mutation paths differ from the accepted scope');
+  requireContinuation(
+    implementation.every((relative) => allowed.has(relative)) &&
+      documentation.every((relative) => allowed.has(relative)),
+    'continuation mutation paths differ from the accepted scope',
+  );
   const maintained = new Set([...implementation, ...documentation]);
-  requireContinuation(changes.every(change => maintained.has(change.path)),
-    'continuation Source changes are outside accepted implementation or documentation paths');
+  requireContinuation(
+    changes.every((change) => maintained.has(change.path)),
+    'continuation Source changes are outside accepted implementation or documentation paths',
+  );
 }
 
 function exactKeys(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
@@ -264,7 +321,10 @@ function validScope(value: unknown): value is ScopedSourceSnapshot {
         (index === 0 || scope.entries[index - 1]!.path < entry.path) &&
         typeof entry.exists === 'boolean' &&
         (entry.exists
-          ? Number.isSafeInteger(entry.bytes) && (entry.bytes as number) >= 0 && typeof entry.sha256 === 'string' && digestPattern.test(entry.sha256)
+          ? Number.isSafeInteger(entry.bytes) &&
+            (entry.bytes as number) >= 0 &&
+            typeof entry.sha256 === 'string' &&
+            digestPattern.test(entry.sha256)
           : entry.bytes === null && entry.sha256 === null),
     ) &&
     scope.digest === canonicalJsonDigest({ schema: scope.schema, entries: scope.entries })
@@ -326,10 +386,11 @@ export function validateCurrentSourceScopeBridge(input: {
   }
   const changes = compareScopedSourceSnapshots(input.original, input.current);
   requireContinuation(
-    authorized.size === changes.length && changes.every((change) => {
-      const authorizedChange = authorized.get(change.path);
-      return authorizedChange !== undefined && canonicalJsonDigest(authorizedChange) === canonicalJsonDigest(change);
-    }),
+    authorized.size === changes.length &&
+      changes.every((change) => {
+        const authorizedChange = authorized.get(change.path);
+        return authorizedChange !== undefined && canonicalJsonDigest(authorizedChange) === canonicalJsonDigest(change);
+      }),
     'current task Source changed outside the accepted beforeimage bridge',
   );
   return input.current;
@@ -420,7 +481,7 @@ export function validateClosedConfigTransitionProof(value: unknown): ClosedConfi
   const proof = value as unknown as ClosedConfigTransitionProof;
   const transition = validateTransition(proof.transition);
   requireContinuation(
-      proof.status === 'closed_config_transition_proven' &&
+    proof.status === 'closed_config_transition_proven' &&
       typeof proof.operation_id === 'string' &&
       identifierPattern.test(proof.operation_id) &&
       proof.operation_id === transition.fence.binding.operation_id &&
@@ -436,54 +497,120 @@ export function validateClosedConfigTransitionProof(value: unknown): ClosedConfi
 }
 
 export function validateClosedConfigRebindProof(value: unknown): ClosedConfigRebindProof {
-  requireContinuation(exactKeys(value, ['status', 'operation_id', 'baseline_config_digest', 'transition',
-    'transition_digest', 'caller_owner_cas_required', 'runtime_accepted', 'writes_host_state']),
-  'normal config proof fields are invalid');
+  requireContinuation(
+    exactKeys(value, [
+      'status',
+      'operation_id',
+      'baseline_config_digest',
+      'transition',
+      'transition_digest',
+      'caller_owner_cas_required',
+      'runtime_accepted',
+      'writes_host_state',
+    ]),
+    'normal config proof fields are invalid',
+  );
   const proof = value as unknown as ClosedConfigRebindProof;
   const transition = proof.transition;
-  const hashes = ['operation_sha256', 'operation_plan_digest', 'operation_release_digest', 'target_config_digest', 'target_schema_digest',
-    'target_yaml_sha256', 'receipt_sha256', 'prior_runtime_code_digest', 'target_runtime_code_digest',
-    'parent_manifest_digest', 'successor_manifest_digest', 'system_update_sha256', 'source_correction_sha256',
-    'native_self_attestation_digest', 'original_intake_sha256'] as const;
-  const refs = ['operation_path', 'receipt_path', 'parent_manifest_ref', 'successor_manifest_ref',
-    'system_update_ref', 'source_correction_ref', 'original_intake_ref'] as const;
-  requireContinuation(exactKeys(transition, ['schema', 'workspace_id', 'repository_id', 'project_ids',
-    'system_update_operation_id', 'runtime_accepted', ...hashes, ...refs]), 'normal config transition fields are invalid');
-  requireContinuation(proof.status === 'closed_config_rebind_proven' &&
-    typeof proof.operation_id === 'string' && identifierPattern.test(proof.operation_id) &&
-    typeof proof.baseline_config_digest === 'string' && digestPattern.test(proof.baseline_config_digest) &&
-    typeof proof.transition_digest === 'string' && digestPattern.test(proof.transition_digest) &&
-    proof.transition_digest === canonicalJsonDigest(transition) &&
-    proof.caller_owner_cas_required === true && proof.runtime_accepted === false && proof.writes_host_state === false &&
-    transition.schema === 'ConfiguredRuntimeEndpointTransition/v1' &&
-    typeof transition.workspace_id === 'string' && digestPattern.test(transition.workspace_id) &&
-    typeof transition.repository_id === 'string' && identifierPattern.test(transition.repository_id) &&
-    Array.isArray(transition.project_ids) && transition.project_ids.length > 0 && transition.project_ids.length <= 64 &&
-    transition.project_ids.every((id, index) => typeof id === 'string' && identifierPattern.test(id) &&
-      (index === 0 || transition.project_ids[index - 1]! < id)) &&
-    typeof transition.system_update_operation_id === 'string' && identifierPattern.test(transition.system_update_operation_id) &&
-    transition.system_update_operation_id !== proof.operation_id && transition.runtime_accepted === false &&
-    hashes.every(key => typeof transition[key] === 'string' && digestPattern.test(transition[key])) &&
-    refs.every(key => typeof transition[key] === 'string' && transition[key].length <= 512 &&
-      pathPattern.test(transition[key]) && !transition[key].startsWith('/') && !/^[A-Za-z]:/.test(transition[key]) &&
-      !/\p{Cc}/u.test(transition[key]) && transition[key].split('/').every(part => part.length > 0 && part !== '.' && part !== '..')) &&
-    transition.operation_path.endsWith(`/${proof.operation_id}/runtime-config-rebind-operation.v1.json`) &&
-    transition.prior_runtime_code_digest !== transition.target_runtime_code_digest &&
-    proof.baseline_config_digest !== transition.target_config_digest,
-  'normal config operation or runtime endpoints are invalid');
+  const hashes = [
+    'operation_sha256',
+    'operation_plan_digest',
+    'operation_release_digest',
+    'target_config_digest',
+    'target_schema_digest',
+    'target_yaml_sha256',
+    'receipt_sha256',
+    'prior_runtime_code_digest',
+    'target_runtime_code_digest',
+    'parent_manifest_digest',
+    'successor_manifest_digest',
+    'system_update_sha256',
+    'source_correction_sha256',
+    'native_self_attestation_digest',
+    'original_intake_sha256',
+  ] as const;
+  const refs = [
+    'operation_path',
+    'receipt_path',
+    'parent_manifest_ref',
+    'successor_manifest_ref',
+    'system_update_ref',
+    'source_correction_ref',
+    'original_intake_ref',
+  ] as const;
+  requireContinuation(
+    exactKeys(transition, [
+      'schema',
+      'workspace_id',
+      'repository_id',
+      'project_ids',
+      'system_update_operation_id',
+      'runtime_accepted',
+      ...hashes,
+      ...refs,
+    ]),
+    'normal config transition fields are invalid',
+  );
+  requireContinuation(
+    proof.status === 'closed_config_rebind_proven' &&
+      typeof proof.operation_id === 'string' &&
+      identifierPattern.test(proof.operation_id) &&
+      typeof proof.baseline_config_digest === 'string' &&
+      digestPattern.test(proof.baseline_config_digest) &&
+      typeof proof.transition_digest === 'string' &&
+      digestPattern.test(proof.transition_digest) &&
+      proof.transition_digest === canonicalJsonDigest(transition) &&
+      proof.caller_owner_cas_required === true &&
+      proof.runtime_accepted === false &&
+      proof.writes_host_state === false &&
+      transition.schema === 'ConfiguredRuntimeEndpointTransition/v1' &&
+      typeof transition.workspace_id === 'string' &&
+      digestPattern.test(transition.workspace_id) &&
+      typeof transition.repository_id === 'string' &&
+      identifierPattern.test(transition.repository_id) &&
+      Array.isArray(transition.project_ids) &&
+      transition.project_ids.length > 0 &&
+      transition.project_ids.length <= 64 &&
+      transition.project_ids.every(
+        (id, index) =>
+          typeof id === 'string' &&
+          identifierPattern.test(id) &&
+          (index === 0 || transition.project_ids[index - 1]! < id),
+      ) &&
+      typeof transition.system_update_operation_id === 'string' &&
+      identifierPattern.test(transition.system_update_operation_id) &&
+      transition.system_update_operation_id !== proof.operation_id &&
+      transition.runtime_accepted === false &&
+      hashes.every((key) => typeof transition[key] === 'string' && digestPattern.test(transition[key])) &&
+      refs.every(
+        (key) =>
+          typeof transition[key] === 'string' &&
+          transition[key].length <= 512 &&
+          pathPattern.test(transition[key]) &&
+          !transition[key].startsWith('/') &&
+          !/^[A-Za-z]:/.test(transition[key]) &&
+          !/\p{Cc}/u.test(transition[key]) &&
+          transition[key].split('/').every((part) => part.length > 0 && part !== '.' && part !== '..'),
+      ) &&
+      transition.operation_path.endsWith(`/${proof.operation_id}/runtime-config-rebind-operation.v1.json`) &&
+      transition.prior_runtime_code_digest !== transition.target_runtime_code_digest &&
+      proof.baseline_config_digest !== transition.target_config_digest,
+    'normal config operation or runtime endpoints are invalid',
+  );
   return proof;
 }
 
 /** Read only validated proof bindings. Normal config and native update identities stay separate. */
 export function deliveredContinuationProofBinding(proof: DeliveredContinuationProof) {
-  if (proof.status === 'closed_config_rebind_proven') return {
-    workspace_id: proof.transition.workspace_id,
-    project_ids: proof.transition.project_ids,
-    forward_operation_id: proof.transition.system_update_operation_id,
-    parent_manifest_digest: proof.transition.parent_manifest_digest,
-    successor_manifest_digest: proof.transition.successor_manifest_digest,
-    maintenance_generation: undefined,
-  };
+  if (proof.status === 'closed_config_rebind_proven')
+    return {
+      workspace_id: proof.transition.workspace_id,
+      project_ids: proof.transition.project_ids,
+      forward_operation_id: proof.transition.system_update_operation_id,
+      parent_manifest_digest: proof.transition.parent_manifest_digest,
+      successor_manifest_digest: proof.transition.successor_manifest_digest,
+      maintenance_generation: undefined,
+    };
   return {
     workspace_id: proof.transition.fence.workspace_id,
     project_ids: proof.transition.fence.binding.project_ids,
@@ -596,7 +723,8 @@ export function projectConfiguredFrontierContinuationAction(input: {
       journal.step_id === engine.step_id &&
       engine.requests.length === 1 &&
       digestPattern.test(targetConfigDigest) &&
-      validScope(currentSourceScope) && validScope(priorScope),
+      validScope(currentSourceScope) &&
+      validScope(priorScope),
     'configured continuation has no current suspended frontier',
   );
   const byAction = new Map(journal.items.map((item) => [item.request.action_id, item]));
@@ -652,56 +780,124 @@ export function projectConfiguredPrewriterContinuationRequests(input: {
   const { repositoryRoot, config, selection, context, workflowId, engine, journal, currentSourceScope } = input;
   assertLoadedRuntimeConfig(config, repositoryRoot);
   requireContinuation(
-    validScope(currentSourceScope) && validScope(journal.source_scope) &&
-      context.work_id === journal.work_id && context.attempt === journal.attempt &&
+    validScope(currentSourceScope) &&
+      validScope(journal.source_scope) &&
+      context.work_id === journal.work_id &&
+      context.attempt === journal.attempt &&
       context.scope_digest === currentSourceScope.digest &&
-      journal.corrective_execution == null && journal.research_wave_exposure === undefined,
+      journal.corrective_execution == null &&
+      journal.research_wave_exposure === undefined,
     'current prewriter context or original journal differs',
   );
   const frontier = projectConfiguredFrontierContinuationAction({
-    engine, journal, targetConfigDigest: runtimeConfigDigest(config), currentSourceScope,
+    engine,
+    journal,
+    targetConfigDigest: runtimeConfigDigest(config),
+    currentSourceScope,
   });
   const step = /^wave-(0|[1-9][0-9]*)$/.exec(frontier.step_id);
   const waveIndex = step ? Number(step[1]) : -1;
-  const plan = compileDevelopmentWorkflow(config, selection.team, workflowId, selection.risk_flags, input.lifecycleRisk);
+  const plan = compileDevelopmentWorkflow(
+    config,
+    selection.team,
+    workflowId,
+    selection.risk_flags,
+    input.lifecycleRisk,
+  );
   const wave = plan.waves[waveIndex];
-  const developer = plan.waves[waveIndex + 1]?.find(stage => stage.kind === 'develop');
+  const developer = plan.waves[waveIndex + 1]?.find((stage) => stage.kind === 'develop');
   requireContinuation(
-    frontier.workflow_id === workflowId && developer?.id === frontier.request.stage_id &&
+    frontier.workflow_id === workflowId &&
+      developer?.id === frontier.request.stage_id &&
       frontier.request.role === 'developer-orchestrator' &&
-      frontier.request.wave_index === waveIndex && Number.isSafeInteger(waveIndex) &&
-      wave?.length === 1 && wave[0]!.id === 'review_source_prewrite' && wave[0]!.kind !== 'develop',
+      frontier.request.wave_index === waveIndex &&
+      Number.isSafeInteger(waveIndex) &&
+      wave?.length === 1 &&
+      wave[0]!.id === 'review_source_prewrite' &&
+      wave[0]!.kind !== 'develop',
     'current prewriter does not replace the exact unissued developer wave',
   );
-  const priorObservations = journal.completed.flatMap(entry => entry.items.map(item => item.observation));
+  const priorObservations = journal.completed.flatMap((entry) => entry.items.map((item) => item.observation));
   requireContinuation(
     journal.completed.length === waveIndex &&
       journal.completed.every((entry, index) => {
-        const actions = sessionActionsForWave(config, selection, context, workflowId, index, [], undefined, input.lifecycleRisk);
-        return entry.step_id === 'wave-' + index && entry.items.length === actions.length &&
-          new Set(entry.items.map(item => canonicalJsonDigest({ stage: item.request.stage_id, role: item.request.role, index: item.request.assignment_index }))).size === actions.length &&
-          entry.items.every(item => item.issue_id !== null && item.observation?.status === 'reported_complete' &&
-            item.observation.action_id === item.request.action_id && item.observation.issue_id === item.issue_id &&
-            item.observation.output_digest === canonicalJsonDigest(item.observation.summary) &&
-            item.request.run_id === engine.run_id && item.request.workflow_id === workflowId &&
-            item.request.config_digest === frontier.request.config_digest && item.request.wave_index === index &&
-            item.request.scope_digest === journal.source_scope!.digest &&
-            actions.some(action => action.stage_id === item.request.stage_id && action.role === item.request.role &&
-              action.assignment_index === item.request.assignment_index)) &&
-          new Set(entry.items.map(item => item.request.action_id)).size === actions.length;
-      }) && new Set(engine.observations.map(observation => observation.action_id)).size === engine.observations.length &&
+        const actions = sessionActionsForWave(
+          config,
+          selection,
+          context,
+          workflowId,
+          index,
+          [],
+          undefined,
+          input.lifecycleRisk,
+        );
+        return (
+          entry.step_id === 'wave-' + index &&
+          entry.items.length === actions.length &&
+          new Set(
+            entry.items.map((item) =>
+              canonicalJsonDigest({
+                stage: item.request.stage_id,
+                role: item.request.role,
+                index: item.request.assignment_index,
+              }),
+            ),
+          ).size === actions.length &&
+          entry.items.every(
+            (item) =>
+              item.issue_id !== null &&
+              item.observation?.status === 'reported_complete' &&
+              item.observation.action_id === item.request.action_id &&
+              item.observation.issue_id === item.issue_id &&
+              item.observation.output_digest === canonicalJsonDigest(item.observation.summary) &&
+              item.request.run_id === engine.run_id &&
+              item.request.workflow_id === workflowId &&
+              item.request.config_digest === frontier.request.config_digest &&
+              item.request.wave_index === index &&
+              item.request.scope_digest === journal.source_scope!.digest &&
+              actions.some(
+                (action) =>
+                  action.stage_id === item.request.stage_id &&
+                  action.role === item.request.role &&
+                  action.assignment_index === item.request.assignment_index,
+              ),
+          ) &&
+          new Set(entry.items.map((item) => item.request.action_id)).size === actions.length
+        );
+      }) &&
+      new Set(engine.observations.map((observation) => observation.action_id)).size === engine.observations.length &&
       canonicalJsonDigest(priorObservations) === canonicalJsonDigest(engine.observations),
     'current prewriter completed prefix differs',
   );
-  const actions = sessionActionsForWave(config, selection, context, workflowId, waveIndex, [], undefined, input.lifecycleRisk);
-  requireContinuation(actions.length > 0 && actions.every(action =>
-    action.stage_id === 'review_source_prewrite' && !action.resolved_profile.tools_policy.source_write),
-  'current prewriter assignments are missing or permit Source writes');
-  return actions.map(action => buildSessionBridgeRequest({
-    runId: engine.run_id, workflowId, configDigest: runtimeConfigDigest(config), context, waveIndex, action,
-    configuredContext: configuredContextForStage(repositoryRoot, config, workflowId, action.stage_id, context),
-    priorResults: engine.observations,
-  }));
+  const actions = sessionActionsForWave(
+    config,
+    selection,
+    context,
+    workflowId,
+    waveIndex,
+    [],
+    undefined,
+    input.lifecycleRisk,
+  );
+  requireContinuation(
+    actions.length > 0 &&
+      actions.every(
+        (action) => action.stage_id === 'review_source_prewrite' && !action.resolved_profile.tools_policy.source_write,
+      ),
+    'current prewriter assignments are missing or permit Source writes',
+  );
+  return actions.map((action) =>
+    buildSessionBridgeRequest({
+      runId: engine.run_id,
+      workflowId,
+      configDigest: runtimeConfigDigest(config),
+      context,
+      waveIndex,
+      action,
+      configuredContext: configuredContextForStage(repositoryRoot, config, workflowId, action.stage_id, context),
+      priorResults: engine.observations,
+    }),
+  );
 }
 
 /** Construct the one permitted first action for a retained known-terminal synthesis body. */
@@ -752,17 +948,21 @@ export function validateDeliveredWorkContinuationRequest(value: unknown): Delive
   ];
   requireContinuation(exactKeys(value, keys), 'continuation request fields are invalid');
   const request = value as unknown as DeliveredWorkContinuationRequest;
-  const transition = request.sourceTransition?.status === 'closed_config_rebind_proven'
-    ? validateClosedConfigRebindProof(request.sourceTransition)
-    : validateClosedConfigTransitionProof(request.sourceTransition);
+  const transition =
+    request.sourceTransition?.status === 'closed_config_rebind_proven'
+      ? validateClosedConfigRebindProof(request.sourceTransition)
+      : validateClosedConfigTransitionProof(request.sourceTransition);
   const action = validateDeliveredWorkContinuationAction(request.action);
   const proofBinding = deliveredContinuationProofBinding(transition);
-  requireContinuation(transition.status !== 'closed_config_rebind_proven' ||
-    (action.kind === 'configured_frontier' && transition.transition.repository_id === request.identity?.repository_id &&
-      transition.transition.prior_runtime_code_digest === request.priorRuntimeCodeDigest &&
-      transition.transition.target_runtime_code_digest === request.targetRuntimeCodeDigest &&
-      transition.transition.target_schema_digest === request.targetSchemaDigest),
-  'normal config proof is not bound to the configured frontier and exact runtime endpoints');
+  requireContinuation(
+    transition.status !== 'closed_config_rebind_proven' ||
+      (action.kind === 'configured_frontier' &&
+        transition.transition.repository_id === request.identity?.repository_id &&
+        transition.transition.prior_runtime_code_digest === request.priorRuntimeCodeDigest &&
+        transition.transition.target_runtime_code_digest === request.targetRuntimeCodeDigest &&
+        transition.transition.target_schema_digest === request.targetSchemaDigest),
+    'normal config proof is not bound to the configured frontier and exact runtime endpoints',
+  );
   const identity = request.identity;
   requireContinuation(
     request.schema === 'DeliveredWorkContinuationRequest/v1' &&
@@ -824,8 +1024,7 @@ export function validateDeliveredWorkContinuationRequest(value: unknown): Delive
       (action.kind !== 'historical_terminal_review' ||
         action.original_request_pointer === request.originalRequestPointer) &&
       (action.kind !== 'configured_frontier' || action.request.config_digest === request.priorConfigDigest) &&
-      canonicalJsonDigest(proofBinding.project_ids) ===
-        canonicalJsonDigest(identity.project_ids) &&
+      canonicalJsonDigest(proofBinding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
       action.workflow_id.length > 0 &&
       typeof request.originalRequestPointer === 'string' &&
       request.originalRequestPointer.length > 0 &&

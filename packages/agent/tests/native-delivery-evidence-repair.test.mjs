@@ -435,7 +435,9 @@ test('an external operation dependency is captured and drift denies apply', asyn
   );
 
   write(f.root, external, json({ schema: 'SyntheticOperationDependency/v1', status: 'changed' }));
-  await Promise.resolve(assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(f.root)), /protected dependency changed/));
+  await Promise.resolve(
+    assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(f.root)), /protected dependency changed/),
+  );
   assert.equal(existsSync(path.join(f.root, base + '/tests.json')), true);
 });
 
@@ -511,10 +513,9 @@ test('completed-reset current test input overflow blocks without changing namesp
   const inspected = await inspectNativeDeliveryEvidenceRepair(input(f.root));
   assert.equal(inspected.status, 'blocked');
   assert.match(inspected.blockers[0], /Source enumeration.*bounded inventory/i);
-  await Promise.resolve(assert.rejects(
-    () => applyNativeDeliveryEvidenceRepair(input(f.root)),
-    /Source enumeration.*bounded inventory/i,
-  ));
+  await Promise.resolve(
+    assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(f.root)), /Source enumeration.*bounded inventory/i),
+  );
   assert.deepEqual(treeSnapshot(operationDirectory), operationBefore);
   assert.deepEqual(treeSnapshot(repairDirectory), repairBefore);
   assert.deepEqual(readFileSync(path.join(f.root, '.agent/work/agent-local-release/pending.json')), pendingBefore);
@@ -543,15 +544,17 @@ test('resume accepts only an exact absent postimage after interruption at each r
   for (const stoppedAt of ['tests_effect', 'source_seal_effect', 'assurance_effect']) {
     const f = fixture();
     await plan(f.root);
-    await Promise.resolve(assert.rejects(
-      () =>
-        applyNativeDeliveryEvidenceRepair(input(f.root), {
-          onPhase(phase) {
-            if (phase === stoppedAt) throw new Error('lost acknowledgement');
-          },
-        }),
-      /lost acknowledgement/,
-    ));
+    await Promise.resolve(
+      assert.rejects(
+        () =>
+          applyNativeDeliveryEvidenceRepair(input(f.root), {
+            onPhase(phase) {
+              if (phase === stoppedAt) throw new Error('lost acknowledgement');
+            },
+          }),
+        /lost acknowledgement/,
+      ),
+    );
     assert.equal((await applyNativeDeliveryEvidenceRepair(input(f.root))).status, 'awaiting_new_qualification');
     for (const name of ['tests.json', 'source-seal.json', 'assurance.json'])
       assert.equal(existsSync(path.join(f.root, base + '/' + name)), false);
@@ -569,15 +572,17 @@ for (const stoppedAt of [
   test(`fresh process resumes persisted ${stoppedAt} phase`, async () => {
     const f = fixture();
     await plan(f.root);
-    await Promise.resolve(assert.rejects(
-      () =>
-        applyNativeDeliveryEvidenceRepair(input(f.root), {
-          onPhase(phase) {
-            if (phase === stoppedAt) throw new Error('simulated interrupted process');
-          },
-        }),
-      /simulated interrupted process/,
-    ));
+    await Promise.resolve(
+      assert.rejects(
+        () =>
+          applyNativeDeliveryEvidenceRepair(input(f.root), {
+            onPhase(phase) {
+              if (phase === stoppedAt) throw new Error('simulated interrupted process');
+            },
+          }),
+        /simulated interrupted process/,
+      ),
+    );
     const frozenState = JSON.parse(
       readFileSync(path.join(f.root, base + '/native-delivery-evidence/state.json'), 'utf8'),
     );
@@ -756,14 +761,18 @@ test('source or dependency drift, installing state, malformed seals and partial 
   const partial = fixture();
   await plan(partial.root);
   rmSync(path.join(partial.root, base + '/native-delivery-evidence/custody/seal.json'));
-  await Promise.resolve(assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(partial.root)), /custody|missing|path/));
+  await Promise.resolve(
+    assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(partial.root)), /custody|missing|path/),
+  );
   assert.equal(existsSync(path.join(partial.root, base + '/tests.json')), true);
 
   const unsafe = fixture();
   await plan(unsafe.root);
   rmSync(path.join(unsafe.root, base + '/assurance.json'));
   mkdirSync(path.join(unsafe.root, base + '/assurance.json'));
-  await Promise.resolve(assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(unsafe.root)), /unsafe|regular|directory/));
+  await Promise.resolve(
+    assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(unsafe.root)), /unsafe|regular|directory/),
+  );
   assert.equal(existsSync(path.join(unsafe.root, base + '/assurance.json')), true);
 });
 
@@ -772,7 +781,9 @@ test('evidence added after custody is never deleted or absorbed by a frozen repa
   await plan(f.root);
   const lateEvidence = base + '/late-result.json';
   write(f.root, lateEvidence, json({ schema: 'SyntheticLateResult/v1', status: 'observed' }));
-  await Promise.resolve(assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(f.root)), /dependency.*changed|membership/i));
+  await Promise.resolve(
+    assert.rejects(() => applyNativeDeliveryEvidenceRepair(input(f.root)), /dependency.*changed|membership/i),
+  );
   assert.equal(existsSync(path.join(f.root, lateEvidence)), true);
   for (const name of ['tests.json', 'source-seal.json', 'assurance.json'])
     assert.equal(existsSync(path.join(f.root, base + '/' + name)), true);
@@ -790,22 +801,26 @@ test('strict fixed-kind routing rejects extra fields and unknown kinds before ac
     '--operation',
     op,
   ];
-  await Promise.resolve(assert.rejects(() => runReconcileArtifacts([...route, '--unexpected', 'value']), /arguments invalid/));
+  await Promise.resolve(
+    assert.rejects(() => runReconcileArtifacts([...route, '--unexpected', 'value']), /arguments invalid/),
+  );
   const held = operationMutex(f.root, op);
   assert.ok(held);
   held.close();
-  await Promise.resolve(assert.rejects(() =>
-    runReconcileArtifacts([
-      '--kind',
-      'native-delivery-evidence-unknown',
-      '--mode',
-      'inspect',
-      '--project-root',
-      f.root,
-      '--operation',
-      op,
-    ]),
-  ));
+  await Promise.resolve(
+    assert.rejects(() =>
+      runReconcileArtifacts([
+        '--kind',
+        'native-delivery-evidence-unknown',
+        '--mode',
+        'inspect',
+        '--project-root',
+        f.root,
+        '--operation',
+        op,
+      ]),
+    ),
+  );
   const after = operationMutex(f.root, op);
   assert.ok(after);
   after.close();

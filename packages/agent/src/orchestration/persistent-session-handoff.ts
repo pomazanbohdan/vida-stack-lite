@@ -1,4 +1,5 @@
 import { coordinationLedgerDigest } from '../contracts/envelopes.js';
+import { parseMastraSessionLedgerState } from './mastra-session-ledger-codec.js';
 import { canonicalJsonAtDepth, canonicalJsonComponents } from '../contracts/canonical-json-core.js';
 import { qualifiedRuntimeCodeHistoryJson } from './qualified-runtime-code-continuation.js';
 import { Database } from 'bun:sqlite';
@@ -6,7 +7,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstatSync } from 'node:fs';
-import { sessionHandoffDatabasePath } from '../config/project-paths.js';
+import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 export { sessionHandoffDatabasePath } from '../config/project-paths.js';
 import stateSchema from '../../schemas/persistent-session-handoff-state.v1.schema.json' with { type: 'json' };
 import {
@@ -16,9 +17,19 @@ import {
   type WorkItemSelection,
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
+import { closeWorkspaceDatabaseWithAdmission } from '../config/storage-read-admission.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import {
+  readWorkspaceMastraSqlRow,
+  readLatestWorkspaceMastraSqlRow,
+  decodeWorkspaceSqlPayload,
+  snapshotWorkspaceSqlProjection,
+  boundedWorkspacePayloadProjection,
+  type WorkspaceMastraSqlRow,
+} from '../config/host-persisted-row.js';
+import {
   HostStateStore,
+  checkedMaintenanceFence,
   openHostStateDatabase,
   type WorkflowAttemptApprovalRequest,
   type StateVersion,
@@ -44,7 +55,7 @@ import {
   parseSessionBridgeObservation,
   type SessionBridgeObservation,
   type SessionBridgeRequest,
-} from './mastra-session-bridge.js';
+} from './mastra-session-bridge-contract.js';
 import {
   compareScopedSourceSnapshots,
   snapshotDeclaredSources,
@@ -129,6 +140,17 @@ export interface PersistentSessionSnapshot {
 
 function requireState(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
+}
+
+function assertMaintenanceStateIntegrity(
+  row: Record<string, unknown>,
+  workspaceId: string,
+  value: ReturnType<typeof checkedMaintenanceFence>,
+): void {
+  requireState(
+    row.workspace_id === workspaceId && row.revision === value.revision && row.digest === canonicalJsonDigest(value),
+    'session maintenance state checksum invalid',
+  );
 }
 
 function resumeStatus(state: PersistentSessionHandoffState): PersistentSessionSnapshot['resume_status'] {
@@ -631,12 +653,12 @@ export function openConfiguredSessionHandoffStore(repositoryRoot: string): Persi
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
-  const database = openHostStateDatabase(databasePath);
+  const database = openHostStateDatabase(repositoryRoot, sessionHandoffDatabaseRelativePath(config), workspaceId);
   try {
     new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, repositoryRoot);
     return new PersistentSessionHandoffStore(database, workspaceId, config, repositoryRoot);
   } catch (error) {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
     throw error;
   }
 }
@@ -667,7 +689,7 @@ export class PersistentSessionHandoffStore {
   }
 
   close(): void {
-    this.#database.close(true);
+    closeWorkspaceDatabaseWithAdmission(this.#database);
   }
 
   #assertFreshConfig(): void {
@@ -680,13 +702,26 @@ export class PersistentSessionHandoffStore {
 
   #read(workId: string, attempt: number): PersistentSessionSnapshot | null {
     this.#assertFreshConfig();
-    const row = this.#database
+    const input = this.#database
       .query(
-        'SELECT revision,payload,digest FROM agent_host_session_handoff WHERE workspace_id=? AND work_id=? AND attempt=?',
+        'SELECT revision,digest,' +
+          boundedWorkspacePayloadProjection +
+          ' FROM agent_host_session_handoff WHERE workspace_id=? AND work_id=? AND attempt=?',
       )
-      .get(this.#workspaceId, workId, attempt) as { revision: number; payload: string; digest: string } | null;
-    if (!row) return null;
-    const state: unknown = JSON.parse(row.payload);
+      .get(this.#workspaceId, workId, attempt);
+    if (!input) return null;
+    const row = snapshotWorkspaceSqlProjection(
+      input,
+      ['revision', 'digest', 'payload', 'raw_payload_bytes'],
+      'agent_host_session_handoff',
+    ) as { revision: number; digest: string; payload: unknown; raw_payload_bytes: unknown };
+    const decoded = decodeWorkspaceSqlPayload(
+      row.payload,
+      row.raw_payload_bytes,
+      'agent_host_session_handoff',
+      this.#database,
+    );
+    const state = decoded.value;
     requireState(validSessionState(state), 'session state current-v1 schema is invalid');
     requireState(
       state.schema === 'PersistentSessionHandoffState/v1' &&
@@ -1056,7 +1091,7 @@ interface ReadOnlyDispatchActivation {
   readonly generation: 1;
 }
 
-function mastraLedgerStatus(state: MastraSessionLedgerState): MastraSessionLedgerSnapshot['resume_status'] {
+export function mastraLedgerStatus(state: MastraSessionLedgerState): MastraSessionLedgerSnapshot['resume_status'] {
   if (state.step_id === null) return 'blocked';
   if (state.items.some((item) => item.issue_id !== null && item.observation === null))
     return 'issued_outcome_uncertain';
@@ -1142,7 +1177,7 @@ export class MastraSessionLedger {
   }
 
   close(): void {
-    this.#database.close(true);
+    closeWorkspaceDatabaseWithAdmission(this.#database);
   }
 
   /** Read the Host-owned receipt only for this fresh, exact ProjectContext. */
@@ -1290,16 +1325,24 @@ export class MastraSessionLedger {
     );
   }
   #maintenanceState(): { generation: number; status: string | null } {
-    const row = this.#database
-      .query('SELECT payload,digest FROM agent_host_maintenance WHERE workspace_id=?')
-      .get(this.#workspaceId) as { payload: string; digest: string } | null;
-    if (!row) return { generation: 0, status: null };
-    const value = JSON.parse(row.payload) as { generation: number; status: string };
-    requireState(
-      row.digest === canonicalJsonDigest(value) && Number.isSafeInteger(value.generation),
-      'session maintenance state checksum invalid',
+    const result = this.#database
+      .query(
+        'SELECT workspace_id,revision,digest,' +
+          boundedWorkspacePayloadProjection +
+          ' FROM agent_host_maintenance WHERE workspace_id=?',
+      )
+      .get(this.#workspaceId);
+    if (!result) return { generation: 0, status: null };
+    const row = snapshotWorkspaceSqlProjection(
+      result,
+      ['workspace_id', 'revision', 'digest', 'payload', 'raw_payload_bytes'],
+      'agent_host_maintenance',
     );
-    return value;
+    const value = checkedMaintenanceFence(
+      decodeWorkspaceSqlPayload(row.payload, row.raw_payload_bytes, 'agent_host_maintenance', this.#database).value,
+    );
+    assertMaintenanceStateIntegrity(row, this.#workspaceId, value);
+    return { generation: value.generation, status: value.status };
   }
   #assertWorkingGeneration(): void {
     const current = this.#maintenanceState();
@@ -1309,35 +1352,26 @@ export class MastraSessionLedger {
     );
   }
 
-  #read(workId: string, attempt: number): MastraSessionLedgerSnapshot | null {
+  #read(
+    workId: string,
+    attempt: number | undefined,
+    readRow: () => WorkspaceMastraSqlRow | null = () =>
+      attempt === undefined
+        ? readLatestWorkspaceMastraSqlRow(this.#database, this.#workspaceId, workId)
+        : readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, workId, attempt),
+  ): MastraSessionLedgerSnapshot | null {
     this.#assertFreshConfig();
     this.#assertWorkingGeneration();
-    const row = this.#database
-      .query(
-        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-      )
-      .get(this.#workspaceId, workId, attempt) as { revision: number; payload: string; digest: string } | null;
+    const row = readRow();
     if (!row) return null;
-    const state = JSON.parse(row.payload) as MastraSessionLedgerState;
+    const state = parseMastraSessionLedgerState(row.value);
     requireState(
       state?.schema === 'MastraSessionLedger/v1' &&
         state.workspace_id === this.#workspaceId &&
         state.work_id === workId &&
-        state.attempt === attempt &&
-        typeof state.run_id === 'string' &&
-        Boolean(Array.isArray(state.items)) &&
-        Boolean(Array.isArray(state.completed)) &&
-        (state.step_id === null || typeof state.step_id === 'string') &&
-        Number.isSafeInteger(row.revision) &&
-        row.revision > 0 &&
-        row.digest === canonicalJsonDigest(state),
-      'Mastra session ledger identity, shape or digest is invalid',
-    );
-    requireState(
-      state.research_wave_exposure === undefined ||
-        state.research_wave_exposure === 'preparing' ||
-        state.research_wave_exposure === 'possible',
-      'Mastra research wave exposure marker is invalid',
+        state.attempt === row.attempt &&
+        typeof state.run_id === 'string',
+      'Mastra session ledger identity is invalid',
     );
     if (state.source_scope)
       requireState(
@@ -1395,12 +1429,7 @@ export class MastraSessionLedger {
   /** Read the latest current-v1 journal for a work item without creating or changing state. */
   currentSnapshot(workId: string): MastraSessionLedgerSnapshot | null {
     requireState(/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(workId), 'session work ID is invalid');
-    const row = this.#database
-      .query(
-        'SELECT attempt FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-      )
-      .get(this.#workspaceId, workId) as { attempt: number } | null;
-    return row ? this.#read(workId, row.attempt) : null;
+    return this.#read(workId, undefined);
   }
 
   #change(
@@ -2349,7 +2378,7 @@ export function openConfiguredMastraSessionLedger(repositoryRoot: string): Mastr
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
-  const database = openHostStateDatabase(databasePath);
+  const database = openHostStateDatabase(repositoryRoot, sessionHandoffDatabaseRelativePath(config), workspaceId);
   try {
     let hostState!: HostStateStore, ledger!: MastraSessionLedger;
     const approvalVerifier = createLocalSourceWriteApprovalVerifier(
@@ -2383,7 +2412,7 @@ export function openConfiguredMastraSessionLedger(repositoryRoot: string): Mastr
     ledger = new MastraSessionLedger(database, workspaceId, config, repositoryRoot, hostState);
     return ledger;
   } catch (error) {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
     throw error;
   }
 }

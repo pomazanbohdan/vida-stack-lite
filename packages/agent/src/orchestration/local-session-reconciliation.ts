@@ -37,7 +37,6 @@ const proofSchema = z
     finding: z.literal('confirmed_not_invoked_and_quiescent'),
   })
   .strict();
-export type LocalSessionNoEffectEvidence = z.infer<typeof proofSchema>;
 const decisionSchema = z
   .object({
     schema: z.literal('WorkflowAttemptRecoveryDecision/v1'),
@@ -266,8 +265,7 @@ export async function reconcileUnissuedLocalSessionAction(input: {
     const storedDecision = work.contracts.decisions.find((entry) => entry.path === decisionRef.path);
     if (!storedDecision || canonicalJsonDigest(storedDecision) !== canonicalJsonDigest(decisionRef))
       throw new Error('no-effect attempt decision differs from persisted evidence');
-    if (!isOriginalLease && !isRetryLease)
-      throw new Error('cooperative lease changed before retry fence renewal');
+    if (!isOriginalLease && !isRetryLease) throw new Error('cooperative lease changed before retry fence renewal');
     if (isRetryLease) {
       const ticket = host.ledger!.tickets.find((entry) => entry.ticket_id === retryLease.ticket_id);
       const claim = host.ledger!.claims.find(
@@ -285,8 +283,7 @@ export async function reconcileUnissuedLocalSessionAction(input: {
         throw new Error('cooperative lease differs from completed retry fence');
       return host;
     }
-  } else if (!isOriginalLease)
-    throw new Error('cooperative lease changed before local no-effect reconciliation');
+  } else if (!isOriginalLease) throw new Error('cooperative lease changed before local no-effect reconciliation');
   if (!work.contracts.decisions.some((entry) => entry.path === decisionRef.path)) {
     const nextWork = {
       ...work,

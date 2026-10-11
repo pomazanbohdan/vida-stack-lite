@@ -1,0 +1,8 @@
+{
+  "extends": "./bin/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "."
+  },
+  "include": ["bin/*.mjs", "bin/*.ts", "tooling/**/*.mjs", "tooling/**/*.ts", "knip.config.ts"],
+  "exclude": []
+}

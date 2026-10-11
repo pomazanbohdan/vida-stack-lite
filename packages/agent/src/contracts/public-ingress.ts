@@ -66,8 +66,14 @@ const governedWriteIntentValidator = new Ajv2020Constructor({ allErrors: true })
   governedWriteIntentSchema as object,
 );
 const governedWriteValidator = new Ajv2020Constructor({ allErrors: true }).compile(governedWriteSchema as object);
-export { MAX_CANONICAL_BYTES, isPlainRecord, canonicalJson, canonicalJsonAtDepth, canonicalJsonDigest,
-  assertCanonicalJsonValue } from './canonical-json-core.js';
+export {
+  MAX_CANONICAL_BYTES,
+  isPlainRecord,
+  canonicalJson,
+  canonicalJsonAtDepth,
+  canonicalJsonDigest,
+  assertCanonicalJsonValue,
+} from './canonical-json-core.js';
 import { assertCanonicalJsonValue, canonicalJsonDigest } from './canonical-json-core.js';
 
 function reject(conditions: readonly boolean[], message: string): void {

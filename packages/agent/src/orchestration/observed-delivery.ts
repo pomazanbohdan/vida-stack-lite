@@ -79,15 +79,16 @@ export function prepareObservedDeliveryInstruction(input: {
     authority,
   } = input;
   validateImplementationResult(packet, implementationResult);
-  const source = input.sourceStore && input.host
-    ? snapshotAdmittedTaskSources({
-        store: input.sourceStore,
-        host: input.host,
-        canonicalHostRoot: repositoryRoot,
-        paths: packet.owned_paths,
-        attempt: journal.state.attempt,
-      })
-    : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
+  const source =
+    input.sourceStore && input.host
+      ? snapshotAdmittedTaskSources({
+          store: input.sourceStore,
+          host: input.host,
+          canonicalHostRoot: repositoryRoot,
+          paths: packet.owned_paths,
+          attempt: journal.state.attempt,
+        })
+      : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireDelivery(
     source.digest === implementationResult.implementation_fingerprint &&
       journal.state.source_scope?.digest === source.digest &&

@@ -35,13 +35,10 @@ test('explicit disposition preparation accepts one safe proposal path and at mos
     proposalPath: '.tmp/disposition.json',
     selection: { mode: 'minor', explicit: true },
   });
-  assert.deepEqual(
-    parseDispositionPreparationArgs(['--proposal', '.tmp/disposition.json', '--version', '0.1.3']),
-    {
-      proposalPath: '.tmp/disposition.json',
-      selection: { mode: 'exact', version: '0.1.3', explicit: true },
-    },
-  );
+  assert.deepEqual(parseDispositionPreparationArgs(['--proposal', '.tmp/disposition.json', '--version', '0.1.3']), {
+    proposalPath: '.tmp/disposition.json',
+    selection: { mode: 'exact', version: '0.1.3', explicit: true },
+  });
   for (const args of [
     [],
     ['--minor'],
@@ -215,14 +212,13 @@ test('a confirmed pending build keeps its operation and version on default and e
     ].map((relative) => [relative, readFileSync(path.join(root, relative))]);
 
     assert.deepEqual(await prepareRelease(root), pending);
-    assert.deepEqual(
-      await prepareRelease(root, { mode: 'exact', version: pending.version, explicit: true }),
-      pending,
+    assert.deepEqual(await prepareRelease(root, { mode: 'exact', version: pending.version, explicit: true }), pending);
+    await Promise.resolve(
+      assert.rejects(
+        prepareRelease(root, { mode: 'exact', version: '0.1.4', explicit: true }),
+        /Pending build retains its version/,
+      ),
     );
-    await Promise.resolve(assert.rejects(
-      prepareRelease(root, { mode: 'exact', version: '0.1.4', explicit: true }),
-      /Pending build retains its version/,
-    ));
     for (const [relative, bytes] of unchangedFiles)
       assert.deepEqual(readFileSync(path.join(root, relative)), bytes, `${relative} remains unchanged`);
   } finally {
@@ -324,12 +320,13 @@ test('fresh formation derives the canonical result from actual native artifact m
   assert.equal(result.manifest_sha256, candidate.manifest_sha256);
   assert.deepEqual(result.checks, [{ id: 'native-build', status: 'passed' }]);
   assert.throws(
-    () => validateCIDeliveryFormationMembers({
-      request,
-      members: { ...members, archive_bytes: Buffer.from('different archive') },
-      providerObservation,
-      profile,
-    }),
+    () =>
+      validateCIDeliveryFormationMembers({
+        request,
+        members: { ...members, archive_bytes: Buffer.from('different archive') },
+        providerObservation,
+        profile,
+      }),
     /candidate, manifest, archive or request differs/,
   );
 });
@@ -392,10 +389,7 @@ test('one-time pending disposition requires exact terminal or explicit no-issue 
       request_ids: [success.request_id, noIssue.request_id],
       actual_census: {
         ...actual,
-        requests: [
-          { ...success, runs: [{ ...success.runs[0], status: 'in_progress' }] },
-          noIssue,
-        ],
+        requests: [{ ...success, runs: [{ ...success.runs[0], status: 'in_progress' }] }, noIssue],
       },
     }).status,
     'blocked',
@@ -573,7 +567,9 @@ test('legacy one-shot dispatch evidence normalizes only with an exact retained r
   };
   const request = {
     ...body,
-    request_id: createHash('sha256').update(JSON.stringify(body, null, 2) + '\n').digest('hex'),
+    request_id: createHash('sha256')
+      .update(JSON.stringify(body, null, 2) + '\n')
+      .digest('hex'),
   };
   const sourceCommit = 'b'.repeat(40);
   const value = {
@@ -661,7 +657,13 @@ test('legacy one-shot dispatch evidence normalizes only with an exact retained r
     /conflicting prior run fields/,
   );
   assert.throws(
-    () => normalizeLegacyReleaseDispatchIntent({ request, reference_path: 'legacy-dispatch.json', value, related_profiles: [] }),
+    () =>
+      normalizeLegacyReleaseDispatchIntent({
+        request,
+        reference_path: 'legacy-dispatch.json',
+        value,
+        related_profiles: [],
+      }),
     /one retained matching source profile/,
   );
 });

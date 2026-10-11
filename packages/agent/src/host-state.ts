@@ -2,11 +2,12 @@ import { sameCoordinationStrings } from './contracts/envelopes.js';
 import { coordinationLedgerDigest, coordinationLedgerJson, coordinationComponentJson } from './contracts/envelopes.js';
 import { canonicalJsonAtDepth, canonicalJsonComponents } from './contracts/canonical-json-core.js';
 import { qualifiedRuntimeCodeHistoryJson } from './orchestration/qualified-runtime-code-continuation.js';
+import { parseRuntimeCodeRebindRequest } from './orchestration/runtime-code-rebind-contract.js';
 import {
   deliveredWorkContinuationRecord,
   serializeDeliveredWorkContinuationReceipt,
 } from './orchestration/delivered-work-continuation-repair.js';
-import { Database } from 'bun:sqlite';
+import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { isDeepStrictEqual } from 'node:util';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstatSync, realpathSync, statSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
@@ -14,11 +15,34 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { deriveWorkspaceId } from './workspace-identity.js';
 import {
+  assertWorkspaceDatabaseRelativePath,
+  openExistingWorkspaceDatabase,
+  queryWorkspaceRowUnknown,
+  queryWorkspaceRowsUnknown,
+} from './config/workspace-database.js';
+import {
+  decodeWorkspaceSqlRow,
+  decodeWorkspaceSqlPayload,
+  snapshotWorkspaceSqlProjection,
+  readWorkspaceStateSqlRow,
+  readWorkspaceMastraSqlRow,
+  readLatestWorkspaceMastraSqlRow,
+  readSelectedWorkspaceMastraSqlRow,
+  boundedWorkspacePayloadProjection,
+  type WorkspaceSqlRow,
+  type WorkspaceStateSqlRow,
+} from './config/host-persisted-row.js';
+import {
   sessionHandoffDatabasePath,
   sessionHandoffDatabaseRelativePath,
   sessionBridgeDatabasePath,
   sessionBridgeDatabaseRelativePath,
 } from './config/project-paths.js';
+import {
+  closeWorkspaceDatabaseWithAdmission,
+  openAdmittedWorkspaceDatabase,
+  openDatabaseWithStorageAdmission,
+} from './config/storage-read-admission.js';
 import type {
   SynthesisObservationCorrectionPlan,
   MastraSessionLedgerState,
@@ -40,6 +64,7 @@ import {
   canonicalJsonDigest,
   freezeJsonValue,
   isPlainRecord,
+  MAX_CANONICAL_BYTES,
   rfc3339TimestampMilliseconds,
 } from './contracts/public-ingress.js';
 import type { WorkExecutionContext, TrustedWorkflowAssignment, WorkflowApprovalAction } from './runtime-kernel.js';
@@ -74,15 +99,22 @@ import {
   correctiveExecutionSchema,
   type CorrectiveExecution,
   validateWorkSessionBinding,
+  validateWorkSessionBindingAndReturnCorrectiveAuthority,
   selectCorrectiveEvidence,
   type FinalAssuranceState,
   type FinalAssuranceSnapshot,
 } from './orchestration/final-assurance.js';
 import { requireSafeRepositoryAccess } from './config/safe-repository-access.js';
-import { compareScopedSourceSnapshots, snapshotDeclaredSources } from './orchestration/scoped-source-snapshot.js';
+import {
+  compareScopedSourceSnapshots,
+  parseScopedSourceSnapshot as validateTaskSourceJournalScope,
+  snapshotDeclaredSources,
+} from './orchestration/scoped-source-snapshot.js';
+import { parseMastraSessionLedgerState } from './orchestration/mastra-session-ledger-codec.js';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
+  assertProjectUpgradeInactive,
   selectWorkflow,
   type WorkItemSelection,
 } from './config/runtime-config.js';
@@ -559,6 +591,23 @@ export interface HistoricalTerminalSynthesisCaptureRequest {
   readonly bodyBytes: Uint8Array;
   readonly provenance: HistoricalTerminalSynthesisProvenance;
 }
+export type HistoricalTerminalSynthesisCaptureReadRequest = Pick<
+  HistoricalTerminalSynthesisCaptureRequest,
+  | 'schema'
+  | 'identity'
+  | 'attempt'
+  | 'actionId'
+  | 'issueId'
+  | 'nativeSessionHandle'
+  | 'userRequestPointer'
+  | 'requestIntent'
+  | 'expectedWork'
+  | 'expectedLedger'
+  | 'expectedJournal'
+  | 'expectedMaintenanceGeneration'
+  | 'bodyBytes'
+  | 'provenance'
+>;
 export interface HistoricalTerminalSynthesisCaptureReceipt {
   readonly schema: 'HistoricalTerminalSynthesisCustodyReceipt/v1';
   readonly request_digest: string;
@@ -585,6 +634,46 @@ export interface HistoricalTerminalSynthesisCaptureResult {
   readonly request_digest: string;
   readonly receipt: HistoricalTerminalSynthesisCaptureReceipt;
 }
+function historicalTerminalSynthesisBodyBytes(bodyBytes: Uint8Array, errorMessage: string): Buffer {
+  requireState(
+    bodyBytes instanceof Uint8Array && bodyBytes.byteLength > 0 && bodyBytes.byteLength <= 65536,
+    errorMessage,
+  );
+  return Buffer.from(bodyBytes);
+}
+function historicalTerminalSynthesisCaptureRequest(
+  input: HistoricalTerminalSynthesisCaptureReadRequest,
+  provenance: HistoricalTerminalSynthesisProvenance,
+  bodyBytes = historicalTerminalSynthesisBodyBytes(
+    input.bodyBytes,
+    'historical synthesis custody body is invalid or oversized',
+  ),
+): {
+  readonly bodyBytes: Buffer;
+  readonly bodyBase64: string;
+  readonly request: Readonly<Record<string, unknown>>;
+  readonly requestDigest: string;
+} {
+  const bodyBase64 = bodyBytes.toString('base64'),
+    request = snapshot({
+      schema: input.schema,
+      identity: input.identity,
+      attempt: input.attempt,
+      action_id: input.actionId,
+      issue_id: input.issueId,
+      native_session_handle: input.nativeSessionHandle,
+      user_request_pointer: input.userRequestPointer,
+      request_intent: input.requestIntent,
+      expected_work: input.expectedWork,
+      expected_ledger: input.expectedLedger,
+      expected_journal: input.expectedJournal,
+      expected_maintenance_generation: input.expectedMaintenanceGeneration,
+      body_base64: bodyBase64,
+      provenance,
+    });
+  return { bodyBytes, bodyBase64, request, requestDigest: canonicalJsonDigest(request) };
+}
+
 export interface WorkflowAttemptApprovalRequest {
   readonly schema: 'WorkflowAttemptApprovalRequest/v1';
   readonly store_id: string;
@@ -937,6 +1026,15 @@ export interface HostStateSnapshot {
   readonly ledgerVersion: StateVersion | null;
   readonly maintenanceGeneration: number;
   readonly runtimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[];
+}
+export interface WorkSessionJournalSnapshot {
+  readonly attempt: number;
+  readonly version: StateVersion;
+  readonly state: MastraSessionLedgerState;
+}
+export interface HostWorkSessionSnapshot {
+  readonly host: HostStateSnapshot;
+  readonly journal: WorkSessionJournalSnapshot | null;
 }
 export interface GuardedArtifactMutation<T> {
   readonly repositoryRoot: string;
@@ -1456,6 +1554,8 @@ const AjvConstructor = Ajv2020 as unknown as new (options: object) => {
 const ajv = new AjvConstructor({ allErrors: true });
 const validateWork = ajv.compile<WorkState>(workSchema);
 const hashPattern = /^[a-f0-9]{64}$/;
+const maxTaskSourceProjectionRows = 2048;
+const maxTaskSourceProjectionPayloadBytes = 64 * 1024 * 1024;
 const maintenanceIdPattern = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 function checkedMaintenanceBinding(value: unknown): MaintenanceFenceBinding {
@@ -1631,6 +1731,7 @@ type TaskSourceOperationRow = {
   readonly digest: string;
   readonly request_id: string;
   readonly request_digest: string;
+  readonly value: unknown;
 };
 type TaskSourceActionRow = {
   readonly operation_id: string;
@@ -1638,57 +1739,600 @@ type TaskSourceActionRow = {
   readonly revision: number;
   readonly payload: string;
   readonly digest: string;
+  readonly value: unknown;
 };
-function validateTaskSourceJournalScope(candidate: unknown): ScopedSourceSnapshot {
-  requireState(
-    candidate !== null &&
-      typeof candidate === 'object' &&
-      !Array.isArray(candidate) &&
-      Object.keys(candidate).sort().join(',') === 'digest,entries,schema',
-    'task source journal scope shape is invalid',
+type CurrentTaskSourceOperation = {
+  readonly row: TaskSourceOperationRow;
+  readonly request: TaskSourceBindingRequest;
+  readonly actionInput: Record<string, unknown> | null;
+};
+type TaskSourceWorkProjectionRow = {
+  readonly operation_id: string;
+  readonly revision: number;
+  readonly digest: string;
+  readonly request_id: string;
+  readonly request_digest: string;
+  readonly work_id: string;
+  readonly payload_bytes: number;
+};
+function taskSourceProjectionRows(
+  database: Database,
+  workspaceId: string,
+  requireProjection = true,
+): TaskSourceWorkProjectionRow[] {
+  const columns = database.query('PRAGMA table_info(agent_host_task_source_binding_operation)').all() as {
+    name: string;
+  }[];
+  const hasProjection = columns.some((column) => column.name === 'work_id');
+  requireState(!requireProjection || hasProjection, 'task source work projection column is missing');
+  assertTaskSourceOperationTableShape(database, hasProjection);
+  const rows: TaskSourceWorkProjectionRow[] = [];
+  const statement = database.query<unknown, SQLQueryBindings[]>(
+    'SELECT operation_id,revision,digest,request_id,request_digest,' +
+      (hasProjection ? 'work_id,' : '') +
+      boundedWorkspacePayloadProjection +
+      ' FROM agent_host_task_source_binding_operation WHERE workspace_id=? ORDER BY rowid',
   );
-  const scope = candidate as unknown as ScopedSourceSnapshot;
-  requireState(
-    scope.schema === 'ScopedSourceSnapshot/v1' &&
-      Boolean(Array.isArray(scope.entries)) &&
-      scope.entries.length > 0 &&
-      scope.entries.length <= 512 &&
-      scope.entries.every((entry, index) => {
-        if (
-          entry === null ||
-          typeof entry !== 'object' ||
-          Array.isArray(entry) ||
-          Object.keys(entry).sort().join(',') !== 'bytes,exists,path,sha256'
-        )
-          return false;
-        const prior = scope.entries[index - 1];
-        return (
-          typeof entry.path === 'string' &&
-          entry.path.length > 0 &&
-          entry.path.length <= 512 &&
-          !entry.path.includes('\\') &&
-          !entry.path.startsWith('/') &&
-          !entry.path.endsWith('/') &&
-          !/^[A-Za-z]:/.test(entry.path) &&
-          !Array.from(entry.path).some(
-            (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
-          ) &&
-          entry.path.split('/').every((part: string) => part.length > 0 && part !== '.' && part !== '..') &&
-          (prior === undefined || prior.path < entry.path) &&
-          (entry.exists
-            ? typeof entry.exists === 'boolean' &&
-              Number.isSafeInteger(entry.bytes) &&
-              entry.bytes! >= 0 &&
-              typeof entry.sha256 === 'string' &&
-              hashPattern.test(entry.sha256)
-            : entry.exists === false && entry.bytes === null && entry.sha256 === null)
-        );
-      }),
-    'task source journal scope entries are invalid',
-  );
-  compareScopedSourceSnapshots(scope, scope);
-  return scope;
+  let payloadBytes = 0;
+  for (const input of statement.iterate(workspaceId)) {
+    const row = taskSourceProjectionRow(database, input, hasProjection);
+    requireState(
+      rows.length < maxTaskSourceProjectionRows &&
+        payloadBytes + row.payload_bytes <= maxTaskSourceProjectionPayloadBytes,
+      'task source projection repair exceeds its row or payload bounds',
+    );
+    rows.push(row);
+    payloadBytes += row.payload_bytes;
+  }
+  return rows;
 }
+function taskSourceProjectionRow(
+  database: Database,
+  input: unknown,
+  hasProjection: boolean,
+): TaskSourceWorkProjectionRow {
+  const expected = [
+    'operation_id',
+    'revision',
+    'digest',
+    'request_id',
+    'request_digest',
+    ...(hasProjection ? ['work_id'] : []),
+    'payload',
+    'raw_payload_bytes',
+  ];
+  const row = decodeHostOwnedSqlPayloadRow(database, input, expected, 'agent_host_task_source_binding_operation'),
+    operation = row.value as Record<string, unknown>,
+    request = validateTaskSourceBindingRequest(operation.request);
+  requireState(row.digest === canonicalJsonDigest(operation), 'task source projection operation checksum differs');
+  assertTaskSourceProjectionOperation(row, operation, request, hasProjection);
+  requireState(
+    row.raw_payload_bytes instanceof Uint8Array && row.raw_payload_bytes.byteLength <= MAX_CANONICAL_BYTES,
+    'task source projection payload byte bound differs',
+  );
+  return {
+    operation_id: String(row.operation_id),
+    revision: Number(row.revision),
+    digest: String(row.digest),
+    request_id: String(row.request_id),
+    request_digest: String(row.request_digest),
+    work_id: request.work_id,
+    payload_bytes: (row.raw_payload_bytes as Uint8Array).byteLength,
+  };
+}
+function assertTaskSourceProjectionOperation(
+  row: Record<string, unknown>,
+  operation: Record<string, unknown>,
+  request: TaskSourceBindingRequest,
+  hasProjection: boolean,
+): void {
+  requireState(
+    Object.keys(operation).sort().join(',') ===
+      'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
+      operation.schema === 'TaskSourceBindingOperation/v1' &&
+      operation.status === 'prepared' &&
+      operation.operation_id === row.operation_id &&
+      operation.request_id === row.request_id &&
+      operation.request_digest === row.request_digest &&
+      row.request_digest === canonicalJsonDigest(request) &&
+      operation.revision === row.revision &&
+      (!hasProjection || row.work_id === request.work_id),
+    'task source work projection or operation integrity differs',
+  );
+}
+function taskSourceProjectionManifest(rows: readonly TaskSourceWorkProjectionRow[]): string {
+  return canonicalJsonDigest(
+    rows.map(({ operation_id, revision, digest, request_id, request_digest, work_id, payload_bytes }) => ({
+      operation_id,
+      revision,
+      digest,
+      request_id,
+      request_digest,
+      work_id,
+      payload_bytes,
+    })),
+  );
+}
+function canonicalTaskSourceProjectionIndexKey(
+  column: { readonly seqno: number | bigint; readonly desc: number | bigint; readonly coll: string },
+  index: number,
+): boolean {
+  return BigInt(column.seqno) === BigInt(index) && BigInt(column.desc) === 0n && column.coll === 'BINARY';
+}
+function assertTaskSourceWorkProjectionIndex(database: Database): void {
+  const indexes = database.query('PRAGMA index_list(agent_host_task_source_binding_operation)').all() as {
+    name: string;
+    unique: number | bigint;
+    partial: number | bigint;
+  }[];
+  const index = indexes.find((entry) => entry.name === 'agent_host_task_source_binding_operation_work');
+  const columns = database.query('PRAGMA index_xinfo(agent_host_task_source_binding_operation_work)').all() as {
+    seqno: number | bigint;
+    name: string | null;
+    desc: number | bigint;
+    coll: string;
+    key: number | bigint;
+  }[];
+  const keys = columns.filter((column) => BigInt(column.key) === 1n);
+  requireState(
+    index !== undefined &&
+      BigInt(index.unique) === 0n &&
+      BigInt(index.partial) === 0n &&
+      keys.length === 3 &&
+      keys.every((column, index) => canonicalTaskSourceProjectionIndexKey(column, index)) &&
+      keys.map((column) => column.name).join(',') === 'workspace_id,work_id,operation_id',
+    'task source work projection index differs',
+  );
+}
+function assertTaskSourceOperationTableShape(database: Database, hasProjection: boolean): void {
+  const columns = database.query('PRAGMA table_info(agent_host_task_source_binding_operation)').all() as {
+    name: string;
+    type: string;
+    notnull: number | bigint;
+    pk: number | bigint;
+  }[];
+  const expected = [
+    'workspace_id',
+    'operation_id',
+    'request_id',
+    'request_digest',
+    ...(hasProjection ? ['work_id'] : []),
+    'revision',
+    'payload',
+    'digest',
+  ];
+  requireState(
+    columns.length === expected.length &&
+      columns
+        .map((column) => column.name)
+        .sort()
+        .join(',') === [...expected].sort().join(',') &&
+      columns.every((column) => column.type === (column.name === 'revision' ? 'INTEGER' : 'TEXT')) &&
+      columns.filter((column) => column.name !== 'work_id').every((column) => BigInt(column.notnull) === 1n) &&
+      BigInt(columns.find((column) => column.name === 'workspace_id')?.pk ?? -1) === 1n &&
+      BigInt(columns.find((column) => column.name === 'operation_id')?.pk ?? -1) === 2n &&
+      columns
+        .filter((column) => !['workspace_id', 'operation_id'].includes(column.name))
+        .every((column) => BigInt(column.pk) === 0n),
+    'task source operation table schema differs',
+  );
+  assertTaskSourceRequestUniqueness(database);
+}
+function assertTaskSourceRequestUniqueness(database: Database): void {
+  const indexes = database.query('PRAGMA index_list(agent_host_task_source_binding_operation)').all() as {
+    name: string;
+    unique: number | bigint;
+    partial: number | bigint;
+  }[];
+  let found = false;
+  for (const index of indexes) {
+    if (BigInt(index.unique) !== 1n || BigInt(index.partial) !== 0n) continue;
+    const name = index.name.replaceAll('"', '""'),
+      columns = database.query(`PRAGMA index_info("${name}")`).all() as {
+        seqno: number | bigint;
+        name: string;
+      }[];
+    if (
+      columns.length === 2 &&
+      columns.every((column, at) => BigInt(column.seqno) === BigInt(at)) &&
+      columns.map((column) => column.name).join(',') === 'workspace_id,request_id'
+    ) {
+      found = true;
+      break;
+    }
+  }
+  requireState(found, 'task source request uniqueness index differs');
+}
+function assertTaskSourceWorkProjectionReady(database: Database): void {
+  const columns = database.query('PRAGMA table_info(agent_host_task_source_binding_operation)').all() as {
+    name: string;
+  }[];
+  requireState(
+    columns.some((column) => column.name === 'work_id'),
+    'task source projection schema requires bundle initialization or maintenance repair',
+  );
+  assertTaskSourceOperationTableShape(database, true);
+  assertTaskSourceWorkProjectionIndex(database);
+}
+function ensureTaskSourceOperationPreparationSchema(database: Database): boolean {
+  if (
+    !database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'")
+      .get()
+  )
+    database.exec(
+      'CREATE TABLE agent_host_task_source_binding_operation (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,request_digest TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
+    );
+  const columns = database.query('PRAGMA table_info(agent_host_task_source_binding_operation)').all() as {
+    name: string;
+  }[];
+  const hasProjection = columns.some((column) => column.name === 'work_id');
+  if (hasProjection) assertTaskSourceWorkProjectionReady(database);
+  else assertTaskSourceOperationTableShape(database, false);
+  return hasProjection;
+}
+function insertTaskSourceBindingOperation(
+  database: Database,
+  workspaceId: string,
+  request: TaskSourceBindingRequest,
+  requestDigest: string,
+  operation: Readonly<Record<string, unknown>>,
+  payload: string,
+  operationDigest: string,
+  hasProjection: boolean,
+): void {
+  const insert = hasProjection
+    ? database.query(
+        'INSERT INTO agent_host_task_source_binding_operation (workspace_id,operation_id,request_id,request_digest,work_id,revision,payload,digest) VALUES(?,?,?,?,?,?,?,?)',
+      )
+    : database.query(
+        'INSERT INTO agent_host_task_source_binding_operation (workspace_id,operation_id,request_id,request_digest,revision,payload,digest) VALUES(?,?,?,?,?,?,?)',
+      );
+  if (hasProjection)
+    insert.run(
+      workspaceId,
+      request.operation_id,
+      request.request_id,
+      requestDigest,
+      request.work_id,
+      operation.revision as number,
+      payload,
+      operationDigest,
+    );
+  else
+    insert.run(
+      workspaceId,
+      request.operation_id,
+      request.request_id,
+      requestDigest,
+      operation.revision as number,
+      payload,
+      operationDigest,
+    );
+}
+function assertTaskSourceActionRowsHaveOperations(database: Database, workspaceId: string): void {
+  const actions = database
+    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'")
+    .get();
+  if (actions)
+    requireState(
+      !database
+        .query(
+          'SELECT a.operation_id FROM agent_host_task_source_binding_action a LEFT JOIN agent_host_task_source_binding_operation p ON p.workspace_id=a.workspace_id AND p.operation_id=a.operation_id WHERE a.workspace_id=? AND p.operation_id IS NULL LIMIT 1',
+        )
+        .get(workspaceId),
+      'orphan task source action prevents projection repair',
+    );
+}
+function taskSourceProjectionRepairRecord(
+  workspaceId: string,
+  operationId: string,
+  fence: MaintenanceFence,
+  rows: readonly TaskSourceWorkProjectionRow[],
+): { readonly value: Readonly<Record<string, unknown>>; readonly payload: string; readonly digest: string } {
+  const rowsDigest = taskSourceProjectionManifest(rows),
+    identityDigest = canonicalJsonDigest({
+      schema: 'TaskSourceBindingWorkProjectionRepair/v1',
+      workspace_id: workspaceId,
+      operation_id: operationId,
+      maintenance_generation: fence.generation,
+      maintenance_revision: fence.revision,
+      rows_digest: rowsDigest,
+    }),
+    value = snapshot({
+      schema: 'TaskSourceBindingWorkProjectionRepair/v1',
+      workspace_id: workspaceId,
+      operation_id: operationId,
+      maintenance_generation: fence.generation,
+      maintenance_revision: fence.revision,
+      identity_digest: identityDigest,
+      rows_digest: rowsDigest,
+    });
+  return { value, payload: canonicalJson(value), digest: canonicalJsonDigest(value) };
+}
+function taskSourceProjectionRepairRow(database: Database, workspaceId: string, operationId: string) {
+  return database
+    .query(
+      'SELECT maintenance_generation,maintenance_revision,identity_digest,rows_digest,payload,digest FROM agent_host_task_source_projection_repair WHERE workspace_id=? AND operation_id=?',
+    )
+    .get(workspaceId, operationId) as {
+    maintenance_generation: number;
+    maintenance_revision: number;
+    identity_digest: string;
+    rows_digest: string;
+    payload: string;
+    digest: string;
+  } | null;
+}
+function assertTaskSourceProjectionRepairTableShape(database: Database): void {
+  const columns = database.query('PRAGMA table_info(agent_host_task_source_projection_repair)').all() as {
+    name: string;
+    type: string;
+    notnull: number;
+    pk: number;
+  }[];
+  const expected: readonly (readonly [string, string, number])[] = [
+    ['workspace_id', 'TEXT', 1],
+    ['operation_id', 'TEXT', 2],
+    ['maintenance_generation', 'INTEGER', 0],
+    ['maintenance_revision', 'INTEGER', 0],
+    ['identity_digest', 'TEXT', 0],
+    ['rows_digest', 'TEXT', 0],
+    ['payload', 'TEXT', 0],
+    ['digest', 'TEXT', 0],
+  ];
+  requireState(
+    columns.length === expected.length &&
+      columns.every((column) =>
+        expected.some(
+          ([name, type, pk]) =>
+            name === column.name && type === column.type && pk === column.pk && column.notnull === 1,
+        ),
+      ),
+    'task source projection repair table schema differs',
+  );
+}
+function assertTaskSourceProjectionRepairOperationUnique(
+  database: Database,
+  workspaceId: string,
+  operationId: string,
+): void {
+  requireState(
+    !database
+      .query(
+        'SELECT operation_id FROM agent_host_task_source_projection_repair WHERE workspace_id=? AND operation_id<>? LIMIT 1',
+      )
+      .get(workspaceId, operationId),
+    'task source projection repair already belongs to another maintenance operation',
+  );
+}
+function assertTaskSourceProjectionRepairRetry(
+  database: Database,
+  workspaceId: string,
+  fence: MaintenanceFence,
+  prior: ReturnType<typeof taskSourceProjectionRepairRow>,
+  hasProjection: boolean,
+  value: Readonly<Record<string, unknown>>,
+  rows: readonly TaskSourceWorkProjectionRow[],
+  payload: string,
+  digest: string,
+): void {
+  requireState(
+    hasProjection &&
+      prior !== null &&
+      prior.maintenance_generation === fence.generation &&
+      prior.maintenance_revision === fence.revision &&
+      prior.identity_digest === value.identity_digest &&
+      prior.rows_digest === value.rows_digest &&
+      prior.payload === payload &&
+      prior.digest === digest,
+    'task source projection repair retry differs or its afterimage changed',
+  );
+  requireState(
+    canonicalJson(taskSourceProjectionRows(database, workspaceId)) === canonicalJson(rows),
+    'task source projection repair afterimage differs',
+  );
+  assertTaskSourceWorkProjectionIndex(database);
+}
+function applyTaskSourceProjectionBackfill(
+  database: Database,
+  workspaceId: string,
+  rows: readonly TaskSourceWorkProjectionRow[],
+): void {
+  for (const row of rows) {
+    const updated = database
+      .query(
+        'UPDATE agent_host_task_source_binding_operation SET work_id=? WHERE workspace_id=? AND operation_id=? AND revision=? AND digest=? AND request_id=? AND request_digest=?',
+      )
+      .run(row.work_id, workspaceId, row.operation_id, row.revision, row.digest, row.request_id, row.request_digest);
+    requireState(updated.changes === 1, 'task source projection repair row compare-and-swap conflict');
+  }
+}
+function saveTaskSourceProjectionRepair(
+  database: Database,
+  workspaceId: string,
+  operationId: string,
+  fence: MaintenanceFence,
+  value: Readonly<Record<string, unknown>>,
+  payload: string,
+  digest: string,
+): void {
+  database
+    .query(
+      'INSERT INTO agent_host_task_source_projection_repair (workspace_id,operation_id,maintenance_generation,maintenance_revision,identity_digest,rows_digest,payload,digest) VALUES(?,?,?,?,?,?,?,?)',
+    )
+    .run(
+      workspaceId,
+      operationId,
+      fence.generation,
+      fence.revision,
+      value.identity_digest as string,
+      value.rows_digest as string,
+      payload,
+      digest,
+    );
+}
+function repairTaskSourceWorkProjection(
+  database: Database,
+  workspaceId: string,
+  fence: MaintenanceFence,
+): Readonly<Record<string, unknown>> {
+  const operationId = fence.binding.operation_id,
+    operationTable = database
+      .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'")
+      .get();
+  if (!operationTable)
+    database.exec(
+      'CREATE TABLE agent_host_task_source_binding_operation (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,request_digest TEXT NOT NULL,work_id TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
+    );
+  const columns = database.query('PRAGMA table_info(agent_host_task_source_binding_operation)').all() as {
+      name: string;
+    }[],
+    hasProjection = columns.some((column) => column.name === 'work_id'),
+    before = taskSourceProjectionRows(database, workspaceId, false);
+  assertTaskSourceActionRowsHaveOperations(database, workspaceId);
+  database.exec(
+    'CREATE TABLE IF NOT EXISTS agent_host_task_source_projection_repair (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,maintenance_generation INTEGER NOT NULL,maintenance_revision INTEGER NOT NULL,identity_digest TEXT NOT NULL,rows_digest TEXT NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id))',
+  );
+  assertTaskSourceProjectionRepairTableShape(database);
+  assertTaskSourceProjectionRepairOperationUnique(database, workspaceId, operationId);
+  const record = taskSourceProjectionRepairRecord(workspaceId, operationId, fence, before),
+    prior = taskSourceProjectionRepairRow(database, workspaceId, operationId);
+  if (prior) {
+    assertTaskSourceProjectionRepairRetry(
+      database,
+      workspaceId,
+      fence,
+      prior,
+      hasProjection,
+      record.value,
+      before,
+      record.payload,
+      record.digest,
+    );
+    return record.value;
+  }
+  if (!hasProjection) database.exec('ALTER TABLE agent_host_task_source_binding_operation ADD COLUMN work_id TEXT');
+  applyTaskSourceProjectionBackfill(database, workspaceId, before);
+  database.exec(
+    'CREATE INDEX IF NOT EXISTS agent_host_task_source_binding_operation_work ON agent_host_task_source_binding_operation(workspace_id,work_id,operation_id)',
+  );
+  assertTaskSourceWorkProjectionIndex(database);
+  const after = taskSourceProjectionRows(database, workspaceId);
+  requireState(canonicalJson(after) === canonicalJson(before), 'task source projection repair postimage differs');
+  saveTaskSourceProjectionRepair(
+    database,
+    workspaceId,
+    operationId,
+    fence,
+    record.value,
+    record.payload,
+    record.digest,
+  );
+  return record.value;
+}
+function decodeHostOwnedSqlPayloadRow(
+  database: Database,
+  input: unknown,
+  expected: readonly string[],
+  table: string,
+): Record<string, unknown> & { readonly value: unknown } {
+  const row = snapshotWorkspaceSqlProjection(input, expected, table);
+  const decoded = decodeWorkspaceSqlPayload(row.payload, row.raw_payload_bytes, table, database);
+  return { ...row, payload: decoded.payload, value: decoded.value };
+}
+
+function decodeHostOwnedSqlPayloadRowOrNull(
+  database: Database,
+  input: unknown,
+  expected: readonly string[],
+  table: string,
+): (Record<string, unknown> & { readonly value: unknown }) | null {
+  return input === null ? null : decodeHostOwnedSqlPayloadRow(database, input, expected, table);
+}
+
+function readCurrentTaskSourceOperations(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+): CurrentTaskSourceOperation[] {
+  const statement = database.query<unknown, SQLQueryBindings[]>(
+    'SELECT p.operation_id,p.revision,p.digest,p.request_id,p.request_digest,p.payload,p.raw_payload_bytes,' +
+      'a.operation_id AS action_operation_id,a.request_id AS action_request_id,' +
+      'a.revision AS action_revision,a.digest AS action_digest,' +
+      'a.payload AS action_payload,a.raw_payload_bytes AS action_raw_payload_bytes ' +
+      'FROM (SELECT rowid AS operation_rowid,operation_id,revision,digest,request_id,request_digest,' +
+      boundedWorkspacePayloadProjection +
+      ' FROM agent_host_task_source_binding_operation WHERE workspace_id=?) AS p ' +
+      'LEFT JOIN (SELECT operation_id,request_id,revision,digest,' +
+      boundedWorkspacePayloadProjection +
+      ' FROM agent_host_task_source_binding_action WHERE workspace_id=?) AS a ' +
+      'ON a.operation_id=p.operation_id ORDER BY p.operation_rowid',
+  );
+  const entries: CurrentTaskSourceOperation[] = [];
+  for (const input of statement.iterate(workspaceId, workspaceId)) {
+    const joined = snapshotWorkspaceSqlProjection(
+      input,
+      [
+        'operation_id',
+        'revision',
+        'digest',
+        'request_id',
+        'request_digest',
+        'payload',
+        'raw_payload_bytes',
+        'action_operation_id',
+        'action_request_id',
+        'action_revision',
+        'action_digest',
+        'action_payload',
+        'action_raw_payload_bytes',
+      ],
+      'task source operation/action join',
+    );
+    const row = decodeHostOwnedSqlPayloadRow(
+      database,
+      {
+        operation_id: joined.operation_id,
+        revision: joined.revision,
+        digest: joined.digest,
+        request_id: joined.request_id,
+        request_digest: joined.request_digest,
+        payload: joined.payload,
+        raw_payload_bytes: joined.raw_payload_bytes,
+      },
+      ['operation_id', 'revision', 'digest', 'request_id', 'request_digest', 'payload', 'raw_payload_bytes'],
+      'agent_host_task_source_binding_operation',
+    ) as unknown as TaskSourceOperationRow;
+    const request = validateTaskSourceBindingRequest((row.value as Record<string, unknown>).request);
+    if (request.work_id !== workId) continue;
+    const actionInput =
+      joined.action_operation_id === null
+        ? null
+        : {
+            operation_id: joined.action_operation_id,
+            request_id: joined.action_request_id,
+            revision: joined.action_revision,
+            digest: joined.action_digest,
+            payload: joined.action_payload,
+            raw_payload_bytes: joined.action_raw_payload_bytes,
+          };
+    entries.push({ row, request, actionInput });
+  }
+  return entries;
+}
+
+function persistedWorkspaceSqlRow(row: WorkspaceSqlRow): {
+  readonly row: Record<string, unknown>;
+  readonly value: unknown;
+} {
+  const persisted: Record<string, unknown> = { ...row };
+  delete persisted.table;
+  delete persisted.payloadBytes;
+  delete persisted.value;
+  return { row: persisted, value: row.value };
+}
+
 function assertTaskSourceJournalScopeWithinWork(scope: ScopedSourceSnapshot, work: WorkState): void {
   const allowedPaths = [
     ...new Set([...work.lifecycle.scope.allowed_paths, ...work.lifecycle.scope.implementation_paths]),
@@ -1709,7 +2353,7 @@ function validateTaskSourceActionPair(
   readonly request: TaskSourceBindingRequest;
   readonly action: Readonly<Record<string, unknown>>;
 } {
-  const operation = JSON.parse(operationRow.payload) as Record<string, unknown>;
+  const operation = operationRow.value as Record<string, unknown>;
   requireState(
     Object.keys(operation).sort().join(',') ===
       'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
@@ -1733,7 +2377,7 @@ function validateTaskSourceActionPair(
       (expectedRequest === undefined || sameJson(request, validateTaskSourceBindingRequest(expectedRequest))),
     'task source action request identity or digest differs from its preparation row',
   );
-  const action = JSON.parse(actionRow.payload) as Record<string, unknown>;
+  const action = actionRow.value as Record<string, unknown>;
   requireState(
     Object.keys(action).sort().join(',') ===
       'command_argv,created_at,issue_id,operation_digest,operation_id,policy_decision,prepared_state_version,recovery_report,recovery_report_digest,report,report_digest,request_id,revision,schema,status,updated_at' &&
@@ -1920,6 +2564,19 @@ interface ContinuationAdmissionHistory {
   readonly references: readonly LifecycleArtifactReference[];
   readonly artifacts: readonly WorkArtifactReference[];
 }
+type StoredWorkHistoryRecord =
+  | { readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt }
+  | { readonly kind: 'failed-prewriter'; readonly receipt: FailedPrewriterRecoveryReceipt }
+  | { readonly kind: 'continuation'; readonly receipt: DeliveredWorkContinuationReceipt }
+  | { readonly kind: 'initial-source'; readonly receipt: InitialSourceContinuationReceipt }
+  | { readonly kind: 'initial-frontier-code'; readonly receipt: InitialSourceFrontierCodeRebindReceipt }
+  | { readonly kind: 'completed-source-report-recovery'; readonly receipt: CompletedSourceReportRecoveryReceipt }
+  | { readonly kind: 'qualified-runtime-code'; readonly receipt: QualifiedRuntimeCodeContinuationReceipt };
+interface StoredWorkHistory {
+  readonly records: readonly StoredWorkHistoryRecord[];
+  readonly qualifiedRuntimeCodeContinuations: readonly QualifiedRuntimeCodeContinuationReceipt[];
+}
+type StoredWorkHistoryReadCache = Map<string, StoredWorkHistory>;
 
 function checkedWork(
   value: unknown,
@@ -2136,20 +2793,20 @@ function checkedWork(
   return work;
 }
 /** Operational binding proof is exact and immutable; it never grants current assignment authority. */
+function historyTableExists(database: Database, tableName: string, availableTables?: ReadonlySet<string>): boolean {
+  return (
+    availableTables?.has(tableName) ??
+    Boolean(database.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(tableName))
+  );
+}
 function storedQualifiedRuntimeCodeContinuations(
   database: Database,
   workspaceId: string,
   workId: string,
   attempt?: number,
+  availableTables?: ReadonlySet<string>,
 ): QualifiedRuntimeCodeContinuationReceipt[] {
-  if (
-    !database
-      .query(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_qualified_runtime_code_continuation'",
-      )
-      .get()
-  )
-    return [];
+  if (!historyTableExists(database, 'agent_host_qualified_runtime_code_continuation', availableTables)) return [];
   const rows = database
     .query(
       'SELECT payload,digest,request_id,attempt,work_revision FROM agent_host_qualified_runtime_code_continuation WHERE workspace_id=? AND work_id=? ORDER BY work_revision',
@@ -2179,62 +2836,43 @@ function storedQualifiedRuntimeCodeContinuations(
     });
 }
 
-function checkedStoredWork(
+function validatedQualifiedRuntimeCodeHistory(
   database: Database,
   workspaceId: string,
-  value: unknown,
-  pendingReceipt?:
-    | RuntimeCodeRebindReceipt
-    | DeliveredWorkContinuationReceipt
-    | FailedPrewriterRecoveryReceipt
-    | InitialSourceContinuationReceipt
-    | CompletedSourceReportRecoveryReceipt,
-  continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
-  observeAdmissionHistory?: (history: ContinuationAdmissionHistory) => void,
-): WorkState {
-  const candidate = value as WorkState,
-    bindings = new Map<string, WorkState['binding']>(),
-    admissionReferences: LifecycleArtifactReference[] = [],
-    admissionArtifacts: WorkArtifactReference[] = [],
-    continuationRepairOverlayUsed = { value: false },
-    records: (
-      | { readonly kind: 'runtime'; readonly receipt: RuntimeCodeRebindReceipt }
-      | {
-          readonly kind: 'failed-prewriter';
-          readonly receipt: FailedPrewriterRecoveryReceipt;
-        }
-      | {
-          readonly kind: 'continuation';
-          readonly receipt: DeliveredWorkContinuationReceipt;
-        }
-      | {
-          readonly kind: 'initial-source';
-          readonly receipt: InitialSourceContinuationReceipt;
-        }
-      | {
-          readonly kind: 'initial-frontier-code';
-          readonly receipt: InitialSourceFrontierCodeRebindReceipt;
-        }
-      | {
-          readonly kind: 'completed-source-report-recovery';
-          readonly receipt: CompletedSourceReportRecoveryReceipt;
-        }
-      | { readonly kind: 'qualified-runtime-code'; readonly receipt: QualifiedRuntimeCodeContinuationReceipt }
-    )[] = [];
-  const table = database
-    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_runtime_code_rebind'")
-    .get();
-  if (table) {
+  workId: string,
+  validated?: readonly QualifiedRuntimeCodeContinuationReceipt[],
+  availableTables?: ReadonlySet<string>,
+): readonly QualifiedRuntimeCodeContinuationReceipt[] {
+  return (
+    validated ?? storedQualifiedRuntimeCodeContinuations(database, workspaceId, workId, undefined, availableTables)
+  );
+}
+function qualifiedRuntimeCodeHistoryForAttempt(
+  history: readonly QualifiedRuntimeCodeContinuationReceipt[],
+  attempt: number,
+): QualifiedRuntimeCodeContinuationReceipt[] {
+  return history.filter((receipt) => receipt.request.attempt === attempt);
+}
+function capturedQualifiedRuntimeCodeHistoryForAttempt(
+  captured: HostStateSnapshot,
+  attempt: number,
+): QualifiedRuntimeCodeContinuationReceipt[] {
+  requireState(captured.runtimeCodeContinuations, 'captured qualified runtime code history is unavailable');
+  return qualifiedRuntimeCodeHistoryForAttempt(captured.runtimeCodeContinuations, attempt);
+}
+function runtimeBindingHistoryRecords(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  availableTables: ReadonlySet<string>,
+): StoredWorkHistoryRecord[] {
+  const records: StoredWorkHistoryRecord[] = [];
+  if (historyTableExists(database, 'agent_host_runtime_code_rebind', availableTables)) {
     const rows = database
       .query(
         'SELECT payload,digest,action_id,attempt FROM agent_host_runtime_code_rebind WHERE workspace_id=? AND work_id=?',
       )
-      .all(workspaceId, candidate.binding?.lifecycle_work_id) as {
-      payload: string;
-      digest: string;
-      action_id: string;
-      attempt: number;
-    }[];
+      .all(workspaceId, workId) as { payload: string; digest: string; action_id: string; attempt: number }[];
     for (const row of rows) {
       const receipt = JSON.parse(row.payload) as RuntimeCodeRebindReceipt;
       requireState(canonicalJsonDigest(receipt) === row.digest, 'runtime binding history receipt checksum differs');
@@ -2247,81 +2885,136 @@ function checkedStoredWork(
       }
     }
   }
-  const continuationTable = database
-    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_delivered_work_continuation'")
-    .get();
-  if (continuationTable) {
-    const rows = database
-      .query(
-        'SELECT payload,digest,action_id,attempt FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=?',
-      )
-      .all(workspaceId, candidate.binding?.lifecycle_work_id) as {
-      payload: string;
-      digest: string;
-      action_id: string;
-      attempt: number;
-    }[];
-    for (const row of rows) {
-      const receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt;
-      const repairOverlayMatches =
-        continuationRepairOverlay?.work_id === candidate.binding?.lifecycle_work_id &&
-        continuationRepairOverlay.attempt === row.attempt &&
-        continuationRepairOverlay.action_id === row.action_id;
-      if (repairOverlayMatches) {
-        requireState(
-          !continuationRepairOverlayUsed.value &&
-            hashPattern.test(row.digest) &&
-            row.digest === continuationRepairOverlay.before_digest &&
-            continuationRepairOverlay.after_digest === deliveredWorkContinuationRecord(receipt).digest,
-          'delivered-work continuation repair digest beforeimage differs',
-        );
-        continuationRepairOverlayUsed.value = true;
-      }
-      const storedDigest = repairOverlayMatches ? continuationRepairOverlay!.after_digest : row.digest;
-      requireState(
-        deliveredWorkContinuationRecord(receipt).digest === storedDigest &&
-          ((receipt.request?.action?.kind === 'historical_terminal_review' &&
-            receipt.request.action.capture.action_id === row.action_id) ||
-            (receipt.request?.action?.kind === 'configured_frontier' &&
-              receipt.request.action.request.action_id === row.action_id)) &&
-          receipt.attempt === row.attempt,
-        'delivered-work continuation history receipt checksum or identity differs',
-      );
-      records.push({ kind: 'continuation', receipt });
-    }
+  return records;
+}
+interface StoredDeliveredContinuationRow {
+  readonly payload: string;
+  readonly digest: string;
+  readonly action_id: string;
+  readonly attempt: number;
+}
+function storedDeliveredContinuationRows(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  availableTables?: ReadonlySet<string>,
+): StoredDeliveredContinuationRow[] {
+  if (!historyTableExists(database, 'agent_host_delivered_work_continuation', availableTables)) return [];
+  return database
+    .query(
+      'SELECT payload,digest,action_id,attempt FROM agent_host_delivered_work_continuation WHERE workspace_id=? AND work_id=?',
+    )
+    .all(workspaceId, workId) as StoredDeliveredContinuationRow[];
+}
+function checkedDeliveredContinuationHistoryRow(
+  row: StoredDeliveredContinuationRow,
+  workId: string,
+  repairOverlay: DeliveredContinuationRepairDigestOverlay | undefined,
+  repairOverlayUsed: { value: boolean },
+): { readonly receipt: DeliveredWorkContinuationReceipt; readonly repairOverlayMatches: boolean } {
+  const receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt,
+    repairOverlayMatches = checkDeliveredContinuationRepairOverlay(
+      row,
+      receipt,
+      workId,
+      repairOverlay,
+      repairOverlayUsed,
+    ),
+    storedDigest = repairOverlayMatches ? repairOverlay!.after_digest : row.digest;
+  requireDeliveredContinuationHistoryIntegrity(row, receipt, storedDigest);
+  return { receipt, repairOverlayMatches };
+}
+function checkDeliveredContinuationRepairOverlay(
+  row: StoredDeliveredContinuationRow,
+  receipt: DeliveredWorkContinuationReceipt,
+  workId: string,
+  repairOverlay: DeliveredContinuationRepairDigestOverlay | undefined,
+  repairOverlayUsed: { value: boolean },
+): boolean {
+  const matches =
+    repairOverlay?.work_id === workId &&
+    repairOverlay.attempt === row.attempt &&
+    repairOverlay.action_id === row.action_id;
+  if (matches) {
+    requireState(
+      !repairOverlayUsed.value &&
+        hashPattern.test(row.digest) &&
+        row.digest === repairOverlay!.before_digest &&
+        repairOverlay!.after_digest === deliveredWorkContinuationRecord(receipt).digest,
+      'delivered-work continuation repair digest beforeimage differs',
+    );
+    repairOverlayUsed.value = true;
   }
-  if (continuationRepairOverlay)
-    requireState(continuationRepairOverlayUsed.value, 'delivered-work continuation repair row is missing');
-  const initialTable = database
-    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_initial_source_continuation'")
-    .get();
-  if (initialTable) {
+  return matches;
+}
+function requireDeliveredContinuationHistoryIntegrity(
+  row: StoredDeliveredContinuationRow,
+  receipt: DeliveredWorkContinuationReceipt,
+  storedDigest: string,
+): void {
+  requireState(
+    deliveredWorkContinuationRecord(receipt).digest === storedDigest &&
+      ((receipt.request?.action?.kind === 'historical_terminal_review' &&
+        receipt.request.action.capture.action_id === row.action_id) ||
+        (receipt.request?.action?.kind === 'configured_frontier' &&
+          receipt.request.action.request.action_id === row.action_id)) &&
+      receipt.attempt === row.attempt,
+    'delivered-work continuation history receipt checksum or identity differs',
+  );
+}
+function deliveredContinuationHistoryRecords(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  repairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  availableTables?: ReadonlySet<string>,
+): StoredWorkHistoryRecord[] {
+  const records: StoredWorkHistoryRecord[] = [],
+    repairOverlayUsed = { value: false };
+  for (const row of storedDeliveredContinuationRows(database, workspaceId, workId, availableTables)) {
+    const checked = checkedDeliveredContinuationHistoryRow(row, workId, repairOverlay, repairOverlayUsed);
+    records.push({ kind: 'continuation', receipt: checked.receipt });
+  }
+  if (repairOverlay) requireState(repairOverlayUsed.value, 'delivered-work continuation repair row is missing');
+  return records;
+}
+function initialSourceContinuationHistoryRecords(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  availableTables: ReadonlySet<string>,
+): StoredWorkHistoryRecord[] {
+  const records: StoredWorkHistoryRecord[] = [];
+  if (historyTableExists(database, 'agent_host_initial_source_continuation', availableTables)) {
     const rows = database
       .query(
         'SELECT payload,digest,attempt FROM agent_host_initial_source_continuation WHERE workspace_id=? AND work_id=?',
       )
-      .all(workspaceId, candidate.binding?.lifecycle_work_id) as { payload: string; digest: string; attempt: number }[];
+      .all(workspaceId, workId) as { payload: string; digest: string; attempt: number }[];
     for (const row of rows) {
       const receipt = readInitialSourceContinuationRecord(row.payload, row.digest);
       requireState(
-        receipt.request.identity.work_id === candidate.binding?.lifecycle_work_id &&
-          receipt.request.attempt === row.attempt,
+        receipt.request.identity.work_id === workId && receipt.request.attempt === row.attempt,
         'initial Source continuation history row checksum or identity differs',
       );
       records.push({ kind: 'initial-source', receipt });
     }
   }
-  const frontierCodeTable = database
-    .query(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_initial_source_frontier_code_rebind'",
-    )
-    .get();
-  if (frontierCodeTable) {
+  return records;
+}
+function initialFrontierCodeHistoryRecords(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  availableTables: ReadonlySet<string>,
+): StoredWorkHistoryRecord[] {
+  const records: StoredWorkHistoryRecord[] = [];
+  if (historyTableExists(database, 'agent_host_initial_source_frontier_code_rebind', availableTables)) {
     const rows = database
       .query(
         'SELECT payload,digest,attempt,original_receipt_id FROM agent_host_initial_source_frontier_code_rebind WHERE workspace_id=? AND work_id=?',
       )
-      .all(workspaceId, candidate.binding?.lifecycle_work_id) as {
+      .all(workspaceId, workId) as {
       payload: string;
       digest: string;
       attempt: number;
@@ -2332,42 +3025,54 @@ function checkedStoredWork(
       requireState(
         receipt.record.attempt === row.attempt &&
           receipt.original_receipt_id === row.original_receipt_id &&
-          receipt.record.identity.work_id === candidate.binding?.lifecycle_work_id,
+          receipt.record.identity.work_id === workId,
         'initial-source frontier code rebind history row identity differs',
       );
       records.push({ kind: 'initial-frontier-code', receipt });
     }
   }
-  const completedReportRecoveryTable = database
-    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_completed_source_report_recovery'")
-    .get();
-  if (completedReportRecoveryTable) {
+  return records;
+}
+function completedReportRecoveryHistoryRecords(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  availableTables: ReadonlySet<string>,
+): StoredWorkHistoryRecord[] {
+  const records: StoredWorkHistoryRecord[] = [];
+  if (historyTableExists(database, 'agent_host_completed_source_report_recovery', availableTables)) {
     const rows = database
       .query(
         'SELECT payload,digest,attempt FROM agent_host_completed_source_report_recovery WHERE workspace_id=? AND work_id=?',
       )
-      .all(workspaceId, candidate.binding?.lifecycle_work_id) as { payload: string; digest: string; attempt: number }[];
+      .all(workspaceId, workId) as { payload: string; digest: string; attempt: number }[];
     for (const row of rows) {
       const receipt = readCompletedSourceReportRecoveryReceiptRecord(row.payload, row.digest);
       requireState(
         receipt.attempt === row.attempt &&
           receipt.record.attempt === row.attempt &&
-          receipt.identity.work_id === candidate.binding?.lifecycle_work_id,
+          receipt.identity.work_id === workId,
         'completed Source report recovery history row identity differs',
       );
       records.push({ kind: 'completed-source-report-recovery', receipt });
     }
   }
-  const recoveryTable = database
-    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_failed_prewriter_recovery'")
-    .get();
-  if (recoveryTable) {
+  return records;
+}
+function failedPrewriterHistoryRecords(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  availableTables: ReadonlySet<string>,
+): StoredWorkHistoryRecord[] {
+  const records: StoredWorkHistoryRecord[] = [];
+  if (historyTableExists(database, 'agent_host_failed_prewriter_recovery', availableTables)) {
     const rows = database
       .query('SELECT payload,digest FROM agent_host_failed_prewriter_recovery WHERE workspace_id=? AND work_id=?')
-      .all(workspaceId, candidate.binding?.lifecycle_work_id) as { payload: string; digest: string }[];
+      .all(workspaceId, workId) as { payload: string; digest: string }[];
     for (const row of rows) {
-      const receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt;
-      const encoded = failedPrewriterRecoveryRecord(receipt);
+      const receipt = JSON.parse(row.payload) as FailedPrewriterRecoveryReceipt,
+        encoded = failedPrewriterRecoveryRecord(receipt);
       requireState(
         row.payload === encoded.payload && row.digest === encoded.digest,
         'failed prewriter recovery history checksum differs',
@@ -2375,12 +3080,95 @@ function checkedStoredWork(
       records.push({ kind: 'failed-prewriter', receipt });
     }
   }
-  for (const receipt of storedQualifiedRuntimeCodeContinuations(
+  return records;
+}
+function loadStoredWorkHistory(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  repairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
+): StoredWorkHistory {
+  const availableTables = new Set(
+    (
+      database
+        .query(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('agent_host_qualified_runtime_code_continuation','agent_host_runtime_code_rebind','agent_host_delivered_work_continuation','agent_host_initial_source_continuation','agent_host_initial_source_frontier_code_rebind','agent_host_completed_source_report_recovery','agent_host_failed_prewriter_recovery')",
+        )
+        .all() as { name: string }[]
+    ).map((row) => row.name),
+  );
+  const qualifiedRuntimeCodeContinuations = validatedQualifiedRuntimeCodeHistory(
+    database,
+    workspaceId,
+    workId,
+    validatedQualifiedRuntimeCodeContinuations,
+    availableTables,
+  );
+  return {
+    records: [
+      ...runtimeBindingHistoryRecords(database, workspaceId, workId, availableTables),
+      ...deliveredContinuationHistoryRecords(database, workspaceId, workId, repairOverlay, availableTables),
+      ...initialSourceContinuationHistoryRecords(database, workspaceId, workId, availableTables),
+      ...initialFrontierCodeHistoryRecords(database, workspaceId, workId, availableTables),
+      ...completedReportRecoveryHistoryRecords(database, workspaceId, workId, availableTables),
+      ...failedPrewriterHistoryRecords(database, workspaceId, workId, availableTables),
+      ...qualifiedRuntimeCodeContinuations.map((receipt) => ({ kind: 'qualified-runtime-code', receipt }) as const),
+    ],
+    qualifiedRuntimeCodeContinuations,
+  };
+}
+function cachedStoredWorkHistory(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  repairOverlay: DeliveredContinuationRepairDigestOverlay | undefined,
+  validatedQualifiedRuntimeCodeContinuations: readonly QualifiedRuntimeCodeContinuationReceipt[] | undefined,
+  cache: StoredWorkHistoryReadCache | undefined,
+): StoredWorkHistory {
+  const canCache = Boolean(cache && !repairOverlay && !validatedQualifiedRuntimeCodeContinuations),
+    key = canCache ? canonicalJson([workspaceId, workId]) : '',
+    cached = canCache ? cache!.get(key) : undefined;
+  if (cached) return cached;
+  const history = loadStoredWorkHistory(
+    database,
+    workspaceId,
+    workId,
+    repairOverlay,
+    validatedQualifiedRuntimeCodeContinuations,
+  );
+  if (canCache) cache!.set(key, freezeJsonValue({ ...history, records: [...history.records] }));
+  return history;
+}
+function checkedStoredWork(
+  database: Database,
+  workspaceId: string,
+  value: unknown,
+  pendingReceipt?:
+    | RuntimeCodeRebindReceipt
+    | DeliveredWorkContinuationReceipt
+    | FailedPrewriterRecoveryReceipt
+    | InitialSourceContinuationReceipt
+    | CompletedSourceReportRecoveryReceipt,
+  continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  observeAdmissionHistory?: (history: ContinuationAdmissionHistory) => void,
+  validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
+  historyReadCache?: StoredWorkHistoryReadCache,
+): WorkState {
+  const candidate = value as WorkState,
+    bindings = new Map<string, WorkState['binding']>(),
+    admissionReferences: LifecycleArtifactReference[] = [],
+    admissionArtifacts: WorkArtifactReference[] = [];
+  const history = cachedStoredWorkHistory(
     database,
     workspaceId,
     candidate.binding.lifecycle_work_id,
-  ))
-    records.push({ kind: 'qualified-runtime-code', receipt });
+    continuationRepairOverlay,
+    validatedQualifiedRuntimeCodeContinuations,
+    historyReadCache,
+  );
+  const records: StoredWorkHistoryRecord[] = [...history.records],
+    qualifiedRuntimeCodeContinuations = history.qualifiedRuntimeCodeContinuations;
   if (pendingReceipt) {
     records.push(
       pendingReceipt.schema === 'FailedPrewriterRecoveryReceipt/v1'
@@ -2434,12 +3222,7 @@ function checkedStoredWork(
     if (record.kind === 'failed-prewriter') {
       const receipt = validateFailedPrewriterRecoveryReceipt(
         record.receipt,
-        storedQualifiedRuntimeCodeContinuations(
-          database,
-          workspaceId,
-          candidate.binding.lifecycle_work_id,
-          record.receipt.request.attempt,
-        ),
+        qualifiedRuntimeCodeHistoryForAttempt(qualifiedRuntimeCodeContinuations, record.receipt.request.attempt),
       );
       const original = database
         .query(
@@ -3770,9 +4553,68 @@ function expectedAttemptReconciliation(
   };
 }
 
+const workspaceInspectionTables = [
+  'agent_host_state',
+  'agent_host_mastra_session_ledger',
+  'agent_host_governance',
+  'agent_host_admission_attempt',
+] as const;
+type WorkspaceInspectionTable = (typeof workspaceInspectionTables)[number];
+const workspaceInspectionMaxRows = 10_000;
+const workspaceInspectionMaxBytes = 64 * 1024 * 1024;
+
+function boundedInspectionInteger(value: number | bigint, limit: number): number {
+  const valid =
+    typeof value === 'number'
+      ? Number.isSafeInteger(value) && value >= 0 && value <= limit
+      : value >= 0n && value <= BigInt(limit);
+  requireState(valid, 'workspace inspection row or byte budget exceeded');
+  return Number(value);
+}
+/** Physical row/byte preflight remains inside the exact transaction used for body reads. */
+function assertWorkspaceInspectionBudget(
+  database: Database,
+  workspaceId: string,
+  tables: readonly WorkspaceInspectionTable[],
+): void {
+  requireState(database.inTransaction, 'workspace inspection budget requires a transaction');
+  let rows = 0,
+    bytes = 0;
+  for (const table of tables) {
+    if (!database.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)) continue;
+    const payloadBytes =
+      table === 'agent_host_admission_attempt'
+        ? 'length(CAST(work_id AS BLOB))+length(CAST(request_digest AS BLOB))+24'
+        : 'length(CAST(payload AS BLOB))';
+    const totals = database
+      .query<
+        { row_count: number | bigint; payload_bytes: number | bigint; max_payload_bytes: number | bigint },
+        [string]
+      >(
+        'SELECT COUNT(*) AS row_count,COALESCE(SUM(' +
+          payloadBytes +
+          '),0) AS payload_bytes,COALESCE(MAX(' +
+          payloadBytes +
+          '),0) AS max_payload_bytes FROM ' +
+          table +
+          ' WHERE workspace_id=?',
+      )
+      .get(workspaceId);
+    requireState(totals, 'workspace inspection statistics are unavailable');
+    rows += boundedInspectionInteger(totals.row_count, workspaceInspectionMaxRows);
+    bytes += boundedInspectionInteger(totals.payload_bytes, workspaceInspectionMaxBytes);
+    boundedInspectionInteger(totals.max_payload_bytes, 8_388_608);
+    requireState(
+      rows <= workspaceInspectionMaxRows && bytes <= workspaceInspectionMaxBytes,
+      'workspace inspection row or byte budget exceeded',
+    );
+  }
+}
+
 /** Read canonical existing rows without creating a database, schema, journal mode or authority. */
 export function inspectHostWorkspaceDatabase(
-  databasePath: string,
+  repositoryRoot: string,
+  databaseRelativePath: string,
   workspaceId: string,
 ): {
   readonly schema: 'HostWorkspaceInspection/v1';
@@ -3788,7 +4630,7 @@ export function inspectHostWorkspaceDatabase(
     readonly work_id: string;
     readonly attempt: number;
     readonly version: StateVersion;
-    readonly state: Readonly<Record<string, unknown>>;
+    readonly state: MastraSessionLedgerState;
   }[];
   readonly governance: readonly {
     readonly store_id: string;
@@ -3799,10 +4641,12 @@ export function inspectHostWorkspaceDatabase(
   }[];
   readonly admission_attempts: readonly Readonly<Record<string, unknown>>[];
 } {
-  requireState(path.isAbsolute(databasePath) && hashPattern.test(workspaceId), 'workspace inspection identity invalid');
-  const stat = lstatSync(databasePath);
-  requireState(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'workspace inspection database is unsafe');
-  const database = new Database(databasePath, { readonly: true, strict: true });
+  assertWorkspaceDatabaseRelativePath(databaseRelativePath);
+  requireState(
+    path.isAbsolute(repositoryRoot) && hashPattern.test(workspaceId),
+    'workspace inspection identity invalid',
+  );
+  const database = openExistingWorkspaceDatabase(repositoryRoot, databaseRelativePath, workspaceId, true);
   try {
     return database
       .transaction(() => {
@@ -3811,17 +4655,21 @@ export function inspectHostWorkspaceDatabase(
           'workspace inspection database integrity failed',
         );
         assertConsumerAdmissionMetadata(database, workspaceId);
-        const rows = database
-          .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
-          .all(workspaceId) as { kind: string; id: string; revision: number; payload: string; digest: string }[];
+        assertWorkspaceInspectionBudget(database, workspaceId, workspaceInspectionTables);
+        const rows = queryWorkspaceRowsUnknown(
+          database,
+          'SELECT workspace_id,kind,id,revision,digest,' +
+            boundedWorkspacePayloadProjection +
+            ' FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id',
+          [workspaceId],
+        ).map((row) => decodeWorkspaceSqlRow('agent_host_state', row, workspaceId, database));
         let ledger: CoordinationLedger | null = null;
         const work: { identity: WorkIdentity; version: StateVersion; state: WorkState }[] = [];
         for (const row of rows) {
-          const value = parseStoredRecord(row.payload, 'workspace inspection row');
+          const value = row.value;
+          requireState(isPlainRecord(value), 'workspace inspection payload must be an object');
           requireState(
-            stateRecord(row.kind, value).digest === row.digest &&
-              value.revision === row.revision &&
-              value.workspace_id === workspaceId,
+            value.revision === row.revision && value.workspace_id === workspaceId,
             'workspace inspection row integrity differs',
           );
           if (row.kind === 'work') {
@@ -3848,31 +4696,28 @@ export function inspectHostWorkspaceDatabase(
             .get(),
         );
         const journalRows = hasJournals
-          ? (database
-              .query(
-                'SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
-              )
-              .all(workspaceId) as {
-              work_id: string;
-              attempt: number;
-              revision: number;
-              payload: string;
-              digest: string;
-            }[])
+          ? queryWorkspaceRowsUnknown(
+              database,
+              'SELECT workspace_id,work_id,attempt,revision,digest,' +
+                boundedWorkspacePayloadProjection +
+                ' FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
+              [workspaceId],
+            ).map((row) => decodeWorkspaceSqlRow('agent_host_mastra_session_ledger', row, workspaceId, database))
           : [];
+        const workOwners = work.reduceRight(
+          (owners, entry) => owners.set(entry.identity.work_id, entry),
+          new Map<string, (typeof work)[number]>(),
+        );
         const journals = journalRows.map((row) => {
-          const state = JSON.parse(row.payload) as Record<string, unknown>;
-          const owner = work.find((entry) => entry.identity.work_id === row.work_id);
+          const state = parseMastraSessionLedgerState(row.value);
+          const owner = workOwners.get(row.work_id);
           requireState(
             owner &&
-              canonicalJsonDigest(state) === row.digest &&
-              state.schema === 'MastraSessionLedger/v1' &&
               state.workspace_id === workspaceId &&
               state.work_id === row.work_id &&
               state.attempt === row.attempt &&
               state.run_id === owner.state.execution.run_id &&
-              Array.isArray(state.items) &&
-              Array.isArray(state.completed),
+              state.schema === 'MastraSessionLedger/v1',
             'workspace inspection journal integrity differs',
           );
           return {
@@ -3882,40 +4727,28 @@ export function inspectHostWorkspaceDatabase(
             state,
           };
         });
-        const governance = database
-          .query(
-            'SELECT store_id,kind,record_key,revision,payload,digest FROM agent_host_governance WHERE workspace_id=? ORDER BY store_id,kind,record_key',
-          )
-          .all(workspaceId)
-          .map((value) => {
-            const row = value as {
-              store_id: string;
-              kind: string;
-              record_key: string;
-              revision: number;
-              payload: string;
-              digest: string;
-            };
-            const state = JSON.parse(row.payload) as Record<string, unknown>;
-            requireState(
-              canonicalJsonDigest({
-                workspace_id: workspaceId,
-                store_id: row.store_id,
-                kind: row.kind,
-                record_key: row.record_key,
-                revision: row.revision,
-                payload: state,
-              }) === row.digest && ['operation', 'approval'].includes(row.kind),
-              'workspace inspection governance integrity differs',
-            );
-            return {
-              store_id: row.store_id,
-              kind: row.kind,
-              record_key: row.record_key,
-              version: { revision: row.revision, digest: row.digest },
-              state,
-            };
-          });
+        const governance = queryWorkspaceRowsUnknown(
+          database,
+          'SELECT workspace_id,store_id,kind,record_key,revision,digest,' +
+            boundedWorkspacePayloadProjection +
+            ' FROM agent_host_governance WHERE workspace_id=? ORDER BY store_id,kind,record_key',
+          [workspaceId],
+        ).map((value) => {
+          const row = decodeWorkspaceSqlRow('agent_host_governance', value, workspaceId, database);
+          const state = row.value;
+          requireState(isPlainRecord(state), 'workspace inspection governance must be an object');
+          requireState(
+            ['operation', 'approval'].includes(row.kind),
+            'workspace inspection governance integrity differs',
+          );
+          return {
+            store_id: row.store_id,
+            kind: row.kind,
+            record_key: row.record_key,
+            version: { revision: row.revision, digest: row.digest },
+            state,
+          };
+        });
         return freezeJsonValue({
           schema: 'HostWorkspaceInspection/v1' as const,
           workspace_id: workspaceId,
@@ -3937,26 +4770,55 @@ export function inspectHostWorkspaceDatabase(
       })
       .deferred();
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }
 
-export function openHostStateDatabase(databasePath: string): Database {
+export function openHostStateDatabase(
+  repositoryRoot: string,
+  databaseRelativePath: string,
+  workspaceId: string,
+): Database {
+  requireState(hashPattern.test(workspaceId), 'Host workspace identity invalid');
+  assertWorkspaceDatabaseRelativePath(databaseRelativePath);
+  const access = requireSafeRepositoryAccess(repositoryRoot);
+  assertProjectUpgradeInactive(access);
+  const parentRelative = path.posix.dirname(databaseRelativePath);
+  const parentIdentity = access.directoryIdentity(parentRelative, 'Host database parent');
+  const databasePath = path.join(access.repository_root, databaseRelativePath);
   requireState(
     typeof databasePath === 'string' && path.isAbsolute(databasePath),
     'host state requires an absolute file-backed database path',
   );
   assertHostStateDatabasePathSafe(databasePath);
-  const database = new Database(databasePath, { create: true, strict: true });
-  try {
+  assertHostStateDatabaseSidecarsSafe(databasePath);
+  return openDatabaseWithStorageAdmission(repositoryRoot, workspaceId, databaseRelativePath, (capture) => {
+    const database = new Database(databasePath, { create: true, strict: true });
+    capture(database);
+    assertHostStateDatabasePathSafe(databasePath);
+    const opened = lstatSync(databasePath);
+    const main = database
+      .query<{ name: string; file: string }, []>('PRAGMA database_list')
+      .all()
+      .find((entry) => entry.name === 'main');
+    requireState(
+      access.directoryIdentity(parentRelative, 'opened Host database parent') === parentIdentity &&
+        main?.file === databasePath,
+      'Host database path changed during open',
+    );
     database.exec('PRAGMA journal_mode=WAL');
     database.exec('PRAGMA synchronous=FULL');
     database.exec('PRAGMA busy_timeout=1000');
+    const after = lstatSync(databasePath);
+    assertHostStateDatabaseSidecarsSafe(databasePath);
+    requireState(
+      opened.dev === after.dev &&
+        opened.ino === after.ino &&
+        access.directoryIdentity(parentRelative, 'initialized Host database parent') === parentIdentity,
+      'Host database identity changed during initialization',
+    );
     return database;
-  } catch (error) {
-    database.close(true);
-    throw error;
-  }
+  });
 }
 
 function assertHostStateDatabasePathSafe(databasePath: string): void {
@@ -3965,6 +4827,16 @@ function assertHostStateDatabasePathSafe(databasePath: string): void {
     !stats || (stats.isFile() && !stats.isSymbolicLink() && stats.nlink === 1),
     'host state database path is unsafe',
   );
+}
+
+function assertHostStateDatabaseSidecarsSafe(databasePath: string): void {
+  for (const suffix of ['-wal', '-shm', '-journal']) {
+    const stats = lstatSync(databasePath + suffix, { throwIfNoEntry: false });
+    requireState(
+      !stats || (stats.isFile() && !stats.isSymbolicLink() && stats.nlink === 1),
+      'host state database sidecar is unsafe',
+    );
+  }
 }
 
 function assertConsumerAdmissionMetadata(database: Database, workspaceId: string): void {
@@ -3983,12 +4855,15 @@ function assertConsumerAdmissionMetadata(database: Database, workspaceId: string
 }
 
 /** SQLite's process-owned writer lock is released on termination; no persistent liveness marker is created. */
-export function withHostStateExclusiveTransaction<T>(databasePath: string, operation: () => T): T {
-  const database = openHostStateDatabase(databasePath);
+export function withHostStateExclusiveTransaction<T>(
+  input: { readonly repositoryRoot: string; readonly databaseRelativePath: string; readonly workspaceId: string },
+  operation: () => T,
+): T {
+  const database = openHostStateDatabase(input.repositoryRoot, input.databaseRelativePath, input.workspaceId);
   try {
     return database.transaction(operation).immediate();
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }
 
@@ -4032,14 +4907,15 @@ export async function runConsumerMigrationState<T>(
   assertHostStateDatabasePathSafe(databasePath);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, input.repositoryRoot);
   if (access.fileExists(relativeDatabase, 'consumer migration canonical database')) {
-    const probe = new Database(databasePath, { readonly: true, strict: true });
+    assertProjectUpgradeInactive(access);
+    const probe = openAdmittedWorkspaceDatabase(input.repositoryRoot, relativeDatabase, workspaceId, true);
     try {
       assertConsumerAdmissionMetadata(probe, workspaceId);
     } finally {
-      probe.close(true);
+      closeWorkspaceDatabaseWithAdmission(probe);
     }
   }
-  const database = openHostStateDatabase(databasePath);
+  const database = openHostStateDatabase(input.repositoryRoot, relativeDatabase, workspaceId);
   const packageSource = snapshotRuntimePackageSources(
     runtimePackageAccess(),
     config.runtime.bundle,
@@ -4171,12 +5047,73 @@ export async function runConsumerMigrationState<T>(
     await store.releaseMaintenanceFence(receipt);
     return result;
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
+}
+
+/** Empty schema initialization only. It creates no workspace, work, lease or authorization records. */
+export function initializeHostDatabaseSchema(database: Database): void {
+  requireState(database instanceof Database && !database.inTransaction, 'Host schema requires an unshared database');
+  database
+    .transaction(() => {
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_state (workspace_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY (workspace_id, kind, id))',
+      );
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_governance (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, kind TEXT NOT NULL, record_key TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id,kind,record_key))',
+      );
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_governance_stores (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, generation TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id))',
+      );
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_reconciliation (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
+      );
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_maintenance (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
+      );
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_admission_attempt (workspace_id TEXT NOT NULL,generation INTEGER NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_digest TEXT NOT NULL,PRIMARY KEY(workspace_id,generation,work_id,attempt))',
+      );
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_final_assurance (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,generation INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,generation))',
+      );
+    })
+    .immediate();
+}
+
+/** Fresh workspace bundle producer for the checked task-source work projection. */
+export function initializeTaskSourceBindingWorkProjectionSchema(database: Database): void {
+  requireState(
+    database instanceof Database && !database.inTransaction,
+    'task source schema requires an unshared database',
+  );
+  database
+    .transaction(() => {
+      database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_task_source_binding_operation (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,request_digest TEXT NOT NULL,work_id TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
+      );
+      database.exec(
+        'CREATE INDEX IF NOT EXISTS agent_host_task_source_binding_operation_work ON agent_host_task_source_binding_operation(workspace_id,work_id,operation_id)',
+      );
+      assertTaskSourceOperationTableShape(database, true);
+      const projection = (
+        database.query('PRAGMA table_info(agent_host_task_source_binding_operation)').all() as {
+          name: string;
+          notnull: number | bigint;
+        }[]
+      ).find((column) => column.name === 'work_id');
+      requireState(
+        projection !== undefined && BigInt(projection.notnull) === 1n,
+        'fresh task source work projection column must be required',
+      );
+      assertTaskSourceWorkProjectionIndex(database);
+    })
+    .immediate();
 }
 
 export class HostStateStore {
   readonly #database: Database;
+  #storedWorkHistoryReadCache: StoredWorkHistoryReadCache | undefined;
   readonly #producerDatabaseIdentity: { readonly dev: number; readonly ino: number } | undefined;
   readonly #sessionProducers = new WeakMap<
     SessionProducerHandle,
@@ -4373,34 +5310,7 @@ export class HostStateStore {
       );
     } else database.exec('PRAGMA synchronous=FULL');
     this.#assertDatabaseSupport();
-    if (!readOnlyInspection)
-      database.exec(
-        'CREATE TABLE IF NOT EXISTS agent_host_state (workspace_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY (workspace_id, kind, id))',
-      );
-    if (!readOnlyInspection)
-      database.exec(
-        'CREATE TABLE IF NOT EXISTS agent_host_governance (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, kind TEXT NOT NULL, record_key TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id,kind,record_key))',
-      );
-    if (!readOnlyInspection)
-      database.exec(
-        'CREATE TABLE IF NOT EXISTS agent_host_governance_stores (workspace_id TEXT NOT NULL, store_id TEXT NOT NULL, generation TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,store_id))',
-      );
-    if (!readOnlyInspection)
-      database.exec(
-        'CREATE TABLE IF NOT EXISTS agent_host_reconciliation (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
-      );
-    if (!readOnlyInspection)
-      database.exec(
-        'CREATE TABLE IF NOT EXISTS agent_host_maintenance (workspace_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL)',
-      );
-    if (!readOnlyInspection)
-      database.exec(
-        'CREATE TABLE IF NOT EXISTS agent_host_admission_attempt (workspace_id TEXT NOT NULL,generation INTEGER NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,request_digest TEXT NOT NULL,PRIMARY KEY(workspace_id,generation,work_id,attempt))',
-      );
-    if (!readOnlyInspection)
-      database.exec(
-        'CREATE TABLE IF NOT EXISTS agent_host_final_assurance (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,generation INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt,generation))',
-      );
+    if (!readOnlyInspection) initializeHostDatabaseSchema(database);
     this.governanceCapability = issueHostGovernanceCapability({
       workspaceId,
       reserveOperation: this.reserveOperation.bind(this),
@@ -4472,17 +5382,37 @@ export class HostStateStore {
         tables.every((table) => sameRecords(actual[table] ?? [], (expected as Record<string, unknown>)[table])),
       );
 
-    const readRows = (): Record<string, Record<string, unknown>[]> =>
-      Object.fromEntries(
-        tables.map((table) => [
-          table,
-          this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)
-            ? (this.#database
-                .query(`SELECT * FROM ${table} WHERE workspace_id=? ORDER BY rowid`)
-                .all(this.#workspaceId) as Record<string, unknown>[])
-            : [],
-        ]),
+    const migrationRowValues = new WeakMap<Record<string, unknown>, unknown>();
+    const migrationColumns = {
+      agent_host_state: 'workspace_id,kind,id,revision,digest',
+      agent_host_mastra_session_ledger: 'workspace_id,work_id,attempt,revision,digest',
+      agent_host_governance: 'workspace_id,store_id,kind,record_key,revision,digest',
+    } as const;
+    const readTable = (table: (typeof tables)[number]): Record<string, unknown>[] => {
+      if (!this.#database.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)) return [];
+      const statement = this.#database.query<unknown, SQLQueryBindings[]>(
+        'SELECT ' +
+          migrationColumns[table] +
+          ',' +
+          boundedWorkspacePayloadProjection +
+          ' FROM ' +
+          table +
+          ' WHERE workspace_id=? ORDER BY rowid',
       );
+      return Array.from(statement.iterate(this.#workspaceId), (input) => {
+        const decoded = decodeWorkspaceSqlRow(table, input, this.#workspaceId, this.#database);
+        const persisted = persistedWorkspaceSqlRow(decoded);
+        migrationRowValues.set(persisted.row, persisted.value);
+        return persisted.row;
+      });
+    };
+    const readRows = (): Record<string, Record<string, unknown>[]> => {
+      return Object.fromEntries(tables.map((table) => [table, readTable(table)]));
+    };
+    const readMigrationRowValue = (row: Record<string, unknown>): unknown => {
+      requireState(migrationRowValues.has(row), 'current migration row has no decoded payload');
+      return migrationRowValues.get(row);
+    };
     const admissions = (): unknown[] =>
       this.#database
         .query(
@@ -4492,10 +5422,9 @@ export class HostStateStore {
     const checkSettled = (): void => {
       this.#assertMaintenanceQuiescent();
       for (const row of readRows().agent_host_mastra_session_ledger ?? []) {
-        const journal = JSON.parse(row.payload as string) as Record<string, unknown>;
+        const journal = parseMastraSessionLedgerState(readMigrationRowValue(row));
         requireState(
           journal.schema === 'MastraSessionLedger/v1' &&
-            canonicalJsonDigest(journal) === row.digest &&
             Array.isArray(journal.items) &&
             Array.isArray(journal.completed),
           'consumer migration journal integrity differs',
@@ -4588,8 +5517,7 @@ export class HostStateStore {
         // Validate every current-v1 pair before hiding old tasks; retired readers are never selected.
         for (const row of before.agent_host_state ?? [])
           if (row.kind === 'work') {
-            const work = this.#checkedWork(JSON.parse(row.payload as string));
-            requireState(canonicalJsonDigest(work) === row.digest, 'consumer migration work integrity differs');
+            const work = this.#checkedWork(readMigrationRowValue(row));
             validatePair(work, this.#load('ledger', 'shared') as CoordinationLedger | null);
           }
         const result = files();
@@ -4748,14 +5676,17 @@ export class HostStateStore {
       'governance namespace invalid',
     );
     this.#assertDatabaseSupport();
-    const row = this.#database
-      .query(
-        'SELECT revision,payload,digest FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind=? AND record_key=?',
-      )
-      .get(this.#workspaceId, storeId, kind, key) as { revision: number; payload: string; digest: string } | null;
-    if (!row) return null;
+    const raw = queryWorkspaceRowUnknown(
+      this.#database,
+      'SELECT workspace_id,store_id,kind,record_key,revision,digest,' +
+        boundedWorkspacePayloadProjection +
+        ' FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind=? AND record_key=?',
+      [this.#workspaceId, storeId, kind, key],
+    );
+    if (raw === null) return null;
+    const row = decodeWorkspaceSqlRow('agent_host_governance', raw, this.#workspaceId, this.#database);
     const generation = this.#governanceGeneration(storeId);
-    const parsed: unknown = JSON.parse(row.payload);
+    const parsed = row.value;
     assertCanonicalJsonValue(parsed, '$');
     const record =
       kind === 'operation' ? validateHostOperationReservation(parsed) : validateHostWorkflowApprovalRecord(parsed);
@@ -4765,8 +5696,7 @@ export class HostStateStore {
         record.store_id === storeId &&
         (kind === 'operation'
           ? (record as OperationReservation).operation_key
-          : canonicalJsonDigest((record as WorkflowApprovalConsumptionRecord).binding)) === key &&
-        row.digest === this.#governanceDigest(storeId, kind, key, row.revision, record),
+          : canonicalJsonDigest((record as WorkflowApprovalConsumptionRecord).binding)) === key,
       'governance checksum or identity mismatch',
     );
     if (kind === 'approval')
@@ -4783,7 +5713,7 @@ export class HostStateStore {
         'governance operation revision mismatch',
       );
     }
-    return { ...row, record: snapshot(record) };
+    return { revision: row.revision, digest: row.digest, record: snapshot(record) };
   }
   #governanceWrite(
     kind: 'operation' | 'approval',
@@ -5167,6 +6097,7 @@ export class HostStateStore {
           nextLedger,
         },
         undefined,
+        true,
         true,
       );
     }).immediate();
@@ -5769,18 +6700,10 @@ export class HostStateStore {
         ),
       'recovery caller/intent/owner binding missing',
     );
-    const row = this.#database
-      .query(
-        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-      )
-      .get(this.#workspaceId, binding.identity.work_id, binding.attempt) as {
-      revision: number;
-      payload: string;
-      digest: string;
-    } | null;
+    const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, binding.identity.work_id, binding.attempt);
     requireState(row, 'recovery original journal missing');
     matchesExpected({ revision: row.revision, digest: row.digest }, binding.expectedJournal);
-    const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
+    const journal = parseMastraSessionLedgerState(row.value);
     requireState(canonicalJsonDigest(journal) === row.digest, 'recovery journal integrity differs');
     validateWorkSessionBinding(work, journal, this.#repositoryRoot);
     const ticket = host.ledger.tickets.find((t) => t.work_id === binding.identity.work_id);
@@ -6084,11 +7007,22 @@ export class HostStateStore {
   }
   #readMaintenanceFence(): MaintenanceFence | null {
     this.#assertDatabaseSupport();
-    const row = this.#database
-      .query('SELECT revision,payload,digest FROM agent_host_maintenance WHERE workspace_id=?')
-      .get(this.#workspaceId) as { revision: number; payload: string; digest: string } | null;
-    if (!row) return null;
-    const fence = checkedMaintenanceFence(JSON.parse(row.payload));
+    const result = queryWorkspaceRowUnknown(
+      this.#database,
+      'SELECT revision,digest,' +
+        boundedWorkspacePayloadProjection +
+        ' FROM agent_host_maintenance WHERE workspace_id=?',
+      [this.#workspaceId],
+    );
+    if (result === null) return null;
+    const row = snapshotWorkspaceSqlProjection(
+      result,
+      ['revision', 'digest', 'payload', 'raw_payload_bytes'],
+      'agent_host_maintenance',
+    );
+    const fence = checkedMaintenanceFence(
+      decodeWorkspaceSqlPayload(row.payload, row.raw_payload_bytes, 'agent_host_maintenance', this.#database).value,
+    );
     requireState(
       row.revision === fence.revision &&
         fence.workspace_id === this.#workspaceId &&
@@ -6222,6 +7156,22 @@ export class HostStateStore {
       this.#maintenanceSnapshotReadScopeActive = false;
     }
   }
+  /** Authorize durable repair intent without acquiring a fence or granting mutation rights. */
+  assertMaintenancePlanningAuthority(binding: MaintenanceFenceBinding): void {
+    const input = checkedMaintenanceBinding(snapshot(binding));
+    requireState(
+      this.#verifyMaintenanceRelease && this.#verifyMaintenanceAcquisition,
+      'trusted maintenance planning and release verifiers required',
+    );
+    requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
+    this.#database
+      .transaction(() => {
+        this.#assertMaintenanceProjects(input);
+        this.#assertMaintenanceQuiescent();
+        this.#assertMaintenanceAcquisition(input, this.#readMaintenanceFence());
+      })
+      .deferred();
+  }
   acquireMaintenanceFence(binding: MaintenanceFenceBinding): MaintenanceFenceReceipt {
     const input = checkedMaintenanceBinding(snapshot(binding));
     requireState(this.#verifyMaintenanceRelease, 'trusted maintenance release verifier required');
@@ -6293,6 +7243,58 @@ export class HostStateStore {
       'foreign repository working mutation',
     );
   }
+  /** Storage identity only. This grants no maintenance, migration or Source authority. */
+  assertConfiguredDatabase(config: import('./config/runtime-config.js').AgentRuntimeConfig): void {
+    requireState(this.#repositoryRoot !== undefined, 'configured Host repository required');
+    requireState(
+      deriveWorkspaceId(config.repository.repository_id, this.#repositoryRoot) === this.#workspaceId,
+      'configured Host workspace differs',
+    );
+    this.assertWorkspaceDatabasePath(this.#repositoryRoot, sessionHandoffDatabaseRelativePath(config));
+  }
+  /** Exact storage identity for a retained repair path. This does not grant maintenance or bootstrap authority. */
+  assertWorkspaceDatabasePath(repositoryRoot: string, relative: string): void {
+    this.assertWorkingRepositoryRoot(repositoryRoot);
+    assertWorkspaceDatabaseRelativePath(relative);
+    const access = requireSafeRepositoryAccess(repositoryRoot);
+    const parent = path.posix.dirname(relative);
+    const parentIdentity = access.directoryIdentity(parent, 'Host database parent');
+    const physical = lstatSync(this.#database.filename);
+    requireState(
+      physical.isFile() &&
+        !physical.isSymbolicLink() &&
+        physical.nlink === 1 &&
+        physical.dev === this.#producerDatabaseIdentity?.dev &&
+        physical.ino === this.#producerDatabaseIdentity?.ino,
+      'configured Host database was substituted',
+    );
+    requireState(
+      realpathSync.native(this.#database.filename) === realpathSync.native(path.join(repositoryRoot, relative)) &&
+        access.directoryIdentity(parent, 'Host database parent') === parentIdentity,
+      'configured Host database or parent differs',
+    );
+  }
+  /** Exact published bootstrap storage only; it grants no maintenance, lease, admission or release rights. */
+  assertWorkspaceDatabaseBootstrap(
+    repositoryRoot: string,
+    relative: string,
+    expected: { readonly device: string; readonly inode: string },
+    binding: unknown,
+  ): void {
+    this.assertWorkspaceDatabasePath(repositoryRoot, relative);
+    requireState(
+      expected.device === String(this.#producerDatabaseIdentity?.dev) &&
+        expected.inode === String(this.#producerDatabaseIdentity?.ino),
+      'Host database differs from the published bootstrap identity',
+    );
+    const row = this.#database
+      .query<{ payload: string; digest: string }, []>('SELECT payload,digest FROM vida_workspace_bootstrap WHERE id=1')
+      .get();
+    requireState(
+      row?.payload === canonicalJson(binding) && row.digest === canonicalJsonDigest(binding),
+      'Host bootstrap sentinel differs from the retained operation',
+    );
+  }
   withWorkingMutation<T>(
     repositoryRoot: string,
     expectedMaintenanceGeneration: number,
@@ -6359,22 +7361,19 @@ export class HostStateStore {
       expectedMaintenanceGeneration: original.expectedMaintenanceGeneration,
       action: async () => {
         const host = this.#read(original.identity),
-          row = this.#database
-            .query(
-              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-            )
-            .get(this.#workspaceId, original.identity.work_id, original.attempt) as {
-            revision: number;
-            payload: string;
-            digest: string;
-          } | null;
+          row = readWorkspaceMastraSqlRow(
+            this.#database,
+            this.#workspaceId,
+            original.identity.work_id,
+            original.attempt,
+          );
         requireState(
-          row && canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+          row && canonicalJsonDigest(row.value) === row.digest,
           'qualified plan refresh Journal integrity differs',
         );
         validateQualifiedRuntimeCodeContinuationState(original, host, {
           version: { revision: row.revision, digest: row.digest },
-          state: JSON.parse(row.payload) as MastraSessionLedgerState,
+          state: parseMastraSessionLedgerState(row.value),
         });
         requireState(
           !storedQualifiedRuntimeCodeContinuations(
@@ -6444,22 +7443,19 @@ export class HostStateStore {
       matchesExpected(before.workVersion, guard.expectedWork);
       matchesExpected(before.ledgerVersion, guard.expectedLedger);
       requireState(before.work !== null && before.ledger !== null, 'historical normalization Host state is missing');
-      const journal = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, guard.identity.work_id, guard.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const journal = readWorkspaceMastraSqlRow(
+        this.#database,
+        this.#workspaceId,
+        guard.identity.work_id,
+        guard.attempt,
+      );
       requireState(
         journal &&
           journal.revision === guard.expectedJournal.revision &&
           journal.digest === guard.expectedJournal.digest,
         'historical normalization Journal CAS conflict',
       );
-      const state = JSON.parse(journal.payload) as MastraSessionLedgerState;
+      const state = parseMastraSessionLedgerState(journal.value);
       requireState(
         canonicalJsonDigest(state) === journal.digest &&
           state.work_id === guard.identity.work_id &&
@@ -6491,6 +7487,30 @@ export class HostStateStore {
     requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
     return this.#database.transaction(() => snapshot(this.#assertMaintenanceReceipt(input))).deferred();
   }
+  /** Read-only same-operation release proof; it never reacquires or releases a fence. */
+  assertReleasedMaintenanceFence(receipt: MaintenanceFenceReceipt): MaintenanceFence {
+    const input = snapshot(receipt);
+    requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
+    return this.#database
+      .transaction(() => {
+        requireState(
+          Object.keys(input).length === 2 && typeof input.token === 'string' && uuidPattern.test(input.token),
+          'release receipt invalid',
+        );
+        const expected = checkedMaintenanceFence(input.fence);
+        const current = this.#readMaintenanceFence();
+        requireState(
+          current?.status === 'released' &&
+            current.workspace_id === this.#workspaceId &&
+            canonicalJsonDigest(current) === canonicalJsonDigest(expected) &&
+            current.token_digest === maintenanceTokenDigest(current, input.token),
+          'released fence receipt stale or forged',
+        );
+        this.#assertMaintenanceProjects(current.binding);
+        return snapshot(current);
+      })
+      .deferred();
+  }
   async releaseMaintenanceFence(receipt: MaintenanceFenceReceipt): Promise<MaintenanceFence> {
     requireState(this.#verifyMaintenanceRelease, 'trusted maintenance release verifier required');
     const input = snapshot(receipt);
@@ -6515,11 +7535,22 @@ export class HostStateStore {
   }
   #readReconciliationGate(): ReconciliationGate | null {
     this.#assertDatabaseSupport();
-    const row = this.#database
-      .query('SELECT revision,payload,digest FROM agent_host_reconciliation WHERE workspace_id=?')
-      .get(this.#workspaceId) as { revision: number; payload: string; digest: string } | null;
-    if (!row) return null;
-    const gate = checkedReconciliationGate(JSON.parse(row.payload));
+    const result = queryWorkspaceRowUnknown(
+      this.#database,
+      'SELECT revision,digest,' +
+        boundedWorkspacePayloadProjection +
+        ' FROM agent_host_reconciliation WHERE workspace_id=?',
+      [this.#workspaceId],
+    );
+    if (result === null) return null;
+    const row = snapshotWorkspaceSqlProjection(
+      result,
+      ['revision', 'digest', 'payload', 'raw_payload_bytes'],
+      'agent_host_reconciliation',
+    );
+    const gate = checkedReconciliationGate(
+      decodeWorkspaceSqlPayload(row.payload, row.raw_payload_bytes, 'agent_host_reconciliation', this.#database).value,
+    );
     assertCanonicalJsonValue(gate, '$');
     requireState(
       Number.isSafeInteger(row.revision) &&
@@ -6823,15 +7854,47 @@ export class HostStateStore {
     value: unknown,
     pendingReceipt?: RuntimeCodeRebindReceipt | DeliveredWorkContinuationReceipt | FailedPrewriterRecoveryReceipt,
     continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
+    validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
   ): WorkState {
-    return checkedStoredWork(this.#database, this.#workspaceId, value, pendingReceipt, continuationRepairOverlay);
+    return checkedStoredWork(
+      this.#database,
+      this.#workspaceId,
+      value,
+      pendingReceipt,
+      continuationRepairOverlay,
+      undefined,
+      validatedQualifiedRuntimeCodeContinuations,
+      this.#storedWorkHistoryReadCache,
+    );
   }
   #admissionHistory(work: WorkState): ContinuationAdmissionHistory {
     let history: ContinuationAdmissionHistory = { references: [], artifacts: [] };
-    checkedStoredWork(this.#database, this.#workspaceId, work, undefined, undefined, (value) => {
-      history = value;
-    });
+    checkedStoredWork(
+      this.#database,
+      this.#workspaceId,
+      work,
+      undefined,
+      undefined,
+      (value) => {
+        history = value;
+      },
+      undefined,
+      this.#storedWorkHistoryReadCache,
+    );
     return history;
+  }
+  /** These scopes contain no retained-receipt writes; each successor still reruns checkedStoredWork validation. */
+  #withStoredWorkHistoryReadCache<T>(operation: () => T): T {
+    const previous = this.#storedWorkHistoryReadCache;
+    this.#storedWorkHistoryReadCache = previous ?? new Map();
+    try {
+      return operation();
+    } finally {
+      this.#storedWorkHistoryReadCache = previous;
+    }
+  }
+  #transactionWithProducerFenceAndStoredWorkHistoryCache<T>(operation: () => T) {
+    return this.#transactionWithProducerFence(() => this.#withStoredWorkHistoryReadCache(operation));
   }
   /** Pure projection; persistence revalidates the stored receipt chain under CAS. */
   projectLifecycleTransition(
@@ -6864,25 +7927,62 @@ export class HostStateStore {
       this.#admissionHistory(work).references,
     );
   }
+  #decodeStoredStateRow(
+    row: WorkspaceStateSqlRow,
+    continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
+    validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
+  ): WorkState | CoordinationLedger {
+    const value =
+      row.kind === 'work'
+        ? this.#checkedWork(row.value, undefined, continuationRepairOverlay, validatedQualifiedRuntimeCodeContinuations)
+        : checkedLedger(row.value);
+    requireState(
+      value.workspace_id === this.#workspaceId && value.revision === row.revision,
+      'stored state checksum or identity mismatch',
+    );
+    if (row.kind === 'work')
+      requireState(identityKey(workIdentity(value as WorkState)) === row.id, 'stored work key mismatch');
+    return value;
+  }
   #load(
     kind: 'work' | 'ledger',
     id: string,
     continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
   ): WorkState | CoordinationLedger | null {
-    const row = this.#database
-      .query('SELECT revision, payload, digest FROM agent_host_state WHERE workspace_id=? AND kind=? AND id=?')
-      .get(this.#workspaceId, kind, id) as { revision: number; payload: string; digest: string } | null;
-    if (!row) return null;
-    const parsed: unknown = JSON.parse(row.payload);
-    const encoded = stateRecord(kind, parsed);
-    const value =
-      kind === 'work' ? this.#checkedWork(parsed, undefined, continuationRepairOverlay) : checkedLedger(parsed);
-    requireState(
-      value.workspace_id === this.#workspaceId && value.revision === row.revision && encoded.digest === row.digest,
-      'stored state checksum or identity mismatch',
+    const row = readWorkspaceStateSqlRow(this.#database, this.#workspaceId, kind, id);
+    return row === null ? null : this.#decodeStoredStateRow(row, continuationRepairOverlay);
+  }
+  #readWorkState(
+    identity: WorkIdentity,
+    continuationRepairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  ): {
+    readonly work: WorkState | null;
+    readonly workVersion: StateVersion | null;
+    readonly runtimeCodeContinuations: readonly QualifiedRuntimeCodeContinuationReceipt[];
+  } {
+    const row = readWorkspaceStateSqlRow(this.#database, this.#workspaceId, 'work', identityKey(identity));
+    if (!row) return { work: null, workVersion: null, runtimeCodeContinuations: [] };
+    const runtimeCodeContinuations = storedQualifiedRuntimeCodeContinuations(
+      this.#database,
+      this.#workspaceId,
+      identity.work_id,
     );
-    if (kind === 'work') requireState(identityKey(workIdentity(value as WorkState)) === id, 'stored work key mismatch');
-    return value;
+    return {
+      work: this.#decodeStoredStateRow(row, continuationRepairOverlay, runtimeCodeContinuations) as WorkState,
+      workVersion: { revision: row.revision, digest: row.digest },
+      runtimeCodeContinuations,
+    };
+  }
+  #readLedgerState(): {
+    readonly ledger: CoordinationLedger | null;
+    readonly version: StateVersion | null;
+  } {
+    const row = readWorkspaceStateSqlRow(this.#database, this.#workspaceId, 'ledger', 'shared');
+    if (!row) return { ledger: null, version: null };
+    return {
+      ledger: this.#decodeStoredStateRow(row) as CoordinationLedger,
+      version: { revision: row.revision, digest: row.digest },
+    };
   }
   #read(
     identity: WorkIdentity,
@@ -6895,8 +7995,8 @@ export class HostStateStore {
     );
     this.#assertDatabaseSupport();
     if (!allowHeldMaintenance) this.#assertMaintenanceAvailable();
-    const work = this.#load('work', identityKey(identity), continuationRepairOverlay) as WorkState | null;
-    const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
+    const { work, workVersion, runtimeCodeContinuations } = this.#readWorkState(identity, continuationRepairOverlay),
+      { ledger, version: ledgerVersion } = this.#readLedgerState();
     requireState(
       work || !ledger?.tickets.some((ticket) => identityKey(ticketIdentity(ticket)) === identityKey(identity)),
       'coordination ticket references missing work state',
@@ -6905,16 +8005,12 @@ export class HostStateStore {
     return snapshotHostComponents({
       work,
       ledger,
-      workVersion: version(work),
-      ledgerVersion: version(ledger, 'ledger'),
+      workVersion,
+      ledgerVersion,
       maintenanceGeneration: this.#maintenanceGeneration(),
       ...(work
         ? {
-            runtimeCodeContinuations: storedQualifiedRuntimeCodeContinuations(
-              this.#database,
-              this.#workspaceId,
-              identity.work_id,
-            ),
+            runtimeCodeContinuations,
           }
         : {}),
     });
@@ -6923,6 +8019,26 @@ export class HostStateStore {
     if (this.#database.inTransaction && this.#maintenanceSnapshotReadScopeActive) return this.#read(identity, true);
     requireState(!this.#database.inTransaction, 'nested host state transaction forbidden');
     return this.#database.transaction(() => this.#read(identity)).deferred();
+  }
+  /** Inspect closed ownership against an exact captured fence; no working capability escapes this read. */
+  readTerminalHostStateSnapshot(identity: WorkIdentity, expectedFence: MaintenanceFence | null): HostStateSnapshot {
+    const expected = expectedFence === null ? null : checkedMaintenanceFence(expectedFence);
+    requireState(!this.#database.inTransaction, 'nested terminal host inspection forbidden');
+    return this.#database
+      .transaction(() => {
+        const current = this.#readMaintenanceFence();
+        requireState(sameJson(current, expected), 'terminal maintenance snapshot drift');
+        const result =
+          current?.status === 'held'
+            ? this.#withMaintenanceSnapshotReadScope(() => this.#read(identity, true))
+            : this.#read(identity);
+        requireState(
+          result.work !== null && result.work.lease === null && result.work.execution.status === 'suspended',
+          'terminal host inspection requires suspended closed ownership',
+        );
+        return result;
+      })
+      .deferred();
   }
   readQualifiedRuntimeCodeContinuations(
     identity: WorkIdentity,
@@ -6933,17 +8049,16 @@ export class HostStateStore {
       'qualified code history inspection invalid',
     );
     return this.#database
-      .transaction(() =>
-        this.#read(identity).work
+      .transaction(() => {
+        const current = this.#read(identity);
+        return current.work
           ? freezeJsonValue(
               JSON.parse(
-                qualifiedRuntimeCodeHistoryJson(
-                  storedQualifiedRuntimeCodeContinuations(this.#database, this.#workspaceId, identity.work_id, attempt),
-                ),
+                qualifiedRuntimeCodeHistoryJson(capturedQualifiedRuntimeCodeHistoryForAttempt(current, attempt)),
               ) as QualifiedRuntimeCodeContinuationReceipt[],
             )
-          : [],
-      )
+          : [];
+      })
       .deferred();
   }
   commitQualifiedRuntimeCodeContinuation(
@@ -6977,20 +8092,14 @@ export class HostStateStore {
     if (existing) return snapshot(existing);
     const readState = () => {
       const host = this.#read(request.identity);
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(
+        this.#database,
+        this.#workspaceId,
+        request.identity.work_id,
+        request.attempt,
+      );
       requireState(
-        row &&
-          Number.isSafeInteger(row.revision) &&
-          row.revision > 0 &&
-          canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+        row && Number.isSafeInteger(row.revision) && row.revision > 0 && canonicalJsonDigest(row.value) === row.digest,
         'qualified code adoption Journal invalid',
       );
       const initial = this.#readInitialSourceContinuationReceipt(request.identity, request.attempt),
@@ -7013,7 +8122,7 @@ export class HostStateStore {
         host,
         journal: {
           version: { revision: row.revision, digest: row.digest },
-          state: JSON.parse(row.payload) as MastraSessionLedgerState,
+          state: parseMastraSessionLedgerState(row.value),
         },
         lineage,
       };
@@ -7141,77 +8250,89 @@ export class HostStateStore {
     readonly ledger_version: StateVersion | null;
   } {
     requireState(!this.#database.inTransaction, 'nested workspace inspection forbidden');
-    return this.#database
-      .transaction(() => {
-        const rows = this.#database
-          .query("SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id")
-          .all(this.#workspaceId) as { id: string }[];
-        const work = rows.map((row) => {
-          const current = this.#read(workIdentity(this.#load('work', row.id) as WorkState));
-          return {
-            work: current.work,
-            workVersion: current.workVersion,
-            maintenanceGeneration: current.maintenanceGeneration,
-          };
-        });
-        const ledger = this.#load('ledger', 'shared') as CoordinationLedger | null;
-        // Each authoritative row has already passed its own current-v1 ingress budget.
-        // The trusted relational projection contains the shared ledger only once.
-        return freezeJsonValue({
-          schema: 'HostWorkspaceSnapshot/v1' as const,
-          workspace_id: this.#workspaceId,
-          work,
-          ledger,
-          ledger_version: version(ledger, 'ledger'),
-        });
-      })
-      .deferred();
+    return this.#database.transaction(() => this.#queryWorkspaceSnapshot()).deferred();
   }
-  readWorkSessionJournal(identity: WorkIdentity): {
-    readonly attempt: number;
-    readonly version: StateVersion;
-    readonly state: Readonly<Record<string, unknown>>;
-  } | null {
+  #queryWorkspaceSnapshot() {
+    requireState(this.#database.inTransaction, 'workspace snapshot requires its original transaction');
+    assertWorkspaceInspectionBudget(this.#database, this.#workspaceId, ['agent_host_state']);
+    const rows = queryWorkspaceRowsUnknown(
+      this.#database,
+      'SELECT workspace_id,kind,id,revision,digest,' +
+        boundedWorkspacePayloadProjection +
+        " FROM agent_host_state WHERE workspace_id=? AND kind='work' ORDER BY id",
+      [this.#workspaceId],
+    ).map((row) => decodeWorkspaceSqlRow('agent_host_state', row, this.#workspaceId, this.#database));
+    if (rows.length) this.#assertDatabaseSupport();
+    const maintenance = rows.length ? this.#readMaintenanceFence() : null;
+    requireState(maintenance?.status !== 'held', 'working access blocked by maintenance fence');
+    const ledgerRow = readWorkspaceStateSqlRow(this.#database, this.#workspaceId, 'ledger', 'shared');
+    const ledger = ledgerRow ? (this.#decodeStoredStateRow(ledgerRow) as CoordinationLedger) : null;
+    const work = rows.map((row) => {
+      const state = this.#decodeStoredStateRow(row) as WorkState;
+      validatePair(state, ledger);
+      return {
+        work: state,
+        workVersion: { revision: row.revision, digest: row.digest },
+        maintenanceGeneration: maintenance?.generation ?? 0,
+      };
+    });
+    // The shared ledger and maintenance state are read once in the same SQLite snapshot.
+    return freezeJsonValue({
+      schema: 'HostWorkspaceSnapshot/v1' as const,
+      workspace_id: this.#workspaceId,
+      work,
+      ledger,
+      ledger_version: ledgerRow ? { revision: ledgerRow.revision, digest: ledgerRow.digest } : null,
+    });
+  }
+  readWorkSessionJournal(identity: WorkIdentity): WorkSessionJournalSnapshot | null {
+    return this.readWorkSessionSnapshot(identity).journal;
+  }
+  /** Host, Ledger, maintenance and Journal versions belong to one read transaction. */
+  readWorkSessionSnapshot(identity: WorkIdentity, attempt?: number): HostWorkSessionSnapshot {
     requireState(!this.#database.inTransaction, 'nested journal inspection forbidden');
     return this.#database
       .transaction(() => {
-        const work = this.#read(identity).work;
-        requireState(work, 'journal work is unavailable');
-        if (
-          !this.#database
-            .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
-            .get()
-        ) {
-          requireState(work.execution.assignment_attempts.length === 0, 'journal missing for retained host effects');
-          return null;
-        }
-        const row = this.#database
-          .query(
-            'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-          )
-          .get(this.#workspaceId, identity.work_id) as {
-          attempt: number;
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
-        if (!row) {
-          requireState(work.execution.assignment_attempts.length === 0, 'journal missing for retained host effects');
-          return null;
-        }
-        const state = JSON.parse(row.payload) as Record<string, unknown>;
-        validateWorkSessionBinding(work, state as unknown as MastraSessionLedgerState, this.#repositoryRoot);
-        requireState(
-          state.schema === 'MastraSessionLedger/v1' &&
-            state.workspace_id === this.#workspaceId &&
-            state.work_id === identity.work_id &&
-            state.attempt === row.attempt &&
-            canonicalJsonDigest(state) === row.digest,
-          'journal inspection identity differs',
-        );
-        return snapshot({ attempt: row.attempt, version: { revision: row.revision, digest: row.digest }, state });
+        const host = this.#read(identity);
+        return Object.freeze({ host, journal: this.#readWorkSessionJournal(identity, host.work, attempt) });
       })
       .deferred();
+  }
+  #readWorkSessionJournal(
+    identity: WorkIdentity,
+    work: WorkState | null,
+    attempt?: number,
+  ): WorkSessionJournalSnapshot | null {
+    requireState(this.#database.inTransaction, 'journal snapshot requires its original transaction');
+    requireState(work, 'journal work is unavailable');
+    if (
+      !this.#database
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_mastra_session_ledger'")
+        .get()
+    ) {
+      requireState(work.execution.assignment_attempts.length === 0, 'journal missing for retained host effects');
+      return null;
+    }
+    const row = readSelectedWorkspaceMastraSqlRow(this.#database, this.#workspaceId, identity.work_id, attempt);
+    if (!row) {
+      requireState(work.execution.assignment_attempts.length === 0, 'journal missing for retained host effects');
+      return null;
+    }
+    const state = parseMastraSessionLedgerState(row.value);
+    validateWorkSessionBinding(work, state, this.#repositoryRoot);
+    requireState(
+      state.schema === 'MastraSessionLedger/v1' &&
+        state.workspace_id === this.#workspaceId &&
+        state.work_id === identity.work_id &&
+        state.attempt === row.attempt &&
+        canonicalJsonDigest(state) === row.digest,
+      'journal inspection identity differs',
+    );
+    return Object.freeze({
+      attempt: row.attempt,
+      version: Object.freeze({ revision: row.revision, digest: row.digest }),
+      state,
+    });
   }
 
   /** Revalidate the live Source owner against the canonical Host journal and ticket queue. */
@@ -7219,7 +8340,7 @@ export class HostStateStore {
     host: HostStateSnapshot,
     request: TaskSourceBindingRequest,
     identity: WorkIdentity,
-    journal: { readonly attempt: number; readonly state: Readonly<Record<string, unknown>> },
+    journal: { readonly attempt: number; readonly state: MastraSessionLedgerState },
   ): CoordinationTicket {
     const work = host.work,
       ledger = host.ledger;
@@ -7277,6 +8398,14 @@ export class HostStateStore {
     return ticket;
   }
 
+  /** Backfill the checked task-source work scalar under one held maintenance transaction. */
+  repairTaskSourceBindingWorkProjection(receipt: MaintenanceFenceReceipt): Readonly<Record<string, unknown>> {
+    requireState(!this.#database.inTransaction, 'nested task source projection repair forbidden');
+    return this.#transactionWithProducerFence(() =>
+      repairTaskSourceWorkProjection(this.#database, this.#workspaceId, this.#assertMaintenanceReceipt(receipt)),
+    ).immediate();
+  }
+
   /** Persist preparation metadata only after the current Host owner and CAS are verified. */
   prepareTaskSourceBindingOperation(input: {
     readonly request: TaskSourceBindingRequest;
@@ -7284,7 +8413,7 @@ export class HostStateStore {
     readonly verifyCurrent: (context: {
       readonly work: WorkState;
       readonly ledger: CoordinationLedger;
-      readonly journal: Readonly<Record<string, unknown>>;
+      readonly journal: MastraSessionLedgerState;
     }) => { readonly source_authorization_sha256: string; readonly source_scope_digest: string };
   }): Readonly<Record<string, unknown>> {
     requireState(
@@ -7308,21 +8437,12 @@ export class HostStateStore {
     ): {
       attempt: number;
       version: StateVersion;
-      state: Readonly<Record<string, unknown>>;
+      state: MastraSessionLedgerState;
     } => {
-      const row = this.#database
-        .query(
-          'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-        )
-        .get(this.#workspaceId, identity.work_id) as {
-        attempt: number;
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readLatestWorkspaceMastraSqlRow(this.#database, this.#workspaceId, identity.work_id);
       requireState(row, 'task source preparation requires the current Host journal');
-      const state = JSON.parse(row.payload) as Record<string, unknown>;
-      validateWorkSessionBinding(work, state as unknown as MastraSessionLedgerState, this.#repositoryRoot);
+      const state = parseMastraSessionLedgerState(row.value);
+      validateWorkSessionBinding(work, state, this.#repositoryRoot);
       requireState(
         state.schema === 'MastraSessionLedger/v1' &&
           state.workspace_id === this.#workspaceId &&
@@ -7343,19 +8463,21 @@ export class HostStateStore {
       );
     const readRecord = (operationId: string) => {
       if (!tableExists()) return null;
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-        )
-        .get(this.#workspaceId, operationId) as {
-        revision: number;
-        payload: string;
-        digest: string;
-        request_id: string;
-        request_digest: string;
-      } | null;
-      if (!row) return null;
-      const operation = JSON.parse(row.payload) as Record<string, unknown>;
+      const input = queryWorkspaceRowUnknown(
+        this.#database,
+        'SELECT revision,digest,request_id,request_digest,' +
+          boundedWorkspacePayloadProjection +
+          ' FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+        [this.#workspaceId, operationId],
+      );
+      if (input === null) return null;
+      const row = decodeHostOwnedSqlPayloadRow(
+        this.#database,
+        input,
+        ['revision', 'digest', 'request_id', 'request_digest', 'payload', 'raw_payload_bytes'],
+        'agent_host_task_source_binding_operation',
+      );
+      const operation = row.value as Record<string, unknown>;
       requireState(
         Object.keys(operation).sort().join(',') ===
           'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
@@ -7422,14 +8544,13 @@ export class HostStateStore {
         );
         return createResult('prepared', stored);
       }
-      if (tableExists()) {
-        const priorRequest = this.#database
-          .query(
-            'SELECT operation_id FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND request_id=?',
-          )
-          .get(this.#workspaceId, request.request_id) as { operation_id: string } | null;
-        requireState(!priorRequest, 'task source request ID is already bound to another operation');
-      }
+      const hasProjection = ensureTaskSourceOperationPreparationSchema(this.#database);
+      const priorRequest = this.#database
+        .query(
+          'SELECT operation_id FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND request_id=?',
+        )
+        .get(this.#workspaceId, request.request_id) as { operation_id: string } | null;
+      requireState(!priorRequest, 'task source request ID is already bound to another operation');
       matchesExpected(before.workVersion, request.expected_host.work);
       matchesExpected(before.ledgerVersion, request.expected_host.ledger);
       requireState(
@@ -7452,22 +8573,16 @@ export class HostStateStore {
       });
       const payload = canonicalJson(operation),
         operationDigest = canonicalJsonDigest(operation);
-      this.#database.exec(
-        'CREATE TABLE IF NOT EXISTS agent_host_task_source_binding_operation (workspace_id TEXT NOT NULL,operation_id TEXT NOT NULL,request_id TEXT NOT NULL,request_digest TEXT NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,operation_id),UNIQUE(workspace_id,request_id))',
+      insertTaskSourceBindingOperation(
+        this.#database,
+        this.#workspaceId,
+        request,
+        requestDigest,
+        operation,
+        payload,
+        operationDigest,
+        hasProjection,
       );
-      this.#database
-        .query(
-          'INSERT INTO agent_host_task_source_binding_operation (workspace_id,operation_id,request_id,request_digest,revision,payload,digest) VALUES(?,?,?,?,?,?,?)',
-        )
-        .run(
-          this.#workspaceId,
-          request.operation_id,
-          request.request_id,
-          requestDigest,
-          operation.revision,
-          payload,
-          operationDigest,
-        );
       return createResult('prepared', {
         operation,
         state_version: { revision: operation.revision, digest: operationDigest },
@@ -7482,7 +8597,7 @@ export class HostStateStore {
     readonly verifyCurrent: (context: {
       readonly work: WorkState;
       readonly ledger: CoordinationLedger;
-      readonly journal: Readonly<Record<string, unknown>>;
+      readonly journal: MastraSessionLedgerState;
     }) => { readonly source_authorization_sha256: string; readonly source_scope_digest: string };
   }): Readonly<Record<string, unknown>> {
     requireState(
@@ -7507,23 +8622,10 @@ export class HostStateStore {
         this.#assertMaintenanceAvailable();
         const before = this.#read(identity);
         requireState(before.work, 'task source inspection Host work is missing');
-        const journalRow = this.#database
-          .query(
-            'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-          )
-          .get(this.#workspaceId, identity.work_id) as {
-          attempt: number;
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
+        const journalRow = readLatestWorkspaceMastraSqlRow(this.#database, this.#workspaceId, identity.work_id);
         requireState(journalRow, 'task source inspection requires the current Host journal');
-        const journalState = JSON.parse(journalRow.payload) as Record<string, unknown>;
-        validateWorkSessionBinding(
-          before.work,
-          journalState as unknown as MastraSessionLedgerState,
-          this.#repositoryRoot,
-        );
+        const journalState = parseMastraSessionLedgerState(journalRow.value);
+        validateWorkSessionBinding(before.work, journalState, this.#repositoryRoot);
         requireState(
           journalState.schema === 'MastraSessionLedger/v1' &&
             journalState.workspace_id === this.#workspaceId &&
@@ -7602,18 +8704,14 @@ export class HostStateStore {
             operation: null,
             state_version: null,
           });
-        const row = this.#database
-          .query(
-            'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-          )
-          .get(this.#workspaceId, request.operation_id) as {
-          revision: number;
-          payload: string;
-          digest: string;
-          request_id: string;
-          request_digest: string;
-        } | null;
-        if (!row)
+        const operationInput = queryWorkspaceRowUnknown(
+          this.#database,
+          'SELECT revision,digest,request_id,request_digest,' +
+            boundedWorkspacePayloadProjection +
+            ' FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+          [this.#workspaceId, request.operation_id],
+        );
+        if (operationInput === null)
           return snapshot({
             schema: 'TaskSourceBindingOperationResult/v1',
             status: 'not_found' as const,
@@ -7622,7 +8720,13 @@ export class HostStateStore {
             operation: null,
             state_version: null,
           });
-        const operation = JSON.parse(row.payload) as Record<string, unknown>;
+        const row = decodeHostOwnedSqlPayloadRow(
+          this.#database,
+          operationInput,
+          ['revision', 'digest', 'request_id', 'request_digest', 'payload', 'raw_payload_bytes'],
+          'agent_host_task_source_binding_operation',
+        );
+        const operation = row.value as Record<string, unknown>;
         requireState(
           Object.keys(operation).sort().join(',') ===
             'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
@@ -7682,11 +8786,19 @@ export class HostStateStore {
         state_version: null,
         command_argv: null,
       });
-    const actionRow = this.#database
-      .query(
-        'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-      )
-      .get(this.#workspaceId, input.request.operation_id) as TaskSourceActionRow | null;
+    const actionInput = queryWorkspaceRowUnknown(
+      this.#database,
+      'SELECT operation_id,request_id,revision,digest,' +
+        boundedWorkspacePayloadProjection +
+        ' FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+      [this.#workspaceId, input.request.operation_id],
+    );
+    const actionRow = decodeHostOwnedSqlPayloadRowOrNull(
+      this.#database,
+      actionInput,
+      ['operation_id', 'request_id', 'revision', 'digest', 'payload', 'raw_payload_bytes'],
+      'agent_host_task_source_binding_action',
+    ) as TaskSourceActionRow | null;
     if (!actionRow)
       return snapshot({
         schema: 'TaskSourceBindingActionResult/v1',
@@ -7697,11 +8809,19 @@ export class HostStateStore {
         state_version: null,
         command_argv: null,
       });
-    const operationRow = this.#database
-      .query(
-        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-      )
-      .get(this.#workspaceId, input.request.operation_id) as TaskSourceOperationRow | null;
+    const operationInput = queryWorkspaceRowUnknown(
+      this.#database,
+      'SELECT operation_id,revision,digest,request_id,request_digest,' +
+        boundedWorkspacePayloadProjection +
+        ' FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+      [this.#workspaceId, input.request.operation_id],
+    );
+    const operationRow = decodeHostOwnedSqlPayloadRowOrNull(
+      this.#database,
+      operationInput,
+      ['operation_id', 'revision', 'digest', 'request_id', 'request_digest', 'payload', 'raw_payload_bytes'],
+      'agent_host_task_source_binding_operation',
+    ) as TaskSourceOperationRow | null;
     requireState(operationRow, 'task source recovery action has no prepared operation');
     const pair = validateTaskSourceActionPair(operationRow, actionRow as TaskSourceActionRow, input.request),
       action = pair.action;
@@ -7785,62 +8905,21 @@ export class HostStateStore {
       'reserved task source ticket has no effect storage',
     );
     if (!operationsTable || !actionsTable) return null;
-    const rows = this.#database
-      .query(
-        'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=?',
-      )
-      .all(this.#workspaceId) as {
-      operation_id: string;
-      revision: number;
-      payload: string;
-      digest: string;
-      request_id: string;
-      request_digest: string;
-    }[];
-    const workRows = rows.filter((row) => {
-      const operation = JSON.parse(row.payload) as Record<string, unknown>;
-      const request = validateTaskSourceBindingRequest(operation.request);
-      return request.work_id === identity.work_id;
-    });
+    const workRows = readCurrentTaskSourceOperations(this.#database, this.#workspaceId, identity.work_id);
     requireState(
       reservedTickets.every((ticket) =>
-        workRows.some(
-          (row) =>
-            taskSourceTicketId(
-              validateTaskSourceBindingRequest(
-                parseStoredRecord(row.payload, 'task source retained operation').request,
-              ),
-            ) === ticket.ticket_id &&
-            this.#database
-              .query(
-                'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-              )
-              .get(this.#workspaceId, row.operation_id),
-        ),
+        workRows.some((row) => taskSourceTicketId(row.request) === ticket.ticket_id && row.actionInput !== null),
       ),
       'reserved task source ticket has no retained effect record',
     );
-    if (
-      !workRows.some((row) =>
-        this.#database
-          .query(
-            'SELECT operation_id FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-          )
-          .get(this.#workspaceId, row.operation_id),
-      )
-    )
-      return null;
-    const journalRow = this.#database
-      .query(
-        'SELECT attempt,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-      )
-      .get(this.#workspaceId, identity.work_id) as { attempt: number; payload: string; digest: string } | null;
+    if (!workRows.some((row) => row.actionInput !== null)) return null;
+    const journalRow = readLatestWorkspaceMastraSqlRow(this.#database, this.#workspaceId, identity.work_id);
     requireState(
       journalRow && (attempt === undefined || journalRow.attempt === attempt),
       'task source binding Host journal attempt differs',
     );
     const currentAttempt = journalRow.attempt;
-    const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
+    const journal = parseMastraSessionLedgerState(journalRow.value),
       durableSourceScope = validateTaskSourceJournalScope(journal.source_scope);
     assertTaskSourceJournalScopeWithinWork(durableSourceScope, work);
     requireState(
@@ -7849,20 +8928,20 @@ export class HostStateStore {
     );
     let binding: TaskSourceBinding | null = null;
     let uncertain = false;
-    for (const row of workRows) {
-      const operationRow = row as TaskSourceOperationRow,
-        operation = JSON.parse(row.payload) as Record<string, unknown>,
-        request = validateTaskSourceBindingRequest(operation.request);
+    for (const entry of workRows) {
+      const { row: operationRow, request, actionInput } = entry,
+        operation = operationRow.value as Record<string, unknown>;
       requireState(
         sameJson(request.project_ids, identity.project_ids),
         'task source prepared operation identity differs during binding read',
       );
-      const actionRow = this.#database
-        .query(
-          'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-        )
-        .get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
-      if (!actionRow) continue;
+      if (actionInput === null) continue;
+      const actionRow = decodeHostOwnedSqlPayloadRow(
+        this.#database,
+        actionInput,
+        ['operation_id', 'request_id', 'revision', 'digest', 'payload', 'raw_payload_bytes'],
+        'agent_host_task_source_binding_action',
+      ) as unknown as TaskSourceActionRow;
       const pair = validateTaskSourceActionPair(operationRow, actionRow),
         action = pair.action;
       if (request.operation === 'inspect') continue;
@@ -7968,7 +9047,7 @@ export class HostStateStore {
             'SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
           )
           .get(this.#workspaceId, input.identity.work_id, input.attempt) as { payload: string; digest: string } | null;
-        const journalState = journal ? (JSON.parse(journal.payload) as Record<string, unknown>) : null;
+        const journalState = journal ? parseMastraSessionLedgerState(JSON.parse(journal.payload)) : null;
         requireState(
           journal &&
             journalState?.schema === 'MastraSessionLedger/v1' &&
@@ -8163,22 +9242,47 @@ export class HostStateStore {
       );
     const readAction = (operationId: string) => {
       if (!tableExists()) return null;
-      const actionRow = this.#database
-        .query(
-          'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-        )
-        .get(this.#workspaceId, operationId) as TaskSourceActionRow | null;
-      if (!actionRow) return null;
-      const operationRow = this.#database
-        .query(
-          'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-        )
-        .get(this.#workspaceId, operationId) as TaskSourceOperationRow | null;
+      const actionInput = queryWorkspaceRowUnknown(
+        this.#database,
+        'SELECT operation_id,request_id,revision,digest,' +
+          boundedWorkspacePayloadProjection +
+          ' FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+        [this.#workspaceId, operationId],
+      );
+      if (actionInput === null) return null;
+      const actionRow = decodeHostOwnedSqlPayloadRow(
+        this.#database,
+        actionInput,
+        ['operation_id', 'request_id', 'revision', 'digest', 'payload', 'raw_payload_bytes'],
+        'agent_host_task_source_binding_action',
+      ) as unknown as TaskSourceActionRow;
+      const operationInput = queryWorkspaceRowUnknown(
+        this.#database,
+        'SELECT operation_id,revision,digest,request_id,request_digest,' +
+          boundedWorkspacePayloadProjection +
+          ' FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+        [this.#workspaceId, operationId],
+      );
+      const operationRow = decodeHostOwnedSqlPayloadRowOrNull(
+        this.#database,
+        operationInput,
+        ['operation_id', 'revision', 'digest', 'request_id', 'request_digest', 'payload', 'raw_payload_bytes'],
+        'agent_host_task_source_binding_operation',
+      ) as TaskSourceOperationRow | null;
       requireState(operationRow, 'task source action has no prepared operation');
       const pair = validateTaskSourceActionPair(operationRow, actionRow);
-      return { action: pair.action, state_version: { revision: actionRow.revision, digest: actionRow.digest } };
+      return {
+        action: pair.action,
+        operation: pair.operation,
+        operationRow,
+        state_version: { revision: actionRow.revision, digest: actionRow.digest },
+      };
     };
-    const result = (status: string, stored: ReturnType<typeof readAction>, argv: unknown = null) =>
+    const result = (
+      status: string,
+      stored: { readonly action: Readonly<Record<string, unknown>>; readonly state_version: StateVersion } | null,
+      argv: unknown = null,
+    ) =>
       snapshot({
         schema: 'TaskSourceBindingActionResult/v1',
         status,
@@ -8193,13 +9297,8 @@ export class HostStateStore {
         this.#assertMaintenanceAvailable();
         const action = readAction(request.operation_id);
         if (!action) return null;
-        const row = this.#database
-          .query(
-            'SELECT payload,digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-          )
-          .get(this.#workspaceId, request.operation_id) as { payload: string; digest: string } | null;
-        requireState(row, 'issued task source operation preparation is missing');
-        const prepared = JSON.parse(row.payload) as Record<string, unknown>;
+        const row = action.operationRow;
+        const prepared = action.operation;
         requireState(
           prepared.request_id === request.request_id &&
             sameJson(prepared.request, request) &&
@@ -8214,19 +9313,21 @@ export class HostStateStore {
     const prepared = this.#database
       .transaction(() => {
         this.#assertMaintenanceAvailable();
-        const row = this.#database
-          .query(
-            'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-          )
-          .get(this.#workspaceId, request.operation_id) as {
-          revision: number;
-          payload: string;
-          digest: string;
-          request_id: string;
-          request_digest: string;
-        } | null;
+        const rowInput = queryWorkspaceRowUnknown(
+          this.#database,
+          'SELECT revision,digest,request_id,request_digest,' +
+            boundedWorkspacePayloadProjection +
+            ' FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+          [this.#workspaceId, request.operation_id],
+        );
+        const row = decodeHostOwnedSqlPayloadRowOrNull(
+          this.#database,
+          rowInput,
+          ['revision', 'digest', 'request_id', 'request_digest', 'payload', 'raw_payload_bytes'],
+          'agent_host_task_source_binding_operation',
+        ) as TaskSourceOperationRow | null;
         requireState(row, 'task source operation must be prepared before issue');
-        const operation = JSON.parse(row.payload) as Record<string, unknown>;
+        const operation = row.value as Record<string, unknown>;
         requireState(
           Object.keys(operation).sort().join(',') ===
             'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
@@ -8269,16 +9370,7 @@ export class HostStateStore {
           before.maintenanceGeneration === request.expected_host.maintenance_generation,
           'task source issue maintenance generation changed',
         );
-        const journalRow = this.#database
-          .query(
-            'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-          )
-          .get(this.#workspaceId, request.work_id) as {
-          attempt: number;
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
+        const journalRow = readLatestWorkspaceMastraSqlRow(this.#database, this.#workspaceId, request.work_id);
         requireState(
           journalRow &&
             journalRow.attempt === request.expected_host.journal.attempt &&
@@ -8286,7 +9378,7 @@ export class HostStateStore {
             journalRow.digest === request.expected_host.journal.version.digest,
           'task source issue journal compare-and-swap changed',
         );
-        const journal = JSON.parse(journalRow.payload) as Record<string, unknown>,
+        const journal = parseMastraSessionLedgerState(journalRow.value),
           journalScope = validateTaskSourceJournalScope(journal.source_scope);
         requireState(
           canonicalJsonDigest(journal) === journalRow.digest && journalScope.digest.length === 64,
@@ -8343,18 +9435,9 @@ export class HostStateStore {
         current.work && current.workVersion && current.ledgerVersion,
         'task source owner changed during policy evaluation',
       );
-      const journalRow = this.#database
-        .query(
-          'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-        )
-        .get(this.#workspaceId, request.work_id) as {
-        attempt: number;
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const journalRow = readLatestWorkspaceMastraSqlRow(this.#database, this.#workspaceId, request.work_id);
       requireState(journalRow, 'task source issue requires the current Host journal');
-      const currentJournal = JSON.parse(journalRow.payload) as Record<string, unknown>;
+      const currentJournal = parseMastraSessionLedgerState(journalRow.value);
       requireState(
         journalRow.attempt === request.attempt && canonicalJsonDigest(currentJournal) === journalRow.digest,
         'task source issue journal integrity differs during policy evaluation',
@@ -8379,11 +9462,10 @@ export class HostStateStore {
       );
       const row = this.#database
         .query(
-          'SELECT revision,payload,digest,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+          'SELECT revision,digest,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
         )
         .get(this.#workspaceId, request.operation_id) as {
         revision: number;
-        payload: string;
         digest: string;
         request_digest: string;
       } | null;
@@ -8403,20 +9485,11 @@ export class HostStateStore {
               .all(this.#workspaceId, request.operation_id) as { operation_id: string }[])
           : [];
         for (const previous of previousActions) {
-          const action = readAction(previous.operation_id)!.action;
-          const priorRow = this.#database
-            .query(
-              'SELECT revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-            )
-            .get(this.#workspaceId, previous.operation_id) as {
-            revision: number;
-            payload: string;
-            digest: string;
-            request_id: string;
-            request_digest: string;
-          } | null;
-          requireState(priorRow, 'pending TaskSource action preparation is missing');
-          const operation = JSON.parse(priorRow.payload) as Record<string, unknown>;
+          const prior = readAction(previous.operation_id);
+          requireState(prior, 'pending TaskSource action preparation is missing');
+          const action = prior.action,
+            priorRow = prior.operationRow,
+            operation = prior.operation;
           requireState(
             Object.keys(operation).sort().join(',') ===
               'authority,created_at,operation_id,request,request_digest,request_id,revision,schema,status' &&
@@ -8613,6 +9686,7 @@ export class HostStateStore {
           },
           undefined,
           true,
+          true,
           additions,
         );
         if (queued) return { status: 'queued' as const, action: null, state_version: null };
@@ -8674,17 +9748,33 @@ export class HostStateStore {
     );
     const stored = this.#transactionWithProducerFence(() => {
       this.#assertMaintenanceAvailable();
-      const actionRow = this.#database
-        .query(
-          'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
-        )
-        .get(this.#workspaceId, request.operation_id) as TaskSourceActionRow | null;
+      const actionInput = queryWorkspaceRowUnknown(
+        this.#database,
+        'SELECT operation_id,request_id,revision,digest,' +
+          boundedWorkspacePayloadProjection +
+          ' FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?',
+        [this.#workspaceId, request.operation_id],
+      );
+      const actionRow = decodeHostOwnedSqlPayloadRowOrNull(
+        this.#database,
+        actionInput,
+        ['operation_id', 'request_id', 'revision', 'digest', 'payload', 'raw_payload_bytes'],
+        'agent_host_task_source_binding_action',
+      ) as TaskSourceActionRow | null;
       requireState(actionRow, 'task source report has no issued Host action');
-      const operationRow = this.#database
-        .query(
-          'SELECT operation_id,revision,payload,digest,request_id,request_digest FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
-        )
-        .get(this.#workspaceId, request.operation_id) as TaskSourceOperationRow | null;
+      const operationInput = queryWorkspaceRowUnknown(
+        this.#database,
+        'SELECT operation_id,revision,digest,request_id,request_digest,' +
+          boundedWorkspacePayloadProjection +
+          ' FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+        [this.#workspaceId, request.operation_id],
+      );
+      const operationRow = decodeHostOwnedSqlPayloadRowOrNull(
+        this.#database,
+        operationInput,
+        ['operation_id', 'revision', 'digest', 'request_id', 'request_digest', 'payload', 'raw_payload_bytes'],
+        'agent_host_task_source_binding_operation',
+      ) as TaskSourceOperationRow | null;
       requireState(operationRow, 'task source report has no prepared operation');
       const action = validateTaskSourceActionPair(operationRow, actionRow, request).action,
         reportDigest = canonicalJsonDigest(report);
@@ -8730,16 +9820,7 @@ export class HostStateStore {
           current.maintenanceGeneration === request.expected_host.maintenance_generation,
           'observed task source report maintenance CAS changed',
         );
-        const journalRow = this.#database
-          .query(
-            'SELECT attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? ORDER BY attempt DESC LIMIT 1',
-          )
-          .get(this.#workspaceId, request.work_id) as {
-          attempt: number;
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
+        const journalRow = readLatestWorkspaceMastraSqlRow(this.#database, this.#workspaceId, request.work_id);
         requireState(
           journalRow &&
             journalRow.attempt === request.expected_host.journal.attempt &&
@@ -8747,7 +9828,7 @@ export class HostStateStore {
             journalRow.digest === request.expected_host.journal.version.digest,
           'observed task source report journal CAS changed',
         );
-        const currentJournal = JSON.parse(journalRow.payload) as { source_scope?: unknown };
+        const currentJournal = parseMastraSessionLedgerState(journalRow.value);
         const currentJournalScope = validateTaskSourceJournalScope(currentJournal.source_scope);
         assertTaskSourceJournalScopeWithinWork(currentJournalScope, current.work);
         if (request.operation !== 'inspect')
@@ -8947,7 +10028,7 @@ export class HostStateStore {
               canonicalJsonDigest(JSON.parse(journalRow.payload)) === journalRow.digest,
               'repair journal preimage integrity differs',
             );
-            const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState;
+            const journal = parseMastraSessionLedgerState(JSON.parse(journalRow.payload));
             requireState(
               journal.schema === 'MastraSessionLedger/v1' &&
                 journal.workspace_id === this.#workspaceId &&
@@ -9070,7 +10151,7 @@ export class HostStateStore {
           );
           const unknownIssuedItems = journals
             .filter((entry) => entry.work_id === work.binding.lifecycle_work_id)
-            .flatMap((entry) => journalItems(JSON.parse(entry.payload) as MastraSessionLedgerState))
+            .flatMap((entry) => journalItems(parseMastraSessionLedgerState(JSON.parse(entry.payload))))
             .filter((entry) => entry.issue_id !== null && entry.observation === null);
           requireState(
             unknownIssuedItems.length === 1 && canonicalJson(unknownIssuedItems[0]) === canonicalJson(item),
@@ -9871,11 +10952,7 @@ export class HostStateStore {
       readonly requestPointer: string;
     }[];
     readonly verifySuccessor: () => void;
-    readonly verifyCurrent: (
-      work: WorkState,
-      journal: Readonly<Record<string, unknown>>,
-      requestPointer: string,
-    ) => void;
+    readonly verifyCurrent: (work: WorkState, journal: MastraSessionLedgerState, requestPointer: string) => void;
   }): HostStateSnapshot {
     const successor = this.#checkedWork(snapshot(input.nextWork));
     const incomingLedger = checkedLedger(snapshotLedger(input.nextLedger));
@@ -9952,46 +11029,31 @@ export class HostStateStore {
           tickets.length > 0 && tickets.every((ticket) => ticket.thread_id === input.nativeSessionHandle),
           'predecessor owner or ticket differs',
         );
-        const journalRow = this.#database
-          .query(
-            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-          )
-          .get(this.#workspaceId, candidate.identity.work_id, candidate.attempt) as {
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
+        const journalRow = readWorkspaceMastraSqlRow(
+          this.#database,
+          this.#workspaceId,
+          candidate.identity.work_id,
+          candidate.attempt,
+        );
         requireState(
           journalRow &&
             journalRow.revision === candidate.expectedJournal.revision &&
             journalRow.digest === candidate.expectedJournal.digest,
           'predecessor journal CAS changed',
         );
-        const journal = JSON.parse(journalRow.payload) as Record<string, unknown>;
+        const journal = parseMastraSessionLedgerState(journalRow.value);
         requireState(
           canonicalJsonDigest(journal) === journalRow.digest &&
             journal.schema === 'MastraSessionLedger/v1' &&
             journal.workspace_id === this.#workspaceId &&
             journal.work_id === candidate.identity.work_id &&
             journal.attempt === candidate.attempt &&
-            journal.run_id === work.execution.run_id &&
-            Array.isArray(journal.items) &&
-            Array.isArray(journal.completed),
+            journal.run_id === work.execution.run_id,
           'predecessor journal identity invalid',
         );
-        const journalItems = [
-          ...(journal.items as Record<string, unknown>[]),
-          ...(journal.completed as { items: Record<string, unknown>[] }[]).flatMap((wave) => wave.items),
-        ];
+        const journalItems = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)];
         requireState(
-          journalItems.every(
-            (item) =>
-              !item.host_reservation ||
-              completedSourceJournalObservationMatches(
-                work,
-                item as unknown as MastraSessionLedgerState['items'][number],
-              ),
-          ),
+          journalItems.every((item) => !item.host_reservation || completedSourceJournalObservationMatches(work, item)),
           'reserved source action prevents absorption',
         );
         requireSynchronousVerification(
@@ -10274,50 +11336,7 @@ export class HostStateStore {
   /** One forward-bound current-v1 runtime-code rebind; ordinary work CAS remains immutable. */
   async rebindRuntimeCode(request: RuntimeCodeRebindRequest): Promise<HostStateSnapshot> {
     requireState(this.#verifyRuntimeCodeRebind, 'trusted runtime-code rebind verifier required');
-    const input = snapshot(request);
-    requireState(
-      Object.keys(input).length === (input.expectedMaintenanceGeneration === undefined ? 14 : 15) &&
-        Number.isSafeInteger(input.attempt) &&
-        input.attempt > 0 &&
-        hashPattern.test(input.oldRuntimeCodeDigest) &&
-        hashPattern.test(input.newRuntimeCodeDigest) &&
-        input.oldRuntimeCodeDigest !== input.newRuntimeCodeDigest &&
-        hashPattern.test(input.parentManifestDigest) &&
-        hashPattern.test(input.successorManifestDigest) &&
-        [input.actionId, input.issueId, input.nativeSessionHandle, input.forwardOperationId].every(
-          (value) =>
-            typeof value === 'string' &&
-            value.length > 0 &&
-            value.length <= 2048 &&
-            value.trim() === value &&
-            !/\p{Cc}/u.test(value),
-        ) &&
-        (input.focusedFailureCorrection
-          ? Object.keys(input.focusedFailureCorrection).length === 1 &&
-            typeof input.focusedFailureCorrection.ownerCorrectionPointer === 'string' &&
-            input.focusedFailureCorrection.ownerCorrectionPointer.trim().length > 0 &&
-            input.focusedFailureCorrection.ownerCorrectionPointer.length <= 2048 &&
-            input.synthesisCorrection === undefined &&
-            input.ownerNoCallPointer === undefined
-          : input.synthesisCorrection === undefined
-            ? typeof input.ownerNoCallPointer === 'string' &&
-              input.ownerNoCallPointer.length > 0 &&
-              input.ownerNoCallPointer.length <= 2048 &&
-              input.ownerNoCallPointer.trim() === input.ownerNoCallPointer &&
-              !/\p{Cc}/u.test(input.ownerNoCallPointer)
-            : input.ownerNoCallPointer === undefined &&
-              Object.keys(input.synthesisCorrection).length === 3 &&
-              hashPattern.test(input.synthesisCorrection.correctionDigest) &&
-              [input.synthesisCorrection.correctionId, input.synthesisCorrection.ownerCorrectionPointer].every(
-                (value) =>
-                  typeof value === 'string' &&
-                  value.length > 0 &&
-                  value.length <= 2048 &&
-                  value.trim() === value &&
-                  !/\p{Cc}/u.test(value),
-              )),
-      'runtime-code rebind request invalid',
-    );
+    const input = parseRuntimeCodeRebindRequest(request);
     const before = this.readHostStateSnapshot(input.identity);
     const focused = Boolean(input.focusedFailureCorrection);
     const { loadRuntimeConfig } = await import('./config/runtime-config.js');
@@ -10392,32 +11411,19 @@ export class HostStateStore {
           Date.parse(claim.lease_expires_at) > Date.now(),
         'runtime-code rebind lease or owner changed',
       );
-      const journalRow = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const journalRow = readWorkspaceMastraSqlRow(
+        this.#database,
+        this.#workspaceId,
+        input.identity.work_id,
+        input.attempt,
+      );
       requireState(
         journalRow?.revision === input.expectedJournal.revision &&
           journalRow.digest === input.expectedJournal.digest &&
-          canonicalJsonDigest(JSON.parse(journalRow.payload)) === journalRow.digest,
+          canonicalJsonDigest(journalRow.value) === journalRow.digest,
         'runtime-code rebind journal CAS changed',
       );
-      const journal = JSON.parse(journalRow!.payload) as MastraSessionLedgerState & {
-        run_id: string;
-        items: readonly {
-          request: { action_id: string; config_digest: string; scope_digest: string };
-          issue_id: string | null;
-          observation: unknown;
-          research_activation?: unknown;
-          research_normalization?: unknown;
-          host_reservation?: unknown;
-        }[];
-      };
+      const journal = parseMastraSessionLedgerState(JSON.parse(journalRow!.payload));
       const item = [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].find(
         (entry) => entry.request.action_id === input.actionId,
       );
@@ -10687,24 +11693,16 @@ export class HostStateStore {
         work !== null && ledger !== null && before.workVersion !== null && before.ledgerVersion !== null,
         'initial Source continuation Work or Ledger is unavailable',
       );
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
       requireState(
         row !== null &&
           row.revision === input.expectedJournal.revision &&
           row.digest === input.expectedJournal.digest &&
-          row.payload === canonicalJson(JSON.parse(row.payload)) &&
-          canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+          row.payload === canonicalJson(row.value) &&
+          canonicalJsonDigest(row.value) === row.digest,
         'initial Source continuation Journal CAS or checksum changed',
       );
-      const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
+      const journal = parseMastraSessionLedgerState(row.value);
       requireState(
         journal.schema === 'MastraSessionLedger/v1' &&
           journal.workspace_id === this.#workspaceId &&
@@ -11287,16 +12285,8 @@ export class HostStateStore {
         action.kind === 'historical_terminal_review'
           ? this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId)
           : null,
-      journalRow = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null,
-      firstJournal = journalRow ? (JSON.parse(journalRow.payload) as MastraSessionLedgerState) : null,
+      journalRow = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt),
+      firstJournal = journalRow ? parseMastraSessionLedgerState(journalRow.value) : null,
       firstJournalVersion = journalRow ? { revision: journalRow.revision, digest: journalRow.digest } : null;
     this.#assertMaintenanceGeneration(input.expectedMaintenanceGeneration);
     inspect(first, capture, firstJournal, firstJournalVersion);
@@ -11328,16 +12318,13 @@ export class HostStateStore {
           action.kind === 'historical_terminal_review'
             ? this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, actionId)
             : null,
-        currentJournalRow = this.#database
-          .query(
-            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-          )
-          .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null,
-        currentJournal = currentJournalRow ? (JSON.parse(currentJournalRow.payload) as MastraSessionLedgerState) : null,
+        currentJournalRow = readWorkspaceMastraSqlRow(
+          this.#database,
+          this.#workspaceId,
+          input.identity.work_id,
+          input.attempt,
+        ),
+        currentJournal = currentJournalRow ? parseMastraSessionLedgerState(currentJournalRow.value) : null,
         currentJournalVersion = currentJournalRow
           ? { revision: currentJournalRow.revision, digest: currentJournalRow.digest }
           : null;
@@ -11703,17 +12690,9 @@ export class HostStateStore {
       after_digest: afterDigest,
     };
     const current = this.#read(identity, false, overlay);
-    const journalRow = this.#database
-      .query(
-        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-      )
-      .get(this.#workspaceId, identity.work_id, attempt) as {
-      revision: number;
-      payload: string;
-      digest: string;
-    } | null;
+    const journalRow = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, identity.work_id, attempt);
     requireState(journalRow, 'delivered-work continuation repair Journal is missing');
-    const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState;
+    const journal = parseMastraSessionLedgerState(journalRow.value);
     assertCanonicalJsonValue(journal, '$.continuationRepair.journal');
     if (receipt.request.action.kind === 'configured_frontier') {
       requireState(
@@ -11968,15 +12947,7 @@ export class HostStateStore {
             )
             .get(this.#workspaceId, identity.work_id, attempt, actionId) as { payload: string; digest: string } | null;
           const current = this.#read(identity),
-            journal = this.#database
-              .query(
-                'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-              )
-              .get(this.#workspaceId, identity.work_id, attempt) as {
-              revision: number;
-              payload: string;
-              digest: string;
-            } | null;
+            journal = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, identity.work_id, attempt);
           requireState(
             row &&
               row.payload === plan.inspection.row.payload &&
@@ -12107,20 +13078,12 @@ export class HostStateStore {
     }
     const readState = (): InitialSourceFrontierCodeRebindState => {
       const host = this.#read(request.identity),
-        row = this.#database
-          .query(
-            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-          )
-          .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
+        row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, request.identity.work_id, request.attempt);
       requireState(
         row !== null &&
           Number.isSafeInteger(row.revision) &&
           row.revision > 0 &&
-          canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+          canonicalJsonDigest(row.value) === row.digest,
         'frontier rebind Journal row is missing or corrupt',
       );
       const initialReceipt = this.#readInitialSourceContinuationReceipt(request.identity, request.attempt);
@@ -12129,7 +13092,7 @@ export class HostStateStore {
         host,
         journal: {
           version: { revision: row!.revision, digest: row!.digest },
-          state: JSON.parse(row!.payload) as MastraSessionLedgerState,
+          state: parseMastraSessionLedgerState(JSON.parse(row!.payload)),
         },
         initialReceipt,
       };
@@ -12367,8 +13330,8 @@ export class HostStateStore {
     identity: WorkIdentity,
     attempt: number,
     originalReceiptId: string,
+    current = this.#read(identity),
   ): InitialSourceFrontierCodeRebindReceipt | null {
-    const current = this.#read(identity);
     if (!current.work) return null;
     const table = this.#database
       .query(
@@ -12455,17 +13418,9 @@ export class HostStateStore {
           host.work !== null && host.work !== undefined,
           'completed Source report recovery receipt has no current Work',
         );
-        const row = this.#database
-          .query(
-            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-          )
-          .get(this.#workspaceId, identity.work_id, attempt) as {
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
+        const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, identity.work_id, attempt);
         requireState(
-          row !== null && canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+          row !== null && canonicalJsonDigest(row.value) === row.digest,
           'completed Source report recovery Journal is missing or corrupt',
         );
         const initialReceipt = this.#readInitialSourceContinuationReceipt(identity, attempt),
@@ -12476,7 +13431,7 @@ export class HostStateStore {
             host,
             journal: {
               version: { revision: row!.revision, digest: row!.digest },
-              state: JSON.parse(row!.payload) as MastraSessionLedgerState,
+              state: parseMastraSessionLedgerState(JSON.parse(row!.payload)),
             },
             initialReceipt,
             frontierReceipt,
@@ -12486,6 +13441,37 @@ export class HostStateStore {
         return snapshotCompletedSourceReportRecoveryReceipt(recoveryReceipt);
       })
       .deferred();
+  }
+  /** Read the current recovery tuple and immutable lineage under one SQLite snapshot. */
+  readCompletedSourceReportRecoveryState(identity: WorkIdentity, attempt: number): CompletedSourceReportRecoveryState {
+    requireState(
+      Number.isSafeInteger(attempt) && attempt > 0 && !this.#database.inTransaction,
+      'completed Source report recovery state inspection identity invalid',
+    );
+    return this.#database.transaction(() => this.#readCompletedSourceReportRecoveryState(identity, attempt)).deferred();
+  }
+  #readCompletedSourceReportRecoveryState(identity: WorkIdentity, attempt: number): CompletedSourceReportRecoveryState {
+    const host = this.#read(identity),
+      journal = this.#readWorkSessionJournal(identity, host.work),
+      initialReceipt = this.#readInitialSourceContinuationReceipt(identity, attempt, host);
+    requireState(
+      journal && journal.attempt === attempt && initialReceipt,
+      'Host, Journal or original Source continuation is missing',
+    );
+    const state: CompletedSourceReportRecoveryState = {
+      host,
+      journal: Object.freeze({ version: journal.version, state: journal.state }),
+      initialReceipt,
+      frontierReceipt: this.#readInitialSourceFrontierCodeRebindReceipt(
+        identity,
+        attempt,
+        initialReceipt.continuation_id,
+        host,
+      ),
+      recoveryReceipt: this.#readCompletedSourceReportRecoveryReceiptRow(identity, attempt),
+    };
+    if (state.recoveryReceipt) validateCompletedSourceReportRecoveryLineage(state);
+    return Object.freeze(state);
   }
   readInitialSourceContinuationReceipt(
     identity: WorkIdentity,
@@ -12500,8 +13486,8 @@ export class HostStateStore {
   #readInitialSourceContinuationReceipt(
     identity: WorkIdentity,
     attempt: number,
+    current = this.#read(identity),
   ): InitialSourceContinuationReceipt | null {
-    const current = this.#read(identity);
     if (!current.work) return null;
     const table = this.#database
       .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_initial_source_continuation'")
@@ -12689,17 +13675,9 @@ export class HostStateStore {
         ),
       'delivered-work continuation original owner lease or FIFO position is no longer current',
     );
-    const journalRow = this.#database
-      .query(
-        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-      )
-      .get(this.#workspaceId, identity.work_id, attempt) as {
-      revision: number;
-      payload: string;
-      digest: string;
-    } | null;
+    const journalRow = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, identity.work_id, attempt);
     requireState(journalRow, 'delivered-work continuation has no retained original-attempt Journal');
-    const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState,
+    const journal = parseMastraSessionLedgerState(journalRow.value),
       version = { revision: journalRow.revision, digest: journalRow.digest };
     validateWorkSessionBinding(current.work, journal, this.#repositoryRoot);
     requireState(
@@ -12957,35 +13935,41 @@ export class HostStateStore {
     stageIds: readonly string[];
     userInstructionRef: string;
   }): CorrectiveExecution | null {
+    const read = () => this.#readCorrectiveAuthorizationFromSnapshot(input);
+    return this.#database.inTransaction ? read() : this.#database.transaction(read).deferred();
+  }
+
+  #readCorrectiveAuthorizationFromSnapshot(input: {
+    identity: WorkIdentity;
+    attempt: number;
+    journal: StateVersion;
+    stageIds: readonly string[];
+    userInstructionRef: string;
+  }): CorrectiveExecution | null {
     const host = this.#read(input.identity),
       work = host.work;
     if (!work || work.lifecycle.assurance.correction_count === 0) return null;
-    const row = this.#database
-      .query(
-        'SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-      )
-      .get(this.#workspaceId, input.identity.work_id, input.attempt) as { payload: string; digest: string } | null;
+    const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
     if (!row) return null;
-    const journal = JSON.parse(row.payload) as MastraSessionLedgerState,
+    const journal = parseMastraSessionLedgerState(row.value),
       execution = journal.corrective_execution;
     if (!execution) return null;
-    this.assertCorrectiveExecution(input.identity, input.attempt, execution);
+    const authority = this.#assertCorrectiveExecutionForWork(work, input.attempt, execution);
+    // The bounded SQL row decoder checked the canonical payload digest before parsing.
+    requireState(this.#repositoryRoot, 'current corrective journal repository binding unavailable');
     requireState(
-      canonicalJsonDigest(journal) === row.digest && this.#repositoryRoot,
-      'current corrective journal integrity differs',
-    );
-    const authority = correctiveAssignmentAuthorizationSchema.parse(
-      JSON.parse(
-        requireSafeRepositoryAccess(this.#repositoryRoot).readText(
-          execution.authorization.path,
-          'corrective authorization delivery retry',
-        ),
-      ),
+      journal.schema === 'MastraSessionLedger/v1' &&
+        journal.workspace_id === this.#workspaceId &&
+        journal.work_id === input.identity.work_id &&
+        journal.attempt === input.attempt &&
+        journal.run_id === execution.engine_run_id,
+      'current corrective journal identity differs',
     );
     if (!sameJson(authority.journal_version, input.journal)) return null;
+    requireState(sameJson(authority.stage_ids, input.stageIds), 'corrective authorization stages differ');
     requireState(
-      sameJson(authority.stage_ids, input.stageIds) && authority.user_instruction_ref === input.userInstructionRef,
-      'corrective authorization retry differs',
+      authority.user_instruction_ref === input.userInstructionRef,
+      'corrective authorization instruction differs',
     );
     return snapshot(execution);
   }
@@ -13005,7 +13989,7 @@ export class HostStateStore {
       'attributable corrective authorization missing',
     );
     requireState(!this.#database.inTransaction, 'nested corrective authorization forbidden');
-    return this.#transactionWithProducerFence(() => {
+    return this.#transactionWithProducerFenceAndStoredWorkHistoryCache(() => {
       this.assertSessionProducerWriteAllowed();
       const host = this.#read(input.identity),
         work = host.work;
@@ -13026,20 +14010,12 @@ export class HostStateStore {
         ),
         'corrective authorization has unknown Host effects',
       );
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
       requireState(
         row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
         'corrective journal CAS conflict',
       );
-      const original = JSON.parse(row.payload) as MastraSessionLedgerState;
+      const original = parseMastraSessionLedgerState(row.value);
       requireState(
         canonicalJsonDigest(original) === row.digest &&
           original.work_id === input.identity.work_id &&
@@ -13288,27 +14264,30 @@ export class HostStateStore {
   }
 
   assertCorrectiveExecution(identity: WorkIdentity, attempt: number, value: CorrectiveExecution): void {
-    const execution = correctiveExecutionSchema.parse(value),
-      host = this.#read(identity),
-      work = host.work;
+    const work = this.#read(identity).work;
     requireState(work, 'corrective execution work unavailable');
-    validateWorkSessionBinding(
-      work,
-      { attempt, run_id: execution.engine_run_id, corrective_execution: execution },
-      this.#repositoryRoot,
-    );
-    const authority = this.#correctiveAuthority(work, execution.stage_ids[0]!);
+    this.#assertCorrectiveExecutionForWork(work, attempt, value);
+  }
+
+  #assertCorrectiveExecutionForWork(
+    work: WorkState,
+    attempt: number,
+    value: CorrectiveExecution,
+  ): ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse> {
+    const execution = correctiveExecutionSchema.parse(value),
+      payload = validateWorkSessionBindingAndReturnCorrectiveAuthority(
+        work,
+        { attempt, run_id: execution.engine_run_id, corrective_execution: execution },
+        this.#repositoryRoot,
+      );
+    requireState(payload, 'corrective execution authority payload unavailable');
+    const authority = this.#correctiveAuthority(work, execution.stage_ids[0]!, {
+      reference: execution.authorization,
+      payload,
+    });
     requireState(
-      sameJson(authority.reference, execution.authorization) && this.#repositoryRoot,
+      sameJson(authority.reference, execution.authorization) && payload,
       'corrective execution authority differs',
-    );
-    const payload = correctiveAssignmentAuthorizationSchema.parse(
-      JSON.parse(
-        requireSafeRepositoryAccess(this.#repositoryRoot).readText(
-          execution.authorization.path,
-          'corrective engine selection',
-        ),
-      ),
     );
     requireState(
       payload.engine_run_id === execution.engine_run_id &&
@@ -13316,6 +14295,7 @@ export class HostStateStore {
         sameJson(payload.stage_ids, execution.stage_ids),
       'corrective execution engine/stages differ',
     );
+    return payload;
   }
   /** Resolve the sole authoritative work without opening a nested projection transaction. */
   assertCorrectiveExecutionForWork(workId: string, attempt: number, value: CorrectiveExecution): void {
@@ -13328,11 +14308,34 @@ export class HostStateStore {
     this.assertCorrectiveExecution(workIdentity(this.#checkedWork(JSON.parse(rows[0]!.payload))), attempt, value);
   }
 
-  #correctiveAuthority(work: WorkState, stageId: string): { generation: number; reference: ContractReference | null } {
+  #readCorrectiveAuthorityPayload(
+    ref: LifecycleArtifactReference,
+    verified?: {
+      reference: CorrectiveExecution['authorization'];
+      payload: ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse>;
+    },
+  ): ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse> {
+    const reference = { schema: ref.artifact_schema, path: ref.path, sha256: ref.sha256 };
+    if (verified && sameJson(reference, verified.reference)) return verified.payload;
+    const bytes = requireSafeRepositoryAccess(this.#repositoryRoot!).readBytes(ref.path, 'Host corrective authority');
+    requireState(
+      bytes.length <= 64 * 1024 && createHash('sha256').update(bytes).digest('hex') === ref.sha256,
+      'corrective authority bytes differ',
+    );
+    return correctiveAssignmentAuthorizationSchema.parse(JSON.parse(bytes.toString('utf8')));
+  }
+
+  #correctiveAuthority(
+    work: WorkState,
+    stageId: string,
+    verified?: {
+      reference: CorrectiveExecution['authorization'];
+      payload: ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse>;
+    },
+  ): { generation: number; reference: ContractReference | null } {
     const generation = work.lifecycle.assurance.correction_count;
     if (generation === 0) return { generation, reference: null };
     requireState(this.#repositoryRoot, 'corrective assignment requires bound repository');
-    const access = requireSafeRepositoryAccess(this.#repositoryRoot);
     const candidates = work.lifecycle.references.filter(
       (ref) =>
         ref.kind === 'correction_authorization' &&
@@ -13340,12 +14343,8 @@ export class HostStateStore {
         ref.artifact_schema === 'CorrectiveAssignmentAuthorization/v1',
     );
     for (const ref of [...candidates].reverse()) {
-      const bytes = access.readBytes(ref.path, 'Host corrective authority');
-      requireState(
-        bytes.length <= 64 * 1024 && createHash('sha256').update(bytes).digest('hex') === ref.sha256,
-        'corrective authority bytes differ',
-      );
-      const authority = correctiveAssignmentAuthorizationSchema.parse(JSON.parse(bytes.toString('utf8')));
+      const reference = { schema: ref.artifact_schema, path: ref.path, sha256: ref.sha256 };
+      const authority = this.#readCorrectiveAuthorityPayload(ref, verified);
       if (authority.correction_generation !== generation) continue;
       requireState(
         authority.work_id === work.binding.lifecycle_work_id &&
@@ -13363,7 +14362,7 @@ export class HostStateStore {
           ),
         'corrective assignment authority binding differs',
       );
-      return { generation, reference: { schema: ref.artifact_schema, path: ref.path, sha256: ref.sha256 } };
+      return { generation, reference };
     }
     throw new HostStateError('current corrective assignment authority unavailable');
   }
@@ -14038,19 +15037,16 @@ export class HostStateStore {
             sameJson(current.workVersion, record.work_version),
           'stopped-source capture retry follows dependent work write',
         );
-        const journal = this.#database
-          .query(
-            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-          )
-          .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
+        const journal = readWorkspaceMastraSqlRow(
+          this.#database,
+          this.#workspaceId,
+          input.identity.work_id,
+          input.attempt,
+        );
         requireState(
           journal &&
             sameJson({ revision: journal.revision, digest: journal.digest }, record.captured_journal_version) &&
-            canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+            canonicalJsonDigest(journal.value) === journal.digest,
           'stopped-source capture retry follows journal change',
         );
         requireState(
@@ -14110,20 +15106,12 @@ export class HostStateStore {
           ticket.exclusive_resources.some((resource) => resource.startsWith('file:')),
         'stopped-source original rights differ',
       );
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
       requireState(
         row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
         'stopped-source journal CAS differs',
       );
-      const state = JSON.parse(row.payload) as MastraSessionLedgerState;
+      const state = parseMastraSessionLedgerState(row.value);
       requireState(
         canonicalJsonDigest(state) === row.digest &&
           state.work_id === input.identity.work_id &&
@@ -14275,6 +15263,7 @@ export class HostStateStore {
           verifyCurrent: input.verifyCurrent,
           stoppedSource: true,
         },
+        true,
         true,
       );
       const record = {
@@ -14430,15 +15419,7 @@ export class HostStateStore {
       if (existing) {
         const record = JSON.parse(existing.payload) as Record<string, unknown>,
           current = this.#read(input.identity),
-          journal = this.#database
-            .query(
-              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-            )
-            .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-            revision: number;
-            payload: string;
-            digest: string;
-          } | null;
+          journal = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
         requireState(
           sourceCaptureRecord(record).digest === existing.digest && record.request_digest === requestDigest,
           'retired-source capture retry differs',
@@ -14451,7 +15432,7 @@ export class HostStateStore {
             sameJson(current.ledgerVersion, record.ledger_version) &&
             journal &&
             sameJson({ revision: journal.revision, digest: journal.digest }, record.journal_version) &&
-            canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+            canonicalJsonDigest(journal.value) === journal.digest,
           'retired-source capture retry follows dependent Host or Journal write',
         );
         return { snapshot: current, request_digest: requestDigest };
@@ -14500,23 +15481,15 @@ export class HostStateStore {
           release.decided_by === input.operatorHandle,
         'exact original retired ticket, claim or release operation differs',
       );
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
       requireState(
         row &&
           row.revision === input.expectedJournal.revision &&
           row.digest === input.expectedJournal.digest &&
-          canonicalJsonDigest(JSON.parse(row.payload)) === row.digest,
+          canonicalJsonDigest(row.value) === row.digest,
         'retired-source Journal CAS differs',
       );
-      const state = JSON.parse(row.payload) as MastraSessionLedgerState,
+      const state = parseMastraSessionLedgerState(row.value),
         allItems = [...state.items, ...state.completed.flatMap((wave) => wave.items)],
         item = allItems.find((entry) => entry.request.action_id === input.actionId),
         reservation = item?.host_reservation,
@@ -14688,7 +15661,7 @@ export class HostStateStore {
             .query('SELECT payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=?')
             .all(this.#workspaceId, grant.work_id) as { payload: string; digest: string }[],
           witnessed = journalRows.flatMap((entry) => {
-            const journal = JSON.parse(entry.payload) as MastraSessionLedgerState;
+            const journal = parseMastraSessionLedgerState(JSON.parse(entry.payload));
             if (canonicalJsonDigest(journal) !== entry.digest) return [];
             return [...journal.items, ...journal.completed.flatMap((wave) => wave.items)].filter(
               (candidate) =>
@@ -14769,6 +15742,7 @@ export class HostStateStore {
           },
           { actionId: input.actionId, next: nextJournal, verifyCurrent: input.verifyCurrent, stoppedSource: true },
           true,
+          true,
         );
       const receipt = {
         schema: 'RetiredSourceCapture/v1',
@@ -14807,7 +15781,7 @@ export class HostStateStore {
     expectedLedger: StateVersion;
     expectedJournal: StateVersion;
     expectedMaintenanceGeneration: number;
-    verifyCurrent: (work: WorkState, journal: Record<string, unknown>, sourceRoot: string | undefined) => void;
+    verifyCurrent: (work: WorkState, journal: MastraSessionLedgerState, sourceRoot: string | undefined) => void;
   }): HostStateSnapshot {
     requireState(
       Number.isSafeInteger(input.attempt) &&
@@ -14873,32 +15847,23 @@ export class HostStateStore {
         ),
         'lease renewal conflicts with earlier FIFO ticket',
       );
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
       requireState(
         row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
         'lease renewal journal CAS changed',
       );
-      const journal = JSON.parse(row.payload) as Record<string, unknown>;
-      validateWorkSessionBinding(work, journal as unknown as MastraSessionLedgerState, this.#repositoryRoot);
+      const journal = parseMastraSessionLedgerState(row.value);
+      validateWorkSessionBinding(work, journal, this.#repositoryRoot);
       requireState(
         canonicalJsonDigest(journal) === row.digest &&
           journal.schema === 'MastraSessionLedger/v1' &&
           journal.workspace_id === this.#workspaceId &&
           journal.work_id === input.identity.work_id &&
-          journal.attempt === input.attempt &&
-          Array.isArray(journal.items),
+          journal.attempt === input.attempt,
         'lease renewal journal identity changed',
       );
       requireState(
-        (journal.items as MastraSessionLedgerState['items']).every(
+        journal.items.every(
           (entry) =>
             !entry.host_reservation ||
             sameJson(entry.host_reservation.receipt.attempt.lease, work.lease) ||
@@ -14996,20 +15961,17 @@ export class HostStateStore {
         'failed prewriter original receipt missing',
       );
       validateFailedPrewriterTransitionRequest(request, original as ConfiguredFrontierReceipt);
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(
+        this.#database,
+        this.#workspaceId,
+        request.identity.work_id,
+        request.attempt,
+      );
       requireState(
         row && row.revision === request.expectedJournal.revision && row.digest === request.expectedJournal.digest,
         'failed prewriter transition Journal CAS changed',
       );
-      const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
+      const journal = parseMastraSessionLedgerState(row.value);
       requireState(
         row.payload === canonicalJson(journal) && row.digest === canonicalJsonDigest(journal),
         'failed prewriter Journal checksum differs',
@@ -15226,7 +16188,7 @@ export class HostStateStore {
     expectedJournal: StateVersion;
     expectedMaintenanceGeneration: number;
     verifyCurrent: (work: WorkState, journal: MastraSessionLedgerState, original: ConfiguredFrontierReceipt) => void;
-  }): HostStateSnapshot {
+  }): HostStateSnapshot & { readonly journalVersion: StateVersion } {
     requireState(
       Number.isSafeInteger(input.attempt) &&
         input.attempt > 0 &&
@@ -15248,20 +16210,12 @@ export class HostStateStore {
         original?.request.action.kind === 'configured_frontier',
         'failed prewriter original continuation missing',
       );
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
       requireState(
         row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
         'failed prewriter recovery Journal CAS changed',
       );
-      const journal = JSON.parse(row.payload) as MastraSessionLedgerState;
+      const journal = parseMastraSessionLedgerState(row.value);
       requireState(
         row.payload === canonicalJson(journal) && row.digest === canonicalJsonDigest(journal),
         'failed prewriter recovery Journal checksum differs',
@@ -15384,7 +16338,10 @@ export class HostStateStore {
         .run(row.revision + 1, this.#workspaceId, input.identity.work_id, input.attempt, row.revision, row.digest);
       requireState(bumped.changes === 1, 'failed prewriter recovery Journal CAS conflict');
       this.#onReconciledWorkWrite(input.identity, before.workVersion, version(nextWork)!);
-      return this.#read(input.identity);
+      return Object.freeze({
+        ...this.#read(input.identity),
+        journalVersion: Object.freeze({ revision: row.revision + 1, digest: row.digest }),
+      });
     }).immediate();
   }
 
@@ -15400,7 +16357,7 @@ export class HostStateStore {
     expectedMaintenanceGeneration: number;
     verifyCurrent: (
       work: WorkState,
-      journal: Record<string, unknown>,
+      journal: MastraSessionLedgerState,
       sourceRoot: string | undefined,
     ) => { runtimeCodeDigest: string; authorityPointer: string };
   }): HostStateSnapshot {
@@ -15473,28 +16430,19 @@ export class HostStateStore {
         ),
         'expired lease recovery conflicts with earlier FIFO ticket',
       );
-      const row = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const row = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
       requireState(
         row && row.revision === input.expectedJournal.revision && row.digest === input.expectedJournal.digest,
         'expired lease recovery journal CAS changed',
       );
-      const journal = JSON.parse(row.payload) as Record<string, unknown>;
+      const journal = parseMastraSessionLedgerState(row.value);
       requireState(
         canonicalJsonDigest(journal) === row.digest &&
           journal.schema === 'MastraSessionLedger/v1' &&
           journal.workspace_id === this.#workspaceId &&
           journal.work_id === input.identity.work_id &&
           journal.attempt === input.attempt &&
-          journal.run_id === work.execution.run_id &&
-          Array.isArray(journal.items),
+          journal.run_id === work.execution.run_id,
         'expired lease recovery journal identity changed',
       );
       if (completedSourceRecovery) {
@@ -15508,35 +16456,25 @@ export class HostStateStore {
           : null;
         validateCompletedSourceReportRecoveryLineage({
           host: before,
-          journal: { version: input.expectedJournal, state: journal as unknown as MastraSessionLedgerState },
+          journal: { version: input.expectedJournal, state: journal },
           initialReceipt,
           frontierReceipt,
           recoveryReceipt: completedSourceRecovery,
         });
       }
-      const currentItems = journal.items as MastraSessionLedgerState['items'];
-      const acceptedCurrentSourceWave = isAcceptedCompletedSourceWave(
-        work,
-        journal as unknown as MastraSessionLedgerState,
-        completedSourceRecovery,
-      );
-      const completed = journal.completed as MastraSessionLedgerState['completed'];
+      const currentItems = journal.items;
+      const acceptedCurrentSourceWave = isAcceptedCompletedSourceWave(work, journal, completedSourceRecovery);
+      const completed = journal.completed;
       requireState(
-        Array.isArray(journal.completed) &&
-          completed.length > 0 &&
+        completed.length > 0 &&
           completed.every(
             (wave) =>
-              Array.isArray(wave.items) &&
               wave.items.length > 0 &&
               wave.items.every(
                 (item: MastraSessionLedgerState['items'][number]) =>
                   item.issue_id !== null &&
                   item.observation?.status === 'reported_complete' &&
-                  (!item.host_reservation ||
-                    completedSourceJournalObservationMatches(
-                      work,
-                      item as unknown as MastraSessionLedgerState['items'][number],
-                    )),
+                  (!item.host_reservation || completedSourceJournalObservationMatches(work, item)),
               ),
           ),
         'expired recovery historical outcomes must already be accepted',
@@ -15549,12 +16487,8 @@ export class HostStateStore {
         work.execution.assignment_attempts.every((attempt) =>
           acceptedItems.some(
             (item) =>
-              (item as unknown as MastraSessionLedgerState['items'][number]).host_reservation?.receipt.attempt
-                .attempt_id === attempt.attempt_id &&
-              completedSourceJournalObservationMatches(
-                work,
-                item as unknown as MastraSessionLedgerState['items'][number],
-              ),
+              item.host_reservation?.receipt.attempt.attempt_id === attempt.attempt_id &&
+              completedSourceJournalObservationMatches(work, item),
           ),
         ),
         'expired execution recovery requires every writer result durably accepted',
@@ -15710,7 +16644,7 @@ export class HostStateStore {
           },
           journal: {
             version: { revision: row.revision + 1, digest: row.digest },
-            state: journal as unknown as MastraSessionLedgerState,
+            state: journal,
           },
           initialReceipt,
           frontierReceipt,
@@ -15869,23 +16803,20 @@ export class HostStateStore {
         ),
         'earlier FIFO Source owner is waiting for the resource',
       );
-      const journalRow = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const journalRow = readWorkspaceMastraSqlRow(
+        this.#database,
+        this.#workspaceId,
+        request.identity.work_id,
+        request.attempt,
+      );
       requireState(
         journalRow &&
           journalRow.revision === request.expectedJournal.revision &&
           journalRow.digest === request.expectedJournal.digest &&
-          canonicalJsonDigest(JSON.parse(journalRow.payload)) === journalRow.digest,
+          canonicalJsonDigest(journalRow.value) === journalRow.digest,
         'interrupted Source retirement journal CAS changed',
       );
-      const journal = JSON.parse(journalRow.payload) as MastraSessionLedgerState;
+      const journal = parseMastraSessionLedgerState(journalRow.value);
       requireState(
         journal.schema === 'MastraSessionLedger/v1' &&
           journal.attempt === request.attempt &&
@@ -15988,6 +16919,7 @@ export class HostStateStore {
         },
         undefined,
         true,
+        true,
       );
       const finalAttempt = after.work!.execution.assignment_attempts.find(
         (entry) => entry.attempt_id === uncertain.attempt.attempt_id,
@@ -16035,7 +16967,7 @@ export class HostStateStore {
     if (!ticket?.exclusive_resources.some((resource) => resource.startsWith('file:'))) return before;
     const journal = this.readWorkSessionJournal(input.identity);
     if (!journal) return before;
-    const state = journal.state as unknown as MastraSessionLedgerState;
+    const state = journal.state;
     const item = [...state.items, ...state.completed.flatMap((wave) => wave.items)].find(
       (item) =>
         completedSourceJournalObservationMatches(work, item) &&
@@ -16088,7 +17020,7 @@ export class HostStateStore {
     );
     const prior = ledger.tickets.find((ticket) => ticket.ticket_id === work.lease!.ticket_id);
     const durableJournal = this.readWorkSessionJournal(input.identity);
-    const durableState = durableJournal?.state as unknown as MastraSessionLedgerState | undefined;
+    const durableState = durableJournal?.state;
     const alreadyDurable =
       durableState &&
       [...durableState.items, ...durableState.completed.flatMap((wave) => wave.items)].some(
@@ -16159,9 +17091,10 @@ export class HostStateStore {
         'completed Source report recovery exact retry differs',
       );
       this.#assertMaintenanceGeneration(existing.maintenance_generation);
-      const current = this.readCompletedSourceReportRecoveryReceipt(request.identity, request.attempt);
-      const currentHost = this.readHostStateSnapshot(request.identity),
-        currentJournal = this.readWorkSessionJournal(request.identity);
+      const state = this.readCompletedSourceReportRecoveryState(request.identity, request.attempt),
+        current = state.recoveryReceipt,
+        currentHost = state.host,
+        currentJournal = state.journal;
       requireState(
         current &&
           sameJson(currentHost.workVersion, current.work_version) &&
@@ -16191,23 +17124,20 @@ export class HostStateStore {
         'completed Source report recovery old/current runtime binding differs',
       );
 
-      const journalRow = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const journalRow = readWorkspaceMastraSqlRow(
+        this.#database,
+        this.#workspaceId,
+        request.identity.work_id,
+        request.attempt,
+      );
       requireState(
         journalRow !== null &&
           journalRow.revision === request.expectedJournal.revision &&
           journalRow.digest === request.expectedJournal.digest &&
-          canonicalJsonDigest(JSON.parse(journalRow.payload)) === journalRow.digest,
+          canonicalJsonDigest(journalRow.value) === journalRow.digest,
         'completed Source report recovery Journal CAS is stale or corrupt',
       );
-      const priorJournal = JSON.parse(journalRow!.payload) as MastraSessionLedgerState;
+      const priorJournal = parseMastraSessionLedgerState(JSON.parse(journalRow!.payload));
       requireState(
         priorJournal.schema === 'MastraSessionLedger/v1' &&
           priorJournal.workspace_id === this.#workspaceId &&
@@ -16561,6 +17491,7 @@ export class HostStateStore {
           },
         },
         true,
+        true,
         [],
         {
           receipt,
@@ -16575,21 +17506,18 @@ export class HostStateStore {
           },
         },
       );
-      const committedJournal = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, request.identity.work_id, request.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const committedJournal = readWorkspaceMastraSqlRow(
+        this.#database,
+        this.#workspaceId,
+        request.identity.work_id,
+        request.attempt,
+      );
       requireState(
         sameJson(after.work, nextWork) &&
           sameJson(after.ledgerVersion, receipt.ledger_version) &&
           committedJournal !== null &&
           sameJson({ revision: committedJournal.revision, digest: committedJournal.digest }, receipt.journal_version) &&
-          canonicalJsonDigest(JSON.parse(committedJournal.payload)) === committedJournal.digest,
+          canonicalJsonDigest(committedJournal.value) === committedJournal.digest,
         'completed Source report recovery successor afterimage differs',
       );
       return snapshotCompletedSourceReportRecoveryReceipt(receipt);
@@ -16611,6 +17539,10 @@ export class HostStateStore {
   captureHistoricalTerminalSynthesisAndRelease(
     input: HistoricalTerminalSynthesisCaptureRequest,
   ): HistoricalTerminalSynthesisCaptureResult {
+    const validatedBodyBytes = historicalTerminalSynthesisBodyBytes(
+      input.bodyBytes,
+      'historical synthesis custody request invalid',
+    );
     requireState(
       input.schema === 'HistoricalTerminalSynthesisCapture/v1' &&
         Number.isSafeInteger(input.attempt) &&
@@ -16623,10 +17555,7 @@ export class HostStateStore {
         input.nativeSessionHandle.length <= 256 &&
         input.userRequestPointer.length > 0 &&
         input.userRequestPointer.length <= 2048 &&
-        !/\p{Cc}/u.test(input.nativeSessionHandle + input.userRequestPointer) &&
-        input.bodyBytes instanceof Uint8Array &&
-        input.bodyBytes.byteLength > 0 &&
-        input.bodyBytes.byteLength <= 65536,
+        !/\p{Cc}/u.test(input.nativeSessionHandle + input.userRequestPointer),
       'historical synthesis custody request invalid',
     );
     const provenance = snapshot(input.provenance);
@@ -16657,25 +17586,11 @@ export class HostStateStore {
         ),
       'historical synthesis provenance invalid',
     );
-    const bodyBytes = Buffer.from(input.bodyBytes),
-      bodyBase64 = bodyBytes.toString('base64'),
-      request = snapshot({
-        schema: input.schema,
-        identity: input.identity,
-        attempt: input.attempt,
-        action_id: input.actionId,
-        issue_id: input.issueId,
-        native_session_handle: input.nativeSessionHandle,
-        user_request_pointer: input.userRequestPointer,
-        request_intent: input.requestIntent,
-        expected_work: input.expectedWork,
-        expected_ledger: input.expectedLedger,
-        expected_journal: input.expectedJournal,
-        expected_maintenance_generation: input.expectedMaintenanceGeneration,
-        body_base64: bodyBase64,
-        provenance,
-      }),
-      requestDigest = canonicalJsonDigest(request);
+    const { bodyBytes, bodyBase64, request, requestDigest } = historicalTerminalSynthesisCaptureRequest(
+      input,
+      provenance,
+      validatedBodyBytes,
+    );
     requireState(!this.#database.inTransaction, 'nested historical synthesis custody transaction forbidden');
     return this.#transactionWithProducerFence(() => {
       this.#database.exec(
@@ -16693,15 +17608,7 @@ export class HostStateStore {
       if (existing) {
         const receipt = JSON.parse(existing.payload) as HistoricalTerminalSynthesisCaptureReceipt,
           current = this.#read(input.identity),
-          journal = this.#database
-            .query(
-              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-            )
-            .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-            revision: number;
-            payload: string;
-            digest: string;
-          } | null;
+          journal = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
         requireState(
           canonicalJsonDigest(receipt) === existing.digest &&
             receipt.request_digest === requestDigest &&
@@ -16724,8 +17631,7 @@ export class HostStateStore {
             sameJson(current.workVersion, receipt.work_version) &&
             sameJson(current.ledgerVersion, receipt.ledger_version) &&
             journal &&
-            sameJson({ revision: journal.revision, digest: journal.digest }, receipt.journal_version) &&
-            canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+            sameJson({ revision: journal.revision, digest: journal.digest }, receipt.journal_version),
           'historical synthesis custody retry follows dependent Host or Journal write',
         );
         return { snapshot: current, request_digest: requestDigest, receipt: snapshot(receipt) };
@@ -16867,20 +17773,17 @@ export class HostStateStore {
           }),
         'historical synthesis custody release operation is incomplete',
       );
-      const journal = this.#database
-        .query(
-          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-        )
-        .get(this.#workspaceId, input.identity.work_id, input.attempt) as {
-        revision: number;
-        payload: string;
-        digest: string;
-      } | null;
+      const journal = readWorkspaceMastraSqlRow(
+        this.#database,
+        this.#workspaceId,
+        input.identity.work_id,
+        input.attempt,
+      );
       requireState(
         journal &&
           journal.revision === input.expectedJournal.revision &&
           journal.digest === input.expectedJournal.digest &&
-          canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+          canonicalJsonDigest(journal.value) === journal.digest,
         'historical synthesis custody Journal CAS differs',
       );
       const after = this.#commitHostState(
@@ -16894,6 +17797,7 @@ export class HostStateStore {
           nextLedger,
         },
         undefined,
+        true,
         true,
       );
       const receipt: HistoricalTerminalSynthesisCaptureReceipt = {
@@ -16961,6 +17865,93 @@ export class HostStateStore {
       'historical synthesis custody receipt is corrupt or foreign',
     );
     return snapshot(receipt);
+  }
+  readHistoricalTerminalSynthesisCaptureForRequest(
+    input: HistoricalTerminalSynthesisCaptureReadRequest,
+  ): HistoricalTerminalSynthesisCaptureResult | null {
+    requireState(!this.#database.inTransaction, 'nested historical synthesis custody read forbidden');
+    requireState(
+      !this.#historicalNormalizationMutationActive,
+      'Host connection is reserved by a historical normalization mutation',
+    );
+    return this.#database
+      .transaction(() => {
+        this.assertSessionProducerWriteAllowed();
+        this.#assertReconciliationWritesAllowed();
+        const receipt = this.readHistoricalTerminalSynthesisCapture(input.identity, input.attempt, input.actionId);
+        if (!receipt) return null;
+        const provenance = snapshot(input.provenance),
+          { bodyBytes, bodyBase64, request, requestDigest } = historicalTerminalSynthesisCaptureRequest(
+            input,
+            provenance,
+          ),
+          expectedMaintenanceGeneration = receipt.request.expected_maintenance_generation,
+          current = this.#read(input.identity),
+          journal = readWorkspaceMastraSqlRow(this.#database, this.#workspaceId, input.identity.work_id, input.attempt);
+        requireState(receipt.request_digest === requestDigest, 'historical synthesis custody exact retry differs');
+        requireState(sameJson(receipt.request, request), 'historical synthesis custody exact retry differs');
+        requireState(sameJson(receipt.identity, input.identity), 'historical synthesis custody exact retry differs');
+        requireState(receipt.attempt === input.attempt, 'historical synthesis custody exact retry differs');
+        requireState(receipt.action_id === input.actionId, 'historical synthesis custody exact retry differs');
+        requireState(receipt.issue_id === input.issueId, 'historical synthesis custody exact retry differs');
+        requireState(sameJson(receipt.provenance, provenance), 'historical synthesis custody exact retry differs');
+        requireState(receipt.body_base64 === bodyBase64, 'historical synthesis custody exact retry differs');
+        requireState(
+          receipt.body_byte_length === bodyBytes.byteLength,
+          'historical synthesis custody exact retry differs',
+        );
+        requireState(
+          receipt.body_sha256 === createHash('sha256').update(bodyBytes).digest('hex'),
+          'historical synthesis custody exact retry differs',
+        );
+        requireState(
+          typeof expectedMaintenanceGeneration === 'number',
+          'historical synthesis custody retry maintenance generation invalid',
+        );
+        requireState(
+          Number.isSafeInteger(expectedMaintenanceGeneration),
+          'historical synthesis custody retry maintenance generation invalid',
+        );
+        requireState(
+          expectedMaintenanceGeneration === input.expectedMaintenanceGeneration,
+          'historical synthesis custody retry maintenance generation invalid',
+        );
+        this.#assertMaintenanceGeneration(expectedMaintenanceGeneration);
+        const work = current.work;
+        requireState(work !== null, 'historical synthesis custody retry follows dependent Host or Journal write');
+        requireState(
+          current.ledger !== null,
+          'historical synthesis custody retry follows dependent Host or Journal write',
+        );
+        requireState(work.lease === null, 'historical synthesis custody retry follows dependent Host or Journal write');
+        requireState(
+          work.execution.status === 'suspended',
+          'historical synthesis custody retry follows dependent Host or Journal write',
+        );
+        requireState(
+          current.workVersion !== null,
+          'historical synthesis custody retry follows dependent Host or Journal write',
+        );
+        requireState(
+          current.ledgerVersion !== null,
+          'historical synthesis custody retry follows dependent Host or Journal write',
+        );
+        requireState(
+          sameJson(current.workVersion, receipt.work_version),
+          'historical synthesis custody retry follows dependent Host or Journal write',
+        );
+        requireState(
+          sameJson(current.ledgerVersion, receipt.ledger_version),
+          'historical synthesis custody retry follows dependent Host or Journal write',
+        );
+        requireState(journal !== null, 'historical synthesis custody retry follows dependent Host or Journal write');
+        requireState(
+          sameJson({ revision: journal.revision, digest: journal.digest }, receipt.journal_version),
+          'historical synthesis custody retry follows dependent Host or Journal write',
+        );
+        return { snapshot: current, request_digest: requestDigest, receipt };
+      })
+      .deferred();
   }
   /** The Host owns the new assurance journal; references in WorkState remain the lifecycle authority. */
   readFinalAssurance(identity: WorkIdentity, attempt: number): FinalAssuranceSnapshot | null {
@@ -17088,7 +18079,7 @@ export class HostStateStore {
     documentationContext: DocumentationVerificationContext;
   }): HostStateSnapshot {
     requireState(!this.#database.inTransaction, 'nested assurance delivery transaction forbidden');
-    return this.#transactionWithProducerFence(() => {
+    return this.#transactionWithProducerFenceAndStoredWorkHistoryCache(() => {
       this.#assertMaintenanceAvailable();
       const before = this.#read(input.identity),
         assurance = this.readFinalAssurance(input.identity, input.attempt);
@@ -17189,6 +18180,9 @@ export class HostStateStore {
       return this.#read(input.identity);
     }).immediate();
   }
+  #assertCommitProducerFence(internalTransaction: boolean, producerFenceChecked: boolean): void {
+    if (internalTransaction && !producerFenceChecked) this.assertSessionProducerWriteAllowed();
+  }
   #commitHostState(
     input: Parameters<HostStateStore['compareAndSwapHostState']>[0],
     terminalJournal?: {
@@ -17198,6 +18192,7 @@ export class HostStateStore {
       readonly stoppedSource?: boolean;
     },
     internalTransaction = false,
+    producerFenceChecked = false,
     taskSourceResourceAdditions: readonly string[] = [],
     sourceReportRecoveryProjection?: {
       readonly receipt: CompletedSourceReportRecoveryReceipt;
@@ -17219,7 +18214,7 @@ export class HostStateStore {
     validatePair(work, ledger);
     requireState(!this.#database.inTransaction || internalTransaction, 'nested host state transaction forbidden');
     const commit = () => {
-      this.assertSessionProducerWriteAllowed();
+      this.#assertCommitProducerFence(internalTransaction, producerFenceChecked);
       const before = this.#read(workIdentity(work));
       this.#assertMaintenanceGeneration(data.expectedMaintenanceGeneration);
       matchesExpected(before.workVersion, data.expectedWork);
@@ -17256,24 +18251,21 @@ export class HostStateStore {
         );
       }
       if (expectedSessionJournal) {
-        const journal = this.#database
-          .query(
-            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
-          )
-          .get(this.#workspaceId, work.binding.lifecycle_work_id, expectedSessionJournal.attempt) as {
-          revision: number;
-          payload: string;
-          digest: string;
-        } | null;
+        const journal = readWorkspaceMastraSqlRow(
+          this.#database,
+          this.#workspaceId,
+          work.binding.lifecycle_work_id,
+          expectedSessionJournal.attempt,
+        );
         requireState(
           journal &&
             journal.revision === expectedSessionJournal.version.revision &&
             journal.digest === expectedSessionJournal.version.digest &&
-            canonicalJsonDigest(JSON.parse(journal.payload)) === journal.digest,
+            canonicalJsonDigest(journal.value) === journal.digest,
           'session journal CAS changed',
         );
         if (terminalJournal) {
-          const state = JSON.parse(journal.payload) as MastraSessionLedgerState;
+          const state = parseMastraSessionLedgerState(journal.value);
           const oldItem = [...state.items, ...state.completed.flatMap((wave) => wave.items)].find(
             (item) => item.request.action_id === terminalJournal.actionId,
           );

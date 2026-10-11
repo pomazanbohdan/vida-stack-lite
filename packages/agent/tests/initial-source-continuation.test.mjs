@@ -22,6 +22,11 @@ import {
 } from '../src/orchestration/scoped-source-snapshot.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
+import { createCompletedSourceReportRecoveryFixture } from './helpers/completed-source-report-recovery-fixture.ts';
+import { expectHistorySnapshotAfterOwner } from './helpers/ledger-cache-observer.ts';
+import { captureInitialSourceEngineDiagnostic } from './helpers/initial-source-engine-diagnostic.ts';
+import { runWithInitialSourceTiming } from './helpers/initial-source-run-timing-diagnostic.ts';
+import { initialSourcePhases } from './helpers/initial-source-phase-timing.ts';
 import { validateInitialSourceFrontierCodeRebindReceipt } from '../src/orchestration/initial-source-frontier-code-rebind.ts';
 import {
   validateQualifiedRuntimeCodeContinuationRequest,
@@ -285,7 +290,32 @@ async function withCleanup(action, cleanup, description) {
 async function withInitialWork(callback) {
   const f = await makeInitialWork();
   return withCleanup(
-    () => callback(f),
+    async () => {
+      try {
+        return await callback(f);
+      } catch (error) {
+        const outputFile = process.env.VIDA_INITIAL_SOURCE_ENGINE_DIAGNOSTIC_FILE;
+        if (typeof outputFile === 'string' && outputFile.length > 0 && f.originalEngine) {
+          try {
+            captureInitialSourceEngineDiagnostic({
+              repositoryRoot: f.root,
+              config: f.config,
+              runId: f.originalEngine.run_id,
+              outputFile,
+            });
+          } catch (diagnosticError) {
+            throw new AggregateError(
+              [error, diagnosticError],
+              'Initial Source operation and diagnostic capture failed',
+              {
+                cause: error,
+              },
+            );
+          }
+        }
+        throw error;
+      }
+    },
     () => f.close(),
     'Initial Source operation',
   );
@@ -324,7 +354,11 @@ async function makeInitialWork() {
     const config = loadRuntimeConfig(root);
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });
     const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
-    database = openHostStateDatabase(path.join(root, config.control.work_root, 'session-handoff.v1.sqlite'));
+    database = openHostStateDatabase(
+      root,
+      path.posix.join(config.control.work_root, 'session-handoff.v1.sqlite'),
+      workspaceId,
+    );
     const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root);
     const id = 'initial-' + randomUUID();
     const nativeSessionHandle = 'initial-thread-' + randomUUID();
@@ -895,7 +929,7 @@ function parseIssuedActions(value, label) {
 /** @param {readonly string[]} args @returns {Promise<unknown>} */
 async function runAgent(args) {
   /** @type {unknown} */
-  const result = await run([...args]);
+  const result = await runWithInitialSourceTiming(args, () => run([...args]));
   return result;
 }
 
@@ -1009,6 +1043,9 @@ async function runOwnedInitialSourceFixture(name) {
           process.execPath,
           [
             'test',
+            ...(initialSourcePhases.enabled
+              ? ['--preload', fileURLToPath(new URL('./helpers/initial-source-phase-preload.ts', import.meta.url))]
+              : []),
             '--timeout',
             '60000',
             '--test-name-pattern',
@@ -1405,335 +1442,6 @@ function trustedHostFixtureVerifier(f, proof) {
   };
 }
 
-/** @typedef {object} CompletedSourceReportRecoveryFixture
- * @property {CompletedSourceReportRecoveryRequest} request
- * @property {string} reportPath
- * @property {CompletedSourceReportRecoveryVerifyCurrent} verifyCurrent
- */
-
-/** @param {InitialWorkFixture} f
- * @param {ReturnType<typeof parseIssuedActions>[number]} writer
- * @param {string} writerAttemptId
- * @param {SessionBridgeObservation} observation
- * @param {ScopedSourceSnapshot} sourceBefore
- * @param {ScopedSourceSnapshot} sourceAfter
- * @param {import('../src/orchestration/initial-source-frontier-code-rebind.ts').InitialSourceFrontierCodeRebindReceipt | null} frontierReceipt
- * @param {string} reportPath
- * @returns {CompletedSourceReportRecoveryFixture}
- */
-function completedSourceReportRecoveryFixture(
-  f,
-  writer,
-  writerAttemptId,
-  observation,
-  sourceBefore,
-  sourceAfter,
-  frontierReceipt,
-  reportPath,
-) {
-  const before = continuationState(f),
-    initialReceipt = hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1),
-    journalBefore = currentJournal(f),
-    pending = journalBefore.state.items.find((item) => item.request.action_id === writer.request.action_id),
-    workDirectory = '.agent/work/' + f.identity.work_id,
-    sourceSnapshotRef = workDirectory + '/completed-source-snapshot.fixture.json',
-    sourceDiffRef = workDirectory + '/completed-source-diff.fixture.json',
-    commandReceiptRef = workDirectory + '/completed-source-command.fixture.json',
-    reportRef = path.relative(f.root, reportPath).split(path.sep).join('/');
-  if (!initialReceipt || !pending?.host_reservation || !journalBefore.state.source_scope)
-    throw new Error('Completed Source report fixture lacks its original receipt, reservation or Journal scope');
-  if (journalBefore.state.source_scope.digest !== sourceBefore.digest)
-    throw new Error('Completed Source report fixture original Journal scope changed');
-  const sourceDiff = [...compareScopedSourceSnapshots(sourceBefore, sourceAfter)].sort((left, right) =>
-      left.path.localeCompare(right.path),
-    ),
-    changedPaths = sourceDiff.map((change) => change.path).sort((left, right) => left.localeCompare(right)),
-    reportSourcePaths = [...(observation.changed_paths ?? [])].sort((left, right) => left.localeCompare(right)),
-    nextJournal = {
-      ...journalBefore.state,
-      source_scope: sourceAfter,
-      items: journalBefore.state.items.map((item) =>
-        item.request.action_id === observation.action_id ? { ...item, observation } : item,
-      ),
-    };
-  if (pending.issue_id !== writer.issue_id || writerAttemptId !== pending.host_reservation.receipt.attempt.attempt_id)
-    throw new Error('Completed Source report fixture writer IDs differ');
-  if (canonicalJsonDigest(reportSourcePaths) !== canonicalJsonDigest(changedPaths))
-    throw new Error('Completed Source report fixture changed paths differ from the exact report');
-
-  const currentRuntimeCodePaths = [...runtimePackageCodePaths(f.config.runtime.bundle)].sort(),
-    currentRuntime = snapshotRuntimePackageSources(
-      runtimePackageAccess(),
-      f.config.runtime.bundle,
-      currentRuntimeCodePaths,
-    ),
-    systemUpdateOperationId = 'fixture-host-only-update-' + writer.request.action_id,
-    currentManifestRef = 'fixture://host-only/current-manifest',
-    currentInstallRef = 'fixture://host-only/current-install-marker',
-    systemUpdateRef = 'fixture://host-only/system-update-marker',
-    currentManifestDigest = canonicalJsonDigest({
-      fixture_only: true,
-      not_native_manifest: true,
-      code_digest: currentRuntime.digest,
-      code_paths: currentRuntimeCodePaths,
-    }),
-    nativeSelfAttestationDigest = canonicalJsonDigest({
-      fixture_only: true,
-      not_native_attestation: true,
-      code_digest: currentRuntime.digest,
-      systemUpdateOperationId,
-    }),
-    oldManifestRef = frontierReceipt?.record.request.successorManifestRef ?? 'fixture://host-only/prior-manifest',
-    oldManifestDigest =
-      frontierReceipt?.record.request.successorManifestDigest ??
-      canonicalJsonDigest({
-        fixture_only: true,
-        not_native_manifest: true,
-        prior_code_digest: before.work.binding.runtime_code_digest,
-        prior_code_paths: currentRuntimeCodePaths,
-      }),
-    oldInstallRef = frontierReceipt?.record.request.systemUpdateRef ?? 'fixture://host-only/prior-install-marker';
-  if (!frontierReceipt && before.work.binding.runtime_code_digest !== currentRuntime.digest)
-    throw new Error('Expiry-only fixture must retain the actual current runtime code binding');
-  // The callback proves only Host field binding against real fixture Source and
-  // package bytes. Fixture endpoint labels do not attest to a native install.
-  writeFileSync(path.join(f.root, sourceSnapshotRef), record(sourceAfter));
-  writeFileSync(path.join(f.root, sourceDiffRef), record(sourceDiff));
-
-  const reportId = observation.tool_call_ref,
-    reportDigest = canonicalJsonDigest(observation),
-    sourceDiffDigest = canonicalJsonDigest(sourceDiff),
-    request = {
-      schema: 'CompletedSourceReportRecoveryRequest/v1',
-      identity: f.identity,
-      attempt: 1,
-      actionId: writer.request.action_id,
-      issueId: writer.issue_id,
-      hostAttemptId: writerAttemptId,
-      nativeSessionHandle: initialReceipt.request.nativeSessionHandle,
-      leaseGeneration: pending.host_reservation.receipt.attempt.lease.generation,
-      expectedWork: before.workVersion,
-      expectedLedger: before.ledgerVersion,
-      expectedJournal: journalBefore.version,
-      expectedMaintenanceGeneration: before.maintenanceGeneration,
-      initialContinuationId: initialReceipt.continuation_id,
-      initialContinuationRequestDigest: initialReceipt.request_digest,
-      frontierReceiptId: frontierReceipt?.original_receipt_id ?? null,
-      frontierRequestDigest: frontierReceipt?.record.request_digest ?? null,
-      sourceReservationDigest: canonicalJsonDigest(pending.host_reservation),
-      originalSourceAuthorizationDigest: initialReceipt.request.sourceAuthorizationSha256,
-      originalSourceScopeDigest: sourceBefore.digest,
-      evolvedJournalSourceScopeDigest: sourceAfter.digest,
-      reportId,
-      reportDigest,
-      sourceDiffDigest,
-      reportSourcePaths,
-      nextJournal,
-      sourceSnapshotRef,
-      sourceDiffRef,
-      changedPaths,
-      oldRuntimeCodeDigest: before.work.binding.runtime_code_digest,
-      oldRuntimeCodePaths: frontierReceipt
-        ? [...frontierReceipt.record.request.runtimeCodePaths]
-        : currentRuntimeCodePaths,
-      currentRuntimeCodeDigest: currentRuntime.digest,
-      currentRuntimeCodePaths,
-      oldManifestRef,
-      oldManifestDigest,
-      oldInstallRef,
-      currentManifestRef,
-      currentManifestDigest,
-      currentInstallRef,
-      systemUpdateRef,
-      systemUpdateOperationId,
-      nativeSelfAttestationDigest,
-      terminalCallerObservationRef: reportRef,
-      terminalCommandReceiptRef: commandReceiptRef,
-    };
-  writeFileSync(
-    path.join(f.root, commandReceiptRef),
-    record({
-      schema: 'FixtureTerminalCommandReceipt/v1',
-      fixture_only: true,
-      status: 'completed',
-      action_id: request.actionId,
-      issue_id: request.issueId,
-      host_attempt_id: request.hostAttemptId,
-      report_id: reportId,
-      report_digest: reportDigest,
-      source_diff_digest: sourceDiffDigest,
-    }),
-  );
-
-  /** @type {CompletedSourceReportRecoveryVerifyCurrent} */
-  /**
-   * @param {CompletedSourceReportRecoveryRequest} candidate
-   * @param {CompletedSourceReportRecoveryState} state
-   * @returns {CompletedSourceReportRecoveryVerifiedCurrent}
-   */
-  const verifyCurrent = (candidate, state) => {
-    const initial = state.initialReceipt,
-      frontier = state.frontierReceipt;
-    if (
-      !initial ||
-      initial.continuation_id !== candidate.initialContinuationId ||
-      initial.request_digest !== candidate.initialContinuationRequestDigest ||
-      (candidate.frontierReceiptId === null
-        ? frontier !== null ||
-          candidate.frontierRequestDigest !== null ||
-          candidate.oldRuntimeCodeDigest !== initial.request.currentRuntimeCodeDigest
-        : !frontier ||
-          frontier.original_receipt_id !== candidate.frontierReceiptId ||
-          frontier.record.request_digest !== candidate.frontierRequestDigest ||
-          frontier.current_runtime_code_digest !== candidate.oldRuntimeCodeDigest ||
-          frontier.record.request.successorManifestRef !== candidate.oldManifestRef ||
-          frontier.record.request.successorManifestDigest !== candidate.oldManifestDigest ||
-          frontier.record.request.systemUpdateRef !== candidate.oldInstallRef ||
-          canonicalJsonDigest(frontier.record.request.runtimeCodePaths) !==
-            canonicalJsonDigest(candidate.oldRuntimeCodePaths)) ||
-      initial.request.nativeSessionHandle !== candidate.nativeSessionHandle
-    )
-      throw new Error('fixture endpoint callback: initial/frontier receipt or original owner changed');
-    const sourceReservation = state.journal.state.items.find(
-        (item) => item.request.action_id === candidate.actionId,
-      )?.host_reservation,
-      sourceAuthorizationRef = initial.request.sourceAuthorizationReference;
-    if (
-      !sourceReservation ||
-      canonicalJsonDigest(sourceReservation) !== candidate.sourceReservationDigest ||
-      sha256(readFileSync(path.join(f.root, sourceAuthorizationRef.path))) !==
-        candidate.originalSourceAuthorizationDigest ||
-      state.host.work?.binding.work_source_revision !== candidate.originalSourceScopeDigest ||
-      candidate.nextJournal.source_scope?.digest !== candidate.evolvedJournalSourceScopeDigest ||
-      canonicalJsonDigest(
-        candidate.nextJournal.items.find((item) => item.request.action_id === candidate.actionId)?.observation,
-      ) !== candidate.reportDigest
-    )
-      throw new Error('fixture endpoint callback: original Source reservation or permission changed');
-    const sourceNow = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents),
-      recordedSource = requireRecord(
-        readJsonFixture(path.join(f.root, candidate.sourceSnapshotRef)),
-        'recorded source snapshot',
-      ),
-      actualDiff = [...compareScopedSourceSnapshots(sourceBefore, sourceNow)].sort((left, right) =>
-        left.path.localeCompare(right.path),
-      ),
-      recordedDiff = requireArray(readJsonFixture(path.join(f.root, candidate.sourceDiffRef)), 'recorded source diff'),
-      report = parseSessionBridgeObservation(readJsonFixture(reportPath)),
-      caller = parseSessionBridgeObservation(
-        readJsonFixture(path.join(f.root, candidate.terminalCallerObservationRef)),
-      ),
-      command = requireRecord(
-        readJsonFixture(path.join(f.root, candidate.terminalCommandReceiptRef)),
-        'terminal command receipt',
-      );
-    if (
-      sourceNow.digest !== candidate.evolvedJournalSourceScopeDigest ||
-      canonicalJsonDigest(recordedSource) !== canonicalJsonDigest(sourceNow) ||
-      canonicalJsonDigest(recordedDiff) !== canonicalJsonDigest(actualDiff) ||
-      canonicalJsonDigest(actualDiff) !== candidate.sourceDiffDigest ||
-      canonicalJsonDigest(report) !== candidate.reportDigest ||
-      report.tool_call_ref !== candidate.reportId ||
-      report.action_id !== candidate.actionId ||
-      report.issue_id !== candidate.issueId ||
-      report.host_attempt_id !== candidate.hostAttemptId ||
-      canonicalJsonDigest([...(report.changed_paths ?? [])].sort((left, right) => left.localeCompare(right))) !==
-        canonicalJsonDigest(candidate.reportSourcePaths) ||
-      canonicalJsonDigest(caller) !== canonicalJsonDigest(report) ||
-      requireString(command.action_id, 'terminal command action_id') !== candidate.actionId ||
-      requireString(command.issue_id, 'terminal command issue_id') !== candidate.issueId ||
-      requireString(command.host_attempt_id, 'terminal command host_attempt_id') !== candidate.hostAttemptId ||
-      requireString(command.report_id, 'terminal command report_id') !== candidate.reportId ||
-      requireString(command.report_digest, 'terminal command report_digest') !== candidate.reportDigest ||
-      requireString(command.source_diff_digest, 'terminal command source_diff_digest') !== candidate.sourceDiffDigest
-    )
-      throw new Error('fixture endpoint callback: exact report, caller or Source bytes changed');
-
-    const currentRuntime = snapshotRuntimePackageSources(
-      runtimePackageAccess(),
-      f.config.runtime.bundle,
-      candidate.currentRuntimeCodePaths,
-    );
-    if (
-      currentRuntime.digest !== candidate.currentRuntimeCodeDigest ||
-      candidate.currentManifestDigest !==
-        canonicalJsonDigest({
-          fixture_only: true,
-          not_native_manifest: true,
-          code_digest: currentRuntime.digest,
-          code_paths: candidate.currentRuntimeCodePaths,
-        }) ||
-      candidate.nativeSelfAttestationDigest !==
-        canonicalJsonDigest({
-          fixture_only: true,
-          not_native_attestation: true,
-          code_digest: currentRuntime.digest,
-          systemUpdateOperationId: candidate.systemUpdateOperationId,
-        }) ||
-      (!frontier &&
-        (currentRuntime.digest !== candidate.oldRuntimeCodeDigest ||
-          canonicalJsonDigest(candidate.oldRuntimeCodePaths) !==
-            canonicalJsonDigest(candidate.currentRuntimeCodePaths) ||
-          candidate.oldManifestDigest !==
-            canonicalJsonDigest({
-              fixture_only: true,
-              not_native_manifest: true,
-              prior_code_digest: currentRuntime.digest,
-              prior_code_paths: candidate.currentRuntimeCodePaths,
-            })))
-    )
-      throw new Error('fixture endpoint callback: current Host-only Source/package bytes changed');
-
-    return {
-      schema: 'CompletedSourceReportRecoveryVerifiedCurrent/v1',
-      terminal: {
-        ownerId: candidate.nativeSessionHandle,
-        ownerThreadId: candidate.nativeSessionHandle,
-        nativeSessionHandle: candidate.nativeSessionHandle,
-        attempt: candidate.attempt,
-        actionId: candidate.actionId,
-        issueId: candidate.issueId,
-        hostAttemptId: candidate.hostAttemptId,
-        leaseGeneration: candidate.leaseGeneration,
-        quiescent: true,
-        outcome: 'reported_complete',
-        callerObservationRef: candidate.terminalCallerObservationRef,
-        commandReceiptRef: candidate.terminalCommandReceiptRef,
-        reportId: candidate.reportId,
-        reportDigest: candidate.reportDigest,
-        sourceDiffDigest: candidate.sourceDiffDigest,
-        reportSourcePaths: candidate.reportSourcePaths,
-      },
-      source: {
-        reservationDigest: candidate.sourceReservationDigest,
-        authorizationDigest: candidate.originalSourceAuthorizationDigest,
-        originalScopeDigest: candidate.originalSourceScopeDigest,
-        evolvedScopeDigest: candidate.evolvedJournalSourceScopeDigest,
-        snapshotRef: candidate.sourceSnapshotRef,
-        diffRef: candidate.sourceDiffRef,
-        changedPaths: candidate.changedPaths,
-      },
-      oldRuntime: {
-        codeDigest: candidate.oldRuntimeCodeDigest,
-        codePaths: candidate.oldRuntimeCodePaths,
-        manifestRef: candidate.oldManifestRef,
-        manifestDigest: candidate.oldManifestDigest,
-        installRef: candidate.oldInstallRef,
-      },
-      currentRuntime: {
-        codeDigest: currentRuntime.digest,
-        codePaths: candidate.currentRuntimeCodePaths,
-        manifestRef: candidate.currentManifestRef,
-        manifestDigest: candidate.currentManifestDigest,
-        installRef: candidate.currentInstallRef,
-      },
-      systemUpdate: { ref: candidate.systemUpdateRef, operationId: candidate.systemUpdateOperationId },
-      nativeSelfAttestationDigest: candidate.nativeSelfAttestationDigest,
-    };
-  };
-  return { request, reportPath, verifyCurrent };
-}
-
 /** @param {WorkState} work */
 function withoutFrontierCodeBinding(work) {
   return {
@@ -1893,10 +1601,32 @@ function completedSourceRecoveryCase(refreshOnly) {
         stateVersion = requireStateVersion(reported.state_version, 'prewriter report state_version');
       }
 
-      const writerIssue = requireRecord(
-        await runAgent([...args, ...expectedRunVersion(stateVersion), '--issue-wave', 'true']),
-        'Initial Source writer issue',
-      );
+      // This case creates and admits its own fixture above; only its current unissued writer is observed.
+      if (initialSourcePhases.enabled) {
+        const pendingWriters = currentJournal(f).state.items.filter(
+          (item) => item.request.stage_id === 'develop_task' && item.issue_id === null,
+        );
+        if (pendingWriters.length !== 1) throw new Error('Initial Source phase capture requires one fresh writer');
+        const pendingWriter = firstValue(pendingWriters, 'fresh Initial Source writer');
+        if (
+          !initialSourcePhases.arm({
+            repositoryRoot: f.root,
+            workId: f.identity.work_id,
+            actionId: pendingWriter.request.action_id,
+            stageId: 'develop_task',
+          })
+        )
+          throw new Error('Initial Source phase capture is not installed or its sink is unavailable');
+      }
+      let writerIssue;
+      try {
+        writerIssue = requireRecord(
+          await runAgent([...args, ...expectedRunVersion(stateVersion), '--issue-wave', 'true']),
+          'Initial Source writer issue',
+        );
+      } finally {
+        initialSourcePhases.disarm();
+      }
       const writerActions = parseIssuedActions(writerIssue.issued_actions, 'Initial Source writer actions');
       expect(writerActions).toHaveLength(1);
       const writer = firstValue(writerActions, 'Initial Source writer actions');
@@ -1980,8 +1710,16 @@ function completedSourceRecoveryCase(refreshOnly) {
       }
 
       writeFileSync(writerReportPath, record(writerObservation));
-      const recoveryFixture = completedSourceReportRecoveryFixture(
-          f,
+      const recoveryFixture = createCompletedSourceReportRecoveryFixture(
+          {
+            root: f.root,
+            identity: f.identity,
+            documents: f.documents,
+            config: f.config,
+            hostStore: hostStore(f),
+            continuationState: () => continuationState(f),
+            currentJournal: () => currentJournal(f),
+          },
           writer,
           writerAttemptId,
           writerObservation,
@@ -2094,6 +1832,7 @@ function completedSourceRecoveryCase(refreshOnly) {
         hostStore(f).readInitialSourceFrontierCodeRebindReceipt(f.identity, 1, initialReceipt.continuation_id),
       ).toBeNull();
       expect(hostStore(f).readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(recovery);
+      expectHistorySnapshotAfterOwner(hostStore(f), afterRecovery.work);
 
       // Exact retry models a lost acknowledgement; it returns the same immutable receipt once.
       expect(commit()).toEqual(recovery);

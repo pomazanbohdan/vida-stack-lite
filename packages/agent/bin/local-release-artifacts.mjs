@@ -2,13 +2,16 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import {
   closeSync,
+  constants as fileConstants,
   existsSync,
   fsyncSync,
+  fstatSync,
   lstatSync,
   mkdirSync,
   opendirSync,
   openSync,
   readFileSync,
+  readSync,
   readdirSync,
   realpathSync,
   renameSync,
@@ -22,10 +25,11 @@ export const releaseIdPattern = /^[a-z0-9][a-z0-9-]{0,95}$/;
 export const releaseJSON = (value) => JSON.stringify(value, null, 2) + '\n';
 /** @param {Parameters<import('node:crypto').Hash['update']>[0]} bytes */
 export const releaseDigest = (bytes) => createHash('sha256').update(bytes).digest('hex');
+/** @param {unknown} value @returns {{major: number, minor: number, patch: number} | null} */
 export function parseReleaseVersion(value) {
   const match = typeof value === 'string' && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
   if (!match) return null;
-  const components = match.slice(1).map(Number);
+  const components = /** @type {[number, number, number]} */ (match.slice(1).map(Number));
   return components.every(Number.isSafeInteger)
     ? { major: components[0], minor: components[1], patch: components[2] }
     : null;
@@ -35,6 +39,130 @@ export const requireRelease = (value, message) => {
   if (!value) throw Error('Local release: ' + message);
 };
 export const releaseRootDefault = fileURLToPath(new URL('../../../', import.meta.url));
+
+/** @typedef {'awaiting_assurance'|'running'|'qualified'|'packing'|'packed'|'installing'|'successful'|'failed'} ReleaseStatus */
+/** @typedef {Record<string, unknown> & {schema: 'VidaLocalReleaseState/v1', operation_id: string, version: string, status: ReleaseStatus}} ReleaseState */
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** @typedef {{path: string, size: number} & Record<string, unknown>} ReleasePackFile */
+/** @typedef {{filename: string, files: ReleasePackFile[]} & Record<string, unknown>} ReleasePackEntry */
+/** Data-only projection; it grants no release or installation authority.
+ * @param {unknown} value @returns {[ReleasePackEntry]}
+ */
+export function parseReleasePackMetadata(value) {
+  requireRelease(Array.isArray(value) && value.length === 1, 'release pack metadata invalid');
+  /** @type {unknown} */
+  const entry = value[0];
+  requireRelease(
+    isRecord(entry) && typeof entry.filename === 'string' && Array.isArray(entry.files),
+    'release pack metadata invalid',
+  );
+  const files = entry.files.map(parseReleasePackFile);
+  return [{ ...entry, filename: entry.filename, files }];
+}
+/** @param {unknown} value @returns {ReleasePackFile} */
+function parseReleasePackFile(value) {
+  requireRelease(
+    isRecord(value) &&
+      typeof value.path === 'string' &&
+      typeof value.size === 'number' &&
+      Number.isSafeInteger(value.size) &&
+      value.size >= 0,
+    'release pack file metadata invalid',
+  );
+  return { ...value, path: value.path, size: value.size };
+}
+
+/** @param {import('node:fs').Stats} left @param {import('node:fs').Stats} right */
+function sameReleaseFileImage(left, right) {
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.size === right.size &&
+    left.mtimeMs === right.mtimeMs &&
+    left.ctimeMs === right.ctimeMs &&
+    right.nlink === 1 &&
+    right.isFile()
+  );
+}
+/** @param {unknown} value @returns {number} */
+function finiteReleaseIdentityNumber(value) {
+  requireRelease(typeof value === 'number' && Number.isFinite(value), 'release file identity number invalid');
+  return value;
+}
+/** @param {unknown} value @returns {SourceIdentity} */
+export function parseReleaseFileIdentity(value) {
+  requireRelease(Array.isArray(value) && value.length === 5, 'release file identity invalid');
+  return [
+    finiteReleaseIdentityNumber(value[0]),
+    finiteReleaseIdentityNumber(value[1]),
+    finiteReleaseIdentityNumber(value[2]),
+    finiteReleaseIdentityNumber(value[3]),
+    finiteReleaseIdentityNumber(value[4]),
+  ];
+}
+/** @param {unknown} value @returns {SourceObservation} */
+export function parseReleaseSourceObservation(value) {
+  requireRelease(isRecord(value), 'release Source observation invalid');
+  const observedPath = releaseRelative(value.path);
+  const identity = parseReleaseFileIdentity(value.identity);
+  if (value.kind === 'directory') {
+    requireRelease(
+      Object.keys(value).sort().join() === ['path', 'identity', 'kind'].sort().join(),
+      'release Source directory fields differ',
+    );
+    return { path: observedPath, identity, kind: 'directory' };
+  }
+  requireRelease(
+    Object.keys(value).sort().join() === ['path', 'identity', 'sha256'].sort().join() &&
+      typeof value.sha256 === 'string' &&
+      /^[a-f0-9]{64}$/.test(value.sha256),
+    'release Source file fields differ',
+  );
+  return { path: observedPath, identity, sha256: value.sha256 };
+}
+/** @param {number} descriptor @param {number} size @returns {Buffer} */
+function readBoundedReleaseDescriptor(descriptor, size) {
+  const buffer = Buffer.alloc(size + 1);
+  let length = 0;
+  while (length < buffer.length) {
+    const count = readSync(descriptor, buffer, length, buffer.length - length, null);
+    if (count === 0) break;
+    length += count;
+  }
+  requireRelease(length === size, 'release file changed during read');
+  return buffer.subarray(0, length);
+}
+/** One descriptor-owned, bounded byte image. Operation-specific authorization stays with the caller.
+ * @param {string} root @param {string} relative @param {number} [limit] @returns {Buffer}
+ */
+export function readReleaseBytes(root, relative, limit = 8 * 1024 * 1024) {
+  const file = releasePath(root, relative);
+  return readReleaseFileBytes(file, limit, () => releasePath(root, relative));
+}
+/** @param {string} file @param {number} limit @param {() => string} currentPath @returns {Buffer} */
+function readReleaseFileBytes(file, limit, currentPath) {
+  requireRelease(
+    Number.isSafeInteger(limit) && limit > 0 && limit <= 512 * 1024 * 1024,
+    'release read byte bound invalid',
+  );
+  const descriptor = openSync(file, fileConstants.O_RDONLY | (fileConstants.O_NOFOLLOW ?? 0));
+  try {
+    const before = fstatSync(descriptor);
+    requireRelease(before.isFile() && before.nlink === 1 && before.size <= limit, 'release file unsafe or oversized');
+    const bytes = readBoundedReleaseDescriptor(descriptor, before.size);
+    requireRelease(
+      sameReleaseFileImage(before, fstatSync(descriptor)) && sameReleaseFileImage(before, lstatSync(currentPath())),
+      'release file changed during read',
+    );
+    return bytes;
+  } finally {
+    closeSync(descriptor);
+  }
+}
 
 /** @param {unknown} value */
 export function releaseRelative(value) {
@@ -86,6 +214,7 @@ export function releasePath(root, relative, allowMissing = false) {
   return current;
 }
 
+/** @param {string} root @param {string} relative @returns {string} */
 export function releaseDirectory(root, relative) {
   requireRelease(
     path.isAbsolute(root) && lstatSync(root).isDirectory() && !lstatSync(root).isSymbolicLink(),
@@ -100,11 +229,13 @@ export function releaseDirectory(root, relative) {
   return current;
 }
 
+/** @param {string} root @param {string} operation @returns {string} */
 export function releaseJournalFile(root, operation) {
   requireRelease(releaseIdPattern.test(operation), 'operation invalid');
   return releasePath(root, '.agent/work/agent-local-release/' + operation + '/release.json', true);
 }
 
+/** @param {unknown} value @returns {ReleaseState} */
 export function parseReleaseState(value) {
   const allowed = new Set([
     'schema',
@@ -124,35 +255,38 @@ export function parseReleaseState(value) {
     'error',
   ]);
   requireRelease(
-    value &&
+    isRecord(value) &&
       value.schema === 'VidaLocalReleaseState/v1' &&
-      releaseIdPattern.test(value.operation_id ?? '') &&
+      typeof value.operation_id === 'string' &&
+      releaseIdPattern.test(value.operation_id) &&
       parseReleaseVersion(value.version) !== null &&
-      [
-        'awaiting_assurance',
-        'running',
-        'qualified',
-        'packing',
-        'packed',
-        'installing',
-        'successful',
-        'failed',
-      ].includes(value.status) &&
+      isReleaseStatus(value.status) &&
       Object.keys(value).every((key) => allowed.has(key)),
     'current state invalid',
   );
-  return value;
+  return /** @type {ReleaseState} */ (value);
 }
 
-export function releaseState(file) {
-  const stat = lstatSync(file);
-  requireRelease(
-    stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1 && stat.size <= 8 * 1024 * 1024,
-    'state file unsafe',
+/** @param {unknown} value @returns {value is ReleaseStatus} */
+function isReleaseStatus(value) {
+  return (
+    typeof value === 'string' &&
+    ['awaiting_assurance', 'running', 'qualified', 'packing', 'packed', 'installing', 'successful', 'failed'].includes(
+      value,
+    )
   );
-  return parseReleaseState(JSON.parse(readFileSync(file, 'utf8')));
 }
 
+/** @param {string} file @returns {ReleaseState} */
+export function releaseState(file) {
+  const bytes = readReleaseFileBytes(file, 8 * 1024 * 1024, () => file);
+  const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  /** @type {unknown} */
+  const value = JSON.parse(text);
+  return parseReleaseState(value);
+}
+
+/** @param {string} file @param {unknown} value */
 export function saveReleaseState(file, value) {
   const temporary = file + '.' + randomUUID() + '.tmp';
   const descriptor = openSync(temporary, 'wx', 0o600);
@@ -165,18 +299,29 @@ export function saveReleaseState(file, value) {
   renameSync(temporary, file);
 }
 
+/** @typedef {import('bun:sqlite').Database | import('node:sqlite').DatabaseSync} SqliteConnection */
+/** @param {string} file @param {number} timeout @returns {SqliteConnection} */
 function sqlite(file, timeout) {
   const require = createRequire(import.meta.url);
   if (process.versions.bun) {
-    const { Database } = require('bun:sqlite');
+    const { Database } = /** @type {typeof import('bun:sqlite')} */ (require('bun:sqlite'));
     const connection = new Database(file, { create: true, strict: true });
     connection.exec('PRAGMA busy_timeout=' + timeout);
     return connection;
   }
-  const { DatabaseSync } = require('node:sqlite');
+  const { DatabaseSync } = /** @type {typeof import('node:sqlite')} */ (require('node:sqlite'));
   return new DatabaseSync(file, { timeout });
 }
 
+/** @param {unknown} error @returns {boolean} */
+function isSqliteBusy(error) {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    (('errcode' in error && error.errcode === 5) || ('code' in error && error.code === 'SQLITE_BUSY'))
+  );
+}
+/** @param {string} root @param {string} relative @param {number} timeout @param {boolean} [busyIsNull] @returns {SqliteConnection|null} */
 function openMutex(root, relative, timeout, busyIsNull = false) {
   releaseDirectory(root, path.posix.dirname(relative));
   const connection = sqlite(releasePath(root, relative, true), timeout);
@@ -185,18 +330,21 @@ function openMutex(root, relative, timeout, busyIsNull = false) {
     return connection;
   } catch (error) {
     connection.close();
-    if (busyIsNull && (error.errcode === 5 || error.code === 'SQLITE_BUSY')) return null;
+    if (busyIsNull && isSqliteBusy(error)) return null;
     throw error;
   }
 }
 
+/** @param {string} root @param {string} operation @returns {SqliteConnection|null} */
 export function operationMutex(root, operation) {
   requireRelease(releaseIdPattern.test(operation), 'operation invalid');
   return openMutex(root, '.agent/work/agent-local-release/' + operation + '/worker.sqlite', 0, true);
 }
 
+/** @param {string} root @param {boolean} [allowPreparation] @returns {SqliteConnection} */
 export function admissionMutex(root, allowPreparation = false) {
   const connection = openMutex(root, '.agent/work/agent-local-release/admission.sqlite', 1000);
+  requireRelease(connection, 'admission mutex unavailable');
   try {
     if (!allowPreparation) assertPreparationSettled(root);
     return connection;
@@ -206,6 +354,7 @@ export function admissionMutex(root, allowPreparation = false) {
   }
 }
 
+/** @param {string} root */
 function assertPreparationSettled(root) {
   requireRelease(
     !existsSync(releasePath(root, '.agent/work/agent-local-release/preparation.json', true)),
@@ -213,12 +362,22 @@ function assertPreparationSettled(root) {
   );
 }
 
+/** @param {unknown} value @returns {value is PromiseLike<unknown>} */
+function isThenable(value) {
+  return (
+    value !== null &&
+    (typeof value === 'object' || typeof value === 'function') &&
+    'then' in value &&
+    typeof value.then === 'function'
+  );
+}
+/** @template T @param {string} root @param {() => T} action @param {boolean} [allowPreparation] @returns {Promise<T>} */
 export async function withReleaseAdmission(root, action, allowPreparation = false) {
   const connection = admissionMutex(root, allowPreparation);
   let open = true;
   try {
     const result = action();
-    requireRelease(!result || typeof result.then !== 'function', 'admission action must be synchronous and bounded');
+    requireRelease(!isThenable(result), 'admission action must be synchronous and bounded');
     connection.exec('COMMIT');
     open = false;
     return result;
@@ -232,8 +391,10 @@ export async function withReleaseAdmission(root, action, allowPreparation = fals
 }
 
 /** Repair publication only. Expensive extraction/copies happen before this lock pair. */
+/** @template T @param {string} root @param {string} operation @param {() => T|Promise<T>} action @returns {Promise<T>} */
 export async function withReleaseRepairLocks(root, operation, action) {
   const admission = admissionMutex(root);
+  /** @type {SqliteConnection|null|undefined} */
   let worker;
   try {
     worker = operationMutex(root, operation);
@@ -248,18 +409,49 @@ export async function withReleaseRepairLocks(root, operation, action) {
   }
 }
 
-export function packedDistribution(metadata) {
-  requireRelease(
-    Array.isArray(metadata) && metadata.length === 1 && Array.isArray(metadata[0].files),
-    'exact metadata missing',
+/** @typedef {{files: Array<{path: unknown}>}} PackedMetadataEntry */
+/** @param {unknown} value @returns {value is [PackedMetadataEntry]} */
+function isPackedMetadata(value) {
+  return (
+    Array.isArray(value) &&
+    value.length === 1 &&
+    isRecord(value[0]) &&
+    Array.isArray(value[0].files) &&
+    value[0].files.every((file) => isRecord(file) && 'path' in file)
   );
+}
+/** @typedef {{name: unknown, version: unknown, filename: unknown, integrity: unknown, files: Array<{path: unknown}>}} ArchiveMetadataEntry */
+/** @param {unknown} value @returns {value is [ArchiveMetadataEntry]} */
+function isArchiveMetadata(value) {
+  return (
+    Array.isArray(value) &&
+    value.length === 1 &&
+    isRecord(value[0]) &&
+    ['name', 'version', 'filename', 'integrity', 'files'].every((key) => key in value[0]) &&
+    Array.isArray(value[0].files) &&
+    value[0].files.every((file) => isRecord(file) && 'path' in file)
+  );
+}
+/** @param {unknown} metadata @returns {'native'|'npm'} */
+export function packedDistribution(metadata) {
+  requireRelease(isPackedMetadata(metadata), 'exact metadata missing');
   const paths = metadata[0].files.map((file) => releaseRelative(file.path));
   requireRelease(new Set(paths).size === paths.length, 'ambiguous file set');
   return paths.some((file) => file.startsWith('dist/standalone/')) ? 'native' : 'npm';
 }
 
+/** @param {unknown} metadata @param {Uint8Array} bytes */
+export function assertReleaseArchiveIntegrity(metadata, bytes) {
+  requireRelease(isArchiveMetadata(metadata), 'exact one archive required');
+  requireRelease(
+    metadata[0].integrity === 'sha512-' + createHash('sha512').update(bytes).digest('base64'),
+    'archive integrity differs',
+  );
+}
+
+/** @param {unknown} metadata @param {string} folder @param {string} version @returns {string} */
 export function selectedTarball(metadata, folder, version) {
-  requireRelease(Array.isArray(metadata) && metadata.length === 1, 'exact one archive required');
+  requireRelease(isArchiveMetadata(metadata), 'exact one archive required');
   const item = metadata[0];
   requireRelease(
     item.name === 'vida-agent' &&
@@ -273,13 +465,8 @@ export function selectedTarball(metadata, folder, version) {
     'archive identity differs',
   );
   for (const file of item.files) releaseRelative(file.path);
-  const file = releasePath(folder, item.filename),
-    stat = lstatSync(file);
-  requireRelease(stat.isFile() && stat.size <= 512 * 1024 * 1024, 'archive unsafe or oversized');
-  requireRelease(
-    item.integrity === 'sha512-' + createHash('sha512').update(readFileSync(file)).digest('base64'),
-    'archive integrity differs',
-  );
+  const file = releasePath(folder, item.filename);
+  assertReleaseArchiveIntegrity(metadata, readReleaseBytes(folder, item.filename, 512 * 1024 * 1024));
   return file;
 }
 
@@ -292,6 +479,7 @@ const scratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agen
  * @typedef {(ReleaseSourceInput & { identity: SourceIdentity, kind?: never }) |
  *   (SourceDirectoryIdentity & { kind: 'directory' })} SourceObservation
  * @typedef {{ path: string }} SourceNodeMarker
+ * @typedef {object & {readonly __repairSourcePass: never}} RepairSourcePass
  * @typedef {{
  *   root: string | null,
  *   rootInput: string | null,
@@ -301,7 +489,7 @@ const scratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agen
  *   paths: Map<string, { entries: ReleaseSourceInput[], observations: SourceObservation[] }>
  * }} RepairSourceState
  */
-/** @type {WeakMap<object, RepairSourceState>} */
+/** @type {WeakMap<RepairSourcePass, RepairSourceState>} */
 const repairSourcePasses = new WeakMap();
 const repairSourceNodeLimit = 8192;
 /** @param {import('node:fs').Stats} info @returns {SourceIdentity} */
@@ -350,9 +538,10 @@ function verifySourceDirectories(directories) {
     );
   }
 }
-/** @returns {object} */
+/** @returns {RepairSourcePass} */
 export function createRepairSourcePass() {
-  const pass = Object.freeze({});
+  // The WeakMap membership is the runtime brand; the assertion stays inside its sole factory.
+  const pass = /** @type {RepairSourcePass} */ (Object.freeze({}));
   repairSourcePasses.set(pass, {
     root: null,
     rootInput: null,
@@ -363,7 +552,7 @@ export function createRepairSourcePass() {
   });
   return pass;
 }
-/** @param {object} pass @param {string} relative */
+/** @param {RepairSourcePass} pass @param {string} relative */
 export function registerRepairSourcePath(pass, relative) {
   const state = repairSourcePasses.get(pass);
   requireRelease(state, 'invalid repair Source enumeration pass');
@@ -382,7 +571,7 @@ export function registerRepairSourcePath(pass, relative) {
  * @param {string} root
  * @param {string} relative
  * @param {SourceObservation[] | undefined} observations
- * @param {object} pass
+ * @param {RepairSourcePass} pass
  * @param {import('node:fs').Stats} [suppliedStat]
  * @param {readonly SourceDirectoryIdentity[]} [suppliedAncestors]
  * @returns {ReleaseSourceInput[]}
@@ -490,7 +679,7 @@ function releaseSourceInputsForRepair(root, relative, observations, pass, suppli
  * @param {string} root
  * @param {string} relative
  * @param {SourceObservation[]} [observations]
- * @param {object} [repairPass]
+ * @param {RepairSourcePass} [repairPass]
  * @returns {ReleaseSourceInput[]}
  */
 export function releaseSourceInputs(root, relative, observations, repairPass) {
@@ -526,7 +715,8 @@ export function releaseSourceInputs(root, relative, observations, repairPass) {
   return result;
 }
 
-/** @param {string} [root] @param {boolean} [withObservations] @param {object} [repairPass] */
+/** @typedef {{source_binding: string, entries: ReleaseSourceInput[], observations?: SourceObservation[]}} ReleaseSourceBinding */
+/** @param {string} [root] @param {boolean} [withObservations] @param {RepairSourcePass} [repairPass] @returns {ReleaseSourceBinding} */
 export function releaseSourceBinding(root = releaseRootDefault, withObservations = false, repairPass) {
   /** @type {SourceObservation[] | undefined} */
   const observations = withObservations ? [] : undefined;
@@ -540,15 +730,18 @@ export function releaseSourceBinding(root = releaseRootDefault, withObservations
     'tooling/agent/release-ci-evidence.mjs',
     'tooling/agent/native-ci-delivery.mjs',
     'tooling/agent/controllers/forward-review-proof.mjs',
+    '.github/workflows/agent-native-delivery.yml',
   ].flatMap((relative) => releaseSourceInputs(root, relative, observations, repairPass));
   return { source_binding: releaseDigest(JSON.stringify(entries)), entries, ...(observations ? { observations } : {}) };
 }
 
+/** @param {string} operation @returns {string} */
 export function retargetStateRelative(operation) {
   requireRelease(releaseIdPattern.test(operation), 'operation invalid');
   return '.agent/work/agent-local-release/' + operation + '/retarget/state.json';
 }
 
+/** @param {string} root @param {string} operation */
 export function assertReleaseRetargetSettled(root, operation) {
   const file = releasePath(root, retargetStateRelative(operation), true);
   const planFile = releasePath(root, '.agent/work/agent-local-release/' + operation + '/retarget/plan.json', true);
@@ -556,8 +749,11 @@ export function assertReleaseRetargetSettled(root, operation) {
     requireRelease(!existsSync(planFile), 'retarget repair missing phase');
     return;
   }
-  requireRelease(lstatSync(file).isFile() && lstatSync(file).size <= 8 * 1024 * 1024, 'retarget state unsafe');
-  const state = JSON.parse(readFileSync(file, 'utf8'));
+  /** @type {unknown} */
+  const state = JSON.parse(
+    new TextDecoder('utf-8', { fatal: true }).decode(readReleaseBytes(root, retargetStateRelative(operation))),
+  );
+  requireRelease(isRecord(state), 'retarget state must be an object');
   const { digest, ...body } = state;
   requireRelease(
     state.schema === 'VidaReleaseRetargetState/v1' &&
@@ -568,8 +764,13 @@ export function assertReleaseRetargetSettled(root, operation) {
       digest === releaseDigest(releaseJSON(body)),
     'retarget repair active or invalid',
   );
-  requireRelease(lstatSync(planFile).isFile() && lstatSync(planFile).size <= 8 * 1024 * 1024, 'retarget plan unsafe');
-  const plan = JSON.parse(readFileSync(planFile, 'utf8'));
+  /** @type {unknown} */
+  const plan = JSON.parse(
+    new TextDecoder('utf-8', { fatal: true }).decode(
+      readReleaseBytes(root, '.agent/work/agent-local-release/' + operation + '/retarget/plan.json'),
+    ),
+  );
+  requireRelease(isRecord(plan) && isRecord(plan.release_after), 'retarget plan afterimage must be an object');
   const { digest: planDigest, ...planBody } = plan;
   requireRelease(
     plan.schema === 'VidaReleaseRetargetPlan/v1' &&

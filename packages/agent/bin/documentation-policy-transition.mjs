@@ -1,8 +1,13 @@
-import { Database } from 'bun:sqlite';
+import {
+  createCliHostStateStore,
+  closeWorkspaceDatabaseWithAdmission,
+  openCliWorkspaceDatabase,
+} from './workspace-database-cli.ts';
+import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli-contracts.ts';
 import { readFileSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
-import Ajv2020 from 'ajv/dist/2020.js';
+import { Ajv2020 } from 'ajv/dist/2020.js';
 import scopeSchema from '../schemas/implementation-scope.v1.schema.json' with { type: 'json' };
 import policySchema from '../schemas/documentation-policy.v1.schema.json' with { type: 'json' };
 import baselineSchema from '../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
@@ -13,7 +18,7 @@ import { sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.
 import { loadProjectContext, projectBindingFor } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { HostStateStore } from '../src/host-state.ts';
+
 import { currentState } from './runtime-config-rebind.mjs';
 import { hasForwardOverlay, verifyForwardCandidateAdmission } from './forward-candidate-admission.mjs';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
@@ -24,63 +29,377 @@ import {
   parseDocumentationPolicyTransition,
   documentationPolicyTransitionFence,
 } from '../src/documentation/policy-transition.ts';
+/** @typedef {import('bun:sqlite').Database} SqliteDatabase */
 
+/** @typedef {Record<string, string> & { '--mode': string; '--project-root': string; '--repair-id': string; '--kind': string; '--work-id': string; '--repository': string; '--project': string; '--actor'?: string; '--instruction-ref'?: string; '--baseline'?: string; '--timestamp'?: string; '--target-policy'?: string; '--forward-operation'?: string; '--payload-root'?: string }} CliValues */
+/** @typedef {CliValues & Required<Pick<CliValues, '--actor' | '--instruction-ref' | '--baseline' | '--timestamp'>>} PlanningCliValues */
+/** @typedef {{ readonly path: string; readonly sha256: string; readonly bytes: string; readonly size: number }} AddedMap */
+/** @typedef {{ readonly path: string; readonly bytes: string }} TransitionEvent */
+/** @typedef {{ readonly path: string; readonly sha256: string; readonly checkpoint_digest: string }} TransitionCloseout */
+/** @typedef {Partial<Pick<TransitionOperation, 'phase' | 'maintenance_released' | 'events' | 'closeout'>>} TransitionChanges */
+/** @typedef {import('../src/host-state.ts').MaintenanceFenceBinding} FenceBinding */
+/** @typedef {{ readonly payload_root: string; readonly target_path: string; readonly operation_id: string } & Record<string, unknown>} ForwardAdmission */
+/** @typedef {{ readonly operation_id: string; readonly repository_root: string; readonly repository_id: string; readonly project_ids: string[]; readonly project_id: string; readonly work_id: string; readonly source_revision: string; readonly scope_digest: string; readonly scope_file_digest: string; readonly project_context_digest: string; readonly config_digest: string; readonly baseline_path: string; readonly baseline_digest: string; readonly baseline_file_digest: string; readonly policy_path: string; readonly old_policy_bytes: string; readonly target_policy_bytes: string; readonly added_maps: AddedMap[]; readonly changelog_path: string; readonly changelog_preimage: string; readonly actor: string; readonly instruction_ref: string; readonly created_at: string; readonly workspace_id: string; readonly state_digest: string; readonly selector_digest: string; readonly bundle_digest: string; readonly source_admission: ForwardAdmission | null; readonly token: string; readonly fence_binding: FenceBinding }} TransitionPlan */
+/** @typedef {Omit<TransitionPlan, 'fence_binding'>} TransitionPlanBase */
+/** @typedef {{ readonly schema: 'DocumentationPolicyTransition/v1'; readonly revision: number; readonly phase: string; readonly maintenance_released: boolean; readonly plan: TransitionPlan; readonly plan_digest: string; readonly events: TransitionEvent[]; readonly closeout: TransitionCloseout | null }} TransitionOperation */
+/** @typedef {{ readonly work_id: string; readonly owner: string; readonly attribution: { readonly pointer: string }; readonly allowed_paths: string[]; readonly documentation_paths: string[]; readonly source_revision: string }} ScopeEvidence */
+/** @typedef {{ readonly digest: string; readonly phase: string; readonly status: string; readonly work_id: string; readonly source_revision: string; readonly scope_digest: string; readonly config_digest: string; readonly project_context_digest: string; readonly policy_path: string; readonly policy_digest: string; readonly documents: Array<{ readonly path: string; readonly sha256: string }>; readonly created_at: string }} BaselineEvidence */
+/** @typedef {{ readonly source_path: string; readonly changelog_required: boolean; readonly changelog_path: string; readonly excluded_roots: string[] }} PolicyEvidence */
+/** @typedef {{ readonly schema: 'ActiveRuntimeSelector/v1'; readonly payload_manifest_sha256: string }} ActiveSelectorEvidence */
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** @param {Record<string, string>} value @returns {value is CliValues} */
+function isCliValues(value) {
+  return ['--mode', '--project-root', '--repair-id', '--kind', '--work-id', '--repository', '--project'].every(
+    (key) => typeof value[key] === 'string',
+  );
+}
+
+/** @param {CliValues} value @returns {value is PlanningCliValues} */
+function isPlanningCliValues(value) {
+  return ['--actor', '--instruction-ref', '--baseline', '--timestamp'].every((key) => typeof value[key] === 'string');
+}
+
+/** @param {Record<string, string>} value @returns {CliValues} */
+function checkedCliValues(value) {
+  if (!isCliValues(value)) throw Error('documentation policy transition: required option absent');
+  return value;
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & { readonly payload_root: string; readonly target_path: string; readonly operation_id: string }} */
+function isForwardAdmission(value) {
+  return (
+    isRecord(value) &&
+    typeof value.payload_root === 'string' &&
+    typeof value.target_path === 'string' &&
+    typeof value.operation_id === 'string'
+  );
+}
+
+/** @param {unknown} value @returns {value is FenceBinding} */
+function isFenceBinding(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'MaintenanceFenceBinding/v1' &&
+    Array.isArray(value.project_ids) &&
+    value.project_ids.every((entry) => typeof entry === 'string') &&
+    typeof value.operation_id === 'string' &&
+    typeof value.manifest_digest === 'string' &&
+    typeof value.request_digest === 'string' &&
+    typeof value.bindings_digest === 'string' &&
+    typeof value.closure_digest === 'string' &&
+    typeof value.bundle_digest === 'string'
+  );
+}
+
+/** @param {string | undefined} value @returns {string} */
+function requiredTargetPath(value) {
+  if (typeof value !== 'string' || !value)
+    throw Error('documentation policy transition: target policy path is required');
+  return value;
+}
+
+/** @param {string | undefined} value @param {string} field @returns {string} */
+function requiredAdmissionString(value, field) {
+  requireTransition(typeof value === 'string' && value.length > 0, 'forward admission ' + field + ' is required');
+  return value;
+}
+
+/** @param {unknown} value @returns {value is ScopeEvidence} */
+function isScopeEvidence(value) {
+  return (
+    isRecord(value) &&
+    typeof value.work_id === 'string' &&
+    typeof value.owner === 'string' &&
+    isRecord(value.attribution) &&
+    typeof value.attribution.pointer === 'string' &&
+    Array.isArray(value.allowed_paths) &&
+    value.allowed_paths.every((entry) => typeof entry === 'string') &&
+    Array.isArray(value.documentation_paths) &&
+    value.documentation_paths.every((entry) => typeof entry === 'string') &&
+    typeof value.source_revision === 'string'
+  );
+}
+
+/** @param {unknown} value @returns {value is BaselineEvidence} */
+function isBaselineEvidence(value) {
+  return isRecord(value) && hasBaselineIdentity(value) && hasBaselineDocuments(value);
+}
+
+/** @param {Record<string, unknown>} value */
+function hasBaselineIdentity(value) {
+  return hasBaselineDigestFields(value) && hasBaselineScopeFields(value) && hasBaselinePolicyFields(value);
+}
+
+/** @param {Record<string, unknown>} value */
+function hasBaselineDigestFields(value) {
+  return (
+    typeof value.digest === 'string' &&
+    typeof value.phase === 'string' &&
+    typeof value.status === 'string' &&
+    typeof value.work_id === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasBaselineScopeFields(value) {
+  return (
+    typeof value.source_revision === 'string' &&
+    typeof value.scope_digest === 'string' &&
+    typeof value.config_digest === 'string' &&
+    typeof value.project_context_digest === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasBaselinePolicyFields(value) {
+  return (
+    typeof value.policy_path === 'string' &&
+    typeof value.policy_digest === 'string' &&
+    typeof value.created_at === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasBaselineDocuments(value) {
+  return (
+    Array.isArray(value.documents) &&
+    value.documents.every(
+      (entry) => isRecord(entry) && typeof entry.path === 'string' && typeof entry.sha256 === 'string',
+    )
+  );
+}
+
+/** @param {unknown} value @returns {value is PolicyEvidence} */
+function isPolicyEvidence(value) {
+  return (
+    isRecord(value) &&
+    typeof value.source_path === 'string' &&
+    typeof value.changelog_required === 'boolean' &&
+    typeof value.changelog_path === 'string' &&
+    Array.isArray(value.excluded_roots) &&
+    value.excluded_roots.every((entry) => typeof entry === 'string')
+  );
+}
+
+/** @param {Uint8Array} bytes @returns {ScopeEvidence} */
+function readScopeEvidence(bytes) {
+  /** @type {unknown} */
+  const value = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  requireTransition(isScopeEvidence(value), 'scope shape invalid');
+  requireTransition(validScope(value), 'scope schema invalid');
+  return value;
+}
+
+/** @param {Uint8Array} bytes @returns {BaselineEvidence} */
+function readBaselineEvidence(bytes) {
+  /** @type {unknown} */
+  const value = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  requireTransition(isBaselineEvidence(value), 'baseline shape invalid');
+  requireTransition(validBaseline(value), 'baseline schema invalid');
+  return value;
+}
+
+/** @param {Uint8Array} bytes @returns {PolicyEvidence} */
+function readPolicyEvidence(bytes) {
+  /** @type {unknown} */
+  const value = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  requireTransition(isPolicyEvidence(value), 'policy shape invalid');
+  requireTransition(validPolicy(value), 'policy schema invalid');
+  return value;
+}
+
+/** @param {unknown} value @returns {value is ActiveSelectorEvidence} */
+function isActiveSelector(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'ActiveRuntimeSelector/v1' &&
+    typeof value.payload_manifest_sha256 === 'string' &&
+    /^[a-f0-9]{64}$/.test(value.payload_manifest_sha256)
+  );
+}
+
+/** @param {Uint8Array} bytes @returns {ActiveSelectorEvidence} */
+function readActiveSelector(bytes) {
+  /** @type {unknown} */
+  const value = JSON.parse(Buffer.from(bytes).toString('utf8'));
+  requireTransition(isActiveSelector(value), 'selected runtime invalid');
+  return value;
+}
+
+/** @param {unknown} value @returns {value is TransitionPlan} */
+function isTransitionPlan(value) {
+  const strings = [
+    'operation_id',
+    'repository_root',
+    'repository_id',
+    'project_id',
+    'work_id',
+    'source_revision',
+    'scope_digest',
+    'scope_file_digest',
+    'project_context_digest',
+    'config_digest',
+    'baseline_path',
+    'baseline_digest',
+    'baseline_file_digest',
+    'policy_path',
+    'old_policy_bytes',
+    'target_policy_bytes',
+    'changelog_path',
+    'changelog_preimage',
+    'actor',
+    'instruction_ref',
+    'created_at',
+    'workspace_id',
+    'state_digest',
+    'selector_digest',
+    'bundle_digest',
+    'token',
+  ];
+  return (
+    isRecord(value) &&
+    strings.every((key) => typeof value[key] === 'string') &&
+    Array.isArray(value.project_ids) &&
+    value.project_ids.every((entry) => typeof entry === 'string') &&
+    Array.isArray(value.added_maps) &&
+    value.added_maps.every(
+      (entry) =>
+        isRecord(entry) &&
+        typeof entry.path === 'string' &&
+        typeof entry.sha256 === 'string' &&
+        typeof entry.bytes === 'string' &&
+        typeof entry.size === 'number',
+    ) &&
+    (value.source_admission === null || isForwardAdmission(value.source_admission)) &&
+    isFenceBinding(value.fence_binding)
+  );
+}
+
+/** @param {unknown} value @returns {value is TransitionOperation} */
+function isTransitionOperation(value) {
+  return (
+    isRecord(value) &&
+    hasTransitionOperationFields(value) &&
+    hasTransitionEvents(value) &&
+    hasTransitionCloseout(value) &&
+    isTransitionPlan(value.plan)
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasTransitionOperationFields(value) {
+  return (
+    value.schema === 'DocumentationPolicyTransition/v1' &&
+    typeof value.revision === 'number' &&
+    Number.isSafeInteger(value.revision) &&
+    typeof value.phase === 'string' &&
+    typeof value.maintenance_released === 'boolean' &&
+    typeof value.plan_digest === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasTransitionEvents(value) {
+  return (
+    Array.isArray(value.events) &&
+    value.events.every((event) => isRecord(event) && typeof event.path === 'string' && typeof event.bytes === 'string')
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasTransitionCloseout(value) {
+  return (
+    value.closeout === null ||
+    (isRecord(value.closeout) &&
+      typeof value.closeout.path === 'string' &&
+      typeof value.closeout.sha256 === 'string' &&
+      typeof value.closeout.checkpoint_digest === 'string')
+  );
+}
+
+/** @param {Uint8Array} bytes @returns {TransitionOperation} */
+function parseTransition(bytes) {
+  const value = parseDocumentationPolicyTransition(bytes);
+  if (!isTransitionOperation(value)) throw Error('documentation policy transition: parsed operation shape differs');
+  return value;
+}
+
+/** @param {Uint8Array} bytes */
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+/** @param {unknown} value */
 const json = (value) => JSON.stringify(value, null, 2) + '\n';
+/** @param {Record<string, unknown>} value */
 const seal = (value) => {
   const { operation_digest: _digest, ...body } = value;
   return { ...body, operation_digest: canonicalJsonDigest(body) };
 };
-const requireTransition = (condition, message) => {
+/** @param {unknown} condition @param {string} message @returns {asserts condition} */
+function requireTransition(condition, message) {
   if (!condition) throw Error(`documentation policy transition: ${message}`);
-};
+}
 const ajv = new Ajv2020({ strict: true, allErrors: true, formats: { 'date-time': true } });
 const validScope = ajv.compile(scopeSchema),
   validPolicy = ajv.compile(policySchema),
   validBaseline = ajv.compile(baselineSchema),
   validEvent = ajv.compile(eventSchema);
 
+/** @param {string[]} args @returns {CliValues} */
 function parse(args) {
+  /** @type {Record<string, string>} */
   const values = {};
   requireTransition(args.length % 2 === 0, 'arguments must be paired');
   for (let i = 0; i < args.length; i += 2) {
-    requireTransition(args[i]?.startsWith('--') && args[i + 1] && !Object.hasOwn(values, args[i]), 'invalid arguments');
-    values[args[i]] = args[i + 1];
+    const key = args[i],
+      value = args[i + 1];
+    requireTransition(
+      typeof key === 'string' &&
+        key.startsWith('--') &&
+        typeof value === 'string' &&
+        value.length > 0 &&
+        !Object.hasOwn(values, key),
+      'invalid arguments',
+    );
+    values[key] = value;
   }
-  const planning = ['inspect', 'plan'].includes(values['--mode']);
-  const keys = [
-    '--kind',
-    '--mode',
-    '--project-root',
-    '--repository',
-    '--project',
-    '--work-id',
-    '--repair-id',
-    ...(planning ? ['--target-policy', '--baseline', '--actor', '--instruction-ref', '--timestamp'] : []),
-    ...(values['--forward-operation'] || values['--payload-root'] ? ['--forward-operation', '--payload-root'] : []),
-  ];
+  const cliValues = checkedCliValues(values);
+  const mode = cliValues['--mode'],
+    projectRoot = cliValues['--project-root'],
+    repairId = cliValues['--repair-id'];
+  const keys = expectedOptionKeys(mode, cliValues);
   requireTransition(
-    Object.keys(values).sort().join('|') === keys.sort().join('|') &&
-      values['--kind'] === 'documentation-policy' &&
-      ['inspect', 'plan', 'apply', 'resume', 'restore'].includes(values['--mode']) &&
-      path.isAbsolute(values['--project-root'] ?? '') &&
-      path.resolve(values['--project-root']) === values['--project-root'] &&
-      /^[a-z0-9][a-z0-9._-]{0,79}$/.test(values['--repair-id']),
+    Object.keys(cliValues).sort().join('|') === keys.sort().join('|') &&
+      cliValues['--kind'] === 'documentation-policy' &&
+      path.isAbsolute(projectRoot) &&
+      path.resolve(projectRoot) === projectRoot &&
+      /^[a-z0-9][a-z0-9._-]{0,79}$/.test(repairId),
     'mode, root or arguments invalid',
   );
-  return values;
+  return cliValues;
 }
 
+/** @param {string} mode @param {CliValues} values @returns {string[]} */
+function expectedOptionKeys(mode, values) {
+  const contract = reconcileCliContracts['documentation-policy'];
+  requireTransition(contract !== undefined && contract.modes.includes(mode), 'CLI contract or mode is absent');
+  return reconcileExpectedOptions('documentation-policy', mode, values) ?? [];
+}
+
+/** @param {CliValues} values @param {string} root @param {ReturnType<typeof requireSafeRepositoryAccess>} access @param {ReturnType<typeof loadRuntimeConfig>} config @param {SqliteDatabase} db @param {ForwardAdmission | null} sourceAdmission */
 function planning(values, root, access, config, db, sourceAdmission) {
+  requireTransition(isPlanningCliValues(values), 'planning inputs are absent');
   const workId = values['--work-id'],
     context = loadProjectContext(root, config, values['--repository'], values['--project']);
   const project = projectBindingFor(context, values['--project']);
   requireTransition(project, 'project binding absent');
-  const scopeBytes = access.readBytes(`.agent/work/${workId}/scope.json`, 'accepted documentation scope'),
-    scope = JSON.parse(scopeBytes);
+  const scopeBytes = access.readBytes(`.agent/work/${workId}/scope.json`, 'accepted documentation scope');
+  const scope = readScopeEvidence(scopeBytes);
   requireTransition(
-    validScope(scope) &&
-      scope.work_id === workId &&
+    scope.work_id === workId &&
       scope.owner === values['--actor'] &&
       scope.attribution.pointer === values['--instruction-ref'] &&
       snapshotDeclaredSources(access, scope.allowed_paths).digest === scope.source_revision,
@@ -91,8 +410,8 @@ function planning(values, root, access, config, db, sourceAdmission) {
     new RegExp(`^\\.agent/work/${workId}/documentation-baseline-[0-9]{4}\\.v1\\.json$`).test(baselinePath),
     'baseline path differs',
   );
-  const baselineBytes = access.readBytes(baselinePath, 'genuine pre-edit baseline'),
-    baseline = JSON.parse(baselineBytes);
+  const baselineBytes = access.readBytes(baselinePath, 'genuine pre-edit baseline');
+  const baseline = readBaselineEvidence(baselineBytes);
   const { digest, ...baselineBody } = baseline;
   const scopeDigest = canonicalJsonDigest([...new Set(scope.allowed_paths)].sort());
   requireTransition(
@@ -109,15 +428,14 @@ function planning(values, root, access, config, db, sourceAdmission) {
   );
   const policyPath = project.path_profile.paths.documentation_policy_path,
     oldBytes = access.readBytes(policyPath, 'old policy');
+  const authoredTargetPath = values['--target-policy'];
   const targetBytes = sourceAdmission
     ? readFileSync(path.join(sourceAdmission.payload_root, sourceAdmission.target_path))
-    : access.readBytes(values['--target-policy'], 'authored target policy');
-  const oldPolicy = JSON.parse(oldBytes),
-    target = JSON.parse(targetBytes);
+    : access.readBytes(requiredTargetPath(authoredTargetPath), 'authored target policy');
+  const oldPolicy = readPolicyEvidence(oldBytes),
+    target = readPolicyEvidence(targetBytes);
   requireTransition(
-    validPolicy(oldPolicy) &&
-      validPolicy(target) &&
-      baseline.policy_path === policyPath &&
+    baseline.policy_path === policyPath &&
       sha(oldBytes) === baseline.policy_digest &&
       scope.allowed_paths.includes(policyPath) &&
       oldPolicy.source_path === policyPath &&
@@ -160,13 +478,10 @@ function planning(values, root, access, config, db, sourceAdmission) {
       Date.parse(values['--timestamp']) <= Date.now(),
     'planning time predates baseline or is future',
   );
-  const selectedBytes = access.readBytes('.agent/active-runtime-selector.v1.json', 'selected runtime'),
-    selected = JSON.parse(selectedBytes);
-  requireTransition(
-    selected.schema === 'ActiveRuntimeSelector/v1' && /^[a-f0-9]{64}$/.test(selected.payload_manifest_sha256),
-    'selected runtime invalid',
-  );
+  const selectedBytes = access.readBytes('.agent/active-runtime-selector.v1.json', 'selected runtime');
+  const selected = readActiveSelector(selectedBytes);
   const workspace = deriveWorkspaceId(config.repository.repository_id, root);
+  /** @type {TransitionPlanBase} */
   const plan = {
     operation_id: values['--repair-id'],
     repository_root: root,
@@ -198,22 +513,24 @@ function planning(values, root, access, config, db, sourceAdmission) {
     source_admission: sourceAdmission,
     token: randomUUID(),
   };
-  plan.fence_binding = documentationPolicyTransitionFence(plan);
+  const generatedFenceBinding = documentationPolicyTransitionFence(plan);
+  requireTransition(isFenceBinding(generatedFenceBinding), 'generated maintenance fence binding is malformed');
+  const completePlan = { ...plan, fence_binding: generatedFenceBinding };
   const operation = seal({
     schema: 'DocumentationPolicyTransition/v1',
     revision: 1,
     phase: 'planned',
     maintenance_released: false,
-    plan,
-    plan_digest: canonicalJsonDigest(plan),
+    plan: completePlan,
+    plan_digest: canonicalJsonDigest(completePlan),
     events: [],
     closeout: null,
   });
-  parseDocumentationPolicyTransition(Buffer.from(json(operation)));
-  return operation;
+  return parseTransition(Buffer.from(json(operation)));
 }
 
 /** Owner authors policy; this command publishes only audit/checkpoints and its owned fence. */
+/** @param {string[]} args @param {{ readonly onPhase?: (phase: string) => void }} [options] */
 export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
   const values = parse(args),
     root = values['--project-root'],
@@ -222,29 +539,35 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
   const operationPath = documentationPolicyTransitionPath(values['--work-id']);
   const saved = ['inspect', 'plan'].includes(values['--mode'])
     ? null
-    : parseDocumentationPolicyTransition(access.readBytes(operationPath, 'policy transition admission'));
+    : parseTransition(access.readBytes(operationPath, 'policy transition admission'));
   const frozenAdmission = saved?.plan.source_admission ?? null;
   const admitted = values['--forward-operation'] || frozenAdmission;
   requireTransition(
     !hasForwardOverlay(root) || admitted,
     'forward maintenance requires sealed administrative admission',
   );
+  /** @type {ForwardAdmission | null} */
   let sourceAdmission = null;
   if (admitted) {
-    const targetPath = values['--target-policy'] ?? frozenAdmission?.target_path;
+    const targetPath = requiredTargetPath(values['--target-policy'] ?? frozenAdmission?.target_path);
     const admittedContext = loadProjectContext(root, config, values['--repository'], values['--project']);
     requireTransition(
       targetPath ===
         projectBindingFor(admittedContext, values['--project'])?.path_profile.paths.documentation_policy_path,
       'admitted target differs from configured canonical policy',
     );
-    sourceAdmission = verifyForwardCandidateAdmission({
+    const verifiedAdmission = verifyForwardCandidateAdmission({
       root,
-      payloadRoot: values['--payload-root'] ?? frozenAdmission?.payload_root,
-      operationId: values['--forward-operation'] ?? frozenAdmission?.operation_id,
+      payloadRoot: requiredAdmissionString(values['--payload-root'] ?? frozenAdmission?.payload_root, 'payload root'),
+      operationId: requiredAdmissionString(
+        values['--forward-operation'] ?? frozenAdmission?.operation_id,
+        'operation ID',
+      ),
       moduleUrl: import.meta.url,
       targetPath,
     });
+    requireTransition(isForwardAdmission(verifiedAdmission), 'forward admission evidence is malformed');
+    sourceAdmission = verifiedAdmission;
     requireTransition(
       !frozenAdmission || canonicalJsonDigest(sourceAdmission) === canonicalJsonDigest(frozenAdmission),
       'frozen administrative source admission differs',
@@ -252,10 +575,12 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
   }
   const databasePath = sessionHandoffDatabaseRelativePath(config);
   access.readBytes(databasePath, 'existing host database');
-  const db = new Database(path.join(root, databasePath), {
-    readonly: ['inspect', 'plan'].includes(values['--mode']),
-    strict: true,
-  });
+  const db = openCliWorkspaceDatabase(
+    root,
+    path.join(root, databasePath),
+    deriveWorkspaceId(config.repository.repository_id, root),
+    ['inspect', 'plan'].includes(values['--mode']),
+  );
   try {
     if (['inspect', 'plan'].includes(values['--mode'])) {
       const operation = planning(values, root, access, config, db, sourceAdmission);
@@ -269,7 +594,7 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
     }
     return await access.withExclusiveLockAsync(operationPath, 'policy transition', async () => {
       let bytes = access.readBytes(operationPath, 'policy transition'),
-        operation = parseDocumentationPolicyTransition(bytes);
+        operation = parseTransition(bytes);
       const plan = operation.plan;
       requireTransition(
         plan.operation_id === values['--repair-id'] &&
@@ -286,12 +611,13 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
         work_id: plan.work_id,
         source_revision: plan.source_revision,
       };
+      /** @param {TransitionChanges} changes */
       const save = async (changes) => {
         const next = seal({ ...operation, ...changes, revision: operation.revision + 1 });
-        parseDocumentationPolicyTransition(Buffer.from(json(next)));
+        const parsedNext = parseTransition(Buffer.from(json(next)));
         await access.replaceAtomicAsync(operationPath, sha(bytes), json(next), 'policy transition phase');
         bytes = Buffer.from(json(next));
-        operation = next;
+        operation = parsedNext;
       };
       const context = () => {
         requireTransition(
@@ -316,6 +642,7 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
         );
         return { old: policy === plan.old_policy_bytes, expectedChangelog, actual };
       };
+      /** @type {import('../src/host-state.ts').MaintenanceReleaseVerifier} */
       const verifier = {
         principal: 'vida-agent-documentation-policy-transition',
         projectIds: plan.project_ids,
@@ -337,7 +664,7 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
           };
         },
       };
-      const store = new HostStateStore(db, plan.workspace_id, undefined, undefined, undefined, verifier, root);
+      const store = createCliHostStateStore(db, plan.workspace_id, undefined, undefined, undefined, verifier, root);
       const current = context();
       if (values['--mode'] === 'restore')
         requireTransition(
@@ -382,10 +709,12 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
         onPhase?.('fenced');
         return { status: 'author_policy_required', maintenance_held: true, writes_policy: false };
       } else {
+        requireTransition(held !== null, 'owned maintenance fence is unavailable');
         requireTransition(
           own && (held.status === 'held' || (held.status === 'released' && operation.phase === 'applied')),
           'own held fence or applied release required',
         );
+        requireTransition(held !== null, 'owned maintenance fence is unavailable');
         if (held.status === 'released') {
           await executeDocumentationClearFromWork(input, 'verify');
           await save({ maintenance_released: true });
@@ -394,8 +723,10 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
         store.assertMaintenanceFence({ fence: held, token: plan.token });
         if (current.old) return { status: 'author_policy_required', maintenance_held: true, writes_policy: false };
         if (!operation.events.length) {
-          const baseline = JSON.parse(access.readText(plan.baseline_path, 'baseline'));
-          const scope = JSON.parse(access.readText(`.agent/work/${plan.work_id}/scope.json`, 'scope'));
+          const baseline = readBaselineEvidence(Buffer.from(access.readText(plan.baseline_path, 'baseline')));
+          const scope = readScopeEvidence(
+            Buffer.from(access.readText(`.agent/work/${plan.work_id}/scope.json`, 'scope')),
+          );
           const before = [...baseline.documents, ...plan.added_maps];
           const events = before.flatMap((entry) => {
             const after = sha(access.readBytes(entry.path, 'governed current document'));
@@ -451,6 +782,7 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
         await save({ phase: 'applied', closeout });
         onPhase?.('applied');
       }
+      requireTransition(held !== null, 'maintenance fence is unavailable for release');
       if (held.status === 'held') await store.releaseMaintenanceFence({ fence: held, token: plan.token });
       else requireTransition(held.status === 'released', 'release state differs');
       onPhase?.('released');
@@ -458,6 +790,6 @@ export async function runDocumentationPolicyTransition(args, { onPhase } = {}) {
       return { status: operation.phase, rollback_performed: false, writes_policy: false };
     });
   } finally {
-    db.close();
+    closeWorkspaceDatabaseWithAdmission(db);
   }
 }

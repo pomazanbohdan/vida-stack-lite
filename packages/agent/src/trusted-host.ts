@@ -4,6 +4,7 @@ export {
   type TrustedHostLauncherCapability,
   type TrustedHostOperation,
 } from './runtime-kernel.js';
+export { openExistingWorkspaceDatabase } from './config/workspace-database.js';
 export {
   HostStateStore,
   openHostStateDatabase,

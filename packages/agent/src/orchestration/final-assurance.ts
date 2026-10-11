@@ -67,34 +67,49 @@ export const correctiveAssignmentAuthorizationSchema = z
     base_run_id: text,
   })
   .strict();
-export const correctiveExecutionSchema = z
-  .object({
-    schema: z.literal('CorrectiveExecution/v1'),
-    base_run_id: text,
-    engine_run_id: z.string().uuid(),
-    correction_generation: z.number().int().positive(),
-    stage_ids: z.array(text).min(1),
-    authorization: z
-      .object({ schema: z.literal('CorrectiveAssignmentAuthorization/v1'), path: text, sha256: digest })
-      .strict(),
-  })
-  .strict();
-export type CorrectiveExecution = z.infer<typeof correctiveExecutionSchema>;
+export { correctiveExecutionSchema, type CorrectiveExecution } from './corrective-execution-contract.js';
+import { correctiveExecutionSchema, type CorrectiveExecution } from './corrective-execution-contract.js';
 /** One current Host binding for the base run and explicitly authorized engine subrun. */
-export function validateWorkSessionBinding(
+export function validateWorkSessionBindingAndReturnCorrectiveAuthority(
   work: WorkState,
   state: { attempt: number; run_id: string; corrective_execution?: CorrectiveExecution | null },
   root?: string,
-): void {
+): ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse> | null {
   const execution = state.corrective_execution;
   if (!execution) {
     requireAssurance(
       state.run_id === work.execution.run_id && work.lifecycle.assurance.correction_count === 0,
       'base session binding differs',
     );
-    return;
+    return null;
   }
   correctiveExecutionSchema.parse(execution);
+  return readValidatedCorrectiveAuthority(work, state, execution, root);
+}
+
+type CorrectiveAuthorityContract = Pick<
+  ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse>,
+  | 'attempt'
+  | 'work_id'
+  | 'run_id'
+  | 'base_run_id'
+  | 'engine_run_id'
+  | 'correction_generation'
+  | 'source_revision'
+  | 'scope_id'
+  | 'config_digest'
+> & {
+  readonly ac_ids: readonly string[];
+  readonly allowed_paths: readonly string[];
+  readonly stage_ids: readonly string[];
+};
+
+function readValidatedCorrectiveAuthority(
+  work: WorkState,
+  state: { attempt: number; run_id: string; corrective_execution?: CorrectiveExecution | null },
+  execution: CorrectiveExecution,
+  root?: string,
+): ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse> {
   requireAssurance(
     root &&
       state.run_id === execution.engine_run_id &&
@@ -119,21 +134,51 @@ export function validateWorkSessionBinding(
     'corrective authority bytes differ',
   );
   const authority = correctiveAssignmentAuthorizationSchema.parse(JSON.parse(bytes.toString('utf8')));
+  const authorityBinding: CorrectiveAuthorityContract = {
+      attempt: authority.attempt,
+      work_id: authority.work_id,
+      run_id: authority.run_id,
+      base_run_id: authority.base_run_id,
+      engine_run_id: authority.engine_run_id,
+      correction_generation: authority.correction_generation,
+      source_revision: authority.source_revision,
+      scope_id: authority.scope_id,
+      config_digest: authority.config_digest,
+      ac_ids: authority.ac_ids,
+      allowed_paths: authority.allowed_paths,
+      stage_ids: authority.stage_ids,
+    },
+    expectedBinding: CorrectiveAuthorityContract = {
+      attempt: state.attempt,
+      work_id: work.binding.lifecycle_work_id,
+      run_id: work.execution.run_id,
+      base_run_id: execution.base_run_id,
+      engine_run_id: execution.engine_run_id,
+      correction_generation: execution.correction_generation,
+      source_revision: work.binding.work_source_revision,
+      scope_id: work.binding.scope_id,
+      config_digest: work.binding.config_digest,
+      ac_ids: work.binding.ac_ids,
+      allowed_paths: work.lifecycle.scope.allowed_paths,
+      stage_ids: execution.stage_ids,
+    },
+    authorityBindingJson = canonicalJson(authorityBinding),
+    expectedBindingJson = canonicalJson(expectedBinding);
   requireAssurance(
-    authority.attempt === state.attempt &&
-      authority.work_id === work.binding.lifecycle_work_id &&
-      authority.run_id === work.execution.run_id &&
-      authority.base_run_id === execution.base_run_id &&
-      authority.engine_run_id === execution.engine_run_id &&
-      authority.correction_generation === execution.correction_generation &&
-      authority.source_revision === work.binding.work_source_revision &&
-      authority.scope_id === work.binding.scope_id &&
-      authority.config_digest === work.binding.config_digest &&
-      canonicalJson(authority.ac_ids) === canonicalJson(work.binding.ac_ids) &&
-      canonicalJson(authority.allowed_paths) === canonicalJson(work.lifecycle.scope.allowed_paths) &&
-      canonicalJson(authority.stage_ids) === canonicalJson(execution.stage_ids),
+    Buffer.byteLength(authorityBindingJson, 'utf8') <= 64 * 1024 &&
+      Buffer.byteLength(expectedBindingJson, 'utf8') <= 64 * 1024 &&
+      authorityBindingJson === expectedBindingJson,
     'corrective authority contract differs',
   );
+  return authority;
+}
+/** One current Host binding for the base run and explicitly authorized engine subrun. */
+export function validateWorkSessionBinding(
+  work: WorkState,
+  state: { attempt: number; run_id: string; corrective_execution?: CorrectiveExecution | null },
+  root?: string,
+): void {
+  validateWorkSessionBindingAndReturnCorrectiveAuthority(work, state, root);
 }
 /** Completed waves retain terminal failures; a downstream wave may remain wholly unissued. */
 export function settledSessionItems(journal: MastraSessionLedgerState) {
@@ -227,8 +272,10 @@ export function selectCorrectiveEvidence(
   for (const item of failed) {
     const stage = workflow.stages.find((stage) => stage.id === item.request.stage_id);
     const kind = stage?.kind;
-    requireAssurance(kind === 'test' || kind === 'validate' && stage?.produces.includes('ValidationReceipt/v1'),
-      'corrective failure is not a focused verdict');
+    requireAssurance(
+      kind === 'test' || (kind === 'validate' && stage?.produces.includes('ValidationReceipt/v1')),
+      'corrective failure is not a focused verdict',
+    );
     if (kind === 'validate')
       requireAssurance(
         parseObservedValidatorVerdict(item.observation!).verdict === 'fail',
@@ -1024,7 +1071,8 @@ function prepareLifecycleAssurance(
   };
   const receipts = completed.flatMap((item, index) => {
     const kind = kinds[index];
-    if (kind !== 'test' && !(kind === 'validate' && stages[index]?.produces.includes('ValidationReceipt/v1'))) return [];
+    if (kind !== 'test' && !(kind === 'validate' && stages[index]?.produces.includes('ValidationReceipt/v1')))
+      return [];
     const file = base + '-focused-' + item.request.action_id + '.json',
       bytes = publish(root, file, item.observation);
     return [

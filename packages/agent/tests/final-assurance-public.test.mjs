@@ -345,19 +345,19 @@ test('public final assurance commits three synthetic review reverse pairs at a r
               gaps: [],
             })
           : stage === 'validate_focused'
-          ? JSON.stringify({
-              schema: 'VidaValidatorVerdict/v1',
-              verdict: 'pass',
-              findings: [],
-              evidence_refs: ['local://synthetic-fixture/focused'],
-            })
-          : stage === 'test_task'
             ? JSON.stringify({
-                schema: 'VidaTesterVerdict/v1',
-                status: 'pass',
+                schema: 'VidaValidatorVerdict/v1',
+                verdict: 'pass',
+                findings: [],
                 evidence_refs: ['local://synthetic-fixture/focused'],
               })
-            : 'Synthetic fixture focused writer outcome';
+            : stage === 'test_task'
+              ? JSON.stringify({
+                  schema: 'VidaTesterVerdict/v1',
+                  status: 'pass',
+                  evidence_refs: ['local://synthetic-fixture/focused'],
+                })
+              : 'Synthetic fixture focused writer outcome';
       const observation = {
         schema: 'VidaSessionObservation/v1',
         action_id: action.action_id,
@@ -394,7 +394,8 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       step_id: null,
       items: [],
       completed: [makeItem('review_source_prewrite'), ...focused].map((item, index) => ({
-        step_id: 'synthetic-focused-' + index, items: [item],
+        step_id: 'synthetic-focused-' + index,
+        items: [item],
       })),
     };
     f.database
@@ -515,9 +516,11 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     expect(() => validateLifecycleReferencePreservation(retainedReferences, preparedReferences)).not.toThrow();
     expect(response.assurance_status).toBe('ready');
     expect(response.next_actions).toHaveLength(3);
-    expect(f.store.readHostStateSnapshot(identity).work.lifecycle.references.filter(
-      (item) => item.kind === 'validation_receipt',
-    )).toHaveLength(2);
+    expect(
+      f.store
+        .readHostStateSnapshot(identity)
+        .work.lifecycle.references.filter((item) => item.kind === 'validation_receipt'),
+    ).toHaveLength(2);
     response = publicRun(withVersion(response.state_version, '--issue-wave', 'true'));
     expect(response.issued_actions).toHaveLength(3);
     const initialAssuranceVersion = response.state_version,

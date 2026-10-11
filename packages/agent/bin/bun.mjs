@@ -16,8 +16,40 @@ import {
 import path from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readCliErrorProperty as errorProperty } from './cli-error-properties.ts';
 
 const bundleRoot = fileURLToPath(new URL('../', import.meta.url));
+
+/** @typedef {{deadline:number, remaining:(maximum?:number)=>number, cleanupTimeout:()=>number, child:(duration:number,reserve?:number)=>ExecutionBudget}} ExecutionBudget */
+/** @typedef {{status:number|null, signal?:NodeJS.Signals|null|undefined, pid?:number, error?:NodeJS.ErrnoException|undefined, stdout?:string|Buffer|null, stderr?:string|Buffer|null}} CommandResult */
+/** @typedef {CommandResult & {timedOut?:boolean, timeoutMs?:number, cleanupTimeoutMs?:number, cleanupAttempted?:boolean, cleanupOutcome?:string, cleanupStatus?:number|null|undefined, cleanupErrorCode?:string|undefined, childElapsedMs?:number, cleanupElapsedMs?:number, diagnosticLabel?:string, elapsedMs?:number}} TrackedCommandResult */
+/** @typedef {{status?:number|null|undefined, signal?:NodeJS.Signals|null|undefined, error?:NodeJS.ErrnoException|undefined}} CleanupResult */
+/** @typedef {(pid:number, timeout:number)=>CleanupResult|undefined} TimeoutCleanup */
+/** Node's synchronous implementation accepts spawn's detached process-group option. */
+/** @typedef {import('node:child_process').SpawnSyncOptions & {detached?:boolean}} PinnedSpawnOptions */
+/** @typedef {(command:string, args:readonly string[], options:PinnedSpawnOptions)=>CommandResult} PinnedSpawn */
+/** @typedef {PinnedSpawnOptions & {budget?:ExecutionBudget|undefined, diagnostics?:boolean|undefined}} BoundedSpawnOptions */
+/** @typedef {{root?:string, env?:NodeJS.ProcessEnv, executable?:string, node?:string, npmCli?:string, spawn?:PinnedSpawn, cleanup?:TimeoutCleanup, budget?:ExecutionBudget, cwd?:string, timeoutMs?:number, diagnostics?:boolean}} BunOptions */
+
+/** @param {unknown} error @returns {string|undefined} */
+function errorCode(error) {
+  const code = errorProperty(error, 'code');
+  return typeof code === 'string' ? code : undefined;
+}
+
+/** @param {unknown} value @returns {Record<string, unknown>} */
+function manifestRecord(value) {
+  if (value === null || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Bun manifest must contain JSON objects.');
+  return /** @type {Record<string, unknown>} */ (value);
+}
+
+/** @param {string} bytes @returns {Record<string, unknown>} */
+function parseManifest(bytes) {
+  /** @type {unknown} */
+  const value = JSON.parse(bytes);
+  return manifestRecord(value);
+}
 
 // These markers select an already materialized executable payload, never authority.
 export function standaloneRuntime(env = process.env) {
@@ -41,7 +73,7 @@ export function standaloneRuntime(env = process.env) {
       throw new Error('Embedded package root must be a non-link directory.');
     if (current === path.dirname(current)) break;
   }
-  const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const manifest = parseManifest(readFileSync(path.join(root, 'package.json'), 'utf8'));
   if (manifest.name !== 'vida-agent') throw new Error('Embedded package identity differs.');
   const pin = readPin(root);
   checkManifest(root, pin);
@@ -70,9 +102,15 @@ export function readPin(root = bundleRoot) {
   return pin;
 }
 
+/** @param {Record<string, unknown>} manifest @returns {Record<string, unknown>} */
+function manifestEngines(manifest) {
+  return manifestRecord(manifest.engines ?? {});
+}
+
+/** @param {string} root @param {string} pin */
 export function checkManifest(root, pin) {
-  const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
-  if (manifest.packageManager !== `bun@${pin}` || manifest.engines?.bun !== pin) {
+  const manifest = parseManifest(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  if (manifest.packageManager !== `bun@${pin}` || manifestEngines(manifest).bun !== pin) {
     throw new Error('Bun manifest mirrors differ from .bun-version; run node bin/bun.mjs --sync-pin.');
   }
 }
@@ -90,10 +128,11 @@ export function syncPin(root = bundleRoot) {
   const identity = lstatSync(file);
   if (!identity.isFile() || identity.isSymbolicLink()) throw new Error('Bun manifest must be a regular file.');
   const before = readFileSync(file, 'utf8');
-  const manifest = JSON.parse(before);
-  if (manifest.packageManager === `bun@${pin}` && manifest.engines?.bun === pin) return false;
+  const manifest = parseManifest(before);
+  const engines = manifestEngines(manifest);
+  if (manifest.packageManager === `bun@${pin}` && engines.bun === pin) return false;
   manifest.packageManager = `bun@${pin}`;
-  manifest.engines = { ...manifest.engines, bun: pin };
+  manifest.engines = { ...engines, bun: pin };
   const after = `${JSON.stringify(manifest, null, 2)}\n`;
   const temporary = path.join(root, `.bun-pin-${randomUUID()}.tmp`);
   let descriptor;
@@ -136,35 +175,57 @@ export function findNpmCli(node = process.execPath) {
   return found;
 }
 
+/** @param {number | null} status @returns {number} */
+function positiveExitStatus(status) {
+  return typeof status === 'number' && Number.isInteger(status) && status > 0 ? status : 1;
+}
+
+/** @param {number | null | undefined} status @returns {boolean} */
+function nonzeroIntegerStatus(status) {
+  return typeof status === 'number' && Number.isInteger(status) && status !== 0;
+}
+
+/** @param {number | null} status @returns {boolean} */
+function unknownExitStatus(status) {
+  return typeof status !== 'number' || !Number.isSafeInteger(status) || status < 0;
+}
+
+/** @param {TrackedCommandResult} result @param {string} label */
 function succeeded(result, label) {
   if (result.error || result.signal || result.status !== 0) {
     const diagnostic = result.timedOut
       ? ` Timed out after ${result.timeoutMs} ms${result.cleanupAttempted ? '; process-tree cleanup was attempted' : ''}. Cleanup outcome: ${result.cleanupOutcome ?? 'unknown'}.`
       : '';
-    const error = new Error(`${label} failed${result.signal ? ` (${result.signal})` : ''}.${diagnostic}`);
-    error.exitCode = Number.isInteger(result.status) && result.status > 0 ? result.status : 1;
-    error.timedOut = result.timedOut ?? false;
+    const error = Object.assign(
+      new Error(`${label} failed${result.signal ? ` (${result.signal})` : ''}.${diagnostic}`),
+      {
+        exitCode: positiveExitStatus(result.status),
+        timedOut: result.timedOut ?? false,
+      },
+    );
     throw error;
   }
   return String(result.stdout ?? '').trim();
 }
 
+/** @param {TrackedCommandResult} result @param {TimeoutCleanup} [cleanup] */
 function cleanupTimedOutProcessTree(result, cleanup = defaultTimeoutCleanup) {
   if (!result?.pid) return { attempted: false, outcome: 'unknown' };
   try {
     const observation = cleanup(result.pid, result.cleanupTimeoutMs ?? 30_000);
     const outcome =
-      observation?.error || observation?.signal || (Number.isInteger(observation?.status) && observation.status !== 0)
+      observation?.error || observation?.signal || nonzeroIntegerStatus(observation?.status)
         ? 'failed'
         : observation?.status === 0
           ? 'command_succeeded'
           : 'unknown';
-    return { attempted: true, outcome, status: observation?.status, error_code: observation?.error?.code };
+    return { attempted: true, outcome, status: observation?.status, error_code: errorCode(observation?.error) };
   } catch (error) {
-    return { attempted: true, outcome: 'failed', error_code: error.code };
+    return { attempted: true, outcome: 'failed', error_code: errorCode(error) };
   }
 }
 
+/** @param {number} pid @param {number} [timeout] @returns {CleanupResult|undefined} */
 function defaultTimeoutCleanup(pid, timeout = 30_000) {
   if (process.platform === 'win32') {
     return spawnSync('taskkill', ['/pid', String(pid), '/T', '/F'], {
@@ -177,6 +238,7 @@ function defaultTimeoutCleanup(pid, timeout = 30_000) {
   return undefined; // A sent signal is not observed process-tree termination.
 }
 
+/** @param {NodeJS.ProcessEnv} env */
 function executionCeiling(env) {
   const duration = env.VIDA_PINNED_COMMAND_BUDGET_MS;
   const expiry = env.VIDA_PINNED_COMMAND_DEADLINE_MS;
@@ -191,6 +253,7 @@ function executionCeiling(env) {
 const inherited = executionCeiling(process.env);
 const inheritedDeadline = performance.now() + Math.min(inherited.duration, inherited.expiry - Date.now());
 
+/** @param {number} [timeoutMs] @param {number} [reserveMs] @param {number} [parentDeadline] @returns {ExecutionBudget} */
 export function executionBudget(timeoutMs = Infinity, reserveMs = 1_000, parentDeadline = Infinity) {
   if (
     !(Number.isSafeInteger(timeoutMs) || timeoutMs === Infinity) ||
@@ -219,12 +282,13 @@ export function executionBudget(timeoutMs = Infinity, reserveMs = 1_000, parentD
         Math.min(Math.floor(reserveMs / 2), Math.floor(deadline - performance.now() - Math.ceil(reserveMs / 2))),
       );
     },
-    child(duration, reserve = 1_000) {
+    child(/** @type {number} */ duration, reserve = 1_000) {
       return executionBudget(duration, reserve, deadline - reserveMs);
     },
   };
 }
 
+/** @param {PinnedSpawn} spawn @param {string} command @param {readonly string[]} args @param {BoundedSpawnOptions} options @param {string} label @param {TimeoutCleanup} [cleanup] @returns {TrackedCommandResult} */
 export function boundedSpawnSync(spawn, command, args, options, label, cleanup = defaultTimeoutCleanup) {
   const { budget, diagnostics = false, timeout = Infinity, ...spawnOptions } = options;
   if (!(Number.isSafeInteger(timeout) || timeout === Infinity) || timeout <= 0)
@@ -240,6 +304,7 @@ export function boundedSpawnSync(spawn, command, args, options, label, cleanup =
   if (allowance <= 0) throw new Error('Execution budget exhausted before child launch.');
   const timeoutMs = budget ? budget.remaining(Math.floor(allowance)) : Math.floor(allowance);
   const started = performance.now();
+  /** @type {TrackedCommandResult} */
   const result = spawn(command, args, {
     ...spawnOptions,
     env: {
@@ -264,7 +329,7 @@ export function boundedSpawnSync(spawn, command, args, options, label, cleanup =
     const observation =
       result.cleanupTimeoutMs > 0
         ? cleanupTimedOutProcessTree(result, cleanup)
-        : { attempted: false, outcome: 'unknown' };
+        : { attempted: false, outcome: 'unknown', status: undefined, error_code: undefined };
     result.cleanupAttempted = observation.attempted;
     result.cleanupOutcome = observation.outcome;
     result.cleanupStatus = observation.status;
@@ -294,17 +359,18 @@ export function boundedSpawnSync(spawn, command, args, options, label, cleanup =
   return result;
 }
 
+/** @param {TrackedCommandResult|null|undefined} result */
 export function commandOutcomeUnknown(result) {
   return (
     !result ||
     result.timedOut === true ||
     Boolean(result.error) ||
     Boolean(result.signal) ||
-    !Number.isSafeInteger(result.status) ||
-    result.status < 0
+    unknownExitStatus(result.status)
   );
 }
 
+/** @param {TrackedCommandResult|null|undefined} result @param {string} label */
 export function requireTerminalCommand(result, label) {
   if (commandOutcomeUnknown(result))
     throw new Error(
@@ -322,6 +388,7 @@ export function requireTerminalCommand(result, label) {
   return result;
 }
 
+/** @param {string} executable @param {NodeJS.ProcessEnv} [env] @param {string} [root] */
 export function pinnedEnvironment(executable, env = process.env, root = bundleRoot) {
   const next = standaloneEnvironment(env);
   const canonical = realpathSync(root);
@@ -365,6 +432,13 @@ export function pinnedEnvironment(executable, env = process.env, root = bundleRo
   return next;
 }
 
+/** @param {NodeJS.ProcessEnv} env @param {string} preferred @param {boolean} foldCase @returns {string} */
+function environmentVariableKey(env, preferred, foldCase) {
+  const keys = Object.keys(env).filter((key) => (foldCase ? key.toUpperCase() === preferred : key === preferred));
+  return keys.includes(preferred) ? preferred : (keys[0] ?? preferred);
+}
+
+/** @param {BunOptions} [options] @returns {string} */
 export function resolvePinnedBun(options = {}) {
   const embedded = standaloneRuntime(options.env ?? process.env);
   if (embedded) {
@@ -382,12 +456,8 @@ export function resolvePinnedBun(options = {}) {
   const node = options.node ?? process.execPath;
   const cleanup = options.cleanup ?? defaultTimeoutCleanup;
   if (!options.executable) {
-    const keys = Object.keys(env).filter((key) =>
-      process.platform === 'win32' ? key.toUpperCase() === 'PATH' : key === 'PATH',
-    );
-    const pathKey = keys.includes('PATH') ? 'PATH' : keys[0];
-    const extensionKeys = Object.keys(env).filter((key) => key.toUpperCase() === 'PATHEXT');
-    const extensionKey = extensionKeys.includes('PATHEXT') ? 'PATHEXT' : extensionKeys[0];
+    const pathKey = environmentVariableKey(env, 'PATH', process.platform === 'win32');
+    const extensionKey = environmentVariableKey(env, 'PATHEXT', true);
     const extensions =
       process.platform === 'win32'
         ? String(env[extensionKey] ?? '.COM;.EXE')
@@ -428,12 +498,11 @@ export function resolvePinnedBun(options = {}) {
         );
         if (version === pin) return discovered;
       } catch (error) {
-        if (error.timedOut) throw error;
+        if (errorProperty(error, 'timedOut')) throw error;
         /* A failed PATH probe cannot bypass pinned npm resolution. */
       }
     }
   }
-  const npm = options.npmCli ?? (options.executable ? null : findNpmCli(node));
   const executable = options.executable
     ? String(options.executable).trim()
     : succeeded(
@@ -441,7 +510,7 @@ export function resolvePinnedBun(options = {}) {
           spawn,
           node,
           [
-            npm,
+            options.npmCli ?? findNpmCli(node),
             'exec',
             '--yes',
             '--package',
@@ -475,6 +544,7 @@ export function resolvePinnedBun(options = {}) {
   return executable;
 }
 
+/** @param {readonly string[]} args @param {BunOptions} [options] @returns {number} */
 export function runPinnedBun(args, options = {}) {
   const embedded = standaloneRuntime(options.env ?? process.env);
   const root = options.root ?? embedded?.root ?? bundleRoot;
@@ -509,7 +579,8 @@ export function runPinnedBun(args, options = {}) {
   if (result.error || result.signal || !Number.isInteger(result.status)) {
     succeeded(result, 'Pinned Bun command');
   }
-  return result.status;
+  // The existing terminal boundary above rejects a non-integer status.
+  return /** @type {number} */ (result.status);
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
@@ -522,7 +593,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       });
     }
   } catch (error) {
-    console.error(error.message);
-    process.exitCode = error.exitCode ?? 1;
+    const message = errorProperty(error, 'message');
+    console.error(typeof message === 'string' ? message : String(error));
+    const exitCode = errorProperty(error, 'exitCode');
+    process.exitCode = typeof exitCode === 'number' ? exitCode : 1;
   }
 }

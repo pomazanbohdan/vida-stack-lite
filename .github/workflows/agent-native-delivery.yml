@@ -11,6 +11,7 @@ on:
         required: true
         type: string
 permissions:
+  actions: read
   contents: read
 concurrency:
   group: vida-native-${{ fromJSON(inputs.request).request_id }}-${{ fromJSON(inputs.request).target }}
@@ -27,6 +28,7 @@ jobs:
       GIT_CONFIG_COUNT: '1'
       GIT_CONFIG_KEY_0: core.autocrlf
       GIT_CONFIG_VALUE_0: 'false'
+      BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/vida-bun-install-cache
     defaults:
       run:
         shell: pwsh
@@ -62,8 +64,6 @@ jobs:
           restore-keys: |
             vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-1.4.2-
       - name: isolated-source
-        env:
-          BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/vida-bun-install-cache
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:GITHUB_RUN_ID -notmatch '^\d+$' -or $env:GITHUB_RUN_ATTEMPT -notmatch '^[1-9]\d*$') { throw 'Actual run identity unavailable' }
@@ -93,7 +93,7 @@ jobs:
           $files = @('package.json','agent-runtime.config.v1.yaml','AGENT.sidecar.md',
             'tooling/agent/release-local.mjs','tooling/agent/release-assurance.mjs',
             'tooling/agent/release-ci-evidence.mjs','tooling/agent/native-ci-delivery.mjs',
-            'tooling/agent/controllers/forward-review-proof.mjs')
+            'tooling/agent/controllers/forward-review-proof.mjs','.github/workflows/agent-native-delivery.yml')
           foreach ($file in $files) {
             $source = Join-Path $env:GITHUB_WORKSPACE $file
             $entry = Get-Item -LiteralPath $source
@@ -106,13 +106,60 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or -not [IO.Path]::IsPathFullyQualified($node)) { throw 'Pinned Node path unavailable' }
           "VIDA_CI_SOURCE_ROOT=$mirror" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
           "VIDA_CI_NODE_EXECUTABLE=$node" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: save-bun-dependency-cache
+      - id: save-bun-dependency-cache
+        name: save-bun-dependency-cache
         if: ${{ steps.bun-dependency-cache.outputs.cache-hit != 'true' }}
-        continue-on-error: true
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ runner.temp }}/vida-bun-install-cache
           key: ${{ steps.bun-dependency-cache.outputs.cache-primary-key }}
+      - name: require-bun-dependency-cache-evidence
+        env:
+          CACHE_KEY: ${{ steps.bun-dependency-cache.outputs.cache-primary-key }}
+          CACHE_HIT: ${{ steps.bun-dependency-cache.outputs.cache-hit }}
+          CACHE_MATCHED_KEY: ${{ steps.bun-dependency-cache.outputs.cache-matched-key }}
+          CACHE_SAVE_OUTCOME: ${{ steps.save-bun-dependency-cache.outcome }}
+          GITHUB_TOKEN: ${{ github.token }}
+          API_URL: ${{ github.api_url }}
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:CACHE_KEY -cnotmatch '^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-1\.4\.2-[a-f0-9]{64}$') { throw 'Exact dependency cache key is missing or invalid' }
+          $cache = Join-Path $env:RUNNER_TEMP 'vida-bun-install-cache'
+          if (-not (Test-Path -LiteralPath $cache -PathType Container)) { throw 'Bun dependency cache directory is absent' }
+          $entry = Get-ChildItem -LiteralPath $cache -File -Recurse -Force | Select-Object -First 1
+          if (-not $entry) { throw 'Bun dependency cache is empty after frozen install' }
+          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-1\.4\.2-[a-f0-9]{64}$'
+          $keyNamespace = $env:CACHE_KEY.Substring(0, $env:CACHE_KEY.Length - 64)
+          if ($env:CACHE_MATCHED_KEY -and ($env:CACHE_MATCHED_KEY -cnotmatch $keyPattern -or -not $env:CACHE_MATCHED_KEY.StartsWith($keyNamespace, [StringComparison]::Ordinal))) { throw 'Restore matched key is outside the selected Bun/platform namespace' }
+          if ($env:CACHE_HIT -ceq 'true' -and $env:CACHE_MATCHED_KEY -ceq $env:CACHE_KEY -and $env:CACHE_SAVE_OUTCOME -ceq 'skipped') {
+            $restore = 'hit'
+            $saveAction = 'skipped'
+          } elseif (($env:CACHE_HIT -ceq 'false' -or $env:CACHE_HIT -ceq '') -and $env:CACHE_SAVE_OUTCOME -ceq 'success') {
+            $restore = 'miss'
+            $saveAction = 'success'
+          } else { throw 'Dependency cache was neither exactly reused nor followed by a successful save attempt' }
+          $api = [Uri]$env:API_URL
+          if ($api.Scheme -cne 'https' -or $api.Host -cne 'api.github.com' -or $env:REPOSITORY -cne 'pomazanbohdan/vida-stack-lite' -or $env:REF -cnotmatch '^refs/heads/[A-Za-z0-9._/-]+$' -or -not $env:GITHUB_TOKEN) { throw 'Approved GitHub cache API context is unavailable' }
+          $query = 'key=' + [Uri]::EscapeDataString($env:CACHE_KEY) + '&ref=' + [Uri]::EscapeDataString($env:REF) + '&per_page=100'
+          $uri = $api.AbsoluteUri.TrimEnd('/') + '/repos/' + $env:REPOSITORY + '/actions/caches?' + $query
+          $headers = @{ Accept='application/vnd.github+json'; Authorization=('Bearer ' + $env:GITHUB_TOKEN); 'X-GitHub-Api-Version'='2022-11-28' }
+          $listing = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers -TimeoutSec 20
+          if (($listing.total_count -isnot [int] -and $listing.total_count -isnot [long]) -or $listing.total_count -lt 0 -or $listing.total_count -gt 100 -or $listing.actions_caches.Count -gt 100) { throw 'Cache API result exceeds its bounded page' }
+          $matches = @($listing.actions_caches | Where-Object { $_.key -ceq $env:CACHE_KEY -and $_.ref -ceq $env:REF })
+          if ($matches.Count -ne 1) { throw 'Exact selected cache key/ref is absent or ambiguous after restore/save' }
+          $entry = $matches[0]
+          if (($entry.id -isnot [long] -and $entry.id -isnot [int]) -or $entry.id -lt 1 -or $entry.id -gt 9007199254740991 -or ($entry.size_in_bytes -isnot [long] -and $entry.size_in_bytes -isnot [int]) -or $entry.size_in_bytes -lt 1 -or $entry.size_in_bytes -gt 9007199254740991 -or $entry.version -isnot [string] -or $entry.version.Length -lt 1 -or $entry.version.Length -gt 256 -or $entry.version -match '[\p{Cc}]') { throw 'Exact cache API metadata is invalid' }
+          "VIDA_CI_CACHE_ID=$($entry.id)" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_CACHE_KEY=$($entry.key)" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_CACHE_REF=$($entry.ref)" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_CACHE_VERSION=$($entry.version)" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_CACHE_BYTES=$($entry.size_in_bytes)" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_CACHE_MATCHED_KEY=$env:CACHE_MATCHED_KEY" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_CACHE_RESTORE=$restore" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_CACHE_SAVE=confirmed" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VIDA_CI_CACHE_SAVE_ACTION=$saveAction" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
       - id: native-build
         name: native-build
         run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.mjs" --phase native-build

@@ -21,6 +21,16 @@ durable receipt bodies retain their integrity and are not routine prompt context
 Existing v1 artifacts keep their format until a qualified artifact-repair path
 permits change. There is one owner for each maintained rule and specification.
 
+Maintained handwritten program Source, including CLI/bootstrap, development
+tooling, tests and helpers, uses TypeScript. Existing JavaScript is migration
+work, not an exception to completion. JavaScript SDK and runnable delivery
+outputs are generated artifacts with declared Source bindings. Native shell and
+PowerShell installation adapters retain their platform boundary. A TS-only
+development gate rejects handwritten JS/MJS/CJS/JSX in declared Source roots;
+compiler/lint and behavioral evidence remain independent. Migration preserves
+public interfaces, executable/bundle closure, ownership, CAS, UNKNOWN and frozen
+per-function budget correspondence.
+
 The runtime preserves one project-owned configuration and one attributable
 lifecycle authority. Human business intent constrains system behavior; code,
 tests and local receipts provide separate evidence. Caller JSON and tool
@@ -90,18 +100,18 @@ waves remain current P0 bug work. Complete blocking defects first, then P1
 optimizations, before this P2 development. New completion profiles, routing,
 child execution and pre-commit expansion do not block the current bug delivery.
 
-| Concern | Required behavior |
-| --- | --- |
-| Flow definition | Registered agent, tool and subflow blocks declare typed inputs, outputs and effects. Conditions and failure routes use typed results; configuration cannot execute arbitrary code. |
-| Inputs and gates | Every reachable path supplies required inputs before an action is issued. Required policy/security gates cannot be bypassed by a branch, skip or child. Mandatory task/context packets retain their complete typed body and evidence references. |
-| Scheduling | Independent branches may progress when their own dependencies are satisfied. Explicit joins wait for their declared inputs and define failed, skipped and partial results. Mastra remains the execution and snapshot owner. |
-| Child execution | Each child has stable parent/child identity, typed input, acceptance, scope, dependencies and result. Admission, ownership, attempts, cancellation, recovery and parent join remain explicit. A parent grants no child Source rights. |
-| Loops | Each iteration has stable identity, persisted decisions and a typed exit condition. Progress, no-progress, resource exhaustion and cancellation are explicit outcomes. Resource policy introduces no implicit total-duration limit on ordinary launcher work. |
-| Adaptive routing | Select registered model/effort profiles using declared capabilities and human policy. Record configured, issued and observed settings separately. Fallback is bounded and explicit; unavailable capability returns GAP. Issued settings remain immutable. |
-| Plan evolution | Freeze the base plan and record validated expansion/branch decisions. Restart preserves decisions and custody. Expansion cannot rewrite issued bodies, original attempts or prior outcomes. |
-| Failure recovery | Correct known-failed read-only work through supported same-attempt operations, retaining exact reports and beforeimages. UNKNOWN effects are never automatically reissued. HostState retains ownership, policy and CAS authority. |
-| Completion | Select Source, research, artifact or deployment completion by the task's declared outcome. Verified product Source-only completion need not deploy. VIDA self-development still updates the whole qualified runtime before dependent effects. Work completion, installation and human Runtime acceptance remain distinct. |
-| Compatibility | Preserve current active contracts. Ship the functional artifact repair required by lifecycle policy before changing an active current-v1 schema. Reuse existing libraries and storage owners. |
+| Concern          | Required behavior                                                                                                                                                                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flow definition  | Registered agent, tool and subflow blocks declare typed inputs, outputs and effects. Conditions and failure routes use typed results; configuration cannot execute arbitrary code.                                                                                                                                        |
+| Inputs and gates | Every reachable path supplies required inputs before an action is issued. Required policy/security gates cannot be bypassed by a branch, skip or child. Mandatory task/context packets retain their complete typed body and evidence references.                                                                          |
+| Scheduling       | Independent branches may progress when their own dependencies are satisfied. Explicit joins wait for their declared inputs and define failed, skipped and partial results. Mastra remains the execution and snapshot owner.                                                                                               |
+| Child execution  | Each child has stable parent/child identity, typed input, acceptance, scope, dependencies and result. Admission, ownership, attempts, cancellation, recovery and parent join remain explicit. A parent grants no child Source rights.                                                                                     |
+| Loops            | Each iteration has stable identity, persisted decisions and a typed exit condition. Progress, no-progress, resource exhaustion and cancellation are explicit outcomes. Resource policy introduces no implicit total-duration limit on ordinary launcher work.                                                             |
+| Adaptive routing | Select registered model/effort profiles using declared capabilities and human policy. Record configured, issued and observed settings separately. Fallback is bounded and explicit; unavailable capability returns GAP. Issued settings remain immutable.                                                                 |
+| Plan evolution   | Freeze the base plan and record validated expansion/branch decisions. Restart preserves decisions and custody. Expansion cannot rewrite issued bodies, original attempts or prior outcomes.                                                                                                                               |
+| Failure recovery | Correct known-failed read-only work through supported same-attempt operations, retaining exact reports and beforeimages. UNKNOWN effects are never automatically reissued. HostState retains ownership, policy and CAS authority.                                                                                         |
+| Completion       | Select Source, research, artifact or deployment completion by the task's declared outcome. Verified product Source-only completion need not deploy. VIDA self-development still updates the whole qualified runtime before dependent effects. Work completion, installation and human Runtime acceptance remain distinct. |
+| Compatibility    | Preserve current active contracts. Ship the functional artifact repair required by lifecycle policy before changing an active current-v1 schema. Reuse existing libraries and storage owners.                                                                                                                             |
 
 Acceptance covers conditional producer reachability, required inputs and joins,
 restart, child admission and parent results, loop exit/no-progress/exhaustion,
@@ -131,11 +141,11 @@ validates each component, composes one configuration and validates its cross-fil
 references. The effective binding covers every input. No implicit deep merge,
 host-dependent search path or network schema lookup selects configuration.
 
-| File | Schema | Owned configuration |
-| --- | --- | --- |
+| File           | Schema                 | Owned configuration                                                                                    |
+| -------------- | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `project.yaml` | `VidaProjectConfig/v1` | Repository, projects, paths, policies and remaining runtime settings; fixed local component references |
-| `agents.yaml` | `VidaAgentsConfig/v1` | Agent profiles, role instructions, tool and egress policies, teams |
-| `flows.yaml` | `VidaFlowsConfig/v1` | Workflows and workflow bindings |
+| `agents.yaml`  | `VidaAgentsConfig/v1`  | Agent profiles, role instructions, tool and egress policies, teams                                     |
+| `flows.yaml`   | `VidaFlowsConfig/v1`   | Workflows and workflow bindings                                                                        |
 
 All components share one `config_id` and declare independent content revisions.
 The project revision maps to the composed `config_revision`. Conversion creates
@@ -164,16 +174,36 @@ JSON/YAML keeps the `Type/vN` convention. Markdown uses a small YAML frontmatter
 with `schema`, stable `id` and `revision`. Schema version describes the format;
 revision describes the content. The runtime package version is separate.
 Schema definitions retain explicit `$schema` dialect and versioned `$id` values.
-Existing valid v1 records need no duplicate version field or cosmetic renaming.
+Existing valid v1 records need no duplicate version field or cosmetic renaming. Legacy local Markdown instructions have an explicit frontmatter migration reader. Structured local instruction files migrate only when a reader recognizes their exact schema and version; unsupported formats fail with a path-specific action while preserving owner bytes.
 
 One bundle-owned upgrade entry and migration registry extend the existing repair
 and maintenance owner. A migration declares its exact supported input and output
 versions, dependencies and affected files. The operation inspects once, freezes
 a plan, records its intent and beforeimages, prepares and validates outputs, then
-activates them under the maintenance fence. SQLite changes use a transaction;
-file changes use the existing journal and atomic replacement. A database
-transaction alone cannot make arbitrary file writes atomic. Readers cannot admit
-partially applied state.
+activates them under the maintenance fence. Initial intent publication uses the
+pinned `@openclaw/fs-safe` 0.25.0 `Root.create()` no-replace operation. It exposes
+the complete frozen intent or no target on a successful publication, within the
+provider's declared containment profile. Linux uses the attested native
+descriptor-relative provider; Windows retains `windows-best-effort-v1`. This
+does not claim power-loss durability. If publication acknowledgement is
+interrupted, reconcile only the same operation id and exact complete image; an
+absent or conflicting image remains UNKNOWN and starts no source effects.
+SQLite changes use a transaction; file changes use the existing journal and
+atomic replacement. A database transaction alone cannot make arbitrary file
+writes atomic. Readers cannot admit partially applied state.
+Existing-storage merge stays blocked while the legacy storage overlap exclusion
+is unproven. This intent repair does not unblock existing consumers.
+
+The package storage-admission coordinator is separate from source databases.
+Its uninitialized exact zero-byte file may be completed under an exclusive
+SQLite transaction, including after interrupted exclusive file creation or an
+`EEXIST` creation race. This does not establish authority from creation timing.
+Require the captured parent/device/inode, the opened connection identity, exact
+zero physical bytes under the lock, an empty user catalog and the finite fresh
+logical page count before creating the closed workspace-bound gate metadata.
+Reject persisted nonzero empty or malformed databases and unexpected sidecars;
+never recreate source storage or settle/replay a product UNKNOWN operation.
+Existing complete gate metadata must match the current workspace.
 
 Resume uses the same operation and recorded progress. It never repeats an
 uncertain effect. Unknown future versions produce an actionable upgrade error;
@@ -732,11 +762,23 @@ UNKNOWN without overwrite. An authorized Source edit selects a new proof request
 within the same operation and retains old evidence; it never reruns CI itself.
 No active release/tests/retarget/Host v1 fields change.
 
-The CI producer encodes `VidaCIDeliveryResult/v1` from actual observations and
-formed bytes. It binds request, run/attempt, archive, native manifest, embedded
-payload and executable. Post-upload artifact identity belongs to the controller
-observation, which binds retrieved result bytes to the actual artifact; the
-producer cannot know it before upload. Require native-build, native-install,
+The CI producer encodes new `VidaCIDeliveryResult/v2` records from actual
+observations and formed bytes. It binds request, run/attempt, archive, native
+manifest, embedded payload, executable and dependency cache evidence. The pinned
+cache action can report success after a caught cache-service warning, so the
+workflow also reads the official repository cache API after restore/save. It
+requires one exact key/ref row and records the cache ID, key, ref, version and
+size in bytes. Cache evidence binds the restore hit or miss, matched restore key, save action
+outcome and API confirmation. A hit requires a skipped save and exact matched
+key; a miss permits only a full fallback key in the same Bun/platform namespace
+and requires a successful save step plus the exact API row. The API row proves
+that the selected cache exists after the attempt; it does not attribute creation
+to this run. The workflow
+uses only actions: read and makes no cache mutation. A missing or ambiguous API
+row blocks formation. Retained v1 records remain readable without rewriting.
+Post-upload artifact identity belongs to the controller observation, which binds
+retrieved result bytes to the actual artifact;
+the producer cannot know it before upload. Require native-build, native-install,
 public-routes, offline-runtime, native-dependencies, state-preservation and
 upgrade-recovery checks. Failed/skipped/missing/stale/UNKNOWN observations deny.
 CI uses existing `build:pinned` then `prepack:pinned`; local release qualification

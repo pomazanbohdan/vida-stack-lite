@@ -1,12 +1,16 @@
+import {
+  createCliHostStateStore,
+  closeWorkspaceDatabaseWithAdmission,
+  openCliWorkspaceDatabase,
+} from './workspace-database-cli.ts';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { Database } from 'bun:sqlite';
 import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { loadRuntimeConfig, runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
-import { HostStateStore } from '../src/host-state.ts';
+
 import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
 import { parseSessionBridgeObservation } from '../src/orchestration/mastra-session-bridge.ts';
 import {
@@ -18,99 +22,142 @@ import {
 import { readLocalSourceWriteAuthorization } from '../src/orchestration/local-source-authorization.ts';
 import { acceptedSourceAuthorizationRevision } from '../src/orchestration/admitted-development-packet.ts';
 import {
-  validateCompletedSourceReportRecoveryLineage,
   validateCompletedSourceReportRecoveryRequest,
   validateCompletedSourceReportRecoveryVerifiedCurrent,
 } from '../src/orchestration/completed-source-report-recovery.ts';
 import { currentNativeSelfAttestation } from './runtime-config-rebind.mjs';
 import { releaseState, releaseJournalFile, releasePath } from './local-release-artifacts.mjs';
 
+/** @typedef {import('../src/orchestration/completed-source-report-recovery.ts').CompletedSourceReportRecoveryRequest} RecoveryRequest */
+/** @typedef {import('../src/orchestration/qualified-runtime-code-continuation.ts').QualifiedRuntimeCodeContinuationRequest} QualifiedRuntimeCodeRequest */
+/** @typedef {RecoveryRequest | QualifiedRuntimeCodeRequest} NativeEndpointRequest */
+/** @typedef {import('../src/orchestration/completed-source-report-recovery.ts').CompletedSourceReportRecoveryState} RecoveryState */
+/** @typedef {import('../src/orchestration/completed-source-report-recovery.ts').CompletedSourceReportRecoveryVerifiedCurrent} VerifiedCurrent */
+/** @typedef {import('../src/config/safe-repository-access.ts').SafeRepositoryAccess} SafeRepositoryAccess */
+/** @typedef {import('../src/host-state.ts').HostStateStore} Store */
+/** @typedef {import('../src/host-state.ts').WorkIdentity} WorkIdentity */
+/** @typedef {import('../src/host-state.ts').HostStateSnapshot} HostStateSnapshot */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerState} MastraSessionLedgerState */
+/** @typedef {import('../src/orchestration/persistent-session-handoff.ts').MastraLedgerItem} MastraLedgerItem */
+/** @typedef {import('../src/orchestration/mastra-session-bridge-contract.ts').SessionBridgeObservation} SessionBridgeObservation */
+/** @typedef {import('../src/orchestration/local-source-authorization.ts').LocalSourceWriteAuthorization} LocalSourceWriteAuthorization */
+/** @typedef {import('../src/config/runtime-config.ts').AgentRuntimeConfig} AgentRuntimeConfig */
+
+/** @typedef {{ readonly mode: 'inspect' | 'plan' | 'apply'; readonly root: string; readonly requestPath: string }} RecoveryArgs */
+/** @typedef {Record<string, unknown> & { readonly schema: 'ObservedControllerCommand/v1'; readonly source: string; readonly thread_id: string; readonly turn_id: string; readonly caller_observation_ref: string; readonly report_tool_ref: string; readonly attribution: string; readonly command_observation: Record<string, unknown> & { readonly id: string; readonly command: string; readonly cwd: string; readonly status: 'completed'; readonly exitCode: 0 } }} ControllerReceipt */
+/** @typedef {Record<string, unknown> & { readonly schema: 'VidaStandaloneBuild/v1'; readonly inputs: readonly unknown[]; readonly asset: Record<string, unknown> & { readonly file: string; readonly sha256: string; readonly bytes: number }; readonly version: string; readonly pin: string; readonly payloadId: string }} NativeManifest */
+/** @typedef {Record<string, unknown> & { readonly schema: 'VidaNativeInstallationResult/v1'; readonly action: 'install' | 'update'; readonly runtime_accepted: false; readonly cleanup_complete: true; readonly version: string; readonly sha256: string; readonly bytes: number; readonly path: string }} NativeInstall */
+/** @typedef {Record<string, unknown> & { readonly status: string; readonly operation_id: string; readonly entry: string; readonly version: string; readonly run_id: string; readonly artifact_id: string; readonly runtime_accepted: false; readonly developer_unblocked: false; readonly installation_observation: unknown }} NativeUpdate */
+/** @typedef {{ readonly schema: 'VidaLocalReleaseFormation/v1'; readonly authority: 'local_consistency_only'; readonly digest: string; readonly operation_id: string; readonly version: string; readonly run_id: string; readonly artifact_id: string; readonly request_id: string; readonly result_sha256: string }} Formation */
+/** @typedef {{ readonly schema: 'VidaCIDeliveryResult/v1'; readonly operation_id: string; readonly request_id: string; readonly manifest_sha256: string; readonly payload_id: string; readonly asset: NativeManifest['asset']; readonly checks: readonly { readonly id: string; readonly status: string }[] }} DeliveryResult */
+/** @typedef {NonNullable<ReturnType<typeof currentNativeSelfAttestation>>} NativeSelf */
+
+/** @type {(condition: unknown, message: string) => asserts condition} */
 const requireRecovery = (condition, message) => {
   if (!condition) throw Error(`completed Source report recovery: ${message}`);
 };
+/** @param {unknown} value @param {string} label @returns {asserts value is Record<string, unknown>} */
+function requireRecord(value, label) {
+  requireRecovery(isPlainRecord(value) && !Array.isArray(value), `${label} must be an object`);
+}
+/** @param {unknown} value @param {string} label @returns {string} */
+function requiredRecoveryString(value, label) {
+  requireRecovery(typeof value === 'string', label);
+  return value;
+}
+
+/** @param {unknown} value @param {string} label @returns {unknown[]} */
+function requireArray(value, label) {
+  requireRecovery(Array.isArray(value), `${label} must be an array`);
+  /** @type {unknown[]} */
+  const entries = value;
+  return entries;
+}
+/** @param {unknown} left @param {unknown} right */
 const same = (left, right) => canonicalJsonDigest(left) === canonicalJsonDigest(right);
+/** @param {Uint8Array} bytes */
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const hashPattern = /^[a-f0-9]{64}$/;
 
+/** @param {Record<string, string>} values @param {string | undefined} flag @param {string | undefined} value */
+function addRecoveryArgument(values, flag, value) {
+  requireRecovery(typeof flag === 'string' && flag.startsWith('--'), 'argument flag invalid');
+  requireRecovery(typeof value === 'string' && value.length > 0, 'argument value missing');
+  requireRecovery(!Object.hasOwn(values, flag), 'argument is duplicated');
+  values[flag] = value;
+}
+
+/** @param {Record<string, string>} values @returns {RecoveryArgs} */
+function recoveryArgsFromValues(values) {
+  const mode = values['--mode'];
+  const root = values['--project-root'];
+  const requestPath = values['--request'];
+  requireRecovery(mode === 'inspect' || mode === 'plan' || mode === 'apply', 'mode invalid');
+  requireRecovery(typeof root === 'string' && path.isAbsolute(root), 'project root must be absolute');
+  requireRecovery(path.resolve(root) === root, 'project root must be canonical');
+  requireRecovery(typeof requestPath === 'string', 'request path is missing');
+  return { mode, root, requestPath };
+}
+
+/** @param {string[]} args @returns {RecoveryArgs} */
 function parseArgs(args) {
   requireRecovery(args.length === 6, 'mode, project root and request are required');
+  /** @type {Record<string, string>} */
   const values = {};
   for (let index = 0; index < args.length; index += 2) {
-    requireRecovery(args[index]?.startsWith('--'), 'argument flag invalid');
-    requireRecovery(Boolean(args[index + 1]), 'argument value missing');
-    requireRecovery(!Object.hasOwn(values, args[index]), 'argument is duplicated');
-    values[args[index]] = args[index + 1];
+    addRecoveryArgument(values, args[index], args[index + 1]);
   }
   requireRecovery(
     Object.keys(values).sort().join(',') === '--mode,--project-root,--request',
     'unexpected argument set',
   );
-  requireRecovery(['inspect', 'plan', 'apply'].includes(values['--mode']), 'mode invalid');
-  requireRecovery(path.isAbsolute(values['--project-root']), 'project root must be absolute');
-  requireRecovery(
-    path.resolve(values['--project-root']) === values['--project-root'],
-    'project root must be canonical',
-  );
-  return { mode: values['--mode'], root: values['--project-root'], requestPath: values['--request'] };
+  return recoveryArgsFromValues(values);
 }
 
+/** @param {Buffer} bytes @param {string} label @returns {unknown} */
+function parseRecoveryJson(bytes, label) {
+  try {
+    return JSON.parse(bytes.toString('utf8'));
+  } catch {
+    throw Error(`completed Source report recovery: ${label} JSON invalid`);
+  }
+}
+
+/** @param {SafeRepositoryAccess} access @param {string} reference @param {string} label @param {number} [limit] @param {'object' | 'array'} [kind] @returns {{ readonly bytes: Buffer; readonly value: unknown }} */
 function readStrictJson(access, reference, label, limit = 1024 * 1024, kind = 'object') {
   requireRecovery(typeof reference === 'string', `${label} reference must be text`);
   requireRecovery(reference.length > 0 && reference.length <= 2048, `${label} reference length invalid`);
   const bytes = access.readBytes(reference, label);
   requireRecovery(bytes.length > 0, `${label} is empty`);
   requireRecovery(bytes.length <= limit, `${label} exceeds its byte bound`);
-  let value;
-  try {
-    value = JSON.parse(bytes.toString('utf8'));
-  } catch {
-    throw Error(`completed Source report recovery: ${label} JSON invalid`);
-  }
+  const value = parseRecoveryJson(bytes, label);
   if (kind === 'array') requireRecovery(Array.isArray(value), `${label} must be an array`);
-  else requireRecovery(isPlainRecord(value), `${label} must be an object`);
+  else requireRecovery(isPlainRecord(value) && !Array.isArray(value), `${label} must be an object`);
   return { bytes, value };
 }
 
+/** @param {MastraSessionLedgerState} journal @param {string} actionId @param {string} issueId @returns {MastraLedgerItem | undefined} */
 function findJournalItem(journal, actionId, issueId) {
   const items = [...(journal.items ?? []), ...(journal.completed ?? []).flatMap((wave) => wave.items ?? [])];
   return items.find((item) => item?.request?.action_id === actionId && item.issue_id === issueId);
 }
 
+/** @param {Store} store @param {RecoveryRequest} request @returns {RecoveryState} */
 function readRecoveryState(store, request) {
-  const host = store.readHostStateSnapshot(request.identity),
-    row = store.readWorkSessionJournal(request.identity),
-    initialReceipt = store.readInitialSourceContinuationReceipt(request.identity, request.attempt),
-    frontierReceipt = initialReceipt
-      ? store.readInitialSourceFrontierCodeRebindReceipt(
-          request.identity,
-          request.attempt,
-          initialReceipt.continuation_id,
-        )
-      : null,
-    recoveryReceipt = store.readCompletedSourceReportRecoveryReceipt(request.identity, request.attempt);
-  requireRecovery(
-    row && row.attempt === request.attempt && initialReceipt,
-    'Host, Journal or original Source continuation is missing',
-  );
-  const state = {
-    host,
-    journal: { version: row.version, state: row.state },
-    initialReceipt,
-    frontierReceipt,
-    recoveryReceipt,
-  };
-  if (recoveryReceipt) validateCompletedSourceReportRecoveryLineage(state);
-  return state;
+  return store.readCompletedSourceReportRecoveryState(request.identity, request.attempt);
 }
 
+/** @param {string} root @param {SafeRepositoryAccess} access @param {RecoveryRequest} request */
 function readControllerCommand(root, access, request) {
   const receipt = readStrictJson(
-      access,
-      request.terminalCommandReceiptRef,
-      'successful controller command receipt',
-      128 * 1024,
-    ).value,
-    command = receipt.command_observation;
+    access,
+    request.terminalCommandReceiptRef,
+    'successful controller command receipt',
+    128 * 1024,
+  ).value;
+  requireRecord(receipt, 'controller receipt');
+  const command = receipt.command_observation;
+  requireRecord(command, 'controller command observation');
   requireRecovery(receipt.schema === 'ObservedControllerCommand/v1', 'controller command receipt schema differs');
   requireRecovery(
     typeof receipt.source === 'string' &&
@@ -139,7 +186,6 @@ function readControllerCommand(root, access, request) {
     typeof receipt.attribution === 'string' && receipt.attribution.length <= 512,
     'controller attribution is invalid',
   );
-  requireRecovery(isPlainRecord(command), 'controller command observation is missing');
   requireRecovery(
     typeof command.id === 'string' && command.id.length > 0,
     'controller command execution identity is invalid',
@@ -156,9 +202,29 @@ function readControllerCommand(root, access, request) {
     command.status === 'completed' && command.exitCode === 0,
     'writer command did not complete successfully',
   );
-  return { receipt, command };
+  /** @satisfies {ControllerReceipt} */
+  const validatedReceipt = {
+    ...receipt,
+    schema: 'ObservedControllerCommand/v1',
+    source: receipt.source,
+    thread_id: receipt.thread_id,
+    turn_id: receipt.turn_id,
+    caller_observation_ref: receipt.caller_observation_ref,
+    report_tool_ref: receipt.report_tool_ref,
+    attribution: receipt.attribution,
+    command_observation: {
+      ...command,
+      id: command.id,
+      command: command.command,
+      cwd: command.cwd,
+      status: 'completed',
+      exitCode: 0,
+    },
+  };
+  return { receipt: validatedReceipt, command: validatedReceipt.command_observation };
 }
 
+/** @param {RecoveryRequest} request @param {RecoveryState} state @param {SessionBridgeObservation} observation @param {ControllerReceipt} receipt */
 function validateReportedJournalBinding(request, state, observation, receipt) {
   const item = findJournalItem(state.journal.state, request.actionId, request.issueId),
     nextItem = findJournalItem(request.nextJournal, request.actionId, request.issueId),
@@ -195,16 +261,20 @@ function validateReportedJournalBinding(request, state, observation, receipt) {
   return reservation;
 }
 
+/** @param {string} root @param {RecoveryRequest} request @param {RecoveryState} state @param {NonNullable<ReturnType<typeof findJournalItem>>['host_reservation']} reservation */
 function validateRetainedSourcePermission(root, request, state, reservation) {
-  const reference = state.initialReceipt.request.sourceAuthorizationReference,
-    work = state.host.work;
+  const initialReceipt = state.initialReceipt;
+  requireRecovery(initialReceipt, 'original Source continuation receipt is missing');
+  const reference = initialReceipt.request.sourceAuthorizationReference;
+  const work = state.host.work;
+  requireRecovery(work, 'current Work state is missing');
   requireRecovery(
-    state.initialReceipt.continuation_id === request.initialContinuationId &&
-      state.initialReceipt.request_digest === request.initialContinuationRequestDigest,
+    initialReceipt.continuation_id === request.initialContinuationId &&
+      initialReceipt.request_digest === request.initialContinuationRequestDigest,
     'original continuation receipt differs',
   );
   requireRecovery(
-    state.initialReceipt.request.nativeSessionHandle === request.nativeSessionHandle,
+    initialReceipt.request.nativeSessionHandle === request.nativeSessionHandle,
     'original native session handle differs',
   );
   requireRecovery(
@@ -233,7 +303,7 @@ function validateRetainedSourcePermission(root, request, state, reservation) {
     'retained Source authorization is for another work attempt',
   );
   const authorizationRevision = acceptedSourceAuthorizationRevision(work, state.journal.state, reference, {
-    receipt: state.initialReceipt,
+    receipt: initialReceipt,
     frontierCodeRebind: state.frontierReceipt,
     completedSourceReportRecovery: state.recoveryReceipt,
   });
@@ -255,6 +325,7 @@ function validateRetainedSourcePermission(root, request, state, reservation) {
   return authority;
 }
 
+/** @param {string} root @param {SafeRepositoryAccess} access @param {RecoveryRequest} request @param {RecoveryState} state */
 function readTerminalProof(root, access, request, state) {
   const caller = readStrictJson(
       access,
@@ -286,17 +357,22 @@ function readTerminalProof(root, access, request, state) {
   };
 }
 
+/** @param {string} root @param {SafeRepositoryAccess} access @param {RecoveryRequest} request @param {RecoveryState} state */
 function verifySourceDiff(root, access, request, state) {
-  const work = state.host.work,
-    oldScope = state.journal.state.source_scope,
-    snapshot = snapshotDeclaredSources(access, work.lifecycle.scope.allowed_paths),
+  const work = state.host.work;
+  requireRecovery(work, 'current Work state is missing');
+  const initialReceipt = state.initialReceipt;
+  requireRecovery(initialReceipt, 'original Source continuation receipt is missing');
+  const oldScope = state.journal.state.source_scope;
+  requireRecovery(oldScope, 'original Source scope snapshot is missing');
+  const snapshot = snapshotDeclaredSources(access, work.lifecycle.scope.allowed_paths),
     changes = compareScopedSourceSnapshots(oldScope, snapshot),
     paths = changes.map((change) => change.path),
     retainedSnapshot = readStrictJson(access, request.sourceSnapshotRef, 'actual Source snapshot').value,
     retainedDiff = readStrictJson(access, request.sourceDiffRef, 'actual Source diff', 1024 * 1024, 'array').value,
     authorization = readLocalSourceWriteAuthorization(
       root,
-      state.initialReceipt.request.sourceAuthorizationReference.path,
+      initialReceipt.request.sourceAuthorizationReference.path,
     ).authorization;
   requireRecovery(
     work.binding.work_source_revision === request.originalSourceScopeDigest &&
@@ -330,45 +406,85 @@ function verifySourceDiff(root, access, request, state) {
   };
 }
 
+/** @param {Record<string, unknown>} value @param {string} label @returns {{inputs: unknown[]; asset: Record<string, unknown> & {file: string; sha256: string; bytes: number}}} */
+function validateNativeManifestFields(value, label) {
+  requireRecovery(value.schema === 'VidaStandaloneBuild/v1', `${label} schema differs`);
+  const inputs = requireArray(value.inputs, `${label} inputs`);
+  const assetValue = value.asset;
+  requireRecord(assetValue, `${label} asset`);
+  requireRecovery(typeof assetValue.file === 'string' && assetValue.file.length > 0, `${label} asset file is invalid`);
+  requireRecovery(typeof assetValue.sha256 === 'string', `${label} asset digest is invalid`);
+  requireRecovery(
+    typeof assetValue.bytes === 'number' && Number.isSafeInteger(assetValue.bytes) && assetValue.bytes > 0,
+    `${label} asset byte count is invalid`,
+  );
+  requireRecovery(typeof value.version === 'string', `${label} version is invalid`);
+  requireRecovery(typeof value.pin === 'string', `${label} pin is invalid`);
+  requireRecovery(typeof value.payloadId === 'string', `${label} payload identity is invalid`);
+  return {
+    inputs,
+    asset: { ...assetValue, file: assetValue.file, sha256: assetValue.sha256, bytes: assetValue.bytes },
+  };
+}
+
+/** @param {SafeRepositoryAccess} access @param {string} ref @param {string} expectedDigest @param {string} label @returns {{ readonly bytes: Buffer; readonly value: NativeManifest }} */
 function readNativeManifest(access, ref, expectedDigest, label) {
   const { bytes, value } = readStrictJson(access, ref, label, 32 * 1024 * 1024);
   requireRecovery(sha256(bytes) === expectedDigest, `${label} digest differs`);
-  requireRecovery(
-    value.schema === 'VidaStandaloneBuild/v1' && Array.isArray(value.inputs) && isPlainRecord(value.asset),
-    `${label} schema differs`,
-  );
-  return { bytes, value };
+  requireRecord(value, label);
+  const { inputs, asset } = validateNativeManifestFields(value, label);
+  /** @satisfies {NativeManifest} */
+  const manifest = {
+    ...value,
+    schema: 'VidaStandaloneBuild/v1',
+    inputs,
+    asset: { ...asset, file: asset.file, sha256: asset.sha256, bytes: asset.bytes },
+    version: requiredRecoveryString(value.version, `${label} version is invalid`),
+    pin: requiredRecoveryString(value.pin, `${label} pin is invalid`),
+    payloadId: requiredRecoveryString(value.payloadId, `${label} payload identity is invalid`),
+  };
+  return { bytes, value: manifest };
 }
 
+/** @param {SafeRepositoryAccess} access @param {string} ref @param {NativeManifest} manifest @param {string} label @returns {NativeInstall} */
 function readNativeInstall(access, ref, manifest, label) {
-  const { value } = readStrictJson(access, ref, label, 1024 * 1024),
-    install = value.installation_observation ?? value,
-    asset = manifest.asset;
+  const { value } = readStrictJson(access, ref, label, 1024 * 1024);
+  requireRecord(value, label);
+  const installValue = value.installation_observation ?? value;
+  requireRecord(installValue, `${label} installation observation`);
+  const asset = manifest.asset;
+  requireRecovery(installValue.schema === 'VidaNativeInstallationResult/v1', `${label} schema differs`);
+  requireRecovery(installValue.action === 'install' || installValue.action === 'update', `${label} action differs`);
   requireRecovery(
-    isPlainRecord(install) && install.schema === 'VidaNativeInstallationResult/v1',
-    `${label} schema differs`,
+    installValue.runtime_accepted === false && installValue.cleanup_complete === true,
+    `${label} acceptance flags differ`,
   );
+  requireRecovery(typeof installValue.version === 'string', `${label} version is invalid`);
+  requireRecovery(typeof installValue.sha256 === 'string', `${label} digest is invalid`);
+  requireRecovery(typeof installValue.bytes === 'number', `${label} byte count is invalid`);
+  requireRecovery(typeof installValue.path === 'string', `${label} executable path is invalid`);
+  requireRecovery(installValue.version === manifest.version, `${label} version differs from its manifest`);
   requireRecovery(
-    ['install', 'update'].includes(install.action) &&
-      install.runtime_accepted === false &&
-      install.cleanup_complete === true,
-    `${label} action or acceptance flags differ`,
-  );
-  requireRecovery(install.version === manifest.version, `${label} version differs from its manifest`);
-  requireRecovery(
-    typeof install.sha256 === 'string' &&
-      hashPattern.test(install.sha256.toLowerCase()) &&
-      install.sha256.toLowerCase() === asset.sha256.toLowerCase(),
+    hashPattern.test(installValue.sha256.toLowerCase()) &&
+      installValue.sha256.toLowerCase() === asset.sha256.toLowerCase(),
     `${label} executable digest differs from its manifest`,
   );
-  requireRecovery(install.bytes === asset.bytes, `${label} byte count differs from its manifest`);
-  requireRecovery(
-    typeof install.path === 'string' && path.isAbsolute(install.path),
-    `${label} executable path is invalid`,
-  );
-  return install;
+  requireRecovery(installValue.bytes === asset.bytes, `${label} byte count differs from its manifest`);
+  requireRecovery(path.isAbsolute(installValue.path), `${label} executable path is invalid`);
+  return {
+    ...installValue,
+    schema: 'VidaNativeInstallationResult/v1',
+    action: installValue.action,
+    runtime_accepted: false,
+    cleanup_complete: true,
+    version: installValue.version,
+    sha256: installValue.sha256,
+    bytes: installValue.bytes,
+    path: installValue.path,
+  };
 }
 
+/** @param {string} root @param {NativeEndpointRequest} request @param {NativeUpdate} update @param {NonNullable<ReturnType<typeof currentNativeSelfAttestation>>} self */
 function verifyCurrentUpdateOwner(root, request, update, self) {
   const registered = releaseState(releaseJournalFile(root, request.systemUpdateOperationId)),
     pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
@@ -397,6 +513,12 @@ function verifyCurrentUpdateOwner(root, request, update, self) {
   return { ref: request.systemUpdateRef, operationId: request.systemUpdateOperationId };
 }
 
+/** @param {unknown} check */
+function isPassedNativeBuildCheck(check) {
+  return isPlainRecord(check) && check.id === 'native-build' && check.status === 'passed';
+}
+
+/** @param {string} root @param {AgentRuntimeConfig} config @param {SafeRepositoryAccess} access @param {NativeEndpointRequest} request */
 export function verifyQualifiedRuntimeCodeEndpoints(root, config, access, request) {
   const oldManifest = readNativeManifest(
       access,
@@ -417,9 +539,31 @@ export function verifyQualifiedRuntimeCodeEndpoints(root, config, access, reques
       currentManifest.value,
       'current installation proof',
     ),
-    update = readStrictJson(access, request.systemUpdateRef, 'native system update').value,
+    updateValue = readStrictJson(access, request.systemUpdateRef, 'native system update').value,
     currentPaths = [...runtimePackageCodePaths(config.runtime.bundle)].sort(),
     self = currentNativeSelfAttestation();
+  requireRecord(updateValue, 'native system update');
+  requireRecovery(typeof updateValue.status === 'string', 'native update status is invalid');
+  requireRecovery(typeof updateValue.operation_id === 'string', 'native update operation ID is invalid');
+  requireRecovery(typeof updateValue.entry === 'string', 'native update entry path is invalid');
+  requireRecovery(typeof updateValue.version === 'string', 'native update version is invalid');
+  requireRecovery(typeof updateValue.run_id === 'string', 'native update run ID is invalid');
+  requireRecovery(typeof updateValue.artifact_id === 'string', 'native update artifact ID is invalid');
+  requireRecovery(updateValue.runtime_accepted === false, 'native update runtime acceptance is invalid');
+  requireRecovery(updateValue.developer_unblocked === false, 'native update developer acceptance is invalid');
+  /** @satisfies {NativeUpdate} */
+  const update = {
+    ...updateValue,
+    status: updateValue.status,
+    operation_id: updateValue.operation_id,
+    entry: updateValue.entry,
+    version: updateValue.version,
+    run_id: updateValue.run_id,
+    artifact_id: updateValue.artifact_id,
+    runtime_accepted: false,
+    developer_unblocked: false,
+    installation_observation: updateValue.installation_observation,
+  };
   requireRecovery(
     currentPaths.length > 0 && currentPaths.length <= 4096,
     'current runtime inventory is empty or oversized',
@@ -467,6 +611,7 @@ export function verifyQualifiedRuntimeCodeEndpoints(root, config, access, reques
     '.agent/work/agent-local-release/formed.json',
     'current formation pointer',
   ).value;
+  requireRecord(formed, 'current formation pointer');
   const { digest: formationDigest, ...formationBody } = formed;
   requireRecovery(
     formed.schema === 'VidaLocalReleaseFormation/v1' &&
@@ -488,6 +633,7 @@ export function verifyQualifiedRuntimeCodeEndpoints(root, config, access, reques
     '.agent/work/agent-local-release/' + formed.operation_id + '/ci/' + formed.request_id + '/result.json',
     'current formed result',
   );
+  requireRecord(formedResult.value, 'current formed result');
   requireRecovery(
     createHash('sha256').update(formedResult.bytes).digest('hex') === formed.result_sha256 &&
       formedResult.value.schema === 'VidaCIDeliveryResult/v1' &&
@@ -497,7 +643,7 @@ export function verifyQualifiedRuntimeCodeEndpoints(root, config, access, reques
       formedResult.value.payload_id === self.resource_payload_id &&
       same(formedResult.value.asset, currentManifest.value.asset) &&
       Array.isArray(formedResult.value.checks) &&
-      formedResult.value.checks.some((check) => check.id === 'native-build' && check.status === 'passed'),
+      formedResult.value.checks.some(isPassedNativeBuildCheck),
     'current formed result does not qualify the selected native',
   );
   const before = snapshotRuntimeManifestSources(oldManifest.value, config.runtime.bundle, request.oldRuntimeCodePaths),
@@ -537,6 +683,7 @@ export function verifyQualifiedRuntimeCodeEndpoints(root, config, access, reques
   };
 }
 
+/** @param {RecoveryRequest} request @param {RecoveryState} state */
 function verifyCurrentCas(request, state) {
   const { host, journal } = state,
     work = host.work;
@@ -573,6 +720,7 @@ function verifyCurrentCas(request, state) {
   requireRecovery(work.lease?.generation === request.leaseGeneration, 'original Work lease generation differs');
 }
 
+/** @param {string} root @param {AgentRuntimeConfig} config @param {SafeRepositoryAccess} access @param {RecoveryRequest} request @param {RecoveryState} state @returns {VerifiedCurrent} */
 function buildVerifiedCurrent(root, config, access, request, state) {
   verifyCurrentCas(request, state);
   const terminal = readTerminalProof(root, access, request, state),
@@ -590,9 +738,9 @@ function buildVerifiedCurrent(root, config, access, request, state) {
   return validateCompletedSourceReportRecoveryVerifiedCurrent(value, request);
 }
 
+/** @param {string} status @param {RecoveryRequest} request @param {VerifiedCurrent | null} proof @param {RecoveryState['recoveryReceipt']} receipt @param {Store} store @param {string} requestPath */
 function result(status, request, proof, receipt, store, requestPath) {
-  const host = store.readHostStateSnapshot(request.identity),
-    journal = store.readWorkSessionJournal(request.identity);
+  const { host, journal } = store.readWorkSessionSnapshot(request.identity);
   return {
     schema: 'CompletedSourceReportRecoveryResult/v1',
     status,
@@ -621,6 +769,7 @@ function result(status, request, proof, receipt, store, requestPath) {
   };
 }
 
+/** @param {string[]} args */
 export function recoverCompletedSourceReport(args) {
   const { mode, root, requestPath } = parseArgs(args),
     access = requireSafeRepositoryAccess(root),
@@ -638,10 +787,14 @@ export function recoverCompletedSourceReport(args) {
     'request identity differs from configured ProjectContext',
   );
   const file = sessionHandoffDatabasePath(root, config);
-  access.readBytes(path.relative(root, file).split(path.sep).join('/'), 'configured Host database');
-  const database = new Database(file, { readonly: mode !== 'apply', strict: true });
+  const database = openCliWorkspaceDatabase(
+    root,
+    file,
+    deriveWorkspaceId(config.repository.repository_id, root),
+    mode !== 'apply',
+  );
   try {
-    const store = new HostStateStore(
+    const store = createCliHostStateStore(
         database,
         deriveWorkspaceId(project.repository_id, root),
         undefined,
@@ -667,6 +820,7 @@ export function recoverCompletedSourceReport(args) {
         requestPath,
       );
     }
+    /** @param {RecoveryRequest} currentRequest @param {RecoveryState} currentState */
     const verifyCurrent = (currentRequest, currentState) => {
       requireRecovery(
         same(currentRequest, request) && access.readBytes(requestPath, 'request stability').equals(requestRead.bytes),
@@ -687,6 +841,6 @@ export function recoverCompletedSourceReport(args) {
     );
     return result('completed_source_report_recovered', request, proof, retained, store, requestPath);
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }

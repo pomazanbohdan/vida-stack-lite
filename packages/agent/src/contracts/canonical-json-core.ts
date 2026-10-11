@@ -2,8 +2,8 @@ import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import canonicalize from 'canonicalize';
 
-const MAX_CANONICAL_DEPTH = 64;
-const MAX_CANONICAL_NODES = 10_000;
+export const MAX_CANONICAL_DEPTH = 64;
+export const MAX_CANONICAL_NODES = 10_000;
 export const MAX_CANONICAL_BYTES = 8_388_608;
 interface CanonicalBudget {
   nodes: number;
@@ -103,9 +103,12 @@ type CanonicalValidator = (
   maxNodes: number,
 ) => void;
 
+export function isCanonicalJsonNumber(value: unknown): value is number {
+  return Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value)) && !Object.is(value, -0);
+}
+
 function canonicalNumber(value: unknown, pointer: string): void {
-  const unsafeInteger = Number.isInteger(value) && !Number.isSafeInteger(value);
-  reject([!Number.isFinite(value), unsafeInteger, Object.is(value, -0)], `non-canonical JSON number at ${pointer}`);
+  reject([!isCanonicalJsonNumber(value)], `non-canonical JSON number at ${pointer}`);
 }
 
 function canonicalString(
@@ -137,6 +140,7 @@ function canonicalArray(
 }
 
 function canonicalArrayKeys(target: unknown[], pointer: string): string[] {
+  reject([Object.getPrototypeOf(target) !== Array.prototype], `non-canonical array prototype at ${pointer}`);
   reject(
     [hasUnsafeSerializationHook(target as unknown as Record<string, unknown>)],
     `serialization hook at ${pointer}`,

@@ -72,10 +72,7 @@ function receiptEnvelope(value: unknown): asserts value is InitialSourceContinua
   }
 }
 /** Preserve each retained component's domain bounds and actual envelope depth. */
-export function serializeInitialSourceContinuationReceipt(
-  receipt: InitialSourceContinuationReceipt,
-  depth = 0,
-): string {
+function serializeInitialSourceContinuationReceipt(receipt: InitialSourceContinuationReceipt, depth = 0): string {
   canonicalJsonAtDepth(null, depth);
   receiptEnvelope(receipt);
   const payload = canonicalJsonComponents(receipt, depth, (value, at, key) =>

@@ -1,5 +1,5 @@
 schema: AgentRuntimeConfig/v1
-config_id: "{{REPOSITORY}}"
+config_id: '{{REPOSITORY}}'
 version: 1
 config_revision: 1
 repository:
@@ -9,8 +9,8 @@ repository:
     - AGENTS.md
     - AGENT.sidecar.md
     - agent-runtime.config.v1.yaml
-  repository_id: "{{REPOSITORY}}"
-  title: "{{REPOSITORY}} repository"
+  repository_id: '{{REPOSITORY}}'
+  title: '{{REPOSITORY}} repository'
   project_root: .
   code_selectors:
     - src/**
@@ -18,14 +18,14 @@ integrations:
   providers:
     - id: local-{{PROJECT}}
       provider: local
-      project_id: "{{PROJECT}}"
+      project_id: '{{PROJECT}}'
       tenant_id: local
-      namespace: "{{PROJECT}}"
+      namespace: '{{PROJECT}}'
 runtime:
-  bundle: "{{BUNDLE}}"
-  schema_root: "{{BUNDLE}}/schemas"
-  instruction_root: "{{BUNDLE}}/instructions"
-  tooling_root: "{{BUNDLE}}/tooling"
+  bundle: '{{BUNDLE}}'
+  schema_root: '{{BUNDLE}}/schemas'
+  instruction_root: '{{BUNDLE}}/instructions'
+  tooling_root: '{{BUNDLE}}/tooling'
 control:
   work_root: .agent/work
   coordination_ledger: .agent/coordination/ownership.v1.json
@@ -57,8 +57,8 @@ paths:
     import_root: .agent/work
     ledger_root: backlogs
 projects:
-  - project_id: "{{PROJECT}}"
-    title: "{{PROJECT}}"
+  - project_id: '{{PROJECT}}'
+    title: '{{PROJECT}}'
     project_root: .
     wiki_root: docs
     wiki_path: AGENT.sidecar.md
@@ -68,7 +68,7 @@ projects:
     task_prefix: TASK
     code_selectors:
       - src/**
-    delivery_group: "{{PROJECT}}"
+    delivery_group: '{{PROJECT}}'
 agents:
   profiles:
     executor:
@@ -388,7 +388,7 @@ teams:
     enabled: true
     default_workflow: task_execution
     allowed_projects:
-      - "{{PROJECT}}"
+      - '{{PROJECT}}'
     allowed_work_item_kinds:
       - epic
       - feature
@@ -417,20 +417,13 @@ teams:
     stage_overrides: {}
 work_items:
   types:
-    epic:
-      true
-    feature:
-      true
-    pbi:
-      true
-    story:
-      true
-    bug:
-      true
-    task:
-      true
-    research:
-      true
+    epic: true
+    feature: true
+    pbi: true
+    story: true
+    bug: true
+    task: true
+    research: true
   provider_mappings:
     - provider: azure
       provider_type: Epic
@@ -1061,9 +1054,9 @@ workflow_bindings:
     intents:
       - information_research
     projects:
-      - "*"
+      - '*'
     risks:
-      - "*"
+      - '*'
     labels: []
     workflow: information_research_light
   - id: bug-default
@@ -1074,9 +1067,9 @@ workflow_bindings:
     intents:
       - bug_fix
     projects:
-      - "*"
+      - '*'
     risks:
-      - "*"
+      - '*'
     labels: []
     workflow: bug_fix
   - id: new-default
@@ -1089,9 +1082,9 @@ workflow_bindings:
     intents:
       - implementation_new
     projects:
-      - "*"
+      - '*'
     risks:
-      - "*"
+      - '*'
     labels: []
     workflow: implementation_new
   - id: change-default
@@ -1105,9 +1098,9 @@ workflow_bindings:
     intents:
       - implementation_change
     projects:
-      - "*"
+      - '*'
     risks:
-      - "*"
+      - '*'
     labels: []
     workflow: implementation_change
   - id: task-default
@@ -1118,9 +1111,9 @@ workflow_bindings:
     intents:
       - task_execution
     projects:
-      - "*"
+      - '*'
     risks:
-      - "*"
+      - '*'
     labels: []
     workflow: task_execution
 artifact_contracts:
@@ -1386,8 +1379,7 @@ research_decision:
         max_bytes: 16384
         privacy: internal
         status: active
-        content:
-          Typed task context selects current instructions; command aliases and
+        content: Typed task context selects current instructions; command aliases and
           keyword parsing are never activation inputs. Bindings are
           deterministic, digest-pinned, bounded and privacy-redacted.
       - instruction_id: research-protocol
@@ -1440,8 +1432,7 @@ research_decision:
         max_bytes: 16384
         privacy: internal
         status: active
-        content:
-          External facts require independent sources; security, architecture and
+        content: External facts require independent sources; security, architecture and
           compliance topics require three. API, server and provider assumptions
           require a live check; conflicts and gaps remain blocked.
       - instruction_id: decision-recording-protocol
@@ -1468,8 +1459,7 @@ research_decision:
         max_bytes: 16384
         privacy: internal
         status: active
-        content:
-          Record statement, context, options, selection, rationale, evidence and
+        content: Record statement, context, options, selection, rationale, evidence and
           revisit conditions. An agent may propose but never accept a business
           or technical decision.
       - instruction_id: decision-closure-reflection
@@ -1497,8 +1487,7 @@ research_decision:
         max_bytes: 16384
         privacy: internal
         status: active
-        content:
-          Recheck completeness, source freshness, conflicts and supersession at
+        content: Recheck completeness, source freshness, conflicts and supersession at
           correction, conflict and closeout boundaries; keep accepted records
           immutable.
       - instruction_id: synthesis-protocol
@@ -1562,7 +1551,7 @@ knowledge:
       title: Project-owned requirements and source map
     - id: runtime-development-lifecycle
       kind: local
-      location: "{{BUNDLE}}/TESTING.md"
+      location: '{{BUNDLE}}/TESTING.md'
       title: Current portable verification contract
 authorization:
   cedar:
@@ -1707,7 +1696,7 @@ verification:
       module: verification/reference-runtime.cjs
       authority: non_executor_reference
     candidate:
-      module: "{{BUNDLE}}/dist/src/index.js"
+      module: '{{BUNDLE}}/dist/src/index.js'
       allowed_exports:
         - canonicalJson
     cases:

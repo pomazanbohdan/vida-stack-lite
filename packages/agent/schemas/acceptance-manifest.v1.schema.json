@@ -4,16 +4,7 @@
   "title": "AcceptanceManifest v1",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema",
-    "id",
-    "version",
-    "ac_ids",
-    "source",
-    "scope",
-    "source_revision",
-    "contracts"
-  ],
+  "required": ["schema", "id", "version", "ac_ids", "source", "scope", "source_revision", "contracts"],
   "properties": {
     "schema": { "const": "AcceptanceManifest/v1" },
     "id": { "type": "string", "minLength": 1 },

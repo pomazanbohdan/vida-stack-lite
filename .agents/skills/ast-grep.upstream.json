@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/ast-grep/agent-skill",
+  "revision": "f2175aff21f20cfb8e2db30c28febeb3a2d42b61",
+  "pluginVersion": "1.0.0",
+  "license": "MIT",
+  "licenseSource": "https://github.com/ast-grep/agent-skill/blob/f2175aff21f20cfb8e2db30c28febeb3a2d42b61/README.md#license",
+  "cliPackage": "@ast-grep/cli",
+  "cliVersion": "0.50.0",
+  "skills": {
+    "ast-grep": "ast-grep/skills/ast-grep",
+    "ast-grep-outline": "ast-grep/skills/outline"
+  },
+  "files": {
+    ".agents/skills/ast-grep/SKILL.md": "a18b68ab555758b85915937cf252d70b0261f930a07ce52095e7cafbbd304782",
+    ".agents/skills/ast-grep/references/rule_reference.md": "9f6d2ba2f2dbde059f61f426c262abe943f548984496962c43c7cc6e44813ad6",
+    ".agents/skills/ast-grep-outline/SKILL.md": "e403fca295ad403bad60bbde1ffa320095cba60f99d09bda5c83a224da8b6613"
+  }
+}

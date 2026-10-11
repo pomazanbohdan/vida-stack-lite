@@ -143,10 +143,7 @@
                 "maxLength": 512
               }
             },
-            "required": [
-              "kind",
-              "path"
-            ],
+            "required": ["kind", "path"],
             "additionalProperties": false
           }
         },
@@ -214,14 +211,7 @@
           "maxLength": 512
         }
       },
-      "required": [
-        "schema",
-        "work_id",
-        "attempt",
-        "stage_ids",
-        "user_instruction_ref",
-        "preparation_path"
-      ],
+      "required": ["schema", "work_id", "attempt", "stage_ids", "user_instruction_ref", "preparation_path"],
       "additionalProperties": false
     },
     {
@@ -272,22 +262,11 @@
               "pattern": "^[a-f0-9]{64}$"
             }
           },
-          "required": [
-            "schema",
-            "path",
-            "sha256"
-          ],
+          "required": ["schema", "path", "sha256"],
           "additionalProperties": false
         }
       },
-      "required": [
-        "schema",
-        "base_run_id",
-        "engine_run_id",
-        "correction_generation",
-        "stage_ids",
-        "authorization"
-      ],
+      "required": ["schema", "base_run_id", "engine_run_id", "correction_generation", "stage_ids", "authorization"],
       "additionalProperties": false
     },
     {
@@ -400,10 +379,7 @@
               "pattern": "^[a-f0-9]{64}$"
             }
           },
-          "required": [
-            "revision",
-            "digest"
-          ],
+          "required": ["revision", "digest"],
           "additionalProperties": false
         },
         "ledger_version": {
@@ -419,10 +395,7 @@
               "pattern": "^[a-f0-9]{64}$"
             }
           },
-          "required": [
-            "revision",
-            "digest"
-          ],
+          "required": ["revision", "digest"],
           "additionalProperties": false
         },
         "journal_version": {
@@ -438,10 +411,7 @@
               "pattern": "^[a-f0-9]{64}$"
             }
           },
-          "required": [
-            "revision",
-            "digest"
-          ],
+          "required": ["revision", "digest"],
           "additionalProperties": false
         },
         "engine_run_id": {

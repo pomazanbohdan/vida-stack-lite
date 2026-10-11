@@ -18,7 +18,10 @@
   "allOf": [
     {
       "if": { "properties": { "status": { "const": "requested" } }, "required": ["status"] },
-      "then": { "properties": { "revision": { "const": 1 } }, "not": { "properties": { "report": {} }, "required": ["report"] } }
+      "then": {
+        "properties": { "revision": { "const": 1 } },
+        "not": { "properties": { "report": {} }, "required": ["report"] }
+      }
     },
     {
       "if": { "properties": { "status": { "const": "applied" } }, "required": ["status"] },
@@ -26,7 +29,10 @@
     },
     {
       "if": { "properties": { "revision": { "const": 3 } }, "required": ["revision"] },
-      "then": { "properties": { "status": { "const": "applied" }, "completion": { "$ref": "#/$defs/completion" } }, "required": ["report", "completion"] }
+      "then": {
+        "properties": { "status": { "const": "applied" }, "completion": { "$ref": "#/$defs/completion" } },
+        "required": ["report", "completion"]
+      }
     },
     {
       "if": { "properties": { "revision": { "const": 2 } }, "required": ["revision"] },
@@ -89,7 +95,16 @@
     "fenceBinding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "project_ids", "operation_id", "manifest_digest", "request_digest", "bindings_digest", "closure_digest", "bundle_digest"],
+      "required": [
+        "schema",
+        "project_ids",
+        "operation_id",
+        "manifest_digest",
+        "request_digest",
+        "bindings_digest",
+        "closure_digest",
+        "bundle_digest"
+      ],
       "properties": {
         "schema": { "const": "MaintenanceFenceBinding/v1" },
         "project_ids": { "$ref": "#/$defs/projectIds" },
@@ -132,7 +147,23 @@
     "completion": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "operation_path", "operation_sha256", "operation_plan_digest", "request_id", "request_digest", "report_digest", "source_snapshot_digest", "target_config_digest", "target_yaml_sha256", "receipt_path", "receipt_sha256", "fence", "native_self_attestation_digest", "runtime_accepted"],
+      "required": [
+        "schema",
+        "operation_path",
+        "operation_sha256",
+        "operation_plan_digest",
+        "request_id",
+        "request_digest",
+        "report_digest",
+        "source_snapshot_digest",
+        "target_config_digest",
+        "target_yaml_sha256",
+        "receipt_path",
+        "receipt_sha256",
+        "fence",
+        "native_self_attestation_digest",
+        "runtime_accepted"
+      ],
       "properties": {
         "schema": { "const": "RuntimeConfigDeliveryTransition/v1" },
         "operation_path": { "type": "string", "minLength": 1, "maxLength": 1024 },
@@ -167,7 +198,16 @@
     "configBinding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "baseline_config_digest", "target_config_digest", "current_yaml_sha256", "yaml_state", "receipt_sha256", "baseline_receipt_sha256", "initialization_schema_digest"],
+      "required": [
+        "schema",
+        "baseline_config_digest",
+        "target_config_digest",
+        "current_yaml_sha256",
+        "yaml_state",
+        "receipt_sha256",
+        "baseline_receipt_sha256",
+        "initialization_schema_digest"
+      ],
       "properties": {
         "schema": { "const": "RuntimeConfigSourceCorrectionConfig/v1" },
         "baseline_config_digest": { "$ref": "#/$defs/hash" },
@@ -182,7 +222,17 @@
     "custody": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "work_id", "attempt", "action_id", "issue_id", "receipt_digest", "journal_revision", "journal_digest", "expected_maintenance_generation"],
+      "required": [
+        "schema",
+        "work_id",
+        "attempt",
+        "action_id",
+        "issue_id",
+        "receipt_digest",
+        "journal_revision",
+        "journal_digest",
+        "expected_maintenance_generation"
+      ],
       "properties": {
         "schema": { "const": "KnownTerminalCustodyBinding/v1" },
         "work_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
@@ -223,7 +273,26 @@
     "priorSystemUpdate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "path", "bytes", "sha256", "status", "operation_id", "version", "entry", "run_id", "artifact_id", "installed_bytes", "prior_bytes", "delta_bytes", "configuration_inspection", "tests_invoked", "reinstallation", "runtime_accepted", "developer_unblocked"],
+      "required": [
+        "schema",
+        "path",
+        "bytes",
+        "sha256",
+        "status",
+        "operation_id",
+        "version",
+        "entry",
+        "run_id",
+        "artifact_id",
+        "installed_bytes",
+        "prior_bytes",
+        "delta_bytes",
+        "configuration_inspection",
+        "tests_invoked",
+        "reinstallation",
+        "runtime_accepted",
+        "developer_unblocked"
+      ],
       "properties": {
         "schema": { "const": "PriorSystemUpdateBinding/v1" },
         "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
@@ -248,7 +317,29 @@
     "request": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "request_id", "operation_id", "publish_operation_id", "original_operation", "repository_root", "repository_id", "project_ids", "source_project_ids", "workspace_id", "state_digest", "config", "fence", "custody", "old_source", "source_beforeimages", "prior_system_update", "new_source", "new_source_manifest", "source_changes", "authorized_changed_paths"],
+      "required": [
+        "schema",
+        "request_id",
+        "operation_id",
+        "publish_operation_id",
+        "original_operation",
+        "repository_root",
+        "repository_id",
+        "project_ids",
+        "source_project_ids",
+        "workspace_id",
+        "state_digest",
+        "config",
+        "fence",
+        "custody",
+        "old_source",
+        "source_beforeimages",
+        "prior_system_update",
+        "new_source",
+        "new_source_manifest",
+        "source_changes",
+        "authorized_changed_paths"
+      ],
       "properties": {
         "schema": { "const": "RuntimeConfigSourceCorrectionRequest/v1" },
         "request_id": { "$ref": "#/$defs/uuid" },
@@ -269,14 +360,36 @@
         "prior_system_update": { "$ref": "#/$defs/priorSystemUpdate" },
         "new_source": { "$ref": "#/$defs/sourceSnapshot" },
         "new_source_manifest": { "$ref": "#/$defs/sourcePackageBinding" },
-        "source_changes": { "type": "array", "minItems": 1, "maxItems": 512, "items": { "$ref": "#/$defs/sourceChange" } },
-        "authorized_changed_paths": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 512 } }
+        "source_changes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 512,
+          "items": { "$ref": "#/$defs/sourceChange" }
+        },
+        "authorized_changed_paths": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+        }
       }
     },
     "nativeSelfAttestation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "executable_path", "executable_bytes", "executable_sha256", "package_name", "package_version", "package_manifest_sha256", "bun_version", "runtime_root", "resource_payload_id"],
+      "required": [
+        "schema",
+        "executable_path",
+        "executable_bytes",
+        "executable_sha256",
+        "package_name",
+        "package_version",
+        "package_manifest_sha256",
+        "bun_version",
+        "runtime_root",
+        "resource_payload_id"
+      ],
       "properties": {
         "schema": { "const": "VidaAgentNativeSelfAttestation/v1" },
         "executable_path": { "type": "string", "minLength": 1, "maxLength": 4096 },
@@ -335,9 +448,26 @@
     "ciResult": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "request_id", "operation_id", "version", "repository_id", "project_ids", "target", "source_binding", "archive_sha256", "manifest_sha256", "payload_id", "asset", "issuer", "run_id", "run_attempt", "checks"],
+      "required": [
+        "schema",
+        "request_id",
+        "operation_id",
+        "version",
+        "repository_id",
+        "project_ids",
+        "target",
+        "source_binding",
+        "archive_sha256",
+        "manifest_sha256",
+        "payload_id",
+        "asset",
+        "issuer",
+        "run_id",
+        "run_attempt",
+        "checks"
+      ],
       "properties": {
-        "schema": { "const": "VidaCIDeliveryResult/v1" },
+        "schema": { "enum": ["VidaCIDeliveryResult/v1", "VidaCIDeliveryResult/v2"] },
         "request_id": { "type": "string", "minLength": 1, "maxLength": 256 },
         "operation_id": { "$ref": "#/$defs/operationId" },
         "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
@@ -352,8 +482,55 @@
         "issuer": { "type": "string", "minLength": 1, "maxLength": 256 },
         "run_id": { "type": "string", "pattern": "^[1-9][0-9]{0,31}$" },
         "run_attempt": { "type": "integer", "minimum": 1, "maximum": 1000 },
-        "checks": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/ciCheck" } }
-      }
+        "checks": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/ciCheck" } },
+        "dependency_cache": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "key", "ref", "version", "size_in_bytes", "restore", "matched_key", "save", "save_action"],
+          "properties": {
+            "id": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-1\\.4\\.2-[a-f0-9]{64}$"
+            },
+            "ref": { "type": "string", "pattern": "^refs/heads/[A-Za-z0-9._/-]+$" },
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]+$"
+            },
+            "size_in_bytes": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+            "restore": { "enum": ["hit", "miss"] },
+            "matched_key": {
+              "type": ["string", "null"],
+              "maxLength": 256,
+              "pattern": "^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-1\\.4\\.2-[a-f0-9]{64}$"
+            },
+            "save": { "const": "confirmed" },
+            "save_action": { "enum": ["skipped", "success"] }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "restore": { "const": "hit" } }, "required": ["restore"] },
+              "then": { "properties": { "save_action": { "const": "skipped" }, "matched_key": { "type": "string" } } }
+            },
+            {
+              "if": { "properties": { "restore": { "const": "miss" } }, "required": ["restore"] },
+              "then": { "properties": { "save_action": { "const": "success" } } }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "schema": { "const": "VidaCIDeliveryResult/v2" } }, "required": ["schema"] },
+          "then": { "required": ["dependency_cache"] },
+          "else": { "not": { "required": ["dependency_cache"] } }
+        }
+      ]
     },
     "asset": {
       "type": "object",
@@ -368,7 +545,20 @@
     "ciDelivery": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "profile", "request_id", "operation_id", "source_binding", "run_id", "run_attempt", "artifact_id", "result_sha256", "checks", "conclusion", "result"],
+      "required": [
+        "schema",
+        "profile",
+        "request_id",
+        "operation_id",
+        "source_binding",
+        "run_id",
+        "run_attempt",
+        "artifact_id",
+        "result_sha256",
+        "checks",
+        "conclusion",
+        "result"
+      ],
       "properties": {
         "schema": { "const": "RuntimeConfigSourceCorrectionCIDelivery/v1" },
         "profile": { "const": "native-build" },
@@ -387,7 +577,21 @@
     "installationReceipt": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["installer", "action", "exit_code", "signal", "source_path", "source_sha256", "prior_bytes", "selected_bytes", "path", "sha256", "path_added", "tests_invoked", "reinstallation"],
+      "required": [
+        "installer",
+        "action",
+        "exit_code",
+        "signal",
+        "source_path",
+        "source_sha256",
+        "prior_bytes",
+        "selected_bytes",
+        "path",
+        "sha256",
+        "path_added",
+        "tests_invoked",
+        "reinstallation"
+      ],
       "properties": {
         "installer": { "type": "string", "minLength": 1, "maxLength": 256 },
         "action": { "const": "update" },
@@ -420,7 +624,21 @@
     "report": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "request_id", "operation_id", "publish_operation_id", "original_operation_sha256", "original_plan_digest", "source_snapshot_digest", "build_manifest_sha256", "build_manifest", "ci_delivery", "installation_receipt", "effective_path", "native_self_attestation"],
+      "required": [
+        "schema",
+        "request_id",
+        "operation_id",
+        "publish_operation_id",
+        "original_operation_sha256",
+        "original_plan_digest",
+        "source_snapshot_digest",
+        "build_manifest_sha256",
+        "build_manifest",
+        "ci_delivery",
+        "installation_receipt",
+        "effective_path",
+        "native_self_attestation"
+      ],
       "properties": {
         "schema": { "const": "RuntimeConfigSourceCorrectionReport/v1" },
         "request_id": { "$ref": "#/$defs/uuid" },

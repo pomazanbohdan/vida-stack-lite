@@ -15,9 +15,15 @@ import { compareScopedSourceSnapshots } from '../../src/orchestration/scoped-sou
 /** @typedef {{priorConfigDigest?: string, targetConfigDigest?: string, projectIds?: readonly string[], workspaceId?: string, integrationsDigest?: string}} DigestOptions */
 /** @param {unknown} value @returns {{revision: number, digest: string}} */
 function journalVersion(value) {
-  if (!isPlainRecord(value) || typeof value.revision !== 'number' || !Number.isSafeInteger(value.revision) ||
-      value.revision < 1 || typeof value.digest !== 'string') throw Error('Fixture journal version is missing or malformed');
-  return {revision: value.revision, digest: value.digest};
+  if (
+    !isPlainRecord(value) ||
+    typeof value.revision !== 'number' ||
+    !Number.isSafeInteger(value.revision) ||
+    value.revision < 1 ||
+    typeof value.digest !== 'string'
+  )
+    throw Error('Fixture journal version is missing or malformed');
+  return { revision: value.revision, digest: value.digest };
 }
 /** @param {ScopedSourceSnapshot['entries']} entries @returns {ScopedSourceSnapshot} */
 export const sourceScope = (entries) => {
@@ -27,7 +33,7 @@ export const sourceScope = (entries) => {
 };
 
 /** @param {DigestOptions} [options] @returns {ClosedTransition} */
-export function closedTransition({
+function closedTransition({
   priorConfigDigest = '5'.repeat(64),
   targetConfigDigest = '6'.repeat(64),
   projectIds = ['agent'],
@@ -88,12 +94,10 @@ export function requestFixture({
   workspaceId = '9'.repeat(64),
   integrationsDigest = '6'.repeat(64),
 } = {}) {
-  const scope = sourceScope([
-    { path: 'packages/agent/src/work.ts', exists: true, bytes: 4, sha256: '1'.repeat(64) },
-  ]);
+  const scope = sourceScope([{ path: 'packages/agent/src/work.ts', exists: true, bytes: 4, sha256: '1'.repeat(64) }]);
   const originalTransition = closedTransition({ priorConfigDigest, targetConfigDigest, projectIds, workspaceId });
-  const body = {...originalTransition.transition, source_snapshot_digest: scope.digest};
-  const transition = {...originalTransition, transition: body, transition_digest: canonicalJsonDigest(body)};
+  const body = { ...originalTransition.transition, source_snapshot_digest: scope.digest };
+  const transition = { ...originalTransition, transition: body, transition_digest: canonicalJsonDigest(body) };
   /** @type {import('../../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} */
   const actionRequest = {
     schema: 'VidaSessionRequest/v1',
@@ -155,7 +159,7 @@ export const fixtureWorkspace = '9'.repeat(64);
 export const runtimeRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 export const runtimeConfig = loadRuntimeConfig(runtimeRoot);
 /** @type {WorkIdentity} */
-export const fixtureIdentity = {
+const fixtureIdentity = {
   repository_id: 'vida-agent',
   project_ids: ['agent'],
   integrations_digest: '6'.repeat(64),
@@ -202,7 +206,7 @@ export function lifecycleFor(binding, revision = 1) {
 }
 
 /** @param {ScopedSourceSnapshot} sourceScope @param {string} [runId] @param {string} [workflowId] @returns {import('../../src/orchestration/persistent-session-handoff.ts').MastraLedgerItem} */
-export function historicalJournalItem(sourceScope, runId = 'run-fixture', workflowId = 'task_execution') {
+function historicalJournalItem(sourceScope, runId = 'run-fixture', workflowId = 'task_execution') {
   /** @type {import('../../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} */
   const request = {
     schema: 'VidaSessionRequest/v1',
@@ -217,7 +221,7 @@ export function historicalJournalItem(sourceScope, runId = 'run-fixture', workfl
     scope_digest: sourceScope.digest,
     bindings_manifest_ref: '2'.repeat(64),
   };
-  return { request, issue_id: 'fixture-issue', observation: null };
+  return { request, issue_id: '22222222-2222-4222-8222-222222222222', observation: null };
 }
 
 /**
@@ -244,7 +248,8 @@ export async function continuationFixture(options = {}) {
     config = suppliedConfig ?? runtimeConfig,
     identity = suppliedIdentity ?? fixtureIdentity,
     workspaceId = suppliedWorkspaceId ?? fixtureWorkspace;
-  const threadId = options.nativeSessionHandle ?? 'fixture-thread', runId = options.runId ?? 'run-fixture';
+  const threadId = options.nativeSessionHandle ?? 'fixture-thread',
+    runId = options.runId ?? 'run-fixture';
   fixtureRoots.push(root);
   const db = new Database(databasePath ?? path.join(root, 'host.db'), { create: true, strict: true });
   fixtureDatabases.push(db);
@@ -306,9 +311,8 @@ export async function continuationFixture(options = {}) {
   };
   const maintenance = store.acquireMaintenanceFence(maintenanceBinding);
   await store.releaseMaintenanceFence(maintenance);
-  const originalSource = suppliedOriginalSource ?? sourceScope([
-      { path: 'src/task.ts', exists: true, bytes: 4, sha256: '1'.repeat(64) },
-    ]),
+  const originalSource =
+      suppliedOriginalSource ?? sourceScope([{ path: 'src/task.ts', exists: true, bytes: 4, sha256: '1'.repeat(64) }]),
     binding = {
       repository_id: identity.repository_id,
       project_ids: [...identity.project_ids],
@@ -367,42 +371,52 @@ export async function continuationFixture(options = {}) {
       blocked_resources: [],
       created_at: now,
     };
-    store.compareAndSwapHostState({
-      expectedWork: null,
-      expectedLedger: null,
-      expectedMaintenanceGeneration: 1,
-      nextWork: {
-        schema: 'WorkState/v1',
-        workspace_id: workspaceId,
-        revision: 1,
-        binding,
-        contracts: {
-          scope: { schema: 'ImplementationScope/v1', path: '.agent/scope.json', sha256: binding.scope_contract_digest },
-          acceptance: { schema: 'AcceptanceManifest/v1', path: '.agent/acceptance.json', sha256: binding.acceptance_manifest_digest },
-          decisions: [],
+  store.compareAndSwapHostState({
+    expectedWork: null,
+    expectedLedger: null,
+    expectedMaintenanceGeneration: 1,
+    nextWork: {
+      schema: 'WorkState/v1',
+      workspace_id: workspaceId,
+      revision: 1,
+      binding,
+      contracts: {
+        scope: { schema: 'ImplementationScope/v1', path: '.agent/scope.json', sha256: binding.scope_contract_digest },
+        acceptance: {
+          schema: 'AcceptanceManifest/v1',
+          path: '.agent/acceptance.json',
+          sha256: binding.acceptance_manifest_digest,
         },
-        lease: { ticket_id: ticket.ticket_id, thread_id: ticket.thread_id, generation: ticket.generation },
-        execution: { run_id: runId, input_digest: '5'.repeat(64), phase: 'implementation', status: 'active', assignment_attempts: [] },
-        lifecycle: lifecycleFor(binding),
-        artifacts: intakeArtifacts,
+        decisions: [],
       },
-      nextLedger: {
-        schema: 'CoordinationLedger/v1',
-        workspace_id: workspaceId,
-        revision: 1,
-        open_generation: 1,
-        next_sequence: 2,
-        tickets: [ticket],
-        claims: [claim],
-        notices: [],
-        dispositions: [],
-        contours: [],
-        batches: [],
-        rebinds: [],
-        operations: [],
-        retirements: [],
+      lease: { ticket_id: ticket.ticket_id, thread_id: ticket.thread_id, generation: ticket.generation },
+      execution: {
+        run_id: runId,
+        input_digest: '5'.repeat(64),
+        phase: 'implementation',
+        status: 'active',
+        assignment_attempts: [],
       },
-    });
+      lifecycle: lifecycleFor(binding),
+      artifacts: intakeArtifacts,
+    },
+    nextLedger: {
+      schema: 'CoordinationLedger/v1',
+      workspace_id: workspaceId,
+      revision: 1,
+      open_generation: 1,
+      next_sequence: 2,
+      tickets: [ticket],
+      claims: [claim],
+      notices: [],
+      dispositions: [],
+      contours: [],
+      batches: [],
+      rebinds: [],
+      operations: [],
+      retirements: [],
+    },
+  });
   let journalItem = historicalJournalItem(originalSource, runId, workflowId);
   if (uncertain) journalItem = { ...journalItem, observation: null };
   else
@@ -411,7 +425,7 @@ export async function continuationFixture(options = {}) {
       observation: {
         schema: 'VidaSessionObservation/v1',
         action_id: journalItem.request.action_id,
-        issue_id: 'fixture-issue',
+        issue_id: '22222222-2222-4222-8222-222222222222',
         agent_id: 'fixture:research-synthesizer',
         tool_call_ref: 'fixture:terminal-body',
         status: 'reported_complete',
@@ -431,7 +445,9 @@ export async function continuationFixture(options = {}) {
     items: [journalItem],
     completed: [],
   };
-  db.exec('CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))');
+  db.exec(
+    'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
+  );
   db.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)').run(
     workspaceId,
     identity.work_id,
@@ -444,8 +460,11 @@ export async function continuationFixture(options = {}) {
     const before = store.readHostStateSnapshot(identity);
     if (!before.work || !before.ledger) throw Error('Seeded Host state missing');
     /** @type {WorkState} */
-    const
-      nextWork = { ...before.work, revision: before.work.revision + 1, lifecycle: { ...before.work.lifecycle, revision: before.work.revision + 1 } },
+    const nextWork = {
+        ...before.work,
+        revision: before.work.revision + 1,
+        lifecycle: { ...before.work.lifecycle, revision: before.work.revision + 1 },
+      },
       /** @type {import('../../src/host-state.ts').CoordinationLedger} */
       nextLedger = {
         ...before.ledger,
@@ -477,45 +496,65 @@ export async function continuationFixture(options = {}) {
   const beforeRelease = store.readHostStateSnapshot(identity);
   if (!beforeRelease.work || !beforeRelease.ledger || !beforeRelease.workVersion || !beforeRelease.ledgerVersion)
     throw Error('Seeded release Host state missing');
-  const
-    row = journalVersion(db.query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?').get(
-      workspaceId,
-      identity.work_id,
-      1,
-    )),
+  const row = journalVersion(
+      db
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(workspaceId, identity.work_id, 1),
+    ),
     /** @type {WorkState} */
-    workAfter = { ...beforeRelease.work, revision: beforeRelease.work.revision + 1, lease: null, execution: { ...beforeRelease.work.execution, phase: 'awaiting_followup', status: 'suspended' }, lifecycle: { ...beforeRelease.work.lifecycle, revision: beforeRelease.work.revision + 1, next_action: 'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.' } };
+    workAfter = {
+      ...beforeRelease.work,
+      revision: beforeRelease.work.revision + 1,
+      lease: null,
+      execution: { ...beforeRelease.work.execution, phase: 'awaiting_followup', status: 'suspended' },
+      lifecycle: {
+        ...beforeRelease.work.lifecycle,
+        revision: beforeRelease.work.revision + 1,
+        next_action:
+          'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.',
+      },
+    };
   const currentTicket = beforeRelease.ledger.tickets.find((entry) => entry.status === 'active');
   if (!currentTicket) throw Error('Original ticket missing');
-  const currentClaim = beforeRelease.ledger.claims.find((entry) => entry.ticket_id === currentTicket.ticket_id && entry.status === 'active');
+  const currentClaim = beforeRelease.ledger.claims.find(
+    (entry) => entry.ticket_id === currentTicket.ticket_id && entry.status === 'active',
+  );
   if (!currentClaim) throw Error('Original claim missing');
   const releaseTime = new Date().toISOString();
   /** @type {import('../../src/host-state.ts').CoordinationLedger} */
-  const ledgerAfter = {...beforeRelease.ledger, revision: beforeRelease.ledger.revision + 1,
+  const ledgerAfter = {
+    ...beforeRelease.ledger,
+    revision: beforeRelease.ledger.revision + 1,
     tickets: beforeRelease.ledger.tickets.map((entry) =>
-    entry.ticket_id === currentTicket.ticket_id
-      ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
-      : entry,
+      entry.ticket_id === currentTicket.ticket_id
+        ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
+        : entry,
     ),
     claims: beforeRelease.ledger.claims.map((entry) =>
-    entry.claim_id === currentClaim.claim_id ? { ...entry, status: 'released', renewed_at: releaseTime } : entry,
+      entry.claim_id === currentClaim.claim_id ? { ...entry, status: 'released', renewed_at: releaseTime } : entry,
     ),
-    operations: [...beforeRelease.ledger.operations, {
-    schema: 'CoordinationOperation/v1',
-    operation_id: 'release-original-owner',
-    kind: 'release',
-    ticket_id: currentTicket.ticket_id,
-    work_id: identity.work_id,
-    thread_id: threadId,
-    source_revision: currentTicket.source_revision,
-    resources: [...currentTicket.exclusive_resources],
-    from_ledger_revision: beforeRelease.ledger.revision,
-    to_ledger_revision: beforeRelease.ledger.revision + 1,
-    decided_by: threadId,
-    decision_pointer: 'WORK.md#accepted-request',
-    created_at: releaseTime,
-    }],
+    operations: [
+      ...beforeRelease.ledger.operations,
+      {
+        schema: 'CoordinationOperation/v1',
+        operation_id: 'release-original-owner',
+        kind: 'release',
+        ticket_id: currentTicket.ticket_id,
+        work_id: identity.work_id,
+        thread_id: threadId,
+        source_revision: currentTicket.source_revision,
+        resources: [...currentTicket.exclusive_resources],
+        from_ledger_revision: beforeRelease.ledger.revision,
+        to_ledger_revision: beforeRelease.ledger.revision + 1,
+        decided_by: threadId,
+        decision_pointer: 'WORK.md#accepted-request',
+        created_at: releaseTime,
+      },
+    ],
   };
+  const projectId = requireContinuationProjectId(identity);
   const bodyBytes = Buffer.from('{"schema":"VidaSessionObservation/v1","status":"reported_complete"}\n'),
     /** @type {Parameters<HostStateStore['captureHistoricalTerminalSynthesisAndRelease']>[0]} */
     captureInput = {
@@ -523,7 +562,7 @@ export async function continuationFixture(options = {}) {
       identity: identity,
       attempt: 1,
       actionId: '4'.repeat(64),
-      issueId: 'fixture-known-terminal-issue',
+      issueId: '11111111-1111-4111-8111-111111111111',
       nativeSessionHandle: threadId,
       userRequestPointer: 'WORK.md#accepted-request',
       requestIntent: 'linked_correction',
@@ -534,7 +573,7 @@ export async function continuationFixture(options = {}) {
       documentationContext: {
         repository_root: root,
         repository_id: identity.repository_id,
-        project_id: identity.project_ids[0],
+        project_id: projectId,
         work_id: identity.work_id,
       },
       nextWork: workAfter,
@@ -560,7 +599,22 @@ export async function continuationFixture(options = {}) {
       },
     },
     capture = store.captureHistoricalTerminalSynthesisAndRelease(captureInput).receipt;
-  return { root, db, store, identity, originalSource, capture, principal, workspaceId, config, repositoryRoot, priorConfigDigest, threadId, runId, closeDatabase };
+  return {
+    root,
+    db,
+    store,
+    identity,
+    originalSource,
+    capture,
+    principal,
+    workspaceId,
+    config,
+    repositoryRoot,
+    priorConfigDigest,
+    threadId,
+    runId,
+    closeDatabase,
+  };
 }
 
 /**
@@ -574,13 +628,16 @@ export function continuationRequestFor(f, options = {}) {
     throw Error('Current continuation Host state missing');
   const pointer = f.capture.request.user_request_pointer;
   if (typeof pointer !== 'string') throw Error('Original request pointer missing');
-  const
-    journalRow = journalVersion(f.db
-      .query('SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?')
-      .get(f.workspaceId ?? fixtureWorkspace, f.identity.work_id, 1)),
-    currentSourceScope = options.currentSourceScope ?? sourceScope([
-      { path: 'src/task.ts', exists: true, bytes: 5, sha256: '8'.repeat(64) },
-    ]),
+  const journalRow = journalVersion(
+      f.db
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(f.workspaceId ?? fixtureWorkspace, f.identity.work_id, 1),
+    ),
+    currentSourceScope =
+      options.currentSourceScope ??
+      sourceScope([{ path: 'src/task.ts', exists: true, bytes: 5, sha256: '8'.repeat(64) }]),
     targetConfigDigest = options.targetConfigDigest ?? '6'.repeat(64),
     base = requestFixture({
       targetConfigDigest,
@@ -632,6 +689,13 @@ export function continuationRequestFor(f, options = {}) {
   };
 }
 
+/** @param {WorkIdentity} identity @returns {string} */
+function requireContinuationProjectId(identity) {
+  const projectId = identity.project_ids[0];
+  if (!projectId) throw new Error('Continuation fixture requires a project identity.');
+  return projectId;
+}
+
 /** @param {string} root @returns {string} */
 export function trackContinuationFixtureRoot(root) {
   fixtureRoots.push(root);
@@ -651,22 +715,33 @@ export function cleanupContinuationFixtures() {
     const filename = path.resolve(database.filename);
     /** @type {readonly unknown[]} */
     const operations = database.query("SELECT payload FROM agent_host_governance WHERE kind='operation'").all();
-    if (operations.some(row => {
-      if (!isPlainRecord(row) || typeof row.payload !== 'string') return true;
-      /** @type {unknown} */
-      const value = JSON.parse(row.payload);
-      return !isPlainRecord(value) || typeof value.status !== 'string' || ['reserved', 'commit_unknown'].includes(value.status);
-    })) {
+    if (
+      operations.some((row) => {
+        if (!isPlainRecord(row) || typeof row.payload !== 'string') return true;
+        /** @type {unknown} */
+        const value = JSON.parse(row.payload);
+        return (
+          !isPlainRecord(value) ||
+          typeof value.status !== 'string' ||
+          ['reserved', 'commit_unknown'].includes(value.status)
+        );
+      })
+    ) {
       for (const root of fixtureRoots) {
         const relative = path.relative(path.resolve(root), filename);
-        if (relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)) retained.add(path.resolve(root));
+        if (relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep))
+          retained.add(path.resolve(root));
       }
     }
     database.close();
   }
-  const scratchPath = path.join(runtimeRoot, '.tmp'), scratchStat = lstatSync(scratchPath, { throwIfNoEntry: false });
-  const parents = [realpathSync(tmpdir()), ...(scratchStat?.isDirectory() && !scratchStat.isSymbolicLink() ? [realpathSync(scratchPath)] : [])];
-  for (const root of new Set(fixtureRoots.splice(0).map(value => path.resolve(value)))) {
+  const scratchPath = path.join(runtimeRoot, '.tmp'),
+    scratchStat = lstatSync(scratchPath, { throwIfNoEntry: false });
+  const parents = [
+    realpathSync(tmpdir()),
+    ...(scratchStat?.isDirectory() && !scratchStat.isSymbolicLink() ? [realpathSync(scratchPath)] : []),
+  ];
+  for (const root of new Set(fixtureRoots.splice(0).map((value) => path.resolve(value)))) {
     if (retained.has(root)) {
       process.stderr.write('Preserved continuation fixture with unresolved operation: ' + root + '\n');
       continue;
@@ -674,11 +749,14 @@ export function cleanupContinuationFixtures() {
     const stat = lstatSync(root, { throwIfNoEntry: false });
     if (!stat) continue;
     const resolved = realpathSync(root);
-    const owned = parents.some(parent => {
+    const owned = parents.some((parent) => {
       const relative = path.relative(parent, resolved);
-      return relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep);
+      return (
+        relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)
+      );
     });
-    if (!stat.isDirectory() || stat.isSymbolicLink() || !owned) throw new Error('Continuation fixture cleanup target is outside the owned temporary roots');
+    if (!stat.isDirectory() || stat.isSymbolicLink() || !owned)
+      throw new Error('Continuation fixture cleanup target is outside the owned temporary roots');
     rmSync(resolved, { recursive: true, force: true });
   }
 }

@@ -86,7 +86,7 @@ export interface ProjectContextProjectBinding {
   readonly path_profile: ResolvedPathProfile;
   readonly path_bindings: ProjectPathBindings;
 }
-export interface ProjectIntegrationBinding {
+interface ProjectIntegrationBinding {
   readonly schema: 'ProjectIntegrationBinding/v1';
   readonly project_id: string;
   readonly provider_id: string;

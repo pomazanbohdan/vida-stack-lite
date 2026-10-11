@@ -126,10 +126,14 @@ test(
       expect(canonicalRows()).toEqual(before);
       expect(readFileSync(enginePath)).toEqual(engineBefore);
       expect(readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'))).toEqual(configBefore);
-      await Promise.resolve(expect(createStagedRuntimeWitness({ ...input, workId: 'foreign' })).rejects.toThrow(/absent/));
-      await Promise.resolve(expect(
-        createStagedRuntimeWitness({ ...input, selection: { ...selection, labels: ['foreign'] } }),
-      ).rejects.toThrow(/context differs/));
+      await Promise.resolve(
+        expect(createStagedRuntimeWitness({ ...input, workId: 'foreign' })).rejects.toThrow(/absent/),
+      );
+      await Promise.resolve(
+        expect(
+          createStagedRuntimeWitness({ ...input, selection: { ...selection, labels: ['foreign'] } }),
+        ).rejects.toThrow(/context differs/),
+      );
       const handle = ledger.beginSessionProducer({
         selection,
         context,

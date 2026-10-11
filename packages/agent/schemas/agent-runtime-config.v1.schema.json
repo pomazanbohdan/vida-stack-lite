@@ -44,7 +44,8 @@
     },
     "config_revision": {
       "type": "integer",
-      "minimum": 1
+      "minimum": 1,
+      "maximum": 9007199254740991
     },
     "repository": {
       "type": "object",
@@ -86,15 +87,7 @@
           "uniqueItems": true
         }
       },
-      "required": [
-        "sidecar",
-        "policy",
-        "root_markers",
-        "repository_id",
-        "title",
-        "project_root",
-        "code_selectors"
-      ]
+      "required": ["sidecar", "policy", "root_markers", "repository_id", "title", "project_root", "code_selectors"]
     },
     "integrations": {
       "type": "object",
@@ -140,12 +133,7 @@
           "minLength": 1
         }
       },
-      "required": [
-        "bundle",
-        "schema_root",
-        "instruction_root",
-        "tooling_root"
-      ]
+      "required": ["bundle", "schema_root", "instruction_root", "tooling_root"]
     },
     "control": {
       "type": "object",
@@ -164,11 +152,7 @@
           "minLength": 1
         }
       },
-      "required": [
-        "work_root",
-        "coordination_ledger",
-        "checkpoint_name"
-      ]
+      "required": ["work_root", "coordination_ledger", "checkpoint_name"]
     },
     "paths": {
       "type": "object",
@@ -181,10 +165,7 @@
           "const": "monorepo"
         },
         "processing_scope": {
-          "enum": [
-            "whole_repository",
-            "selected_project"
-          ]
+          "enum": ["whole_repository", "selected_project"]
         },
         "defaults": {
           "type": "object",
@@ -300,12 +281,7 @@
           ]
         }
       },
-      "required": [
-        "schema",
-        "repository_mode",
-        "processing_scope",
-        "defaults"
-      ]
+      "required": ["schema", "repository_mode", "processing_scope", "defaults"]
     },
     "projects": {
       "type": "array",
@@ -485,16 +461,10 @@
                 "minLength": 1
               },
               "execution_mode": {
-                "enum": [
-                  "fast",
-                  "standard"
-                ]
+                "enum": ["fast", "standard"]
               },
               "mutation_scope": {
-                "enum": [
-                  "none",
-                  "repository_source"
-                ]
+                "enum": ["none", "repository_source"]
               },
               "tools_policy": {
                 "type": "string",
@@ -505,14 +475,7 @@
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
               }
             },
-            "required": [
-              "model",
-              "reasoning",
-              "execution_mode",
-              "mutation_scope",
-              "tools_policy",
-              "egress_policy"
-            ]
+            "required": ["model", "reasoning", "execution_mode", "mutation_scope", "tools_policy", "egress_policy"]
           }
         },
         "tool_policies": {
@@ -534,10 +497,7 @@
                 "uniqueItems": true
               }
             },
-            "required": [
-              "source_write",
-              "allowed_tools"
-            ]
+            "required": ["source_write", "allowed_tools"]
           }
         },
         "egress_policies": {
@@ -556,9 +516,7 @@
                 "uniqueItems": true
               }
             },
-            "required": [
-              "allowed_hosts"
-            ]
+            "required": ["allowed_hosts"]
           }
         },
         "role_instructions": {
@@ -570,12 +528,7 @@
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "description",
-              "consumes",
-              "produces",
-              "rules"
-            ],
+            "required": ["description", "consumes", "produces", "rules"],
             "properties": {
               "description": {
                 "type": "string",
@@ -614,12 +567,7 @@
           }
         }
       },
-      "required": [
-        "profiles",
-        "tool_policies",
-        "egress_policies",
-        "role_instructions"
-      ]
+      "required": ["profiles", "tool_policies", "egress_policies", "role_instructions"]
     },
     "teams": {
       "type": "object",
@@ -709,18 +657,11 @@
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
               }
             },
-            "required": [
-              "provider",
-              "provider_type",
-              "canonical_kind"
-            ]
+            "required": ["provider", "provider_type", "canonical_kind"]
           }
         }
       },
-      "required": [
-        "types",
-        "provider_mappings"
-      ]
+      "required": ["types", "provider_mappings"]
     },
     "workflows": {
       "type": "object",
@@ -730,12 +671,7 @@
         "additionalProperties": false,
         "properties": {
           "assurance_profile": {
-            "enum": [
-              "research_light",
-              "code_full",
-              "bug_focused",
-              "task_focused"
-            ]
+            "enum": ["research_light", "code_full", "bug_focused", "task_focused"]
           },
           "max_attempts": {
             "type": "integer",
@@ -766,20 +702,10 @@
                   "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
                 },
                 "kind": {
-                  "enum": [
-                    "research",
-                    "synthesize",
-                    "develop",
-                    "validate",
-                    "test",
-                    "deliver"
-                  ]
+                  "enum": ["research", "synthesize", "develop", "validate", "test", "deliver"]
                 },
                 "mode": {
-                  "enum": [
-                    "single",
-                    "parallel"
-                  ]
+                  "enum": ["single", "parallel"]
                 },
                 "assignments": {
                   "type": "array",
@@ -797,14 +723,7 @@
                         "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
                       },
                       "contour": {
-                        "enum": [
-                          "requirements",
-                          "documentation",
-                          "code",
-                          "platform",
-                          "diagnostics",
-                          "security_data"
-                        ]
+                        "enum": ["requirements", "documentation", "code", "platform", "diagnostics", "security_data"]
                       },
                       "risk_flags": {
                         "type": "array",
@@ -828,10 +747,7 @@
                         "uniqueItems": true
                       }
                     },
-                    "required": [
-                      "role",
-                      "profile"
-                    ]
+                    "required": ["role", "profile"]
                   }
                 },
                 "consumes": {
@@ -898,15 +814,7 @@
                   "uniqueItems": true
                 }
               },
-              "required": [
-                "id",
-                "kind",
-                "mode",
-                "assignments",
-                "consumes",
-                "produces",
-                "required_after"
-              ]
+              "required": ["id", "kind", "mode", "assignments", "consumes", "produces", "required_after"]
             }
           },
           "edges": {
@@ -929,14 +837,7 @@
             }
           }
         },
-        "required": [
-          "assurance_profile",
-          "max_attempts",
-          "entry_stage",
-          "terminal_stages",
-          "stages",
-          "edges"
-        ]
+        "required": ["assurance_profile", "max_attempts", "entry_stage", "terminal_stages", "stages", "edges"]
       }
     },
     "workflow_bindings": {
@@ -952,7 +853,8 @@
           },
           "priority": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 9007199254740991
           },
           "team": {
             "type": "string",
@@ -1021,17 +923,7 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
           }
         },
-        "required": [
-          "id",
-          "priority",
-          "team",
-          "work_item_kinds",
-          "intents",
-          "projects",
-          "risks",
-          "labels",
-          "workflow"
-        ]
+        "required": ["id", "priority", "team", "work_item_kinds", "intents", "projects", "risks", "labels", "workflow"]
       }
     },
     "artifact_contracts": {
@@ -1054,10 +946,7 @@
             "uniqueItems": true
           }
         },
-        "required": [
-          "schema",
-          "required_fields"
-        ]
+        "required": ["schema", "required_fields"]
       }
     },
     "research_decision": {
@@ -1087,11 +976,7 @@
               "maximum": 65536
             }
           },
-          "required": [
-            "max_instruction_bytes",
-            "max_context_bytes",
-            "max_projection_bytes"
-          ]
+          "required": ["max_instruction_bytes", "max_context_bytes", "max_projection_bytes"]
         },
         "paths": {
           "type": "object",
@@ -1118,13 +1003,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "research_records",
-            "decision_records",
-            "changelog",
-            "cache",
-            "activation_history"
-          ]
+          "required": ["research_records", "decision_records", "changelog", "cache", "activation_history"]
         },
         "registry": {
           "type": "object",
@@ -1139,7 +1018,8 @@
             },
             "revision": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "maximum": 9007199254740991
             },
             "source_revision": {
               "type": "string",
@@ -1165,11 +1045,12 @@
                   },
                   "revision": {
                     "type": "integer",
-                    "minimum": 1
+                    "minimum": 1,
+                    "maximum": 9007199254740991
                   },
                   "source_path": {
                     "type": "string",
-                    "pattern": "^agent-runtime\\.config\\.v1\\.yaml#research_decision\\.registry\\.instructions\\.[0-9]+$"
+                    "pattern": "^(?:agent-runtime\\.config\\.v1\\.yaml|\\.vida/project\\.yaml)#research_decision\\.registry\\.instructions\\.[0-9]+$"
                   },
                   "source_sha256": {
                     "type": "string",
@@ -1180,12 +1061,7 @@
                     "pattern": "^[a-f0-9]{64}$"
                   },
                   "activation_class": {
-                    "enum": [
-                      "always_on",
-                      "lane_entry",
-                      "triggered_domain",
-                      "closure_reflection"
-                    ]
+                    "enum": ["always_on", "lane_entry", "triggered_domain", "closure_reflection"]
                   },
                   "triggers": {
                     "type": "array",
@@ -1224,17 +1100,10 @@
                     "maximum": 4194304
                   },
                   "privacy": {
-                    "enum": [
-                      "public",
-                      "internal",
-                      "sensitive_redacted"
-                    ]
+                    "enum": ["public", "internal", "sensitive_redacted"]
                   },
                   "status": {
-                    "enum": [
-                      "active",
-                      "disabled"
-                    ]
+                    "enum": ["active", "disabled"]
                   },
                   "content": {
                     "type": "string",
@@ -1271,23 +1140,10 @@
               "pattern": "^[a-f0-9]{64}$"
             }
           },
-          "required": [
-            "schema",
-            "registry_id",
-            "revision",
-            "source_revision",
-            "instructions",
-            "updated_at",
-            "digest"
-          ]
+          "required": ["schema", "registry_id", "revision", "source_revision", "instructions", "updated_at", "digest"]
         }
       },
-      "required": [
-        "schema",
-        "limits",
-        "paths",
-        "registry"
-      ]
+      "required": ["schema", "limits", "paths", "registry"]
     },
     "knowledge": {
       "type": "object",
@@ -1305,10 +1161,7 @@
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
               },
               "kind": {
-                "enum": [
-                  "official",
-                  "local"
-                ]
+                "enum": ["official", "local"]
               },
               "location": {
                 "type": "string",
@@ -1319,18 +1172,11 @@
                 "minLength": 1
               }
             },
-            "required": [
-              "id",
-              "kind",
-              "location",
-              "title"
-            ]
+            "required": ["id", "kind", "location", "title"]
           }
         }
       },
-      "required": [
-        "sources"
-      ]
+      "required": ["sources"]
     },
     "authorization": {
       "type": "object",
@@ -1349,15 +1195,10 @@
               "minLength": 1
             }
           },
-          "required": [
-            "policy",
-            "schema_text"
-          ]
+          "required": ["policy", "schema_text"]
         }
       },
-      "required": [
-        "cedar"
-      ]
+      "required": ["cedar"]
     },
     "governance": {
       "type": "object",
@@ -1389,26 +1230,25 @@
               "properties": {
                 "max_attempts": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "maximum": 9007199254740991
                 },
                 "max_tool_calls": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "maximum": 9007199254740991
                 },
                 "max_calls_per_tool": {
                   "type": "object",
                   "minProperties": 1,
                   "additionalProperties": {
                     "type": "integer",
-                    "minimum": 1
+                    "minimum": 1,
+                    "maximum": 9007199254740991
                   }
                 }
               },
-              "required": [
-                "max_attempts",
-                "max_tool_calls",
-                "max_calls_per_tool"
-              ]
+              "required": ["max_attempts", "max_tool_calls", "max_calls_per_tool"]
             },
             "approval": {
               "type": "object",
@@ -1416,17 +1256,16 @@
               "properties": {
                 "clock_skew_ms": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 },
                 "max_age_ms": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "maximum": 9007199254740991
                 }
               },
-              "required": [
-                "clock_skew_ms",
-                "max_age_ms"
-              ]
+              "required": ["clock_skew_ms", "max_age_ms"]
             },
             "evidence": {
               "type": "object",
@@ -1441,9 +1280,7 @@
                   "uniqueItems": true
                 }
               },
-              "required": [
-                "required_stages"
-              ]
+              "required": ["required_stages"]
             },
             "sandbox": {
               "type": "object",
@@ -1458,9 +1295,7 @@
                   "uniqueItems": true
                 }
               },
-              "required": [
-                "allowlist"
-              ]
+              "required": ["allowlist"]
             },
             "workflow": {
               "type": "object",
@@ -1492,18 +1327,11 @@
                         "type": "boolean"
                       }
                     },
-                    "required": [
-                      "id",
-                      "tools",
-                      "approval_required",
-                      "require_result"
-                    ]
+                    "required": ["id", "tools", "approval_required", "require_result"]
                   }
                 }
               },
-              "required": [
-                "stages"
-              ]
+              "required": ["stages"]
             }
           },
           "required": [
@@ -1518,9 +1346,7 @@
           ]
         }
       },
-      "required": [
-        "edictum"
-      ]
+      "required": ["edictum"]
     },
     "orchestration": {
       "type": "object",
@@ -1574,24 +1400,13 @@
                   "uniqueItems": true
                 }
               },
-              "required": [
-                "enabled",
-                "approval_required_for"
-              ]
+              "required": ["enabled", "approval_required_for"]
             }
           },
-          "required": [
-            "default_profile",
-            "workflow_allowlist",
-            "tool_allowlist",
-            "egress_allowlist",
-            "hitl"
-          ]
+          "required": ["default_profile", "workflow_allowlist", "tool_allowlist", "egress_allowlist", "hitl"]
         }
       },
-      "required": [
-        "mastra"
-      ]
+      "required": ["mastra"]
     },
     "operations": {
       "type": "object",
@@ -1621,27 +1436,14 @@
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
               },
               "evidence_class": {
-                "enum": [
-                  "Decision",
-                  "Code",
-                  "Static",
-                  "Runtime"
-                ]
+                "enum": ["Decision", "Code", "Static", "Runtime"]
               }
             },
-            "required": [
-              "id",
-              "profile",
-              "tool",
-              "governance_stage",
-              "evidence_class"
-            ]
+            "required": ["id", "profile", "tool", "governance_stage", "evidence_class"]
           }
         }
       },
-      "required": [
-        "registry"
-      ]
+      "required": ["registry"]
     },
     "verification": {
       "type": "object",
@@ -1668,18 +1470,16 @@
                 },
                 "operation_timeout_ms": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "maximum": 9007199254740991
                 },
                 "worker_output_bytes": {
                   "type": "integer",
-                  "minimum": 1024
+                  "minimum": 1024,
+                  "maximum": 9007199254740991
                 }
               },
-              "required": [
-                "executor",
-                "operation_timeout_ms",
-                "worker_output_bytes"
-              ]
+              "required": ["executor", "operation_timeout_ms", "worker_output_bytes"]
             },
             "oracle": {
               "type": "object",
@@ -1693,10 +1493,7 @@
                   "const": "non_executor_reference"
                 }
               },
-              "required": [
-                "module",
-                "authority"
-              ]
+              "required": ["module", "authority"]
             },
             "candidate": {
               "type": "object",
@@ -1715,10 +1512,7 @@
                   "uniqueItems": true
                 }
               },
-              "required": [
-                "module",
-                "allowed_exports"
-              ]
+              "required": ["module", "allowed_exports"]
             },
             "cases": {
               "type": "array",
@@ -1744,28 +1538,14 @@
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
                   }
                 },
-                "required": [
-                  "case_id",
-                  "operation",
-                  "candidate_export",
-                  "oracle_export"
-                ]
+                "required": ["case_id", "operation", "candidate_export", "oracle_export"]
               }
             }
           },
-          "required": [
-            "enabled",
-            "required_oracle_digests",
-            "execution",
-            "oracle",
-            "candidate",
-            "cases"
-          ]
+          "required": ["enabled", "required_oracle_digests", "execution", "oracle", "candidate", "cases"]
         }
       },
-      "required": [
-        "differential"
-      ]
+      "required": ["differential"]
     },
     "observability": {
       "type": "object",
@@ -1773,7 +1553,8 @@
       "properties": {
         "max_error_log_bytes": {
           "type": "integer",
-          "minimum": 1024
+          "minimum": 1024,
+          "maximum": 9007199254740991
         },
         "redact_fields": {
           "type": "array",
@@ -1784,10 +1565,7 @@
           "uniqueItems": true
         }
       },
-      "required": [
-        "max_error_log_bytes",
-        "redact_fields"
-      ]
+      "required": ["max_error_log_bytes", "redact_fields"]
     },
     "timing": {
       "type": "object",
@@ -1795,17 +1573,15 @@
       "properties": {
         "threshold_ms": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "maximum": 9007199254740991
         },
         "optimization_reason": {
           "type": "string",
           "minLength": 1
         }
       },
-      "required": [
-        "threshold_ms",
-        "optimization_reason"
-      ]
+      "required": ["threshold_ms", "optimization_reason"]
     }
   }
 }

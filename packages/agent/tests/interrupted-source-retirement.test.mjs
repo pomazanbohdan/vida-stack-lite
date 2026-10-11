@@ -178,27 +178,63 @@ async function fixture({ writer = true } = {}) {
   }
   async function reportPrewritePlan(id, activeBridge, activeSource) {
     let current = ledger.resume(id, 1);
-    expect(current.state.items.every(entry => entry.request.role === 'source-planner')).toBe(true);
+    expect(current.state.items.every((entry) => entry.request.role === 'source-planner')).toBe(true);
     current = ledger.issueWave(id, 1, current.version);
     for (const entry of current.state.items) {
       const evidence = `.agent/work/${id}/scope.json`;
       const record = {
-        schema: 'LifecyclePreparationObservation/v1', record_id: 'plan-' + entry.request.action_id,
-        kind: 'source_plan', work_id: id, attempt: 1, source_revision: activeSource.digest,
-        scope_id: 'scope-' + id, config_digest: runtimeConfigDigest(config), ac_ids: ['AC-' + id],
-        observed_at: new Date().toISOString(), observer_id: 'synthetic-source-planner', status: 'pass',
-        evidence_refs: [evidence], observations: [
-          {mechanic: 'scope_acceptance_trace', actual: 'The fixture scope and acceptance bind the exact Source file and AC.', evidence_ref: evidence},
-          {mechanic: 'verification_rollback', actual: 'The selected retirement regression and retained Source beforeimage provide verification and rollback.', evidence_ref: evidence},
-        ], gaps: [],
+        schema: 'LifecyclePreparationObservation/v1',
+        record_id: 'plan-' + entry.request.action_id,
+        kind: 'source_plan',
+        work_id: id,
+        attempt: 1,
+        source_revision: activeSource.digest,
+        scope_id: 'scope-' + id,
+        config_digest: runtimeConfigDigest(config),
+        ac_ids: ['AC-' + id],
+        observed_at: new Date().toISOString(),
+        observer_id: 'synthetic-source-planner',
+        status: 'pass',
+        evidence_refs: [evidence],
+        observations: [
+          {
+            mechanic: 'scope_acceptance_trace',
+            actual: 'The fixture scope and acceptance bind the exact Source file and AC.',
+            evidence_ref: evidence,
+          },
+          {
+            mechanic: 'verification_rollback',
+            actual:
+              'The selected retirement regression and retained Source beforeimage provide verification and rollback.',
+            evidence_ref: evidence,
+          },
+        ],
+        gaps: [],
       };
       const summary = canonicalJson(record);
-      current = ledger.report(id, 1, current.version, {schema: 'VidaSessionObservation/v1',
-        action_id: entry.request.action_id, issue_id: entry.issue_id, agent_id: record.observer_id,
-        tool_call_ref: 'local:synthetic-source-plan', status: 'reported_complete', summary,
-        output_digest: canonicalJsonDigest(summary), evidence_refs: record.evidence_refs}, activeSource);
+      current = ledger.report(
+        id,
+        1,
+        current.version,
+        {
+          schema: 'VidaSessionObservation/v1',
+          action_id: entry.request.action_id,
+          issue_id: entry.issue_id,
+          agent_id: record.observer_id,
+          tool_call_ref: 'local:synthetic-source-plan',
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: record.evidence_refs,
+        },
+        activeSource,
+      );
     }
-    await activeBridge.resume(current.state.step_id, current.state.items.map(entry => entry.observation), activeSource);
+    await activeBridge.resume(
+      current.state.step_id,
+      current.state.items.map((entry) => entry.observation),
+      activeSource,
+    );
     return ledger.resume(id, 1);
   }
   const extraBridges = [];
@@ -437,9 +473,11 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
     );
 
     await f.laterWriter('later-overlap', 'AGENT.sidecar.md', { ownershipOnly: true });
-    await Promise.resolve(expect(retireInterruptedSourceOwnerForSession(f.executionCapability, request)).rejects.toThrow(
-      'another active Source owner overlaps',
-    ));
+    await Promise.resolve(
+      expect(retireInterruptedSourceOwnerForSession(f.executionCapability, request)).rejects.toThrow(
+        'another active Source owner overlaps',
+      ),
+    );
 
     const complete = {
       schema: 'VidaSessionObservation/v1',
@@ -465,9 +503,11 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
 test('an interrupted Source owner keeps a later FIFO contender queued', async () => {
   const f = await fixture();
   try {
-    await Promise.resolve(expect(f.laterWriter('fifo-contender', 'AGENT.sidecar.md')).rejects.toThrow(
-      'source writer ownership is queued behind an earlier exclusive resource',
-    ));
+    await Promise.resolve(
+      expect(f.laterWriter('fifo-contender', 'AGENT.sidecar.md')).rejects.toThrow(
+        'source writer ownership is queued behind an earlier exclusive resource',
+      ),
+    );
     const after = f.store.readHostStateSnapshot(f.identity),
       owner = after.ledger.tickets.find((ticket) => ticket.ticket_id === after.work.lease.ticket_id),
       contender = after.ledger.tickets.find(

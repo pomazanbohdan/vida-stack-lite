@@ -455,7 +455,7 @@ test('historical normalization keeps its original scope binding when current sou
   const host = createHostMutationFixture(f);
   try {
     removePublication(f);
-    const changedCurrentCode = pathFor(f, 'packages/agent/bin/scope.mjs');
+    const changedCurrentCode = pathFor(f, 'packages/agent/bin/scope.ts');
     writeFileSync(changedCurrentCode, 'Current code changed after the original reservation.\n');
     const result = await resumeHistoricalObservedResearchResult(input(f, host));
     assert.equal(result.recordSha256, f.plan.record_sha256);

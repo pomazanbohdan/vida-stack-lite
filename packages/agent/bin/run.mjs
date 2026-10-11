@@ -1,14 +1,5 @@
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
-import { verifyForwardReviewSet } from './forward-review-proof.mjs';
-import {
-  parseDocumentationPolicyTransitionEnvelope,
-  parseForwardClearCheckpoint,
-  parseForwardDocumentationEvent,
-  parseForwardPolicyIdentity,
-  verifySelectedForwardPolicyProof,
-  verifyCommittedParentPolicyProof,
-} from '../dist/src/documentation/transition-proof.js';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   constants,
@@ -27,12 +18,48 @@ import {
 } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { standaloneRuntime } from './bun.mjs';
+import {
+  runRepeatedOptions,
+  runScalarOptionFields,
+  runRequiredFields,
+  runChangingFields,
+  runSpecialSelectors,
+  runSpecialModeOptions,
+  runTaskSourceOperations,
+} from './run-cli-options.ts';
+
+const isRunMain = Boolean(process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url);
+// Informational help must complete before loading operation-only runtime modules.
+if (isRunMain && process.argv[2] === '--help') {
+  await printRunHelp(process.argv.slice(2));
+  process.exit(0);
+}
+
+const {
+  createCliHostStateStore,
+  closeWorkspaceDatabaseWithAdmission,
+  inspectCliHostWorkspaceDatabase,
+  openCliHostStateDatabase,
+  openCliWorkspaceDatabase,
+} = await import('./workspace-database-cli.ts');
+const { verifyForwardReviewSet } = await import('./forward-review-proof.mjs');
+const {
+  parseDocumentationPolicyTransitionEnvelope,
+  parseForwardClearCheckpoint,
+  parseForwardDocumentationEvent,
+  parseForwardPolicyIdentity,
+  verifySelectedForwardPolicyProof,
+  verifyCommittedParentPolicyProof,
+} = await import('../dist/src/documentation/transition-proof.js');
 
 const bundleRoot = standaloneRuntime()?.root ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const isBunRuntime = typeof Bun !== 'undefined';
+/** @param {Uint8Array} bytes @returns {string} */
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
+/** @param {unknown} value @returns {string} */
 const controllerJson = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
+/** @param {string} file @returns {Buffer} */
 function regularFile(file) {
   let stat;
   try {
@@ -45,6 +72,7 @@ function regularFile(file) {
   return readFileSync(file);
 }
 
+/** @param {string} directory @returns {void} */
 function checkedDirectory(directory) {
   let stat;
   try {
@@ -56,38 +84,463 @@ function checkedDirectory(directory) {
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority directory is unsafe.');
 }
 
+/** @param {string} file @returns {boolean} */
 function pathExists(file) {
   try {
     lstatSync(file);
     return true;
   } catch (error) {
-    if (error?.code === 'ENOENT') return false;
+    if (nodeErrorCode(error) === 'ENOENT') return false;
     throw error;
   }
 }
 
+/** @param {unknown} error */
+function nodeErrorCode(error) {
+  return error !== null && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+    ? error.code
+    : undefined;
+}
+
+/** @param {string} file @param {string} schema @returns {Record<string, unknown>} */
 function readControllerRecord(file, schema) {
   const bytes = regularFile(file);
+  /** @type {unknown} */
   let value;
   try {
     value = JSON.parse(bytes.toString('utf8'));
   } catch {
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority is invalid.');
   }
-  if (value?.schema !== schema || !bytes.equals(Buffer.from(controllerJson(value))))
-    fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority has an invalid shape or encoding.');
+  assertControllerRecord(bytes, value, schema);
   return value;
 }
 
+/** @param {Buffer} bytes @param {unknown} value @param {string} schema @returns {asserts value is Record<string, unknown>} */
+function assertControllerRecord(bytes, value, schema) {
+  if (!isRecord(value) || value.schema !== schema || !bytes.equals(Buffer.from(controllerJson(value))))
+    fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority has an invalid shape or encoding.');
+}
+
+/** @param {string} left @param {string} right @returns {number} */
+function compareStrings(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+/** @typedef {import('../dist/src/orchestration/mastra-session-bridge.js').SessionBridgeSnapshot} RunSessionSnapshot */
+/** @typedef {import('../dist/src/orchestration/mastra-session-bridge.js').SessionBridgeObservation} RunSessionObservation */
+/** @typedef {import('../dist/src/orchestration/scoped-source-snapshot.js').ScopedSourceSnapshot} RunSourceSnapshot */
+/** @typedef {{close: () => Promise<void>, snapshot: () => Promise<RunSessionSnapshot | null>, start: (sourceScope?: RunSourceSnapshot | null) => Promise<RunSessionSnapshot>, resume: (stepId: string, observations: readonly RunSessionObservation[], sourceScope?: RunSourceSnapshot | null) => Promise<RunSessionSnapshot>}} RunSessionBridge */
+
+/** @param {RunSessionBridge} bridge @returns {Promise<void>} */
+function closeRunSessionBridge(bridge) {
+  return bridge.close();
+}
+
+/** @param {string} text @returns {unknown} */
+function parseJsonUnknown(text) {
+  /** @type {unknown} */
+  const value = JSON.parse(text);
+  return value;
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** @typedef {Record<string, unknown> & {schema: string, generation: string, runtime: string, bundle_root: string, config_path: string, archive_manifest_sha256: string, plan_sha256: string, payload_manifest_sha256?: string, state_policy?: string, activation_decision_sha256?: string}} ActiveRuntimeSelectorRecord */
+
+/** @param {unknown} value @returns {value is ActiveRuntimeSelectorRecord} */
+function isActiveRuntimeSelectorRecord(value) {
+  if (!isRecord(value)) return false;
+  const base = [
+    'schema',
+    'generation',
+    'runtime',
+    'bundle_root',
+    'config_path',
+    'archive_manifest_sha256',
+    'plan_sha256',
+  ];
+  const keys =
+    value.payload_manifest_sha256 === undefined
+      ? base
+      : [...base, 'payload_manifest_sha256', 'state_policy', 'activation_decision_sha256'];
+  return exactStringFields(value, keys, keys);
+}
+
+/** @param {Record<string, unknown>} value @returns {asserts value is ActiveRuntimeSelectorRecord} */
+function requireActiveRuntimeSelectorRecord(value) {
+  if (!isActiveRuntimeSelectorRecord(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Active selector fields are invalid.');
+}
+
+/** @param {unknown} value @param {string} key @returns {unknown} */
+function recordField(value, key) {
+  if (!isRecord(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority is invalid.');
+  return value[key];
+}
+
+/** @param {unknown} value @returns {value is unknown[]} */
+function isUnknownArray(value) {
+  return Array.isArray(value);
+}
+
+/** @template {string} K @param {unknown} value @param {readonly K[]} keys @returns {value is Record<K, unknown>} */
 function exactKeys(value, keys) {
+  return isRecord(value) && JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
+}
+
+/**
+ * @template {string} K
+ * @template {K} S
+ * @param {unknown} value
+ * @param {readonly K[]} keys
+ * @param {readonly S[]} stringFields
+ * @returns {value is Record<K, unknown> & Record<S, string>}
+ */
+function exactStringFields(value, keys, stringFields) {
+  return exactKeys(value, keys) && stringFields.every((key) => typeof value[key] === 'string');
+}
+
+/** @param {unknown} value @returns {value is string} */
+function isPreparedRelativePath(value) {
   return (
-    value && !Array.isArray(value) && JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort())
+    typeof value === 'string' &&
+    value.length > 0 &&
+    !value.includes('\\') &&
+    !value.startsWith('/') &&
+    value.split('/').every((part) => part !== '' && part !== '.' && part !== '..' && !part.includes(':'))
   );
 }
 
+/** @param {unknown} value @returns {value is string} */
+function isPreparedDigest(value) {
+  return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+}
+
+/** @param {unknown} value @returns {value is number} */
+function isPreparedSize(value) {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
+/** @param {unknown} entryPath @param {unknown} digestValue @param {unknown} size @returns {boolean} */
+function hasPreparedPayloadCore(entryPath, digestValue, size) {
+  return isPreparedRelativePath(entryPath) && isPreparedDigest(digestValue) && isPreparedSize(size);
+}
+
+/** @typedef {Record<string, unknown> & {kind: string}} EvidenceKindEntry */
+
+/** @param {unknown} value @returns {value is EvidenceKindEntry} */
+function isEvidenceKindEntry(value) {
+  return isRecord(value) && typeof value.kind === 'string';
+}
+
+/** @param {unknown} value @returns {value is EvidenceKindEntry[]} */
+function isEvidenceKindArray(value) {
+  if (!isUnknownArray(value)) return false;
+  for (const entry of value) if (!isEvidenceKindEntry(entry)) return false;
+  return true;
+}
+
+/** @param {unknown} value @param {readonly string[]} expected @returns {value is EvidenceKindEntry[]} */
+function hasEvidenceKinds(value, expected) {
+  if (!isEvidenceKindArray(value) || value.length !== expected.length) return false;
+  return (
+    value
+      .map((entry) => entry.kind)
+      .sort()
+      .join(',') === [...expected].sort().join(',')
+  );
+}
+
+/** @param {Record<string, unknown>} parentLock @param {Record<string, unknown>} parent @returns {boolean} */
+function isRepairParentLockBound(parentLock, parent) {
+  return (
+    isRecord(parentLock.archive_manifest) &&
+    parentLock.archive_manifest.manifest_sha256 === parent.archive_manifest_sha256 &&
+    isRecord(parentLock.plan) &&
+    parentLock.plan.schema === 'VidaPreparedInstallPlan/v1' &&
+    parentLock.plan.plan_sha256 === parent.plan_sha256 &&
+    parentLock.plan.payload_manifest_sha256 === parent.payload_manifest_sha256 &&
+    parentLock.plan.archive_manifest_sha256 === parent.archive_manifest_sha256
+  );
+}
+
+/** @param {string} entry @returns {boolean} */
+function isNonCanonicalAbsolutePath(entry) {
+  return !path.isAbsolute(entry) || path.resolve(entry) !== entry;
+}
+
+/** @template {{issue_id: unknown, observation: unknown}} Item @param {Item} item @returns {boolean} */
+function isIssuedWithoutObservation(item) {
+  return item.issue_id !== null && item.observation === null;
+}
+
+/** @template {{observation: unknown}} Item @param {Item} item @returns {unknown[]} */
+function observationList(item) {
+  return item.observation ? [item.observation] : [];
+}
+
+/** @template {{consumes: readonly string[]}} Stage @param {Stage | undefined} stage @returns {boolean} */
+function isPacketOnlyDevelopmentStage(stage) {
+  return Boolean(
+    stage?.consumes.includes('DevelopmentTaskPacket/v1') && !stage.consumes.includes('ImplementationResult/v1'),
+  );
+}
+
+/** @template {{issue_id: unknown, observation: unknown, host_reservation?: unknown}} Item @param {Item} item @returns {boolean} */
+function isResearchPreparationUnsafe(item) {
+  return Boolean(item.issue_id === null || item.observation || item.host_reservation);
+}
+
+/** @template {{produces: readonly string[]}} Stage @param {Stage | undefined} stage @returns {boolean} */
+function isResearchOutputStage(stage) {
+  return Boolean(stage?.produces.includes('ResearchResult/v1') || stage?.produces.includes('ResearchSynthesis/v1'));
+}
+
+/** @template {{id: string, produces: readonly string[]}} Stage @param {Stage} stage @param {string} stageId @returns {boolean} */
+function isResearchOutputForStage(stage, stageId) {
+  return stage.id === stageId && isResearchOutputStage(stage);
+}
+
+/** @template {{request: {action_id: string}}} Item @param {Item} item @param {string} actionId @param {unknown} observation @returns {Item | (Item & {observation: unknown})} */
+function addObservationForAction(item, actionId, observation) {
+  return item.request.action_id === actionId ? { ...item, observation } : item;
+}
+
+/** @template {{action_id: string, status: string}} Item @param {Item} item @returns {Item} */
+function markUncertainResearchStatus(item) {
+  return {
+    ...item,
+    status: item.status === 'research_preparation_incomplete' ? 'issued_outcome_uncertain' : item.status,
+  };
+}
+
+/** @template {{issue_id: unknown, request: {action_id: string}}} Item @param {Item} item @param {boolean} issuedNow @param {(item: Item) => Record<string, unknown>} describe @returns {Record<string, unknown>} */
+function describeUncertainIssuedAction(item, issuedNow, describe) {
+  if (issuedNow) return { ...describe(item), prior_issue_outcome: 'unknown' };
+  return {
+    request: item.request,
+    issue_id: item.issue_id,
+    logical_action_id: item.request.action_id,
+    prior_issue_outcome: 'unknown',
+  };
+}
+
+/** @template {{issue_id: unknown, kind: string}} Entry @param {Entry} entry @param {string} kind @returns {boolean} */
+function isUnissuedKind(entry, kind) {
+  return !entry.issue_id && entry.kind === kind;
+}
+
+/**
+ * @template {{request: import('../src/orchestration/mastra-session-bridge-contract.ts').SessionBridgeRequest, issue_id: string | null, host_reservation?: {receipt: {attempt: {attempt_id: string}}} | null, research_activation?: {use: unknown} | null}} Item
+ * @param {Item} item
+ * @param {Map<string, unknown>} researchBindings
+ * @param {readonly {id: string, kind: string}[]} stages
+ * @returns {RunIssuedAction}
+ */
+function describeIssuedAction(item, researchBindings, stages) {
+  const action = {
+    request: item.request,
+    issue_id: item.issue_id,
+    host_attempt_id: item.host_reservation?.receipt.attempt.attempt_id,
+  };
+  const activation = item.research_activation;
+  if (!activation) return action;
+  const bindings = researchBindings.get(item.request.action_id);
+  const researchStage = stages.find((stage) => stage.id === item.request.stage_id)?.kind === 'research';
+  return {
+    ...action,
+    instruction_activation: activation.use,
+    instruction_bindings: bindings,
+    ...(researchStage
+      ? { research_instruction_activation: activation.use, research_instruction_bindings: bindings }
+      : {}),
+  };
+}
+
+/** @typedef {{path: string, sha256: string, size: number, source_sha256?: string, source_path?: string}} PreparedPayloadEntry */
+
+/** @typedef {{path: string, old_sha256: string | null, new_sha256: string, old_size: number | null, new_size: number}} ForwardFileChange */
+/** @typedef {Record<string, unknown> & {schema: string, operation_id: string, operator: string, parent_generation: string, parent_selector_sha256: string, parent_cutoff_sha256: string, first_admitted_work_attempt: string | null, old_payload_manifest_sha256: string, new_payload_manifest_sha256: string, changed: ForwardFileChange[], preserved_mutable_outputs: unknown[]}} ForwardUpdatePlan */
+/** @typedef {Record<string, unknown> & {schema: string, operation_id: string, operator: string, outcome: string, pointer: string, plan_sha256: string, evidence: unknown}} ForwardUpdateAuthorization */
+/** @typedef {{actor: string, path: string, pointer: string, sha256: string, status: string}} CutoverEvidence */
+
+/** @param {unknown} value @returns {value is CutoverEvidence} */
+function isCutoverEvidence(value) {
+  return (
+    exactKeys(value, ['actor', 'path', 'pointer', 'sha256', 'status']) &&
+    typeof value.actor === 'string' &&
+    typeof value.path === 'string' &&
+    typeof value.pointer === 'string' &&
+    typeof value.sha256 === 'string' &&
+    typeof value.status === 'string'
+  );
+}
+
+/** @param {unknown} value @returns {value is ForwardFileChange} */
+function isForwardFileChange(value) {
+  return (
+    isRecord(value) &&
+    typeof value.path === 'string' &&
+    (typeof value.old_sha256 === 'string' || value.old_sha256 === null) &&
+    typeof value.new_sha256 === 'string' &&
+    (typeof value.old_size === 'number' || value.old_size === null) &&
+    typeof value.new_size === 'number'
+  );
+}
+
+/** @param {unknown} value @returns {value is ForwardUpdatePlan} */
+function isForwardUpdatePlan(value) {
+  return isForwardPlanHeader(value) && hasForwardPlanCollections(value);
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isForwardPlanHeader(value) {
+  return (
+    isRecord(value) &&
+    hasForwardPlanIdentity(value) &&
+    hasForwardPlanDigests(value) &&
+    (typeof value.first_admitted_work_attempt === 'string' || value.first_admitted_work_attempt === null)
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function hasForwardPlanIdentity(value) {
+  return (
+    typeof value.schema === 'string' && typeof value.operation_id === 'string' && typeof value.operator === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function hasForwardPlanDigests(value) {
+  return (
+    typeof value.parent_generation === 'string' &&
+    typeof value.parent_selector_sha256 === 'string' &&
+    typeof value.parent_cutoff_sha256 === 'string' &&
+    typeof value.old_payload_manifest_sha256 === 'string' &&
+    typeof value.new_payload_manifest_sha256 === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function hasForwardPlanCollections(value) {
+  return (
+    Array.isArray(value.changed) &&
+    value.changed.every(isForwardFileChange) &&
+    Array.isArray(value.preserved_mutable_outputs)
+  );
+}
+
+/** @param {unknown} value @returns {value is ForwardUpdateAuthorization} */
+function isForwardUpdateAuthorization(value) {
+  return (
+    isRecord(value) &&
+    typeof value.schema === 'string' &&
+    typeof value.operation_id === 'string' &&
+    typeof value.operator === 'string' &&
+    typeof value.outcome === 'string' &&
+    typeof value.pointer === 'string' &&
+    typeof value.plan_sha256 === 'string' &&
+    Object.hasOwn(value, 'evidence')
+  );
+}
+
+/** @param {unknown} value @returns {asserts value is ForwardUpdatePlan} */
+function requireForwardUpdatePlan(value) {
+  if (!isForwardUpdatePlan(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward update records are invalid.');
+}
+
+/** @param {unknown} value @returns {asserts value is ForwardUpdateAuthorization} */
+function requireForwardUpdateAuthorization(value) {
+  if (!isForwardUpdateAuthorization(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward update records are invalid.');
+}
+
+/** @param {unknown} value @returns {asserts value is EvidenceKindEntry[]} */
+function requireForwardReviewEvidence(value) {
+  if (!hasEvidenceKinds(value, ['assurance', 'correctness', 'security']))
+    fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward review bindings are invalid.');
+}
+
+/** @param {unknown} value @returns {asserts value is ActiveRuntimeSelectorRecord} */
+function requireForwardParentSelector(value) {
+  if (!isActiveRuntimeSelectorRecord(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward parent selector is invalid.');
+}
+
+/** @param {string | undefined} leaf @returns {string} */
+function requireForwardFileLeaf(leaf) {
+  if (!leaf) fail('GAP-VIDA-RUN-SELECTOR-001', 'Installed forward bundle path is invalid.');
+  return leaf;
+}
+
+/** @param {unknown} value @returns {Record<string, unknown>} */
+function requireSelectorRecord(value) {
+  if (!isRecord(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Configured mutable output record is invalid.');
+  return value;
+}
+
+/** @param {unknown} value @returns {PreparedPayloadEntry} */
+function parsePreparedPayloadEntry(value) {
+  if (!isPreparedPayloadEntry(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair payload entry is invalid.');
+  if (typeof value.source_path === 'string' && typeof value.source_sha256 === 'string')
+    return {
+      path: value.path,
+      sha256: value.sha256,
+      size: value.size,
+      source_sha256: value.source_sha256,
+      source_path: value.source_path,
+    };
+  if (typeof value.source_sha256 === 'string')
+    return { path: value.path, sha256: value.sha256, size: value.size, source_sha256: value.source_sha256 };
+  return { path: value.path, sha256: value.sha256, size: value.size };
+}
+
+/** @param {unknown} value @returns {value is PreparedPayloadEntry} */
+function isPreparedPayloadEntry(value) {
+  return isDirectPreparedEntry(value) || isSameBytePreparedEntry(value) || isMappedPreparedEntry(value);
+}
+
+/** @param {unknown} value @returns {value is Extract<PreparedPayloadEntry, {source_path?: never, source_sha256?: never}>} */
+function isDirectPreparedEntry(value) {
+  return (
+    isRecord(value) &&
+    exactKeys(value, ['path', 'sha256', 'size']) &&
+    hasPreparedPayloadCore(value.path, value.sha256, value.size)
+  );
+}
+
+/** @param {unknown} value @returns {value is Extract<PreparedPayloadEntry, {source_sha256: string, source_path?: never}>} */
+function isSameBytePreparedEntry(value) {
+  return (
+    isRecord(value) &&
+    exactKeys(value, ['path', 'sha256', 'size', 'source_sha256']) &&
+    hasPreparedPayloadCore(value.path, value.sha256, value.size) &&
+    isPreparedDigest(value.source_sha256) &&
+    value.source_sha256 === value.sha256
+  );
+}
+
+/** @param {unknown} value @returns {value is Extract<PreparedPayloadEntry, {source_path: string}>} */
+function isMappedPreparedEntry(value) {
+  return (
+    isRecord(value) &&
+    exactKeys(value, ['path', 'sha256', 'size', 'source_path', 'source_sha256']) &&
+    hasPreparedPayloadCore(value.path, value.sha256, value.size) &&
+    isPreparedDigest(value.source_sha256) &&
+    isPreparedRelativePath(value.source_path)
+  );
+}
+
+/**
+ * @param {string} file
+ * @param {string} expectedSha
+ * @returns {{manifest: Record<string, unknown>, files: Map<string, PreparedPayloadEntry>}}
+ */
 function readBoundManifest(file, expectedSha) {
   const raw = regularFile(file);
   if (digest(raw) !== expectedSha) fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair payload manifest drift.');
+  /** @type {unknown} */
   let manifest;
   try {
     manifest = JSON.parse(raw.toString('utf8'));
@@ -95,47 +548,29 @@ function readBoundManifest(file, expectedSha) {
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair payload manifest is invalid.');
   }
   if (
-    manifest?.schema !== 'VidaAgentPreparedPayload/v1' ||
-    !Array.isArray(manifest.files) ||
-    !Array.isArray(manifest.unresolved_integration_paths) ||
+    !isRecord(manifest) ||
+    manifest.schema !== 'VidaAgentPreparedPayload/v1' ||
+    !isUnknownArray(manifest.files) ||
+    !isUnknownArray(manifest.unresolved_integration_paths) ||
     manifest.unresolved_integration_paths.length
   )
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair payload manifest is invalid.');
+  /** @type {Map<string, PreparedPayloadEntry>} */
   const files = new Map();
-  for (const entry of manifest.files) {
-    const direct = exactKeys(entry, ['path', 'sha256', 'size']);
-    const sameByteSource = exactKeys(entry, ['path', 'sha256', 'size', 'source_sha256']);
-    const mappedSource = exactKeys(entry, ['path', 'sha256', 'size', 'source_path', 'source_sha256']);
-    if (!direct && !sameByteSource && !mappedSource)
-      fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair payload entry is invalid.');
-    if (
-      typeof entry.path !== 'string' ||
-      !entry.path ||
-      entry.path.includes('\\') ||
-      entry.path.startsWith('/') ||
-      entry.path.split('/').some((part) => !part || part === '.' || part === '..' || part.includes(':')) ||
-      files.has(entry.path) ||
-      !/^[a-f0-9]{64}$/.test(entry.sha256) ||
-      !Number.isSafeInteger(entry.size) ||
-      entry.size < 0 ||
-      ((sameByteSource || mappedSource) && !/^[a-f0-9]{64}$/.test(entry.source_sha256)) ||
-      (sameByteSource && entry.source_sha256 !== entry.sha256) ||
-      (mappedSource &&
-        (typeof entry.source_path !== 'string' ||
-          !entry.source_path ||
-          entry.source_path.includes('\\') ||
-          entry.source_path.startsWith('/') ||
-          entry.source_path.split('/').some((part) => !part || part === '.' || part === '..' || part.includes(':'))))
-    )
-      fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair payload entry is invalid.');
+  for (const rawEntry of manifest.files) {
+    const entry = parsePreparedPayloadEntry(rawEntry);
+    if (files.has(entry.path)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair payload entry is invalid.');
     files.set(entry.path, entry);
   }
   return { manifest, files };
 }
+/** @param {string} projectRoot @param {ReadonlySet<string>} expected @returns {void} */
 function installedBundleInventory(projectRoot, expected) {
   const root = path.join(projectRoot, 'vida-agent');
   checkedDirectory(root);
+  /** @type {Set<string>} */
   const observed = new Set();
+  /** @param {string} directory @param {string} prefix @returns {void} */
   function walk(directory, prefix) {
     for (const name of readdirSync(directory)) {
       if (!prefix && name === 'node_modules') continue;
@@ -153,6 +588,14 @@ function installedBundleInventory(projectRoot, expected) {
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Installed bundle inventory differs from forward manifest.');
 }
 
+/**
+ * @param {string} projectRoot
+ * @param {ActiveRuntimeSelectorRecord} selector
+ * @param {string} selectorSha
+ * @param {string} generationRoot
+ * @param {boolean} [skipInstalledBundle]
+ * @returns {void}
+ */
 export function repairAuthority(projectRoot, selector, selectorSha, generationRoot, skipInstalledBundle = false) {
   const hash = /^[a-f0-9]{64}$/;
   const plan = readControllerRecord(
@@ -172,43 +615,63 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
     'VidaActiveLauncherRepairSelectorCommit/v1',
   );
   if (
-    !exactKeys(plan, [
-      'schema',
-      'repair_id',
-      'operator',
-      'parent_cutover_id',
-      'parent_selector_sha256',
-      'parent_payload_manifest_sha256',
-      'parent_launcher_sha256',
-      'successor_payload_manifest_sha256',
-      'successor_launcher_sha256',
-      'archive_manifest_sha256',
-      'authorization_sha256',
-    ]) ||
-    !exactKeys(authorization, [
-      'schema',
-      'repair_id',
-      'operator',
-      'outcome',
-      'pointer',
-      'old_generation',
-      'old_selector_sha256',
-      'old_payload_manifest_sha256',
-      'old_launcher_sha256',
-      'new_payload_manifest_sha256',
-      'new_launcher_sha256',
-      'evidence',
-    ]) ||
-    !exactKeys(decision, [
-      'schema',
-      'repair_id',
-      'operator',
-      'plan_sha256',
-      'authorization_sha256',
-      'selector_intent_sha256',
-      'outcome',
-    ]) ||
-    !exactKeys(commit, ['schema', 'repair_id', 'plan_sha256', 'decision_sha256', 'selector_sha256']) ||
+    !exactStringFields(
+      plan,
+      [
+        'schema',
+        'repair_id',
+        'operator',
+        'parent_cutover_id',
+        'parent_selector_sha256',
+        'parent_payload_manifest_sha256',
+        'parent_launcher_sha256',
+        'successor_payload_manifest_sha256',
+        'successor_launcher_sha256',
+        'archive_manifest_sha256',
+        'authorization_sha256',
+      ],
+      [
+        'schema',
+        'repair_id',
+        'operator',
+        'parent_cutover_id',
+        'parent_selector_sha256',
+        'parent_payload_manifest_sha256',
+        'parent_launcher_sha256',
+        'successor_payload_manifest_sha256',
+        'successor_launcher_sha256',
+        'archive_manifest_sha256',
+        'authorization_sha256',
+      ],
+    ) ||
+    !exactStringFields(
+      authorization,
+      [
+        'schema',
+        'repair_id',
+        'operator',
+        'outcome',
+        'pointer',
+        'old_generation',
+        'old_selector_sha256',
+        'old_payload_manifest_sha256',
+        'old_launcher_sha256',
+        'new_payload_manifest_sha256',
+        'new_launcher_sha256',
+        'evidence',
+      ],
+      ['schema', 'repair_id', 'operator', 'outcome', 'pointer', 'evidence'],
+    ) ||
+    !exactStringFields(
+      decision,
+      ['schema', 'repair_id', 'operator', 'plan_sha256', 'authorization_sha256', 'selector_intent_sha256', 'outcome'],
+      ['schema', 'repair_id', 'operator', 'plan_sha256', 'authorization_sha256', 'selector_intent_sha256', 'outcome'],
+    ) ||
+    !exactStringFields(
+      commit,
+      ['schema', 'repair_id', 'plan_sha256', 'decision_sha256', 'selector_sha256'],
+      ['schema', 'repair_id', 'plan_sha256', 'decision_sha256', 'selector_sha256'],
+    ) ||
     plan.repair_id !== selector.generation ||
     !/^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.parent_cutover_id) ||
     !/^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.operator) ||
@@ -238,7 +701,9 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
     decision.plan_sha256 !== selector.plan_sha256 ||
     decision.authorization_sha256 !== plan.authorization_sha256 ||
     decision.selector_intent_sha256 !==
-      digest(Buffer.from(controllerJson((({ activation_decision_sha256: ignored, ...intent }) => intent)(selector)))) ||
+      digest(
+        Buffer.from(controllerJson((({ activation_decision_sha256: _ignored, ...intent }) => intent)(selector))),
+      ) ||
     selector.activation_decision_sha256 !== digest(Buffer.from(controllerJson(decision))) ||
     commit.plan_sha256 !== selector.plan_sha256 ||
     commit.decision_sha256 !== selector.activation_decision_sha256 ||
@@ -246,7 +711,7 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
   )
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair authority is invalid.');
   if (
-    !Array.isArray(authorization.evidence) ||
+    !isEvidenceKindArray(authorization.evidence) ||
     authorization.evidence.length !== 3 ||
     authorization.evidence
       .map((entry) => entry.kind)
@@ -257,7 +722,7 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
   const evidencePaths = new Set();
   for (const entry of authorization.evidence) {
     if (
-      !exactKeys(entry, ['kind', 'path', 'sha256', 'status']) ||
+      !exactStringFields(entry, ['kind', 'path', 'sha256', 'status'], ['kind', 'path', 'sha256', 'status']) ||
       entry.status !== 'passed' ||
       !hash.test(entry.sha256) ||
       typeof entry.path !== 'string' ||
@@ -302,64 +767,131 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
   const { activation_decision_sha256: _parentDecisionHash, ...parentIntent } = parent;
   const parentEvidenceKinds = ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime'];
   if (
-    !exactKeys(parent, [
-      'schema',
-      'generation',
-      'runtime',
-      'bundle_root',
-      'config_path',
-      'archive_manifest_sha256',
-      'plan_sha256',
-      'payload_manifest_sha256',
-      'state_policy',
-      'activation_decision_sha256',
-    ]) ||
-    !exactKeys(parentCommit, [
-      'schema',
-      'cutover_id',
-      'plan_sha256',
-      'activation_decision_sha256',
-      'selector_sha256',
-    ]) ||
-    !exactKeys(parentDecision, [
-      'schema',
-      'actor',
-      'cutover_id',
-      'evidence',
-      'outcome',
-      'payload_manifest_sha256',
-      'plan_sha256',
-      'pointer',
-      'selector_intent_sha256',
-    ]) ||
-    !exactKeys(parentJournal, [
-      'schema',
-      'cutover_id',
-      'plan_sha256',
-      'archive_manifest_sha256',
-      'payload_manifest_sha256',
-      'archive_scope',
-      'state_policy',
-      'status',
-    ]) ||
-    !exactKeys(parentReady, ['schema', 'cutover_id', 'plan_sha256', 'archive_scope', 'state_policy', 'status']) ||
-    !exactKeys(parentLock, [
-      'schema',
-      'cutover_id',
-      'operator',
-      'attestation',
-      'archive_manifest_sha256',
-      'plan_sha256',
-      'payload_manifest_sha256',
-      'expected_file_count',
-      'archive_manifest',
-      'plan',
-      'state_policy',
-      'activation_decision_path',
-      'activation_decision_sha256',
-    ]) ||
-    !exactKeys(parentRelease, ['schema', 'cutover_id', 'operator', 'lock_sha256', 'status']) ||
-    !exactKeys(parentCutoff, ['schema', 'generation', 'selector_sha256', 'first_admitted_work_attempt']) ||
+    !exactStringFields(
+      parent,
+      [
+        'schema',
+        'generation',
+        'runtime',
+        'bundle_root',
+        'config_path',
+        'archive_manifest_sha256',
+        'plan_sha256',
+        'payload_manifest_sha256',
+        'state_policy',
+        'activation_decision_sha256',
+      ],
+      [
+        'schema',
+        'generation',
+        'runtime',
+        'bundle_root',
+        'config_path',
+        'archive_manifest_sha256',
+        'plan_sha256',
+        'payload_manifest_sha256',
+        'state_policy',
+        'activation_decision_sha256',
+      ],
+    ) ||
+    !exactStringFields(
+      parentCommit,
+      ['schema', 'cutover_id', 'plan_sha256', 'activation_decision_sha256', 'selector_sha256'],
+      ['schema', 'cutover_id', 'plan_sha256', 'activation_decision_sha256', 'selector_sha256'],
+    ) ||
+    !exactStringFields(
+      parentDecision,
+      [
+        'schema',
+        'actor',
+        'cutover_id',
+        'evidence',
+        'outcome',
+        'payload_manifest_sha256',
+        'plan_sha256',
+        'pointer',
+        'selector_intent_sha256',
+      ],
+      [
+        'schema',
+        'actor',
+        'cutover_id',
+        'outcome',
+        'payload_manifest_sha256',
+        'plan_sha256',
+        'pointer',
+        'selector_intent_sha256',
+        'evidence',
+      ],
+    ) ||
+    !exactStringFields(
+      parentJournal,
+      [
+        'schema',
+        'cutover_id',
+        'plan_sha256',
+        'archive_manifest_sha256',
+        'payload_manifest_sha256',
+        'archive_scope',
+        'state_policy',
+        'status',
+      ],
+      [
+        'schema',
+        'cutover_id',
+        'plan_sha256',
+        'archive_manifest_sha256',
+        'payload_manifest_sha256',
+        'archive_scope',
+        'state_policy',
+        'status',
+      ],
+    ) ||
+    !exactStringFields(
+      parentReady,
+      ['schema', 'cutover_id', 'plan_sha256', 'archive_scope', 'state_policy', 'status'],
+      ['schema', 'cutover_id', 'plan_sha256', 'archive_scope', 'state_policy', 'status'],
+    ) ||
+    !exactStringFields(
+      parentLock,
+      [
+        'schema',
+        'cutover_id',
+        'operator',
+        'attestation',
+        'archive_manifest_sha256',
+        'plan_sha256',
+        'payload_manifest_sha256',
+        'expected_file_count',
+        'archive_manifest',
+        'plan',
+        'state_policy',
+        'activation_decision_path',
+        'activation_decision_sha256',
+      ],
+      [
+        'schema',
+        'cutover_id',
+        'operator',
+        'attestation',
+        'archive_manifest_sha256',
+        'plan_sha256',
+        'payload_manifest_sha256',
+        'activation_decision_path',
+        'activation_decision_sha256',
+        'state_policy',
+      ],
+    ) ||
+    !exactStringFields(
+      parentRelease,
+      ['schema', 'cutover_id', 'operator', 'lock_sha256', 'status'],
+      ['schema', 'cutover_id', 'operator', 'lock_sha256', 'status'],
+    ) ||
+    !exactStringFields(
+      parentCutoff,
+      ['schema', 'generation', 'selector_sha256', 'first_admitted_work_attempt'],
+      ['schema', 'generation', 'selector_sha256'],
+    ) ||
     !exactKeys(parentDecision.evidence, parentEvidenceKinds) ||
     parentSha !== plan.parent_selector_sha256 ||
     parent.generation !== plan.parent_cutover_id ||
@@ -394,11 +926,7 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
     parentLock.payload_manifest_sha256 !== parent.payload_manifest_sha256 ||
     parentLock.attestation !== 'old_runtime_quiesced' ||
     parentLock.state_policy !== parent.state_policy ||
-    parentLock.archive_manifest?.manifest_sha256 !== parent.archive_manifest_sha256 ||
-    parentLock.plan?.schema !== 'VidaPreparedInstallPlan/v1' ||
-    parentLock.plan?.plan_sha256 !== parent.plan_sha256 ||
-    parentLock.plan?.payload_manifest_sha256 !== parent.payload_manifest_sha256 ||
-    parentLock.plan?.archive_manifest_sha256 !== parent.archive_manifest_sha256 ||
+    !isRepairParentLockBound(parentLock, parent) ||
     parentLock.activation_decision_path !== `.agent/cutover/${parent.generation}/activation-decision.v1.json` ||
     parentLock.activation_decision_sha256 !== parent.activation_decision_sha256 ||
     parentRelease.cutover_id !== parent.generation ||
@@ -413,9 +941,13 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
   )
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair parent authority is invalid.');
   for (const kind of parentEvidenceKinds) {
-    const item = parentDecision.evidence[kind];
+    const item = recordField(parentDecision.evidence, kind);
     if (
-      !exactKeys(item, ['actor', 'path', 'pointer', 'sha256', 'status']) ||
+      !exactStringFields(
+        item,
+        ['actor', 'path', 'pointer', 'sha256', 'status'],
+        ['actor', 'path', 'pointer', 'sha256', 'status'],
+      ) ||
       item.status !== 'passed' ||
       !hash.test(item.sha256) ||
       !item.actor ||
@@ -441,7 +973,7 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
     [...successorManifest.files].some(
       ([relative, entry]) =>
         !parentManifest.files.has(relative) ||
-        (relative !== 'vida-agent/bin/run.mjs' && parentManifest.files.get(relative).sha256 !== entry.sha256),
+        (relative !== 'vida-agent/bin/run.mjs' && parentManifest.files.get(relative)?.sha256 !== entry.sha256),
     ) ||
     parentManifest.files.get('vida-agent/bin/run.mjs')?.sha256 !== plan.parent_launcher_sha256 ||
     successorManifest.files.get('vida-agent/bin/run.mjs')?.sha256 !== plan.successor_launcher_sha256 ||
@@ -460,7 +992,9 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
       at = path.join(at, part);
       checkedDirectory(at);
     }
-    const actual = regularFile(path.join(at, parts.at(-1)));
+    const leaf = parts.at(-1);
+    if (!leaf) fail('GAP-VIDA-RUN-SELECTOR-001', 'Installed repair path is invalid.');
+    const actual = regularFile(path.join(at, leaf));
     if (actual.length !== entry.size || digest(actual) !== entry.sha256)
       fail('GAP-VIDA-RUN-SELECTOR-001', 'Installed repair payload drift.');
   }
@@ -499,6 +1033,7 @@ export function repairAuthority(projectRoot, selector, selectorSha, generationRo
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair release proof is invalid.');
 }
 
+/** @param {string} projectRoot @param {string} relative @returns {Buffer} */
 function readForwardDocumentationEvidence(projectRoot, relative) {
   if (
     typeof relative !== 'string' ||
@@ -512,12 +1047,164 @@ function readForwardDocumentationEvidence(projectRoot, relative) {
     at = path.join(at, part);
     checkedDirectory(at);
   }
-  const bytes = regularFile(path.join(at, relative.split('/').at(-1)));
+  const bytes = regularFile(path.join(at, path.basename(relative)));
   if (bytes.length > 16 * 1024 * 1024)
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward documentation evidence exceeds bound.');
   return bytes;
 }
 
+/** @param {string} text @returns {Record<string, unknown>[]} */
+function parseForwardJournal(text) {
+  return text
+    .trim()
+    .split('\n')
+    .map((line) => {
+      /** @type {unknown} */
+      const value = JSON.parse(line);
+      if (!isRecord(value)) throw Error('leaf forward journal event is invalid');
+      return value;
+    });
+}
+
+/** @param {string} projectRoot @param {string} generationRelative @param {ForwardUpdatePlan} plan @param {ForwardUpdateAuthorization} authorization @param {string} relative @param {{manifest: Record<string, unknown>, files: Map<string, PreparedPayloadEntry>}} oldManifest @param {{manifest: Record<string, unknown>, files: Map<string, PreparedPayloadEntry>}} newManifest @param {(file: string) => Buffer} read @returns {void} */
+function verifyCurrentForwardDocumentationAuthority(
+  projectRoot,
+  generationRelative,
+  plan,
+  authorization,
+  relative,
+  oldManifest,
+  newManifest,
+  read,
+) {
+  const authority = readCurrentForwardDocumentationAuthority(projectRoot, generationRelative, read);
+  verifyForwardDocumentationReceipt(authority, plan, () =>
+    read(generationRelative + '/forward-journal.v1.jsonl').toString('utf8'),
+  );
+  const identity = verifySelectedForwardPolicyProof({
+    operationBytes: authority.operationBytes,
+    baselineBytes: authority.baselineBytes,
+    closeoutBytes: authority.closeoutBytes,
+    changelogBytes: read(authority.changelogPath),
+    scopeBytes: read('.agent/work/' + authority.baseline.work_id + '/scope.json'),
+    priorFiles: [...oldManifest.files].map(([file, entry]) => ({ ...entry, path: file })),
+    successorFiles: [...newManifest.files].map(([file, entry]) => ({ ...entry, path: file })),
+    operationId: plan.operation_id,
+    parentSelectorDigest: plan.parent_selector_sha256,
+    parentManifestDigest: plan.old_payload_manifest_sha256,
+    successorManifestDigest: plan.new_payload_manifest_sha256,
+    intentDigest: digest(Buffer.from(controllerJson(plan))),
+    authorizationDigest: digest(Buffer.from(controllerJson(authorization))),
+    changes: plan.changed,
+  });
+  if (identity !== relative) throw Error('leaf canonical identity differs');
+}
+
+/** @param {string} projectRoot @param {string} generationRelative @param {(file: string) => Buffer} read @returns {{receiptPath: string, receipt: Record<string, unknown>, baselineBytes: Buffer, baseline: ReturnType<typeof parseForwardClearCheckpoint>, operationBytes: Buffer, operation: ReturnType<typeof parseDocumentationPolicyTransitionEnvelope>, closeoutBytes: Buffer, changelogPath: string, targetSha256: string}} */
+function readCurrentForwardDocumentationAuthority(projectRoot, generationRelative, read) {
+  const receiptPath = generationRelative + '/documentation-forward.v1.json';
+  const receipt = readControllerRecord(path.join(projectRoot, receiptPath), 'VidaForwardLifecycleClearBinding/v1');
+  const baselinePath = receipt.baseline_path;
+  if (typeof baselinePath !== 'string') throw Error('leaf baseline path is invalid');
+  const baselineBytes = read(baselinePath),
+    baseline = parseForwardClearCheckpoint(baselineBytes);
+  const baselineWorkId = requireRunString(baseline.work_id, 'leaf baseline work id is invalid');
+  assertForwardDocumentationBaselinePath(baselinePath, baselineWorkId);
+  const operationBytes = read('.agent/work/' + baselineWorkId + '/documentation-policy-transition.v1.json');
+  const operation = parseDocumentationPolicyTransitionEnvelope(operationBytes);
+  const closeoutPath = readForwardDocumentationCloseoutPath(operation.closeout, baselineWorkId);
+  const closeoutBytes = read(closeoutPath);
+  const transition = operation.plan;
+  if (!isRecord(transition) || !isRecord(transition.source_admission)) throw Error('leaf transition plan is invalid');
+  const changelogPath = requireRunString(transition.changelog_path, 'leaf changelog path is invalid');
+  const targetSha256 = requireRunString(transition.source_admission.target_sha256, 'leaf target digest is invalid');
+  return {
+    receiptPath,
+    receipt,
+    baselineBytes,
+    baseline,
+    operationBytes,
+    operation,
+    closeoutBytes,
+    changelogPath,
+    targetSha256,
+  };
+}
+
+/** @param {unknown} value @param {string} message @returns {string} */
+function requireRunString(value, message) {
+  if (typeof value !== 'string') throw Error(message);
+  return value;
+}
+
+/** @param {string} baselinePath @param {string} workId @returns {void} */
+function assertForwardDocumentationBaselinePath(baselinePath, workId) {
+  if (
+    !/^[a-z0-9][a-z0-9._-]{0,127}$/.test(workId) ||
+    !baselinePath.startsWith('.agent/work/' + workId + '/documentation-baseline-')
+  )
+    throw Error('leaf baseline work path differs');
+}
+
+/** @param {unknown} closeout @param {string} workId @returns {string} */
+function readForwardDocumentationCloseoutPath(closeout, workId) {
+  const closeoutPath = isRecord(closeout) ? closeout.path : undefined;
+  if (
+    typeof closeoutPath !== 'string' ||
+    !closeoutPath.startsWith('.agent/work/' + workId + '/documentation-closeout-')
+  )
+    throw Error('leaf closeout work path differs');
+  return closeoutPath;
+}
+
+/** @param {ReturnType<typeof readCurrentForwardDocumentationAuthority>} authority @param {ForwardUpdatePlan} plan @param {() => string} readJournal @returns {void} */
+function verifyForwardDocumentationReceipt(authority, plan, readJournal) {
+  const journal = parseForwardJournal(readJournal());
+  const proof = journal.filter((event) => event.phase === 'documentation_closeout_verified');
+  const proofEvent = proof.length === 1 ? proof[0] : undefined;
+  if (!isForwardDocumentationReceiptBound(proofEvent, authority, plan))
+    throw Error('leaf forward journal/receipt differs');
+}
+
+/** @param {Record<string, unknown> | undefined} event @param {ReturnType<typeof readCurrentForwardDocumentationAuthority>} authority @param {ForwardUpdatePlan} plan @returns {boolean} */
+function isForwardDocumentationReceiptBound(event, authority, plan) {
+  return isForwardDocumentationEventBound(event, authority, plan) && isForwardDocumentationRecordBound(authority, plan);
+}
+
+/** @param {Record<string, unknown> | undefined} event @param {ReturnType<typeof readCurrentForwardDocumentationAuthority>} authority @param {ForwardUpdatePlan} plan @returns {boolean} */
+function isForwardDocumentationEventBound(event, authority, plan) {
+  return (
+    Boolean(event) &&
+    event?.schema === 'VidaForwardUpdateEvent/v1' &&
+    event.operation_id === plan.operation_id &&
+    event.lock_sha256 === digest(Buffer.from(controllerJson(plan))) &&
+    event.receipt_path === authority.receiptPath &&
+    event.closeout_sha256 === digest(authority.closeoutBytes)
+  );
+}
+
+/** @param {ReturnType<typeof readCurrentForwardDocumentationAuthority>} authority @param {ForwardUpdatePlan} plan @returns {boolean} */
+function isForwardDocumentationRecordBound(authority, plan) {
+  return (
+    authority.receipt.operation_id === plan.operation_id &&
+    authority.receipt.baseline_digest === authority.baseline.digest &&
+    authority.receipt.policy_sha256 === authority.targetSha256 &&
+    authority.receipt.parent_manifest_sha256 === plan.old_payload_manifest_sha256 &&
+    authority.receipt.successor_manifest_sha256 === plan.new_payload_manifest_sha256
+  );
+}
+
+/**
+ * @param {string} projectRoot
+ * @param {string} generationRoot
+ * @param {ForwardUpdatePlan} plan
+ * @param {ForwardUpdateAuthorization} authorization
+ * @param {string} relative
+ * @param {boolean} historical
+ * @param {{manifest: Record<string, unknown>, files: Map<string, PreparedPayloadEntry>}} oldManifest
+ * @param {{manifest: Record<string, unknown>, files: Map<string, PreparedPayloadEntry>}} newManifest
+ * @returns {void}
+ */
 function forwardPolicyAuthority(
   projectRoot,
   generationRoot,
@@ -528,72 +1215,34 @@ function forwardPolicyAuthority(
   oldManifest,
   newManifest,
 ) {
+  /** @param {string} file @returns {Buffer} */
   const read = (file) => readForwardDocumentationEvidence(projectRoot, file);
   const generationRelative = path.relative(projectRoot, generationRoot).split(path.sep).join('/');
   try {
     if (!historical) {
-      const receiptPath = generationRelative + '/documentation-forward.v1.json';
-      const receipt = readControllerRecord(path.join(projectRoot, receiptPath), 'VidaForwardLifecycleClearBinding/v1');
-      const baselineBytes = read(receipt.baseline_path),
-        baseline = parseForwardClearCheckpoint(baselineBytes);
-      if (
-        !/^[a-z0-9][a-z0-9._-]{0,127}$/.test(baseline.work_id) ||
-        !receipt.baseline_path.startsWith('.agent/work/' + baseline.work_id + '/documentation-baseline-')
-      )
-        throw Error('leaf baseline work path differs');
-      const operationBytes = read('.agent/work/' + baseline.work_id + '/documentation-policy-transition.v1.json');
-      const operation = parseDocumentationPolicyTransitionEnvelope(operationBytes);
-      if (!operation.closeout?.path?.startsWith('.agent/work/' + baseline.work_id + '/documentation-closeout-'))
-        throw Error('leaf closeout work path differs');
-      const closeoutBytes = read(operation.closeout.path);
-      const journal = read(generationRelative + '/forward-journal.v1.jsonl')
-        .toString('utf8')
-        .trim()
-        .split('\n')
-        .map(JSON.parse);
-      const proof = journal.filter((event) => event.phase === 'documentation_closeout_verified');
-      if (
-        proof.length !== 1 ||
-        proof[0].schema !== 'VidaForwardUpdateEvent/v1' ||
-        proof[0].operation_id !== plan.operation_id ||
-        proof[0].lock_sha256 !== digest(Buffer.from(controllerJson(plan))) ||
-        proof[0].receipt_path !== receiptPath ||
-        proof[0].closeout_sha256 !== digest(closeoutBytes) ||
-        receipt.operation_id !== plan.operation_id ||
-        receipt.baseline_digest !== baseline.digest ||
-        receipt.policy_sha256 !== operation.plan.source_admission?.target_sha256 ||
-        receipt.parent_manifest_sha256 !== plan.old_payload_manifest_sha256 ||
-        receipt.successor_manifest_sha256 !== plan.new_payload_manifest_sha256
-      )
-        throw Error('leaf forward journal/receipt differs');
-      const identity = verifySelectedForwardPolicyProof({
-        operationBytes,
-        baselineBytes,
-        closeoutBytes,
-        changelogBytes: read(operation.plan.changelog_path),
-        scopeBytes: read('.agent/work/' + baseline.work_id + '/scope.json'),
-        priorFiles: [...oldManifest.files].map(([path, entry]) => ({ path, ...entry })),
-        successorFiles: [...newManifest.files].map(([path, entry]) => ({ path, ...entry })),
-        operationId: plan.operation_id,
-        parentSelectorDigest: plan.parent_selector_sha256,
-        parentManifestDigest: plan.old_payload_manifest_sha256,
-        successorManifestDigest: plan.new_payload_manifest_sha256,
-        intentDigest: digest(Buffer.from(controllerJson(plan))),
-        authorizationDigest: digest(Buffer.from(controllerJson(authorization))),
-        changes: plan.changed,
-      });
-      if (identity !== relative) throw Error('leaf canonical identity differs');
+      verifyCurrentForwardDocumentationAuthority(
+        projectRoot,
+        generationRelative,
+        plan,
+        authorization,
+        relative,
+        oldManifest,
+        newManifest,
+        read,
+      );
       return;
     }
     // Only recursive committed-parent traversal reaches this observational path.
     // Current identity locates retained events; old rights/configuration are not reinterpreted.
     const identity = parseForwardPolicyIdentity(read(relative), relative);
+    if (typeof identity.changelog_path !== 'string') throw Error('committed policy changelog path is invalid');
     const lines = read(identity.changelog_path).toString('utf8').trim().split('\n');
     const parsed = lines.map((line) => ({
       bytes: Buffer.from(line + '\n'),
       event: parseForwardDocumentationEvent(Buffer.from(line)),
     }));
     const change = plan.changed.find((entry) => entry.path === relative);
+    if (!change) throw Error('committed policy change is missing');
     const policies = parsed.filter(
       ({ event }) =>
         event.operation === 'finalize' &&
@@ -603,8 +1252,11 @@ function forwardPolicyAuthority(
         event.after_sha256 === change.new_sha256,
     );
     if (policies.length !== 1) throw Error('committed policy event missing or ambiguous');
-    const policy = policies[0],
-      work = policy.event.work_id;
+    const policy = policies[0];
+    if (!policy) throw Error('committed policy event missing');
+    const policyWork = policy.event.work_id;
+    if (typeof policyWork !== 'string') throw Error('committed event work is invalid');
+    const work = policyWork;
     if (!/^[a-z0-9][a-z0-9._-]{0,127}$/.test(work)) throw Error('committed event work invalid');
     const workRoot = '.agent/work/' + work;
     checkedDirectory(path.join(projectRoot, '.agent'));
@@ -658,10 +1310,21 @@ function forwardPolicyAuthority(
         }
     if (matches !== 1) throw Error('committed policy event/CLEAR closure missing or ambiguous');
   } catch (error) {
-    fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward policy proof invalid: ' + error.message);
+    fail(
+      'GAP-VIDA-RUN-SELECTOR-001',
+      'Forward policy proof invalid: ' + (error instanceof Error ? error.message : String(error)),
+    );
   }
 }
 
+/**
+ * @param {string} projectRoot
+ * @param {ActiveRuntimeSelectorRecord} selector
+ * @param {string} selectorSha
+ * @param {string} generationRoot
+ * @param {boolean} [skipInstalledBundle]
+ * @param {Set<string>} [seen]
+ */
 export function forwardUpdateAuthority(
   projectRoot,
   selector,
@@ -701,40 +1364,73 @@ export function forwardUpdateAuthority(
   );
   const cutoff = readControllerRecord(path.join(generationRoot, 'cutoff-witness.json'), 'VidaNewWorkCutoffWitness/v1');
   if (
-    !exactKeys(plan, [
-      'schema',
-      'operation_id',
-      'operator',
-      'parent_generation',
-      'parent_selector_sha256',
-      'parent_cutoff_sha256',
-      'first_admitted_work_attempt',
-      'old_payload_manifest_sha256',
-      'new_payload_manifest_sha256',
-      'changed',
-      'preserved_mutable_outputs',
-    ]) ||
-    !exactKeys(authorization, [
-      'schema',
-      'operation_id',
-      'operator',
-      'outcome',
-      'pointer',
-      'plan_sha256',
-      'evidence',
-    ]) ||
-    !exactKeys(decision, [
-      'schema',
-      'operation_id',
-      'operator',
-      'plan_sha256',
-      'authorization_sha256',
-      'selector_intent_sha256',
-      'outcome',
-    ]) ||
-    !exactKeys(commit, ['schema', 'operation_id', 'plan_sha256', 'decision_sha256', 'selector_sha256']) ||
-    !exactKeys(release, ['schema', 'operation_id', 'operator', 'lock_sha256', 'status']) ||
-    !exactKeys(cutoff, ['schema', 'generation', 'selector_sha256', 'first_admitted_work_attempt']) ||
+    !exactStringFields(
+      plan,
+      [
+        'schema',
+        'operation_id',
+        'operator',
+        'parent_generation',
+        'parent_selector_sha256',
+        'parent_cutoff_sha256',
+        'first_admitted_work_attempt',
+        'old_payload_manifest_sha256',
+        'new_payload_manifest_sha256',
+        'changed',
+        'preserved_mutable_outputs',
+      ],
+      [
+        'schema',
+        'operation_id',
+        'operator',
+        'parent_generation',
+        'parent_selector_sha256',
+        'parent_cutoff_sha256',
+        'old_payload_manifest_sha256',
+        'new_payload_manifest_sha256',
+      ],
+    ) ||
+    !exactStringFields(
+      authorization,
+      ['schema', 'operation_id', 'operator', 'outcome', 'pointer', 'plan_sha256', 'evidence'],
+      ['schema', 'operation_id', 'operator', 'outcome', 'pointer', 'plan_sha256'],
+    ) ||
+    !exactStringFields(
+      decision,
+      [
+        'schema',
+        'operation_id',
+        'operator',
+        'plan_sha256',
+        'authorization_sha256',
+        'selector_intent_sha256',
+        'outcome',
+      ],
+      [
+        'schema',
+        'operation_id',
+        'operator',
+        'plan_sha256',
+        'authorization_sha256',
+        'selector_intent_sha256',
+        'outcome',
+      ],
+    ) ||
+    !exactStringFields(
+      commit,
+      ['schema', 'operation_id', 'plan_sha256', 'decision_sha256', 'selector_sha256'],
+      ['schema', 'operation_id', 'plan_sha256', 'decision_sha256', 'selector_sha256'],
+    ) ||
+    !exactStringFields(
+      release,
+      ['schema', 'operation_id', 'operator', 'lock_sha256', 'status'],
+      ['schema', 'operation_id', 'operator', 'lock_sha256', 'status'],
+    ) ||
+    !exactStringFields(
+      cutoff,
+      ['schema', 'generation', 'selector_sha256', 'first_admitted_work_attempt'],
+      ['schema', 'generation', 'selector_sha256'],
+    ) ||
     !/^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.operation_id) ||
     !/^[a-z0-9][a-z0-9._-]{0,79}$/.test(plan.operator) ||
     plan.operation_id !== selector.generation ||
@@ -760,7 +1456,9 @@ export function forwardUpdateAuthority(
     digest(Buffer.from(controllerJson(plan))) !== selector.plan_sha256 ||
     digest(Buffer.from(controllerJson(decision))) !== selector.activation_decision_sha256 ||
     decision.selector_intent_sha256 !==
-      digest(Buffer.from(controllerJson((({ activation_decision_sha256: ignored, ...intent }) => intent)(selector)))) ||
+      digest(
+        Buffer.from(controllerJson((({ activation_decision_sha256: _ignored, ...intent }) => intent)(selector))),
+      ) ||
     !hash.test(plan.parent_selector_sha256) ||
     !hash.test(plan.parent_cutoff_sha256) ||
     !hash.test(plan.old_payload_manifest_sha256) ||
@@ -776,15 +1474,10 @@ export function forwardUpdateAuthority(
     cutoff.first_admitted_work_attempt !== plan.first_admitted_work_attempt
   )
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward update proof is invalid.');
-  if (
-    !Array.isArray(authorization.evidence) ||
-    authorization.evidence.length !== 3 ||
-    authorization.evidence
-      .map((item) => item.kind)
-      .sort()
-      .join(',') !== 'assurance,correctness,security'
-  )
-    fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward review bindings are invalid.');
+  requireForwardUpdatePlan(plan);
+  requireForwardUpdateAuthorization(authorization);
+  requireForwardParentSelector(parent);
+  requireForwardReviewEvidence(authorization.evidence);
   try {
     verifyForwardReviewSet(projectRoot, selector.generation, authorization.plan_sha256, authorization.evidence);
   } catch {
@@ -834,30 +1527,25 @@ export function forwardUpdateAuthority(
     const configEntry = oldManifest.files.get('agent-runtime.config.v1.yaml');
     const nextConfig = newManifest.files.get('agent-runtime.config.v1.yaml');
     if (
-      !exactKeys(preserved, [
-        'path',
-        'config_path',
-        'config_pointer',
-        'config_sha256',
-        'staged_sha256',
-        'installed_sha256_at_inspection',
-      ]) ||
+      !exactStringFields(
+        preserved,
+        ['path', 'config_path', 'config_pointer', 'config_sha256', 'staged_sha256', 'installed_sha256_at_inspection'],
+        ['path', 'config_path', 'config_pointer', 'config_sha256', 'staged_sha256', 'installed_sha256_at_inspection'],
+      ) ||
       (configEntry && nextConfig && configEntry.sha256 !== nextConfig.sha256) ||
       preserved.config_path !== 'agent-runtime.config.v1.yaml' ||
       preserved.config_pointer !== 'research_decision.paths.changelog' ||
       !hash.test(preserved.config_sha256) ||
       (configEntry && preserved.config_sha256 !== configEntry.sha256) ||
       !oldManifest.files.has(preserved.path) ||
-      preserved.staged_sha256 !== oldManifest.files.get(preserved.path).sha256 ||
+      preserved.staged_sha256 !== oldManifest.files.get(preserved.path)?.sha256 ||
       newManifest.files.get(preserved.path)?.sha256 !== preserved.staged_sha256 ||
       !hash.test(preserved.installed_sha256_at_inspection)
     )
       fail('GAP-VIDA-RUN-SELECTOR-001', 'Configured mutable-output preservation proof invalid.');
   }
   const changed = [];
-  for (const [relative, after] of [...newManifest.files].sort(([left], [right]) =>
-    left < right ? -1 : left > right ? 1 : 0,
-  )) {
+  for (const [relative, after] of [...newManifest.files].sort(([left], [right]) => compareStrings(left, right))) {
     const before = oldManifest.files.get(relative);
     const changedEntry = !before || before.sha256 !== after.sha256 || before.size !== after.size;
     if (changedEntry) {
@@ -918,7 +1606,7 @@ export function forwardUpdateAuthority(
         at = path.join(at, part);
         checkedDirectory(at);
       }
-      const actual = regularFile(path.join(at, parts.at(-1)));
+      const actual = regularFile(path.join(at, requireForwardFileLeaf(parts.at(-1))));
       if (actual.length !== after.size || digest(actual) !== after.sha256)
         fail('GAP-VIDA-RUN-SELECTOR-001', 'Installed forward bundle drift.');
     }
@@ -930,9 +1618,42 @@ export function forwardUpdateAuthority(
       projectRoot,
       new Set([...newManifest.files.keys()].filter((item) => item.startsWith('vida-agent/'))),
     );
-  return skipInstalledBundle ? null : (plan.preserved_mutable_outputs[0] ?? null);
+  if (skipInstalledBundle || plan.preserved_mutable_outputs.length === 0) return null;
+  return requireSelectorRecord(plan.preserved_mutable_outputs[0]);
 }
 
+/** @param {string} projectRoot @returns {ActiveSelectorState | null} */
+/** @typedef {{generationRoot: string, generation: string, selectorSha: string, planSha256: string, archiveManifestSha256: string, payloadManifestSha256?: string | undefined, activationDecisionSha256?: string | undefined, repaired: boolean, forward: boolean, currentMutableOutput: Record<string, unknown> | null}} ActiveSelectorState */
+
+/**
+ * @param {string} generationRoot
+ * @param {ActiveRuntimeSelectorRecord} selector
+ * @param {string} selectorSha
+ * @param {boolean} repaired
+ * @param {boolean} forward
+ * @param {Record<string, unknown> | null} currentMutableOutput
+ * @returns {ActiveSelectorState}
+ */
+function buildActiveSelectorState(generationRoot, selector, selectorSha, repaired, forward, currentMutableOutput) {
+  return {
+    generationRoot,
+    generation: selector.generation,
+    selectorSha,
+    planSha256: selector.plan_sha256,
+    archiveManifestSha256: selector.archive_manifest_sha256,
+    ...(selector.payload_manifest_sha256 === undefined
+      ? {}
+      : { payloadManifestSha256: selector.payload_manifest_sha256 }),
+    ...(selector.activation_decision_sha256 === undefined
+      ? {}
+      : { activationDecisionSha256: selector.activation_decision_sha256 }),
+    repaired,
+    forward,
+    currentMutableOutput,
+  };
+}
+
+/** @param {string} projectRoot @returns {ActiveSelectorState | null} */
 function activeSelector(projectRoot) {
   const agentRoot = path.join(projectRoot, '.agent');
   const selectorPath = path.join(agentRoot, 'active-runtime-selector.v1.json');
@@ -948,6 +1669,7 @@ function activeSelector(projectRoot) {
   }
   checkedDirectory(agentRoot);
   const selector = readControllerRecord(selectorPath, 'ActiveRuntimeSelector/v1');
+  requireActiveRuntimeSelectorRecord(selector);
   const hash = /^[a-f0-9]{64}$/;
   const expectedKeys = [
     'schema',
@@ -962,7 +1684,7 @@ function activeSelector(projectRoot) {
       : ['payload_manifest_sha256', 'state_policy', 'activation_decision_sha256']),
   ];
   if (
-    JSON.stringify(Object.keys(selector).sort()) !== JSON.stringify(expectedKeys.sort()) ||
+    !exactStringFields(selector, expectedKeys, expectedKeys) ||
     !/^[a-z0-9][a-z0-9._-]{0,79}$/.test(selector.generation) ||
     selector.runtime !== 'vida-agent' ||
     selector.bundle_root !== 'vida-agent' ||
@@ -979,28 +1701,31 @@ function activeSelector(projectRoot) {
   checkedDirectory(generationRoot);
   const forward = pathExists(path.join(generationRoot, 'forward-intent.v1.json'));
   const repaired = pathExists(path.join(generationRoot, 'repair-plan.v1.json'));
+  /** @type {Record<string, unknown> | null} */
   let currentMutableOutput = null;
+  const payloadManifestSha256 = selector.payload_manifest_sha256;
+  const activationDecisionSha256 = selector.activation_decision_sha256;
   if (forward) {
     if (
-      !hash.test(selector.payload_manifest_sha256) ||
-      !hash.test(selector.activation_decision_sha256) ||
+      !isPreparedDigest(payloadManifestSha256) ||
+      !isPreparedDigest(activationDecisionSha256) ||
       selector.state_policy !== 'forward_only_preserve_work'
     )
       fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward selector is incomplete.');
     currentMutableOutput = forwardUpdateAuthority(projectRoot, selector, selectorSha, generationRoot);
   } else if (repaired) {
     if (
-      !hash.test(selector.payload_manifest_sha256) ||
+      !isPreparedDigest(payloadManifestSha256) ||
       selector.state_policy !== 'clean_start_no_ticket_transfer' ||
-      !hash.test(selector.activation_decision_sha256)
+      !isPreparedDigest(activationDecisionSha256)
     )
       fail('GAP-VIDA-RUN-SELECTOR-001', 'Repair selector is incomplete.');
     repairAuthority(projectRoot, selector, selectorSha, generationRoot);
-  } else if (selector.payload_manifest_sha256 !== undefined) {
+  } else if (payloadManifestSha256 !== undefined) {
     if (
-      !hash.test(selector.payload_manifest_sha256) ||
+      !isPreparedDigest(payloadManifestSha256) ||
       selector.state_policy !== 'clean_start_no_ticket_transfer' ||
-      !hash.test(selector.activation_decision_sha256)
+      !isPreparedDigest(activationDecisionSha256)
     )
       fail('GAP-VIDA-RUN-SELECTOR-001', 'Prepared selector is incomplete.');
     const journal = readControllerRecord(
@@ -1063,9 +1788,9 @@ function activeSelector(projectRoot) {
     )
       fail('GAP-VIDA-RUN-SELECTOR-001', 'Prepared cutover decision or selector commit is invalid.');
     for (const kind of ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime']) {
-      const item = decision.evidence[kind];
+      const item = recordField(decision.evidence, kind);
       if (
-        !exactKeys(item, ['actor', 'path', 'pointer', 'sha256', 'status']) ||
+        !isCutoverEvidence(item) ||
         item.status !== 'passed' ||
         !hash.test(item.sha256) ||
         !item.actor ||
@@ -1089,22 +1814,25 @@ function activeSelector(projectRoot) {
     )
       fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover journal is incomplete.');
   }
-  return {
-    generationRoot,
-    generation: selector.generation,
-    selectorSha,
-    planSha256: selector.plan_sha256,
-    archiveManifestSha256: selector.archive_manifest_sha256,
-    payloadManifestSha256: selector.payload_manifest_sha256,
-    activationDecisionSha256: selector.activation_decision_sha256,
-    repaired,
-    forward,
-    currentMutableOutput,
-  };
+  return buildActiveSelectorState(generationRoot, selector, selectorSha, repaired, forward, currentMutableOutput);
 }
 
 // A selector is not sufficient authority while its cutover controller still holds maintenance.
 // The controller releases this marker only through an explicit operator completion action.
+/** @param {Record<string, unknown>} retained @param {ActiveSelectorState} selector @returns {boolean} */
+function hasPreparedMaintenanceBindings(retained, selector) {
+  return (
+    retained.attestation === 'old_runtime_quiesced' &&
+    retained.activation_decision_path === `.agent/cutover/${selector.generation}/activation-decision.v1.json` &&
+    isRecord(retained.plan) &&
+    retained.plan.schema === 'VidaPreparedInstallPlan/v1' &&
+    retained.plan.plan_sha256 === selector.planSha256 &&
+    isRecord(retained.archive_manifest) &&
+    retained.archive_manifest.manifest_sha256 === selector.archiveManifestSha256
+  );
+}
+
+/** @param {ActiveSelectorState | null | undefined} selector @returns {void} */
 export function assertNoActiveCutoverMaintenance(selector) {
   if (!selector) return;
   if (selector.repaired || selector.forward) return;
@@ -1136,12 +1864,7 @@ export function assertNoActiveCutoverMaintenance(selector) {
         'activation_decision_sha256',
       ])) ||
     !exactKeys(receipt, ['schema', 'cutover_id', 'operator', 'lock_sha256', 'status']) ||
-    (selector.payloadManifestSha256 !== undefined &&
-      (retained.attestation !== 'old_runtime_quiesced' ||
-        retained.activation_decision_path !== `.agent/cutover/${selector.generation}/activation-decision.v1.json` ||
-        retained.plan?.schema !== 'VidaPreparedInstallPlan/v1' ||
-        retained.plan?.plan_sha256 !== selector.planSha256 ||
-        retained.archive_manifest?.manifest_sha256 !== selector.archiveManifestSha256)) ||
+    (selector.payloadManifestSha256 !== undefined && !hasPreparedMaintenanceBindings(retained, selector)) ||
     retained.cutover_id !== selector.generation ||
     retained.plan_sha256 !== selector.planSha256 ||
     retained.archive_manifest_sha256 !== selector.archiveManifestSha256 ||
@@ -1155,6 +1878,7 @@ export function assertNoActiveCutoverMaintenance(selector) {
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover maintenance release proof is invalid.');
 }
 
+/** @param {string} file @param {unknown} value @returns {void} */
 export function writeDurable(file, value) {
   const bytes = Buffer.from(controllerJson(value));
   const target = `${file}.pending-${randomUUID()}`;
@@ -1171,7 +1895,7 @@ export function writeDurable(file, value) {
     try {
       unlinkSync(target);
     } catch (cleanupError) {
-      if (cleanupError.code !== 'ENOENT')
+      if (nodeErrorCode(cleanupError) !== 'ENOENT')
         throw new AggregateError([error, cleanupError], 'Cutoff publication and temporary cleanup failed.');
     }
     throw error;
@@ -1179,6 +1903,11 @@ export function writeDurable(file, value) {
   if (!regularFile(file).equals(bytes)) fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness publication failed.');
 }
 
+/**
+ * @param {ActiveSelectorState | null | undefined} selector
+ * @param {{project_root: string, repository?: string | undefined, work_id?: string | undefined, attempt?: string | undefined, scope_digest?: string | undefined}} values
+ * @returns {Promise<void>}
+ */
 export async function advanceCutoff(selector, values) {
   if (!selector) return;
   const file = path.join(selector.generationRoot, 'cutoff-witness.json');
@@ -1187,27 +1916,39 @@ export async function advanceCutoff(selector, values) {
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
-  const { withHostStateExclusiveTransaction } = await import('../src/host-state.ts');
+  const { withCliHostStateExclusiveTransaction } = await import('./workspace-database-cli.ts');
+  const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const config = loadRuntimeConfig(values.project_root);
   const access = requireSafeRepositoryAccess(values.project_root);
   access.ensureDirectory(config.control.work_root, 'cutoff transaction root');
   const databasePath = sessionHandoffDatabasePath(values.project_root, config);
   try {
-    withHostStateExclusiveTransaction(databasePath, () => {
-      if (
-        pathExists(lock) ||
-        digest(access.readBytes('.agent/active-runtime-selector.v1.json', 'cutoff current selector')) !==
-          selector.selectorSha
-      )
-        fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff selector changed while acquiring exclusion.');
-      advanceLockedCutoff(file, selector, values);
-    });
+    withCliHostStateExclusiveTransaction(
+      values.project_root,
+      databasePath,
+      deriveWorkspaceId(config.repository.repository_id, values.project_root),
+      () => {
+        if (
+          pathExists(lock) ||
+          digest(access.readBytes('.agent/active-runtime-selector.v1.json', 'cutoff current selector')) !==
+            selector.selectorSha
+        )
+          fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff selector changed while acquiring exclusion.');
+        advanceLockedCutoff(file, selector, values);
+      },
+    );
   } catch (error) {
-    if (error.code === 'SQLITE_BUSY') fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
+    if (nodeErrorCode(error) === 'SQLITE_BUSY') fail('GAP-VIDA-RUN-CUTOFF-001', 'Cutoff witness is held or unsafe.');
     throw error;
   }
 }
 
+/**
+ * @param {string} file
+ * @param {ActiveSelectorState} selector
+ * @param {{repository?: string | undefined, work_id?: string | undefined, attempt?: string | undefined, scope_digest?: string | undefined}} values
+ * @returns {void}
+ */
 function advanceLockedCutoff(file, selector, values) {
   const initial = {
     schema: 'VidaNewWorkCutoffWitness/v1',
@@ -1230,66 +1971,849 @@ function advanceLockedCutoff(file, selector, values) {
   });
 }
 
-function fail(code, message, details = {}) {
-  const error = new Error(message);
-  error.code = code;
-  error.details = details;
-  throw error;
+/**
+ * @param {import('../src/host-state.ts').HostStateSnapshot} snapshot
+ * @param {string} message
+ * @returns {import('../src/host-state.ts').WorkState}
+ */
+function requireHostWork(snapshot, message) {
+  if (!snapshot.work) fail('GAP-VIDA-RUN-CONTEXT-001', message);
+  return snapshot.work;
 }
 
+/** @typedef {Record<string, unknown>} RunErrorDetails */
+
+class RunCliError extends Error {
+  /**
+   * @param {string} code
+   * @param {string} message
+   * @param {RunErrorDetails} [details]
+   */
+  constructor(code, message, details = {}) {
+    super(message);
+    this.code = code;
+    this.details = details;
+  }
+}
+
+/**
+ * @param {string} code
+ * @param {string} message
+ * @param {RunErrorDetails} [details]
+ * @returns {never}
+ */
+function fail(code, message, details = {}) {
+  throw new RunCliError(code, message, details);
+}
+
+/** @param {unknown} value @param {string} message @returns {asserts value} */
+function requireRunValue(value, message) {
+  if (!value) fail('GAP-VIDA-RUN-CONTEXT-001', message);
+}
+
+/** @template T @param {T | null | undefined} value @param {string} message @returns {T} */
+function requireRunData(value, message) {
+  if (value === null || value === undefined) fail('GAP-VIDA-RUN-CONTEXT-001', message);
+  return value;
+}
+
+/** @param {unknown} value @param {string} message @returns {Record<string, unknown>} */
+function requireRunRecord(value, message) {
+  if (!isRecord(value)) fail('GAP-VIDA-RUN-CONTEXT-001', message);
+  return value;
+}
+
+/** @param {unknown} left @param {unknown} right @returns {boolean} */
+function sameImplementationPaths(left, right) {
+  if (!isStringArray(left) || !isStringArray(right)) return false;
+  return JSON.stringify([...left].sort(compareStrings)) === JSON.stringify([...right].sort(compareStrings));
+}
+
+/** @template {{lease?: {thread_id: string} | null}} Work @param {Work} work @param {string} nativeSessionHandle @returns {asserts work is Work & {lease: {thread_id: string}}} */
+function requireCurrentLeaseOwner(work, nativeSessionHandle) {
+  if (!work.lease || work.lease.thread_id !== nativeSessionHandle)
+    fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal current owner lease is unavailable.');
+}
+
+/** @param {unknown} value @param {(value: unknown) => boolean} validate @returns {value is RenewalScope} */
+function isValidatedRenewalScope(value, validate) {
+  return validate(value) && isRenewalScope(value);
+}
+
+/** @param {unknown} revision @param {unknown} digest @returns {import('../src/host-state.ts').StateVersion | undefined} */
+function readExpectedStateVersion(revision, digest) {
+  if (typeof revision !== 'string' || typeof digest !== 'string') return undefined;
+  return { revision: Number(revision), digest };
+}
+
+/** @param {import('../src/orchestration/delivered-work-continuation.ts').DeliveredWorkContinuationAction} action @returns {asserts action is import('../src/orchestration/delivered-work-continuation.ts').HistoricalTerminalReviewAction} */
+function requireHistoricalReviewAction(action) {
+  if (action.kind !== 'historical_terminal_review')
+    fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work continuation is not a historical review.');
+}
+
+/** @param {typeof import('../src/orchestration/workflow-session-reservation-contract.ts').workflowWorkItemSchema} schema @param {unknown} value @returns {WorkItem} */
+function parseWorkflowWorkItem(schema, value) {
+  if (!isRecord(value)) fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted intake changed.');
+  return schema.parse(value);
+}
+
+/** @param {typeof import('../src/orchestration/workflow-session-reservation-contract.ts').workflowWorkItemSchema} schema @param {unknown} value @returns {WorkItem} */
+function parseAdmittedIntakeWorkItem(schema, value) {
+  if (!isRecord(value)) fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted intake changed.');
+  return parseWorkflowWorkItem(schema, value.work_item);
+}
+
+/** @param {typeof import('../src/orchestration/workflow-session-reservation-contract.ts').workflowWorkItemSchema} schema @param {string} team @param {string} kindValue @param {string} intentValue @param {WorkItem | undefined} workItem @returns {Omit<WorkItemSelection, 'project'>} */
+function workflowSelectionBase(schema, team, kindValue, intentValue, workItem) {
+  const kind = schema.shape.canonical_kind.safeParse(kindValue);
+  if (!kind.success) throw Error('workflow selection work item kind is invalid');
+  const intent = schema.shape.intent.safeParse(intentValue);
+  if (!intent.success) throw Error('workflow selection intent is invalid');
+  return {
+    team,
+    kind: kind.data,
+    intent: intent.data,
+    risk_flags: workItem?.risk_flags ?? [],
+    labels: workItem?.labels ?? [],
+  };
+}
+
+/** @param {import('../src/orchestration/persistent-session-handoff.ts').MastraLedgerItem['observation']} observation @returns {asserts observation is import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeObservation & {status: 'reported_complete'}} */
+function requireReportedCompleteObservation(observation) {
+  if (!observation || observation.status !== 'reported_complete')
+    fail('GAP-VIDA-RUN-CONTEXT-001', 'The current prewriter wave contains a failed or incomplete report.');
+}
+
+/** @param {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot['state']['corrective_execution']} correctiveExecution @returns {NonNullable<import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot['state']['corrective_execution']> | undefined} */
+function optionalCorrectiveExecution(correctiveExecution) {
+  return correctiveExecution ?? undefined;
+}
+
+/** @param {unknown} operation @param {string} workId @returns {boolean} */
+function isCompletedReadonlyRelease(operation, workId) {
+  return (
+    isRecord(operation) &&
+    operation.work_id === workId &&
+    operation.kind === 'release' &&
+    typeof operation.operation_id === 'string' &&
+    operation.operation_id.startsWith('completed-readonly-release-')
+  );
+}
+
+/** @typedef {'prepare' | 'inspect' | 'issue' | 'report' | 'recover'} TaskSourceOperation */
+
+/** @typedef {import('../src/host-state.ts').WorkIdentity} WorkIdentity */
+/** @typedef {import('../src/config/runtime-config.ts').WorkItemSelection} WorkItemSelection */
+/** @typedef {import('../src/runtime-kernel.ts').WorkExecutionContextRequest['workItem']} WorkItem */
+/** @typedef {import('../src/host-state.ts').UnpreparedWorkRecoveryRequest} UnpreparedWorkRecoveryRequest */
+/** @typedef {import('../src/host-state.ts').RecoveryReviewBinding} RecoveryReviewBinding */
+/** @typedef {import('../src/host-state.ts').StateVersion} StateVersion */
+/** @typedef {import('../src/orchestration/scoped-source-snapshot.ts').ScopedSourceSnapshot} ScopedSourceSnapshot */
+/** @typedef {Parameters<typeof import('../src/orchestration/suspend-local-work.ts').inspectHistoricalOwnerWork>[0]} HistoricalOwnerSuspension */
+/** @typedef {'completed_readonly' | 'unknown_readonly' | 'settled_writer_failed_validators' | 'unissued_prepared' | 'settled_research' | 'readonly_bookkeeping'} HistoricalOwnerPredicate */
+/** @typedef {Record<string, unknown> & {expectedWork: StateVersion, expectedLedger: StateVersion, expectedJournal: StateVersion, expectedMaintenanceGeneration: number, baseline_binding: string, receipt_binding: string, current_config_binding: string, engine_binding: string, request_binding: string, preimage_binding: string | null, nativeSessionHandle: string}} HistoricalOwnerReleaseInspection */
+/** @typedef {{schema: string, identity: WorkIdentity, attempt: number, userRequestPointer: string, requestIntent: 'next_work' | 'linked_correction', predicate: HistoricalOwnerPredicate, preimage_ref?: string, inspection?: HistoricalOwnerReleaseInspection}} HistoricalOwnerReleaseRequest */
+/** @typedef {Parameters<typeof import('./runtime-config-rebind.mjs').openInternalRecoveryReview>[0]} InternalRecoveryReviewInput */
+/** @typedef {Omit<InternalRecoveryReviewInput, 'repositoryRoot'> & {observation?: unknown}} RecoveryReviewExport */
+/** @typedef {WorkIdentity & {thread_id?: unknown}} CompletedReadonlyReleaseIdentity */
+/** @typedef {{schema: 'CompletedReadonlyReleaseRequest/v1', workspace_id: string, identity: CompletedReadonlyReleaseIdentity, attempt: number, expectedWork: StateVersion, expectedLedger: StateVersion, expectedJournal: StateVersion, nativeSessionHandle: string, userRequestPointer: string, requestIntent: 'linked_correction' | 'next_work'}} CompletedReadonlyReleaseRequest */
+/** @typedef {{workflow_name: string, snapshot: string}} ReadonlyReleaseEngineSnapshotRow */
+/** @typedef {{waveIndex: number | null, value: unknown}} ReadonlyReleaseEngineWaveCandidate */
+/** @typedef {{waveIndex: number, value: unknown}} ReadonlyReleaseEngineWave */
+/** @typedef {ReadonlyReleaseEngineWave & {value: Record<string, unknown>}} ReadonlyReleaseEngineStepWave */
+/** @typedef {Parameters<import('../src/host-state.ts').HostStateStore['captureStoppedSourceObservation']>[0]} HostStoppedSourceCaptureInput */
+/** @typedef {Omit<HostStoppedSourceCaptureInput, 'verifyCurrent' | 'observation'> & {workspace_id: string, observation: StoppedSourceCaptureObservation}} StoppedSourceCaptureRequest */
+/** @typedef {NonNullable<HostStoppedSourceCaptureInput['observation']>} StoppedSourceCaptureObservation */
+/** @typedef {HostStoppedSourceCaptureInput['terminalEvidence']} StoppedSourceCaptureTerminalEvidence */
+/** @typedef {HostStoppedSourceCaptureInput['candidateSnapshot']} StoppedSourceCaptureSnapshot */
+/** @typedef {StoppedSourceCaptureSnapshot['entries'][number]} StoppedSourceCaptureEntry */
+/** @typedef {{actor_id: string, history_ref: string, tool_call_ref: string, verdict: string, candidate_binding: string, receipt_ref: string}} StoppedSourceCandidateReview */
+/** @typedef {{schema: string, status: string, actor: string, action_id: string, issue_id: string | null, host_attempt_id: string, observation_ref: string, native_status?: unknown, source_turn_id?: unknown, final_message_id?: unknown, current_tmp_only_turn_id?: unknown, owner_thread_id?: unknown}} StoppedSourceTerminalRecord */
+/**
+ * Options as collected from argv. Scalar values remain absent until supplied;
+ * the two repeatable flags are represented by their actual arrays.
+ * @typedef {Object} RunOptionValues
+ * @property {string[]} projects
+ * @property {string[]} scope_paths
+ * @property {string | undefined} [project_root]
+ * @property {string | undefined} [repository]
+ * @property {string | undefined} [work_path]
+ * @property {string | undefined} [team]
+ * @property {string | undefined} [kind]
+ * @property {string | undefined} [intent]
+ * @property {string | undefined} [workflow]
+ * @property {string | undefined} [work_id]
+ * @property {string | undefined} [attempt]
+ * @property {string | undefined} [scope_digest]
+ * @property {string | undefined} [intake]
+ * @property {string | undefined} [continuation]
+ * @property {string | undefined} [inspect]
+ * @property {string | undefined} [issue_wave]
+ * @property {string | undefined} [recover_expired_lease]
+ * @property {string | undefined} [renew_lease]
+ * @property {string | undefined} [rebind_current_bundle]
+ * @property {string | undefined} [native_session_handle]
+ * @property {string | undefined} [lease_generation]
+ * @property {string | undefined} [report]
+ * @property {string | undefined} [correct]
+ * @property {string | undefined} [prepare_assurance]
+ * @property {string | undefined} [reconcile]
+ * @property {string | undefined} [export_staged_witness]
+ * @property {string | undefined} [payload_manifest_sha256]
+ * @property {string | undefined} [expected_revision]
+ * @property {string | undefined} [expected_digest]
+ * @property {string | undefined} [task_source_operation]
+ * @property {string | undefined} [task_source_request]
+ * @property {string | undefined} [task_source_report]
+ */
+
+/** @typedef {keyof Omit<RunOptionValues, 'projects' | 'scope_paths'>} RunScalarOptionField */
+
+/**
+ * @typedef {Omit<RunOptionValues,
+ *   'project_root' | 'repository' | 'work_path' | 'work_id' | 'attempt' | 'team' |
+ *   'kind' | 'intent' | 'workflow' | 'task_source_operation' | 'task_source_request'> & {
+ *   project_root: string,
+ *   repository: string,
+ *   work_path: string,
+ *   work_id: string,
+ *   attempt: string,
+ *   team: string,
+ *   kind: string,
+ *   intent: string,
+ *   workflow: string,
+ *   task_source_operation?: undefined,
+ *   task_source_request?: undefined
+ * }} StandardRunOptions
+ */
+
+/**
+ * @typedef {Omit<RunOptionValues, 'project_root' | 'task_source_operation' | 'task_source_request' | 'projects' | 'scope_paths'> & {
+ *   project_root: string,
+ *   task_source_operation: TaskSourceOperation,
+ *   task_source_request: string
+ * }} TaskSourceRunOptions
+ */
+
+/** @typedef {StandardRunOptions | TaskSourceRunOptions} ParsedRunOptions */
+/** @typedef {{request: import('../src/orchestration/mastra-session-bridge-contract.ts').SessionBridgeRequest, issue_id: string | null, host_attempt_id: string | undefined, instruction_activation?: unknown, instruction_bindings?: unknown, research_instruction_activation?: unknown, research_instruction_bindings?: unknown}} RunIssuedAction */
+
+/** @param {unknown} value @returns {value is TaskSourceOperation} */
+function isTaskSourceOperation(value) {
+  return typeof value === 'string' && runTaskSourceOperations.includes(value);
+}
+
+/** @param {ParsedRunOptions} value @returns {asserts value is StandardRunOptions} */
+function assertStandardRunOptions(value) {
+  if (value.task_source_operation !== undefined) throw Error('Task source operation cannot enter standard run mode');
+}
+
+/** @param {import('../src/config/runtime-config.ts').AgentRuntimeConfig} config @param {string} workflowId @param {string} stageId @returns {boolean} */
+function hasConfiguredDevelopmentStage(config, workflowId, stageId) {
+  const workflow = config.workflows[workflowId];
+  return workflow !== undefined && workflow.stages.some((stage) => stage.id === stageId && stage.kind === 'develop');
+}
+
+/** @param {unknown} value @returns {value is 'low' | 'medium' | 'high'} */
+function isLifecycleRisk(value) {
+  return value === 'low' || value === 'medium' || value === 'high';
+}
+
+/** @param {unknown} value @returns {value is {source_id: string}} */
+function isResearchSourceReference(value) {
+  return isRecord(value) && typeof value.source_id === 'string';
+}
+
+/** @typedef {Record<string, unknown> & {work_id: string, scope_id: string, source_revision: string, attribution: {thread_id: string}, allowed_paths: string[], ac_ids: string[], implementation_paths: string[]}} RenewalScope */
+
+/** @param {unknown} value @returns {value is RenewalScope} */
+function isRenewalScope(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'ImplementationScope/v1' &&
+    typeof value.work_id === 'string' &&
+    typeof value.scope_id === 'string' &&
+    typeof value.source_revision === 'string' &&
+    isRecord(value.attribution) &&
+    typeof value.attribution.thread_id === 'string' &&
+    isStringArray(value.allowed_paths) &&
+    isStringArray(value.ac_ids) &&
+    isStringArray(value.implementation_paths)
+  );
+}
+
+/** @param {string} key @returns {key is keyof typeof runScalarOptionFields} */
+function isRunScalarOptionKey(key) {
+  return Object.hasOwn(runScalarOptionFields, key);
+}
+
+/** @param {string} key @returns {RunScalarOptionField | undefined} */
+function runScalarFieldFor(key) {
+  if (isRunScalarOptionKey(key)) return runScalarOptionFields[key];
+  return undefined;
+}
+
+/** @param {unknown} value @returns {value is string} */
+function isString(value) {
+  return typeof value === 'string';
+}
+
+/** @param {string | undefined} value @returns {string} */
+function runOptionKey(value) {
+  return value ?? '';
+}
+
+/** @param {unknown} value @returns {value is string} */
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.length > 0;
+}
+
+/** @param {string | undefined} value @param {string} flag @returns {string} */
+/** @param {unknown} value @returns {value is WorkIdentity} */
+function isWorkIdentity(value) {
+  return (
+    exactKeys(value, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) &&
+    typeof value.repository_id === 'string' &&
+    isStringArray(value.project_ids) &&
+    typeof value.integrations_digest === 'string' &&
+    typeof value.work_id === 'string'
+  );
+}
+
+/**
+ * @param {unknown} value
+ * @param {readonly string[]} keys
+ * @returns {value is Record<string, unknown> & {identity: WorkIdentity, attempt: number, baselinePath: string, decisionPointer: string}}
+ */
+function isUnpreparedRecoveryEnvelope(value, keys) {
+  return (
+    exactKeys(value, keys) &&
+    isWorkIdentity(value.identity) &&
+    typeof value.attempt === 'number' &&
+    typeof value.baselinePath === 'string' &&
+    typeof value.decisionPointer === 'string'
+  );
+}
+
+/** @param {UnpreparedWorkRecoveryRequest} current @param {unknown} retained */
+function assertRetainedUnpreparedRecoveryRequest(current, retained) {
+  if (!isDeepStrictEqual(current, retained)) throw Error('Unprepared recovery retained request differs');
+}
+
+/** @param {string} file @param {ReturnType<typeof lstatSync>} before @returns {void} */
+function assertUnpreparedRecoveryHostStable(file, before) {
+  if (!before) throw Error('Unprepared recovery Host missing');
+  const after = lstatSync(file);
+  if (
+    !after.isFile() ||
+    after.isSymbolicLink() ||
+    after.nlink !== 1 ||
+    before.dev !== after.dev ||
+    before.ino !== after.ino
+  )
+    throw Error('Unprepared recovery Host substituted');
+}
+
+/** @template T @param {T | null} operation @returns {T} */
+function requireRecoveryOperation(operation) {
+  if (operation === null) throw Error('Recovery review operation is unavailable');
+  return operation;
+}
+
+/** @param {unknown} value @returns {value is string[]} */
+function isStringArray(value) {
+  return Array.isArray(value) && value.every(isString);
+}
+
+/** @param {unknown} value @returns {value is StateVersion} */
+function isStateVersion(value) {
+  return exactKeys(value, ['revision', 'digest']) && typeof value.revision === 'number' && isString(value.digest);
+}
+
+/** @param {unknown} value @returns {value is ScopedSourceSnapshot['entries'][number]} */
+function isScopedSourceEntry(value) {
+  return (
+    exactKeys(value, ['path', 'exists', 'bytes', 'sha256']) &&
+    isString(value.path) &&
+    typeof value.exists === 'boolean' &&
+    (value.bytes === null || typeof value.bytes === 'number') &&
+    (value.sha256 === null || isString(value.sha256))
+  );
+}
+
+/** @param {unknown} value @returns {value is ScopedSourceSnapshot} */
+function isScopedSourceSnapshot(value) {
+  return (
+    exactKeys(value, ['schema', 'entries', 'digest']) &&
+    value.schema === 'ScopedSourceSnapshot/v1' &&
+    Array.isArray(value.entries) &&
+    value.entries.every(isScopedSourceEntry) &&
+    isString(value.digest)
+  );
+}
+
+/** @param {unknown} value @returns {value is RecoveryReviewBinding} */
+function isRecoveryReviewBinding(value) {
+  return (
+    exactKeys(value, [
+      'identity',
+      'attempt',
+      'callerSession',
+      'controllerId',
+      'userInstructionRef',
+      'historicalOwner',
+      'expectedWork',
+      'expectedLedger',
+      'expectedJournal',
+      'maintenanceGeneration',
+      'source',
+      'context',
+    ]) &&
+    isWorkIdentity(value.identity) &&
+    typeof value.attempt === 'number' &&
+    isRecoveryReviewOwner(value) &&
+    isRecoveryReviewVersions(value) &&
+    typeof value.maintenanceGeneration === 'number' &&
+    isScopedSourceSnapshot(value.source) &&
+    isRecord(value.context)
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function isRecoveryReviewOwner(value) {
+  return (
+    isString(value.callerSession) &&
+    isString(value.controllerId) &&
+    isString(value.userInstructionRef) &&
+    isString(value.historicalOwner)
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function isRecoveryReviewVersions(value) {
+  return (
+    isStateVersion(value.expectedWork) && isStateVersion(value.expectedLedger) && isStateVersion(value.expectedJournal)
+  );
+}
+
+/** @param {unknown} value @returns {value is 'prepare' | 'begin' | 'complete' | 'inspect'} */
+function isRecoveryReviewMode(value) {
+  return value === 'prepare' || value === 'begin' || value === 'complete' || value === 'inspect';
+}
+
+/** @param {unknown} value @param {readonly string[]} keys @param {boolean} requestRequired @param {boolean} observationRequired @returns {value is RecoveryReviewExport} */
+function isRecoveryReviewExport(value, keys, requestRequired, observationRequired) {
+  if (!isRecord(value) || !exactKeys(value, keys) || !isRecoveryReviewExportIdentity(value)) return false;
+  return isRecoveryReviewOptionalFields(value, requestRequired, observationRequired);
+}
+
+/** @param {Record<string, unknown>} value @param {boolean} requestRequired @param {boolean} observationRequired @returns {boolean} */
+function isRecoveryReviewOptionalFields(value, requestRequired, observationRequired) {
+  return (
+    (!requestRequired || isRecoveryReviewBinding(value.request)) &&
+    (!observationRequired || Boolean(value.observation)) &&
+    (!hasRecoveryReviewOriginalContexts(value) || isNonEmptyArray(value.originalContexts)) &&
+    (!Object.hasOwn(value, 'request') || isRecoveryReviewBinding(value.request))
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function isRecoveryReviewExportIdentity(value) {
+  return (
+    isWorkIdentity(value.identity) &&
+    typeof value.attempt === 'number' &&
+    isString(value.baselinePath) &&
+    isString(value.callerSession) &&
+    isString(value.controllerId) &&
+    isString(value.userInstructionRef)
+  );
+}
+
+/** @param {unknown} value @returns {boolean} */
+function hasRecoveryReviewOriginalContexts(value) {
+  return isRecord(value) && Object.hasOwn(value, 'originalContexts');
+}
+
+/** @param {unknown} value @returns {value is unknown[]} */
+function isNonEmptyArray(value) {
+  return Array.isArray(value) && value.length > 0;
+}
+
+/** @param {unknown} value @returns {value is HistoricalOwnerReleaseInspection} */
+function isHistoricalOwnerReleaseInspection(value) {
+  return isHistoricalOwnerReleaseInspectionVersions(value) && isHistoricalOwnerReleaseInspectionBindings(value);
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isHistoricalOwnerReleaseInspectionVersions(value) {
+  return (
+    isRecord(value) &&
+    isStateVersion(value.expectedWork) &&
+    isStateVersion(value.expectedLedger) &&
+    isStateVersion(value.expectedJournal) &&
+    typeof value.expectedMaintenanceGeneration === 'number'
+  );
+}
+
+/** @param {unknown} value @returns {value is HistoricalOwnerReleaseInspection} */
+function isHistoricalOwnerReleaseInspectionBindings(value) {
+  return (
+    isRecord(value) &&
+    isString(value.baseline_binding) &&
+    isString(value.receipt_binding) &&
+    isString(value.current_config_binding) &&
+    isString(value.engine_binding) &&
+    isString(value.request_binding) &&
+    (value.preimage_binding === null || isString(value.preimage_binding)) &&
+    isString(value.nativeSessionHandle)
+  );
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isHistoricalOwnerReleaseHeader(value) {
+  return isHistoricalOwnerReleaseHeaderIdentity(value) && isHistoricalOwnerReleaseHeaderPredicate(value);
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isHistoricalOwnerReleaseHeaderIdentity(value) {
+  return (
+    isRecord(value) &&
+    isWorkIdentity(value.identity) &&
+    typeof value.attempt === 'number' &&
+    isString(value.userRequestPointer)
+  );
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isHistoricalOwnerReleaseHeaderPredicate(value) {
+  return (
+    isRecord(value) &&
+    (value.requestIntent === 'next_work' || value.requestIntent === 'linked_correction') &&
+    (value.predicate === 'completed_readonly' ||
+      value.predicate === 'unknown_readonly' ||
+      value.predicate === 'settled_writer_failed_validators' ||
+      value.predicate === 'unissued_prepared' ||
+      value.predicate === 'settled_research' ||
+      value.predicate === 'readonly_bookkeeping')
+  );
+}
+
+/** @param {unknown} predicate @param {readonly string[]} predicates @returns {predicate is string} */
+function isHistoricalReleasePredicate(predicate, predicates) {
+  return isString(predicate) && predicates.includes(predicate);
+}
+
+/** @param {unknown} value @param {string} schema @param {readonly string[]} predicates @param {'inspect' | 'apply'} mode @returns {value is HistoricalOwnerReleaseRequest} */
+function isHistoricalOwnerReleaseRequest(value, schema, predicates, mode) {
+  if (!isHistoricalOwnerReleaseHeader(value)) return false;
+  const writer = value.predicate === 'settled_writer_failed_validators';
+  const keys = [
+    'schema',
+    'identity',
+    'attempt',
+    'userRequestPointer',
+    'requestIntent',
+    'predicate',
+    ...(writer ? ['preimage_ref'] : []),
+    ...(mode === 'apply' ? ['inspection'] : []),
+  ];
+  return (
+    exactKeys(value, keys) &&
+    value.schema === schema &&
+    isHistoricalReleasePredicate(value.predicate, predicates) &&
+    (!writer || isString(value.preimage_ref)) &&
+    (mode === 'inspect' || isHistoricalOwnerReleaseInspection(value.inspection))
+  );
+}
+
+/** @param {boolean} readonlyBookkeeping @param {boolean} settledResearch @param {boolean} unissuedOwner @returns {{schema: string, predicates: string[]}} */
+function historicalOwnerReleaseContract(readonlyBookkeeping, settledResearch, unissuedOwner) {
+  return {
+    schema: readonlyBookkeeping
+      ? 'ReadonlyBookkeepingOwnerReleaseRequest/v1'
+      : settledResearch
+        ? 'SettledResearchOwnerReleaseRequest/v1'
+        : unissuedOwner
+          ? 'UnissuedOwnerReleaseRequest/v1'
+          : 'HistoricalOwnerReleaseRequest/v1',
+    predicates: readonlyBookkeeping
+      ? ['readonly_bookkeeping']
+      : settledResearch
+        ? ['settled_research']
+        : unissuedOwner
+          ? ['unissued_prepared']
+          : ['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators'],
+  };
+}
+
+/** @param {string} source @param {string} schema @param {readonly string[]} predicates @param {'inspect' | 'apply'} mode @returns {HistoricalOwnerReleaseRequest} */
+function parseHistoricalOwnerReleaseRequest(source, schema, predicates, mode) {
+  /** @type {unknown} */
+  let value;
+  try {
+    value = JSON.parse(source);
+  } catch {
+    throw Error('Historical release request shape or predicate invalid');
+  }
+  if (!isHistoricalOwnerReleaseRequest(value, schema, predicates, mode))
+    throw Error('Historical release request shape or predicate invalid');
+  return value;
+}
+
+/** @param {'inspect' | 'apply'} mode @param {HistoricalOwnerReleaseInspection | undefined} supplied @param {HistoricalOwnerReleaseInspection} current @returns {HistoricalOwnerReleaseInspection} */
+function historicalReleaseInspection(mode, supplied, current) {
+  if (mode === 'apply' && supplied) return supplied;
+  return current;
+}
+
+/** @param {unknown} value @returns {value is {schema: 'VidaAgentRunResult/v1', next_actions: unknown[]}} */
+function isHistoricalRunHistory(value) {
+  return isRecord(value) && value.schema === 'VidaAgentRunResult/v1' && isUnknownArray(value.next_actions);
+}
+
+/** @param {string} value @returns {value is 'inspect' | 'apply'} */
+function isHistoricalReleaseMode(value) {
+  return value === 'inspect' || value === 'apply';
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & {schema: 'ConfiguredContext/v1', digest: string}} */
+function isHistoricalConfiguredContext(value) {
+  return isRecord(value) && value.schema === 'ConfiguredContext/v1' && isString(value.digest);
+}
+
+/** @param {readonly unknown[]} actions @returns {Array<Record<string, unknown> & {schema: 'ConfiguredContext/v1', digest: string}>} */
+function historicalConfiguredContexts(actions) {
+  return actions.flatMap((action) => {
+    if (!isRecord(action) || !isHistoricalConfiguredContext(action.configured_context)) return [];
+    return [action.configured_context];
+  });
+}
+
+/** @template T @param {T | undefined} value @returns {T} */
+function requireHistoricalItem(value) {
+  if (value === undefined) throw Error('Historical context history action differs');
+  return value;
+}
+
+/** @param {unknown} value @param {(candidate: unknown) => candidate is string} relative @returns {value is ScopedSourceSnapshot} */
+function isHistoricalScopedSnapshot(value, relative) {
+  if (
+    !isRecord(value) ||
+    !exactKeys(value, ['digest', 'entries', 'schema']) ||
+    value.schema !== 'ScopedSourceSnapshot/v1'
+  )
+    return false;
+  if (!isNonEmptyArray(value.entries) || value.entries.length > 512) return false;
+  let prior;
+  for (const raw of value.entries) {
+    if (!isHistoricalScopedEntry(raw, relative, prior)) return false;
+    prior = raw.path;
+  }
+  return isString(value.digest);
+}
+
+/** @param {unknown} value @param {(candidate: unknown) => candidate is string} relative @param {string | undefined} prior @returns {value is Record<string, unknown> & {path: string}} */
+function isHistoricalScopedEntry(value, relative, prior) {
+  if (!isHistoricalScopedEntryPath(value, relative, prior)) return false;
+  if (value.exists) return isHistoricalPresentScopedEntry(value);
+  return value.bytes === null && value.sha256 === null;
+}
+
+/** @param {unknown} value @param {(candidate: unknown) => candidate is string} relative @param {string | undefined} prior @returns {value is Record<string, unknown> & {path: string}} */
+function isHistoricalScopedEntryPath(value, relative, prior) {
+  return (
+    isRecord(value) &&
+    exactKeys(value, ['bytes', 'exists', 'path', 'sha256']) &&
+    relative(value.path) &&
+    value.path.length <= 512 &&
+    (prior === undefined || prior < value.path) &&
+    typeof value.exists === 'boolean'
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function isHistoricalPresentScopedEntry(value) {
+  return (
+    Number.isSafeInteger(value.bytes) &&
+    typeof value.bytes === 'number' &&
+    value.bytes >= 0 &&
+    isString(value.sha256) &&
+    /^[a-f0-9]{64}$/.test(value.sha256)
+  );
+}
+
+/** @param {readonly string[]} args @param {number} index @returns {string} */
+function requireReadonlyReleaseArg(args, index) {
+  const value = args[index];
+  if (value === undefined) throw Error('Readonly release requires mode, exact root and request');
+  return value;
+}
+
+/** @param {unknown} value @returns {unknown} */
+function readonlyReleaseThreadId(value) {
+  return isRecord(value) ? value.thread_id : undefined;
+}
+
+/** @param {unknown} value @returns {value is CompletedReadonlyReleaseRequest} */
+function isCompletedReadonlyReleaseRequest(value) {
+  return (
+    isCompletedReadonlyReleaseContext(value) &&
+    isCompletedReadonlyReleaseIdentity(value.identity) &&
+    isCompletedReadonlyReleaseCas(value) &&
+    isCompletedReadonlyReleaseIntent(value)
+  );
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & {workspace_id: string, attempt: number}} */
+function isCompletedReadonlyReleaseContext(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'CompletedReadonlyReleaseRequest/v1' &&
+    isString(value.workspace_id) &&
+    typeof value.attempt === 'number'
+  );
+}
+
+/** @param {unknown} value @returns {value is CompletedReadonlyReleaseIdentity} */
+function isCompletedReadonlyReleaseIdentity(value) {
+  return (
+    isRecord(value) &&
+    isString(value.repository_id) &&
+    isStringArray(value.project_ids) &&
+    isString(value.integrations_digest) &&
+    isString(value.work_id)
+  );
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isCompletedReadonlyReleaseCas(value) {
+  return (
+    isRecord(value) &&
+    isStateVersion(value.expectedWork) &&
+    isStateVersion(value.expectedLedger) &&
+    isStateVersion(value.expectedJournal)
+  );
+}
+
+/** @param {unknown} value @returns {value is CompletedReadonlyReleaseRequest} */
+function isCompletedReadonlyReleaseIntent(value) {
+  return (
+    isRecord(value) &&
+    isString(value.nativeSessionHandle) &&
+    isString(value.userRequestPointer) &&
+    (value.requestIntent === 'linked_correction' || value.requestIntent === 'next_work')
+  );
+}
+
+/** @param {ReturnType<typeof openCliWorkspaceDatabase>} database @param {string} runId @returns {unknown} */
+function readReadonlyReleaseSnapshotRows(database, runId) {
+  return database
+    .query('SELECT workflow_name,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?')
+    .all(runId);
+}
+
+/** @param {unknown} value @returns {value is {schema: string, request_digest: string}} */
+function isReadonlyReleasePlan(value) {
+  return isRecord(value) && isString(value.schema) && isString(value.request_digest);
+}
+
+/** @param {unknown} value @returns {value is ReadonlyReleaseEngineSnapshotRow[]} */
+function isReadonlyReleaseSnapshotRows(value) {
+  return (
+    isUnknownArray(value) &&
+    value.every((row) => isRecord(row) && isString(row.workflow_name) && isString(row.snapshot))
+  );
+}
+
+/** @param {ReadonlyReleaseEngineSnapshotRow[]} rows @returns {ReadonlyReleaseEngineSnapshotRow} */
+function requireOnlyReadonlyReleaseSnapshotRow(rows) {
+  if (rows.length !== 1 || !rows[0]) throw Error('Readonly release original engine missing/ambiguous');
+  return rows[0];
+}
+
+/** @template T @param {readonly T[]} values @returns {T} */
+function requireFirstReadonlyReleaseValue(values) {
+  const value = values[0];
+  if (value === undefined) throw Error('Readonly release actual engine frontier differs');
+  return value;
+}
+
+/** @template T @param {readonly T[]} values @returns {T} */
+function requireOneReadonlyReleaseMatch(values) {
+  if (values.length !== 1 || values[0] === undefined) throw Error('Readonly release actual engine completion differs');
+  return values[0];
+}
+
+/** @param {string} text @returns {unknown} */
+function parseReadonlyReleaseEngineSnapshot(text) {
+  return JSON.parse(text);
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & {context: Record<string, unknown>}} */
+function isReadonlyReleaseEngineSnapshot(value) {
+  return isRecord(value) && isRecord(value.context);
+}
+
+/** @param {unknown} value @returns {value is ReadonlyReleaseEngineWave} */
+function isReadonlyReleaseEngineWave(value) {
+  return isRecord(value) && typeof value.waveIndex === 'number';
+}
+
+/** @param {ReadonlyReleaseEngineWave} value @returns {value is ReadonlyReleaseEngineStepWave} */
+function isReadonlyReleaseSuspendedWave(value) {
+  return isRecord(value.value) && value.value.status === 'suspended';
+}
+
+/** @param {ReadonlyReleaseEngineWave} value @returns {value is ReadonlyReleaseEngineStepWave} */
+function isReadonlyReleaseSuccessfulWave(value) {
+  return isRecord(value.value) && value.value.status === 'success';
+}
+
+/** @template T @param {unknown} values @param {(value: unknown) => T} parse @returns {T[]} */
+function parseReadonlyReleaseArray(values, parse) {
+  if (!isUnknownArray(values)) throw Error('Readonly release actual engine completion differs');
+  return values.map((value) => parse(value));
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & {suspendPayload: {requests: unknown[]}}} */
+function isReadonlyReleaseFrontierStep(value) {
+  return (
+    isRecord(value) &&
+    Object.hasOwn(value, 'payload') &&
+    Object.hasOwn(value, 'suspendPayload') &&
+    isRecord(value.suspendPayload) &&
+    isUnknownArray(value.suspendPayload.requests)
+  );
+}
+
+/** @param {unknown} value @param {string} flag @returns {string} */
+function requireOption(value, flag) {
+  if (typeof value !== 'string' || value.length === 0)
+    fail('GAP-VIDA-RUN-CLI-001', `Required launcher option ${flag} is missing.`);
+  return value;
+}
+
+/** @param {string[]} args @returns {ParsedRunOptions} */
 function parseArgs(args) {
-  const allowed = new Set([
-    '--project-root',
-    '--repository',
-    '--project',
-    '--work-path',
-    '--team',
-    '--kind',
-    '--intent',
-    '--workflow',
-    '--work-id',
-    '--attempt',
-    '--scope-digest',
-    '--scope-path',
-    '--intake',
-    '--continuation',
-    '--inspect',
-    '--issue-wave',
-    '--recover-expired-lease',
-    '--renew-lease',
-    '--rebind-current-bundle',
-    '--native-session-handle',
-    '--lease-generation',
-    '--report',
-    '--correct',
-    '--prepare-assurance',
-    '--reconcile',
-    '--export-staged-witness',
-    '--payload-manifest-sha256',
-    '--expected-revision',
-    '--expected-digest',
-    '--task-source-operation',
-    '--task-source-request',
-    '--task-source-report',
-  ]);
+  const allowed = new Set([...Object.keys(runScalarOptionFields), ...runRepeatedOptions]);
+  /** @type {RunOptionValues} */
   const values = { projects: [], scope_paths: [] };
   for (let index = 0; index < args.length; index += 2) {
-    const key = args[index];
+    const key = runOptionKey(args[index]);
     const value = args[index + 1];
-    if (
-      !allowed.has(key) ||
-      !value ||
-      (!['--project', '--scope-path'].includes(key) && Object.hasOwn(values, key.slice(2).replaceAll('-', '_')))
-    )
+    const field = runScalarFieldFor(key);
+    if (!allowed.has(key) || !isNonEmptyString(value) || (field !== undefined && Object.hasOwn(values, field)))
       fail(
         'GAP-VIDA-RUN-CLI-001',
         'Usage: run.mjs --project-root ABSOLUTE_PATH --repository ID --project ID --work-path RELATIVE_PATH --work-id ID --attempt NUMBER --scope-digest SHA256 --team ID --kind KIND --intent INTENT --workflow WORKFLOW_ID [--recover-expired-lease true --native-session-handle HANDLE --lease-generation NUMBER --expected-revision NUMBER --expected-digest SHA256]',
       );
     if (key === '--project') values.projects.push(value);
     else if (key === '--scope-path') values.scope_paths.push(value);
-    else
-      values[key.slice(2).replaceAll('-', '_')] =
-        key === '--project-root' && path.isAbsolute(value) ? path.resolve(value) : value;
+    else {
+      if (field === undefined) fail('GAP-VIDA-RUN-CLI-001', 'Unsupported launcher option.');
+      values[field] = key === '--project-root' && path.isAbsolute(value) ? path.resolve(value) : value;
+    }
   }
   if (values.task_source_operation !== undefined || values.task_source_request !== undefined) {
     const unrelated = Object.keys(values).filter(
@@ -1303,39 +2827,32 @@ function parseArgs(args) {
           'task_source_report',
         ].includes(key),
     );
+    const projectRoot = values.project_root;
+    const operation = values.task_source_operation;
+    const request = values.task_source_request;
     if (
       unrelated.length > 0 ||
       values.projects.length > 0 ||
       values.scope_paths.length > 0 ||
-      !values.project_root ||
-      !path.isAbsolute(values.project_root) ||
-      path.resolve(values.project_root) !== values.project_root ||
-      !['prepare', 'inspect', 'issue', 'report', 'recover'].includes(values.task_source_operation ?? '') ||
-      !values.task_source_request ||
-      (values.task_source_operation === 'report' ? !values.task_source_report : values.task_source_report !== undefined)
+      !projectRoot ||
+      !path.isAbsolute(projectRoot) ||
+      path.resolve(projectRoot) !== projectRoot ||
+      !isTaskSourceOperation(operation) ||
+      !request ||
+      (operation === 'report' ? !values.task_source_report : values.task_source_report !== undefined)
     )
       fail(
         'GAP-VIDA-RUN-CLI-001',
         'Task source operations require --project-root ABSOLUTE_PATH, --task-source-operation prepare|inspect|issue|report|recover and --task-source-request RELATIVE_PATH; report also requires --task-source-report RELATIVE_PATH.',
       );
     return Object.freeze({
-      project_root: values.project_root,
-      task_source_operation: values.task_source_operation,
-      task_source_request: values.task_source_request,
+      project_root: projectRoot,
+      task_source_operation: operation,
+      task_source_request: request,
       ...(values.task_source_report ? { task_source_report: values.task_source_report } : {}),
     });
   }
-  const required = [
-    'project_root',
-    'repository',
-    'work_path',
-    'work_id',
-    'attempt',
-    'team',
-    'kind',
-    'intent',
-    'workflow',
-  ];
+  const requiredPresent = runRequiredFields.map((field) => values[field]);
   const deriveScope =
     values.scope_paths.length > 0 &&
     !values.recover_expired_lease &&
@@ -1346,28 +2863,16 @@ function parseArgs(args) {
     !values.inspect &&
     !values.continuation &&
     !values.export_staged_witness;
-  if (required.some((key) => !values[key]) || values.projects.length < 1 || (!values.scope_digest && !deriveScope))
+  if (requiredPresent.some((value) => !value) || values.projects.length < 1 || (!values.scope_digest && !deriveScope))
     fail('GAP-VIDA-RUN-CLI-001', 'All launcher arguments are required.');
-  const changing = Boolean(
-    values.issue_wave ||
-    values.report ||
-    values.correct ||
-    values.prepare_assurance ||
-    values.reconcile ||
-    values.recover_expired_lease ||
-    values.renew_lease,
-  );
+  const projectRoot = requireOption(values.project_root, '--project-root');
+  const repository = requireOption(values.repository, '--repository');
+  const workId = requireOption(values.work_id, '--work-id');
+  const attempt = requireOption(values.attempt, '--attempt');
+  const changing = runChangingFields.some((field) => Boolean(values[field]));
   const exporting = Boolean(values.export_staged_witness || values.payload_manifest_sha256);
   if (
-    [
-      values.issue_wave,
-      values.report,
-      values.correct,
-      values.prepare_assurance,
-      values.reconcile,
-      values.recover_expired_lease,
-      values.renew_lease,
-    ].filter(Boolean).length > 1 ||
+    runChangingFields.filter((field) => Boolean(values[field])).length > 1 ||
     (values.issue_wave && values.issue_wave !== 'true') ||
     (values.recover_expired_lease &&
       (values.recover_expired_lease !== 'true' ||
@@ -1395,8 +2900,8 @@ function parseArgs(args) {
         !Number.isSafeInteger(Number(values.expected_revision)) ||
         !/^[a-f0-9]{64}$/.test(values.expected_digest ?? ''))) ||
     [values.report, values.correct, values.prepare_assurance, values.reconcile]
-      .filter(Boolean)
-      .some((entry) => !path.isAbsolute(entry) || path.resolve(entry) !== entry) ||
+      .filter(isString)
+      .some(isNonCanonicalAbsolutePath) ||
     (exporting &&
       (changing ||
         values.intake ||
@@ -1421,36 +2926,50 @@ function parseArgs(args) {
       'GAP-VIDA-RUN-CLI-001',
       'Mutation modes require one mode and an exact expected state version; renewal also requires the current owner and lease generation.',
     );
-  if (!path.isAbsolute(values.project_root) || path.resolve(values.project_root) !== values.project_root)
+  if (!path.isAbsolute(projectRoot) || path.resolve(projectRoot) !== projectRoot)
     fail('GAP-VIDA-RUN-CLI-002', 'The project root must be one canonical absolute path.');
   let identity;
   try {
-    identity = lstatSync(values.project_root);
-    if (
-      !identity.isDirectory() ||
-      identity.isSymbolicLink() ||
-      realpathSync(values.project_root) !== values.project_root
-    )
+    identity = lstatSync(projectRoot);
+    if (!identity.isDirectory() || identity.isSymbolicLink() || realpathSync(projectRoot) !== projectRoot)
       fail('GAP-VIDA-RUN-CLI-004', 'The project root must be an existing canonical directory.');
   } catch (error) {
-    if (error?.code?.startsWith?.('GAP-VIDA-RUN-')) throw error;
+    if (nodeErrorCode(error)?.startsWith('GAP-VIDA-RUN-')) throw error;
     fail('GAP-VIDA-RUN-CLI-004', 'The project root must be an existing canonical directory.');
   }
-  if (![values.repository, ...values.projects].every((value) => /^[a-z0-9][a-z0-9-]{0,127}$/.test(value)))
+  if (![repository, ...values.projects].every((value) => /^[a-z0-9][a-z0-9-]{0,127}$/.test(value)))
     fail('GAP-VIDA-RUN-CLI-003', 'Repository and project must be valid lowercase identifiers.');
   if (
-    !/^[a-z0-9][a-z0-9-]{0,127}$/.test(values.work_id) ||
-    !/^[1-9][0-9]*$/.test(values.attempt) ||
-    !Number.isSafeInteger(Number(values.attempt)) ||
+    !/^[a-z0-9][a-z0-9-]{0,127}$/.test(workId) ||
+    !/^[1-9][0-9]*$/.test(attempt) ||
+    !Number.isSafeInteger(Number(attempt)) ||
     (values.scope_digest ? !/^[a-f0-9]{64}$/.test(values.scope_digest) : !deriveScope)
   )
     fail('GAP-VIDA-RUN-CLI-003', 'Work attempt and scope must be valid explicit identifiers.');
   values.projects = [...new Set(values.projects)].sort();
   if (values.scope_paths.length > 512 || new Set(values.scope_paths).size !== values.scope_paths.length)
     fail('GAP-VIDA-RUN-CLI-003', 'Scope paths must be unique and bounded.');
-  return Object.freeze(values);
+  const {
+    task_source_operation: _taskSourceOperation,
+    task_source_request: _taskSourceRequest,
+    task_source_report: _taskSourceReport,
+    ...standardValues
+  } = values;
+  return Object.freeze({
+    ...standardValues,
+    project_root: projectRoot,
+    repository,
+    work_path: requireOption(values.work_path, '--work-path'),
+    work_id: workId,
+    attempt,
+    team: requireOption(values.team, '--team'),
+    kind: requireOption(values.kind, '--kind'),
+    intent: requireOption(values.intent, '--intent'),
+    workflow: requireOption(values.workflow, '--workflow'),
+  });
 }
 
+/** @type {Readonly<Record<string, string>>} */
 const publicMessages = Object.freeze({
   'GAP-VIDA-RUN-CLI-001': 'Launcher arguments are incomplete or contain an unsupported option.',
   'GAP-VIDA-RUN-CLI-002': 'The project root is not a canonical absolute path.',
@@ -1466,10 +2985,26 @@ const publicMessages = Object.freeze({
 });
 const publicCodes = new Set(Object.keys(publicMessages));
 
+/** @param {unknown} error */
+/** @param {unknown} error @returns {string} */
+function publicErrorMessage(error) {
+  return error !== null && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
+    ? error.message
+    : '';
+}
+
+/** @param {unknown} error @returns {string} */
+function publicCodeForError(error) {
+  const candidateCode = nodeErrorCode(error);
+  return candidateCode && publicCodes.has(candidateCode) ? candidateCode : 'GAP-VIDA-RUN-EXECUTION-001';
+}
+
+/** @param {unknown} error */
 function publicFailure(error) {
-  const code = publicCodes.has(error?.code) ? error.code : 'GAP-VIDA-RUN-EXECUTION-001';
+  const code = publicCodeForError(error);
   // Classify only known validation language. Never expose caller messages, paths,
   // credentials or stack traces through the public diagnostic envelope.
+  /** @type {Array<[RegExp, string, string, string]>} */
   const reasons = [
     [
       /failed prewriter (?:owner )?recovery:|issued writer outcome must settle before expired lease recovery|issued writer-bound wave must advance before expired lease recovery|expired recovery requires an entirely unissued (?:current )?wave/,
@@ -1514,11 +3049,10 @@ function publicFailure(error) {
       'Inspect the exact work and conflicting resource ownership; do not repeat a source action.',
     ],
   ];
+  const message = publicErrorMessage(error);
   // The CLI code owns malformed-argument output. Parser usage text can contain
   // unrelated lease, revision or source flags and must not override that contract.
-  const reason = code.startsWith('GAP-VIDA-RUN-CLI-')
-    ? undefined
-    : reasons.find(([pattern]) => pattern.test(typeof error?.message === 'string' ? error.message : ''));
+  const reason = code.startsWith('GAP-VIDA-RUN-CLI-') ? undefined : reasons.find(([pattern]) => pattern.test(message));
   return {
     schema: 'VidaAgentRunResult/v1',
     status: 'blocked',
@@ -1529,6 +3063,21 @@ function publicFailure(error) {
   };
 }
 
+/**
+ * @typedef {Object} LocalSessionIntake
+ * @property {'VidaLocalSessionIntake/v1'} schema
+ * @property {string} native_session_handle
+ * @property {{schema: 'WorkItem/v1', id: string, provider: string, provider_type: string, canonical_kind: string, intent: string, project_id: string, title: string, description: string, labels: string[], risk_flags: string[]}} work_item
+ * @property {string} scope_path
+ * @property {string} acceptance_path
+ * @property {string | undefined} [source_authorization_path]
+ * @property {string[]} runtime_code_paths
+ * @property {'R1' | 'R2' | 'R3' | 'R4'} route
+ * @property {'low' | 'medium' | 'high'} risk
+ * @property {'feature' | 'fix' | 'refactor' | 'migration' | 'documentation' | 'incident'} change_kind
+ */
+
+/** @param {string} file @returns {Promise<LocalSessionIntake>} */
 async function readLocalSessionIntake(file) {
   const { z } = await import('zod');
   const schema = z
@@ -1566,6 +3115,7 @@ async function readLocalSessionIntake(file) {
   }
 }
 
+/** @param {string} file @returns {unknown} */
 function readBoundedReport(file) {
   let fd;
   try {
@@ -1599,10 +3149,186 @@ function readBoundedReport(file) {
   }
 }
 
+/** @param {unknown} value @returns {value is WorkIdentity} */
+function isCaptureStoppedSourceIdentity(value) {
+  return (
+    isRecord(value) &&
+    isString(value.repository_id) &&
+    isStringArray(value.project_ids) &&
+    isString(value.integrations_digest) &&
+    isString(value.work_id)
+  );
+}
+
+/** @param {unknown} value @returns {value is StateVersion} */
+function isCaptureStoppedSourceVersion(value) {
+  return isRecord(value) && typeof value.revision === 'number' && isString(value.digest);
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureObservation} */
+function isCaptureStoppedSourceObservation(value) {
+  return isCaptureStoppedSourceObservationHeader(value) && isCaptureStoppedSourceObservationEvidence(value);
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureObservation} */
+function isCaptureStoppedSourceObservationHeader(value) {
+  return (
+    isCaptureStoppedSourceObservationIdentity(value) &&
+    (value.status === 'reported_complete' || value.status === 'reported_failed') &&
+    isString(value.summary) &&
+    isString(value.output_digest)
+  );
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureObservation} */
+function isCaptureStoppedSourceObservationIdentity(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'VidaSessionObservation/v1' &&
+    isString(value.action_id) &&
+    isString(value.host_attempt_id) &&
+    isString(value.issue_id) &&
+    isString(value.agent_id) &&
+    isString(value.tool_call_ref)
+  );
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureObservation} */
+function isCaptureStoppedSourceObservationEvidence(value) {
+  return isRecord(value) && isStringArray(value.changed_paths) && isStringArray(value.evidence_refs);
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureTerminalEvidence} */
+function isStoppedSourceCaptureTerminalEvidence(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'StoppedSourceTerminalEvidence/v1' &&
+    isString(value.native_actor) &&
+    isString(value.observation_ref) &&
+    isString(value.owner_decision_ref) &&
+    value.terminal === 'partial_stopped'
+  );
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureEntry} */
+function isStoppedSourceCaptureEntry(value) {
+  return isRecord(value) && isString(value.path) && isString(value.sha256) && typeof value.size === 'number';
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureSnapshot} */
+function isStoppedSourceCaptureSnapshot(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'UnverifiedSourceSnapshot/v1' &&
+    Array.isArray(value.entries) &&
+    value.entries.every(isStoppedSourceCaptureEntry)
+  );
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureRequest} */
+function isStoppedSourceCaptureRequest(value) {
+  return isStoppedSourceCaptureRequestContext(value) && isStoppedSourceCaptureRequestEvidence(value);
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & {workspace_id: string, identity: WorkIdentity, attempt: number, expectedWork: StateVersion, expectedLedger: StateVersion, expectedJournal: StateVersion, nativeSessionHandle: string}} */
+function isStoppedSourceCaptureRequestContext(value) {
+  return (
+    isRecord(value) &&
+    isString(value.workspace_id) &&
+    isCaptureStoppedSourceIdentity(value.identity) &&
+    typeof value.attempt === 'number' &&
+    isCaptureStoppedSourceVersion(value.expectedWork) &&
+    isCaptureStoppedSourceVersion(value.expectedLedger) &&
+    isCaptureStoppedSourceVersion(value.expectedJournal) &&
+    isString(value.nativeSessionHandle)
+  );
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCaptureRequest} */
+function isStoppedSourceCaptureRequestEvidence(value) {
+  return (
+    isRecord(value) &&
+    isCaptureStoppedSourceObservation(value.observation) &&
+    isStoppedSourceCaptureTerminalEvidence(value.terminalEvidence) &&
+    isStoppedSourceCaptureSnapshot(value.candidateSnapshot)
+  );
+}
+
+/** @param {unknown} value @param {string} expectedWorkspace @returns {StoppedSourceCaptureRequest} */
+function requireStoppedSourceCaptureRequest(value, expectedWorkspace) {
+  if (!isStoppedSourceCaptureRequest(value) || value.workspace_id !== expectedWorkspace)
+    throw Error('Capture workspace/root binding differs');
+  return value;
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceTerminalRecord} */
+function isStoppedSourceTerminalRecord(value) {
+  return (
+    isRecord(value) &&
+    isString(value.schema) &&
+    isString(value.status) &&
+    isString(value.actor) &&
+    isString(value.action_id) &&
+    (value.issue_id === null || isString(value.issue_id)) &&
+    isString(value.host_attempt_id) &&
+    isString(value.observation_ref)
+  );
+}
+
+/** @param {unknown} value @returns {StoppedSourceTerminalRecord} */
+function requireStoppedSourceTerminalRecord(value) {
+  if (!isStoppedSourceTerminalRecord(value)) throw Error('actual terminal fixture evidence differs');
+  return value;
+}
+
+/** @param {unknown} value @returns {value is {schema: string, action: string, owner_thread_id: string, request_digest: string, candidate_binding: string, source_turn_id: string, status: string, reviews: StoppedSourceCandidateReview[]}} */
+function isStoppedSourceCaptureAuthorization(value) {
+  return (
+    isRecord(value) &&
+    isString(value.schema) &&
+    isString(value.action) &&
+    isString(value.owner_thread_id) &&
+    isString(value.request_digest) &&
+    isString(value.candidate_binding) &&
+    isString(value.source_turn_id) &&
+    isString(value.status) &&
+    isStoppedSourceReviewArray(value.reviews)
+  );
+}
+
+/** @param {unknown} value @returns {{schema: string, action: string, owner_thread_id: string, request_digest: string, candidate_binding: string, source_turn_id: string, status: string, reviews: StoppedSourceCandidateReview[]}} */
+function requireStoppedSourceCaptureAuthorization(value) {
+  if (!isStoppedSourceCaptureAuthorization(value)) throw Error('Capture exact manifest/owner authorization differs');
+  return value;
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCandidateReview} */
+function isStoppedSourceCandidateReview(value) {
+  return (
+    isRecord(value) &&
+    isString(value.actor_id) &&
+    isString(value.history_ref) &&
+    isString(value.tool_call_ref) &&
+    isString(value.verdict) &&
+    isString(value.candidate_binding) &&
+    isString(value.receipt_ref)
+  );
+}
+
+/** @param {unknown} value @returns {value is StoppedSourceCandidateReview[]} */
+function isStoppedSourceReviewArray(value) {
+  return Array.isArray(value) && value.every(isStoppedSourceCandidateReview);
+}
+
+/** @param {unknown} value @returns {value is {schema: string, request_digest: string}} */
+function isStoppedSourceCapturePlan(value) {
+  return isRecord(value) && isString(value.schema) && isString(value.request_digest);
+}
+
+/** @param {string[]} args */
 async function captureStoppedSource(args) {
   const { readFileSync, writeFileSync, realpathSync } = await import('node:fs');
   const { createHash } = await import('node:crypto');
-  const { HostStateStore, openHostStateDatabase, inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
@@ -1612,21 +3338,24 @@ async function captureStoppedSource(args) {
     throw Error(
       'Usage: run.mjs --capture-stopped-source true --mode inspect|plan|apply|resume --project-root ABS --request REL',
     );
-  const mode = args[1],
-    root = realpathSync(args[3]);
+  const mode = requireOption(args[1], '--mode'),
+    root = realpathSync(requireOption(args[3], '--project-root')),
+    requestPath = requireOption(args[5], '--request');
   if (!['inspect', 'plan', 'apply', 'resume'].includes(mode)) throw Error('Capture operation mode invalid');
   const fixture = path.dirname(root) === base && path.basename(root).startsWith('fixture-');
   const config = loadRuntimeConfig(root);
   const databasePath = fixture ? path.join(root, 'fixture.sqlite') : sessionHandoffDatabasePath(root, config);
   const expectedWorkspace = deriveWorkspaceId(config.repository.repository_id, root);
-  const file = path.resolve(root, args[5]),
+  const file = path.resolve(root, requestPath),
     requestRelative = path.relative(root, file);
   if (requestRelative.startsWith('..') || path.isAbsolute(requestRelative) || realpathSync(file) !== file)
     throw Error('Bounded capture request path differs');
   const bytes = readFileSync(file);
   if (bytes.length > 1048576) throw Error('Capture request exceeds bound');
-  const input = JSON.parse(bytes);
-  if (input.workspace_id !== expectedWorkspace) throw Error('Capture workspace/root binding differs');
+  /** @type {unknown} */
+  const decodedInput = JSON.parse(bytes.toString('utf8'));
+  const input = requireStoppedSourceCaptureRequest(decodedInput, expectedWorkspace);
+  /** @type {[string, Buffer][]} */
   let approvedFiles = [];
   function verifyCurrent() {
     for (const [absolute, approved] of approvedFiles)
@@ -1641,7 +3370,10 @@ async function captureStoppedSource(args) {
       throw Error('Terminal observation path differs');
     const terminalBytes = readFileSync(terminalPath);
     if (terminalBytes.length > 65536) throw Error('Terminal evidence exceeds bound');
-    const terminal = JSON.parse(terminalBytes);
+    /** @type {unknown} */
+    /** @type {unknown} */
+    const decodedTerminal = JSON.parse(terminalBytes.toString('utf8'));
+    const terminal = requireStoppedSourceTerminalRecord(decodedTerminal);
     if (
       !fixture &&
       (terminal.native_status !== 'completed' ||
@@ -1672,10 +3404,10 @@ async function captureStoppedSource(args) {
     }
   }
   verifyCurrent();
-  const workspace = inspectHostWorkspaceDatabase(databasePath, input.workspace_id);
+  const workspace = inspectCliHostWorkspaceDatabase(root, databasePath, input.workspace_id);
   const selected = workspace.work.find((row) => row.identity.work_id === input.identity.work_id);
   if (!selected) throw Error('fixture exact work missing');
-  const { workspace_id, ...operation } = input;
+  const { workspace_id: _workspaceId, ...operation } = input;
   const planPath = fixture
     ? path.join(root, 'capture-plan.json')
     : path.join(path.dirname(file), 'capture-plan-' + operation.identity.work_id + '.json');
@@ -1687,24 +3419,28 @@ async function captureStoppedSource(args) {
       throw Error('Capture authorization path differs');
     const bytes = readFileSync(authorizationPath);
     if (bytes.length > 65536) throw Error('Capture authorization exceeds bound');
-    const authorization = JSON.parse(bytes);
+    /** @type {unknown} */
+    const decodedAuthorization = JSON.parse(bytes.toString('utf8'));
+    const authorization = requireStoppedSourceCaptureAuthorization(decodedAuthorization);
     const { developmentControllerBinding } = await import('./development-controller.mjs');
     const candidateBinding = developmentControllerBinding(bundleRoot);
+    /** @type {unknown} */
+    const currentTerminal = JSON.parse(
+      readFileSync(path.resolve(root, operation.terminalEvidence.observation_ref), 'utf8'),
+    );
+    const checkedCurrentTerminal = requireStoppedSourceTerminalRecord(currentTerminal);
     if (
       authorization.schema !== 'StoppedSourceCaptureAuthorization/v1' ||
       authorization.action !== 'source.capture-failed-and-release' ||
       authorization.owner_thread_id !== operation.nativeSessionHandle ||
       authorization.request_digest !== canonicalJsonDigest(operation) ||
       authorization.candidate_binding !== candidateBinding ||
-      authorization.source_turn_id !==
-        JSON.parse(readFileSync(path.resolve(root, operation.terminalEvidence.observation_ref), 'utf8'))
-          .source_turn_id ||
+      authorization.source_turn_id !== checkedCurrentTerminal.source_turn_id ||
       authorization.status !== 'approved_exact_manifest'
     )
       throw Error('Capture exact manifest/owner authorization differs');
     const reviews = authorization.reviews;
     if (
-      !Array.isArray(reviews) ||
       reviews.length !== 3 ||
       new Set(reviews.map((r) => r.actor_id)).size !== 3 ||
       new Set(reviews.map((r) => r.history_ref)).size !== 3 ||
@@ -1730,8 +3466,10 @@ async function captureStoppedSource(args) {
         throw Error('Capture review receipt path differs');
       const receiptBytes = readFileSync(receiptPath);
       if (receiptBytes.length > 65536) throw Error('Capture review receipt exceeds bound');
-      const receipt = JSON.parse(receiptBytes);
+      /** @type {unknown} */
+      const receipt = JSON.parse(receiptBytes.toString('utf8'));
       if (
+        !isRecord(receipt) ||
         receipt.schema !== 'StoppedSourceCandidateReview/v1' ||
         receipt.verdict !== 'pass' ||
         receipt.candidate_binding !== candidateBinding ||
@@ -1767,13 +3505,18 @@ async function captureStoppedSource(args) {
       request_digest: plan.request_digest,
     };
   } else {
+    /** @type {unknown} */
     const plan = JSON.parse(readFileSync(planPath, 'utf8'));
     await verifyAuthorization();
-    if (plan.schema !== 'StoppedSourceCapturePlan/v1' || plan.request_digest !== canonicalJsonDigest(operation))
+    if (
+      !isStoppedSourceCapturePlan(plan) ||
+      plan.schema !== 'StoppedSourceCapturePlan/v1' ||
+      plan.request_digest !== canonicalJsonDigest(operation)
+    )
       throw Error('frozen capture plan differs');
-    const database = openHostStateDatabase(databasePath);
+    const database = openCliHostStateDatabase(root, databasePath, expectedWorkspace);
     try {
-      const store = new HostStateStore(database, workspace_id);
+      const store = createCliHostStateStore(database, expectedWorkspace);
       const result = store.captureStoppedSourceObservation({ ...operation, verifyCurrent });
       return {
         status: 'captured_partial_source_released',
@@ -1783,11 +3526,12 @@ async function captureStoppedSource(args) {
         canonical_acceptance: false,
       };
     } finally {
-      database.close(true);
+      closeWorkspaceDatabaseWithAdmission(database);
     }
   }
 }
 
+/** @param {string[]} args */
 async function recoverUnpreparedWork(args) {
   if (
     args.length !== 8 ||
@@ -1797,32 +3541,28 @@ async function recoverUnpreparedWork(args) {
     args[6] !== '--request'
   )
     throw Error('Unprepared recovery requires mode, exact root, original owner handle and request');
-  const mode = args[1],
-    root = realpathSync(args[3]),
-    operatorHandle = args[5];
+  const mode = requireOption(args[1], '--mode'),
+    root = realpathSync(requireOption(args[3], '--project-root')),
+    operatorHandle = requireOption(args[5], '--native-session-handle');
   if (!['inspect', 'apply'].includes(mode)) throw Error('Unprepared recovery mode invalid');
-  const { Database } = await import('bun:sqlite');
   const { loadRuntimeConfig, validateRuntimeConfigRepairTargetBytes } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { loadProjectSetContext } = await import('../src/config/project-context.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
-  const { HostStateStore } = await import('../src/host-state.ts');
   const access = requireSafeRepositoryAccess(root),
     current = loadRuntimeConfig(root),
-    bytes = access.readBytes(args[7], 'unprepared recovery request');
+    bytes = access.readBytes(requireOption(args[7], '--request'), 'unprepared recovery request');
   if (!bytes.length || bytes.length > 262144) throw Error('Unprepared recovery request exceeds bound');
+  /** @type {unknown} */
   const input = JSON.parse(bytes.toString('utf8'));
   if (
-    !exactKeys(
+    !isUnpreparedRecoveryEnvelope(
       input,
       mode === 'inspect'
         ? ['identity', 'attempt', 'baselinePath', 'decisionPointer']
         : ['identity', 'attempt', 'baselinePath', 'decisionPointer', 'request'],
-    ) ||
-    !exactKeys(input.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) ||
-    typeof input.baselinePath !== 'string' ||
-    typeof input.decisionPointer !== 'string'
+    )
   )
     throw Error('Unprepared recovery request shape differs');
   if (
@@ -1858,9 +3598,14 @@ async function recoverUnpreparedWork(args) {
     before = lstatSync(file);
   if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1)
     throw Error('Unprepared recovery Host path unsafe');
-  const database = new Database(file, { readonly: mode === 'inspect', strict: true });
+  const database = openCliWorkspaceDatabase(
+    root,
+    file,
+    deriveWorkspaceId(project.repository_id, root),
+    mode === 'inspect',
+  );
   try {
-    const store = new HostStateStore(
+    const store = createCliHostStateStore(
       database,
       deriveWorkspaceId(project.repository_id, root),
       undefined,
@@ -1886,7 +3631,9 @@ async function recoverUnpreparedWork(args) {
         runtime_acceptance: false,
       };
     }
-    const result = store.releaseUnpreparedWork(context, input.request);
+    const supplied = store.inspectUnpreparedWorkRecovery(context);
+    assertRetainedUnpreparedRecoveryRequest(supplied, input.request);
+    const result = store.releaseUnpreparedWork(context, supplied);
     return {
       status: 'unprepared_execution_released',
       work_version: result.workVersion,
@@ -1897,23 +3644,316 @@ async function recoverUnpreparedWork(args) {
       runtime_acceptance: false,
     };
   } finally {
-    database.close(true);
-    const after = lstatSync(file);
-    if (
-      !after.isFile() ||
-      after.isSymbolicLink() ||
-      after.nlink !== 1 ||
-      before.dev !== after.dev ||
-      before.ino !== after.ino
-    )
-      throw Error('Unprepared recovery Host substituted');
+    closeWorkspaceDatabaseWithAdmission(database);
+    assertUnpreparedRecoveryHostStable(file, before);
   }
 }
 
+/** @typedef {Record<string, unknown> & {id: string, type: string}} RetiredSourceItem */
+/** @typedef {{path: string, diff: {text: string, truncated: boolean}}} RetiredSourceChange */
+/** @typedef {Record<string, unknown> & {request: Record<string, unknown> & {action_id: string, stage_id: string, scope_digest: string}, action: Record<string, unknown> & {action_id: string, stage_id: string, scope_digest: string}, development_packet: Record<string, unknown> & {schema: 'DevelopmentTaskPacket/v1', work_item_id: string, attempt: number, packet_id: string, digest: string}, issue_id: string, host_attempt_id: string}} RetiredSourceIssuedAction */
+/** @typedef {{path: string, event_ref: string, kind: 'command' | 'patch' | 'file_change', evidence_sha256: string, patch_ref?: string}} RetiredSourceEffect */
+/** @typedef {{sourceThreadId: string, sourceTurnId: string, actionId: string, issueId: string, hostAttemptId: string, workId: string, attempt: number, sourcePaths: string[]}} RetiredSourceExpected */
+/** @typedef {Record<string, unknown> & {schema: 'RetiredSourceCapture/v1', workspace_id: string, operatorHandle: string, nativeTurnEvidenceRef: string, identity: WorkIdentity, attempt: number, actionId: string, issueId: string, expectedWork: StateVersion, expectedLedger: StateVersion, expectedJournal: StateVersion, expectedMaintenanceGeneration: number, retirementOperationId: string, retirementClaimId: string, observation: Record<string, unknown> & {host_attempt_id: string}, terminalEvidence: import('../src/host-state.ts').RetiredSourceCaptureTerminalEvidence, candidateSnapshot: import('../src/host-state.ts').RetiredSourceCaptureRequest['candidateSnapshot']}} RetiredSourceCaptureEnvelope */
+
+/** @param {unknown} value @returns {value is RetiredSourceCaptureEnvelope} */
+function isRetiredSourceCaptureEnvelope(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'RetiredSourceCapture/v1' &&
+    isRetiredSourceCaptureAuthority(value) &&
+    isRetiredSourceCaptureOperation(value)
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function isRetiredSourceCaptureAuthority(value) {
+  return (
+    typeof value.workspace_id === 'string' &&
+    typeof value.operatorHandle === 'string' &&
+    typeof value.nativeTurnEvidenceRef === 'string' &&
+    isStateVersion(value.expectedWork) &&
+    isStateVersion(value.expectedLedger) &&
+    isStateVersion(value.expectedJournal) &&
+    typeof value.expectedMaintenanceGeneration === 'number' &&
+    typeof value.retirementOperationId === 'string' &&
+    typeof value.retirementClaimId === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {value is RetiredSourceCaptureEnvelope} */
+function isRetiredSourceCaptureOperation(value) {
+  return (
+    isWorkIdentity(value.identity) &&
+    typeof value.attempt === 'number' &&
+    Number.isSafeInteger(value.attempt) &&
+    value.attempt > 0 &&
+    typeof value.actionId === 'string' &&
+    typeof value.issueId === 'string' &&
+    isRetiredSourceCaptureObservation(value.observation) &&
+    isRetiredSourceCaptureTerminal(value.terminalEvidence) &&
+    isRetiredSourceCaptureSnapshot(value.candidateSnapshot)
+  );
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & {host_attempt_id: string}} */
+function isRetiredSourceCaptureObservation(value) {
+  return isRecord(value) && typeof value.host_attempt_id === 'string';
+}
+
+/** @param {unknown} value @returns {value is import('../src/host-state.ts').RetiredSourceCaptureTerminalEvidence} */
+function isRetiredSourceCaptureTerminal(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'RetiredSourceTerminalEvidence/v1' &&
+    isRetiredSourceTerminalTurn(value) &&
+    isRetiredSourceTerminalBindings(value)
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function isRetiredSourceTerminalTurn(value) {
+  return (
+    typeof value.source_thread_id === 'string' &&
+    typeof value.source_turn_id === 'string' &&
+    typeof value.source_thread_status === 'string' &&
+    value.source_turn_status === 'interrupted' &&
+    typeof value.operator_thread_id === 'string' &&
+    typeof value.original_actor_id === 'string' &&
+    value.final_message_id === null
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function isRetiredSourceTerminalBindings(value) {
+  return (
+    typeof value.action_id === 'string' &&
+    typeof value.issue_id === 'string' &&
+    typeof value.host_attempt_id === 'string' &&
+    isStringArray(value.active_source_writer_ids) &&
+    isRetiredSourceTerminalCommands(value.observed_commands) &&
+    isRetiredSourceTerminalToolRecords(value.original_tool_records) &&
+    isRetiredSourceLaterGrants(value.later_grants)
+  );
+}
+
+/** @param {unknown} value @returns {value is import('../src/host-state.ts').RetiredSourceCaptureTerminalEvidence['observed_commands']} */
+function isRetiredSourceTerminalCommands(value) {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (entry) =>
+        isRecord(entry) &&
+        typeof entry.ref === 'string' &&
+        isRetiredSourceCommandStatus(entry.status) &&
+        typeof entry.exit_code === 'number' &&
+        Number.isSafeInteger(entry.exit_code) &&
+        typeof entry.command_sha256 === 'string' &&
+        (typeof entry.output_sha256 === 'string' || entry.output_sha256 === null) &&
+        typeof entry.output_present === 'boolean' &&
+        typeof entry.output_truncated === 'boolean',
+    )
+  );
+}
+
+/** @param {unknown} value @returns {value is 'completed' | 'failed'} */
+function isRetiredSourceCommandStatus(value) {
+  return value === 'completed' || value === 'failed';
+}
+
+/** @param {unknown} value @returns {value is import('../src/host-state.ts').RetiredSourceCaptureTerminalEvidence['original_tool_records']} */
+function isRetiredSourceTerminalToolRecords(value) {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (entry) =>
+        isRecord(entry) &&
+        typeof entry.call_ref === 'string' &&
+        typeof entry.actor_id === 'string' &&
+        typeof entry.action_id === 'string' &&
+        typeof entry.issue_id === 'string' &&
+        typeof entry.host_attempt_id === 'string' &&
+        entry.status === 'completed' &&
+        isStringArray(entry.changed_paths),
+    )
+  );
+}
+
+/** @param {unknown} value @returns {value is import('../src/host-state.ts').RetiredSourceCaptureTerminalEvidence['later_grants']} */
+function isRetiredSourceLaterGrants(value) {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (entry) =>
+        isRecord(entry) &&
+        typeof entry.work_id === 'string' &&
+        typeof entry.ticket_id === 'string' &&
+        typeof entry.claim_id === 'string' &&
+        typeof entry.actor_id === 'string' &&
+        typeof entry.action_id === 'string' &&
+        typeof entry.issue_id === 'string' &&
+        typeof entry.host_attempt_id === 'string' &&
+        isStringArray(entry.changed_paths) &&
+        typeof entry.evidence_ref === 'string',
+    )
+  );
+}
+
+/** @param {unknown} value @returns {value is import('../src/host-state.ts').RetiredSourceCaptureRequest['candidateSnapshot']} */
+function isRetiredSourceCaptureSnapshot(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'UnverifiedSourceSnapshot/v1' &&
+    Array.isArray(value.entries) &&
+    value.entries.every(
+      (entry) =>
+        isRecord(entry) &&
+        typeof entry.path === 'string' &&
+        typeof entry.sha256 === 'string' &&
+        typeof entry.size === 'number' &&
+        Number.isSafeInteger(entry.size) &&
+        entry.size >= 0,
+    )
+  );
+}
+
+/** @param {unknown} value @returns {value is RetiredSourceItem} */
+function isRetiredSourceItem(value) {
+  return isRecord(value) && typeof value.id === 'string' && typeof value.type === 'string';
+}
+
+/** @param {unknown} value @returns {value is RetiredSourceChange} */
+function isRetiredSourceChange(value) {
+  return (
+    isRecord(value) &&
+    typeof value.path === 'string' &&
+    isRecord(value.diff) &&
+    typeof value.diff.text === 'string' &&
+    typeof value.diff.truncated === 'boolean'
+  );
+}
+
+/** @param {unknown} value @returns {value is RetiredSourceIssuedAction} */
+function isRetiredSourceIssuedAction(value) {
+  return (
+    isRecord(value) && hasRetiredSourceActionBinding(value) && isRetiredSourcePacketBinding(value.development_packet)
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {value is RetiredSourceIssuedAction} */
+function hasRetiredSourceActionBinding(value) {
+  return (
+    isRecord(value.request) &&
+    isRecord(value.action) &&
+    typeof value.request.action_id === 'string' &&
+    typeof value.request.stage_id === 'string' &&
+    typeof value.request.scope_digest === 'string' &&
+    typeof value.action.action_id === 'string' &&
+    typeof value.action.stage_id === 'string' &&
+    typeof value.action.scope_digest === 'string' &&
+    typeof value.issue_id === 'string' &&
+    typeof value.host_attempt_id === 'string'
+  );
+}
+
+/** @param {unknown} value @returns {value is RetiredSourceIssuedAction['development_packet']} */
+function isRetiredSourcePacketBinding(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'DevelopmentTaskPacket/v1' &&
+    typeof value.work_item_id === 'string' &&
+    typeof value.attempt === 'number' &&
+    Number.isSafeInteger(value.attempt) &&
+    typeof value.packet_id === 'string' &&
+    typeof value.digest === 'string'
+  );
+}
+
+/** @param {unknown} value @returns {value is import('../src/host-state.ts').InterruptedSourceRetirementEvidence} */
+function isInterruptedSourceRetirementEvidence(value) {
+  return (
+    exactKeys(value, [
+      'schema',
+      'source_thread_id',
+      'source_thread_status',
+      'read_thread_ref',
+      'list_agents_ref',
+      'active_source_writer_ids',
+    ]) &&
+    value.schema === 'InterruptedSourceRetirementEvidence/v1' &&
+    typeof value.source_thread_id === 'string' &&
+    value.source_thread_status === 'interrupted' &&
+    typeof value.read_thread_ref === 'string' &&
+    typeof value.list_agents_ref === 'string' &&
+    Array.isArray(value.active_source_writer_ids) &&
+    value.active_source_writer_ids.every((writerId) => typeof writerId === 'string')
+  );
+}
+
+/** @typedef {Record<string, unknown> & {identity: WorkIdentity, attempt: number}} InterruptedSourceRetirementInspection */
+
+/** @param {unknown} value @returns {value is InterruptedSourceRetirementInspection} */
+function isInterruptedSourceRetirementInspection(value) {
+  return (
+    isRecord(value) &&
+    exactKeys(value, ['identity', 'attempt']) &&
+    isWorkIdentity(value.identity) &&
+    typeof value.attempt === 'number' &&
+    Number.isSafeInteger(value.attempt) &&
+    value.attempt >= 1
+  );
+}
+
+/** @param {Record<string, unknown>} value @returns {boolean} */
+function isInterruptedSourceRetirementCas(value) {
+  return (
+    isStateVersion(value.expectedWork) &&
+    isStateVersion(value.expectedLedger) &&
+    isStateVersion(value.expectedJournal) &&
+    typeof value.expectedMaintenanceGeneration === 'number' &&
+    Number.isSafeInteger(value.expectedMaintenanceGeneration) &&
+    value.expectedMaintenanceGeneration >= 0 &&
+    typeof value.decisionPointer === 'string' &&
+    isInterruptedSourceRetirementEvidence(value.evidence)
+  );
+}
+
+/** @typedef {Record<string, unknown> & {identity: WorkIdentity, attempt: number, actionId: string, issueId: string, expectedWork: StateVersion, expectedLedger: StateVersion, expectedJournal: StateVersion, expectedMaintenanceGeneration: number, decisionPointer: string, evidence: import('../src/host-state.ts').InterruptedSourceRetirementEvidence}} InterruptedSourceRetirementInput */
+
+/** @param {unknown} value @returns {value is InterruptedSourceRetirementInput} */
+function isInterruptedSourceRetirementInput(value) {
+  return (
+    isRecord(value) &&
+    exactKeys(value, [
+      'identity',
+      'attempt',
+      'actionId',
+      'issueId',
+      'expectedWork',
+      'expectedLedger',
+      'expectedJournal',
+      'expectedMaintenanceGeneration',
+      'decisionPointer',
+      'evidence',
+    ]) &&
+    isWorkIdentity(value.identity) &&
+    typeof value.attempt === 'number' &&
+    Number.isSafeInteger(value.attempt) &&
+    value.attempt >= 1 &&
+    typeof value.actionId === 'string' &&
+    typeof value.issueId === 'string' &&
+    isInterruptedSourceRetirementCas(value)
+  );
+}
+
+/** @param {string} root @param {RetiredSourceItem[]} items @param {string[]} sourcePaths @returns {{effects: RetiredSourceEffect[], retained: {path: string, sha256: string}[]}} */
 function retiredSourceEffects(root, items, sourcePaths) {
   const scope = new Set(sourcePaths),
+    /** @type {RetiredSourceEffect[]} */
     effects = [],
+    /** @type {{path: string, sha256: string}[]} */
     retained = [];
+  /** @param {RetiredSourceItem} event @param {string} sourcePath @param {'command' | 'patch' | 'file_change'} kind @param {string} body @param {string | undefined} patchRef */
   const add = (event, sourcePath, kind, body, patchRef) => {
     const relative = path.isAbsolute(sourcePath) ? path.relative(root, sourcePath).replaceAll('\\', '/') : sourcePath;
     if (relative.startsWith('.tmp/') || relative.startsWith('.agent/')) return;
@@ -1928,84 +3968,305 @@ function retiredSourceEffects(root, items, sourcePaths) {
   };
   for (const event of items) {
     if (event.type === 'fileChange') {
-      for (const change of event.changes) add(event, change.path, 'file_change', change.diff.text);
+      addRetiredSourceFileEffects(event, add);
       continue;
     }
     if (event.type !== 'commandExecution') continue;
     const command = event.command;
-    for (const match of command.matchAll(/git apply\b([^;\n]*)/g)) {
-      if (/--(?:check|stat|numstat|summary)\b/.test(match[1])) continue;
-      const patchRefs = [...match[1].matchAll(/\.tmp\/[A-Za-z0-9_./-]+\.patch/g)].map((value) => value[0]);
-      if (event.exitCode !== 0 || patchRefs.length !== 1) throw Error('Retired-source patch outcome is unresolved');
-      const patchRef = patchRefs[0],
-        absolute = path.resolve(root, patchRef),
-        metadata = lstatSync(absolute);
-      if (
-        realpathSync(absolute) !== absolute ||
-        !metadata.isFile() ||
-        metadata.isSymbolicLink() ||
-        metadata.nlink !== 1 ||
-        metadata.size > 5 * 1024 * 1024
-      )
-        throw Error('Retired-source referenced patch is unsafe');
-      const bytes = readFileSync(absolute),
-        body = bytes.toString('utf8');
-      const excluded = [...match[1].matchAll(/--exclude=['"]([^'"]+)['"]/g)].map((value) => value[1]);
-      const paths = [...body.matchAll(/^diff --git a\/(\S+) b\/\1\r?$/gm)].map((value) => value[1]);
-      if (!paths.length) throw Error('Retired-source patch paths are missing');
-      for (const value of paths.filter((value) => !excluded.includes(value)))
-        add(event, value, 'patch', body, patchRef);
-      retained.push({ path: patchRef, sha256: digest(bytes) });
-    }
-    if (
-      !/\b(?:write_text|write_bytes|writeFileSync|Set-Content|Add-Content|Out-File)\b/.test(command) &&
-      !/\.open\(['"](?:a|w)/.test(command)
-    )
-      continue;
-    const paths = [];
-    for (const match of command.matchAll(
-      /\b(\w+)\s*=\s*Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)/g,
-    ))
-      if (new RegExp('\\b' + match[1] + '\\.(?:write_text|write_bytes)\\(').test(command)) paths.push(match[2]);
-    for (const match of command.matchAll(
-      /with Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)\.open\(['"](?:a|w)/g,
-    ))
-      paths.push(match[1]);
-    for (const match of command.matchAll(
-      /Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)\.(?:write_text|write_bytes)\(/g,
-    ))
-      paths.push(match[1]);
-    for (const match of command.matchAll(
-      /with \(root\/['"]((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)['"]\)\.open\(['"](?:a|w)/g,
-    ))
-      paths.push(match[1]);
-    if (
-      /def edit\(file,transform\):/.test(command) &&
-      /p=root\/file/.test(command) &&
-      /p\.write_bytes\(/.test(command)
-    ) {
-      const declared = [...command.matchAll(/\bedit\(['"]((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)['"]/g)].map(
-        (match) => match[1],
-      );
-      let report;
-      try {
-        report = JSON.parse(event.output?.text ?? '');
-      } catch {
-        throw Error('Retired-source document edit result is unresolved');
-      }
-      if (!Array.isArray(report.updated) || report.updated.some((value) => !declared.includes(value)))
-        throw Error('Retired-source document edit paths differ from the recorded command');
-      paths.push(...report.updated);
-    }
-    // Other Source-writing shell forms need an explicit observable path, not inferred execution.
-    if (!paths.length && /(?:packages\/agent|docs)\//.test(command))
-      throw Error('Retired-source command mutation paths are unresolved: ' + event.id);
-    if (paths.length && event.exitCode !== 0) throw Error('Retired-source command effect is unresolved');
-    for (const value of new Set(paths)) add(event, value, 'command', command);
+    if (typeof command !== 'string' || typeof event.exitCode !== 'number')
+      throw Error('Retired-source command outcome is invalid');
+    addRetiredSourcePatchEffects(root, event, command, add, retained);
+    addRetiredSourceCommandEffects(event, command, add);
   }
   return { effects, retained };
 }
 
+/** @param {RetiredSourceItem} event @param {(event: RetiredSourceItem, sourcePath: string, kind: 'command' | 'patch' | 'file_change', body: string, patchRef: string | undefined) => void} add @returns {void} */
+function addRetiredSourceFileEffects(event, add) {
+  if (!Array.isArray(event.changes) || !event.changes.every(isRetiredSourceChange))
+    throw Error('Retired-source file-change event is invalid');
+  for (const change of event.changes) {
+    if (isRetiredSourceChange(change)) add(event, change.path, 'file_change', change.diff.text, undefined);
+  }
+}
+
+/** @param {string} root @param {RetiredSourceItem} event @param {string} command @param {(event: RetiredSourceItem, sourcePath: string, kind: 'command' | 'patch' | 'file_change', body: string, patchRef: string | undefined) => void} add @param {{path: string, sha256: string}[]} retained @returns {void} */
+function addRetiredSourcePatchEffects(root, event, command, add, retained) {
+  for (const match of command.matchAll(/git apply\b([^;\n]*)/g)) {
+    const commandArguments = match[1] ?? '';
+    if (/--(?:check|stat|numstat|summary)\b/.test(commandArguments)) continue;
+    const patchRefs = [...commandArguments.matchAll(/\.tmp\/[A-Za-z0-9_./-]+\.patch/g)].flatMap((value) =>
+      value[0] ? [value[0]] : [],
+    );
+    if (event.exitCode !== 0 || patchRefs.length !== 1) throw Error('Retired-source patch outcome is unresolved');
+    const patchRef = patchRefs[0];
+    if (!patchRef) throw Error('Retired-source patch reference is missing');
+    const absolute = path.resolve(root, patchRef);
+    const bytes = readRetiredSourcePatchBytes(absolute),
+      body = bytes.toString('utf8');
+    const excluded = [...commandArguments.matchAll(/--exclude=['"]([^'"]+)['"]/g)].flatMap((value) =>
+      value[1] ? [value[1]] : [],
+    );
+    const paths = retiredSourcePatchPaths(body);
+    if (!paths.length) throw Error('Retired-source patch paths are missing');
+    for (const value of paths.filter((value) => !excluded.includes(value))) add(event, value, 'patch', body, patchRef);
+    retained.push({ path: patchRef, sha256: digest(bytes) });
+  }
+}
+
+/** @param {string} absolute @returns {Buffer} */
+function readRetiredSourcePatchBytes(absolute) {
+  const metadata = lstatSync(absolute);
+  if (
+    realpathSync(absolute) !== absolute ||
+    !metadata.isFile() ||
+    metadata.isSymbolicLink() ||
+    metadata.nlink !== 1 ||
+    metadata.size > 5 * 1024 * 1024
+  )
+    throw Error('Retired-source referenced patch is unsafe');
+  return readFileSync(absolute);
+}
+
+/** @param {string} body @returns {string[]} */
+function retiredSourcePatchPaths(body) {
+  return [...body.matchAll(/^diff --git a\/(\S+) b\/\1\r?$/gm)].flatMap((value) => (value[1] ? [value[1]] : []));
+}
+
+/** @param {RetiredSourceItem} event @param {string} command @param {(event: RetiredSourceItem, sourcePath: string, kind: 'command' | 'patch' | 'file_change', body: string, patchRef: string | undefined) => void} add @returns {void} */
+function addRetiredSourceCommandEffects(event, command, add) {
+  if (!hasRetiredSourceWriteSyntax(command)) return;
+  const paths = extractRetiredSourceWritePaths(command);
+  if (hasRetiredSourceEditHelper(command)) paths.push(...retiredSourceDeclaredEditPaths(event, command));
+  if (!paths.length && /(?:packages\/agent|docs)\//.test(command))
+    throw Error('Retired-source command mutation paths are unresolved: ' + event.id);
+  if (paths.length && event.exitCode !== 0) throw Error('Retired-source command effect is unresolved');
+  for (const value of new Set(paths)) add(event, value, 'command', command, undefined);
+}
+
+/** @param {string} command @returns {boolean} */
+function hasRetiredSourceWriteSyntax(command) {
+  return (
+    /\b(?:write_text|write_bytes|writeFileSync|Set-Content|Add-Content|Out-File)\b/.test(command) ||
+    /\.open\(['"](?:a|w)/.test(command)
+  );
+}
+
+/** @param {string} command @returns {string[]} */
+function extractRetiredSourceWritePaths(command) {
+  /** @type {string[]} */
+  const paths = [];
+  const patterns = [
+    /\b(\w+)\s*=\s*Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)/g,
+    /with Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)\.open\(['"](?:a|w)/g,
+    /Path\([^)]*?((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)[^)]*\)\.(?:write_text|write_bytes)\(/g,
+    /with \(root\/['"]((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)['"]\)\.open\(['"](?:a|w)/g,
+  ];
+  for (const [index, pattern] of patterns.entries()) {
+    for (const match of command.matchAll(pattern)) {
+      const candidate = match[index === 0 ? 2 : 1];
+      if (!candidate) continue;
+      if (index !== 0 || new RegExp('\\b' + match[1] + '\\.(?:write_text|write_bytes)\\(').test(command))
+        paths.push(candidate);
+    }
+  }
+  return paths;
+}
+
+/** @param {string} command @returns {boolean} */
+function hasRetiredSourceEditHelper(command) {
+  return (
+    /def edit\(file,transform\):/.test(command) && /p=root\/file/.test(command) && /p\.write_bytes\(/.test(command)
+  );
+}
+
+/** @param {RetiredSourceItem} event @param {string} command @returns {string[]} */
+function retiredSourceDeclaredEditPaths(event, command) {
+  const declared = [...command.matchAll(/\bedit\(['"]((?:packages\/agent|docs)\/[A-Za-z0-9_./-]+)['"]/g)].flatMap(
+    (match) => (match[1] ? [match[1]] : []),
+  );
+  const output = isRecord(event.output) && typeof event.output.text === 'string' ? event.output.text : '';
+  let report;
+  try {
+    report = parseJsonUnknown(output);
+  } catch {
+    throw Error('Retired-source document edit result is unresolved');
+  }
+  if (!isRecord(report) || !isStringArray(report.updated) || report.updated.some((value) => !declared.includes(value)))
+    throw Error('Retired-source document edit paths differ from the recorded command');
+  return report.updated;
+}
+
+/** @param {Record<string, unknown>} artifact @returns {boolean} */
+function isRetiredSourceReadArtifact(artifact) {
+  return (
+    (exactKeys(artifact, ['schema', 'data']) && artifact.schema === 'RetiredSourceTurnRead/v1') ||
+    (exactKeys(artifact, ['schema', 'host', 'tool', 'max_output_chars_per_item', 'data']) &&
+      artifact.schema === 'CoreNativeIssuedTurnRead/v1' &&
+      typeof artifact.host === 'string' &&
+      artifact.tool === 'mcp__codex_app__read_thread')
+  );
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & {thread: Record<string, unknown>, turns: unknown[]}} */
+function hasRetiredSourceReadData(value) {
+  return isRecord(value) && isRecord(value.thread) && isUnknownArray(value.turns) && value.turns.length === 1;
+}
+
+/** @param {unknown} value @returns {value is Record<string, unknown> & {items: unknown[]}} */
+function hasRetiredSourceTurnItems(value) {
+  return isRecord(value) && isUnknownArray(value.items);
+}
+
+/** @param {unknown} artifactValue @param {RetiredSourceExpected} expected @returns {{threadId: string, threadStatus: string, turnId: string, turnStatus: 'interrupted', items: RetiredSourceItem[]}} */
+function parseRetiredSourceNativeTurnPayload(artifactValue, expected) {
+  if (
+    !isRecord(artifactValue) ||
+    !isRetiredSourceReadArtifact(artifactValue) ||
+    !hasRetiredSourceReadData(artifactValue.data)
+  )
+    throw Error('Retired-source native evidence contract differs');
+  const thread = artifactValue.data.thread,
+    turn = artifactValue.data.turns[0];
+  if (!hasRetiredSourceTurnItems(turn)) throw Error('Retired-source turn is invalid');
+  const items = turn.items.map((value) => {
+    if (!isRetiredSourceItem(value)) throw Error('Retired-source thread item is invalid');
+    return value;
+  });
+  const binding = assertRetiredSourceTurnBinding(thread, turn, items, expected);
+  return { ...binding, items };
+}
+
+/** @param {Record<string, unknown>} thread @param {Record<string, unknown>} turn @param {RetiredSourceItem[]} items @param {RetiredSourceExpected} expected @returns {{threadId: string, threadStatus: string, turnId: string, turnStatus: 'interrupted'}} */
+function assertRetiredSourceTurnBinding(thread, turn, items, expected) {
+  if (
+    thread.id !== expected.sourceThreadId ||
+    !isRecord(thread.status) ||
+    typeof thread.status.type !== 'string' ||
+    !thread.status.type ||
+    turn.id !== expected.sourceTurnId ||
+    turn.status !== 'interrupted' ||
+    items.length > 4096 ||
+    items.some((item) => item.type === 'agentMessage' && item.phase === 'final')
+  )
+    throw Error('Retired-source original thread or interrupted turn differs');
+  return { threadId: thread.id, threadStatus: thread.status.type, turnId: turn.id, turnStatus: 'interrupted' };
+}
+
+/** @param {unknown} value @param {number} depth @param {unknown[]} issued @param {unknown[]} waves @returns {void} */
+function collectRetiredSourceThreadOutput(value, depth, issued, waves) {
+  if (depth > 5 || value === null || value === undefined) return;
+  if (typeof value === 'string') return collectRetiredSourceJsonText(value, depth, issued, waves);
+  if (isUnknownArray(value)) {
+    for (const entry of value) collectRetiredSourceThreadOutput(entry, depth + 1, issued, waves);
+    return;
+  }
+  if (isRecord(value)) collectRetiredSourceOutputRecord(value, depth, issued, waves);
+}
+
+/** @param {string} value @param {number} depth @param {unknown[]} issued @param {unknown[]} waves @returns {void} */
+function collectRetiredSourceJsonText(value, depth, issued, waves) {
+  if (value.length > 256 * 1024 || !/^[\s]*[[{]/.test(value)) return;
+  try {
+    collectRetiredSourceThreadOutput(parseJsonUnknown(value), depth + 1, issued, waves);
+  } catch {
+    /* command output need not be JSON */
+  }
+}
+
+/** @param {Record<string, unknown>} value @param {number} depth @param {unknown[]} issued @param {unknown[]} waves @returns {void} */
+function collectRetiredSourceOutputRecord(value, depth, issued, waves) {
+  if (value.schema === 'VidaAgentRunResult/v1' && isUnknownArray(value.issued_actions))
+    for (const action of value.issued_actions) issued.push(action);
+  if (value.status === 'wave_issued' && typeof value.issue_id === 'string') waves.push(value);
+  if (typeof value.stdout === 'string') collectRetiredSourceThreadOutput(value.stdout, depth + 1, issued, waves);
+}
+
+/** @param {RetiredSourceItem} item @param {Set<string>} commandIds @param {(value: unknown, depth?: number) => void} collect @returns {import('../src/host-state.ts').RetiredSourceCaptureTerminalEvidence['observed_commands'][number]} */
+function readRetiredSourceCommand(item, commandIds, collect) {
+  const itemId = item.id,
+    command = item.command,
+    status = item.status,
+    exitCode = item.exitCode;
+  if (
+    typeof itemId !== 'string' ||
+    commandIds.has(itemId) ||
+    typeof command !== 'string' ||
+    !isRetiredSourceCommandStatus(status) ||
+    typeof exitCode !== 'number' ||
+    !Number.isSafeInteger(exitCode)
+  )
+    throw Error('Retired-source command inventory has a duplicate or unresolved outcome');
+  commandIds.add(itemId);
+  const { output, present, truncated } = readRetiredSourceCommandOutput(item);
+  if (present) collect(output);
+  assertRetiredSourceCommandOutputIsSafe(truncated, command);
+  return {
+    ref: itemId,
+    status,
+    exit_code: exitCode,
+    command_sha256: digest(Buffer.from(command, 'utf8')),
+    output_sha256: present ? digest(Buffer.from(output, 'utf8')) : null,
+    output_present: present,
+    output_truncated: truncated,
+  };
+}
+
+/** @param {RetiredSourceItem} item @returns {{output: string, present: boolean, truncated: boolean}} */
+function readRetiredSourceCommandOutput(item) {
+  const outputRecord = isRecord(item.output) ? item.output : undefined;
+  const present = item.output !== null && item.output !== undefined;
+  if (!isCompleteRetiredSourceCommandOutput(present, outputRecord))
+    throw Error('Retired-source command output is incomplete');
+  return {
+    output: present && outputRecord && typeof outputRecord.text === 'string' ? outputRecord.text : '',
+    present,
+    truncated: present && outputRecord?.truncated === true,
+  };
+}
+
+/** @param {boolean} present @param {Record<string, unknown> | undefined} output @returns {boolean} */
+function isCompleteRetiredSourceCommandOutput(present, output) {
+  return !present || (output !== undefined && typeof output.text === 'string' && typeof output.truncated === 'boolean');
+}
+
+/** @param {boolean} truncated @param {string} command @returns {void} */
+function assertRetiredSourceCommandOutputIsSafe(truncated, command) {
+  if (
+    truncated &&
+    (!/\bGet-Content\b/i.test(command) ||
+      /\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|write_text|write_bytes|writeFileSync)\b/i.test(
+        command,
+      ))
+  )
+    throw Error('Retired-source truncated command output could hide an effect');
+}
+
+/** @param {unknown} value @param {RetiredSourceExpected} expected @returns {boolean} */
+function matchesRetiredSourceIssueWave(value, expected) {
+  return isRecord(value) && value.issue_id === expected.issueId && value.host_attempt_id === expected.hostAttemptId;
+}
+
+/** @param {string} root @param {RetiredSourceItem} item @returns {{ref: string, paths: string[]}} */
+function readRetiredSourceFileChange(root, item) {
+  if (item.status !== 'completed' || !Array.isArray(item.changes) || !item.changes.every(isRetiredSourceChange))
+    throw Error('Retired-source file-change event is unresolved');
+  return {
+    ref: item.id,
+    paths: item.changes.map((change) => {
+      if (!isRetiredSourceChange(change) || change.diff.truncated !== false)
+        throw Error('Retired-source file-change evidence is incomplete');
+      return path.relative(root, path.resolve(change.path)).replaceAll('\\', '/');
+    }),
+  };
+}
+
+/**
+ * @param {string} root
+ * @param {unknown} reference
+ * @param {RetiredSourceExpected} expected
+ * @returns {{artifact_sha256: string, nativeReadResult: import('../src/host-state.ts').RetiredSourceNativeReadResult, observed_commands: import('../src/host-state.ts').RetiredSourceCaptureTerminalEvidence['observed_commands'], file_changes: unknown[], retained_patches: {path: string, sha256: string}[], issue: import('../src/host-state.ts').RetiredSourceNativeReadResult['issue']}}
+ */
 function readRetiredSourceNativeTurn(root, reference, expected) {
   if (typeof reference !== 'string' || !reference.startsWith('.tmp/') || path.isAbsolute(reference))
     throw Error('Retired-source native evidence must reference a retained .tmp read');
@@ -2033,143 +4294,60 @@ function readRetiredSourceNativeTurn(root, reference, expected) {
     before.size !== after.size
   )
     throw Error('Retired-source native evidence changed or exceeds its bound');
-  const artifact = JSON.parse(bytes.toString('utf8'));
-  const portable = exactKeys(artifact, ['schema', 'data']) && artifact.schema === 'RetiredSourceTurnRead/v1',
-    codexRead =
-      exactKeys(artifact, ['schema', 'host', 'tool', 'max_output_chars_per_item', 'data']) &&
-      artifact.schema === 'CoreNativeIssuedTurnRead/v1' &&
-      typeof artifact.host === 'string' &&
-      artifact.tool === 'mcp__codex_app__read_thread';
-  if (
-    (!portable && !codexRead) ||
-    !artifact.data?.thread ||
-    !Array.isArray(artifact.data.turns) ||
-    artifact.data.turns.length !== 1
-  )
-    throw Error('Retired-source native evidence contract differs');
-  const thread = artifact.data.thread,
-    turn = artifact.data.turns[0],
-    items = turn.items;
-  if (
-    thread.id !== expected.sourceThreadId ||
-    typeof thread.status?.type !== 'string' ||
-    !thread.status.type ||
-    turn.id !== expected.sourceTurnId ||
-    turn.status !== 'interrupted' ||
-    !Array.isArray(items) ||
-    items.length > 4096 ||
-    items.some((item) => item.type === 'agentMessage' && item.phase === 'final')
-  )
-    throw Error('Retired-source original thread or interrupted turn differs');
-  const issued = [],
-    waves = [];
-  function collect(value, depth = 0) {
-    if (depth > 5 || value === null || value === undefined) return;
-    if (typeof value === 'string') {
-      if (value.length <= 256 * 1024 && /^[\s]*[\[{]/.test(value)) {
-        try {
-          collect(JSON.parse(value), depth + 1);
-        } catch {
-          /* command output need not be JSON */
-        }
-      }
-      return;
-    }
-    if (Array.isArray(value)) {
-      for (const entry of value) collect(entry, depth + 1);
-      return;
-    }
-    if (typeof value !== 'object') return;
-    if (value.schema === 'VidaAgentRunResult/v1' && Array.isArray(value.issued_actions))
-      issued.push(...value.issued_actions);
-    if (value.status === 'wave_issued' && typeof value.issue_id === 'string') waves.push(value);
-    if (typeof value.stdout === 'string') collect(value.stdout, depth + 1);
-  }
+  /** @type {unknown} */
+  const parsedArtifact = JSON.parse(bytes.toString('utf8'));
+  if (!isRecord(parsedArtifact)) throw Error('Retired-source native evidence must be an object');
+  const { threadId, threadStatus, turnId, turnStatus, items } = parseRetiredSourceNativeTurnPayload(
+    parsedArtifact,
+    expected,
+  );
+  /** @type {unknown[]} */
+  const issued = [];
+  /** @type {unknown[]} */
+  const waves = [];
+  /** @param {unknown} value @param {number} [depth] @returns {void} */
+  const collect = (value, depth = 0) => collectRetiredSourceThreadOutput(value, depth, issued, waves);
+  /** @type {Set<string>} */
   const commandIds = new Set(),
     commands = items
       .filter((item) => item.type === 'commandExecution')
-      .map((item) => {
-        if (
-          typeof item.id !== 'string' ||
-          commandIds.has(item.id) ||
-          typeof item.command !== 'string' ||
-          !['completed', 'failed'].includes(item.status) ||
-          !Number.isSafeInteger(item.exitCode)
-        )
-          throw Error('Retired-source command inventory has a duplicate or unresolved outcome');
-        commandIds.add(item.id);
-        const present = item.output !== null && item.output !== undefined;
-        if (present && (typeof item.output.text !== 'string' || typeof item.output.truncated !== 'boolean'))
-          throw Error('Retired-source command output is incomplete');
-        const output = present ? item.output.text : '',
-          truncated = present && item.output.truncated === true;
-        if (present) collect(output);
-        if (
-          truncated &&
-          (!/\bGet-Content\b/i.test(item.command) ||
-            /\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|write_text|write_bytes|writeFileSync)\b/i.test(
-              item.command,
-            ))
-        )
-          throw Error('Retired-source truncated command output could hide an effect');
-        return {
-          ref: item.id,
-          status: item.status,
-          exit_code: item.exitCode,
-          command_sha256: digest(Buffer.from(item.command, 'utf8')),
-          output_sha256: present ? digest(Buffer.from(output, 'utf8')) : null,
-          output_present: present,
-          output_truncated: truncated,
-        };
-      });
+      .map((item) => readRetiredSourceCommand(item, commandIds, collect));
   if (!commands.length || commands.length > 512) throw Error('Retired-source complete command inventory is absent');
-  const matches = issued.filter(
+  const matches = issued
+    .filter(isRetiredSourceIssuedAction)
+    .filter(
       (entry) =>
-        entry?.request?.action_id === expected.actionId &&
-        entry?.action?.action_id === expected.actionId &&
+        entry.request.action_id === expected.actionId &&
+        entry.action.action_id === expected.actionId &&
         entry.issue_id === expected.issueId &&
         entry.host_attempt_id === expected.hostAttemptId,
-    ),
-    direct = waves.filter(
-      (entry) => entry.issue_id === expected.issueId && entry.host_attempt_id === expected.hostAttemptId,
     );
+  const direct = waves.filter((entry) => matchesRetiredSourceIssueWave(entry, expected));
   if (matches.length !== 1 || direct.length !== 1) throw Error('Retired-source original issue mapping differs');
-  const action = matches[0].action,
-    packet = matches[0].development_packet;
+  const matched = matches[0];
+  const issuedWave = direct[0];
+  if (!matched || !isRecord(issuedWave)) throw Error('Retired-source original issue mapping is missing');
+  const action = matched.action,
+    packet = matched.development_packet;
   if (
     !packet ||
     packet.schema !== 'DevelopmentTaskPacket/v1' ||
     packet.work_item_id !== expected.workId ||
     packet.attempt !== expected.attempt ||
-    packet.packet_id !== direct[0].packet_id ||
+    packet.packet_id !== issuedWave.packet_id ||
     typeof packet.digest !== 'string' ||
     !/^[a-f0-9]{64}$/.test(packet.digest) ||
-    action.stage_id !== matches[0].request.stage_id ||
-    action.scope_digest !== matches[0].request.scope_digest
+    action.stage_id !== matched.request.stage_id ||
+    action.scope_digest !== matched.request.scope_digest
   )
     throw Error('Retired-source original issued packet binding differs');
   const fileChanges = items
     .filter((item) => item.type === 'fileChange')
-    .map((item) => {
-      if (item.status !== 'completed' || !Array.isArray(item.changes))
-        throw Error('Retired-source file-change event is unresolved');
-      return {
-        ref: item.id,
-        paths: item.changes.map((change) => {
-          if (
-            typeof change.path !== 'string' ||
-            typeof change.diff?.text !== 'string' ||
-            change.diff.truncated !== false
-          )
-            throw Error('Retired-source file-change evidence is incomplete');
-          return path.relative(root, path.resolve(change.path)).replaceAll('\\', '/');
-        }),
-      };
-    });
+    .map((item) => readRetiredSourceFileChange(root, item));
   const issue = {
     action_id: action.action_id,
-    issue_id: matches[0].issue_id,
-    host_attempt_id: matches[0].host_attempt_id,
+    issue_id: matched.issue_id,
+    host_attempt_id: matched.host_attempt_id,
     packet_id: packet.packet_id,
     packet_digest: packet.digest,
     work_item_id: packet.work_item_id,
@@ -2178,21 +4356,23 @@ function readRetiredSourceNativeTurn(root, reference, expected) {
     scope_digest: action.scope_digest,
   };
   const sourceEffects = retiredSourceEffects(root, items, expected.sourcePaths);
+  /** @type {import('../src/host-state.ts').RetiredSourceNativeReadResult} */
+  const nativeReadResult = {
+    schema: 'RetiredSourceNativeTurnEvidence/v1',
+    artifact_ref: reference,
+    artifact_sha256: digest(Buffer.from(bytes)),
+    thread_id: threadId,
+    thread_status: threadStatus,
+    turn_id: turnId,
+    turn_status: turnStatus,
+    issue,
+    command_refs: commands.map((entry) => entry.ref),
+    file_change_refs: fileChanges.map((entry) => entry.ref),
+    source_effects: sourceEffects.effects,
+  };
   return {
-    artifact_sha256: digest(bytes),
-    nativeReadResult: {
-      schema: 'RetiredSourceNativeTurnEvidence/v1',
-      artifact_ref: reference,
-      artifact_sha256: digest(bytes),
-      thread_id: thread.id,
-      thread_status: thread.status.type,
-      turn_id: turn.id,
-      turn_status: turn.status,
-      issue,
-      command_refs: commands.map((entry) => entry.ref),
-      file_change_refs: fileChanges.map((entry) => entry.ref),
-      source_effects: sourceEffects.effects,
-    },
+    artifact_sha256: digest(Buffer.from(bytes)),
+    nativeReadResult,
     observed_commands: commands,
     file_changes: fileChanges,
     retained_patches: sourceEffects.retained,
@@ -2200,14 +4380,14 @@ function readRetiredSourceNativeTurn(root, reference, expected) {
   };
 }
 
+/** @param {string[]} args */
 async function captureRetiredSource(args) {
   const { readFileSync, realpathSync } = await import('node:fs');
   const { createHash } = await import('node:crypto');
-  const { HostStateStore, openHostStateDatabase } = await import('../src/host-state.ts');
-  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
+  const { parseSessionBridgeObservation } = await import('../src/orchestration/mastra-session-bridge.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   if (
     args.length !== 6 ||
@@ -2216,47 +4396,53 @@ async function captureRetiredSource(args) {
     args[4] !== '--request'
   )
     throw Error('Retired-source capture requires exact root, current owner handle and request');
-  const root = realpathSync(args[1]),
-    operatorHandle = args[3],
+  const root = realpathSync(requireOption(args[1], '--project-root')),
+    operatorHandle = requireOption(args[3], '--native-session-handle'),
     config = loadRuntimeConfig(root),
     workspaceId = deriveWorkspaceId(config.repository.repository_id, root),
-    requestPath = path.resolve(root, args[5]),
+    requestPath = path.resolve(root, requireOption(args[5], '--request')),
     requestRelative = path.relative(root, requestPath);
   if (requestRelative.startsWith('..') || path.isAbsolute(requestRelative) || realpathSync(requestPath) !== requestPath)
     throw Error('Retired-source request path differs');
   const requestBytes = readFileSync(requestPath);
   if (requestBytes.length > 1048576) throw Error('Retired-source request exceeds bound');
-  const input = JSON.parse(requestBytes);
-  if (
-    input.schema !== 'RetiredSourceCapture/v1' ||
-    input.workspace_id !== workspaceId ||
-    input.operatorHandle !== operatorHandle ||
-    typeof input.nativeTurnEvidenceRef !== 'string'
-  )
+  /** @type {unknown} */
+  const parsedInput = JSON.parse(requestBytes.toString('utf8'));
+  if (!isRetiredSourceCaptureEnvelope(parsedInput))
     throw Error('Retired-source request workspace or owner binding differs');
-  const { workspace_id: _workspace, nativeTurnEvidenceRef, ...operation } = input,
-    access = requireSafeRepositoryAccess(root),
+  const input = parsedInput;
+  if (input.workspace_id !== workspaceId || input.operatorHandle !== operatorHandle)
+    throw Error('Retired-source request workspace or owner binding differs');
+  const { workspace_id: _workspace, nativeTurnEvidenceRef, observation: rawObservation, ...operation } = input,
+    observation = parseSessionBridgeObservation(rawObservation),
+    hostAttemptId = input.observation.host_attempt_id;
+  if (observation.host_attempt_id !== hostAttemptId) throw Error('Retired-source observation owner binding differs');
+  const interruptedTurnStatus = 'interrupted';
+  /** @type {'completed'} */
+  const completedCommandStatus = 'completed';
+  const access = requireSafeRepositoryAccess(root),
     readResult = readRetiredSourceNativeTurn(root, nativeTurnEvidenceRef, {
       sourceThreadId: operation.terminalEvidence.source_thread_id,
       sourceTurnId: operation.terminalEvidence.source_turn_id,
       actionId: operation.actionId,
       issueId: operation.issueId,
-      hostAttemptId: operation.observation.host_attempt_id,
+      hostAttemptId,
       workId: operation.identity.work_id,
       attempt: operation.attempt,
       sourcePaths: operation.candidateSnapshot.entries.map((entry) => entry.path),
-    }),
-    terminalEvidence = {
-      ...operation.terminalEvidence,
-      source_thread_status: readResult.nativeReadResult.thread_status,
-      source_turn_status: 'interrupted',
-      final_message_id: null,
-      action_id: readResult.issue.action_id,
-      issue_id: readResult.issue.issue_id,
-      host_attempt_id: readResult.issue.host_attempt_id,
-      observed_commands: readResult.observed_commands,
-    },
-    sourceFileChanges = readResult.nativeReadResult.source_effects.map((event) => ({
+    });
+  /** @type {import('../src/host-state.ts').RetiredSourceCaptureTerminalEvidence} */
+  const terminalEvidence = {
+    ...operation.terminalEvidence,
+    source_thread_status: readResult.nativeReadResult.thread_status,
+    source_turn_status: interruptedTurnStatus,
+    final_message_id: null,
+    action_id: readResult.issue.action_id,
+    issue_id: readResult.issue.issue_id,
+    host_attempt_id: readResult.issue.host_attempt_id,
+    observed_commands: readResult.observed_commands,
+  };
+  const sourceFileChanges = readResult.nativeReadResult.source_effects.map((event) => ({
       call_ref: event.event_ref,
       path: event.path,
     })),
@@ -2266,7 +4452,7 @@ async function captureRetiredSource(args) {
       action_id: readResult.issue.action_id,
       issue_id: readResult.issue.issue_id,
       host_attempt_id: readResult.issue.host_attempt_id,
-      status: 'completed',
+      status: completedCommandStatus,
       changed_paths: [
         ...new Set(sourceFileChanges.filter((entry) => entry.call_ref === callRef).map((entry) => entry.path)),
       ],
@@ -2274,6 +4460,7 @@ async function captureRetiredSource(args) {
     terminalEvidenceWithRecords = { ...terminalEvidence, original_tool_records: originalToolRecords },
     operationWithEvidence = {
       ...operation,
+      observation,
       nativeTurnEvidenceRef,
       nativeReadResult: readResult.nativeReadResult,
       terminalEvidence: terminalEvidenceWithRecords,
@@ -2290,7 +4477,7 @@ async function captureRetiredSource(args) {
         sourceTurnId: terminalEvidence.source_turn_id,
         actionId: operation.actionId,
         issueId: operation.issueId,
-        hostAttemptId: operation.observation.host_attempt_id,
+        hostAttemptId,
         workId: operation.identity.work_id,
         attempt: operation.attempt,
         sourcePaths: operation.candidateSnapshot.entries.map((entry) => entry.path),
@@ -2311,9 +4498,9 @@ async function captureRetiredSource(args) {
       }
     };
   verifyCurrent();
-  const database = openHostStateDatabase(sessionHandoffDatabasePath(root, config));
+  const database = openCliHostStateDatabase(root, sessionHandoffDatabasePath(root, config), workspaceId);
   try {
-    const store = new HostStateStore(database, workspaceId),
+    const store = createCliHostStateStore(database, workspaceId),
       result = store.captureRetiredSourceObservation({ ...operationWithEvidence, verifyCurrent });
     return {
       schema: 'RetiredSourceCapture/v1',
@@ -2326,11 +4513,26 @@ async function captureRetiredSource(args) {
       runtime_acceptance: false,
     };
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }
 
+/** @param {string} mode @param {unknown} value @returns {value is InterruptedSourceRetirementInspection | InterruptedSourceRetirementInput} */
+function isInterruptedSourceRetirementModeInput(mode, value) {
+  return mode === 'inspect'
+    ? isInterruptedSourceRetirementInspection(value)
+    : isInterruptedSourceRetirementInput(value);
+}
+
+/** @param {unknown} value @returns {asserts value is InterruptedSourceRetirementInput} */
+function assertInterruptedSourceRetirementInput(value) {
+  if (!isInterruptedSourceRetirementInput(value))
+    throw Error('Interrupted Source retirement apply request shape differs');
+}
+
+/** @param {string[]} args */
 async function retireInterruptedSourceOwner(args) {
+  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   if (
     args.length !== 8 ||
     args[0] !== '--mode' ||
@@ -2339,11 +4541,10 @@ async function retireInterruptedSourceOwner(args) {
     args[6] !== '--request'
   )
     throw Error('Interrupted Source retirement requires mode, exact root, current owner handle and request');
-  const mode = args[1],
-    root = realpathSync(args[3]),
-    operatorHandle = args[5];
-  if (!['inspect', 'apply'].includes(mode)) throw Error('Interrupted Source retirement mode invalid');
-  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
+  const mode = requireOption(args[1], '--mode'),
+    root = realpathSync(requireOption(args[3], '--project-root')),
+    operatorHandle = requireOption(args[5], '--native-session-handle');
+  if (mode !== 'inspect' && mode !== 'apply') throw Error('Interrupted Source retirement mode invalid');
   const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { loadProjectSetContext } = await import('../src/config/project-context.ts');
@@ -2351,50 +4552,19 @@ async function retireInterruptedSourceOwner(args) {
   const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
   const config = loadRuntimeConfig(root),
     access = requireSafeRepositoryAccess(root),
-    requestBytes = access.readBytes(args[7], 'interrupted Source retirement request');
+    requestBytes = access.readBytes(requireOption(args[7], '--request'), 'interrupted Source retirement request');
   if (!requestBytes.length || requestBytes.length > 65536)
     throw Error('Interrupted Source retirement request exceeds bound');
-  const input = JSON.parse(requestBytes.toString('utf8'));
-  if (
-    !exactKeys(
-      input,
-      mode === 'inspect'
-        ? ['identity', 'attempt']
-        : [
-            'identity',
-            'attempt',
-            'actionId',
-            'issueId',
-            'expectedWork',
-            'expectedLedger',
-            'expectedJournal',
-            'expectedMaintenanceGeneration',
-            'decisionPointer',
-            'evidence',
-          ],
-    ) ||
-    !exactKeys(input.identity, ['repository_id', 'project_ids', 'integrations_digest', 'work_id']) ||
-    (mode === 'apply' &&
-      !exactKeys(input.evidence, [
-        'schema',
-        'source_thread_id',
-        'source_thread_status',
-        'read_thread_ref',
-        'list_agents_ref',
-        'active_source_writer_ids',
-      ]))
-  )
+  /** @type {unknown} */
+  const parsedInput = JSON.parse(requestBytes.toString('utf8'));
+  if (!isRecord(parsedInput)) throw Error('Interrupted Source retirement request shape differs');
+  const input = parsedInput;
+  if (!isInterruptedSourceRetirementModeInput(mode, input))
     throw Error('Interrupted Source retirement request shape differs');
   if (
     input.identity.repository_id !== config.repository.repository_id ||
-    !Array.isArray(input.identity.project_ids) ||
     input.identity.project_ids.length !== 1 ||
-    typeof input.identity.work_id !== 'string' ||
-    !input.identity.work_id ||
-    typeof operatorHandle !== 'string' ||
-    !operatorHandle.trim() ||
-    !Number.isSafeInteger(input.attempt) ||
-    input.attempt < 1
+    !operatorHandle.trim()
   )
     throw Error('Interrupted Source retirement identity differs');
   const project = loadProjectSetContext(root, config, input.identity.repository_id, input.identity.project_ids);
@@ -2403,9 +4573,10 @@ async function retireInterruptedSourceOwner(args) {
   const ledger = openConfiguredMastraSessionLedger(root);
   try {
     const store = ledger.hostState,
-      host = store.readHostStateSnapshot(input.identity),
+      snapshot = store.readWorkSessionSnapshot(input.identity, input.attempt),
+      host = snapshot.host,
       intake = readAdmittedSessionIntake(root, store, input.identity),
-      journalRow = store.readWorkSessionJournal(input.identity);
+      journalRow = snapshot.journal;
     if (
       !host.work ||
       !journalRow ||
@@ -2430,7 +4601,7 @@ async function retireInterruptedSourceOwner(args) {
       item = eligible.length === 1 ? eligible[0] : null,
       reservation = item?.host_reservation,
       authorization = reservation?.authorization;
-    if (!item || !authorization || authorization.receipt.attempt.lease.thread_id !== operatorHandle)
+    if (!item || !item.issue_id || !authorization || authorization.receipt.attempt.lease.thread_id !== operatorHandle)
       throw Error('Interrupted Source retirement requires one exact pending Source issue');
     const projection = {
       identity: input.identity,
@@ -2452,6 +4623,7 @@ async function retireInterruptedSourceOwner(args) {
         attempt_outcome_resolved: false,
       };
     }
+    assertInterruptedSourceRetirementInput(input);
     const request = {
         identity: input.identity,
         attempt: input.attempt,
@@ -2466,10 +4638,22 @@ async function retireInterruptedSourceOwner(args) {
         decisionPointer: input.decisionPointer,
         evidence: input.evidence,
       },
-      priorRelease = host.ledger.operations.some(
-        (entry) => entry.operation_id === 'interrupted-source-release-' + canonicalJsonDigest(request),
-      );
-    for (const key of Object.keys(projection)) {
+      priorRelease =
+        host.ledger?.operations.some(
+          (entry) => entry.operation_id === 'interrupted-source-release-' + canonicalJsonDigest(request),
+        ) ?? false;
+    /** @type {Array<keyof typeof projection>} */
+    const projectionKeys = [
+      'identity',
+      'attempt',
+      'actionId',
+      'issueId',
+      'expectedWork',
+      'expectedLedger',
+      'expectedJournal',
+      'expectedMaintenanceGeneration',
+    ];
+    for (const key of projectionKeys) {
       if (priorRelease && ['expectedWork', 'expectedLedger'].includes(key)) continue;
       if (canonicalJsonDigest(input[key]) !== canonicalJsonDigest(projection[key]))
         throw Error('Interrupted Source retirement Work/Ledger/Journal/maintenance CAS differs');
@@ -2500,7 +4684,7 @@ async function retireInterruptedSourceOwner(args) {
     )
       throw Error('Interrupted Source retirement target or cooperative evidence differs');
     const result = store.retireInterruptedSourceOwner(request),
-      after = store.readWorkSessionJournal(input.identity);
+      after = store.readWorkSessionSnapshot(input.identity, input.attempt).journal;
     if (!after || canonicalJsonDigest(after.version) !== canonicalJsonDigest(input.expectedJournal))
       throw Error('Interrupted Source retirement unexpectedly changed the session journal');
     return {
@@ -2519,21 +4703,31 @@ async function retireInterruptedSourceOwner(args) {
   }
 }
 
+/**
+ * @param {typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest} build
+ * @param {Omit<Parameters<typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest>[0], 'correctiveExecution'>} args
+ * @param {Parameters<typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest>[0]['correctiveExecution']} correctiveExecution
+ * @returns {ReturnType<typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest>}
+ */
+function buildReadonlyReleaseRequest(build, args, correctiveExecution) {
+  return build(correctiveExecution === undefined ? args : { ...args, correctiveExecution });
+}
+
+/** @param {string[]} args */
 async function releaseCompletedReadonly(args) {
+  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   if (args.length !== 6 || args[0] !== '--mode' || args[2] !== '--project-root' || args[4] !== '--request')
     throw Error('Readonly release requires mode, exact root and request');
-  const mode = args[1],
-    root = realpathSync(args[3]);
+  const mode = requireReadonlyReleaseArg(args, 1),
+    root = realpathSync(requireReadonlyReleaseArg(args, 3)),
+    requestPath = requireReadonlyReleaseArg(args, 5);
   if (!['inspect', 'plan', 'apply', 'resume'].includes(mode)) throw Error('Readonly release mode invalid');
-  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
-  const { HostStateStore, openHostStateDatabase, inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
   const { suspendCompletedReadOnlyWork } = await import('../src/orchestration/suspend-local-work.ts');
   const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
-  const { Database } = await import('bun:sqlite');
   const {
     buildSessionBridgeRequest,
     configuredContextForStage,
@@ -2546,19 +4740,21 @@ async function releaseCompletedReadonly(args) {
   const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
   const config = loadRuntimeConfig(root),
     access = requireSafeRepositoryAccess(root);
-  const requestBytes = access.readBytes(args[5], 'completed readonly release request');
+  const requestBytes = access.readBytes(requestPath, 'completed readonly release request');
   if (requestBytes.length > 65536) throw Error('Readonly release request exceeds bound');
-  const request = JSON.parse(requestBytes),
-    equal = (a, b) => canonicalJsonDigest(a) === canonicalJsonDigest(b);
+  /** @type {unknown} */
+  const decodedRequest = JSON.parse(requestBytes.toString('utf8'));
+  if (!isCompletedReadonlyReleaseRequest(decodedRequest)) throw Error('Readonly release identity differs');
+  const request = decodedRequest,
+    equal = (/** @type {unknown} */ a, /** @type {unknown} */ b) => canonicalJsonDigest(a) === canonicalJsonDigest(b);
   if (
-    request.schema !== 'CompletedReadonlyReleaseRequest/v1' ||
     request.workspace_id !== deriveWorkspaceId(config.repository.repository_id, root) ||
     request.identity.project_ids.length !== 1 ||
-    !['linked_correction', 'next_work'].includes(request.requestIntent)
+    (request.requestIntent !== 'linked_correction' && request.requestIntent !== 'next_work')
   )
     throw Error('Readonly release identity differs');
   const databasePath = sessionHandoffDatabasePath(root, config),
-    workspace = inspectHostWorkspaceDatabase(databasePath, request.workspace_id);
+    workspace = inspectCliHostWorkspaceDatabase(root, databasePath, request.workspace_id);
   const selected = workspace.work.find((row) => equal(row.identity, request.identity)),
     row = workspace.journals.find((j) => j.work_id === request.identity.work_id && j.attempt === request.attempt);
   if (!selected || !row || !equal(row.version, request.expectedJournal))
@@ -2579,19 +4775,20 @@ async function releaseCompletedReadonly(args) {
     !items.length
   )
     throw Error('Readonly release current binding or host effects differ');
-  const engine = new Database(sessionBridgeDatabasePath(root, config), { readonly: true, strict: true });
+  const engine = openCliWorkspaceDatabase(root, sessionBridgeDatabasePath(root, config), request.workspace_id, true);
   try {
-    const snapshots = engine
-      .query('SELECT workflow_name,json(snapshot) AS snapshot FROM mastra_workflow_snapshot WHERE run_id=?')
-      .all(state.run_id);
-    if (snapshots.length !== 1) throw Error('Readonly release original engine missing/ambiguous');
-    const snapshot = JSON.parse(snapshots[0].snapshot),
-      parseRunState = (value) => {
+    const rawSnapshots = readReadonlyReleaseSnapshotRows(engine, state.run_id);
+    if (!isReadonlyReleaseSnapshotRows(rawSnapshots)) throw Error('Readonly release original engine missing/ambiguous');
+    const snapshots = rawSnapshots,
+      snapshotRow = requireOnlyReadonlyReleaseSnapshotRow(snapshots),
+      snapshot = parseReadonlyReleaseEngineSnapshot(snapshotRow.snapshot);
+    if (!isReadonlyReleaseEngineSnapshot(snapshot)) throw Error('Readonly release original engine binding differs');
+    const parseRunState = (/** @type {unknown} */ value) => {
         const parsed = parseSessionBridgeRunState(value);
         if (!isDeepStrictEqual(parsed, value)) throw Error('Readonly release actual engine completion differs');
         return parsed;
       },
-      input = parseRunState(snapshot.context?.input),
+      input = parseRunState(snapshot.context.input),
       context = { work_id: input.work_id, attempt: input.attempt, scope_digest: input.scope_digest };
     if (
       snapshot.status !== 'suspended' ||
@@ -2600,32 +4797,33 @@ async function releaseCompletedReadonly(args) {
       input.attempt !== request.attempt ||
       input.config_digest !== work.binding.config_digest ||
       input.scope_digest !== state.source_scope.digest ||
-      input.workflow_id !== snapshots[0].workflow_name ||
+      input.workflow_id !== snapshotRow.workflow_name ||
       input.observations.length !== 0 ||
       !Array.isArray(input.selection?.risk_flags)
     )
       throw Error('Readonly release original engine binding differs');
-    const engineWaves = Object.entries(snapshot.context ?? {})
-        .map(([key, value]) => ({ waveIndex: /^wave-(\d+)$/.test(key) ? Number(key.slice(5)) : null, value }))
-        .filter((entry) => entry.waveIndex !== null)
-        .sort((a, b) => a.waveIndex - b.waveIndex),
-      frontiers = engineWaves.filter((entry) => entry.value?.status === 'suspended');
+    /** @type {ReadonlyReleaseEngineWaveCandidate[]} */
+    const waveCandidates = Object.entries(snapshot.context).map(([key, value]) => ({
+      waveIndex: /^wave-(\d+)$/.test(key) ? Number(key.slice(5)) : null,
+      value,
+    }));
+    const engineWaves = waveCandidates
+        .filter(isReadonlyReleaseEngineWave)
+        .sort(
+          (/** @type {ReadonlyReleaseEngineWave} */ a, /** @type {ReadonlyReleaseEngineWave} */ b) =>
+            a.waveIndex - b.waveIndex,
+        ),
+      frontiers = engineWaves.filter(isReadonlyReleaseSuspendedWave);
     if (frontiers.length !== 1) throw Error('Readonly release actual engine frontier differs');
-    const frontier = frontiers[0],
+    const frontier = requireFirstReadonlyReleaseValue(frontiers),
       frontierStep = frontier.value;
-    if (engineWaves.some((entry) => entry.value?.status !== 'success' && entry.waveIndex !== frontier.waveIndex))
+    if (engineWaves.some((entry) => !isReadonlyReleaseSuccessfulWave(entry) && entry.waveIndex !== frontier.waveIndex))
       throw Error('Readonly release actual engine frontier differs');
-    if (
-      !Object.prototype.hasOwnProperty.call(frontierStep, 'payload') ||
-      !Object.prototype.hasOwnProperty.call(frontierStep, 'suspendPayload') ||
-      !frontierStep.suspendPayload ||
-      typeof frontierStep.suspendPayload !== 'object' ||
-      !Array.isArray(frontierStep.suspendPayload.requests)
-    )
-      throw Error('Readonly release actual engine frontier differs');
-    const frontierRequests = frontierStep.suspendPayload.requests.map(parseSessionBridgeRequest);
+    if (!isReadonlyReleaseFrontierStep(frontierStep)) throw Error('Readonly release actual engine frontier differs');
+    const frontierRequests = frontierStep.suspendPayload.requests.map((value) => parseSessionBridgeRequest(value));
     if (!frontierRequests.length) throw Error('Readonly release actual engine frontier differs');
-    const correctiveExecution = frontierRequests[0].corrective_execution,
+    const firstFrontierRequest = requireFirstReadonlyReleaseValue(frontierRequests),
+      correctiveExecution = firstFrontierRequest.corrective_execution,
       baseRunId = sessionBridgeRunId(request.workspace_id, context, input.workflow_id);
     if (
       frontierRequests.some((entry) => !isDeepStrictEqual(entry.corrective_execution, correctiveExecution)) ||
@@ -2633,17 +4831,22 @@ async function releaseCompletedReadonly(args) {
       baseRunId !== work.execution.run_id
     )
       throw Error('Readonly release original engine binding differs');
-    validateWorkSessionBinding(
-      work,
-      { attempt: state.attempt, run_id: state.run_id, corrective_execution: correctiveExecution },
-      root,
-    );
+    if (correctiveExecution) {
+      validateWorkSessionBinding(
+        work,
+        { attempt: state.attempt, run_id: state.run_id, corrective_execution: correctiveExecution },
+        root,
+      );
+    } else {
+      validateWorkSessionBinding(work, { attempt: state.attempt, run_id: state.run_id }, root);
+    }
     if (
       correctiveExecution
         ? correctiveExecution.base_run_id !== baseRunId || correctiveExecution.engine_run_id !== state.run_id
         : state.run_id !== baseRunId
     )
       throw Error('Readonly release original engine binding differs');
+    /** @type {Map<number, {item: (typeof items)[number], issued: ReturnType<typeof parseSessionBridgeRequest>, observed: ReturnType<typeof parseSessionBridgeObservation>}[]>} */
     const groupedItems = new Map();
     for (const item of items) {
       const issued = parseSessionBridgeRequest(item.request),
@@ -2673,7 +4876,7 @@ async function releaseCompletedReadonly(args) {
     }
     let priorState = input;
     const verifiedWaves = new Set();
-    for (const { waveIndex, value: step } of engineWaves.filter((entry) => entry.value?.status === 'success')) {
+    for (const { waveIndex, value: step } of engineWaves.filter(isReadonlyReleaseSuccessfulWave)) {
       if (
         waveIndex >= frontier.waveIndex ||
         !Object.prototype.hasOwnProperty.call(step, 'payload') ||
@@ -2694,14 +4897,9 @@ async function releaseCompletedReadonly(args) {
       )
         throw Error('Readonly release actual engine completion differs');
       const resumePayload = step.resumePayload;
-      if (
-        !resumePayload ||
-        typeof resumePayload !== 'object' ||
-        Array.isArray(resumePayload) ||
-        !Array.isArray(resumePayload.observations)
-      )
+      if (!isRecord(resumePayload) || !Array.isArray(resumePayload.observations))
         throw Error('Readonly release actual engine completion differs');
-      const resumeObservations = resumePayload.observations.map(parseSessionBridgeObservation);
+      const resumeObservations = parseReadonlyReleaseArray(resumePayload.observations, parseSessionBridgeObservation);
       if (!isDeepStrictEqual(resumePayload, { observations: resumeObservations }))
         throw Error('Readonly release actual engine completion differs');
       const output = parseRunState(step.output),
@@ -2718,17 +4916,20 @@ async function releaseCompletedReadonly(args) {
         work.lifecycle.risk,
       );
       const expectedRequests = actions.map((action) =>
-        buildSessionBridgeRequest({
-          runId: state.run_id,
-          workflowId: waveInput.workflow_id,
-          configDigest: waveInput.config_digest,
-          context,
-          waveIndex,
-          action,
-          configuredContext: configuredContextForStage(root, config, waveInput.workflow_id, action.stage_id, context),
-          priorResults: waveInput.observations,
+        buildReadonlyReleaseRequest(
+          buildSessionBridgeRequest,
+          {
+            runId: state.run_id,
+            workflowId: waveInput.workflow_id,
+            configDigest: waveInput.config_digest,
+            context,
+            waveIndex,
+            action,
+            configuredContext: configuredContextForStage(root, config, waveInput.workflow_id, action.stage_id, context),
+            priorResults: waveInput.observations,
+          },
           correctiveExecution,
-        }),
+        ),
       );
       const journalItems = groupedItems.get(waveIndex) ?? [];
       if (
@@ -2741,12 +4942,12 @@ async function releaseCompletedReadonly(args) {
       for (const expected of expectedRequests) {
         const matches = journalItems.filter((entry) => entry.issued.action_id === expected.action_id);
         const engineMatches = resumeObservations.filter((entry) => entry.action_id === expected.action_id);
+        const match = requireOneReadonlyReleaseMatch(matches),
+          engineMatch = requireOneReadonlyReleaseMatch(engineMatches);
         if (
-          matches.length !== 1 ||
-          engineMatches.length !== 1 ||
-          !isDeepStrictEqual(matches[0].issued, expected) ||
-          !isDeepStrictEqual(engineMatches[0], matches[0].observed) ||
-          engineMatches[0].issue_id !== matches[0].item.issue_id
+          !isDeepStrictEqual(match.issued, expected) ||
+          !isDeepStrictEqual(engineMatch, match.observed) ||
+          engineMatch.issue_id !== match.item.issue_id
         )
           throw Error('Readonly release actual engine completion differs');
       }
@@ -2777,17 +4978,26 @@ async function releaseCompletedReadonly(args) {
       work.lifecycle.risk,
     );
     const expectedFrontier = frontierActions.map((action) =>
-      buildSessionBridgeRequest({
-        runId: state.run_id,
-        workflowId: frontierInput.workflow_id,
-        configDigest: frontierInput.config_digest,
-        context,
-        waveIndex: frontier.waveIndex,
-        action,
-        configuredContext: configuredContextForStage(root, config, frontierInput.workflow_id, action.stage_id, context),
-        priorResults: frontierInput.observations,
+      buildReadonlyReleaseRequest(
+        buildSessionBridgeRequest,
+        {
+          runId: state.run_id,
+          workflowId: frontierInput.workflow_id,
+          configDigest: frontierInput.config_digest,
+          context,
+          waveIndex: frontier.waveIndex,
+          action,
+          configuredContext: configuredContextForStage(
+            root,
+            config,
+            frontierInput.workflow_id,
+            action.stage_id,
+            context,
+          ),
+          priorResults: frontierInput.observations,
+        },
         correctiveExecution,
-      }),
+      ),
     );
     const inertRequests = inertItems.map((item) => {
       const issued = parseSessionBridgeRequest(item.request);
@@ -2809,19 +5019,21 @@ async function releaseCompletedReadonly(args) {
     )
       throw Error('Readonly release actual engine frontier differs');
   } finally {
-    engine.close(true);
+    closeWorkspaceDatabaseWithAdmission(engine);
   }
   const planPath = path.join(
-    path.dirname(path.resolve(root, args[5])),
+    path.dirname(path.resolve(root, requestPath)),
     'readonly-release-plan-' + request.identity.work_id + '.json',
   );
-  const database = openHostStateDatabase(databasePath);
+  const database = openCliHostStateDatabase(root, databasePath, request.workspace_id);
   try {
-    const store = new HostStateStore(database, request.workspace_id),
+    const store = createCliHostStateStore(database, request.workspace_id),
       intake = readAdmittedSessionIntake(root, store, request.identity);
+    const projectId = request.identity.project_ids[0];
+    if (!projectId) throw Error('Readonly release identity differs');
     if (
       intake.native_session_handle !== request.nativeSessionHandle ||
-      (work.binding.thread_id !== request.identity.thread_id && request.identity.thread_id !== undefined)
+      (readonlyReleaseThreadId(work.binding) !== request.identity.thread_id && request.identity.thread_id !== undefined)
     )
       throw Error('Readonly release original owner differs');
     if (['inspect', 'plan'].includes(mode)) {
@@ -2841,11 +5053,13 @@ async function releaseCompletedReadonly(args) {
         rights_granted: false,
       };
     }
+    /** @type {unknown} */
     const plan = JSON.parse(readFileSync(planPath, 'utf8'));
+    if (!isReadonlyReleasePlan(plan)) throw Error('Readonly release frozen context changed');
     if (
       plan.schema !== 'CompletedReadonlyReleasePlan/v1' ||
       plan.request_digest !== canonicalJsonDigest(request) ||
-      !access.readBytes(args[5], 'readonly release replay').equals(requestBytes) ||
+      !access.readBytes(requestPath, 'readonly release replay').equals(requestBytes) ||
       runtimeConfigDigest(loadRuntimeConfig(root)) !== work.binding.config_digest
     )
       throw Error('Readonly release frozen context changed');
@@ -2861,7 +5075,7 @@ async function releaseCompletedReadonly(args) {
       documentationContext: {
         repository_root: root,
         repository_id: request.identity.repository_id,
-        project_id: request.identity.project_ids[0],
+        project_id: projectId,
         work_id: request.identity.work_id,
       },
       config,
@@ -2875,23 +5089,30 @@ async function releaseCompletedReadonly(args) {
       runtime_acceptance: false,
     };
   } finally {
-    database.close(true);
+    closeWorkspaceDatabaseWithAdmission(database);
   }
 }
 
+/** @param {string[]} args */
 async function releaseHistoricalOwner(
   args,
   unissuedOwner = false,
   settledResearch = false,
   readonlyBookkeeping = false,
 ) {
+  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
+  /** @type {Record<string, string>} */
   const values = {};
   if (![10, 12].includes(args.length))
     throw Error('Historical release requires mode, exact root, owner, baseline and request');
   for (let index = 0; index < args.length; index += 2) {
-    if (Object.hasOwn(values, args[index]) || !args[index + 1]) throw Error('Historical release arguments invalid');
-    values[args[index]] = args[index + 1];
+    const key = runOptionKey(args[index]),
+      value = args[index + 1];
+    if (Object.hasOwn(values, key) || !value) throw Error('Historical release arguments invalid');
+    values[key] = value;
   }
+  const mode = runOptionKey(values['--mode']),
+    projectRoot = runOptionKey(values['--project-root']);
   if (
     Object.keys(values).sort().join('|') !==
       [
@@ -2904,26 +5125,25 @@ async function releaseHistoricalOwner(
       ]
         .sort()
         .join('|') ||
-    !['inspect', 'apply'].includes(values['--mode']) ||
-    !path.isAbsolute(values['--project-root'])
+    !isHistoricalReleaseMode(mode) ||
+    !path.isAbsolute(projectRoot)
   )
     throw Error('Historical release mode or argument set invalid');
-  const root = realpathSync(values['--project-root']),
-    mode = values['--mode'];
+  const root = realpathSync(projectRoot);
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { inspectHistoricalOwnerContext } = await import('./runtime-config-rebind.mjs');
-  const { HostStateStore, inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
-  const { Database } = await import('bun:sqlite');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
   const { compareScopedSourceSnapshots } = await import('../src/orchestration/scoped-source-snapshot.ts');
   const { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } =
     await import('../src/orchestration/suspend-local-work.ts');
   const access = requireSafeRepositoryAccess(root),
-    requestPath = values['--request'];
+    requestPath = requireOption(values['--request'], '--request'),
+    baselinePath = requireOption(values['--baseline-config'], '--baseline-config'),
+    nativeSessionHandle = requireOption(values['--native-session-handle'], '--native-session-handle');
+  /** @param {unknown} value @returns {value is string} */
   const relative = (value) =>
     typeof value === 'string' &&
     value.length > 0 &&
@@ -2932,49 +5152,45 @@ async function releaseHistoricalOwner(
     !/^(?:\/|[A-Za-z]:)/.test(value) &&
     !/\p{Cc}/u.test(value) &&
     value.split('/').every((part) => part && part !== '.' && part !== '..');
-  if (!relative(requestPath) || !relative(values['--baseline-config']))
+  if (!relative(requestPath) || !relative(baselinePath))
     throw Error('Historical release references must be bounded repository-relative paths');
   const requestBytes = access.readBytes(requestPath, 'historical owner request');
   if (requestBytes.length > 65536) throw Error('Historical release request exceeds bound');
-  const request = JSON.parse(requestBytes.toString('utf8')),
-    { inspection: suppliedInspection, ...base } = request;
-  const expectedKeys = ['schema', 'identity', 'attempt', 'userRequestPointer', 'requestIntent', 'predicate'];
+  const contract = historicalOwnerReleaseContract(readonlyBookkeeping, settledResearch, unissuedOwner),
+    decodedRequest = parseHistoricalOwnerReleaseRequest(
+      requestBytes.toString('utf8'),
+      contract.schema,
+      contract.predicates,
+      mode,
+    ),
+    { inspection: suppliedInspection, ...base } = decodedRequest;
   const writer = base.predicate === 'settled_writer_failed_validators';
-  if (writer) expectedKeys.push('preimage_ref');
   if (
-    Object.keys(base).sort().join('|') !== expectedKeys.sort().join('|') ||
-    base.schema !==
-      (readonlyBookkeeping
-        ? 'ReadonlyBookkeepingOwnerReleaseRequest/v1'
-        : settledResearch
-          ? 'SettledResearchOwnerReleaseRequest/v1'
-          : unissuedOwner
-            ? 'UnissuedOwnerReleaseRequest/v1'
-            : 'HistoricalOwnerReleaseRequest/v1') ||
-    !(
-      readonlyBookkeeping
-        ? ['readonly_bookkeeping']
-        : settledResearch
-          ? ['settled_research']
-          : unissuedOwner
-            ? ['unissued_prepared']
-            : ['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators']
-    ).includes(base.predicate) ||
-    !['next_work', 'linked_correction'].includes(base.requestIntent) ||
+    (writer ? !isString(base.preimage_ref) : Object.hasOwn(base, 'preimage_ref')) ||
     (mode === 'inspect' ? suppliedInspection !== undefined : !suppliedInspection)
   )
     throw Error('Historical release request shape or predicate invalid');
   const historyRef = values['--context-history'];
-  let historyBytes, originalContexts;
+  /** @type {Buffer | undefined} */
+  let historyBytes;
+  /** @type {unknown} */
+  let originalContexts;
   if (historyRef !== undefined) {
     if (!relative(historyRef)) throw Error('Historical context history path differs');
-    historyBytes = access.readBytes(historyRef, 'original caller context export');
+    const historyReference = historyRef;
+    historyBytes = access.readBytes(historyReference, 'original caller context export');
     if (historyBytes.length > 1024 * 1024) throw Error('Historical context history exceeds bound');
-    const body = JSON.parse(historyBytes),
-      current = loadRuntimeConfig(root);
-    if (body.schema !== 'VidaAgentRunResult/v1' || !Array.isArray(body.next_actions))
+    /** @type {unknown} */
+    let body;
+    try {
+      body = JSON.parse(historyBytes.toString('utf8'));
+    } catch {
       throw Error('Historical context history must be an original run result');
-    const host = inspectHostWorkspaceDatabase(
+    }
+    const current = loadRuntimeConfig(root);
+    if (!isHistoricalRunHistory(body)) throw Error('Historical context history must be an original run result');
+    const host = inspectCliHostWorkspaceDatabase(
+      root,
       sessionHandoffDatabasePath(root, current),
       deriveWorkspaceId(current.repository.repository_id, root),
     );
@@ -2982,16 +5198,16 @@ async function releaseHistoricalOwner(
       (entry) => entry.work_id === base.identity.work_id && entry.attempt === base.attempt,
     );
     if (journals.length !== 1) throw Error('Historical context history Journal differs');
-    const state = journals[0].state,
+    const historyJournal = journals[0];
+    if (!historyJournal) throw Error('Historical context history Journal differs');
+    const state = historyJournal.state,
       items = [...state.items, ...state.completed.flatMap((wave) => wave.items)];
-    const contexts = body.next_actions
-      .map((action) => action.configured_context)
-      .filter((context) => context?.schema === 'ConfiguredContext/v1');
+    const contexts = historicalConfiguredContexts(body.next_actions);
     if (!contexts.length || contexts.length > 256) throw Error('Historical context history is missing or excessive');
     originalContexts = contexts.map((context) => {
       const matches = items.filter((item) => item.request.configured_context_digest === context.digest);
       if (matches.length !== 1) throw Error('Historical context history action differs');
-      const request = matches[0].request;
+      const request = requireHistoricalItem(matches[0]).request;
       return {
         action_id: request.action_id,
         wave_index: request.wave_index,
@@ -3002,43 +5218,34 @@ async function releaseHistoricalOwner(
       };
     });
   }
-  const original = inspectHistoricalOwnerContext(
-    root,
-    values['--baseline-config'],
-    base.identity,
-    base.attempt,
-    originalContexts,
-  );
-  let preimage, preimageBytes;
+  const original = inspectHistoricalOwnerContext(root, baselinePath, base.identity, base.attempt, originalContexts);
+  /** @type {ScopedSourceSnapshot | undefined} */
+  let preimage;
+  /** @type {Buffer | undefined} */
+  let preimageBytes;
   if (writer) {
     if (!relative(base.preimage_ref)) throw Error('Historical preimage reference invalid');
     preimageBytes = access.readBytes(base.preimage_ref, 'complete original source preimage');
     if (preimageBytes.length > 1024 * 1024) throw Error('Historical preimage exceeds bound');
-    preimage = JSON.parse(preimageBytes.toString('utf8'));
-    if (
-      Object.keys(preimage).sort().join('|') !== 'digest|entries|schema' ||
-      preimage.schema !== 'ScopedSourceSnapshot/v1' ||
-      !Array.isArray(preimage.entries) ||
-      !preimage.entries.length ||
-      preimage.entries.length > 512 ||
-      preimage.entries.some(
-        (entry, index) =>
-          Object.keys(entry).sort().join('|') !== 'bytes|exists|path|sha256' ||
-          !relative(entry.path) ||
-          entry.path.length > 512 ||
-          (index && preimage.entries[index - 1].path >= entry.path) ||
-          typeof entry.exists !== 'boolean' ||
-          (entry.exists
-            ? !Number.isSafeInteger(entry.bytes) || entry.bytes < 0 || !/^[a-f0-9]{64}$/.test(entry.sha256)
-            : entry.bytes !== null || entry.sha256 !== null),
-      )
-    )
+    /** @type {unknown} */
+    let decodedPreimage;
+    try {
+      decodedPreimage = JSON.parse(preimageBytes.toString('utf8'));
+    } catch {
       throw Error('Historical preimage must be one complete pure scoped snapshot');
-    compareScopedSourceSnapshots(preimage, original.journal.state.source_scope);
+    }
+    if (!isHistoricalScopedSnapshot(decodedPreimage, relative))
+      throw Error('Historical preimage must be one complete pure scoped snapshot');
+    preimage = decodedPreimage;
+    const originalScope = original.journal.state.source_scope;
+    if (!originalScope) throw Error('Historical source preimage has no retained owner scope');
+    compareScopedSourceSnapshots(decodedPreimage, originalScope);
   }
+  const expectedLedger = original.workspace.ledger_version;
+  if (!expectedLedger) throw Error('Historical release ledger version is unavailable');
   const inspection = {
     expectedWork: original.owner.version,
-    expectedLedger: original.workspace.ledger_version,
+    expectedLedger,
     expectedJournal: original.journal.version,
     expectedMaintenanceGeneration: original.maintenanceGeneration,
     baseline_binding: original.baseline_binding,
@@ -3046,32 +5253,35 @@ async function releaseHistoricalOwner(
     current_config_binding: (await import('../src/config/runtime-config.ts')).runtimeConfigDigest(original.current),
     engine_binding: original.engine_binding,
     request_binding: canonicalJsonDigest(base),
-    preimage_binding: writer ? canonicalJsonDigest(preimageBytes.toString('utf8')) : null,
-    nativeSessionHandle: values['--native-session-handle'],
+    preimage_binding: writer && preimageBytes ? canonicalJsonDigest(preimageBytes.toString('utf8')) : null,
+    nativeSessionHandle,
   };
+  const selectedInspection = historicalReleaseInspection(mode, suppliedInspection, inspection);
   if (mode === 'apply') {
     const prior = original.owner.state.lease === null;
+    /** @param {HistoricalOwnerReleaseInspection} value */
     const comparable = (value) =>
       prior
         ? Object.fromEntries(Object.entries(value).filter(([key]) => !['expectedWork', 'expectedLedger'].includes(key)))
         : value;
-    if (canonicalJsonDigest(comparable(suppliedInspection)) !== canonicalJsonDigest(comparable(inspection)))
+    if (canonicalJsonDigest(comparable(selectedInspection)) !== canonicalJsonDigest(comparable(inspection)))
       throw Error('Historical frozen configuration/engine/evidence or Work/Ledger/Journal/maintenance CAS changed');
   }
-  const db = new Database(sessionHandoffDatabasePath(root, original.current), {
-    readonly: mode === 'inspect',
-    strict: true,
-  });
+  const db = openCliWorkspaceDatabase(
+    root,
+    sessionHandoffDatabasePath(root, original.current),
+    original.journal.state.workspace_id,
+    mode === 'inspect',
+  );
   try {
-    const store = new HostStateStore(db, original.journal.state.workspace_id),
+    const store = createCliHostStateStore(db, original.journal.state.workspace_id),
       intake = readAdmittedSessionIntake(root, store, base.identity);
-    if (intake.native_session_handle !== values['--native-session-handle'])
-      throw Error('Historical release original owner differs');
+    if (intake.native_session_handle !== nativeSessionHandle) throw Error('Historical release original owner differs');
     const pending = [
       ...original.journal.state.items,
       ...original.journal.state.completed.flatMap((wave) => wave.items),
     ].filter((item) => item.issue_id !== null && item.observation === null);
-    const suspension = {
+    const suspension = /** @type {HistoricalOwnerSuspension} */ ({
       store,
       identity: base.identity,
       journal: {
@@ -3079,10 +5289,10 @@ async function releaseHistoricalOwner(
         version: original.journal.version,
         resume_status: unissuedOwner ? 'ready' : pending.length ? 'issued_outcome_uncertain' : 'ready_to_resume',
       },
-      expectedWork: mode === 'apply' ? suppliedInspection.expectedWork : inspection.expectedWork,
-      expectedLedger: mode === 'apply' ? suppliedInspection.expectedLedger : inspection.expectedLedger,
+      expectedWork: selectedInspection.expectedWork,
+      expectedLedger: selectedInspection.expectedLedger,
       expectedMaintenanceGeneration: inspection.expectedMaintenanceGeneration,
-      nativeSessionHandle: values['--native-session-handle'],
+      nativeSessionHandle,
       userRequestPointer: base.userRequestPointer,
       requestIntent: base.requestIntent,
       config: original.config,
@@ -3091,10 +5301,10 @@ async function releaseHistoricalOwner(
       documentationContext: {
         repository_root: root,
         repository_id: base.identity.repository_id,
-        project_id: base.identity.project_ids[0],
+        project_id: base.identity.project_ids[0] ?? '',
         work_id: base.identity.work_id,
       },
-    };
+    });
     if (mode === 'inspect') {
       inspectHistoricalOwnerWork(suspension);
       return {
@@ -3108,19 +5318,20 @@ async function releaseHistoricalOwner(
     }
     if (
       !access.readBytes(requestPath, 'historical request stability').equals(requestBytes) ||
-      (historyBytes && !access.readBytes(historyRef, 'historical context stability').equals(historyBytes)) ||
-      (writer && !access.readBytes(base.preimage_ref, 'original preimage stability').equals(preimageBytes))
+      (historyBytes &&
+        historyRef &&
+        !access.readBytes(historyRef, 'historical context stability').equals(historyBytes)) ||
+      (writer &&
+        base.preimage_ref &&
+        preimageBytes &&
+        !access.readBytes(base.preimage_ref, 'original preimage stability').equals(preimageBytes))
     )
       throw Error('Historical frozen request/preimage changed before CAS');
-    const latest = inspectHistoricalOwnerContext(
-      root,
-      values['--baseline-config'],
-      base.identity,
-      base.attempt,
-      originalContexts,
-    );
+    const latest = inspectHistoricalOwnerContext(root, baselinePath, base.identity, base.attempt, originalContexts);
     if (
-      ['baseline_binding', 'receipt_binding', 'engine_binding'].some((key) => latest[key] !== original[key]) ||
+      latest.baseline_binding !== original.baseline_binding ||
+      latest.receipt_binding !== original.receipt_binding ||
+      latest.engine_binding !== original.engine_binding ||
       latest.maintenanceGeneration !== inspection.expectedMaintenanceGeneration ||
       canonicalJsonDigest(latest.current) !== canonicalJsonDigest(original.current)
     )
@@ -3136,47 +5347,49 @@ async function releaseHistoricalOwner(
       runtime_acceptance: false,
     };
   } finally {
-    db.close(true);
+    closeWorkspaceDatabaseWithAdmission(db);
   }
 }
+/** @param {string[]} args */
 async function recoveryReview(args) {
   if (args.length !== 6) throw Error('Recovery review requires exact mode, root and caller-history export');
+  /** @type {Record<string, string>} */
   const values = {};
   for (let i = 0; i < args.length; i += 2) {
-    if (Object.hasOwn(values, args[i]) || !args[i + 1]) throw Error('Recovery review arguments invalid');
-    values[args[i]] = args[i + 1];
+    const key = runOptionKey(args[i]),
+      value = args[i + 1];
+    if (Object.hasOwn(values, key) || !value) throw Error('Recovery review arguments invalid');
+    values[key] = value;
   }
-  const mode = values['--mode'];
+  const mode = runOptionKey(values['--mode']);
+  const projectRoot = runOptionKey(values['--project-root']);
   if (
     Object.keys(values).sort().join('|') !== ['--mode', '--project-root', '--request'].sort().join('|') ||
-    !['prepare', 'begin', 'complete', 'inspect'].includes(mode) ||
-    !path.isAbsolute(values['--project-root'])
+    !isRecoveryReviewMode(mode) ||
+    !path.isAbsolute(projectRoot)
   )
     throw Error('Recovery review mode or argument set invalid');
-  const root = realpathSync(values['--project-root']);
+  const root = realpathSync(projectRoot);
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { openInternalRecoveryReview } = await import('./runtime-config-rebind.mjs');
-  const bytes = requireSafeRepositoryAccess(root).readBytes(values['--request'], 'recovery caller-history export');
+  const bytes = requireSafeRepositoryAccess(root).readBytes(
+    runOptionKey(values['--request']),
+    'recovery caller-history export',
+  );
   if (bytes.length > 262144) throw Error('Recovery caller-history export exceeds bound');
+  /** @type {unknown} */
   const input = JSON.parse(bytes.toString('utf8'));
   const keys = ['identity', 'attempt', 'baselinePath', 'callerSession', 'controllerId', 'userInstructionRef'];
-  if (Object.hasOwn(input, 'originalContexts')) keys.push('originalContexts');
+  if (hasRecoveryReviewOriginalContexts(input)) keys.push('originalContexts');
   if (mode !== 'prepare') keys.push('request');
   if (mode === 'complete') keys.push('observation');
-  if (
-    !input ||
-    Array.isArray(input) ||
-    Object.keys(input).sort().join('|') !== keys.sort().join('|') ||
-    (mode !== 'prepare' && !input.request) ||
-    (mode === 'complete' && !input.observation) ||
-    (Object.hasOwn(input, 'originalContexts') &&
-      (!Array.isArray(input.originalContexts) || !input.originalContexts.length))
-  )
+  if (!isRecoveryReviewExport(input, keys, mode !== 'prepare', mode === 'complete'))
     throw Error('Recovery caller-history export shape invalid');
   const route = openInternalRecoveryReview({ ...input, repositoryRoot: root, mode });
   try {
-    const operation =
-      mode === 'begin' ? route.begin() : mode === 'complete' ? route.complete(input.observation) : route.inspect();
+    const operation = requireRecoveryOperation(
+      mode === 'begin' ? route.begin() : mode === 'complete' ? route.complete(input.observation) : route.inspect(),
+    );
     return {
       status: operation.status,
       request: route.request,
@@ -3190,15 +5403,35 @@ async function recoveryReview(args) {
   }
 }
 
+/** @param {readonly string[]} args @param {number} selectorIndex @returns {boolean} */
+function hasRunSpecialConflict(args, selectorIndex) {
+  return (runSpecialModeOptions[selectorIndex]?.conflicts ?? []).some((option) => args.includes(option));
+}
+
+/** @param {import('../src/runtime-initialization.ts').RuntimeInitializationAuthority} authority @param {string} integrationsDigest */
+function assertInitializationIntegrations(authority, integrationsDigest) {
+  if (authority.format !== 'RuntimeInitialization/v1') return;
+  if (authority.receipt.integrations_digest !== integrationsDigest)
+    fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization integrations are stale.');
+}
+
+/** @param {readonly string[]} args @param {number} selectorIndex @returns {boolean} */
+function hasRunSpecialSelector(args, selectorIndex) {
+  const selector = runSpecialSelectors[selectorIndex];
+  return typeof selector === 'string' && args.includes(selector);
+}
+
 export async function run(args = process.argv.slice(2)) {
-  if (args.includes('--continue-initial-source')) {
-    if (args[0] !== '--continue-initial-source' || args[1] !== 'true')
+  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
+  const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
+  if (hasRunSpecialSelector(args, 0)) {
+    if (args[0] !== runSpecialSelectors[0] || args[1] !== 'true')
       throw Error('Initial source continuation requires its exact separate signal');
     const { continueInitialSource } = await import('./continue-initial-source.mjs');
     return continueInitialSource(args.slice(2));
   }
-  if (args.includes('--recover-unprepared-work')) {
-    if (args[0] !== '--recover-unprepared-work' || args[1] !== 'true')
+  if (hasRunSpecialSelector(args, 1)) {
+    if (args[0] !== runSpecialSelectors[1] || args[1] !== 'true')
       throw Error('Unprepared recovery requires its exact separate signal');
     return recoverUnpreparedWork(args.slice(2));
   }
@@ -3209,122 +5442,78 @@ export async function run(args = process.argv.slice(2)) {
       cwd: bundleRoot,
     });
   }
-  if (args.includes('--recover-completed-source-report')) {
-    if (
-      args[0] !== '--recover-completed-source-report' ||
-      args[1] !== 'true' ||
-      args.includes('--report') ||
-      args.includes('--issue-wave')
-    )
+  if (hasRunSpecialSelector(args, 2)) {
+    if (args[0] !== runSpecialSelectors[2] || args[1] !== 'true' || hasRunSpecialConflict(args, 2))
       throw Error('Completed Source report recovery requires its exact separate signal');
     const { recoverCompletedSourceReport } = await import('./recover-completed-source-report.mjs');
     return recoverCompletedSourceReport(args.slice(2));
   }
-  if (args.includes('--transition-failed-prewriter')) {
-    if (args[0] !== '--transition-failed-prewriter' || args[1] !== 'true')
+  if (hasRunSpecialSelector(args, 3)) {
+    if (args[0] !== runSpecialSelectors[3] || args[1] !== 'true')
       throw Error('Failed prewriter transition requires its exact separate signal');
     const { transitionFailedPrewriter } = await import('./transition-failed-prewriter.mjs');
     return transitionFailedPrewriter(args.slice(2));
   }
-  if (args.includes('--recover-failed-prewriter-owner')) {
-    if (args[0] !== '--recover-failed-prewriter-owner' || args[1] !== 'true')
+  if (hasRunSpecialSelector(args, 4)) {
+    if (args[0] !== runSpecialSelectors[4] || args[1] !== 'true')
       throw Error('Failed prewriter owner recovery requires its exact separate signal');
     const { recoverFailedPrewriterOwner } = await import('./recover-failed-prewriter-owner.mjs');
     return recoverFailedPrewriterOwner(args.slice(2));
   }
-  if (args.includes('--recovery-review')) {
-    if (args[0] !== '--recovery-review' || args[1] !== 'true')
+  if (hasRunSpecialSelector(args, 5)) {
+    if (args[0] !== runSpecialSelectors[5] || args[1] !== 'true')
       throw Error('Recovery review requires its exact separate signal');
     return recoveryReview(args.slice(2));
   }
-  if (args.includes('--release-historical-owner')) {
-    if (args[0] !== '--release-historical-owner' || args[1] !== 'true')
+  if (hasRunSpecialSelector(args, 6)) {
+    if (args[0] !== runSpecialSelectors[6] || args[1] !== 'true')
       throw Error('Historical release requires its exact separate signal');
     return releaseHistoricalOwner(args.slice(2));
   }
-  if (args.includes('--resume-historical-normalization')) {
-    if (
-      args[0] !== '--resume-historical-normalization' ||
-      args[1] !== 'true' ||
-      args.includes('--report') ||
-      args.includes('--issue-wave') ||
-      args.includes('--capture-stopped-source')
-    )
+  if (hasRunSpecialSelector(args, 7)) {
+    if (args[0] !== runSpecialSelectors[7] || args[1] !== 'true' || hasRunSpecialConflict(args, 7))
       throw Error('Historical normalization resume requires its exact separate signal');
     const { resumeHistoricalNormalization } = await import('./historical-normalization-resume.mjs');
     return resumeHistoricalNormalization(args.slice(2));
   }
-  if (args.includes('--capture-historical-terminal-synthesis')) {
-    if (
-      args[0] !== '--capture-historical-terminal-synthesis' ||
-      args[1] !== 'true' ||
-      args.includes('--report') ||
-      args.includes('--issue-wave') ||
-      args.includes('--capture-stopped-source') ||
-      args.includes('--release-completed-readonly')
-    )
+  if (hasRunSpecialSelector(args, 8)) {
+    if (args[0] !== runSpecialSelectors[8] || args[1] !== 'true' || hasRunSpecialConflict(args, 8))
       throw Error('Historical terminal synthesis capture requires its exact separate signal');
     const { captureHistoricalTerminalSynthesis } = await import('./historical-terminal-synthesis-capture.mjs');
     return captureHistoricalTerminalSynthesis(args.slice(2));
   }
-  if (args.includes('--release-unissued-owner')) {
-    if (args[0] !== '--release-unissued-owner' || args[1] !== 'true')
+  if (hasRunSpecialSelector(args, 9)) {
+    if (args[0] !== runSpecialSelectors[9] || args[1] !== 'true')
       throw Error('Unissued owner release requires its exact separate signal');
     return releaseHistoricalOwner(args.slice(2), true);
   }
-  if (args.includes('--release-settled-research-owner')) {
-    if (args[0] !== '--release-settled-research-owner' || args[1] !== 'true')
+  if (hasRunSpecialSelector(args, 10)) {
+    if (args[0] !== runSpecialSelectors[10] || args[1] !== 'true')
       throw Error('Settled research release requires its exact separate signal');
     return releaseHistoricalOwner(args.slice(2), false, true);
   }
-  if (args.includes('--release-readonly-bookkeeping-owner')) {
-    if (args[0] !== '--release-readonly-bookkeeping-owner' || args[1] !== 'true')
+  if (hasRunSpecialSelector(args, 11)) {
+    if (args[0] !== runSpecialSelectors[11] || args[1] !== 'true')
       throw Error('Readonly bookkeeping release requires its exact separate signal');
     return releaseHistoricalOwner(args.slice(2), false, false, true);
   }
-  if (args.includes('--retire-interrupted-source-owner')) {
-    if (
-      args[0] !== '--retire-interrupted-source-owner' ||
-      args[1] !== 'true' ||
-      args.includes('--report') ||
-      args.includes('--issue-wave') ||
-      args.includes('--capture-stopped-source') ||
-      args.includes('--release-completed-readonly')
-    )
+  if (hasRunSpecialSelector(args, 12)) {
+    if (args[0] !== runSpecialSelectors[12] || args[1] !== 'true' || hasRunSpecialConflict(args, 12))
       throw Error('Interrupted Source retirement requires its exact separate signal');
     return retireInterruptedSourceOwner(args.slice(2));
   }
-  if (args.includes('--release-completed-readonly')) {
-    if (
-      args[0] !== '--release-completed-readonly' ||
-      args[1] !== 'true' ||
-      args.includes('--report') ||
-      args.includes('--issue-wave') ||
-      args.includes('--capture-stopped-source')
-    )
+  if (hasRunSpecialSelector(args, 13)) {
+    if (args[0] !== runSpecialSelectors[13] || args[1] !== 'true' || hasRunSpecialConflict(args, 13))
       throw Error('Readonly release requires separate exact signal');
     return releaseCompletedReadonly(args.slice(2));
   }
-  if (args.includes('--capture-retired-source')) {
-    if (
-      args[0] !== '--capture-retired-source' ||
-      args[1] !== 'true' ||
-      args.includes('--report') ||
-      args.includes('--issue-wave') ||
-      args.includes('--capture-stopped-source') ||
-      args.includes('--retire-interrupted-source-owner') ||
-      args.includes('--release-completed-readonly')
-    )
+  if (hasRunSpecialSelector(args, 14)) {
+    if (args[0] !== runSpecialSelectors[14] || args[1] !== 'true' || hasRunSpecialConflict(args, 14))
       throw Error('Retired-source capture requires its exact separate capture signal');
     return captureRetiredSource(args.slice(2));
   }
-  if (args.includes('--capture-stopped-source')) {
-    if (
-      args[0] !== '--capture-stopped-source' ||
-      args[1] !== 'true' ||
-      args.includes('--report') ||
-      args.includes('--issue-wave')
-    )
+  if (hasRunSpecialSelector(args, 15)) {
+    if (args[0] !== runSpecialSelectors[15] || args[1] !== 'true' || hasRunSpecialConflict(args, 15))
       throw Error('Stopped-source capture requires exact separate capture signal');
     return captureStoppedSource(args.slice(2));
   }
@@ -3334,17 +5523,17 @@ export async function run(args = process.argv.slice(2)) {
   // evidence. Normal work entry still requires an active selector there.
   const selector = values.export_staged_witness ? null : activeSelector(values.project_root);
   assertNoActiveCutoverMaintenance(selector);
-  const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   const { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess, runtimePackageCodePaths, selectWorkflow } =
     await import('../src/config/runtime-config.ts');
+  const { workflowWorkItemSchema } = await import('../src/orchestration/workflow-session-reservation-contract.ts');
   const { resolveSelectedProjectForRepositoryPath } = await import('../src/config/project-context.ts');
   const pin = readPin(bundleRoot);
   checkManifest(bundleRoot, pin);
   if (Bun.version !== pin) fail('GAP-VIDA-RUN-BUN-001', `Pinned Bun ${pin} is required; running ${Bun.version}.`);
   const config = loadRuntimeConfig(values.project_root);
   if (!values.scope_digest && !values.task_source_operation) {
-    const { inspectScope } = await import('./scope.mjs');
+    const { inspectScope } = await import('./scope.ts');
     const snapshot = await inspectScope([
       '--project-root',
       values.project_root,
@@ -3360,32 +5549,32 @@ export async function run(args = process.argv.slice(2)) {
   const configDigest = runtimeConfigDigest(config);
   if (selector && config.runtime.bundle !== 'vida-agent')
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Selected bundle differs from configured runtime.');
-  const { readRuntimeInitializationReceipt } = await import('../src/config/initialization-record.ts');
-  const { requireSafeRepositoryAccess: initializationAccess } = await import('../src/config/safe-repository-access.ts');
-  let initialization;
+  const { readRuntimeInitializationAuthority } = await import('../src/runtime-initialization.ts');
+  let initializationAuthority;
   try {
-    initialization = readRuntimeInitializationReceipt(initializationAccess(values.project_root)).receipt;
+    initializationAuthority = readRuntimeInitializationAuthority(values.project_root, config);
   } catch {
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization authority is unavailable.');
   }
+  const initialization = initializationAuthority.receipt;
+  const initializationBinding = initializationAuthority.binding;
   if (
-    initialization.repository_id !== config.repository.repository_id ||
-    (!values.task_source_operation && initialization.repository_id !== values.repository)
+    initializationBinding.repository_id !== config.repository.repository_id ||
+    (!values.task_source_operation && initializationBinding.repository_id !== values.repository)
   )
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization repository identity is stale.');
-  const configuredProjectIds = [...config.projects.map((entry) => entry.project_id)].sort();
+  const configuredProjectIds = config.projects.map((entry) => entry.project_id).sort(compareStrings);
   if (
-    !Array.isArray(initialization.project_ids) ||
-    JSON.stringify([...initialization.project_ids].sort()) !== JSON.stringify(configuredProjectIds)
+    !isStringArray(initializationBinding.project_ids) ||
+    JSON.stringify([...initializationBinding.project_ids].sort(compareStrings)) !== JSON.stringify(configuredProjectIds)
   )
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization project configuration is stale.');
-  if (initialization.integrations_digest !== canonicalJsonDigest(config.integrations))
-    fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization integrations are stale.');
-  if (initialization.config_digest !== configDigest)
+  assertInitializationIntegrations(initializationAuthority, canonicalJsonDigest(config.integrations));
+  if (initializationBinding.config_digest !== configDigest)
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization configuration is stale.');
-  if (initialization.workspace_id !== deriveWorkspaceId(config.repository.repository_id, values.project_root))
+  if (initializationBinding.workspace_id !== deriveWorkspaceId(config.repository.repository_id, values.project_root))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'Runtime initialization workspace identity is stale.');
-  const { assertRuntimePackageExports } = await import('../tooling/maintained-source-inventory.mjs');
+  const { assertRuntimePackageExports } = await import('../tooling/maintained-source-inventory.ts');
   assertRuntimePackageExports(runtimePackageAccess().repository_root);
   if (values.task_source_operation) {
     const { executeTaskSourceBindingOperation } =
@@ -3402,6 +5591,7 @@ export async function run(args = process.argv.slice(2)) {
       initialization_status: initialization.workspace_binding_status,
     };
   }
+  assertStandardRunOptions(values);
   if (values.projects.some((id) => !config.projects.some((project) => project.project_id === id)))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The project context is not bound to the requested identity.');
   let pathProject;
@@ -3412,8 +5602,13 @@ export async function run(args = process.argv.slice(2)) {
   }
   if (!values.projects.includes(pathProject.project_id))
     fail('GAP-VIDA-RUN-CONTEXT-001', 'The work path is outside the selected project context.');
+  /** @type {WorkItem | undefined} */
   let selectedWorkItem;
-  if (values.intake) selectedWorkItem = readBoundedReport(values.intake).work_item;
+  if (values.intake)
+    selectedWorkItem = parseWorkflowWorkItem(
+      workflowWorkItemSchema,
+      (await readLocalSessionIntake(values.intake)).work_item,
+    );
   else {
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
@@ -3437,7 +5632,9 @@ export async function run(args = process.argv.slice(2)) {
         const bytes = requireSafeRepositoryAccess(values.project_root).readBytes(ref.path, 'current selection intake');
         if (bytes.length > 32768 || digest(bytes) !== ref.sha256)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted intake changed.');
-        selectedWorkItem = JSON.parse(bytes.toString('utf8')).work_item;
+        /** @type {unknown} */
+        const intakeValue = JSON.parse(bytes.toString('utf8'));
+        selectedWorkItem = parseAdmittedIntakeWorkItem(workflowWorkItemSchema, intakeValue);
         if (canonicalJsonDigest(selectedWorkItem) !== work.binding.work_item_digest)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted work item changed.');
       }
@@ -3445,22 +5642,26 @@ export async function run(args = process.argv.slice(2)) {
       selectionLedger.close();
     }
   }
-  const selectionMetadata = { risk_flags: selectedWorkItem?.risk_flags ?? [], labels: selectedWorkItem?.labels ?? [] };
+  const selectionBase = workflowSelectionBase(
+    workflowWorkItemSchema,
+    values.team,
+    values.kind,
+    values.intent,
+    selectedWorkItem,
+  );
   const selections = values.projects.map((projectId) =>
-    selectWorkflow(config, {
-      team: values.team,
-      kind: values.kind,
-      intent: values.intent,
-      project: projectId,
-      ...selectionMetadata,
-    }),
+    selectWorkflow(config, { ...selectionBase, project: projectId }),
   );
   if (selections.some((selection) => selection.workflow_id !== values.workflow))
     fail('GAP-VIDA-RUN-WORKFLOW-001', 'The requested workflow is not the configured workflow for this selection.');
+  const activeWorkflow = config.workflows[values.workflow];
+  requireRunValue(activeWorkflow, 'Configured workflow is unavailable for the selected run.');
   if (values.export_staged_witness) {
+    const payloadManifestSha256 = requireOption(values.payload_manifest_sha256, '--payload-manifest-sha256'),
+      stagedWorkId = requireOption(values.work_id, '--work-id'),
+      stagedAttempt = Number(requireOption(values.attempt, '--attempt'));
     const { createStagedRuntimeWitness } = await import('../src/orchestration/staged-runtime-witness.ts');
     const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
-    const { inspectHostWorkspaceDatabase } = await import('../src/host-state.ts');
     const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
@@ -3470,7 +5671,8 @@ export async function run(args = process.argv.slice(2)) {
       config.repository.repository_id,
       values.projects,
     );
-    const workspace = inspectHostWorkspaceDatabase(
+    const workspace = inspectCliHostWorkspaceDatabase(
+      values.project_root,
       sessionHandoffDatabasePath(values.project_root, config),
       deriveWorkspaceId(project.repository_id, values.project_root),
     );
@@ -3482,21 +5684,15 @@ export async function run(args = process.argv.slice(2)) {
         JSON.stringify(entry.identity.project_ids) === JSON.stringify(project.project_ids),
     )?.state;
     const lifecycleRisk = work?.lifecycle.risk;
-    if (!lifecycleRisk || !['low', 'medium', 'high'].includes(lifecycleRisk))
+    if (!isLifecycleRisk(lifecycleRisk))
       fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted Work lifecycle risk is unavailable.');
     const witness = await createStagedRuntimeWitness({
       repositoryRoot: values.project_root,
-      payloadManifestSha256: values.payload_manifest_sha256,
-      workId: values.work_id,
-      attempt: Number(values.attempt),
+      payloadManifestSha256,
+      workId: stagedWorkId,
+      attempt: stagedAttempt,
       lifecycleRisk,
-      selection: {
-        team: values.team,
-        kind: values.kind,
-        intent: values.intent,
-        project: pathProject.project_id,
-        ...selectionMetadata,
-      },
+      selection: { ...selectionBase, project: pathProject.project_id },
     });
     const access = requireSafeRepositoryAccess(values.project_root);
     const directory = `.agent/cutover/${values.export_staged_witness}`;
@@ -3534,6 +5730,11 @@ export async function run(args = process.argv.slice(2)) {
     };
   }
   if (values.recover_expired_lease) {
+    const recoveryAttempt = Number(requireOption(values.attempt, '--attempt')),
+      nativeSessionHandle = requireOption(values.native_session_handle, '--native-session-handle'),
+      leaseGeneration = Number(requireOption(values.lease_generation, '--lease-generation')),
+      expectedRevision = Number(requireOption(values.expected_revision, '--expected-revision')),
+      expectedDigest = requireOption(values.expected_digest, '--expected-digest');
     const {
       readInitialSourceContinuationLineageView,
       acceptedSourceAuthorizationRevision,
@@ -3542,7 +5743,6 @@ export async function run(args = process.argv.slice(2)) {
     const { readLocalSourceWriteAuthorization } = await import('../src/orchestration/local-source-authorization.ts');
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
-    const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
     const { snapshotDeclaredSources, snapshotRuntimePackageSources } =
       await import('../src/orchestration/scoped-source-snapshot.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
@@ -3558,11 +5758,12 @@ export async function run(args = process.argv.slice(2)) {
     };
     const ledger = openConfiguredMastraSessionLedger(values.project_root);
     try {
-      const journal = ledger.resume(values.work_id, Number(values.attempt));
+      const journal = ledger.resume(values.work_id, recoveryAttempt);
       const host = ledger.hostState.readHostStateSnapshot(identity);
       if (
         !journal ||
         !host.work ||
+        !host.work.lease ||
         !host.workVersion ||
         !host.ledgerVersion ||
         host.work.binding.team_id !== values.team ||
@@ -3571,21 +5772,18 @@ export async function run(args = process.argv.slice(2)) {
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery admitted work or selection differs.');
 
       const access = requireSafeRepositoryAccess(values.project_root);
-      const initialLineage = readInitialSourceContinuationLineageView(
-        ledger.hostState,
-        identity,
-        Number(values.attempt),
-      );
+      const initialLineage = readInitialSourceContinuationLineageView(ledger.hostState, identity, recoveryAttempt);
       ledger.hostState.recoverExpiredLocalLease({
         identity,
-        attempt: Number(values.attempt),
-        nativeSessionHandle: values.native_session_handle,
-        generation: Number(values.lease_generation),
+        attempt: recoveryAttempt,
+        nativeSessionHandle,
+        generation: leaseGeneration,
         expectedWork: host.workVersion,
         expectedLedger: host.ledgerVersion,
-        expectedJournal: { revision: Number(values.expected_revision), digest: values.expected_digest },
+        expectedJournal: { revision: expectedRevision, digest: expectedDigest },
         expectedMaintenanceGeneration: host.maintenanceGeneration,
         verifyCurrent: (work, state, sourceRoot) => {
+          const sourceScope = requireRunData(state.source_scope, 'Expired recovery source scope is unavailable.');
           const acceptedCurrentSourceWave = isAcceptedCompletedSourceWave(
             work,
             state,
@@ -3611,19 +5809,15 @@ export async function run(args = process.argv.slice(2)) {
             approval.source_revision !== acceptedAuthorityRevision ||
             authority.user_instruction_ref !== approval.record_id ||
             approval.principal !== 'local-session:' + canonicalJsonDigest(values.native_session_handle) ||
-            authority.native_session_handle !== values.native_session_handle ||
+            authority.native_session_handle !== nativeSessionHandle ||
             authority.work_id !== values.work_id ||
-            authority.attempt !== Number(values.attempt) ||
+            authority.attempt !== recoveryAttempt ||
             authority.scope_digest !== acceptedAuthorityRevision ||
             authority.config_digest !== work.binding.config_digest ||
             authority.workflow_id !== work.binding.workflow_id ||
-            canonicalJsonDigest([...authority.implementation_paths].sort()) !==
-              canonicalJsonDigest([...work.binding.implementation_paths].sort()) ||
+            !sameImplementationPaths(authority.implementation_paths, work.binding.implementation_paths) ||
             authority.stage_ids.some(
-              (id) =>
-                !currentConfig.workflows[work.binding.workflow_id].stages.some(
-                  (stage) => stage.id === id && stage.kind === 'develop',
-                ),
+              (id) => !hasConfiguredDevelopmentStage(currentConfig, work.binding.workflow_id, id),
             )
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired recovery existing source authority changed.');
@@ -3643,16 +5837,14 @@ export async function run(args = process.argv.slice(2)) {
                 item.issue_id === recoveredSource.issue_id &&
                 completedSourceJournalObservationMatches(work, item),
               );
-              const retainedRequestScope = recoveredSource
-                ? recoveredSource.record.prior_journal.source_scope.digest
-                : state.source_scope.digest;
+              const retainedRequestScope = recoveredSource?.record.prior_journal.source_scope?.digest;
               if (
                 !assignment ||
                 !profile ||
                 (profile.mutation_scope === 'repository_source' && !retainedSourceResult) ||
                 item.request.role !== assignment.role ||
                 item.request.config_digest !== work.binding.config_digest ||
-                (item.request.scope_digest !== state.source_scope.digest &&
+                (item.request.scope_digest !== sourceScope.digest &&
                   item.request.scope_digest !== retainedRequestScope) ||
                 !item.observation ||
                 item.observation.status !== 'reported_complete' ||
@@ -3717,25 +5909,27 @@ export async function run(args = process.argv.slice(2)) {
             runtimeConfigDigest(currentConfig) !== work.binding.config_digest ||
             work.binding.repository_id !== values.repository ||
             JSON.stringify(work.binding.project_ids) !== JSON.stringify(values.projects) ||
-            (state.source_scope?.digest !== values.scope_digest &&
+            (sourceScope.digest !== values.scope_digest &&
               !(
                 initialLineage?.completedSourceReportRecovery &&
                 work.binding.work_source_revision === values.scope_digest
               ))
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery configuration, projects or scope differs.');
+          const verifiedSourceRoot = requireRunData(sourceRoot, 'Expired recovery source root is unavailable.');
           const source = snapshotDeclaredSources(
-            requireSafeRepositoryAccess(sourceRoot),
-            state.source_scope.entries.map((entry) => entry.path),
+            requireSafeRepositoryAccess(verifiedSourceRoot),
+            sourceScope.entries.map((entry) => entry.path),
           );
-          if (source.digest !== state.source_scope.digest)
+          if (source.digest !== sourceScope.digest)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery declared source changed.');
           const intakeRef = work.artifacts.find((entry) => entry.artifact_id === 'local-session-intake');
           if (!intakeRef) fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery intake is unavailable.');
           const intakeBytes = access.readBytes(intakeRef.path, 'expired lease recovery intake');
           if (digest(intakeBytes) !== intakeRef.sha256)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Expired lease recovery intake changed.');
-          const intake = JSON.parse(intakeBytes.toString('utf8'));
+          const intakeValue = parseJsonUnknown(intakeBytes.toString('utf8'));
+          const intake = requireRunRecord(intakeValue, 'Persisted intake is invalid.');
           const inventory = runtimePackageCodePaths(currentConfig.runtime.bundle);
           if (
             canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory) &&
@@ -3764,7 +5958,7 @@ export async function run(args = process.argv.slice(2)) {
               canonicalJsonDigest(
                 initialLineage.runtimeCodeContinuations?.at(-1)?.request.currentRuntimeCodePaths ??
                   initialLineage.completedSourceReportRecovery?.record.request.currentRuntimeCodePaths ??
-                  initialLineage.frontierCodeRebind.record.request.runtimeCodePaths,
+                  initialLineage.frontierCodeRebind?.record.request.runtimeCodePaths,
               ) !== canonicalJsonDigest(inventory) ||
               runtime.digest !== work.binding.runtime_code_digest
             )
@@ -3805,14 +5999,17 @@ export async function run(args = process.argv.slice(2)) {
     const { readLocalSourceWriteAuthorization } = await import('../src/orchestration/local-source-authorization.ts');
     const { loadProjectSetContext } = await import('../src/config/project-context.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
-    const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
     const { snapshotDeclaredSources, snapshotRuntimePackageSources, compareScopedSourceSnapshots } =
       await import('../src/orchestration/scoped-source-snapshot.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
     const { inspectLocalSession } = await import('../src/orchestration/inspect-local-session.ts');
-    const { default: Ajv } = await import('ajv/dist/2020.js');
-    const validateScope = new Ajv({ strict: true, allErrors: true }).compile(
-      JSON.parse(runtimePackageAccess().readBytes('schemas/implementation-scope.v1.schema.json', 'renew scope schema')),
+    const { Ajv2020 } = await import('ajv/dist/2020.js');
+    const validateScope = new Ajv2020({ strict: true, allErrors: true }).compile(
+      JSON.parse(
+        runtimePackageAccess()
+          .readBytes('schemas/implementation-scope.v1.schema.json', 'renew scope schema')
+          .toString('utf8'),
+      ),
     );
     const project = loadProjectSetContext(values.project_root, config, values.repository, values.projects);
     const identity = {
@@ -3823,11 +6020,17 @@ export async function run(args = process.argv.slice(2)) {
     };
     const ledger = openConfiguredMastraSessionLedger(values.project_root);
     try {
-      const journal = ledger.resume(values.work_id, Number(values.attempt));
+      const renewalAttempt = Number(requireOption(values.attempt, '--attempt')),
+        nativeSessionHandle = requireOption(values.native_session_handle, '--native-session-handle'),
+        leaseGeneration = Number(requireOption(values.lease_generation, '--lease-generation')),
+        expectedRevision = Number(requireOption(values.expected_revision, '--expected-revision')),
+        expectedDigest = requireOption(values.expected_digest, '--expected-digest');
+      const journal = ledger.resume(values.work_id, renewalAttempt);
       const host = ledger.hostState.readHostStateSnapshot(identity);
       if (
         !journal ||
         !host.work ||
+        !host.work.lease ||
         !host.workVersion ||
         !host.ledgerVersion ||
         host.work.binding.team_id !== values.team ||
@@ -3838,15 +6041,17 @@ export async function run(args = process.argv.slice(2)) {
       const access = requireSafeRepositoryAccess(values.project_root);
       ledger.hostState.renewActiveLocalLease({
         identity,
-        attempt: Number(values.attempt),
-        nativeSessionHandle: values.native_session_handle,
-        generation: Number(values.lease_generation),
+        attempt: renewalAttempt,
+        nativeSessionHandle,
+        generation: leaseGeneration,
         expectedWork: host.workVersion,
         expectedLedger: host.ledgerVersion,
-        expectedJournal: { revision: Number(values.expected_revision), digest: values.expected_digest },
+        expectedJournal: { revision: expectedRevision, digest: expectedDigest },
         expectedMaintenanceGeneration: host.maintenanceGeneration,
         verifyCurrent: (work, state, sourceRoot) => {
+          requireCurrentLeaseOwner(work, nativeSessionHandle);
           const currentConfig = loadRuntimeConfig(values.project_root);
+          /** @type {import('../src/orchestration/local-source-authorization.ts').LocalSourceWriteAuthorization | undefined} */
           let currentWriterAuthority;
           for (const item of state.items) {
             const settledWriter = item.host_reservation && completedSourceJournalObservationMatches(work, item);
@@ -3885,13 +6090,12 @@ export async function run(args = process.argv.slice(2)) {
                 bound.sha256 !== reference.sha256 ||
                 authority.work_id !== work.binding.lifecycle_work_id ||
                 authority.attempt !== Number(values.attempt) ||
-                authority.native_session_handle !== values.native_session_handle ||
+                authority.native_session_handle !== nativeSessionHandle ||
                 authority.scope_digest !== work.binding.work_source_revision ||
                 authority.config_digest !== work.binding.config_digest ||
                 authority.workflow_id !== work.binding.workflow_id ||
                 !authority.stage_ids.includes(item.request.stage_id) ||
-                canonicalJsonDigest([...authority.implementation_paths].sort()) !==
-                  canonicalJsonDigest([...work.binding.implementation_paths].sort())
+                !sameImplementationPaths(authority.implementation_paths, work.binding.implementation_paths)
               )
                 fail('GAP-VIDA-RUN-CONTEXT-001', 'Writer heartbeat source authority changed.');
             }
@@ -3903,29 +6107,32 @@ export async function run(args = process.argv.slice(2)) {
             state.source_scope?.digest !== values.scope_digest
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal configuration, projects or scope differs.');
+          const sourceScope = requireRunData(state.source_scope, 'Lease renewal source scope is unavailable.');
+          const verifiedSourceRoot = requireRunData(sourceRoot, 'Lease renewal source root is unavailable.');
           const source = snapshotDeclaredSources(
-            requireSafeRepositoryAccess(sourceRoot),
-            state.source_scope.entries.map((entry) => entry.path),
+            requireSafeRepositoryAccess(verifiedSourceRoot),
+            sourceScope.entries.map((entry) => entry.path),
           );
-          const scopeBytes = access.readBytes(work.contracts.scope.path, 'renew bound scope'),
-            scope = JSON.parse(scopeBytes);
+          const scopeBytes = access.readBytes(work.contracts.scope.path, 'renew bound scope');
+          /** @type {unknown} */
+          const scope = JSON.parse(scopeBytes.toString('utf8'));
           if (
             digest(scopeBytes) !== work.contracts.scope.sha256 ||
-            !validateScope(scope) ||
+            !isValidatedRenewalScope(scope, validateScope) ||
             scope.work_id !== work.binding.lifecycle_work_id ||
             scope.scope_id !== work.binding.scope_id ||
             scope.source_revision !== work.binding.work_source_revision ||
-            scope.attribution.thread_id !== values.native_session_handle ||
-            canonicalJsonDigest([...state.source_scope.entries.map((entry) => entry.path)].sort()) !==
-              canonicalJsonDigest([...scope.allowed_paths].sort()) ||
-            canonicalJsonDigest([...scope.allowed_paths].sort()) !==
-              canonicalJsonDigest([...work.lifecycle.scope.allowed_paths].sort()) ||
+            scope.attribution.thread_id !== nativeSessionHandle ||
+            !sameImplementationPaths(
+              sourceScope.entries.map((entry) => entry.path),
+              scope.allowed_paths,
+            ) ||
+            !sameImplementationPaths(scope.allowed_paths, work.lifecycle.scope.allowed_paths) ||
             canonicalJsonDigest(scope.ac_ids) !== canonicalJsonDigest(work.binding.ac_ids) ||
-            canonicalJsonDigest([...scope.implementation_paths].sort()) !==
-              canonicalJsonDigest([...work.binding.implementation_paths].sort())
+            !sameImplementationPaths(scope.implementation_paths, work.binding.implementation_paths)
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal bound scope differs.');
-          const changes = compareScopedSourceSnapshots(state.source_scope, source);
+          const changes = compareScopedSourceSnapshots(sourceScope, source);
           if (
             changes.some(
               (change) =>
@@ -3940,7 +6147,8 @@ export async function run(args = process.argv.slice(2)) {
           const intakeBytes = access.readBytes(intakeRef.path, 'lease renewal intake');
           if (digest(intakeBytes) !== intakeRef.sha256)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal intake changed.');
-          const intake = JSON.parse(intakeBytes.toString('utf8'));
+          const intakeValue = parseJsonUnknown(intakeBytes.toString('utf8'));
+          const intake = requireRunRecord(intakeValue, 'Persisted intake is invalid.');
           const inventory = runtimePackageCodePaths(currentConfig.runtime.bundle);
           if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(inventory))
             fail(
@@ -3958,7 +6166,7 @@ export async function run(args = process.argv.slice(2)) {
           if (
             runtime.digest !== work.binding.runtime_code_digest ||
             schema !== work.binding.schema_digest ||
-            intake.native_session_handle !== values.native_session_handle ||
+            intake.native_session_handle !== nativeSessionHandle ||
             canonicalJsonDigest(intake.work_item) !== work.binding.work_item_digest
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Lease renewal bundle, intake or owner changed.');
@@ -4009,28 +6217,21 @@ export async function run(args = process.argv.slice(2)) {
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
-    const {
-      compareScopedSourceSnapshots,
-      snapshotAdmittedTaskSources,
-      snapshotDeclaredSources,
-      snapshotRuntimePackageSources,
-    } = await import('../src/orchestration/scoped-source-snapshot.ts');
+    const { compareScopedSourceSnapshots, snapshotAdmittedTaskSources, snapshotDeclaredSources } =
+      await import('../src/orchestration/scoped-source-snapshot.ts');
+    const scopeDigest = requireOption(values.scope_digest, '--scope-digest');
+    /** @type {import('../src/orchestration/session-handoff.ts').SessionHandoffContext} */
     const context = {
       work_id: values.work_id,
       attempt: Number(values.attempt),
-      scope_digest: values.scope_digest,
+      scope_digest: scopeDigest,
     };
-    const selection = {
-      team: values.team,
-      kind: values.kind,
-      intent: values.intent,
-      project: pathProject.project_id,
-      ...selectionMetadata,
-    };
+    const selection = { ...selectionBase, project: pathProject.project_id };
     const ledger = openConfiguredMastraSessionLedger(values.project_root);
-    if (values.report && readBoundedReport(values.report).schema === 'VidaSessionObservation/v1') {
+    const reportValue = values.report ? readBoundedReport(values.report) : undefined;
+    if (isRecord(reportValue) && reportValue.schema === 'VidaSessionObservation/v1') {
       try {
-        const observation = parseSessionBridgeObservation(readBoundedReport(values.report));
+        const observation = parseSessionBridgeObservation(reportValue);
         const recorded = ledger.retrieveReportedObservation(context.work_id, context.attempt, observation);
         if (recorded) {
           const { loadProjectSetContext } = await import('../src/config/project-context.ts');
@@ -4114,22 +6315,28 @@ export async function run(args = process.argv.slice(2)) {
     }
     const continuationLookup = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
     if (continuationLookup?.receipt.request.action.kind === 'configured_frontier') {
+      const admissionWork = requireHostWork(
+        admissionHost,
+        'Delivered prewriter continuation has no current Host work.',
+      );
       try {
-        const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
         const intake = assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
         if (values.prepare_assurance || values.correct || values.reconcile)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'The current prewriter wave must finish before dependent execution.');
         let current = continuationLookup;
-        const expected = { revision: Number(values.expected_revision), digest: values.expected_digest };
-        if (
-          (values.issue_wave || values.report) &&
-          (current.journal.version.revision !== expected.revision || current.journal.version.digest !== expected.digest)
-        )
-          fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter Journal version is stale.');
+        const expected = readExpectedStateVersion(values.expected_revision, values.expected_digest);
+        if (values.issue_wave || values.report) {
+          requireRunValue(expected, 'Delivered prewriter Journal version is stale.');
+          if (
+            current.journal.version.revision !== expected.revision ||
+            current.journal.version.digest !== expected.digest
+          )
+            fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter Journal version is stale.');
+        }
         const effectiveScope =
           current.recovery?.request.currentSourceScope ?? current.receipt.request.currentSourceScope;
         const sourcePaths = effectiveScope.entries.map((entry) => entry.path);
-        const owner = admissionHost.work?.lease?.thread_id;
+        const owner = admissionWork.lease?.thread_id;
         if (!owner) fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter has no original owner lease.');
         const source = ledger.hostState.snapshotCurrentTaskSourceSources(
           admissionIdentity,
@@ -4141,19 +6348,24 @@ export async function run(args = process.argv.slice(2)) {
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter current Source differs.');
         const { buildAdmittedDevelopmentPacket } = await import('../src/orchestration/admitted-development-packet.ts');
         const access = requireSafeRepositoryAccess(values.project_root);
+        const currentLedger = ledger.resume(context.work_id, context.attempt);
+        if (
+          !currentLedger ||
+          currentLedger.version.revision !== current.journal.version.revision ||
+          currentLedger.version.digest !== current.journal.version.digest
+        )
+          fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered prewriter Journal changed before packet construction.');
+        const continuedWorkItem = workflowWorkItemSchema.parse(intake.work_item);
         const packet = buildAdmittedDevelopmentPacket({
           repositoryRoot: values.project_root,
           config,
           host: admissionHost,
           sourceStore: ledger.hostState,
-          ledger: current.journal,
-          workItem: intake.work_item,
+          ledger: currentLedger,
+          workItem: continuedWorkItem,
           selection,
-          scopeBytes: access.readBytes(admissionHost.work.contracts.scope.path, 'continued admitted scope'),
-          acceptanceBytes: access.readBytes(
-            admissionHost.work.contracts.acceptance.path,
-            'continued admitted acceptance',
-          ),
+          scopeBytes: access.readBytes(admissionWork.contracts.scope.path, 'continued admitted scope'),
+          acceptanceBytes: access.readBytes(admissionWork.contracts.acceptance.path, 'continued admitted acceptance'),
           configuredContext: configuredContextForStage(
             values.project_root,
             config,
@@ -4179,12 +6391,18 @@ export async function run(args = process.argv.slice(2)) {
             };
           if (!issued?.issue_id || issued.issue_id !== observed.issue_id)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Prewriter report has no matching retained issuance.');
+          requireRunValue(expected, 'Prewriter report has no expected Journal version.');
           ledger.report(context.work_id, context.attempt, expected, observed, source);
-          current = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+          const updated = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+          requireRunValue(updated, 'Delivered prewriter continuation disappeared after report.');
+          current = updated;
           status = 'continuation_prewrite_reported';
         } else if (values.issue_wave && current.action_status === 'unissued') {
+          requireRunValue(expected, 'Prewriter issue has no expected Journal version.');
           ledger.issueWave(context.work_id, context.attempt, expected);
-          current = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+          const updated = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+          requireRunValue(updated, 'Delivered prewriter continuation disappeared after issue.');
+          current = updated;
           status = 'issued';
           issuedNow = true;
         } else if (current.action_status === 'issued') status = 'wave_retrieved';
@@ -4201,8 +6419,9 @@ export async function run(args = process.argv.slice(2)) {
                 wave,
                 [],
                 undefined,
-                admissionHost.work.lifecycle.risk,
+                admissionWork.lifecycle.risk,
               );
+        /** @param {import('../src/host-state.ts').DeliveredWorkContinuationLookup['items'][number]} item */
         const describe = (item) => {
           const action = actions.find((candidate) => candidate.action_id === item.request.action_id);
           if (
@@ -4226,9 +6445,11 @@ export async function run(args = process.argv.slice(2)) {
           };
         };
         if (!values.inspect && current.action_status === 'reported') {
-          const observations = current.items.map((item) => item.observation);
-          if (observations.some((observation) => observation?.status !== 'reported_complete'))
-            fail('GAP-VIDA-RUN-CONTEXT-001', 'The current prewriter wave contains a failed or incomplete report.');
+          const observations = current.items.map((item) => {
+            const observation = item.observation;
+            requireReportedCompleteObservation(observation);
+            return observation;
+          });
           const bridge = await MastraSessionBridge.open({
             repositoryRoot: values.project_root,
             config,
@@ -4238,10 +6459,14 @@ export async function run(args = process.argv.slice(2)) {
             workspaceId: initialization.workspace_id,
             ledger,
             projectIds: admissionProject.project_ids,
-            lifecycleRisk: admissionHost.work.lifecycle.risk,
+            lifecycleRisk: admissionWork.lifecycle.risk,
             configuredFrontier: { identity: admissionIdentity, attempt: context.attempt },
           });
-          const resumed = await bridge.resume(current.journal.state.step_id, observations, source);
+          const prewriterStepId = current.journal.state.step_id;
+          requireRunValue(prewriterStepId, 'Reported delivered prewriter has no retained step identifier.');
+          const resumed = await bridge.resume(prewriterStepId, observations, source);
+          const resumedLedger = ledger.resume(context.work_id, context.attempt);
+          requireRunValue(resumedLedger, 'Delivered prewriter Journal disappeared after resume.');
           const nextWave = resumed.requests[0]?.wave_index;
           const nextActions =
             nextWave === undefined
@@ -4254,7 +6479,7 @@ export async function run(args = process.argv.slice(2)) {
                   nextWave,
                   [],
                   undefined,
-                  admissionHost.work.lifecycle.risk,
+                  admissionWork.lifecycle.risk,
                 );
           return {
             schema: 'VidaAgentRunResult/v1',
@@ -4263,7 +6488,7 @@ export async function run(args = process.argv.slice(2)) {
             mastra_run_id: resumed.run_id,
             mastra_step_id: resumed.step_id,
             execution_status: resumed.status,
-            state_version: ledger.resume(context.work_id, context.attempt).version,
+            state_version: resumedLedger.version,
             next_actions: resumed.requests.map((request) => ({
               request,
               action: nextActions.find((action) => action.action_id === request.action_id),
@@ -4282,6 +6507,8 @@ export async function run(args = process.argv.slice(2)) {
             runtime_accepted: false,
           };
         }
+        const responseLedger = ledger.resume(context.work_id, context.attempt);
+        requireRunValue(responseLedger, 'Delivered prewriter Journal is unavailable for response construction.');
         return {
           schema: 'VidaAgentRunResult/v1',
           status,
@@ -4289,24 +6516,15 @@ export async function run(args = process.argv.slice(2)) {
           mastra_run_id: current.journal.state.run_id,
           mastra_step_id: current.journal.state.step_id,
           execution_status: 'configured_prewrite',
-          resume_status: ledger.resume(context.work_id, context.attempt).resume_status,
+          resume_status: responseLedger.resume_status,
           state_version: current.journal.version,
           continuation_id: current.receipt.continuation_id,
           source_snapshot_digest: source.digest,
           reconciliation_required: false,
           next_actions: current.items.filter((item) => item.issue_id === null).map(describe),
           issued_actions: current.items
-            .filter((item) => item.issue_id !== null && item.observation === null)
-            .map((item) =>
-              issuedNow
-                ? { ...describe(item), prior_issue_outcome: 'unknown' }
-                : {
-                    request: item.request,
-                    issue_id: item.issue_id,
-                    logical_action_id: item.request.action_id,
-                    prior_issue_outcome: 'unknown',
-                  },
-            ),
+            .filter(isIssuedWithoutObservation)
+            .map((item) => describeUncertainIssuedAction(item, issuedNow, describe)),
           action_statuses: current.items.map((item, index) => ({
             action_id: item.request.action_id,
             status:
@@ -4314,7 +6532,7 @@ export async function run(args = process.argv.slice(2)) {
           })),
           completed_observations: [
             ...current.journal.state.completed.flatMap((wave) => wave.items.map((item) => item.observation)),
-            ...current.items.flatMap((item) => (item.observation ? [item.observation] : [])),
+            ...current.items.flatMap(observationList),
           ],
           accepted_result: false,
           runtime_accepted: false,
@@ -4325,6 +6543,7 @@ export async function run(args = process.argv.slice(2)) {
       }
     }
     if (continuationLookup) {
+      requireHistoricalReviewAction(continuationLookup.receipt.request.action);
       const actionRequest = continuationLookup.receipt.request.action.request;
       if (
         !admissionHost.work ||
@@ -4349,7 +6568,7 @@ export async function run(args = process.argv.slice(2)) {
         values.workflow,
         actionRequest.wave_index,
         [],
-        continuationLookup.journal.state.corrective_execution,
+        optionalCorrectiveExecution(continuationLookup.journal.state.corrective_execution),
         admissionHost.work.lifecycle.risk,
       ).filter((action) => action.action_id === actionRequest.action_id);
       const configuredContext = configuredContextForStage(
@@ -4364,11 +6583,13 @@ export async function run(args = process.argv.slice(2)) {
             .filter((entry) => entry.sha256 !== null)
             .map((entry) => ({ path: entry.location, sha256: entry.sha256 }))
         : [];
+      const reviewAction = candidates[0];
+      requireRunValue(reviewAction, 'Delivered-work review action is unavailable.');
       if (
         candidates.length !== 1 ||
-        candidates[0].stage_id !== actionRequest.stage_id ||
-        candidates[0].assignment_index !== actionRequest.assignment_index ||
-        candidates[0].role !== actionRequest.role ||
+        reviewAction.stage_id !== actionRequest.stage_id ||
+        reviewAction.assignment_index !== actionRequest.assignment_index ||
+        reviewAction.role !== actionRequest.role ||
         (configuredContext?.digest ?? undefined) !== actionRequest.configured_context_digest ||
         canonicalJsonDigest(configuredFiles) !== canonicalJsonDigest(actionRequest.configured_context_files ?? [])
       ) {
@@ -4390,8 +6611,9 @@ export async function run(args = process.argv.slice(2)) {
         try {
           let reviewLookup = continuationLookup,
             reviewStatus = 'continuation_review_ready';
-          const expected = { revision: Number(values.expected_revision), digest: values.expected_digest };
+          const expected = readExpectedStateVersion(values.expected_revision, values.expected_digest);
           if (values.issue_wave || values.report) {
+            requireRunValue(expected, 'Delivered-work review Journal version is stale.');
             if (
               reviewLookup.journal.version.revision !== expected.revision ||
               reviewLookup.journal.version.digest !== expected.digest
@@ -4420,14 +6642,20 @@ export async function run(args = process.argv.slice(2)) {
             );
             if (currentSourceScope.digest !== continuationLookup.receipt.request.currentSourceScope.digest)
               fail('GAP-VIDA-RUN-CONTEXT-001', 'Current Source changed after delivered-work review preparation.');
+            requireRunValue(expected, 'Review report has no expected Journal version.');
             ledger.report(context.work_id, context.attempt, expected, observation, currentSourceScope);
-            reviewLookup = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+            const updated = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+            requireRunValue(updated, 'Delivered-work review disappeared after report.');
+            reviewLookup = updated;
             reviewStatus = 'continuation_review_reported';
           } else if (values.issue_wave && reviewLookup.action_status === 'unissued') {
+            requireRunValue(expected, 'Review issue has no expected Journal version.');
             const issuedJournal = ledger.issueWave(context.work_id, context.attempt, expected);
             if (issuedJournal.state.items.length !== 1)
               fail('GAP-VIDA-RUN-EXECUTION-001', 'Delivered-work review did not issue exactly one action.');
-            reviewLookup = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+            const updated = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
+            requireRunValue(updated, 'Delivered-work review disappeared after issue.');
+            reviewLookup = updated;
             reviewStatus = 'issued';
           } else if (reviewLookup.action_status === 'issued') {
             reviewStatus = 'wave_retrieved';
@@ -4435,22 +6663,24 @@ export async function run(args = process.argv.slice(2)) {
             reviewStatus = 'continuation_review_reported';
           }
           const currentRequest = reviewLookup.item.request;
-          const reviewAction = candidates[0];
           const capture = reviewLookup.receipt.historical_capture;
+          const reviewActionReceipt = reviewLookup.receipt.request.action;
+          requireRunValue(capture, 'Retained review body bytes differ from Host custody.');
+          requireHistoricalReviewAction(reviewActionReceipt);
           const captureBytes = Buffer.from(capture.body_base64, 'base64');
           if (
             captureBytes.byteLength !== capture.body_byte_length ||
             digest(captureBytes) !== capture.body_sha256 ||
-            capture.body_sha256 !== reviewLookup.receipt.request.action.capture.body_sha256 ||
-            reviewLookup.receipt.request.action.original_request_pointer !== capture.request.user_request_pointer
+            capture.body_sha256 !== reviewActionReceipt.capture.body_sha256 ||
+            reviewActionReceipt.original_request_pointer !== capture.request.user_request_pointer
           )
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Retained review body bytes differ from Host custody.');
           const historicalReviewInput = {
             body_base64: capture.body_base64,
             body_sha256: capture.body_sha256,
             body_byte_length: capture.body_byte_length,
-            body_ref: reviewLookup.receipt.request.action.capture.body_ref,
-            original_request_pointer: reviewLookup.receipt.request.action.original_request_pointer,
+            body_ref: reviewActionReceipt.capture.body_ref,
+            original_request_pointer: reviewActionReceipt.original_request_pointer,
           };
           const currentJournal = ledger.resume(context.work_id, context.attempt);
           if (
@@ -4549,8 +6779,7 @@ export async function run(args = process.argv.slice(2)) {
           finalAssuranceStatus,
           finalAssuranceReceiptReferences,
         } = await import('../src/orchestration/final-assurance.ts');
-        const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
-        const expected = { revision: Number(values.expected_revision), digest: values.expected_digest };
+        const expected = readExpectedStateVersion(values.expected_revision, values.expected_digest);
         if (
           values.prepare_assurance &&
           finalJournal &&
@@ -4559,6 +6788,7 @@ export async function run(args = process.argv.slice(2)) {
         )
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Assurance preparation retry differs from the current packet.');
         if (values.prepare_assurance && !finalJournal) {
+          requireRunValue(expected, 'Assurance preparation has no expected Journal version.');
           assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
           const journal = ledger.resume(context.work_id, context.attempt);
           if (!journal || journal.version.revision !== expected.revision || journal.version.digest !== expected.digest)
@@ -4572,22 +6802,28 @@ export async function run(args = process.argv.slice(2)) {
             preparationPath: path.relative(values.project_root, values.prepare_assurance).split(path.sep).join('/'),
           });
         }
+        requireRunValue(finalJournal, 'Final assurance state is unavailable.');
+        let assurance = finalJournal;
         let status = 'assurance_resumed',
+          /** @type {import('../src/orchestration/final-assurance.ts').FinalAssuranceState['actions'][number][]} */
           issued = [];
         if (values.issue_wave || values.report) {
+          requireRunValue(expected, 'Final assurance operation has no expected Journal version.');
           assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
           const next = values.issue_wave
-            ? issueFinalAssuranceWave(finalJournal.state)
-            : reportFinalAssurance(finalJournal.state, readBoundedReport(values.report));
-          const duplicate = canonicalJsonDigest(next) === canonicalJsonDigest(finalJournal.state);
+            ? issueFinalAssuranceWave(assurance.state)
+            : reportFinalAssurance(assurance.state, readBoundedReport(requireOption(values.report, '--report')));
+          const duplicate = canonicalJsonDigest(next) === canonicalJsonDigest(assurance.state);
           if (!duplicate) {
-            if (finalJournal.version.revision !== expected.revision || finalJournal.version.digest !== expected.digest)
+            if (assurance.version.revision !== expected.revision || assurance.version.digest !== expected.digest)
               fail('GAP-VIDA-RUN-CONTEXT-001', 'Final assurance journal version is stale.');
             const host = ledger.hostState.readHostStateSnapshot(admissionIdentity);
-            finalJournal = ledger.hostState.compareAndSwapFinalAssurance({
+            requireRunValue(host.workVersion, 'Final assurance compare-and-swap has no current Host versions.');
+            requireRunValue(host.ledgerVersion, 'Final assurance compare-and-swap has no current Host versions.');
+            assurance = ledger.hostState.compareAndSwapFinalAssurance({
               identity: admissionIdentity,
               attempt: context.attempt,
-              expected: finalJournal.version,
+              expected: assurance.version,
               expectedWork: host.workVersion,
               expectedLedger: host.ledgerVersion,
               next,
@@ -4599,23 +6835,29 @@ export async function run(args = process.argv.slice(2)) {
               ? 'assurance_report_retrieved'
               : 'assurance_reported';
           if (values.issue_wave)
-            issued = finalJournal.state.actions.filter((action) => action.issue_id && !action.observation);
+            issued = assurance.state.actions.filter((action) => action.issue_id && !action.observation);
         }
         let host = ledger.hostState.readHostStateSnapshot(admissionIdentity),
           deliveryGap = null;
+        requireRunValue(host.work, 'Final assurance has no current Host work.');
+        const assuranceWork = host.work;
         if (
           (values.report || values.prepare_assurance) &&
-          finalAssuranceStatus(finalJournal.state) === 'reviewed' &&
-          host.work.lifecycle.phase === 'VERIFY'
+          finalAssuranceStatus(assurance.state) === 'reviewed' &&
+          assuranceWork.lifecycle.phase === 'VERIFY'
         ) {
           try {
-            const references = finalAssuranceReceiptReferences(values.project_root, host.work, finalJournal.state);
+            const expectedWork = host.workVersion;
+            const expectedLedger = host.ledgerVersion;
+            requireRunValue(expectedWork, 'Final assurance delivery has no current Host CAS versions.');
+            requireRunValue(expectedLedger, 'Final assurance delivery has no current Host CAS versions.');
+            const references = finalAssuranceReceiptReferences(values.project_root, assuranceWork, assurance.state);
             host = ledger.hostState.commitFinalAssuranceDelivery({
               identity: admissionIdentity,
               attempt: context.attempt,
-              expected: finalJournal.version,
-              expectedWork: host.workVersion,
-              expectedLedger: host.ledgerVersion,
+              expected: assurance.version,
+              expectedWork,
+              expectedLedger,
               references,
               documentationContext: {
                 repository_root: values.project_root,
@@ -4625,18 +6867,20 @@ export async function run(args = process.argv.slice(2)) {
               },
             });
           } catch (error) {
-            deliveryGap = error.message;
+            deliveryGap = error instanceof Error ? error.message : String(error);
           }
         }
+        requireRunValue(host.work, 'Final assurance delivery has no current Host work.');
+        /** @param {import('../src/orchestration/final-assurance.ts').FinalAssuranceState['actions'][number]} entry */
         const action = (entry) => ({
           ...entry,
-          role: finalJournal.state.packet.role,
-          model: finalJournal.state.packet.model,
-          reasoning: finalJournal.state.packet.reasoning,
-          packet: finalJournal.state.packet,
+          role: assurance.state.packet.role,
+          model: assurance.state.packet.model,
+          reasoning: assurance.state.packet.reasoning,
+          packet: assurance.state.packet,
           review:
             entry.kind === 'reverse'
-              ? finalJournal.state.actions.find(
+              ? assurance.state.actions.find(
                   (review) => review.kind === 'review' && review.perspective === entry.perspective,
                 )?.observation
               : null,
@@ -4654,13 +6898,13 @@ export async function run(args = process.argv.slice(2)) {
         return {
           schema: 'VidaAgentRunResult/v1',
           status: host.work.lifecycle.phase === 'DELIVERY' ? 'delivery' : status,
-          assurance_status: finalAssuranceStatus(finalJournal.state),
+          assurance_status: finalAssuranceStatus(assurance.state),
           workflow: values.workflow,
-          state_version: finalJournal.version,
+          state_version: assurance.version,
           issued_actions: issued.map(action),
           next_actions:
-            finalAssuranceStatus(finalJournal.state) === 'ready'
-              ? finalJournal.state.actions.filter((entry) => !entry.issue_id && entry.kind === nextKind).map(action)
+            finalAssuranceStatus(assurance.state) === 'ready'
+              ? assurance.state.actions.filter((entry) => isUnissuedKind(entry, nextKind)).map(action)
               : [],
           delivery_gap: deliveryGap,
           delivery_manifest:
@@ -4709,12 +6953,14 @@ export async function run(args = process.argv.slice(2)) {
       try {
         const { correctiveExecutionPlanSchema, prepareLifecycleForCorrection } =
           await import('../src/orchestration/final-assurance.ts');
-        const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
         const plan = correctiveExecutionPlanSchema.parse(readBoundedReport(values.correct));
         if (plan.work_id !== context.work_id || plan.attempt !== context.attempt)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Correction plan belongs to another work or attempt.');
         assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
-        const expected = { revision: Number(values.expected_revision), digest: values.expected_digest };
+        const expected = {
+          revision: Number(requireOption(values.expected_revision, '--expected-revision')),
+          digest: requireOption(values.expected_digest, '--expected-digest'),
+        };
         let corrective = ledger.hostState.retrieveCorrectiveAuthorization({
           identity: admissionIdentity,
           attempt: context.attempt,
@@ -4724,7 +6970,8 @@ export async function run(args = process.argv.slice(2)) {
         });
         if (!corrective) {
           const current = ledger.resume(context.work_id, context.attempt);
-          if (!current || current.version.revision !== expected.revision || current.version.digest !== expected.digest)
+          requireRunValue(current, 'Correction journal version is stale.');
+          if (current.version.revision !== expected.revision || current.version.digest !== expected.digest)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Correction journal version is stale.');
           const host = prepareLifecycleForCorrection({
             root: values.project_root,
@@ -4734,6 +6981,8 @@ export async function run(args = process.argv.slice(2)) {
             journal: current,
             preparationPath: plan.preparation_path,
           });
+          requireRunValue(host.workVersion, 'Correction authorization has no current Host CAS versions.');
+          requireRunValue(host.ledgerVersion, 'Correction authorization has no current Host CAS versions.');
           corrective = ledger.hostState.authorizeCorrectiveExecution({
             identity: admissionIdentity,
             attempt: context.attempt,
@@ -4746,6 +6995,7 @@ export async function run(args = process.argv.slice(2)) {
           });
         }
         const current = ledger.resume(context.work_id, context.attempt);
+        requireRunValue(current, 'Correction Journal disappeared after authorization.');
         return {
           schema: 'VidaAgentRunResult/v1',
           status: 'correction_authorized',
@@ -4791,7 +7041,12 @@ export async function run(args = process.argv.slice(2)) {
         throw error;
       }
     }
-    let bridge;
+    /** @type {RunSessionBridge | null} */
+    let bridge = null;
+    /**
+     * @param {import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest} request
+     * @param {readonly string[]} [allowedChangedPaths]
+     */
     const requireConfiguredContext = (request, allowedChangedPaths = []) => {
       const current = configuredContextForStage(
         values.project_root,
@@ -4815,6 +7070,11 @@ export async function run(args = process.argv.slice(2)) {
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Configured context changed outside the admitted native output.');
       return current;
     };
+    /**
+     * @param {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot} currentJournal
+     * @param {boolean} [requireImplementation]
+     * @param {import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeRequest | null} [pendingDeveloper]
+     */
     const admittedEvidence = async (currentJournal, requireImplementation = true, pendingDeveloper = null) => {
       const { openAdmittedSessionExecution, readAdmittedSessionExecutionContext } =
         await import('../src/orchestration/admitted-session-execution.ts');
@@ -4836,27 +7096,28 @@ export async function run(args = process.argv.slice(2)) {
           );
       const host = ledger.hostState.readHostStateSnapshot(execution.identity);
       const work = host.work;
-      if (!work) fail('GAP-VIDA-RUN-EXECUTION-001', 'Admitted work is missing for evidence.');
+      requireRunValue(work, 'Admitted work is missing for evidence.');
+      const selectedWorkflow = activeWorkflow;
+      requireRunValue(selectedWorkflow, 'Configured workflow is unavailable for evidence.');
       const access = requireSafeRepositoryAccess(values.project_root);
       const developer = currentJournal.state.completed
         .flatMap((entry) => entry.items)
         .find((item) =>
-          config.workflows[values.workflow].stages.some(
-            (stage) => stage.id === item.request.stage_id && stage.kind === 'develop',
-          ),
+          selectedWorkflow.stages.some((stage) => stage.id === item.request.stage_id && stage.kind === 'develop'),
         );
       const configuredContext = pendingDeveloper
         ? requireConfiguredContext(pendingDeveloper)
         : developer
           ? requireConfiguredContext(developer.request, developer.observation?.changed_paths ?? [])
           : null;
+      const workItem = workflowWorkItemSchema.parse(execution.workItem);
       const packet = buildAdmittedDevelopmentPacket({
         repositoryRoot: values.project_root,
         config,
         host,
         sourceStore: ledger.hostState,
         ledger: currentJournal,
-        workItem: execution.workItem,
+        workItem,
         selection,
         scopeBytes: access.readBytes(work.contracts.scope.path, 'current admitted scope'),
         acceptanceBytes: access.readBytes(work.contracts.acceptance.path, 'current admitted acceptance'),
@@ -4872,18 +7133,33 @@ export async function run(args = process.argv.slice(2)) {
             ledger: currentJournal,
           })
         : undefined;
+      const authority = requireImplementation
+        ? 'composition' in execution
+          ? execution.composition.deliveryEvidenceAuthority
+          : fail('GAP-VIDA-RUN-EXECUTION-001', 'Admitted execution has no trusted delivery authority.')
+        : undefined;
       return {
         packet,
         implementationResult,
-        authority: requireImplementation ? execution.composition.deliveryEvidenceAuthority : undefined,
+        authority,
         host,
       };
     };
+    /**
+     * @param {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot} currentJournal
+     * @param {Awaited<ReturnType<typeof admittedEvidence>>} evidence
+     */
     const completedValidationReceipts = async (currentJournal, evidence) => {
       const { issueObservedValidationReceipt } = await import('../src/orchestration/observed-validation.ts');
       const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
       const { compileDevelopmentWorkflow } = await import('../src/orchestration/workflow-plan.ts');
-      const currentLifecycleRisk = evidence.host.work.lifecycle.risk;
+      const currentWork = evidence.host.work;
+      const implementationResult = evidence.implementationResult;
+      const authority = evidence.authority;
+      requireRunValue(currentWork, 'Completed validation requires admitted implementation and authority.');
+      requireRunValue(implementationResult, 'Completed validation requires admitted implementation and authority.');
+      requireRunValue(authority, 'Completed validation requires admitted implementation and authority.');
+      const currentLifecycleRisk = currentWork.lifecycle.risk;
       const compiled = compileDevelopmentWorkflow(
         config,
         values.team,
@@ -4900,7 +7176,7 @@ export async function run(args = process.argv.slice(2)) {
               values.workflow,
               index,
               [],
-              currentJournal.state.corrective_execution,
+              optionalCorrectiveExecution(currentJournal.state.corrective_execution),
               currentLifecycleRisk,
             ).filter((action) => action.stage_kind === 'validate' && action.produces.includes('ValidationReceipt/v1'))
           : [],
@@ -4910,10 +7186,10 @@ export async function run(args = process.argv.slice(2)) {
           repositoryRoot: values.project_root,
           config,
           packet: evidence.packet,
-          implementationResult: evidence.implementationResult,
+          implementationResult,
           journal: currentJournal,
           actionId: action.action_id,
-          authority: evidence.authority,
+          authority,
           host: evidence.host,
           sourceStore: ledger.hostState,
         }),
@@ -4925,8 +7201,17 @@ export async function run(args = process.argv.slice(2)) {
         fail('GAP-VIDA-RUN-EXECUTION-001', 'Configured validator receipts are incomplete or failed.');
       return receipts;
     };
+    /**
+     * @param {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot} currentJournal
+     * @param {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot} [evidenceJournal]
+     */
     const preparedDelivery = async (currentJournal, evidenceJournal = currentJournal) => {
       const evidence = await admittedEvidence(evidenceJournal);
+      const implementationResult = evidence.implementationResult;
+      const authority = evidence.authority;
+      requireRunValue(implementationResult, 'Prepared delivery requires current admitted implementation authority.');
+      requireRunValue(authority, 'Prepared delivery requires current admitted implementation authority.');
+      requireRunValue(evidence.host.work, 'Prepared delivery requires current admitted implementation authority.');
       const receipts = await completedValidationReceipts(evidenceJournal, evidence);
       const { issueObservedTestReceipt } = await import('../src/orchestration/observed-testing.ts');
       const {
@@ -4937,33 +7222,36 @@ export async function run(args = process.argv.slice(2)) {
         repositoryRoot: values.project_root,
         config,
         packet: evidence.packet,
-        implementationResult: evidence.implementationResult,
+        implementationResult,
         journal: evidenceJournal,
-        authority: evidence.authority,
+        authority,
         host: evidence.host,
         sourceStore: ledger.hostState,
       });
       const { prepareObservedDeliveryInstruction } = await import('../src/orchestration/observed-delivery.ts');
-      const instruction = await prepareObservedDeliveryInstruction({
+      const instruction = prepareObservedDeliveryInstruction({
         repositoryRoot: values.project_root,
         config,
         packet: evidence.packet,
-        implementationResult: evidence.implementationResult,
+        implementationResult,
         journal: currentJournal,
         validationReceipts: receipts,
         testerInstruction,
         testReceipt,
-        authority: evidence.authority,
+        authority,
         host: evidence.host,
         sourceStore: ledger.hostState,
       });
       return { instruction, evidence: testerEvidence };
     };
+    /** @param {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot} currentJournal */
     const normalizeObservedResearch = async (currentJournal) => {
+      const selectedWorkflow = activeWorkflow;
+      requireRunValue(selectedWorkflow, 'Configured workflow is unavailable for research.');
       const researchItems = currentJournal.state.items.filter(
         (item) =>
           item.observation?.status === 'reported_complete' &&
-          config.workflows[values.workflow].stages.some(
+          selectedWorkflow.stages.some(
             (stage) =>
               stage.id === item.request.stage_id &&
               (stage.produces.includes('ResearchResult/v1') || stage.produces.includes('ResearchSynthesis/v1')),
@@ -4980,14 +7268,7 @@ export async function run(args = process.argv.slice(2)) {
         integrations_digest: capturedProject.integrations_digest,
         work_id: context.work_id,
       });
-      if (
-        capturedOwner.ledger?.operations.some(
-          (operation) =>
-            operation.work_id === context.work_id &&
-            operation.kind === 'release' &&
-            operation.operation_id.startsWith('completed-readonly-release-'),
-        )
-      )
+      if (capturedOwner.ledger?.operations.some((operation) => isCompletedReadonlyRelease(operation, context.work_id)))
         fail(
           'GAP-VIDA-RUN-EXECUTION-001',
           'Captured native completion remains normalization pending; ordinary execution cannot accept it.',
@@ -5007,22 +7288,23 @@ export async function run(args = process.argv.slice(2)) {
         pathProject.project_id,
         context.work_id,
       );
+      const researchWorkItem = workflowWorkItemSchema.parse(execution.workItem);
       const access = requireSafeRepositoryAccess(values.project_root);
       for (const original of researchItems) {
         const item = currentJournal.state.items.find((entry) => entry.request.action_id === original.request.action_id);
         if (!item?.observation || !item.issue_id || !item.research_activation)
           fail('GAP-VIDA-RUN-EXECUTION-001', 'Observed research action lacks issued activation.');
         const host = ledger.hostState.readHostStateSnapshot(execution.identity);
-        if (!host.work) fail('GAP-VIDA-RUN-EXECUTION-001', 'Observed research work is missing.');
+        requireRunValue(host.work, 'Observed research work is missing.');
+        const researchWork = host.work;
+        const selectedStage = selectedWorkflow.stages.find((stage) => stage.id === item.request.stage_id);
         const admittedPlan = item.research_normalization;
-        const artifactSchema = config.workflows[values.workflow].stages
-          .find((stage) => stage.id === item.request.stage_id)
-          ?.produces.includes('ResearchSynthesis/v1')
+        const artifactSchema = selectedStage?.produces.includes('ResearchSynthesis/v1')
           ? 'ResearchSynthesis/v1'
           : 'ResearchResult/v1';
         const admittedArtifact =
           admittedPlan &&
-          host.work.artifacts.find(
+          researchWork.artifacts.find(
             (artifact) =>
               artifact.schema === artifactSchema &&
               artifact.path === admittedPlan.record_path &&
@@ -5048,10 +7330,10 @@ export async function run(args = process.argv.slice(2)) {
           request: item.request,
           issueId: item.issue_id,
           activationUse: item.research_activation.use,
-          work: host.work,
-          scopeBytes: access.readBytes(host.work.contracts.scope.path, 'research accepted scope'),
-          acceptanceBytes: access.readBytes(host.work.contracts.acceptance.path, 'research accepted acceptance'),
-          workItem: execution.workItem,
+          work: researchWork,
+          scopeBytes: access.readBytes(researchWork.contracts.scope.path, 'research accepted scope'),
+          acceptanceBytes: access.readBytes(researchWork.contracts.acceptance.path, 'research accepted acceptance'),
+          workItem: researchWorkItem,
         };
         const result =
           artifactSchema === 'ResearchSynthesis/v1'
@@ -5061,9 +7343,8 @@ export async function run(args = process.argv.slice(2)) {
                   repositoryRoot: values.project_root,
                   config,
                   journal: currentJournal,
-                  work: host.work,
+                  work: researchWork,
                   workflowId: values.workflow,
-                  workItem: execution.workItem,
                 }),
               })
             : buildObservedResearchResult(base);
@@ -5120,19 +7401,22 @@ export async function run(args = process.argv.slice(2)) {
       }
       return currentJournal;
     };
+    /** @param {import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot} currentJournal */
     const unresolvedHostEffect = async (currentJournal) => {
       if (currentJournal.resume_status !== 'ready') return null;
-      const writers = currentJournal.state.items.filter(
-        (item) =>
-          item.issue_id === null &&
-          config.workflows[values.workflow].stages.some(
-            (stage) =>
-              stage.id === item.request.stage_id &&
-              stage.assignments[item.request.assignment_index]?.profile &&
-              config.agents.profiles[stage.assignments[item.request.assignment_index].profile]?.mutation_scope ===
-                'repository_source',
-          ),
-      );
+      const selectedWorkflow = activeWorkflow;
+      requireRunValue(selectedWorkflow, 'Configured workflow is unavailable for Host reconciliation.');
+      const writers = currentJournal.state.items.filter((item) => {
+        if (item.issue_id !== null) return false;
+        return selectedWorkflow.stages.some((stage) => {
+          const assignment = stage.assignments[item.request.assignment_index];
+          return (
+            stage.id === item.request.stage_id &&
+            assignment?.profile !== undefined &&
+            config.agents.profiles[assignment.profile]?.mutation_scope === 'repository_source'
+          );
+        });
+      });
       if (writers.length === 0) return null;
       const { readAdmittedSessionExecutionContext } =
         await import('../src/orchestration/admitted-session-execution.ts');
@@ -5187,13 +7471,13 @@ export async function run(args = process.argv.slice(2)) {
               ledger.replacementDispatch(context.work_id, context.attempt, item.request.action_id)
                 ?.dispatch_action_id === replacementReport.action_id,
           );
-        const issuedReplacement =
-          values.issue_wave &&
-          paused?.state.items.find(
-            (item) =>
-              ledger.replacementDispatch(context.work_id, context.attempt, item.request.action_id) &&
-              item.observation === null,
-          );
+        const issuedReplacement = values.issue_wave
+          ? paused?.state.items.find(
+              (item) =>
+                ledger.replacementDispatch(context.work_id, context.attempt, item.request.action_id) &&
+                item.observation === null,
+            )
+          : undefined;
         if (paused && (replacement || activeReplacement || issuedReplacement)) {
           if (
             paused.version.revision !== Number(values.expected_revision) ||
@@ -5215,7 +7499,9 @@ export async function run(args = process.argv.slice(2)) {
           };
           const ownerSnapshot = ledger.hostState.readHostStateSnapshot(identity);
           const owner = ownerSnapshot.work;
-          const currentRequest = (replacement ?? activeReplacement ?? issuedReplacement).request;
+          const currentReplacement = replacement ?? activeReplacement ?? issuedReplacement;
+          if (!currentReplacement) fail('GAP-VIDA-RUN-EXECUTION-001', 'Paused replacement action is missing.');
+          const currentRequest = currentReplacement.request;
           const stored = paused.state.source_scope;
           const fresh =
             stored &&
@@ -5253,26 +7539,28 @@ export async function run(args = process.argv.slice(2)) {
           if (activeReplacement && replacementReport) {
             const { researchObservationOutputContract } =
               await import('../src/orchestration/observed-research-result.ts');
+            /** @type {unknown} */
             let output;
             try {
-              output = JSON.parse(replacementReport.summary);
+              output = parseJsonUnknown(replacementReport.summary);
             } catch {
               fail('GAP-VIDA-RUN-REPORT-001', 'Replacement research summary must be structured JSON.');
             }
+            /** @type {unknown} */
+            const parsedOutput = output;
             const required = researchObservationOutputContract.required_fields;
             if (
-              !output ||
-              typeof output !== 'object' ||
-              Array.isArray(output) ||
-              output.schema !== researchObservationOutputContract.summary_json_schema ||
-              Object.keys(output).length !== required.length ||
-              required.some((key) => !Object.hasOwn(output, key)) ||
-              !Array.isArray(output.source_refs) ||
-              output.source_refs.some((entry) => !entry || typeof entry.source_id !== 'string') ||
-              canonicalJsonDigest(output.source_refs.map((entry) => entry.source_id).sort()) !==
+              !isRecord(parsedOutput) ||
+              parsedOutput.schema !== researchObservationOutputContract.summary_json_schema ||
+              Object.keys(parsedOutput).length !== required.length ||
+              required.some((key) => !Object.hasOwn(parsedOutput, key)) ||
+              !Array.isArray(parsedOutput.source_refs) ||
+              !parsedOutput.source_refs.every(isResearchSourceReference) ||
+              canonicalJsonDigest(parsedOutput.source_refs.map((entry) => entry.source_id).sort()) !==
                 canonicalJsonDigest([...replacementReport.evidence_refs].sort()) ||
-              !Array.isArray(output.ac_ids) ||
-              canonicalJsonDigest([...output.ac_ids].sort()) !== canonicalJsonDigest([...owner.binding.ac_ids].sort())
+              !isStringArray(parsedOutput.ac_ids) ||
+              canonicalJsonDigest([...parsedOutput.ac_ids].sort()) !==
+                canonicalJsonDigest([...owner.binding.ac_ids].sort())
             )
               fail('GAP-VIDA-RUN-REPORT-001', 'Replacement research output differs from required scope.');
             const { readAdmittedSessionExecutionContext } =
@@ -5287,9 +7575,10 @@ export async function run(args = process.argv.slice(2)) {
             const currentItem = paused.state.items.find(
               (item) => item.request.action_id === activeReplacement.request.action_id,
             );
-            if (!currentItem?.research_activation)
+            if (!currentItem?.research_activation || !currentItem.issue_id)
               fail('GAP-VIDA-RUN-REPORT-001', 'Replacement research activation is missing.');
             const access = requireSafeRepositoryAccess(values.project_root);
+            const replacementWorkItem = workflowWorkItemSchema.parse(execution.workItem);
             buildObservedResearchResult({
               config,
               observation: { ...replacementReport, action_id: currentItem.request.action_id },
@@ -5299,7 +7588,7 @@ export async function run(args = process.argv.slice(2)) {
               work: owner,
               scopeBytes: access.readBytes(owner.contracts.scope.path, 'research accepted scope'),
               acceptanceBytes: access.readBytes(owner.contracts.acceptance.path, 'research accepted acceptance'),
-              workItem: execution.workItem,
+              workItem: replacementWorkItem,
             });
             const observed = ledger.reportReadOnlyReplacement(
               context.work_id,
@@ -5334,13 +7623,13 @@ export async function run(args = process.argv.slice(2)) {
                 dispatch: ledger.replacementDispatch(
                   context.work_id,
                   context.attempt,
-                  issuedReplacement.request.action_id,
+                  currentReplacement.request.action_id,
                 ),
               };
           const { resumePausedLocalWork } = await import('../src/orchestration/resume-paused-local-work.ts');
           const nativeHandle =
             replacementPlan?.native_session_handle ??
-            ledger.replacementNativeHandle(context.work_id, context.attempt, issuedReplacement.request.action_id);
+            ledger.replacementNativeHandle(context.work_id, context.attempt, currentReplacement.request.action_id);
           if (!nativeHandle || !ownerSnapshot.workVersion || !ownerSnapshot.ledgerVersion || !stored || !owner)
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Paused replacement lease context is incomplete.');
           if (owner.lease === null) {
@@ -5361,6 +7650,7 @@ export async function run(args = process.argv.slice(2)) {
           } else if (owner.lease.thread_id !== nativeHandle) {
             fail('GAP-VIDA-RUN-CONTEXT-001', 'Replacement lease belongs to another native owner.');
           }
+          if (!activated.dispatch) fail('GAP-VIDA-RUN-EXECUTION-001', 'Paused replacement dispatch is missing.');
           const { readAdmittedSessionExecutionContext } =
             await import('../src/orchestration/admitted-session-execution.ts');
           const { issueObservedResearchActivation } =
@@ -5410,6 +7700,7 @@ export async function run(args = process.argv.slice(2)) {
       if (values.intake) {
         const { z } = await import('zod');
         const intake = admissionIntake;
+        requireRunValue(intake, 'Requested local session intake is unavailable.');
         if (values.continuation) {
           const stateVersion = z
             .object({
@@ -5495,7 +7786,9 @@ export async function run(args = process.argv.slice(2)) {
           workItem: intake.work_item,
           scopePath: intake.scope_path,
           acceptancePath: intake.acceptance_path,
-          sourceAuthorizationPath: intake.source_authorization_path,
+          ...(intake.source_authorization_path !== undefined
+            ? { sourceAuthorizationPath: intake.source_authorization_path }
+            : {}),
           intakePath: path.relative(values.project_root, values.intake).split(path.sep).join('/'),
           runtimeCodePaths: intake.runtime_code_paths,
           route: intake.route,
@@ -5512,9 +7805,11 @@ export async function run(args = process.argv.slice(2)) {
             storedScope?.entries.map((entry) => entry.path) ??
             []);
       const workflowHost = ledger.hostState.readHostStateSnapshot(admissionIdentity);
-      if (workflowHost.work && !['low', 'medium', 'high'].includes(workflowHost.work.lifecycle.risk))
+      const workflowWork = workflowHost.work;
+      requireRunValue(workflowWork, 'Current admitted Work is unavailable for workflow execution.');
+      if (!isLifecycleRisk(workflowWork.lifecycle.risk))
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted Work lifecycle risk is unavailable.');
-      const lifecycleRisk = workflowHost.work?.lifecycle.risk;
+      const lifecycleRisk = workflowWork.lifecycle.risk;
       const scopeHost = scopePaths.length > 0 ? workflowHost : null;
       const sourceSnapshot =
         scopePaths.length > 0
@@ -5549,8 +7844,9 @@ export async function run(args = process.argv.slice(2)) {
       if (configuredContinuation && initialSourceContinuation)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Multiple Host producer continuation receipts are ambiguous.');
       const pendingInitialSourceWriteReport = (() => {
-        if (!initialSourceContinuation || !values.report || !storedScope || !sourceSnapshot || !workflowHost.work)
-          return false;
+        if (!initialSourceContinuation || !values.report || !storedScope || !sourceSnapshot) return false;
+        const currentWork = workflowHost.work;
+        if (!currentWork) return false;
         try {
           const observed = parseSessionBridgeObservation(readBoundedReport(values.report));
           const pending =
@@ -5568,14 +7864,14 @@ export async function run(args = process.argv.slice(2)) {
             item.issue_id === observed.issue_id &&
             item.host_reservation.receipt.attempt.attempt_id === observed.host_attempt_id &&
             item.request.workflow_id === values.workflow &&
-            item.request.run_id === workflowHost.work.execution.run_id &&
+            item.request.run_id === currentWork.execution.run_id &&
             item.request.config_digest === configDigest &&
             item.request.scope_digest === initialSourceContinuation.request.currentSourceScope.digest &&
             storedScope.digest === initialSourceContinuation.request.currentSourceScope.digest &&
             changedPaths.length > 0 &&
             Array.isArray(observed.changed_paths) &&
             canonicalJsonDigest(changedPaths) === canonicalJsonDigest([...observed.changed_paths].sort()) &&
-            changedPaths.every((file) => workflowHost.work.lifecycle.scope.implementation_paths.includes(file))
+            changedPaths.every((file) => currentWork.lifecycle.scope.implementation_paths.includes(file))
           );
         } catch {
           return false;
@@ -5591,6 +7887,9 @@ export async function run(args = process.argv.slice(2)) {
           'GAP-VIDA-RUN-CONTEXT-001',
           'Initial Source continuation does not match the current scoped Source snapshot.',
         );
+      const bridgeCorrection = ledger.resume(context.work_id, context.attempt)?.state.corrective_execution;
+      if (configuredContinuation && !configuredView)
+        fail('GAP-VIDA-RUN-CONTEXT-001', 'Configured frontier recovery view is unavailable.');
       const bridgeArgs = {
         ledger,
         projectIds: admissionProject.project_ids,
@@ -5601,7 +7900,7 @@ export async function run(args = process.argv.slice(2)) {
         workflowId: values.workflow,
         workspaceId: initialization.workspace_id,
         lifecycleRisk,
-        correctiveExecution: ledger.resume(context.work_id, context.attempt)?.state.corrective_execution,
+        ...(bridgeCorrection ? { correctiveExecution: bridgeCorrection } : {}),
         ...(configuredContinuation
           ? { configuredFrontier: { identity: admissionIdentity, attempt: context.attempt } }
           : {}),
@@ -5609,6 +7908,7 @@ export async function run(args = process.argv.slice(2)) {
           ? { initialSourceContinuation: { identity: admissionIdentity, attempt: context.attempt } }
           : {}),
       };
+      /** @returns {Promise<RunSessionBridge>} */
       const openBridge = async () => (bridge ??= await MastraSessionBridge.open(bridgeArgs));
       const {
         readSessionEngineSnapshot,
@@ -5621,6 +7921,9 @@ export async function run(args = process.argv.slice(2)) {
         bridgeArgs.correctiveExecution?.engine_run_id ??
         sessionBridgeRunId(initialization.workspace_id, context, values.workflow);
       const persistedJournal = currentJournal;
+      const configuredViewForEngine = configuredContinuation
+        ? requireRunData(configuredView, 'Configured frontier recovery view is unavailable.')
+        : undefined;
       if (persistedJournal && persistedJournal.state.run_id !== expectedRunId)
         fail('GAP-VIDA-RUN-CONTEXT-001', 'The persisted attempt differs from the current launcher context.');
       if (initialSourceContinuation) {
@@ -5646,14 +7949,15 @@ export async function run(args = process.argv.slice(2)) {
         ? readConfiguredContinuationSessionEngineSnapshot(
             engineBinding,
             configuredContinuation,
-            configuredView.recovery,
-            configuredView.runtimeCodeContinuations,
+            requireRunData(configuredViewForEngine, 'Configured frontier recovery view is unavailable.').recovery,
+            requireRunData(configuredViewForEngine, 'Configured frontier recovery view is unavailable.')
+              .runtimeCodeContinuations,
           )
         : initialSourceContinuation
           ? readInitialSourceContinuationSessionEngineSnapshot(
               engineBinding,
               initialSourceContinuation,
-              persistedJournal,
+              requireRunData(persistedJournal, 'Initial Source continuation journal is unavailable.'),
               workflowHost,
               initialSourceFrontierCodeRebind,
               completedSourceReportRecovery,
@@ -5665,20 +7969,29 @@ export async function run(args = process.argv.slice(2)) {
       if (!workflowSnapshot) {
         if (values.issue_wave || values.report || values.reconcile)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'The Mastra run has not been prepared.');
-        workflowSnapshot = await (await openBridge()).start(sourceSnapshot);
+        workflowSnapshot = requireRunData(
+          await (await openBridge()).start(sourceSnapshot),
+          'Prepared Mastra snapshot is unavailable.',
+        );
       }
+      if (!workflowSnapshot) fail('GAP-VIDA-RUN-CONTEXT-001', 'The prepared Mastra snapshot is unavailable.');
       const pendingSourceEffect = ledger
         .resume(context.work_id, context.attempt)
         ?.state.items.some((item) => item.host_reservation && item.issue_id && item.observation === null);
       const retainedSource =
         pendingSourceEffect && storedScope?.digest !== sourceSnapshot?.digest ? storedScope : sourceSnapshot;
-      let journal = ledger.resume(context.work_id, context.attempt);
+      let journal = requireRunData(
+        ledger.resume(context.work_id, context.attempt),
+        'Current producer journal is unavailable.',
+      );
       if (!journal || (journal.state.source_scope && journal.state.source_scope.digest !== retainedSource?.digest))
         fail('GAP-VIDA-RUN-CONTEXT-001', 'Current producer journal source differs from the prepared scope.');
       let reconciliationRequired = await unresolvedHostEffect(journal);
       let status = created ? 'prepared' : 'resumed';
+      /** @type {RunIssuedAction[]} */
       let issuedActions = [];
       let issuedEvidence = null;
+      /** @type {ReturnType<typeof import('../src/orchestration/observed-validation.ts').issueObservedValidationReceipt>[]} */
       let validationReceipts = [];
       let testerInstruction = null;
       let testReceipt = null;
@@ -5715,10 +8028,7 @@ export async function run(args = process.argv.slice(2)) {
           reconciliationRequired = await unresolvedHostEffect(journal);
           status = 'reconciled';
         } else if (values.issue_wave && journal.resume_status !== 'ready_to_resume') {
-          if (
-            initialSourceContinuation &&
-            journal.state.items.some((item) => item.issue_id !== null && item.observation === null)
-          )
+          if (initialSourceContinuation && journal.state.items.some(isIssuedWithoutObservation))
             fail(
               'GAP-VIDA-RUN-EXECUTION-001',
               'Initial Source continuation has an issued action with unknown outcome; automatic reissue is forbidden.',
@@ -5750,12 +8060,11 @@ export async function run(args = process.argv.slice(2)) {
           for (const request of workflowSnapshot.requests) requireConfiguredContext(request);
           const issueKinds = new Set(
             workflowSnapshot.requests.map(
-              (request) =>
-                config.workflows[values.workflow].stages.find((stage) => stage.id === request.stage_id)?.kind,
+              (request) => activeWorkflow.stages.find((stage) => stage.id === request.stage_id)?.kind,
             ),
           );
           const issuedStages = workflowSnapshot.requests.map((request) =>
-            config.workflows[values.workflow].stages.find((stage) => stage.id === request.stage_id),
+            activeWorkflow.stages.find((stage) => stage.id === request.stage_id),
           );
           const researchItems = journal.state.items.filter((item) => {
             const stage = config.workflows[item.request.workflow_id]?.stages.find(
@@ -5767,23 +8076,17 @@ export async function run(args = process.argv.slice(2)) {
             researchItems.length > 0 && journal.state.items.some((item) => item.issue_id !== null);
           if (issueKinds.has('develop')) {
             const developerRequest = workflowSnapshot.requests.find(
-              (request) =>
-                config.workflows[values.workflow].stages.find((stage) => stage.id === request.stage_id)?.kind ===
-                'develop',
+              (request) => activeWorkflow.stages.find((stage) => stage.id === request.stage_id)?.kind === 'develop',
             );
             issuedEvidence = await admittedEvidence(journal, false, developerRequest);
           }
-          if (
-            !issuedEvidence &&
-            issuedStages.some(
-              (stage) =>
-                stage?.consumes.includes('DevelopmentTaskPacket/v1') &&
-                !stage.consumes.includes('ImplementationResult/v1'),
-            )
-          )
+          if (!issuedEvidence && issuedStages.some(isPacketOnlyDevelopmentStage))
             issuedEvidence = await admittedEvidence(journal, false);
           if (issuedStages.some((stage) => stage?.consumes.includes('ImplementationResult/v1'))) {
-            issuedEvidence = await admittedEvidence(journal);
+            const implementationEvidence = await admittedEvidence(journal);
+            requireRunValue(implementationEvidence.implementationResult, 'Implementation authority is unavailable.');
+            requireRunValue(implementationEvidence.authority, 'Delivery evidence authority is unavailable.');
+            issuedEvidence = implementationEvidence;
             if (
               issueKinds.has('deliver') ||
               issuedStages.some((stage) => stage?.kind === 'test' && stage.consumes.includes('ValidationReceipt/v1'))
@@ -5793,7 +8096,7 @@ export async function run(args = process.argv.slice(2)) {
               const { buildObservedTesterInstruction } = await import('../src/orchestration/observed-testing.ts');
               testerInstruction = buildObservedTesterInstruction(
                 issuedEvidence.packet,
-                issuedEvidence.implementationResult,
+                implementationEvidence.implementationResult,
               );
             }
             if (issueKinds.has('deliver')) {
@@ -5806,16 +8109,17 @@ export async function run(args = process.argv.slice(2)) {
                 repositoryRoot: values.project_root,
                 config,
                 packet: issuedEvidence.packet,
-                implementationResult: issuedEvidence.implementationResult,
+                implementationResult: implementationEvidence.implementationResult,
                 journal,
-                authority: issuedEvidence.authority,
-                host: issuedEvidence.host,
+                authority: implementationEvidence.authority,
+                host: implementationEvidence.host,
                 sourceStore: ledger.hostState,
               }));
               if (testReceipt.status !== 'pass')
                 fail('GAP-VIDA-RUN-EXECUTION-001', 'Configured tester receipt is not passing.');
             }
           }
+          /** @type {Map<string, readonly import('../src/research-decision.ts').InstructionBinding[]>} */
           const researchBindings = new Map();
           if (hasIssuedResearchWave) {
             if (journal.state.research_wave_exposure === 'possible')
@@ -5831,7 +8135,7 @@ export async function run(args = process.argv.slice(2)) {
               );
             if (
               journal.state.research_wave_exposure !== 'preparing' ||
-              journal.state.items.some((item) => item.issue_id === null || item.observation || item.host_reservation)
+              journal.state.items.some(isResearchPreparationUnsafe)
             )
               fail('GAP-VIDA-RUN-EXECUTION-001', 'Research preparation is not safely resumable for the current wave.');
             const { readAdmittedSessionExecutionContext } =
@@ -5881,24 +8185,9 @@ export async function run(args = process.argv.slice(2)) {
               researchBindings.set(item.request.action_id, activated.bindings);
             }
             status = 'wave_recovered';
-            issuedActions = journal.state.items.map((item) => ({
-              request: item.request,
-              issue_id: item.issue_id,
-              host_attempt_id: item.host_reservation?.receipt.attempt.attempt_id,
-              ...(item.research_activation
-                ? {
-                    instruction_activation: item.research_activation.use,
-                    instruction_bindings: researchBindings.get(item.request.action_id),
-                    ...(config.workflows[values.workflow].stages.find((stage) => stage.id === item.request.stage_id)
-                      ?.kind === 'research'
-                      ? {
-                          research_instruction_activation: item.research_activation.use,
-                          research_instruction_bindings: researchBindings.get(item.request.action_id),
-                        }
-                      : {}),
-                  }
-                : {}),
-            }));
+            issuedActions = journal.state.items.map((item) =>
+              describeIssuedAction(item, researchBindings, activeWorkflow.stages),
+            );
           } else {
             const waveIndex = workflowSnapshot.requests[0]?.wave_index;
             const waveActions =
@@ -5911,15 +8200,16 @@ export async function run(args = process.argv.slice(2)) {
                     values.workflow,
                     waveIndex,
                     [],
-                    journal.state.corrective_execution,
+                    journal.state.corrective_execution ?? undefined,
                     lifecycleRisk,
                   );
             const writers = waveActions.filter((action) => action.mutation_scope === 'repository_source');
+            /** @type {Record<string, import('../src/runtime-kernel.ts').WorkflowSessionReservation>} */
             let reservations = {};
             if (writers.length > 0) {
               if (writers.length !== 1 || !sourceSnapshot)
                 fail('GAP-VIDA-RUN-EXECUTION-001', 'Source-writing wave needs one admitted exact-path scope.');
-              const writerAction = writers[0];
+              const writerAction = requireRunData(writers[0], 'Mastra source writer action is missing.');
               const writerRequest = journal.state.items.find(
                 (item) => item.request.action_id === writerAction.action_id,
               )?.request;
@@ -5938,17 +8228,27 @@ export async function run(args = process.argv.slice(2)) {
                 work_id: context.work_id,
               };
               const beforeWriter = ledger.hostState.readHostStateSnapshot(writerIdentity);
+              const writerWork = requireRunData(beforeWriter.work, 'Mastra source writer Work is missing.');
+              const writerLease = requireRunData(writerWork.lease, 'Mastra source writer lease is unavailable.');
+              const writerWorkVersion = requireRunData(
+                beforeWriter.workVersion,
+                'Mastra source writer Work version is missing.',
+              );
+              const writerLedgerVersion = requireRunData(
+                beforeWriter.ledgerVersion,
+                'Mastra source writer Ledger version is missing.',
+              );
               const { acquireLocalSourceWriterLease } = await import('../src/orchestration/local-work-admission.ts');
               acquireLocalSourceWriterLease({
                 repositoryRoot: values.project_root,
                 config,
                 store: ledger.hostState,
                 identity: writerIdentity,
-                nativeSessionHandle: beforeWriter.work?.lease?.thread_id,
+                nativeSessionHandle: writerLease.thread_id,
                 stageId: writerRequest.stage_id,
                 assignmentIndex: writerRequest.assignment_index,
-                expectedWork: beforeWriter.workVersion,
-                expectedLedger: beforeWriter.ledgerVersion,
+                expectedWork: writerWorkVersion,
+                expectedLedger: writerLedgerVersion,
                 expectedSessionJournal: { attempt: context.attempt, version: journal.version },
               });
               const { openAdmittedSessionExecution } =
@@ -5961,16 +8261,21 @@ export async function run(args = process.argv.slice(2)) {
                 pathProject.project_id,
                 context.work_id,
               );
-              const capability = execution.composition.workflowExecutionCapability;
+              const capability = requireRunData(
+                execution.composition.workflowExecutionCapability,
+                'Workflow execution capability is missing.',
+              );
               const prepared = await prepareWorkflowExecution(capability, {
                 repositoryRoot: values.project_root,
                 configDigest,
                 teamId: values.team,
                 workItemId: context.work_id,
               });
-              const action = writers[0];
-              const request = journal.state.items.find((item) => item.request.action_id === action.action_id)?.request;
-              if (!request) fail('GAP-VIDA-RUN-EXECUTION-001', 'Mastra source action is missing.');
+              const action = requireRunData(writers[0], 'Mastra source writer action is missing.');
+              const request = requireRunData(
+                journal.state.items.find((item) => item.request.action_id === action.action_id)?.request,
+                'Mastra source action is missing.',
+              );
               const reserved = await reserveWorkflowAssignmentForSession(capability, {
                 repositoryRoot: values.project_root,
                 configDigest,
@@ -5986,12 +8291,7 @@ export async function run(args = process.argv.slice(2)) {
               reservations = { [action.action_id]: reserved };
             }
             journal = ledger.issueWave(context.work_id, context.attempt, journal.version, reservations);
-            if (
-              issuedStages.some(
-                (stage) =>
-                  stage?.produces.includes('ResearchResult/v1') || stage?.produces.includes('ResearchSynthesis/v1'),
-              )
-            ) {
+            if (issuedStages.some(isResearchOutputStage)) {
               const { readAdmittedSessionExecutionContext } =
                 await import('../src/orchestration/admitted-session-execution.ts');
               const { issueObservedResearchActivation } =
@@ -6003,11 +8303,7 @@ export async function run(args = process.argv.slice(2)) {
                 context.work_id,
               );
               for (const item of journal.state.items.filter((entry) =>
-                config.workflows[values.workflow].stages.some(
-                  (stage) =>
-                    stage.id === entry.request.stage_id &&
-                    (stage.produces.includes('ResearchResult/v1') || stage.produces.includes('ResearchSynthesis/v1')),
-                ),
+                activeWorkflow.stages.some((stage) => isResearchOutputForStage(stage, entry.request.stage_id)),
               )) {
                 const activated = await issueObservedResearchActivation({
                   repositoryRoot: values.project_root,
@@ -6022,47 +8318,28 @@ export async function run(args = process.argv.slice(2)) {
               }
             }
             status = 'wave_issued';
-            issuedActions = journal.state.items.map((item) => ({
-              request: item.request,
-              issue_id: item.issue_id,
-              host_attempt_id: item.host_reservation?.receipt.attempt.attempt_id,
-              ...(item.research_activation
-                ? {
-                    instruction_activation: item.research_activation.use,
-                    instruction_bindings: researchBindings.get(item.request.action_id),
-                    ...(config.workflows[values.workflow].stages.find((stage) => stage.id === item.request.stage_id)
-                      ?.kind === 'research'
-                      ? {
-                          research_instruction_activation: item.research_activation.use,
-                          research_instruction_bindings: researchBindings.get(item.request.action_id),
-                        }
-                      : {}),
-                  }
-                : {}),
-            }));
+            issuedActions = journal.state.items.map((item) =>
+              describeIssuedAction(item, researchBindings, activeWorkflow.stages),
+            );
           }
         } else {
-          const observation = parseSessionBridgeObservation(readBoundedReport(values.report));
+          const observation = parseSessionBridgeObservation(
+            readBoundedReport(requireOption(values.report, '--report')),
+          );
           const issued = journal.state.items.find((item) => item.request.action_id === observation.action_id);
-          const reportedStage =
-            issued && config.workflows[values.workflow].stages.find((stage) => stage.id === issued.request.stage_id);
+          const reportedStage = issued && activeWorkflow.stages.find((stage) => stage.id === issued.request.stage_id);
           if (reportedStage?.kind === 'validate' && reportedStage.produces.includes('ValidationReceipt/v1')) {
             const { parseObservedValidatorVerdict } = await import('../src/orchestration/observed-validation.ts');
             parseObservedValidatorVerdict(observation);
           }
-          if (
-            issued &&
-            config.workflows[values.workflow].stages.find((stage) => stage.id === issued.request.stage_id)?.kind ===
-              'test'
-          ) {
+          if (issued && activeWorkflow.stages.find((stage) => stage.id === issued.request.stage_id)?.kind === 'test') {
             const { parseObservedTesterVerdict } = await import('../src/orchestration/observed-testing.ts');
             parseObservedTesterVerdict(observation);
           }
           if (
             issued &&
             observation.status === 'reported_complete' &&
-            config.workflows[values.workflow].stages.find((stage) => stage.id === issued.request.stage_id)?.kind ===
-              'research'
+            activeWorkflow.stages.find((stage) => stage.id === issued.request.stage_id)?.kind === 'research'
           ) {
             if (!issued.issue_id || !issued.research_activation)
               fail('GAP-VIDA-RUN-EXECUTION-001', 'Research action lacks a committed instruction activation.');
@@ -6078,6 +8355,7 @@ export async function run(args = process.argv.slice(2)) {
             const host = ledger.hostState.readHostStateSnapshot(execution.identity);
             if (!host.work) fail('GAP-VIDA-RUN-EXECUTION-001', 'Research work is missing.');
             const access = requireSafeRepositoryAccess(values.project_root);
+            const workItem = parseWorkflowWorkItem(workflowWorkItemSchema, execution.workItem);
             buildObservedResearchResult({
               config,
               observation,
@@ -6087,13 +8365,13 @@ export async function run(args = process.argv.slice(2)) {
               work: host.work,
               scopeBytes: access.readBytes(host.work.contracts.scope.path, 'research accepted scope'),
               acceptanceBytes: access.readBytes(host.work.contracts.acceptance.path, 'research accepted acceptance'),
-              workItem: execution.workItem,
+              workItem,
             });
           }
           if (
             issued &&
             observation.status === 'reported_complete' &&
-            config.workflows[values.workflow].stages
+            activeWorkflow.stages
               .find((stage) => stage.id === issued.request.stage_id)
               ?.produces.includes('ResearchSynthesis/v1')
           ) {
@@ -6112,6 +8390,7 @@ export async function run(args = process.argv.slice(2)) {
             const host = ledger.hostState.readHostStateSnapshot(execution.identity);
             if (!host.work) fail('GAP-VIDA-RUN-EXECUTION-001', 'Synthesis work is missing.');
             const access = requireSafeRepositoryAccess(values.project_root);
+            const workItem = parseWorkflowWorkItem(workflowWorkItemSchema, execution.workItem);
             buildObservedSynthesisResult({
               config,
               observation,
@@ -6121,21 +8400,19 @@ export async function run(args = process.argv.slice(2)) {
               work: host.work,
               scopeBytes: access.readBytes(host.work.contracts.scope.path, 'synthesis accepted scope'),
               acceptanceBytes: access.readBytes(host.work.contracts.acceptance.path, 'synthesis accepted acceptance'),
-              workItem: execution.workItem,
+              workItem,
               researchResults: admittedResearchResultsForSynthesis({
                 repositoryRoot: values.project_root,
                 config,
                 journal,
-                work: host.work,
+                work: requireRunData(host.work, 'Synthesis Host Work is unavailable.'),
                 workflowId: values.workflow,
-                workItem: execution.workItem,
               }),
             });
           }
           if (
             issued &&
-            config.workflows[values.workflow].stages.find((stage) => stage.id === issued.request.stage_id)?.kind ===
-              'deliver'
+            activeWorkflow.stages.find((stage) => stage.id === issued.request.stage_id)?.kind === 'deliver'
           ) {
             const { parseObservedDeliveryProposal } = await import('../src/orchestration/observed-delivery.ts');
             parseObservedDeliveryProposal(observation);
@@ -6148,7 +8425,7 @@ export async function run(args = process.argv.slice(2)) {
                 state: {
                   ...journal.state,
                   items: journal.state.items.map((item) =>
-                    item.request.action_id === observation.action_id ? { ...item, observation } : item,
+                    addObservationForAction(item, observation.action_id, observation),
                   ),
                 },
               },
@@ -6183,7 +8460,10 @@ export async function run(args = process.argv.slice(2)) {
             );
             if (prior?.status === 'started')
               await completeWorkflowAssignmentForSession(
-                execution.composition.workflowExecutionCapability,
+                requireRunData(
+                  execution.composition.workflowExecutionCapability,
+                  'Workflow execution capability is missing.',
+                ),
                 issued.host_reservation,
                 observation,
               );
@@ -6199,22 +8479,28 @@ export async function run(args = process.argv.slice(2)) {
       if (journal.resume_status === 'ready_to_resume') {
         if (
           journal.state.items.some((item) =>
-            config.workflows[values.workflow].stages.some(
-              (stage) => stage.id === item.request.stage_id && stage.kind === 'deliver',
-            ),
+            activeWorkflow.stages.some((stage) => stage.id === item.request.stage_id && stage.kind === 'deliver'),
           )
         )
           ({ instruction: deliveryInstruction, evidence: testEvidence } = await preparedDelivery(journal));
         const stepId = journal.state.step_id;
         if (!stepId) fail('GAP-VIDA-RUN-EXECUTION-001', 'The Mastra resume step is missing.');
-        workflowSnapshot = await (
-          await openBridge()
-        ).resume(
-          stepId,
-          journal.state.items.map((item) => item.observation),
-          sourceSnapshot,
+        workflowSnapshot = requireRunData(
+          await (
+            await openBridge()
+          ).resume(
+            stepId,
+            journal.state.items.map((item) =>
+              requireRunData(item.observation, 'Mastra resume observation is unavailable.'),
+            ),
+            sourceSnapshot,
+          ),
+          'Resumed Mastra snapshot is unavailable.',
         );
-        journal = ledger.resume(context.work_id, context.attempt);
+        journal = requireRunData(
+          ledger.resume(context.work_id, context.attempt),
+          'Resumed producer journal is unavailable.',
+        );
         status = journal.resume_status === 'complete' ? 'all_reports_collected' : 'resumed';
       }
       if (
@@ -6222,17 +8508,15 @@ export async function run(args = process.argv.slice(2)) {
         !deliveryInstruction &&
         journal.state.completed.some((entry) =>
           entry.items.some((item) =>
-            config.workflows[values.workflow].stages.some(
-              (stage) => stage.id === item.request.stage_id && stage.kind === 'deliver',
-            ),
+            activeWorkflow.stages.some((stage) => stage.id === item.request.stage_id && stage.kind === 'deliver'),
           ),
         )
       )
         ({ instruction: deliveryInstruction, evidence: testEvidence } = await preparedDelivery(journal));
       let researchSynthesis = null;
-      const terminalSynthesisStages = config.workflows[values.workflow].stages.filter(
+      const terminalSynthesisStages = activeWorkflow.stages.filter(
         (stage) =>
-          config.workflows[values.workflow].terminal_stages.includes(stage.id) &&
+          activeWorkflow.terminal_stages.includes(stage.id) &&
           stage.kind === 'synthesize' &&
           stage.produces.includes('ResearchSynthesis/v1'),
       );
@@ -6247,9 +8531,11 @@ export async function run(args = process.argv.slice(2)) {
         const items = journal.state.completed
           .flatMap((entry) => entry.items)
           .filter((item) => item.request.stage_id === terminalStage.id && item.request.workflow_id === values.workflow);
-        if (items.length !== 1 || !items[0].research_normalization || !items[0].observation || !items[0].issue_id)
+        if (items.length !== 1)
           fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal synthesis has no unique canonical observation.');
-        const item = items[0];
+        const item = requireRunData(items[0], 'Terminal synthesis observation is missing.');
+        if (!item.research_normalization || !item.observation || !item.issue_id)
+          fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal synthesis has no unique canonical observation.');
         const { readAdmittedSessionExecutionContext } =
           await import('../src/orchestration/admitted-session-execution.ts');
         const execution = readAdmittedSessionExecutionContext(
@@ -6259,7 +8545,9 @@ export async function run(args = process.argv.slice(2)) {
           context.work_id,
         );
         const host = ledger.hostState.readHostStateSnapshot(execution.identity);
-        const plan = item.research_normalization;
+        const plan = requireRunData(item.research_normalization, 'Terminal synthesis normalization is missing.');
+        const observation = requireRunData(item.observation, 'Terminal synthesis observation is missing.');
+        const issueId = requireRunData(item.issue_id, 'Terminal synthesis issue receipt is missing.');
         const artifact = host.work?.artifacts.find(
           (entry) =>
             entry.schema === 'ResearchSynthesis/v1' &&
@@ -6270,8 +8558,8 @@ export async function run(args = process.argv.slice(2)) {
         if (
           !artifact ||
           plan.binding.action_id !== item.request.action_id ||
-          plan.binding.issue_id !== item.issue_id ||
-          plan.observation_digest !== canonicalJsonDigest(item.observation)
+          plan.binding.issue_id !== issueId ||
+          plan.observation_digest !== canonicalJsonDigest(observation)
         )
           fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal synthesis is not bound to its admitted artifact.');
         const bytes = requireSafeRepositoryAccess(values.project_root).readBytes(
@@ -6286,7 +8574,8 @@ export async function run(args = process.argv.slice(2)) {
           fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal synthesis identity changed.');
       }
       reconciliationRequired = await unresolvedHostEffect(journal);
-      const actionWave = workflowSnapshot.requests[0]?.wave_index;
+      const actionWave = requireRunData(workflowSnapshot, 'Prepared Mastra snapshot is unavailable.').requests[0]
+        ?.wave_index;
       const actions =
         actionWave === undefined
           ? []
@@ -6297,7 +8586,7 @@ export async function run(args = process.argv.slice(2)) {
               values.workflow,
               actionWave,
               [],
-              journal.state.corrective_execution,
+              journal.state.corrective_execution ?? undefined,
               lifecycleRisk,
             );
       const actionById = new Map(actions.map((action) => [action.action_id, action]));
@@ -6305,7 +8594,7 @@ export async function run(args = process.argv.slice(2)) {
       const { synthesisObservationOutputContract, admittedResearchResultsForSynthesis, synthesisSourceCatalog } =
         await import('../src/orchestration/observed-synthesis-result.ts');
       const synthesisStageIds = new Set(
-        config.workflows[values.workflow].stages
+        activeWorkflow.stages
           .filter((stage) => stage.produces.includes('ResearchSynthesis/v1'))
           .map((stage) => stage.id),
       );
@@ -6330,7 +8619,7 @@ export async function run(args = process.argv.slice(2)) {
                 repositoryRoot: values.project_root,
                 config,
                 journal,
-                work: host.work,
+                work: requireRunData(host.work, 'Synthesis Host Work is unavailable.'),
                 workflowId: values.workflow,
               }),
             );
@@ -6346,9 +8635,9 @@ export async function run(args = process.argv.slice(2)) {
         schema: 'VidaAgentRunResult/v1',
         status,
         workflow: values.workflow,
-        mastra_run_id: workflowSnapshot.run_id,
-        mastra_step_id: workflowSnapshot.step_id,
-        execution_status: workflowSnapshot.status,
+        mastra_run_id: requireRunData(workflowSnapshot, 'Prepared Mastra snapshot is unavailable.').run_id,
+        mastra_step_id: requireRunData(workflowSnapshot, 'Prepared Mastra snapshot is unavailable.').step_id,
+        execution_status: requireRunData(workflowSnapshot, 'Prepared Mastra snapshot is unavailable.').status,
         resume_status: reconciliationRequired ? 'reconciliation_required' : journal.resume_status,
         reconciliation_required: reconciliationRequired,
         research_preparation_status:
@@ -6368,7 +8657,7 @@ export async function run(args = process.argv.slice(2)) {
                 ...(actionById.get(item.request.action_id)?.stage_kind === 'research'
                   ? { research_output_contract: researchObservationOutputContract }
                   : {}),
-                ...(config.workflows[values.workflow].stages
+                ...(activeWorkflow.stages
                   .find((stage) => stage.id === item.request.stage_id)
                   ?.produces.includes('ResearchSynthesis/v1')
                   ? {
@@ -6385,7 +8674,7 @@ export async function run(args = process.argv.slice(2)) {
           ...(actionById.get(item.request.action_id)?.stage_kind === 'research'
             ? { research_output_contract: researchObservationOutputContract }
             : {}),
-          ...(config.workflows[values.workflow].stages
+          ...(activeWorkflow.stages
             .find((stage) => stage.id === item.request.stage_id)
             ?.produces.includes('ResearchSynthesis/v1')
             ? {
@@ -6446,20 +8735,24 @@ export async function run(args = process.argv.slice(2)) {
         result.state_version = journal.version;
         result.resume_status = journal.resume_status;
         result.research_preparation_status = 'exposure_possible';
-        result.action_statuses = result.action_statuses.map((item) => ({
-          ...item,
-          status: item.status === 'research_preparation_incomplete' ? 'issued_outcome_uncertain' : item.status,
-        }));
+        result.action_statuses = result.action_statuses.map(markUncertainResearchStatus);
       }
       return result;
     } finally {
       try {
         ledger.close();
       } finally {
-        if (bridge) await bridge.close();
+        if (bridge) await closeRunSessionBridge(bridge);
       }
     }
   }
+}
+
+/** @param {Pick<NodeJS.Process, 'exitCode'>} exit @param {unknown} result @returns {boolean} */
+function applyIntegerExitResult(exit, result) {
+  if (typeof result !== 'number' || !Number.isInteger(result)) return false;
+  exit.exitCode = result;
+  return true;
 }
 
 export async function main({
@@ -6487,12 +8780,24 @@ export async function main({
   }
   try {
     const result = await execute(args);
-    if (Number.isInteger(result)) exit.exitCode = result;
-    else io.log(JSON.stringify(result));
+    if (!applyIntegerExitResult(exit, result)) io.log(JSON.stringify(result));
   } catch (error) {
     io.error(JSON.stringify(publicFailure(error)));
     exit.exitCode = 1;
   }
+}
+
+/** @param {string[]} args */
+async function printRunHelp(args) {
+  const { cliMetadataResult } = await import('./cli-metadata.ts');
+  const text = JSON.stringify(cliMetadataResult(['run', ...args], { name: 'vida-agent', version: '0.0.0' })) + '\n';
+  // Explicit entrypoint exit follows the actual pipe-write completion, not enqueueing.
+  await new Promise((resolve, reject) => {
+    process.stdout.write(text, (error) => {
+      if (error) reject(error);
+      else resolve(undefined);
+    });
+  });
 }
 
 await main();

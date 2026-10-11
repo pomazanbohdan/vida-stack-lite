@@ -58,7 +58,7 @@ const workflowStateSchema = z
     failedAssignments: z.array(z.string()),
   })
   .strict();
-export type ConfiguredWorkflowResult = z.infer<typeof workflowStateSchema>;
+type ConfiguredWorkflowResult = z.infer<typeof workflowStateSchema>;
 export interface ConfiguredMastraExecution {
   readonly workflowExecutionCapability: WorkflowExecutionCapability;
 }

@@ -52,10 +52,7 @@
               }
             },
             "successor_work_id": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "minLength": 1,
               "maxLength": 256
             }
@@ -217,20 +214,12 @@
     "contracts": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "scope",
-        "acceptance",
-        "decisions"
-      ],
+      "required": ["scope", "acceptance", "decisions"],
       "properties": {
         "scope": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "schema",
-            "path",
-            "sha256"
-          ],
+          "required": ["schema", "path", "sha256"],
           "properties": {
             "schema": {
               "const": "ImplementationScope/v1"
@@ -249,11 +238,7 @@
         "acceptance": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "schema",
-            "path",
-            "sha256"
-          ],
+          "required": ["schema", "path", "sha256"],
           "properties": {
             "schema": {
               "const": "AcceptanceManifest/v1"
@@ -274,17 +259,10 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "schema",
-              "path",
-              "sha256"
-            ],
+            "required": ["schema", "path", "sha256"],
             "properties": {
               "schema": {
-                "enum": [
-                  "DecisionRecord/v1",
-                  "WorkflowAttemptRecoveryDecision/v1"
-                ]
+                "enum": ["DecisionRecord/v1", "WorkflowAttemptRecoveryDecision/v1"]
               },
               "path": {
                 "type": "string",
@@ -308,11 +286,7 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "ticket_id",
-            "thread_id",
-            "generation"
-          ],
+          "required": ["ticket_id", "thread_id", "generation"],
           "properties": {
             "ticket_id": {
               "type": "string",
@@ -339,13 +313,7 @@
     "execution": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "run_id",
-        "input_digest",
-        "phase",
-        "status",
-        "assignment_attempts"
-      ],
+      "required": ["run_id", "input_digest", "phase", "status", "assignment_attempts"],
       "properties": {
         "run_id": {
           "anyOf": [
@@ -369,12 +337,7 @@
           "maxLength": 2048
         },
         "status": {
-          "enum": [
-            "active",
-            "suspended",
-            "failed",
-            "complete"
-          ]
+          "enum": ["active", "suspended", "failed", "complete"]
         },
         "assignment_attempts": {
           "type": "array",
@@ -423,11 +386,7 @@
               "lease": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": [
-                  "ticket_id",
-                  "thread_id",
-                  "generation"
-                ],
+                "required": ["ticket_id", "thread_id", "generation"],
                 "properties": {
                   "ticket_id": {
                     "type": "string",
@@ -447,12 +406,7 @@
                 }
               },
               "status": {
-                "enum": [
-                  "started",
-                  "completed",
-                  "uncertain",
-                  "no_effect"
-                ]
+                "enum": ["started", "completed", "uncertain", "no_effect"]
               },
               "result": {},
               "result_digest": {
@@ -512,10 +466,7 @@
                       "work_version": {
                         "type": "object",
                         "additionalProperties": false,
-                        "required": [
-                          "revision",
-                          "digest"
-                        ],
+                        "required": ["revision", "digest"],
                         "properties": {
                           "revision": {
                             "type": "integer",
@@ -531,10 +482,7 @@
                       "ledger_version": {
                         "type": "object",
                         "additionalProperties": false,
-                        "required": [
-                          "revision",
-                          "digest"
-                        ],
+                        "required": ["revision", "digest"],
                         "properties": {
                           "revision": {
                             "type": "integer",
@@ -556,10 +504,7 @@
                         "pattern": "^[a-f0-9]{64}$"
                       },
                       "outcome": {
-                        "enum": [
-                          "completed",
-                          "no_effect"
-                        ]
+                        "enum": ["completed", "no_effect"]
                       },
                       "result_digest": {
                         "anyOf": [
@@ -575,11 +520,7 @@
                       "provider_evidence": {
                         "type": "object",
                         "additionalProperties": false,
-                        "required": [
-                          "schema",
-                          "path",
-                          "sha256"
-                        ],
+                        "required": ["schema", "path", "sha256"],
                         "properties": {
                           "schema": {
                             "type": "string",
@@ -601,17 +542,10 @@
                           {
                             "type": "object",
                             "additionalProperties": false,
-                            "required": [
-                              "schema",
-                              "path",
-                              "sha256"
-                            ],
+                            "required": ["schema", "path", "sha256"],
                             "properties": {
                               "schema": {
-                                "enum": [
-                                  "DecisionRecord/v1",
-                                  "WorkflowAttemptRecoveryDecision/v1"
-                                ]
+                                "enum": ["DecisionRecord/v1", "WorkflowAttemptRecoveryDecision/v1"]
                               },
                               "path": {
                                 "type": "string",
@@ -634,11 +568,7 @@
                           {
                             "type": "object",
                             "additionalProperties": false,
-                            "required": [
-                              "ticket_id",
-                              "thread_id",
-                              "generation"
-                            ],
+                            "required": ["ticket_id", "thread_id", "generation"],
                             "properties": {
                               "ticket_id": {
                                 "type": "string",
@@ -682,11 +612,7 @@
                   {
                     "type": "object",
                     "additionalProperties": false,
-                    "required": [
-                      "schema",
-                      "path",
-                      "sha256"
-                    ],
+                    "required": ["schema", "path", "sha256"],
                     "properties": {
                       "schema": {
                         "const": "CorrectiveAssignmentAuthorization/v1"
@@ -717,16 +643,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "artifact_id",
-          "schema",
-          "path",
-          "sha256",
-          "stage_id",
-          "source_revision",
-          "scope_id",
-          "ac_ids"
-        ],
+        "required": ["artifact_id", "schema", "path", "sha256", "stage_id", "source_revision", "scope_id", "ac_ids"],
         "properties": {
           "artifact_id": {
             "type": "string",
@@ -782,9 +699,7 @@
   "allOf": [
     {
       "if": {
-        "required": [
-          "migration"
-        ],
+        "required": ["migration"],
         "properties": {
           "migration": {
             "type": "object",
@@ -817,9 +732,7 @@
     },
     {
       "if": {
-        "required": [
-          "migration"
-        ],
+        "required": ["migration"],
         "properties": {
           "migration": {
             "type": "object",
@@ -847,9 +760,7 @@
     {
       "if": {
         "not": {
-          "required": [
-            "migration"
-          ]
+          "required": ["migration"]
         }
       },
       "then": {
@@ -891,10 +802,7 @@
           "const": "WorkMigrationLineage/v1"
         },
         "source_schema": {
-          "enum": [
-            "WorkCheckpoint/v2",
-            "CoordinationTicket/v1"
-          ]
+          "enum": ["WorkCheckpoint/v2", "CoordinationTicket/v1"]
         },
         "source_sha256": {
           "$ref": "#/$defs/digest"
@@ -937,10 +845,7 @@
           "$ref": "#/$defs/digest"
         },
         "rebind_status": {
-          "enum": [
-            "pending",
-            "accepted"
-          ]
+          "enum": ["pending", "accepted"]
         },
         "rebind_receipt": {
           "anyOf": [
@@ -968,12 +873,7 @@
                 "identity": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": [
-                    "repository_id",
-                    "project_ids",
-                    "integrations_digest",
-                    "work_id"
-                  ],
+                  "required": ["repository_id", "project_ids", "integrations_digest", "work_id"],
                   "properties": {
                     "repository_id": {
                       "type": "string",
@@ -1033,14 +933,7 @@
         "source_ticket": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "pointer",
-            "ticket_id",
-            "thread_id",
-            "generation",
-            "contour_keys",
-            "exclusive_resources"
-          ],
+          "required": ["pointer", "ticket_id", "thread_id", "generation", "contour_keys", "exclusive_resources"],
           "properties": {
             "pointer": {
               "type": "string",
@@ -1092,17 +985,13 @@
                 "const": "CoordinationTicket/v1"
               }
             },
-            "required": [
-              "source_schema"
-            ]
+            "required": ["source_schema"]
           },
           "then": {
             "properties": {
               "source_ticket": {}
             },
-            "required": [
-              "source_ticket"
-            ]
+            "required": ["source_ticket"]
           }
         },
         {
@@ -1112,18 +1001,14 @@
                 "const": "WorkCheckpoint/v2"
               }
             },
-            "required": [
-              "source_schema"
-            ]
+            "required": ["source_schema"]
           },
           "then": {
             "not": {
               "properties": {
                 "source_ticket": {}
               },
-              "required": [
-                "source_ticket"
-              ]
+              "required": ["source_ticket"]
             }
           }
         }
@@ -1263,10 +1148,7 @@
           }
         },
         "generation": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 1,
           "maximum": 9007199254740991
         },
@@ -1281,39 +1163,20 @@
           ]
         },
         "delivery_cycle_id": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "minLength": 1,
           "maxLength": 2048
         },
         "principal": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "minLength": 1,
           "maxLength": 2048
         },
         "decision": {
-          "enum": [
-            "pass",
-            "fail",
-            "approved",
-            "accepted",
-            "feedback",
-            "rejected",
-            "unknown",
-            null
-          ]
+          "enum": ["pass", "fail", "approved", "accepted", "feedback", "rejected", "unknown", null]
         },
         "disposition": {
-          "enum": [
-            "current",
-            "consumed",
-            "retired"
-          ]
+          "enum": ["current", "consumed", "retired"]
         }
       }
     },
@@ -1345,15 +1208,7 @@
           "maximum": 9007199254740991
         },
         "phase": {
-          "enum": [
-            "INTAKE",
-            "TRACE",
-            "PLAN",
-            "EXECUTE",
-            "VERIFY",
-            "DELIVERY",
-            "COMPLETE"
-          ]
+          "enum": ["INTAKE", "TRACE", "PLAN", "EXECUTE", "VERIFY", "DELIVERY", "COMPLETE"]
         },
         "source_revision": {
           "type": "string",
@@ -1366,38 +1221,18 @@
           "maxLength": 4096
         },
         "route": {
-          "enum": [
-            "R1",
-            "R2",
-            "R3",
-            "R4"
-          ]
+          "enum": ["R1", "R2", "R3", "R4"]
         },
         "risk": {
-          "enum": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "enum": ["low", "medium", "high"]
         },
         "change_kind": {
-          "enum": [
-            "feature",
-            "fix",
-            "refactor",
-            "migration",
-            "documentation",
-            "incident"
-          ]
+          "enum": ["feature", "fix", "refactor", "migration", "documentation", "incident"]
         },
         "config_binding": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "config_digest",
-            "schema_digest",
-            "runtime_code_digest"
-          ],
+          "required": ["config_digest", "schema_digest", "runtime_code_digest"],
           "properties": {
             "config_digest": {
               "$ref": "#/$defs/digest"
@@ -1413,13 +1248,7 @@
         "scope": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "scope_id",
-            "allowed_paths",
-            "fingerprint_paths",
-            "implementation_paths",
-            "documentation_paths"
-          ],
+          "required": ["scope_id", "allowed_paths", "fingerprint_paths", "implementation_paths", "documentation_paths"],
           "properties": {
             "scope_id": {
               "type": "string",
@@ -1448,11 +1277,7 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": [
-                "sealed_revision",
-                "sealed_at",
-                "implementation_fingerprint"
-              ],
+              "required": ["sealed_revision", "sealed_at", "implementation_fingerprint"],
               "properties": {
                 "sealed_revision": {
                   "type": "integer",
@@ -1474,13 +1299,7 @@
         "assurance": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "epoch",
-            "review_generation",
-            "correction_count",
-            "review_failure_count",
-            "delivery_cycle_id"
-          ],
+          "required": ["epoch", "review_generation", "correction_count", "review_failure_count", "delivery_cycle_id"],
           "properties": {
             "epoch": {
               "type": "string",
@@ -1503,10 +1322,7 @@
               "maximum": 9007199254740991
             },
             "delivery_cycle_id": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": ["string", "null"],
               "minLength": 1,
               "maxLength": 2048
             }

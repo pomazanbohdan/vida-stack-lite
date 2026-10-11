@@ -6,36 +6,270 @@
   "additionalProperties": false,
   "required": ["schema", "revision", "phase", "maintenance_released", "plan", "plan_digest"],
   "properties": {
-    "schema": { "const": "ConfigRebindOperation/v1" },
-    "revision": { "type": "integer", "minimum": 1 },
-    "phase": { "enum": ["planned", "fenced", "applied", "abandoned_no_effect"] },
-    "maintenance_released": { "type": "boolean" },
-    "plan_digest": { "$ref": "#/$defs/hash" },
+    "schema": {
+      "const": "ConfigRebindOperation/v1"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "phase": {
+      "enum": ["planned", "fenced", "applied", "abandoned_no_effect"]
+    },
+    "maintenance_released": {
+      "type": "boolean"
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/hash"
+    },
     "plan": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["operation_id", "actor", "instruction_ref", "created_at", "repository_root", "repository_id", "project_ids", "workspace_id", "baseline_yaml", "target_yaml", "baseline_receipt", "old_config_digest", "target_config_digest", "initialization_schema_digest", "selector_digest", "bundle_digest", "state_digest", "token"],
+      "required": [
+        "operation_id",
+        "actor",
+        "instruction_ref",
+        "created_at",
+        "repository_root",
+        "repository_id",
+        "project_ids",
+        "workspace_id",
+        "baseline_yaml",
+        "target_yaml",
+        "baseline_receipt",
+        "old_config_digest",
+        "target_config_digest",
+        "initialization_schema_digest",
+        "selector_digest",
+        "bundle_digest",
+        "state_digest",
+        "token"
+      ],
       "properties": {
-        "operation_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
-        "actor": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[^\\u0000-\\u001f]+$" },
-        "instruction_ref": { "type": "string", "minLength": 1, "maxLength": 2048, "pattern": "^[^\\u0000-\\u001f]+$" },
-        "created_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$" },
-        "repository_root": { "type": "string", "minLength": 1, "maxLength": 4096 },
-        "repository_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,127}$" },
-        "project_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,127}$" } },
-        "workspace_id": { "$ref": "#/$defs/hash" },
-        "baseline_yaml": { "type": "string", "minLength": 1, "maxLength": 4194304 },
-        "target_yaml": { "type": "string", "minLength": 1, "maxLength": 4194304 },
-        "baseline_receipt": { "type": "string", "minLength": 1, "maxLength": 1048576 },
-        "old_config_digest": { "$ref": "#/$defs/hash" },
-        "target_config_digest": { "$ref": "#/$defs/hash" },
-        "initialization_schema_digest": { "$ref": "#/$defs/hash" },
-        "selector_digest": { "$ref": "#/$defs/hash" },
-        "bundle_digest": { "$ref": "#/$defs/hash" },
-        "state_digest": { "$ref": "#/$defs/hash" },
-        "token": { "type": "string", "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$" }
-      }
+        "operation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$"
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\u0000-\\u001f]+$"
+        },
+        "instruction_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\u0000-\\u001f]+$"
+        },
+        "created_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+        },
+        "repository_root": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "repository_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,127}$"
+        },
+        "project_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,127}$"
+          }
+        },
+        "workspace_id": {
+          "$ref": "#/$defs/hash"
+        },
+        "baseline_yaml": {
+          "type": "string",
+          "maxLength": 4194304
+        },
+        "target_yaml": {
+          "type": "string",
+          "maxLength": 4194304
+        },
+        "baseline_receipt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1048576
+        },
+        "old_config_digest": {
+          "$ref": "#/$defs/hash"
+        },
+        "target_config_digest": {
+          "$ref": "#/$defs/hash"
+        },
+        "initialization_schema_digest": {
+          "$ref": "#/$defs/hash"
+        },
+        "selector_digest": {
+          "$ref": "#/$defs/hash"
+        },
+        "bundle_digest": {
+          "$ref": "#/$defs/hash"
+        },
+        "state_digest": {
+          "$ref": "#/$defs/hash"
+        },
+        "token": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+        },
+        "configuration_format": {
+          "const": "project-split-v2"
+        },
+        "baseline_inputs": {
+          "$ref": "#/$defs/projectInputs"
+        },
+        "target_inputs": {
+          "$ref": "#/$defs/projectInputs"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["configuration_format"],
+            "properties": {
+              "configuration_format": {}
+            }
+          },
+          "then": {
+            "required": ["baseline_inputs", "target_inputs"],
+            "properties": {
+              "baseline_inputs": {},
+              "target_inputs": {},
+              "configuration_format": {
+                "const": "project-split-v2"
+              },
+              "baseline_yaml": {
+                "const": ""
+              },
+              "target_yaml": {
+                "const": ""
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["baseline_inputs"],
+                  "properties": {
+                    "baseline_inputs": {}
+                  }
+                },
+                {
+                  "required": ["target_inputs"],
+                  "properties": {
+                    "target_inputs": {}
+                  }
+                }
+              ]
+            },
+            "properties": {
+              "baseline_yaml": {
+                "type": "string",
+                "minLength": 1
+              },
+              "target_yaml": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
     }
   },
-  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "projectInputDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "text", "sha256"],
+      "properties": {
+        "path": {
+          "enum": [".vida/project.yaml", ".vida/agents.yaml", ".vida/flows.yaml"]
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 4194304
+        },
+        "sha256": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    },
+    "projectInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "input_digest", "config_digest", "project", "agents", "flows"],
+      "properties": {
+        "schema": {
+          "const": "ProjectConfigurationInputSet/v1"
+        },
+        "input_digest": {
+          "$ref": "#/$defs/hash"
+        },
+        "config_digest": {
+          "$ref": "#/$defs/hash"
+        },
+        "project": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/projectInputDocument"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "const": ".vida/project.yaml"
+                }
+              }
+            }
+          ]
+        },
+        "agents": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/projectInputDocument"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "const": ".vida/agents.yaml"
+                }
+              }
+            }
+          ]
+        },
+        "flows": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/projectInputDocument"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "const": ".vida/flows.yaml"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
 }

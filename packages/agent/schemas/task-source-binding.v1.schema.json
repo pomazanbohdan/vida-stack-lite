@@ -188,7 +188,16 @@
     "taskSourceReport": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schema", "operation", "operation_id", "request_id", "report_id", "expected_host", "status", "binding"],
+      "required": [
+        "schema",
+        "operation",
+        "operation_id",
+        "request_id",
+        "report_id",
+        "expected_host",
+        "status",
+        "binding"
+      ],
       "properties": {
         "schema": { "const": "TaskSourceBindingReport/v1" },
         "operation": { "enum": ["inspect", "propose-create", "propose-adopt"] },

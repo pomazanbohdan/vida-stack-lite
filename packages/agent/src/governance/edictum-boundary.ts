@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { parseWorkflowApprovalConsumptionRecord } from './workflow-approval-consumption-contract.js';
 import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { GovernanceDenied, OperationPolicyGuard, PolicySession, type EvaluationResult } from './operation-policy.js';
@@ -675,35 +676,7 @@ export function requireHostGovernanceCapability(capability: HostGovernanceCapabi
 }
 
 export function validateHostWorkflowApprovalRecord(value: unknown): WorkflowApprovalConsumptionRecord {
-  requireCondition(isPlainRecord(value), 'host workflow approval record is invalid');
-  const record = value as WorkflowApprovalConsumptionRecord;
-  const keys = [
-    'schema',
-    'store_id',
-    'store_generation',
-    'binding',
-    'fencing_token',
-    'status',
-    'reserved_at',
-    'approval_expires_at',
-    'attempt_id',
-  ];
-  if (record.status !== 'reserved') keys.push('terminal_at');
-  requireCondition(
-    hasExactOwnKeys(record as unknown as Record<string, unknown>, keys) &&
-      record.schema === 'EdictumWorkflowApprovalConsumption/v1' &&
-      validWorkflowApprovalBinding(record.binding) &&
-      WORKFLOW_STORE_ID_PATTERN.test(record.store_id) &&
-      RESERVATION_FENCING_TOKEN.test(record.store_generation) &&
-      RESERVATION_FENCING_TOKEN.test(record.fencing_token) &&
-      ['reserved', 'commit_unknown', 'applied', 'aborted'].includes(record.status) &&
-      isStrictRfc3339Timestamp(record.reserved_at) &&
-      (record.approval_expires_at === null || isStrictRfc3339Timestamp(record.approval_expires_at)) &&
-      (record.attempt_id === null || /^[0-9a-f]{64}$/.test(record.attempt_id)) &&
-      (record.status === 'reserved' || isStrictRfc3339Timestamp(record.terminal_at)),
-    'host workflow approval record is invalid',
-  );
-  return record;
+  return parseWorkflowApprovalConsumptionRecord(value);
 }
 
 interface WorkflowApprovalStoreIdentity {

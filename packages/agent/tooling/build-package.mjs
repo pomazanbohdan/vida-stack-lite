@@ -1,12 +1,22 @@
 import { readdir, readFile, stat, writeFile, copyFile, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { expectedJavascriptFiles } from './maintained-source-inventory.mjs';
+import { expectedJavascriptFiles } from './maintained-source-inventory.ts';
 
 const candidateRoot = path.resolve(import.meta.dirname, '..');
 const distRoot = path.join(candidateRoot, 'dist');
 const distSourceRoot = path.join(distRoot, 'src');
-const packageManifest = JSON.parse(await readFile(path.join(candidateRoot, 'package.json'), 'utf8'));
-const schemaNames = packageManifest.files
+const packageValue = /** @type {unknown} */ (
+  JSON.parse(await readFile(path.join(candidateRoot, 'package.json'), 'utf8'))
+);
+if (typeof packageValue !== 'object' || packageValue === null || Array.isArray(packageValue))
+  throw new Error('candidate package manifest must be a JSON object');
+if (
+  !('files' in packageValue) ||
+  !Array.isArray(packageValue.files) ||
+  !packageValue.files.every((file) => typeof file === 'string')
+)
+  throw new Error('candidate package manifest files must be a string array');
+const schemaNames = packageValue.files
   .filter((file) => file.startsWith('dist/schemas/') && file.endsWith('.schema.json'))
   .map((file) => file.slice('dist/schemas/'.length));
 const forbiddenTestIssuers = [
@@ -24,6 +34,7 @@ const forbiddenInternalDeclarations = [
   'createWorkflowHostAuthenticationProofForCompositionRoot',
 ];
 
+/** @param {string} directory @returns {Promise<string[]>} */
 async function filesUnder(directory) {
   const result = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -34,6 +45,7 @@ async function filesUnder(directory) {
   return result;
 }
 
+/** @param {string} text @param {string} name @returns {string} */
 function stripDeclaration(text, name) {
   const declaration = `export declare function ${name}(`;
   let output = text;
@@ -49,12 +61,14 @@ function stripDeclaration(text, name) {
     output = output.slice(0, contentStart) + output.slice(end + 2);
   }
 }
+/** @param {string} text @param {string} name @returns {string} */
 function stripExportAlias(text, name) {
   return text
     .split('\n')
     .filter((line) => !(line.trim().startsWith('export {') && line.includes(' as ' + name)))
     .join('\n');
 }
+/** @type {string[]} */
 const facadeNames = ['index', 'trusted-host'];
 const transpiler = new Bun.Transpiler({ loader: 'ts' });
 const facadeExports = await Promise.all(
@@ -62,6 +76,7 @@ const facadeExports = await Promise.all(
     async (name) => transpiler.scan(await readFile(path.join(candidateRoot, 'src', name + '.ts'), 'utf8')).exports,
   ),
 );
+/** @type {string[]} */
 const exportedNames = facadeExports.flat();
 if (new Set(exportedNames).size !== exportedNames.length) throw new Error('package entrypoint exports overlap');
 const virtualEntry = path.join(candidateRoot, 'src', 'runtime.ts');
@@ -89,9 +104,11 @@ if (runtimeExports.sort().join(',') !== exportedNames.sort().join(',')) {
   throw new Error('bundled runtime exports differ from the public entrypoint union');
 }
 for (const [index, name] of facadeNames.entries()) {
+  const exports = facadeExports[index];
+  if (exports === undefined) throw new Error(`missing facade exports for ${name}`);
   await writeFile(
     path.join(distSourceRoot, name + '.js'),
-    `export { ${facadeExports[index].join(', ')} } from './runtime.js';\n`,
+    `export { ${exports.join(', ')} } from './runtime.js';\n`,
     'utf8',
   );
 }

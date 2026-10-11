@@ -170,8 +170,10 @@ test('the full delivery caller uses Host-bound Source and still rejects drift an
   expect(result.evidence.test_execution_verified).toBe(false);
   expect(() => issueObservedTestReceipt({ ...fullCaller, unexpected: true })).toThrow(/caller fields are closed/);
   expect(sourceCalls).toBe(1);
-  expect(() => issueObservedTestReceipt({
-    ...fullCaller,
-    sourceStore: { snapshotCurrentTaskSourceSources: () => ({ ...source, digest: 'd'.repeat(64) }) },
-  })).toThrow(/source or work changed/);
+  expect(() =>
+    issueObservedTestReceipt({
+      ...fullCaller,
+      sourceStore: { snapshotCurrentTaskSourceSources: () => ({ ...source, digest: 'd'.repeat(64) }) },
+    }),
+  ).toThrow(/source or work changed/);
 });

@@ -8,6 +8,7 @@ import { verifyStagedPayloadManifest } from './forward-update-plan.mjs';
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const entries = [
   'src/contracts/public-ingress.ts',
+  'src/contracts/implementation-scope.ts',
   'src/documentation/clear.ts',
   'src/config/safe-repository-access.ts',
   'src/orchestration/scoped-source-snapshot.ts',
@@ -115,14 +116,16 @@ export async function loadForwardPayloadRuntime(repositoryRoot, payloadRoot, exp
     }
   }
   const source = (relative) => pathToFileURL(path.join(repositoryRoot, 'vida-agent', 'src', relative)).href;
-  const [contracts, documentation, access, snapshots] = await Promise.all([
+  const [contracts, scopes, documentation, access, snapshots] = await Promise.all([
     import(source('contracts/public-ingress.ts')),
+    import(source('contracts/implementation-scope.ts')),
     import(source('documentation/clear.ts')),
     import(source('config/safe-repository-access.ts')),
     import(source('orchestration/scoped-source-snapshot.ts')),
   ]);
   return {
     canonicalJsonDigest: contracts.canonicalJsonDigest,
+    compileImplementationScopeValidator: scopes.compileImplementationScopeValidator,
     executeDocumentationClearOperation: documentation.executeDocumentationClearOperation,
     produceDocumentationClearCheckpoint: documentation.produceDocumentationClearCheckpoint,
     requireSafeRepositoryAccess: access.requireSafeRepositoryAccess,

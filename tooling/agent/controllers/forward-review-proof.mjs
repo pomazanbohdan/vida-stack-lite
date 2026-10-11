@@ -2,14 +2,40 @@ import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
+/** @param {string | Uint8Array} bytes */
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+/** @param {unknown} value */
 const json = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
 const hex = /^[a-f0-9]{64}$/;
-const keys = (value, expected) =>
-  value &&
-  typeof value === 'object' &&
-  !Array.isArray(value) &&
-  Object.keys(value).sort().join(',') === [...expected].sort().join(',');
+
+/** @typedef {{bytes: Buffer, parsed: unknown}} ReviewFile */
+
+/** @param {unknown} value @param {readonly string[]} expected @returns {value is Record<string, unknown>} */
+const keys = (value, expected) => {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).sort().join(',') === [...expected].sort().join(',')
+  );
+};
+
+/** @param {unknown} value @returns {value is unknown[]} */
+function isArray(value) {
+  return Array.isArray(value);
+}
+
+/** @param {unknown} value @returns {value is string} */
+function nonEmptyString(value) {
+  return typeof value === 'string' && !!value.trim();
+}
+
+/** @param {unknown} item @returns {string} */
+function reviewKind(item) {
+  return item !== null && typeof item === 'object' && 'kind' in item && typeof item.kind === 'string' ? item.kind : '';
+}
+
+/** @param {string} root @param {unknown} relative @param {string} operationId @param {string} receiptRoot @returns {ReviewFile} */
 function read(root, relative, operationId, receiptRoot) {
   if (
     typeof relative !== 'string' ||
@@ -26,21 +52,28 @@ function read(root, relative, operationId, receiptRoot) {
   }
   if (!lstatSync(current).isFile()) throw new Error('forward review file invalid');
   const bytes = readFileSync(current);
+  /** @type {unknown} */
   const parsed = JSON.parse(bytes.toString('utf8'));
   if (!bytes.equals(json(parsed))) throw new Error('forward review encoding invalid');
   return { bytes, parsed };
 }
 
 /** Consistency gate for three real, separately attributable review and reverse records.
- * File content remains an assertion; the operator must verify native provenance separately. */
+ * File content remains an assertion; the operator must verify native provenance separately.
+ * @param {string} root
+ * @param {string} operationId
+ * @param {string} planSha
+ * @param {unknown} evidence
+ * @param {string} [receiptRoot]
+ */
 export function verifyForwardReviewSet(root, operationId, planSha, evidence, receiptRoot = '.agent/cutover') {
   if (
     !['.agent/cutover', '.agent/release-assurance'].includes(receiptRoot) ||
     !hex.test(planSha) ||
-    !Array.isArray(evidence) ||
+    !isArray(evidence) ||
     evidence.length !== 3 ||
     evidence
-      .map((item) => item.kind)
+      .map((item) => reviewKind(item))
       .sort()
       .join(',') !== 'assurance,correctness,security'
   )
@@ -53,8 +86,8 @@ export function verifyForwardReviewSet(root, operationId, planSha, evidence, rec
     if (
       !keys(item, ['kind', 'path', 'sha256', 'reverse_path', 'reverse_sha256', 'status']) ||
       item.status !== 'passed' ||
-      !hex.test(item.sha256) ||
-      !hex.test(item.reverse_sha256) ||
+      !hex.test(String(item.sha256)) ||
+      !hex.test(String(item.reverse_sha256)) ||
       files.has(item.path) ||
       files.has(item.reverse_path)
     )
@@ -87,9 +120,9 @@ export function verifyForwardReviewSet(root, operationId, planSha, evidence, rec
       review.fresh_blind !== true ||
       review.verdict !== 'pass' ||
       review.scope_reviewed !== 'complete' ||
-      !review.actor?.trim() ||
-      !review.history_id?.trim() ||
-      !review.native_tool_ref?.trim() ||
+      !nonEmptyString(review.actor) ||
+      !nonEmptyString(review.history_id) ||
+      !nonEmptyString(review.native_tool_ref) ||
       actors.has(review.actor) ||
       histories.has(review.history_id) ||
       calls.has(review.native_tool_ref) ||

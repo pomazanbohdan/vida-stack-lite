@@ -49,9 +49,34 @@ interface ComposedProjectConfiguration {
   readonly documents: ProjectConfiguration;
   readonly config: AgentRuntimeConfig;
 }
+interface ProjectConfigurationComposition extends ComposedProjectConfiguration {
+  readonly captured: Readonly<Record<ComponentKey, string>>;
+}
 export interface ParsedProjectConfiguration extends ComposedProjectConfiguration {
   /** Binds every fixed input path and exact UTF-8 text, including schema and revision. */
   readonly input_digest: string;
+}
+
+/** Hash the bounded fixed inputs without parsing YAML, for a validated loader-cache lookup. */
+export function projectConfigurationInputDigest(inputs: unknown): string {
+  const sources = snapshotRuntimeConfig(inputs);
+  const keys = Object.keys(PROJECT_CONFIGURATION_PATHS) as ComponentKey[];
+  if (!isPlainRecord(sources) || Object.keys(sources).length !== keys.length)
+    throw new RuntimeConfigError('Project configuration requires exactly project, agents and flows text inputs.');
+  const captured = sources as Record<ComponentKey, unknown>;
+  const binding = new Bun.CryptoHasher('sha256').update('VidaProjectConfigurationInputs/v1\0');
+  let bytes = 0;
+  for (const key of keys) {
+    const raw = captured[key];
+    if (typeof raw !== 'string') throw new RuntimeConfigError('Project configuration input must be UTF-8 text.');
+    const size = Buffer.byteLength(raw, 'utf8');
+    bytes += size;
+    if (bytes > MAX_CONFIG_BYTES) throw new RuntimeConfigError('Project configuration inputs exceed the byte budget.');
+    if (Buffer.from(raw, 'utf8').toString('utf8') !== raw)
+      throw new RuntimeConfigError('Project configuration input contains invalid Unicode.');
+    binding.update(PROJECT_CONFIGURATION_PATHS[key]).update('\0').update(String(size)).update('\0').update(raw);
+  }
+  return binding.digest('hex');
 }
 
 type AjvConstructor = new (options: Record<string, unknown>) => {
@@ -108,12 +133,12 @@ function compose(
   return Object.freeze({ documents: freezeJsonValue(documents), config });
 }
 
-/** Parse one captured file set. Filesystem snapshot/activation remains the upgrade owner's job. */
-export function parseProjectConfiguration(
+/** @internal Parse and compose one captured file set without calculating its input digest. */
+export function composeProjectConfigurationInputs(
   inputs: unknown,
   repositoryRoot?: string,
   source: RuntimeConfigurationSource = LEGACY_RUNTIME_CONFIGURATION_PATH,
-): ParsedProjectConfiguration {
+): ProjectConfigurationComposition {
   const sources = snapshotRuntimeConfig(inputs);
   const keys = Object.keys(PROJECT_CONFIGURATION_PATHS) as ComponentKey[];
   if (!isPlainRecord(sources) || Object.keys(sources).length !== keys.length)
@@ -121,18 +146,7 @@ export function parseProjectConfiguration(
   const { project, agents, flows } = sources;
   if (typeof project !== 'string' || typeof agents !== 'string' || typeof flows !== 'string')
     throw new RuntimeConfigError('Project configuration input must be UTF-8 text.');
-  const captured = { project, agents, flows };
-  const binding = new Bun.CryptoHasher('sha256').update('VidaProjectConfigurationInputs/v1\0');
-  let bytes = 0;
-  for (const key of keys) {
-    const raw = captured[key];
-    const size = Buffer.byteLength(raw, 'utf8');
-    bytes += size;
-    if (bytes > MAX_CONFIG_BYTES) throw new RuntimeConfigError('Project configuration inputs exceed the byte budget.');
-    if (Buffer.from(raw, 'utf8').toString('utf8') !== raw)
-      throw new RuntimeConfigError('Project configuration input contains invalid Unicode.');
-    binding.update(PROJECT_CONFIGURATION_PATHS[key]).update('\0').update(String(size)).update('\0').update(raw);
-  }
+  const captured = Object.freeze({ project, agents, flows });
   return Object.freeze({
     ...compose(
       parseRuntimeConfigDocument(project),
@@ -141,7 +155,21 @@ export function parseProjectConfiguration(
       repositoryRoot,
       source,
     ),
-    input_digest: binding.digest('hex'),
+    captured,
+  });
+}
+
+/** Parse one captured file set. Filesystem snapshot/activation remains the upgrade owner's job. */
+export function parseProjectConfiguration(
+  inputs: unknown,
+  repositoryRoot?: string,
+  source: RuntimeConfigurationSource = LEGACY_RUNTIME_CONFIGURATION_PATH,
+): ParsedProjectConfiguration {
+  const { config, documents, captured } = composeProjectConfigurationInputs(inputs, repositoryRoot, source);
+  return Object.freeze({
+    documents,
+    config,
+    input_digest: projectConfigurationInputDigest(captured),
   });
 }
 

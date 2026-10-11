@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { developmentControllerContract } from './cli-command-contracts.ts';
+import { cliCommandEntrypoint } from './cli-metadata.ts';
 import {
   existsSync,
   lstatSync,
@@ -16,17 +18,213 @@ import { createHash, randomUUID } from 'node:crypto';
 import { resolvePinnedBun, runPinnedBun, readPin, checkManifest } from './bun.mjs';
 import { invokeObservedControllerChild } from './development-controller-observation.mjs';
 import { readPortableLock } from './install.mjs';
-import { assertRuntimePackageExports, runtimeExecutableInventory } from '../tooling/maintained-source-inventory.mjs';
+import { assertRuntimePackageExports, runtimeExecutableInventory } from '../tooling/maintained-source-inventory.ts';
+
+/** @typedef {{ readonly path: string; readonly bytes: number; readonly sha256: string }} FileEntry */
+/** @typedef {{ readonly path: string; readonly target: string }} LinkEntry */
+/** @typedef {{ readonly files: FileEntry[]; readonly links: LinkEntry[]; readonly digest: string; readonly runtime_paths: readonly string[] }} PackageBinding */
+/** @typedef {{ readonly status: number | null; readonly signal: NodeJS.Signals | null; readonly stdout: Buffer | Uint8Array | string | null; readonly stderr: Buffer | Uint8Array | string | null; readonly error?: unknown; readonly observation_complete?: boolean }} ChildResult */
+/** @typedef {{ readonly schema: 'DevelopmentControllerQualification/v1'; readonly status: string; readonly package_binding: string; readonly checks: readonly unknown[]; readonly fixture_root: string }} Qualification */
+/** @typedef {{ readonly schema: 'VidaDevelopmentController/v1'; readonly controller_root: string; readonly entrypoint: string; readonly invocation: { readonly executable: string; readonly args: string[] }; readonly status: 'prepared' | 'ready'; readonly target: string; readonly identity: { readonly repository_id: string; readonly project_ids: string[]; readonly bundle: string }; readonly package_root: string; readonly engine: string; readonly engine_sha256: string; readonly package_binding: PackageBinding; readonly elapsed_ms: number; readonly qualification?: Qualification }} ControllerState */
+/** @typedef {{ readonly target?: string; readonly controllerRoot: string }} ControllerInput */
+/** @typedef {{ readonly controllerRoot: string; readonly command: string; readonly args?: string[] }} ExecuteInput */
+/** @typedef {{ readonly required: string[]; readonly options: string[] }} ModeContract */
+/** @typedef {'prepare' | 'inspect' | 'verify' | 'exec'} ControllerAction */
+/** @typedef {{ readonly name?: unknown; readonly version?: unknown }} PackageManifest */
+/** @typedef {typeof import('../src/config/runtime-config.ts')} RuntimeConfigModule */
+
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** @param {unknown} value @returns {value is FileEntry} */
+function isFileEntry(value) {
+  return (
+    isRecord(value) &&
+    typeof value.path === 'string' &&
+    typeof value.bytes === 'number' &&
+    Number.isSafeInteger(value.bytes) &&
+    value.bytes >= 0 &&
+    typeof value.sha256 === 'string'
+  );
+}
+
+/** @param {unknown} value @returns {value is LinkEntry} */
+function isLinkEntry(value) {
+  return isRecord(value) && typeof value.path === 'string' && typeof value.target === 'string';
+}
+
+/** @param {unknown} value @returns {value is PackageBinding} */
+function isPackageBinding(value) {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.files) &&
+    value.files.every(isFileEntry) &&
+    Array.isArray(value.links) &&
+    value.links.every(isLinkEntry) &&
+    typeof value.digest === 'string' &&
+    /^[a-f0-9]{64}$/.test(value.digest) &&
+    Array.isArray(value.runtime_paths) &&
+    value.runtime_paths.every((entry) => typeof entry === 'string')
+  );
+}
+
+/** @param {unknown} value @returns {value is Qualification} */
+function isQualification(value) {
+  return (
+    isRecord(value) &&
+    value.schema === 'DevelopmentControllerQualification/v1' &&
+    typeof value.status === 'string' &&
+    typeof value.package_binding === 'string' &&
+    typeof value.fixture_root === 'string' &&
+    Array.isArray(value.checks)
+  );
+}
+
+/** @param {unknown} value */
+function isControllerInvocation(value) {
+  return (
+    isRecord(value) &&
+    typeof value.executable === 'string' &&
+    Array.isArray(value.args) &&
+    value.args.every((arg) => typeof arg === 'string')
+  );
+}
+
+/** @param {unknown} value */
+function isControllerIdentity(value) {
+  return (
+    isRecord(value) &&
+    typeof value.repository_id === 'string' &&
+    Array.isArray(value.project_ids) &&
+    value.project_ids.every((id) => typeof id === 'string') &&
+    typeof value.bundle === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasControllerStateFields(value) {
+  return hasControllerOperationalFields(value) && hasControllerRuntimeFields(value);
+}
+
+/** @param {Record<string, unknown>} value */
+function hasControllerOperationalFields(value) {
+  return (
+    value.schema === 'VidaDevelopmentController/v1' &&
+    typeof value.controller_root === 'string' &&
+    typeof value.entrypoint === 'string' &&
+    (value.status === 'prepared' || value.status === 'ready') &&
+    typeof value.target === 'string'
+  );
+}
+
+/** @param {Record<string, unknown>} value */
+function hasControllerRuntimeFields(value) {
+  return (
+    typeof value.package_root === 'string' &&
+    typeof value.engine === 'string' &&
+    typeof value.engine_sha256 === 'string' &&
+    isPackageBinding(value.package_binding) &&
+    typeof value.elapsed_ms === 'number' &&
+    Number.isFinite(value.elapsed_ms) &&
+    (value.qualification === undefined || isQualification(value.qualification))
+  );
+}
+
+/** @param {unknown} value @returns {value is ControllerState} */
+function isControllerState(value) {
+  return (
+    isRecord(value) &&
+    hasControllerStateFields(value) &&
+    isControllerInvocation(value.invocation) &&
+    isControllerIdentity(value.identity)
+  );
+}
+
+/** @param {unknown} value @param {unknown} candidate */
+function packageIdentityMatches(value, candidate) {
+  return (
+    isPackageManifest(value) &&
+    isPackageManifest(candidate) &&
+    value.name === 'vida-agent' &&
+    typeof value.version === 'string' &&
+    /^\d+\.\d+\.\d+$/.test(value.version) &&
+    candidate.name === value.name &&
+    candidate.version === value.version
+  );
+}
+
+/** @param {unknown} value @returns {value is ControllerAction} */
+function isControllerAction(value) {
+  return value === 'prepare' || value === 'inspect' || value === 'verify' || value === 'exec';
+}
+
+/** @param {Record<string, string>} options @param {string} key */
+function requiredOption(options, key) {
+  const value = options[key];
+  if (!value) throw new Error('Required controller option is missing.');
+  return value;
+}
+
+/** @param {unknown} value @returns {value is PackageManifest} */
+function isPackageManifest(value) {
+  return (
+    isRecord(value) &&
+    (value.name === undefined || typeof value.name === 'string') &&
+    (value.version === undefined || typeof value.version === 'string')
+  );
+}
+
+/** @param {string} file @returns {ControllerState} */
+function readControllerState(file) {
+  /** @type {unknown} */
+  const raw = JSON.parse(readFileSync(file, 'utf8'));
+  if (!isControllerState(raw)) throw new Error('Controller operational metadata is malformed.');
+  return raw;
+}
+
+/** @param {unknown} error */
+function isMissingPathError(error) {
+  return isRecord(error) && error.code === 'ENOENT';
+}
+
+/** @param {string} output @returns {Qualification} */
+function readQualification(output) {
+  /** @type {unknown} */
+  const value = JSON.parse(output.trim().split(/\r?\n/).at(-1) ?? '');
+  if (!isQualification(value)) throw new Error('Controller qualification metadata is malformed.');
+  return value;
+}
+
+/** @param {Qualification} qualification @param {ControllerState} state */
+function requireMatchingQualification(qualification, state) {
+  if (
+    qualification.schema !== 'DevelopmentControllerQualification/v1' ||
+    qualification.status !== 'pass' ||
+    qualification.package_binding !== state.package_binding.digest
+  )
+    throw new Error('Controller qualification did not establish the current package.');
+}
+
+/** @param {unknown} value @returns {string} */
+function errorMessage(value) {
+  return value instanceof Error ? value.message : typeof value === 'string' ? value : 'Unknown failure';
+}
 
 const executingRoot = realpathSync(path.resolve(import.meta.dirname, '..'));
+/** @param {Uint8Array} bytes */
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+/** @param {string} root */
 const entryArguments = (root) => [
   '--no-env-file',
   '--no-install',
   '--config=' + path.join(root, 'bunfig.toml'),
   path.join(root, 'bin/development-controller.mjs'),
 ];
+/** @param {unknown} value */
 const record = (value) => JSON.stringify(value) + '\n';
+/** @param {string} stage @param {string} event @param {number} started */
 function stageMarker(stage, event, started) {
   if (process.env.VIDA_CONTROLLER_DIAGNOSTICS === 'true')
     process.stderr.write(
@@ -34,14 +232,15 @@ function stageMarker(stage, event, started) {
     );
 }
 
-const commands = new Set(['run', 'scope', 'init', 'documentation-clear', 'reconcile-artifacts']);
+const commands = new Set(developmentControllerContract.targetCommands);
 const qualificationChildren = Object.freeze([
   'qualifier-repair-inspect',
   'qualifier-repair-plan',
   'qualifier-repair-apply',
 ]);
+/** @param {string} value @returns {string} */
 function canonicalDirectory(value) {
-  if (!path.isAbsolute(value ?? '') || path.resolve(value) !== value || realpathSync(value) !== value)
+  if (!path.isAbsolute(value) || path.resolve(value) !== value || realpathSync(value) !== value)
     throw new Error('Controller paths must be canonical absolute physical directories.');
   let current = value;
   for (;;) {
@@ -53,31 +252,36 @@ function canonicalDirectory(value) {
   }
   return value;
 }
+/** @param {string} parent @param {string} child */
 function contained(parent, child) {
   const relative = path.relative(parent, child);
   return relative === '' || (!relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative));
 }
+/** @param {string} value */
 function targetRoot(value) {
   canonicalDirectory(value);
   if (existsSync(path.join(value, '.agent/active-runtime-selector.v1.json')))
     throw new Error('Development controller rejects an active-selector target.');
   return value;
 }
+/** @param {string} root */
 function packageIdentity(root) {
-  const manifest = JSON.parse(readFileSync(path.join(root, 'package.json')));
-  const candidate = JSON.parse(readFileSync(path.join(executingRoot, 'package.json')));
-  if (
-    candidate.name !== 'vida-agent' ||
-    !/^\d+\.\d+\.\d+$/.test(candidate.version) ||
-    manifest.name !== candidate.name ||
-    manifest.version !== candidate.version
-  )
+  /** @type {unknown} */
+  const manifestValue = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+  /** @type {unknown} */
+  const candidateValue = JSON.parse(readFileSync(path.join(executingRoot, 'package.json'), 'utf8'));
+  if (!isPackageManifest(manifestValue) || !isPackageManifest(candidateValue))
+    throw new Error('Development controller package manifest is malformed.');
+  const manifest = manifestValue,
+    candidate = candidateValue;
+  if (!packageIdentityMatches(candidate, manifest))
     throw new Error('Development controller requires the actual current vida-agent candidate package.');
   checkManifest(root, readPin(root));
   if (readPin(root) !== '1.4.2') throw new Error('Development controller Bun pin differs.');
   assertRuntimePackageExports(root);
   return manifest;
 }
+/** @returns {NodeJS.ProcessEnv} */
 function cleanEnvironment() {
   const env = { ...process.env };
   for (const key of Object.keys(env))
@@ -91,9 +295,11 @@ function cleanEnvironment() {
   return env;
 }
 /** Bounded failure evidence; never include child arguments or environment. */
+/** @param {ChildResult} result @param {number} elapsedMs */
 export function developmentControllerChildDiagnostic(result, elapsedMs) {
+  /** @param {unknown} value */
   const sanitize = (value) => {
-    const raw = String(value ?? '');
+    const raw = renderDiagnosticValue(value);
     const clean = raw
       .replace(/(Bearer\s+)[^\s"']+/gi, '$1[redacted]')
       .replace(/((?:password|secret|token|api[_-]?key)\s*[=:]\s*["']?)[^\s,"'\r\n]+/gi, '$1[redacted]')
@@ -106,10 +312,28 @@ export function developmentControllerChildDiagnostic(result, elapsedMs) {
     elapsed_ms: Math.max(0, Math.round(elapsedMs)),
     stdout: sanitize(result.stdout),
     stderr: sanitize(result.stderr),
-    error: result.error ? sanitize(result.error.message) : null,
+    error: childErrorDiagnostic(result.error, sanitize),
     outcome: 'child_failure_effects_unknown',
   };
 }
+/** @param {unknown} error @param {(value: unknown) => {text: string; truncated: boolean}} sanitize */
+function childErrorDiagnostic(error, sanitize) {
+  if (!error) return null;
+  return sanitize(isRecord(error) && typeof error.message === 'string' ? error.message : error);
+}
+/** @param {unknown} value */
+function renderDiagnosticValue(value) {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+}
+/** @param {Buffer | Uint8Array | string | null} value */
+function capturedOutputText(value) {
+  if (Buffer.isBuffer(value)) return value.toString('utf8');
+  if (typeof value === 'string') return value;
+  return value ? Buffer.from(value).toString('utf8') : '';
+}
+/** @param {{ readonly executable: string; readonly packageRoot: string; readonly args: string[]; readonly controllerRoot: string; readonly cwd?: string; readonly additionalEnv?: NodeJS.ProcessEnv; readonly nestedChildren?: readonly string[] }} input */
 function invoke({
   executable,
   packageRoot,
@@ -120,6 +344,7 @@ function invoke({
   nestedChildren = [],
 }) {
   const started = performance.now();
+  /** @type {ChildResult} */
   const result = invokeObservedControllerChild({
     controllerRoot,
     executable,
@@ -136,8 +361,9 @@ function invoke({
         record(developmentControllerChildDiagnostic(result, performance.now() - started)).trim(),
     );
   if (!result.observation_complete) throw new Error('Development controller child observation is incomplete.');
-  return result.stdout.toString('utf8');
+  return capturedOutputText(result.stdout);
 }
+/** @param {string} root @param {string} relative @param {FileEntry[]} [result] @param {LinkEntry[]} [links] @returns {FileEntry[]} */
 function fileEntries(root, relative, result = [], links = []) {
   const absolute = path.join(root, relative),
     info = lstatSync(absolute);
@@ -160,6 +386,7 @@ function fileEntries(root, relative, result = [], links = []) {
   } else throw new Error('Controller has an unsupported filesystem entry.');
   return result;
 }
+/** @param {string} root @returns {PackageBinding} */
 function snapshot(root) {
   packageIdentity(root);
   readPortableLock(root);
@@ -178,15 +405,22 @@ function snapshot(root) {
     'bunfig.toml',
     'TESTING.md',
   ];
+  /** @type {LinkEntry[]} */
   const links = [],
     files = roots.flatMap((relative) => fileEntries(root, relative, [], links));
-  return { files, links, digest: hash(record({ files, links })), runtime_paths: runtimeExecutableInventory(root) };
+  return {
+    files,
+    links,
+    digest: hash(Buffer.from(record({ files, links }))),
+    runtime_paths: runtimeExecutableInventory(root),
+  };
 }
-async function targetIdentity(root, packageRoot = executingRoot) {
-  const { loadRuntimeConfig } = await import(
-    pathToFileURL(path.join(packageRoot, 'src/config/runtime-config.ts')).href
+/** @param {string} root */
+async function targetIdentity(root) {
+  const runtimeConfig = /** @type {RuntimeConfigModule} */ (
+    await import(pathToFileURL(path.join(executingRoot, 'src/config/runtime-config.ts')).href)
   );
-  const config = loadRuntimeConfig(root);
+  const config = runtimeConfig.loadRuntimeConfig(root);
   if (config.runtime.bundle !== 'packages/agent')
     throw new Error('Development controller is restricted to the Source logical packages/agent bundle.');
   return {
@@ -195,11 +429,14 @@ async function targetIdentity(root, packageRoot = executingRoot) {
     bundle: config.runtime.bundle,
   };
 }
+/** @param {string} file @param {unknown} value */
 function save(file, value) {
   const pending = file + '.' + randomUUID() + '.pending';
   writeFileSync(pending, record(value), { flag: 'wx' });
   renameSync(pending, file);
 }
+/** @param {{ readonly target: string; readonly controllerRoot: string }} input */
+/** @param {{ readonly target: string; readonly controllerRoot: string }} input @returns {Promise<ControllerState>} */
 export async function prepareDevelopmentController({ target, controllerRoot }) {
   targetRoot(target);
   canonicalDirectory(path.dirname(controllerRoot));
@@ -263,6 +500,7 @@ export async function prepareDevelopmentController({ target, controllerRoot }) {
   stageMarker('snapshot', 'start', snapshotStarted);
   const packageBinding = snapshot(root);
   stageMarker('snapshot', 'end', snapshotStarted);
+  /** @type {ControllerState} */
   const state = {
     schema: 'VidaDevelopmentController/v1',
     controller_root: controllerRoot,
@@ -280,14 +518,15 @@ export async function prepareDevelopmentController({ target, controllerRoot }) {
   save(path.join(controllerRoot, 'controller.json'), state);
   return state;
 }
+/** @param {{ readonly controllerRoot: string }} input @returns {Promise<ControllerState>} */
 export async function inspectDevelopmentController({ controllerRoot }) {
   try {
     canonicalDirectory(controllerRoot);
   } catch (error) {
-    if (error?.code !== 'ENOENT') throw error;
+    if (!isMissingPathError(error)) throw error;
     throw new Error('Development controller root is unavailable.', { cause: error });
   }
-  const state = JSON.parse(readFileSync(path.join(controllerRoot, 'controller.json')));
+  const state = readControllerState(path.join(controllerRoot, 'controller.json'));
   const keys = [
     'schema',
     'controller_root',
@@ -327,6 +566,8 @@ export async function inspectDevelopmentController({ controllerRoot }) {
     throw new Error('Controller target identity differs.');
   return state;
 }
+/** @param {{ readonly controllerRoot: string }} input */
+/** @param {{ readonly controllerRoot: string }} input @returns {Promise<ControllerState>} */
 export async function verifyDevelopmentController({ controllerRoot }) {
   const started = Date.now(),
     state = await inspectDevelopmentController({ controllerRoot });
@@ -342,13 +583,8 @@ export async function verifyDevelopmentController({ controllerRoot }) {
     },
     nestedChildren: qualificationChildren,
   });
-  const qualification = JSON.parse(output.trim().split(/\r?\n/).at(-1));
-  if (
-    qualification.schema !== 'DevelopmentControllerQualification/v1' ||
-    qualification.status !== 'pass' ||
-    qualification.package_binding !== state.package_binding.digest
-  )
-    throw new Error('Controller qualification did not establish the current package.');
+  const qualification = readQualification(output);
+  requireMatchingQualification(qualification, state);
   await inspectDevelopmentController({ controllerRoot });
   if (
     typeof qualification.fixture_root !== 'string' ||
@@ -358,10 +594,12 @@ export async function verifyDevelopmentController({ controllerRoot }) {
     throw new Error('Qualification fixture ownership differs.');
   const { rm } = await import('node:fs/promises');
   await rm(qualification.fixture_root, { recursive: true, force: true });
+  /** @type {ControllerState} */
   const ready = { ...state, status: 'ready', qualification, elapsed_ms: Date.now() - started };
   save(path.join(controllerRoot, 'controller.json'), ready);
   return ready;
 }
+/** @param {ExecuteInput} input */
 export async function executeDevelopmentController({ controllerRoot, command, args = [] }) {
   const state = await inspectDevelopmentController({ controllerRoot });
   if (
@@ -370,47 +608,84 @@ export async function executeDevelopmentController({ controllerRoot, command, ar
     !commands.has(command)
   )
     throw new Error('A qualified controller and supported target command are required.');
-  const roots = args.flatMap((value, index) => (value === '--project-root' ? [args[index + 1]] : []));
+  const roots = args.flatMap((value, index) =>
+    isProjectRootArgument(value, args[index + 1]) ? [args[index + 1]] : [],
+  );
   if (roots.length !== 1 || roots[0] !== state.target)
     throw new Error('Controlled execution requires the exact original target.');
   return invoke({
     executable: state.engine,
     packageRoot: state.package_root,
-    args: [path.join(state.package_root, 'bin', command + '.mjs'), ...args],
+    args: [path.join(state.package_root, 'bin', cliCommandEntrypoint(command)), ...args],
     controllerRoot,
     cwd: state.target,
   });
 }
+/** @param {string} value @param {string | undefined} next */
+function isProjectRootArgument(value, next) {
+  return value === '--project-root' && next !== undefined;
+}
+/** @param {string} root */
 export function developmentControllerBinding(root) {
   return snapshot(root).digest;
 }
-async function main(args) {
-  if (!['prepare', 'inspect', 'verify', 'exec'].includes(args[0]))
+/** @param {string[]} args */
+function parseControllerCli(args) {
+  const action = args.shift();
+  if (!isControllerAction(action) || !Object.hasOwn(developmentControllerContract.modes, action))
     throw new Error(
       'development-controller prepare --target ABS --controller-root NEW_ABS | inspect|verify --controller-root ABS | exec --controller-root ABS -- COMMAND --project-root EXACT_TARGET ...',
     );
-  const action = args.shift(),
-    options = {};
-  while (args.length && args[0] !== '--') {
+  /** @type {Record<string, string>} */
+  const options = {};
+  while (args.length) {
+    const nextArgument = args.at(0);
+    if (nextArgument === '--') break;
     const key = args.shift(),
       value = args.shift();
-    if (!['--target', '--controller-root'].includes(key) || !value || Object.hasOwn(options, key))
+    if (
+      key === undefined ||
+      value === undefined ||
+      !Object.values(developmentControllerContract.modes).some((mode) => mode.options.includes(key)) ||
+      !value ||
+      Object.hasOwn(options, key)
+    )
       throw new Error('Invalid controller option.');
     options[key] = value;
   }
-  const input = { target: options['--target'], controllerRoot: options['--controller-root'] };
+  validateControllerOptions(developmentControllerContract.modes[action], options);
+  return { action, options, args };
+}
+
+/** @param {string[]} args */
+async function main(args) {
+  const { action, options, args: commandArgs } = parseControllerCli(args);
+  const input = { target: options['--target'], controllerRoot: requiredOption(options, '--controller-root') };
   if (action === 'exec') {
-    if (args.shift() !== '--') throw new Error('Controlled command separator missing.');
-    if (args[0] === 'vida-agent') args.shift();
-    process.stdout.write(await executeDevelopmentController({ ...input, command: args.shift(), args }));
+    if (commandArgs.shift() !== '--') throw new Error('Controlled command separator missing.');
+    const executionArgs = commandArgs;
+    if (executionArgs[0] === 'vida-agent') executionArgs.shift();
+    const command = executionArgs.shift();
+    if (!command) throw new Error('Controlled command is missing.');
+    process.stdout.write(
+      await executeDevelopmentController({ controllerRoot: input.controllerRoot, command, args: executionArgs }),
+    );
     return;
   }
-  if (args.length) throw new Error('Unexpected controller arguments.');
-  const result = await {
-    prepare: prepareDevelopmentController,
-    inspect: inspectDevelopmentController,
-    verify: verifyDevelopmentController,
-  }[action](input);
+  if (commandArgs.length) throw new Error('Unexpected controller arguments.');
+  const result =
+    action === 'prepare'
+      ? await prepareDevelopmentController({
+          target: requiredOption(options, '--target'),
+          controllerRoot: input.controllerRoot,
+        })
+      : action === 'inspect'
+        ? await inspectDevelopmentController(input)
+        : action === 'verify'
+          ? await verifyDevelopmentController(input)
+          : (() => {
+              throw new Error('Controller action is not valid here.');
+            })();
   process.stdout.write(
     record({
       schema: result.schema,
@@ -424,13 +699,21 @@ async function main(args) {
     }),
   );
 }
+
+/** @param {{required: string[], options: string[]}} modeContract @param {Record<string, string>} options */
+/** @param {ModeContract} modeContract @param {Record<string, string>} options */
+function validateControllerOptions(modeContract, options) {
+  if (modeContract.required.some((key) => !options[key])) throw new Error('Required controller option is missing.');
+  if (Object.keys(options).some((key) => !modeContract.options.includes(key)))
+    throw new Error('Controller option is not supported for this mode.');
+}
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   if (typeof Bun === 'undefined')
     process.exitCode = runPinnedBun([fileURLToPath(import.meta.url), ...process.argv.slice(2)]);
   else
-    main(process.argv.slice(2)).catch((error) => {
+    main(process.argv.slice(2)).catch((/** @type {unknown} */ error) => {
       process.stderr.write(
-        record({ status: 'blocked', code: 'GAP-DEVELOPMENT-CONTROLLER-001', message: error.message }),
+        record({ status: 'blocked', code: 'GAP-DEVELOPMENT-CONTROLLER-001', message: errorMessage(error) }),
       );
       process.exitCode = 1;
     });

@@ -9,7 +9,6 @@ import {
 import { loadProjectSetContext } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import type { HostStateStore, WorkIdentity, WorkState } from '../host-state.js';
 import { createTrustedLocalSessionComposition, requireLiveLocalSessionAdmission } from '../runtime-kernel.js';
 import { snapshotRuntimePackageSources } from './scoped-source-snapshot.js';
@@ -18,7 +17,6 @@ import {
   validateConfiguredFrontierReceiptStructure,
   type ConfiguredFrontierReceipt,
 } from './delivered-work-continuation-repair.js';
-import { validateInitialSourceContinuationReceipt } from './initial-source-continuation.js';
 import {
   readInitialSourceContinuationLineageView,
   validateInitialSourceContinuationLineage,
@@ -86,12 +84,12 @@ export function assertAdmittedRuntimeCodeCurrent(
   store: HostStateStore,
   identity: WorkIdentity,
 ): { work_item: unknown; native_session_handle: string } {
-  const intake = readAdmittedSessionIntake(repositoryRoot, store, identity);
-  const host = store.readHostStateSnapshot(identity);
-  const work = host.work!;
+  const { host, journal } = store.readWorkSessionSnapshot(identity);
+  const work = host.work;
+  requireExecution(work, 'admitted local session work is unavailable');
+  const intake = readAdmittedSessionIntakeForWork(repositoryRoot, work);
   const config = loadRuntimeConfig(repositoryRoot);
   const currentPaths = runtimePackageCodePaths(config.runtime.bundle);
-  const journal = store.readWorkSessionJournal(identity);
   const initialView = journal ? readInitialSourceContinuationLineageView(store, identity, journal.attempt) : null;
   const initialReceipt = initialView?.receipt ?? null;
   const configuredContinuation = journal ? store.readConfiguredFrontierRecoveryView(identity, journal.attempt) : null;
@@ -99,13 +97,12 @@ export function assertAdmittedRuntimeCodeCurrent(
     !(initialReceipt && configuredContinuation),
     'multiple Host runtime continuation records are ambiguous',
   );
-  let runtimePaths: readonly string[] = currentPaths;
+  let initialEndpoint: { digest: string; paths: readonly string[] } | undefined;
   if (initialReceipt) {
-    const receipt = validateInitialSourceContinuationReceipt(initialReceipt);
     const completedRecovery = initialView?.completedSourceReportRecovery ?? null;
-    validateInitialSourceContinuationLineage(
+    const receipt = validateInitialSourceContinuationLineage(
       work,
-      receipt,
+      initialReceipt,
       journal!.state,
       initialView?.frontierCodeRebind,
       completedRecovery,
@@ -114,13 +111,12 @@ export function assertAdmittedRuntimeCodeCurrent(
     if (completedRecovery) {
       validateCompletedSourceReportRecoveryCurrentWorkJoin(
         host,
-        { version: journal!.version, state: journal!.state as unknown as MastraSessionLedgerState },
+        { version: journal!.version, state: journal!.state },
         receipt,
         initialView?.frontierCodeRebind ?? null,
         completedRecovery,
       );
     }
-    const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, currentPaths);
     const adoptedCode = initialView?.runtimeCodeContinuations?.at(-1)?.request;
     const expectedCurrentCode =
       adoptedCode?.currentRuntimeCodeDigest ??
@@ -129,19 +125,7 @@ export function assertAdmittedRuntimeCodeCurrent(
       receipt.request.currentRuntimeCodeDigest;
     const expectedCurrentPaths =
       adoptedCode?.currentRuntimeCodePaths ?? completedRecovery?.record.request.currentRuntimeCodePaths ?? currentPaths;
-    requireExecution(
-      current.digest === work.binding.runtime_code_digest &&
-        current.digest === expectedCurrentCode &&
-        canonicalJsonDigest(currentPaths) === canonicalJsonDigest(expectedCurrentPaths) &&
-        (adoptedCode
-          ? adoptedCode.currentRuntimeCodeDigest === current.digest
-          : !initialView?.frontierCodeRebind && !completedRecovery
-            ? receipt.request.currentRuntimeCodeDigest === current.digest
-            : completedRecovery
-              ? completedRecovery.record.request.currentRuntimeCodeDigest === current.digest
-              : initialView!.frontierCodeRebind!.current_runtime_code_digest === current.digest),
-      'initial Source continuation does not bind the canonical runtime inventory and protected intake paths',
-    );
+    initialEndpoint = { digest: expectedCurrentCode, paths: expectedCurrentPaths };
   } else if (canonicalJsonDigest(intake.runtime_code_paths) !== canonicalJsonDigest(currentPaths)) {
     const receipt = journal && store.readDeliveredWorkContinuationReceipt(identity, journal.attempt);
     requireExecution(
@@ -189,7 +173,15 @@ export function assertAdmittedRuntimeCodeCurrent(
       'admitted runtime continuation does not bind the protected intake and current endpoint',
     );
   }
-  const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, runtimePaths);
+  const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, currentPaths);
+  if (initialEndpoint) {
+    requireExecution(
+      current.digest === work.binding.runtime_code_digest &&
+        current.digest === initialEndpoint.digest &&
+        canonicalJsonDigest(currentPaths) === canonicalJsonDigest(initialEndpoint.paths),
+      'initial Source continuation does not bind the canonical runtime inventory and protected intake paths',
+    );
+  }
   requireExecution(current.digest === work.binding.runtime_code_digest, 'admitted runtime code changed');
   return { work_item: intake.work_item, native_session_handle: intake.native_session_handle };
 }

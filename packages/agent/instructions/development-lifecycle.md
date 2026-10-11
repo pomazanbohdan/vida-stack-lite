@@ -673,6 +673,14 @@ included bytes do not invalidate it. Changed included inputs invalidate their
 affected proof, without manual integrity replay. This changes no generic
 assurance or Runtime acceptance gate.
 
+For a Source repository with standing Git authorization, commit and push each
+completed correction packet after its applicable checks. Both are required
+closeout steps; do not leave verified corrections only in local or staged files.
+Publish the exact reviewed, connected payload, preserve unrelated staging and
+use a non-force push. A failed or uncertain push remains pending until the
+remote commit is confirmed. A Source checkpoint does not close outstanding
+quality gates or establish delivered Runtime acceptance.
+
 Public agent delivery uses only one standalone native executable per qualified
 target with embedded pinned Bun. Preserve the generic runtime, public commands
 and every maintained SDK library export. An SDK/npm artifact is library evidence,

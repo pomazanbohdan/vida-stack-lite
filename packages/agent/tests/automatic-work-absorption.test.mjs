@@ -1,4 +1,5 @@
 import { test, expect } from 'bun:test';
+import { createAutomaticWorkAdmissionFixture as fixture } from './helpers/automatic-work-admission-fixture.js';
 import { Database } from 'bun:sqlite';
 import {
   mkdtempSync,
@@ -27,6 +28,7 @@ import {
   inspectHostWorkspaceDatabase,
 } from '../src/host-state.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
 import { runWorkStateRepair } from '../bin/repair-work-state.mjs';
 import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
@@ -44,145 +46,14 @@ import { runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { run } from '../bin/run.mjs';
 import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
 import { prepareLifecycleForCorrection } from '../src/orchestration/final-assurance.ts';
+import { expectCorrectiveAuthorizationMetadata, observeMetadataReads } from './helpers/ledger-cache-observer.ts';
+import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.ts';
+import { runSourcePrewriterPublicActions } from './helpers/public-prewriter-fixture.ts';
 import { requireLiveLocalSessionAdmission } from '../src/runtime-kernel.ts';
 import { issueObservedResearchActivation } from '../src/orchestration/observed-research-activation.ts';
+import { createNativeTsPublicCliFixtureRunner } from './helpers/public-cli-fixture-runner.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-function fixture(sourceWriter = false, publicStore = false) {
-  const root = mkdtempSync(path.join(tmpdir(), 'vida-absorption-'));
-  writeFileSync(
-    path.join(root, 'agent-runtime.config.v1.yaml'),
-    readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
-      .replaceAll('{{REPOSITORY}}', 'absorption-repository')
-      .replaceAll('{{PROJECT}}', 'sample')
-      .replaceAll('{{BUNDLE}}', 'vida-agent'),
-  );
-  writeFileSync(path.join(root, 'AGENTS.md'), 'Test fixture policy');
-  writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Test fixture source map');
-  mkdirSync(path.join(root, 'docs', 'agent-instructions'), { recursive: true });
-  writeFileSync(path.join(root, 'docs', 'agent-instructions', 'documentation-policy.v1.json'), '{}');
-  const config = loadRuntimeConfig(root);
-  if (publicStore) mkdirSync(path.join(root, config.control.work_root), { recursive: true });
-  const database = openHostStateDatabase(
-      publicStore
-        ? path.join(root, config.control.work_root, 'session-handoff.v1.sqlite')
-        : path.join(root, 'fixture.sqlite'),
-    ),
-    store = new HostStateStore(
-      database,
-      publicStore ? deriveWorkspaceId(config.repository.repository_id, root) : 'a'.repeat(64),
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      publicStore ? root : undefined,
-    ),
-    source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
-  database.exec(
-    'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
-  );
-  const selection = {
-    team: 'default-development',
-    kind: sourceWriter ? 'feature' : 'research',
-    intent: sourceWriter ? 'implementation_change' : 'information_research',
-    project: 'sample',
-    risk_flags: [],
-    labels: [],
-  };
-  function prepare(id, pointer, thread = 'session') {
-    mkdirSync(path.join(root, '.agent', 'work', id), { recursive: true });
-    const scope = {
-      schema: 'ImplementationScope/v1',
-      scope_id: 'scope-' + id,
-      work_id: id,
-      source_revision: source.digest,
-      ac_ids: ['AC-SHARED'],
-      allowed_paths: ['AGENT.sidecar.md'],
-      implementation_paths: ['AGENT.sidecar.md'],
-      documentation_paths: [],
-      changed_symbols: [],
-      non_goals: ['Source mutation'],
-      acceptance_trace: ['AC-SHARED'],
-      behavior_trace: ['SR-SHARED'],
-      test_trace: ['fixture'],
-      diagnostic_trace: ['fixture'],
-      attribution: { thread_id: thread, pointer },
-      owner: 'fixture',
-      created_at: new Date().toISOString(),
-    };
-    const acceptance = {
-      schema: 'AcceptanceManifest/v1',
-      id: 'acceptance-' + id,
-      version: 1,
-      ac_ids: scope.ac_ids,
-      source: 'AGENT.sidecar.md',
-      scope: scope.scope_id,
-      source_revision: source.digest,
-      contracts: [{ id: 'AC-SHARED', definition: 'Preserve unfinished scope', sr: 'SR-SHARED', evidence: ['fixture'] }],
-    };
-    const scopePath = `.agent/work/${id}/scope.json`,
-      acceptancePath = `.agent/work/${id}/acceptance.json`;
-    writeFileSync(path.join(root, scopePath), JSON.stringify(scope));
-    writeFileSync(path.join(root, acceptancePath), JSON.stringify(acceptance));
-    return {
-      repositoryRoot: root,
-      config,
-      store,
-      selection,
-      context: { work_id: id, attempt: 1, scope_digest: source.digest },
-      nativeSessionHandle: thread,
-      workItem: {
-        schema: 'WorkItem/v1',
-        id,
-        canonical_kind: selection.kind,
-        intent: selection.intent,
-        project_id: 'sample',
-        title: 'Fixture ' + id,
-        description: 'Unfinished acceptance',
-        risk_flags: [],
-        labels: [],
-        provider: 'local',
-        provider_type: 'Research',
-      },
-      scopePath,
-      acceptancePath,
-      runtimeCodePaths: ['vida-agent/bin/run.mjs'],
-      route: 'R2',
-      risk: 'low',
-      changeKind: 'feature',
-    };
-  }
-  function admit(input) {
-    const admitted = admitLocalSessionWork(input);
-    const journal = {
-      schema: 'MastraSessionLedger/v1',
-      workspace_id: store.workspaceId,
-      work_id: input.context.work_id,
-      attempt: 1,
-      run_id: admitted.host.work.execution.run_id,
-      step_id: 'unissued-fixture-wave',
-      items: [],
-      completed: [],
-    };
-    database
-      .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
-      .run(store.workspaceId, input.context.work_id, 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
-    return admitted;
-  }
-  return {
-    root,
-    config,
-    database,
-    store,
-    source,
-    prepare,
-    admit,
-    close() {
-      database.close();
-      rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
-    },
-  };
-}
 
 test('admission retains complete original entries and exact retry rejects a different base attempt', () => {
   const f = fixture();
@@ -437,65 +308,6 @@ test('competing base attempt commits before the local Host call and cannot be re
   }
 });
 
-test('admission normalizes a caller runtime subset into one immutable canonical intake without changing raw input', () => {
-  const f = fixture(false, true);
-  try {
-    const input = f.prepare('canonical', 'user:canonical');
-    input.intakePath = '.agent/work/canonical/raw-intake.json';
-    const raw = JSON.stringify({
-      schema: 'VidaLocalSessionIntake/v1',
-      work_item: input.workItem,
-      native_session_handle: input.nativeSessionHandle,
-      scope_path: input.scopePath,
-      acceptance_path: input.acceptancePath,
-      runtime_code_paths: input.runtimeCodePaths,
-      route: input.route,
-      risk: input.risk,
-      change_kind: input.changeKind,
-    });
-    writeFileSync(path.join(f.root, input.intakePath), raw);
-    const result = f.admit(input),
-      reference = result.host.work.artifacts.find((artifact) => artifact.artifact_id === 'local-session-intake');
-    expect(reference.path).not.toBe(input.intakePath);
-    const normalized = JSON.parse(readFileSync(path.join(f.root, reference.path), 'utf8'));
-    expect(normalized.runtime_code_paths).toEqual(runtimePackageCodePaths(f.config.runtime.bundle));
-    expect(normalized.runtime_code_paths).toContain('vida-agent/src/runtime-kernel.ts');
-    expect(readFileSync(path.join(f.root, input.intakePath), 'utf8')).toBe(raw);
-    const work = result.host.work,
-      identity = {
-        repository_id: work.binding.repository_id,
-        project_ids: work.binding.project_ids,
-        integrations_digest: work.binding.integrations_digest,
-        work_id: 'canonical',
-      };
-    expect(assertAdmittedRuntimeCodeCurrent(f.root, f.store, identity).native_session_handle).toBe(
-      input.nativeSessionHandle,
-    );
-    const data = readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'canonical');
-    expect(data.identity).toEqual(identity);
-    expect(data.workItem).toEqual(input.workItem);
-    expect(Object.hasOwn(data, 'composition')).toBe(false);
-    writeFileSync(
-      path.join(f.root, input.intakePath),
-      JSON.stringify({ ...JSON.parse(raw), runtime_code_paths: ['vida-agent/bin/scope.mjs'] }),
-    );
-    expect(assertAdmittedRuntimeCodeCurrent(f.root, f.store, identity).native_session_handle).toBe(
-      input.nativeSessionHandle,
-    );
-    const configPath = path.join(f.root, 'agent-runtime.config.v1.yaml'),
-      originalConfig = readFileSync(configPath, 'utf8');
-    writeFileSync(configPath, originalConfig.replace(/config_revision: \d+/, 'config_revision: 2'));
-    expect(() => readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'canonical')).toThrow(
-      'configuration or project differs',
-    );
-    writeFileSync(configPath, originalConfig);
-    writeFileSync(path.join(f.root, reference.path), raw);
-    expect(() => assertAdmittedRuntimeCodeCurrent(f.root, f.store, identity)).toThrow(/intake changed/);
-    expect(() => readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'canonical')).toThrow(/intake changed/);
-  } finally {
-    f.close();
-  }
-});
 
 test('data-only admitted context rejects expired tickets, expired claims and absent active claims', () => {
   const f = fixture();
@@ -1545,11 +1357,17 @@ test('second predecessor verification failure leaves every canonical row and raw
     expect(verified).toBe(2);
     expect(f.store.readWorkspaceSnapshot()).toEqual(before);
     expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journals);
-    for (const callback of [() => Promise.resolve(), () => Promise.reject(new Error('rejected current proof')), () => true]) {
-      f.store.admitSuccessorWork = (input) => admit({...input, verifyCurrent: callback});
+    for (const callback of [
+      () => Promise.resolve(),
+      () => Promise.reject(new Error('rejected current proof')),
+      () => true,
+    ]) {
+      f.store.admitSuccessorWork = (input) => admit({ ...input, verifyCurrent: callback });
       expect(() => admitLocalSessionWork(f.prepare('next', 'user:next'))).toThrow(/synchronously/);
       expect(f.store.readWorkspaceSnapshot()).toEqual(before);
-      expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journals);
+      expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(
+        journals,
+      );
     }
   } finally {
     f.close();
@@ -2067,19 +1885,21 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
     async () => {
       const failureStage = ['runtime-rebind', 'success'].includes(scenario) ? 'validate' : scenario;
       const f = fixture(true, true);
-      let failure;
+      let failure,
+        retainFixtureRootOnUnknown = false;
+      const publicCli = createNativeTsPublicCliFixtureRunner({
+        bundleRoot: bundle,
+        diagnosticReceiptPath: path.resolve(
+          bundle,
+          '../../.tmp/tooling-research/root-public-cli-fixture-timing-v10/public-cli-' + scenario + '.ndjson',
+        ),
+        fixtureRoot: f.root,
+        onUnknown: () => {
+          retainFixtureRootOnUnknown = true;
+        },
+      });
       const publicRun = (args) => {
-        const result = spawnSync(
-          process.execPath,
-          [
-            '--no-env-file',
-            '--no-install',
-            '--config=' + path.join(bundle, 'bunfig.toml'),
-            path.join(bundle, 'bin/run.mjs'),
-            ...args,
-          ],
-          { cwd: bundle, encoding: 'utf8', windowsHide: true, timeout: 30000 },
-        );
+        const result = publicCli.spawn(args);
         if (result.status !== 0)
           throw new Error(
             JSON.stringify({
@@ -2159,11 +1979,11 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             schema_sha256: createHash('sha256')
               .update(readFileSync(path.join(bundle, 'schemas/runtime-initialization.v1.schema.json')))
               .digest('hex'),
-            templates: [],
+            templates: fixtureInitializationTemplates(f.root, bundle),
             created_at: new Date().toISOString(),
           }),
         );
-        const sourceLease = acquireLocalSourceWriterLease({
+        acquireLocalSourceWriterLease({
           repositoryRoot: f.root,
           config: f.config,
           store: f.store,
@@ -2173,15 +1993,6 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           assignmentIndex: 0,
           expectedWork: initial.host.workVersion,
           expectedLedger: initial.host.ledgerVersion,
-        });
-        const claimed = f.store.claimWorkflowAttempt({
-          identity,
-          expectedWork: sourceLease.workVersion,
-          expectedLedger: sourceLease.ledgerVersion,
-          stageId: 'develop_task',
-          assignmentIndex: 0,
-          requestDigest: '1'.repeat(64),
-          lease: sourceLease.work.lease,
         });
         const args = [
           '--project-root',
@@ -2255,25 +2066,47 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           fixtureSource,
         );
         journal = sync();
-        const developer = journal.state.items[0].request;
-        const reservation = {
-          schema: 'WorkflowSessionReservation/v1',
-          receipt: claimed,
-          request: { workItemId: id, stageId: 'develop_task', assignmentIndex: 0 },
-        };
-        journal = ledger.issueWave(id, 1, journal.version, { [developer.action_id]: reservation });
+        journal = runSourcePrewriterPublicActions({
+          args,
+          publicRun,
+          sync,
+          repositoryRoot: f.root,
+          workId: id,
+          attempt: input.context.attempt,
+          work,
+        });
+        const issuedWriter = publicRun([
+          ...args,
+          '--issue-wave',
+          'true',
+          '--expected-revision',
+          String(journal.version.revision),
+          '--expected-digest',
+          journal.version.digest,
+        ]);
+        expect(issuedWriter.issued_actions).toHaveLength(1);
+        journal = sync();
+        const reservation = journal.state.items[0].host_reservation;
+        expect(reservation).toBeDefined();
+        expect(reservation.approvalAction).toBe('source.write');
+        const claimed = reservation.receipt;
+        expect(issuedWriter.issued_actions[0].host_attempt_id).toBe(claimed.attempt.attempt_id);
         const writer = {
           ...observed(journal.state.items[0], 'Actual isolated fixture writer terminal'),
           host_attempt_id: claimed.attempt.attempt_id,
           changed_paths: [],
         };
-        f.store.completeWorkflowAttempt(claimed, writer);
-        journal = ledger.report(id, 1, journal.version, writer, fixtureSource);
-        await bridge.resume(
-          journal.state.step_id,
-          journal.state.items.map((item) => item.observation),
-          fixtureSource,
-        );
+        const writerReport = path.join(f.root, '.agent/work/' + id + '/report-develop_task-0.json');
+        writeFileSync(writerReport, JSON.stringify(writer));
+        publicRun([
+          ...args,
+          '--report',
+          writerReport,
+          '--expected-revision',
+          String(journal.version.revision),
+          '--expected-digest',
+          journal.version.digest,
+        ]);
         journal = sync();
         journal = ledger.issueWave(id, 1, journal.version);
         const report = (item, summary, status) => {
@@ -2331,23 +2164,15 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
         if (failureStage === 'validate') {
           const beforeHost = f.store.readHostStateSnapshot(identity),
             beforeJournal = ledger.resume(id, 1);
-          const denied = spawnSync(
-            process.execPath,
-            [
-              '--no-env-file',
-              '--no-install',
-              '--config=' + path.join(bundle, 'bunfig.toml'),
-              path.join(bundle, 'bin/run.mjs'),
-              ...args,
-              '--issue-wave',
-              'true',
-              '--expected-revision',
-              String(beforeJournal.version.revision),
-              '--expected-digest',
-              beforeJournal.version.digest,
-            ],
-            { cwd: bundle, encoding: 'utf8', windowsHide: true, timeout: 30000 },
-          );
+          const denied = publicCli.spawn([
+            ...args,
+            '--issue-wave',
+            'true',
+            '--expected-revision',
+            String(beforeJournal.version.revision),
+            '--expected-digest',
+            beforeJournal.version.digest,
+          ]);
           expect(denied.status).toBe(1);
           expect(denied.signal).toBeNull();
           expect(denied.error).toBeUndefined();
@@ -2630,6 +2455,40 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           return;
         }
 
+        // TEST-only accepted reports reached Host through the real configured session APIs above.
+        // Prepare once, then observe the public Host authorization API in this same SQLite isolate.
+        const prepared = prepareLifecycleForCorrection({
+            root: f.root,
+            config: f.config,
+            store: fixtureHost,
+            identity,
+            journal: ledger.resume(id, 1),
+            preparationPath,
+          }),
+          beforeAuthorization = fixtureHost.readHostStateSnapshot(identity),
+          currentJournal = ledger.resume(id, 1);
+        expect(beforeAuthorization.work.lifecycle.phase).toBe('VERIFY');
+        expect(beforeAuthorization.work.lease).not.toBeNull();
+        expect(beforeAuthorization.workVersion).toEqual(prepared.workVersion);
+        expect(beforeAuthorization.ledgerVersion).toEqual(prepared.ledgerVersion);
+        const cacheObservation = observeMetadataReads(f.database, () =>
+          fixtureHost.authorizeCorrectiveExecution({
+            identity,
+            attempt: 1,
+            expectedWork: beforeAuthorization.workVersion,
+            expectedLedger: beforeAuthorization.ledgerVersion,
+            expectedJournal: currentJournal.version,
+            stageIds: ['develop_task', 'validate_focused', 'test_task'],
+            userInstructionRef: 'fixture:actual-correction-owner',
+            config: f.config,
+          }),
+        );
+        expect(cacheObservation.error).toBeUndefined();
+        expect(cacheObservation.result).toBeDefined();
+        expectCorrectiveAuthorizationMetadata(cacheObservation.reads);
+
+        // The CLI retry is a read-only retrieval: run.mjs calls retrieveCorrectiveAuthorization
+        // first and returns that existing authorization before any preparation or write.
         const authorized = publicRun([
           ...args,
           '--correct',
@@ -2639,6 +2498,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           '--expected-digest',
           originalVersion.digest,
         ]);
+        expect(authorized.corrective_execution).toEqual(cacheObservation.result);
         expect(
           publicRun([
             ...args,
@@ -2858,7 +2718,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
         throw error;
       } finally {
         try {
-          f.close();
+          f.close({ retainRoot: retainFixtureRootOnUnknown });
         } catch (cleanup) {
           if (failure)
             throw new AggregateError([failure, cleanup], 'Public correction failed; owned fixture cleanup also failed');

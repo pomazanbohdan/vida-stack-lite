@@ -1,5 +1,5 @@
 import { stringify } from 'yaml';
-import { freezeJsonValue } from '../contracts/public-ingress.js';
+import { canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import {
   parseProjectConfiguration,
   splitRuntimeConfig,
@@ -25,10 +25,12 @@ const managedRoots = [
   ['docs/agent-instructions', INITIALIZED_PROJECT_PATHS.instructions],
 ] as const;
 const managedFiles = new Map<string, string>([
+  ['AGENTS.md', INITIALIZED_PROJECT_PATHS.projectPolicy],
   ['AGENT.sidecar.md', INITIALIZED_PROJECT_PATHS.sidecar],
   [LEGACY_RUNTIME_CONFIGURATION_PATH, PROJECT_CONFIGURATION_PATHS.project],
   ['docs/agent-instructions/documentation-policy.v1.json', INITIALIZED_PROJECT_PATHS.documentationPolicy],
 ]);
+export { migratedPath as migratedProjectLayoutPath };
 const managedProfileKeys = new Set<PathProfileKey>([
   'wiki_path',
   'wiki_output_root',
@@ -84,7 +86,10 @@ function requireManagedDestination(value: string, root: string): void {
 }
 
 function requireProjectLayout(config: AgentRuntimeConfig): void {
-  if (config.repository.sidecar !== INITIALIZED_PROJECT_PATHS.sidecar || config.repository.policy !== 'AGENTS.md')
+  if (
+    config.repository.sidecar !== INITIALIZED_PROJECT_PATHS.sidecar ||
+    config.repository.policy !== INITIALIZED_PROJECT_PATHS.projectPolicy
+  )
     throw new RuntimeConfigError('Project layout upgrade requires the managed sidecar and root discovery mapping.');
   const paths = config.paths.defaults;
   for (const key of ['work_root', 'delivery_root', 'import_root', 'documentation_evidence_root'] as const)
@@ -119,13 +124,24 @@ export function prepareVidaProjectConfiguration(value: unknown): ParsedProjectCo
   requireManagedDestination(control.work_root, INITIALIZED_PROJECT_PATHS.work);
   requireManagedDestination(control.coordination_ledger, INITIALIZED_PROJECT_PATHS.coordination);
   const research = original.research_decision;
+  const registry = {
+    ...research.registry,
+    revision: nextRevision(research.registry.revision),
+    instructions: research.registry.instructions.map((instruction, index) => ({
+      ...instruction,
+      source_path: PROJECT_CONFIGURATION_PATHS.project + '#research_decision.registry.instructions.' + index,
+    })),
+  };
+  const registryWithoutDigest = Object.fromEntries(Object.entries(registry).filter(([key]) => key !== 'digest'));
+  const projectRegistry = { ...registry, digest: canonicalJsonDigest(registryWithoutDigest) };
   const config = {
     ...original,
     config_revision: nextRevision(original.config_revision),
     repository: {
       ...original.repository,
+      policy: migratedPath(original.repository.policy),
       sidecar: migratedPath(original.repository.sidecar),
-      root_markers: original.repository.root_markers.map(migratedPath),
+      root_markers: [...new Set(['AGENTS.md', ...original.repository.root_markers.map(migratedPath)])],
     },
     control,
     paths: { ...original.paths, defaults: migratedProfile(original.paths.defaults) },
@@ -139,14 +155,7 @@ export function prepareVidaProjectConfiguration(value: unknown): ParsedProjectCo
         cache: migratedPath(research.paths.cache),
         activation_history: migratedPath(research.paths.activation_history),
       },
-      registry: {
-        ...research.registry,
-        revision: nextRevision(research.registry.revision),
-        instructions: research.registry.instructions.map((instruction, index) => ({
-          ...instruction,
-          source_path: PROJECT_CONFIGURATION_PATHS.project + '#research_decision.registry.instructions.' + index,
-        })),
-      },
+      registry: projectRegistry,
     },
     knowledge: {
       sources: original.knowledge.sources.map((source) => ({

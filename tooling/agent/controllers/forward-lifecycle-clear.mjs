@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadForwardPayloadRuntime } from './forward-payload-runtime.mjs';
@@ -37,18 +36,17 @@ export async function ensureForwardLifecycleClear({
     throw Error('new-work lifecycle CLEAR binding invalid');
   if (!['baseline', 'closeout', 'historical', 'current', 'current_verify', 'verify'].includes(phase))
     throw Error('lifecycle CLEAR phase invalid');
-  const { canonicalJsonDigest, requireSafeRepositoryAccess, snapshotDeclaredSources } = await loadForwardPayloadRuntime(
-    root,
-    payloadRoot,
-    successorManifest,
-  );
+  const {
+    canonicalJsonDigest,
+    compileImplementationScopeValidator,
+    requireSafeRepositoryAccess,
+    snapshotDeclaredSources,
+  } = await loadForwardPayloadRuntime(root, payloadRoot, successorManifest);
   const access = requireSafeRepositoryAccess(root),
     workPath = `.agent/work/${documentationWorkId}`;
   const scopeBytes = access.readBytes(`${workPath}/scope.json`, 'new documentation work scope');
   const scope = JSON.parse(scopeBytes);
-  const require = createRequire(path.join(root, 'vida-agent/package.json'));
-  const Ajv = require('ajv/dist/2020').default;
-  const validate = new Ajv({ strict: true, allErrors: true }).compile(
+  const validate = compileImplementationScopeValidator(
     JSON.parse(access.readText('vida-agent/schemas/implementation-scope.v1.schema.json', 'documentation scope schema')),
   );
   if (!validate(scope) || scope.work_id !== documentationWorkId || !scope.allowed_paths.includes(instruction))

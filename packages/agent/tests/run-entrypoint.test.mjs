@@ -42,64 +42,115 @@ test('readonly local inspection validates decoded rows and retains uncertain jou
   const config = loadRuntimeConfig(path.resolve(import.meta.dirname, '..', '..', '..'));
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
   const file = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
-  mkdirSync(path.dirname(file), {recursive: true});
+  mkdirSync(path.dirname(file), { recursive: true });
   const database = new Database(file);
   try {
-    database.exec('CREATE TABLE agent_host_state (workspace_id TEXT,kind TEXT,id TEXT,revision INTEGER,payload TEXT,digest TEXT)');
-    database.exec('CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)');
-    const input = {repositoryRoot: root, config, projectIds: ['agent'], integrationsDigest: 'a'.repeat(64),
-      workId: 'fixture-inspection', attempt: 1};
-    const state = {schema: 'MastraSessionLedger/v1', workspace_id: workspaceId, work_id: input.workId, attempt: 1,
-      items: [{issue_id: 'retained-issue', observation: null, request: {action_id: 'retained-action', stage_id: 'review'}}]};
+    database.exec(
+      'CREATE TABLE agent_host_state (workspace_id TEXT,kind TEXT,id TEXT,revision INTEGER,payload TEXT,digest TEXT)',
+    );
+    database.exec(
+      'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)',
+    );
+    const input = {
+      repositoryRoot: root,
+      config,
+      projectIds: ['agent'],
+      integrationsDigest: 'a'.repeat(64),
+      workId: 'fixture-inspection',
+      attempt: 1,
+    };
+    const state = {
+      schema: 'MastraSessionLedger/v1',
+      workspace_id: workspaceId,
+      work_id: input.workId,
+      attempt: 1,
+      items: [
+        {
+          issue_id: 'retained-issue',
+          observation: null,
+          request: { action_id: 'retained-action', stage_id: 'review' },
+        },
+      ],
+    };
     /** @param {unknown} value */
-    const saveJournal = value => {
+    const saveJournal = (value) => {
       database.exec('DELETE FROM agent_host_mastra_session_ledger');
-      database.query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+      database
+        .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
         .run(workspaceId, input.workId, 1, 1, JSON.stringify(value), canonicalJsonDigest(value));
     };
     saveJournal(state);
     const before = database.query('SELECT * FROM agent_host_mastra_session_ledger').all();
-    expect(inspectLocalSession(input)).toMatchObject({status: 'inspected', recovery_required: true,
-      pending_actions: [{action_id: 'retained-action', issue_id: 'retained-issue', stage_id: 'review'}]});
+    expect(inspectLocalSession(input)).toMatchObject({
+      status: 'inspected',
+      recovery_required: true,
+      pending_actions: [{ action_id: 'retained-action', issue_id: 'retained-issue', stage_id: 'review' }],
+    });
     expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(before);
-    for (const candidate of [null, {...state, items: [null]}, {...state, items: [{...state.items[0], request: {action_id: 1, stage_id: 'review'}}]}]) {
+    for (const candidate of [
+      null,
+      { ...state, items: [null] },
+      { ...state, items: [{ ...state.items[0], request: { action_id: 1, stage_id: 'review' } }] },
+    ]) {
       saveJournal(candidate);
       const retained = database.query('SELECT * FROM agent_host_mastra_session_ledger').all();
       expect(() => inspectLocalSession(input)).toThrow(/local session inspection/);
       expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(retained);
     }
     saveJournal(state);
-    const workKey = JSON.stringify([config.repository.repository_id, input.projectIds, input.integrationsDigest, input.workId]);
-    database.query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)')
+    const workKey = JSON.stringify([
+      config.repository.repository_id,
+      input.projectIds,
+      input.integrationsDigest,
+      input.workId,
+    ]);
+    database
+      .query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)')
       .run(workspaceId, 'work', workKey, 1, 'null', canonicalJsonDigest(null));
     expect(() => inspectLocalSession(input)).toThrow(/work identity/);
     database.exec('DELETE FROM agent_host_state');
-    database.query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)')
+    database
+      .query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)')
       .run(workspaceId, 'ledger', 'shared', 1, '{}', canonicalJsonDigest({}));
     expect(() => inspectLocalSession(input)).toThrow(/coordination ledger/);
   } finally {
     database.close(true);
     if (!path.resolve(root).startsWith(path.resolve(tmpdir(), 'vida-readonly-inspection-')))
       throw Error('owned inspection fixture cleanup target differs');
-    rmSync(root, {recursive: true, force: true});
+    rmSync(root, { recursive: true, force: true });
   }
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {
   const { main } = await import('../bin/run.mjs');
   const diagnose = async (message) => {
-    const lines = [], exit = {};
-    await main({ isMain: true, args: [], execute: async () => { throw Error(message); },
-      io: { error: value => lines.push(value), log: () => { throw Error('unexpected success'); } }, exit });
+    const lines = [],
+      exit = {};
+    await main({
+      isMain: true,
+      args: [],
+      execute: async () => {
+        throw Error(message);
+      },
+      io: {
+        error: (value) => lines.push(value),
+        log: () => {
+          throw Error('unexpected success');
+        },
+      },
+      exit,
+    });
     expect(exit.exitCode).toBe(1);
     expect(lines).toHaveLength(1);
     return JSON.parse(lines[0]);
   };
-  for (const message of ['issued writer outcome must settle before expired lease recovery',
+  for (const message of [
+    'issued writer outcome must settle before expired lease recovery',
     'issued writer-bound wave must advance before expired lease recovery',
     'expired recovery requires an entirely unissued current wave',
     'failed prewriter recovery: exact expired full-resource ticket and claim differ',
-    'failed prewriter owner recovery: retained human Source authority missing']) {
+    'failed prewriter owner recovery: retained human Source authority missing',
+  ]) {
     const result = await diagnose(message);
     expect(result.message).toContain('Phase: recovery eligibility.');
     expect(result.message).toContain('do not repeat lease recovery');
@@ -110,11 +161,7 @@ test('lease recovery eligibility denies repeat advice while retaining expiry, CA
   expect((await diagnose('C:/secret/token confidential')).message).not.toContain('confidential');
 });
 import { canonicalJsonDigest, rfc3339TimestampMilliseconds } from '../src/contracts/public-ingress.ts';
-import {
-  deriveWorkspaceId,
-  loadRuntimeConfig,
-  runtimeConfigDigest,
-} from '../src/index.ts';
+import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../src/index.ts';
 import { runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources, snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
@@ -509,9 +556,11 @@ describe('unprepared recovery', () => {
         path.join(f.root, 'changed.json'),
         JSON.stringify({ ...inspected.request, decisionPointer: 'user:changed' }),
       );
-      await Promise.resolve(expect(
-        run(apply.map((value, index) => (apply[index - 1] === '--request' ? 'changed.json' : value))),
-      ).rejects.toThrow());
+      await Promise.resolve(
+        expect(
+          run(apply.map((value, index) => (apply[index - 1] === '--request' ? 'changed.json' : value))),
+        ).rejects.toThrow(),
+      );
       expect(f.observed()).toEqual(after);
     } finally {
       f.close();
@@ -1074,7 +1123,9 @@ test('cutoff SQLite exclusion rejects a live owner and recovers after process te
       attempt: '1',
       scope_digest: 'a'.repeat(64),
     };
-    await Promise.resolve(expect(advanceCutoff(selector, values)).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CUTOFF-001' }));
+    await Promise.resolve(
+      expect(advanceCutoff(selector, values)).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CUTOFF-001' }),
+    );
     expect(JSON.parse(readFileSync(witnessPath)).first_admitted_work_attempt).toBeNull();
     child.kill('SIGKILL');
     await exited;
@@ -2072,9 +2123,11 @@ if (mutationMode || v8CoverageMode) {
         expect(reportRetry.state_version).toEqual(reported.state_version);
         expect(reportRetry.recorded_observation).toEqual(reported.reported_observation);
         writeFileSync(reportPath, observationBody('Conflicting retry must be denied.'));
-        await Promise.resolve(expect(run([...args, ...expected(reported.state_version), '--report', reportPath])).rejects.toThrow(
-          /retry differs/,
-        ));
+        await Promise.resolve(
+          expect(run([...args, ...expected(reported.state_version), '--report', reportPath])).rejects.toThrow(
+            /retry differs/,
+          ),
+        );
         expect(snapshotSpy).not.toHaveBeenCalled();
         expect(bridgeSpy).not.toHaveBeenCalled();
         snapshotSpy.mockRestore();
@@ -2109,16 +2162,20 @@ if (mutationMode || v8CoverageMode) {
       try {
         const { args, initialization, initializationPath } = createFixture(root);
         writeFileSync(initializationPath, record({ ...initialization, workspace_binding_status: 'unknown' }));
-        await Promise.resolve(expect(run(args)).rejects.toMatchObject({
-          code: 'GAP-VIDA-RUN-CONTEXT-001',
-          message: 'Runtime initialization status is invalid.',
-        }));
+        await Promise.resolve(
+          expect(run(args)).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Runtime initialization status is invalid.',
+          }),
+        );
         writeFileSync(initializationPath, record(initialization));
         const escaping = args.map((entry, index) => (args[index - 1] === '--work-path' ? '../escape' : entry));
-        await Promise.resolve(expect(run(escaping)).rejects.toMatchObject({
-          code: 'GAP-VIDA-RUN-CONTEXT-001',
-          message: 'The work path is not bound to the selected project context.',
-        }));
+        await Promise.resolve(
+          expect(run(escaping)).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'The work path is not bound to the selected project context.',
+          }),
+        );
         expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
       } finally {
         rmSync(root, { recursive: true, force: true });
@@ -2167,9 +2224,11 @@ if (mutationMode || v8CoverageMode) {
               ? `mutation-run-${randomUUID()}`
               : value,
         );
-        await Promise.resolve(expect(run([...args, '--workflow', 'information_research_light'])).rejects.toMatchObject({
-          code: 'GAP-VIDA-RUN-SELECTOR-001',
-        }));
+        await Promise.resolve(
+          expect(run([...args, '--workflow', 'information_research_light'])).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-SELECTOR-001',
+          }),
+        );
       } finally {
         rmSync(root, { recursive: true, force: true });
       }
@@ -2200,10 +2259,12 @@ if (mutationMode || v8CoverageMode) {
         ];
         for (const entry of cases) {
           writeFileSync(initializationPath, record(entry.initialization));
-          await Promise.resolve(expect(run(entry.args)).rejects.toMatchObject({
-            code: 'GAP-VIDA-RUN-CONTEXT-001',
-            message: entry.message,
-          }));
+          await Promise.resolve(
+            expect(run(entry.args)).rejects.toMatchObject({
+              code: 'GAP-VIDA-RUN-CONTEXT-001',
+              message: entry.message,
+            }),
+          );
           expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
         }
       } finally {

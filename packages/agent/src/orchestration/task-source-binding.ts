@@ -3,7 +3,7 @@ import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { HostStateSnapshot, HostStateStore, StateVersion, WorkIdentity } from '../host-state.js';
 
 /** Exact HostState compare-and-swap references observed before a task-source operation. */
-export interface TaskSourceExpectedHost {
+interface TaskSourceExpectedHost {
   readonly work: StateVersion;
   readonly ledger: StateVersion;
   readonly journal: { readonly attempt: number; readonly version: StateVersion };
@@ -11,7 +11,7 @@ export interface TaskSourceExpectedHost {
 }
 
 /** Project identity is bound to the current configuration and ProjectContext digests. */
-export interface TaskSourceContextBinding {
+interface TaskSourceContextBinding {
   readonly config_digest: string;
   readonly project_context_digest: string;
 }
@@ -41,7 +41,7 @@ export interface TaskSourceBinding {
   readonly cwd: string;
 }
 
-export interface TaskSourceScope {
+interface TaskSourceScope {
   readonly schema: 'ScopedSourceSnapshot/v1';
   readonly entries: readonly {
     readonly path: string;
@@ -101,17 +101,31 @@ export function validateTaskSourceBindingRequest(candidate: unknown): TaskSource
   const operationId = validateOperationId(value.operation_id, 'operation ID');
   const requestId = validateOperationId(value.request_id, 'request ID');
   const branchRef = value.branch_ref === undefined ? undefined : validateCanonicalBranchRef(value.branch_ref);
-  requireBinding(value.operation === 'inspect' || branchRef !== undefined, 'branch ref is required for create and adopt proposals');
+  requireBinding(
+    value.operation === 'inspect' || branchRef !== undefined,
+    'branch ref is required for create and adopt proposals',
+  );
   const expectedHost = validateExpectedHost(value.expected_host);
   const canonicalHostRoot = canonicalAbsolutePath(value.canonical_host_root, 'canonical host root');
-  const sourceRoot = value.source_root === undefined
-    ? undefined
-    : canonicalAbsolutePath(value.source_root, 'task source root');
-  requireBinding(typeof value.work_id === 'string' && value.work_id.length > 0 && value.work_id.length <= 128, 'work ID is invalid');
+  const sourceRoot =
+    value.source_root === undefined ? undefined : canonicalAbsolutePath(value.source_root, 'task source root');
+  requireBinding(
+    typeof value.work_id === 'string' && value.work_id.length > 0 && value.work_id.length <= 128,
+    'work ID is invalid',
+  );
   requireBinding(Number.isSafeInteger(value.attempt) && value.attempt > 0, 'attempt is invalid');
-  requireBinding(expectedHost.journal.attempt === value.attempt, 'Host journal attempt does not match the task attempt');
-  requireBinding(typeof value.thread_id === 'string' && value.thread_id.length > 0 && value.thread_id.length <= 256, 'thread ID is invalid');
-  requireBinding(typeof value.repository_id === 'string' && /^[a-z0-9][a-z0-9._-]{0,127}$/.test(value.repository_id), 'repository ID is invalid');
+  requireBinding(
+    expectedHost.journal.attempt === value.attempt,
+    'Host journal attempt does not match the task attempt',
+  );
+  requireBinding(
+    typeof value.thread_id === 'string' && value.thread_id.length > 0 && value.thread_id.length <= 256,
+    'thread ID is invalid',
+  );
+  requireBinding(
+    typeof value.repository_id === 'string' && /^[a-z0-9][a-z0-9._-]{0,127}$/.test(value.repository_id),
+    'repository ID is invalid',
+  );
   const projectIds = canonicalProjectIds(value.project_ids);
   const context = validateTaskSourceContext(value);
   const request: TaskSourceBindingRequest = Object.freeze({
@@ -130,7 +144,10 @@ export function validateTaskSourceBindingRequest(candidate: unknown): TaskSource
     project_ids: projectIds,
     ...context,
   });
-  requireBinding(canonicalJsonDigest(request) === canonicalJsonDigest(value), 'task source request contains unexpected or noncanonical fields');
+  requireBinding(
+    canonicalJsonDigest(request) === canonicalJsonDigest(value),
+    'task source request contains unexpected or noncanonical fields',
+  );
   return request;
 }
 
@@ -144,16 +161,25 @@ export function validateTaskSourceBindingReport(candidate: unknown): TaskSourceB
   const reportId = validateOperationId(value.report_id, 'report ID');
   const expectedHost = validateExpectedHost(value.expected_host);
   requireBinding(
-    value.status === 'observed' || value.status === 'proposed' || value.status === 'denied' || value.status === 'unknown',
+    value.status === 'observed' ||
+      value.status === 'proposed' ||
+      value.status === 'denied' ||
+      value.status === 'unknown',
     'task source report status is invalid',
   );
-  requireBinding(value.binding === null || (value.binding !== undefined && typeof value.binding === 'object'), 'task source report binding is invalid');
+  requireBinding(
+    value.binding === null || (value.binding !== undefined && typeof value.binding === 'object'),
+    'task source report binding is invalid',
+  );
   requireBinding(
     (value.status === 'observed') === (value.binding !== null),
     'observed reports require a binding and other outcomes must not contain one',
   );
   const binding = value.binding === null ? null : validateTaskSourceBinding(value.binding);
-  requireBinding(value.reason === undefined || (typeof value.reason === 'string' && value.reason.length <= 512), 'task source report reason is invalid');
+  requireBinding(
+    value.reason === undefined || (typeof value.reason === 'string' && value.reason.length <= 512),
+    'task source report reason is invalid',
+  );
   const report: TaskSourceBindingReport = Object.freeze({
     schema: value.schema,
     operation: value.operation,
@@ -165,7 +191,10 @@ export function validateTaskSourceBindingReport(candidate: unknown): TaskSourceB
     binding,
     ...(value.reason === undefined ? {} : { reason: value.reason }),
   });
-  requireBinding(canonicalJsonDigest(report) === canonicalJsonDigest(value), 'task source report contains unexpected or noncanonical fields');
+  requireBinding(
+    canonicalJsonDigest(report) === canonicalJsonDigest(value),
+    'task source report contains unexpected or noncanonical fields',
+  );
   return report;
 }
 
@@ -177,7 +206,10 @@ export function validateTaskSourceBindingExchange(
   const request = validateTaskSourceBindingRequest(requestCandidate);
   const report = validateTaskSourceBindingReport(reportCandidate);
   requireBinding(report.operation === request.operation, 'task source report operation does not match its request');
-  requireBinding(report.operation_id === request.operation_id, 'task source report operation ID does not match its request');
+  requireBinding(
+    report.operation_id === request.operation_id,
+    'task source report operation ID does not match its request',
+  );
   requireBinding(report.request_id === request.request_id, 'task source report request ID does not match its request');
   requireBinding(
     canonicalJsonDigest(report.expected_host) === canonicalJsonDigest(request.expected_host),
@@ -186,9 +218,18 @@ export function validateTaskSourceBindingExchange(
   if (report.binding !== null) {
     const binding = report.binding;
     requireBinding(binding.operation === request.operation, 'task source binding operation does not match its request');
-    requireBinding(binding.operation_id === request.operation_id, 'task source binding operation ID does not match its request');
-    requireBinding(binding.request_id === request.request_id, 'task source binding request ID does not match its request');
-    requireBinding(binding.branch_ref === request.branch_ref, 'task source binding branch ref does not match its request');
+    requireBinding(
+      binding.operation_id === request.operation_id,
+      'task source binding operation ID does not match its request',
+    );
+    requireBinding(
+      binding.request_id === request.request_id,
+      'task source binding request ID does not match its request',
+    );
+    requireBinding(
+      binding.branch_ref === request.branch_ref,
+      'task source binding branch ref does not match its request',
+    );
     requireBinding(
       canonicalJsonDigest(binding.expected_host) === canonicalJsonDigest(request.expected_host),
       'task source binding Host CAS references do not match its request',
@@ -196,17 +237,26 @@ export function validateTaskSourceBindingExchange(
     requireBinding(binding.work_id === request.work_id, 'task source binding work ID does not match its request');
     requireBinding(binding.attempt === request.attempt, 'task source binding attempt does not match its request');
     requireBinding(binding.thread_id === request.thread_id, 'task source binding thread ID does not match its request');
-    requireBinding(binding.repository_id === request.repository_id, 'task source binding repository ID does not match its request');
+    requireBinding(
+      binding.repository_id === request.repository_id,
+      'task source binding repository ID does not match its request',
+    );
     requireBinding(
       canonicalJsonDigest(binding.project_ids) === canonicalJsonDigest(request.project_ids),
       'task source binding project set does not match its request',
     );
-    requireBinding(binding.canonical_host_root === request.canonical_host_root, 'task source binding host root does not match its request');
+    requireBinding(
+      binding.canonical_host_root === request.canonical_host_root,
+      'task source binding host root does not match its request',
+    );
     requireBinding(
       binding.source_root === resolveTaskSourceRoot(request.canonical_host_root, request.source_root),
       'task source binding source root does not match its request',
     );
-    requireBinding(binding.config_digest === request.config_digest, 'task source binding configuration does not match its request');
+    requireBinding(
+      binding.config_digest === request.config_digest,
+      'task source binding configuration does not match its request',
+    );
     requireBinding(
       binding.project_context_digest === request.project_context_digest,
       'task source binding ProjectContext does not match its request',
@@ -232,7 +282,10 @@ function requireOperation(value: unknown): asserts value is TaskSourceBindingReq
 }
 
 function validateCanonicalBranchRef(value: unknown): string {
-  requireBinding(typeof value === 'string' && value.startsWith('refs/heads/'), 'branch ref must use canonical refs/heads/<name> form');
+  requireBinding(
+    typeof value === 'string' && value.startsWith('refs/heads/'),
+    'branch ref must use canonical refs/heads/<name> form',
+  );
   requireBinding(value.length <= 1024, 'branch ref is too long');
   const name = value.slice('refs/heads/'.length);
   const components = name.split('/');
@@ -249,7 +302,9 @@ function validateCanonicalBranchRef(value: unknown): string {
       !name.includes('@{') &&
       !hasForbiddenCharacter &&
       !name.endsWith('.') &&
-      components.every((component) => component.length > 0 && !component.startsWith('.') && !component.endsWith('.lock')),
+      components.every(
+        (component) => component.length > 0 && !component.startsWith('.') && !component.endsWith('.lock'),
+      ),
     'branch ref is not a canonical Git head reference',
   );
   return value;
@@ -265,10 +320,7 @@ function canonicalAbsolutePath(value: unknown, label: string): string {
 function validateStateVersion(candidate: unknown, label: string): StateVersion {
   requireBinding(candidate !== null && typeof candidate === 'object', `${label} must be an object`);
   const value = candidate as StateVersion;
-  requireBinding(
-    Object.keys(value).sort().join(',') === 'digest,revision',
-    `${label} contains unexpected fields`,
-  );
+  requireBinding(Object.keys(value).sort().join(',') === 'digest,revision', `${label} contains unexpected fields`);
   requireBinding(Number.isSafeInteger(value.revision) && value.revision > 0, `${label} revision is invalid`);
   requireBinding(typeof value.digest === 'string' && digestPattern.test(value.digest), `${label} digest is invalid`);
   return Object.freeze({ revision: value.revision, digest: value.digest });
@@ -281,13 +333,22 @@ function validateExpectedHost(candidate: unknown): TaskSourceExpectedHost {
     Object.keys(value).sort().join(',') === 'journal,ledger,maintenance_generation,work',
     'expected Host state contains unexpected fields',
   );
-  requireBinding(value.journal !== null && typeof value.journal === 'object', 'expected Host journal reference is invalid');
+  requireBinding(
+    value.journal !== null && typeof value.journal === 'object',
+    'expected Host journal reference is invalid',
+  );
   requireBinding(
     Object.keys(value.journal).sort().join(',') === 'attempt,version',
     'expected Host journal reference contains unexpected fields',
   );
-  requireBinding(Number.isSafeInteger(value.journal.attempt) && value.journal.attempt > 0, 'expected Host journal attempt is invalid');
-  requireBinding(Number.isSafeInteger(value.maintenance_generation) && value.maintenance_generation >= 0, 'maintenance generation is invalid');
+  requireBinding(
+    Number.isSafeInteger(value.journal.attempt) && value.journal.attempt > 0,
+    'expected Host journal attempt is invalid',
+  );
+  requireBinding(
+    Number.isSafeInteger(value.maintenance_generation) && value.maintenance_generation >= 0,
+    'maintenance generation is invalid',
+  );
   return Object.freeze({
     work: validateStateVersion(value.work, 'expected work version'),
     ledger: validateStateVersion(value.ledger, 'expected ledger version'),
@@ -300,7 +361,10 @@ function validateExpectedHost(candidate: unknown): TaskSourceExpectedHost {
 }
 
 function validateTaskSourceContext(value: TaskSourceContextBinding): TaskSourceContextBinding {
-  requireBinding(typeof value.config_digest === 'string' && digestPattern.test(value.config_digest), 'configuration digest is invalid');
+  requireBinding(
+    typeof value.config_digest === 'string' && digestPattern.test(value.config_digest),
+    'configuration digest is invalid',
+  );
   requireBinding(
     typeof value.project_context_digest === 'string' && digestPattern.test(value.project_context_digest),
     'ProjectContext digest is invalid',
@@ -333,9 +397,11 @@ export function resolveTaskSourceFileRoot(input: {
   const binding = validateTaskSourceBinding(input.binding);
   requireBinding(
     binding.canonical_host_root === hostRoot &&
-      binding.work_id === input.identity.work_id && binding.repository_id === input.identity.repository_id &&
+      binding.work_id === input.identity.work_id &&
+      binding.repository_id === input.identity.repository_id &&
       canonicalJsonDigest(binding.project_ids) === canonicalJsonDigest(input.identity.project_ids) &&
-      binding.attempt === input.attempt && binding.thread_id === input.threadId &&
+      binding.attempt === input.attempt &&
+      binding.thread_id === input.threadId &&
       binding.config_digest === input.configDigest &&
       binding.project_context_digest === input.projectContextDigest &&
       binding.source_scope.digest === input.sourceScopeDigest,
@@ -403,9 +469,8 @@ export function parseTaskSourceGitObservation(
   requireBinding(topLevel === root, 'Git top-level does not match the task source root');
   const commonOutput = oneLine(outputs[1], 'Git common directory');
   const commonDir = canonicalAbsolutePath(path.resolve(root, commonOutput), 'Git common directory');
-  const rawBranch = outputs[2] === '' || outputs[2] === '\n' || outputs[2] === '\r\n'
-    ? ''
-    : oneLine(outputs[2], 'Git branch');
+  const rawBranch =
+    outputs[2] === '' || outputs[2] === '\n' || outputs[2] === '\r\n' ? '' : oneLine(outputs[2], 'Git branch');
   const head = oneLine(outputs[3], 'Git HEAD').toLowerCase();
   requireBinding(/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(head), 'Git HEAD must be a full object ID');
   return Object.freeze({
@@ -418,8 +483,11 @@ export function parseTaskSourceGitObservation(
 }
 
 function canonicalProjectIds(projectIds: readonly string[]): readonly string[] {
-  requireBinding(Boolean(Array.isArray(projectIds)) && projectIds.length > 0 && projectIds.length <= 128, 'project set is invalid');
-  const sorted = [...projectIds].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+  requireBinding(
+    Boolean(Array.isArray(projectIds)) && projectIds.length > 0 && projectIds.length <= 128,
+    'project set is invalid',
+  );
+  const sorted = [...projectIds].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
   requireBinding(
     sorted.every((id) => typeof id === 'string' && /^[a-z0-9][a-z0-9._-]{0,63}$/.test(id)) &&
       new Set(sorted).size === sorted.length,
@@ -430,17 +498,24 @@ function canonicalProjectIds(projectIds: readonly string[]): readonly string[] {
 
 function validateScope(scope: TaskSourceScope): TaskSourceScope {
   requireBinding(
-    Object.keys(scope).sort((left, right) => left < right ? -1 : left > right ? 1 : 0).join(',') === ['digest', 'entries', 'schema'].join(','),
+    Object.keys(scope)
+      .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))
+      .join(',') === ['digest', 'entries', 'schema'].join(','),
     'source scope contains unexpected fields',
   );
   requireBinding(scope?.schema === 'ScopedSourceSnapshot/v1', 'source scope schema is invalid');
-  requireBinding(Boolean(Array.isArray(scope.entries)) && scope.entries.length > 0 && scope.entries.length <= 512, 'source scope entries are invalid');
+  requireBinding(
+    Boolean(Array.isArray(scope.entries)) && scope.entries.length > 0 && scope.entries.length <= 512,
+    'source scope entries are invalid',
+  );
   let previous = '';
   for (const entry of scope.entries) {
     requireBinding(
       entry !== null &&
         typeof entry === 'object' &&
-        Object.keys(entry).sort((left, right) => left < right ? -1 : left > right ? 1 : 0).join(',') === ['bytes', 'exists', 'path', 'sha256'].join(','),
+        Object.keys(entry)
+          .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))
+          .join(',') === ['bytes', 'exists', 'path', 'sha256'].join(','),
       'source scope entry contains unexpected fields',
     );
     requireBinding(
@@ -450,7 +525,7 @@ function validateScope(scope: TaskSourceScope): TaskSourceScope {
         !entry.path.includes('\\') &&
         !entry.path.startsWith('/') &&
         !/^[A-Za-z]:/.test(entry.path) &&
-        !Array.from(entry.path).some(character => character.charCodeAt(0) < 32) &&
+        !Array.from(entry.path).some((character) => character.charCodeAt(0) < 32) &&
         entry.path.split('/').every((part: string) => part && part !== '.' && part !== '..') &&
         entry.path > previous,
       'source scope paths must be canonical, sorted, and unique',
@@ -458,22 +533,35 @@ function validateScope(scope: TaskSourceScope): TaskSourceScope {
     previous = entry.path;
     requireBinding(typeof entry.exists === 'boolean', 'source scope existence flag is invalid');
     if (entry.exists) {
-      requireBinding(Number.isSafeInteger(entry.bytes) && (entry.bytes as number) >= 0, 'source scope byte count is invalid');
-      requireBinding(typeof entry.sha256 === 'string' && digestPattern.test(entry.sha256), 'source scope digest is invalid');
+      requireBinding(
+        Number.isSafeInteger(entry.bytes) && (entry.bytes as number) >= 0,
+        'source scope byte count is invalid',
+      );
+      requireBinding(
+        typeof entry.sha256 === 'string' && digestPattern.test(entry.sha256),
+        'source scope digest is invalid',
+      );
     } else {
-      requireBinding(entry.bytes === null && entry.sha256 === null, 'absent source entries must have null content fields');
+      requireBinding(
+        entry.bytes === null && entry.sha256 === null,
+        'absent source entries must have null content fields',
+      );
     }
   }
   const body = { schema: scope.schema, entries: scope.entries };
   requireBinding(scope.digest === canonicalJsonDigest(body), 'source scope digest does not match its entries');
   return Object.freeze({
     schema: scope.schema,
-    entries: Object.freeze(scope.entries.map((entry) => Object.freeze({
-      path: entry.path,
-      exists: entry.exists,
-      bytes: entry.bytes,
-      sha256: entry.sha256,
-    }))),
+    entries: Object.freeze(
+      scope.entries.map((entry) =>
+        Object.freeze({
+          path: entry.path,
+          exists: entry.exists,
+          bytes: entry.bytes,
+          sha256: entry.sha256,
+        }),
+      ),
+    ),
     digest: scope.digest,
   });
 }
@@ -491,9 +579,15 @@ export function createTaskSourceBinding(input: CreateTaskSourceBindingInput): Ta
   const request = validateTaskSourceBindingRequest(input.request);
   const sourceScope = validateScope(input.source_scope);
   const sourceRoot = resolveTaskSourceRoot(request.canonical_host_root, request.source_root);
-  const canonicalHostCommonDir = canonicalAbsolutePath(input.canonical_host_common_dir, 'canonical host Git common directory');
+  const canonicalHostCommonDir = canonicalAbsolutePath(
+    input.canonical_host_common_dir,
+    'canonical host Git common directory',
+  );
   const git = input.git;
-  requireBinding(canonicalAbsolutePath(git.source_root, 'task source root') === sourceRoot, 'Git observation does not match the requested task source root');
+  requireBinding(
+    canonicalAbsolutePath(git.source_root, 'task source root') === sourceRoot,
+    'Git observation does not match the requested task source root',
+  );
   const commonDir = canonicalAbsolutePath(git.common_dir, 'task source Git common directory');
   requireBinding(
     commonDir === canonicalHostCommonDir,
@@ -501,7 +595,10 @@ export function createTaskSourceBinding(input: CreateTaskSourceBindingInput): Ta
   );
   const cwd = canonicalAbsolutePath(git.cwd, 'caller working directory');
   requireBinding(
-    git.branch === null || (typeof git.branch === 'string' && git.branch.length > 0 && !Array.from(git.branch).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)),
+    git.branch === null ||
+      (typeof git.branch === 'string' &&
+        git.branch.length > 0 &&
+        !Array.from(git.branch).some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)),
     'Git branch is invalid',
   );
   if (request.branch_ref !== undefined) {
@@ -510,7 +607,10 @@ export function createTaskSourceBinding(input: CreateTaskSourceBindingInput): Ta
       'observed Git branch does not match the requested branch ref',
     );
   }
-  requireBinding(typeof git.head === 'string' && /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(git.head), 'Git HEAD is invalid');
+  requireBinding(
+    typeof git.head === 'string' && /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(git.head),
+    'Git HEAD is invalid',
+  );
   return Object.freeze({
     schema: 'TaskSourceBinding/v1',
     operation: request.operation,
@@ -571,6 +671,9 @@ export function validateTaskSourceBinding(candidate: unknown): TaskSourceBinding
       cwd: value.cwd,
     },
   });
-  requireBinding(canonicalJsonDigest(binding) === canonicalJsonDigest(value), 'task source binding contains unexpected or noncanonical fields');
+  requireBinding(
+    canonicalJsonDigest(binding) === canonicalJsonDigest(value),
+    'task source binding contains unexpected or noncanonical fields',
+  );
   return binding;
 }

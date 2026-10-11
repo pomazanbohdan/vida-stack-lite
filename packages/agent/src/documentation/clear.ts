@@ -4,29 +4,18 @@ import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
 import eventSchema from '../../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
-import policySchema from '../../schemas/documentation-policy.v1.schema.json' with { type: 'json' };
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { loadProjectContext, projectBindingFor } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { documentationPolicyTransitionPreimages } from './policy-transition.js';
+import {
+  documentationRelativePath as relative,
+  validateDocumentationPolicy,
+  type DocumentationPolicy as Policy,
+} from './policy.js';
 
 type RecordValue = Record<string, unknown>;
-type Policy = {
-  schema: 'DocumentationPolicy/v1';
-  policy_id: string;
-  project_id: string;
-  source_path: string;
-  owner: string;
-  required: boolean;
-  canonical_roots: string[];
-  map_paths: string[];
-  excluded_roots: string[];
-  changelog_required: boolean;
-  changelog_path: string | null;
-  relations: string[];
-  updated_at: string;
-};
 type DocumentHash = { path: string; sha256: string; size: number };
 export type DocumentationClearCheckpoint = {
   schema: 'DocumentationClearCheckpoint/v1';
@@ -74,18 +63,6 @@ const validEvent = new Ajv2020Constructor({ strict: true, allErrors: true, forma
   eventSchema as object,
 );
 const digestPattern = /^[a-f0-9]{64}$/u;
-const relative = (value: string): string => {
-  if (
-    typeof value !== 'string' ||
-    !value ||
-    value.includes('\\') ||
-    path.posix.isAbsolute(value) ||
-    value.split('/').some((segment) => !segment || segment === '.' || segment === '..') ||
-    /^[A-Za-z]:/u.test(value)
-  )
-    throw new Error('documentation path is not safe and repository-relative');
-  return value;
-};
 const within = (file: string, root: string): boolean => file === root || file.startsWith(root + '/');
 const asRecord = (value: unknown): RecordValue => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('documentation record invalid');
@@ -110,20 +87,14 @@ function loadBoundPolicy(
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const policyPath = relative(configuredPath);
   const raw = access.readBytes(policyPath, 'project documentation policy');
-  const validator = new Ajv2020Constructor({ strict: true, allErrors: true, formats: { 'date-time': true } }).compile(
-    policySchema as object,
+  const policy = validateDocumentationPolicy(
+    JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)),
+    policyPath,
   );
-  const policy = asRecord(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)));
-  if (!validator(policy)) throw new Error('documentation policy schema invalid');
-  if (policy.source_path !== policyPath) throw new Error('documentation policy source path differs from config');
   const projectIdentities = [projectId, repositoryId, configId];
   if (!projectIdentities.includes(String(policy.project_id)) && !String(policy.project_id).endsWith('/' + projectId))
     throw new Error('documentation policy project identity differs from current project');
-  if (Number.isNaN(Date.parse(String(policy.updated_at)))) throw new Error('documentation policy timestamp invalid');
-  for (const key of ['canonical_roots', 'map_paths', 'excluded_roots'] as const)
-    for (const entry of policy[key] as string[]) relative(entry);
-  if (typeof policy.changelog_path === 'string') relative(policy.changelog_path);
-  return { policy: policy as Policy, digest: sha256(raw) };
+  return { policy, digest: sha256(raw) };
 }
 
 function inventory(repositoryRoot: string, policy: Policy): DocumentHash[] {

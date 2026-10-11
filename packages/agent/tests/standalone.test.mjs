@@ -23,7 +23,7 @@ import {
   verifyResourceTree,
 } from '../bin/standalone-resources.mjs';
 
-import { cliMetadataResult } from '../bin/cli-metadata.mjs';
+import { cliMetadataResult } from '../bin/cli-metadata.ts';
 import { runStandalone } from '../bin/standalone.mjs';
 
 const fixture = () => {
@@ -61,10 +61,14 @@ test('resources preserve dangling foreign directory links', async () => {
         cache = path.join(parent, 'runtime');
       mkdirSync(cache, { mode: 0o700 });
       chmodSync(parent, 0o755);
-      await Promise.resolve(assert.rejects(materializeResources({ ...value, cache, privateRoot: parent }), /permissions/));
+      await Promise.resolve(
+        assert.rejects(materializeResources({ ...value, cache, privateRoot: parent }), /permissions/),
+      );
       chmodSync(parent, 0o700);
       chmodSync(cache, 0o777);
-      await Promise.resolve(assert.rejects(materializeResources({ ...value, cache, privateRoot: parent }), /permissions/));
+      await Promise.resolve(
+        assert.rejects(materializeResources({ ...value, cache, privateRoot: parent }), /permissions/),
+      );
     } finally {
       rmSync(value.cache, { recursive: true, force: true });
     }
@@ -126,19 +130,22 @@ test('resources reject a linked resource directory and preserve its external own
   }
 });
 
-test('resources retain interrupted private staging and refuse uncertain locks or linked payloads', async () => {
+test('resources clean failed owned staging and refuse uncertain locks or linked payloads', async () => {
   const value = fixture();
   try {
-    await Promise.resolve(assert.rejects(
-      materializeResources({
-        ...value,
-        loadFiles: async () => {
-          throw Error('interrupted owned loader');
-        },
-      }),
-      /interrupted/,
-    ));
-    assert.equal(readdirSync(value.cache).filter((name) => name.startsWith('.pending-')).length, 1);
+    await Promise.resolve(
+      assert.rejects(
+        materializeResources({
+          ...value,
+          loadFiles: async () => {
+            throw Error('interrupted owned loader');
+          },
+        }),
+        /interrupted/,
+      ),
+    );
+    assert.equal(readdirSync(value.cache).filter((name) => name.startsWith('.pending-')).length, 0);
+    assert.equal(readdirSync(value.cache).filter((name) => name.endsWith('.lock')).length, 0);
     const root = await materializeResources(value);
     linkSync(path.join(root, 'instructions/owned.md'), path.join(value.cache, 'linked-owner'));
     assert.throws(() => verifyResourceTree(root, value.index), /unlinked/);
@@ -217,15 +224,17 @@ test('resources drain disjoint writes before releasing the owned lock on a faile
           return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length);
         },
       });
-    await Promise.resolve(assert.rejects(
-      materializeResources({
-        ...value,
-        index: entries,
-        payloadId: resourceDigest(JSON.stringify(entries)),
-        loadFiles: async () => files,
-      }),
-      /owned batch fault/,
-    ));
+    await Promise.resolve(
+      assert.rejects(
+        materializeResources({
+          ...value,
+          index: entries,
+          payloadId: resourceDigest(JSON.stringify(entries)),
+          loadFiles: async () => files,
+        }),
+        /owned batch fault/,
+      ),
+    );
     assert.equal(completed, 7);
     assert.equal(nextBatchStarted, false);
     assert.equal(readdirSync(value.cache).filter((name) => name.endsWith('.lock')).length, 0);

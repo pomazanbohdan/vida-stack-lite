@@ -1,3 +1,8 @@
+import {
+  assertReconcileOptionKeys,
+  reconcileAllowedOptions,
+  reconcileCliContracts,
+} from './reconcile-cli-contracts.ts';
 import { existsSync, lstatSync, mkdirSync, opendirSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { root as safeRoot } from '@openclaw/fs-safe/root';
@@ -14,14 +19,38 @@ import {
   releaseDirectory,
   releaseIdPattern,
   releaseState,
+  parseReleaseFileIdentity,
+  parseReleaseSourceObservation,
+  readReleaseBytes as read,
+  parseReleasePackMetadata as packMetadata,
   releaseSourceBinding,
   releaseSourceInputs,
   selectedTarball,
 } from './local-release-artifacts.mjs';
 import { verifyForwardReviewSet } from './forward-review-proof.mjs';
 
+/** @typedef {import('./local-release-artifacts.mjs').ReleaseState} ReleaseState */
+/** @typedef {ReturnType<typeof createRepairSourcePass>} RepairSourcePass */
+/** @typedef {readonly [number, number, number, number, number]} FileIdentity */
+/** @typedef {{path: string, kind: 'file', exists: boolean, identity: FileIdentity|null, sha256: string|null, copy?: string|null}} FileObservation */
+/** @typedef {{path: string, kind: 'directory', exists: true, identity: FileIdentity, members: string[]}} DirectoryObservation */
+/** @typedef {Record<string, unknown>} JsonRecord */
+/** @typedef {{filename: string, files: Array<{path: string, size: number}>} & Record<string, unknown>} PackEntry */
+/** @typedef {ReleaseState & {pack_metadata: [PackEntry], source_binding: string, tarball_sha256: string}} ReleaseRecord */
+/** @param {unknown} value @returns {value is JsonRecord} */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** @typedef {{source_binding: string, source_observations: import('./local-release-artifacts.mjs').SourceObservation[], files: FileObservation[], directories: DirectoryObservation[]}} DependencyClosure */
+/** @typedef {JsonRecord & {operation_id: string, version: string, actor: string, release_before: JsonRecord, source_before: string, closure: DependencyClosure, beforeimages: FileObservation[], digest: string}} RepairPlan */
+/** @typedef {JsonRecord & {operation_id: string, version: string, source_binding: string, tarball_sha256: string, entries: Array<{path: string}>}} SourceSeal */
+/** @typedef {JsonRecord & {operation_id: string, plan_digest: string, phase: string, digest: string}} RepairState */
+/** @param {string} op @returns {string} */
 const base = (op) => '.agent/work/agent-local-release/' + op;
+/** @param {string} op @returns {string} */
 const repair = (op) => base(op) + '/native-delivery-evidence';
+/** @param {string} op @returns {[string, string, string]} */
 const targets = (op) => [base(op) + '/tests.json', base(op) + '/source-seal.json', base(op) + '/assurance.json'];
 const phaseNames = [
   'planning',
@@ -51,40 +80,46 @@ const pathFields = new Set([
 ]);
 const sourceExcluded = new Set(['node_modules', 'dist', 'coverage', '.pack-inspect']);
 const sourceScratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent']);
+/** @param {import('node:fs').Stats|null|undefined} stat @returns {FileIdentity|null} */
 const identity = (stat) => (stat ? [stat.dev, stat.ino, stat.size, stat.mtimeMs, stat.ctimeMs] : null);
+/** @template {object} T @param {T} body @returns {T & {digest: string}} */
 const sealed = (body) => ({ ...body, digest: sha(json(body)) });
+/** @param {unknown} value @param {readonly string[]} expected @returns {asserts value is JsonRecord} */
 function keys(value, expected) {
   require(value &&
     typeof value === 'object' &&
     !Array.isArray(value) &&
     Object.keys(value).sort().join() === expected.slice().sort().join(), 'native evidence repair fields differ');
 }
-function read(root, relative, limit = 8 * 1024 * 1024) {
-  const file = releasePath(root, relative),
-    stat = lstatSync(file);
-  require(stat.isFile() && stat.nlink === 1 && stat.size <= limit, 'native evidence repair file unsafe or oversized');
-  const before = identity(stat),
-    bytes = readFileSync(file);
-  require(json(before) === json(identity(lstatSync(file))), 'native evidence repair input changed during read');
-  return bytes;
-}
+
+/** @param {string} root @param {string} relative @returns {unknown} */
 function object(root, relative) {
   return JSON.parse(read(root, relative).toString('utf8'));
 }
-function fileObservation(root, relative) {
+/** @param {Map<string, Buffer>|undefined} images @param {string} relative @param {Buffer} bytes */
+function retainJsonImage(images, relative, bytes) {
+  if (images?.has(relative) && bytes.length <= 8 * 1024 * 1024) images.set(relative, bytes);
+}
+/** @param {string} root @param {string} relative @param {Map<string, Buffer>} [jsonImages] @returns {FileObservation} */
+function fileObservation(root, relative, jsonImages) {
   const file = releasePath(root, relative, true),
     stat = lstatSync(file, { throwIfNoEntry: false });
   if (!stat) return { path: relative, kind: 'file', exists: false, identity: null, sha256: null };
   require(stat.isFile() && stat.nlink === 1, 'native evidence dependency is not a regular file');
   const bytes = read(root, relative, 512 * 1024 * 1024);
+  require(json(identity(stat)) ===
+    json(identity(lstatSync(file))), 'native evidence dependency changed during observation');
+  retainJsonImage(jsonImages, relative, bytes);
   return { path: relative, kind: 'file', exists: true, identity: identity(stat), sha256: sha(bytes) };
 }
+/** @param {Set<string>} nodes @param {string} relative @param {RepairSourcePass} sourcePass */
 function registerClosureNode(nodes, relative, sourcePass) {
   const normalized = releaseRelative(relative);
   if (nodes.has(normalized)) return;
   registerRepairSourcePath(sourcePass, normalized);
   nodes.add(normalized);
 }
+/** @param {string} root @param {string} relative @param {Set<string>} nodes @param {RepairSourcePass} sourcePass @returns {string[]} */
 function closureDirectoryMembers(root, relative, nodes, sourcePass) {
   registerClosureNode(nodes, relative, sourcePass);
   const directory = opendirSync(releasePath(root, relative));
@@ -101,52 +136,151 @@ function closureDirectoryMembers(root, relative, nodes, sourcePass) {
   }
   return members.sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
 }
+/** @param {string} value */
+function hasUnsafeReferenceCharacter(value) {
+  for (const character of value) if (character.charCodeAt(0) < 32 || character === ':') return true;
+  return false;
+}
+/** @param {string} root @param {(relative: string, validatePath?: boolean) => void} enqueue @param {unknown} value @param {boolean} [packageRelative] */
 function addRef(root, enqueue, value, packageRelative = false) {
   require(typeof value === 'string' &&
     value.length > 0 &&
     value.length <= 1024 &&
     !value.includes('\\') &&
     !path.isAbsolute(value) &&
-    !/[\x00-\x1f:]/.test(value), 'native evidence dependency reference invalid');
+    !hasUnsafeReferenceCharacter(value), 'native evidence dependency reference invalid');
   const candidate = packageRelative ? 'packages/agent/' + value : value;
   enqueue(candidate, true);
 }
+/** @param {string} root @param {(relative: string, validatePath?: boolean) => void} enqueue @param {unknown} inputs */
+function addStandaloneInputs(root, enqueue, inputs) {
+  require(Array.isArray(inputs), 'native evidence standalone inputs invalid');
+  for (const input of inputs) {
+    keys(input, ['path', 'bytes', 'sha256']);
+    require(typeof input.path === 'string' &&
+      typeof input.bytes === 'number' &&
+      Number.isSafeInteger(input.bytes) &&
+      input.bytes >= 0 &&
+      typeof input.sha256 === 'string' &&
+      /^[a-f0-9]{64}$/.test(input.sha256), 'native evidence standalone input invalid');
+    addRef(root, enqueue, input.path, true);
+  }
+}
+/** @param {string} root @param {(relative: string, validatePath?: boolean) => void} enqueue @param {string} key @param {unknown} child @param {boolean} packageRelative @param {boolean} standaloneBuild */
+function addInputReferences(root, enqueue, key, child, packageRelative, standaloneBuild) {
+  if (key !== 'inputs' || !Array.isArray(child)) return false;
+  if (!standaloneBuild) for (const input of child) addRef(root, enqueue, input, packageRelative);
+  return true;
+}
+/** @param {string} root @param {(relative: string, validatePath?: boolean) => void} enqueue @param {string} key @param {unknown} child @param {JsonRecord} value */
+function addFilenameReference(root, enqueue, key, child, value) {
+  if (key !== 'filename' || typeof child !== 'string' || !/^[\w.-]+\.tgz$/.test(child)) return false;
+  if (typeof value.operation_id === 'string')
+    addRef(root, enqueue, '.tmp/releases/' + value.operation_id + '/' + child);
+  return true;
+}
+/** @param {string} root @param {(relative: string, validatePath?: boolean) => void} enqueue @param {string} key @param {unknown} child @param {boolean} packageRelative */
+function addEntryReferences(root, enqueue, key, child, packageRelative) {
+  if (key !== 'entries' || !Array.isArray(child)) return false;
+  for (const entry of child)
+    if (isRecord(entry) && typeof entry.path === 'string') addRef(root, enqueue, entry.path, packageRelative);
+  return true;
+}
+/** @param {string} root @param {(relative: string, validatePath?: boolean) => void} enqueue @param {string} key @param {unknown} child @param {JsonRecord} value @param {boolean} packageRelative @param {boolean} standaloneBuild */
+function addStructuredReference(root, enqueue, key, child, value, packageRelative, standaloneBuild) {
+  if (pathFields.has(key) && typeof child === 'string') addRef(root, enqueue, child, packageRelative);
+  else if (addInputReferences(root, enqueue, key, child, packageRelative, standaloneBuild)) return;
+  else if (addFilenameReference(root, enqueue, key, child, value)) return;
+  else if (addEntryReferences(root, enqueue, key, child, packageRelative)) return;
+  else if (child && typeof child === 'object')
+    references(root, enqueue, child, packageRelative || key === 'pack_metadata');
+}
+/** @param {string} root @param {(relative: string, validatePath?: boolean) => void} enqueue @param {unknown} value @param {boolean} [packageRelative] */
 function references(root, enqueue, value, packageRelative = false) {
   if (Array.isArray(value)) {
     for (const item of value) references(root, enqueue, item, packageRelative);
     return;
   }
-  if (!value || typeof value !== 'object') return;
+  if (!isRecord(value)) return;
   const standaloneBuild = value.schema === 'VidaStandaloneBuild/v1';
   packageRelative ||= standaloneBuild;
-  if (standaloneBuild) {
-    require(Array.isArray(value.inputs), 'native evidence standalone inputs invalid');
-    for (const input of value.inputs) {
-      keys(input, ['path', 'bytes', 'sha256']);
-      require(Number.isSafeInteger(input.bytes) &&
-        input.bytes >= 0 &&
-        typeof input.sha256 === 'string' &&
-        /^[a-f0-9]{64}$/.test(input.sha256), 'native evidence standalone input invalid');
-      addRef(root, enqueue, input.path, true);
-    }
-  }
-  for (const [key, child] of Object.entries(value)) {
-    if (pathFields.has(key) && typeof child === 'string') addRef(root, enqueue, child, packageRelative);
-    else if (key === 'inputs' && Array.isArray(child)) {
-      if (!standaloneBuild) for (const input of child) addRef(root, enqueue, input, packageRelative);
-    } else if (key === 'filename' && typeof child === 'string' && /^[\w.-]+\.tgz$/.test(child))
-      addRef(root, enqueue, '.tmp/releases/' + value.operation_id + '/' + child);
-    else if (key === 'entries' && Array.isArray(child)) {
-      for (const entry of child)
-        if (entry && typeof entry.path === 'string') addRef(root, enqueue, entry.path, packageRelative);
-    } else if (child && typeof child === 'object')
-      references(root, enqueue, child, packageRelative || key === 'pack_metadata');
-  }
+  if (standaloneBuild) addStandaloneInputs(root, enqueue, value.inputs);
+  for (const [key, child] of Object.entries(value))
+    addStructuredReference(root, enqueue, key, child, value, packageRelative, standaloneBuild);
 }
-function closure(root, operation, seal, sourcePass) {
-  const queue = [],
-    nodes = new Set(),
-    queued = new Set();
+/** @param {string} root @param {string} operation @param {SourceSeal} seal @param {RepairSourcePass} sourcePass @param {ReleaseRecord|undefined} releaseProjection @param {(relative: string, validatePath?: boolean) => void} enqueue */
+function seedClosureReferences(root, operation, seal, sourcePass, releaseProjection, enqueue) {
+  const releaseValue = releaseProjection ?? object(root, base(operation) + '/release.json');
+  require(isRecord(releaseValue) && Array.isArray(releaseValue.pack_metadata), 'release metadata invalid');
+  for (const raw of releaseValue.pack_metadata)
+    if (isRecord(raw) && typeof raw.filename === 'string') enqueue('.tmp/releases/' + operation + '/' + raw.filename);
+  require(Array.isArray(seal.entries), 'source seal entries invalid');
+  for (const raw of seal.entries) if (isRecord(raw) && typeof raw.path === 'string') addRef(root, enqueue, raw.path);
+  const current = releaseSourceBinding(root, true, sourcePass);
+  for (const entry of current.entries) addRef(root, enqueue, entry.path);
+  return current;
+}
+/** @param {string} root @param {string} operation @param {Set<string>} nodes @param {RepairSourcePass} sourcePass @param {Map<string, DirectoryObservation>} directories */
+function recordOperationDirectory(root, operation, nodes, sourcePass, directories) {
+  const relative = base(operation);
+  const stat = lstatSync(releasePath(root, relative));
+  const observedIdentity = identity(stat);
+  require(observedIdentity, 'operation directory identity missing');
+  const members = closureDirectoryMembers(root, relative, nodes, sourcePass);
+  directories.set(relative, {
+    path: relative,
+    kind: 'directory',
+    exists: true,
+    identity: observedIdentity,
+    members: members.filter((name) => !/^worker\.sqlite(?:-wal|-shm|-journal)?$/.test(name)),
+  });
+  return members;
+}
+/** @param {string} root @param {string} operation @param {Map<string, FileObservation>} files @param {Map<string, DirectoryObservation>} directories @param {ReturnType<typeof releaseSourceBinding>} current @returns {DependencyClosure} */
+function finishClosure(root, operation, files, directories, current) {
+  for (const target of targets(operation)) if (!files.has(target)) files.set(target, fileObservation(root, target));
+  require(current.observations, 'Source observations missing');
+  return {
+    source_binding: current.source_binding,
+    source_observations: current.observations,
+    files: [...files.values()].sort((a, b) => a.path.localeCompare(b.path)),
+    directories: [...directories.values()].sort((a, b) => a.path.localeCompare(b.path)),
+  };
+}
+/** @param {string} root @param {string} operation @param {string} relative @param {string} name @param {boolean} sourceMode */
+function skipClosureChild(root, operation, relative, name, sourceMode) {
+  const child = relative + '/' + name;
+  if (
+    !sourceMode &&
+    (child.startsWith(repair(operation) + '/') || /^worker\.sqlite(?:-wal|-shm|-journal)?$/.test(name))
+  )
+    return true;
+  if (!sourceMode) return false;
+  const childStat = lstatSync(releasePath(root, child));
+  require(!childStat.isSymbolicLink(), 'native evidence dependency linked');
+  return childStat.isDirectory() && (sourceExcluded.has(name) || sourceScratch.has(child));
+}
+/** @param {string} relative @param {FileObservation} observed @param {Set<string>} parsed */
+function shouldExpandJson(relative, observed, parsed) {
+  return (
+    relative.endsWith('.json') &&
+    observed.exists &&
+    observed.identity !== null &&
+    observed.identity[2] <= 8 * 1024 * 1024 &&
+    !parsed.has(relative)
+  );
+}
+/** @param {string} root @param {string} operation @param {SourceSeal} seal @param {RepairSourcePass} sourcePass @param {ReleaseRecord} [releaseProjection] @returns {DependencyClosure} */
+function closure(root, operation, seal, sourcePass, releaseProjection) {
+  /** @type {Map<string, Buffer>} */
+  const jsonImages = new Map([[base(operation) + '/release.json', Buffer.alloc(0)]]);
+  /** @type {string[]} */
+  const queue = [];
+  /** @type {Set<string>} */
+  const nodes = new Set();
+  /** @type {Set<string>} */
+  const queued = new Set();
+  /** @param {string} relative @param {boolean} [validatePath] */
   const enqueue = (relative, validatePath = false) => {
     const normalized = releaseRelative(relative);
     if (validatePath) releaseRelative(relative);
@@ -159,30 +293,20 @@ function closure(root, operation, seal, sourcePass) {
   enqueue('.agent/work/agent-local-release/pending.json');
   enqueue('.agent/work/agent-local-release/successful.json');
   for (const target of targets(operation)) enqueue(target);
-  const release = object(root, base(operation) + '/release.json');
-  for (const item of release.pack_metadata ?? [])
-    if (typeof item.filename === 'string') enqueue('.tmp/releases/' + operation + '/' + item.filename);
-  for (const entry of seal.entries) addRef(root, enqueue, entry.path);
-  const current = releaseSourceBinding(root, true, sourcePass);
-  for (const entry of current.entries) addRef(root, enqueue, entry.path);
+  const current = seedClosureReferences(root, operation, seal, sourcePass, releaseProjection, enqueue);
+  /** @type {Map<string, FileObservation>} */
   const files = new Map(),
-    directories = new Map(),
-    parsed = new Set();
-  const opRelative = base(operation),
-    opDir = releasePath(root, opRelative);
-  const opStat = lstatSync(opDir);
-  const opMembers = closureDirectoryMembers(root, opRelative, nodes, sourcePass);
-  directories.set(base(operation), {
-    path: base(operation),
-    kind: 'directory',
-    exists: true,
-    identity: identity(opStat),
-    members: opMembers.filter((name) => !/^worker\.sqlite(?:-wal|-shm|-journal)?$/.test(name)),
-  });
+    /** @type {Map<string, DirectoryObservation>} */
+    directories = new Map();
+  /** @type {Set<string>} */
+  const parsed = new Set();
+  const opMembers = recordOperationDirectory(root, operation, nodes, sourcePass, directories);
+  /** @param {string} start @param {boolean} [sourceMode] */
   const walk = (start, sourceMode = false) => {
     const pending = [start];
     while (pending.length) {
       const relative = pending.pop();
+      if (relative === undefined) continue;
       registerClosureNode(nodes, relative, sourcePass);
       const absolute = releasePath(root, relative),
         stat = lstatSync(absolute);
@@ -193,26 +317,17 @@ function closure(root, operation, seal, sourcePass) {
           path: relative,
           kind: 'directory',
           exists: true,
-          identity: identity(stat),
+          identity: /** @type {FileIdentity} */ (identity(stat)),
           members,
         });
         if (sourceMode && sourceScratch.has(relative)) continue;
         for (const name of members) {
           const child = relative + '/' + name;
-          if (
-            !sourceMode &&
-            (child.startsWith(repair(operation) + '/') || /^worker\.sqlite(?:-wal|-shm|-journal)?$/.test(name))
-          )
-            continue;
-          if (sourceMode) {
-            const childStat = lstatSync(releasePath(root, child));
-            require(!childStat.isSymbolicLink(), 'native evidence dependency linked');
-            if (childStat.isDirectory() && (sourceExcluded.has(name) || sourceScratch.has(child))) continue;
-          }
+          if (skipClosureChild(root, operation, relative, name, sourceMode)) continue;
           pending.push(child);
         }
       } else {
-        files.set(relative, fileObservation(root, relative));
+        files.set(relative, fileObservation(root, relative, jsonImages));
         if (relative.endsWith('.json')) enqueue(relative);
       }
     }
@@ -222,27 +337,26 @@ function closure(root, operation, seal, sourcePass) {
     if (name === 'native-delivery-evidence' || /^worker\.sqlite(?:-wal|-shm|-journal)?$/.test(name)) continue;
     walk(base(operation) + '/' + name);
   }
+  /** @param {string} relative @param {FileObservation} observed */
   const expandJson = (relative, observed) => {
-    if (
-      !relative.endsWith('.json') ||
-      !observed.exists ||
-      observed.identity[2] > 8 * 1024 * 1024 ||
-      parsed.has(relative)
-    )
-      return;
+    if (!shouldExpandJson(relative, observed, parsed)) return;
     parsed.add(relative);
-    const bytes = read(root, relative);
+    const bytes = jsonImages.get(relative) ?? read(root, relative);
     require(sha(bytes) === observed.sha256, 'native evidence dependency changed during closure: ' + relative);
+    /** @type {unknown} */
     const parsedValue = JSON.parse(bytes.toString('utf8'));
     references(
       root,
       enqueue,
       parsedValue,
-      relative.startsWith('packages/agent/') && parsedValue.schema === 'VidaStandaloneBuild/v1',
+      relative.startsWith('packages/agent/') &&
+        isRecord(parsedValue) &&
+        parsedValue.schema === 'VidaStandaloneBuild/v1',
     );
   };
   for (let cursor = 0; cursor < queue.length; cursor++) {
     const relative = queue[cursor];
+    if (relative === undefined) continue;
     if (relative.startsWith(repair(operation) + '/') || directories.has(relative)) continue;
     const inventoried = files.get(relative);
     if (inventoried) {
@@ -253,7 +367,7 @@ function closure(root, operation, seal, sourcePass) {
       stat = lstatSync(file, { throwIfNoEntry: false });
     const parent = path.posix.dirname(relative),
       parentPath = parent === '.' ? null : releasePath(root, parent, true),
-      parentStat = parentPath && lstatSync(parentPath, { throwIfNoEntry: false });
+      parentStat = parentPath ? lstatSync(parentPath, { throwIfNoEntry: false }) : null;
     if (parentStat?.isDirectory() && !directories.has(parent)) {
       const members = closureDirectoryMembers(root, parent, nodes, sourcePass).filter(
         (name) =>
@@ -263,35 +377,31 @@ function closure(root, operation, seal, sourcePass) {
         path: parent,
         kind: 'directory',
         exists: true,
-        identity: identity(parentStat),
+        identity: /** @type {FileIdentity} */ (identity(parentStat)),
         members,
       });
     }
     registerClosureNode(nodes, relative, sourcePass);
     if (!stat) {
-      files.set(relative, fileObservation(root, relative));
+      files.set(relative, fileObservation(root, relative, jsonImages));
       continue;
     }
     if (stat.isDirectory()) {
       walk(relative, true);
     } else {
-      const observed = fileObservation(root, relative);
+      const observed = fileObservation(root, relative, jsonImages);
       files.set(relative, observed);
       expandJson(relative, observed);
     }
   }
   // Preserve explicit absences for the three repair targets and all reader references.
-  for (const target of targets(operation)) if (!files.has(target)) files.set(target, fileObservation(root, target));
-  return {
-    source_binding: current.source_binding,
-    source_observations: current.observations,
-    files: [...files.values()].sort((a, b) => a.path.localeCompare(b.path)),
-    directories: [...directories.values()].sort((a, b) => a.path.localeCompare(b.path)),
-  };
+  return finishClosure(root, operation, files, directories, current);
 }
+/** @param {string} root @param {DependencyClosure} expected @param {string} operation @param {RepairSourcePass} sourcePass */
 function sameClosure(root, expected, operation, sourcePass) {
-  const mutable = new Set(targets(operation)),
-    nodes = new Set();
+  const mutable = new Set(targets(operation));
+  /** @type {Set<string>} */
+  const nodes = new Set();
   for (const item of expected.files)
     if (!mutable.has(item.path)) {
       registerClosureNode(nodes, item.path, sourcePass);
@@ -326,12 +436,8 @@ function sameClosure(root, expected, operation, sourcePass) {
   require(current.source_binding === expected.source_binding &&
     json(current.observations) === json(expected.source_observations), 'Source or dependency binding changed');
 }
-function eligible(root, operation) {
-  require(releaseIdPattern.test(operation), 'operation invalid');
-  releasePath(root, 'packages/agent/package.json');
-  const manifest = object(root, 'packages/agent/package.json'),
-    state = releaseState(releasePath(root, base(operation) + '/release.json')),
-    pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+/** @param {JsonRecord} manifest @param {ReleaseState} state @param {ReleaseState} pending @param {string} operation */
+function assertEligibleRelease(manifest, state, pending, operation) {
   require(manifest.name === 'vida-agent' &&
     state.operation_id === operation &&
     pending.operation_id === operation &&
@@ -339,37 +445,148 @@ function eligible(root, operation) {
     state.version === manifest.version &&
     state.status === 'awaiting_assurance' &&
     !state.install_started, 'original operation is not eligible');
-  return { state, pending };
 }
-function validateSeal(root, operation, state, sourcePass) {
-  const value = object(root, base(operation) + '/source-seal.json');
+/** @param {string} root @param {string} operation @returns {{state: ReleaseRecord, pending: ReleaseState}} */
+function eligible(root, operation) {
+  require(releaseIdPattern.test(operation), 'operation invalid');
+  releasePath(root, 'packages/agent/package.json');
+  const manifestValue = object(root, 'packages/agent/package.json');
+  require(isRecord(manifestValue) &&
+    typeof manifestValue.name === 'string' &&
+    typeof manifestValue.version === 'string', 'package manifest invalid');
+  const manifest = manifestValue;
+  const rawState = releaseState(releasePath(root, base(operation) + '/release.json'));
+  const rawPending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+  const state = rawState;
+  const pending = rawPending;
+  assertEligibleRelease(manifest, state, pending, operation);
+  require(typeof rawState.source_binding === 'string' &&
+    typeof rawState.tarball_sha256 === 'string', 'release binding fields invalid');
+  return {
+    state: {
+      ...state,
+      source_binding: rawState.source_binding,
+      tarball_sha256: rawState.tarball_sha256,
+      pack_metadata: packMetadata(rawState.pack_metadata),
+    },
+    pending,
+  };
+}
+/** @param {JsonRecord} value @param {boolean} required @param {string} message */
+function assertSealEntries(value, required, message) {
+  require(Array.isArray(value.entries) &&
+    (!required || value.entries.length > 0) &&
+    value.entries.every(
+      (entry) =>
+        isRecord(entry) &&
+        typeof entry.path === 'string' &&
+        typeof entry.sha256 === 'string' &&
+        /^[a-f0-9]{64}$/.test(entry.sha256),
+    ), message);
+}
+/** @param {JsonRecord} value @param {string} message */
+function assertSealDigests(value, message) {
+  require(sha(JSON.stringify(value.entries)) === value.source_binding &&
+    value.sealed_fingerprint === sha(JSON.stringify([value.source_binding, value.tarball_sha256])), message);
+}
+/** @param {unknown} value @returns {asserts value is JsonRecord} */
+function assertSealKeys(value) {
   keys(value, ['operation_id', 'version', 'source_binding', 'entries', 'tarball_sha256', 'sealed_fingerprint']);
-  require(value.operation_id === operation &&
-    value.version === state.version &&
-    value.source_binding === state.source_binding &&
-    value.tarball_sha256 === state.tarball_sha256 &&
-    Array.isArray(value.entries) &&
-    value.entries.length > 0 &&
-    sha(JSON.stringify(value.entries)) === value.source_binding &&
-    value.sealed_fingerprint ===
-      sha(
-        JSON.stringify([value.source_binding, value.tarball_sha256]),
-      ), 'source seal does not bind the original release');
-  const current = releaseSourceBinding(root, true, sourcePass);
-  require(value.source_binding !==
-    current.source_binding, 'source seal is current; stale qualification repair is not applicable');
+}
+/** @param {JsonRecord} value @param {string} operation @param {string} version @param {string} sourceBinding @param {string} tarballSha @param {string} message */
+function assertSealIdentity(value, operation, version, sourceBinding, tarballSha, message) {
+  require(typeof value.operation_id === 'string' &&
+    typeof value.version === 'string' &&
+    typeof value.source_binding === 'string' &&
+    typeof value.tarball_sha256 === 'string' &&
+    typeof value.sealed_fingerprint === 'string' &&
+    value.operation_id === operation &&
+    value.version === version &&
+    value.source_binding === sourceBinding &&
+    value.tarball_sha256 === tarballSha, message);
+}
+/** @param {string} root @param {string} operation @param {ReleaseRecord} state @param {string} digest */
+function assertArchiveDigest(root, operation, state, digest) {
   const archive = selectedTarball(
     state.pack_metadata,
     path.dirname(releasePath(root, '.tmp/releases/' + operation + '/' + state.pack_metadata[0].filename)),
     state.version,
   );
-  require(sha(readFileSync(archive)) === value.tarball_sha256, 'source seal archive binding differs');
-  return value;
+  require(sha(readFileSync(archive)) === digest, 'source seal archive binding differs');
 }
+/** @param {string} root @param {string} operation @param {ReleaseRecord} state @param {RepairSourcePass} sourcePass @returns {SourceSeal} */
+function validateSeal(root, operation, state, sourcePass) {
+  const value = object(root, base(operation) + '/source-seal.json');
+  assertSealKeys(value);
+  const invalidSeal = 'source seal does not bind the original release';
+  assertSealIdentity(value, operation, state.version, state.source_binding, state.tarball_sha256, invalidSeal);
+  assertSealEntries(value, true, invalidSeal);
+  assertSealDigests(value, invalidSeal);
+  const current = releaseSourceBinding(root, true, sourcePass);
+  require(value.source_binding !==
+    current.source_binding, 'source seal is current; stale qualification repair is not applicable');
+  assertArchiveDigest(root, operation, state, state.tarball_sha256);
+  return /** @type {SourceSeal} */ (/** @type {unknown} */ (value));
+}
+/** @param {unknown} entry @returns {string} */
+function testLane(entry) {
+  require(isRecord(entry) && typeof entry.lane === 'string', 'current local test lane invalid');
+  return entry.lane;
+}
+/** @param {unknown} entry @returns {string} */
+function observationPath(entry) {
+  require(isRecord(entry) && typeof entry.path === 'string', 'native evidence observation path invalid');
+  return entry.path;
+}
+/** @typedef {{lane: string, path: string, inputs: string[], input_binding: string, sha256: string}} TestEntry */
+/** @param {unknown} entry @returns {TestEntry} */
+function assertTestEntry(entry) {
+  keys(entry, ['lane', 'path', 'inputs', 'input_binding', 'sha256']);
+  require(typeof entry.lane === 'string' &&
+    typeof entry.path === 'string' &&
+    typeof entry.input_binding === 'string' &&
+    typeof entry.sha256 === 'string' &&
+    Array.isArray(entry.inputs) &&
+    entry.inputs.length > 0 &&
+    /^[a-f0-9]{64}$/.test(entry.input_binding) &&
+    /^[a-f0-9]{64}$/.test(entry.sha256), 'current local test entry invalid');
+  require(entry.inputs.every((input) => typeof input === 'string') &&
+    new Set(entry.inputs).size === entry.inputs.length, 'current local test input set invalid');
+  return {
+    lane: entry.lane,
+    path: entry.path,
+    inputs: entry.inputs,
+    input_binding: entry.input_binding,
+    sha256: entry.sha256,
+  };
+}
+/** @param {string} root @param {TestEntry} entry */
+function assertSuccessfulTestLog(root, entry) {
+  const log = read(root, entry.path);
+  require(sha(log) === entry.sha256, 'current local test log differs');
+  /** @type {unknown} */
+  const result = JSON.parse(log.toString('utf8'));
+  require(isRecord(result) &&
+    result.exit_code === 0 &&
+    result.command &&
+    result.started_at &&
+    result.completed_at, 'successful current local test log required');
+}
+/** @param {string} root @param {TestEntry} entry @param {boolean} current @param {RepairSourcePass|undefined} sourcePass */
+function assertCurrentTestBinding(root, entry, current, sourcePass) {
+  if (!current) return;
+  const inputs = entry.inputs
+    .slice()
+    .sort()
+    .flatMap((relative) => releaseSourceInputs(root, relative, undefined, sourcePass));
+  require(entry.input_binding === sha(JSON.stringify(inputs)), 'new test evidence is not bound to current inputs');
+}
+/** @param {string} root @param {string} operation @param {ReleaseRecord} state @param {boolean} [current] @param {RepairSourcePass} [sourcePass] @returns {boolean} */
 function validateTestsFile(root, operation, state, current = false, sourcePass) {
   const testsPath = base(operation) + '/tests.json';
   const testsFile = releasePath(root, testsPath, true);
   if (existsSync(testsFile)) {
+    /** @type {unknown} */
     const tests = JSON.parse(read(root, testsPath).toString('utf8'));
     keys(tests, ['schema', 'operation_id', 'version', 'tests']);
     require(tests.schema === 'VidaLocalReleaseTests/v1' &&
@@ -377,84 +594,75 @@ function validateTestsFile(root, operation, state, current = false, sourcePass) 
       tests.version === state.version &&
       Array.isArray(tests.tests), 'current local test record invalid');
     require(tests.tests.length === 3 &&
-      tests.tests
-        .map((entry) => entry.lane)
-        .sort()
-        .join() === ['release-local', 'retained-behavior', 'static'].join(), 'current local test lanes differ');
-    for (const entry of tests.tests) {
-      keys(entry, ['lane', 'path', 'inputs', 'input_binding', 'sha256']);
-      require(typeof entry.lane === 'string' &&
-        Array.isArray(entry.inputs) &&
-        entry.inputs.length > 0 &&
-        /^[a-f0-9]{64}$/.test(entry.input_binding) &&
-        /^[a-f0-9]{64}$/.test(entry.sha256), 'current local test entry invalid');
-      require(new Set(entry.inputs).size === entry.inputs.length, 'current local test input set invalid');
-      const log = read(root, entry.path);
-      require(sha(log) === entry.sha256, 'current local test log differs');
-      const result = JSON.parse(log.toString('utf8'));
-      require(result.exit_code === 0 &&
-        result.command &&
-        result.started_at &&
-        result.completed_at, 'successful current local test log required');
-      if (current) {
-        const inputs = entry.inputs
-          .slice()
-          .sort()
-          .flatMap((relative) => releaseSourceInputs(root, relative, undefined, sourcePass));
-        require(entry.input_binding ===
-          sha(JSON.stringify(inputs)), 'new test evidence is not bound to current inputs');
-      }
+      tests.tests.map(testLane).sort().join() ===
+        ['release-local', 'retained-behavior', 'static'].join(), 'current local test lanes differ');
+    for (const rawEntry of tests.tests) {
+      const entry = assertTestEntry(rawEntry);
+      assertSuccessfulTestLog(root, entry);
+      assertCurrentTestBinding(root, entry, current, sourcePass);
     }
   }
   return existsSync(testsFile);
 }
+/** @param {unknown} assurance @param {string} operation @param {SourceSeal} seal @returns {{sealed_fingerprint: string, reviews: unknown[]}} */
+function assertCurrentAssurance(assurance, operation, seal) {
+  keys(assurance, [
+    'schema',
+    'operation_id',
+    'sealed_fingerprint',
+    'scope_path',
+    'clear_work_id',
+    'repository_id',
+    'project_id',
+    'reviews',
+  ]);
+  require(typeof seal.sealed_fingerprint === 'string' &&
+    typeof assurance.sealed_fingerprint === 'string' &&
+    assurance.schema === 'VidaLocalReleaseAssurance/v1' &&
+    assurance.operation_id === operation &&
+    assurance.sealed_fingerprint === seal.sealed_fingerprint &&
+    Array.isArray(assurance.reviews), 'current assurance record invalid');
+  return { sealed_fingerprint: assurance.sealed_fingerprint, reviews: assurance.reviews };
+}
+/** @param {string} root @param {string} operation @param {SourceSeal} seal @returns {boolean} */
 function validateAssuranceFile(root, operation, seal) {
   const assurancePath = base(operation) + '/assurance.json';
   const assuranceFile = releasePath(root, assurancePath, true);
   if (existsSync(assuranceFile)) {
+    /** @type {unknown} */
     const assurance = JSON.parse(read(root, assurancePath).toString('utf8'));
-    keys(assurance, [
-      'schema',
-      'operation_id',
-      'sealed_fingerprint',
-      'scope_path',
-      'clear_work_id',
-      'repository_id',
-      'project_id',
-      'reviews',
-    ]);
-    require(assurance.schema === 'VidaLocalReleaseAssurance/v1' &&
-      assurance.operation_id === operation &&
-      assurance.sealed_fingerprint === seal.sealed_fingerprint &&
-      Array.isArray(assurance.reviews), 'current assurance record invalid');
-    verifyForwardReviewSet(root, operation, seal.sealed_fingerprint, assurance.reviews, '.agent/release-assurance');
+    const current = assertCurrentAssurance(assurance, operation, seal);
+    verifyForwardReviewSet(root, operation, current.sealed_fingerprint, current.reviews, '.agent/release-assurance');
   }
   return existsSync(assuranceFile);
 }
+/** @param {string} root @param {string} operation @param {ReleaseRecord} state @param {SourceSeal} seal */
 function validateJoinFiles(root, operation, state, seal) {
   validateTestsFile(root, operation, state);
   validateAssuranceFile(root, operation, seal);
 }
-function currentSeal(root, operation, state, sourcePass) {
+/** @param {string} root @param {string} operation @param {ReleaseRecord} state @param {RepairSourcePass} sourcePass @returns {SourceSeal} */
+function currentSealValue(root, operation, state, sourcePass) {
   const value = object(root, base(operation) + '/source-seal.json');
-  keys(value, ['operation_id', 'version', 'source_binding', 'entries', 'tarball_sha256', 'sealed_fingerprint']);
+  assertSealKeys(value);
   const current = releaseSourceBinding(root, true, sourcePass);
-  require(value.operation_id === operation &&
-    value.version === state.version &&
-    value.source_binding === current.source_binding &&
-    Array.isArray(value.entries) &&
-    sha(JSON.stringify(value.entries)) === value.source_binding &&
-    value.tarball_sha256 === state.tarball_sha256 &&
-    value.sealed_fingerprint ===
-      sha(JSON.stringify([value.source_binding, value.tarball_sha256])), 'current source seal binding differs');
+  const invalidSeal = 'current source seal binding differs';
+  assertSealIdentity(value, operation, state.version, current.source_binding, state.tarball_sha256, invalidSeal);
+  assertSealEntries(value, false, invalidSeal);
+  assertSealDigests(value, invalidSeal);
   const archive = selectedTarball(
     state.pack_metadata,
     path.dirname(releasePath(root, '.tmp/releases/' + operation + '/' + state.pack_metadata[0].filename)),
     state.version,
   );
   require(sha(readFileSync(archive)) === value.tarball_sha256, 'current source seal archive differs');
-  return value;
+  return /** @type {SourceSeal} */ (/** @type {unknown} */ (value));
 }
+/** @param {string} root @param {string} operation @param {ReleaseRecord} state @param {RepairSourcePass} sourcePass @returns {SourceSeal} */
+function currentSeal(root, operation, state, sourcePass) {
+  return currentSealValue(root, operation, state, sourcePass);
+}
+/** @param {unknown} value @param {string} schema @param {readonly string[]} fields @returns {JsonRecord} */
 function unseal(value, schema, fields) {
   keys(value, [...fields, 'digest']);
   const { digest, ...body } = value;
@@ -472,54 +680,205 @@ const planFields = [
   'beforeimages',
 ];
 const stateFields = ['schema', 'operation_id', 'plan_digest', 'phase'];
+
+/** @param {unknown} value @returns {FileObservation} */
+function parseFileObservation(value) {
+  require(isRecord(value), 'native evidence file observation invalid');
+  const observedPath = validateFileObservationKeys(value);
+  return value.exists
+    ? parsePresentFileObservation(value, observedPath)
+    : parseAbsentFileObservation(value, observedPath);
+}
+/** @param {JsonRecord} value @returns {string} */
+function validateFileObservationKeys(value) {
+  const expected = ['path', 'kind', 'exists', 'identity', 'sha256'];
+  keys(value, Object.hasOwn(value, 'copy') ? [...expected, 'copy'] : expected);
+  const observedPath = releaseRelative(value.path);
+  require(value.kind === 'file' && typeof value.exists === 'boolean', 'native evidence file kind invalid');
+  return observedPath;
+}
+/** @param {JsonRecord} value @param {string} observedPath @returns {FileObservation} */
+function parseAbsentFileObservation(value, observedPath) {
+  require(value.identity === null &&
+    value.sha256 === null &&
+    (!Object.hasOwn(value, 'copy') || value.copy === null), 'absent native evidence file has an image');
+  return {
+    path: observedPath,
+    kind: 'file',
+    exists: false,
+    identity: null,
+    sha256: null,
+    ...(Object.hasOwn(value, 'copy') ? { copy: null } : {}),
+  };
+}
+/** @param {JsonRecord} value @param {string} observedPath @returns {FileObservation} */
+function parsePresentFileObservation(value, observedPath) {
+  const observedIdentity = parseReleaseFileIdentity(value.identity);
+  require(typeof value.sha256 === 'string' && /^[a-f0-9]{64}$/.test(value.sha256), 'native evidence file hash invalid');
+  const copy = Object.hasOwn(value, 'copy') ? releaseRelative(value.copy) : undefined;
+  return {
+    path: observedPath,
+    kind: 'file',
+    exists: true,
+    identity: observedIdentity,
+    sha256: value.sha256,
+    ...(copy === undefined ? {} : { copy }),
+  };
+}
+/** @param {unknown} value @returns {DirectoryObservation} */
+function parseDirectoryObservation(value) {
+  keys(value, ['path', 'kind', 'exists', 'identity', 'members']);
+  require(value.kind === 'directory' &&
+    value.exists === true &&
+    Array.isArray(value.members), 'native evidence directory observation invalid');
+  const members = value.members.map((member) => {
+    const name = releaseRelative(member);
+    require(!name.includes('/'), 'native evidence directory member is not a name');
+    return name;
+  });
+  require(new Set(members).size === members.length, 'native evidence directory members duplicate');
+  return {
+    path: releaseRelative(value.path),
+    kind: 'directory',
+    exists: true,
+    identity: parseReleaseFileIdentity(value.identity),
+    members,
+  };
+}
+/** @param {unknown} value @returns {DependencyClosure} */
+function parseDependencyClosure(value) {
+  keys(value, ['source_binding', 'source_observations', 'files', 'directories']);
+  require(typeof value.source_binding === 'string' &&
+    /^[a-f0-9]{64}$/.test(value.source_binding), 'native evidence closure Source binding invalid');
+  require(Array.isArray(value.source_observations) &&
+    Array.isArray(value.files) &&
+    Array.isArray(value.directories), 'native evidence closure inventory invalid');
+  return {
+    source_binding: value.source_binding,
+    source_observations: value.source_observations.map(parseReleaseSourceObservation),
+    files: value.files.map(parseFileObservation),
+    directories: value.directories.map(parseDirectoryObservation),
+  };
+}
+/** @param {string} op @returns {string} */
 function planFile(op) {
   return repair(op) + '/plan.json';
 }
+/** @param {string} op @returns {string} */
 function stateFile(op) {
   return repair(op) + '/state.json';
 }
+/** @param {unknown} value @param {string} operation @returns {{operation_id: string, version: string, source_before: string, actor: string, digest: string}} */
+function assertPlanHeader(value, operation) {
+  require(isRecord(value) &&
+    typeof value.operation_id === 'string' &&
+    typeof value.version === 'string' &&
+    typeof value.source_before === 'string' &&
+    typeof value.digest === 'string' &&
+    value.operation_id === operation &&
+    releaseIdPattern.test(operation) &&
+    typeof value.actor === 'string' &&
+    value.actor.trim() &&
+    value.actor.length <= 256, 'native evidence repair plan identity differs');
+  return {
+    operation_id: value.operation_id,
+    version: value.version,
+    source_before: value.source_before,
+    actor: value.actor,
+    digest: value.digest,
+  };
+}
+/** @param {JsonRecord} item @param {string} operation @param {number} index */
+function assertPresentBeforeimage(item, operation, index) {
+  require(Array.isArray(item.identity) &&
+    item.identity.length === 5 &&
+    item.identity.every((part) => typeof part === 'number' && Number.isFinite(part)) &&
+    typeof item.copy === 'string' &&
+    typeof item.sha256 === 'string' &&
+    /^[a-f0-9]{64}$/.test(item.sha256) &&
+    item.copy === repair(operation) + '/custody/before-' + index + '.bin', 'native evidence beforeimage differs');
+}
+/** @param {unknown} item @param {string} operation @param {number} index */
+function assertBeforeimage(item, operation, index) {
+  keys(item, ['path', 'kind', 'exists', 'identity', 'sha256', 'copy']);
+  require(item.kind === 'file' && typeof item.exists === 'boolean', 'native evidence beforeimage differs');
+  if (item.exists) {
+    assertPresentBeforeimage(item, operation, index);
+    return;
+  }
+  require(item.identity === null && item.sha256 === null && item.copy === null, 'native evidence beforeimage differs');
+}
+/** @param {JsonRecord} plan @param {string} operation @returns {FileObservation[]} */
+function assertPlanBeforeimages(plan, operation) {
+  const beforeimages = plan.beforeimages;
+  require(Array.isArray(beforeimages) && beforeimages.length === 3, 'native evidence repair plan identity differs');
+  require(beforeimages.every(
+    (item) => isRecord(item) && typeof item.path === 'string',
+  ), 'native evidence repair plan identity differs');
+  require(beforeimages.map(observationPath).join() ===
+    targets(operation).join(), 'native evidence repair plan identity differs');
+  for (const [index, item] of beforeimages.entries()) assertBeforeimage(item, operation, index);
+  return beforeimages.map(parseFileObservation);
+}
+/** @param {unknown} value @returns {JsonRecord} */
+function assertReleaseBeforeimage(value) {
+  require(isRecord(value) && isRecord(value.pending), 'native evidence repair release beforeimage invalid');
+  require(Object.keys(value).sort().join() ===
+    ['operation_id', 'version', 'status', 'source_binding', 'tarball_sha256', 'pending'].sort().join() &&
+    typeof value.operation_id === 'string' &&
+    typeof value.version === 'string' &&
+    typeof value.status === 'string' &&
+    typeof value.source_binding === 'string' &&
+    typeof value.tarball_sha256 === 'string', 'native evidence repair release beforeimage invalid');
+  require(Object.keys(value.pending).sort().join() === ['operation_id', 'version'].sort().join() &&
+    typeof value.pending.operation_id === 'string' &&
+    typeof value.pending.version === 'string', 'native evidence repair release beforeimage invalid');
+  return value;
+}
+/** @param {string} root @param {string} operation @returns {RepairPlan} */
 function loadPlan(root, operation) {
   const plan = unseal(object(root, planFile(operation)), 'NativeDeliveryEvidenceRepairPlan/v1', planFields);
-  require(plan.operation_id === operation &&
-    releaseIdPattern.test(operation) &&
-    typeof plan.actor === 'string' &&
-    plan.actor.trim() &&
-    plan.actor.length <= 256 &&
-    Array.isArray(plan.beforeimages) &&
-    plan.beforeimages.length === 3 &&
-    plan.beforeimages.map((item) => item.path).join() ===
-      targets(operation).join(), 'native evidence repair plan identity differs');
-  for (const [index, item] of plan.beforeimages.entries()) {
-    keys(item, ['path', 'kind', 'exists', 'identity', 'sha256', 'copy']);
-    require(item.kind === 'file' &&
-      typeof item.exists === 'boolean' &&
-      (item.exists
-        ? Array.isArray(item.identity) &&
-          /^[a-f0-9]{64}$/.test(item.sha256) &&
-          item.copy === repair(operation) + '/custody/before-' + index + '.bin'
-        : item.identity === null && item.sha256 === null && item.copy === null), 'native evidence beforeimage differs');
-  }
-  return plan;
+  const header = assertPlanHeader(plan, operation);
+  const beforeimages = assertPlanBeforeimages(plan, operation);
+  const releaseBefore = assertReleaseBeforeimage(plan.release_before);
+  return {
+    ...plan,
+    ...header,
+    release_before: releaseBefore,
+    closure: parseDependencyClosure(plan.closure),
+    beforeimages,
+  };
 }
+/** @param {JsonRecord} state @param {string} operation @param {RepairPlan} plan */
+function assertPhaseIdentity(state, operation, plan) {
+  require(typeof state.operation_id === 'string' &&
+    typeof state.plan_digest === 'string' &&
+    typeof state.phase === 'string' &&
+    state.operation_id === operation &&
+    state.plan_digest === plan.digest &&
+    phaseNames.includes(state.phase), 'native evidence repair phase differs');
+}
+/** @param {string} root @param {string} operation @param {RepairPlan} plan @returns {RepairState|null} */
 function phase(root, operation, plan) {
   const file = releasePath(root, stateFile(operation), true);
   if (!existsSync(file)) return null;
   const state = unseal(object(root, stateFile(operation)), 'NativeDeliveryEvidenceRepairState/v1', stateFields);
-  require(state.operation_id === operation &&
-    state.plan_digest === plan.digest &&
-    phaseNames.includes(state.phase), 'native evidence repair phase differs');
-  return state;
+  assertPhaseIdentity(state, operation, plan);
+  return /** @type {RepairState} */ (/** @type {unknown} */ (state));
 }
+/** @param {string} root @returns {Promise<Awaited<ReturnType<typeof safeRoot>>>} */
 async function access(root) {
   const packageFile = releasePath(root, 'packages/agent/package.json');
   require(realpathSync(packageFile) === packageFile, 'package containment differs');
   return safeRoot(root, { hardlinks: 'reject', symlinks: 'reject', maxBytes: 512 * 1024 * 1024, mode: 0o600 });
 }
+/** @param {string} root @param {string} operation */
 function reserve(root, operation) {
   const relative = repair(operation);
   releaseDirectory(root, base(operation));
   mkdirSync(releasePath(root, relative, true), { mode: 0o700 });
 }
+/** @param {Awaited<ReturnType<typeof safeRoot>>} api @param {string} operation @param {RepairPlan} plan @param {string} value */
 async function savePhase(api, operation, plan, value) {
   await api.write(
     stateFile(operation),
@@ -533,6 +892,7 @@ async function savePhase(api, operation, plan, value) {
     ),
   );
 }
+/** @param {string} root @param {string} operation @param {RepairPlan} plan @returns {JsonRecord} */
 function custodyRows(root, operation, plan) {
   const file = repair(operation) + '/custody/seal.json';
   const custody = unseal(object(root, file), 'NativeDeliveryEvidenceRepairCustody/v1', [
@@ -541,21 +901,38 @@ function custodyRows(root, operation, plan) {
     'plan_digest',
     'beforeimages',
   ]);
-  require(custody.operation_id === operation &&
-    custody.plan_digest === plan.digest &&
-    json(custody.beforeimages) === json(plan.beforeimages), 'native evidence custody differs');
-  for (const before of custody.beforeimages) {
+  assertCustodyIdentity(custody, operation, plan);
+  for (const before of /** @type {FileObservation[]} */ (custody.beforeimages)) {
     if (!before.exists) continue;
-    const current = fileObservation(root, before.copy);
-    require(current.exists && current.sha256 === before.sha256, 'native evidence beforeimage custody changed');
+    assertCustodyBeforeimage(root, before);
   }
   return custody;
 }
+/** @param {JsonRecord} custody @param {string} operation @param {RepairPlan} plan */
+function assertCustodyIdentity(custody, operation, plan) {
+  require(typeof custody.operation_id === 'string' &&
+    typeof custody.plan_digest === 'string' &&
+    custody.operation_id === operation &&
+    typeof custody.beforeimages === 'object' &&
+    Array.isArray(custody.beforeimages) &&
+    custody.plan_digest === plan.digest &&
+    json(custody.beforeimages) === json(plan.beforeimages), 'native evidence custody differs');
+}
+/** @param {string} root @param {FileObservation} before */
+function assertCustodyBeforeimage(root, before) {
+  require(typeof before.copy === 'string', 'native evidence custody path missing');
+  const current = fileObservation(root, before.copy);
+  require(current.exists && current.sha256 === before.sha256, 'native evidence beforeimage custody changed');
+}
+/** @param {string} root @param {FileObservation} entry @returns {FileObservation} */
 function currentTarget(root, entry) {
   return fileObservation(root, entry.path);
 }
+/** @param {string} root @param {string} operation @param {RepairPlan} plan @param {RepairState} state @param {boolean} [allowTargetOutputs] @param {RepairSourcePass} [sourcePass] */
 function validateContinuity(root, operation, plan, state, allowTargetOutputs = false, sourcePass) {
-  const { state: original, pending } = eligible(root, operation);
+  const eligibleRelease = eligible(root, operation);
+  const original = eligibleRelease.state;
+  const { pending } = eligibleRelease;
   const { pending: frozenPending, ...releaseBefore } = plan.release_before;
   require(json({
     operation_id: original.operation_id,
@@ -566,6 +943,7 @@ function validateContinuity(root, operation, plan, state, allowTargetOutputs = f
   }) === json(releaseBefore), 'release identity changed');
   require(json({ operation_id: pending.operation_id, version: pending.version }) ===
     json(frozenPending), 'pending identity changed');
+  require(sourcePass, 'repair Source pass missing');
   sameClosure(root, plan.closure, operation, sourcePass);
   custodyRows(root, operation, plan);
   if (state.phase === 'complete') {
@@ -603,8 +981,11 @@ function validateContinuity(root, operation, plan, state, allowTargetOutputs = f
         }), 'unstarted evidence beforeimage changed');
   }
 }
+/** @param {string} root @param {string} operation @param {RepairPlan} plan @param {RepairState} state @param {RepairSourcePass} sourcePass */
 function validateCompletedReset(root, operation, plan, state, sourcePass) {
-  const { state: original, pending } = eligible(root, operation);
+  const eligibleRelease = eligible(root, operation);
+  const original = eligibleRelease.state;
+  const { pending } = eligibleRelease;
   const { pending: frozenPending, ...releaseBefore } = plan.release_before;
   require(state.phase === 'complete' &&
     json({
@@ -620,6 +1001,7 @@ function validateCompletedReset(root, operation, plan, state, sourcePass) {
   const tests = validateTestsFile(root, operation, original, true, sourcePass);
   const sealPath = releasePath(root, base(operation) + '/source-seal.json', true);
   const assurancePath = releasePath(root, base(operation) + '/assurance.json', true);
+  /** @type {SourceSeal|undefined} */
   let seal;
   if (existsSync(sealPath)) seal = currentSeal(root, operation, original, sourcePass);
   if (existsSync(assurancePath)) {
@@ -627,33 +1009,40 @@ function validateCompletedReset(root, operation, plan, state, sourcePass) {
     validateAssuranceFile(root, operation, seal);
   }
 }
+/** @param {string} root @param {string} operation @param {RepairSourcePass} sourcePass @returns {{state: ReleaseRecord, pending: ReleaseState, seal: SourceSeal}} */
 function eligibleForPlan(root, operation, sourcePass) {
-  const { state, pending } = eligible(root, operation),
-    seal = validateSeal(root, operation, state, sourcePass);
+  const eligibleRelease = eligible(root, operation);
+  const state = eligibleRelease.state;
+  const { pending } = eligibleRelease;
+  const seal = validateSeal(root, operation, state, sourcePass);
   validateJoinFiles(root, operation, state, seal);
   return { state, pending, seal };
 }
+/** @param {string} root @param {string} operation @param {RepairSourcePass} sourcePass @returns {JsonRecord} */
+function inspectStoredRepair(root, operation, sourcePass) {
+  const plan = loadPlan(root, operation),
+    state = phase(root, operation, plan);
+  require(state, 'repair phase missing; UNKNOWN');
+  if (state.phase === 'complete') validateCompletedReset(root, operation, plan, state, sourcePass);
+  else validateContinuity(root, operation, plan, state, true, sourcePass);
+  return {
+    status: state.phase === 'complete' ? 'awaiting_new_qualification' : state.phase,
+    operation_id: operation,
+    version: plan.version,
+    gaps: [
+      'fresh current local tests, source seal, CI/CD results and three reviews with reverse validation and current CLEAR remain required',
+    ],
+    qualified: false,
+  };
+}
+/** @param {{root: string, operation: string}} input @returns {Promise<JsonRecord>} */
 export async function inspectNativeDeliveryEvidenceRepair({ root, operation }) {
   try {
     const sourcePass = createRepairSourcePass();
-    if (existsSync(releasePath(root, planFile(operation), true))) {
-      const plan = loadPlan(root, operation),
-        state = phase(root, operation, plan);
-      require(state, 'repair phase missing; UNKNOWN');
-      if (state.phase === 'complete') validateCompletedReset(root, operation, plan, state, sourcePass);
-      else validateContinuity(root, operation, plan, state, true, sourcePass);
-      return {
-        status: state.phase === 'complete' ? 'awaiting_new_qualification' : state.phase,
-        operation_id: operation,
-        version: plan.version,
-        gaps: [
-          'fresh current local tests, source seal, CI/CD results and three reviews with reverse validation and current CLEAR remain required',
-        ],
-        qualified: false,
-      };
-    }
+    if (existsSync(releasePath(root, planFile(operation), true)))
+      return inspectStoredRepair(root, operation, sourcePass);
     const { state, seal } = eligibleForPlan(root, operation, sourcePass);
-    closure(root, operation, seal, sourcePass);
+    closure(root, operation, seal, sourcePass, state);
     return {
       status: 'stale_qualification_repairable',
       operation_id: operation,
@@ -661,9 +1050,15 @@ export async function inspectNativeDeliveryEvidenceRepair({ root, operation }) {
       qualified: false,
     };
   } catch (error) {
-    return { status: 'blocked', operation_id: operation, blockers: [error.message], qualified: false };
+    return {
+      status: 'blocked',
+      operation_id: operation,
+      blockers: [error instanceof Error ? error.message : String(error)],
+      qualified: false,
+    };
   }
 }
+/** @param {string} root @param {string} operation @param {RepairPlan} plan @param {{onPhase?: ((phase: string) => unknown)|undefined}} [options] @returns {Promise<JsonRecord>} */
 async function finishPlan(root, operation, plan, options = {}) {
   const api = await access(root),
     custodyDir = repair(operation) + '/custody',
@@ -675,11 +1070,13 @@ async function finishPlan(root, operation, plan, options = {}) {
     require(!existsSync(releasePath(root, custodyDir, true)), 'partial custody is UNKNOWN; no reconstruction');
     const sourcePass = createRepairSourcePass();
     eligibleForPlan(root, operation, sourcePass);
+    require(sourcePass, 'repair Source pass missing');
     sameClosure(root, plan.closure, operation, sourcePass);
     await options.onPhase?.('planning');
     mkdirSync(releasePath(root, custodyDir, true), { mode: 0o700 });
     for (let index = 0; index < entries.length; index++) {
       const entry = entries[index];
+      require(entry, 'repair beforeimage missing');
       if (entry.exists)
         await api.create(custodyDir + '/before-' + index + '.bin', read(root, entry.path, 512 * 1024 * 1024));
     }
@@ -700,6 +1097,7 @@ async function finishPlan(root, operation, plan, options = {}) {
     return { status: 'planned', operation_id: operation, version: plan.version, qualified: false };
   });
 }
+/** @param {{root: string, operation: string, actor: unknown}} input @param {{onPhase?: ((phase: string) => unknown)|undefined}} [options] @returns {Promise<JsonRecord>} */
 export async function planNativeDeliveryEvidenceRepair({ root, operation, actor }, options = {}) {
   require(typeof actor === 'string' && actor.trim() && actor.length <= 256, 'repair actor missing');
   const existing = releasePath(root, planFile(operation), true);
@@ -713,12 +1111,12 @@ export async function planNativeDeliveryEvidenceRepair({ root, operation, actor 
       : finishPlan(root, operation, plan, options);
   }
   const sourcePass = createRepairSourcePass(),
-    { state, pending } = eligibleForPlan(root, operation, sourcePass),
+    { state, pending, seal } = eligibleForPlan(root, operation, sourcePass),
     beforeimages = targets(operation).map((file, index) => {
       const observed = fileObservation(root, file);
       return { ...observed, copy: observed.exists ? repair(operation) + '/custody/before-' + index + '.bin' : null };
     }),
-    frozen = closure(root, operation, object(root, base(operation) + '/source-seal.json'), sourcePass);
+    frozen = closure(root, operation, seal, sourcePass, state);
   const plan = sealed({
     schema: 'NativeDeliveryEvidenceRepairPlan/v1',
     operation_id: operation,
@@ -758,6 +1156,7 @@ export async function planNativeDeliveryEvidenceRepair({ root, operation, actor 
   }
   return finishPlan(root, operation, plan, options);
 }
+/** @param {string} root @param {string} operation @param {{onPhase?: ((phase: string) => unknown)|undefined}} [options] @returns {Promise<JsonRecord>} */
 async function apply(root, operation, options = {}) {
   const plan = loadPlan(root, operation),
     initial = phase(root, operation, plan);
@@ -789,8 +1188,9 @@ async function apply(root, operation, options = {}) {
     let phaseValue = current.phase;
     for (const item of sequence) {
       if (phaseNames.indexOf(phaseValue) > phaseNames.indexOf(item.done)) continue;
-      const before = plan.beforeimages[item.index],
-        observed = currentTarget(root, before);
+      const before = plan.beforeimages[item.index];
+      require(before, 'repair beforeimage missing');
+      const observed = currentTarget(root, before);
       require(!before.exists ||
         !observed.exists ||
         observed.sha256 === before.sha256, 'evidence is neither exact beforeimage nor absent postimage');
@@ -825,9 +1225,11 @@ async function apply(root, operation, options = {}) {
     };
   });
 }
+/** @param {{root: string, operation: string}} input @param {{onPhase?: ((phase: string) => unknown)|undefined}} [options] @returns {Promise<JsonRecord>} */
 export async function applyNativeDeliveryEvidenceRepair({ root, operation }, options = {}) {
   return apply(root, operation, options);
 }
+/** @param {string} root @param {string} operation */
 export function assertNativeDeliveryEvidenceRepairSettled(root, operation) {
   const dir = releasePath(root, repair(operation), true);
   if (!existsSync(dir)) return;
@@ -838,26 +1240,54 @@ export function assertNativeDeliveryEvidenceRepairSettled(root, operation) {
   require(state?.phase === 'complete', 'native evidence repair active or UNKNOWN');
   validateCompletedReset(root, operation, plan, state, createRepairSourcePass());
 }
-export async function runNativeDeliveryEvidenceRepair(args, options) {
+/** @param {readonly string[]} args @returns {Record<string, string>} */
+function parseRepairArguments(args) {
+  /** @type {Record<string, string>} */
   const values = {};
+  const allowedOptions = reconcileAllowedOptions('native-delivery-evidence');
+  require(args.length % 2 === 0, 'native evidence repair argument pairs differ');
   for (let index = 0; index < args.length; index += 2) {
-    require(['--kind', '--mode', '--project-root', '--operation', '--actor'].includes(args[index]) &&
-      args[index + 1] &&
-      !Object.hasOwn(values, args[index]), 'native evidence repair arguments invalid');
-    values[args[index]] = args[index + 1];
+    const key = args[index];
+    const value = args[index + 1];
+    require(typeof key === 'string' &&
+      typeof value === 'string' &&
+      allowedOptions.includes(key) &&
+      !Object.hasOwn(values, key), 'native evidence repair arguments invalid');
+    values[key] = value;
   }
+  return values;
+}
+/** @param {Record<string, string>} values @returns {{root: string, operation: string, mode: string, actor: string|undefined}} */
+function nativeEvidenceCommand(values) {
+  assertReconcileOptionKeys(
+    values,
+    'native-delivery-evidence',
+    values['--mode'],
+    'native evidence repair arguments differ from declaration',
+  );
+  const root = values['--project-root'];
+  const operation = values['--operation'];
+  const mode = values['--mode'];
+  const contract = reconcileCliContracts['native-delivery-evidence'];
+  require(contract, 'native evidence repair command declaration missing');
   require(values['--kind'] === 'native-delivery-evidence' &&
-    path.isAbsolute(values['--project-root'] ?? '') &&
-    releaseIdPattern.test(values['--operation'] ?? '') &&
-    ['inspect', 'plan', 'apply', 'resume'].includes(
-      values['--mode'],
-    ), 'native evidence repair operation arguments invalid');
-  const input = { root: values['--project-root'], operation: values['--operation'], actor: values['--actor'] };
-  if (values['--mode'] === 'inspect') {
+    typeof root === 'string' &&
+    typeof operation === 'string' &&
+    typeof mode === 'string' &&
+    path.isAbsolute(root) &&
+    releaseIdPattern.test(operation) &&
+    contract.modes.includes(mode), 'native evidence repair operation arguments invalid');
+  return { root, operation, mode, actor: values['--actor'] };
+}
+/** @param {readonly string[]} args @param {{onPhase?: ((phase: string) => unknown)|undefined}} options @returns {Promise<JsonRecord>} */
+export async function runNativeDeliveryEvidenceRepair(args, options) {
+  const { root, operation, mode, actor } = nativeEvidenceCommand(parseRepairArguments(args));
+  const input = { root, operation, actor };
+  if (mode === 'inspect') {
     require(!input.actor, 'inspect accepts no actor');
     return inspectNativeDeliveryEvidenceRepair(input);
   }
-  if (values['--mode'] === 'plan') return planNativeDeliveryEvidenceRepair(input, options);
+  if (mode === 'plan') return planNativeDeliveryEvidenceRepair(input, options);
   require(!input.actor, 'apply/resume use frozen attribution');
   return applyNativeDeliveryEvidenceRepair(input, options);
 }

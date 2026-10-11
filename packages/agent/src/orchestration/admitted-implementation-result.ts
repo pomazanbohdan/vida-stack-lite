@@ -36,10 +36,10 @@ export function buildAdmittedImplementationResult(input: {
   validateWorkSessionBinding(work, ledger.state, repositoryRoot);
   const source = input.sourceStore
     ? snapshotAdmittedTaskSources({
-      store: input.sourceStore,
-      host,
-      canonicalHostRoot: repositoryRoot,
-      paths: packet.owned_paths,
+        store: input.sourceStore,
+        host,
+        canonicalHostRoot: repositoryRoot,
+        paths: packet.owned_paths,
         attempt: ledger.state.attempt,
       })
     : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);

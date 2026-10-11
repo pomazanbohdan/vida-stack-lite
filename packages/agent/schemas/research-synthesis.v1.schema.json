@@ -69,10 +69,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "result_id",
-          "digest"
-        ],
+        "required": ["result_id", "digest"],
         "properties": {
           "result_id": {
             "type": "string",
@@ -91,13 +88,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "finding_id",
-          "statement",
-          "source_refs",
-          "evidence_class",
-          "status"
-        ],
+        "required": ["finding_id", "statement", "source_refs", "evidence_class", "status"],
         "properties": {
           "finding_id": {
             "type": "string",
@@ -122,20 +113,10 @@
             }
           },
           "evidence_class": {
-            "enum": [
-              "Decision",
-              "Code",
-              "Static",
-              "Runtime",
-              "GAP"
-            ]
+            "enum": ["Decision", "Code", "Static", "Runtime", "GAP"]
           },
           "status": {
-            "enum": [
-              "confirmed",
-              "tentative",
-              "unknown"
-            ]
+            "enum": ["confirmed", "tentative", "unknown"]
           }
         }
       }
@@ -146,11 +127,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "uncertainty_id",
-          "statement",
-          "material"
-        ],
+        "required": ["uncertainty_id", "statement", "material"],
         "properties": {
           "uncertainty_id": {
             "type": "string",
@@ -174,12 +151,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "conflict_id",
-          "statement",
-          "source_refs",
-          "status"
-        ],
+        "required": ["conflict_id", "statement", "source_refs", "status"],
         "properties": {
           "conflict_id": {
             "type": "string",
@@ -204,11 +176,7 @@
             }
           },
           "status": {
-            "enum": [
-              "open",
-              "reconciled",
-              "accepted_unknown"
-            ]
+            "enum": ["open", "reconciled", "accepted_unknown"]
           }
         }
       }
@@ -260,12 +228,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "option_id",
-          "label",
-          "description",
-          "evidence_refs"
-        ],
+        "required": ["option_id", "label", "description", "evidence_refs"],
         "properties": {
           "option_id": {
             "type": "string",
@@ -296,16 +259,9 @@
       }
     },
     "recommendation": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
-      "required": [
-        "option_id",
-        "rationale",
-        "evidence_refs"
-      ],
+      "required": ["option_id", "rationale", "evidence_refs"],
       "properties": {
         "option_id": {
           "type": "string",
@@ -342,10 +298,7 @@
       ],
       "properties": {
         "status": {
-          "enum": [
-            "pass",
-            "blocked"
-          ]
+          "enum": ["pass", "blocked"]
         },
         "required_questions": {
           "type": "array",
@@ -390,13 +343,7 @@
         "external_validation": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "required",
-            "source_count",
-            "minimum_sources",
-            "status",
-            "live_check"
-          ],
+          "required": ["required", "source_count", "minimum_sources", "status", "live_check"],
           "properties": {
             "required": {
               "type": "boolean"
@@ -412,28 +359,17 @@
               "maximum": 64
             },
             "status": {
-              "enum": [
-                "pass",
-                "blocked",
-                "not_required"
-              ]
+              "enum": ["pass", "blocked", "not_required"]
             },
             "live_check": {
-              "type": [
-                "boolean",
-                "null"
-              ]
+              "type": ["boolean", "null"]
             }
           }
         }
       }
     },
     "readiness": {
-      "enum": [
-        "ready",
-        "blocked",
-        "informational"
-      ]
+      "enum": ["ready", "blocked", "informational"]
     },
     "actor": {
       "type": "string",
@@ -480,11 +416,7 @@
         },
         "risk": {
           "type": "string",
-          "enum": [
-            "low",
-            "medium",
-            "high"
-          ]
+          "enum": ["low", "medium", "high"]
         },
         "phase": {
           "type": "string",
@@ -497,13 +429,7 @@
           "maxLength": 128
         },
         "trigger": {
-          "enum": [
-            "research_intent",
-            "domain_question",
-            "external_fact",
-            "api_assumption",
-            "provider_change"
-          ]
+          "enum": ["research_intent", "domain_question", "external_fact", "api_assumption", "provider_change"]
         },
         "required_instruction_ids": {
           "type": "array",
@@ -537,10 +463,7 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "instruction_id",
-              "source_sha256"
-            ],
+            "required": ["instruction_id", "source_sha256"],
             "properties": {
               "instruction_id": {
                 "type": "string",

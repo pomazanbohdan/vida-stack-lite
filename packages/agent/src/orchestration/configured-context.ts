@@ -1,3 +1,5 @@
+import type { SessionHandoffContext } from './session-handoff.js';
+import { requireBridge } from './mastra-session-bridge-contract.js';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { assertLoadedRuntimeConfig, runtimePackageAccess, type AgentRuntimeConfig } from '../config/runtime-config.js';
@@ -46,7 +48,7 @@ function canonicalList(values: readonly string[], label: string): readonly strin
     values.every((value) => typeof value === 'string' && value.length > 0 && value.length <= 512),
     `${label} contains an invalid reference`,
   );
-  const sorted = [...values].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+  const sorted = [...values].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
   requireContext(new Set(sorted).size === sorted.length, `${label} contains duplicates`);
   return sorted;
 }
@@ -155,4 +157,25 @@ export function buildConfiguredContext(
   entries.sort((a, b) => (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const body = { schema: 'ConfiguredContext/v1' as const, work_id: request.work_id, attempt: request.attempt, entries };
   return { ...body, digest: canonicalJsonDigest(body) };
+}
+
+export function configuredContextForStage(
+  repositoryRoot: string,
+  config: AgentRuntimeConfig,
+  workflowId: string,
+  stageId: string,
+  context: SessionHandoffContext,
+): ConfiguredContext | null {
+  const stage = config.workflows[workflowId]?.stages.find((entry) => entry.id === stageId);
+  requireBridge(stage, 'Configured context stage is missing');
+  const sourceIds = stage.context_source_ids ?? [];
+  const skillRefs = stage.context_skill_refs ?? [];
+  return sourceIds.length + skillRefs.length === 0
+    ? null
+    : buildConfiguredContext(repositoryRoot, config, {
+        work_id: context.work_id,
+        attempt: context.attempt,
+        source_ids: sourceIds,
+        skill_refs: skillRefs,
+      });
 }

@@ -643,8 +643,7 @@ Bun 1.4.2 showed the exact synthetic case passing (1 pass, 42 filtered, 0 fail) 
 `bun --no-env-file --no-install test tests/release-retarget-state.test.mjs --test-name-pattern 'CI emission requires all seven exact ordered terminal receipts and known denials'`.
 One current full run of
 `bun --no-env-file --no-install test tests/release-retarget-state.test.mjs`
-then showed 43/43 tests and no failures (32.43 seconds); the shell reported exit
-0. Both ran from `packages/agent`, used the maintained `bunfig.toml` seed
+then showed 43/43 tests and no failures (32.43 seconds); the shell reported exit 0. Both ran from `packages/agent`, used the maintained `bunfig.toml` seed
 20260817 and normal reader resolution with `VIDA_CI_READER_ROOT` unset. Targeted
 `oxfmt --check` (0.64.0) and `oxlint` (1.79.0) on the two changed JavaScript
 files passed; `node --check` also passed under Node v24.19.0. The outer test

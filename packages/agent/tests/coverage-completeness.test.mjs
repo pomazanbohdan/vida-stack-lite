@@ -544,7 +544,13 @@ describe('direct maintained-source completeness', () => {
     expect(freezeJsonValue(1)).toBe(1);
     expect(freezeJsonValue(null)).toBeNull();
     let getterCalls = 0;
-    const frozenAccessor = Object.defineProperty({}, 'value', {enumerable: true, get() { getterCalls++; return {value: 1}; }});
+    const frozenAccessor = Object.defineProperty({}, 'value', {
+      enumerable: true,
+      get() {
+        getterCalls++;
+        return { value: 1 };
+      },
+    });
     expect(freezeJsonValue(frozenAccessor)).toBe(frozenAccessor);
     expect(Object.isFrozen(frozenAccessor)).toBe(true);
     expect(getterCalls).toBe(0);
@@ -1125,7 +1131,7 @@ describe('direct maintained-source completeness', () => {
       filesystem: 'unknown',
       package: {
         name: '@openclaw/fs-safe',
-        version: '0.5.6',
+        version: '0.25.0',
         integrity: 'sha512-0M1vz1PEFAgCwTxhB1lt/B7z+TRTTWmlYJ3dSbdhjZp2AcfM7rXPGjQVJqHXpzpsb9SRxvKGrAM454Uul/Xy5g==',
       },
       residual_risks: [

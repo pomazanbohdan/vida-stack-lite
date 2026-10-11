@@ -95,7 +95,16 @@ export function issueObservedTestReceipt(input: {
   const { repositoryRoot, config, packet, implementationResult, journal, authority } = input;
   requireTest(
     Object.keys(input).every((key) =>
-      ['repositoryRoot', 'config', 'packet', 'implementationResult', 'journal', 'authority', 'host', 'sourceStore'].includes(key),
+      [
+        'repositoryRoot',
+        'config',
+        'packet',
+        'implementationResult',
+        'journal',
+        'authority',
+        'host',
+        'sourceStore',
+      ].includes(key),
     ),
     'test evidence classification is runtime-derived and caller fields are closed',
   );
@@ -104,15 +113,16 @@ export function issueObservedTestReceipt(input: {
     validateWorkSessionBinding(input.host.work, journal.state, repositoryRoot);
   }
   validateImplementationResult(packet, implementationResult);
-  const source = input.sourceStore && input.host
-    ? snapshotAdmittedTaskSources({
-        store: input.sourceStore,
-        host: input.host,
-        canonicalHostRoot: repositoryRoot,
-        paths: packet.owned_paths,
-        attempt: journal.state.attempt,
-      })
-    : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
+  const source =
+    input.sourceStore && input.host
+      ? snapshotAdmittedTaskSources({
+          store: input.sourceStore,
+          host: input.host,
+          canonicalHostRoot: repositoryRoot,
+          paths: packet.owned_paths,
+          attempt: journal.state.attempt,
+        })
+      : snapshotDeclaredSources(requireSafeRepositoryAccess(repositoryRoot), packet.owned_paths);
   requireTest(
     source.digest === implementationResult.implementation_fingerprint &&
       journal.state.source_scope?.digest === source.digest &&
