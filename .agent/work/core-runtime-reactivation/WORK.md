@@ -5509,3 +5509,61 @@ The connected TypeScript migration and corrections form one staged unfinished
 Source checkpoint. Root bun.lock remains unstaged and preserved; package locks
 own the qualified package pins. Whole coverage, exhaustive frozen budgets,
 assertion-confirmed mutation and isolated formed native Runtime remain OPEN.
+
+### v729–v734 — published static checkpoint, actual correction GREEN, parser custody
+
+Strict staged precommit v728PASS without bypass: Knip zero issues/hints, focused
+reference guard, formatter402files, one maintained TS program and typed lint.
+Source checkpoint a09c3d6 published non-force to origin/main after fresh fetch
+1/0; Git retains unrelated unstaged root bun.lock. Prior staged failures remain
+in their logs; local dist no longer supplies those CLI imports. This is an
+unfinished Source checkpoint, not whole numeric/native qualification.
+
+Fresh bounded private Source capture v729 uses a new owned tmpfs namespace,
+existing pinned Bun1.4.2/dependencies, exact captured Source bytes and unchanged
+60s case/30s child limits. Actual public same-work correction now1PASS/0FAIL,
+79assertions,57.44888s case/59.13s command. Public correction/writer/resume/tester
+issue and final state assertions pass; readonly reports use the same in-process
+product runner. This closes the selected Source behavior failure, with only
+2.55s case margin; no dependable speed/native/power-loss acceptance claim.
+Previous v722/v723 UNKNOWN roots remain retained, untouched and unreplayed.
+Receipt: typed-correction-v179/tmpfs-v729/{input-receipt.json,same-work-v729.log}.
+
+Root and blind review renewed two frozen-lineage slices without full AST/hash
+recapture. root-reviewed-evidence-lineage-v730.json selects8published/11current:
+7retained,4prospective new,1removed. Retain currentJournalEvidence's map API as
+sourcePreparationJournalEvidence; preserve the second index's wave.items closure
+in appendPreparationJournalEvidence, and explicitly remove its duplicated parent
+journalEvidence. All five original observed-receipt functions keep exact frozen
+ceilings. This replaces the earlier observed-module slice, never duplicates it.
+root-reviewed-admitted-lineage-v731.json renews87retained:83same identities and
+four callbacks remapped under the new packet binding by acceptance/delivery/
+skill-filter/skill-location roles. Parent CC101 remains frozen101; all selected
+current CCs satisfy their original ceilings. One scoped maintained inventory,
+no full scan/baseline replay. These are Source correspondence, not executable
+exhaustive budgets, coverage or CRAP PASS. Global plan remains OPEN.
+
+A disjoint Luna test writer added callback controls:3PASS/6assertions at2.05s.
+Successful packet publishes exact authenticated state once; bad journal digest
+and late over-limit objective reject without callback. Existing builder fixture
+is shape/binding proof only, separate from the actual public correction above.
+
+Blind current test-tooling review found no missing scenario/assertion/N/A gates;
+do not add duplicate mechanisms. Its next bounded review confirmed real P0:
+audit discovers .test.tsx but parsed it without JSX, producing unknown. Root
+and a disjoint Luna test writer added actual static-link/type-angle/JSX-denial
+fixtures. Initial expectation-label mismatch was corrected before causal RED;
+v733RED1PASS/1FAIL confirms valid selected TSX rejected. Root shares filename
+plugin selection with focused guard via tooling/babel-syntax.ts, preserving
+plain TS parsing and existing focus/cast/alias denial; Source inventory and
+instrumentation contracts are unchanged. Affected auditor/guard90PASS401assertions.
+
+Blind review caught helper bytes missing from audit configurationFiles. Causal
+v734RED failed its inclusion requirement; Root added the exact helper input to
+the existing config digest, without another scan/hash owner. Changed config,
+profile invalidation and parser controls4PASS/19assertions. Later helper-only
+policy edits now invalidate reviewed matrices/queue config bindings. TESTING
+records the one syntax owner and static-only evidence. Current packet staged
+static verification is pending; exact coverage/frozen CRAP/confirmed-Killed and
+formed isolated native Runtime remain OPEN. No build/install, loader/schema
+cutover, old operational access or unblock notices.

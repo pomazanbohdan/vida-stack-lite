@@ -772,21 +772,25 @@ Current Work details and failed/terminal receipts: WORK v702–v718. Preserve kn
 per-scope v662 freshness, existing ceilings, exact gates and retained UNKNOWN.
 
 
-#### Current shared/static checkpoint v720–v728
+#### Current shared/static checkpoint v720–v734
 
-Corrective preparation now reuses packet-validated original planning evidence
-through trusted context. Two duplicated journal indexes share a linear evidence
-join; per-item summary hashing and broad duplicate ambiguity rules remain.
-Focused preflight/producer18PASS; current WORK owns negative controls and scoped
-complexity proof. v722/v723 fresh public same-work cases still FAIL/UNKNOWN at
-unchanged60s, with their roots retained and never replayed. Latest readonly test
-startup reduction awaits a fresh case check.
+Corrective preparation reuses packet-validated original planning evidence through
+trusted context. Two duplicated journal indexes share a linear join; broad
+ambiguity rules and per-item summary hashing remain. Focused preflight/producer
+18PASS. Fresh actual public same-work v729 now1PASS/79assertions,57.45s under
+unchanged60s; prior v722/v723 FAIL/UNKNOWN roots remain untouched/unreplayed.
+Small2.55s margin is not dependable/native qualification.
 
-Worktree all-maintained compiler reports407TS/0JS violations/0diagnostics;
-staged verification exposed generated-dist dependencies hidden by local output.
-CLI runtime/types now use maintained TS owners. Focused guard now parses plain
-TS separately from JSX and retains cast/alias focus denial; affected scope
-24PASS. Staged whole static checkpoint is pending, without hook weakening or
-bypass. Frozen correspondence/exact numeric gates and isolated formed native
-Runtime qualification remain OPEN. No schema/loader activation, installation,
-Runtime acceptance or old unblock notices. Detailed receipts: current WORK.
+Strict staged checkpoint a09c3d6 passed without bypass and was published to
+origin/main. CLI runtime/types use maintained TS owners; local dist does not
+supply staged imports. Root bun.lock remains unstaged/preserved. New callback
+controls3PASS. Auditor/guard share filename syntax with selected .test.tsx,
+90PASS; helper config-binding follow-up4PASS. This latest packet awaits staged
+statics/publication. No Source inventory/instrumentation scope expansion.
+
+Reviewed Source-lineage replacements bind evidence7retained/4new/1removed and
+packet87retained/four closure remaps, with exact frozen ceilings. They are not
+the exhaustive executable plan or numeric qualification. Frozen correspondence,
+exact coverage/CRAP/assertion-confirmed Killed and isolated formed native Runtime
+remain OPEN. No build/install, active schema/loader cutover, Runtime acceptance
+or old unblock notices. Current WORK owns exact receipts, mappings and limits.

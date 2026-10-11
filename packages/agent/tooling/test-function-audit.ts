@@ -23,6 +23,7 @@ import {
 } from './pattern-profile.js';
 import { functionInventory } from './function-inventory.js';
 import { maintainedSourceInventory } from './maintained-source-inventory.js';
+import { typescriptSyntaxPlugins } from './babel-syntax.js';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.js';
 const nativeCaptureAccess =
   process.platform === 'linux' || process.platform === 'win32'
@@ -277,7 +278,7 @@ function portableCapturedBytes(root: string, file: string, label: string, limit:
 function parseFile(text: string, file: string, sourceType: 'unambiguous' | 'module' = 'unambiguous'): BabelFile {
   return parse(text, {
     sourceType,
-    plugins: ['typescript'],
+    plugins: typescriptSyntaxPlugins(file),
     sourceFilename: file,
     errorRecovery: false,
   });
@@ -1675,6 +1676,7 @@ export const configurationFiles = [
   'node_modules/bun-types/test.d.ts',
   'tooling/test-function-audit.ts',
   'tooling/function-inventory.ts',
+  'tooling/babel-syntax.ts',
   'tooling/maintained-source-inventory.ts',
   'tooling/pattern-profile.ts',
   'tsconfig.json',

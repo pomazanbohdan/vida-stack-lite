@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { typescriptSyntaxPlugins } from './babel-syntax.js';
 
 type AstNode = { readonly type?: string; readonly [key: string]: unknown };
 type ScopeKind = 'module' | 'function' | 'block';
@@ -386,7 +387,7 @@ export async function rejectFocusedTests(pkg: string, files: readonly string[]):
     const ast = parse(readFileSync(file, 'utf8'), {
       sourceType: 'unambiguous',
       sourceFilename: file,
-      plugins: /\.[jt]sx$/iu.test(file) ? ['typescript', 'jsx'] : ['typescript'],
+      plugins: typescriptSyntaxPlugins(file),
     });
     const analysis = analyze(ast);
     const focus = analysis.focuses.find(focusRejected);

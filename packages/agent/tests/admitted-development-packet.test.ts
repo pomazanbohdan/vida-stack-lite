@@ -855,6 +855,50 @@ describe('admitted development packet', () => {
     expect(first.expected_tests).toEqual(['Run the focused acceptance check.']);
   });
 
+  test('publishes the authenticated planning journal once after packet construction succeeds', () => {
+    const input = controlledPacketSnapshot();
+    const observed: MastraSessionLedgerState[] = [];
+
+    buildAdmittedDevelopmentPacket({
+      ...input,
+      onValidatedPlanningJournal: (state) => observed.push(state),
+    });
+
+    expect(observed).toHaveLength(1);
+    expect(observed[0]).toBe(input.ledger.state);
+  });
+
+  test('does not publish planning state when persisted journal authentication fails', () => {
+    const input = controlledPacketSnapshot();
+    const observed: MastraSessionLedgerState[] = [];
+    const invalidLedger = {
+      ...input.ledger,
+      version: { ...input.ledger.version, digest: '0'.repeat(64) },
+    };
+
+    expect(() =>
+      buildAdmittedDevelopmentPacket({
+        ...input,
+        ledger: invalidLedger,
+        onValidatedPlanningJournal: (state) => observed.push(state),
+      }),
+    ).toThrow(/persisted Mastra ledger differs from admitted work/);
+    expect(observed).toHaveLength(0);
+  });
+
+  test('does not publish planning state when final packet construction rejects the objective', () => {
+    const input = packetWithDescription(controlledPacketSnapshot(), 'x'.repeat(4097));
+    const observed: MastraSessionLedgerState[] = [];
+
+    expect(() =>
+      buildAdmittedDevelopmentPacket({
+        ...input,
+        onValidatedPlanningJournal: (state) => observed.push(state),
+      }),
+    ).toThrow(/packet objective/);
+    expect(observed).toHaveLength(0);
+  });
+
   test('continued packet retains only exact Host-bound original contracts and observed task synthesis', () => {
     const originalInput = controlledPacketSnapshot('task_execution', 'medium', '5'.repeat(64));
     const originalWork = structuredClone(originalInput.host.work);

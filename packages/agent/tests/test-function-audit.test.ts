@@ -499,6 +499,50 @@ test('missing wrapped call', () => { expect((missing as () => number)()).toBe(1)
     expect(report.functions[0]?.cases.map((item) => item.name)).toEqual(['wrapped call']);
   });
 
+  test('TSX tests with JSX retain static source links without executing JSX', () => {
+    const report = runSourcesFixture(
+      {
+        'src/subject.ts': 'export function target() { return 1; }',
+      },
+      {
+        'subject.test.tsx': `import { test, expect } from 'bun:test';
+import { target } from '../src/subject.js';
+test('direct source reference', () => { const view = <section />; void view; expect(target()).toBe(1); });`,
+      },
+    );
+    expect(report.status).toBe('reported');
+    expect(report.diagnostics).toEqual([]);
+    expect(report.functions).toHaveLength(1);
+    expect(report.functions[0]).toMatchObject({
+      name: 'fn:target',
+      testStatus: 'present',
+      cases: [{ file: 'tests/subject.test.tsx', name: 'direct source reference' }],
+      evidence: 'direct-import-call',
+    });
+    // This audit establishes a static test link only; it never runs the JSX or target.
+    expect(report.analysis).toMatchObject({ sourceAstParses: 1, sourceInventoryCalls: 1, testParserCalls: 1 });
+  });
+
+  test('plain TypeScript keeps generic arrows and assertions while JSX remains invalid in .ts', () => {
+    const valid = runSourcesFixture(
+      { 'src/subject.ts': 'export const identity = <T>(value: T): T => <T>value;' },
+      {
+        'subject.test.ts': `import { test, expect } from 'bun:test';
+import { identity } from '../src/subject.js';
+test('generic identity', () => expect(identity<number>(1)).toBe(1));`,
+      },
+    );
+    expect(valid.status).toBe('reported');
+    expect(valid.diagnostics).toEqual([]);
+    expect(valid.functions[0]).toMatchObject({ name: 'binding:identity', testStatus: 'present' });
+
+    const jsxInTs = runSourcesFixture({ 'src/subject.ts': 'export const Subject = () => <button />;' }, {});
+    expect(jsxInTs.status).toBe('unknown');
+    expect(jsxInTs.diagnostics.some((issue) => issue.code === 'source-parse' && issue.file === 'src/subject.ts')).toBe(
+      true,
+    );
+  });
+
   test('type-only imported bindings used as runtime values cannot establish direct test links', () => {
     const report = runFixture('export function target() { return 1; }', {
       'invalid-runtime.test.ts': `import { test, expect } from 'bun:test';
@@ -610,6 +654,7 @@ test('named strict assertion', () => { check(target()); });`,
 
   test('binds native inventory implementation and type changes to the configuration digest', () => {
     expect(configurationFiles).toContain('tooling/function-inventory.ts');
+    expect(configurationFiles).toContain('tooling/babel-syntax.ts');
     expect(configurationFiles).toContain('node_modules/bun-types/test.d.ts');
     const baseline = configurationDigest(['src/subject.ts'], ['tests/subject.test.mjs'], {
       'tooling/function-inventory.ts': 'a'.repeat(64),

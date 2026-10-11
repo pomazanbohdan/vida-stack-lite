@@ -201,6 +201,13 @@ names and resolution-only `require.resolve` remain outside this static check.
 Preserve the captured bytes and hashes;
 do not add a second Babel AST or filesystem capture pass for this check.
 
+The test-function auditor and focused-test guard share the filename-based Babel
+syntax owner in `tooling/babel-syntax.ts`. Plain TypeScript retains generic arrow
+and angle-assertion syntax; JSX is enabled only for JSX filenames, including
+discovered `.test.tsx` inputs. The auditor reuses each parsed test AST and reports
+static links separately from execution. This syntax policy does not expand the
+maintained product Source inventory or qualify JSX runtime execution.
+
 For a focused check, use:
 
 ```text
@@ -350,26 +357,26 @@ While fixing lint, capture complete machine-readable diagnostics in the owned ig
 
 Use the current scripts for the applicable completion checks.
 
-| Check                         | Command                                                                                  |
-| ----------------------------- | ---------------------------------------------------------------------------------------- |
+| Check                         | Command                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
 | Toolchain and input layout    | `node bin/bun.ts run test:toolchain:pinned` and `node bin/bun.ts run preflight:pinned` |
-| Configuration                 | `node bin/bun.ts run test:config:pinned`                                                |
-| Ordinary agent phase          | `node bin/bun.ts run test:pinned`                                                       |
-| Repair and recovery           | `node bin/bun.ts run test:repair:pinned`                                                |
-| HostState and lifecycle       | `node bin/bun.ts run test:host-state:pinned`                                            |
-| Public run entrypoint         | `node bin/bun.ts run test:run-entrypoint:pinned`                                        |
-| Resource integrity            | `node bin/bun.ts run test:resources:pinned`                                             |
-| Fuzz                          | `node bin/bun.ts run test:fuzz:pinned`                                                  |
-| ZOMBIES                       | `node bin/bun.ts run test:zombies:pinned`                                               |
-| Deep properties               | `node bin/bun.ts run test:deep:pinned`                                                  |
-| Static quality                | `node bin/bun.ts run quality:static:pinned`                                             |
-| Full Source types             | `node bin/bun.ts node_modules/typescript/bin/tsc --project tsconfig.json --noEmit`      |
-| Coverage and CRAP             | `node bin/bun.ts run test:coverage:pinned`                                              |
-| Saved coverage report         | `node bin/bun.ts run coverage:gate:pinned`                                              |
-| Saved CRAP budget report      | `node bin/bun.ts run crap:pinned`                                                       |
-| Format                        | `node bin/bun.ts run format:check:pinned`                                               |
-| Final applicable local matrix | `node bin/bun.ts run local:candidate:pinned`                                            |
-| Portable local subset         | `node bin/bun.ts run verify:portable:pinned`                                            |
+| Configuration                 | `node bin/bun.ts run test:config:pinned`                                               |
+| Ordinary agent phase          | `node bin/bun.ts run test:pinned`                                                      |
+| Repair and recovery           | `node bin/bun.ts run test:repair:pinned`                                               |
+| HostState and lifecycle       | `node bin/bun.ts run test:host-state:pinned`                                           |
+| Public run entrypoint         | `node bin/bun.ts run test:run-entrypoint:pinned`                                       |
+| Resource integrity            | `node bin/bun.ts run test:resources:pinned`                                            |
+| Fuzz                          | `node bin/bun.ts run test:fuzz:pinned`                                                 |
+| ZOMBIES                       | `node bin/bun.ts run test:zombies:pinned`                                              |
+| Deep properties               | `node bin/bun.ts run test:deep:pinned`                                                 |
+| Static quality                | `node bin/bun.ts run quality:static:pinned`                                            |
+| Full Source types             | `node bin/bun.ts node_modules/typescript/bin/tsc --project tsconfig.json --noEmit`     |
+| Coverage and CRAP             | `node bin/bun.ts run test:coverage:pinned`                                             |
+| Saved coverage report         | `node bin/bun.ts run coverage:gate:pinned`                                             |
+| Saved CRAP budget report      | `node bin/bun.ts run crap:pinned`                                                      |
+| Format                        | `node bin/bun.ts run format:check:pinned`                                              |
+| Final applicable local matrix | `node bin/bun.ts run local:candidate:pinned`                                           |
+| Portable local subset         | `node bin/bun.ts run verify:portable:pinned`                                           |
 
 `npm test` selects four disjoint agent phases: ordinary tests, repair, HostState and run entrypoint. It does not build or install. `verify` is a local subset. It does not install dependencies or a bundle. `ci:pinned` is delivery preparation; run it only through the delivery lane.
 

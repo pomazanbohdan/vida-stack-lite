@@ -1190,3 +1190,24 @@ frontier15PASS. Wider public corrective rerun and full static profile are pendin
 do not claim whole-flow or numerical/native closure from these focused proofs.
 Current Work details and failed/terminal receipts: WORK v702–v718. Preserve known
 per-scope v662 freshness, existing ceilings, exact gates and retained UNKNOWN.
+
+
+#### Current dependency-ready continuation v729–v734
+
+Selected public same-work corrective flow is Source-qualified: fresh v7291PASS/
+79assertions under unchanged60s. Keep prior FAIL/UNKNOWN custody and small2.55s
+margin explicit. Strict staged checkpoint a09c3d6 passed without bypass and is
+published; root bun.lock remains preserved outside it. No native acceptance.
+
+Current frozen mapping work reuses unchanged captures and renews only affected
+scopes. Reviewed evidence consolidation:7retained/4new/1removed; admitted packet:
+87retained with4reviewed closure-address transfers. These replace overlapping
+old slices, retain every published ceiling and do not activate a partial plan.
+Global exhaustive correspondence and exact coverage/CRAP/mutation remain OPEN.
+
+Test tooling now shares TS/JSX filename policy for selected .test.tsx and focused
+aliases, with helper bytes included in existing config binding. Affected90PASS,
+then changed configuration controls4PASS; callback controls3PASS. Finish staged
+statics/publication, then continue the existing exhaustive function/scenario/
+budget plan and remaining bundle/native requirements. No duplicate audit/gates,
+baseline run, test suites in formation/install or P2 expansion.
