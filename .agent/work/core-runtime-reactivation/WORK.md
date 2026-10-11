@@ -6445,3 +6445,51 @@ with613explicit633absent addresses. Its output is explicitly static diagnostic,
 no coverage percentage. Blind bun-metadata-reference-review-v798 APPROVES the
 reference update and scenario application; no extra tests or new inventory pass.
 This makes the Bun/TS workflow concrete rather than a promised future change.
+
+### v799–v804 — declaration-derived init scalar keys and whole-file lineage
+
+Metadata/referencec1d84f5 is strict-published. Independent Source continues
+while current numerical producer custody remains blocked; no UNKNOWN replay.
+Blind typed-init-scalar-plan-v799 and validation-review-v800 approve preserving
+literal init options at their sole declaration and carrying runtime-validated
+arity-one keys through the parser. Root keeps the canonical membership set,
+nonempty values, duplicate rejection, repeatable project order and zero-arity
+reconcile handling. No second option-name list, cast, runtime helper or new
+cap is introduced. recordOption keeps project append, then uses the narrowed
+scalar property; its CC4to2 now fits genuine old2/CRAP6. Function count remains16.
+
+Root adds rejection cases for duplicate repository, empty root/repository/project,
+prototype-like unsupported key and duplicate reconcile, plus explicit reconcile
+forwarding with ordered repeated projects. Before-edit characterization20PASS,
+98assertions513ms and candidate20PASS98assertions631ms are green. This is a
+behavior-preserving refactor, not fabricated RED. Scoped CLI compiler initially
+rejects readonly init tuple against metadata's mutable unknown[] (v801).
+Inspection confirms metadata only reads/returns options; its local interface
+now accepts readonly unknown[]. Corrected strict CLI compile exit0 v802.
+Official TypeScript readonly/const and narrowing documentation supports the
+type mechanism; qualification is the actual current compiler, not Bun execution.
+After this correction, completion/direct help checks26PASS1914assertions8.73s.
+Blind Source-review-v803 APPROVES the actual diff and corrected compiler receipt.
+
+One selected existing Babel capture inventories init16, declarations3, metadata32;
+no duplicate whole scan. Genuine b549951 Source and frozen v653 seed supply
+7retained9NEW init correspondences. Renamed positive validator retains the old
+invalidOption role/cap and caller polarity; no NEW reclassification. Existing
+3declaration roles only refresh current addresses/binding. Metadata32 type-only
+roles are inventoried but remain globally unpaired; this join does not hide
+that GAP. Blind semantic-lineage-review-v804 APPROVES exact one-to-one16 and
+unchanged previous caps. Partial becomes1262roles68files:1004retained258NEW,
+1removed, still SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE. Five whole
+deferred files58roles remain from the previous six/74 selected cohort; global
+correspondence and default executable budget plan remain incomplete.
+
+Receipts under BASE: typed-init-characterization-v800.log, final-v801.log,
+typecheck-v801.log (failed), typecheck-corrected-v802.log, capture-v802.json/log,
+lineage-v803.json/log, joined-draft-v803.json, source-review-v803.md,
+lineage-review-v804.md and help-completion-v804.log (all typed-init-prefixed).
+References: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html
+and https://www.typescriptlang.org/docs/handbook/2/narrowing.html.
+Root owns strict checkpoint/Git and final measurements. Full coverage/CRAP,
+assertion-confirmed mutation and clean formed-native qualification remain OPEN.
+No active schema/loader change, old state restoration, build/install suite or
+unblock notice. Preserve unrelated root bun.lock. Strict publication follows.

@@ -5,6 +5,8 @@ import { initializeProjectFromBundle } from './init-core.ts';
 import { readCliErrorProperty } from './cli-error-properties.ts';
 
 type InitializationRequest = Parameters<typeof initializeProjectFromBundle>[0];
+type InitOption = (typeof cliCommandContracts.init.options)[number];
+type InitScalarOption = Extract<InitOption, { arity: 1 }>['name'];
 interface InitOptions {
   projects: string[];
   reconcileExisting?: boolean;
@@ -32,24 +34,24 @@ export async function initializeProject({
 }
 
 const usage = `Usage: ${cliCommandContracts.init.syntax}`;
-const initScalarOptions = new Set(
+const initScalarOptions: ReadonlySet<string> = new Set(
   cliCommandContracts.init.options.filter((option) => option.arity === 1).map((option) => option.name),
 );
-const initRepeatableOptions = new Set(
-  cliCommandContracts.init.options.filter((option) => option.repeatable).map((option) => option.name),
+const initRepeatableOptions: ReadonlySet<string> = new Set(
+  cliCommandContracts.init.options
+    .filter((option: { name: string; repeatable?: boolean }) => option.repeatable)
+    .map((option) => option.name),
 );
 const initHelpOption = cliCommandContracts.init.options.find((option) => option.arity === 0)?.name;
 
-function invalidOption(key: string, value: string, values: InitOptions): boolean {
+function isValidInitOption(key: string, value: string, values: InitOptions): key is InitScalarOption {
   const duplicate = !initRepeatableOptions.has(key) && Object.hasOwn(values, key);
-  return !initScalarOptions.has(key) || !value || duplicate;
+  return initScalarOptions.has(key) && !!value && !duplicate;
 }
 
-function recordOption(values: InitOptions, key: string, value: string): void {
+function recordOption(values: InitOptions, key: InitScalarOption, value: string): void {
   if (key === '--project') values.projects.push(value);
-  else if (key === '--project-root') values['--project-root'] = value;
-  else if (key === '--repository') values['--repository'] = value;
-  else throw new Error(usage);
+  else values[key] = value;
 }
 
 function parseInitArguments(args: string[]): InitializationRequest {
@@ -74,10 +76,11 @@ function parseInitArguments(args: string[]): InitializationRequest {
   };
 }
 
-function initOptionPair(args: string[], index: number, values: InitOptions): { key: string; value: string } {
+function initOptionPair(args: string[], index: number, values: InitOptions): { key: InitScalarOption; value: string } {
   const key = args[index];
   const value = args[index + 1];
-  if (typeof key !== 'string' || typeof value !== 'string' || invalidOption(key, value, values)) throw new Error(usage);
+  if (typeof key !== 'string' || typeof value !== 'string' || !isValidInitOption(key, value, values))
+    throw new Error(usage);
   return { key, value };
 }
 

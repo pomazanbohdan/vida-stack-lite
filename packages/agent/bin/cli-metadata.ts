@@ -30,7 +30,7 @@ export interface CliManifest {
 interface CliCommandDetail {
   purpose?: string;
   syntax?: string;
-  options?: unknown[];
+  options?: readonly unknown[];
   conflicts?: string[];
   constraints?: string[];
   example?: string;

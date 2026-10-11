@@ -1381,3 +1381,20 @@ Current Source work continues with TypeScript/Bun development automation and
 validated JSON. Root owns measurement and may resume it only through legitimate
 producer custody; Source shared-URL and remaining frozen work remain ready.
 Details/actual refusal/independent readiness: WORKv796–v797.
+
+#### Current declaration-derived init and frozen join v799–v804
+
+TS/Bun referencec1d84f5 is strict-published. Literal init options supply the
+validated scalar key union; runtime membership/nonempty/duplicate/reconcile
+checks remain. Typed scalar assignment replaces repeated field selection,
+recordOptionCC4to2 under unchanged old2/CRAP6,16roles unchanged. Const-only
+readonly metadata mismatch is diagnosed and corrected at its read-only interface;
+strict CLI compile passes, final affected/help26PASS1914assertions. Independent
+Source and semantic-lineage reviews APPROVE. Whole init7retained9NEW plus refresh
+of3existing declaration roles yields partial1262roles68files (1004retained258NEW,
+1removed); all prior caps and baseline suite/quality false remain. Metadata32
+inventoried but globally unpaired. Five whole deferred files58roles remain in
+this cohort; global/default executable lineage remains GAP. Details: WORKv799–v804.
+Root completes strict checkpoint and ordinary publication, then continues ready
+shared URL/refactoring contours. Numerical producer custody and final coverage,
+CRAP/mutation/native prerequisites remain OPEN; no UNKNOWN replay or scope bypass.

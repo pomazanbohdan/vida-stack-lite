@@ -92,6 +92,15 @@ test.each([
   ['unknown switch', ['--project-root', 'C:/workspace', '--repository', 'sample', '--unknown', 'value']],
   ['missing value', ['--project-root', 'C:/workspace', '--repository']],
   ['duplicate root', ['--project-root', 'C:/workspace', '--project-root', 'C:/other', '--repository', 'sample']],
+  ['duplicate repository', ['--project-root', 'C:/workspace', '--repository', 'sample', '--repository', 'other']],
+  ['empty root', ['--project-root', '', '--repository', 'sample']],
+  ['empty repository', ['--project-root', 'C:/workspace', '--repository', '']],
+  ['empty project mapping', ['--project-root', 'C:/workspace', '--repository', 'sample', '--project', '']],
+  ['prototype key', ['--project-root', 'C:/workspace', '--repository', 'sample', '__proto__', 'value']],
+  [
+    'duplicate reconcile flag',
+    ['--project-root', 'C:/workspace', '--repository', 'sample', '--reconcile-existing', '--reconcile-existing'],
+  ],
 ] as const)('init CLI rejects %s before invoking the initializer', async (_name, args) => {
   let invoked = false;
   const cli = cliHarness({
@@ -105,6 +114,37 @@ test.each([
   expect(cli.messages.err).toHaveLength(1);
   expect(cli.messages.err[0]).toMatch(/^Usage: vida-agent init/);
   expect(cli.exit.exitCode).toBe(1);
+});
+
+test('init CLI forwards the explicit reconcile flag with repeated project mappings', async () => {
+  const calls: InitializationRequest[] = [];
+  const cli = cliHarness({
+    initialize: (request) => {
+      calls.push(request);
+      return { status: 'initialized' };
+    },
+  });
+  await cli.run([
+    '--reconcile-existing',
+    '--project-root',
+    'C:/workspace',
+    '--project',
+    'alpha=.',
+    '--repository',
+    'sample',
+    '--project',
+    'beta=child',
+  ]);
+  expect(calls).toEqual([
+    {
+      projectRoot: 'C:/workspace',
+      repository: 'sample',
+      projectMappings: ['alpha=.', 'beta=child'],
+      reconcileExisting: true,
+    },
+  ]);
+  expect(cli.messages).toEqual({ out: ['{"status":"initialized"}'], err: [] });
+  expect(cli.exit.exitCode).toBeUndefined();
 });
 
 test('init CLI rejects an omitted project mapping before creating integration state', async () => {

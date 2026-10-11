@@ -20,7 +20,7 @@ export const cliCommandContracts = freezeCliDeclaration({
       { name: '--repository', arity: 1, type: 'lowercase-slug', required: true },
       { name: '--project', arity: 1, type: 'project-mapping', required: true, repeatable: true },
       { name: '--reconcile-existing', arity: 0, type: 'flag', default: false },
-    ],
+    ] as const,
     example: 'vida-agent init --project-root /workspace/app --repository example --project app=.',
   },
   install: {
