@@ -1368,3 +1368,16 @@ remain OPEN with no UNKNOWN replay. Details/receipt paths: WORKv791–v795.
 Next: shared URL AST shape owner with exact scanner-selection/anchor-policy
 separation, then remaining coherent frozen constraints; retain durable CAS and
 live guards. Do not add tests to formation/install or duplicate whole scans.
+
+#### Current whole-scope coverage request v796–v797
+
+Portable-root9254e3a is strict-published. One current maintained inventory
+defines144production Source files/7575functions, private methods and closures.
+Selected partial1246roles all exist under current static caps;6329remain globally
+unpaired. This is static scope, not measured coverage. User-requested actual
+coverage launch exits1 at existing exclusive coverage-run.lock EEXIST before
+tests or a new run identity. Preserve custody; no new numeric result or bypass.
+Current Source work continues with TypeScript/Bun development automation and
+validated JSON. Root owns measurement and may resume it only through legitimate
+producer custody; Source shared-URL and remaining frozen work remain ready.
+Details/actual refusal/independent readiness: WORKv796–v797.

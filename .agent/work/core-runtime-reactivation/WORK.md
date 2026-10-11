@@ -6394,3 +6394,54 @@ clean formed-native Runtime remain OPEN. v747 numeric and v776 corrective
 UNKNOWN custody remains held. No old DB/lease/attempt/state restoration, active
 schema/loader cutover or unblock notices. Root remains sole checks/Git owner;
 strict checkpoint and ordinary publication of this exact correction next.
+
+### v796–v797 — whole-scope denominator and requested coverage launch refusal
+
+Portable-root9254e3a passed complete strict checkpoint-v795 and published
+1c5fa9e..9254e3a. Partial lineage1246roles67files remains non-executable;
+no default executable CRAP plan or numerical/native PASS is claimed.
+
+User asks whether all coverage is measurable, then explicitly requests a run.
+Root executes the existing current crap-gate --inventory once on stable Source:
+144production files (96src/48bin),7575functions/methods/closures, exit0/stderr0.
+Report declares static-inventory-only/qualification-not-performed. It supplies
+the maintained denominator, not execution or coverage. Receipt:
+BASE/current-function-inventory-v796.json. Blind whole-coverage-readiness-v796
+confirms the established Babel/Istanbul pipeline can measure all four metrics,
+with explicit source-map, captured-byte and receipt bounds. CLI-spawned children
+do not inherit instrumentation and cannot supply numeric execution proof from
+their behavioral assertions. Root reuses this one inventory, no second scanner.
+
+Crosscheck against the selected partial finds all1246IDs present,0over-cap,
+0stale explicit current addresses among613rows.633older rows have no explicit
+current_source_address field; this is recorded separately, not invented or
+inferred from legacy source_address.6329current roles remain globally unpaired.
+The first private Python crosscheck assumed uniform fields and failed KeyError;
+corrected field-aware inspection creates current-lineage-crosscheck-v796.json.
+No failed invocation supplies admission or numerical PASS. User challenges
+Python inline scripts: lead adopts qualified Bun/TypeScript for development
+automation and apply_patch for edits, recorded in sidecar and Bun Test reference.
+Declared shell/Git and Node tool owners remain. Validate JSON as unknown before
+field access; a typed cast alone is not schema validation.
+
+Actual requested current coverage command on qualified Bun1.4.2 exits1 after
+406ms at exclusive producer-lock acquisition, BEFORE tests/new run ID/staging:
+EEXIST packages/agent/coverage/bun-unified/coverage-run.lock. No new coverage
+measurement, CRAP or mutation result. Full diagnostic remains
+BASE/current-coverage-request-v797.log. Existing lock custody stays untouched;
+Root neither reads/removes that held lock, changes output scope to bypass it,
+nor replays any old UNKNOWN. Prior known v747 numerical UNKNOWN remains held;
+this refusal alone does not identify the current lock owner or prove its exit.
+Official Node24.19 fs flags confirm wx/O_EXCL intentionally rejects EEXIST and
+prechecking accessibility would introduce a race. The coverage owner releases
+only its exact acquired handle after known terminal outcome; no legacy owner
+handle or terminal proof is fabricated. Measurement is currently blocked at
+that custody boundary; other Source P0/P1 corrections can continue independently.
+
+The new owned metadata-status-v798.ts actually executes with Bun1.4.2, exit0,
+uses the existing isPlainRecord owner and JSON.parse-as-unknown, validates the
+consumed arrays/IDs and optional address presence, and reproduces144/7575/1246
+with613explicit633absent addresses. Its output is explicitly static diagnostic,
+no coverage percentage. Blind bun-metadata-reference-review-v798 APPROVES the
+reference update and scenario application; no extra tests or new inventory pass.
+This makes the Bun/TS workflow concrete rather than a promised future change.

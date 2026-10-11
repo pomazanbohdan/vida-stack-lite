@@ -29,6 +29,7 @@ strict typecheck success.
 | Timeout | Separate parent elapsed time, child receipt and phase intervals before changing implementation. |
 | Repeated computation | Reuse within the invocation; test output parity, changed inputs and deterministic operation counts. |
 | Missing profile | Check capability on an inert control before another expensive case. |
+| Inventory/report processing | Reuse TS tools or an owned temporary `.ts` diagnostic with qualified Bun; validate JSON before reading fields. |
 
 Run from `packages/agent`, using the existing pinned launcher:
 

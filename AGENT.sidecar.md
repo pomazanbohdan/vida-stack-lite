@@ -132,6 +132,13 @@ is a maintained technique reference; those existing owners retain all policy,
 gate and command authority. Update the reference with verified changes in the
 same correction packet. Keep its original only in `.agents/skills`.
 
+Author self-development automation in TypeScript and execute it with qualified
+Bun. For inventory/report processing, reuse the package-owned TS tools or an
+owned temporary `.ts` diagnostic. Use `apply_patch` for exact document edits.
+Shell/Git commands and declared Node-backed compiler/quality tools retain their
+existing owners. Decode JSON as unknown and validate its actual schema before
+reading fields; TypeScript assertions do not validate report bytes.
+
 ## Source package Git policy
 
 The Source repository owner's standing authorization permits ordinary non-force
