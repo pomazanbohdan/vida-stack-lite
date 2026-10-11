@@ -124,7 +124,7 @@ export async function inspectScope(args: readonly string[]) {
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   try {
     if (typeof Bun === 'undefined') {
-      const { runPinnedBun } = await import('./bun.mjs');
+      const { runPinnedBun } = await import('./bun.ts');
       process.exitCode = runPinnedBun([fileURLToPath(import.meta.url), ...process.argv.slice(2)], {
         root: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
         cwd: process.cwd(),

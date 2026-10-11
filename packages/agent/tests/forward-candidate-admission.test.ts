@@ -2,7 +2,7 @@ import { test, expect } from 'bun:test';
 import * as parser from '@babel/parser';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { scanAdmittedRuntimeImports } from '../bin/forward-candidate-admission.mjs';
+import { scanAdmittedRuntimeImports } from '../bin/forward-candidate-admission.ts';
 test('sealed admission ignores type-only imports and comments while retaining literal runtime imports', () => {
   const imports = scanAdmittedRuntimeImports(
     `import type {Foo} from './unexecuted.ts'; type Bar=import('./query-only.ts').Bar;
@@ -246,6 +246,7 @@ for (const [file, declaration, relative] of [
   ['vida-agent/bin/bun.mjs', 'const bundleRoot', '../'],
   ['vida-agent/bin/install.mjs', 'const bundleRoot', '../'],
   ['vida-agent/bin/local-release-artifacts.mjs', 'export const releaseRootDefault', '../../../'],
+  ['vida-agent/bin/local-release-artifacts.ts', 'export const releaseRootDefault', '../../../'],
 ] as const)
   test('owned module directory anchor is a locator rather than a file: ' + file, () => {
     const source =

@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
-import { runReconcileArtifacts } from '../bin/reconcile-artifacts.mjs';
+import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import { preparedFixture } from './helpers/documentation-policy-fixture.ts';
 
 test('policy mode contracts reject missing planning inputs and substituted replay authority before effects', async () => {

@@ -1,8 +1,9 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { withStagedGitSnapshot } from './staged-git-snapshot.js';
-import { findMaintainedJavaScriptViolations } from './ts-only-source-gate.js';
+import { classifyMaintainedSourcePath, findMaintainedJavaScriptViolations } from './ts-only-source-gate.js';
+import { createCompilerProject } from './quality-current.js';
 import { environmentPath } from './environment-path.js';
 
 export interface FocusedTestGuard {
@@ -51,7 +52,9 @@ function output(executable: string, args: readonly string[], cwd: string, env: N
 function execute(executable: string, args: readonly string[], cwd: string, env: NodeJS.ProcessEnv): void {
   const result = spawnSync(executable, [...args], { cwd, env, stdio: 'inherit', windowsHide: true });
   if (result.error || result.signal || !Number.isInteger(result.status) || result.status !== 0)
-    throw new Error(`${path.basename(executable)} failed: ${result.error?.message ?? result.signal ?? result.status}`);
+    throw new Error(
+      `${path.basename(args[0] ?? executable)} failed: ${result.error?.message ?? result.signal ?? result.status}`,
+    );
 }
 
 function executableFromPath(name: string, env: NodeJS.ProcessEnv): string {
@@ -148,7 +151,13 @@ function isTestFile(file: string): boolean {
   return /(?:^|\/)tests\//u.test(file) && isCodeFile(file);
 }
 
-function runStaticGates(root: string, node: string, env: NodeJS.ProcessEnv, tools: Toolchain): void {
+function runStaticGates(
+  root: string,
+  node: string,
+  env: NodeJS.ProcessEnv,
+  tools: Toolchain,
+  trackedFiles: readonly string[],
+): void {
   const pkg = path.join(root, 'packages/agent');
   execute(
     node,
@@ -163,8 +172,16 @@ function runStaticGates(root: string, node: string, env: NodeJS.ProcessEnv, tool
     root,
     env,
   );
-  execute(node, [tools.tsc, '--project', 'tsconfig.json', '--noEmit'], pkg, env);
-  execute(node, [tools.tsc, '--project', 'tsconfig.checked-js.json', '--noEmit'], pkg, env);
+  const files = trackedFiles
+    .filter((file) => classifyMaintainedSourcePath(file) === 'typescript')
+    .map((file) => path.resolve(root, file));
+  // The snapshot owner checks and cleans this parent; keep generated config outside its raw tree.
+  const configPath = path.join(path.dirname(root), 'tsconfig.staged.json');
+  writeFileSync(configPath, `${JSON.stringify(createCompilerProject(pkg, root, files), null, 2)}\n`, {
+    flag: 'wx',
+    mode: 0o600,
+  });
+  execute(node, [tools.tsc, '--project', configPath, '--noEmit'], pkg, env);
   execute(
     node,
     [
@@ -225,7 +242,7 @@ export async function runPreCommit(options: KnipPrecommitOptions): Promise<void>
       );
       const testFiles = trackedFiles.filter(isTestFile).map((file) => path.join(snapshotRoot, file));
       await options.rejectFocusedTests(packageRoot, testFiles);
-      runStaticGates(snapshotRoot, node, env, tools);
+      runStaticGates(snapshotRoot, node, env, tools, trackedFiles);
     },
   });
 }

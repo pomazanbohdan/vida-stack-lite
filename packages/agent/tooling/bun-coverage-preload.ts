@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parsePublishedFixtureIdentity } from './published-coverage-inputs.js';
-import { capturedModuleInputs, instrumentSource } from './bun-coverage-evidence.mjs';
+import { capturedModuleInputs, instrumentSource } from './bun-coverage-evidence.ts';
 
 type FileCoverageData = import('istanbul-lib-instrument').FileCoverageData;
 type SourceDigest = { path: string; sha256: string };
@@ -14,7 +14,7 @@ type RunManifest = {
   snapshot_directory: string;
   source_fingerprint: string;
   test_fingerprint: string;
-  test_selection: import('./bun-coverage-evidence.mjs').CoverageInputs['test_selection'];
+  test_selection: import('./bun-coverage-evidence.ts').CoverageInputs['test_selection'];
   tests: string[];
   tool_fingerprint: string;
   runtime_executable_sha256: string;
@@ -96,7 +96,7 @@ if (!preloadDigest || path.resolve(preloadPath) !== path.join(snapshotRoot, 'too
 snapshotBytes('tooling/bun-coverage-preload.ts', preloadDigest);
 const bootstrapInputs = [
   'tooling/bun-coverage-preload.ts',
-  'tooling/bun-coverage-evidence.mjs',
+  'tooling/bun-coverage-evidence.ts',
   'tooling/source-instrumentation.ts',
   'tooling/captured-json-module.ts',
   'tooling/captured-module-contents.ts',

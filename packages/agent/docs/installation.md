@@ -1,7 +1,7 @@
 # Agent installation
 
 Owner: agent maintainers. Class: derived installation guide.
-Sources: [system specification](system-specification.md), [package declarations](../package.json), [Bun pin](../.bun-version), [public command](../bin/vida-agent.mjs), [initializer](../bin/init.mjs).
+Sources: [system specification](system-specification.md), [package declarations](../package.json), [Bun pin](../.bun-version), [public command](../bin/vida-agent.ts), [initializer](../bin/init.ts).
 
 Public agent delivery is one native executable with embedded pinned Bun.
 No external Node/npm/Bun or first-run download is needed. SDK/npm packages
@@ -124,7 +124,7 @@ call, grant physical isolation, or establish user Runtime acceptance.
 Project-owned settings use the bounded `runtime-config` reconciliation route.
 Author proposed YAML from current project values, changing only the approved
 executor model to `gpt-6.1-sol` and reasoning to `medium`. Call
-`bin/reconcile-artifacts.mjs --kind runtime-config --mode inspect` with a
+`bin/reconcile-artifacts.ts --kind runtime-config --mode inspect` with a
 canonical `--project-root`, one `--repair-id`, attributed `--actor`, ISO
 `--timestamp`, `--instruction-ref` and repository-relative `--target-config`.
 Repeat those planning arguments with `--mode plan`. Inspect reads state and
@@ -165,7 +165,7 @@ invalid citation is rejected without recording the report. The keys do not
 relax external locator or independence-group checks.
 
 For active synthesis records that predate this citation contract, use the
-bundle-owned `bin/reconcile-artifacts.mjs --kind synthesis-qualification` with
+bundle-owned `bin/reconcile-artifacts.ts --kind synthesis-qualification` with
 `--mode inspect`, then `plan`, then `apply` or `resume` and one exact
 `--repair-id`. Planning requires the actor and timestamp; apply and resume
 read the frozen plan. The command archives original record bytes and updates
@@ -245,21 +245,21 @@ The specification owns the exact phase and recovery contract.
 ## Source native construction
 
 In CI, `ci:pinned` runs the existing `build:pinned` then `prepack:pinned` once.
-The direct standalone command is `node bin/bun.mjs run build:standalone:pinned`
+The direct standalone command is `node bin/bun.ts run build:standalone:pinned`
 after that SDK build. It reuses only a still-current verified output
 and refuses stale or conflicting output. It uses the existing frozen production
 dependencies, physical copies, embedded resources and pinned Bun bytecode with
 retained names. Source construction needs the declared development toolchain;
 consumer execution uses the executable itself.
 
-Local runtime resource checks use `node bin/bun.mjs run test:resources:pinned`.
+Local runtime resource checks use `node bin/bun.ts run test:resources:pinned`.
 Build and installation checks belong to CI/CD. Missing current CI/CD receipts
 remain delivery GAPs; local resource proof does not establish installed acceptance.
 
 ## Quick Windows build and system-command reference
 
 Build owner: `.github/workflows/agent-native-delivery.yml` and
-`tooling/agent/native-ci-delivery.mjs`. The workflow publishes the six build
+`tooling/agent/native-ci-delivery.ts`. The workflow publishes the six build
 files. CI/CD forms and publishes the exact package and metadata. No tests run at formation or installation.
 
 The build job restores the Bun package cache before installing dependencies.

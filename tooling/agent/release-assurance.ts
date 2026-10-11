@@ -1,0 +1,439 @@
+import { createHash } from 'node:crypto';
+import { existsSync, lstatSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  releaseSourceBinding,
+  releaseSourceInputs as sources,
+  assertReleaseRetargetSettled,
+  releasePath,
+  releaseState,
+  admissionMutex,
+  operationMutex,
+  selectedTarball,
+} from '../../packages/agent/bin/local-release-artifacts.ts';
+import { assertNativeDeliveryEvidenceRepairSettled } from '../../packages/agent/bin/repair-native-delivery-evidence.ts';
+import { verifyForwardReviewSet } from './controllers/forward-review-proof.ts';
+import { runCommand } from './release-local.ts';
+import { verifyCIDeliveryEvidence, minimumNativeDeliveryChecks } from './release-ci-evidence.ts';
+
+const rootDefault = fileURLToPath(new URL('../../', import.meta.url));
+type SourceObservations = NonNullable<Parameters<typeof sources>[2]>;
+type InputObservation = SourceObservations[number];
+interface TestEvidence {
+  lane: string;
+  path: string;
+  inputs: string[];
+  sha256: string;
+  input_binding: string;
+}
+interface ReviewInput {
+  kind: string;
+  path: string;
+  reverse_path: string;
+}
+interface ReviewEvidence {
+  kind: string;
+  path: string;
+  sha256: string;
+  reverse_path: string;
+  reverse_sha256: string;
+  status: 'passed';
+}
+interface RecordTestsInput {
+  root?: string;
+  operation: string;
+  tests: TestEvidence[];
+}
+interface RecordAssuranceInput {
+  root?: string;
+  operation: string;
+  scope_path: string;
+  clear_work_id: string;
+  repository_id: string;
+  project_id: string;
+  reviews: ReviewInput[];
+}
+interface SealInput {
+  root?: string;
+  operation: string;
+}
+type CiEvidence = Parameters<typeof verifyCIDeliveryEvidence>[0]['ci'];
+interface VerifyInput {
+  root?: string;
+  operation: string;
+  version: string;
+  ci?: CiEvidence | null | undefined;
+}
+type JsonRecord = Record<string, unknown>;
+
+const sha = (value: string | Uint8Array): string => createHash('sha256').update(value).digest('hex');
+function parseJSON(text: string): unknown {
+  const value: unknown = JSON.parse(text);
+  return value;
+}
+function read(file: string): unknown {
+  return parseJSON(readFileSync(file, 'utf8'));
+}
+function isRecord(value: unknown): value is JsonRecord {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+function asRecord(value: unknown, message: string): JsonRecord {
+  if (!isRecord(value)) throw new Error(message);
+  return value;
+}
+function requiredString(value: JsonRecord, key: string, message: string): string {
+  const field = value[key];
+  if (typeof field !== 'string' || !field) throw new Error(message);
+  return field;
+}
+function isTestEvidence(value: unknown): value is TestEvidence {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.inputs) &&
+    typeof value.lane === 'string' &&
+    typeof value.path === 'string' &&
+    typeof value.sha256 === 'string' &&
+    typeof value.input_binding === 'string' &&
+    value.inputs.every((input: unknown) => typeof input === 'string')
+  );
+}
+function isScopeEntry(value: unknown): value is JsonRecord & { exists: true; path: string; sha256: string } {
+  return isRecord(value) && value.exists === true && typeof value.path === 'string' && typeof value.sha256 === 'string';
+}
+function testEvidenceRows(value: unknown): TestEvidence[] {
+  if (!Array.isArray(value) || !value.every(isTestEvidence)) throw new Error('Test evidence records invalid.');
+  return value;
+}
+function releasePackFilename(value: unknown): string {
+  if (!Array.isArray(value) || value.length !== 1 || !isRecord(value[0]) || typeof value[0].filename !== 'string')
+    throw new Error('Release pack metadata invalid.');
+  return value[0].filename;
+}
+function isScopeSnapshot(value: unknown): value is JsonRecord & {
+  schema: 'ScopedSourceSnapshot/v1';
+  digest: string;
+  entries: Array<JsonRecord & { exists: true; path: string; sha256: string }>;
+} {
+  return (
+    isRecord(value) &&
+    value.schema === 'ScopedSourceSnapshot/v1' &&
+    typeof value.digest === 'string' &&
+    !!value.digest &&
+    Array.isArray(value.entries) &&
+    value.entries.length > 0 &&
+    value.entries.every(isScopeEntry)
+  );
+}
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value !== null &&
+    (typeof value === 'object' || typeof value === 'function') &&
+    'then' in value &&
+    typeof value.then === 'function'
+  );
+}
+export function testInputBinding(root: string, inputs: string[], observations?: SourceObservations): string {
+  if (!Array.isArray(inputs) || !inputs.length || new Set(inputs).size !== inputs.length)
+    throw new Error('Test inputs must be a nonempty exact set.');
+  const entries = inputs
+    .slice()
+    .sort()
+    .flatMap((relative) => {
+      if (
+        typeof relative !== 'string' ||
+        !relative ||
+        relative.includes('\\') ||
+        relative.startsWith('/') ||
+        relative.split('/').some((part) => !part || part === '.' || part === '..' || part.includes(':'))
+      )
+        throw new Error('Test input path invalid.');
+      return sources(root, relative, observations);
+    });
+  return sha(JSON.stringify(entries));
+}
+function localFile(root: string, relative: string): string {
+  const current = releasePath(root, relative);
+  if (!lstatSync(current).isFile()) throw new Error('Assurance evidence must be a regular file.');
+  return current;
+}
+function withAssuranceWriteLocks<T>(root: string, operation: string, action: () => T): T {
+  const admission = admissionMutex(root);
+  let worker: ReturnType<typeof operationMutex> | undefined;
+  try {
+    worker = operationMutex(root, operation);
+    if (!worker) throw new Error('Local release: operation busy.');
+    assertReleaseRetargetSettled(root, operation);
+    assertNativeDeliveryEvidenceRepairSettled(root, operation);
+    const pending = asRecord(
+      read(path.join(root, '.agent/work/agent-local-release/pending.json')),
+      'Pending release invalid.',
+    );
+    const current = releaseState(releasePath(root, '.agent/work/agent-local-release/' + operation + '/release.json'));
+    const manifest = asRecord(read(path.join(root, 'packages/agent/package.json')), 'Package manifest invalid.');
+    if (
+      pending.operation_id !== operation ||
+      pending.version !== current.version ||
+      current.operation_id !== operation ||
+      current.version !== manifest.version ||
+      current.status !== 'awaiting_assurance' ||
+      current.install_started
+    )
+      throw new Error('Local release: current awaiting-assurance operation required.');
+    const result = action();
+    if (isPromiseLike(result)) throw new Error('Local release: proof writer must be synchronous.');
+    return result;
+  } finally {
+    try {
+      worker?.close();
+    } finally {
+      admission.close();
+    }
+  }
+}
+export function recordLocalTestEvidence({ root = rootDefault, operation, tests }: RecordTestsInput) {
+  return withAssuranceWriteLocks(root, operation, () => {
+    if (!Array.isArray(tests)) throw new Error('Test evidence operation differs.');
+    const pending = asRecord(
+      read(path.join(root, '.agent/work/agent-local-release/pending.json')),
+      'Pending release invalid.',
+    );
+    const recorded = tests.map(({ lane, path: relative, inputs }) => {
+      const raw = readFileSync(localFile(root, relative));
+      const log = asRecord(parseJSON(raw.toString('utf8')), 'Test log invalid.');
+      if (log.exit_code !== 0 || !log.command || !log.started_at || !log.completed_at)
+        throw new Error('Actual successful test log required.');
+      return { lane, path: relative, inputs, input_binding: testInputBinding(root, inputs), sha256: sha(raw) };
+    });
+    const record = {
+      schema: 'VidaLocalReleaseTests/v1',
+      operation_id: operation,
+      version: requiredString(pending, 'version', 'Pending release version invalid.'),
+      tests: recorded,
+    };
+    writeFileSync(
+      path.join(root, '.agent/work/agent-local-release', operation, 'tests.json'),
+      JSON.stringify(record, null, 2) + '\n',
+    );
+    return record;
+  });
+}
+export function recordLocalAssurance({
+  root = rootDefault,
+  operation,
+  scope_path,
+  clear_work_id,
+  repository_id,
+  project_id,
+  reviews,
+}: RecordAssuranceInput) {
+  return withAssuranceWriteLocks(root, operation, () => {
+    const folder = path.join(root, '.agent/work/agent-local-release', operation);
+    const seal = asRecord(read(path.join(folder, 'source-seal.json')), 'Source seal invalid.');
+    const evidence: ReviewEvidence[] = reviews.map(({ kind, path: relative, reverse_path }) => ({
+      kind,
+      path: relative,
+      reverse_path,
+      sha256: sha(readFileSync(localFile(root, relative))),
+      reverse_sha256: sha(readFileSync(localFile(root, reverse_path))),
+      status: 'passed',
+    }));
+    const sealedFingerprint = requiredString(seal, 'sealed_fingerprint', 'Source seal fingerprint invalid.');
+    verifyForwardReviewSet(root, operation, sealedFingerprint, evidence, '.agent/release-assurance');
+    const record = {
+      schema: 'VidaLocalReleaseAssurance/v1',
+      operation_id: operation,
+      sealed_fingerprint: sealedFingerprint,
+      scope_path,
+      clear_work_id,
+      repository_id,
+      project_id,
+      reviews: evidence,
+    };
+    writeFileSync(path.join(folder, 'assurance.json'), JSON.stringify(record, null, 2) + '\n');
+    return { operation_id: operation, status: 'joined' };
+  });
+}
+export function writeLocalSourceSeal({ root = rootDefault, operation }: SealInput) {
+  return withAssuranceWriteLocks(root, operation, () => {
+    const pending = asRecord(
+      read(path.join(root, '.agent/work/agent-local-release/pending.json')),
+      'Pending release invalid.',
+    );
+    if (pending.operation_id !== operation) throw new Error('Pending release differs.');
+    const seal: {
+      operation_id: string;
+      version: string;
+      source_binding: string;
+      tarball_sha256?: string;
+      sealed_fingerprint?: string;
+    } = {
+      operation_id: operation,
+      version: requiredString(pending, 'version', 'Pending release version invalid.'),
+      ...releaseSourceBinding(root),
+    };
+    const release = asRecord(
+      read(path.join(root, '.agent/work/agent-local-release', operation, 'release.json')),
+      'Release record invalid.',
+    );
+    const packFilename = releasePackFilename(release.pack_metadata);
+    const releaseVersion = requiredString(release, 'version', 'Release version invalid.');
+    const tarball = selectedTarball(
+      release.pack_metadata,
+      path.dirname(releasePath(root, '.tmp/releases/' + operation + '/' + packFilename)),
+      releaseVersion,
+    );
+    seal.tarball_sha256 = sha(readFileSync(tarball));
+    seal.sealed_fingerprint = sha(JSON.stringify([seal.source_binding, seal.tarball_sha256]));
+    const folder = path.join(root, '.agent/work/agent-local-release', operation);
+    writeFileSync(path.join(folder, 'source-seal.json'), JSON.stringify(seal, null, 2) + '\n');
+    return {
+      operation_id: operation,
+      status: 'sealed_awaiting_assurance',
+      source_binding: seal.source_binding,
+      sealed_fingerprint: seal.sealed_fingerprint,
+    };
+  });
+}
+export async function verifyLocalReleaseTests({ root = rootDefault, operation, version, ci }: VerifyInput) {
+  assertReleaseRetargetSettled(root, operation);
+  const folder = path.join(root, '.agent/work/agent-local-release', operation);
+  const proofFile = path.join(folder, 'tests.json');
+  if (!existsSync(proofFile))
+    throw new Error(
+      'awaiting_assurance: current local retained-behavior/static logs and CI/CD build/install evidence in the release-local lane are required.',
+    );
+  const proofRelative = path.relative(root, proofFile).split(path.sep).join('/');
+  const proofBytes = readFileSync(localFile(root, proofRelative));
+  const proof = asRecord(parseJSON(proofBytes.toString('utf8')), 'Tests proof invalid.');
+  const observedEvidence: Array<{ path: string; bytes: Buffer }> = [{ path: proofRelative, bytes: proofBytes }];
+  const inputObservations: InputObservation[] = [];
+  const bindings = new Map<string, string>();
+  if (proof.operation_id !== operation || proof.version !== version)
+    throw new Error('Tests operation binding differs.');
+  const testEvidence = testEvidenceRows(proof.tests);
+  const required = ['retained-behavior', 'static', 'release-local'];
+  if (
+    testEvidence.length !== required.length ||
+    testEvidence
+      .map((test) => test.lane)
+      .sort()
+      .join() !== required.sort().join()
+  )
+    throw new Error('Actual required test lanes missing.');
+  for (const test of testEvidence) {
+    const raw = readFileSync(localFile(root, test.path));
+    const result = asRecord(parseJSON(raw.toString('utf8')), 'Test log invalid.');
+    const inputKey = JSON.stringify(test.inputs);
+    if (!bindings.has(inputKey)) bindings.set(inputKey, testInputBinding(root, test.inputs, inputObservations));
+    if (
+      sha(raw) !== test.sha256 ||
+      test.input_binding !== bindings.get(inputKey) ||
+      result.exit_code !== 0 ||
+      !result.command ||
+      !result.started_at ||
+      !result.completed_at
+    )
+      throw new Error('Test log is missing, failed or bound to other source.');
+    observedEvidence.push({ path: test.path, bytes: raw });
+  }
+  const joined = await verifyCIDeliveryEvidence({ root, operation, version, ci });
+  for (const evidence of observedEvidence)
+    if (!readFileSync(localFile(root, evidence.path)).equals(evidence.bytes))
+      throw Error('Local test evidence changed during CI observation.');
+  for (const input of inputObservations) {
+    const stat = lstatSync(releasePath(root, input.path));
+    if (JSON.stringify([stat.dev, stat.ino, stat.size, stat.mtimeMs, stat.ctimeMs]) !== JSON.stringify(input.identity))
+      throw Error('Local test input changed during CI observation.');
+  }
+  return joined;
+}
+export async function verifyLocalReleaseAssurance({ root = rootDefault, operation, version, ci }: VerifyInput) {
+  if (!isRecord(ci)) throw new Error('CI evidence invalid.');
+  const profile = isRecord(ci.profile) ? ci.profile : undefined;
+  if (JSON.stringify(profile?.required_checks) === JSON.stringify(minimumNativeDeliveryChecks))
+    return verifyCIDeliveryEvidence({ root, operation, version, ci });
+  const tested = await verifyLocalReleaseTests({ root, operation, version, ci });
+  const folder = path.join(root, '.agent/work/agent-local-release', operation);
+  const seal = asRecord(read(path.join(folder, 'source-seal.json')), 'Source seal invalid.');
+  const proofFile = path.join(folder, 'assurance.json');
+  if (!existsSync(proofFile))
+    throw new Error('awaiting_assurance: three actual fresh reviews, reverse validation and current CLEAR required.');
+  const proof = asRecord(read(proofFile), 'Assurance proof invalid.');
+  const release = asRecord(read(path.join(folder, 'release.json')), 'Release record invalid.');
+  const packFilename = releasePackFilename(release.pack_metadata);
+  const sealedFingerprint = requiredString(seal, 'sealed_fingerprint', 'Source seal fingerprint invalid.');
+  const sourceBinding = requiredString(seal, 'source_binding', 'Source seal binding invalid.');
+  const tarballSha256 = requiredString(seal, 'tarball_sha256', 'Source seal archive digest invalid.');
+  const tarball = path.join(root, '.tmp/releases', operation, packFilename);
+  if (
+    seal.operation_id !== operation ||
+    seal.version !== version ||
+    sourceBinding !== tested.source_binding ||
+    proof.operation_id !== operation ||
+    proof.sealed_fingerprint !== sealedFingerprint ||
+    sha(readFileSync(tarball)) !== tarballSha256
+  )
+    throw new Error('Assurance source, archive or operation binding differs.');
+  verifyForwardReviewSet(root, operation, sealedFingerprint, proof.reviews, '.agent/release-assurance');
+  const scopePath = requiredString(proof, 'scope_path', 'Public source scope path missing.');
+  const scope = asRecord(read(localFile(root, scopePath)), 'Public source scope evidence invalid.');
+  if (!isScopeSnapshot(scope)) throw new Error('Public source scope evidence missing.');
+  for (const entry of scope.entries)
+    if (!entry.exists || sha(readFileSync(localFile(root, entry.path))) !== entry.sha256)
+      throw new Error('Public source scope evidence is stale.');
+  if (
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(requiredString(proof, 'clear_work_id', 'CLEAR work context invalid.')) ||
+    !/^[a-z0-9][a-z0-9-]{0,63}$/.test(requiredString(proof, 'repository_id', 'CLEAR work context invalid.')) ||
+    !/^[a-z0-9][a-z0-9-]{0,63}$/.test(requiredString(proof, 'project_id', 'CLEAR work context invalid.'))
+  )
+    throw new Error('CLEAR work context invalid.');
+  const repositoryId = requiredString(proof, 'repository_id', 'CLEAR repository invalid.');
+  const projectId = requiredString(proof, 'project_id', 'CLEAR project invalid.');
+  const clearWorkId = requiredString(proof, 'clear_work_id', 'CLEAR work identifier invalid.');
+  const sourceRevision = requiredString(scope, 'digest', 'Public source scope digest invalid.');
+  const output = await runCommand(
+    process.execPath,
+    [
+      path.join(root, 'packages/agent/bin/vida-agent.ts'),
+      'documentation-clear',
+      '--mode',
+      'verify',
+      '--project-root',
+      root,
+      '--repository',
+      repositoryId,
+      '--project',
+      projectId,
+      '--work-id',
+      clearWorkId,
+      '--source-revision',
+      sourceRevision,
+    ],
+    { cwd: root },
+  );
+  const closeout = asRecord(parseJSON(output), 'Current public CLEAR closeout response invalid.');
+  if (closeout.status !== 'verified') throw new Error('Current public CLEAR closeout is not verified.');
+  return { source_binding: sourceBinding };
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const [mode, operation] = process.argv.slice(2);
+  if ((mode !== '--source' && mode !== '--seal') || !operation || !/^[a-z0-9][a-z0-9-]{0,95}$/.test(operation))
+    throw new Error('Usage: release-assurance.mjs --source OPERATION | --seal OPERATION');
+  if (mode === '--source') {
+    const pending = asRecord(
+      read(path.join(rootDefault, '.agent/work/agent-local-release/pending.json')),
+      'Pending release invalid.',
+    );
+    if (pending.operation_id !== operation) throw new Error('Pending release differs.');
+    console.log(
+      JSON.stringify({
+        operation_id: operation,
+        version: requiredString(pending, 'version', 'Pending release version invalid.'),
+        ...releaseSourceBinding(),
+      }),
+    );
+    process.exit(0);
+  }
+  console.log(JSON.stringify(writeLocalSourceSeal({ root: rootDefault, operation })));
+}

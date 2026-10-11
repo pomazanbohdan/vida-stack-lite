@@ -10,7 +10,7 @@ import {
   coverageToolInputs,
   instrumentSource,
   sha256,
-} from '../tooling/bun-coverage-evidence.mjs';
+} from '../tooling/bun-coverage-evidence.ts';
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const capturedTools = new Map(coverageToolInputs.map((file) => [file, readFileSync(path.join(packageRoot, file))]));

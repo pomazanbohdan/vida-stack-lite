@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { afterEach, test as baseTest } from 'bun:test';
 import type JSZipConstructor from 'jszip';
-import { pinnedEnvironment } from '../bin/bun.mjs';
+import { pinnedEnvironment } from '../bin/bun.ts';
 import {
   releaseDigest as sha,
   releaseJSON as json,
@@ -16,7 +16,7 @@ import {
   operationMutex,
   admissionMutex,
   assertReleaseRetargetSettled,
-} from '../bin/local-release-artifacts.mjs';
+} from '../bin/local-release-artifacts.ts';
 import {
   stageNativeRetargetCandidate,
   planReleaseRetarget,
@@ -24,18 +24,18 @@ import {
   inspectReleaseRetarget,
   runReleaseRetarget,
   readNativeRetargetCandidate,
-} from '../bin/repair-release-retarget.mjs';
+} from '../bin/repair-release-retarget.ts';
 import {
   reserveReleaseWorker,
   claimReleaseWorker,
   withReleaseAdmission,
   runCommand,
-} from '../../../tooling/agent/release-local.mjs';
+} from '../../../tooling/agent/release-local.ts';
 import {
   testInputBinding,
   verifyLocalReleaseTests,
   verifyLocalReleaseAssurance,
-} from '../../../tooling/agent/release-assurance.mjs';
+} from '../../../tooling/agent/release-assurance.ts';
 import {
   recordCIDeliveryRequest,
   encodeCIDeliveryResult,
@@ -48,7 +48,7 @@ import {
   ciTransportLimit,
   validateCIZIPReaderVersions,
   observeGitHubCIDelivery,
-} from '../../../tooling/agent/release-ci-evidence.mjs';
+} from '../../../tooling/agent/release-ci-evidence.ts';
 import {
   validateNativeCIInvocation,
   validateNativeCIReceipts,
@@ -58,7 +58,7 @@ import {
   nativeCIDenialDiagnostics,
   createNativeCICommandRunner,
   nativeCIUnadmittedWorkflowDenial,
-} from '../../../tooling/agent/native-ci-delivery.mjs';
+} from '../../../tooling/agent/native-ci-delivery.ts';
 import { cliCommandNames } from '../bin/cli-command-contracts.ts';
 import { standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
 
@@ -478,7 +478,7 @@ async function fixture({ success = false }: { success?: boolean } = {}): Promise
       'bun.lock',
       'bunfig.toml',
     ],
-    bin: { 'vida-agent': './bin/vida-agent.mjs' },
+    bin: { 'vida-agent': './bin/vida-agent.ts' },
     type: 'module',
     main: './dist/src/index.js',
     types: './dist/src/index.d.ts',
@@ -499,10 +499,10 @@ async function fixture({ success = false }: { success?: boolean } = {}): Promise
   write(root, 'packages/agent/package.json', manifest);
   write(root, 'packages/agent/lib.js', 'export const inert = 1;\n');
   const sourceFiles: Record<string, string> = {
-    'bin/vida-agent.mjs': '#!/usr/bin/env node\n// inert development fixture entrypoint\n',
+    'bin/vida-agent.ts': '#!/usr/bin/env node\n// inert development fixture entrypoint\n',
     'tooling/maintained-source-inventory.ts': '// inert inventory fixture\n',
-    'tooling/build-standalone.mjs': '// inert build fixture; never executed\n',
-    'tooling/pack-sdk.mjs': '// inert pack fixture; never executed\n',
+    'tooling/build-standalone.ts': '// inert build fixture; never executed\n',
+    'tooling/pack-sdk.ts': '// inert pack fixture; never executed\n',
     'tooling/owned-staging.ts': '// inert staging fixture; never executed\n',
     'src/index.ts': 'export const inert = true;\n',
     'dist/src/index.js': 'export const inert = true;\n',
@@ -526,11 +526,11 @@ async function fixture({ success = false }: { success?: boolean } = {}): Promise
     'package.json',
     'agent-runtime.config.v1.yaml',
     'AGENT.sidecar.md',
-    'tooling/agent/release-local.mjs',
-    'tooling/agent/release-assurance.mjs',
-    'tooling/agent/release-ci-evidence.mjs',
-    'tooling/agent/native-ci-delivery.mjs',
-    'tooling/agent/controllers/forward-review-proof.mjs',
+    'tooling/agent/release-local.ts',
+    'tooling/agent/release-assurance.ts',
+    'tooling/agent/release-ci-evidence.ts',
+    'tooling/agent/native-ci-delivery.ts',
+    'tooling/agent/controllers/forward-review-proof.ts',
     '.github/workflows/agent-native-delivery.yml',
   ])
     write(root, file, '{}\n');
@@ -707,9 +707,9 @@ test('CI emission requires all seven exact ordered terminal receipts and known d
   validateNativeCIDenial({ code: 1, signal: null, stderr: 'invalid argument\n' }, expectedLine);
   const publicCommandNames = cliCommandNames.filter((name) => !['help', 'instructions', 'version'].includes(name));
   const commandDenials = validateNativeCICommandDenialInventory(publicCommandNames, {
-    'vida-agent': './bin/vida-agent.mjs',
+    'vida-agent': './bin/vida-agent.ts',
     'vida-agent-run': './bin/run.mjs',
-    'vida-agent-documentation-clear': './bin/documentation-clear.mjs',
+    'vida-agent-documentation-clear': './bin/documentation-clear.ts',
   });
   assert.strictEqual(commandDenials.get(path.basename('./bin/run.mjs', '.mjs')), commandDenials.get('run'));
   assert.throws(
@@ -1126,7 +1126,10 @@ test('CI public observer rejects duplicate physical ZIP names before accepting r
           encoding: 'base64',
           content: workflow.toString('base64'),
         },
-        '/actions/runs/17/attempts/2/jobs?per_page=100': { total_count: 1, jobs: [data.job] },
+        '/actions/runs/17/attempts/2/jobs?per_page=100': {
+          total_count: 3,
+          jobs: [null, { name: 'unrelated', steps: null }, data.job],
+        },
         '/actions/artifacts/19': data.artifact,
       };
       let calls = 0;
@@ -1170,7 +1173,7 @@ test('CI public observer rejects duplicate physical ZIP names before accepting r
   }
 });
 
-for (const kind of ['complete', 'partial', 'oversized', 'wrong-digest', 'wrong-commit'])
+for (const kind of ['complete', 'unrelated-malformed', 'partial', 'oversized', 'wrong-digest', 'wrong-commit'])
   test('CI explicit mocked transport ' + kind + ' keeps bounded custody and never forwards credentials', async () => {
     const value = await fixture(),
       request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' }),
@@ -1185,7 +1188,10 @@ for (const kind of ['complete', 'partial', 'oversized', 'wrong-digest', 'wrong-c
       const url = fetchURL(input);
       if (!options) throw new Error('Mocked CI request options are missing.');
       calls.push({ url, options });
-      if (url.includes('/attempts/2/jobs?')) return Response.json({ total_count: 1, jobs: [data.job] });
+      if (url.includes('/attempts/2/jobs?')) {
+        const jobs = kind === 'unrelated-malformed' ? [null, { name: 'unrelated', steps: null }, data.job] : [data.job];
+        return Response.json({ total_count: jobs.length, jobs });
+      }
       if (url.endsWith('/runs/17/attempts/2')) return Response.json(data.run);
       if (url.endsWith('/artifacts/19')) return Response.json(data.artifact);
       if (url.endsWith('/artifacts/19/zip'))
@@ -1219,7 +1225,7 @@ for (const kind of ['complete', 'partial', 'oversized', 'wrong-digest', 'wrong-c
     };
     const relative = '.tmp/ci-delivery/' + request.request_id + '/17-2-19.zip';
     try {
-      if (kind === 'complete') {
+      if (kind === 'complete' || kind === 'unrelated-malformed') {
         assert.equal((await downloadGitHubCIDelivery(options)).transport_path, relative);
         assert.deepEqual(read(value.root, relative), bytes);
         const count = calls.length;
@@ -1313,7 +1319,7 @@ test('CI request retry preserves custody and Source changes keep the original op
   assert.deepEqual(recordCIDeliveryRequest(args), request);
   const relative = folder + '/ci/' + request.request_id + '/request.json',
     saved = read(value.root, relative);
-  write(value.root, 'tooling/agent/release-ci-evidence.mjs', 'changed in-scope repository consumer');
+  write(value.root, 'tooling/agent/release-ci-evidence.ts', 'changed in-scope repository consumer');
   const amended = recordCIDeliveryRequest(args);
   assert.notEqual(amended.request_id, request.request_id);
   assert.equal(amended.operation_id, request.operation_id);
@@ -1652,7 +1658,7 @@ test('busy worker and admission deny before custody or effects', async () => {
   if (!worker) throw new Error('Retarget operation lock was not acquired.');
   try {
     await Promise.resolve(assert.rejects(plan(value), /busy/));
-    const module = new URL('../bin/local-release-artifacts.mjs', import.meta.url).href;
+    const module = new URL('../bin/local-release-artifacts.ts', import.meta.url).href;
     const child = spawnSync(
       'node',
       [
@@ -1797,7 +1803,7 @@ test('successful local logs never replace trusted CI/CD delivery evidence', asyn
 
 test('public fixed kind is read-only and missing initial ACK resumes only unchanged preimages', async () => {
   const value = await fixture();
-  const { runReconcileArtifacts } = await import('../bin/reconcile-artifacts.mjs');
+  const { runReconcileArtifacts } = await import('../bin/reconcile-artifacts.ts');
   const result = await runReconcileArtifacts([
     '--kind',
     'release-retarget',
@@ -1978,4 +1984,142 @@ test('formation profile validates build identity without installation tests and 
       }),
     /differs/,
   );
+});
+
+test('CI selected job shape and cardinality fail before artifact reads in both consumers', async () => {
+  const value = await fixture();
+  const request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' });
+  const data = githubTransportFixture(request, Buffer.from('inert job-selection transport'));
+  const workflow = Buffer.from('inert workflow definition');
+  const candidate = ciCandidateForRequest(request, Buffer.from('inert candidate archive; no executable'));
+  const pages: { name: string; jobs: unknown[]; total: number; observerOnly?: boolean }[] = [
+    { name: 'missing', jobs: [{ name: 'unrelated' }], total: 1 },
+    { name: 'duplicate', jobs: [data.job, data.job], total: 2 },
+    { name: 'selected shape', jobs: [{ ...data.job, steps: null }], total: 1 },
+    {
+      name: 'selected step shape',
+      jobs: [{ ...data.job, steps: [{ name: 'invalid', status: 'completed' }] }],
+      total: 1,
+    },
+    { name: 'foreign attempt', jobs: [{ ...data.job, run_attempt: 3 }], total: 1 },
+    { name: 'failed selected job', jobs: [{ ...data.job, conclusion: 'failure' }], total: 1 },
+    { name: 'incomplete page', jobs: [data.job], total: 2 },
+    ...['failure', 'skipped'].map((conclusion) => ({
+      name: 'required step ' + conclusion,
+      jobs: [
+        { ...data.job, steps: data.job.steps.map((step, index) => (index === 0 ? { ...step, conclusion } : step)) },
+      ],
+      total: 1,
+      observerOnly: true,
+    })),
+  ];
+  const before = read(value.root, pending);
+  const priorFetch = globalThis.fetch;
+  try {
+    for (const page of pages) {
+      const calls: string[] = [];
+      globalThis.fetch = mockedFetch(priorFetch, async (input) => {
+        const url = fetchURL(input);
+        calls.push(url);
+        if (url.includes('/attempts/2/jobs?')) return Response.json({ total_count: page.total, jobs: page.jobs });
+        if (url.endsWith('/runs/17/attempts/2')) return Response.json(data.run);
+        if (url.includes('/contents/'))
+          return Response.json({ encoding: 'base64', content: workflow.toString('base64') });
+        throw new Error('Fixture rejects unexpected later provider request: ' + url);
+      });
+      const failure = /(?:provider job|native job|download job|bounded.*job|native step failed)/;
+      if (!page.observerOnly) {
+        await assert.rejects(
+          downloadGitHubCIDelivery({
+            root: value.root,
+            request,
+            profile: data.profile,
+            run_id: '17',
+            run_attempt: 2,
+            artifact_id: '19',
+          }),
+          failure,
+          page.name + ' download',
+        );
+      }
+      await assert.rejects(
+        observeGitHubCIDelivery({
+          root: value.root,
+          request,
+          candidate,
+          profile: data.profile,
+          run_id: 17,
+          run_attempt: 2,
+          artifact_id: 19,
+          transport_path: '.tmp/inert-unread.zip',
+        }),
+        failure,
+        page.name + ' observer',
+      );
+      assert.equal(
+        calls.some((url) => url.includes('/artifacts/')),
+        false,
+        page.name + ' stops before artifact',
+      );
+      assert.deepEqual(read(value.root, pending), before, page.name + ' retains release');
+    }
+  } finally {
+    globalThis.fetch = priorFetch;
+  }
+});
+
+test('CI provider byte reader rejects oversized and non-byte streams before later requests', async () => {
+  const value = await fixture();
+  const request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' });
+  const data = githubTransportFixture(request, Buffer.from('inert transport'));
+  const candidate = ciCandidateForRequest(request, Buffer.from('inert archive'));
+  const before = read(value.root, pending);
+  const priorFetch = globalThis.fetch;
+  try {
+    for (const kind of ['oversized', 'non-byte']) {
+      let calls = 0;
+      globalThis.fetch = mockedFetch(priorFetch, async () => {
+        calls++;
+        if (kind === 'oversized') return new Response(Buffer.alloc(8 * 1024 * 1024 + 1, 32));
+        return new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(JSON.stringify(data.run));
+              controller.close();
+            },
+          }),
+        );
+      });
+      const failure =
+        kind === 'oversized' ? /provider response oversized/ : /provider response contains a non-byte chunk/;
+      await assert.rejects(
+        downloadGitHubCIDelivery({
+          root: value.root,
+          request,
+          profile: data.profile,
+          run_id: '17',
+          run_attempt: 2,
+          artifact_id: '19',
+        }),
+        failure,
+      );
+      await assert.rejects(
+        observeGitHubCIDelivery({
+          root: value.root,
+          request,
+          candidate,
+          profile: data.profile,
+          run_id: 17,
+          run_attempt: 2,
+          artifact_id: 19,
+          transport_path: '.tmp/inert-unread.zip',
+        }),
+        failure,
+      );
+      assert.equal(calls, 2, kind + ' rejects each first provider response');
+      assert.deepEqual(read(value.root, pending), before);
+    }
+  } finally {
+    globalThis.fetch = priorFetch;
+  }
 });

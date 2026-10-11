@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,7 +40,7 @@ test('public scope dispatch reaches the native TypeScript command', () => {
     [
       '--no-env-file',
       '--no-install',
-      fileURLToPath(new URL('../bin/vida-agent.mjs', import.meta.url)),
+      fileURLToPath(new URL('../bin/vida-agent.ts', import.meta.url)),
       'scope',
       '--project-root',
       '/never-read',
@@ -66,6 +66,39 @@ test('public scope dispatch reaches the native TypeScript command', () => {
     code: 'GAP-VIDA-SCOPE-001',
     message: 'duplicate scope path',
   });
+});
+
+test.each([
+  ['reconcile-artifacts', 'invalid arguments'],
+  ['documentation-clear', 'documentation CLEAR arguments invalid'],
+])('public %s dispatch reaches its command argument guard', (command, message) => {
+  const runtimePath = mkdtempSync(path.join(tmpdir(), 'vida-dispatch-runtime-'));
+  try {
+    symlinkSync(process.execPath, path.join(runtimePath, process.platform === 'win32' ? 'bun.exe' : 'bun'));
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--no-env-file',
+        '--no-install',
+        fileURLToPath(new URL('../bin/vida-agent.ts', import.meta.url)),
+        command,
+        '--foreign-option',
+        'invalid',
+      ],
+      {
+        encoding: 'utf8',
+        windowsHide: true,
+        timeout: 15_000,
+        env: { ...process.env, PATH: runtimePath + path.delimiter + (process.env.PATH ?? '') },
+      },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(message);
+  } finally {
+    rmSync(runtimePath, { recursive: true, force: true });
+  }
 });
 
 test('shared CLI declaration freezes nested aliases and preserves supported scalar values', () => {
@@ -118,7 +151,7 @@ test('native run option details retain unique contracts and isolate each returne
     requiredFor: 'task-source mode',
   });
   if (!task || !('values' in task) || !Array.isArray(task.values)) throw new Error('task-source enum missing');
-  const values = task.values;
+  const values: readonly unknown[] = task.values;
   expect(() => Object.defineProperty(values, '0', { value: 'foreign' })).toThrow();
   const attempt = first.find((option) => option.name === '--attempt');
   if (!attempt) throw new Error('attempt option missing');
@@ -171,15 +204,15 @@ function assertDirectHelpMetadataClosure(command: string, entry: string, extra: 
 }
 
 test('direct reconcile help requires only its metadata closure', () => {
-  assertDirectHelpMetadataClosure('reconcile-artifacts', 'reconcile-artifacts.mjs');
+  assertDirectHelpMetadataClosure('reconcile-artifacts', 'reconcile-artifacts.ts');
 });
 test('direct run help requires only its metadata closure', () => {
-  assertDirectHelpMetadataClosure('run', 'run.mjs', ['bun.mjs', 'cli-error-properties.ts']);
+  assertDirectHelpMetadataClosure('run', 'run.ts', ['bun.ts', 'cli-error-properties.ts']);
 });
 
 test('public command, nested route and compatibility help complete without project effects', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-cli-informational-help-'));
-  const entry = fileURLToPath(new URL('../bin/vida-agent.mjs', import.meta.url));
+  const entry = fileURLToPath(new URL('../bin/vida-agent.ts', import.meta.url));
   let complete = true;
   let children = 0;
   const record = (value: unknown): Record<string, unknown> => {

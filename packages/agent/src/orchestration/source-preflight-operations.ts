@@ -35,8 +35,12 @@ import {
 } from './admitted-development-packet.js';
 import { readAdmittedSessionExecutionContext } from './admitted-session-execution.js';
 import type { LocalWorkAdmissionInput } from './local-work-admission.js';
-import { lifecyclePreparationObservationSchema } from './final-assurance.js';
-import { observedReceiptEvidenceReference, validateObservedEvidenceReferences } from './observed-receipt-evidence.js';
+import { lifecyclePreparationObservationSchema, validateWorkSessionRunBinding } from './final-assurance.js';
+import {
+  observedReceiptEvidenceReference,
+  sourcePreparationJournalEvidence,
+  validateObservedEvidenceReferences,
+} from './observed-receipt-evidence.js';
 import type { LocalSourceWriteAuthorization } from './local-source-authorization.js';
 import type { LifecycleArtifactReference } from '../lifecycle/lifecycle-state.js';
 import type { MastraLedgerItem, MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
@@ -959,6 +963,7 @@ function currentReadEvidence(context: SourcePolicyCommonInput, operationBinding:
     host_ledger_digest: snapshot.ledgerVersion?.digest ?? null,
     journal_revision: context.journal.version.revision,
     journal_digest: context.journal.version.digest,
+    planning_journal_digest: context.planningJournal ? canonicalJsonDigest(context.planningJournal) : null,
     config_digest: runtimeConfigDigest(context.config),
     project_context_digest: context.projectContext.project_context_digest,
     task_packet_digest: context.taskPacket.digest,
@@ -1153,36 +1158,6 @@ function parseJsonRecord(bytes: Uint8Array, label: string): Record<string, unkno
   return value;
 }
 
-function journalEvidence(
-  journal: MastraSessionLedgerSnapshot,
-  work: NonNullable<HostStateSnapshot['work']>,
-): ReadonlyMap<string, MastraLedgerItem> {
-  const items = [...journal.state.completed.flatMap((wave) => wave.items), ...journal.state.items];
-  const evidence = new Map<string, MastraLedgerItem>();
-  for (const item of items) {
-    const observation = item.observation;
-    if (
-      item.issue_id === null ||
-      !observation ||
-      observation.status !== 'reported_complete' ||
-      observation.action_id !== item.request.action_id ||
-      observation.issue_id !== item.issue_id ||
-      item.request.run_id !== journal.state.run_id ||
-      item.request.workflow_id !== work.binding.workflow_id ||
-      item.request.config_digest !== work.binding.config_digest ||
-      item.request.scope_digest !== work.binding.work_source_revision
-    )
-      continue;
-    try {
-      const reference = observedReceiptEvidenceReference(journal, item.request.action_id, observation.output_digest);
-      evidence.set(reference, item);
-    } catch {
-      // Invalid or ambiguous observations cannot satisfy a preparation reference.
-    }
-  }
-  return evidence;
-}
-
 function securityReviewers(
   config: SourceWritePreflightContext['config'],
   workflowId: string,
@@ -1215,7 +1190,6 @@ function validateTaskSourcePlanAndSecurity(context: TaskSourceMutationPolicyCont
     journal.state.schema === 'MastraSessionLedger/v1' &&
       journal.state.workspace_id === work.workspace_id &&
       journal.state.work_id === binding.lifecycle_work_id &&
-      journal.state.run_id === work.execution.run_id &&
       Number.isSafeInteger(journal.state.attempt) &&
       journal.state.attempt > 0 &&
       Number.isSafeInteger(journal.version.revision) &&
@@ -1227,6 +1201,7 @@ function validateTaskSourcePlanAndSecurity(context: TaskSourceMutationPolicyCont
       ),
     'same-thread journal is stale, foreign, uncertain, or not ready',
   );
+  validateWorkSessionRunBinding(work, journal.state);
 
   const scopeHash = sha256(context.scopeBytes);
   const acceptanceHash = sha256(context.acceptanceBytes);
@@ -1286,7 +1261,7 @@ function validateTaskSourcePlanAndSecurity(context: TaskSourceMutationPolicyCont
       reference.disposition === 'current',
   );
   requireCurrent(context.preparations.length === currentReferences.length, 'current preparation set is incomplete');
-  const journalItems = journalEvidence(journal, work);
+  const journalItems = sourcePreparationJournalEvidence(journal, work, context.planningJournal);
   const records = new Map<string, ReturnType<typeof lifecyclePreparationObservationSchema.parse>>();
   const mechanics: Readonly<Record<string, readonly string[]>> = {
     source_plan: ['scope_acceptance_trace', 'verification_rollback'],

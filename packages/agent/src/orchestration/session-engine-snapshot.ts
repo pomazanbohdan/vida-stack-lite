@@ -25,9 +25,9 @@ import { configuredContextForStage } from './configured-context.js';
 import type { SessionBridgeSnapshot } from './mastra-session-bridge.js';
 import type { SessionHandoffContext } from './session-handoff.js';
 import { createSessionActionProjector, sessionActionsForWave } from './session-handoff.js';
-import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { assertCanonicalJsonValue, canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { compileDevelopmentWorkflow, type WorkflowLifecycleRisk } from './workflow-plan.js';
-import type { CorrectiveExecution } from './final-assurance.js';
+import { correctiveExecutionSchema, type CorrectiveExecution } from './corrective-execution-contract.js';
 import type { QualifiedRuntimeCodeContinuationReceipt } from './qualified-runtime-code-continuation.js';
 import type { MastraSessionLedgerSnapshot, MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { projectConfiguredPrewriterContinuationRequests } from './delivered-work-continuation.js';
@@ -63,6 +63,13 @@ function unknownRecord(value: unknown): value is Record<string, unknown> {
 }
 function unknownArray(value: unknown): value is unknown[] {
   return Array.isArray(value);
+}
+function normalizeCorrectiveExecution(value: unknown): CorrectiveExecution {
+  assertCanonicalJsonValue(value, '$.correctiveExecution');
+  const detached = Object.assign(Object.create(null) as Record<string, unknown>, value);
+  if (unknownRecord(detached.authorization))
+    detached.authorization = Object.assign(Object.create(null) as Record<string, unknown>, detached.authorization);
+  return correctiveExecutionSchema.parse(detached);
 }
 function arrayShape(value: unknown): boolean {
   return Array.isArray(value);
@@ -1690,7 +1697,10 @@ function readSessionEngineSnapshotInternal(
             Number.isSafeInteger(suspendedIndexes[0]),
       'suspended path differs',
     );
-    const correction = binding.correctiveExecution,
+    const correction =
+        binding.correctiveExecution === undefined
+          ? undefined
+          : normalizeCorrectiveExecution(binding.correctiveExecution),
       actionProjector = createSessionActionProjector(config, selection, workflowId, binding.lifecycleRisk),
       executedWaves = actionProjector.executableWaveIndices(correction?.stage_ids);
     const waveIds = Object.keys(persisted.context).filter((key) => key.startsWith('wave-'));

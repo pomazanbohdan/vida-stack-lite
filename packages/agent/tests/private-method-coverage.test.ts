@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { instrumentSource } from '../tooling/bun-coverage-evidence.mjs';
+import { instrumentSource } from '../tooling/bun-coverage-evidence.ts';
 import { functionInventory } from '../tooling/function-inventory.ts';
 import { baselineFunctionEvidenceForSource } from '../tooling/coverage-math.ts';
 

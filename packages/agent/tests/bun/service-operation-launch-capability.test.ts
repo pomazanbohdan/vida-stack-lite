@@ -702,7 +702,7 @@ test('launch reservation cannot replace UNKNOWN, terminal, or already launching 
   }
 });
 
-test('legacy MJS reserve and direct claim reject before launch and preserve the operation journal', async () => {
+test('legacy reserve and direct claim reject before launch and preserve the operation journal', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'service-custody-legacy-held-'));
   const operation = 'legacy-held-operation';
   const journal = path.join(root, '.agent/work/agent-local-release/operations', operation, 'release.json');
@@ -713,7 +713,7 @@ test('legacy MJS reserve and direct claim reject before launch and preserve the 
     const repositoryRoot =
       process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
       path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-    const adapterFile = path.join(repositoryRoot, 'tooling/agent/release-local.mjs');
+    const adapterFile = path.join(repositoryRoot, 'tooling/agent/release-local.ts');
     const loaded: unknown = createRequire(import.meta.url)(adapterFile);
     if (!isLegacyReleaseAdapter(loaded)) throw new Error('Release adapter does not expose the legacy worker APIs.');
     let launchCalls = 0;

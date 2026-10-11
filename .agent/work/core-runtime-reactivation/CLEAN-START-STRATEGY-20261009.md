@@ -2,8 +2,11 @@
 
 Статус: погоджений CLEAR P0–P1 у роботі. Root — єдиний інтегратор Source.
 Luna агенти паралельно досліджують, готують текстові пропозиції й виконують
-сліпий review. Чинна межа після writer-incident: агенти не пишуть файли,
-не запускають checks і не змінюють Git; Root пише Source, тести й scratch.
+сліпий review. Чинне пряме доручення людини від 2026-10-11: тести переписують паралельні
+Luna writers з окремими непересічними файлами. Root інтегрує refs, володіє
+product/shared Source, форматуванням, checks, фінальними доказами й Git.
+Сліпі reviewers працюють read-only без історії; агенти не запускають checks
+і не змінюють Git.
 Чинне доповнення людини від 2026-10-10: тести пишемо паралельно з кодовими
 корекціями; сліпі цикли аналізу продовжуємо. Фінальні числові перевірки
 виконує один writer після стабілізації їхніх входів.
@@ -28,10 +31,172 @@ DERIVED / NON-AUTHORITATIVE. Пріоритети й IDs визначає
 питання. Історичні наративи, повторні статуси й застарілі коментарі вилучаємо.
 Прийняті рішення, research, задачі та докази зберігаємо окремо від активного стану.
 
+## Наскрізний P0–P1 shared-рефакторинг — доручення 2026-10-11
+
+Пряме доручення власника: включити знайдені в цій сесії shared, оптимізацію
+читань/викликів та інші корисні спрощення в прохід **усіх підтримуваних файлів
+Agent/Core**, разом із TS-міграцією і тестами. Це виконання чинних
+BL-FLOW006/007, OPT01/06/08/13, storage і TEST-013 scopes; нових IDs немає.
+Відтворений дефект чинної поведінки — P0; підтримуване спрощення — P1.
+Нові engine capabilities та формати без готового repair залишаються P2.
+
+### Обсяг і єдина черга
+
+Обсяг: `packages/agent/{src,bin,tooling,tests}`, їхні SDK/manifest/config
+consumers, `tooling/agent` і `tests/agent`. Кожен файл чинного підтримуваного
+інвентарю отримує reviewed disposition; прохід охоплює вже мігровані TS файли
+також. Generated artifacts, dependencies й provenance не перетворюємо на
+handwritten Source. Plugin змінюємо лише як підтверджений affected caller.
+Єдине джерело файлів/функцій — maintained inventory та TS-only gate; повторного
+ручного каталогу або AST/hash scanner не створюємо.
+
+Черга: causal P0 і його callers → уже видані/готові connected packets →
+категорії з меншою кількістю залишкових файлів → більші категорії. Усередині
+контуру — original bytes від менших до більших; dependency closure має пріоритет.
+Останній filename receipt v633:396TS/10JS,406 code files/473 selected entries.
+CLI6, adapters4, repository tests0, Agent tests0. Після v634–637 joined трьох
+adapters фактичний active MJS залишок7 (CLI6/adapters1); fresh filename receipt
+ще pending. Тимчасові unqualified TS compiler subjects не рахуються як міграція.
+Це міграційний залишок,
+а не кількість файлів, які вже пройшли наскрізний quality review.
+
+| Категорія аналізу всіх файлів | Місце та результат | Обов'язкова перевірка |
+| --- | --- | --- |
+| Однакові контракти й дублікати | Package-owned helpers для validators/codecs/paths/receipts; adapters делегують власнику | Ті самі bytes, acceptance, rejection order, caller-specific errors і права; схожа syntax не достатня |
+| Зайві читання/декодування/digest | Host/Ledger/Journal і continuation readers; локальний validated snapshot | Read cardinality, stale/foreign CAS, orphan rows, no-Work path; reuse лише в тому самому transaction/custody interval |
+| Зайві виклики й кроки | CLI metadata/dispatch/help, preparation/repair, test orchestration | Один актуальний owner; aliases/entrypoints, no effects on help, original operation/UNKNOWN retained |
+| Модулі, типи та dead code | Native TS implementations/tests/helpers; згуртовані private flows замість копій | Strict noEmit, typed lint/format, strict Knip; public SDK, exports/files і dynamic consumers не видаляти за одним syntax match |
+| I/O та Bun механізми | Bounded readers, descriptor ownership, serialization, SQL/indexes, subprocess outcomes | No-follow/CAS/bounds/atomicity/terminal evidence; фактична причина й офіційний API; без збільшення timeout або кешу через effect |
+| Тести, матриці й gates | Один Babel inventory → test links → reviewed scenarios → Ajv/Bun evidence | Static link, execution, coverage, assertion/property і mutation — окремі докази; N/A має причину |
+| Версії/cache/доставка | Чинні release/version/CI owners та мінімальний whole-agent artifact | Monotonic version, exact input/cache binding; build/install без suites; actual installed/fresh admission окремо |
+
+### Уже внесене: повторно не реалізовувати
+
+- [x] `packages/agent/bin/forward-review-proof.ts` — один owner п'яти byte/path/
+  provenance helpers; `tooling/agent/controllers/forward-review-proof.ts`
+  зберігає власний ingress. Прибрано7 duplicate functions/closures;
+  verifier CC38→20; v512 connected101PASS. Whole-loop merge відхилений через
+  різні early-error/read-order контракти, зафіксовані shared regression.
+- [x] `packages/agent/src/host-state.ts` — один приватний вибір engine для
+  begin/settle; validated Journal reuse всередині кожної immediate transaction.
+  Read-count regression RED[2,2]→GREEN[1,1]; транзакційні CC50→47 та19→16.
+- [x] Той самий Host owner — delivered/recovery bundle прибирає повторну повну
+  recovery validation у producer context. Historical action не отримує
+  configured recovery semantics; nullable/no-row/orphan і порядок guards збережені.
+  Validator CC57 збережено. Нові helper/wrapper та frozen correspondence ще
+  потребують фінального numerical gate; extraction не дає автоматичний budget PASS.
+- [x] Owned-path checks в `src/contracts/envelopes.ts` — precompiled predicates
+  і один historical replacement зі збереженням Unicode/device boundaries.
+  Validated receipt payload reuse в Host зберігає digest/error order і detached freeze.
+- [x] `bin/development-controller-observation.ts` фіксує runtime pin до child
+  effect; `bin/cli-metadata.ts` — спільні актуальні entrypoints/alias extensions.
+  Producer fixture helper живе в child scope; absent Journal дозволений тільки
+  до його creation, перевірки UNKNOWN не послаблено.
+- [x] Native `bin/capture-completed-readonly.ts` і
+  `bin/recover-completed-source-report.ts` приєднано з вісьмома affected consumers.
+  Capture додає complete-Host guard після suspension; recovery ingress має
+  шість invalid-argv controls. v530:2PASS; positive recovery/release і фінальні
+  числові докази лишаються відкритими. Ці два CLI більше не видавати на міграцію.
+
+Точні preimages, scope, reviews і FAIL/PASS receipts — у
+[WORK.md](WORK.md).
+Виправлений shared-ledger12 case пройшов на новому fixture без зміни60s child/
+90s parent bounds. Це Source evidence; системний runtime не оновлено.
+
+### Конкретні знахідки сесії: стан і критерії прийняття
+
+Нижче — уточнення тієї самої черги, а не нові task IDs. Root володіє integration
+і checks; blind Luna отримують непересічні analysis/review або private test jobs.
+Read-only висновок чи готовий private файл не означає виконану корекцію.
+
+| Пріоритет / стан | Файли та поточна знахідка | Найменша корекція і acceptance |
+| --- | --- | --- |
+| P0 afterimage Source proof PASS; timing margin/final qualification OPEN | `packages/agent/tests/project-upgrade-lifecycle.test.ts`, `packages/agent/tests/helpers/project-upgrade-stop-preload.ts`: v600 actual stop after delegated write, ordinary dead-owner quarantine, complete same-operation resume/history51assert PASS87.519s; child resume42.309s | Exact token/plan/afterimage bytes/dev/ino і history перевірені;45s child/90s parent незмінні. Retain prior v538/v563/v588/v593/v597 FAIL; їхні roots не читати/replay. Trace identifies46 package access passes,9284 package byte reads; no stable speedup or native unblock claim. Remaining boundary/matrix and final numerical qualification OPEN; live owner/bundle/fence/CAS checks retained |
+| P0 boundary GAP — proposal, не відтворений дефект | `packages/agent/src/config/{safe-repository-access,project-upgrade}.ts`: initial-create не має достатнього typed no-effect доказу | Відрізняти доведену відмову до provider/create invocation від uncertain post-invocation error. Спочатку causal controls; лише доведений no-effect може бути NOT_APPLIED. Exact afterimage reconciliation має пріоритет; зберігати operation/directory custody, без нового ID або автоматичного reissue |
+| P1 Host — joined, affected checks PASS | `packages/agent/src/host-state.ts`: validated Host передано з producer context у initial engine branch у тій самій immediate transaction; native `initial-source-continuation.test.ts` joined | Causal v569RED16→v572GREEN14 actual Work/Ledger SQL preparations у кожному begin/settle; independent receipt reads retained. v583 persisted rollback та v586 no-Work/stale-CAS/maintenance controls PASS. Frontier/recovery filesystem, owner та effect-adjacent reads залишаються fresh; frozen numerical qualification OPEN |
+| P1 gate — joined, affected checks PASS; whole-index TS-only OPEN | `packages/agent/tooling/knip-precommit.ts`, `quality-current.ts`, `ts-only-source-gate.ts`; `packages/agent/tests/knip-precommit.test.ts`: два tsc projects пропускали native TS tests/helpers; v543–v553 замінені одним maintained program | Reuse вже exported `createCompilerProject` і `classifyMaintainedSourcePath` на наявному raw staged snapshot/trackedFiles. Один strict noEmit program охоплює всі maintained TS roots/declarations; без нового scan/hash. Real staged type-error helper + valid unstaged rewrite має FAIL саме compiler, valid staged input — PASS; index/worktree незмінні. Temporary config owned/exclusive/finally-cleaned; TS-only першим, Knip/lint/format/focused guard лишаються строгими |
+| P1 native bootstrap — шість joined; affected Source proof PASS, native qualification OPEN | `packages/agent/bin/{vida-agent,standalone,init,bun,install,development-controller}.mjs`; private TS proposals вже існують | Connected TS join з imports/SDK/native build entry/package bin/files/scripts/help/mutation/consumer closure внесено; v62842PASS, v632 help139 children/4PASS, strictTS/lint0 і canonical Knip0. Actual native formation/qualification OPEN. Rebase computed package root після переміщення candidate; scratch-relative literal не переносити. Generated wrapper — delivery artifact. Не запускати build/install або дублюючі suites для міграції |
+| P0 CI selected-job ingress / P1 TS adapter — joined, affected checks PASS | `tooling/agent/release-ci-evidence.ts` та одинадцять consumers; policy job вибирається перед selected-record validation, unrelated null/malformed jobs не блокують correct evidence | Causal v577RED→v578GREEN; v5799PASS та v5842PASS: both consumers missing/duplicate/malformed/foreign attempt/failed selected job/incomplete page й response bytes bound; observer required-step controls; custody/credential/provenance/digest/ZIP controls preserved. v585/v587 strictTS/lint/Knip0. Source fixture proof не є actual CI formation/native Runtime qualification |
+| P1 pure artifact derivation — joined, affected checks PASS | `packages/agent/src/config/project-upgrade.ts`: one-entry scalar cache після повної schema/canonical plan/config/dependency binding validation | v573RED→v574GREEN19assert: cloned validated plan3→0 preparations, displacement, tampered recomputed outputs denied; warm-hit progress/hash/schema checks retained. No live bundle/Host/fence/CAS cache. Local helper CC6 не є frozen budget admission |
+| P1 final quality — GAP, не новий analyzer | `packages/agent/tooling/{test-function-audit,quality-final,crap-gate}.ts`, чинний TEST-013 fixture protocol і correspondence proposals | Genuine published b549951 measurements уже admitted v126 (measurement=true, suite/quality=false); повторний capture не потрібний. Сформувати reviewed exhaustive one-to-one mapping, removals/new functions і frozen budgets на свіжому current snapshot. Default `crap-budgets.v1.json` поки відсутній. Не виводити allowances з current CC, ordinals чи локальних preimages; static linkage не підміняє assertion/execution/property/mutation proof |
+
+Універсальний file-family job використовує один чинний inventory snapshot і
+містить: paths/symbols та source/tests/config hashes, existing shared owner,
+finding category, counterexample або measured cost, affected callers/tests,
+залежності й disposition **fix/share/retain/no-change** з причиною. Статуси:
+reviewed finding → prepared → joined → affected checks PASS → final qualified.
+Generated scenario та неперевірена proposal не перескакують ці стани.
+
+- [ ] Для кожної family виконати однакову матрицю: duplicates/contracts;
+  repeated reads/parse/hash/calls; typing/dead code; I/O/bounds/ownership;
+  scenario/assertion evidence; consumers/delivery. Уже TS файли не пропускати.
+- [ ] Вносити shared extraction тільки за однакових semantics, bytes, guard/
+  error order і authority. Different plain-record/authorization/UNKNOWN ingress
+  залишати окремими; adapter делегує package owner без нових прав.
+- [ ] Відхилені знахідки цієї сесії не реалізовувати: заборона variable/helper
+  assertions через static AST; дублювання вже наявних `test.each` before-effect
+  cases; current/local CC як published baseline; механічне злиття різних loops.
+- [ ] Після корекції перевіряти її callers і blind review лише актуальних
+  inputs; наступний аналіз оновлює критерії причинно, без нового full scan або
+  повторної видачі joined/issued задач. Прогрес all-file review рахувати лише
+  за reviewed dispositions; TS migration count — окремий показник.
+
+### Наступні незалежно прийнятні пакети
+
+- [ ] P0: завершити відсутні `.vida` upgrade/apply/resume boundary cases,
+  typed initial-create no-effect seam, чинні deadline і existing-storage
+  exclusion GAP. До dependable repair не активувати loader/схеми.
+- [ ] P1 Host: перевірити решту повторних Host/receipt reads між context і
+  engine branch. Для no-Work явно відрізняти **unread** від перевіреного null;
+  лишити потрібні filesystem rechecks і effect-adjacent guards. Не додавати
+  cross-transaction/cache authority. Мінімальний acceptance: ті самі stale/
+  foreign/orphan/errors, fresh begin/settle/restart і менша cardinality.
+- [ ] P1 migration: інтегрувати вже готові native CLI/test/adapter candidates,
+  включно з шістьма bootstrap/controller кандидатами, через
+  один connected consumer/package/mutation closure. CI candidate з corrected
+  selected-job timestamp validation спочатку кваліфікувати. Не видавати ці задачі
+  вдруге. Typed-command set змінювати лише разом із наявними implementations.
+- [ ] P1 all-file review: видати непересічні file-family jobs за категоріями
+  таблиці; кожен результат містить path/symbol, existing owner, контрприклад або
+  cost evidence, affected callers/tests і disposition: fix/share/retain/no-change.
+  Не об'єднувати різні plain-record, error або authorization контракти.
+- [ ] P1 tooling/tests: завершити конкретні scenario/function/test bindings,
+  reviewed extraction/removal/new-function correspondence і frozen budgets.
+  Зберегти fast-check properties, assertion-confirmed mutation classification,
+  строгий Knip pre-commit і один фінальний verifier без дублювання suites/scans.
+- [ ] P1 storage/history/Bun/help/version/cache/minimal delivery виконувати за
+  чинними scopes після їхніх dependencies; не відкривати паралельний rewrite.
+
+### Один цикл реалізації та закриття
+
+1. Reuse актуальних inventory/scan/hash outputs; bounded `rg`/`ast-grep` для
+   потрібного family. Blind Luna аналізують до шести незалежних контурів;
+   Root — один writer shared/product Source, refs, gates і Git.
+2. Join findings в одну причинну пачку. Native TS + потрібне виправлення +
+   shared extraction + disjoint test updates виконуються разом. Спільний helper
+   має одного owner; synthetic/generated scenario залишається unreviewed.
+3. На стабільних inputs: static batch → один affected behavior completion →
+   independent review. Числові checks тільки після готовності їхнього scope;
+   Source не змінювати під час child-backed перевірки. Після нової зміни
+   інвалідувати тільки її dependency closure, не повторювати незмінений PASS.
+4. Review correspondence **one-to-one**: жодних ordinal/hash guesses, N/A для
+   складності чи підняття budget під код. Removed/new functions мають dispositions.
+   Exact100 functions/lines/statements/branches, frozen CRAP/complexity та100
+   assertion-confirmed Killed залишаються обов'язковими фінальними вимогами.
+5. Completed reviewed packet — applicable checks, ordinary commit і non-force
+   push зі збереженням іншого staging. Доставка/активація/pre-commit мають власні
+   readiness checks; scoped hook bypass не стає постійним правилом.
+6. Новий сліпий аналіз лише нових/змінених inputs та їхніх callers. Коли вся
+   актуальна file queue має reviewed disposition і немає accepted actionable
+   findings у stable cycle, переходити до спільних final gates і доставки.
+   Не позначати весь P0–P1 завершеним за scoped regression чи кількістю TS файлів.
+
 ## Перевірений вхідний стан Cloud
 
 - Checkout: `/workspace/vida-stack-lite`, гілка `work`; HEAD і fetched origin/main
-  — `b5499511e64b2165a8c97ae3d2b455b25b1ac5b6`. Локальні зміни збережено.
+  — `e09ab999330799bf38de015771b79bf0922d6336` за поточним fetch/check.
+  `b549951` — первинний published checkpoint, не поточний HEAD. Локальні й
+  staged зміни збережено.
 - Поточні людські передумови — повний tracked
   [HANDOFF-CLEAR-CLOUD-20261009.md](HANDOFF-CLEAR-CLOUD-20261009.md) і нові прямі
   доручення. Старі handoff/recovery записи не є умовами нового виконання.
@@ -163,8 +328,11 @@ Windows/Linux target докази, installation, нове runtime admission та
 
 **Мета:** довести чинну підтримувану поведінку та прибрати підтверджені P0–P1
 дефекти, дублювання й зайві читання без зміни меж прав і UNKNOWN.
-**Архітектура:** Root — один writer Source, тестів, scratch і числових доказів;
-незалежні сліпі reviewers мають лише read-only контури. Тести й review використовують
+**Архітектура:** Root — один writer product/shared Source, плану, integration refs
+і числових доказів. Пряме доручення власника дозволяє Luna writers паралельно
+мігрувати й виправляти тести в непересічних file-owned контурах; окремі сліпі
+reviewers лишаються read-only. Root форматування й checks виконує після ready/join,
+без одночасної зміни перевірюваних входів. Тести й review використовують
 один актуальний контракт, але не підміняють одне одного.
 **Інструменти:** Bun 1.4.2, existing function inventory, Istanbul four-metric
 coverage, frozen published CRAP/complexity, existing confirmed-mutant runner,
@@ -180,8 +348,10 @@ strict TypeScript і repository-configured Oxlint/Oxfmt.
   Схожий token/receipt-shaped JSON не дає прав.
 - Старі UNKNOWN не replay і не перевидаємо під новим ID. Класифікована
   фактичним провайдером відмова без ефекту відрізняється від невідомого результату.
-- Root інтегрує текстові пропозиції після перевірки актуальних bytes і callers.
-  Агенти не пишуть product candidates, тестові helpers або scratch.
+- Root інтегрує текстові Source-пропозиції після перевірки актуальних bytes і callers.
+  Test writers пишуть лише явно призначені непересічні файли. Shared helpers
+  потребують окремого solewriter; агенти не змінюють product/shared Source або refs
+  і не запускають власні checks, suites, inventory/hash scans чи Git.
 - Не зменшуємо test/source selection, не додаємо suppression, baseline lint,
   косметичні тести, синтетичне coverage або вигадані Killed outcomes.
 - Build/install/formation не запускають suites. Numeric gates — явна
@@ -232,6 +402,70 @@ coupling і parallel ownership; (3) frozen correspondence та відсутні�
   new handwritten механізми не лишаються двома підтримуваними owners.
 - [ ] TS сам по собі не обіцяє runtime acceleration. Порівнюємо ті самі inputs,
   assertions і isolation; parse/read/process counts та elapsed — окремі докази.
+
+### Категорії міграції: менші файли першими
+
+Пряма вказівка власника: групувати міграцію за категоріями та йти від менших
+файлів до більших. Розмір — чинні bytes оригінального implementation, а не
+оцінка складності. Усередині категорії черга зростає за розміром. Спочатку
+завершуємо вже видані file-owned задачі; залежності shared helper/caller та
+P0 корекції мають пріоритет перед розміром. Один writer на файл зберігається.
+
+| Контур у порядку виконання | Залишок за v512 | Наступний найменший файл | Розмір |
+| --- | ---: | --- | ---: |
+| Конфігурації | 0 | Connected TS; final assurance окремо | — |
+| Спільні тестові helpers | 0 | Connected TS; contained constructor CI-only GAP | — |
+| Quality/build tooling | 0 | Connected TS; formation і final numerical gates OPEN | — |
+| Тести репозиторію | 4 | tests/agent/forward-documentation-clear.test.mjs | 5872B |
+| Тести агента | 2 | packages/agent/tests/initial-source-continuation.test.mjs | 142706B |
+| Адаптери репозиторію | 12 | tooling/agent/controllers/append-runtime-documentation-change.mjs | 4205B |
+| CLI/bootstrap | 14 | packages/agent/bin/vida-agent.mjs | 3987B |
+
+Закриваємо контури за зростанням кількості залишкових файлів; усередині —
+за зростанням original bytes. Issued writers, causal P0 і shared dependency
+closure мають пріоритет. v512:32JS/375TS/474selected FAIL, мінус11 від v482;
+TS count includes unjoined candidates, not their qualification;
+усі п'ять tooling originals збережено в .tmp/archive/ts-contour-join-v357 і
+v360, Source TS imports/callers/selectors/package/manifest замкнуто. Прибрано
+окремий coverage .d.mts owner: native TS owns actual contract. Frozen published
+MJS subjects збережено. Черга migration-queue-v430.json у чинному scratch
+повторно використовує filename report; додаткового AST/hash scan немає.
+
+Retirement/configured Source-qualified TS joins v454 мають актуальні package/
+mutation selectors; originals збережено в ts-agent-tests-join-v454. Retirement
+усі7 Source cases cumulative GREEN, нові partial journal pairs v454GREEN.
+Configured152 Source cases GREEN; actual distribution case лишається selected
+FAIL/GAP без Source proxy. Combined strict CLI і strict Knip v455PASS0. Далі
+stopped усі4 Source cases cumulative GREEN; TS selected once in existing repair
+suite v459,8 contained cases зберігають CI-owned GAP. Далі initial/delivered;
+strict static contracts обох готові, affected behavior qualification pending.
+Перед завершенням — повна відповідність frozen functions і числові гейти;
+Source qualification не є доставкою/Runtime acceptance.
+
+Tooling selected strictTS/lint0, strictCLI0 і canonical Knip0; bounded blind
+reviews мають explicit limits. Changed projection/adapter assertions pass;
+construction/build/install не запускали. Stryker report guards відповідають
+pinned Core/API10 schema і не приймають timeout/error/uncovered як Killed.
+Hash serializers fail closed без empty-string fallback. Числовий/frozen
+function mapping gate залишається OPEN, не збільшено жодного allowance.
+
+Repo tests4: public documentation/config/policy transition blocked до нового
+атрибутованого prepared payload/dist-index/manifest binding. Жоден старий
+operational root або UNKNOWN не replay. Hook proposal now uses actual current
+CRAP shape; full precommit enforcement reuses existing entrypoint test owner,
+а ізольована pre-push orchestration не активує hook і не є coverage proof.
+Repo hook TS joined v370: усі18 чинних сценаріїв cumulative GREEN; original
+збережено, legacy baseline API прибрано, full precommit має одного test owner.
+Historical normalization10/10, smoke16/16, ZOMBIES14/14 cumulative GREEN; їхні
+TS paths/selectors замкнуто, originals збережено v376/v380. ZOMBIES cells мають
+explicit unreviewed status та optional candidate refs; placeholders не є proof.
+Наступні чотири Agent proposals проходять static correction privately; вони не
+рахуються як міграція до connected qualification. Small repo transitions лишаються GAP.
+Stopped-source candidate strictTS/lint0, selected4FAIL before capture at actual
+workflow approval; fixture lacks supported complete preflight chain. Do not
+inject approval or opaque authority. Source/product defect is not attributed.
+Root owns active Source/helpers/config/ref integration/checks/Git; blind Luna
+agents own issued disjoint tests/private proposals or read-only reviews.
 
 ### Бібліотеки для цього циклу
 
@@ -487,22 +721,24 @@ invalidates its dependent capture rather than being hidden by a cache.
 
 ### Практична черга і самоперевірка плану
 
-Актуальний dispatch 2026-10-11, v175–v176: до шести незалежних Luna-контурів
-плюс Root. Root єдиний writer Source, тестів, плану та receipts і єдиний
-власник поведінкових/числових перевірок. Агенти повертають текстові proposals
-або review; не пишуть файли й не запускають checks. Кожен новий агент сліпий
+Поточний dispatch визначає наскрізний розділ вище; v283 нижче —
+попередній збережений dispatch snapshot, без повторної видачі його ready jobs: до шести незалежних Luna-контурів
+плюс Root. Root єдиний writer product/shared Source, integration refs, плану та
+receipts і єдиний власник поведінкових/числових перевірок. Test writers паралельно
+мігрують призначені файли; reviewers повертають текстові proposals/review.
+Агенти не запускають checks. Кожен новий агент сліпий
 (`fork_turns=none`), читає AGENTS -> весь sidecar -> self-development-protocol
 -> TESTING -> весь tracked handoff -> чинні plan/WORK/backlog. WORK tail не
 замінює handoff. У prompt: точні inputs, один результат, acceptance і stop.
 
 | Контур / чинний scope | Один результат поточної хвилі | Залежність та stop |
 | --- | --- | --- |
-| P0: dependable upgrade completion | Гіпотеза manifest/raw-byte reuse перевірена: NONE. Наступний пакет тільки з новою причинною діагностикою read cost за v167 | NONE закриває цю гіпотезу. Не повторювати загальний scan/reuse research; не прибирати authority checks, не розширювати timeout. Наступна діагностика має новий причинний input |
+| P0: dependable upgrade completion — `upgrade_text_diagnostics_v280` → Root | v282 рахує byte/text API без додаткових reads;512 calls/1828ms перед4500ms timeout. Наступний input лише для невиміряного CPU/discovery cost | Manifest/raw-byte reuse вже NONE. Не повторювати цей research, не читати failed/UNKNOWN roots, не прибирати authority checks і не розширювати4500ms bound |
 | P0: existing-storage exclusion | Карта supported openers, private raw-open exceptions, finite negative cases і справжня quiescence/delivery передумова | Cooperative gate не виключає ungated old process. Guard лишається false; code-only proof не закриває host GAP |
 | P0: repair interruption matrix | v172 exact-intent foreign-ID refusal і no-reissue directory identity пройшли2cases/45assertions. Далі лише відсутні boundary/no-effect/lost-ACK/conflict сценарії | Не повторювати qualified slices. Typed initial-write seam лишається GAP. UNKNOWN roots не відкривати/replay |
-| TEST-013: correspondence/frozen budgets | Наступна мала connected Source family, disjoint identity sets, nested closures і additions/removals за готовими inventories | Не повторювати 151 reviewed upgrade rows. Семантичний review, не path/name/ordinal/hash match; global executable plan і freeze ще pending |
-| P1: TS-only та gate closure | Dispatcher rename відкладено: caller closure охоплює release/mutation/standalone fixtures. Наступна міграція лише після exact connected closure | Source/CLI strict TS та Knip уже PASS у receipts. Старі1271diagnostics не поточний blocker. Не дублювати migrated files, gate або build/install suites |
-| Незалежний plan/candidate review | Сліпий review замороженого плану, потім готового actual diff | Шостий слот для незалежного review. Немає нового stable input — не запускати повторний цикл тієї самої проблеми |
+| TEST-013 — `lock_correspondence_v266` | Lock reclaim/remove/cleanup family за v261 capture і genuine b549951 rows: exact role correspondence, nested closures, new/removal dispositions | Без нового AST capture або повторного behavior review. Не reset budgets;151 reviewed upgrade rows не переробляти; global executable plan/freeze pending |
+| P1: TS-only — disjoint test writers | Host HOLD після selected static PASS; rebind176TS/176lint v281; absorption frozen-plan negative control; audit supported public-flow fixture; entry contextual typing; task-source-coordination parity | Один writer/file; shared refs/Source тільки Root. Dispatcher rename відкладено до connected release/mutation/standalone closure. Source/CLI/Knip PASS не дорівнює filename gate PASS |
+| Незалежний ready-packet review | Після завершення малого writer — fresh blind review його actual diff; відповідний слот перевикористовується | Немає нового stable input — не запускати повторний цикл. Reviewer не запускає checks; Root виконує один affected static batch перед behavior |
 
 Root інтегрує за залежностями, не за порядком повернення агентів:
 
@@ -905,3 +1141,52 @@ they are not the executable plan or frozen qualification. Use the existing globa
 VidaCrapBudgetPlan/v1 owner for remaining published/current additions/removals and
 reviewed budgets. Keep current Source inventory versus stale test links distinct.
 No ordinal/hash inference, candidate-derived allowances or new quality hierarchy.
+
+
+#### Native Source completion checkpoint v661
+
+Current Source CLI/adapters are joined as native TS; exact MJS originals archived before removal. v661 all-maintained static compiler PASS0:473 selected files,406 TypeScript,0 JavaScript violations. Remaining maintained executable Source JS files:0. v660 canonical strict Knip issues[] and scoped typed lint20files PASS0. v660 compiler FAIL8 corrected by preserving original optional historical-context argument; failed receipts remain. Detailed corrections, parity review and retarget fixture proof are in WORK v644–v661. Selected native behavior v661 and one shared current audit capture v662 pending. Source migration completion does not establish final100% numeric gates, reviewed frozen function correspondence or installed native readiness. Runtime/schema/loader not switched; retained failures/UNKNOWN not replayed. Continue concrete remaining behavior/mapping/bundle boundary work; no repeated unchanged audit or baseline recapture.
+
+
+### Current human decision — clean isolated Runtime qualification (2026-10-11)
+
+The user replaces the old existing-consumer unblock/recovery verification with a real native Runtime run in fresh isolated project(s), covering all supported options and flows. This supersedes earlier handoff/plan instructions to recover old blocked work or notify TeamLead/affected owners on that unblock for this clean-development task. Do not access, restore, replay or transfer old Host state/leases/attempts/UNKNOWN roots. No unblock claim or duplicate notice is required.
+
+OPEN final task: qualify the exact formed native executable in an unrelated fresh project with the Source checkout unavailable. Bind its version, bytes/provenance and target. Derive the command/option/alias/subcommand matrix from existing CLI contracts and reuse the help matrix; add execution evidence for every supported option and flow (help output alone is insufficient). Exercise valid defaults/explicit values, boundary/invalid values and incompatible option sets through real public entrypoints. Cover fresh init and repeat init, single/multi-project context, admission/workflow prepare/execute/inspect/report, authorization/CAS denial, supported continuation/recovery without reissue, configuration repair, .vida upgrade/apply/resume, atomic activation and process interruption/restart, ledger/history, and delivery-owned install/update/uninstall where supported by the actual target. Use fresh fixture identities and controlled actual effects; an unavailable required provider/target remains GAP, not mock-based Runtime proof. Mark N/A only with a reviewed contract reason. Avoid unbounded Cartesian combinations: reviewed behavior equivalence/boundary classes cover every declared option/flow, with explicit command/option/scenario/test/result links.
+
+Root remains sole final-check owner. Reuse already qualified unchanged Source tests/numeric evidence. Build/install run no suites; the isolated native execution task is a distinct qualification phase after formation. Preserve exact coverage/frozen CC-CRAP/assertion-confirmed Killed gates and product CAS/ownership/authorization/UNKNOWN. Clean-project qualification does not authorize removing guards or changing active schemas/loaders before bundle repair is ready. Completion requires the actual isolated execution receipts; installation/version text alone is insufficient.
+
+Source unavailability requires checkout absence on the target or a real mount/container/permission boundary, with a negative access control for a known checkout marker and a positive native-resource control. PATH/cwd exclusion alone is insufficient. Derive native aliases from the actual standalone dispatch contract: package SDK bin metadata does not establish separate installed native executables. Physical install/update/uninstall is currently Windows-owned; unsupported Linux adapter cases need a reviewed contract-based N/A, while the required actual Windows qualification remains GAP until that target is available. The bounded private matrix proposal is `.tmp/tooling-research/typed-correction-v179/isolated-runtime-matrix-v672.md`; the exact declaration-to-option/scenario/execution joins remain OPEN and must be reviewed before qualification.
+
+Next measured P1 correction: v695 activation qualification spends44.73s in publication/staging and records11605 parent package byte reads (396MB;52.275s summed). Existing assertUpgradeOwner/bundleDigest checks bracket effects and must retain live freshness. Do not replace them with cross-boundary digest caching or unlocked captured reads. Evaluate an owned read-set/lock mechanism only with proof of equivalent no-follow path/root identity, deterministic lock order and release, replacement/foreign-write denial, current inventory membership and fresh bytes at every original effect boundary. Prefer existing provider contracts; a new shared primitive requires focused positive/race/cleanup/error tests before joining. Preserve45s child/90s case limits; do not rerun the unchanged timeout case or any retained UNKNOWN root. Real move/exit86 is proved, full resume remains OPEN. Current corrective reader regression and statics pass; final exhaustive numeric/mutation/native qualification remains separate.
+
+v696–v699 review: reject whole-invocation read-lock retention without crash qualification; an abrupt activation exit would leave package-wide locks. No change implemented. Actual native upgrade route is nested `reconcile-artifacts --kind project-upgrade`; apply/resume share the same-operation owner, with explicit UNKNOWN consent admitted only for resume. Current clean Runtime acceptance requires supported positive flows and documented denials on newly owned disposable fixtures. Existing-storage successful activation is intentionally blocked by the current declaration/owner, so it is not an old-consumer unblock requirement for clean Runtime acceptance. Keep its false guard and separate Source architectural gap; do not access old state or label the guard gap closed.
+
+
+#### Next bounded correction batch v665
+
+Native recovery negative fixture corrected and passed (foreign caller denial,12assertions). Current copied-controller retired capture PASS. Same-work correction FAIL observed3 history metadata reads vs required1; causal advisor active, no expected-count relaxation. Two pending P0 abrupt termination cases are activation move/checkpoint and final file/publication checkpoint; existing-storage old-opener exclusion remains real guarded GAP. Use v664 private review anchors and v662 shared inventory where source/test byte bindings remain current, not a new whole scan. Detailed terminal receipts/limits in WORK v663–v666. Final clean isolated native Runtime qualification supersedes old unblock/notices per latest human decision.
+
+
+#### Publication checkpoint proof v670 / next caller correction
+
+Final-file abrupt termination before publication checkpoint now PASS68assertions/78.020s with original45s child/90s parent bounds, same-operation public resume, exact last inode/history/released fence. Activation-move process death and actual existing-storage old-opener exclusion still OPEN. Shared history table lookup now satisfies unchanged1-query assertion, but full same-work scenario remains FAIL at later public corrective retry (GAP-VIDA-RUN-EXECUTION-001). Collect private cause on a fresh fixture; no old failed-root access/replay or weakened public error/authorization. Detailed receipts in WORK v668–v670. Final task remains actual native clean isolated project execution across all supported options/flows per latest human decision; no old unblock/notices.
+
+
+#### Current Bun/P0 correction checkpoint v705–v718
+
+Pinned Bun/TS remains the test runner. Coverage capture false-positive Vitest
+fixtures fixed; regression20PASS. Actual activation-move death/same-operation
+resume on bounded owned Source namespace PASS79assertions/48.03s, original
+45s child/90s case and normal quarantine/CAS/fsync retained. This supersedes
+activation-move Source behavior OPEN, while isolated formed native Runtime and
+power-loss qualification remain OPEN. Tmpfs lowers test I/O cost; repeated
+product package reads remain a separate P1 optimization task.
+
+Owned resource prepublication cleanup corrected, resource custody/attestation
+8PASS. Corrective preflight now uses shared pure base/engine binding and preserves
+full current authority checks at existing resolver boundaries; focused preflight/
+frontier15PASS. Wider public corrective rerun and full static profile are pending;
+do not claim whole-flow or numerical/native closure from these focused proofs.
+Current Work details and failed/terminal receipts: WORK v702–v718. Preserve known
+per-scope v662 freshness, existing ceilings, exact gates and retained UNKNOWN.

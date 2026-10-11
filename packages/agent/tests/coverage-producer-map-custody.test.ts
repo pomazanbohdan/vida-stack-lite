@@ -14,7 +14,7 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageToolInputs } from '../tooling/bun-coverage-evidence.mjs';
+import { coverageToolInputs } from '../tooling/bun-coverage-evidence.ts';
 import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { projectMappings } from '../bin/project-mapping-contract.js';
-import { initializeProjectFromBundle } from '../bin/init-core.mjs';
+import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { createInitializationBundle } from './helpers/init-bundle.js';
 
 // Pure parser contracts reach private guards through the public API. Filesystem

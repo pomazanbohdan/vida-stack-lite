@@ -1551,8 +1551,8 @@ knowledge:
       title: Project-owned requirements and source map
     - id: runtime-development-lifecycle
       kind: local
-      location: '{{BUNDLE}}/TESTING.md'
-      title: Current portable verification contract
+      location: '{{BUNDLE}}/instructions/development-lifecycle.md'
+      title: Current portable development lifecycle
 authorization:
   cedar:
     policy: |-

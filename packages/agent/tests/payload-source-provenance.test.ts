@@ -17,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 function findRepositoryRoot(start: string): string {
   let current = path.resolve(start);
   while (true) {
-    if (existsSync(path.join(current, 'tooling/agent/controllers/forward-update-plan.mjs'))) return current;
+    if (existsSync(path.join(current, 'tooling/agent/controllers/forward-update-plan.ts'))) return current;
     const parent = path.dirname(current);
     if (parent === current) throw new Error('Could not locate repository root for payload verifier');
     current = parent;
@@ -74,7 +74,7 @@ function isVerifiedPayloadManifest(value: unknown): value is VerifiedPayloadMani
 }
 
 const importedVerifier: unknown = await import(
-  pathToFileURL(path.join(repository, 'tooling/agent/controllers/forward-update-plan.mjs')).href
+  pathToFileURL(path.join(repository, 'tooling/agent/controllers/forward-update-plan.ts')).href
 );
 if (!isRecord(importedVerifier)) throw new Error('Payload verifier module export record is invalid');
 const verifyValue = importedVerifier.verifyStagedPayloadManifest;

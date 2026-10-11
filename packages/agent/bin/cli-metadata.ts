@@ -54,15 +54,15 @@ export const installerProtectedFiles = [
   'package.json',
   'bun.lock',
   '.bun-version',
-  'bin/bun.mjs',
-  'bin/init.mjs',
-  'bin/install.mjs',
+  'bin/bun.ts',
+  'bin/init.ts',
+  'bin/install.ts',
 ];
 
 /** Dispatcher/install-check local modules; the same exact set selects index and archive members. */
 export const standaloneDiscoveryFiles = [
   ...installerProtectedFiles,
-  'bin/vida-agent.mjs',
+  'bin/vida-agent.ts',
   'bin/cli-metadata.ts',
   'bin/cli-command-contracts.ts',
   'bin/run-cli-options.ts',
@@ -74,9 +74,19 @@ export const standaloneDiscoveryFiles = [
 
 export const commands = cliCommandSet;
 
+const typescriptCommands = new Set([
+  'scope',
+  'run',
+  'documentation-clear',
+  'reconcile-artifacts',
+  'init',
+  'install',
+  'development-controller',
+]);
+
 /** Select the maintained filename after the caller validates its command allowlist. */
 export function cliCommandEntrypoint(command: string): string {
-  return command === 'scope' ? 'scope.ts' : command + '.mjs';
+  return command + (typescriptCommands.has(command) ? '.ts' : '.mjs');
 }
 
 const commandDetailsByName: Readonly<Record<string, CliCommandDetail>> = cliCommandContracts;
@@ -85,7 +95,7 @@ const aliasesFor = (manifest: CliManifest) =>
   Object.entries(manifest?.bin ?? {}).map(([name, target]) => ({
     name,
     target,
-    command: name === manifest.name ? 'root' : path.basename(target, '.mjs'),
+    command: name === manifest.name ? 'root' : path.basename(target, path.extname(target)),
     primary: name === manifest.name,
   }));
 const commandAliasMap = (manifest: CliManifest) =>

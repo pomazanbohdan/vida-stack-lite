@@ -894,13 +894,13 @@ function callImport(call: BabelNode, context: TestScanContext): ImportBinding | 
 }
 
 function assignmentTargetNames(target: BabelNode): string[] {
-  switch (target.type) {
-    case 'TSAsExpression':
-    case 'TSSatisfiesExpression':
-    case 'TSTypeAssertion':
-    case 'TSNonNullExpression':
-      return assignmentTargetNames(target.expression);
-  }
+  if (
+    target.type === 'TSAsExpression' ||
+    target.type === 'TSSatisfiesExpression' ||
+    target.type === 'TSTypeAssertion' ||
+    target.type === 'TSNonNullExpression'
+  )
+    return assignmentTargetNames(target.expression);
   if (target.type === 'MemberExpression') return assignmentTargetNames(target.object);
   if (target.type === 'AssignmentPattern') return assignmentTargetNames(target.left);
   if (target.type === 'RestElement') return assignmentTargetNames(target.argument);
@@ -1467,7 +1467,7 @@ function regularResolutionFile(root: string, file: string, repository: string | 
     /^(?:tests|tooling)\//u.test(file) ||
     /^schemas\/.+\.json$/u.test(file) ||
     file === 'package.json' ||
-    file === 'stryker.config.mjs' ||
+    file === 'stryker.config.ts' ||
     external;
   if (
     !permitted ||
@@ -2364,7 +2364,7 @@ function makeQueueFunction(
       ...(directFiles.length ? {} : { testSearchRoot: 'tests' }),
       testCorpus: { root: 'tests', files: Object.keys(report.inputHashes.tests).length, digest: testScopeHash },
     },
-    checkCommands: (directFiles.length ? directFiles : [target]).map((file) => `node bin/bun.mjs test ${file}`),
+    checkCommands: (directFiles.length ? directFiles : [target]).map((file) => `node bin/bun.ts test ${file}`),
     prompt: `Review ${row.identity} using the bound source, test, and audit configuration hashes. Decide the contract and applicable scenarios before writing or updating a test. Preserve UNKNOWN and do not treat labels or import references as proof. Target ${target}. Do not edit shared helpers; report any helper dependency to the owning reviewer.`,
   };
 }
@@ -2430,7 +2430,7 @@ function walkTests(directory: string, relative = ''): string[] {
 }
 
 function help() {
-  return `Usage: node bin/bun.mjs tooling/test-function-audit.ts [--source=src/foo.ts] [--format=json|table] [--matrix=path] [--draft=profiles] [--queue=json|table] [--workers=N] [--help]\nScans maintained mutationSources and tests/ *.test.* files in this package. Queue mode reports deterministic write/update/review/blocked jobs with one owner per test file; worker hints do not start agents or edit files. Matrix schemaVersion 1 or reusable-profile schemaVersion 2 binds sourceHashes, testHashes, configHash, and function identities to real asserted named cases; profile patterns compose base profile, scenario refinements, and case overrides. Draft mode prints an unreviewed profile document from this scan without rescanning or writing files. Evidence is structural and does not prove semantics.`;
+  return `Usage: node bin/bun.ts tooling/test-function-audit.ts [--source=src/foo.ts] [--format=json|table] [--matrix=path] [--draft=profiles] [--queue=json|table] [--workers=N] [--help]\nScans maintained mutationSources and tests/ *.test.* files in this package. Queue mode reports deterministic write/update/review/blocked jobs with one owner per test file; worker hints do not start agents or edit files. Matrix schemaVersion 1 or reusable-profile schemaVersion 2 binds sourceHashes, testHashes, configHash, and function identities to real asserted named cases; profile patterns compose base profile, scenario refinements, and case overrides. Draft mode prints an unreviewed profile document from this scan without rescanning or writing files. Evidence is structural and does not prove semantics.`;
 }
 
 function main(args: string[]): number {

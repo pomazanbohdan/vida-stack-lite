@@ -33,7 +33,7 @@ import {
 export type TaskSourceBindingOperationMode = 'prepare' | 'inspect' | 'issue' | 'report' | 'recover';
 
 /** Fresh Host-validated working directory for the current admitted Source tree. */
-export interface SourceExecutionContextV1 {
+interface SourceExecutionContextV1 {
   readonly schema: 'SourceExecutionContext/v1';
   readonly canonical_host_root: string;
   readonly source_root: string;
@@ -48,7 +48,7 @@ export interface SourceExecutionContextV1 {
   } | null;
 }
 
-export function readSourceExecutionContext(input: {
+function readSourceExecutionContext(input: {
   readonly store: HostStateStore;
   readonly identity: WorkIdentity;
   readonly threadId: string;

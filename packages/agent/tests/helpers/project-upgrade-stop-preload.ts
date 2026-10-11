@@ -1,28 +1,41 @@
 import { mock } from 'bun:test';
+import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import { writeSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isPromise } from 'node:util/types';
 import type { SafeRepositoryAccess } from '../../src/config/safe-repository-access.js';
-import { PROJECT_UPGRADE_OPERATION_PATH } from '../../src/config/project-paths.js';
+import type { ProjectUpgradeOperation } from '../../src/config/project-upgrade.js';
+import { PROJECT_ACTIVATION_PATH, PROJECT_UPGRADE_OPERATION_PATH } from '../../src/config/project-paths.js';
 
 const root = process.env.VIDA_UPGRADE_PRE_EFFECT_ROOT;
 const operationId = process.env.VIDA_UPGRADE_PRE_EFFECT_OPERATION;
 const token = process.env.VIDA_UPGRADE_PRE_EFFECT_TOKEN;
 const selectedTarget = process.env.VIDA_UPGRADE_PRE_EFFECT_TARGET;
 const method = process.env.VIDA_UPGRADE_PRE_EFFECT_METHOD;
+const stopMode = process.env.VIDA_UPGRADE_PRE_EFFECT_MODE ?? 'before';
 const childTimingEnabled = process.env.VIDA_UPGRADE_CHILD_TIMING === '1';
 const filesystemTimingEnabled = childTimingEnabled && process.env.VIDA_UPGRADE_IO_TIMING === '1';
-const stopEnabled = token !== undefined || selectedTarget !== undefined || method !== undefined;
+const stopEnabled =
+  token !== undefined ||
+  selectedTarget !== undefined ||
+  method !== undefined ||
+  process.env.VIDA_UPGRADE_PRE_EFFECT_MODE !== undefined;
 if (
   !root ||
   !path.isAbsolute(root) ||
   !operationId ||
   (!stopEnabled && !childTimingEnabled) ||
-  (stopEnabled && (!token || !selectedTarget || (method !== 'write' && method !== 'replace')))
+  (stopEnabled &&
+    (!token ||
+      !selectedTarget ||
+      (method !== 'write' && method !== 'replace' && method !== 'move') ||
+      (stopMode !== 'before' && stopMode !== 'after') ||
+      (stopMode === 'after' && method !== 'write' && method !== 'move') ||
+      (method === 'move' && stopMode !== 'after')))
 )
-  throw new Error('Pre-effect fixture stop is not configured.');
+  throw new Error('Project upgrade fixture stop is not configured.');
 
 function recordPhase(phase: string): void {
   writeSync(
@@ -61,6 +74,9 @@ const childReads = {
   other: { readBytes: readStats(), readText: readStats() },
 };
 const packageRoot = path.resolve(import.meta.dir, '../..');
+let packageAccessCalls = 0;
+let lastPackageCaller: string[] | undefined;
+let lastConsumerAccess: Record<string, unknown> | undefined;
 const filesystemMethods = [
   'openSync',
   'closeSync',
@@ -86,7 +102,7 @@ if (filesystemTimingEnabled) {
   const observedFs = { ...originals };
   for (const method of filesystemMethods) {
     const original = originals[method];
-    const wrapper = function (this: unknown, ...args: unknown[]) {
+    const wrapper = function (this: unknown, ...args: unknown[]): unknown {
       if (filesystemReadDepth === 0) return Reflect.apply(original, this, args);
       const stats = filesystemTiming[method];
       const started = performance.now();
@@ -148,6 +164,9 @@ function recordChildTiming(terminal = false): void {
         bytes_before: timingBytes,
         preparations,
         reads: childReads,
+        package_access_calls: packageAccessCalls,
+        last_package_caller: lastPackageCaller,
+        last_consumer_access: lastConsumerAccess,
         ...(filesystemTimingEnabled
           ? {
               filesystem_api_scope: 'inclusive JS fs calls within package readBytes; native helper syscalls unobserved',
@@ -229,12 +248,38 @@ await mock.module(fileURLToPath(new URL('../../src/config/project-upgrade-storag
 const accessTraceEnabled = process.env.VIDA_UPGRADE_ACCESS_TRACE === '1';
 let accessEventSequence = 0;
 let accessEventBytes = 0;
+let accessEventRecords = 0;
 let accessTraceTruncated = false;
+const tracedAccessMethods = new Set([
+  'withExclusiveLock',
+  'withExclusiveLockAsync',
+  'prepareExclusiveCreation',
+  'ensureDirectoryAsync',
+  'writeExclusive',
+  'writeExclusiveAsync',
+  'writeExclusiveAtomicAsync',
+  'writeExclusiveBytesAsync',
+  'replaceAtomic',
+  'replaceAtomicAsync',
+  'moveNoReplaceAsync',
+  'removeFile',
+]);
 function recordAccess(value: Record<string, unknown>): void {
   if (!accessTraceEnabled || accessTraceTruncated) return;
+  // Ordinary inventory/dependency reads already have aggregates. Reserve event
+  // capacity for guards, journal reads, effects and package-owner call sites.
+  if (
+    value.phase !== 'require-begin' &&
+    value.phase !== 'require-returned' &&
+    !(
+      value.root === 'consumer' &&
+      (tracedAccessMethods.has(String(value.method)) || value.target === PROJECT_UPGRADE_OPERATION_PATH)
+    )
+  )
+    return;
   try {
     const line = JSON.stringify({ schema: 'ProjectUpgradeAccessTrace/v1', ...value }) + '\n';
-    if (accessEventSequence > 400 || accessEventBytes + timingBytes + Buffer.byteLength(line) > 48 * 1024 - 64) {
+    if (accessEventRecords >= 400 || accessEventBytes + Buffer.byteLength(line) > 8 * 1024 - 64) {
       accessTraceTruncated = true;
       const marker = JSON.stringify({ schema: 'ProjectUpgradeAccessTrace/v1', phase: 'truncated' }) + '\n';
       accessEventBytes += Buffer.byteLength(marker);
@@ -242,6 +287,7 @@ function recordAccess(value: Record<string, unknown>): void {
       return;
     }
     accessEventBytes += Buffer.byteLength(line);
+    accessEventRecords++;
     writeSync(2, line);
   } catch {
     // Observation never replaces the operation's result or error.
@@ -276,6 +322,7 @@ function observedAccess(access: SafeRepositoryAccess): SafeRepositoryAccess {
             target: typeof args[0] === 'string' ? args[0].slice(0, 120) : null,
             process_elapsed_ms: started,
           };
+          if (rootClass === 'consumer') lastConsumerAccess = { ...context, phase: 'begin' };
           recordAccess({ ...context, phase: 'begin' });
           const terminal = (phase: string, result?: unknown): void => {
             const elapsed = performance.now() - started;
@@ -290,11 +337,12 @@ function observedAccess(access: SafeRepositoryAccess): SafeRepositoryAccess {
               recordChildTiming();
             }
             recordAccess({ ...context, phase, elapsed_ms: elapsed });
+            if (rootClass === 'consumer') lastConsumerAccess = { ...context, phase, elapsed_ms: elapsed };
           };
           try {
             const result: unknown = observedFilesystemRead(
               filesystemTimingEnabled && rootClass === 'package' && key === 'readBytes',
-              () => Reflect.apply(value, this, args),
+              (): unknown => Reflect.apply(value, this, args),
             );
             if (isPromise(result))
               void Promise.prototype.then.call(
@@ -316,7 +364,10 @@ function observedAccess(access: SafeRepositoryAccess): SafeRepositoryAccess {
   );
 }
 
-function stopAtBoundary(access: SafeRepositoryAccess): never {
+function verifyPublicationBoundary(access: SafeRepositoryAccess): {
+  readonly journal: ProjectUpgradeOperation;
+  readonly file: ProjectUpgradeOperation['plan']['files'][number];
+} {
   if (stopValidator === undefined) throw new Error('Observe-only fixture cannot install a publication stop.');
   recordPhase('publication-boundary-entered');
   const journal = stopValidator(
@@ -342,8 +393,141 @@ function stopAtBoundary(access: SafeRepositoryAccess): never {
   if (file.before === null ? before !== null : before === null || !before.equals(Buffer.from(file.before)))
     throw new Error('Pre-effect fixture stop does not retain the exact beforeimage.');
   recordPhase('beforeimage-verified');
+  return { journal, file };
+}
+
+type ActivationMoveBoundary = {
+  readonly journal: ProjectUpgradeOperation;
+  readonly staging: string;
+  readonly sourceDevice: string;
+  readonly sourceInode: string;
+};
+
+function verifyActivationMoveBoundary(access: SafeRepositoryAccess): ActivationMoveBoundary {
+  if (stopValidator === undefined) throw new Error('Observe-only fixture cannot install an activation move stop.');
+  recordPhase('activation-move-boundary-entered');
+  const journal = stopValidator(
+    JSON.parse(
+      new TextDecoder('utf-8', { fatal: true }).decode(
+        access.readBytes(PROJECT_UPGRADE_OPERATION_PATH, 'fixture activation move journal'),
+      ),
+    ),
+  );
+  const staging = '.vida/.activation-' + operationId + '.json';
+  if (
+    selectedTarget !== PROJECT_ACTIVATION_PATH ||
+    journal.phase !== 'activating' ||
+    journal.plan.operation_id !== operationId ||
+    journal.plan.token !== token ||
+    journal.next_file !== journal.plan.files.length ||
+    journal.activation === null
+  )
+    throw new Error('Activation move fixture does not match the retained activating boundary.');
+  const activation = Buffer.from(journal.activation);
+  if (!access.readBytes(staging, 'fixture activation staging beforeimage').equals(activation))
+    throw new Error('Activation move fixture staging differs from the frozen activation image.');
+  if (access.fileExists(PROJECT_ACTIVATION_PATH, 'fixture activation target beforeimage'))
+    throw new Error('Activation move fixture target already exists.');
+  const source = fs.lstatSync(path.join(root!, staging), { bigint: true });
+  if (!source.isFile() || source.nlink !== 1n)
+    throw new Error('Activation move fixture staging is not a single-link regular file.');
+  return {
+    journal,
+    staging,
+    sourceDevice: source.dev.toString(),
+    sourceInode: source.ino.toString(),
+  };
+}
+
+function stopAtBoundary(boundary: ReturnType<typeof verifyPublicationBoundary>): never {
   recordPreparations();
+  writeSync(
+    2,
+    JSON.stringify({
+      schema: 'ProjectUpgradeFixtureStop/v1',
+      operation_id: boundary.journal.plan.operation_id,
+      token: boundary.journal.plan.token,
+      target: boundary.file.path,
+      next_file: boundary.journal.next_file,
+      mode: 'before',
+      boundary: 'verified-before-effect',
+      phase: 'publishing',
+      effect_calls: 0,
+    }) + '\n',
+  );
   writeSync(2, 'verified pre-effect publication stop\n');
+  process.exit(86);
+}
+
+function stopAfterWrite(
+  access: SafeRepositoryAccess,
+  contents: string,
+  boundary: ReturnType<typeof verifyPublicationBoundary>,
+): never {
+  const afterimage = Buffer.from(contents);
+  if (!afterimage.equals(Buffer.from(boundary.file.after)))
+    throw new Error('After-effect fixture write differs from the frozen planned image.');
+  const observed = access.readBytes(boundary.file.path, 'fixture stop afterimage');
+  if (!observed.equals(afterimage)) throw new Error('After-effect fixture did not observe the exact written image.');
+  recordPreparations();
+  writeSync(
+    2,
+    JSON.stringify({
+      schema: 'ProjectUpgradeFixtureStop/v1',
+      operation_id: operationId,
+      token: boundary.journal.plan.token,
+      target: boundary.file.path,
+      mode: 'after',
+      boundary: 'delegated-write-resolved',
+      phase: boundary.journal.phase,
+      next_file: boundary.journal.next_file,
+      effect_calls: 1,
+      afterimage_bytes: observed.byteLength,
+    }) + '\n',
+  );
+  process.exit(86);
+}
+
+function stopAfterMove(
+  access: SafeRepositoryAccess,
+  source: string,
+  target: string,
+  boundary: ActivationMoveBoundary,
+): never {
+  if (source !== boundary.staging || target !== PROJECT_ACTIVATION_PATH)
+    throw new Error('Activation move fixture paths differ from the verified boundary.');
+  const afterimage = access.readBytes(PROJECT_ACTIVATION_PATH, 'fixture activation move afterimage');
+  if (!afterimage.equals(Buffer.from(boundary.journal.activation!)))
+    throw new Error('Activation move fixture did not observe the exact moved activation image.');
+  if (access.fileExists(boundary.staging, 'fixture activation staging afterimage'))
+    throw new Error('Activation move fixture retained its staging path after the move.');
+  const targetIdentity = fs.lstatSync(path.join(root!, PROJECT_ACTIVATION_PATH), { bigint: true });
+  if (
+    !targetIdentity.isFile() ||
+    targetIdentity.nlink !== 1n ||
+    targetIdentity.dev.toString() !== boundary.sourceDevice ||
+    targetIdentity.ino.toString() !== boundary.sourceInode
+  )
+    throw new Error('Activation move fixture target identity differs from the staged inode.');
+  recordPreparations();
+  writeSync(
+    2,
+    JSON.stringify({
+      schema: 'ProjectUpgradeFixtureStop/v1',
+      operation_id: boundary.journal.plan.operation_id,
+      token: boundary.journal.plan.token,
+      target: PROJECT_ACTIVATION_PATH,
+      mode: 'after',
+      boundary: 'delegated-move-resolved',
+      phase: boundary.journal.phase,
+      next_file: boundary.journal.next_file,
+      move_calls: 1,
+      effect_calls: 1,
+      afterimage_bytes: afterimage.byteLength,
+      device: targetIdentity.dev.toString(),
+      inode: targetIdentity.ino.toString(),
+    }) + '\n',
+  );
   process.exit(86);
 }
 
@@ -351,25 +535,66 @@ await mock.module(fileURLToPath(new URL('../../src/config/safe-repository-access
   ...originalModule,
   requireSafeRepositoryAccess(repositoryRoot: string) {
     const sequence = ++accessEventSequence;
-    recordAccess({
+    if (repositoryRoot === packageRoot) {
+      packageAccessCalls++;
+      lastPackageCaller = new Error().stack
+        ?.split('\n')
+        .slice(2, 5)
+        .map((line) => line.trim());
+    }
+    const context = {
       sequence,
-      phase: 'require-begin',
       root: repositoryRoot === root ? 'consumer' : 'package-or-other',
+      ...(repositoryRoot === packageRoot
+        ? {
+            caller: lastPackageCaller,
+          }
+        : {}),
+    };
+    recordAccess({
+      ...context,
+      phase: 'require-begin',
       process_elapsed_ms: performance.now(),
     });
     const original = originalRequire(repositoryRoot);
     const access = accessTraceEnabled || childTimingEnabled ? observedAccess(original) : original;
-    recordAccess({ sequence, phase: 'require-returned', process_elapsed_ms: performance.now() });
+    recordAccess({ ...context, phase: 'require-returned', process_elapsed_ms: performance.now() });
     if (repositoryRoot !== root || !stopEnabled) return access;
     return {
       ...access,
-      writeExclusiveAsync(target: string, contents: string, label: string): Promise<void> {
-        if (method === 'write' && target === selectedTarget) stopAtBoundary(access);
+      async writeExclusiveAsync(target: string, contents: string, label: string): Promise<void> {
+        if (method === 'write' && target === selectedTarget) {
+          const boundary = verifyPublicationBoundary(access);
+          if (stopMode === 'before') stopAtBoundary(boundary);
+          if (boundary.file.path !== target) throw new Error('After-effect fixture target changed after validation.');
+          await access.writeExclusiveAsync(target, contents, label);
+          stopAfterWrite(access, contents, boundary);
+        }
         return access.writeExclusiveAsync(target, contents, label);
       },
       replaceAtomicAsync(target: string, expectedHash: string, contents: string, label: string): Promise<void> {
-        if (method === 'replace' && target === selectedTarget) stopAtBoundary(access);
+        if (method === 'replace' && target === selectedTarget) stopAtBoundary(verifyPublicationBoundary(access));
         return access.replaceAtomicAsync(target, expectedHash, contents, label);
+      },
+      async moveNoReplaceAsync(
+        source: string,
+        target: string,
+        expectedHash: string,
+        label: string,
+      ): Promise<'moved' | 'already_moved'> {
+        if (method === 'move' && target === selectedTarget) {
+          const boundary = verifyActivationMoveBoundary(access);
+          if (
+            source !== boundary.staging ||
+            target !== PROJECT_ACTIVATION_PATH ||
+            expectedHash !== createHash('sha256').update(boundary.journal.activation!).digest('hex')
+          )
+            throw new Error('Activation move fixture arguments differ from the verified operation.');
+          const result = await access.moveNoReplaceAsync(source, target, expectedHash, label);
+          if (result !== 'moved') throw new Error('Activation move fixture did not perform a new move.');
+          stopAfterMove(access, source, target, boundary);
+        }
+        return access.moveNoReplaceAsync(source, target, expectedHash, label);
       },
     };
   },
@@ -380,3 +605,4 @@ await mock.module(fileURLToPath(new URL('../../src/config/safe-repository-access
 const stopValidator = stopEnabled
   ? (await import('../../src/config/project-upgrade.js')).validateProjectUpgradeOperation
   : undefined;
+if (childTimingEnabled) setInterval(() => recordChildTiming(), 2_000).unref();

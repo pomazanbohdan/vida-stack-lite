@@ -3499,3 +3499,2013 @@ scratch. That path is operational research data, not a qualified Source purity
 PASS or a measured current migration count. Do not weaken selection or create
 legacy exceptions to hide actual maintained JS/MJS. Resolve work-data placement
 and connected TS packets while retaining existing receipts and UNKNOWN custody.
+
+
+### 2026-10-11 — parallel native test corrections v178–v184
+
+Published unfinished Source checkpoint e09ab999330799bf38de015771b79bf0922d6336
+is confirmed at origin/main by ordinary non-force push. Its explicit one-checkpoint
+pre-commit override did not disable or weaken the hook. Later publication still
+requires the applicable strict gate; it is not automatically covered by that override.
+
+Package-local operational scratch was atomically relocated to
+.tmp/package-agent-work-v178; preserved root dev/inode and original receipt bytes
+are bound by source-operational-boundary-v178/relocation.json. Original receipt
+path strings remain provenance, with explicit prefix translation, never replay
+authority. No historical DB, lease, attempt, release or UNKNOWN was restored.
+The unchanged current filesystem TS-only gate completed: before this wave147
+JS violations; after23native migrations273TS/124JS,463total files. Its FAIL
+remains visible in typed-correction-v179/ts-only-current.json.
+
+The owner's direct parallel-test instruction now permits disjoint Luna test writers.
+Root owns caller/config integration, product/shared files, checks and Git. Native
+migrations preserve assertions and use real API types. Strict test diagnostics
+were corrected, including nullable ledger items, mock inputs, current DB opening
+and admission-aware close. A review caught weakened synthesis citations; Root
+restored r0-qualified assertions and required evidence classes. Focused-validator
+actions now derive from the configured implementation_change validation workflow.
+Activation-use fixture digest excludes its own digest property.
+
+Bounded subprocess output now marks discarded bytes after an exactly full64KiB
+buffer; causal RED and GREEN receipts remain. Resource materialization drains
+pending writes, captures owned staging identity, preserves raw falsy cleanup causes
+and retains unknown publication/stage/lock custody. Resource contract4PASS and
+owned-staging6PASS; known replacement preserves foreign scratch and may release
+its own known prepublication lock. This is cooperative ownership, not hostile actor
+physical exclusion. Root's shared raw-throw cleanup path preserves the older
+warning/status API.
+
+Affected first wave43PASS/7FAIL; corrected scoped wave18PASS/3FAIL; final changed
+mock closure12PASS/0FAIL/58assertions. Root retained all failed receipts. The latter
+three failed cases were incomplete Cedar module mocking and absent Windows flag
+simulation; full real Cedar exports and O_NOFOLLOW=0 fixtures corrected them.
+Host capability tests now use actual Bun Test with isolated bounded child mocks,
+not a Vitest shim. Documentation CLEAR's native test passes static checks; its
+isolated built-bundle behavior remains pending, no local build/install performed.
+
+Current default lifecycle context selected an81678byte TESTING.md and failed the
+unchanged64KiB per-file cap. Template and repository knowledge source now select
+the existing50769byte development-lifecycle instruction. No bound was raised;
+package ownership/collision, stable projection and Unicode cases pass. This only
+changes the declared context source, not active layout/schema/loader authority.
+
+A fresh isolated initialization race7PASS/1FAIL reproduced contention before either
+binder. Typed read-only preflight retry is bounded5s/25ms and reruns both the upgrade
+barrier and full configuration selection. Exact lock O_EXCL EEXIST is typed only
+at its creation call and retains raw cause/message/code; other IO faults propagate.
+Existing binding-lock Windows pre-callback EEXIST/file_lock_timeout support stays;
+entered callbacks are never retried. New guard cases cover pending bytes, exact
+identity, expiry and unsafe symlink/no retry. Postfix7PASS/4FAIL identified owned
+fixture .vida already created by admission plus the next untyped O_EXCL collision;
+those causes were corrected. Subsequent young-lock eligibility correction has
+causal RED/GREEN and final affected13PASS/61assertions; see v200 update below.
+
+Full Source/strict CLI, migrated tests typed checks, zero-warning lint and strict
+Knip have scoped PASS receipts; affected changes require fresh evidence, and
+contention-delta intermediate checks are stale because Source changed during them.
+Use later contention-compatible/retry-code receipts. Three independent current
+reviews cover correctness, security and reverse trace. The security reviewer
+flagged original generic binding-lock EEXIST support; Root retains that existing
+Windows contract and confines the NEW read-only preflight retry to the typed class.
+
+Current Source/test graph needs stable recapture; the selected initialization
+correspondence v178 packet is stale after inlining the duplicate binder helper.
+Historical ceilings are not changed: public binding body currentlyCC6 against
+published5 remains FAIL. No global executable frozen plan, exact coverage,
+assertion-confirmed mutation Killed, Runtime acceptance or unblock is claimed.
+No build/install/version consumption, active schema switch or owner notices.
+
+### 2026-10-11 — parallel native tests and causal P0 repairs v185–v200
+
+Root preserves the published e09 checkpoint, unstaged correction packet and
+original index. No further hook bypass, staging, commit or push occurred.
+Fresh ts-only-wave200.json measures464maintained files/298TS/100JS violations
+(FAIL), against147JS before this wave:47maintained files migrated to native TS
+and one new Source module. Counts include files still awaiting behavior/type
+correction and are not final qualification. Luna writers own disjoint tests;
+Root owns shared/product Source, refs, format/checks and Git. Current plan's old
+root-only test-writer text was reconciled to the owner's explicit parallel order.
+
+Native-ready-v195 strict TS and typed lint pass for9test files. Its behavior is
+26PASS/2FAIL/1error: old kernel repository/project assumptions and old CI result
+schema. Project-context and observed-validation cases pass. Version-policy's
+14cases pass after checking the complete current v2 CI result and exact cache
+evidence, retaining failed/UNKNOWN/malformed formation denials. Kernel fixtures
+now use actual initialization and loaded fixture identity; current checks are
+in progress. Governance and safe-repository tests have additionally migrated;
+large CLI/task fixtures continue strict typed repairs under their sole writers.
+Intermediate parse/type/lint failures remain recorded, no suppressions added.
+
+Read-only dispatch repair's admitted negative test exposed nested Host
+transactions. Root moved pure planning into Source and made commit a narrow
+Host-owned immediate transaction using its existing coherent readers and
+producer/maintenance fence. Plan v2 binds maintenance generation; explicit v1
+persisted readers stay, new strict CLI ingress requires v2. Commit rebuilds the
+exact plan against live config, Source, activation and exact Host/Ledger/Journal
+versions, stores only immutable repair evidence, and preserves original rows
+and UNKNOWN. Blind review exposed wrong-handle stranded replacement and then
+insufficient claim/release Source lineage. Shared selectPausedLocalOwner now
+reuses one precise released-owner contract for preparation and resume, including
+work/thread/resources/Source and revision interval/history. Genuine causal REDs:
+readonly-handle-red-valid-v192 and readonly-release-red-v193. Final affected
+readonly-release-green-v194:8PASS/34assertions; current strict CLI PASS. Latest
+blind owner/commit/activation review returns bounded NONE. Maintenance-generation
+behavior and frozen correspondence remain GAP; no execution right is granted.
+System specification now states this connected v2 repair contract.
+
+Init shared read retry and stale-lock eligibility: young-lock-red reproduces
+unnecessary guard acquisition; young-lock-green passes14assertions. Post-effect
+typed contention never retries entered writes (1PASS/4assertions). Final scope
+shared-read-young-lock-scope:13PASS/61assertions/15.51s including bounded2process
+contention. Existing different release-guard collision remains a separate
+possible gap; no physical Windows or entire runtime qualification is claimed.
+
+Test-tooling real POSIX descendant regression exposed unbounded stdout custody
+after the direct child exited. Descendant-selected-red-v193 failed at1277ms;
+Root removed the exited-child skip when killing its owned process group. Final
+descendant-scope-green-v193:6PASS/6.37s, unchanged bounds, real marker/no-late-output
+assertions. Audit partial-init now uses the shared bounded helper, drains tracked
+children, and removes roots only after successful terminal fixture authority.
+Native-custody-v196: its10cases PASS; four denial workers FAIL on exact title
+filter. Suffix filter corrects Bun's describe-prefixed names without permitting
+zero matches. Denial-selected-v198 then selects actual cases but all4 hit4500ms.
+Worker-only phase timing now separates fixture/planning/attempt/retry; fresh
+diagnosis pending. Failed/UNKNOWN fixture roots remain; no historical replay.
+
+All exact numerical gates remain OPEN: coverage100% four dimensions, genuine
+one-to-one frozen complexity/CRAP and assertion-confirmed Killed100%. Public
+initialization binder remainsCC6 versus published ceiling5; no budget is raised.
+One stable current function/graph capture is still required. No build/install,
+version consumption, active layout/schema/loader change, Runtime update, unblock
+or affected-owner notice occurred.
+
+## 2026-10-11 v201–v224 — native causal inventory/release corrections and fixture closure
+
+Root verified current UTC time and answered the two-hour product-bug question
+from actual scoped receipts. Previously closed product defects include nested
+Host transactions, foreign handle/release lineage and unnecessary young-lock
+guard acquisition. Source remains ahead of installed Runtime; no unblock notice.
+
+Native strict typing joined the run-entrypoint and task-source-binding-operation
+files; current CLI/Source and strict Knip passed at v212/v216. Four further
+maintained tests migrated: scoped-source-snapshot, Edictum workflow completeness,
+staged-runtime-witness and readonly reconcile. The single filename gate wave218
+measures 466 files, 303 TypeScript and 96 JavaScript violations: TS-only FAIL.
+These are measured gate counts, not behavioral/numerical qualification.
+
+Live executable discovery and standalone resource enumeration incorrectly
+included SafeAccess reclaim owner JSON. Reading/hashing operational custody as
+Source could destabilize identity and acquire control locks inside guard paths.
+The native causal CAS test failed before correction; blind review then found
+ordinary resource-lock guard names missing. inventory-ordinary-lock-v214-red
+fails on foo.schema.json.lock.reclaim/owner.json. A shared complete-name filter
+now excludes generated CAS/hash/ordinary reclaim and UUID quarantine entries,
+counts raw entries against traversal budgets, preserves hidden/near-match/bun.lock
+inputs and never reads/removes owner custody. Historical manifest discovery is
+unchanged. native-inventory-v215-green contains all4 inventory cases PASS with
+byte/dev/ino/mtime preservation assertions. Source/CLI/strict Knip PASS; full
+frozen correspondence and delivery/runtime qualification remain OPEN.
+
+Blind release review found a genuine false-success path: a live reclaim guard
+made releaseExclusiveLock return normally while retaining this process's lock.
+release-custody-v219-red reproduces successful return with the lock retained.
+Release now throws SAFE_REPOSITORY_LOCK_RELEASE_INCOMPLETE, distinct from
+retryable admission contention. Finalizers preserve physical lock/guard custody
+while closing descriptors; no entered callback is replayed or new recovery
+right granted. native-custody-v221-green: all3 native reclaim/release controls
+PASS, including /tmp and workspace filesystem; collision callback once, no
+returned result and exact live owner/identity preserved. Its unresolved root is
+retained/logged. This does not prove the separate denial-worker timeout cause.
+
+Current readonly repair scope9PASS includes a correctly redigested plan with
+another maintenance generation: publication denied without row changes.
+Edictum13PASS after correcting replay-stage matcher and using a separate retained
+UNKNOWN fixture root. Governance's broken-root expectation was stale: ENOTDIR
+must fail closed, not become absent. Its isolated direct-store fixture completes
+known synthetic outcomes before cleanup, separately aborts corruption fixtures
+and retains failed custody. governance-durable-v222-green:1PASS/20assertions.
+The readonly public fixture lacked current Host tables and current session request
+fields; setup now uses the canonical Host API/one DB and schema-parsed requests.
+The external scope consumer lacked typed intake/admitted Work; its current
+fixture supplies exact scope/AC/source-bound intake. Both affected behaviors
+remain pending until native-admission-v224 joins.
+
+Upgrade denial v215 still FAIL: two workers reach4500ms and two fail package CAS
+admission after planning. Fresh failed/UNKNOWN roots are retained, never read or
+replayed. No deadline, UNKNOWN or validation rule was relaxed. Six disjoint
+Luna writers now own the next native TS test files; root alone owns Source,
+shared references, final checks and Git. No full duplicate AST/hash/suite run.
+Exact coverage four dimensions100%, genuine frozen CC/CRAP and confirmed
+Killed100% remain OPEN; public initialization binder CC6 versus ceiling5 remains
+FAIL pending architectural correction. No new hook bypass, commit/push,
+build/install, version consumption or active layout/schema/loader switch.
+
+## 2026-10-11 v225–v237 — current fixture closure and native restore-custody RED
+
+The shared initialization error normalizer retains original cause and existing
+RuntimeInitializationBindingError identity. Current public binder CC4 is below
+the genuine published ceiling5; new helper CC3 is within the unchanged10 ceiling.
+selected-functions-v225 is the reusable three-file capture. This is selected
+complexity evidence, not exhaustive frozen correspondence or CRAP qualification.
+Source/strict CLI/typed lint passed v225 and v235.
+
+Initialization v225 scope kept its failed5s race setup hook. New child stage
+markers, incremental ownership registration and failure-root custody are joined.
+Fresh isolated unchanged-bound two-process case v230:1PASS/3assertions, each child
+READY after1.87s/2.21s, all outcomes drained exit0 before completed root removal.
+Host import dominates measured child startup. No hook/child deadline was raised;
+the old failed receipt remains. Remaining physical Windows proof stays GAP.
+
+The v230 connected packet has53PASS/9FAIL across five files: all25 toolchain,
+all5 Mastra bridge and all3 public readonly reconcile cases PASS. Session handoff
+has20PASS and one synthetic branch fixture failure; the current workflow requires
+exact source-prewriter gating. The corrected fixture branches through postwrite
+validators and joins at testing, preserving incomplete-branch and delivery
+assertions. v231 affected slice9PASS includes that branch and7 preflight cases.
+The eighth Cedar-marker preflight case was not selected and remains pending.
+Preflight's first8 failures occurred while constructing an invalid nonhex ledger
+workspace ID; current fixture uses one valid digest consistently. New .ts fixture
+files and actual schema contracts are not numeric/runtime qualification.
+
+Host-state strict progress is measured1136(v226)→761(v228)→437(v231)→390(v236),
+stillFAIL. Source-preflight and session-handoff are strict/lintPASS in v231;
+Mastra bridge and Bun toolchain types/lint pass in their v227–v229 slices.
+Source-preflight-producer and initialization have new native files: producer
+strict closure passed v236; initialization3errors plus20lintwarnings remain
+under its sole writer. The wave218 purity count is still the latest measured
+filename snapshot; no unmeasured migration count is presented as a fresh gate.
+
+Independent release review found swallowed quarantine-restoration errors. Native
+restore-causal-v234 RED reproduces admission callback1 despite a live foreign
+guard left at quarantine, and loss of the restore EIO on release. Shared restore
+now throws SAFE_REPOSITORY_LOCK_RESTORE_INCOMPLETE with the actual cause, distinct
+from retryable admission. restore-causal-v235 scope5PASS/94assertions proves
+callback0 on admission, callback1/no result on release and native reclaim controls.
+Physical unresolved lock/guard roots are retained/logged, never reused outside
+their current controlled test. New tests for a separate contender against pending
+quarantine and simultaneous unsafe-owner/restore errors are prepared for causal
+RED. Complete failed-restoration custody is therefore still OPEN. No assertion
+of cross-process closure, installed correction or entire Source quality pass.
+
+Root updates only active package/mutation references to native test paths; exact
+published-baseline .mjs fixture references stay unchanged. No index staging, new
+hook override, commit/push, build/install, active loader/schema/layout change,
+version consumption, Runtime update, unblock or owner notice occurred. Exact
+four-metric100%, genuine frozen CC/CRAP and confirmed-Killed100% remain OPEN.
+
+## 2026-10-11 v238–v247 — retained custody, fsync regression and restored executor
+
+Proper static-qualified v238 RED confirmed two further restoration defects:
+a separately constructed contender admitted against retained quarantine, and an
+unsafe-owner failure was masked by cleanup failure. The current shared cleanup
+retains both causes; recognized quarantine blocks admission without reading or
+removing its owner. v241 scope9PASS/120assertions. The existing borrowed-read
+boundary closes only its own descriptor and keeps actual pinned identity checks.
+Selected v240 inventory is static-only; extraction does not reset frozen roles.
+Current reclaimStaleLock CC3 versus genuine published2 remains an explicit GAP.
+
+Blind v240 review identified post-delete parent-fsync misclassification. Real
+isolated-worker regressions v243 pass strict TS/lint, then all3 fail on unchanged
+Source: cleanup tries restoring an already deleted quarantine and hides the EIO.
+Each path now records physical removal immediately after successful unlink/rmdir,
+before parent fsync. v244 Source/strict CLI/native TS/typed lint PASS; connected
+scope7PASS/116assertions includes the isolated custody worker and native restore/
+reclaim controls. Blind v245 review found no actionable defect in this correction.
+Physical namespace absence is distinct from uncertain durability; no callback
+result, replay right or power-loss guarantee is granted by failed fsync.
+Fresh v245 native two-process bind1PASS/3assertions, both children exit0 and drain
+before fixture removal. v244's anchored filter selected0 and is not behavior proof.
+
+Temporary peer quarantine is a separate pre-admission classification defect:
+ordinary release/reclaim can expose a quarantine while its operation is active.
+Presence alone cannot prove failed restoration; a live quarantined owner PID
+cannot distinguish transient activity from orphan custody. Native interleaving
+regressions are under a disjoint writer. Actual restore errors and entered
+callback/release failures remain nonretryable; finite observation must preserve
+the unchanged admission deadline, custody and absence of effects.
+
+The managed executor restarted and became ready at06:41UTC. Key Source/test
+files, the completed persistent-handoff migration, local modifications and v241
+receipt survived; staged index is empty. Fresh origin/main fetch has0/0 divergence
+from checkpoint e09ab99 on the cloud work branch. Current boot memory.events are
+all0 with16GiB limit; they provide no historical OOM evidence. No local journal
+boot history exists; dmesg is denied. Current executor log shows successful
+registration/rendezvous/handshake only. Historical restart cause is unestablished.
+No old failed/UNKNOWN fixture roots or Windows state were inspected or replayed.
+
+Native frontier v246: Host250diagnostics (300v241), runtime rebind821 and unfinished
+automatic absorption511; persistent handoff has0 after its4 API/type corrections.
+Writers retain these failures and own disjoint files. Automatic absorption keeps
+its original MJS until conversion completes. Active refs follow completed native
+paths; published fixture refs stay immutable. The latest measured filename gate
+is still wave218, not an inferred new count. Current selected native lint/type
+captures and pending behavior remain distinct from global quality qualification.
+No new hook bypass, commit/push, build/install, Runtime update, active cutover or
+unblock notice. Exact100% coverage, frozen budgets and confirmedKilled remain OPEN.
+
+## 2026-10-11 v248–v254 — pending-quarantine phases and native test closure
+
+Native real-rename interleaves confirmed the temporary quarantine defect in
+v250: two peers received RestoreIncomplete instead of admission contention.
+The init pending/orphan cases passed strict TS/lint then both failed causally
+in v251. A third entered-release case passed corrected strict TS/lint in v253
+and failed on the wrong RestoreIncomplete classification; its callback entered
+once and its result stayed withheld. Failed fresh roots and receipts remain
+retained without subsequent inspection or replay.
+
+Current correction makes reclaim-guard acquisition phase explicit. Presence-only
+admission observations throw a private pending-quarantine subtype of the existing
+ContentionError. The caller retains its existing deadline and read-only retry;
+no owner bytes, PID authority, cleanup, new retry loop or replay right is added.
+Entered release denies as ReleaseIncomplete. Actual native restoration errors
+still preserve their cause as nonretryable RestoreIncomplete; combined operation
+and restore failures keep both causes. A shared required-guard helper removes
+duplicated null handling without changing native ownership or eligibility checks.
+The retained-restoration contender expectation now reflects presence-only
+observation; its actual initial EIO assertion and byte/dev/inode/no-callback
+custody assertions remain.
+
+v254 Source, strict CLI, six selected native test files and typed lint all exit0.
+Connected native scope14PASS/164assertions includes the isolated custody worker,
+three real-rename/pending-release cases, three restore cases, three native guard
+controls and all four corrected producer cases. Affected init scope6PASS/45
+assertions covers transient/orphan quarantine, existing guard expiry, post-effect
+no-retry and unsafe guard denial. The admission deadline remains five seconds.
+Independent blind v254 review reports no actionable finding in these phases.
+Current captured Babel inventory is reused: pending constructorCC1, denyCC3,
+required-guardCC2, and reclaimStaleLockCC3. The earlier frozen correspondence GAP
+is not erased or granted a new budget. No global coverage, CRAP or mutation PASS.
+The three new native guard/quarantine files join the package's existing final
+test selection and Linux mutation partition; no extra full-suite lane is added.
+
+Persistent handoff24PASS and preflight's remaining Cedar1PASS are v247 evidence.
+Producer fixture now uses the actual current preview, canonical request/attempt
+binding and all five preparation records. v250's request-preview failures remain;
+v253 selected producer3PASS omitted the missing-permission case, so v254 all4PASS
+is its complete current evidence. TS fixture imports/positive guards were fixed,
+without changing the absent Host permission denial or attempt side-effect checks.
+
+Strict migration frontier v253 still fails: Host209 (250v246), rebind495
+(821v246), absorption248 (511v246). Root fed the exact captured diagnostics to
+the three sole-file writers. The absorption writer's one shared helper guard
+edit violated the assignment boundary; Root stopped shared edits, reviewed its
+non-null Work/Ledger/version success guard and verified it in v251 strict/lint.
+The writer now touches only its assigned test. Original MJS remains until joined.
+Subsequent writer edits and filename totals remain unmeasured, not extrapolated.
+
+Restart investigation was repeated after access returned. Current managed status
+is connected/running with matching spec1129 and no current failure. The boot ID
+is c9576cd5-624a-4870-bcff-02de3440a84e. The only executor log contains successful
+registration/rendezvous/handshake at06:41:48–50UTC; no prior failure history is
+available. journalctl has no boots; syslog/kern/messages files are absent; dmesg
+is denied. Current cgroup counters are all0, which cannot rule out a previous
+boot OOM. Observed pre-recovery executor configuration/capability read errors are
+proximate symptoms, not a diagnosed restart cause. No product/process-load cause
+is claimed. Local changes remained intact; no Windows or archived UNKNOWN state
+was imported. No new commit/push/hook bypass, build/install, activation or notice.
+
+## 2026-10-11 v255–v263 — guard lifetime, combined failures and diagnostic frontier
+
+Blind role review verified genuine b549951 measurement rows, not passing baseline
+quality: removeStaleLockCC3/CRAP12 and reclaimStaleLockCC2/CRAP6. A thin delegate
+alone would not conserve guard ownership. Current separation keeps eligibility,
+opened-fd lifetime and pinned removal in removeStaleLock, invoking the private
+synchronous reclaimStaleLock guard wrapper only after dead-owner eligibility.
+Guard acquisition failure still closes the opened fd. The wrapper invokes removal
+once and releases its guard. v257 Source/strictCLI/lint PASS; connected native
+scope10PASS/164assertions. This does not approve frozen nested correspondence.
+
+Fresh blind v257 review found a genuine simultaneous failure counterexample:
+guard release in finally masked a preceding removal error. The native regression
+faults the real lock rename and then real owned guard rename before either effect,
+capturing lock/guard/owner bytes and dev/ino. Root corrected two fixture defects
+before execution: a directory cannot be read as bytes, and throwing from finally
+violates typed lint. The corrected case passes strict TS/lint then fails causally
+in v260 on the missing AggregateError. Its failed fresh root remains retained.
+Shared Result-based cleanup now preserves exact single errors, ordered dual errors
+with the primary as cause, and RestoreIncomplete only when cleanup actually
+reports failed restoration. The guard wrapper reuses that cleanup mechanism.
+v261 Source/strictCLI/lint PASS; connected scope11PASS/182assertions; a fresh blind
+review finds no actionable counterexample in scope. Current reused Babel capture
+measures cleanupCC6, reclaimCC1 and removeCC3. Actual behavior/roles and new nested
+closure dispositions still need exhaustive frozen review; no new inferred budget,
+coverage, CRAP or mutation qualification is claimed.
+
+Root v262 strict frontier stillFAIL: Host151 (166v257), rebind373 (453v257),
+absorption40 (116v257). Three sole-file writers resumed from exact receipts.
+Independent advisors supplied precise SQLite projection/validator and real Host
+assignment fixture guidance without shared edits or duplicate checking. Complete
+WorkflowSessionReservation fixtures remain a semantic dependency: positive repair
+cases keep their behavior, missing historical correction fields stay explicit,
+and a trusted invocation/capability is never invented. Existing manual complete
+persisted examples prove data shape, not genuine runtime-kernel issuance.
+
+Fresh bounded upgrade denial v255 has4FAIL before its target effect: each worker
+throws package CAS contention while planning (roughly1.10–1.22s inside planning).
+v256 selected worker instead reaches4500ms during planning; no native failure
+diagnostic is emitted before kill/drain. v263 opt-in package-path trace reaches
+dist schema reads before unchanged4500ms expiry. The selected AST capture overlapped
+this diagnostic attempt, so it is not a performance comparison. No timing cause
+or remediation is inferred from the last observed path. The test-only wrapper
+retains actual read errors, path/label and elapsed time without a new filesystem
+read; verbose per-read tracing is explicitly opt-in, not normal test overhead.
+All failed fresh roots/process receipts stay retained; no old UNKNOWN or package
+custody is reopened, restored or replayed. Exact receipts live in
+.tmp/tooling-research/typed-correction-v179/ in the exact
+upgrade-denial-v255-behavior.log, upgrade-denial-v256-behavior.log and
+upgrade-denial-v263-behavior.log receipts.
+No new Git staging/commit/push/bypass, build/install, active schema/loader cutover,
+version consumption, Runtime update or unblock notice. Final quality remains OPEN.
+
+## 2026-10-11 v264–v265 — fresh strict gates and migration residuals
+
+Final opt-in-only diagnostic test v264 passes strict TS/lint. Root froze the
+three writer files for one v265 static batch: Host114 (151v262), rebind305
+(373v262), absorption15 (40v262), strictFAIL retained. Writers resume only from
+the exact residual log. Fresh filename gate counts468selected files,316TS and
+86JS violations, FAIL; this measured snapshot supersedes wave218, not an inferred
+migration total. Absorption still has both MJS and unfinished TS. Fresh strict
+Knip exits0 with{"issues":[]}, max-issues0 and both config/tag hint errors enforced.
+This is static cleanliness only, not behavior, coverage, frozen budgets or Killed.
+No additional full suite, AST/scan/hash pass, build/install, new gate owner or
+hook override was introduced. Existing final selectors include the new native
+lock cases; mutation qualification remains pending.
+
+The reservation boundary was clarified without weakening opaque authorization:
+parseWorkflowSessionReservationData validates complete persisted DATA without
+granting rights. Native data-only fixtures may derive their envelope from actual
+fixture config/context and a genuine current Host claim/receipt, with approval
+or authorization absent unless actually issued. They do not establish live
+kernel issuance, and cannot bypass capability membership checks. Repair fixtures
+omit only the explicit historical correction fields and keep all other envelope
+fields current. Positive repair and readonly boundary assertions remain intact.
+
+## 2026-10-11 v266 — dependency dispatch and reduced verification steps
+
+User explicitly requests agents/dispatch and Superpowers. Root applies writing-plans
+and subagent-driven-development within the existing strategy/WORK hierarchy.
+Ruling: parallel disjoint test writers and blind readonly advisors are authorized
+by the user and repository lifecycle; skill defaults for serial implementation,
+agent-owned checks/commits or a fresh approval step do not replace that authority.
+Three existing writers retain Host/rebind/absorption; no task is restarted from
+scratch. Three fresh blind Luna lanes cover upgrade package read/CAS causality,
+genuine frozen lock-family correspondence from existing captures, and one bounded
+audit-core test migration. Agent prompts enforce full bootstrap, no subagents,
+no checks/scans/Git, one writer/file and Root-owned Source/shared refs.
+
+Dependency check: existing writers share public Source types but do not edit
+them; audit-core consumes unchanged Source and helpers; correspondence consumes
+v261 Source/inventory without modifying it; upgrade advisor reads current
+diagnostics only. Root integrates ready packets before checking their closure.
+No shared write conflict or duplicate full-suite/AST/hash pass is introduced.
+No completed review or unchanged failing4500ms diagnostic is redispatched.
+Static-first batch, targeted behavior, then a new ready-packet review stays under
+one verification owner. The actual v265 counts and all quality/Runtime GAPs
+remain unchanged until new qualified evidence exists.
+
+## 2026-10-11 v267–v269 — fresh residuals and ready-packet review
+
+One held three-file compiler/lint batch measures Host39 (114v265), rebind218
+(305v265), absorption8 (15v265), stillFAIL; exact logs native-frontier-v267-*.log
+are preserved. Writers resume from these receipts, not a new scan. Absorption
+then freezes its8-row correction/parser-qualified DATA envelope for fresh blind
+review. Audit-core test writer finishes a disjoint TS migration. Root corrects
+missing actual CLI io.log and unknown template interpolation before behavior;
+v268FAIL and v269strictTS/lintPASS remain separate receipts.
+
+Fresh audit review finds a real regression in test strength: a handwritten
+Ledger projection narrowed the original whole-Ledger stale-CAS no-effect
+assertion to claims/tickets. Root preserves the full parsed unknown Ledger
+for equality, using its projection only to navigate the active claim. No test
+strength is traded for strict TS. This correction still requires its fresh
+static/behavior evidence; no inherited v269PASS is applied to changed bytes.
+Two more disjoint TS writers migrate controller-observation and coordination
+writer-entrypoint tests, retaining originalMJS until Root joins actual refs.
+
+Upgrade causal advisor confirms actual packageCAS admission contention in v255,
+without identifying an owner. Inclusive read cost remains a hypothesis. Root
+adds opt-in cumulative read count/failure/byte/time/max counters to the existing
+test-only real-access wrapper. A checkpoint every64completed reads and on
+error uses no new filesystem read/scan; original errors and4500ms bounds remain.
+This is new diagnostic input, not a performance improvement or qualified denial.
+
+## 2026-10-11 v266 lock correspondence — selected semantic proposal
+
+Fresh blind advisor and Root historical/current body check agree on5retained
+rows and3new current rows for the selected removeStaleLock/reclaimStaleLock/
+withReclaimedEntryCleanup family. Existing v261 capture is reused; Root checks
+exact disjoint identities and historical roles, including the moved quarantine
+predicate closure. The proposal records genuine historical measurements3/12,
+1/2,2/6,1/2,2/6 and explicit pending new-function budget dispositions, without
+claiming accepted baseline quality or generating current CRAP. Receipt:
+.tmp/tooling-research/typed-correction-v179/safe-access-correspondence-v266.json.
+Cleanup CC moved into the new CC6 helper, so lower wrapperCC is not an overall
+complexity improvement claim. Other shared-helper callers remain separate
+correspondence work; global exhaustive plan/freeze and final quality stayOPEN.
+
+Absorption review's historical-invocation finding is adjudicated against the
+actual supported repair contract and withdrawn by the reviewer. It normalizes
+only Work/receipt/authorization receipt attempts; invocation remains current
+format. This is mixed-preimage receipt-repair evidence, not qualification of a
+fully historical reservation with every copy stripped. No Source repair scope
+or authorization is expanded to satisfy that broader unsupported inference.
+
+
+## 2026-10-11 v270–v283 — connected test packets and actual repair P0
+
+Root integrates three qualified TS migrations: audit-core-regressions,
+development-controller-observation and automatic-work-absorption. Original MJS
+bytes are retained in .tmp/archive/ts-test-join-v274; package files/test:pinned,
+exact mutation selectors and the current TESTING command are joined once.
+v273 strict selected TS and typed lint pass for these files and Host tests.
+Controller behavior passes all8cases; audit fast cases pass2. The public audit
+fixture fails initialization first for the removed post-write packet contract,
+then, after preserving that contract, for its absent causal packet producer.
+v280 retains the incomplete root. A disjoint writer now uses supported current
+public workflow/prewriter behavior; no Source validator is weakened.
+
+Native absorption v278 yields4PASS/3FAIL. The started receipt repair with200
+readonly Journal items reproduces an actual Source defect: the frozen operation
+comparison pools the public10000-node limit across individually validated owned
+components, failing at after.items[131] before the intended apply fault. Root
+replaces only the decoded validated aggregate comparison with Node's existing
+isDeepStrictEqual. Per-row canonical ingress, transformation, checksum, binding,
+CAS, ownership and UNKNOWN controls remain. v279 Source/strict CLI/typed lint
+pass; fresh blind review finds no bypass in scope. v280 both started/completed
+repair cases pass2/54assertions. New valid-shaped redigested frozen-plan revision
+tampering is being verified, with exact comparator denial and whole retained
+state no-effect controls; current behavior results remain pending.
+
+Fresh v281 held static frontier: Host and expanded upgrade diagnostic TS/lint
+pass; rebind176TS/176lint (v272214/317), entrypoint1TS. Rebind resumes only those
+actual residuals. Positive settled-writer fixture now uses complete actual
+request, genuine Host claim/completed receipt and source observation; fresh
+blind review has no actionable defect. Persisted DATA is not kernel issuance.
+Entry mapper receives a Source-derived contextual return type; v282 entry and
+latest absorption strict TS/lint pass. No global filename count is inferred
+from joins; last measured v265 remains316TS/468selected/86JS violations.
+
+Upgrade v271 count diagnostic observes256 completed byte reads/0failed,
+8.9MiB/1451.720ms inclusiveAPI before unchanged4500ms expiry. v282 also counts
+real readText without extra FS reads: last checkpoint512calls,507byte/5text,
+18295248 byte-returned,153663 UTF16 code units,1828.014ms inclusiveAPI,0failed.
+The selected worker still times out; target bootstrap denial is not reached.
+No timeout relaxation, bundle proof cache, authority deletion or old-root replay.
+Read time is only partial causal evidence, not proof of the remaining CPU/scan cost.
+
+Current dispatch reuses ready lanes: Host HOLD, rebind exact residual writer,
+absorption fixture/negative-control writer, audit public-flow fixture writer,
+entry contextual typing, disjoint task-source-coordination TS parity writer,
+fresh blind packet reviews, Root alone Source/integration/check/Git. No duplicate
+full suite/AST/hash, no build/install/runtime cutover/unblock/notice, no new
+hook override or quality completion claim. Git fetch v272 confirmed origin/main
+and HEAD e09ab999330799bf38de015771b79bf0922d6336 divergence0/0; index remains
+preserved. Completion/publication and all exact final quality gates stayOPEN.
+
+## 2026-10-11 v284–v295 — stable packets and categorized migration
+
+v284/v292 fresh filename gate measures469 selected files,320 TS,83 active JS
+violations (64 Agent,19 repository), FAIL. Delta is-3 from v265's86; private
+CLI candidates and unjoined TS copies are not completed migrations. Root fetched
+origin/main again: HEAD e09ab999330799bf38de015771b79bf0922d6336 diverges0/0;
+index stays empty and all local changes remain preserved.
+
+Absorption ten-writer case passes at unchanged10 writers/20s,14050.99ms;
+known failed report passes1572.21ms. Complete reservation DATA comes from actual
+fixture config/request and genuine Host claim/receipt; no kernel/HITL grant is
+claimed. Valid-shaped redigested frozen repair journal revision tampering denies
+both plan and resume with exact incomplete-change-set error; raw full Host and
+Journal state remains unchanged. v285 started repair passes1/33assertions,
+including fault/apply/resume/restore. Earlier invalid legacy-work reader failure
+is retained; it was corrected to raw ordered SQL beforeimage comparisons.
+
+Host v286 selected cases fail fixture bootstrap for required missing AGENTS.md.
+Solewriter seeds maintained instruction/policy fixture files and retains failed
+roots. v288 strictTS/lint pass; four affected Host cases pass4/37assertions in
+3.01s. This is not the full242 native Host cases or installed authorization.
+
+Audit v289 matches0cases and is FAIL; corrected v290 selection fails at missing
+synthesize_task advancement. Root extracts one shared report/CAS helper and adds
+current public task-synthesis stage before existing Source prewriter. v291
+selected helper/audit/task static diagnostics are zero; fresh blind review finds
+no actionable defect. v294 actual audit public case passes1/36assertions in
+49117.05ms, with actual issued request/current journal joins, packet fields and
+whole Work/Ledger/Journal stale-CAS no-effect assertions. Controlled stage reports
+are fixture observations, not independent review or Runtime acceptance.
+
+Fresh held rebind v293 frontier measures101TS/90lint diagnostics, down from
+v288163/153. Solewriter continues exact residuals; later bytes need a new held
+receipt. Upgrade CPU diagnostic export wrappers pass v293 selected strictTS/lint;
+Root identifies that planning timeout precedes attempt-only totals and requests
+phase/start checkpoints. New test-only opt-in counters now label phase-local and
+cumulative inclusive API calls, omitted lexical/import work and in-flight entry;
+fresh blind review has no finding. New bytes still need static/behavior evidence;
+unchanged4500ms bound and actual bundle checks remain. No measured speedup yet.
+
+User now requires categorized migration from smaller files upward. Strategy
+records7 categories and size-ordered queue from actual filenames/sizes; existing
+writers finish instead of restarting. Rebind keeps sole ownership; three writers
+prepare runtime YAML, Linux simulation and repair CLI tests. Two fresh smallest
+category jobs prepare repository documentation tests and controller tests. Root
+alone checks/integrates; no agent suites/compiler/AST/hash/Git or shared writes.
+All exact coverage, frozen budgets/correspondence, confirmed Killed, functional
+upgrade completion, publication and Runtime/update/unblock/notices remain OPEN.
+
+
+### Current continuation v296–v338: size-ordered joins and causal repair
+
+The active category queue is v335, ordered by actual original byte size within
+seven categories. Finish issued writers first; causal P0/shared closure outranks
+size. The v335 filename gate is FAIL:73JS violations,333TS/474selected files,
+ten fewer JS files than v292. Root preserved the index and original bytes in
+.tmp/archive/ts-test-join-v302/v314/v329/v333, ts-cli-join-v302,
+ts-repo-join-v307, ts-config-join-v321 and ts-tooling-join-v333. No new Git
+publication or hook override; e09ab99 remains the published checkpoint.
+
+Task-source coordination now exposes its current immutable request through a
+fixture getter instead of returning the stale pre-peer request. Both native
+cases have affected receipts: expiry unchanged PASS and FIFO v296 PASS1/19assert.
+Current imports/package selectors join its TS and package forward-review-proof
+TS. The latter scoped package proof passes1case and strictCLI/typedlint; no
+installed attestation or repo-wrapper proof is inferred.
+
+Repository invocation lock now retains falsy callback errors and every ordered
+callback/commit/rollback/close cause. Genuine v307 RED5cases precedes the Source
+correction; v309 GREEN5 and v320 GREEN9child controls are verified through the
+bounded isolated parent. SQLite mock cannot escape that child. Fresh blind review
+found no error-custody regression; inherited pathname-substitution risk is OPEN.
+Node adapter selection has no existing cross-platform payload-bound async lock
+provider. Controlled wrapper tests do not qualify native SQLite or Windows.
+
+YAML migration has65unchanged PASS cases plus v310 affected1PASS/4assert after
+correcting the guarded provider lookup; full66scenario closure is cumulative,
+not a repeated suite. Controller migration has strictTS/lint and its inert
+failure diagnostic1PASS/7assert; three construction/qualification cases remain
+CI-owned GAP. Linux simulation has17unchanged PASS plus v320 custody and v323
+FIFO PASS at unchanged bounds. Its child was corrected to self-contained JS and
+complete terminal diagnostics; no physical Windows proof. These files are joined.
+
+Public writer entry v332 passes1/32assert,78.26s after its copier selects schema
+files through runtimeExecutableInventory instead of copying SafeAccess reclaim
+custody into the fresh bundle. Native actual entrypoint is still the default;
+private cause diagnostics are explicit opt-in only. Owned Source and whole
+Work/Ledger stale-CAS assertions remain. Its TS is joined; elapsed exceeds the
+control-operation target and is not a speedup claim.
+
+Typed Vitest/Stryker configs retain maintained source selection and existing
+mutation thresholds. Installed Vitest5 has no coverage.all option; Bun/Istanbul
+remains the accepted exact coverage owner, V8 qualification is pending. Actual
+Core10 ConfigReader/OptionsValidator accepts explicit stryker.config.ts in
+Node24.19 and Bun1.4.2 for main/platform/source-slice settings, with no suite or
+mutant execution. Historical b549951 config MJS paths remain unchanged. Builder
+TS has strictCLI/typedlint and fresh blind semantic review, manifest closure is
+joined; no local formation/build/install proof. Stryker API10 must be a direct
+pinned development dependency, rather than a transitive type import; lock-only
+refresh is in progress. No package version increment is consumed by source edits.
+
+Synthesis dispatcher causal P0: normalizeObservation rewrote citations through
+the citation-only helper then validated a stale digest. Root now uses existing
+qualifyLegacySynthesisRecord; original input validation, provenance denials,
+non-mutation and strict digest validation remain. v324 four digest REDs and v331
+freeze/plan GREEN1/13assert confirm this slice. An unused unexported inspect
+wrapper was removed; exhaustive frozen function retirement remains pending.
+A second causal decoder P0 reordered nested target keys, rejecting the CLI's own
+frozen plan. Root keeps the exact validated input field order, all validators,
+raw-byte equality and digest gates. v336 three cases pass that admission but
+still fail at their own maintenance fence: planning creates an ordinary Host
+reader after entering its fence. This current P0 is under causal diagnosis;
+never bypass maintenance or invent authority.
+
+Repair observation fixtures now have Source-validated complete released ledger
+DATA and persist each typed value's own revision. v336 two observation cases
+PASS/20assert in combined receipt, including real conflicting citation source
+provenance, unchanged original native outcome, denial before effects and exact
+same-receipt replay. Direct observation output digest assertions were added.
+Qualification apply/CAS/interruption three cases remain FAIL at maintenance;
+repair TS candidate remains unjoined. Four research cases and one qualification
+freeze case are passing and are not repeated after unrelated fixes.
+
+v334 strictCLI PASS. Selected ready files are strictTS/typedlint0 except the sole
+rebind writer frontier17TS/4lint (down from75TS/37lint atv315). Current Knip v335
+FAIL2 unlisted imports: direct Stryker API declaration and private repo-document
+proposal Babel type ownership. The unsupported proposal is preserved outside the
+active test tree, original MJS remains. Restore strict Knip with no allowances.
+All failed/UNKNOWN roots are retained without replay; current native entry root
+was successful. Final stable Bun behavior, exact coverage/CRAP/frozen mapping/
+assertion-confirmed mutation gates remain OPEN. No active loader/schema cutover,
+system update, verified unblock or notices.
+
+
+### 2026-10-11 continuation v340–v354: connected contours and causal P0
+
+Current handoff continuation is updated to v340–v354. Latest filename receipt
+v351:66JS/337TS/471selected FAIL, minus7 originals since v340. Seven connected
+joins retain exact originals in .tmp/archive/ts-contour-join-v350. Configs and
+shared helpers have zero filename leftovers; whole/numeric assurance is separate.
+Stable equal-count order is repo tests5 then tooling5; Agent tests12, adapters13,
+CLI31 follow. No duplicate AST/hash scan was used to order the existing receipt.
+
+Synthesis own-fence replan and repair-row typed read use the supported exact-owned
+maintenance inspection. v340 reached second-read RED, v341 apply/replay+resume
+GREEN2, v343 late-CAS GREEN1/27assert after preserving raw frozen plan/full object.
+Existing journal/work/ledger/fence transaction CAS and UNKNOWN custody remain.
+Repair suite cumulative ten cases are qualified; final full scope remains OPEN.
+Standalone partial-write loss has causal v343 RED and v349 final affected pair
+GREEN2 after complexity-neutral cleanup predicate correction. Seven exact files
+are retained, second batch does not start, writes drain and exact-owned lock
+releases only before uncertain publication. OS-write independently blocked timing,
+native Windows and durability are not established by the controlled test.
+
+Other receipts: helper ledger-schema v34714PASS/146assert; frontier v3483PASS/
+26assert; candidate-authority v3441PASS/59assert; strictCLI/lint v351 PASS0;
+canonical Knip v352 PASS0. Root-cwd Knip v351 used wrong project scope and is
+superseded, not a product regression. Rebind frontier v3430TS/0lint. Stopped
+candidate v3533TS/2lint reduced from v34993/50; Root five final corrections yield
+v354 strictTS/lint0. Four Source-only behaviors are now under focused check;
+contained constructor remains CI-owned and is not executed locally.
+
+Blind fresh repo-fixture review reports precise GAP: no attributable current
+complete prepared-payload/dist-index binding for real Node adapter transition.
+Old fixture roots/generated outputs are not replayed or accepted as current.
+Private full repo test proposals remain unjoined. Hook fixture uses a retired
+CRAP schema/API and is being reconciled to actual current report/staged helper,
+without false guards or weak gates. Five disjoint blind Luna tooling proposals
+are private and uncounted, in original-byte-size order for integration.
+
+Fresh upgrade known-bootstrap CPU/read-count diagnostic v354 retains unchanged
+4500ms child bound and FAIL1 with no API completion or read checkpoints before
+cutoff. .tmp/tooling-research/typed-correction-v179/upgrade-cpu-v354.log is the
+receipt; this does not attribute cause, establish a target denial or permit replay.
+Source stayed stable during this timed check. Fresh origin fetch0/0 at e09ab999.
+Index unchanged; no new stage/commit/push, build/install, active cutover or notices.
+Exact final numerical/frozen mapping/Runtime gates remain OPEN.
+
+
+### 2026-10-11 continuation v355–v382: smaller contours, honest scenario evidence
+
+Latest filename receipt v38057JS/348TS/474selected FAIL; remaining repo4, Agent9,
+adapters13, CLI31. Reused receipt queue migration-queue-v380.json; no extra AST/
+hash scan. TS count includes unjoined candidates and is not a qualification claim.
+Five tooling joins v357/v360 retain exact originals; connected changed projection/
+adapter cases4cumulative GREEN, inert4PASS/74assert v365. Frozen published MJS
+subjects preserved. Canonical Knip v3820issues, allowances/hints unchanged.
+
+Repo hook18current cases cumulative GREEN, joined v370, old original archived;
+retired allowance API removed and fullprecommit tests reuse existing entrypoint
+owner. Syntheticprepush fixture is orchestration only. Historical10PASS and
+smoke16PASS/411assert v374 joined v376. ZOMBIES v37613PASS1FAIL exposed five current
+public upgrade exports absent from stale inventory; corrected interface v379
+1PASS/1876assert completes14cumulative current cases. v378 selector matched0 and
+is not a pass. Joined v380; placeholders removed, all scenario cells explicitly
+unreviewed, optional TS candidate references never prove applicability/execution.
+Root restored a genuinely used coverage projection type after CLI v380 found the
+removed export. Direct type import reuses one contract; strictCLI v382 PASS0,
+connected tests TS/lint v381 PASS0. No runtime change follows from erased types.
+
+Next terminal/delivery/admitted/retirement candidates preserve original scenarios;
+static corrections remain private and originals active. Supported asynchronous
+shared prewriter seam identified; no duplicate sync/async fixture driver adopted.
+Stopped4FAIL before capture remains fixture producer/approval GAP, not Source bug.
+Fresh repo transitions require attributable current complete payload/manifest.
+
+Upgrade v367 FAIL at4500ms: imports303/1127ms, completed parse/validate/inventory,
+320package reads11.215MB/inclusive1.511s. No redundant reads or safe CAS removal
+proved. Retain prior failure/custody. Fresh fetch HEAD/origin e09ab9990/0; index
+preserved. No new stage/commit/push/build/install/cutover/runtime/unblock/notices.
+Exact numerical/frozen correspondence/complexity/CRAP/Killed100 gates remain OPEN.
+
+## 2026-10-11 continuation v383–v398 — two connected test joins and causal repair P0
+
+Terminal capture TS joins v395 after all17 original expanded cases GREEN across
+bounded receipts v387/v389/v390. Native evidence repair TS joins v398 after
+all35 expanded cases GREEN cumulatively v387/v389/v394/v395/v397. Originals
+archived v395/v398; current selectors/package paths use TS; frozen published
+fixture subjects remain unchanged. v398 selected native strictTS/lint0;
+strictCLI0. These receipts qualify synthetic isolated contracts, not installed
+Runtime, full release formation, final coverage or Killed100%.
+
+New causal P0: release Source observation reader changed object property order;
+repair compares frozen JSON, so its unchanged Source was falsely rejected.
+Added existing Source-binding regression: v392 RED demonstrates key-order
+change, v393 two parser return literal orders restored writer identity, v394
+three affected cases GREEN. No reads, fields, branches, CAS or UNKNOWN semantics
+removed. Blind v395 read-only review of neighboring frozen projections reports
+no further same-causal-order mismatch. Specification now requires serialized
+Source observation identity across parsing. Final frozen budgets still OPEN.
+
+Fresh filename-only v398 gate FAIL55JS/348TS/472selected (minus2JS vs v380).
+Configs0/shared0/tooling0/repo4/Agent7/adapters13/CLI31. Queue v398 reuses that
+receipt, without AST/hash scans. TS count includes unjoined candidates. Repo4
+remain payload/manifest-bound; dependency-ready smaller Agent files proceed.
+Index preserved; no commit/push, build/install or Runtime-unblock notice made.
+
+Admitted packet remains unjoined. v396 strict diagnostics came from positive
+fixture journal source_scope nullable typing. Root v400 narrows the existing
+seed minimally (no helper/Source weakening); strictTS/lint0, bounded review0.
+v401 behavior9PASS4FAIL. v402 corrects two fixture assumptions: empty unknown
+input fails at loader provenance first, and foreign synthesis digest must exclude
+its old digest to reach intended scope denial. Both affected cases2PASS; selected
+strictTS/lint0. Two continuation prefix failures remain; private Luna investigates
+their fixture/contract correspondence read-only. No migration closure claimed.
+Initial v400 behavioral invocation used wrong runner path and executed no tests;
+failed receipt retained, corrected v401 actual Bun run supplies proof.
+
+
+## 2026-10-11 continuation v399–v432 — qualified joins, real writer setup and SQLite boundary
+
+Admitted-development packet joined TS v406 after all13 cases passed cumulatively
+(61assert v405); selected strictTS/lint0. Original archived in v406; current
+package and mutation selector paths updated, frozen baseline MJS subjects kept.
+Coverage completeness joined TS v417: original10 broad cases covered by bounded
+checks; current timing console.error/config whole_repository/array prototype
+fixture assumptions reconciled without changing Source guards. Blind review
+caught22 unawaited matcher operations: actual operation settlement now precedes
+all assertions; changed3 blocks PASS142assert, strictTS/lint0. Original archived
+v417; current selectors TS; candidate matrices remain unreviewed.
+
+Fresh filename-only gate v430 FAIL53JS/354TS/474selected, minus2JS from v398.
+Configs0/helpers0/tooling0/repository tests4/Agent tests5/adapters13/CLI31.
+Migration queue v430 reuses the one filename receipt, no repeated AST/hash scan.
+TS totals include unjoined candidates; no numeric completion inferred.
+
+Stopped Source fixture v422 showed missing initialization authority before
+public writer preparation. Shared controlled-runtime-initialization-fixture
+extracts the existing current-schema/template/output-byte receipt builder and
+calls actual Host bind; explicitly Source-only fixture, no native installation
+proof. v426 reached actual writer but direct capture incorrectly demanded a
+contained package review binding. v427 direct Source capture PASS1/19assert;
+contained review emission remains enabled for native CLI cases. Other3 Source
+cases and8 contained cases remain pending/GAP. Current public writer requests
+supply actual configured prewriter sequence and use kernel-produced reservation;
+no synthetic opaque capability or relaxed approval check introduced.
+
+Initial first readonly reserved-wave fixture v425 failed because public issue
+correctly provides no writer reservation for readonly actions. Current test
+preserves actual issued/observed denials and tests explicitly forged reservation
+data via the real validator; v430 PASS1/20assert. No claim of a supported readonly
+writer reservation. Root v431 selected strictTS/lint0 across stopped, retirement,
+initial and reused expect-rejection helper.21 async rejection assertions now
+await actual operation settlement before inspection/cleanup. Malformed values
+remain unknown at real Source boundary; no casts/any/suppression introduced.
+
+Shared public-prewriter helpers now await actual public run callbacks; their
+existing audit/automatic callers await the helper. Audit v425 failed while
+copying a transient Source lease path concurrently with another Source fixture;
+Root serialized fresh bounded copy check v431 PASS1/36assert. Automatic affected
+behavior is pending. No full suites/build/install/numerical claims.
+
+Luna disjoint configured/delivered candidates v429 still have68/227 strict TS
+errors respectively, improved from240/477; reviewers distinguish synthetic
+unit data ports from actual Source-issued opaque capabilities. Private edits
+are not joined or certified. Retirement v425 strictTS0, Root corrected one
+unknown-return lint boundary; current producer qualification remains open.
+
+Owner conditional SQLite3.54 preference researched with official release/docs:
+SQLite3.54.0 stable2026-10-09; installed Bun1.4.2 in-memory3.53.2; official
+Bun1.4.3 bundles3.53.4, custom dylib onlymacOS/no-opLinuxWindows. Registry records
+portable qualified bundled adoption and fresh DB qualification; no runtime
+pin/install/live DB changed. WAL/SHM/FULL/CAS/ownership/UNKNOWN preserved.
+
+## 2026-10-11 continuation v433–v454 — shared evidence and real retirement repair
+
+Supersedes the v429 candidate diagnostic counts above. All five Agent test
+candidates now pass selected native strict TS (v446/v450); Source v451/v453 and
+combined checked CLI v451 PASS0. Filename v453 still FAIL53JS/355TS/475selected:
+no new connected join yet, remaining CLI31/adapters13/Agent tests5/repo tests4.
+TS candidates and private proposals are not completed migrations.
+
+Configured workflow cumulative152 Source cases GREEN. v450151PASS/2FAIL retained;
+the protected-claim case subsequently v451PASS1/3assert after binding the actual
+instance method. Distribution case remains selected FAIL/GAP before assertions:
+stale generated dist imports the former inventory MJS. Mutable YAML fixtures
+clone frozen parsed data, field writes fail closed, config-ID negatives actually
+change the parsed value, and mock.createWorkflow captures the real function.
+Governance mock denials are unit evidence only. No artifact/source proxy or skip.
+
+Actual public retirement exposed ownership P0 v435RED. Source v441 preserves the
+dedicated retirement's exact retained-owner validation view while persisting
+released ticket/claim and suspended work; generic unresolved-owner/CAS guards
+are unchanged. First UNKNOWN/stale completion case v441GREEN; invalid
+ownership/CAS v445, FIFO v449, rollback v452. v453 remaining3PASS/78assert closes
+the seven original Source scenarios cumulatively. Source fixtures now obtain
+real public synthesis, prewriter, writer issue and execution capability.
+
+Legacy correction repair exposed another actual P0: strict parsing before its
+explicit paired-field normalization (v452RED). The sole correction-generation
+discovery uses an ephemeral copied journal, defaults only the wholly missing
+pair, rejects partial pairs, then invokes the unchanged strict codec. Original
+raw payload/revision/digest stay the plan/apply/resume/restore CAS preimages;
+issue, owner, approval, invocation, scope, original UNKNOWN and unrelated issued
+readonly journals remain checked. v453 positive covers inspect/plan, late CAS,
+transaction rollback, apply/resume, semantic restore and public retirement.
+Blind independent review found no authority weakening. Four additional partial
+journal pair rejections v454PASS1/17assert. Existing broad negative gains one
+case-specific exact scope-integrity cause; request status denial asserts shape.
+Fixture timeouts are explicit60s for actual public setup, not raised production
+operation deadlines or frozen numeric budgets.
+
+Mutation helper assertion attribution uses one shared AsyncLocalStorage module
+per child; file/test-body evidence remains separate. Actual copied helper
+v438RED -> v439GREEN; consumed assertion v444 and concurrent body isolation v446
+GREEN. Unknown/runtime/mixed results never become assertion-confirmed Killed.
+New preload file owner accepts exclusive creation or byte-equal existing data
+only. These child/classifier checks do not certify the actual mutation scope.
+
+Initialization resource-copy helper reuses exported existing exact inventory
+predicate. v447RED -> v448GREEN13assert, including normal hidden/lookalike bytes,
+unchanged source sidecar bytes/identity and excluded reserved custody metadata.
+Source-copy behavior checks are serialized by Root. New function inventory owner
+receipts v449/v454 measure retirement CC10, preload owner CC7 and repair helper
+CC4/4/3; no frozen gate reset or numerical PASS claim. Finite child/callback and
+whole changed-function correspondence still require final quality proof.
+
+Private Luna proposals: three bootstrap and three root adapters plus stopped
+laterWriter fixture. Blind reviews preserve closure limits; review-proof reexport
+rejects malformed non-string hashes earlier with a different error; the MJS
+owner also rejects them at its strict byte-hash comparison. The blind review's
+initial claimed acceptance difference was corrected. Active callers/artifact
+metadata remain unchanged pending Root
+qualification. No build/install or real Runtime update; no notices, Git mutation,
+new hook exemption or archived operational replay.
+
+Connected retirement/configured TS selectors v454; exact MJS original bytes
+retained in .tmp/archive/ts-agent-tests-join-v454. Filename v455 now
+FAIL51JS/355TS/473selected, down2; CLI31/adapters13/Agent tests3/repo tests4.
+Combined checked CLI v455 and strict Knip v455 PASS0. Source proof is scoped;
+configured's actual distribution scenario remains selected FAIL/GAP.
+Stopped laterWriter uses actual public synthesis/prewriter/writer issue. Removed
+three unused legacy fixture helpers; selected lint v456PASS0. v456Source2PASS/
+1FAIL: public retired capture and command-patch assertions pass. Remaining
+foreign/CAS/overlap case previously attributed an early CLI envelope denial to
+the later Host guard. It now asserts both exact guards separately; v457/v458
+PASS1/7assert. Deliberately invalid input is unknown at the actual Source method,
+explicitly bound to its Host store; scoped TS/lint v459PASS0. The late run's
+59.43s case duration approaches the unchanged60s bound. Preserve receipts and
+margin risk; do not combine heavy compiler/lint with Source-copy behavior checks.
+Three additional small CLI private TS proposals (Bun wrapper, readonly dispatch,
+delivered-work repair) remain unqualified and unjoined.
+
+Stopped TS joined v459 after cumulative4 Source scenarios GREEN (v427, v456,
+v458). Exact MJS bytes remain in the same v454 archive; missing explicit selector
+was closed by selecting its TS file once in existing test:repair:pinned. All12
+cases remain, with8 contained-construction cases explicitly unqualified/CI-owned
+GAP. No new full suite, artifact formation, install or Runtime proof. Filename
+v459 FAIL50JS/355TS/472selected: CLI31/adapters13/repo tests4/Agent tests2. This
+closes3 filename migrations since v430; remaining TS candidates are not counted
+as migrated. Final numeric/correspondence/mutation, native delivery, Git checkpoint
+and verified unblock remain OPEN.
+
+Initial v460 selected guarded prepared-plan case PASS1/216assert in owned child
+(62.49s command), parentPASS1 (64.32s). Tests retain SAME plan/Host state,
+concurrency/fault guards, exact CAS cause and injected Source-drift error identity.
+Source/fixture evidence only, no installed/native/Runtime proof. Initial now has
+first-wave denial and guarded-plan blocks scoped GREEN; other blocks/delivered
+qualification remain pending. Legacy file retained; migration count unchanged50.
+
+Initial v461 exact completed-report recovery PASS1/226assert in the owned child
+(113.30s child command); parentPASS1,115.34s whole command. The actual supported
+readonly follow-up retains original report/recovery identity and no-reissue
+behavior. Source fixture proof only; no native or installed Runtime acceptance.
+Delivered v462 projection/parser/budget scope4PASS/29assert (2.43s), covering
+ordinary canonical budgets, full configured reviewer projection, wholly unissued
+frontier guards and public runtime-code argument routing. Original MJS selectors
+remain until connected qualification; these receipts do not close actual public
+producer, artifact or final numeric gates. Current filename scan reconfirms
+50JS/355TS/472selected; private candidates are not completed migrations.
+
+Delivered v463 RED2 before product assertions: Bun's child evaluation of
+createOriginalFrontierEngine lacked the newly explicit requireFixtureValue
+binding. The same pure helper is now included in the child's script. No product
+guards, fixture receipts or assertions changed. Selected TS/lint v464PASS0;
+delivery/normal full-wave checks v464GREEN2/68assert,22.57s whole command.
+Seeded Host/engine fixtures prove their actual operation behavior only; actual
+original public producer, native/Runtime and exhaustive numerical proof remain
+separate. The normal-large variant and remaining continuation cases are pending.
+Private release-preparation TS proposal passes Root strict typecheck v464;
+independent blind review finds no actionable parity difference. It remains
+unjoined, pending path/caller closure and focused exact-image tests. Other
+private native TS candidates have central feedback pending. No build/install,
+Git mutation, hook bypass, archived operation replay or owner unblock notice.
+
+
+### 2026-10-11 — release preparation and connected CLI migration v465–v484
+
+Release preparation native TS joined v471 with exact original MJS bytes retained
+in .tmp/archive/ts-release-preparation-join-v471. Caller, package and mutation
+paths are current. Original behavior run v469 was7PASS/2FAIL due absent admission
+fixture setup; fixing the two setups under actual admission gives v4702GREEN.
+These are cumulative nine qualified cases, not an invented single whole-suite
+receipt. v475 additional3PASS/0FAIL/64ms verifies nine 3/4-target exact-prefix
+states, seven per-target third-state conflicts and actual four-target publication
+with changed-disposition readback denial. Exact intent/receipt/unrelated bytes,
+prior version and settled identity are checked; power-loss/native/Runtime remain
+separate. Scoped native TS/lint v475PASS0; strictCLI/Knip v471PASS0.
+
+Six CLI ports joined: v477 recover-failed-prewriter-owner/transition-failed-
+prewriter; v480 historical-normalization-resume/qualified-runtime-code-
+continuation; v482 forward-candidate-admission/synthesis-observation-correction.
+Exact dirty MJS bytes retained in ts-prewriter-cli-join-v477,
+ts-continuation-cli-join-v480 and ts-admission-synthesis-join-v482. All selected
+callers/package/mutation paths now use TS. v476 first private test invocation
+matched no file; corrected explicit path then genuinely reproduced the missing
+runtime string guards. Restored original guards; v478 actual maintained regression
+PASS1/6assert. Public owner recovery PASS1/24assert/11.68s. Transition scope
+v478PASS1/FAIL1/231expect calls/116.46s: ledger0GREEN; ledger12 reaches unchanged
+60s bridge-child budget. UNKNOWN root /tmp/frontier-repair-host-lrHRoy retained,
+never reopened/replayed; no causal CLI attribution or mutation kill claimed.
+
+Delivered normal-large v465 reaches unchanged30s parent case limit, not proof
+of its helper's60s child expiry. UNKNOWN /tmp/frontier-repair-host-BJ8YF7 remains
+retained. Test-only opt-in numeric phase timings in the existing TS bridge helper
+preserve calls, reads, fixture sizes and budgets; Root retained current TS helpers
+and imports instead of integrating a stale private whole-file proposal. Fresh
+phase attribution remains pending; no speculative product memoization applied.
+
+Root fetched origin/main; current HEAD/origin e09ab999 remain0/0. Index preserved,
+no new Git checkpoint/bypass/build/install/schema-loader activation/Runtime update
+or notices. Private strict feedback was returned to disjoint Luna writers; private
+candidates do not count as migrated or behavior-qualified. v482 filename gate
+FAIL43JS/363TS/473selected: CLI24/adapters13/repo tests4/Agent tests2, down6 from
+v47249. Combined checked CLI v482PASS0; Source/test strict v484PASS0; changed lint
+v483/v484PASS0; canonical Knip v482PASS0issues/hints. Final frozen correspondence,
+coverage/CRAP/complexity/assertion-confirmed Killed and public/native proof OPEN.
+
+## 2026-10-11 connected CLI and shared verifier v485–v512
+
+Whole current tracked handoff reread before continuation. Dirty/index bytes preserved;
+fresh fetch has HEAD/origin/main e09ab999 at 0/0. No new checkpoint, hook bypass,
+build/install, active layout/loader switch, Runtime update, unblock or notices.
+
+Five CLI joins v488/v490: reconcile-readonly-dispatch, repair-delivered-work-
+continuation, reconcile-artifacts, documentation-policy-transition and repair-
+research-records. Original dirty MJS bytes byte-verified in ts-repair-dispatch-cli-
+join-v488 and ts-reconcile-research-policy-join-v490. Replaced the policy port's
+ambiguous Ajv require/type cast with the installed named Ajv2020 constructor;
+strict CLI/test checks and lint v491 PASS0; canonical Knip v491 PASS0issues/hints.
+Historical fixture repair now parses/configures project_root through the existing
+YAML owner and keeps generic documentation events separate from CLI operation
+objects. Affected CLI cases v493 PASS2/39expect/13.70s. Readonly CLI v494
+PASS3/34expect/2.96s. These do not establish Runtime or whole-suite closure.
+
+P0 observer defect reproduced v501 RED: child removed its private package pin,
+then post-spawn runtimeContext failed before persisting raw outcome. Retained
+unresolved controller-eana8c fixture; never reopened/replayed. Joined native
+observation.ts v502 and captured frozen launch context before spawn. Existing
+reservations and UNKNOWN/no-reissue behavior retained. v502 full observer file
+PASS9/0FAIL/1.222s, including the causal regression and nested/persistence cases;
+strict CLI/test/lint PASS0. Original bytes archived ts-observation-cli-join-v502.
+
+Four further native joins v504: continue-initial-source, init-core, historical-
+terminal-synthesis-capture and local-release-artifacts. Original bytes archived
+and compared in ts-initial-history-release-cli-join-v504. Root restored portable
+anchors, native unknown JSON variables and exported producer types. Preserved
+RepairSourcePass's existing frozen-empty-token phantom brand and runtime WeakMap.
+Completed subtree cache semantics unchanged. v505 strict CLI/lint PASS0;
+canonical Knip PASS0issues/hints. Blind private candidates are not migration proof.
+
+Measured producer CPU v496 identifies repeated path validation/canonical ledger
+work, not SQLite/LibSQL initialization as a general cause. Path check now avoids
+temporary arrays and uses nonglobal precompiled regexes; historical wildcard
+conversion is one pass. True EOF preserves U+2028/U+2029, unlike dollar-anchor
+proposal rejected during review. Babel-owned CC stays 2 for all three functions.
+v499 Source/lint PASS0; path property/direct ingress PASS2/893expect/686ms.
+Receipt readers v503 reuse verified payload bytes with the same digest/check order,
+all identity/lineage/history/custody checks and detached recursive freezing.
+Blind review approved; Source/lint PASS0. No global cache or relaxed proof.
+
+Bridge ledger12 remains FAIL at unchanged 60s child/90s parent budgets: v485,
+v492, v496, v500 and v506 fresh roots respectively VrUwoW, RobYRS, ngFh2L,
+8xVOet and WQGg0c under /tmp/frontier-repair-host-. Retain all; no read/reopen/replay,
+including under new IDs. v500 reaches reopen; v506 has variable open latency and
+fails during subsequent init. Numeric traces/CPU profiling are diagnostics only;
+no successful unblock, assertion-confirmed Killed or stable speedup claimed.
+Next safe optimization is validated DB snapshot/receipt reuse strictly within
+one existing transaction; preserve filesystem rechecks and every separate producer
+boundary. Do not use the sequential public aggregate view as an atomic snapshot.
+
+Explicit shared-code directive implemented v508–v512: package forward-review-proof
+owns file/key/digest/provenance/reverse helpers. Native repository adapter calls
+five alias exports and retains its own ingress/error order, coerced hashes and
+late malformed-item handling. Original adapter bytes archived ts-shared-forward-
+review-join-v510. Babel inventory: repository functions/closures 10 to 3;
+verifyForwardReviewSet CC38 to20. Package helper identities/bodies retained;
+final frozen correspondence for extraction remains OPEN, not automatically N/A.
+Baseline regression PASS8 before extraction. Post-change v512 PASS101/0FAIL/
+309expect/46.69s across five files: shared verifier, admission, retarget verifier,
+public init and interrupted init. Assertion-library calls are not counted as Bun
+expect calls. Scoped native TS/lint PASS0, canonical Knip v512 PASS0issues/hints.
+Full repository TS v510 FAIL on existing unmigrated adapters/tests; retained log.
+
+Fresh v512 filename gate FAIL32JS/375TS/474selected (407 code files): CLI14,
+adapters12, repository tests4, Agent tests2. Down11 JS from v482; an added native
+shared-verifier test accounts for one extra Source file. Private two next CLI
+ports are strict PASS v511 but not joined/behavior-qualified. CI private port
+now selects the policy job before checking unrelated timestamps/steps; private
+qualification pending. Six bootstrap/controller candidates are ready for coherent
+join; do not count them early. Final exact coverage, frozen CRAP/complexity,
+function correspondence and assertion-confirmed Killed remain OPEN.
+
+### Public dispatcher closure v513–v515
+
+Post-sharing caller review found two Source P0 defects: command dispatch still
+selected deleted MJS for documentation-clear/reconcile-artifacts, and help aliases
+stripped only MJS from a TS target. Corrected the single shared cliCommandEntrypoint
+owner for the three currently typed public commands; both dispatcher and controller
+consume it. Alias names use path.extname instead of a fixed extension. Extend the
+transitional typed-command set at coherent bootstrap join; remove it after all
+command implementations are TS. No filesystem scan/read was added.
+
+First v513 test attempt stopped at npm discovery because the test process's pinned
+Bun was absent from PATH; this was fixture failure, not the dispatch causal RED.
+The fixture now exposes only the already running pinned binary through a private
+launcher path, with no downloads/install. v514 genuinely RED2 on deleted command
+modules. Its whole-file run reached the command guards but FAIL1 on the typed alias
+contract, exposing the second defect. v515 GREEN11/0FAIL/1848expect/6.01s; help
+matrix139 children/9 commands/5 aliases/102 nested routes, with unchanged2s child
+budgets and no project effects. Native test compiler and scoped lint PASS0. Removed
+an existing unsafe any-array return through a native readonly unknown[] annotation.
+No wider Runtime or whole-repository gate claim; frozen numeric proof remains OPEN.
+
+### Shared producer closure v516–v526
+
+Root integrated the user's shared-functionality instruction and the follow-up
+all-file P0–P1 optimization mandate into the existing CLEAR plan/backlog. Root
+remains sole shared/product writer and checker; blind Luna parity reviews are
+scoped read-only evidence, not numerical gates.
+
+`host-state.ts` now owns one private engine selection flow for begin/settle,
+returns its validated frozen Journal for reuse only in that immediate transaction,
+and returns the delivered receipt with its already validated recovery through a
+private bundle. The receipt-only reader surface remains receipt|null. Historical
+review actions ignore configured recovery. No-work/unread receipt checks,
+filesystem rechecks, auth/CAS/ownership/effect ordering and UNKNOWN stay intact.
+
+The producer baseline v516 was 12PASS/4FAIL: three premature required-Journal
+fixture assertions and one child-scope ReferenceError. Corrected parent phase
+expectations and child-local actual reader; v51816PASS/187expect/45.96s.
+The new read-cardinality regression genuinely RED[2,2] in v519, then GREEN[1,1].
+Both operations settle before its assertion; prototype observation delegates
+with the actual receiver and restores the exact method in finally. The one
+scoped unbound-method lint annotation documents this intentional observation.
+Intermediate v52017PASS/191expect/51.87s.
+
+After the bundle join, v52425PASS/0FAIL/272parent Bun expect/114.14s across three
+files, including real initial-source code-rebind and configured full-wave
+resume/restart, foreign/orphan/history guards and all five producer interruptions.
+Selected Babel inventory caught an unnecessary nullish fallback (validator57→58);
+removed it after children were terminal and scoped blind use-site review found
+no observable change. Final v526 validator57, engine helper4, old reader's13CC
+body retained in bundle13, compatibility wrapper2; transaction closures50→47,
+19→16. Exhaustive frozen published/current correspondence/new/removal budgets
+remain OPEN; do not create a one-to-many pairing or infer from ordinals.
+
+Final affected v5262PASS/0FAIL/113parent Bun expect/109.47s: initial-source
+code-rebind and formerly failed prewriter transition [shared ledger12]. The
+latter PASS67.910s with unchanged60s child/90s parent bounds. Prior v506FAIL
+82.034s and its retained `/tmp/frontier-repair-host-WQGg0c` remain evidence,
+never opened/replayed. Prior tracing and this unprofiled run are different
+measurement modes; no percentage or stable latency claim follows from them.
+
+Source/CLI native typecheck and scoped typed lint PASS0; fresh strict Knip v521
+issues[]; scoped format PASS. Final v527 strict Knip exit0, issues[], empty stderr;
+scoped host/producer-test format check exit0 and git diff --check PASS.
+CLI native typecheck/scoped typed lint v525 remain the final stable Source receipts;
+this plan-only update does not invalidate them or the completed v526 behavior.
+Preimages and logs: `.tmp/tooling-research/typed-correction-v179/`
+`shared-producer-v517/`, `journal-reuse-v519-red.log`,
+`shared-producer-v524-behavior.log`, `shared-producer-v526-behavior.log` and
+`shared-producer-v526-inventory.json`. Shell cwd mistakes in optional inventory/
+formatter probes were corrected; their outputs are not successful gate evidence.
+
+No filename changes after v512:375TS/32JS/474selected. Ready private candidates
+are not joined counts. Exact all-four coverage, frozen CRAP/complexity,
+assertion-confirmed100 Killed, dependable full repair, actual delivery/runtime
+and notices remain pending. No packages installed/builds run, no runtime/schema/
+loader activation, archive/state recovery, new operation replay, hook bypass or
+Git publication in this correction. Existing Source/index preserved.
+
+Plan v527 blind Luna read-only review approved the current CLEAR/backlog/handoff
+sections: no actionable conflict or missing requirement found; one queue, shared
+writer, stable-input verifier and completed/ready/pending distinctions retained.
+This is plan consistency evidence, not a Source numerical quality gate.
+
+
+### 2026-10-11 — native next CLI closure v528–v532
+
+Root joined the already prepared `recover-completed-source-report.ts` and
+`capture-completed-readonly.ts` to their package owner; exact prior MJS bytes
+are in `.tmp/archive/ts-next-cli-join-v529`. Rebased private imports and updated
+8 connected package/run/qualified/admission/mutation/test/repository-adapter/
+fixture consumers. No active consumer loader/schema or installed runtime changed.
+The capture adds only `requireCompleteHostSnapshot(released)` after actual
+suspension; suspended-state and digest checks pre-existed in MJS. Blind review's
+initial attribution of those old checks to this join was corrected by Root.
+Positive release/CLI recovery behavior still requires its task evidence.
+
+Disjoint Luna writer prepared the new native recovery CLI ingress test. Root
+joined it, existing full/repair selection and the recovery mutation partition.
+Six invalid public CLI inputs reject at argument parsing before filesystem or
+recovery effects; these are not positive inspect/plan/apply, recovery, installed
+or mutation proof. Existing capture test now reuses `expectRejection` so the
+actual operation settles before assertions/fixture inspection.
+
+Final affected v530:2PASS/0FAIL/11expect/2.13s across the capture no-effect denial
+and six-case ingress table. Maintained whole checked CLI v529 PASS0; selected
+native test project v530 PASS0; typed lint v529/v530 PASS0; scoped format PASS;
+strict Knip v531 exit0/issues[]/empty stderr; git diff --check PASS. One bounded
+Babel inventory pass for the two exact local preimages and current modules:
+113/113 and33/33 functions. Output explicitly static-inventory-only,
+correspondence not reviewed; neither count nor file rename establishes frozen
+published mapping or numeric qualification. No unchanged suites repeated.
+
+Filename-only gate v531 correctly FAIL30JS/378TS/475selected (minus2 JS from
+v512, one new TS test); maintained code408. CLI12/adapters12/repo tests4/Agent
+tests2. Ready candidates remain separate. The executable frozen CRAP default
+`.agent/work/core-runtime-reactivation/crap-budgets.v1.json` is absent; local
+v526 CC57 is not a measured published b549951 budget. Genuine baseline admission,
+reviewed exhaustive one-to-one mappings/removals/new-function budgets, exact
+coverage and assertion-confirmed Killed remain OPEN.
+
+Blind v528 audit initially proposed static assertion dataflow enforcement.
+Re-evaluation against TESTING.md and CLI evidence disclaimers retracted it:
+case-level assertion plus static function link and explicit reviewed matrix
+applicability do not claim semantic assertion, execution, coverage or mutation.
+No direct-expect-only restriction was added; it would reject valid stateful,
+variable-result, property and helper assertions. Another review initially missed
+`test.each` interrupted-beforeimage cases; Root located them before any duplicate
+implementation. Existing exit86/quarantine/public resume tests already cover
+before-effect publishing -> UNKNOWN without replay. The distinct after-real-write
+process-death publishing afterimage branch is queued as one disjoint private
+proposal; it must reuse actual dead-owner quarantine and unchanged bounds.
+
+Original index and unrelated dirty Source preserved. No new package install,
+build/install, runtime activation, hook bypass, Git publication or owner notices.
+
+### 2026-10-11 — уточнення all-file P0–P1 плану за знахідками сесії
+
+За прямим дорученням власника оновлено існуючий CLEAR shared/all-file section,
+без нових task IDs чи окремого каталогу. Додано конкретні owners/paths, стан,
+мінімальну корекцію та acceptance для afterimage interruption, typed initial-
+create no-effect GAP, transaction-local Host reuse, одного staged TS compiler,
+шести prepared bootstrap CLI, selected CI job validation і genuine frozen
+baseline/correspondence. Два next CLI вже joined і вилучені з migration queue.
+All-file jobs охоплюють уже TS files, shared semantics, read/parse/hash/call
+reuse, I/O/types/dead code, scenario evidence та delivery consumers; прогрес
+review відокремлено від filename migration. Відхилені static-assertion/duplicate
+before-effect/псевдо-published-budget пропозиції не стають задачами.
+
+Збережені нові receipts, прочитані для правильного статусу плану:
+`upgrade-interrupted-v537` strictTS/lint PASS0;
+`upgrade-interrupted-v538-behavior.log` 1PASS/1FAIL: before-effect UNKNOWN PASS,
+afterimage case FAIL90s після фактичного delegated write/exit86;
+`upgrade-interrupted-v540-diagnostic.log` FAIL до afterimage assertions:
+planning відмовив `lock owner is alive` у bundleDigest/package read.
+Це не встановлює причину попереднього timeout або продуктову regression.
+Retained `/tmp/project-upgrade-lifecycle-mu6e8s` і
+`/tmp/project-upgrade-lifecycle-HTTGyV` не відкривати/не replay.
+Private staged-types-v536 proposal звірено з актуальними exported builders:
+новий compiler-project builder/scanner не потрібний; implementation ще pending.
+
+Це documentation-only уточнення. Product Source, tests, package pins, active
+loader/schema, Runtime, Git index і operational state за цим запитом не змінені.
+Чинні exact coverage/frozen CRAP/complexity/assertion-confirmed Killed gates
+лишаються OPEN. Bounded plan paths/joined-task queue consistency та
+git diff --check PASS. Blind Luna v541 виявив три неповні path references;
+Root виправив їх, повторний bounded table review — scoped approval без
+залишкової concrete issue. Це не numerical/product qualification;
+повторних suites/AST/hash проходів немає.
+
+### 2026-10-11 — staged TS closure, bounded runner, Linux owner liveness v543–v563
+
+Root preserves HEAD/origin e09ab999, empty initial index and all existing dirty
+changes. No package install/build/runtime activation/Git publication or notices.
+Blind Luna reviewed distinct compiler, subprocess, Linux liveness, Host, bootstrap,
+CI and frozen-mapping contours; Root alone writes maintained Source and runs checks.
+
+One precommit strict program now reuses exported createCompilerProject and the
+existing tracked staged snapshot/classifier. It covers maintained TS tests/helpers
+as well as Source/bin/tooling. No second inventory/hash/compiler/config owner.
+Config is exclusive inside the existing ownership-checked temporary parent.
+Causal v543 RED: staged bad helper was accepted; v544 GREEN. New cases split
+rather than raising Bun default5s after a double invocation timed out v546.
+Final v553:7PASS/0FAIL/13expect/14.77s (all5 precommit cases and2 changed runner
+bound-validation cases). Six staged snapshot ownership cases passed v546;
+no unchanged repeat. Whole-index TS-only still30JS; gate remains blocking.
+
+The shared bounded subprocess helper now supports independent byte caps and
+opt-in overflow tree signal, retaining64KiB defaults. Lifecycle child keeps45s,
+stdout8MiB+newline and stderr64KiB; caller preserves status/signal/error/timeout/
+overflow separately. Group signal failure is never called tree cleanup: request
+confirmation/error are explicit, a direct-child fallback remains unconfirmed.
+Causal RED v549 (new caps), v554 (false termination claim); final shared-runner
+v555 all11PASS/0FAIL/8.51s. Invalid-limit loop uses one owned fixture and literal
+case name; overflow descendant emits only after direct parent exit. No group-wide
+process disappearance or installed-runtime unblock is claimed.
+
+Linux /proc existence alone considered zombies alive. New private parser accepts
+only expected PID, Z, exact current52-field ABI and at most one LF; spaces and
+right-parens in comm are handled. Unknown ABI/data/read errors remain alive;
+ENOENT and non-Linux semantics are preserved. Age/inode/CAS/quarantine and repeated
+owner checks are intact. v556 RED real public stale-lock refusal; v557 GREEN.
+Blind review found permissive extra fields; v559 RED and v560 final2PASS/82expects
+with extra-field/double-LF denials. Existing absent-PID pinned-descriptor case
+passed v557. Failed proc fixtures /tmp/vida-safe-read-bounds-AlGR8o and
+/tmp/vida-safe-read-bounds-tzGYRa are retained and must not be opened/replayed.
+Local static inventory v562: processIsAlive CC3 unchanged, new private helpers
+CC4 each; this is not a frozen historical correspondence/budget qualification.
+v561 strict wholebin/tooling +affectednative tests PASS0. v562 scoped typed lint
+exit0/no diagnostics, diff check PASS. v558/v559 Babel diagnostics were caused by
+an ad hoc wildcard paths override forcing different Babel types: removing that
+non-production override restored actual module resolution. Runtime Core7.29.7
+uses nested parser/types/traverse7.29.8; top inventory parser is8.0.7. No Source
+instrumentation/dependency change or unsupported Babel8-core claim was made.
+
+Fresh afterimage v563 retained actual delegated write/exit86/23952 bytes, plan
+5.026s and stopped child7.553s; its child diagnostic showed1055 package byte reads,
+36.05MB/4.13s and6 artifact preparations/772ms. Resume child has start evidence
+only; parent FAIL90s, no precise child final outcome/complete-state claim.
+Parent package aggregate2532 reads/86.5MB is case-local diagnostic with explicit
+late/concurrent mix caveat. Failed /tmp/project-upgrade-lifecycle-aeDeFa retained,
+never inspected/replayed. Known child PID87416 later observed Z, no process kill.
+Next: causal pure derived-closure/transaction-local read reuse; never cache live
+bundle/Host/fence/CAS authorization or raise45s/90s bounds.
+
+Status correction: genuine b549951 measurement admission already passed v126;
+consumer-admission.json measurement_admitted=true, suite_passed=false,
+quality_passed=false, run fe54f83c-6a70-4223-9872-f43f1ac784e9,108 sources/5701
+functions. Report SHA ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb
+is distinct from JUnit SHA89d3f6748575d3ddea2c43529fa51775a773602e7e89e7df851a12f80d70dcb7.
+No recapture of unchanged historical inputs. Earlier entries calling admission
+OPEN are superseded by this distinction. Actual GAP: absent executable frozen
+budget plan and exhaustive reviewed mapping/new/removal dispositions with fresh
+current scope. Stale v139 or older proposal counts do not establish current gates.
+Exact100 coverage and100 assertion-confirmed Killed remain OPEN.
+
+## Continuation v567–v598: shared Host, native joins and bounded diagnostics
+
+Root remains the only maintained Source/checks/Git writer. Full current handoff,
+sidecar/lifecycle/testing and focused CLEAR plan were reread; fresh origin/main
+fetch remains0/0 at e09ab999. Existing dirty/index bytes were preserved. No old
+operational DB/leases/attempts or failed UNKNOWN fixture was read or replayed.
+Blind Luna performed focused independent reviews, not duplicate checks/scans.
+
+Host `#assertSessionProducerContext` now supplies its validated Host alongside
+config/Journal to the initial engine branch in the same immediate transaction.
+Frontier/recovery receipt reads stay fresh. Real native SQLite query regression
+v569RED16→v572GREEN14 Work/Ledger preparations for each begin and settle;
+remaining independent receipt owners account for the other reads. v5721PASS with
+80 child assertions/23.35s; v583 reserved/issued/observed control1PASS24 assertions
+proves incomplete legacy reservation rejection and exact SQL revision/payload/
+digest rollback. The separate pure frontier control does not pretend to issue
+reservation authority. v586 no-Work/stale-CAS/maintenance controls2PASS25/2.09s.
+Initial continuation's native TS test is now primary; original literal case
+selectors remain and package/mutation refs point to TS. Exact MJS preimage is in
+.tmp/archive/initial-migration-v580; Host/native preimages in host-read-v567.
+Blind review approved the transaction-local reuse and strengthened rollback.
+
+Pure project-upgrade artifact derivation keeps one last successful canonical
+plan digest scalar, consulted only after complete schema, plan/config/dependency/
+database/identity validation. It never caches live Source/bundle/Host/fence/CAS
+proof. v573RED→v574GREEN1PASS19 assertions/5.91s: three fresh clones3→0 extra
+preparations, bounded displacement, tampered recomputed outputs reject without
+publishing the bad cache entry, warm-hit independent validators still reject.
+Local validator CC9 unchanged/helper5→6 is not frozen budget admission.
+`src/config/project-upgrade.ts` is absent from genuine b549951: its functions
+must have reviewed NEW budgets, never retained budgets inferred from v139/local
+preimages. The module's marker is not a function row. Archive pure-artifact-v573.
+
+CI evidence adapter joined native `tooling/agent/release-ci-evidence.ts` with11
+consumer refs. Filtering policy-selected jobs before parsing avoids unrelated
+null/malformed-job rejection. Actual old behavior v577RED(null.job.name)→typed
+v578GREEN. v5799PASS/323ms retains observer/download provenance, credentials,
+custody, interval, digest, real ZIP and duplicate controls. v5842PASS/167ms adds
+both-consumer missing/duplicate/malformed/foreign-attempt/failed-job/incomplete-page
+denials, observer required-step errors, actual oversized8MiB+1 and nonbyte response
+chunks before effects. Selected job cardinality and trusted controller evidence
+remain strict. Five unused candidate-only type exports became private after real
+Knip diagnostics; no existing public SDK exports were removed. CI adapter review
+found gaps that Root filled; actual CI formation/native Runtime remains separate.
+Exact old/candidate Source preimages are in ci-adapter-v576.
+
+v585/v587 combined strict CLI/tooling+affected native TS PASS0; scoped typed lint
+PASS0. Initial ad-hoc Babel wildcard paths had produced artificial type conflicts;
+actual maintained resolution remains Core7.29.7/nested Babel7 and inventory
+parser8.0.7. No invented Babel8 Core support claim or dependency change. Strict
+Knip v587 exit0 with `issues:[]`, unchanged zero allowances/hint errors. Filename
+v585 FAIL28JS/379TS/474selected,407 code files: CLI12/adapters11/repo tests4/Agent
+test1. This supersedes30JS; migration counts are not all-file review percentages.
+
+Afterimage v588 and v593 both FAIL90s with actual first write/exit86 observed,
+but resume terminal remains unproven. Failed roots
+/tmp/project-upgrade-lifecycle-KyME6s and -y9Chbn are retained/unreplayed.
+Known own v588 child108378 was observed Z; no process kill or lock edit. v593
+planning5.61s/stopped child8.325s; access trace exhausted48KiB at package schema
+114 and hid later events. No precise product cause follows from this absence.
+
+Shared runner adds diagnostic-only accepted-prefix stderr forwarding. Native
+prefix on/off/zero and real EBADF fixtures v589RED→v590/v591GREEN. EBADF fixture
+closes fd2 AFTER spawn; before-spawn closure could be reused for a pipe and was
+corrected as fixture setup. Blind review found writeSync can block the timer.
+Real unread fresh child's stderr v594RED proves that; asynchronous serialized
+node:fs.write, partial-write handling and drain race use the SAME deadline and
+captured-byte budget. v595 all3 controlsPASS/708ms. Forward failure/undrained
+deadline stays explicit, requests owned group termination, and cannot qualify
+exit0. No shared stream destroy, new sink scan, second runner or unbounded output
+queue. Lifecycle keeps terminationRequestConfirmed; it is request evidence,
+never proof that every descendant disappeared. Diagnostic terminal JSON omits
+duplicate full stderr; captured stderr remains available for assertions.
+
+v596 combined strictTS and scoped typed lint0, format/diff checkPASS. New v597
+fresh trace also FAIL90s; retained /tmp/project-upgrade-lifecycle-vQ0SY1 must not
+be inspected/replayed. Package reads increased to2172/74MB by16.4s, without
+failure at that sample. Consumer-only trace still spent capacity on ordinary
+inventory reads; absence after truncation does not identify a stalled function.
+Blind reviewer hypothesizes repeated `assertUpgradeOwner`→`bundleDigest` around
+effects, not a proven causal removal opportunity. Live checks after awaits and
+effects stay. v598 diagnostic narrows events to journal/guards/effects plus
+package-access caller stacks, counts actual emitted records and reserves8KiB
+for access/40KiB for timing; unref'ed periodic progress adds no FS reads or
+operation authority. Full shared-runner affected completion is pending.
+
+Independent reviewed Windows GAP: existing taskkill completion has no timeout;
+unconditional cleanup observation can exceed the helper deadline. Linux native
+controls do not qualify that platform. Next fix must bound observation and keep
+missing closure/termination explicit, not fabricate cleanup. No build/install,
+active loader/schema switch, runtime update, unblock/notices, new commit/push
+or broader hook bypass. Frozen correspondence/CRAP plan and final exact coverage/
+assertion-confirmed Killed remain OPEN; genuine historical admission v126 is reused.
+
+
+### Continuation v599–v613: afterimage proof, delivered TS and terminal custody
+
+v600 interrupted-afterimage Source case PASS51assert/87.519s at unchanged90s;
+actual stop-child exit86/8.124s and resumed child exit0/42.309s at unchanged45s.
+Same original operation, plan/token/history and first afterimage bytes/dev/ino
+were asserted after ordinary30s dead-owner quarantine. No lock age/inode edit,
+old-root replay or reissued ID. Small2.48s parent margin is not stable latency or
+native Runtime unblock. Prior v538/v563/v588/v593/v597 failures stay retained.
+
+Delivered continuation is connected native TS: package test and two mutation
+selectors joined, original30 literal declarations retained (41 expanded cases).
+Shared boundedSpawnSync also bounds previously unbounded seed60s; both child
+paths retain roots on error/signal/nonzero. v602 affected positive2PASS/68assert,
+30.05s. v604 public action ingress case1PASS/16assert adds meaningful direct
+API configured/historical normalization and malformed/foreign action denials.
+Strict compiler/lint0 and strict Knip v606issues[] resolve the v603 unused public
+export diagnostic with API evidence, not export deletion or allowances. Whole
+producer/native/delivery qualification remains independent and OPEN. Filename
+v603 FAIL27JS/379TS/473selected; CLI12/adapters11/repository tests4/Agent tests0.
+
+Shared subprocess runner causal Windows platform-double v605RED(exceeded1.5s
+outer deadline)→v606GREEN with same operation bound. It now races direct close,
+stderr drain and taskkill result against one absolute deadline. Unobserved close
+has explicit closeObserved:false/null exit+signal; a taskkill status never proves
+child/group disappearance. Blind review identified live-child error/custody gaps.
+v607 real-owned-child error controlRED→v608GREEN: record error while PID exists,
+keep bounded observation, destroy only runner-owned capture pipes/unref child on
+unobserved terminal. Windows command own timer kill-requests/unrefs taskkill;
+spawn throw is an explicit unconfirmed request. Lifecycle carries closure and
+child error and cannot accept missing close as successful status.
+
+v609 completion15PASS/1FAIL: simulated Windows fixture wrongly assumed native
+Node stderr arrived before150ms while compiler work ran. v610 replaces that
+startup assumption with explicitly labeled stream-event control in the owned
+platform double; real stderr prefix/EBADF/stalled-sink cases stay native. Final
+affected runner completion v61116PASS/0FAIL/9.60s; no physical Windows qualification.
+In-flight async diagnostic fd2 write may finish late but stays byte-bounded and
+missed drain is an explicit failure. Official Node24 child_process docs distinguish
+error from close and unref from termination; cached research JSON is v611. The
+v607 RED child111789 was bound by exact command/cwd/starttime and receipt time
+before Root signaled only that owned PID; no unrelated PID/group was signaled.
+All later live-child controls log owned PID. Independent v611 reviewer found no
+remaining blocking runner race. v609 strictTS/lint0 preceded final fixture correction;
+connected final static checks are in progress, not a final all-agent numeric PASS.
+
+Four repository executable TS proposals preserve top-level stdout/report protocol,
+case/assertion order, child arguments and frozen external-input artifact names.
+Blind pair review approved valid-input parity. New compiler scope exposed42 test
+and30 dependency diagnostics; private agents repair their own disjoint packets,
+Root integrates. Two documentary controllers are being migrated as the same
+connected dependency closure, keeping selected-payload live validation. Fresh
+fixture/caller/formation qualification is OPEN; none of the dated default inputs
+or archived operational roots was read/executed. Do not schedule these legacy
+protocols without a fresh admitted fixture. Prepared TS copies coexist until
+compiler/lint/consumer join is complete; they are not yet migration closures.
+
+No build/install suites, loader/schema activation, runtime update, owner notices,
+new staging/commit/push or expanded hook bypass. Exact final coverage, reviewed
+exhaustive frozen correspondence/CRAP budget plan and assertion-confirmed Killed
+remain OPEN. Reuse genuine historical admission v126; do not recapture baseline.
+
+
+v614–v618 connected closure: four repository tests are now maintained TS and
+both documentary controllers TS, exact old MJS preimages archived v610 before
+removal. Current consumers/Knip forward-lifecycle-clear entry joined; frozen
+external-input `.mjs` artifact names in stale-report remain exact historical
+input protocol, never substituted/replayed. Missing CLI args reject as one blocked
+JSON receipt before payload loading; direct function null work IDs remain denied.
+v614 fresh ingress2PASS/78ms (six binding/phase denials and exact CLI receipt).
+Independent blind reviews v615 found no blocking drift in protocol/adapters;
+this is Source comparison, not fresh fixture/Runtime qualification.
+
+v614 typed lint exposed unchecked dynamic module/Babel return boundaries and
+root-workspace unlisted parser/Ajv imports. Root retains the actual package-owned
+createRequire parser behind an unknown API guard; frozen staged APIs narrow
+unknown exports before use, preserving original unbound calls (`this:void`).
+The optional completed-readonly fixture checks only its actually asserted Work
+projection and existing package-owned ledger codec. No new full Work schema
+compile/dependency in the repository workspace and no fake complete WorkState
+admission. Original assertion/rollback/CAS/UNKNOWN evidence remains. v616 combined
+strict compilerPASS0 and strictKnipissues[]; lint's last two unbound-method warnings
+are corrected v618 without waivers. v618 scoped typed lintPASS0 with max-warnings0.
+
+v617 bounded filename receiptFAIL21JS/386TS/474selected,407 code files;
+CLI12/adapters9/repository tests0/Agent tests0. Six further Source migrations
+closed; the additional TS ingress test is new evidence, not a migrated file.
+Generated boundaries stay exact; filename progress is separate from fresh
+behavior/frozen budgets/exact coverage/assertion-confirmed mutation qualification.
+Initial-create native no-invocation analysis v615 confirms only a conservative
+UNKNOWN boundary: existing fake before-delegate tests do not prove native
+opened.create was never invoked. Keep UNKNOWN until typed/provider-boundary
+causal proof exists; do not relabel conservative result as NOT_APPLIED.
+
+
+v619 dispatch used six blind Luna jobs for the next dependency-ready Source
+closure: three bootstrap entry proposals; Bun/install; development controller;
+payload/doc-phase pair; forward plan/prepare/finalize; exact bootstrap consumer
+review. These rebase existing proposals, not duplicate completed migrations.
+All outputs are private prepared packets. Bootstrap consumer review binds
+package bin/files/scripts, metadata/anchors, native compile entry and SDK
+formation, direct CLI/help/dispatch tests and mutation selectors. Generated
+runnable artifacts and frozen inputs stay distinct from maintained TS Source.
+Do not transplant private package-root expressions or infer Node direct TS
+support/native publishability from compiler PASS. Current active remainder
+stays v61721JS until a full connected join and required scoped checks.
+
+
+### v625–v633 forward/bootstrap connected Source continuation
+
+Root corrected the repeated chat-answer loop and resumed the existing CLEAR
+plan. Six blind Luna v625 preparation/review jobs used disjoint private paths;
+Root alone joined Source, consumers and checks. Five forward adapters are native
+TS, with exact original preimages in archive/forward-adapters-v621. Typed
+manifest producer validation is reused directly: removed duplicate map scan/copy.
+AST child traversal no longer constructs a flattened child array; Babel node
+prototype behavior, import-meta denial and selected dependency checks remain.
+Unused private type/import and unused parent-path allocation removed. The unused
+approvedRepair callee binding is renamed only; caller authorization remains.
+Review evidence sorting uses explicit UTF-16 String order, preserving JSON input
+behavior without locale ordering. v625 affected loader/provenance7PASS18assert.
+The first comparator attempt failed strict TS on unknown keys; corrected to String
+conversion. No malformed intent guard hoist: it would change rejection/read order.
+
+Six bootstrap entries are native TS: bun, init, install, vida-agent, standalone,
+development-controller. Exact dirty originals archived bootstrap-v626 before
+removal. Source imports, package bin/files/scripts, CLI dispatch/aliases,
+installer/discovery sets, SDK prepack/native compile entry, Knip/mutation selectors,
+controller identity, tests and maintained guide references are connected. Frozen
+external payload names remain unchanged. Both legacy and current exact module
+anchor keys remain sealed. Generated artifacts were not substituted or formed.
+
+v628 affected bootstrap42PASS/64 Bun expects/2.07s: existing pin/deadline/argv/
+UNKNOWN cases, initializer parsing/delegation/denials, controller diagnostics/
+portable lock, native metadata and complete standalone dispatch. v632 help matrix
+and selected cache/relocation4PASS/1793expects/10.99s,139 children/9 commands/
+5 aliases/102 nested routes. No unchanged full suite added. Node24 actual root
+help, init help and Bun launcher version succeeded; the v629 check erroneously
+requested unsupported --version and its assertion failed. This is a check-command
+error, not a new CLI defect: supported `version` succeeded v630 with0.1.3.
+No product flag or command contract changed for that check.
+
+v630 connected strict/lint found two missed root adapter imports and unsafe test
+JSON/dynamic import boundaries. Corrected actual Bun Source imports. Blind
+private tests narrow only required API/result projections; Root removed an
+unnecessary copied instruction projection and derives options from the existing
+Bun API. v632 connected strict compilerPASS0 and scoped typed lint50filesPASS0,
+with unchanged max-warnings0. Canonical Knip v631issues[] and hint-error flags.
+The wrongly scoped v630 Knip report is retained and is not valid project evidence.
+Blind bootstrap review found no success-path semantic drift; stale maintained
+instruction guide links and private proposal banners were removed.
+
+Fresh filename v633FAIL10JS/396TS/473selected,406 code files: CLI6/adapters4,
+Agent/repository test filenames all TS. This replaces v61721JS and the intermediate
+16JS count. Source migration progress is not final exact coverage, frozen
+correspondence/CRAP/complexity, assertion-confirmed Killed, native formation or
+Runtime qualification. Retained failed/UNKNOWN roots remain unopened/unreplayed.
+
+Remaining four adapters have private work in progress: reuse prepared combined
+steps/assurance drafts, new native-CI conversion, incomplete release-local draft.
+The latter converted typedefs only and is NOT ready for join; full parameter/
+result typing and unchecked dynamic module/JSON boundaries remain. Do not count
+private draft filenames as Source migrations. No new stage/commit/push/hook bypass,
+build/install, active loader/schema change, Runtime update/unblock or notices.
+
+
+### v634–v643 — three connected adapters, concrete compiler-led CLI correction
+
+Joined native TS `tooling/agent/{combined-public-steps,release-assurance,native-ci-delivery}.ts` with current Source consumers, CI invocation, source-binding inventory and maintained instruction pointers. Exact MJS preimages retained under typed-correction-v179/archive/{small-adapters-v634,native-ci-v635}. Frozen external/published fixture inputs are not rewritten. Combined steps use the actual owner signatures and a narrow result projection; no duplicate receipt validator or claim of full receipt validation was added.
+
+v635 and consumer-closure v636 connected strict TypeScript and scoped typed lint PASS0. v636 affected behavior6PASS (1.80s): dormant CI target/published Source ingress, seven ordered receipts/denials, local-log non-qualification, metadata profile and standalone Source input preservation. These are development fixture checks, not formation or installation. Blind adapter parity review found no actionable effect/guard/CAS/UNKNOWN drift.
+
+v636 Knip reported AgentExtractArchiveModule unused. The type was already shared: replacing the inline import type reference with an explicit import from its maintained owner makes that link visible. No redundant local type was extracted. v637 canonical strict Knip issues[] with max-issues0 and both hint-error flags; behavior was not repeated for this type-only correction. These PASS receipts precede the following incomplete candidates.
+
+Remaining active MJS files: six CLI implementations and release-local (seven). Last measured filename receipt remains v63310JS; three adapters have since been joined, but private/temporary TS filenames do not establish migration completion. Root temporarily placed release-local.ts, repair-release-retarget.ts, run.ts and runtime-code-rebind.ts alongside their active MJS owners solely for connected compiler feedback; none is activated or counted migrated. v638 release-local FAIL, v640 repair18 diagnostics; v641 stopped on two malformed arrow return annotations, corrected by Root before semantic v642 (run179 diagnostics). v643 includes the completed runtime-code private signature draft. All unresolved diagnostics remain mandatory blockers; no any/waiver/legacy filename exceptions.
+
+Dispatch now assigns exact compiler diagnostics and concrete native signature segments to existing blind Luna workers, reusing their loaded context. Root remains sole maintained Source/check/Git writer. No repeated baseline, full behavior suite, AST/hash census or test in build/install. Private proposals are incomplete until strict typing, lint, semantic review and affected behavior qualify their connected callers. Runtime-config, synthesis and run work remains in progress; repair-native-delivery-evidence still needs its candidate.
+
+Fresh origin/main fetch0/0 at e09ab999330799bf38de015771b79bf0922d6336; existing dirty work and empty index preserved. No new stage/commit/push/hook bypass, package installation, build/install, active loader/schema switch, Runtime update/unblock or notices. Frozen exhaustive correspondence/CC/CRAP, exact coverage, assertion-confirmed mutation and actual native qualification remain OPEN. Retained failed/UNKNOWN roots remain unopened/unreplayed.
+
+
+### v644–v661 — native Source migration joined; all-maintained compiler PASS
+
+Root joined release-local and the six last native CLI owners (retarget, native evidence repair, synthesis qualification, runtime code, run, runtime config). Exact dirty MJS originals and first consumer preimages remain in typed-correction-v179/archive/native-cli-v652 and native-config-v659. Current imports, package selections, mutation selectors, CI Source inputs and actual copied Source fixture launcher paths use TS. Frozen external logical payloads and historical research locators are retained. No active runtime loader/schema/configuration switch or installed artifact change occurred.
+
+v655 connected compiler PASS0 for all seven native candidates; v656 scoped lint PASS0. The canonical v656 Knip FAIL identified only the disconnected runtime-config TS candidate. v658 compiler/lint PASS after removing unnecessary context array/object reconstruction: existing full guards remain, then original structuredClone preserves retained data. The initial v657 clone assertion did not compile and was corrected at its validated unknown boundary. Independent public-call tracing established no observable key-order defect (all relevant comparisons canonical; raw context not returned). No invented causal RED test or product-bug claim was added.
+
+Native retarget restores its original planning guard/error and treats historical previous source binding as unknown until the existing continuity owner checks it. No new early phase/metadata rejection was retained solely for typing. Fresh inert unknown-phase inspection/apply test proves read-only inspection, exact denial and unchanged protected Source/release/custody bytes. v654 test-helper EISDIR FAIL retained; helper corrected to exclude directory observations. v655 exact new phase case1PASS; corrected completed handoff case v6541PASS. v653 selected completion21PASS/1FAIL, with native .ts package input excluded by synthetic old *.mjs fixture; only affected manifest fixtures were corrected. These receipts are separate, not a fabricated combined22PASS.
+
+v659 runtime-config Source cutover and 16 consumer preimages archived. Blind consumer review distinguishes current copied Source helpers from frozen payloads: public-cli-fixture-runner, contained-controller-fixture and development-controller-qualification now use bin/run.ts. Config original-context optional argument preserves actual omitted caller behavior. v660 all-maintained static run FAIL8 on that required annotation; correction v661 all-maintained compiler PASS0:473 selected files,406 TypeScript,0 JavaScript violations. This supersedes prior last-measured10JS/396TS. Maintained executable Source migration remainder is0; generated dist/runtime delivery is not included in that claim. Canonical v660 Knip issues[] with max-issues0 and both hint errors; v660 scoped typed lint20files PASS0. No gate loosened.
+
+Root selected v661 native behavior cases are in progress; preserve terminal receipts and do not rerun unchanged passing subsets. One v662 current Babel inventory/test-link/queue capture is in progress for source-bound next work; reuse it rather than worker AST/hash rescans. Frozen b549951 measurement admission v126 is reused unchanged. Private budget seed v653 is UNREVIEWED, not an executable allowance plan. Reviewed exhaustive retained/new/removed correspondence, exact coverage, frozen CC/CRAP and assertion-confirmed Killed remain OPEN, as do full bundle upgrade interruption/old-opener qualification and actual native delivery/installation/unblock.
+
+No new stage/commit/push/hook bypass, package install, build/install, Runtime update or notices yet. Existing dirty work remains intact; retained failed/UNKNOWN roots remain unopened and unreplayed. Next concrete work: finish selected native behavior, join resulting defects once, then reviewed mapping and unresolved bundle boundary matrix under one final-check owner. Do not restart bootstrap/audit loops for unchanged Source.
+
+
+### v662–v663 — one current audit, corrected native recovery negative fixture
+
+v662 shared Babel audit/test-link/queue capture completed:7563functions,320present,2647no-direct-reference,4596unresolved,0diagnostics,127review jobs. Structural present is not execution/assertion/coverage/mutation proof; all generated patterns remain unreviewed. Reuse current-v662-audit-queue.json for dispatch; native Source unchanged since its capture. Its test binding will be stale for the following changed test only.
+
+v661 selected native behavior6PASS/1FAIL/125expects/50.14s. Root initially misread a truncated log as a duplicate begin failure; full log1159 and two independent read-only comparisons show repeated begin correctly denied. Actual failure was an old fixture expecting first terminal FAIL to reject where PASS and FAIL are both explicitly supported. No product/native migration bug found. Corrected only that denial input to a foreign caller_session, preserving expected rejection and final unchanged DB assertion. Existing adjacent parameterized PASS/FAIL acceptance remains. v663 exact changed case is in progress on a fresh fixture; prior failed root is not opened/replayed. No unchanged6PASS rerun or gate relaxation.
+
+
+### Current human decision — clean isolated Runtime qualification (2026-10-11)
+
+The user replaces the old existing-consumer unblock/recovery verification with a real native Runtime run in fresh isolated project(s), covering all supported options and flows. This supersedes earlier handoff/plan instructions to recover old blocked work or notify TeamLead/affected owners on that unblock for this clean-development task. Do not access, restore, replay or transfer old Host state/leases/attempts/UNKNOWN roots. No unblock claim or duplicate notice is required.
+
+OPEN final task: qualify the exact formed native executable in an unrelated fresh project with the Source checkout unavailable. Bind its version, bytes/provenance and target. Derive the command/option/alias/subcommand matrix from existing CLI contracts and reuse the help matrix; add execution evidence for every supported option and flow (help output alone is insufficient). Exercise valid defaults/explicit values, boundary/invalid values and incompatible option sets through real public entrypoints. Cover fresh init and repeat init, single/multi-project context, admission/workflow prepare/execute/inspect/report, authorization/CAS denial, supported continuation/recovery without reissue, configuration repair, .vida upgrade/apply/resume, atomic activation and process interruption/restart, ledger/history, and delivery-owned install/update/uninstall where supported by the actual target. Use fresh fixture identities and controlled actual effects; an unavailable required provider/target remains GAP, not mock-based Runtime proof. Mark N/A only with a reviewed contract reason. Avoid unbounded Cartesian combinations: reviewed behavior equivalence/boundary classes cover every declared option/flow, with explicit command/option/scenario/test/result links.
+
+Root remains sole final-check owner. Reuse already qualified unchanged Source tests/numeric evidence. Build/install run no suites; the isolated native execution task is a distinct qualification phase after formation. Preserve exact coverage/frozen CC-CRAP/assertion-confirmed Killed gates and product CAS/ownership/authorization/UNKNOWN. Clean-project qualification does not authorize removing guards or changing active schemas/loaders before bundle repair is ready. Completion requires the actual isolated execution receipts; installation/version text alone is insufficient.
+
+
+### v663–v666 — qualified recovery fixture correction; concrete remaining caller cost
+
+v663 exact corrected foreign caller observation denial PASS1/12expects/16.27s; no product guard change, no replay. v665 scoped lint config/recovery tests PASS0. v665 format-check found runtime-config only; v666 formatter applied formatting only after all behavior children terminated. Config Source hash in v662 is now stale; retain its inventory as provenance for that module and do not dispatch/final-gate against its obsolete byte binding. Other unchanged scoped function maps retain their source bindings; the changed recovery test hash also requires final refresh. Do not duplicate a whole AST pass merely for formatting now.
+
+v665 helper completion1PASS/1FAIL/47expects/88.33s. Retired Source capture through the current copied TS controller PASS31.060s. Public same-work correction through current run.ts reached its quantitative helper assertion but FAILED55.087s: expectCorrectiveAuthorizationMetadata expected1 history metadata read, observed3. This is a concrete P1 read-amplification candidate under causal review, not a missing-launcher failure or permission to weaken the expected count. Keep failed receipt and its original failed/UNKNOWN fixture custody; no old fixture opened/replayed. Blind bounded advisor is tracing actual history reader calls before one shared-owner correction. No whole suite rerun.
+
+Bounded v664 frozen correspondence proposals are PRIVATE/non-executable: bootstrap bun/init30retained,20new,3published callback mappings unresolved; CLI options/contracts1candidate-new,57unresolved. Root review and exact exhaustive mapping remain GAP; do not activate allowance seed or classify missing TS files as automatically new. Upgrade review identifies actual remaining process-death boundaries after activation move/before activated save and after final file/before files_published CAS, plus unresolved actual existing-storage old-opener exclusion. Do not flip its false guard. These are ordered next P0 test/implementation tasks, not another generic audit cycle. New clean isolated Runtime task above is the final qualification owner; old user unblock/recovery/notices are superseded.
+
+
+### v667–v668 — shared transaction-scoped history inventory correction
+
+Causal review locates3metadata probes: initial qualified-history existence, full stored-history load bypassed by supplied validated receipts, then projected Work history reload. Root archived exact host-state preimage at archive/history-cache-v667. Existing no-history-write fenced operation scope now shares one live all-history table inventory between the qualified-row read and full history loader. The existing per-work history cache accepts supplied freshly validated qualified receipts and reuses an existing value only if the supplied list matches; mismatch reloads. Overlay bypass, scope finally restoration, actual qualified row verification, repeated Work/current-file validation, Host/Journal/ledger CAS and authorization remain. No cross-operation table/history cache or schema switch.
+
+v667 Source compiler/scoped typed lint PASS0, formatter PASS. Independent delta review is pending. v668 only originally failed same-work validate case is running on a fresh fixture. Do not weaken expected1 metadata query or replay v665 failure. Host-state source binding in v662 is now stale; private unaffected-module correspondence still reusable, final whole inventory waits for Source stability.
+
+
+### v668–v670 — final publication interruption proof; next explicit caller blocker
+
+v667 independent exact-preimage delta review found no unsafe history inventory lifetime or Work/rights caching. v668 originally failed same-work case advanced past the unchanged quantitative metadata assertion (now1 vs v6653 reads), then FAILED at public corrective retry with sanitized GAP-VIDA-RUN-EXECUTION-001 (54.865s;35expects). Whole case is NOT qualified. Blind comparison found no TS migration drift in corrective retry; underlying cause is not yet observable from public sanitized output. Next bounded P0 caller task: collect private actual entrypoint failure evidence on a new fixture, preserving public sanitized error and avoiding effect reissue or old failed-root access. No success claim from the metadata counter alone; no old root reopened.
+
+v669 joins private first/last publication interruption parameterization into the existing lifecycle fixture (exact preimage archive/final-file-v669); no duplicate test body or shared preload change. Both retain original90s parent/45s children. Root adds all preceding published file afterimages and absent activation assertions. v669 connected strict compiler/scoped typed lint/formatter PASS0.
+
+v670 ONLY newly added last-file abrupt stop case PASS1/68expects/78.020s (79.73s runner). Actual final target .vida/runtime-initialization.v2.json/index14; real write resolved, child exited86 before checkpoint at39.655s, journal retained publishing/index14/exact plan/token and bytes/inode, existing dead-owner quarantine respected. Ordinary same-operation public resume succeeded24.399s and retained the final inode, exact history and released fence. No45s/90s increase or old failed fixture replay. This establishes that specific final-file process-death boundary, not the separate activation-move death boundary, whole matrix stability, final numeric coverage or native installed qualification.
+
+Current instruction remains clean isolated native Runtime qualification rather than old unblock/notices. No stage/commit/push/hook bypass or active Runtime/schema/loader change. Source/test edits invalidate their affected v662 byte bindings; unaffected scoped private maps reusable. Final mapping/numeric/native qualification remains OPEN; no whole AST/suite rerun merely for this checkpoint.
+
+
+### v671–v674 — causal corrective inspection repair and activation death fixture
+
+v671 fresh private actual run/main diagnostic exposed the existing public corrective retry cause: local session inspection rejects different Work/base and authorized Journal/engine run IDs. The private launcher used unchanged run/main and public sanitizer; after the child reached terminal FAIL (35 assertions/57.132s), Root restored the maintained public CLI launcher to bin/run.ts. No old failed fixture or UNKNOWN root was opened/replayed. Exact diagnostic preimage/log retained in typed-correction-v179.
+
+v672 Root reuses final-assurance validateWorkSessionBinding for a schema-validated non-null corrective journal, with actual repository root and current Work/attempt/run. Ordinary journal equality remains unchanged. Independent review confirms actual approved Host ref, authority bytes/hash, base/engine IDs, generation and contract are required. Connected compiler/scoped typed lint/format PASS0. The focused fresh CLI case now passes its first actual corrective retrieval (4.074s) but whole case FAIL at unchanged60s deadline during second retry; prior setup subprocesses consumed about52s. This is not whole-case PASS or evidence of a retry hang. Preserve UNKNOWN root /tmp/vida-absorption-5noeyj; do not replay it. Next bounded correction is reuse existing actual in-process fixture APIs for unasserted history setup while keeping all distinct CLI assertions and30s child/60s case bounds.
+
+v673 private activation process-death patch joined after independent contract review. Initial helper syntax omission caught by formatter/lint and corrected before any behavior run; retained failed static log is not a PASS. v674 explicitly includes the child-only preload in connected compiler scope: compiler, scoped typed lint and formatter PASS0. Fresh selected activation-move process-death behavior run is pending. It delegates the actual no-replace move, proves exact staging/target dev+inode/bytes, exits86 before checkpoint, then uses same-operation public API resume with an observed zero additional move count. Original45s child/90s parent bounds retained.
+
+Clean isolated native Runtime task remains the current final owner instead of old unblock/notices. Private matrix-v672 is UNREVIEWED and under corrections for physical Source unavailability and native-vs-SDK alias surfaces; no runtime execution claimed. Private frozen mappings remain non-executable; existing genuine baseline positions are reused, not recaptured. Root is sole Source/Git/final-check writer. No stage/commit/push/hook bypass, native formation/install, active loader/schema change or Runtime acceptance.
+
+
+### v675–v680 — bounded fixture optimization; exact corrective prototype cause
+
+v675–v676 joins reviewed independent corrective inspection cases into the existing validate scenario only: legitimate authorized different base/engine run inspection is read-only; absent marker, foreign engine/base/generation/attempt/ref and changed authority bytes are denied with original SQL rows and authority bytes restored. The pre-correction history setup now reuses the existing actual in-process public run API; each distinct corrective CLI retrieval/retry/denial/resume/issue/report remains a real subprocess. No child30s/case60s increase or mocked authorization. Connected compiler PASS0; initial redundant-union typed lint FAIL corrected without suppressions, then v676 lint/formatter PASS0. All66 assertions before resume passed; whole fresh v676 scenario FAIL53.006s at later resume. It is not whole-case qualification.
+
+Activation setup now reaches activation_staged through the existing public API and typed no-effect move-denied seam (SafeRepositoryMoveError/SAFE_REPOSITORY_MOVE_NOT_APPLIED,1call/0effects), retaining actual same-operation plan/token and published afterimages. v677 fresh child performed the actual activation move and exited86 before checkpoint in8.786s; exact bytes/dev+inode and absent staging proved. Whole test FAILED its unchanged90s parent bound before final same-ID resume/history/fence assertions (43expects). Preserve UNKNOWN root /tmp/project-upgrade-lifecycle-2EMGMy and earlier child-timeout root /tmp/project-upgrade-lifecycle-jTNMo3; neither was opened or replayed. Actual boundary receipt alone is not case PASS. Remaining fixture cost needs causal optimization, not increased deadlines or removed guard checks.
+
+Fresh actual main/run private v678 diagnostic exposes resume rejection at Session engine configured frontier requests differ inside Host.settleSessionProducer after the bridge snapshot succeeds (66expects,50.979s FAIL). v679 delegates the original reader unchanged and records current-process previous successful binding/request predicate observations: context/selection/risk/config/corrective canonical bytes and every scalar/manifest predicate match; whole scenario still FAIL53.211s/66expects. It never opens old roots or feeds captured state into product execution. Root restored the maintained child launcher to bin/run.ts after terminal child completion; diagnostic files are private/non-qualified evidence only.
+
+Root and independent reviewer locate the actual representation mismatch: parseMastraSessionLedgerState returns deepFreezeClone after strict field parsing, recursively creating null-prototype records. Host passes that decoded correction to the engine reader, whereas snapshot request and bridge correction are strict-schema ordinary records. Original isDeepStrictEqual rejects the prototypes despite identical contract fields. v680 normalizes only the optional binding correction through the existing strict correctiveExecutionSchema before projection/comparison; retains the full deep-equality predicate, rejects malformed/extra-key corrections, and grants no authority. Exact Source preimage archived under archive/corrective-prototype-v680. Connected compiler/scoped typed lint/formatter PASS0; fresh originally failing full validate scenario v681 pending. No whole suite or duplicate AST capture.
+
+The clean isolated native Runtime task is saved in the current CLEAR plan, handoff and backlog. Reviewed scope now requires actual Source absence/isolation controls, native-vs-SDK alias distinction, and target-owned delivery contracts. Exhaustive option→scenario→result join and actual native execution remain OPEN. Frozen mapping proposals are still private/non-executable; no numeric gate closure, commit/push/hook bypass, formed/installed Runtime or schema/loader switch claimed.
+
+v681 terminal receipt: full validate case FAILED unchanged60s parent deadline (59expects,60.029s;64.72s runner), before the corrected resume boundary. Setup variance consumed the budget; unchanged first corrective retrieval passed, the following retry child received SIGTERM. This run neither confirms nor disproves the prototype repair behavior. Private timing receipt retains UNKNOWN fixture /tmp/vida-absorption-V5aYPk; do not open/replay it. Maintained launcher is bin/run.ts and the owned test runner is terminal. Next verification is a bounded actual engine-reader regression reusing existing fixture contracts, plus causal setup optimization, not another identical whole-case retry or timeout increase. An independent private test draft is assigned; no mock-based Runtime qualification.
+
+Independent read-only review confirms the clean isolated Runtime decision is consistent across plan/WORK/handoff/backlog with no material scope omission. Exact option joins and actual execution remain OPEN; this is task-scope validation only.
+
+
+### v682–v686 — qualified corrective reader regression and bounded parallel closures
+
+Independent private test draft joined into the existing session-engine-frontier owner. Root replaces an arbitrary8-wave scan with the existing projector's actual executable corrective indices, uses the actual codec-produced Journal correction and adds an explicit not.toThrow assertion around the single real reader call. No fake Host authority or native qualification: schema-valid persisted fixture data tests this read-only engine boundary only. Malformed generation and changed persisted correction stages still deny. Initial v682 unused-param lint FAIL fixed without suppression; v683 connected config explicitly includes this test root, compiler/lint PASS0. First selected case PASS1/6expects/352.86ms.
+
+v684 controlled fresh-fixture counterfactual removed only Source correction normalization. The not.toThrow assertion FAILED with the exact configured frontier requests differ cause (477.50ms/4expects); Python finally restored exact saved green Source bytes before any other check. Receipt confirms restoration. This is local assertion-strength/cause evidence only, not admission into the final mutation gate or a native Runtime proof. v685 compiler/scoped typed lint PASS0; entire related frontier owner PASS5/27expects/2.87s, including codec corrective acceptance, malformed/tamper denials and retained/UNKNOWN/inode guards. Independent scoped review finds no rights/equality weakening. Full corrective CLI flow remains unqualified due v681 setup timeout; do not reuse its UNKNOWN root or infer whole-flow PASS from the short regression.
+
+Root reviews20 retained public-ingress function/closure correspondences: actual published/current module delta is only re-export formatting, exact frozen ceilings retained. Private root review public-ingress-root-review-v685.json is partial/non-executable, unresolved links remain separate. Global reviewed exact budget plan is still missing; no changed allowance or partial gate activation. Blind disjoint Luna drafts continue canonical/research/admission-recovery lineage, native init/scope option matrices and activation setup-cost review using existing inventory/baseline, with one maintained writer and one final checker.
+
+v686 safe fixture reduction reuses the Host snapshot returned by prepareLifecycleForCorrection for its immediate authorize CAS preimage, eliminating one redundant Host/history read. Removes only the two now-tautological same-snapshot equality assertions; keeps current phase/lease assertions, separate fresh Journal CAS read and actual authorization's fenced reread/CAS. Independent review identifies no larger safe prep/snapshot collapse; this small reduction is not claimed to resolve the60s budget. Activation review finds no safe removal of effect-adjacent owner/fence/staging/file checks; next fresh test uses existing opt-in test-level timing to attribute setup/quarantine/final-resume cost. No repeated identical timeout attempt, widened guard cache or deadline increase.
+
+Current clean isolated Runtime instruction remains saved in plan/handoff/backlog. Metadata and init/scope native option drafts are UNREVIEWED/NOT_EXECUTED; exact option joins and final actual target execution remain OPEN. No commit/push/hook bypass, active Runtime/schema/loader switch or full100% numeric qualification claimed.
+
+### v687–v695 — canonical corrective boundary; isolated Runtime task retained
+
+The clean isolated native Runtime task remains the final qualification owner. Existing-consumer unblock/recovery verification and its notices remain superseded by the current human decision above. No old state or UNKNOWN roots were accessed or replayed.
+
+The opt-in activation phase timing instrumentation preserves existing assertions, operation ordering and 45s child/90s case bounds. Timing-disabled execution delegates immediately. v695 terminal FAIL at90.003s/43expects during normal dead-owner quarantine. Planning7.05s, database preparation9.30s, typed-no-effect staging44.73s, actual move child6.835s; retained afterimage/fence checks0.111s, quarantine starts at68.04s. Actual child exit86/close observed, exactly1move/1effect, exact afterimage receipt; full resume not proved. Parent package readBytes11605calls/396355300bytes/summed52.275s identifies repeated bundle ownership reads as the next concrete bottleneck. Child1055package reads/36MB/summed4.026s, observed bundleDigest→assertUpgradeOwner caller. Keep original deadlines and per-effect freshness/CAS/fence/UNKNOWN checks. Retained /tmp/project-upgrade-lifecycle-OpsVu1 is UNKNOWN and must never be accessed/replayed. Log activation-v695-phase-timing.log is development evidence, not native Runtime acceptance.
+
+v690 related corrective frontier tests PASS5/30expects. Independent review found that strict Zod parsing can obtain missing fields through inherited Object.prototype getters despite canonical own-descriptor validation. v692 reproduces this with an assertion failure: expected zero inherited reads, observed1. Root now validates canonical JSON, detaches the corrective record and its nested authorization into null-prototype own-data records, then invokes the unchanged strict schema. Full configured frontier equality remains unchanged. Tests cover missing root correction_generation and nested authorization.sha256, zero getter calls and schema denial, with synchronous finally restoration of Object.prototype.
+
+v693 related frontier file PASS5/36expects/3.35s. Its scoped typed lint initially FAIL2 because Reflect.get returned any in the test; typing the captured fixture value as unknown corrected that tooling issue. v694 explicit connected compiler PASS0 and scoped typed lint PASS0; current formatting check PASS. Blind final delta review found no blocker and ran no duplicate checks. Local RED/green proof does not claim final assertion-confirmed mutation qualification. New local normalizeCorrectiveExecution owns canonical/strict own-data normalization; its concrete case is `reads a codec-parsed corrective execution from a configured suspended engine frontier` in session-engine-frontier.test.ts (frozen null-prototype acceptance, invalid generation, symbol/own-accessor/inherited-root/inherited-authorization denial, persisted request drift). The helper and changed Source/test bytes require final inventory/scenario/numeric binding; exact gates are not waived.
+
+Root checked152 admission/recovery proposal rows against the existing current capture and genuine frozen seed: exact boundaries, unique current identities and exact published ceilings agree; both full Source files have an empty git diff against b549951. Receipt admission-recovery-consistency-v695.json is mechanical consistency only, private/non-executable. Semantic/global correspondence, exhaustive frozen plan, exact coverage/CRAP and final mutation evidence remain OPEN. No repeated AST/hash scan or baseline capture was run.
+
+### v696–v699 — clean native route scope; no unsafe read-lock widening
+
+Blind architectural review rejects whole-public-invocation package read-lock ownership as a current optimization: abrupt exit after a real activation move would retain package-wide locks, introducing orphan/reclaim contention beyond today's per-read scope. No such lease/cross-boundary digest cache or unlocked read substitution was implemented. A prospective scoped owner would need exact lifetime, inventory/root/parent identity, current-byte, deterministic acquisition/release, contention and process-death proofs. Preserve current guards and prioritize an evidenced equivalent correction rather than repeated unchanged timeout runs.
+
+Private upgrade Runtime matrix v696 identifies the actual nested route `reconcile-artifacts --kind project-upgrade`; there is no top-level upgrade command/run selector. Root review resolves the shared apply/resume handler as shared same-operation state-machine implementation, not evidence of a bug. Distinct options remain: only resume admits explicit UNKNOWN reconciliation. Latest clean Runtime acceptance does not require old existing-consumer unblock. The current existing-storage success path is intentionally blocked by declaration/owner; its positive success is N/A under that current contract, while a documented denial is a required candidate on a NEW disposable owned fixture only. The false legacy-opener guard and separately tracked Source architectural gap remain unchanged/OPEN. No old operation/database access or replay is authorized. Agent is correcting its private proposal accordingly; all rows remain UNREVIEWED/NOT_EXECUTED.
+
+Added corrective boundary cases for null authorization and unknown string fields, preserving strict-schema rejection after own-data detachment. v697 compiler/lint PASS0, behavior FAIL due to an expected human message being JSON-escaped in Zod's error envelope; assertion now checks stable unrecognized_keys code rather than display quoting. v698 focused actual-reader case PASS1/18expects/2.33s; no rerun of unchanged4 prior passing cases. v699 exact connected compiler and scoped typed lint PASS0 on the corrected current test. No final coverage, frozen CC/CRAP, mutation, native formation/install or Runtime acceptance claimed. No Git staging/commit/push or hook bypass.
+
+
+### v700–v701 — reviewed unchanged function lineage; bounded fixture-cost assessment
+
+Root reused the genuine b549951 historical-function measurement, frozen v653
+seed and current v662 captured inventory. Sixteen full Source files are unchanged
+from the published Git image. Actual callable names and all eight declaration/body
+coordinates establish 713 unique, exhaustive retained pairs within those files;
+all published measurements and frozen maxima match exactly. A blind Luna review
+checked the captures, full Source equality and nested closure callsites, with no
+blocking lineage finding. Self-contained input references were corrected before
+acceptance. The accepted non-executable slice is
+`.tmp/tooling-research/typed-correction-v179/root-unchanged-lineage-v701.json`; it
+consolidates the prior three-file481-row Root slice, so do not count both. No
+ordinal/body-hash inference, current-derived ceiling, new AST/hash scan or suite.
+Caller/scenario/assertion/execution evidence, full current coverage, numeric CRAP
+and assertion-confirmed mutation remain separate OPEN obligations. This partial
+slice must join the existing single exhaustive VidaCrapBudgetPlan/v1 owner; it
+does not activate a partial allowance plan or establish quality/Runtime PASS.
+
+A disjoint blind agent repaired 22 missing published canonical-function locations
+from the genuine historical capture and retained current identities and exact
+frozen maxima, with one prospective10/10 new shared-number helper. Private
+`map-canonical-v700.json` remains UNREVIEWED, non-executable and without measured
+qualification. Source contract changes and affected runtime-config caller need
+their distinct semantic/scenario review; generated labels are not proof.
+
+The bounded tmpfs assessment is
+`.tmp/tooling-research/snapshot-v700/assessment.md`. Current coverage capture is a
+possible byte-provenance feeder, but its runner keeps original checkout-derived
+module paths; the real repair child runs without its preload and derives package
+resources from import.meta.url. Its materializer changes modes and does not
+attest installed dependency bytes. The staged snapshot is index-only, so it does
+not represent current dirty Source. Direct reuse is therefore rejected for exact
+focused execution. No tmpfs runner, package copy, benchmark, lock/fsync bypass or
+timeout relaxation implemented. v695 real move/exit86 remains proved, same-ID
+post-quarantine completion OPEN, and retained UNKNOWN root remains unopened.
+The saved clean isolated native Runtime task replaces old unblock/notices; this
+Source assessment is not its execution evidence.
+
+
+### v702–v705 — Bun import capture correction; actual activation death/resume PASS
+
+Latest human decision remains clean isolated native Runtime qualification across
+all supported options/flows; old consumer unblock/notices are superseded. The
+maintained test runner remains pinned Bun1.4.2 with TypeScript/Bun tests.
+
+Root reviewed `root-reviewed-canonical-lineage-v702.json`:22 retained genuine
+published canonical functions,1 prospective new shared numeric helper,0 removed,
+0 correspondence errors. It supersedes the v700 UNREVIEWED canonical proposal.
+Retained frozen maxima are unchanged; new10/10 ceilings are prospective, not
+measured quality. Together with v701's713 unchanged functions, these are Source
+lineage slices only; global exhaustive reviewed plan/numeric gates remain OPEN.
+
+Real P0 test-tooling defect: `captureQualityInputBase` treated a quoted Vitest
+AST-guard fixture as a runtime import; current input capture failed before tests.
+Root replaced the raw regex with capture-local pinned Bun.Transpiler.scanImports,
+reusing scanners per supported loader over the already captured bytes. No new
+dependency, filesystem recapture or second Babel AST pass. Strings/comments and
+erased types are allowed; actual static import/reexport/dynamic/CommonJS loads,
+including escaped module spelling, are denied. Shadowed require is conservatively
+denied. Computed names/resolution-only requests are outside this syntactic gate;
+this is not execution/assertion evidence. TESTING.md records those limits.
+Blind review found a shadowed-require test gap; Root added the concrete case.
+
+TDD v704: first fixture setup lacked contract directories (failed before subject;
+not causal RED). Corrected fixture then genuine RED4pass16fail, demonstrating both
+false-positive text/types and missing side-effect/comment/escape import denials.
+Initial green29pass1fail was an out-of-contract require.resolve expectation;
+actual pinned scan does not report resolution-only requests. Root explicitly
+recorded that boundary and tested it separately from loads. Final maintained
+import suite20PASS0FAIL,27 Bun expects plus awaited node assert.rejects; adjacent
+focus/provenance suites10PASS unchanged. Focused strict TypeScript, scoped typed
+lint and format PASS0 after replacing misleading Bun matcher await typing with
+awaited standard assert.rejects. No full-suite/100% claim.
+
+Private Source backend v703–v705: actual user/mount namespace controls PASS;
+exact captured package root is tmpfs, installed dependency root identity matches
+ordinary Source execution.436 captured inputs/144 Source/34 dist inputs,
+12140310 bytes, original absolute package paths rebound only in the private
+namespace. Fresh owned project fixtures; all original CAS/fsync/fence checks and
+45s child/90s parent limits retained. Early capture-owner receipt saved. Original
+parent checkout untouched; external dependencies retain normal Source trust,
+not whole-tree attestation. Capture occurs before the final test-only matcher
+refinement; selected lifecycle test and product Source are the captured bytes.
+
+Actual selected Bun process-death test PASS79assertions,48025.57ms case,
+49.76s command. Real activation move delegates once, durable afterimage retained,
+child exit86/close observed, normal dead-owner quarantine retained, same-operation
+resume completes with final inode/history/fence checks and no second move.
+Parent package read counters13082calls/446800520bytes/5138.12ms retain freshness;
+this backend fixes test I/O cost, not repeated product reads. Retained v695
+UNKNOWN root is unopened. Receipts/logs: ignored
+`typed-correction-v179/tmpfs-v703/activation-v705{.log,-terminal.json}`.
+
+This is captured Source behavior proof only: no installed/native Runtime,
+power-loss durability or final coverage/CRAP/mutation qualification. Final native
+clean-project matrix and remaining product/shared optimization stay OPEN.
+
+
+### v706–v718 — strict static closure batch and two causal P0 corrections
+
+Fetch origin/main succeeded; HEAD and origin/main remain equal at e09ab99,
+so no ff integration or dirty/index displacement was necessary. Current branch
+work and existing migration changes preserved. No checkpoint/publication yet.
+
+Full current static probe v706 found one TS error in the actual in-process
+fixture result union; Root narrowed it with the existing requireUnknownRecord
+before issued_actions access. v707 all-maintained strict compiler PASS0:
+474 selected/407TS/0JS violations. Canonical Knip v706 issues[]/empty stderr.
+Full typed lint v709 FAIL136; full format FAIL5. Three blind Luna scopes traced
+common declaration resolution, actual Babel/AST unsafe typing, and product
+corrective cause. Broad dirty migration status is NOT evidence of post-v662
+staleness; the advisor retracted that inference. Preserve existing verified
+v701/v702 bytes and refresh only truly changed scopes/dependent joins.
+
+Root formatter corrected the five reported files without changing behavior;
+full format v714 PASS386files. Source source-instrumentation now gives the Babel
+callback its actual narrow types shape, and tests/tsconfig explicitly includes
+sibling tooling ambient declarations. This fixes coverage cascades without rule
+suppression. AST pattern arrays/argument objects are narrowly typed after real
+shape checks; policy fixture validates unknown JSON through existing product Ajv
+policy validator; fixed-module cache-busting import has its literal module type.
+Affected coverage/native AST cluster lint v712 PASS0(10files), remaining policy
+and resource cluster v713 PASS0(4files). Full current lint remains pending one
+final profile after this stable correction batch; no scope-to-global PASS claim.
+
+Real P0 materializer regression v713: slow sibling write settled but its owned
+prepublication .pending stage leaked because cleanup was disabled before opening
+an output file. Root removed only that premature flag assignment; settled
+Promise.allSettled batches and awaited closes precede existing owned dev/ino
+cleanup. Replaced staging remains preserved. Publication-start flag, uncertain
+cleanup/lock retention and raw falsy error aggregation remain. Meaningful existing
+RED12pass1fail; v714 resource-custody/fs-safe-attestation8PASS0FAIL. Blind review
+accepts bounded fix. Prior other unaffected instrumentation/counter tests passed.
+
+Actual corrective public scenario v708 FAIL66expects/42231.60ms at its later
+--issue-wave. Fresh private diagnostic v711 (not acceptance) revealed workflow
+approval denied; error was emitted only in the owned copied CLI and original
+public error envelope/maintained Source stayed unchanged. No old Runtime root or
+UNKNOWN replay. Cause: sourceWritePreflightResolver and pure source preflight
+both assumed journal engine run equals Work base run. The existing corrective
+ledger correctly carries a separate authorized engine run.
+
+Root extracted pure shared validateWorkSessionRunBinding into final-assurance:
+ordinary base identity/correction_count0; strict corrective schema, engine/base/
+generation relation. Full validator retains approved Host reference, safe current
+authority bytes/hash/schema and complete contract comparison. Pure preflight
+uses shared in-memory check and stays pure; resolver removes only premature base
+equality, retaining currentSnapshot and packet's existing full authority checks.
+No duplicate authorization file read or new API/approval mechanism. New helper
+needs prospective frozen allowance/scenario admission, not inferred numeric PASS.
+Blind security review found no concrete defect.
+
+Bun TDD preflight v715 RED1pass1fail (valid engine/base split wrongly denied);
+v716 entire preflight+frontier15PASS0FAIL/38Bunexpects, with engine/base/generation/
+schema/missing correction negative controls and no attempt markers. Strict
+compiler v717 exposed one lost string narrowing across the pure helper; Root
+uses already validated execution.base_run_id for the expected authority run_id
+instead of a cast/redundant guard. v718 current compiler and actual public
+corrective rerun remain under observation at this entry. Fresh private owner
+Source has an explicit single-file correction receipt; original quality hash is
+superseded and cannot qualify numeric gates. All deadlines/guards retained.
+
+Known newly changed Source scopes: final-assurance/source-preflight/persistent-
+session-handoff, standalone-resources, source-instrumentation, native-import-
+boundary; formatting changes capture-completed-readonly/run and selected helpers.
+Existing v662 correspondence must use per-scope freshness; no duplicate full
+inventory because of dirty Git paths. Final full numeric/mutation/clean isolated
+native Runtime gates remain OPEN. Old unblock/notices remain superseded.
+
+
+### v719 — terminal static and corrective diagnostic update
+
+Root collected full stable typed lint: 383 files, 110 rules, diagnostics[]
+(empty stderr, exit0). v718 all-maintained compiler PASS: 474 selected,
+407 TS, zero JS violations, zero diagnostics. This is static evidence only.
+
+The actual public corrective scenario remains FAIL at 66 assertions. A fresh
+private copied-Source diagnostic (public envelope unchanged; authorization
+still denies on failure) now identifies source-preflight.ts preparation evidence
+validation: original base-run session-observation citations are absent from the
+current corrective-only evidence index. Packet construction already authenticates
+immutable original planning through readCorrectivePlanningJournal. Reuse that
+validated state through trusted preflight context; do not accept arbitrary base
+URIs or repeat recovery/authority reads. Two preflight modules duplicate the
+index and repeatedly scan all journal items for each observation. A blind Luna
+review is checking the minimum shared evidence/dataflow correction and negative
+controls. No unchanged public scenario retry or historical consumer replay.
+
+Optimization analysis is partial: current shared binding and capture scanner
+corrections are verified, but repeated product package reads and exhaustive
+all-file refactoring, frozen numeric/mutation gates and clean native Runtime
+qualification remain OPEN. Private tmpfs acceleration does not close product I/O.
+
+
+### v720–v723 — authenticated planning evidence and linear shared join
+
+Actual v719 diagnostic confirmed preparation session-observation citations from
+original base planning are absent from corrective-only indexes. Root added the
+packet builder's post-success internal callback, threaded the authenticated
+planning state through both trusted Source/task-source policy contexts, and
+bound its digest in existing policy evidence and asynchronous freshness checks.
+No extra recovery read within a snapshot; the required later assertCurrent pass
+still revalidates live evidence. Blind authority review found no weakened
+authorization; its concern about that existing freshness read is not a reason
+to remove the guard. System specification and official Mastra snapshot reference
+updated; direct current docs retrieved successfully (private research receipt).
+
+Both duplicate indexes now use observed-receipt-evidence's shared bulk join.
+Summary digest is computed once per item; failed/foreign duplicate tuples still
+poison per-journal uniqueness, and malformed summaries poison only their tuple.
+Base/current run references stay separate. Root split cohesive guard/index
+mechanics before measuring: new function CC values9/8/10/8/1/2 are within the
+prospective10 ceiling; this is scoped static complexity, NOT frozen CRAP or
+coverage qualification. Existing retained budgets and exact gates stay unchanged.
+Blind index review accepted broad uniqueness preservation.
+
+Meaningful Bun RED0pass2fail at preparation evidence; green-v72118PASS0FAIL
+(preflight + configured policy producer), including independent identity/status/
+source/summary mutations, failed/foreign/malformed duplicate controls, distinct
+base/current same-action references and unrelated malformed tuple control.
+All-maintained strict compiler v722/v723PASS407TS/0JS violations/0diagnostics.
+Scoped typed lint v722PASS0; full lint v719 had383files/0diagnostics before this
+correction. Current whole numeric and native Runtime gates remain OPEN.
+
+Fresh actual public case v722 passed previously failing corrective issue-wave,
+reaching76 assertions, then parent60s interrupted later tester issue. Timing
+identified redundant third authorization retrieval and repeated readonly report
+processes. Root removed only the duplicate retrieval and routed late readonly
+validator reports through existing in-process product run; public writer issue/
+report, correction retrieval/drift denial, resume and tester issue remain real
+children. Blind review found no distinct required acceptance lost. v723 advanced
+through tester issue but parent60s interrupted its final report at75 assertions.
+These are FAIL/UNKNOWN, not whole-flow PASS; bounds were not enlarged. Preserve
+without inspection/replay/cleanup:
+- /dev/shm/vida-source-v722-D3s15o/fixtures/vida-absorption-3PWm6V
+- /dev/shm/vida-source-v723-HgQVN3/fixtures/vida-absorption-poyh5S
+
+Read optimization advisor found remaining bundle byte reads at DISTINCT upgrade
+effect/freshness barriers; current caches do not establish immutable package
+bytes. Metadata-only caching across barriers is rejected. No safe existing cache
+removes that measured I/O. Seed/path replay/shrinking and strict scenario-link
+validation already exist; a blind backlog advisor retracted two proposed gaps
+after checking the actual maintained final owners. Do not duplicate those tools.
+
+### v727–v728 — staged Source boundary and focused parser correction
+
+Strict precommit uses tracked staged bytes without local generated dist. Its
+v725 Knip failure exposed run.ts's generated transition-proof runtime import;
+Root routed runtime and session/snapshot types to their maintained TS owners.
+The subsequent v726 focused-test guard failed on an ordinary TS generic arrow:
+JSX was enabled for every .ts input. Root selects JSX only for .jsx/.tsx and
+unwraps TSTypeAssertion so casts cannot conceal focused calls. A disjoint Luna
+test writer supplied TS generic/cast and TSX/JSX alias controls; causal RED
+1PASS/2FAIL, affected focused guard/documentation policy GREEN24PASS/0FAIL.
+No guard exemption or duplicate parser/inventory was introduced.
+
+v727 staged Knip/focused guard/format reached strict TS, then failed TS2307 at
+bin/documentation-clear.ts's generated dist runtime import. Types already
+referenced Source; local untracked dist masked the dependency in worktree
+checks. Root binds both types and lazy runtime loading directly to the current
+src/documentation/clear.ts owner. No generated output is added to the snapshot,
+no export ignore or hook bypass is used. Staged static retry remains pending.
+These failures do not invalidate unrelated source-bound behavior receipts.
+
+The final readonly tester report in the fresh public same-work test now uses
+its existing in-process product runner, retaining public tester issue and all
+terminal state assertions. This removes another readonly process startup;
+actual wider-case recheck remains pending on a fresh Source capture, without
+reusing v722/v723 UNKNOWN owners or increasing its bounds.
+
+The connected TypeScript migration and corrections form one staged unfinished
+Source checkpoint. Root bun.lock remains unstaged and preserved; package locks
+own the qualified package pins. Whole coverage, exhaustive frozen budgets,
+assertion-confirmed mutation and isolated formed native Runtime remain OPEN.

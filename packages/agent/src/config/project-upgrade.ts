@@ -179,6 +179,8 @@ export interface ProjectUpgradeBootstrapVerifier {
 const validatedOperations = new WeakSet<object>();
 const bootstrapVerifiers = new WeakSet<object>();
 const originalConfigurations = new WeakMap<ProjectUpgradePlan, ReturnType<typeof validateRuntimeConfig>>();
+// One process-local marker for a pure closure; no files, live ownership or authority are cached.
+let verifiedArtifactPlanDigest: string | null = null;
 
 function requireUpgrade(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(label + ': ' + message);
@@ -316,7 +318,7 @@ export function validateProjectUpgradeOperation(value: unknown): ProjectUpgradeO
       canonicalJson(config.projects.map((entry) => entry.project_id).sort()) === canonicalJson(plan.project_ids),
     'original project identity differs',
   );
-  assertPreparedArtifactClosure(plan, config);
+  assertPreparedArtifactClosure(plan, config, operation.plan_digest);
   assertPublicationProgress(operation);
   assertStorageProgress(operation);
   assertActivationProgress(operation);
@@ -325,7 +327,13 @@ export function validateProjectUpgradeOperation(value: unknown): ProjectUpgradeO
   return frozen;
 }
 
-function assertPreparedArtifactClosure(plan: ProjectUpgradePlan, config: ReturnType<typeof originalConfig>): void {
+function assertPreparedArtifactClosure(
+  plan: ProjectUpgradePlan,
+  config: ReturnType<typeof originalConfig>,
+  verifiedPlanDigest: string,
+): void {
+  // The caller has just validated the complete canonical plan digest and captured config.
+  if (verifiedArtifactPlanDigest === verifiedPlanDigest) return;
   const prepared = prepareProjectUpgradeArtifacts(config, plan.dependencies, plan);
   requireUpgrade(prepared.input_digest === plan.input_digest, 'prepared configuration binding differs');
   requireUpgrade(plan.files.length === prepared.files.length, 'prepared artifact inventory differs');
@@ -340,6 +348,7 @@ function assertPreparedArtifactClosure(plan: ProjectUpgradePlan, config: ReturnT
       file.path === 'AGENTS.md' ? file.before === originalPolicy : file.before === null || file.before === file.after;
     requireUpgrade(allowed, 'existing artifact conflicts with legacy upgrade');
   }
+  verifiedArtifactPlanDigest = verifiedPlanDigest;
 }
 
 function assertActivationProgress(operation: ProjectUpgradeOperation): void {

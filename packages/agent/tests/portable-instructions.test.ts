@@ -3,7 +3,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, write
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
-import { boundedSpawnSync, executionBudget } from '../bin/bun.mjs';
+import { boundedSpawnSync, executionBudget } from '../bin/bun.ts';
 import { standaloneDiscoveryFiles } from '../bin/cli-metadata.ts';
 
 const bundleRoot = path.resolve(import.meta.dirname, '..');
@@ -69,7 +69,7 @@ for (const bundleName of ['npm-package', 'vida agent-\u0454']) {
       const result = boundedSpawnSync(
         spawnSync,
         process.execPath,
-        [path.join(bundle, 'bin/vida-agent.mjs'), 'instructions', '--path', name],
+        [path.join(bundle, 'bin/vida-agent.ts'), 'instructions', '--path', name],
         {
           cwd: consumer,
           encoding: 'utf8',
@@ -85,7 +85,16 @@ for (const bundleName of ['npm-package', 'vida agent-\u0454']) {
       expect(result.error).toBeUndefined();
       expect(result.signal).toBeNull();
       expect(result.status, result.stderr).toBe(0);
-      const instruction = JSON.parse(result.stdout);
+      const instruction: unknown = JSON.parse(result.stdout);
+      if (
+        typeof instruction !== 'object' ||
+        instruction === null ||
+        !('schema' in instruction) ||
+        !('package' in instruction) ||
+        !('path' in instruction) ||
+        typeof instruction.path !== 'string'
+      )
+        throw new Error('Relocated instruction child returned an invalid instruction receipt');
       expect(instruction.schema).toBe('VidaAgentInstruction/v1');
       expect(instruction.package).toBe('vida-agent');
       expect(instruction.path).toBe(path.join(bundle, 'instructions', `${name}.md`));

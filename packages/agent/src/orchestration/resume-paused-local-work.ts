@@ -1,11 +1,113 @@
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
-import type { HostStateStore, StateVersion, WorkIdentity } from '../host-state.js';
+import type { HostStateStore, StateVersion, WorkIdentity, WorkState } from '../host-state.js';
 import type { MastraSessionLedger } from './persistent-session-handoff.js';
+import { sameCoordinationStrings, type CoordinationLedger } from '../contracts/envelopes.js';
 
 function requireResume(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`paused local work resume: ${message}`);
 }
 const same = (left: unknown, right: unknown): boolean => canonicalJsonDigest(left) === canonicalJsonDigest(right);
+
+type ReleasedTicket = CoordinationLedger['tickets'][number];
+type ReleasedClaim = CoordinationLedger['claims'][number];
+type ReleaseOperation = CoordinationLedger['operations'][number];
+
+function assertReleasedClaim(ticket: ReleasedTicket, claim: ReleasedClaim): void {
+  requireResume(
+    ticket.claim_ids.length === 1 &&
+      ticket.claim_ids[0] === claim.claim_id &&
+      claim.work_id === ticket.work_id &&
+      claim.thread_id === ticket.thread_id &&
+      claim.generation === ticket.generation &&
+      sameCoordinationStrings(claim.resources, ticket.exclusive_resources),
+    'released owner claim provenance differs',
+  );
+}
+function assertOwnerRelease(ticket: ReleasedTicket, release: ReleaseOperation): void {
+  requireResume(
+    release.work_id === ticket.work_id &&
+      release.thread_id === ticket.thread_id &&
+      release.source_revision === ticket.source_revision &&
+      Array.isArray(release.resources) &&
+      sameCoordinationStrings(release.resources, ticket.exclusive_resources),
+    'released owner provenance differs',
+  );
+}
+function assertReleaseHistory(ledger: CoordinationLedger, ticket: ReleasedTicket, release: ReleaseOperation): void {
+  const from = release.from_ledger_revision,
+    to = release.to_ledger_revision;
+  requireResume(
+    typeof from === 'number' &&
+      Number.isSafeInteger(from) &&
+      from >= 1 &&
+      typeof to === 'number' &&
+      Number.isSafeInteger(to) &&
+      to === from + 1 &&
+      to <= ledger.revision,
+    'released owner revision interval differs',
+  );
+  requireResume(
+    ledger.operations.filter((operation) => operation.ticket_id === ticket.ticket_id && operation.kind === 'release')
+      .length === 1 &&
+      ledger.claims.filter((claim) => claim.ticket_id === ticket.ticket_id).length === 1 &&
+      !ledger.operations.some(
+        (operation) =>
+          operation.ticket_id === ticket.ticket_id &&
+          (typeof operation.to_ledger_revision !== 'number' || operation.to_ledger_revision > to),
+      ),
+    'released owner retained history differs',
+  );
+}
+
+/** Select the same proven released owner before intent publication and lease reacquisition. */
+export function selectPausedLocalOwner(
+  work: WorkState,
+  ledger: CoordinationLedger,
+  identity: WorkIdentity,
+  nativeSessionHandle: string,
+  sourceDigest: string,
+) {
+  const prior = [...ledger.tickets]
+    .reverse()
+    .find(
+      (ticket) =>
+        ticket.work_id === identity.work_id &&
+        ticket.repository_id === identity.repository_id &&
+        same(ticket.project_ids, identity.project_ids) &&
+        ticket.integrations_digest === identity.integrations_digest &&
+        ticket.thread_id === nativeSessionHandle &&
+        ticket.status === 'released',
+    );
+  const release = ledger.operations.find(
+    (operation) =>
+      operation.ticket_id === prior?.ticket_id &&
+      operation.kind === 'release' &&
+      operation.thread_id === nativeSessionHandle,
+  );
+  const oldClaim = ledger.claims.find((claim) => claim.ticket_id === prior?.ticket_id && claim.status === 'released');
+  requireResume(
+    prior &&
+      release &&
+      oldClaim &&
+      prior.source_revision === sourceDigest &&
+      prior.exclusive_resources.every((resource) => work.binding.allowed_resources.includes(resource)) &&
+      prior.exclusive_resources.every(
+        (resource) => resource.startsWith('file:') || resource === 'execution:' + identity.work_id,
+      ),
+    'no exact owner-attributed released ticket is available',
+  );
+  assertReleasedClaim(prior, oldClaim);
+  assertOwnerRelease(prior, release);
+  assertReleaseHistory(ledger, prior, release);
+  const contenders = ledger.tickets.filter(
+    (ticket) =>
+      ticket.ticket_id !== prior.ticket_id &&
+      ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(ticket.status) &&
+      ticket.exclusive_resources.some((resource) => prior.exclusive_resources.includes(resource)),
+  );
+  requireResume(contenders.length === 0, 'overlapping earlier owner must be queued or reconciled');
+  return { prior, oldClaim };
+}
 
 /** Reacquire exact source rights after a cooperative pause; never infer release from expiry. */
 export function resumePausedLocalWork(input: {
@@ -60,44 +162,13 @@ export function resumePausedLocalWork(input: {
       ),
     'paused work authority or scoped source changed',
   );
-  const prior = [...host.ledger.tickets]
-    .reverse()
-    .find(
-      (ticket) =>
-        ticket.work_id === input.identity.work_id &&
-        ticket.repository_id === input.identity.repository_id &&
-        same(ticket.project_ids, input.identity.project_ids) &&
-        ticket.integrations_digest === input.identity.integrations_digest &&
-        ticket.thread_id === input.nativeSessionHandle &&
-        ticket.status === 'released',
-    );
-  const release = host.ledger.operations.find(
-    (operation) =>
-      operation.ticket_id === prior?.ticket_id &&
-      operation.kind === 'release' &&
-      operation.thread_id === input.nativeSessionHandle,
+  const { prior, oldClaim } = selectPausedLocalOwner(
+    work,
+    host.ledger,
+    input.identity,
+    input.nativeSessionHandle,
+    input.sourceDigest,
   );
-  const oldClaim = host.ledger.claims.find(
-    (claim) => claim.ticket_id === prior?.ticket_id && claim.status === 'released',
-  );
-  requireResume(
-    prior &&
-      release &&
-      oldClaim &&
-      prior.source_revision === input.sourceDigest &&
-      prior.exclusive_resources.every((resource) => work.binding.allowed_resources.includes(resource)) &&
-      prior.exclusive_resources.every(
-        (resource) => resource.startsWith('file:') || resource === 'execution:' + input.identity.work_id,
-      ),
-    'no exact owner-attributed released ticket is available',
-  );
-  const contenders = host.ledger.tickets.filter(
-    (ticket) =>
-      ticket.ticket_id !== prior.ticket_id &&
-      ['active', 'queued', 'ready_for_handoff', 'blocked'].includes(ticket.status) &&
-      ticket.exclusive_resources.some((resource) => prior.exclusive_resources.includes(resource)),
-  );
-  requireResume(contenders.length === 0, 'overlapping earlier owner must be queued or reconciled');
   const now = input.now ?? new Date().toISOString();
   requireResume(Number.isFinite(Date.parse(now)), 'resume timestamp invalid');
   const sequence = host.ledger.next_sequence;

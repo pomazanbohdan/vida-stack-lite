@@ -1,7 +1,7 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
-import { pinnedEnvironment, readPin } from '../../bin/bun.mjs';
+import { pinnedEnvironment, readPin } from '../../bin/bun.ts';
 
 interface PublicCliFixtureRunnerOptions {
   readonly bundleRoot: string;
@@ -67,7 +67,7 @@ export function createNativeTsPublicCliFixtureRunner(options: PublicCliFixtureRu
         '--no-env-file',
         '--no-install',
         '--config=' + path.join(options.bundleRoot, 'bunfig.toml'),
-        path.join(options.bundleRoot, 'bin/run.mjs'),
+        path.join(options.bundleRoot, 'bin/run.ts'),
         ...args,
       ];
       const result = spawnSync(process.execPath, commandArgs, {

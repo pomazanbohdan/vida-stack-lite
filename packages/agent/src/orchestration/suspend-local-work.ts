@@ -85,7 +85,7 @@ type HistoricalSuspensionInput = SuspensionInput & {
     | 'readonly_bookkeeping'
     | 'terminal_synthesis_unaccepted';
   readonly expectedMaintenanceGeneration: number;
-  readonly preimage?: ScopedSourceSnapshot;
+  readonly preimage?: ScopedSourceSnapshot | undefined;
   readonly capture?: {
     readonly actionId: string;
     readonly issueId: string;

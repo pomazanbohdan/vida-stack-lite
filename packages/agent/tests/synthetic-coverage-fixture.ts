@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageToolInputs, coverageInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.mjs';
+import { coverageToolInputs, coverageInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
 
 type InstrumentedFile = ReturnType<typeof instrumentSource>['fileCoverage'];
 type CoverageMap = Record<string, InstrumentedFile>;
@@ -24,7 +24,7 @@ const sourcePaths = [
 ];
 const bootstrapPaths = [
   'tooling/bun-coverage-preload.ts',
-  'tooling/bun-coverage-evidence.mjs',
+  'tooling/bun-coverage-evidence.ts',
   'tooling/source-instrumentation.ts',
   'tooling/maintained-source-inventory.ts',
 ];

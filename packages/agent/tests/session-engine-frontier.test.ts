@@ -6,18 +6,22 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
 import {
   readRetainedUnissuedSessionEngineSnapshot,
+  readSessionEngineSnapshot,
   type RetainedSessionEngineWorkEvidence,
 } from '../src/orchestration/session-engine-snapshot.ts';
 import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-session-ledger-codec.ts';
 import type { MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
-import type {
-  SessionBridgeObservation,
-  SessionBridgeRequest,
+import {
+  buildSessionBridgeRequest,
+  type SessionBridgeObservation,
+  type SessionBridgeRequest,
 } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import type { WorkItemSelection } from '../src/config/runtime-config.ts';
+import { createSessionActionProjector } from '../src/orchestration/session-handoff.ts';
+import type { CorrectiveExecution } from '../src/orchestration/corrective-execution-contract.ts';
 
 type MutableScopeFixture = {
   schema: 'ScopedSourceSnapshot/v1';
@@ -433,6 +437,210 @@ test('rejects issued and unknown frontier outcomes, and corrective work', () => 
       expect(() => readRetainedUnissuedSessionEngineSnapshot(binding, { work, journal })).toThrow();
     });
   }
+});
+
+test('reads a codec-parsed corrective execution from a configured suspended engine frontier', () => {
+  withFixture(({ binding: originalBinding, databasePath, runId: originalRunId }) => {
+    const config = originalBinding.config,
+      workflowId = 'task_execution',
+      workId = originalBinding.context.work_id,
+      attempt = originalBinding.context.attempt,
+      scopeDigest = originalBinding.context.scope_digest,
+      engineRunId = randomUUID(),
+      baseRunId = 'vida-corrective-base-run',
+      context = { work_id: workId, attempt, scope_digest: scopeDigest },
+      selection: WorkItemSelection = {
+        team: 'default-development',
+        kind: 'task',
+        intent: 'task_execution',
+        project: config.projects[0]!.project_id,
+        risk_flags: ['high'],
+        labels: [],
+      },
+      correctiveExecution: CorrectiveExecution = {
+        schema: 'CorrectiveExecution/v1',
+        base_run_id: baseRunId,
+        engine_run_id: engineRunId,
+        correction_generation: 1,
+        stage_ids: ['develop_task', 'validate_focused', 'test_task'],
+        authorization: {
+          schema: 'CorrectiveAssignmentAuthorization/v1',
+          path: `.agent/work/${workId}/correction-authorization.json`,
+          sha256: 'a'.repeat(64),
+        },
+      },
+      projector = createSessionActionProjector(config, selection, workflowId, 'high'),
+      waveIndex = projector.executableWaveIndices(correctiveExecution.stage_ids)[0];
+    if (waveIndex === undefined) throw new Error('configured correction has no executable wave');
+    const actions = projector.actionsForWave(context, waveIndex, [], correctiveExecution),
+      action = actions.find((entry) => entry.stage_id === 'develop_task');
+    if (!action) throw new Error('configured corrective develop action is missing');
+    expect(actions).toHaveLength(1);
+    const request = buildSessionBridgeRequest({
+        runId: engineRunId,
+        workflowId,
+        configDigest: runtimeConfigDigest(config),
+        context,
+        waveIndex,
+        action,
+        configuredContext: null,
+        priorResults: [],
+        correctiveExecution,
+      }),
+      input = {
+        work_id: workId,
+        attempt,
+        workflow_id: workflowId,
+        scope_digest: scopeDigest,
+        config_digest: runtimeConfigDigest(config),
+        selection,
+        observations: [],
+      },
+      stepId = `wave-${waveIndex}`,
+      snapshot: Record<string, unknown> = {
+        runId: engineRunId,
+        status: 'suspended',
+        context: {
+          input,
+          [stepId]: {
+            status: 'suspended',
+            payload: input,
+            suspendPayload: { requests: [request] },
+          },
+        },
+        suspendedPaths: { [stepId]: [0] },
+      },
+      journal = parseMastraSessionLedgerState({
+        schema: 'MastraSessionLedger/v1',
+        workspace_id: 'workspace-fixture',
+        work_id: workId,
+        attempt,
+        run_id: engineRunId,
+        step_id: stepId,
+        items: [{ request, issue_id: null, observation: null }],
+        completed: [],
+        corrective_execution: correctiveExecution,
+      }),
+      parsedCorrection = journal.corrective_execution;
+    if (!parsedCorrection) throw new Error('codec-parsed corrective request omitted its authority');
+    expect(Object.getPrototypeOf(parsedCorrection)).toBeNull();
+    expect(Object.isFrozen(parsedCorrection)).toBe(true);
+
+    const database = new Database(databasePath, { strict: true });
+    try {
+      database
+        .query('UPDATE mastra_workflow_snapshot SET workflow_name=?,run_id=?,snapshot=jsonb(?) WHERE run_id=?')
+        .run(workflowId, engineRunId, JSON.stringify(snapshot), originalRunId);
+    } finally {
+      database.close();
+    }
+    const currentBinding = {
+      ...originalBinding,
+      config,
+      selection,
+      context,
+      workflowId,
+      runId: engineRunId,
+      lifecycleRisk: 'high' as const,
+      correctiveExecution: parsedCorrection,
+    };
+    let inspected: ReturnType<typeof readSessionEngineSnapshot> | undefined;
+    expect(() => {
+      inspected = readSessionEngineSnapshot(currentBinding);
+    }).not.toThrow();
+    expect(inspected).toEqual({
+      run_id: engineRunId,
+      status: 'suspended',
+      step_id: stepId,
+      requests: [request],
+      observations: [],
+    });
+
+    const malformed = { ...parsedCorrection, correction_generation: 0 };
+    expect(() => readSessionEngineSnapshot({ ...currentBinding, correctiveExecution: malformed })).toThrow(
+      /correction_generation/,
+    );
+
+    const malformedAuthorization = { ...parsedCorrection };
+    Reflect.set(malformedAuthorization, 'authorization', null);
+    expect(() => readSessionEngineSnapshot({ ...currentBinding, correctiveExecution: malformedAuthorization })).toThrow(
+      /authorization/,
+    );
+
+    const extraField = { ...parsedCorrection, extra: true };
+    expect(() => readSessionEngineSnapshot({ ...currentBinding, correctiveExecution: extraField })).toThrow(
+      /unrecognized_keys/,
+    );
+
+    const symbolic = { ...parsedCorrection, [Symbol('extra')]: true };
+    expect(() => readSessionEngineSnapshot({ ...currentBinding, correctiveExecution: symbolic })).toThrow(
+      'symbol property at $.correctiveExecution',
+    );
+
+    let generationReads = 0;
+    const accessor = { ...parsedCorrection };
+    Object.defineProperty(accessor, 'correction_generation', {
+      enumerable: true,
+      get() {
+        generationReads += 1;
+        return 1;
+      },
+    });
+    expect(() => readSessionEngineSnapshot({ ...currentBinding, correctiveExecution: accessor })).toThrow(
+      'non-canonical property descriptor at $.correctiveExecution.correction_generation',
+    );
+    expect(generationReads).toBe(0);
+
+    for (const field of ['correction_generation', 'sha256'] as const) {
+      const inherited = { ...parsedCorrection, authorization: { ...parsedCorrection.authorization } },
+        owner = field === 'correction_generation' ? inherited : inherited.authorization,
+        previous = Object.getOwnPropertyDescriptor(Object.prototype, field);
+      const value: unknown = Reflect.get(owner, field);
+      let inheritedReads = 0;
+      Reflect.deleteProperty(owner, field);
+      Object.defineProperty(Object.prototype, field, {
+        configurable: true,
+        get() {
+          inheritedReads += 1;
+          return value;
+        },
+      });
+      try {
+        let rejection: unknown;
+        try {
+          readSessionEngineSnapshot({ ...currentBinding, correctiveExecution: inherited });
+        } catch (error) {
+          rejection = error;
+        }
+        expect(inheritedReads).toBe(0);
+        expect(rejection).toBeInstanceOf(Error);
+        expect(rejection instanceof Error ? rejection.message : rejection).toMatch(new RegExp(field));
+      } finally {
+        if (previous === undefined) Reflect.deleteProperty(Object.prototype, field);
+        else Object.defineProperty(Object.prototype, field, previous);
+      }
+    }
+
+    const changedSnapshot = structuredClone(snapshot),
+      snapshotContext = changedSnapshot.context;
+    if (!isPlainRecord(snapshotContext)) throw new Error('corrective snapshot context is invalid');
+    const suspendedStep = snapshotContext[stepId];
+    if (!isPlainRecord(suspendedStep) || !isPlainRecord(suspendedStep.suspendPayload))
+      throw new Error('corrective suspended step is invalid');
+    const requests = suspendedStep.suspendPayload.requests;
+    if (!Array.isArray(requests) || !isPlainRecord(requests[0]) || !isPlainRecord(requests[0].corrective_execution))
+      throw new Error('corrective suspended request is invalid');
+    requests[0].corrective_execution.stage_ids = ['test_task'];
+    const changedDatabase = new Database(databasePath, { strict: true });
+    try {
+      changedDatabase
+        .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+        .run(JSON.stringify(changedSnapshot), engineRunId);
+    } finally {
+      changedDatabase.close();
+    }
+    expect(() => readSessionEngineSnapshot(currentBinding)).toThrow(/configured frontier requests/);
+  });
 });
 
 test('rejects a substituted database inode and duplicate retained run rows', () => {

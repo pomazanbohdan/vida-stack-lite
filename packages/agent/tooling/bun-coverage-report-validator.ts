@@ -17,7 +17,8 @@ import {
   qualityInputProjections,
   readBunPin,
   sha256,
-} from './bun-coverage-evidence.mjs';
+  type FinalQualityProjectionInputs,
+} from './bun-coverage-evidence.ts';
 
 type CoverageSummaryData = import('istanbul-lib-coverage').CoverageSummaryData;
 type FileCoverageData = import('istanbul-lib-instrument').FileCoverageData;
@@ -39,7 +40,7 @@ type RunManifest = {
   snapshot_directory: string;
   source_fingerprint: string;
   test_fingerprint: string;
-  test_selection: import('./bun-coverage-evidence.mjs').CoverageInputs['test_selection'];
+  test_selection: import('./bun-coverage-evidence.ts').CoverageInputs['test_selection'];
   tool_fingerprint: string;
   sources: Digest[];
   tests: string[];
@@ -59,7 +60,7 @@ type CoverageReport = {
   runtime_executable_sha256: string;
   sources: Digest[];
   tests: string[];
-  test_selection: import('./bun-coverage-evidence.mjs').CoverageInputs['test_selection'];
+  test_selection: import('./bun-coverage-evidence.ts').CoverageInputs['test_selection'];
   test_inputs: Digest[];
   tool_inputs: Digest[];
   module_inputs: Digest[];
@@ -82,8 +83,8 @@ type CoverageReport = {
 
 type SelectionMode = 'current' | 'published-baseline-bun-native';
 type CoverageOptions = { requireFullCoverage?: boolean; reportBytes?: Uint8Array; testSelectionMode?: SelectionMode };
-type CoverageInputs = import('./bun-coverage-evidence.mjs').CoverageInputs;
-type FinalProjections = import('./bun-coverage-evidence.mjs').FinalQualityProjectionInputs;
+type CoverageInputs = import('./bun-coverage-evidence.ts').CoverageInputs;
+type FinalProjections = FinalQualityProjectionInputs;
 type InputProjections = Awaited<ReturnType<typeof qualityInputProjections>>;
 type DecodedReport = Record<string, unknown> &
   Pick<CoverageReport, 'schema' | 'run_id' | 'runtime_executable_sha256'> & {
@@ -348,7 +349,7 @@ function verifyLoadedInputs(
     if (!observed.has(test)) throw new Error('Selected test did not execute from captured bytes: ' + test);
   for (const required of [
     'tooling/bun-coverage-preload.ts',
-    'tooling/bun-coverage-evidence.mjs',
+    'tooling/bun-coverage-evidence.ts',
     'tooling/source-instrumentation.ts',
     'tooling/maintained-source-inventory.ts',
   ])

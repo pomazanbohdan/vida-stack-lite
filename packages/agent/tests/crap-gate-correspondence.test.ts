@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageToolInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.mjs';
+import { coverageToolInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
 import { functionInventory } from '../tooling/function-inventory.js';
 import type { FileCoverageData } from 'istanbul-lib-instrument';
 

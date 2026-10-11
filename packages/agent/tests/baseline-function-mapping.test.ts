@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import path from 'node:path';
 import { functionInventory } from '../tooling/function-inventory.ts';
-import { instrumentSource } from '../tooling/bun-coverage-evidence.mjs';
+import { instrumentSource } from '../tooling/bun-coverage-evidence.ts';
 import { baselineFunctionEvidenceForSource, type BaselineCoverageFunction } from '../tooling/coverage-math.ts';
 
 const outer: BaselineCoverageFunction = {

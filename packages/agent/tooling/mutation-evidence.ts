@@ -483,13 +483,13 @@ const canonicalEvidenceJson = (value: unknown) => JSON.stringify(value);
 const evidenceSha256 = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 
 export const mutationToolInputs = [
-  'stryker.config.mjs',
-  'tooling/mutation-gate.mjs',
-  'tooling/mutation-command-runner.mjs',
+  'stryker.config.ts',
+  'tooling/mutation-gate.ts',
+  'tooling/mutation-command-runner.ts',
   'tooling/mutation-evidence.ts',
   'tooling/mutation-test-adapter.ts',
   'tooling/mutation-test-preload.ts',
-  'bin/bun.mjs',
+  'bin/bun.ts',
 ];
 
 export function executionIdentityDigest(identity: Record<string, unknown>) {

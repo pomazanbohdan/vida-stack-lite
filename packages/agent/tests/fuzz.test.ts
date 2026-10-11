@@ -1,4 +1,4 @@
-import { configuredTestContext } from './configured-context.mjs';
+import { configuredTestContext } from './configured-context.ts';
 import { describe, expect, test } from 'bun:test';
 import fc from 'fast-check';
 import path from 'node:path';

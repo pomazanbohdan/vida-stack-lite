@@ -233,8 +233,10 @@ function sourceWritePreflightResolver(
         request.identity.project_ids,
       ),
       journal = getLedger().currentSnapshot(workId);
-    if (!journal || journal.state.work_id !== workId || journal.state.run_id !== work.execution.run_id)
+    if (!journal || journal.state.work_id !== workId)
       throw new Error('Source preflight requires the current same-thread Host journal');
+    // Ledger admission and the packet builder validate base/engine binding and
+    // current corrective authority. Preserve those checks without another read.
     const access = requireSafeRepositoryAccess(repositoryRoot),
       scopeBytes = access.readBytes(work.contracts.scope.path, 'source preflight current scope'),
       acceptanceBytes = access.readBytes(work.contracts.acceptance.path, 'source preflight current acceptance'),
@@ -254,6 +256,7 @@ function sourceWritePreflightResolver(
       risk_flags: [...workItem.risk_flags],
       labels: [...workItem.labels],
     };
+    let planningJournal: MastraSessionLedgerState | null = null;
     const taskPacket = buildAdmittedDevelopmentPacket({
       repositoryRoot,
       config,
@@ -265,6 +268,9 @@ function sourceWritePreflightResolver(
       scopeBytes,
       acceptanceBytes,
       configuredContext: null,
+      onValidatedPlanningJournal: (state) => {
+        planningJournal = journal.state.corrective_execution ? state : null;
+      },
     });
     const preparationKinds = new Set([
       'source_plan',
@@ -302,6 +308,7 @@ function sourceWritePreflightResolver(
     const stable = {
       hostSnapshot,
       journal,
+      planningJournal,
       config,
       projectContext,
       workItem,
@@ -353,6 +360,7 @@ function sourceWritePreflightResolver(
       if (
         canonicalJsonDigest(current.hostSnapshot) !== canonicalJsonDigest(initial.hostSnapshot) ||
         canonicalJsonDigest(current.journal) !== canonicalJsonDigest(initial.journal) ||
+        canonicalJsonDigest(current.planningJournal) !== canonicalJsonDigest(initial.planningJournal) ||
         runtimeConfigDigest(current.config) !== runtimeConfigDigest(initial.config) ||
         canonicalJsonDigest(current.projectContext) !== canonicalJsonDigest(initial.projectContext) ||
         canonicalJsonDigest(current.taskPacket) !== canonicalJsonDigest(initial.taskPacket) ||
@@ -380,6 +388,7 @@ function sourceWritePreflightResolver(
       request,
       hostSnapshot: initial.hostSnapshot,
       journal: initial.journal,
+      planningJournal: initial.planningJournal,
       config: initial.config,
       projectContext: initial.projectContext,
       trustedIdentity,
@@ -430,7 +439,7 @@ function taskSourceMutationPolicyResolver(
       journal = getLedger().currentSnapshot(request.work_id);
     requireState(
       journal &&
-        journal.state.run_id === work.execution.run_id &&
+        journal.state.work_id === request.work_id &&
         journal.state.attempt === attempt &&
         request.scope_digest === work.binding.work_source_revision,
       'task-source policy requires the current Host journal',
@@ -453,6 +462,7 @@ function taskSourceMutationPolicyResolver(
       risk_flags: [...workItem.risk_flags],
       labels: [...workItem.labels],
     };
+    let planningJournal: MastraSessionLedgerState | null = null;
     const taskPacket = buildAdmittedDevelopmentPacket({
       repositoryRoot,
       config,
@@ -464,6 +474,9 @@ function taskSourceMutationPolicyResolver(
       scopeBytes,
       acceptanceBytes,
       configuredContext: null,
+      onValidatedPlanningJournal: (state) => {
+        planningJournal = journal.state.corrective_execution ? state : null;
+      },
     });
     const preparationKinds = new Set([
       'source_plan',
@@ -505,6 +518,7 @@ function taskSourceMutationPolicyResolver(
     return {
       hostSnapshot,
       journal,
+      planningJournal,
       config,
       projectContext,
       workItem,
@@ -582,6 +596,7 @@ function taskSourceMutationPolicyResolver(
       requireState(
         canonicalJsonDigest(current.hostSnapshot) === canonicalJsonDigest(initial.hostSnapshot) &&
           canonicalJsonDigest(current.journal) === canonicalJsonDigest(initial.journal) &&
+          canonicalJsonDigest(current.planningJournal) === canonicalJsonDigest(initial.planningJournal) &&
           runtimeConfigDigest(current.config) === runtimeConfigDigest(initial.config) &&
           canonicalJsonDigest(current.projectContext) === canonicalJsonDigest(initial.projectContext) &&
           canonicalJsonDigest(current.taskPacket) === canonicalJsonDigest(initial.taskPacket) &&
@@ -619,6 +634,7 @@ function taskSourceMutationPolicyResolver(
       sourceAuthorization: initial.sourceAuthorization,
       hostSnapshot: initial.hostSnapshot,
       journal: initial.journal,
+      planningJournal: initial.planningJournal,
       config: initial.config,
       projectContext: initial.projectContext,
       trustedIdentity,
@@ -1058,7 +1074,8 @@ export interface SynthesisObservationCorrectionPlan {
 }
 
 interface ReadOnlyDispatchPlan {
-  readonly schema: 'VidaReadOnlyDispatchRepairPlan/v1';
+  readonly schema: 'VidaReadOnlyDispatchRepairPlan/v1' | 'VidaReadOnlyDispatchRepairPlan/v2';
+  readonly maintenance_generation?: number;
   readonly digest: string;
   readonly repair_id: string;
   readonly workspace_id: string;
@@ -1485,7 +1502,10 @@ export class MastraSessionLedger {
     const plan = JSON.parse(row.payload) as ReadOnlyDispatchPlan;
     const { digest, ...body } = plan;
     requireState(
-      plan.schema === 'VidaReadOnlyDispatchRepairPlan/v1' &&
+      (plan.schema === 'VidaReadOnlyDispatchRepairPlan/v1' ||
+        (plan.schema === 'VidaReadOnlyDispatchRepairPlan/v2' &&
+          Number.isSafeInteger(plan.maintenance_generation) &&
+          plan.maintenance_generation! >= 0)) &&
         plan.workspace_id === this.#workspaceId &&
         plan.work_id === workId &&
         plan.attempt === attempt &&
@@ -1563,6 +1583,11 @@ export class MastraSessionLedger {
             plan.mastra_version.revision === expected.revision &&
             plan.mastra_version.digest === expected.digest,
           'read-only dispatch plan or journal CAS version changed',
+        );
+        requireState(
+          plan.schema === 'VidaReadOnlyDispatchRepairPlan/v1' ||
+            plan.maintenance_generation === this.#openedMaintenanceGeneration,
+          'read-only dispatch maintenance generation changed',
         );
         const item = current.state.items.find((entry) => entry.request.action_id === actionId);
         requireState(

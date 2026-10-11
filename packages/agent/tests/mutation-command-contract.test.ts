@@ -2,8 +2,8 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'bun:test';
-import { readPin } from '../bin/bun.mjs';
-import strykerConfig from '../stryker.config.mjs';
+import { readPin } from '../bin/bun.ts';
+import strykerConfig from '../stryker.config.ts';
 import { buildMutationTestCommand } from '../tooling/mutation-evidence.js';
 import { maintainedSourceInventory } from '../tooling/maintained-source-inventory.ts';
 
@@ -38,7 +38,7 @@ test('mutation command builder constructs the exact pinned Bun test argv', () =>
 
 test('configured mutation adapter builds worker argv from the already selected pinned runtime', () => {
   expect(process.versions.bun).toBe(readPin(root));
-  expect(strykerConfig.commandRunner.command).toBe('bun tooling/mutation-command-runner.mjs');
+  expect(strykerConfig.commandRunner.command).toBe('bun tooling/mutation-command-runner.ts');
   expect(buildMutationTestCommand(process.execPath, ['tests/a.test.ts'], '/reports/worker.xml')).toEqual([
     process.execPath,
     'test',
@@ -54,7 +54,7 @@ test('configured mutation adapter builds worker argv from the already selected p
 test('mutation inventory assigns maintained sources and exposes pending upgrade qualification', () => {
   expect(process.versions.bun).toBe(readPin(root));
 
-  const result = spawnSync(process.execPath, ['tooling/mutation-gate.mjs', '--inventory'], {
+  const result = spawnSync(process.execPath, ['tooling/mutation-gate.ts', '--inventory'], {
     cwd: root,
     encoding: 'utf8',
     timeout: 30_000,

@@ -121,7 +121,13 @@ export function createAutomaticWorkAdmissionFixture(sourceWriter = false, public
   }
   function admit(input: LocalWorkAdmissionInput) {
     const admitted = admitLocalSessionWork(input);
-    if (admitted.host.work === null) throw new Error('Admitted fixture has no persisted Host work');
+    if (
+      admitted.host.work === null ||
+      admitted.host.ledger === null ||
+      admitted.host.workVersion === null ||
+      admitted.host.ledgerVersion === null
+    )
+      throw new Error('Admitted fixture has no complete persisted Host snapshot');
     const journal = {
       schema: 'MastraSessionLedger/v1',
       workspace_id: store.workspaceId,

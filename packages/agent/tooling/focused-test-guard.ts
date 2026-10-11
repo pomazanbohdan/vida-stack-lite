@@ -41,6 +41,7 @@ function unwrap(value: AstNode | undefined): AstNode | undefined {
   let current = value;
   while (
     current?.type === 'TSAsExpression' ||
+    current?.type === 'TSTypeAssertion' ||
     current?.type === 'TSSatisfiesExpression' ||
     current?.type === 'TSNonNullExpression' ||
     current?.type === 'ParenthesizedExpression'
@@ -382,7 +383,11 @@ function resolveParser(pkg: string): Parser {
 export async function rejectFocusedTests(pkg: string, files: readonly string[]): Promise<void> {
   const parse = resolveParser(pkg);
   for (const file of files) {
-    const ast = parse(readFileSync(file, 'utf8'), { sourceType: 'unambiguous', plugins: ['typescript', 'jsx'] });
+    const ast = parse(readFileSync(file, 'utf8'), {
+      sourceType: 'unambiguous',
+      sourceFilename: file,
+      plugins: /\.[jt]sx$/iu.test(file) ? ['typescript', 'jsx'] : ['typescript'],
+    });
     const analysis = analyze(ast);
     const focus = analysis.focuses.find(focusRejected);
     if (focus) throw new Error(`Focused test is forbidden: ${file}:${focus.line}`);

@@ -1,5 +1,6 @@
 import { expect, spyOn, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
+import type { BufferView, NonSharedBuffer } from 'node:buffer';
 import { fileURLToPath } from 'node:url';
 import * as fs from 'node:fs';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -722,6 +723,109 @@ test.skipIf(process.platform !== 'linux')(
     } finally {
       reads.mockRestore();
       rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
+
+function observedProcStat(state: string): string {
+  return `${process.pid} (worker ) with spaces) ${state} ${Array<string>(49).fill('0').join(' ')}\n`;
+}
+
+function withObservedProcState(
+  outcome: string | Error,
+  check: (root: string, owner: string, reads: () => number) => void,
+): void {
+  const root = createRepositoryFixture();
+  const owner = path.join(root, 'proc-owner.lock');
+  writeFileSync(
+    owner,
+    JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: process.pid, label: 'isolated proc owner' }),
+  );
+  const old = new Date(Date.now() - 60000);
+  fs.utimesSync(owner, old, old);
+  const originalRead = fs.readFileSync;
+  let procReads = 0;
+  function observedRead<T extends NodeJS.ArrayBufferView>(
+    target: fs.PathOrFileDescriptor,
+    options: fs.ReadFileSyncOptionsWithBuffer<T>,
+  ): BufferView<T>;
+  function observedRead(
+    target: fs.PathOrFileDescriptor,
+    options?: fs.ReadFileSyncOptionsWithBufferEncoding | null,
+  ): NonSharedBuffer;
+  function observedRead(
+    target: fs.PathOrFileDescriptor,
+    options: fs.ReadFileSyncOptionsWithStringEncoding | BufferEncoding,
+  ): string;
+  function observedRead(target: fs.PathOrFileDescriptor, options: fs.ReadFileSyncOptions): string | NonSharedBuffer;
+  function observedRead(
+    target: fs.PathOrFileDescriptor,
+    options?: fs.ReadFileSyncOptions | BufferEncoding | null,
+  ): string | Buffer {
+    if (target === `/proc/${process.pid}/stat` && options === 'utf8') {
+      procReads++;
+      if (outcome instanceof Error) throw outcome;
+      return outcome;
+    }
+    if (typeof options === 'string') return originalRead(target, options);
+    if (options == null) return originalRead(target, options);
+    return originalRead(target, options);
+  }
+  const reads = spyOn(fs, 'readFileSync').mockImplementation(observedRead);
+  let passed = false;
+  try {
+    check(root, owner, () => procReads);
+    passed = true;
+  } finally {
+    reads.mockRestore();
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`proc-state fixture retained at ${root}`);
+  }
+}
+
+test.skipIf(process.platform !== 'linux')(
+  'stale lock reclamation treats a confirmed zombie as exited and rechecks its state',
+  () => {
+    withObservedProcState(observedProcStat('Z'), (root, _owner, reads) => {
+      let calls = 0;
+      expect(
+        requireSafeRepositoryAccess(root).withExclusiveLock('proc-owner', 'zombie state fixture', () => ++calls),
+      ).toBe(1);
+      expect(calls).toBe(1);
+      expect(reads()).toBeGreaterThanOrEqual(2);
+      expect(fs.readdirSync(root)).toEqual([]);
+    });
+  },
+);
+
+test.skipIf(process.platform !== 'linux')(
+  'stale lock retains live or unknown proc owners without entering the callback',
+  () => {
+    const denied = [
+      ...['R', 'S', 'D', 'T', 'I', '?'].map(observedProcStat),
+      '',
+      `${process.pid} (truncated) Z 0`,
+      observedProcStat('Z').replace('\n', ' 0\n'),
+      observedProcStat('Z') + '\n',
+      observedProcStat('Z').replace(`${process.pid} (`, '2147483647 ('),
+      Object.assign(new Error('proc lookup denied'), { code: 'EACCES' }),
+      Object.assign(new Error('proc read failed'), { code: 'EIO' }),
+    ];
+    for (const outcome of denied) {
+      withObservedProcState(outcome, (root, owner) => {
+        const bytes = fs.readFileSync(owner);
+        const identity = fs.statSync(owner, { bigint: true });
+        let calls = 0;
+        expect(() =>
+          requireSafeRepositoryAccess(root).withExclusiveLock('proc-owner', 'denied proc fixture', () => ++calls),
+        ).toThrow('lock owner is alive');
+        expect(calls).toBe(0);
+        expect(fs.readFileSync(owner)).toEqual(bytes);
+        const after = fs.statSync(owner, { bigint: true });
+        expect(after.dev).toBe(identity.dev);
+        expect(after.ino).toBe(identity.ino);
+        expect(fs.readdirSync(root)).toEqual(['proc-owner.lock']);
+      });
     }
   },
 );

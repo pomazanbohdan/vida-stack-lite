@@ -3,8 +3,11 @@ import { moduleHasValueBinding } from './runtime-import-bindings.ts';
 
 const anchors = new Map([
   ['vida-agent/bin/bun.mjs', ['bundleRoot', '../']],
+  ['vida-agent/bin/bun.ts', ['bundleRoot', '../']],
   ['vida-agent/bin/install.mjs', ['bundleRoot', '../']],
+  ['vida-agent/bin/install.ts', ['bundleRoot', '../']],
   ['vida-agent/bin/local-release-artifacts.mjs', ['releaseRootDefault', '../../../']],
+  ['vida-agent/bin/local-release-artifacts.ts', ['releaseRootDefault', '../../../']],
 ]);
 
 // These declarations locate their module's default filesystem scope. They do

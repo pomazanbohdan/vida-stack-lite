@@ -5,7 +5,7 @@ import {
   cleanupContinuationFixtures,
   continuationFixture,
   continuationRequestFor,
-} from '../helpers/delivered-work-continuation-fixture.mjs';
+} from '../helpers/delivered-work-continuation-fixture.ts';
 import {
   expectSnapshotMetadata,
   historyTables,

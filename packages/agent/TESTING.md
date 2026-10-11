@@ -85,6 +85,12 @@ reviewed disposition and remains a GAP under the current executable gate.
 Ordinary task authorization does not automatically launch mutation. Pending
 manual mutation proof is reported as pending, never as achieved qualification.
 
+Rewritten test and shared-helper assertion adapters share one async context per
+child while retaining exact file and test-body identities. A consumed assertion,
+runtime error or overlapping body's assertion is not proof for another body's
+failure. Exclusive adapter publication permits only exact equal-byte retries;
+the child classifier's own fixtures do not qualify a full mutation scope.
+
 For a demonstrated test bottleneck, record comparable whole-command timing,
 collection/setup and child outcomes, then research relevant current official
 documentation. Optimize the actual cause while retaining test selection,
@@ -154,7 +160,12 @@ Use current generated SDK outputs only when their inputs match. Missing or stale
 
 Use supported temporary directories or explicit owned fixture roots. Keep Source-workspace scratch in ignored `.tmp`, outside the package payload. Preserve fixtures when a child outcome is UNKNOWN.
 
-Tests and comments describe current supported behavior. Do not include narratives about absent legacy implementations. Human authorization covers the strict Knip precommit gate. Qualify its staged snapshot, tool/config failures, formatter check, Source/checked-JS typechecks, lint and focused-test enforcement. Hook activation proves enforcement, not quality closure: existing findings must continue to block commits. This authorization does not activate pre-push coverage, CRAP or mutation checks.
+Initialization resource fixtures reuse the maintained inventory owner's exact
+reserved-sidecar predicate. Preserve ordinary hidden files and lookalikes;
+exclude only reserved custody metadata. Serialize Source-copy and Source-binding
+behavior checks, retaining actual copy errors and prior failed receipts.
+
+Tests and comments describe current supported behavior. Do not include narratives about absent legacy implementations. Human authorization covers the strict Knip precommit gate. Qualify its staged snapshot, tool/config failures, formatter check, one strict maintained-TypeScript program, lint and focused-test enforcement. Hook activation proves enforcement, not quality closure: existing findings must continue to block commits. This authorization does not activate pre-push coverage, CRAP or mutation checks.
 
 ## Commands and pins
 
@@ -179,10 +190,21 @@ selection rules to the four published baseline tests. Capture TypeScript
 declarations as tool inputs, but exclude `.d.ts`, `.d.mts` and `.d.cts` from
 runtime module inputs regardless of their basenames.
 
+Current coverage capture checks selected test bytes with pinned Bun's
+`Transpiler.scanImports`, reusing a scanner per supported loader within that
+capture. Deny static Vitest module requests (imports, reexports, dynamic imports
+and CommonJS loads), including escaped specifiers and intervening comments.
+Quoted test fixtures, comments and erased type-only references are allowed.
+This is conservative syntactic evidence: a shadowed `require('vitest')` is also
+denied; it does not prove module execution or lexical binding. Computed module
+names and resolution-only `require.resolve` remain outside this static check.
+Preserve the captured bytes and hashes;
+do not add a second Babel AST or filesystem capture pass for this check.
+
 For a focused check, use:
 
 ```text
-node bin/bun.mjs test tests/FILE.test.mjs --test-name-pattern "CASE_PATTERN"
+node bin/bun.ts test tests/FILE.test.ts --test-name-pattern "CASE_PATTERN"
 ```
 
 The published fixture protocol is owned by
@@ -282,10 +304,14 @@ Type shared fixture state and helpers with the existing production contracts. Gi
 
 Check changed shared MJS helpers with strict `checkJs --noEmit` as well as lint.
 A zero-lint result does not prove that their TypeScript contracts compile.
-The full typecheck runs the Source project and one combined CLI/tooling project
-in `tsconfig.checked-js.json`. This avoids compiling their shared imports twice.
+The mandatory full typecheck first rejects any maintained JS/MJS, then compiles
+the captured maintained TypeScript files in one strict project, including CLI,
+tooling and tests. It also checks the Source project, which owns `src/**/*.ts`
+and retains its stricter prohibition on TypeScript import extensions.
+During migration, use `tsconfig.checked-js.json` for one combined strict CLI/
+tooling check; it also remains mandatory for the staged precommit snapshot.
 The separate CLI and tooling commands remain available for focused checks.
-Source retains its stricter prohibition on TypeScript import extensions.
+Do not add another full CLI/tooling pass to a successful all-maintained check.
 Keep mutable test seeds separate from readonly production snapshots. Use the
 complete current Work contract for valid research fixtures, and check nullable
 Host state, journal versions and original request pointers before use.
@@ -314,9 +340,9 @@ Missing function/file/statement coverage stays uncovered. Keep source-fingerprin
 checks, exact function mapping and nested statement ownership. A clean lint or
 type result for the gate does not prove that product coverage or CRAP passed.
 
-The precommit checks use pinned Bun, Node-hosted Knip, Oxfmt `--check`, full Source and checked-JS TypeScript with `--noEmit`, type-aware Oxlint and the shared AST guard for focused tests. Knip runs once with all-code workspace/test entries, zero allowed issues, and configuration/tag hints treated as errors. Do not use production/strict mode to drop tests or dev dependencies, blanket ignores, issue baselines, cache-based freshness, autofix, or `--no-exit-code`. Public SDK entry exports remain supported API roots.
+The precommit checks use pinned Bun, Node-hosted Knip, Oxfmt `--check`, one strict TypeScript program with `--noEmit` for every maintained staged TS root, including Source, CLI/tooling, native tests and helpers, type-aware Oxlint and the shared AST guard for focused tests. Knip runs once with all-code workspace/test entries, zero allowed issues, and configuration/tag hints treated as errors. Do not use production/strict mode to drop tests or dev dependencies, blanket ignores, issue baselines, cache-based freshness, autofix, or `--no-exit-code`. Public SDK entry exports remain supported API roots.
 
-Capture the active Git index once and materialize its raw object bytes in one owned temporary tree. Reuse it for every precommit check; do not read changed worktree bytes, run checkout filters, format files, or invoke `git add`. Valid partial staging is supported. Preserve indexed paths and modes, including assume-unchanged/skip-worktree entries and staged deletions. Reject conflicts, links, unsafe paths, missing tools/config, or any check failure. Compare the live index with its captured bytes and identity after checks, including failures; preserve concurrent index/worktree changes. Cleanup must prove temporary-root ownership and fail closed on uncertain cleanup. The focused-test guard detects Bun `test.only` and aliases while allowing comments and strings. Include root instructions, sidecar, YAML, attributes and package manifests/configuration in the common staged tree.
+Capture the active Git index once and materialize its raw object bytes in one owned temporary tree. Reuse it for every precommit check; create its exclusive compiler config inside the same identity-checked temporary owner, outside the raw tree; do not read changed worktree bytes, run checkout filters, format files, or invoke `git add`. Valid partial staging is supported. Preserve indexed paths and modes, including assume-unchanged/skip-worktree entries and staged deletions. Reject conflicts, links, unsafe paths, missing tools/config, or any check failure. Compare the live index with its captured bytes and identity after checks, including failures; preserve concurrent index/worktree changes. Cleanup must prove temporary-root ownership and fail closed on uncertain cleanup. The focused-test guard detects Bun `test.only` and aliases while allowing comments and strings. Include root instructions, sidecar, YAML, attributes and package manifests/configuration in the common staged tree.
 
 While fixing lint, capture complete machine-readable diagnostics in the owned ignored output directory. Read counts, rule groups and bounded examples. Do not print the full report. Recheck changed files and their callers; run the complete current profile once after the correction batch is stable. Require zero errors and zero warnings before claiming lint closure. An activated gate must reject outstanding diagnostics.
 
@@ -326,24 +352,24 @@ Use the current scripts for the applicable completion checks.
 
 | Check                         | Command                                                                                  |
 | ----------------------------- | ---------------------------------------------------------------------------------------- |
-| Toolchain and input layout    | `node bin/bun.mjs run test:toolchain:pinned` and `node bin/bun.mjs run preflight:pinned` |
-| Configuration                 | `node bin/bun.mjs run test:config:pinned`                                                |
-| Ordinary agent phase          | `node bin/bun.mjs run test:pinned`                                                       |
-| Repair and recovery           | `node bin/bun.mjs run test:repair:pinned`                                                |
-| HostState and lifecycle       | `node bin/bun.mjs run test:host-state:pinned`                                            |
-| Public run entrypoint         | `node bin/bun.mjs run test:run-entrypoint:pinned`                                        |
-| Resource integrity            | `node bin/bun.mjs run test:resources:pinned`                                             |
-| Fuzz                          | `node bin/bun.mjs run test:fuzz:pinned`                                                  |
-| ZOMBIES                       | `node bin/bun.mjs run test:zombies:pinned`                                               |
-| Deep properties               | `node bin/bun.mjs run test:deep:pinned`                                                  |
-| Static quality                | `node bin/bun.mjs run quality:static:pinned`                                             |
-| Full Source types             | `node bin/bun.mjs node_modules/typescript/bin/tsc --project tsconfig.json --noEmit`      |
-| Coverage and CRAP             | `node bin/bun.mjs run test:coverage:pinned`                                              |
-| Saved coverage report         | `node bin/bun.mjs run coverage:gate:pinned`                                              |
-| Saved CRAP budget report      | `node bin/bun.mjs run crap:pinned`                                                       |
-| Format                        | `node bin/bun.mjs run format:check:pinned`                                               |
-| Final applicable local matrix | `node bin/bun.mjs run local:candidate:pinned`                                            |
-| Portable local subset         | `node bin/bun.mjs run verify:portable:pinned`                                            |
+| Toolchain and input layout    | `node bin/bun.ts run test:toolchain:pinned` and `node bin/bun.ts run preflight:pinned` |
+| Configuration                 | `node bin/bun.ts run test:config:pinned`                                                |
+| Ordinary agent phase          | `node bin/bun.ts run test:pinned`                                                       |
+| Repair and recovery           | `node bin/bun.ts run test:repair:pinned`                                                |
+| HostState and lifecycle       | `node bin/bun.ts run test:host-state:pinned`                                            |
+| Public run entrypoint         | `node bin/bun.ts run test:run-entrypoint:pinned`                                        |
+| Resource integrity            | `node bin/bun.ts run test:resources:pinned`                                             |
+| Fuzz                          | `node bin/bun.ts run test:fuzz:pinned`                                                  |
+| ZOMBIES                       | `node bin/bun.ts run test:zombies:pinned`                                               |
+| Deep properties               | `node bin/bun.ts run test:deep:pinned`                                                  |
+| Static quality                | `node bin/bun.ts run quality:static:pinned`                                             |
+| Full Source types             | `node bin/bun.ts node_modules/typescript/bin/tsc --project tsconfig.json --noEmit`      |
+| Coverage and CRAP             | `node bin/bun.ts run test:coverage:pinned`                                              |
+| Saved coverage report         | `node bin/bun.ts run coverage:gate:pinned`                                              |
+| Saved CRAP budget report      | `node bin/bun.ts run crap:pinned`                                                       |
+| Format                        | `node bin/bun.ts run format:check:pinned`                                               |
+| Final applicable local matrix | `node bin/bun.ts run local:candidate:pinned`                                            |
+| Portable local subset         | `node bin/bun.ts run verify:portable:pinned`                                            |
 
 `npm test` selects four disjoint agent phases: ordinary tests, repair, HostState and run entrypoint. It does not build or install. `verify` is a local subset. It does not install dependencies or a bundle. `ci:pinned` is delivery preparation; run it only through the delivery lane.
 
@@ -562,7 +588,7 @@ Use the strict current v1 contracts. Ship and qualify a functional bundle-owned 
 
 ### Failed prewriter recovery
 
-Use the cases in `tests/delivered-work-continuation.test.mjs` for owner recovery
+Use the cases in `tests/delivered-work-continuation.test.ts` for owner recovery
 and failed-wave correction. These are development behavior checks. They do not
 form or install a package.
 
@@ -625,7 +651,7 @@ unresolved file ownership during generic CAS, and asynchronous proof rejection
 before writes. Windows replacement checks include hardlinks and same-byte target,
 staging and result substitution. Git hook checks retain unrelated index entries.
 
-`native-delivery-evidence-repair.test.mjs` covers the fixed stale qualification
+`native-delivery-evidence-repair.test.ts` covers the fixed stale qualification
 reset. It checks the original uninstalled operation and archive, review, reverse,
 scope and CLEAR bytes and directory membership, complete protected dependency
 closure, three exact beforeimages or absences, custody, source and path drift,
@@ -734,13 +760,13 @@ child. Successful qualification cleanup removes only its owned qualification
 fixture; controller observations stay outside that fixture. Controller and
 qualification timeout and output limits remain unchanged.
 
-Run the inert capture cases with `node bin/bun.mjs test tests/development-controller-observation.test.mjs`.
+Run the inert capture cases with `node bin/bun.ts test tests/development-controller-observation.test.ts`.
 They cover byte-exact success, terminal nonzero streams, spawn error, pinned
 partial capture, timeout, path/link/collision denial, fresh-process restart,
 declared nesting, duplicate and independent launch denial, and final-receipt
 persistence failure. The partial-capture case runs under the pinned Bun
 1.4.2 Node-compatible `spawnSync` API. Run the existing pure diagnostic check
-with `node bin/bun.mjs test tests/development-controller.test.mjs --test-name-pattern "controller failure diagnostics preserve bounded sanitized terminal fields without claiming no effects"`.
+with `node bin/bun.ts test tests/development-controller.test.ts --test-name-pattern "controller failure diagnostics preserve bounded sanitized terminal fields without claiming no effects"`.
 Do not run the controller construction, dependency-install or copied-package
 integration case as a local observation test.
 

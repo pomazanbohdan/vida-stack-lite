@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import coverageApi from 'istanbul-lib-coverage';
 import { maintainedSourceInventory, selectMaintainedSourcePaths } from './maintained-source-inventory.js';
-import { canonicalTestSelection, sha256 } from './bun-coverage-evidence.mjs';
+import { canonicalTestSelection, sha256 } from './bun-coverage-evidence.ts';
 import { functionInventory } from './function-inventory.js';
 import { validateCoverageReport } from './bun-coverage-report-validator.js';
 import { baselineFunctionEvidenceForSource, exactFullCoverage, validateCoverageLocations } from './coverage-math.js';
@@ -28,7 +28,7 @@ type CoverageReport = {
   source_fingerprint: string;
   test_fingerprint: string;
   tests: string[];
-  test_selection: import('./bun-coverage-evidence.mjs').CoverageInputs['test_selection'];
+  test_selection: import('./bun-coverage-evidence.ts').CoverageInputs['test_selection'];
   test_inputs: Array<{ path: string; sha256: string }>;
   coverage: Record<string, import('istanbul-lib-instrument').FileCoverageData>;
 };
@@ -210,7 +210,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
 
   function isCurrentQualityTool(
     file: string,
-    selection: import('./bun-coverage-evidence.mjs').CoverageInputs['test_selection'],
+    selection: import('./bun-coverage-evidence.ts').CoverageInputs['test_selection'],
   ): boolean {
     const published = selection.published_contract_inputs?.some((entry) => entry.path === file) ?? false;
     return file.startsWith('tooling/') && !published;

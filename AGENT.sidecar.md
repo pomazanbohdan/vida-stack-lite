@@ -27,26 +27,32 @@ current owners.
 
 ## Source and ownership map
 
-| Layer or concern                                                    | Authoritative source                                                                                                                | Owner            |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| Repository layout and distribution intent                           | Current attributable user decision in `.agent/work/core-cloud-continuation-20261002/WORK.md#native-only-public-delivery-decision`   | Repository owner |
-| Agent system behavior                                               | `packages/agent/docs/system-specification.md`                                                                                       | Agent maintainer |
-| Agent lifecycle and verification                                    | `packages/agent/instructions/`, `packages/agent/TESTING.md`                                                                         | Agent maintainer |
-| Agent installation guide                                            | `packages/agent/docs/installation.md` (derived guide, not a second specification)                                                   | Agent maintainer |
-| Agent research evidence                                             | `packages/agent/docs/research/` (facts and open questions, not runtime receipts)                                                    | Agent maintainer |
-| Agent implementation and executable evidence                        | `packages/agent/src/`, `packages/agent/bin/`, `packages/agent/schemas/`, `packages/agent/tests/`, `packages/agent/tooling/`         | Agent maintainer |
-| Plugin business intent                                              | `packages/plugin/docs/business-requirements.md`                                                                                     | Plugin owner     |
-| Plugin system behavior                                              | `packages/plugin/docs/system-specification.md`                                                                                      | Plugin owner     |
-| Plugin acceptance                                                   | `packages/plugin/docs/acceptance.md`                                                                                                | Plugin owner     |
-| Plugin code and verification                                        | `packages/plugin/`, as declared by its current system specification                                                                 | Plugin owner     |
-| Repository-only migration verification                              | `tooling/agent/`, `tests/agent/`                                                                                                    | Agent maintainer |
-| Repository-only CI evidence join                                    | `tooling/agent/release-ci-evidence.mjs` and its trusted session/controller observation boundary                                     | Agent maintainer |
-| Native build artifact and Windows install/update/uninstall delivery | `.github/workflows/agent-native-delivery.yml`, `tooling/agent/native-ci-delivery.mjs`, `packages/agent/tooling/install-windows.ps1` | Agent maintainer |
-| Project registry and configuration                                  | Root `agent-runtime.config.v1.yaml` and bound documentation policy                                                                  | Repository owner |
+| Layer or concern                                                    | Authoritative source                                                                                                               | Owner            |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Repository layout and distribution intent                           | Current attributable user decision in `.agent/work/core-cloud-continuation-20261002/WORK.md#native-only-public-delivery-decision`  | Repository owner |
+| Agent system behavior                                               | `packages/agent/docs/system-specification.md`                                                                                      | Agent maintainer |
+| Agent lifecycle and verification                                    | `packages/agent/instructions/`, `packages/agent/TESTING.md`                                                                        | Agent maintainer |
+| Agent installation guide                                            | `packages/agent/docs/installation.md` (derived guide, not a second specification)                                                  | Agent maintainer |
+| Agent research evidence                                             | `packages/agent/docs/research/` (facts and open questions, not runtime receipts)                                                   | Agent maintainer |
+| Agent implementation and executable evidence                        | `packages/agent/src/`, `packages/agent/bin/`, `packages/agent/schemas/`, `packages/agent/tests/`, `packages/agent/tooling/`        | Agent maintainer |
+| Plugin business intent                                              | `packages/plugin/docs/business-requirements.md`                                                                                    | Plugin owner     |
+| Plugin system behavior                                              | `packages/plugin/docs/system-specification.md`                                                                                     | Plugin owner     |
+| Plugin acceptance                                                   | `packages/plugin/docs/acceptance.md`                                                                                               | Plugin owner     |
+| Plugin code and verification                                        | `packages/plugin/`, as declared by its current system specification                                                                | Plugin owner     |
+| Repository-only migration verification                              | `tooling/agent/`, `tests/agent/`                                                                                                   | Agent maintainer |
+| Repository-only CI evidence join                                    | `tooling/agent/release-ci-evidence.ts` and its trusted session/controller observation boundary                                     | Agent maintainer |
+| Native build artifact and Windows install/update/uninstall delivery | `.github/workflows/agent-native-delivery.yml`, `tooling/agent/native-ci-delivery.ts`, `packages/agent/tooling/install-windows.ps1` | Agent maintainer |
+| Project registry and configuration                                  | Root `agent-runtime.config.v1.yaml` and bound documentation policy                                                                 | Repository owner |
 
 Plugin canonical documents are filled by the Plugin owner under a fresh scope.
 Their absence is an explicit setup gap, not permission to import old work as law.
 One writer owns overlapping shared root configuration and workspace files.
+
+Before adding a helper, search maintained code for an owner with the same contract.
+Keep shared product behavior in `packages`; repository adapters call that owner.
+Preserve each boundary's authorization, guard order, CAS and UNKNOWN handling.
+Reuse its tests and inventory; add cases for affected callers and record extracted
+function correspondence. Similar syntax alone is insufficient reason to merge.
 
 ## Runtime and distribution
 

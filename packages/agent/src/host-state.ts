@@ -112,6 +112,10 @@ import {
 } from './orchestration/scoped-source-snapshot.js';
 import { parseMastraSessionLedgerState } from './orchestration/mastra-session-ledger-codec.js';
 import {
+  buildReadOnlyDispatchRepairPlan,
+  type ReadOnlyDispatchRepairPlan,
+} from './orchestration/read-only-dispatch-repair.js';
+import {
   loadRuntimeConfig,
   runtimeConfigDigest,
   assertProjectUpgradeInactive,
@@ -373,6 +377,49 @@ type JournalRepairPreimage = Omit<MastraSessionLedgerState, 'items' | 'completed
   readonly items: readonly JournalItemRepairPreimage[];
   readonly completed: readonly { readonly step_id: string; readonly items: readonly JournalItemRepairPreimage[] }[];
 };
+
+function normalizeCorrectionRepairReceipt(value: unknown): unknown {
+  if (!isPlainRecord(value) || !isPlainRecord(value.attempt)) return value;
+  const attempt = value.attempt;
+  const hasGeneration = Object.hasOwn(attempt, 'correction_generation');
+  requireState(
+    hasGeneration === Object.hasOwn(attempt, 'correction_authorization'),
+    'partial assignment authority is ambiguous',
+  );
+  return hasGeneration
+    ? value
+    : { ...value, attempt: { ...attempt, correction_generation: 0, correction_authorization: null } };
+}
+
+function normalizeCorrectionRepairItem(value: unknown): unknown {
+  if (!isPlainRecord(value) || !isPlainRecord(value.host_reservation)) return value;
+  const reservation = value.host_reservation;
+  const authorization = reservation.authorization;
+  return {
+    ...value,
+    host_reservation: {
+      ...reservation,
+      receipt: normalizeCorrectionRepairReceipt(reservation.receipt),
+      authorization: isPlainRecord(authorization)
+        ? { ...authorization, receipt: normalizeCorrectionRepairReceipt(authorization.receipt) }
+        : authorization,
+    },
+  };
+}
+
+/** Repair-only validation view; original journal bytes remain the CAS preimage. */
+function parseCorrectionRepairJournal(value: unknown): MastraSessionLedgerState {
+  requireState(isPlainRecord(value), 'repair journal preimage shape is invalid');
+  const normalizeWave = (wave: unknown): unknown =>
+    isPlainRecord(wave) && Array.isArray(wave.items)
+      ? { ...wave, items: wave.items.map(normalizeCorrectionRepairItem) }
+      : wave;
+  return parseMastraSessionLedgerState({
+    ...value,
+    items: Array.isArray(value.items) ? value.items.map(normalizeCorrectionRepairItem) : value.items,
+    completed: Array.isArray(value.completed) ? value.completed.map(normalizeWave) : value.completed,
+  });
+}
 export interface WorkflowAttemptReconciliationRequest {
   readonly identity: WorkIdentity;
   readonly expectedWork: StateVersion;
@@ -2576,7 +2623,9 @@ interface StoredWorkHistory {
   readonly records: readonly StoredWorkHistoryRecord[];
   readonly qualifiedRuntimeCodeContinuations: readonly QualifiedRuntimeCodeContinuationReceipt[];
 }
-type StoredWorkHistoryReadCache = Map<string, StoredWorkHistory>;
+type StoredWorkHistoryReadCache = Map<string, StoredWorkHistory> & {
+  availableTables?: ReadonlySet<string>;
+};
 
 function checkedWork(
   value: unknown,
@@ -3082,13 +3131,8 @@ function failedPrewriterHistoryRecords(
   }
   return records;
 }
-function loadStoredWorkHistory(
-  database: Database,
-  workspaceId: string,
-  workId: string,
-  repairOverlay?: DeliveredContinuationRepairDigestOverlay,
-  validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
-): StoredWorkHistory {
+function storedWorkHistoryTables(database: Database, cache?: StoredWorkHistoryReadCache): ReadonlySet<string> {
+  if (cache?.availableTables) return cache.availableTables;
   const availableTables = new Set(
     (
       database
@@ -3098,6 +3142,18 @@ function loadStoredWorkHistory(
         .all() as { name: string }[]
     ).map((row) => row.name),
   );
+  if (cache) cache.availableTables = availableTables;
+  return availableTables;
+}
+function loadStoredWorkHistory(
+  database: Database,
+  workspaceId: string,
+  workId: string,
+  repairOverlay?: DeliveredContinuationRepairDigestOverlay,
+  validatedQualifiedRuntimeCodeContinuations?: readonly QualifiedRuntimeCodeContinuationReceipt[],
+  cache?: StoredWorkHistoryReadCache,
+): StoredWorkHistory {
+  const availableTables = storedWorkHistoryTables(database, cache);
   const qualifiedRuntimeCodeContinuations = validatedQualifiedRuntimeCodeHistory(
     database,
     workspaceId,
@@ -3126,16 +3182,22 @@ function cachedStoredWorkHistory(
   validatedQualifiedRuntimeCodeContinuations: readonly QualifiedRuntimeCodeContinuationReceipt[] | undefined,
   cache: StoredWorkHistoryReadCache | undefined,
 ): StoredWorkHistory {
-  const canCache = Boolean(cache && !repairOverlay && !validatedQualifiedRuntimeCodeContinuations),
+  const canCache = Boolean(cache && !repairOverlay),
     key = canCache ? canonicalJson([workspaceId, workId]) : '',
     cached = canCache ? cache!.get(key) : undefined;
-  if (cached) return cached;
+  if (
+    cached &&
+    (validatedQualifiedRuntimeCodeContinuations === undefined ||
+      sameJson(cached.qualifiedRuntimeCodeContinuations, validatedQualifiedRuntimeCodeContinuations))
+  )
+    return cached;
   const history = loadStoredWorkHistory(
     database,
     workspaceId,
     workId,
     repairOverlay,
     validatedQualifiedRuntimeCodeContinuations,
+    canCache ? cache : undefined,
   );
   if (canCache) cache!.set(key, freezeJsonValue({ ...history, records: [...history.records] }));
   return history;
@@ -4069,6 +4131,84 @@ function validateMutableHistories(before: CoordinationLedger, ledger: Coordinati
     );
   }
 }
+function interruptedSourceRetirementProgress(
+  before: HostStateSnapshot,
+  work: WorkState,
+  ledger: CoordinationLedger,
+  request: InterruptedSourceRetirementRequest,
+): { readonly work: WorkState; readonly ledger: CoordinationLedger } {
+  requireState(before.work && before.ledger && before.work.lease, 'retirement progress predecessor is unavailable');
+  const priorWork = before.work,
+    priorLedger = before.ledger,
+    lease = priorWork.lease!,
+    ticket = priorLedger.tickets.find((entry) => entry.ticket_id === lease.ticket_id),
+    claims = priorLedger.claims.filter((entry) => entry.ticket_id === lease.ticket_id && entry.status === 'active'),
+    attempt = priorWork.execution.assignment_attempts.find(
+      (entry) => entry.attempt_id === request.authorization.receipt.attempt.attempt_id,
+    ),
+    operation = ledger.operations.at(-1);
+  requireState(
+    ticket?.status === 'active' &&
+      claims.length === 1 &&
+      attempt &&
+      operation?.kind === 'release' &&
+      sameJson(attempt, {
+        ...request.authorization.receipt.attempt,
+        status: 'uncertain',
+        result: null,
+        result_digest: null,
+      }) &&
+      sameJson(attempt.lease, lease),
+    'retirement progress does not retain the exact uncertain attempt and ownership',
+  );
+  const claim = claims[0]!;
+  requireState(
+    sameJson(operation, {
+      schema: 'CoordinationOperation/v1',
+      operation_id: 'interrupted-source-release-' + canonicalJsonDigest(request),
+      kind: 'release',
+      ticket_id: ticket.ticket_id,
+      work_id: ticket.work_id,
+      thread_id: ticket.thread_id,
+      source_revision: ticket.source_revision,
+      resources: [...ticket.exclusive_resources],
+      from_ledger_revision: priorLedger.revision,
+      to_ledger_revision: priorLedger.revision + 1,
+      decided_by: request.operatorHandle,
+      decision_pointer: request.decisionPointer,
+      created_at: operation.created_at,
+    }) &&
+      sameJson(work, {
+        ...priorWork,
+        revision: priorWork.revision + 1,
+        lifecycle: { ...priorWork.lifecycle, revision: priorWork.lifecycle.revision + 1 },
+        lease: null,
+        execution: { ...priorWork.execution, status: 'suspended' },
+      }) &&
+      sameJson(ledger, {
+        ...priorLedger,
+        revision: priorLedger.revision + 1,
+        tickets: priorLedger.tickets.map((entry) =>
+          entry.ticket_id === ticket.ticket_id
+            ? { ...entry, status: 'released', active_resources: [], blocked_resources: [], expires_at: null }
+            : entry,
+        ),
+        claims: priorLedger.claims.map((entry) =>
+          entry.claim_id === claim.claim_id
+            ? { ...entry, status: 'released', renewed_at: operation.created_at }
+            : entry,
+        ),
+        operations: [...priorLedger.operations, operation],
+      }),
+    'retirement progress differs from the authorized exact owner release',
+  );
+  // The exact dedicated release is checked above; ordinary validation retains its ownership preimage.
+  return {
+    work: { ...work, lease },
+    ledger: { ...ledger, tickets: priorLedger.tickets, claims: priorLedger.claims },
+  };
+}
+
 function validateProgress(
   before: HostStateSnapshot,
   work: WorkState,
@@ -4919,7 +5059,7 @@ export async function runConsumerMigrationState<T>(
   const packageSource = snapshotRuntimePackageSources(
     runtimePackageAccess(),
     config.runtime.bundle,
-    ['src/host-state.ts', 'src/orchestration/local-work-admission.ts', 'bin/run.mjs'].map(
+    ['src/host-state.ts', 'src/orchestration/local-work-admission.ts', 'bin/run.ts'].map(
       (item) => config.runtime.bundle + '/' + item,
     ),
   );
@@ -6107,7 +6247,11 @@ export class HostStateStore {
     ledger: MastraSessionLedger,
     input: SessionProducerInput,
     journalExpected: StateVersion | null,
-  ): import('./config/runtime-config.js').AgentRuntimeConfig {
+  ): {
+    readonly config: import('./config/runtime-config.js').AgentRuntimeConfig;
+    readonly journal: ReturnType<MastraSessionLedger['resume']>;
+    readonly host: HostStateSnapshot;
+  } {
     const bound = MastraSessionLedger.prototype.sessionProducerBinding.call(ledger);
     const physical = lstatSync(this.#database.filename);
     requireState(
@@ -6188,7 +6332,7 @@ export class HostStateStore {
             }),
         'mechanical producer run differs',
       );
-      return currentConfig;
+      return { config: currentConfig, journal, host };
     }
     const work = host.work,
       lease = work.lease;
@@ -6253,11 +6397,11 @@ export class HostStateStore {
       input.runId === (journal?.state.corrective_execution?.engine_run_id ?? work.execution.run_id),
       'session producer base/corrective run differs',
     );
-    const continuation = this.#readDeliveredWorkContinuationReceipt(identity, input.context.attempt);
+    const delivered = this.#readDeliveredWorkContinuationBundle(identity, input.context.attempt);
+    const continuation = delivered?.receipt;
     const configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
-    const configuredRecovery = configuredContinuation
-      ? this.#readFailedPrewriterRecoveryReceipt(identity, input.context.attempt)
-      : null;
+    const configuredRecovery =
+      delivered?.receipt.request.action.kind === 'configured_frontier' ? delivered.recovery : null;
     const initialContinuation = this.#readInitialSourceContinuationReceipt(identity, input.context.attempt);
     requireState(
       !(configuredContinuation && initialContinuation),
@@ -6329,7 +6473,51 @@ export class HostStateStore {
       'session producer owner claim/FIFO/expiry differs',
     );
     this.#assertNoOverlappingActiveSourceOwner(host.ledger, ticket);
-    return currentConfig;
+    return { config: currentConfig, journal, host };
+  }
+
+  #readSessionProducerEngineSnapshot(
+    binding: SessionEngineBinding,
+    journal: ReturnType<MastraSessionLedger['resume']>,
+    identity: WorkIdentity,
+    continuation: DeliveredWorkContinuationReceipt | null,
+    initialContinuation: InitialSourceContinuationReceipt | null,
+    currentHost: HostStateSnapshot,
+  ): SessionBridgeSnapshot | null {
+    if (initialContinuation) {
+      requireState(
+        journal && !journal.state.corrective_execution,
+        'initial-source producer current Journal is missing or corrective',
+      );
+      const frontierReceipt = this.#readInitialSourceFrontierCodeRebindReceipt(
+          identity,
+          binding.context.attempt,
+          initialContinuation.continuation_id,
+        ),
+        completedRecoveryReceipt = this.#readCompletedSourceReportRecoveryReceiptRow(identity, binding.context.attempt);
+      requireState(currentHost.work, 'initial-source producer current Work is missing');
+      return readInitialSourceContinuationSessionEngineSnapshot(
+        binding,
+        initialContinuation,
+        journal,
+        currentHost,
+        frontierReceipt,
+        completedRecoveryReceipt,
+      );
+    }
+    if (continuation?.request.action.kind === 'configured_frontier')
+      return readConfiguredContinuationSessionEngineSnapshot(
+        binding,
+        continuation as ConfiguredFrontierReceipt,
+        this.#readFailedPrewriterRecoveryReceipt(identity, binding.context.attempt),
+        storedQualifiedRuntimeCodeContinuations(
+          this.#database,
+          this.#workspaceId,
+          identity.work_id,
+          binding.context.attempt,
+        ),
+      );
+    return readSessionEngineSnapshot(binding);
   }
 
   beginSessionProducer(ledger: MastraSessionLedger, supplied: SessionProducerInput): SessionProducerHandle {
@@ -6342,8 +6530,7 @@ export class HostStateStore {
       .transaction(() => {
         this.#assertReconciliationWritesAllowed();
         this.assertSessionProducerWriteAllowed();
-        const config = this.#assertSessionProducerContext(ledger, input, input.expectedJournal);
-        const journal = MastraSessionLedger.prototype.resume.call(ledger, input.context.work_id, input.context.attempt);
+        const { config, journal, host } = this.#assertSessionProducerContext(ledger, input, input.expectedJournal);
         const project = loadProjectSetContext(
             input.repositoryRoot,
             config,
@@ -6368,44 +6555,14 @@ export class HostStateStore {
           config,
           correctiveExecution: journal?.state.corrective_execution ?? undefined,
         };
-        let engine: SessionBridgeSnapshot | null;
-        if (initialContinuation) {
-          requireState(
-            journal && !journal.state.corrective_execution,
-            'initial-source producer current Journal is missing or corrective',
-          );
-          const currentHost = this.#read(identity),
-            frontierReceipt = this.#readInitialSourceFrontierCodeRebindReceipt(
-              identity,
-              input.context.attempt,
-              initialContinuation.continuation_id,
-            ),
-            completedRecoveryReceipt = this.#readCompletedSourceReportRecoveryReceiptRow(
-              identity,
-              input.context.attempt,
-            );
-          requireState(currentHost.work, 'initial-source producer current Work is missing');
-          engine = readInitialSourceContinuationSessionEngineSnapshot(
-            engineBinding,
-            initialContinuation,
-            journal,
-            currentHost,
-            frontierReceipt,
-            completedRecoveryReceipt,
-          );
-        } else if (configuredContinuation) {
-          engine = readConfiguredContinuationSessionEngineSnapshot(
-            engineBinding,
-            configuredContinuation as ConfiguredFrontierReceipt,
-            this.#readFailedPrewriterRecoveryReceipt(identity, input.context.attempt),
-            storedQualifiedRuntimeCodeContinuations(
-              this.#database,
-              this.#workspaceId,
-              identity.work_id,
-              input.context.attempt,
-            ),
-          );
-        } else engine = readSessionEngineSnapshot(engineBinding);
+        const engine = this.#readSessionProducerEngineSnapshot(
+          engineBinding,
+          journal,
+          identity,
+          continuation,
+          initialContinuation,
+          host,
+        );
         if (initialContinuation && input.phase === 'resume')
           requireState(
             journal &&
@@ -6572,11 +6729,10 @@ export class HostStateStore {
       .transaction(() => {
         this.assertSessionProducerWriteAllowed(handle);
         const entry = this.#sessionProducers.get(handle)!;
-        const config = this.#assertSessionProducerContext(entry.ledger, entry.input, expectedJournal);
-        const journal = MastraSessionLedger.prototype.resume.call(
+        const { config, journal, host } = this.#assertSessionProducerContext(
           entry.ledger,
-          entry.input.context.work_id,
-          entry.input.context.attempt,
+          entry.input,
+          expectedJournal,
         );
         const project = loadProjectSetContext(
             entry.input.repositoryRoot,
@@ -6601,44 +6757,14 @@ export class HostStateStore {
           config,
           correctiveExecution: journal?.state.corrective_execution ?? undefined,
         };
-        let engine: SessionBridgeSnapshot | null;
-        if (initialContinuation) {
-          requireState(
-            journal && !journal.state.corrective_execution,
-            'initial-source producer current Journal is missing or corrective',
-          );
-          const currentHost = this.#read(identity),
-            frontierReceipt = this.#readInitialSourceFrontierCodeRebindReceipt(
-              identity,
-              entry.input.context.attempt,
-              initialContinuation.continuation_id,
-            ),
-            completedRecoveryReceipt = this.#readCompletedSourceReportRecoveryReceiptRow(
-              identity,
-              entry.input.context.attempt,
-            );
-          requireState(currentHost.work, 'initial-source producer current Work is missing');
-          engine = readInitialSourceContinuationSessionEngineSnapshot(
-            binding,
-            initialContinuation,
-            journal,
-            currentHost,
-            frontierReceipt,
-            completedRecoveryReceipt,
-          );
-        } else if (continuation?.request.action.kind === 'configured_frontier') {
-          engine = readConfiguredContinuationSessionEngineSnapshot(
-            binding,
-            continuation as ConfiguredFrontierReceipt,
-            this.#readFailedPrewriterRecoveryReceipt(identity, entry.input.context.attempt),
-            storedQualifiedRuntimeCodeContinuations(
-              this.#database,
-              this.#workspaceId,
-              identity.work_id,
-              entry.input.context.attempt,
-            ),
-          );
-        } else engine = readSessionEngineSnapshot(binding);
+        const engine = this.#readSessionProducerEngineSnapshot(
+          binding,
+          journal,
+          identity,
+          continuation,
+          initialContinuation,
+          host,
+        );
         if (!engine)
           requireState(
             entry.input.phase === 'initialize' &&
@@ -7966,6 +8092,10 @@ export class HostStateStore {
       this.#database,
       this.#workspaceId,
       identity.work_id,
+      undefined,
+      this.#storedWorkHistoryReadCache && !continuationRepairOverlay
+        ? storedWorkHistoryTables(this.#database, this.#storedWorkHistoryReadCache)
+        : undefined,
     );
     return {
       work: this.#decodeStoredStateRow(row, continuationRepairOverlay, runtimeCodeContinuations) as WorkState,
@@ -8287,6 +8417,72 @@ export class HostStateStore {
   }
   readWorkSessionJournal(identity: WorkIdentity): WorkSessionJournalSnapshot | null {
     return this.readWorkSessionSnapshot(identity).journal;
+  }
+  /** Record one read-only replacement intent; the original unknown issue stays untouched. */
+  commitReadOnlyDispatchRepair(plan: ReadOnlyDispatchRepairPlan): ReadOnlyDispatchRepairPlan {
+    requireState(this.#repositoryRoot, 'read-only dispatch repair requires its configured repository');
+    const repositoryRoot = this.#repositoryRoot;
+    requireState(
+      plan.schema === 'VidaReadOnlyDispatchRepairPlan/v2' && plan.workspace_id === this.#workspaceId,
+      'read-only dispatch repair plan identity differs',
+    );
+    requireState(!this.#database.inTransaction, 'nested read-only dispatch repair transaction forbidden');
+    const identity: WorkIdentity = {
+      repository_id: plan.repository_id,
+      project_ids: plan.project_ids,
+      integrations_digest: plan.integrations_digest,
+      work_id: plan.work_id,
+    };
+    return this.#transactionWithProducerFence(() => {
+      this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceAvailable();
+      this.#assertMaintenanceGeneration(plan.maintenance_generation);
+      const host = this.#read(identity);
+      matchesExpected(host.workVersion, plan.work_version);
+      matchesExpected(host.ledgerVersion, plan.ledger_version);
+      const journal = this.#readWorkSessionJournal(identity, host.work, plan.attempt);
+      matchesExpected(journal?.version ?? null, plan.mastra_version);
+      const rebuilt = buildReadOnlyDispatchRepairPlan({
+        repositoryRoot,
+        config: loadRuntimeConfig(repositoryRoot),
+        workspaceId: this.#workspaceId,
+        projectIds: identity.project_ids,
+        workId: identity.work_id,
+        attempt: plan.attempt,
+        actionId: plan.logical_action_id,
+        issueId: plan.prior_issue_id,
+        nativeHandle: plan.prior_native_handle,
+        repairId: plan.repair_id,
+        actor: plan.actor,
+        timestamp: plan.timestamp,
+        snapshot: { host, journal },
+      });
+      requireState(
+        canonicalJson(plan) === canonicalJson(rebuilt),
+        'read-only dispatch repair plan is stale or differs from deterministic current state',
+      );
+      this.#database.exec(
+        'CREATE TABLE IF NOT EXISTS agent_host_readonly_dispatch_repair (workspace_id TEXT NOT NULL, work_id TEXT NOT NULL, attempt INTEGER NOT NULL, logical_action_id TEXT NOT NULL, generation INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,work_id,attempt,logical_action_id,generation))',
+      );
+      const key = [this.#workspaceId, plan.work_id, plan.attempt, plan.logical_action_id, 1] as const;
+      const prior: unknown = this.#database
+        .query(
+          'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=?',
+        )
+        .get(...key);
+      const payload = canonicalJson(rebuilt);
+      if (prior !== null) {
+        requireState(
+          isPlainRecord(prior) && prior.digest === rebuilt.digest && prior.payload === payload,
+          'existing read-only dispatch repair generation differs',
+        );
+      } else {
+        this.#database
+          .query('INSERT INTO agent_host_readonly_dispatch_repair VALUES(?,?,?,?,?,?,?)')
+          .run(...key, payload, rebuilt.digest);
+      }
+      return freezeJsonValue(rebuilt);
+    }).immediate();
   }
   /** Host, Ledger, maintenance and Journal versions belong to one read transaction. */
   readWorkSessionSnapshot(identity: WorkIdentity, attempt?: number): HostWorkSessionSnapshot {
@@ -10028,7 +10224,7 @@ export class HostStateStore {
               canonicalJsonDigest(JSON.parse(journalRow.payload)) === journalRow.digest,
               'repair journal preimage integrity differs',
             );
-            const journal = parseMastraSessionLedgerState(JSON.parse(journalRow.payload));
+            const journal = parseCorrectionRepairJournal(JSON.parse(journalRow.payload));
             requireState(
               journal.schema === 'MastraSessionLedger/v1' &&
                 journal.workspace_id === this.#workspaceId &&
@@ -10151,7 +10347,7 @@ export class HostStateStore {
           );
           const unknownIssuedItems = journals
             .filter((entry) => entry.work_id === work.binding.lifecycle_work_id)
-            .flatMap((entry) => journalItems(parseMastraSessionLedgerState(JSON.parse(entry.payload))))
+            .flatMap((entry) => journalItems(parseCorrectionRepairJournal(JSON.parse(entry.payload))))
             .filter((entry) => entry.issue_id !== null && entry.observation === null);
           requireState(
             unknownIssuedItems.length === 1 && canonicalJson(unknownIssuedItems[0]) === canonicalJson(item),
@@ -10742,7 +10938,10 @@ export class HostStateStore {
             : sameJson(operation.bindings, bindings);
         if (boundCurrent)
           requireState(
-            sameJson(operation.work_changes, workChanges) && sameJson(operation.journal_changes, journalChanges),
+            // These decoded, validated rows are owned recovery components, not
+            // one public JSON input with a pooled ingress node budget.
+            isDeepStrictEqual(operation.work_changes, workChanges) &&
+              isDeepStrictEqual(operation.journal_changes, journalChanges),
             'repair frozen change set is incomplete',
           );
       }
@@ -13053,7 +13252,7 @@ export class HostStateStore {
         original.digest === receipt.request.original_receipt_digest,
       'failed prewriter recovery original custody differs',
     );
-    return snapshotFailedPrewriterRecoveryReceipt(receipt);
+    return freezeJsonValue(JSON.parse(encoded.payload) as FailedPrewriterRecoveryReceipt);
   }
   commitReadOnlyFrontierRuntimeCode(
     input: InitialSourceFrontierCodeRebindRequest,
@@ -13538,6 +13737,15 @@ export class HostStateStore {
     identity: WorkIdentity,
     attempt: number,
   ): DeliveredWorkContinuationReceipt | null {
+    return this.#readDeliveredWorkContinuationBundle(identity, attempt)?.receipt ?? null;
+  }
+  #readDeliveredWorkContinuationBundle(
+    identity: WorkIdentity,
+    attempt: number,
+  ): {
+    readonly receipt: DeliveredWorkContinuationReceipt;
+    readonly recovery: FailedPrewriterRecoveryReceipt | null;
+  } | null {
     this.#assertNoPendingDeliveredContinuationRepair();
     const current = this.#read(identity);
     if (!current.work) return null;
@@ -13555,10 +13763,11 @@ export class HostStateStore {
     const row = rows[0]!,
       receipt = JSON.parse(row.payload) as DeliveredWorkContinuationReceipt,
       action = receipt.request.action,
-      recovery = this.#readFailedPrewriterRecoveryReceipt(identity, attempt);
+      recovery = this.#readFailedPrewriterRecoveryReceipt(identity, attempt),
+      payload = serializeDeliveredWorkContinuationReceipt(receipt);
     requireState(
-      row.payload === serializeDeliveredWorkContinuationReceipt(receipt) &&
-        row.digest === deliveredWorkContinuationRecord(receipt).digest &&
+      row.payload === payload &&
+        row.digest === createHash('sha256').update(payload).digest('hex') &&
         sameJson(receipt.request.identity, identity) &&
         receipt.attempt === attempt &&
         receipt.request_digest === canonicalJsonDigest(receipt.request) &&
@@ -13576,9 +13785,7 @@ export class HostStateStore {
           : action.capture.action_id === row.action_id),
       'delivered-work receipt or current binding differs',
     );
-    return freezeJsonValue(
-      JSON.parse(serializeDeliveredWorkContinuationReceipt(receipt)) as DeliveredWorkContinuationReceipt,
-    );
+    return { receipt: freezeJsonValue(JSON.parse(payload) as DeliveredWorkContinuationReceipt), recovery };
   }
   /** Read the current retained review/prewriter wave for this original Work attempt. */
   readDeliveredWorkContinuation(identity: WorkIdentity, attempt: number): DeliveredWorkContinuationLookup | null {
@@ -16920,6 +17127,9 @@ export class HostStateStore {
         undefined,
         true,
         true,
+        [],
+        undefined,
+        request,
       );
       const finalAttempt = after.work!.execution.assignment_attempts.find(
         (entry) => entry.attempt_id === uncertain.attempt.attempt_id,
@@ -18198,6 +18408,7 @@ export class HostStateStore {
       readonly receipt: CompletedSourceReportRecoveryReceipt;
       readonly progressWork: WorkState;
     },
+    sourceRetirementRequest?: InterruptedSourceRetirementRequest,
   ): HostStateSnapshot {
     const { documentationContext, expectedSessionJournal, ...stateInput } = input;
     const data = snapshotHostComponents(stateInput);
@@ -18338,6 +18549,17 @@ export class HostStateStore {
           'completed Source report recovery progress projection differs from its receipt',
         );
         this.#validateProgress(before, projected, ledger, documentationContext, taskSourceResourceAdditions);
+      } else if (sourceRetirementRequest) {
+        requireState(
+          internalTransaction &&
+            producerFenceChecked &&
+            !terminalJournal &&
+            expectedSessionJournal &&
+            taskSourceResourceAdditions.length === 0,
+          'retirement progress requires its fenced journal transaction',
+        );
+        const projected = interruptedSourceRetirementProgress(before, work, ledger, sourceRetirementRequest);
+        this.#validateProgress(before, projected.work, projected.ledger, documentationContext);
       } else this.#validateProgress(before, work, ledger, documentationContext, taskSourceResourceAdditions);
       if (work.lease) {
         const ticket = ledger.tickets.find((entry) => entry.ticket_id === work.lease!.ticket_id)!;

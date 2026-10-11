@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import strykerConfig from '../stryker.config.mjs';
+import strykerConfig from '../stryker.config.ts';
 import {
   buildMutationTestCommand,
   confirmedRunnerOutcome,
@@ -26,7 +26,7 @@ const report = ({
 
 describe('mutation JUnit attribution', () => {
   test('routes each Stryker baseline and mutant command through the receipt writer', () => {
-    expect(strykerConfig.commandRunner.command).toBe('bun tooling/mutation-command-runner.mjs');
+    expect(strykerConfig.commandRunner.command).toBe('bun tooling/mutation-command-runner.ts');
   });
 
   test('accepts a nonempty passing report with reconciled suite counters', () => {

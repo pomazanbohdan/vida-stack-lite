@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
-export async function makeFreshRepository(): Promise<string> {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'project-upgrade-lifecycle-'));
+export async function makeFreshRepository(prefix = 'project-upgrade-lifecycle-'): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), prefix));
   await mkdir(path.join(root, '.git'));
   await mkdir(path.join(root, 'docs/agent-instructions'), { recursive: true });
   await cp(path.join(packageRoot, 'instructions'), path.join(root, 'docs/agent-instructions'), { recursive: true });

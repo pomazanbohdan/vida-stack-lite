@@ -20,6 +20,12 @@ function requiredAdapterDirectory(): string {
 const adapterDirectory = requiredAdapterDirectory();
 if (!bodyReceiptFile) throw new Error('Mutation body receipt channel is not configured.');
 mkdirSync(adapterDirectory, { recursive: true, mode: 0o700 });
+const contextPath = path.join(adapterDirectory, 'mutation-assertion-context.ts');
+writeBoundAdapterModule(
+  contextPath,
+  readFileSync(fileURLToPath(new URL('./mutation-assertion-context.ts', import.meta.url)), 'utf8'),
+);
+const contextUrl = pathToFileURL(contextPath).href;
 const escapedTestRoot = path
   .resolve(process.cwd(), 'tests')
   .replaceAll('\\', '/')
@@ -28,9 +34,20 @@ const escapedTestRoot = path
   .join('[\\\\/]');
 const testPath = new RegExp(`^${escapedTestRoot}[\\\\/].*$`, process.platform === 'win32' ? 'iu' : 'u');
 
+function writeBoundAdapterModule(modulePath: string, contents: string): void {
+  try {
+    writeFileSync(modulePath, contents, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
+  } catch (error) {
+    if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 'EEXIST') throw error;
+    if (readFileSync(modulePath, 'utf8') !== contents)
+      throw new Error('Mutation adapter wrapper changed during module load.');
+  }
+}
+
 function adapterFor(testFile: string): string {
   const adapterPath = path.join(adapterDirectory, `${createHash('sha256').update(testFile).digest('hex')}.ts`);
   const contents = adapterTemplate
+    .replace("'./mutation-assertion-context.ts'", JSON.stringify(contextUrl))
     .replace(
       "const file = new URL(import.meta.url).searchParams.get('file');",
       `const file = ${JSON.stringify(testFile)};`,
@@ -39,13 +56,7 @@ function adapterFor(testFile: string): string {
       'const receiptFile = process.env.AGENT_MUTATION_BODY_RECEIPTS;',
       `const receiptFile = ${JSON.stringify(bodyReceiptFile)};`,
     );
-  try {
-    writeFileSync(adapterPath, contents, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
-  } catch (error) {
-    if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 'EEXIST') throw error;
-    if (readFileSync(adapterPath, 'utf8') !== contents)
-      throw new Error('Mutation adapter wrapper changed during module load.');
-  }
+  writeBoundAdapterModule(adapterPath, contents);
   return pathToFileURL(adapterPath).href;
 }
 

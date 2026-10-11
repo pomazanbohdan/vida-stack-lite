@@ -18,6 +18,6 @@
     "outDir": "dist",
     "types": ["node", "bun"]
   },
-  "include": ["src/**/*.ts", "tooling/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }

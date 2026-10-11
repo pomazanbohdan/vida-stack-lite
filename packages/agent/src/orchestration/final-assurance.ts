@@ -69,21 +69,40 @@ export const correctiveAssignmentAuthorizationSchema = z
   .strict();
 export { correctiveExecutionSchema, type CorrectiveExecution } from './corrective-execution-contract.js';
 import { correctiveExecutionSchema, type CorrectiveExecution } from './corrective-execution-contract.js';
-/** One current Host binding for the base run and explicitly authorized engine subrun. */
-export function validateWorkSessionBindingAndReturnCorrectiveAuthority(
-  work: WorkState,
-  state: { attempt: number; run_id: string; corrective_execution?: CorrectiveExecution | null },
-  root?: string,
-): ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse> | null {
+type WorkSessionRunBinding = {
+  attempt: number;
+  run_id: string;
+  corrective_execution?: CorrectiveExecution | null;
+};
+
+/** Pure base/engine identity check; current authorization bytes are checked separately. */
+export function validateWorkSessionRunBinding(work: WorkState, state: WorkSessionRunBinding): void {
   const execution = state.corrective_execution;
   if (!execution) {
     requireAssurance(
       state.run_id === work.execution.run_id && work.lifecycle.assurance.correction_count === 0,
       'base session binding differs',
     );
-    return null;
+    return;
   }
   correctiveExecutionSchema.parse(execution);
+  requireAssurance(
+    state.run_id === execution.engine_run_id &&
+      execution.base_run_id === work.execution.run_id &&
+      execution.correction_generation === work.lifecycle.assurance.correction_count,
+    'corrective session binding differs',
+  );
+}
+
+/** One current Host binding for the base run and explicitly authorized engine subrun. */
+export function validateWorkSessionBindingAndReturnCorrectiveAuthority(
+  work: WorkState,
+  state: WorkSessionRunBinding,
+  root?: string,
+): ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse> | null {
+  validateWorkSessionRunBinding(work, state);
+  const execution = state.corrective_execution;
+  if (!execution) return null;
   return readValidatedCorrectiveAuthority(work, state, execution, root);
 }
 
@@ -106,17 +125,11 @@ type CorrectiveAuthorityContract = Pick<
 
 function readValidatedCorrectiveAuthority(
   work: WorkState,
-  state: { attempt: number; run_id: string; corrective_execution?: CorrectiveExecution | null },
+  state: WorkSessionRunBinding,
   execution: CorrectiveExecution,
   root?: string,
 ): ReturnType<typeof correctiveAssignmentAuthorizationSchema.parse> {
-  requireAssurance(
-    root &&
-      state.run_id === execution.engine_run_id &&
-      execution.base_run_id === work.execution.run_id &&
-      execution.correction_generation === work.lifecycle.assurance.correction_count,
-    'corrective session binding differs',
-  );
+  requireAssurance(root, 'corrective session binding differs');
   requireAssurance(
     work.lifecycle.references.some(
       (ref) =>
@@ -151,7 +164,7 @@ function readValidatedCorrectiveAuthority(
     expectedBinding: CorrectiveAuthorityContract = {
       attempt: state.attempt,
       work_id: work.binding.lifecycle_work_id,
-      run_id: work.execution.run_id,
+      run_id: execution.base_run_id,
       base_run_id: execution.base_run_id,
       engine_run_id: execution.engine_run_id,
       correction_generation: execution.correction_generation,
@@ -173,11 +186,7 @@ function readValidatedCorrectiveAuthority(
   return authority;
 }
 /** One current Host binding for the base run and explicitly authorized engine subrun. */
-export function validateWorkSessionBinding(
-  work: WorkState,
-  state: { attempt: number; run_id: string; corrective_execution?: CorrectiveExecution | null },
-  root?: string,
-): void {
+export function validateWorkSessionBinding(work: WorkState, state: WorkSessionRunBinding, root?: string): void {
   validateWorkSessionBindingAndReturnCorrectiveAuthority(work, state, root);
 }
 /** Completed waves retain terminal failures; a downstream wave may remain wholly unissued. */

@@ -8,13 +8,11 @@ const config = {
     '.': {
       // Child-process entrypoints and the source template have concrete consumers.
       entry: [
-        'tooling/agent/controllers/forward-update-prepare.mjs',
-        'tooling/agent/controllers/forward-update-finalize.mjs',
-        'tooling/agent/controllers/forward-documentation-phase.mjs',
-        'tooling/agent/controllers/forward-lifecycle-clear.mjs',
-        // Loaded by the strict native test compiler as the adapter's type companion.
-        'tooling/agent/controllers/forward-payload-runtime.d.mts',
-        'tooling/agent/combined-public-steps.mjs',
+        'tooling/agent/controllers/forward-update-prepare.ts',
+        'tooling/agent/controllers/forward-update-finalize.ts',
+        'tooling/agent/controllers/forward-documentation-phase.ts',
+        'tooling/agent/controllers/forward-lifecycle-clear.ts',
+        'tooling/agent/combined-public-steps.ts',
         ...tests,
       ],
       project: ['tooling/agent/' + codeFiles, 'tests/agent/' + codeFiles],
@@ -25,13 +23,13 @@ const config = {
       ignoreBinaries: ['mkfifo'],
       entry: [
         'bin/scope.ts',
-        'bin/development-controller.mjs',
+        'bin/development-controller.ts',
         // Explicit child/preload paths and compiler/declaration inputs.
         'tooling/knip-precommit.ts',
         'tooling/git-quality-hooks.ts',
-        'tooling/development-controller-qualification.mjs',
+        'tooling/development-controller-qualification.ts',
         'tooling/bun-coverage-preload.ts',
-        'tooling/mutation-command-runner.mjs',
+        'tooling/mutation-command-runner.ts',
         'tooling/mutation-test-preload.ts',
         // Fault injection is loaded by test children through explicit --preload paths.
         'tests/helpers/clean-stat-fault-preload.ts',
@@ -39,7 +37,6 @@ const config = {
         // The preload reads this template to create per-test assertion adapters.
         'tooling/mutation-test-adapter.ts',
         // Declaration inputs consumed by the compiler and included in the package.
-        'tooling/bun-coverage-evidence.d.mts',
         'src/config/index.ts',
         // release-local loads this custody API through its createRequire boundary.
         'src/config/service-operation-custody.ts',

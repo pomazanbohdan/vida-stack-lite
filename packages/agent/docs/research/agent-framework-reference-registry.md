@@ -20,7 +20,7 @@ remain separate from approved local requirements.
 | LangChain / LangGraph               | [LangChain agents](https://docs.langchain.com/oss/python/langchain/agents), [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence), [error and workflow design](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph)     | LangChain's agent tool loop uses LangGraph primitives; checkpoints and thread resume; separate transient retry, agent recovery, human pause and unexpected failure.                                            |
 | Microsoft Agent Framework           | [Overview](https://learn.microsoft.com/en-us/agent-framework/overview/)                                                                                                                                                                                                      | Explicit workflows for defined processes; documented successor of AutoGen and Semantic Kernel.                                                                                                                 |
 | Google ADK                          | [Workflow agents](https://adk.dev/agents/workflow-agents/)                                                                                                                                                                                                                   | Deterministic sequential, parallel and loop workflows; the page distinguishes Python/Go ADK 2.0 graph and dynamic workflows.                                                                                   |
-| Mastra                              | [Agentic workflows](https://mastra.ai/articles/agentic-workflows), [snapshots](https://mastra.ai/en/reference/workflows/snapshots)                                                                                                                                           | The opened workflow article supports persistence, parallel execution and suspend/resume. Official search retrieved the snapshots body; direct snapshot retrieval was unavailable in the final reference check. |
+| Mastra                              | [Agentic workflows](https://mastra.ai/articles/agentic-workflows), [snapshots](https://mastra.ai/docs/workflows/snapshots)                                                                                                                                           | The workflow article supports persistence, parallel execution and suspend/resume. Direct snapshots documentation verified on 2026-10-11 describes serializable step state, completed outputs, execution path and retrieval on resume. This informs retained evidence; VIDA Host authorization, CAS and UNKNOWN policy stay authoritative. |
 | Temporal, a durable workflow system | [Tasks](https://docs.temporal.io/tasks), [workflow definitions](https://docs.temporal.io/workflow-definition)                                                                                                                                                                | History replay, task versus business-execution failure, and separate external/non-deterministic activities.                                                                                                    |
 
 ## Packet-text screening applicability
@@ -970,7 +970,7 @@ existing immediate transaction and session-producer fence. Reserve rejects
 active or UNKNOWN producers, and later producers wait for exact repair closure.
 Repair changes the digest and its own operation only, with dependency CAS.
 
-Mastra [snapshots](https://mastra.ai/en/reference/workflows/snapshots) retain
+Mastra [snapshots](https://mastra.ai/docs/workflows/snapshots) retain
 workflow/run identity and suspended state. Future frontier receipts therefore
 need immutable snapshot bytes: the live snapshot changes after resume. SQLite
 [transactions](https://www.sqlite.org/lang_transaction.html) provide immediate
@@ -1133,3 +1133,82 @@ plan; do not infer cross-store crash atomicity. Isolated terminated-process
 fixtures exercise retry before and after replacement. Source and native endpoint
 checks must run again after awaited publication and on an already-replaced retry.
 Fixture endpoints establish Source/Host behavior, not native qualification.
+
+### Invocation failures and isolated Bun module mocks
+
+Checked 2026-10-11: the official
+[ECMAScript throw algorithm](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-throw-statement-runtime-semantics-evaluation)
+returns a ThrowCompletion carrying any value. Error presence must therefore be
+recorded separately from its truthiness. The forward invocation adapter retains
+falsy callback failures and all ordered rollback/close causes. A cleanup
+classifier may consume a normally returned result, including undefined, only
+after the callback completed; a callback failure cannot become completion.
+
+Official [Bun mocks](https://bun.com/docs/test/mocks) document that mock.restore()
+does not reset module overrides. Controlled SQLite failure tests therefore run
+in a bounded isolated Bun child and require a complete terminal receipt. Their
+proof concerns wrapper error custody, not native SQLite serialization or safe
+database pathname opening. The inherited pathname-substitution risk remains
+open; BEGIN IMMEDIATE serializes connections to the same database file only.
+
+### Typed quality configurations
+
+Checked 2026-10-11: the installed Vitest 5.0.3 CoverageOptions omits coverage.all.
+The typed configuration keeps the exact maintained coverage.include list and
+other supported settings, following the
+[official migration guide](https://vitest.dev/guide/migration.html). Config loading
+does not qualify V8 coverage. Accepted final coverage remains the Bun/Istanbul
+pipeline and its exact completeness gate.
+
+[Stryker configuration documentation](https://stryker-mutator.io/docs/stryker-js/config-file/)
+describes JavaScript/JSON files. Installed Core 10 imports an explicitly selected
+non-JSON config. Its actual ConfigReader and OptionsValidator accepted the typed
+config in Node 24.19 and pinned Bun 1.4.2, preserving main/platform/source-slice
+settings. Use an explicit stryker.config.ts path; automatic discovery and native
+Bun test-runner integration are not established. These load-only receipts prove
+neither mutation execution nor assertion-confirmed Killed results. Historical
+b549951 fixture paths keep the published MJS identities.
+
+## SQLite 3.54 adoption boundary — 2026-10-11
+
+Official [SQLite 3.54.0 release notes](https://www.sqlite.org/releaselog/3_54_0.html)
+confirm the stable release on 2026-10-09. Root's isolated in-memory query on the
+current pinned Bun1.4.2 observes SQLite3.53.2. Official
+[Bun1.4.3 release notes](https://bun.com/blog/bun-v1.4.3) list SQLite3.53.4;
+qualifying that newer runtime is a separate current-pin task and does not adopt
+SQLite3.54. Official [Bun SQLite documentation](https://bun.com/docs/runtime/sqlite)
+states setCustomSQLite loads a dylib before database creation on macOS and is a
+no-op on other operating systems. Linux/Windows statically link Bun's SQLite.
+
+The owner's conditional preference for3.54 is recorded. Adopt it through a
+portable qualified Bun runtime when bundled; do not add a system/npm SQLite or
+macOS-only override as an implicit runtime dependency. Keep one admitted
+workspace database, same DB/WAL/SHM identities, FULL synchronous writes, short
+transactions, CAS, component ownership and bounded JSONB decoding. Qualification
+must use fresh isolated databases for actual JSONB, storage read admission,
+transaction rollback, competing writers and exact CAS. Existing operational
+rows/leases/UNKNOWN are not replay inputs. General upstream benchmark gains are
+not evidence of VIDA workload improvement. No runtime pin or live DB changed by
+this investigation; current delivery/final-gate qualification remains open.
+
+## Producer Journal reuse and fixture closure — 2026-10-11
+
+Official [Bun SQLite transactions](https://bun.com/docs/runtime/sqlite#transactions)
+provide synchronous transaction callbacks and immediate transactions. Official
+[SQLite isolation](https://www.sqlite.org/isolation.html) distinguishes an active
+transaction snapshot from reads after another transaction. Reuse the producer's
+validated immutable Journal only inside its existing begin or settle transaction.
+The validator performs no intervening write; every new invocation repeats its
+CAS and context validation. Filesystem and continuation/orphan checks remain
+separate. The private delivered-receipt bundle also returns its already validated
+recovery to the producer; historical-review actions still ignore this recovery
+for configured-run checks. Reader error and early-return order stays intact.
+This does not authorize a cross-transaction cache or receipt replay.
+
+The [JavaScript ReferenceError contract](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Not_defined)
+requires a child module's helpers to exist in that child's scope. Producer
+termination fixtures now use the child's actual ledger reader and distinguish
+phases before Journal creation from phases after it. The fresh cardinality case
+observed two reads per acquisition/settlement before correction and requires one
+per transaction. Fewer reads establish that bounded property; whole-frontier
+speed and delivered Runtime qualification remain separate pending evidence.

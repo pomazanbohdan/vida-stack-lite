@@ -8,16 +8,16 @@ import { rejectFocusedTests } from '../tooling/focused-test-guard.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-function fixture(): { readonly file: string; readonly clean: () => void } {
+function fixture(filenameSuffix = '.ts'): { readonly file: string; readonly clean: () => void } {
   const directory = mkdtempSync(path.join(tmpdir(), 'focused-test-guard-'));
   return {
-    file: path.join(directory, 'sample.test.ts'),
+    file: path.join(directory, `sample.test${filenameSuffix}`),
     clean: () => rmSync(directory, { recursive: true, force: true }),
   };
 }
 
-async function rejectsSource(source: string): Promise<void> {
-  const temporary = fixture();
+async function rejectsSource(source: string, filenameSuffix = '.ts'): Promise<void> {
+  const temporary = fixture(filenameSuffix);
   try {
     writeFileSync(temporary.file, source);
     await assert.rejects(rejectFocusedTests(packageRoot, [temporary.file]), /Focused test is forbidden/);
@@ -26,8 +26,8 @@ async function rejectsSource(source: string): Promise<void> {
   }
 }
 
-async function acceptsSource(source: string): Promise<void> {
-  const temporary = fixture();
+async function acceptsSource(source: string, filenameSuffix = '.ts'): Promise<void> {
+  const temporary = fixture(filenameSuffix);
   try {
     writeFileSync(temporary.file, source);
     await rejectFocusedTests(packageRoot, [temporary.file]);
@@ -127,5 +127,44 @@ test('preserves imported test provenance through catch var and ordinary lexical 
   await acceptsSource("import { test as check } from 'bun:test'; for (const check of []) { check.only('ordinary'); }");
   await acceptsSource(
     "import { test } from 'bun:test'; const ordinary = class test { static only() {} static run() { test.only(); } };",
+  );
+});
+
+test('parses standard TypeScript generic arrows and angle type assertions', async () => {
+  await acceptsSource(`import { test } from 'bun:test';
+    const clone = <T>(value: T): T => <T>value;
+    test('ordinary', () => clone('value'));`);
+});
+
+test('parses JSX files while still detecting focused aliases', async () => {
+  await rejectsSource(
+    `import { test as check } from 'bun:test';
+    const view = <section />;
+    check.only('focused', () => view);`,
+    '.tsx',
+  );
+  await acceptsSource(
+    `import { test } from 'bun:test';
+    const view = <section />;
+    test('ordinary', () => view);`,
+    '.tsx',
+  );
+  await rejectsSource(
+    `import { test as check } from 'bun:test';
+    const view = <section />;
+    check.only('focused', () => view);`,
+    '.jsx',
+  );
+  await acceptsSource(
+    `import { test } from 'bun:test';
+    const view = <section />;
+    test('ordinary', () => view);`,
+    '.jsx',
+  );
+});
+
+test('detects focused aliases inside TypeScript angle assertions', async () => {
+  await rejectsSource(
+    "import { test as check } from 'bun:test'; const alias = (<typeof test>check); alias.only('focused', () => {});",
   );
 });

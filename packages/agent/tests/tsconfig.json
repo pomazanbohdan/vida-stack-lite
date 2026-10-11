@@ -6,6 +6,6 @@
     "noEmit": true,
     "rootDir": ".."
   },
-  "include": ["**/*.mjs", "**/*.ts"],
+  "include": ["**/*.mjs", "**/*.ts", "../tooling/**/*.d.ts"],
   "exclude": []
 }

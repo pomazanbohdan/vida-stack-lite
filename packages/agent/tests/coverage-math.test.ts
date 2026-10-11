@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import { instrumentSource } from '../tooling/bun-coverage-evidence.mjs';
+import { instrumentSource } from '../tooling/bun-coverage-evidence.ts';
 import {
   exactFullCoverage,
   validateCoverageLocations,

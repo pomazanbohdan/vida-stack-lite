@@ -60,9 +60,61 @@ if (!isolated && !underStryker) {
   let failOwnedParentClose = false;
   let ownedLockCloseValue: unknown = ownedLockCloseFailure;
   const ownedCloseAttempts: number[] = [];
+  let watchedReclaimGuardPath: string | undefined;
+  let watchReclaimGuardMkdir = false;
+  let watchedReclaimGuardMkdirAttempts = 0;
+  let postDeleteFsyncRoot: string | undefined;
+  let postDeleteFsyncQuarantine: { readonly prefix: string; readonly suffix: string } | undefined;
+  let postDeleteRemovalObserved = false;
+  let postDeleteFsyncFailure: Error | undefined;
+  let postDeleteFsyncCount = 0;
+
+  function isWatchedReclaimGuardDirectory(directory: string | Buffer | URL): boolean {
+    if (!watchedReclaimGuardPath || typeof directory !== 'string') return false;
+    if (path.basename(directory) !== path.basename(watchedReclaimGuardPath)) return false;
+    const parent = path.dirname(directory);
+    if (parent === path.dirname(watchedReclaimGuardPath)) return true;
+    try {
+      return readlinkSync(parent) === path.dirname(watchedReclaimGuardPath);
+    } catch {
+      return false;
+    }
+  }
+
+  function observeQuarantineRemoval(removedPath: string | Buffer | URL): void {
+    if (!postDeleteFsyncRoot || !postDeleteFsyncQuarantine || typeof removedPath !== 'string') return;
+    let parentPath = path.dirname(removedPath);
+    try {
+      parentPath = readlinkSync(parentPath);
+    } catch {
+      // A direct path already names its actual parent.
+    }
+    const basename = path.basename(removedPath);
+    if (
+      parentPath === postDeleteFsyncRoot &&
+      basename.startsWith(postDeleteFsyncQuarantine.prefix) &&
+      basename.endsWith(postDeleteFsyncQuarantine.suffix)
+    )
+      postDeleteRemovalObserved = true;
+  }
 
   void mock.module('node:fs', () => ({
     ...actualFs,
+    unlinkSync(...args: Parameters<typeof actualFs.unlinkSync>): ReturnType<typeof actualFs.unlinkSync> {
+      const result = actualFs.unlinkSync(...args);
+      observeQuarantineRemoval(args[0]);
+      return result;
+    },
+    rmdirSync(...args: Parameters<typeof actualFs.rmdirSync>): ReturnType<typeof actualFs.rmdirSync> {
+      const result = actualFs.rmdirSync(...args);
+      observeQuarantineRemoval(args[0]);
+      return result;
+    },
+    mkdirSync(...args: Parameters<typeof actualFs.mkdirSync>): ReturnType<typeof actualFs.mkdirSync> {
+      const [directory] = args;
+      if (watchReclaimGuardMkdir && isWatchedReclaimGuardDirectory(directory)) watchedReclaimGuardMkdirAttempts += 1;
+      return actualFs.mkdirSync(...args);
+    },
     openSync(file: string | Buffer | URL, flags: number | string, mode?: number | string): number {
       const fd = actualFs.openSync(file, flags, mode);
       const descriptorPath = readlinkSync(`/proc/self/fd/${fd}`);
@@ -106,6 +158,13 @@ if (!isolated && !underStryker) {
     },
     fsyncSync(fd: number): void {
       const descriptorPath = readlinkSync(`/proc/self/fd/${fd}`);
+      if (postDeleteFsyncRoot && descriptorPath === postDeleteFsyncRoot && postDeleteRemovalObserved) {
+        postDeleteFsyncCount += 1;
+        postDeleteRemovalObserved = false;
+        const error = postDeleteFsyncFailure;
+        if (!error) throw new Error('post-delete fsync fault was armed without its error');
+        throw error;
+      }
       if (reclaimGuardOwnerPath && descriptorPath === reclaimGuardOwnerPath) {
         reclaimGuardFsyncCount += 1;
         if (failReclaimGuardFsync) {
@@ -128,7 +187,8 @@ if (!isolated && !underStryker) {
     },
   }));
 
-  const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.js');
+  const { requireSafeRepositoryAccess, SafeRepositoryLockContentionError } =
+    await import('../src/config/safe-repository-access.js');
 
   function freshRoot(): string {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-lock-payload-custody-'));
@@ -153,6 +213,17 @@ if (!isolated && !underStryker) {
     failReclaimGuardFsync = true;
     releaseCallbackSettled = false;
     reclaimGuardFsyncSawSettledCallback = false;
+  }
+
+  function armPostDeleteFsync(root: string, quarantinePrefix: string, quarantineSuffix: string): Error {
+    postDeleteFsyncRoot = root;
+    postDeleteFsyncQuarantine = { prefix: quarantinePrefix, suffix: quarantineSuffix };
+    postDeleteRemovalObserved = false;
+    postDeleteFsyncCount = 0;
+    postDeleteFsyncFailure = Object.assign(new Error('injected parent fsync after quarantine removal'), {
+      code: 'EIO',
+    });
+    return postDeleteFsyncFailure;
   }
 
   function expectClosedWithEbafd(fd: number): void {
@@ -305,6 +376,57 @@ if (!isolated && !underStryker) {
     expect(calls).toBe(1);
     expect(payloadFsyncCount).toBe(1);
     expect(actualFs.existsSync(payloadLockPath)).toBe(false);
+    completedRoots.add(root);
+  });
+
+  linuxTest('a nested contender does not create a reclaim guard for the current owner lock', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    expect(access.provider).toBe('linux-proc-fd');
+    const target = lockPath(root);
+    watchedReclaimGuardPath = target + '.reclaim';
+    watchedReclaimGuardMkdirAttempts = 0;
+    let ownerCalls = 0;
+    let contenderCalls = 0;
+    let contenderError: unknown;
+
+    expect(
+      access.withExclusiveLock('owner.lock', 'young owned lock', () => {
+        ownerCalls += 1;
+        const before = actualFs.lstatSync(target, { bigint: true });
+        expect(before.isFile()).toBe(true);
+        expect(Date.now() - Number(before.mtimeMs) < 30_000).toBe(true);
+        expect(JSON.parse(readFileSync(target, 'utf8'))).toEqual({
+          schema: 'SafeRepositoryAccessLock/v1',
+          owner_pid: process.pid,
+          label: 'young owned lock',
+        });
+
+        watchReclaimGuardMkdir = true;
+        try {
+          access.withExclusiveLock('owner.lock', 'nested contender', () => {
+            contenderCalls += 1;
+          });
+        } catch (error) {
+          contenderError = error;
+        } finally {
+          watchReclaimGuardMkdir = false;
+        }
+
+        expect(contenderError).toBeInstanceOf(SafeRepositoryLockContentionError);
+        expect(contenderCalls).toBe(0);
+        expect(watchedReclaimGuardMkdirAttempts).toBe(0);
+        const after = actualFs.lstatSync(target, { bigint: true });
+        expect(after.dev).toBe(before.dev);
+        expect(after.ino).toBe(before.ino);
+        return 'owner released';
+      }),
+    ).toBe('owner released');
+
+    expect(ownerCalls).toBe(1);
+    expect(actualFs.existsSync(target)).toBe(false);
+    expect(access.withExclusiveLock('owner.lock', 'fresh admission', () => 'admitted')).toBe('admitted');
+    expect(actualFs.existsSync(target)).toBe(false);
     completedRoots.add(root);
   });
 
@@ -517,6 +639,105 @@ if (!isolated && !underStryker) {
       closeOnlyCapturedDescriptor(parentFd, root);
     }
     if (assertionsPassed) completedRoots.add(root);
+  });
+
+  linuxTest('stale reclaim-guard post-delete fsync preserves its EIO without reporting failed restoration', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    const guardPath = lockPath(root) + '.reclaim';
+    const ownerPath = path.join(guardPath, 'owner.json');
+    actualFs.mkdirSync(guardPath, 0o700);
+    actualFs.writeFileSync(
+      ownerPath,
+      JSON.stringify({
+        schema: 'SafeRepositoryAccessReclaimGuard/v1',
+        owner_pid: 2_147_483_647,
+        owner_token: '00000000-0000-4000-8000-000000000000',
+        acquired_at: new Date(0).toISOString(),
+      }),
+    );
+    actualFs.utimesSync(ownerPath, new Date(0), new Date(0));
+    actualFs.utimesSync(guardPath, new Date(0), new Date(0));
+    const failure = armPostDeleteFsync(root, '.' + path.basename(guardPath) + '.', '.reclaimed');
+    let callbackCalls = 0;
+    let observedError: unknown;
+    try {
+      access.withExclusiveLock('owner.lock', 'post-delete stale guard fsync', () => {
+        callbackCalls += 1;
+        return 'must not acquire';
+      });
+    } catch (error) {
+      observedError = error;
+    }
+
+    expect(observedError).toBe(failure);
+    expect(observedError).toMatchObject({ code: 'EIO' });
+    expect(observedError).not.toHaveProperty('name', 'SafeRepositoryLockRestoreError');
+    expect(postDeleteFsyncCount).toBe(1);
+    expect(callbackCalls).toBe(0);
+    expect(actualFs.existsSync(guardPath)).toBe(false);
+    expect(actualFs.readdirSync(root)).toEqual([]);
+    completedRoots.add(root);
+  });
+
+  linuxTest('stale lock post-delete fsync preserves its EIO and leaves the removed lock absent', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    const target = lockPath(root);
+    actualFs.writeFileSync(
+      target,
+      JSON.stringify({ schema: 'SafeRepositoryAccessLock/v1', owner_pid: 2_147_483_647, label: 'stale lock' }),
+    );
+    actualFs.utimesSync(target, new Date(0), new Date(0));
+    const failure = armPostDeleteFsync(root, '.' + path.basename(target) + '.', '.reclaimed');
+    let callbackCalls = 0;
+    let observedError: unknown;
+    try {
+      access.withExclusiveLock('owner.lock', 'post-delete stale lock fsync', () => {
+        callbackCalls += 1;
+        return 'must not acquire';
+      });
+    } catch (error) {
+      observedError = error;
+    }
+
+    expect(observedError).toBe(failure);
+    expect(observedError).toMatchObject({ code: 'EIO' });
+    expect(observedError).not.toHaveProperty('name', 'SafeRepositoryLockRestoreError');
+    expect(postDeleteFsyncCount).toBe(1);
+    expect(callbackCalls).toBe(0);
+    expect(actualFs.existsSync(target)).toBe(false);
+    expect(actualFs.readdirSync(root)).toEqual([]);
+    completedRoots.add(root);
+  });
+
+  linuxTest('release-guard post-delete fsync preserves EIO after one successful callback', () => {
+    const root = freshRoot();
+    const access = requireSafeRepositoryAccess(root);
+    const guardPath = lockPath(root) + '.reclaim';
+    const failure = armPostDeleteFsync(root, '.' + path.basename(guardPath) + '.', '.released');
+    let callbackCalls = 0;
+    let result: unknown;
+    let observedError: unknown;
+    try {
+      result = access.withExclusiveLock('owner.lock', 'post-delete release guard fsync', () => {
+        callbackCalls += 1;
+        return 'callback result is withheld by failed durability confirmation';
+      });
+    } catch (error) {
+      observedError = error;
+    }
+
+    expect(observedError).toBe(failure);
+    expect(observedError).toMatchObject({ code: 'EIO' });
+    expect(observedError).not.toHaveProperty('name', 'SafeRepositoryLockRestoreError');
+    expect(postDeleteFsyncCount).toBe(1);
+    expect(callbackCalls).toBe(1);
+    expect(result).toBeUndefined();
+    expect(actualFs.existsSync(lockPath(root))).toBe(false);
+    expect(actualFs.existsSync(guardPath)).toBe(false);
+    expect(actualFs.readdirSync(root)).toEqual([]);
+    completedRoots.add(root);
   });
 
   linuxTest('sync and async callback throw undefined remains a thrown outcome', async () => {

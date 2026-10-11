@@ -18,6 +18,18 @@ export interface MaintainedSourceInventory {
 }
 const comparePaths = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
 
+// SafeAccess control sidecars are runtime custody, never executable/resource inputs.
+// Match their complete reserved names; ordinary hidden package sources remain selected.
+const repositoryControlEntry =
+  /^\.(?:.+\.cas\.lock|\.?vida-resource-lock-[a-f0-9]{64}\.lock)(?:\.reclaim)?(?:\.[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\.(?:released|reclaimed))?$/u;
+const resourceReclaimControlEntry =
+  /^(?:.+\.lock\.reclaim|\..+\.lock\.reclaim\.[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\.(?:released|reclaimed))$/u;
+
+export function isInventorySourceEntry(entry: string | { readonly name: string }): boolean {
+  const name = typeof entry === 'string' ? entry : entry.name;
+  return !(repositoryControlEntry.test(name) || resourceReclaimControlEntry.test(name));
+}
+
 export const expectedJavascriptFiles: readonly string[] = [
   'documentation/transition-proof.js',
   'index.js',
@@ -89,7 +101,7 @@ function standaloneResourcePaths(root: string, relative: string, files: string[]
   const entries = readdirSync(path.join(root, relative), { withFileTypes: true });
   if ((budget.nodes += entries.length) > 16384)
     throw new Error('Standalone resource inventory exceeds the path bound.');
-  for (const entry of entries) {
+  for (const entry of entries.filter(isInventorySourceEntry)) {
     const file = relative + '/' + entry.name;
     if (entry.isSymbolicLink()) throw new Error('Standalone source link forbidden.');
     if (entry.isDirectory()) standaloneResourcePaths(root, file, files, budget);
@@ -108,8 +120,8 @@ export function standaloneBuildInputInventory(root: string): string[] {
     '.bun-version',
     'bun.lock',
     'bunfig.toml',
-    'tooling/build-standalone.mjs',
-    'tooling/pack-sdk.mjs',
+    'tooling/build-standalone.ts',
+    'tooling/pack-sdk.ts',
     'tooling/owned-staging.ts',
   ];
   const budget = { nodes: 0 };
@@ -136,7 +148,7 @@ function inventoryDirectoryEntries(
     ? access.listFiles(relative, 'runtime inventory directory')
     : readdirSync(directory, { withFileTypes: true });
   if (access && (budget.nodes += entries.length) > 512) throw new Error('Runtime inventory exceeds the path bound.');
-  return entries;
+  return entries.filter(isInventorySourceEntry);
 }
 
 function sourceFiles(

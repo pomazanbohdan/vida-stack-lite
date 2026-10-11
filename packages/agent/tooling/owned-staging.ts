@@ -43,15 +43,20 @@ export function removeOwnedDirectory(
 ): OwnedCleanupStatus | undefined {
   if (directory === undefined) return undefined;
   if (identity === undefined) return cleanupWarning(directory, 'identity-mismatch', 'No captured directory identity');
-  const status = inspectOwnedDirectory(directory, identity);
-  if (status !== 'match') return status;
   try {
-    rmSync(directory, { recursive: true, force: true });
-    return 'removed';
+    return removeOwnedDirectoryOrThrow(directory, identity);
   } catch (error: unknown) {
     const reason = error instanceof Error ? error.message : String(error);
     return cleanupWarning(directory, 'cleanup-failed', reason);
   }
+}
+
+/** Same owned-path check, with raw failures retained for attributable completion. */
+export function removeOwnedDirectoryOrThrow(directory: string, identity: OwnedDirectoryIdentity): OwnedCleanupStatus {
+  const status = inspectOwnedDirectory(directory, identity);
+  if (status !== 'match') return status;
+  rmSync(directory, { recursive: true, force: true });
+  return 'removed';
 }
 
 function inspectOwnedDirectory(directory: string, identity: OwnedDirectoryIdentity): 'match' | OwnedCleanupStatus {
@@ -60,8 +65,7 @@ function inspectOwnedDirectory(directory: string, identity: OwnedDirectoryIdenti
     current = lstatSync(directory, { bigint: true, throwIfNoEntry: false });
   } catch (error: unknown) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return 'missing';
-    const reason = error instanceof Error ? error.message : String(error);
-    return cleanupWarning(directory, 'cleanup-failed', reason);
+    throw error;
   }
   if (current === undefined) return 'missing';
   if (!sameOwnedDirectory(current, identity))

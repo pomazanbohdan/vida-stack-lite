@@ -276,3 +276,88 @@ test.each(['false', 'runtime', 'skipped', 'interrupted'] as const)(
     }
   },
 );
+
+test('real adapter confirms failure when the shared rejection helper receives fulfillment', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-rejection-helper-'));
+  try {
+    const helperPath = fileURLToPath(new URL('./helpers/expect-rejection.ts', import.meta.url));
+    const copiedHelperPath = path.join(root, 'tests', 'helpers', 'expect-rejection.ts');
+    await mkdir(path.dirname(copiedHelperPath), { recursive: true });
+    const helperBytes = await readFile(helperPath);
+    await writeFile(copiedHelperPath, helperBytes);
+    expect(await readFile(copiedHelperPath)).toEqual(helperBytes);
+    const child = await runAdapterChild(
+      root,
+      `import { test } from 'bun:test';\nimport { expectRejection } from ${JSON.stringify(copiedHelperPath)};\ntest('fulfilled operation fails the helper assertion', async () => { await expectRejection(Promise.resolve('unexpected fulfillment')); });\n`,
+      'helper',
+    );
+    expect(child.events).toMatchObject([
+      { kind: 'body', body_id: 1, assertion_cause: true, assertion_source: 'bun-expect' },
+    ]);
+    const outcome = junitOutcome(child.junit, [child.selectedTest], [], child.events);
+    expect(confirmedRunnerOutcome(child.exitCode, outcome.outcome)).toBe('killed');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('real adapter keeps a consumed helper assertion unproven across module boundaries', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-helper-consumed-'));
+  try {
+    const helperPath = path.join(root, 'tests', 'helpers', 'consumed.ts');
+    await mkdir(path.dirname(helperPath), { recursive: true });
+    await writeFile(
+      helperPath,
+      `import { expect } from 'bun:test';\nexport function consumedFailure() { let saved: unknown; expect(() => { try { expect(1).toBe(2); } catch (error) { saved = error; throw error; } }).toThrow(); return saved; }\n`,
+    );
+    const child = await runAdapterChild(
+      root,
+      `import { test } from 'bun:test';\nimport { consumedFailure } from ${JSON.stringify(helperPath)};\ntest('consumed helper failure', async () => { await Promise.resolve(); throw consumedFailure(); });\n`,
+      'helper-consumed',
+    );
+    expect(child.events).toMatchObject([{ kind: 'body', body_id: 1, assertion_cause: false, assertion_source: null }]);
+    expect(child.events).toHaveLength(1);
+    const classified = junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome;
+    expect(classified).toBe('unproven');
+    expect(confirmedRunnerOutcome(child.exitCode, classified)).toBe('unknown');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('real adapter isolates overlapping helper assertion and runtime failures', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-helper-overlap-'));
+  try {
+    const helperPath = path.join(root, 'tests', 'helpers', 'expect-rejection.ts');
+    await mkdir(path.dirname(helperPath), { recursive: true });
+    await writeFile(
+      helperPath,
+      await readFile(fileURLToPath(new URL('./helpers/expect-rejection.ts', import.meta.url))),
+    );
+    const child = await runAdapterChild(
+      root,
+      `import { test } from 'bun:test';\nimport { expectRejection } from ${JSON.stringify(helperPath)};\nlet arrived = 0; let release: () => void; const joined = new Promise<void>(resolve => { release = resolve; }); function rendezvous() { if (++arrived === 2) release(); return joined; }\ntest.concurrent('helper assertion', async () => { await rendezvous(); await expectRejection(Promise.resolve('fulfilled')); });\ntest.concurrent('runtime failure', async () => { await rendezvous(); throw new Error('unrelated runtime failure'); });\n`,
+      'helper-overlap',
+    );
+    expect(child.events).toHaveLength(2);
+    expect(child.events.find((event) => event.kind === 'body' && event.body_id === 1)).toMatchObject({
+      kind: 'body',
+      body_id: 1,
+      test_file: child.selectedTest,
+      assertion_cause: true,
+      assertion_source: 'bun-expect',
+    });
+    expect(child.events.find((event) => event.kind === 'body' && event.body_id === 2)).toMatchObject({
+      kind: 'body',
+      body_id: 2,
+      test_file: child.selectedTest,
+      assertion_cause: false,
+      assertion_source: null,
+    });
+    expect(() => junitOutcome(child.junit, [child.selectedTest], [], child.events)).toThrow(
+      'JUnit failure is not proven to be a Bun assertion failure.',
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

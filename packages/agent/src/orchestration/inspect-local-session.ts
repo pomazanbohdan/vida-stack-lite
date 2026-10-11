@@ -13,6 +13,7 @@ import { coordinationLedgerDigest, sameCoordinationStrings, type CoordinationLed
 import type { WorkState } from '../host-state.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
 import { assertProjectUpgradeInactive, type AgentRuntimeConfig } from '../config/runtime-config.js';
+import { correctiveExecutionSchema, validateWorkSessionBinding } from './final-assurance.js';
 
 type Row = { revision: number; payload: string; digest: string; value: unknown };
 const AjvConstructor = Ajv2020 as unknown as new (options: object) => {
@@ -121,13 +122,22 @@ export function inspectLocalSession(input: {
         if (ledgerState && (ledgerState.workspace_id !== workspaceId || ledgerState.revision !== ledger!.revision))
           throw new Error('local session inspection: coordination ledger is invalid');
         const inspectedWork = work ? (workState as WorkState) : null;
-        if (
-          inspectedWork &&
-          journal &&
-          isPlainRecord(journalState) &&
-          journalState.run_id !== inspectedWork.execution.run_id
-        )
-          throw new Error('local session inspection: work and journal run differ');
+        if (inspectedWork && journal && isPlainRecord(journalState)) {
+          if (journalState.corrective_execution != null) {
+            if (typeof journalState.run_id !== 'string')
+              throw new Error('local session inspection: work and journal run differ');
+            validateWorkSessionBinding(
+              inspectedWork,
+              {
+                attempt: input.attempt,
+                run_id: journalState.run_id,
+                corrective_execution: correctiveExecutionSchema.parse(journalState.corrective_execution),
+              },
+              input.repositoryRoot,
+            );
+          } else if (journalState.run_id !== inspectedWork.execution.run_id)
+            throw new Error('local session inspection: work and journal run differ');
+        }
         const items = journal && isPlainRecord(journalState) ? journalItems(journalState.items) : [];
         const lease = inspectedWork?.lease ?? null;
         const ticket = ledgerState?.tickets.find((entry) => entry.ticket_id === lease?.ticket_id);

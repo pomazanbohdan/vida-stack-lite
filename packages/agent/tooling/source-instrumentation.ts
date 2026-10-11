@@ -38,7 +38,7 @@ export function instrumentSource(file: string, source: string): { code: string; 
       plugins: ['typescript', 'importAttributes'],
     },
     plugins: [
-      (api) => {
+      (api: { types: typeof types }) => {
         const visitor = programVisitor(api.types, file, { coverageVariable: '__vidaAgentCoverage__' });
         return {
           visitor: {

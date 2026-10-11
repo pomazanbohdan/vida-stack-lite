@@ -11,6 +11,6 @@
     "agent:build": "npm --workspace vida-agent run build",
     "agent:test": "npm --workspace vida-agent test",
     "agent:pack": "npm --workspace vida-agent pack",
-    "release:local": "node tooling/agent/release-local.mjs"
+    "release:local": "node tooling/agent/release-local.ts"
   }
 }

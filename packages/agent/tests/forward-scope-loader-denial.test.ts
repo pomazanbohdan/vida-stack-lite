@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, 
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadForwardPayloadRuntime } from '../../../tooling/agent/controllers/forward-payload-runtime.mjs';
+import { loadForwardPayloadRuntime } from '../../../tooling/agent/controllers/forward-payload-runtime.ts';
 
 const hash = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -17,7 +17,7 @@ const files: Readonly<Record<string, string>> = {
   'vida-agent/src/documentation/clear.ts': 'export {};\n',
   'vida-agent/src/config/safe-repository-access.ts': 'export {};\n',
   'vida-agent/src/orchestration/scoped-source-snapshot.ts': 'export {};\n',
-  'vida-agent/bin/documentation-clear.mjs': 'export {};\n',
+  'vida-agent/bin/documentation-clear.ts': 'export {};\n',
   [schemaPath]: '{"type":"object"}\n',
   'vida-agent/bun.lock': '{}\n',
 };

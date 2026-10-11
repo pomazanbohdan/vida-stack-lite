@@ -5,7 +5,7 @@ import { lstat, mkdir, mkdtemp, open } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mutationToolInputs, executeMutationCommand } from './mutation-evidence.js';
-import { qualityInputProjections, qualityFingerprint, readBunPin, sha256 } from './bun-coverage-evidence.mjs';
+import { qualityInputProjections, qualityFingerprint, readBunPin, sha256 } from './bun-coverage-evidence.ts';
 import { validateCurrentCoverageReportWithInputs } from './bun-coverage-report-validator.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -338,7 +338,7 @@ async function readMutationInventory(runDirectory: string, deadlineAt: number): 
   const result = await runCommand(
     runDirectory,
     'mutation-inventory',
-    [process.execPath, 'tooling/mutation-gate.mjs', '--inventory'],
+    [process.execPath, 'tooling/mutation-gate.ts', '--inventory'],
     deadlineAt,
     maximumOutputBytes,
   );

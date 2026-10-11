@@ -57,7 +57,7 @@ function matches(value: unknown, pattern: Pattern): boolean {
     return (
       Array.isArray(value) &&
       value.length === pattern.length &&
-      pattern.every((item, index) => matches(value[index], item))
+      (pattern as Pattern[]).every((item, index) => matches(value[index], item))
     );
   if (object(pattern))
     return object(value) && Object.entries(pattern).every(([key, item]) => matches(value[key], item as Pattern));
@@ -620,8 +620,10 @@ export function createFsSafeNativeImportBoundary(
     }
     const resolution = erased(initializer(functions.get('resolveFsSafeNativePackageRoot'), 2));
     const identity = functions.get('matchesAttestedNativeBinding')?.body.body[2];
-    if (object(resolution) && Array.isArray(resolution.arguments) && resolution.arguments[0]?.type === 'CallExpression')
-      allowed.add(resolution.arguments[0] as CallExpression);
+    const firstArgument: unknown =
+      object(resolution) && Array.isArray(resolution.arguments) ? resolution.arguments[0] : undefined;
+    if (object(firstArgument) && firstArgument.type === 'CallExpression')
+      allowed.add(firstArgument as unknown as CallExpression);
     if (
       identity?.type === 'ReturnStatement' &&
       identity.argument?.type === 'BinaryExpression' &&

@@ -15,8 +15,8 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { initializeProject, main } from '../bin/init.mjs';
-import { initializeProjectFromBundle } from '../bin/init-core.mjs';
+import { initializeProject, main } from '../bin/init.ts';
+import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { createInitializationBundle } from './helpers/init-bundle.js';
 import { loadRuntimeConfig } from '../src/config/runtime-config.js';
 
@@ -123,7 +123,7 @@ test('init CLI rejects an omitted project mapping before creating integration st
 });
 
 test('public init help works without project configuration', () => {
-  const result = spawnSync(process.execPath, [path.join(packageRoot, 'bin/vida-agent.mjs'), 'init', '--help'], {
+  const result = spawnSync(process.execPath, [path.join(packageRoot, 'bin/vida-agent.ts'), 'init', '--help'], {
     encoding: 'utf8',
     windowsHide: true,
     timeout: 5_000,
@@ -159,7 +159,7 @@ test('Node CLI delegates the same arguments to pinned Bun and preserves its exit
       return 7;
     },
   });
-  expect(calls).toEqual([[fileURLToPath(new URL('../bin/init.mjs', import.meta.url)), ...args]]);
+  expect(calls).toEqual([[fileURLToPath(new URL('../bin/init.ts', import.meta.url)), ...args]]);
   expect(cli.exit.exitCode).toBe(7);
   expect(cli.messages).toEqual({ out: [], err: [] });
 });

@@ -9,7 +9,7 @@ import {
   coverageToolInputs,
   qualityFingerprint,
   qualityInputProjections,
-} from '../tooling/bun-coverage-evidence.mjs';
+} from '../tooling/bun-coverage-evidence.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -120,9 +120,7 @@ describe('final quality input projections', () => {
       expect(projections[name].source_fingerprint).toMatch(/^[0-9a-f]{64}$/u);
       expect(projections[name].test_fingerprint).toMatch(/^[0-9a-f]{64}$/u);
       expect(projections[name].tool_inputs.map(({ path: file }) => file)).toEqual(expectedPaths[name]);
-      expect(projections[name].tool_inputs.map(({ path: file }) => file)).toContain(
-        'tooling/bun-coverage-evidence.d.mts',
-      );
+      expect(projections[name].tool_inputs.map(({ path: file }) => file)).toContain('tooling/bun-coverage-evidence.ts');
       expect(projections[name].module_inputs.some(({ path: file }) => /\.d\.(?:ts|mts|cts)$/u.test(file))).toBe(false);
       expect(new Set(projections[name].tool_inputs.map(({ path: file }) => file)).size).toBe(
         projections[name].tool_inputs.length,

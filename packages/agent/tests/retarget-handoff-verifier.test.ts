@@ -1,17 +1,19 @@
+import { isPlainRecord } from '../src/contracts/public-ingress.ts';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'bun:test';
-import { releaseJSON, releaseSourceBinding } from '../bin/local-release-artifacts.mjs';
+import { releaseJSON, releaseSourceBinding } from '../bin/local-release-artifacts.ts';
 import { expectedJavascriptFiles, standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
 import {
   applyReleaseRetarget,
+  inspectReleaseRetarget,
   planReleaseRetarget,
   stageNativeRetargetCandidate,
   verifyCompletedReleaseRetargetHandoff,
-} from '../bin/repair-release-retarget.mjs';
+} from '../bin/repair-release-retarget.ts';
 
 const operation = 'handoff-verifier',
   version = '0.1.2',
@@ -51,10 +53,10 @@ async function fixture(): Promise<{ root: string; input: ReleaseInput; oldBytes:
   const manifest = {
     name: 'vida-agent',
     version,
-    bin: { 'vida-agent': './bin/vida-agent.mjs' },
+    bin: { 'vida-agent': './bin/vida-agent.ts' },
     engines: { bun: '1.4.2' },
     packageManager: 'bun@1.4.2',
-    files: ['bin/*.mjs'],
+    files: ['bin/*.ts'],
   };
   writeJSON(root, 'packages/agent/package.json', manifest);
   write(root, 'packages/agent/lib.js', 'export const inert = 1;\n');
@@ -62,11 +64,11 @@ async function fixture(): Promise<{ root: string; input: ReleaseInput; oldBytes:
     'package.json',
     'agent-runtime.config.v1.yaml',
     'AGENT.sidecar.md',
-    'tooling/agent/release-local.mjs',
-    'tooling/agent/release-assurance.mjs',
-    'tooling/agent/release-ci-evidence.mjs',
-    'tooling/agent/native-ci-delivery.mjs',
-    'tooling/agent/controllers/forward-review-proof.mjs',
+    'tooling/agent/release-local.ts',
+    'tooling/agent/release-assurance.ts',
+    'tooling/agent/release-ci-evidence.ts',
+    'tooling/agent/native-ci-delivery.ts',
+    'tooling/agent/controllers/forward-review-proof.ts',
     '.github/workflows/agent-native-delivery.yml',
   ])
     write(root, file, '{}\n');
@@ -96,15 +98,15 @@ async function fixture(): Promise<{ root: string; input: ReleaseInput; oldBytes:
   writeJSON(root, folder + '/source-seal.json', {
     entries: [{ path: 'packages/agent/lib.js', sha256: digest('old') }],
   });
-  write(root, 'packages/agent/bin/vida-agent.mjs', 'export const inert = 1;\n');
+  write(root, 'packages/agent/bin/vida-agent.ts', 'export const inert = 1;\n');
   for (const file of [
     'tooling/maintained-source-inventory.ts',
     'TESTING.md',
     '.bun-version',
     'bun.lock',
     'bunfig.toml',
-    'tooling/build-standalone.mjs',
-    'tooling/pack-sdk.mjs',
+    'tooling/build-standalone.ts',
+    'tooling/pack-sdk.ts',
     'tooling/owned-staging.ts',
     ...expectedJavascriptFiles.map((file) => 'dist/src/' + file),
   ])
@@ -248,4 +250,76 @@ function reseal(value: Record<string, unknown>): Record<string, unknown> & { dig
   const body = { ...value };
   delete body.digest;
   return { ...body, digest: digest(releaseJSON(body)) };
+}
+
+test('inspect preserves a sealed unknown phase read-only and apply keeps the exact phase guard', async () => {
+  const value = await fixture();
+  try {
+    await stageNativeRetargetCandidate({ root: value.root, operation, candidateFile: '.tmp/candidate.json' });
+    await planReleaseRetarget({ root: value.root, operation, actor: 'isolated human controller' });
+
+    const statePath = folder + '/retarget/state.json';
+    const rawJSON: unknown = JSON.parse(readFileSync(path.join(value.root, statePath), 'utf8'));
+    if (
+      !isPlainRecord(rawJSON) ||
+      Object.keys(rawJSON).sort().join() !==
+        ['schema', 'operation_id', 'plan_digest', 'phase', 'release_after_sha256', 'digest'].sort().join() ||
+      rawJSON.schema !== 'VidaReleaseRetargetState/v1' ||
+      typeof rawJSON.operation_id !== 'string' ||
+      typeof rawJSON.plan_digest !== 'string' ||
+      typeof rawJSON.phase !== 'string' ||
+      typeof rawJSON.release_after_sha256 !== 'string' ||
+      typeof rawJSON.digest !== 'string'
+    )
+      throw new Error('Fixture retarget state does not satisfy its contract.');
+    write(value.root, statePath, releaseJSON(reseal({ ...rawJSON, phase: 'sealed-unknown-phase' })));
+
+    const source = releaseSourceBinding(value.root, true);
+    if (!source.observations) throw new Error('Fixture Source observation set is missing.');
+    const protectedFiles = [
+      ...new Set([
+        ...source.observations.filter((entry) => entry.kind !== 'directory').map((entry) => entry.path),
+        archive,
+        folder + '/release.json',
+        pending,
+        folder + '/retarget/plan.json',
+        statePath,
+        folder + '/retarget/custody/seal.json',
+        folder + '/retarget/custody/publication.tgz',
+        ...retargetCustodyCopies(value.root, folder + '/retarget/custody'),
+      ]),
+    ];
+    const before = protectedFiles.map((file) =>
+      existsSync(path.join(value.root, file)) ? readFileSync(path.join(value.root, file)) : null,
+    );
+
+    assert.deepEqual(await inspectReleaseRetarget(value.input), {
+      status: 'sealed-unknown-phase',
+      operation_id: operation,
+      version,
+      qualified: false,
+    });
+    for (const [index, file] of protectedFiles.entries())
+      assert.deepEqual(
+        existsSync(path.join(value.root, file)) ? readFileSync(path.join(value.root, file)) : null,
+        before[index],
+      );
+
+    await assert.rejects(applyReleaseRetarget(value.input), /repair phase UNKNOWN/);
+    for (const [index, file] of protectedFiles.entries())
+      assert.deepEqual(
+        existsSync(path.join(value.root, file)) ? readFileSync(path.join(value.root, file)) : null,
+        before[index],
+      );
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
+  }
+});
+
+function retargetCustodyCopies(root: string, directory: string): string[] {
+  const absolute = path.join(root, directory);
+  return readdirSync(absolute, { withFileTypes: true }).flatMap((entry) => {
+    const child = directory + '/' + entry.name;
+    return entry.isDirectory() ? retargetCustodyCopies(root, child) : [child];
+  });
 }

@@ -50,7 +50,7 @@ function parsePrewriterAction(value: unknown): PublicPrewriterAction {
   return { issue_id: action.issue_id, request: parseSessionBridgeRequest(action.request) };
 }
 
-function parsePrewriterActions(value: unknown): readonly PublicPrewriterAction[] {
+function parsePublicActions(value: unknown): readonly PublicPrewriterAction[] {
   return parseIssueEnvelope(value).map(parsePrewriterAction);
 }
 
@@ -200,37 +200,83 @@ function assertReported(snapshot: MastraSessionLedgerSnapshot, observation: Sess
     throw new Error('Public prewriter report was not synchronized exactly');
 }
 
-function reportPrewriterAction(
+async function reportPrewriterAction(
   action: PublicPrewriterAction,
   input: PublicPrewriterInput,
-): MastraSessionLedgerSnapshot {
+): Promise<MastraSessionLedgerSnapshot> {
   const current = currentSnapshot(input),
     preparation = controlledPreparation(action, input, current.state.attempt),
     observation = reportedObservation(action, preparation),
     reportPath = '.agent/work/' + input.workId + '/prewriter-report-' + action.request.assignment_index + '.json';
+  return reportControlledObservation(input, current, observation, reportPath);
+}
+
+async function reportControlledObservation(
+  input: PublicPrewriterInput,
+  current: MastraSessionLedgerSnapshot,
+  observation: SessionBridgeObservation,
+  reportPath: string,
+): Promise<MastraSessionLedgerSnapshot> {
   requireSafeRepositoryAccess(input.repositoryRoot).writeExclusive(
     reportPath,
     JSON.stringify(observation),
-    'controlled public prewriter fixture report',
+    'controlled public stage fixture report',
   );
-  input.publicRun(
+  await input.publicRun(
     expectedVersionArguments([...input.args, '--report', resolve(input.repositoryRoot, reportPath)], current),
   );
   const reported = currentSnapshot(input);
   if (reported.version.revision <= current.version.revision)
-    throw new Error('Public prewriter report did not advance the journal');
+    throw new Error('Public stage report did not advance the journal');
   assertReported(reported, observation);
   return reported;
 }
 
-export function runSourcePrewriterPublicActions(input: PublicPrewriterInput): MastraSessionLedgerSnapshot {
+export async function runTaskSynthesisPublicActions(input: PublicPrewriterInput): Promise<MastraSessionLedgerSnapshot> {
   const current = currentSnapshot(input),
-    envelope = input.publicRun(expectedVersionArguments([...input.args, '--issue-wave', 'true'], current)),
-    actions = parsePrewriterActions(envelope);
+    envelope = await input.publicRun(expectedVersionArguments([...input.args, '--issue-wave', 'true'], current)),
+    actions = parsePublicActions(envelope),
+    action = actions[0];
+  if (
+    actions.length !== 1 ||
+    !action ||
+    action.request.stage_id !== 'synthesize_task' ||
+    action.request.workflow_id !== 'task_execution'
+  )
+    throw new Error('Public task synthesis omitted the configured action');
+  const issued = currentSnapshot(input);
+  assertJournalMatchesActions(actions, issued);
+  // Controlled stage observation for fixture advancement, not independent review or Runtime acceptance.
+  const summary = 'The accepted task and scope are ready for current Source planning.',
+    observation: SessionBridgeObservation = {
+      schema: 'VidaSessionObservation/v1',
+      action_id: action.request.action_id,
+      issue_id: action.issue_id,
+      agent_id: 'fixture:' + action.request.role,
+      tool_call_ref: 'fixture:task-synthesis',
+      status: 'reported_complete',
+      summary,
+      output_digest: canonicalJsonDigest(summary),
+      evidence_refs: [],
+    };
+  return reportControlledObservation(
+    input,
+    issued,
+    observation,
+    '.agent/work/' + input.workId + '/synthesis-report.json',
+  );
+}
+
+export async function runSourcePrewriterPublicActions(
+  input: PublicPrewriterInput,
+): Promise<MastraSessionLedgerSnapshot> {
+  const current = currentSnapshot(input),
+    envelope = await input.publicRun(expectedVersionArguments([...input.args, '--issue-wave', 'true'], current)),
+    actions = parsePublicActions(envelope);
   assertPrewriterActions(actions);
   const issued = currentSnapshot(input);
   assertJournalMatchesActions(actions, issued);
   let reported = issued;
-  for (const action of actions) reported = reportPrewriterAction(action, input);
+  for (const action of actions) reported = await reportPrewriterAction(action, input);
   return reported;
 }

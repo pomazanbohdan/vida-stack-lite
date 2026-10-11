@@ -526,6 +526,27 @@ original_operation_reference to attribution.pointer in the exact accepted
 scope bytes and binds those bytes themselves. The historical reference is
 traceability evidence only; it is not caller identity or authority.
 
+### Read-only dispatch repair after paused owner release
+
+Repair preparation reads one coherent Host Work/Ledger/Journal snapshot through
+the maintained Host reader. It creates no nested SQLite transaction. New
+`ReadOnlyDispatchRepairPlan/v2` plans bind the snapshot versions, maintenance
+generation, current configuration, scoped Source, original issue and exact
+released owner. The ticket, claim and release must agree on work, thread,
+generation, resources and Source provenance; the claim/release revision interval
+must be valid and no later operation may reuse that ticket.
+
+Apply uses one immediate Host transaction under the producer fence. It rechecks
+the maintenance generation and all snapshot versions, then rebuilds the exact
+plan from current configuration, Source and activation history before recording
+an immutable idempotent repair row. It preserves the original Work, Ledger and
+Journal bytes and original UNKNOWN issue; the row grants no replay or execution
+rights. A conflicting payload or changed dependent input denies without
+publication. Replacement activation rechecks its paused owner, retained issue,
+versions and current generation before any effect. Persisted v1 reader
+compatibility remains explicit; newly prepared or applied plans require v2.
+An attributable active caller still owns authorization for this exact repair.
+
 ### Partial Source accounting after owner retirement
 
 The distinct `run --capture-retired-source true` route uses
@@ -611,6 +632,11 @@ operation-bound; active overlapping owners and earlier FIFO waiters deny
 retirement. A retained exact apply request supports lost-acknowledgement retry;
 changed requests or conflicting later ownership are rejected. The unknown effect remains unresolved, and late results stay
 fenced from the released owner.
+
+The dedicated retirement transaction validates its exact retained-owner
+preimage through a transient progress view while persisting the actual released
+ticket/claim and suspended Work afterimage. Ordinary unresolved-attempt ownership
+validation remains unchanged and grants no release authority.
 
 A known-terminal VERIFY failure may use the existing forward runtime-code rebind
 under an explicit owner correction basis, exact attempt/live lease/CAS and verified
@@ -746,7 +772,7 @@ Current formation provenance and artifact integrity qualify the selected package
 for delivery. Development tests/reviews and user Runtime acceptance remain separate;
 formation and installation do not require new seals or repeated assurance cycles.
 
-The repository-only evidence owner is `tooling/agent/release-ci-evidence.mjs`.
+The repository-only evidence owner is `tooling/agent/release-ci-evidence.ts`.
 Its portable boundary receives an actual attributable trusted session/controller
 observation and an already approved profile. It checks consistency; file JSON,
 saved success, a callback boolean or Git origin does not establish origin or
@@ -784,7 +810,7 @@ upgrade-recovery checks. Failed/skipped/missing/stale/UNKNOWN observations deny.
 CI uses existing `build:pinned` then `prepack:pinned`; local release qualification
 does not form its prerequisite candidate.
 
-The manual Windows workflow uses tooling/agent/native-ci-delivery.mjs for
+The manual Windows workflow uses tooling/agent/native-ci-delivery.ts for
 native-build -> emit-build -> publication. Formation invokes no test suites.
 The isolated frozen package lock, declared current Source, platform and version
 are bound to one actual request/run/attempt. emit-build requires the successful
@@ -899,6 +925,9 @@ absent postimage with intact custody and unchanged dependencies. Unexpected
 bytes or missing custody preserve UNKNOWN. The three removals are recoverable
 steps, not one filesystem transaction.
 
+Reloading frozen Source observations preserves their serialized identity.
+Parsing an unchanged observation must not make the same bundle appear to drift.
+
 The synchronous local test-evidence, source-seal and assurance writers acquire
 the same admission lock followed by the operation lock. They recheck pending
 operation and repair state under both locks. A writer is denied while a repair
@@ -1000,6 +1029,15 @@ and actual receipts. Retargeting uses supported bundle-owned reconciliation; no
 manual journal edit, invented successful installation or replay of UNKNOWN
 effects is permitted. Native and CI acceptance retain their actual GAPs. Only
 verified installed native behavior can establish developer readiness.
+
+Standalone resource materialization drains every started write in its bounded
+batch before releasing the owned lock after a failure. A loader failure before
+file creation permits identity-checked cleanup of its empty stage. Once a file
+open/write is attempted, preserve the partial stage and its bytes for inspection;
+do not start another batch or publish an incomplete destination. A known staging
+failure can release only its exact owned lock after all writes have settled.
+Destination publication uncertainty retains the lock and permits no automatic
+reissue. These custody checks do not establish power-loss durability.
 
 ## Scoped source and lease continuity
 
@@ -1306,6 +1344,13 @@ scope is cleared in `finally`, rejects asynchronous callbacks, and does not
 relax nested Host mutation checks. See the
 [SQLite transaction documentation](https://www.sqlite.org/lang_transaction.html#transactions)
 for its transaction and nesting behavior.
+
+Bundle-owned synthesis qualification repair rederives the frozen plan and its
+typed Work projection through this same-store, exact-receipt inspection scope
+while its own maintenance fence is held. The subsequent immediate commit still
+checks the held fence and Work/Journal/shared-Ledger CAS. Frozen plan decoding
+preserves validated field order so the saved exact wire image remains verifiable;
+an inspection scope grants no mutation authority or UNKNOWN outcome resolution.
 
 The configured Mastra engine has one Host-owned producer exclusion. Before
 storage initialization, start or resume, the actual configured journal and its
@@ -1720,7 +1765,7 @@ Historical corrective rebinding remains a GAP; receipt adoption and disposal
 alone do not authorize execution. Source implementation is not installed proof.
 
 Acceptance evidence: isolated historical predicate controls in
-`tests/runtime-config-rebind.test.mjs`, concurrent completed/failed journal
+`tests/runtime-config-rebind.test.ts`, concurrent completed/failed journal
 controls in `tests/bun/host-state.test.mjs`, and configured terminal-validator
 capability controls in `tests/final-assurance.test.mjs`. Required full-chain
 qualification additionally covers initialize A, admit work under A, deliver B,
@@ -2017,13 +2062,26 @@ authority in strict current-v1 shape, including explicit generation zero for
 base attempts; raw preimages remain provenance. New assignment or work writes
 after the frozen repair postimage block restore through dependency CAS.
 
+Corrective Source preflight may resolve current lifecycle preparation citations
+against the immutable original planning journal authenticated by the current
+recovery evidence, alongside the current corrective journal. The admitted packet
+builder supplies that already validated state to trusted policy composition;
+consumers do not independently reread recovery or project original observations
+into the current engine. Each asynchronous freshness check revalidates the live
+inputs and binds the planning digest to policy evidence. Observation references
+remain unique per run and exact action, issue and canonical summary digest;
+failed or foreign-bound duplicates still make a matching tuple ambiguous.
+This supplies evidence, never authority to replay an original action.
+
 The explicit correction-generation repair may normalize a proven original
 non-corrective Source attempt while its provider outcome remains unknown.
 Require the unchanged generation-zero assignment identity, zero correction
 count, matching original Host and journal receipts, and the exact issued action
-with its retained authorization. Normalize only the wholly absent
-`correction_generation`/`correction_authorization` pair to `0`/`null`, including
-the nested authorization receipt. Partial fields, corrective history, mismatched
+with its retained authorization. Validate a repair-only copied journal with only
+the wholly absent `correction_generation`/`correction_authorization` pair supplied
+as `0`/`null`, including the nested authorization receipt, before invoking the
+strict journal codec. Retain raw journal bytes for CAS; ordinary readers continue
+requiring explicit current authority. Partial fields, corrective history, mismatched
 authority, competing Source ownership and unrelated unknown effects fail closed.
 Unrelated execution-only read-only claims remain unchanged under ledger CAS.
 Journals requiring no correction metadata normalization remain unchanged frozen
@@ -2056,6 +2114,14 @@ expired recovery and runtime-code-rebind; public run requires the complete
 expected exports. Copied-package source or generated-engine omissions fail
 before engine construction. Qualification must bind those boundaries to the actual executing package and
 current release operation.
+
+Live executable and standalone-resource inventories exclude SafeRepositoryAccess
+control sidecars, reclaim guards and their exact UUID quarantine names. These
+operational files do not contribute executable identity or delivery inputs;
+inventory discovery neither reads their owner records nor removes them. Genuine
+hidden sources, lockfile inputs and names that only resemble the reserved
+control names remain selected. Historical executable inventory continues to use
+the exact selected native manifest rather than rediscovering live package files.
 
 For first clean cutover, old accepted subset-engine intakes are archival or
 lawfully superseded only. No old-subset reader fallback or conversion to new
@@ -2256,8 +2322,32 @@ On Linux, sidecar names longer than 199 UTF-8 bytes use a fixed-size
 `.vida-resource-lock-<sha256 of resource basename>.lock` name in the same
 directory, reserving room for reclaim and quarantine suffixes within NAME_MAX.
 Linux lock acquisition, stale-lock quarantine and release stay bound to opened
-directory/file identities and fail closed on foreign or changed entries. The
-lock namespace change requires quiescence while upgrading cooperating writers;
+directory/file identities and fail closed on foreign or changed entries. Failure
+to acquire a release guard is reported as
+`SAFE_REPOSITORY_LOCK_RELEASE_INCOMPLETE`; the exact lock remains in custody.
+This is a release failure after the protected callback entered, never an
+acquisition-only contention signal or permission to replay that callback. Finalizers
+close their descriptors while preserving the physical lock and any live guard.
+Failed restoration of a quarantined entry reports
+`SAFE_REPOSITORY_LOCK_RESTORE_INCOMPLETE` with the actual cause and retains the
+unrestored entry. A simultaneous operation failure and restoration failure
+retain both causes. Stale-lock removal and guard release also preserve
+simultaneous failures in
+primary-first order with the primary as cause. A single failure keeps its exact
+identity; an aggregate is not itself evidence of failed namespace restoration.
+Recognized unresolved quarantine prevents new admission;
+its presence does not establish a failed restoration or authorize cleanup or
+callback replay. Before callback entry, observation reports typed pending
+contention through the caller's existing finite read-admission policy. An orphan
+remains blocked at expiry. After callback entry, pending quarantine instead
+reports incomplete release; the callback result is withheld and cannot replay.
+After successful unlink or directory removal, the cleanup state records the
+physical removal before synchronizing the parent directory. A failed parent
+sync reports the original error and uncertain durability; it cannot restore an
+already deleted entry or claim that a quarantine remains. Callback results stay
+withheld on a release failure. No power-loss durability or successful release
+is inferred from the visible namespace alone.
+The lock namespace change requires quiescence while upgrading cooperating writers;
 it does not promise coordination with older processes still using the prior
 in-place lock name.
 

@@ -1,12 +1,12 @@
-import { afterAll, afterEach, expect, mock, test } from 'bun:test';
+import { afterAll, afterEach, expect, mock, spyOn, test } from 'bun:test';
+import * as artifactProducer from '../src/config/project-upgrade-artifacts.ts';
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { closeSync, fstatSync, fsyncSync, openSync, readFileSync, readSync, writeSync } from 'node:fs';
 import { lstat, readFile, rm, stat } from 'node:fs/promises';
-import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.js';
+import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.js';
 import { HostStateStore } from '../src/host-state.js';
 import * as actualAccess from '../src/config/safe-repository-access.js';
 import {
@@ -18,6 +18,7 @@ import {
   runtimeConfigurationSourceFor,
 } from '../src/config/project-paths.js';
 import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
+import { runBoundedSubprocess } from './helpers/bounded-subprocess.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packageSource = (relativePath: string): string => path.join(packageRoot, relativePath);
@@ -439,6 +440,7 @@ async function assertUnknownRequiresExplicitSameId(
 }
 
 type ChildResult = {
+  readonly closeObserved: boolean;
   readonly status: number | null;
   readonly signal: NodeJS.Signals | null;
   readonly error: string | null;
@@ -446,6 +448,7 @@ type ChildResult = {
   readonly stderr: string;
   readonly outputExceeded: boolean;
   readonly timedOut: boolean;
+  readonly terminationRequestConfirmed: boolean | null;
 };
 
 // The returned operation has the producer's 8 MiB journal bound plus its CLI newline.
@@ -456,7 +459,12 @@ async function runFreshBunResume(
   root: string,
   operationId: string,
   reconcileUnknown?: boolean,
-  preEffectStop?: { readonly target: string; readonly method: 'write' | 'replace'; readonly token: string },
+  preEffectStop?: {
+    readonly target: string;
+    readonly method: 'write' | 'replace' | 'move';
+    readonly token: string;
+    readonly mode?: 'before' | 'after';
+  },
 ): Promise<ChildResult> {
   const startedAt = performance.now();
   const childEnvironment = { ...process.env };
@@ -469,6 +477,7 @@ async function runFreshBunResume(
     'VIDA_UPGRADE_PRE_EFFECT_TOKEN',
     'VIDA_UPGRADE_PRE_EFFECT_TARGET',
     'VIDA_UPGRADE_PRE_EFFECT_METHOD',
+    'VIDA_UPGRADE_PRE_EFFECT_MODE',
   ])
     delete childEnvironment[key];
   if (bundleTimingEnabled) {
@@ -483,9 +492,11 @@ async function runFreshBunResume(
     childEnvironment.VIDA_UPGRADE_PRE_EFFECT_TOKEN = preEffectStop.token;
     childEnvironment.VIDA_UPGRADE_PRE_EFFECT_TARGET = preEffectStop.target;
     childEnvironment.VIDA_UPGRADE_PRE_EFFECT_METHOD = preEffectStop.method;
+    childEnvironment.VIDA_UPGRADE_PRE_EFFECT_MODE = preEffectStop.mode ?? 'before';
   }
   if ((bundleTimingEnabled || preEffectStop !== undefined) && process.env.VIDA_UPGRADE_ACCESS_TRACE === '1')
     childEnvironment.VIDA_UPGRADE_ACCESS_TRACE = '1';
+
   const args = [
     '--no-env-file',
     '--no-install',
@@ -493,7 +504,7 @@ async function runFreshBunResume(
     ...(preEffectStop === undefined && !bundleTimingEnabled
       ? []
       : ['--preload', packageSource('tests/helpers/project-upgrade-stop-preload.ts')]),
-    packageSource('bin/reconcile-artifacts.mjs'),
+    packageSource('bin/reconcile-artifacts.ts'),
     '--kind',
     'project-upgrade',
     '--mode',
@@ -504,58 +515,65 @@ async function runFreshBunResume(
     operationId,
     ...(reconcileUnknown === undefined ? [] : ['--reconcile-unknown', String(reconcileUnknown)]),
   ];
-  const result = await new Promise<ChildResult>((resolve) => {
-    const child = spawn(process.execPath, args, {
+
+  // These parent-side markers use the existing opt-in diagnostic sink. They
+  // bound phase visibility without asserting why a phase took its duration.
+  recordBundleTiming({
+    phase: 'fresh-resume-child-start',
+    operation_id: operationId,
+    diagnostic_preload: bundleTimingEnabled || preEffectStop !== undefined,
+  });
+  let result: ChildResult;
+  try {
+    const bounded = await runBoundedSubprocess(process.execPath, args, {
       cwd: packageRoot,
       env: childEnvironment,
-      shell: false,
-      windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      timeoutMs: 45_000,
+      stdoutLimitBytes: childOperationOutputLimit,
+      stderrLimitBytes: childErrorOutputLimit,
+      terminateOnOutputLimit: true,
+      forwardStderrProgress: bundleTimingEnabled,
     });
-    const stdout: Buffer[] = [];
-    const stderr: Buffer[] = [];
-    let stdoutBytes = 0;
-    let stderrBytes = 0;
-    let spawnError: string | null = null;
-    let outputExceeded = false;
-    let timedOut = false;
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      child.kill('SIGKILL');
-      // Whole fresh resume was measured at 39 s; 30 s killed a supported repair.
-    }, 45_000);
-    const capture = (chunks: Buffer[], currentBytes: number, chunk: Buffer, byteLimit: number): number => {
-      const remaining = byteLimit - currentBytes;
-      if (chunk.byteLength > remaining) {
-        outputExceeded = true;
-        if (remaining > 0) chunks.push(chunk.subarray(0, remaining));
-        child.kill('SIGKILL');
-        return byteLimit;
-      }
-      chunks.push(chunk);
-      return currentBytes + chunk.byteLength;
+    result = {
+      closeObserved: bounded.closeObserved,
+      status: bounded.exitCode,
+      signal: bounded.signal,
+      error:
+        [bounded.childError, bounded.stderrForwardingError, bounded.terminationError]
+          .filter((value) => value !== null)
+          .join('; ') || null,
+      stdout: bounded.stdout.toString('utf8'),
+      stderr: bounded.stderr.toString('utf8'),
+      outputExceeded: bounded.stdoutTruncated || bounded.stderrTruncated,
+      timedOut: bounded.timedOut,
+      terminationRequestConfirmed: bounded.terminationRequestConfirmed,
     };
-    child.stdout.on('data', (chunk: Buffer) => {
-      stdoutBytes = capture(stdout, stdoutBytes, chunk, childOperationOutputLimit);
-    });
-    child.stderr.on('data', (chunk: Buffer) => {
-      stderrBytes = capture(stderr, stderrBytes, chunk, childErrorOutputLimit);
-    });
-    child.once('error', (error) => {
-      spawnError = error.message;
-    });
-    child.once('close', (status, signal) => {
-      clearTimeout(timeout);
-      resolve({
-        status,
-        signal,
-        error: spawnError,
-        stdout: Buffer.concat(stdout).toString('utf8'),
-        stderr: Buffer.concat(stderr).toString('utf8'),
-        outputExceeded,
-        timedOut,
-      });
-    });
+  } catch (error) {
+    // A synchronous spawn throw or asynchronous spawn error is a failed
+    // observation, never a fabricated successful terminal result.
+    result = {
+      closeObserved: false,
+      status: null,
+      signal: null,
+      error: error instanceof Error ? error.message : String(error),
+      stdout: '',
+      stderr: '',
+      outputExceeded: false,
+      timedOut: false,
+      terminationRequestConfirmed: null,
+    };
+  }
+  recordBundleTiming({
+    phase: 'fresh-resume-child-terminal',
+    operation_id: operationId,
+    status: result.status,
+    close_observed: result.closeObserved,
+    signal: result.signal,
+    spawn_error: result.error,
+    output_exceeded: result.outputExceeded,
+    timed_out: result.timedOut,
+    termination_request_confirmed: result.terminationRequestConfirmed,
+    elapsed_ms: performance.now() - startedAt,
   });
   console.info(
     JSON.stringify({
@@ -564,12 +582,15 @@ async function runFreshBunResume(
       filesystemApiTiming: bundleTimingEnabled && process.env.VIDA_UPGRADE_IO_TIMING === '1',
       durationMs: performance.now() - startedAt,
       status: result.status,
+      closeObserved: result.closeObserved,
       signal: result.signal,
       error: result.error,
       outputExceeded: result.outputExceeded,
       timedOut: result.timedOut,
+      terminationRequestConfirmed: result.terminationRequestConfirmed,
       stdoutBytes: Buffer.byteLength(result.stdout),
-      stderr: result.stderr,
+      stderrBytes: Buffer.byteLength(result.stderr),
+      ...(bundleTimingEnabled ? { stderrForwarded: true } : { stderr: result.stderr }),
     }),
   );
   return result;
@@ -1943,3 +1964,374 @@ test.each(['write', 'replace'] as const)(
   },
   90_000,
 );
+
+function parseFixtureStop(stderr: string): Record<string, unknown> {
+  const line = stderr.split('\n').find((item) => item.includes('"schema":"ProjectUpgradeFixtureStop/v1"'));
+  if (line === undefined) throw new Error('Publication stop receipt is missing');
+  const value: unknown = JSON.parse(line);
+  if (!isPlainRecord(value)) throw new Error('Publication stop receipt is malformed');
+  return value;
+}
+
+test('fresh Bun abrupt stop after activation move retains the exact afterimage and resumes without another move', async () => {
+  const caseStartedAt = performance.now();
+  const operationId = 'lifecycle-activation-process-death-001';
+  async function timedPhase<T>(name: string, action: () => Promise<T>): Promise<T> {
+    if (!bundleTimingEnabled) return action();
+    recordBundleTiming({
+      phase: 'activation-move-case-phase-start',
+      operation_id: operationId,
+      phase_name: name,
+      case_elapsed_ms: performance.now() - caseStartedAt,
+    });
+    const phaseStartedAt = performance.now();
+    let outcome: 'completed' | 'failed' = 'failed';
+    try {
+      const value = await action();
+      outcome = 'completed';
+      return value;
+    } finally {
+      recordBundleTiming({
+        phase: 'activation-move-case-phase-terminal',
+        operation_id: operationId,
+        phase_name: name,
+        outcome,
+        case_elapsed_ms: performance.now() - caseStartedAt,
+        phase_elapsed_ms: performance.now() - phaseStartedAt,
+      });
+    }
+  }
+  const custody = beginCase();
+  let qualified = false;
+  try {
+    const root = await makeFreshRepository();
+    addRoot(root, custody);
+    const planned = await planFresh(root, operationId);
+    await timedPhase('fresh-database-preparation-resume', () =>
+      upgrade.resumeFreshProjectUpgradeDatabase(root, planned.plan.operation_id),
+    );
+
+    // Reach the owned staging boundary through the existing no-effect denial.
+    // The fresh child then performs the real activation move and dies before its checkpoint.
+    await timedPhase('typed-no-effect-staging-setup', async () => {
+      const armed = arm({
+        root,
+        kind: 'move-denied',
+        target: PROJECT_ACTIVATION_PATH,
+        armed: true,
+        calls: 0,
+        effects: 0,
+      });
+      await expectFailure(
+        upgrade.resumeProjectUpgrade(root, planned.plan.operation_id),
+        'fixture typed no-effect activation move denial',
+      );
+      expect(armed.boundaryError).toBeInstanceOf(originalAccessModule.SafeRepositoryMoveError);
+      expect(armed.boundaryError).toMatchObject({ code: 'SAFE_REPOSITORY_MOVE_NOT_APPLIED' });
+      expect(armed.calls).toBe(1);
+      expect(armed.effects).toBe(0);
+      const staged = upgrade.inspectPlannedProjectUpgrade(root, planned.plan.operation_id);
+      expect(staged.phase).toBe('activation_staged');
+      expect(staged.plan.token).toBe(planned.plan.token);
+      expect(canonicalJson(staged.plan)).toBe(canonicalJson(planned.plan));
+      if (staged.activation === null || armed.stageBefore === undefined)
+        throw new Error('Activation process-death setup lost its staged beforeimage');
+      expect(armed.stageBefore.bytes).toEqual(Buffer.from(staged.activation));
+      for (const file of planned.plan.files)
+        expect(await readFile(path.join(root, file.path))).toEqual(Buffer.from(file.after));
+    });
+
+    const stopped = await timedPhase('actual-move-child', () =>
+      runFreshBunResume(root, planned.plan.operation_id, undefined, {
+        target: PROJECT_ACTIVATION_PATH,
+        method: 'move',
+        token: planned.plan.token,
+        mode: 'after',
+      }),
+    );
+    expect(stopped).toMatchObject({
+      status: 86,
+      closeObserved: true,
+      signal: null,
+      error: null,
+      timedOut: false,
+      outputExceeded: false,
+    });
+    const receipt = parseFixtureStop(stopped.stderr);
+    expect(receipt).toMatchObject({
+      schema: 'ProjectUpgradeFixtureStop/v1',
+      operation_id: planned.plan.operation_id,
+      token: planned.plan.token,
+      target: PROJECT_ACTIVATION_PATH,
+      mode: 'after',
+      boundary: 'delegated-move-resolved',
+      phase: 'activating',
+      next_file: planned.plan.files.length,
+      move_calls: 1,
+      effect_calls: 1,
+    });
+
+    const retainedState = await timedPhase('retained-afterimage-and-fence-checks', async () => {
+      const access = originalRequireSafeRepositoryAccess(root);
+      const retainedBytes = originalAccessModule.readRepositoryTextImage(
+        access,
+        PROJECT_UPGRADE_OPERATION_PATH,
+        'interrupted activation move fixture journal',
+      );
+      if (retainedBytes === null) throw new Error('Interrupted activating journal is missing');
+      const retained = upgrade.validateProjectUpgradeOperation(JSON.parse(retainedBytes));
+      expect(retained.phase).toBe('activating');
+      expect(retained.next_file).toBe(planned.plan.files.length);
+      expect(canonicalJson(retained.plan)).toBe(canonicalJson(planned.plan));
+      expect(retained.plan.token).toBe(planned.plan.token);
+      if (retained.activation === null) throw new Error('Interrupted activating journal lost its activation image');
+      const target = path.join(root, PROJECT_ACTIVATION_PATH);
+      expect(await readFile(target)).toEqual(Buffer.from(retained.activation));
+      const staging = path.join(root, `.vida/.activation-${planned.plan.operation_id}.json`);
+      expect(await readFile(staging).catch((error: unknown) => error)).toMatchObject({ code: 'ENOENT' });
+      const activationIdentity = await stat(target, { bigint: true });
+      expect(receipt.device).toBe(activationIdentity.dev.toString());
+      expect(receipt.inode).toBe(activationIdentity.ino.toString());
+
+      const database = new Database(path.join(root, PROJECT_WORKSPACE_DATABASE_PATH), { readonly: true, strict: true });
+      try {
+        const store = readOnlyUpgradeHost(root, database, planned);
+        const fence = store.readMaintenanceFence();
+        expect(fence?.status).toBe('held');
+        expect(fence?.binding).toEqual(upgrade.projectUpgradeFenceBinding(planned));
+        if (!fence) throw new Error('Interrupted activation move lost its Host maintenance fence');
+        store.assertMaintenanceFence({ fence, token: planned.plan.token });
+      } finally {
+        database.close();
+      }
+      return { retainedBytes, activationIdentity, target };
+    });
+    const { retainedBytes, activationIdentity, target } = retainedState;
+
+    const lockPath = path.join(root, `${PROJECT_UPGRADE_OPERATION_PATH}.lock`);
+    await timedPhase('normal-30s-dead-owner-quarantine', async () => {
+      const orphanLock = await lstat(lockPath);
+      expect(orphanLock.isFile()).toBe(true);
+      expect(orphanLock.nlink).toBe(1);
+      const quarantineRemaining = Math.max(0, orphanLock.mtimeMs + 30_000 - Date.now());
+      await new Promise<void>((resolve) => setTimeout(resolve, quarantineRemaining + 5));
+      const agedLock = await lstat(lockPath);
+      expect(agedLock.dev).toBe(orphanLock.dev);
+      expect(agedLock.ino).toBe(orphanLock.ino);
+      expect(agedLock.mtimeMs).toBe(orphanLock.mtimeMs);
+      expect(Date.now() - agedLock.mtimeMs).toBeGreaterThanOrEqual(30_000);
+      expect(await readFile(path.join(root, PROJECT_UPGRADE_OPERATION_PATH), 'utf8')).toBe(retainedBytes);
+    });
+
+    const resumedMoveObservation = arm({
+      root,
+      kind: 'write',
+      target: PROJECT_ACTIVATION_PATH,
+      armed: false,
+      calls: 0,
+      effects: 0,
+    });
+    // Exercise the public same-ID API in this process and count any activation move.
+    await timedPhase('final-same-id-resume-and-history', async () => {
+      await upgrade.resumeProjectUpgrade(root, planned.plan.operation_id);
+      await assertCompleteHistory(root, planned);
+      expect(resumedMoveObservation.moves ?? 0).toBe(0);
+      const finalIdentity = await stat(target, { bigint: true });
+      expect(finalIdentity.dev).toBe(activationIdentity.dev);
+      expect(finalIdentity.ino).toBe(activationIdentity.ino);
+    });
+    qualified = true;
+    completeRoot(root);
+  } finally {
+    if (!qualified)
+      console.error(`Retained failed activation process-death fixture: ${custody.root ?? 'creation pending'}`);
+    settleCase(custody);
+  }
+}, 90_000);
+
+test.each(['first', 'last'] as const)(
+  'fresh Bun abrupt stop after the %s publication write resumes the exact afterimage once',
+  async (boundary) => {
+    const custody = beginCase();
+    let qualified = false;
+    try {
+      const root = await makeFreshRepository();
+      addRoot(root, custody);
+      const operationId = `lifecycle-interrupted-afterimage-${boundary}-001`;
+      const planned = await planFresh(root, operationId);
+      const fileIndex =
+        boundary === 'first'
+          ? planned.plan.files.findIndex((file) => file.before === null)
+          : planned.plan.files.length - 1;
+      const file = planned.plan.files[fileIndex];
+      if (file === undefined) throw new Error('Fresh fixture has no exclusive config publication target');
+      // The existing child-stop fixture intentionally supports only a real
+      // writeExclusiveAsync afterimage. Do not silently claim coverage if the
+      // last planned file changes to replacement semantics.
+      expect(file.before).toBeNull();
+      const target = path.join(root, file.path);
+      expect(await readFile(target).catch((error: unknown) => error)).toMatchObject({ code: 'ENOENT' });
+
+      // Establish the real held fence and published workspace before the child.
+      await upgrade.resumeFreshProjectUpgradeDatabase(root, planned.plan.operation_id);
+      expect(await readFile(target).catch((error: unknown) => error)).toMatchObject({ code: 'ENOENT' });
+
+      // The helper validates phase/token/target/beforeimage, delegates one actual
+      // writeExclusiveAsync, observes its exact afterimage, writes one bounded
+      // receipt, then exits without returning to the journal checkpoint.
+      const stopped = await runFreshBunResume(root, planned.plan.operation_id, undefined, {
+        target: file.path,
+        method: 'write',
+        token: planned.plan.token,
+        mode: 'after',
+      });
+      expect(stopped).toMatchObject({ status: 86, signal: null, error: null, timedOut: false, outputExceeded: false });
+      const receipt = parseFixtureStop(stopped.stderr);
+      expect(receipt).toMatchObject({
+        schema: 'ProjectUpgradeFixtureStop/v1',
+        operation_id: planned.plan.operation_id,
+        token: planned.plan.token,
+        target: file.path,
+        mode: 'after',
+        boundary: 'delegated-write-resolved',
+        phase: 'publishing',
+        next_file: fileIndex,
+        effect_calls: 1,
+      });
+
+      // `close` from runFreshBunResume observes the direct child and its pipes. Only
+      // now read the fixture. Use the non-locking stable journal reader while the
+      // child's actual operation lock remains abandoned.
+      const access = originalRequireSafeRepositoryAccess(root);
+      const retainedBytes = originalAccessModule.readRepositoryTextImage(
+        access,
+        PROJECT_UPGRADE_OPERATION_PATH,
+        'interrupted afterimage fixture journal',
+      );
+      if (retainedBytes === null) throw new Error('Interrupted publishing journal is missing');
+      const retained = upgrade.validateProjectUpgradeOperation(JSON.parse(retainedBytes));
+      expect(retained.phase).toBe('publishing');
+      expect(retained.next_file).toBe(fileIndex);
+      expect(canonicalJson(retained.plan)).toBe(canonicalJson(planned.plan));
+      for (const published of planned.plan.files.slice(0, fileIndex + 1))
+        expect(await readFile(path.join(root, published.path))).toEqual(Buffer.from(published.after));
+      expect(await readFile(path.join(root, PROJECT_ACTIVATION_PATH)).catch((error: unknown) => error)).toMatchObject({
+        code: 'ENOENT',
+      });
+      expect(await readFile(target)).toEqual(Buffer.from(file.after));
+      const afterimageIdentity = await stat(target, { bigint: true });
+
+      // Match the existing dead-owner path: wait for the normal quarantine age,
+      // without touching, unlinking or aging the child-owned lock. Every child
+      // reports its own terminal result; group-wide termination remains separate evidence.
+      const lockPath = path.join(root, `${PROJECT_UPGRADE_OPERATION_PATH}.lock`);
+      const orphanLock = await lstat(lockPath);
+      expect(orphanLock.isFile()).toBe(true);
+      expect(orphanLock.nlink).toBe(1);
+      const quarantineRemaining = Math.max(0, orphanLock.mtimeMs + 30_000 - Date.now());
+      await new Promise<void>((resolve) => setTimeout(resolve, quarantineRemaining + 5));
+      const agedLock = await lstat(lockPath);
+      expect(agedLock.dev).toBe(orphanLock.dev);
+      expect(agedLock.ino).toBe(orphanLock.ino);
+      expect(agedLock.mtimeMs).toBe(orphanLock.mtimeMs);
+      expect(Date.now() - agedLock.mtimeMs).toBeGreaterThanOrEqual(30_000);
+      expect(await readFile(path.join(root, PROJECT_UPGRADE_OPERATION_PATH), 'utf8')).toBe(retainedBytes);
+
+      // This is the ordinary public same-ID resume. The lock owner was a dead
+      // child; normal safe-repository quarantine/reacquisition remains the only
+      // lock transition. Keep the existing 45s child and 90s parent bounds.
+      const resumed = await runFreshBunResume(root, planned.plan.operation_id);
+      expect(resumed).toMatchObject({ status: 0, signal: null, error: null, timedOut: false, outputExceeded: false });
+      const completed = await assertCompleteHistory(root, planned);
+      expect(canonicalJson(completed.plan)).toBe(canonicalJson(planned.plan));
+      expect(completed.plan.token).toBe(planned.plan.token);
+      expect(await readFile(target)).toEqual(Buffer.from(file.after));
+      const finalIdentity = await stat(target, { bigint: true });
+      expect(finalIdentity.dev).toBe(afterimageIdentity.dev);
+      expect(finalIdentity.ino).toBe(afterimageIdentity.ino);
+      qualified = true;
+      completeRoot(root);
+    } finally {
+      if (!qualified)
+        console.error(`Retained failed interrupted-afterimage fixture: ${custody.root ?? 'creation pending'}`);
+      settleCase(custody);
+    }
+  },
+  90_000,
+);
+
+test('upgrade artifact closure reuse is bounded to the last verified plan and preserves independent validators', async () => {
+  const custody = beginCase();
+  const root = await makeFreshRepository();
+  addRoot(root, custody);
+  const prepare = artifactProducer.prepareProjectUpgradeArtifacts;
+  let calls = 0;
+  const producer = spyOn(artifactProducer, 'prepareProjectUpgradeArtifacts').mockImplementation((...args) => {
+    calls++;
+    return prepare(...args);
+  });
+  try {
+    const first = upgrade.inspectProjectUpgrade(root, {
+      operation_id: 'lifecycle-pure-closure-001',
+      actor: 'test-owner',
+      instruction_ref: 'artifact closure regression',
+    });
+    expect(calls).toBe(2); // Actual capture plus its independent derived-closure validation.
+    const clones = Array.from({ length: 3 }, (): unknown => JSON.parse(canonicalJson(first)));
+    calls = 0;
+    for (const clone of clones)
+      expect(canonicalJson(upgrade.validateProjectUpgradeOperation(clone))).toBe(canonicalJson(first));
+    expect(calls).toBe(0);
+
+    const second = upgrade.inspectProjectUpgrade(root, {
+      operation_id: 'lifecycle-pure-closure-002',
+      actor: 'test-owner',
+      instruction_ref: 'distinct actual capture',
+    });
+    expect(second.plan_digest).not.toBe(first.plan_digest);
+    expect(calls).toBe(2);
+    calls = 0;
+    expect(canonicalJson(upgrade.validateProjectUpgradeOperation(JSON.parse(canonicalJson(first))))).toBe(
+      canonicalJson(first),
+    );
+    expect(calls).toBe(1); // One-entry bound: the other successfully checked plan displaced this one.
+
+    calls = 0;
+    expect(() => upgrade.validateProjectUpgradeOperation({ ...first, next_file: 1 })).toThrow(
+      'unfenced publication progress',
+    );
+    expect(() => upgrade.validateProjectUpgradeOperation({ ...first, plan_digest: '0'.repeat(64) })).toThrow(
+      'frozen plan differs',
+    );
+    expect(() => upgrade.validateProjectUpgradeOperation({ ...first, unrecognized: true })).toThrow();
+    expect(calls).toBe(0);
+
+    const changedPlan = {
+      ...first.plan,
+      files: first.plan.files.map((file, index) => (index === 0 ? { ...file, after: file.after + '\n' } : file)),
+    };
+    expect(() =>
+      upgrade.validateProjectUpgradeOperation({
+        ...first,
+        plan: changedPlan,
+        plan_digest: canonicalJsonDigest(changedPlan),
+      }),
+    ).toThrow('prepared output differs from the bundle converter');
+    expect(calls).toBe(1);
+    calls = 0;
+    expect(canonicalJson(upgrade.validateProjectUpgradeOperation(JSON.parse(canonicalJson(first))))).toBe(
+      canonicalJson(first),
+    );
+    expect(calls).toBe(0); // A failed closure cannot replace the successful entry.
+    expect(
+      await readFile(path.join(root, PROJECT_UPGRADE_OPERATION_PATH)).catch((error: unknown) => error),
+    ).toMatchObject({ code: 'ENOENT' });
+    expect(
+      await readFile(path.join(root, PROJECT_WORKSPACE_DATABASE_PATH)).catch((error: unknown) => error),
+    ).toMatchObject({ code: 'ENOENT' });
+    completeRoot(root);
+  } finally {
+    producer.mockRestore();
+    settleCase(custody);
+  }
+}, 90_000);

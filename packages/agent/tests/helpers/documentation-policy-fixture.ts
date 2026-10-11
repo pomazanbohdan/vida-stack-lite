@@ -8,6 +8,7 @@ import { HostStateStore } from '../../src/host-state.ts';
 import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
 import { executeDocumentationClearFromWork } from '../../src/documentation/clear.ts';
 import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
+import { validateDocumentationPolicy } from '../../src/documentation/policy.ts';
 
 export const policy = {
   schema: 'DocumentationPolicy/v1',
@@ -46,8 +47,9 @@ function fixture() {
     filter: (file) => !/^\..+\.cas\.lock(?:\.|$)/u.test(path.basename(file)),
   });
   const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
+  const templatePolicy: unknown = JSON.parse(template('documentation-policy.template.v1.json'));
   const oldPolicy = {
-    ...JSON.parse(template('documentation-policy.template.v1.json')),
+    ...validateDocumentationPolicy(templatePolicy, policyPath),
     required: true,
     changelog_required: true,
     changelog_path: 'docs/agent-instructions/events.jsonl',

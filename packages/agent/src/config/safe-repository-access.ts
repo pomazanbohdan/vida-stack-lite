@@ -93,6 +93,45 @@ const fsSafePackageMaxBytes = 64 * 1024 * 1024;
 const maxRepositoryReadBytes = 8 * 1024 * 1024;
 const boundedReadChunkBytes = 64 * 1024;
 const staleLockAgeMs = 30_000;
+/** A read admission denial while a reclaim owner holds the exact lock namespace. */
+export class SafeRepositoryLockContentionError extends Error {
+  readonly code: 'SAFE_REPOSITORY_LOCK_CONTENTION' | 'EEXIST';
+  constructor(label: string, cause?: Error) {
+    super(cause?.message ?? `safe repository access unavailable: ${label} lock reclaim is in progress`, { cause });
+    this.name = 'SafeRepositoryLockContentionError';
+    this.code = cause === undefined ? 'SAFE_REPOSITORY_LOCK_CONTENTION' : 'EEXIST';
+  }
+}
+
+/** Observed quarantine does not establish whether its owner is active or interrupted. */
+class SafeRepositoryLockPendingQuarantineError extends SafeRepositoryLockContentionError {
+  constructor(label: string, quarantineName: string) {
+    super(label);
+    this.name = 'SafeRepositoryLockPendingQuarantineError';
+    this.message = `safe repository access unavailable: ${label} quarantine ${quarantineName} is pending; custody retained`;
+  }
+}
+
+/** An entered operation cannot classify retained release custody as admission contention. */
+class SafeRepositoryLockReleaseError extends Error {
+  readonly code = 'SAFE_REPOSITORY_LOCK_RELEASE_INCOMPLETE';
+  constructor(lockName: string) {
+    super(`safe repository access unavailable: ${lockName} release incomplete; exact lock custody retained`);
+    this.name = 'SafeRepositoryLockReleaseError';
+  }
+}
+
+/** Failed namespace restoration retains quarantined custody and never permits admission retry. */
+class SafeRepositoryLockRestoreError extends Error {
+  readonly code = 'SAFE_REPOSITORY_LOCK_RESTORE_INCOMPLETE';
+  constructor(fromName: string, toName: string, cause: unknown) {
+    super(`safe repository access unavailable: ${fromName} restore to ${toName} incomplete; quarantine retained`, {
+      cause,
+    });
+    this.name = 'SafeRepositoryLockRestoreError';
+  }
+}
+
 function fail(message: string): never {
   throw new Error(`safe repository access unavailable: ${message}`);
 }
@@ -394,8 +433,30 @@ function lockOwnerPid(fd: number): number | null {
     () => null,
   );
 }
+// Linux proc stat field 3 is the state; comm may itself contain spaces and ')'.
+// Only the complete, PID-bound 52-field ABI record proves zombie exit.
+// Unknown ABI extensions and malformed terminators remain alive/unknown.
+function isExitedLinuxProcess(pid: number, value: string): boolean {
+  const prefix = `${pid} (`;
+  const boundary = value.lastIndexOf(') ');
+  return (
+    value.length <= 8192 &&
+    value.startsWith(prefix) &&
+    boundary >= prefix.length &&
+    /^Z(?: -?\d+){49}\n?(?![\s\S])/u.test(value.slice(boundary + 2))
+  );
+}
+
+function linuxProcessIsAlive(pid: number): boolean {
+  try {
+    return !isExitedLinuxProcess(pid, readFileSync(`/proc/${pid}/stat`, 'utf8'));
+  } catch (error) {
+    return !(error instanceof Error && 'code' in error && error.code === 'ENOENT');
+  }
+}
+
 function processIsAlive(pid: number): boolean {
-  if (process.platform === 'linux') return existsSync('/proc/' + pid);
+  if (process.platform === 'linux') return linuxProcessIsAlive(pid);
   try {
     process.kill(pid, 0);
     return true;
@@ -477,11 +538,41 @@ function readReclaimGuardOwner(guardPath: string, label: string): ReclaimGuardOw
   }
 }
 function restoreReclaimedEntry(native: LinuxNativeBinding, parentFd: number, fromName: string, toName: string): void {
-  Result.fromThrowable(
-    () => native.renameNoReplace(parentFd, fromName, parentFd, toName),
-    () => undefined,
-  )();
+  Result.fromThrowable(() => native.renameNoReplace(parentFd, fromName, parentFd, toName))().mapErr((error) => {
+    throw new SafeRepositoryLockRestoreError(fromName, toName, error);
+  });
 }
+function withReclaimedEntryCleanup<T>(operation: () => T, cleanup: () => void): T {
+  const result = Result.fromThrowable(operation)();
+  const cleaned = Result.fromThrowable(cleanup)();
+  if (result.isErr() && cleaned.isErr()) {
+    const failures = new AggregateError([result.error, cleaned.error], 'Owned entry operation and cleanup failed', {
+      cause: result.error,
+    });
+    throw cleaned.error instanceof SafeRepositoryLockRestoreError
+      ? new SafeRepositoryLockRestoreError('quarantined entry', 'original namespace', failures)
+      : failures;
+  }
+  if (cleaned.isErr()) throw cleaned.error;
+  if (result.isErr()) throw result.error;
+  return result.value;
+}
+
+type ReclaimGuardPhase = 'admission' | 'release';
+function denyReclaimGuard(name: string, label: string, phase: ReclaimGuardPhase, quarantineName?: string): never {
+  if (phase === 'release') throw new SafeRepositoryLockReleaseError(name);
+  if (quarantineName !== undefined) throw new SafeRepositoryLockPendingQuarantineError(label, quarantineName);
+  throw new SafeRepositoryLockContentionError(label);
+}
+function rejectRetainedLockQuarantine(parentFd: number, name: string, label: string, phase: ReclaimGuardPhase): void {
+  const prefix = '.' + name + '.';
+  const suffix = /^(?:[a-f0-9-]{36}[.]reclaimed|reclaim[.][a-f0-9-]{36}[.](?:reclaimed|released))$/u;
+  const retained = readdirSync(childPath(parentFd, '.')).find(
+    (entry) => entry.startsWith(prefix) && suffix.test(entry.slice(prefix.length)),
+  );
+  if (retained !== undefined) denyReclaimGuard(name, label, phase, retained);
+}
+
 function reclaimStaleReclaimGuard(parentFd: number, name: string, label: string): boolean {
   const guardName = name + '.reclaim';
   const current = reclaimGuardStats(parentFd, guardName, label);
@@ -491,35 +582,42 @@ function reclaimStaleReclaimGuard(parentFd: number, name: string, label: string)
   const quarantineName = '.' + guardName + '.' + randomUUID() + '.reclaimed';
   let moved = false;
   let removed = false;
-  try {
-    try {
-      native!.renameNoReplace(parentFd, guardName, parentFd, quarantineName);
-      moved = true;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
-      throw error;
-    }
-    const quarantinePath = reclaimGuardPath(parentFd, quarantineName);
-    const movedStats = reclaimGuardStats(parentFd, quarantineName, label);
-    if (!movedStats || !sameFileIdentity(current, movedStats)) return false;
-    const entries = readdirSync(quarantinePath);
-    if (entries.some((entry) => entry !== reclaimGuardOwnerFile)) return false;
-    const ownerState = readReclaimGuardOwner(quarantinePath, label);
-    const referenceTime = Math.max(movedStats.mtimeMs, ownerState.mtimeMs);
-    if (!ownerState.owner || Date.now() - referenceTime < staleLockAgeMs || processIsAlive(ownerState.owner.owner_pid))
-      return false;
-    unlinkSync(reclaimGuardOwnerPath(quarantinePath));
-    rmdirSync(quarantinePath);
-    fsyncSync(parentFd);
-    removed = true;
-    return true;
-  } finally {
-    choose(
-      all(moved, !removed),
-      () => restoreReclaimedEntry(native!, parentFd, quarantineName, guardName),
-      () => undefined,
-    );
-  }
+  return withReclaimedEntryCleanup(
+    () => {
+      try {
+        native!.renameNoReplace(parentFd, guardName, parentFd, quarantineName);
+        moved = true;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+        throw error;
+      }
+      const quarantinePath = reclaimGuardPath(parentFd, quarantineName);
+      const movedStats = reclaimGuardStats(parentFd, quarantineName, label);
+      if (!movedStats || !sameFileIdentity(current, movedStats)) return false;
+      const entries = readdirSync(quarantinePath);
+      if (entries.some((entry) => entry !== reclaimGuardOwnerFile)) return false;
+      const ownerState = readReclaimGuardOwner(quarantinePath, label);
+      const referenceTime = Math.max(movedStats.mtimeMs, ownerState.mtimeMs);
+      if (
+        !ownerState.owner ||
+        Date.now() - referenceTime < staleLockAgeMs ||
+        processIsAlive(ownerState.owner.owner_pid)
+      )
+        return false;
+      unlinkSync(reclaimGuardOwnerPath(quarantinePath));
+      rmdirSync(quarantinePath);
+      removed = true;
+      fsyncSync(parentFd);
+      return true;
+    },
+    () => {
+      choose(
+        all(moved, !removed),
+        () => restoreReclaimedEntry(native!, parentFd, quarantineName, guardName),
+        () => undefined,
+      );
+    },
+  );
 }
 function mkdirReclaimGuard(parentFd: number, guardName: string): boolean {
   try {
@@ -530,7 +628,13 @@ function mkdirReclaimGuard(parentFd: number, guardName: string): boolean {
     throw error;
   }
 }
-function acquireReclaimGuard(parentFd: number, name: string, label: string): ReclaimGuard | null {
+function acquireReclaimGuard(
+  parentFd: number,
+  name: string,
+  label: string,
+  phase: ReclaimGuardPhase,
+): ReclaimGuard | null {
+  rejectRetainedLockQuarantine(parentFd, name, label, phase);
   const guardName = name + '.reclaim';
   if (!mkdirReclaimGuard(parentFd, guardName)) {
     if (!reclaimStaleReclaimGuard(parentFd, name, label) || !mkdirReclaimGuard(parentFd, guardName)) return null;
@@ -594,42 +698,63 @@ function releaseReclaimGuard(guard: ReclaimGuard, label: string): void {
   const quarantineName = '.' + guard.guardName + '.' + randomUUID() + '.released';
   let moved = false;
   let removed = false;
-  try {
-    try {
-      native!.renameNoReplace(guard.parentFd, guard.guardName, guard.parentFd, quarantineName);
-      moved = true;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
-      throw error;
-    }
-    const quarantinePath = reclaimGuardPath(guard.parentFd, quarantineName);
-    const movedStats = reclaimGuardStats(guard.parentFd, quarantineName, label);
-    if (!movedStats || !sameFileIdentity(current, movedStats)) return;
-    const entries = readdirSync(quarantinePath);
-    if (entries.some((entry) => entry !== reclaimGuardOwnerFile)) return;
-    const ownerState = readReclaimGuardOwner(quarantinePath, label);
-    if (
-      !ownerState.owner ||
-      ownerState.owner.owner_pid !== process.pid ||
-      ownerState.owner.owner_token !== guard.ownerToken
-    )
-      return;
-    unlinkSync(reclaimGuardOwnerPath(quarantinePath));
-    rmdirSync(quarantinePath);
-    fsyncSync(guard.parentFd);
-    removed = true;
-  } finally {
-    choose(
-      all(moved, !removed),
-      () => restoreReclaimedEntry(native!, guard.parentFd, quarantineName, guard.guardName),
-      () => undefined,
-    );
-  }
+  return withReclaimedEntryCleanup(
+    () => {
+      try {
+        native!.renameNoReplace(guard.parentFd, guard.guardName, guard.parentFd, quarantineName);
+        moved = true;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+        throw error;
+      }
+      const quarantinePath = reclaimGuardPath(guard.parentFd, quarantineName);
+      const movedStats = reclaimGuardStats(guard.parentFd, quarantineName, label);
+      if (!movedStats || !sameFileIdentity(current, movedStats)) return;
+      const entries = readdirSync(quarantinePath);
+      if (entries.some((entry) => entry !== reclaimGuardOwnerFile)) return;
+      const ownerState = readReclaimGuardOwner(quarantinePath, label);
+      if (
+        !ownerState.owner ||
+        ownerState.owner.owner_pid !== process.pid ||
+        ownerState.owner.owner_token !== guard.ownerToken
+      )
+        return;
+      unlinkSync(reclaimGuardOwnerPath(quarantinePath));
+      rmdirSync(quarantinePath);
+      removed = true;
+      fsyncSync(guard.parentFd);
+    },
+    () => {
+      choose(
+        all(moved, !removed),
+        () => restoreReclaimedEntry(native!, guard.parentFd, quarantineName, guard.guardName),
+        () => undefined,
+      );
+    },
+  );
+}
+function requireReclaimGuard(parentFd: number, name: string, label: string, phase: ReclaimGuardPhase): ReclaimGuard {
+  return acquireReclaimGuard(parentFd, name, label, phase) ?? denyReclaimGuard(name, label, phase);
 }
 function lockReclaimGuardExists(parentFd: number, name: string, label: string): boolean {
+  rejectRetainedLockQuarantine(parentFd, name, label, 'admission');
   if (reclaimStaleReclaimGuard(parentFd, name, label)) return false;
   return reclaimGuardStats(parentFd, name + '.reclaim', label) !== null;
 }
+function withPinnedLockRead<T>(
+  quarantinePath: string,
+  pinnedReadFd: number | undefined,
+  operation: (fd: number) => T,
+): T {
+  // A borrowed descriptor stays with its caller; this scope closes only its own read.
+  const fd = pinnedReadFd ?? openSync(quarantinePath, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+  try {
+    return operation(fd);
+  } finally {
+    if (pinnedReadFd === undefined) closeQuietly(fd);
+  }
+}
+
 function moveAndRemovePinnedLock(
   parentFd: number,
   name: string,
@@ -648,46 +773,49 @@ function moveAndRemovePinnedLock(
   const quarantineName = '.' + quarantineStem + '.' + randomUUID() + '.reclaimed';
   let moved = false;
   let removed = false;
-  try {
-    try {
-      native!.renameNoReplace(parentFd, name, parentFd, quarantineName);
-      moved = true;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
-      throw error;
-    }
-    const quarantinePath = childPath(parentFd, quarantineName);
-    // Borrow only a caller-owned read descriptor; its lifetime encloses this removal.
-    const quarantineFd = pinnedReadFd ?? openSync(quarantinePath, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
-    try {
-      const movedStats = fstatSync(quarantineFd);
-      const pathStats = lstatSync(quarantinePath);
-      const owner = readOwner ? lockOwnerPid(quarantineFd) : null;
-      const stillPinned = all(
-        sameFileIdentity(expected, movedStats),
-        sameFileIdentity(movedStats, pathStats),
-        !pathStats.isSymbolicLink(),
-        movedStats.nlink === 1,
-        predicate(movedStats, owner),
+  return withReclaimedEntryCleanup(
+    () => {
+      try {
+        native!.renameNoReplace(parentFd, name, parentFd, quarantineName);
+        moved = true;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+        throw error;
+      }
+      const quarantinePath = childPath(parentFd, quarantineName);
+      return withPinnedLockRead(quarantinePath, pinnedReadFd, (quarantineFd) => {
+        const movedStats = fstatSync(quarantineFd);
+        const pathStats = lstatSync(quarantinePath);
+        const owner = readOwner ? lockOwnerPid(quarantineFd) : null;
+        const stillPinned = all(
+          sameFileIdentity(expected, movedStats),
+          sameFileIdentity(movedStats, pathStats),
+          !pathStats.isSymbolicLink(),
+          movedStats.nlink === 1,
+          predicate(movedStats, owner),
+        );
+        if (!stillPinned) return false;
+        const beforeUnlink = lstatSync(quarantinePath);
+        if (!all(sameFileIdentity(movedStats, beforeUnlink), beforeUnlink.nlink === 1, !beforeUnlink.isSymbolicLink()))
+          return false;
+        unlinkSync(quarantinePath);
+        removed = true;
+        fsyncSync(parentFd);
+        return true;
+      });
+    },
+    () => {
+      choose(
+        all(moved, !removed),
+        () => restoreReclaimedEntry(native!, parentFd, quarantineName, name),
+        () => undefined,
       );
-      if (!stillPinned) return false;
-      const beforeUnlink = lstatSync(quarantinePath);
-      if (!all(sameFileIdentity(movedStats, beforeUnlink), beforeUnlink.nlink === 1, !beforeUnlink.isSymbolicLink()))
-        return false;
-      unlinkSync(quarantinePath);
-      fsyncSync(parentFd);
-      removed = true;
-      return true;
-    } finally {
-      if (pinnedReadFd === undefined) closeQuietly(quarantineFd);
-    }
-  } finally {
-    choose(
-      all(moved, !removed),
-      () => restoreReclaimedEntry(native!, parentFd, quarantineName, name),
-      () => undefined,
-    );
-  }
+    },
+  );
+}
+function reclaimStaleLock(parentFd: number, name: string, label: string, removal: Thunk<boolean>): boolean {
+  const guard = requireReclaimGuard(parentFd, name, label, 'admission');
+  return withReclaimedEntryCleanup(removal, () => releaseReclaimGuard(guard, label));
 }
 function removeStaleLock(parentFd: number, name: string, label: string): boolean {
   const target = childPath(parentFd, name);
@@ -707,20 +835,24 @@ function removeStaleLock(parentFd: number, name: string, label: string): boolean
         const owner = lockOwnerPid(fd);
         reject(!sameFileIdentity(before, opened), 'lock identity changed');
         reject(any(owner === null, processIsAlive(owner as number)), 'lock owner is alive');
-        return moveAndRemovePinnedLock(
-          parentFd,
-          name,
-          label,
-          opened,
-          (stats, ownerPid) =>
-            all(
-              stats.isFile(),
-              stats.nlink === 1,
-              Date.now() - stats.mtimeMs >= staleLockAgeMs,
-              ownerPid !== null && !processIsAlive(ownerPid),
-            ),
-          true,
-          fd,
+        // Only eligible dead-owner candidates contend for the reclaim namespace.
+        // Quarantine still rechecks the pinned identity, age and owner before removal.
+        return reclaimStaleLock(parentFd, name, label, () =>
+          moveAndRemovePinnedLock(
+            parentFd,
+            name,
+            label,
+            opened,
+            (stats, ownerPid) =>
+              all(
+                stats.isFile(),
+                stats.nlink === 1,
+                Date.now() - stats.mtimeMs >= staleLockAgeMs,
+                ownerPid !== null && !processIsAlive(ownerPid),
+              ),
+            true,
+            fd,
+          ),
         );
       } finally {
         closeQuietly(fd);
@@ -729,28 +861,21 @@ function removeStaleLock(parentFd: number, name: string, label: string): boolean
     () => false,
   );
 }
-function reclaimStaleLock(parentFd: number, name: string, label: string): boolean {
-  const guard = acquireReclaimGuard(parentFd, name, label);
-  if (!guard) fail(label + ' lock reclaim is in progress');
-  try {
-    return removeStaleLock(parentFd, name, label);
-  } finally {
-    releaseReclaimGuard(guard, label);
-  }
-}
 type OpenedExclusiveLock = { fd: number; parentFd: number; name: string };
 function openExclusiveLockAt(parentFd: number, name: string, label: string): OpenedExclusiveLock {
   const target = childPath(parentFd, name);
   choose(
     lockReclaimGuardExists(parentFd, name, label),
-    () => fail(label + ' lock reclaim is in progress'),
+    () => {
+      throw new SafeRepositoryLockContentionError(label);
+    },
     () => undefined,
   );
   choose(
     existsSync(target),
     () =>
       choose(
-        reclaimStaleLock(parentFd, name, label),
+        removeStaleLock(parentFd, name, label),
         () => undefined,
         () => undefined,
       ),
@@ -758,10 +883,19 @@ function openExclusiveLockAt(parentFd: number, name: string, label: string): Ope
   );
   choose(
     lockReclaimGuardExists(parentFd, name, label),
-    () => fail(label + ' lock reclaim is in progress'),
+    () => {
+      throw new SafeRepositoryLockContentionError(label);
+    },
     () => undefined,
   );
-  const fd = openSync(target, fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow, 0o600);
+  let fd: number;
+  try {
+    fd = openSync(target, fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow, 0o600);
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'EEXIST')
+      throw new SafeRepositoryLockContentionError(label, error);
+    throw error;
+  }
   publishOwnedLockPayload(fd, label);
   return { fd, parentFd, name };
 }
@@ -789,8 +923,7 @@ function resourceLockName(resourceName: string): string {
     : '.vida-resource-lock-' + createHash('sha256').update(resourceName, 'utf8').digest('hex') + '.lock';
 }
 function releaseExclusiveLock(parentFd: number, name: string, fd: number): void {
-  const guard = acquireReclaimGuard(parentFd, name, 'exclusive lock release');
-  if (!guard) return;
+  const guard = requireReclaimGuard(parentFd, name, 'exclusive lock release', 'release');
   try {
     const owner = fstatSync(fd);
     try {

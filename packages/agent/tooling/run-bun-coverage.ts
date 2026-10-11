@@ -29,10 +29,10 @@ import {
   qualityFingerprint,
   readBunPin,
   sha256,
-} from './bun-coverage-evidence.mjs';
+} from './bun-coverage-evidence.ts';
 
 import type { FileCoverageData } from 'istanbul-lib-instrument';
-import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.mjs';
+import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
 
 type SourceDigest = InputDigest;
 type RunManifest = {
@@ -213,7 +213,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       if (!seen.has(test)) throw new Error('Selected test was not snapshot-loaded: ' + test);
     for (const required of [
       'tooling/bun-coverage-preload.ts',
-      'tooling/bun-coverage-evidence.mjs',
+      'tooling/bun-coverage-evidence.ts',
       'tooling/maintained-source-inventory.ts',
     ])
       if (!seen.has(required)) throw new Error('Snapshot bootstrap dependency was not attested: ' + required);

@@ -16,9 +16,13 @@ import type {
 } from '../host-state.js';
 import type { LifecycleArtifactReference } from '../lifecycle/lifecycle-state.js';
 import type { DevelopmentTaskPacket } from './mastra-boundary.js';
-import type { MastraLedgerItem, MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
-import { observedReceiptEvidenceReference, validateObservedEvidenceReferences } from './observed-receipt-evidence.js';
-import { lifecyclePreparationObservationSchema } from './final-assurance.js';
+import type {
+  MastraLedgerItem,
+  MastraSessionLedgerSnapshot,
+  MastraSessionLedgerState,
+} from './persistent-session-handoff.js';
+import { sourcePreparationJournalEvidence, validateObservedEvidenceReferences } from './observed-receipt-evidence.js';
+import { lifecyclePreparationObservationSchema, validateWorkSessionRunBinding } from './final-assurance.js';
 import {
   acceptedContractSourceRevision,
   acceptedSourceAuthorizationRevision,
@@ -49,6 +53,8 @@ export interface SourceWritePreflightInput {
   readonly hostSnapshot: HostStateSnapshot;
   /** The trusted same-thread session journal snapshot. */
   readonly journal: MastraSessionLedgerSnapshot;
+  /** Immutable original planning authenticated by the packet builder; only present for a corrective run. */
+  readonly planningJournal?: MastraSessionLedgerState | null;
   /** The genuine Host-created pending Source request preview, before attempt reservation. */
   readonly request: WorkflowAttemptApprovalRequest;
   /** The exact current configuration used to derive the Host assignment and ProjectContext. */
@@ -257,35 +263,6 @@ function parsePreparation(bytes: Uint8Array): LifecyclePreparationObservation {
 
 function allJournalItems(journal: MastraSessionLedgerSnapshot): readonly MastraLedgerItem[] {
   return [...journal.state.completed.flatMap((wave) => wave.items), ...journal.state.items];
-}
-
-function currentJournalEvidence(
-  journal: MastraSessionLedgerSnapshot,
-  work: NonNullable<HostStateSnapshot['work']>,
-): ReadonlyMap<string, MastraLedgerItem> {
-  const evidence = new Map<string, MastraLedgerItem>();
-  for (const item of allJournalItems(journal)) {
-    const observation = item.observation;
-    if (
-      item.issue_id === null ||
-      !observation ||
-      observation.status !== 'reported_complete' ||
-      observation.action_id !== item.request.action_id ||
-      observation.issue_id !== item.issue_id ||
-      item.request.run_id !== journal.state.run_id ||
-      item.request.workflow_id !== work.binding.workflow_id ||
-      item.request.config_digest !== work.binding.config_digest ||
-      item.request.scope_digest !== work.binding.work_source_revision
-    )
-      continue;
-    try {
-      const reference = observedReceiptEvidenceReference(journal, item.request.action_id, observation.output_digest);
-      evidence.set(reference, item);
-    } catch {
-      // Non-unique or malformed observations cannot satisfy a lifecycle preparation reference.
-    }
-  }
-  return evidence;
 }
 
 function configuredSecurityReviewer(
@@ -504,7 +481,6 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     journal.state.work_id !== identity.work_id ||
     !Number.isSafeInteger(journal.state.attempt) ||
     journal.state.attempt < 1 ||
-    journal.state.run_id !== work.execution.run_id ||
     !Number.isSafeInteger(journal.version.revision) ||
     journal.version.revision < 1 ||
     !/^[a-f0-9]{64}$/.test(journal.version.digest) ||
@@ -513,6 +489,11 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
     allJournalItems(journal).some((item) => item.issue_id !== null && item.observation === null)
   )
     fail('same-thread journal is stale, foreign, uncertain, or not ready');
+  try {
+    validateWorkSessionRunBinding(work, journal.state);
+  } catch {
+    fail('same-thread journal is stale, foreign, uncertain, or not ready');
+  }
 
   const scopeHash = sha256(input.scopeBytes),
     acceptanceHash = sha256(input.acceptanceBytes);
@@ -595,7 +576,7 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
   );
   if (input.preparations.length !== currentPreparationReferences.length)
     fail('preparation artifacts do not match current applicable lifecycle references');
-  const journalEvidence = currentJournalEvidence(journal, work);
+  const journalEvidence = sourcePreparationJournalEvidence(journal, work, input.planningJournal);
   const references: LifecycleArtifactReference[] = [];
   const records = new Map<PreparationKind, LifecyclePreparationObservation>();
   for (const item of input.preparations) {

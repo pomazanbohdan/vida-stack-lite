@@ -1,11 +1,12 @@
 import { expect, test } from 'bun:test';
 import { rejects } from 'node:assert/strict';
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   createPrecommitFixture as fixture,
   fixtureGit as git,
   checkPrecommitFixture as check,
+  formatPrecommitFixture,
 } from './helpers/precommit-repository-fixture.js';
 
 test('accepts a clean staged fixture while preserving a broken unstaged version', async () => {
@@ -75,6 +76,60 @@ test('rejects a parser lock mismatch before invoking the focused-test guard', as
     );
     expect(guarded).toBe(false);
     expect(readFileSync(path.join(root, '.git/index'))).toEqual(index);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('rejects staged native TypeScript helper errors while preserving a valid unstaged version', async () => {
+  const root = fixture(['src/index.ts', 'tests/helpers/compiler-input.ts']);
+  try {
+    const helper = 'packages/agent/tests/helpers/compiler-input.ts';
+    const helperPath = path.join(root, helper);
+    mkdirSync(path.dirname(helperPath), { recursive: true });
+    writeFileSync(helperPath, "const count: number = 'not a number';\nexport { count };\n");
+    formatPrecommitFixture(root, ['tests/helpers/compiler-input.ts']);
+    git(root, ['add', '--', helper]);
+
+    const stagedIndex = readFileSync(path.join(root, '.git/index'));
+    const validUnstaged = 'export const count = 1;\n';
+    writeFileSync(helperPath, validUnstaged);
+
+    let guarded = false;
+    await rejects(
+      check(root, () => {
+        guarded = true;
+      }),
+      /tsc failed/u,
+    );
+
+    expect(guarded).toBe(true);
+    expect(readFileSync(path.join(root, '.git/index'))).toEqual(stagedIndex);
+    expect(readFileSync(helperPath, 'utf8')).toBe(validUnstaged);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('accepts a valid staged TypeScript helper while preserving an invalid unstaged version', async () => {
+  const root = fixture(['src/index.ts', 'tests/helpers/compiler-input.ts']);
+  try {
+    const helper = 'packages/agent/tests/helpers/compiler-input.ts';
+    const helperPath = path.join(root, helper);
+    mkdirSync(path.dirname(helperPath), { recursive: true });
+    writeFileSync(helperPath, 'export const count = 1;\n');
+    formatPrecommitFixture(root, ['tests/helpers/compiler-input.ts']);
+    git(root, ['add', '--', helper]);
+    const stagedIndex = readFileSync(path.join(root, '.git/index'));
+    const invalidUnstaged = "export const count: number = 'unstaged error';\n";
+    writeFileSync(helperPath, invalidUnstaged);
+    let guarded = false;
+    await check(root, () => {
+      guarded = true;
+    });
+    expect(guarded).toBe(true);
+    expect(readFileSync(path.join(root, '.git/index'))).toEqual(stagedIndex);
+    expect(readFileSync(helperPath, 'utf8')).toBe(invalidUnstaged);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

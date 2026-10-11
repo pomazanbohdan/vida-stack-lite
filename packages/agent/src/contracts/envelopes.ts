@@ -182,17 +182,12 @@ const ledgerValidator = new Ajv2020Constructor({ allErrors: true }).compile<Coor
   coordinationLedgerSchema,
 );
 
+// Require the actual end of a segment: `$` also matches before a final Unicode line separator.
+const invalidPathSegmentSyntax = /(?:^|^\.[gG][iI][tT]|[. ])(?![\s\S])|\p{Cc}|[<>|"?*]/u;
+const reservedPathSegment = /^(?:con|prn|aux|nul|clock\$|conin\$|conout\$|com[1-9¹²³]|lpt[1-9¹²³])(?:\..*)?$/i;
+
 function invalidPathSegment(segment: string): boolean {
-  return [
-    !segment,
-    segment === '.',
-    segment === '..',
-    segment.toLowerCase() === '.git',
-    segment.endsWith('.') || segment.endsWith(' '),
-    /\p{Cc}/u.test(segment),
-    /[<>|"?*]/.test(segment),
-    /^(?:con|prn|aux|nul|clock\$|conin\$|conout\$|com[1-9¹²³]|lpt[1-9¹²³])(?:\..*)?$/i.test(segment),
-  ].some(Boolean);
+  return invalidPathSegmentSyntax.test(segment) || reservedPathSegment.test(segment);
 }
 
 export function safeWorkflowOwnedPath(value: string): boolean {
@@ -211,10 +206,7 @@ export function safeWorkflowOwnedPath(value: string): boolean {
 
 export function safeHistoricalWorkflowOwnedPath(value: string): boolean {
   if (typeof value !== 'string') return false;
-  const pathProbe = value
-    .replaceAll('*', 'x')
-    .replaceAll('?', 'x')
-    .replace(/[[\]{}]/g, 'x');
+  const pathProbe = value.replace(/[*?[\]{}]/g, 'x');
   return safeWorkflowOwnedPath(pathProbe);
 }
 

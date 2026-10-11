@@ -121,6 +121,8 @@ export interface AdmittedDevelopmentPacketInput {
   readonly scopeBytes: Buffer;
   readonly acceptanceBytes: Buffer;
   readonly configuredContext: ConfiguredContext | null;
+  /** Trusted composition receives the already authenticated planning state after successful packet construction. */
+  readonly onValidatedPlanningJournal?: (state: MastraSessionLedgerState) => void;
 }
 
 function requirePacket(condition: unknown, message: string): asserts condition {
@@ -1089,7 +1091,7 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     .map((entry) => entry.path);
   const documentationRefs =
     configuredContext?.entries.filter((entry) => entry.kind === 'local').map((entry) => entry.location) ?? [];
-  return buildDevelopmentTaskPacket(config, {
+  const packet = buildDevelopmentTaskPacket(config, {
     packet_id: packetId,
     work_item_id: workItem.id,
     team_id: selection.team,
@@ -1131,4 +1133,6 @@ export function buildAdmittedDevelopmentPacket(input: AdmittedDevelopmentPacketI
     source_revision: binding.work_source_revision,
     lease_expires_at: leaseExpiresAt,
   });
+  input.onValidatedPlanningJournal?.(planning);
+  return packet;
 }

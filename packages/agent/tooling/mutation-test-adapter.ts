@@ -1,5 +1,5 @@
 import { appendFileSync, statSync } from 'node:fs';
-import { AsyncLocalStorage } from 'node:async_hooks';
+import { bodyContext, type MutationBodyState } from './mutation-assertion-context.ts';
 import assertStrict from 'node:assert/strict';
 import {
   afterAll as bunAfterAll,
@@ -13,14 +13,9 @@ import {
 } from 'bun:test';
 
 type AssertionSource = 'bun-expect' | 'node-assert';
-interface BodyState {
-  id: number;
-  assertionError: unknown;
-  assertionSource: AssertionSource | null;
-}
+type BodyState = MutationBodyState;
 type Callable = (this: unknown, ...args: unknown[]) => unknown;
 type TestCallback = Callable;
-const bodyContext = new AsyncLocalStorage<BodyState>();
 const receiptFile = process.env.AGENT_MUTATION_BODY_RECEIPTS;
 let bodyId = 0;
 const file = new URL(import.meta.url).searchParams.get('file');

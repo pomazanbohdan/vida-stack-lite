@@ -151,6 +151,20 @@ formation/install не запускають suites. Політика інших 
 Це вимога до реалізації, не нове локальне відтворення. Shrinking звірено з
 [fast-check Parameters](https://fast-check.dev/docs/api/interfaces/Parameters/#endonfailure).
 
+### Прийнятий наскрізний shared/оптимізаційний прохід — 2026-10-11
+
+За прямим дорученням власника підтверджене спрощення всіх підтримуваних файлів
+Agent/Core приєднано до чинних BL-FLOW006/007, OPT01/06/08/13, storage і TEST-013
+scopes. Виконувана черга, file families, знайдені дублікати/зайві читання,
+готові packets і acceptance мають одного owner у
+[CLEAR плані](../core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md).
+P0 — відтворений дефект чинної поведінки; P1 — shared contracts, fewer reads/
+calls, TS/dead-code/tooling simplification. Public/persisted boundaries, exact
+quality, CAS/ownership/authorization/UNKNOWN і attribution лишаються чинними.
+Нових task IDs, engine capabilities або budget allowances це доручення не додає.
+Already implemented/issued роботу не дублювати; Source evidence не є Runtime
+unblock. Решта P2 пропозицій нижче не стають прийнятими автоматично.
+
 ### Кандидати до P1 як основа для P2
 
 Це пропозиції за поточним запитом, не автоматичне перенесення всього P2 чи
@@ -223,3 +237,22 @@ workspace DB збережено; різні transactions і filesystem не ст
 - Same dispatch follow-up: raw-index TS-only filename gate joined, two bounded controls/static PASS; actual commit remains FAIL on preserved staged JS and index unchanged. CI cache directory now shared at job scope for both frozen installs; static YAML PASS, live formation/cache proof GAP. Next private packets cover fresh lifecycle/interruption and one ledger schema discovery instead of seven reads; scope help syntax parity is a bounded P1 follow-up. No full numerical/runtime/task closure inferred.
 
 - Current measured delta:26 native files registered once; fresh-process same-ID UNKNOWN recovery PASS (63 assertions), existing-storage admission4 PASS, configuration contract migration10 PASS, inline throw-assertion audit2 PASS and optional CLI contract3 PASS. Ledger metadata regression12 PASS; public corrective cache-hit fixture remains under Root verification. Four synchronous upgrade read duplicates removed; effectful callback revalidation retained. Root native CI configured typed lint and release-adapter closure remain open. One behavioral verifier serializes shared package CAS use; six blind Luna scopes prepare private candidates/reviews. Frozen baseline, exhaustive correspondence, exact numeric gates, legacy exclusion and actual runtime qualification remain open; no task closure or percentage inferred from these bounded proofs.
+
+
+### Чинне уточнення фінальної перевірки — 2026-10-11
+
+За прямим рішенням користувача працюємо на чистому середовищі: перевірку
+розблокування старих споживачів та пов'язані notices вилучено з поточної задачі.
+Заміна — **OPEN: прогін реального сформованого native Runtime у свіжому
+ізольованому проєкті через всі підтримувані команди, опції та флоу**.
+Власник порядку, меж і критеріїв — [поточний CLEAR plan](../core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md#current-human-decision--clean-isolated-runtime-qualification-2026-10-11).
+Пов'язана задача збережена також у WORK та актуальному handoff.
+
+Потрібні реальні виконання, persistence/restart та CAS/authorization/UNKNOWN
+denials; help/install/version не замінюють доказу. Source checkout має бути
+фактично недоступним для runtime, а не лише виключеним із PATH/cwd.
+Матриця покриває всі підтримувані опції через перевірені класи значень і
+конфліктів; відсутній необхідний target/provider лишається GAP. Непідтримувана
+на конкретному target операція може мати N/A лише з посиланням на контракт.
+Старі Host state, leases, attempts та UNKNOWN не переносити й не replay.
+Чинні P0/P1, exact quality gates та ownership не послаблено.
