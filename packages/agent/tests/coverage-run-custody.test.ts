@@ -13,6 +13,7 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from '../tooling/coverage-run-lock.ts';
+import { coverageProducerTerminalKnown } from '../tooling/run-bun-coverage.ts';
 
 function fixture(): string {
   return mkdtempSync(path.join(tmpdir(), 'vida-coverage-custody-'));
@@ -27,6 +28,17 @@ function cleanupAfterPass(root: string, check: () => void): void {
   }
   rmSync(root, { recursive: true, force: true });
 }
+
+test('coverage producer termination stays separate from result success and unobserved children', () => {
+  expect(coverageProducerTerminalKnown({ pid: 1, status: 0, signal: null })).toBe(true);
+  expect(coverageProducerTerminalKnown({ pid: 1, status: 1, signal: null })).toBe(true);
+  expect(coverageProducerTerminalKnown({ pid: 1, status: null, signal: 'SIGTERM' })).toBe(true);
+  expect(coverageProducerTerminalKnown({ pid: 1, status: null, signal: 'SIGKILL' })).toBe(true);
+  expect(coverageProducerTerminalKnown({ pid: 1, status: null, signal: null })).toBe(false);
+  expect(coverageProducerTerminalKnown({ pid: 0, status: null, signal: null })).toBe(false);
+  expect(coverageProducerTerminalKnown({ pid: -1, status: 0, signal: null })).toBe(false);
+  expect(coverageProducerTerminalKnown({ pid: NaN, status: 0, signal: null })).toBe(false);
+});
 
 test('a foreign coverage lock denies acquisition without changing report, staging bytes, or lock custody', () => {
   const outputRoot = fixture();

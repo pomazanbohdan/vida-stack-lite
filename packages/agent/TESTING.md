@@ -878,6 +878,23 @@ come from the recorded runner selection and its pinned preload.
 
 The final CRAP subprocess executes the captured tooling closure against the original package root. Its five-minute hard deadline and unknown termination retain the run lock for explicit reconciliation. Runtime plugin path admission accepts both Windows and POSIX separators. These are static implementation guarantees pending the final Bun behavior checks.
 
+Coverage reservation custody follows the direct measurement producer's lifetime,
+separately from test-result and fixture-effect custody. On qualified Bun 1.4.2,
+a synchronous child return with a positive PID and an exit status or terminating
+signal observes that direct producer's completion. A timeout/error still denies
+measurement success; keep its run, diagnostics and UNKNOWN test effects. Release
+only the genuine acquired lock handle after known producer termination. A live,
+unobserved or replaced producer reservation remains held. Apply the same rule to
+the captured CRAP subprocess; never classify these failures as Killed mutants.
+
+Legacy reservation disposition requires explicit attributable authority and
+independent evidence that its actual measurement writers terminated. A missing
+PID alone is insufficient. Preserve the exact original inode and bytes in an
+exclusive same-filesystem quarantine, recheck identity immediately before the
+move and verify its afterimage. Keep the original run and UNKNOWN effects;
+quarantine grants no measurement admission, old-operation replay or cleanup.
+Do not fabricate an acquired handle or change the output root to evade custody.
+
 ### Lock pathname replacement and informational CLI isolation
 
 Linux lock release, stale reclaim and reclaim-guard owner reads must open with

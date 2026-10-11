@@ -1398,3 +1398,23 @@ this cohort; global/default executable lineage remains GAP. Details: WORKv799–
 Root completes strict checkpoint and ordinary publication, then continues ready
 shared URL/refactoring contours. Numerical producer custody and final coverage,
 CRAP/mutation/native prerequisites remain OPEN; no UNKNOWN replay or scope bypass.
+
+#### Current coverage reservation correction and disposition v805–v809
+
+Typed initc5a6865 is strict-published. User directs coverage unblock and no excess
+lock retention. Qualified Bun direct synchronous timeout controls and original
+controller terminal observations separate producer completion from UNKNOWN test
+effects. Runner/CRAP release only genuine owned reservation after known producer
+termination; unobserved/live/replaced custody still denies. Inert original RED,
+candidate teardown EACCES retained, corrected stable10PASS76assertions2.94s and
+blind Source/technique reviewAPPROVE. Shared test-only writable-directory helper
+reuses existing behavior without following dependency links.
+Exact legacy lock quarantine is separately reviewed, hardened before effects and
+actually completes once, exit0: original inode/bytes plus durable intent/result
+are preserved at the standard output root; original run/effects remain UNKNOWN.
+Genuine new acquire/release probe proves availability, no active lock remains.
+This is neither forged ownership nor archived operation replay. Details: WORKv805–v809.
+Root finishes strict checkpoint and publication, then collects one current whole
+measurement. Exact coverage/CRAP/mutation/default exhaustive plan/native remain
+pending. No changed output-root bypass, cap reset, build/install suite or unblock
+notice to Runtime owners. Source custody correction does not prove Runtime unblock.

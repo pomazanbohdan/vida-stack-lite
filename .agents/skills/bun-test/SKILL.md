@@ -30,6 +30,7 @@ strict typecheck success.
 | Repeated computation | Reuse within the invocation; test output parity, changed inputs and deterministic operation counts. |
 | Missing profile | Check capability on an inert control before another expensive case. |
 | Inventory/report processing | Reuse TS tools or an owned temporary `.ts` diagnostic with qualified Bun; validate JSON before reading fields. |
+| Measurement reservation | Separate qualified direct producer termination from measurement success and UNKNOWN test effects; apply the existing TESTING custody owner. |
 
 Run from `packages/agent`, using the existing pinned launcher:
 

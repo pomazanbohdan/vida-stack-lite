@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import coverageApi from 'istanbul-lib-coverage';
@@ -61,6 +61,13 @@ type ChildOutcome = {
   error: string | null;
   unknown: boolean;
 };
+
+/** A qualified synchronous return observes only this producer, not its test effects or descendants. */
+export function coverageProducerTerminalKnown(
+  result: Pick<SpawnSyncReturns<unknown>, 'pid' | 'status' | 'signal'>,
+): boolean {
+  return Number.isInteger(result.pid) && result.pid > 0 && (Number.isInteger(result.status) || Boolean(result.signal));
+}
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { createCoverageMap } = coverageApi;
 const outputRoot = path.join(root, 'coverage', 'bun-unified');
@@ -260,7 +267,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     manifestPath: string,
     reportDirectory: string,
     invocation: { args: string[]; env: NodeJS.ProcessEnv; cwd: string },
-  ): ChildOutcome {
+  ): ChildOutcome & { producerTerminalKnown: boolean } {
     const result = spawnSync(process.execPath, invocation.args, {
       cwd: invocation.cwd,
       env: invocation.env,
@@ -278,6 +285,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         signal: result.signal,
         error: String(result.error ?? 'unknown terminal outcome'),
         unknown: true,
+        producerTerminalKnown: coverageProducerTerminalKnown(result),
       };
     return {
       shard_id: 'bun-test',
@@ -285,6 +293,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       signal: null,
       error: null,
       unknown: false,
+      producerTerminalKnown: coverageProducerTerminalKnown(result),
     };
   }
 
@@ -368,10 +377,20 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     manifest.active_argv = invocation.args;
     writeAtomic(manifestPath, manifest);
     chmodSync(runDirectory, 0o500);
-    const outcome = runBunTests(evidence.tests, manifest, manifestPath, reportDirectory, invocation);
+    const { producerTerminalKnown, ...outcome } = runBunTests(
+      evidence.tests,
+      manifest,
+      manifestPath,
+      reportDirectory,
+      invocation,
+    );
     if (outcome.unknown) {
-      terminalKnown = false;
-      throw new Error('Bun Test outcome is UNKNOWN; preserve lock and run directory.');
+      terminalKnown = producerTerminalKnown;
+      throw new Error(
+        producerTerminalKnown
+          ? 'Bun Test outcome is UNKNOWN; direct coverage producer terminated; preserve run directory and test-effect custody.'
+          : 'Bun Test outcome is UNKNOWN; preserve lock and run directory.',
+      );
     }
     if (outcome.status !== 0 && !(publishedFixture && outcome.status === 1))
       throw new Error('Bun Test coverage suite failed.');
@@ -507,8 +526,12 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       process.stdout.write(gate.stdout ?? '');
       process.stderr.write(gate.stderr ?? '');
       if (gate.error || gate.signal || gate.status === null) {
-        terminalKnown = false;
-        throw new Error(`${gateScript} outcome is UNKNOWN; preserve the run lock for reconciliation.`);
+        terminalKnown = coverageProducerTerminalKnown(gate);
+        throw new Error(
+          terminalKnown
+            ? `${gateScript} outcome is UNKNOWN; direct gate producer terminated; preserve run evidence.`
+            : `${gateScript} outcome is UNKNOWN; preserve the run lock for reconciliation.`,
+        );
       }
       if (gate.status !== 0) throw new Error(`${gateScript} failed.`);
     }

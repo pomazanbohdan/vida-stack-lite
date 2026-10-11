@@ -6493,3 +6493,75 @@ Root owns strict checkpoint/Git and final measurements. Full coverage/CRAP,
 assertion-confirmed mutation and clean formed-native qualification remain OPEN.
 No active schema/loader change, old state restoration, build/install suite or
 unblock notice. Preserve unrelated root bun.lock. Strict publication follows.
+
+### v805–v809 — coverage producer custody correction and explicit disposition
+
+Typed initc5a6865 passed strict checkpoint-v804 and publishedc1d84f5..c5a6865.
+User explicitly requests unblocking coverage and no unnecessary measurement lock.
+This supersedes the earlier no-inspection defer for this exact measurement
+reservation; it does not authorize old fixture cleanup or UNKNOWN replay.
+Root remains the original controller and sole Source/disposition writer.
+The held v1 lock is the original regular private lock, pid149516, dev27/ino1125491,
+exact unchanged bytes. Owner-known runb41a06c4-5264-4373-aa1d-6afde18f4f71 and
+original current-coverage-measurement-v747.log retain the actual synchronous
+child return, runner UNKNOWN throw and package-script terminal exit1. The run
+has0process receipts/no final report. PID absence is corroboration, not proof.
+
+Two blind diagnoses separate actual direct measurement-writer lifetime from
+unknown test/product effects. Pinned Bun1.4.2 inert SIGTERM and SIGKILL timeout
+controls both return positive matching child PID, ETIMEDOUT, terminating signal,
+null status and post-returnESRCH. Node24 spawnSync documentation states the
+direct child closes before synchronous return. Neither this nor direct-child
+completion proves descendant or test-effect cleanup. Original runner stopped
+before any final report/CRAP invocation; unrelated descendants have no inherited
+coverage preload. Original measurement/test effects remain UNKNOWN/unqualified.
+
+The existing runner incorrectly retained its reservation for all errored/signaled
+results. Root now keeps producerTerminalKnown as transient control evidence,
+strips it before persisted unchanged shard shape, releases only its genuine
+owned handle after known direct producer termination, and still denies the
+UNKNOWN measurement. A positive PID with no exit/signal remains uncertain and
+retains its lock. The CRAP child uses the same predicate. No coverage/CRAP cap,
+counter admission, mutation classification, CAS or product authorization changes.
+The inert real-runner regression fails original behavior at retainedlock (v806).
+Candidate v807 passes all assertions then fails readonly-snapshot cleanupEACCES;
+that fixture and its log remain. Existing writable-directory restoration moves
+to one shared test helper, skips dependency links and is called only for passed
+owned inert fixtures. Stable focused completion10PASS76assertions2.94s v808
+includes unchanged foreign/replaced custody and real producer/consumer map proof.
+No duplicate full suite/AST/hash pass. Blind Source/technique review-v809 APPROVES.
+
+TESTING owns the direct producer/effect distinction; the Bun Test skill points
+there. Blind recovery review approves the exact named legacy disposition on
+same-thread owner/terminal proof, not PID absence. Operator script-v809 initial
+review finds path-based immediate reads/FIFO risk, incomplete signal-pair and
+directory-fsync proof. Root corrects those before effects: descriptor-only
+O_NOFOLLOW/O_NONBLOCK, exact identity/type/nlink/size, bounded positional bytes/EOF,
+exact pair, durable intent and result directory entries. Atomic rename is not
+an inode-conditional OS primitive: this is the sole cooperative owner's explicit
+private disposition, and a mismatched afterimage denies admission and preserves
+all custody without retry or blind restoration. Corrected independent review
+APPROVES this one-off cooperative disposition, not an adversarial unlock API.
+Root executes the exact reviewed script once, exit0. Original dev27/ino1125491
+and49bytes remain in .custody-quarantine-1f301b56-a3a6-4456-a77d-4e44251d01ba
+under the SAME standard coverage/bun-unified root. Durable intent/result receipts
+record UNKNOWN_UNQUALIFIED measurement and UNKNOWN_RETAINED test effects. The
+original run is untouched; no release handle is forged. A genuine new exclusive
+acquire/release probe succeeds, proving reservation availability only. There is
+no active lock after that probe. Actual receipt: BASE/coverage-quarantine-v809.log.
+Coverage output custody is unblocked; exact metrics, frozen CRAP and mutation
+qualification remain pending. Root completes strict checkpoint/Git before the
+fresh current Source measurement. No archived operation or retained fixture replay.
+
+Initial strict checkpoint-v810 rejects unused readdirSync after helper extraction
+and matcher-any inside a test object. Root removes the unused import and asserts
+the parsed child shape plus a checked string timeout error directly, retaining
+the regression. Changed-case follow-up1PASS11assertions v810; no repeated full
+suite and no producer Source change. Failed checkpoint remains evidence; no
+hook bypass/suppression. Corrected strict checkpoint follows on the new index.
+
+Corrected-v811 finishes static diagnostics but rejects a changed active index
+identity. Root's concurrent status inspection may refresh Git index metadata;
+no semantic staged change is assumed away. Preserve this failed checkpoint.
+Root stops Git reads during the next hook and uses GIT_OPTIONAL_LOCKS=0 for
+subsequent read-only Git inspection. No index-integrity check is weakened.

@@ -1,21 +1,12 @@
 import { expect, test } from 'bun:test';
-import {
-  chmodSync,
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { coverageToolInputs } from '../tooling/bun-coverage-evidence.ts';
 import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
+import { restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 function write(root: string, file: string, bytes: string | Uint8Array): void {
@@ -26,13 +17,6 @@ function write(root: string, file: string, bytes: string | Uint8Array): void {
 function record(value: unknown): Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected fixture record');
   return value as Record<string, unknown>;
-}
-
-function restoreOwnedDirectoryWrites(directory: string): void {
-  chmodSync(directory, 0o700);
-  for (const entry of readdirSync(directory, { withFileTypes: true }))
-    if (entry.isDirectory()) restoreOwnedDirectoryWrites(path.join(directory, entry.name));
-  // Never follow or change the installed dependency symlink target.
 }
 
 // Real producer over inert owned Source, not candidate quality or historical evidence.
@@ -95,7 +79,7 @@ test('real producer and consumer preserve pristine initialization maps while mer
     passed = true;
   } finally {
     if (passed) {
-      restoreOwnedDirectoryWrites(root);
+      restoreOwnedCoverageDirectoryWrites(root);
       rmSync(root, { recursive: true, force: true });
     } else console.error('Preserved failed real map fixture: ' + root);
   }

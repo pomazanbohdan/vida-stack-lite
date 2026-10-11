@@ -16,6 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { coverageToolInputs } from '../tooling/bun-coverage-evidence.ts';
+import { restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const maintainedSources = [
@@ -197,5 +198,68 @@ mock.module('./coverage-run-lock.js', () => ({
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });
     else console.error(`Preserved failed coverage input-race fixture at ${root}`);
+  }
+});
+
+test('a synchronously reaped coverage producer timeout retains the run but releases its reservation', () => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    write(
+      root,
+      'tooling/inert-timeout-preload.ts',
+      `import * as original from 'node:child_process';
+import { mock } from 'bun:test';
+import { writeFileSync } from 'node:fs';
+const run = original.spawnSync;
+mock.module('node:child_process', () => ({
+  spawnSync(command: string) {
+    const result = run(command, ['--eval', 'process.stdout.write(String(process.pid)); setInterval(() => {}, 1000);'], { encoding: 'utf8', timeout: 100, killSignal: 'SIGKILL' });
+    writeFileSync(${JSON.stringify(path.join(root, 'direct-child-outcome.json'))}, JSON.stringify({ pid: result.pid, status: result.status, signal: result.signal, error: String(result.error) }));
+    return result;
+  }
+}));
+`,
+    );
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--preload',
+        path.join(root, 'tooling/inert-timeout-preload.ts'),
+        path.join(root, 'tooling/run-bun-coverage.ts'),
+      ],
+      {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 60_000,
+        maxBuffer: 2 * 1024 * 1024,
+        windowsHide: true,
+        env: { ...process.env, BUN_OPTIONS: '' },
+      },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Bun Test outcome is UNKNOWN');
+    const outputRoot = path.join(root, 'coverage/bun-unified');
+    const runs = readdirSync(path.join(outputRoot, 'runs'));
+    expect(runs).toHaveLength(1);
+    const runId = runs[0];
+    if (typeof runId !== 'string') throw new Error('Retained coverage run identity missing');
+    expect(existsSync(path.join(outputRoot, 'runs', runId, 'manifest.json'))).toBe(true);
+    expect(readdirSync(path.join(outputRoot, 'runs', runId, 'processes'))).toEqual([]);
+    expect(existsSync(path.join(outputRoot, 'coverage-final.json'))).toBe(false);
+    const child: unknown = JSON.parse(readFileSync(path.join(root, 'direct-child-outcome.json'), 'utf8'));
+    expect(child).toMatchObject({ status: null, signal: 'SIGKILL' });
+    if (typeof child !== 'object' || child === null || !('error' in child) || typeof child.error !== 'string')
+      throw new Error('Expected child timeout error');
+    expect(child.error).toContain('ETIMEDOUT');
+    expect(existsSync(path.join(outputRoot, 'coverage-run.lock'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) {
+      restoreOwnedCoverageDirectoryWrites(root);
+      rmSync(root, { recursive: true, force: true });
+    } else console.error(`Preserved failed coverage timeout fixture at ${root}`);
   }
 });
