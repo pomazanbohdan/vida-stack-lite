@@ -5831,3 +5831,39 @@ operational fixture custody remain unchanged; no old operation is replayed.
 Independent capture-closure-v762-review.md found no blocker: scanner-only byte
 normalization, exact metadata/config admission, unchanged Source classification,
 bounded reader and published-baseline boundary, and unique digest/read reuse.
+
+
+### v763–v764 — scoped fixture setup and remaining bottlenecks
+
+Checkpointe8abb93 passed the strict indexed precommit profile and was published to
+origin/main. Blind current-doc reviews found no safe duplicate copy to remove in
+run-entrypoint: recoveryBundle already caches the immutable copy, while its live
+binding checks and separate mutable consumer roots have distinct custody duties.
+The stream proposal remains deferred: blocked sink drain or nonterminal child
+close can defeat its deadline; exact Node24.19 documentation and unversioned Bun
+guidance do not qualify pinned Bun1.4.2 or bounded cleanup. Neither speculative
+optimization was applied. Scratch reports immutable-fixture-cost-v763.md and
+stream-design-review-v763.md preserve this evidence and remaining acceptance.
+
+CAS diagnosis follows the actual v747 stack to package Source bundle hashing,
+before the lifecycle fixture's injected effect. Independent mutable project roots
+do not explain ownership of that package schema lock. O_CREAT|O_EXCL EEXIST is
+correctly mapped to SafeRepositoryLockContentionError; an absent owner receipt is
+not proof of a stale removable lock. No retry, lock removal or UNKNOWN closure.
+Report:cas-contention-analysis-v763.md; official Bun parallel and Linux open(2).
+
+One proved duplicate setup was removed: task-source-binding-operations shared
+beforeEach/afterEach now belong to the contiguous persisted-binding describe.
+The same fresh per-case Host/DB/journal setup serves its eight test declarations
+(15 parameter-expanded cases); six later independently owned cases avoid creating
+an unused second Host/DB. Bodies, literal titles, assertions, bounds, order and
+local cleanup remain. Bun full displayed names gain the group prefix; maintained
+selection is file-based and literal audit/mutation titles stay unchanged. No
+generated scenario or new evidence was marked reviewed by this refactor alone.
+
+One combined direct-boundary check PASS6/0FAIL44assertions/10.19s: first persisted
+case, all three historical-read faults at the group end, and both independent
+real-Host report orders. Receipt:fixture-scope-green-v764.log. Independent
+fixture-scope-review-v764.md approves the boundary. This removes six unused setups
+per complete file execution; it is not measured speed improvement or a full
+suite/numeric PASS. Root retains final check/Git ownership and all v747 custody.

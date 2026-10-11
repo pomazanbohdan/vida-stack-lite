@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import type { Database } from 'bun:sqlite';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -1065,648 +1065,650 @@ function allowTaskSourcePolicy({ request: policyRequest }: Parameters<PolicyVeri
   };
 }
 
-beforeEach(() => {
-  root = mkdtempSync(path.join(tmpdir(), 'vida-task-source-operation-'));
-  database = openFixtureDatabase(root, path.join(root, 'host.sqlite'), workspace);
-  store = new HostStateStore(database, workspace);
-  const seed = makeWorkAndLedger();
-  const initialSnapshot = store.compareAndSwapHostState({
-    expectedWork: seed.expectedWork,
-    expectedLedger: seed.expectedLedger,
-    nextWork: seed.nextWork,
-    nextLedger: seed.nextLedger,
+describe('persisted TaskSource binding operations', () => {
+  beforeEach(() => {
+    root = mkdtempSync(path.join(tmpdir(), 'vida-task-source-operation-'));
+    database = openFixtureDatabase(root, path.join(root, 'host.sqlite'), workspace);
+    store = new HostStateStore(database, workspace);
+    const seed = makeWorkAndLedger();
+    const initialSnapshot = store.compareAndSwapHostState({
+      expectedWork: seed.expectedWork,
+      expectedLedger: seed.expectedLedger,
+      nextWork: seed.nextWork,
+      nextLedger: seed.nextLedger,
+    });
+    assert.ok(initialSnapshot.work);
+    assert.ok(initialSnapshot.work.execution.run_id);
+    assert.ok(initialSnapshot.ledger);
+    assert.ok(initialSnapshot.workVersion);
+    assert.ok(initialSnapshot.ledgerVersion);
+    initial = requireFixtureHostSnapshot(initialSnapshot);
+    const initialRunId = initial.work.execution.run_id;
+    assert.ok(initialRunId);
+    journal = {
+      schema: 'MastraSessionLedger/v1',
+      workspace_id: workspace,
+      work_id: identity.work_id,
+      attempt: 1,
+      run_id: initialRunId,
+      step_id: null,
+      source_scope: seed.sourceScope,
+      items: [],
+      completed: [],
+    };
+    database.exec(
+      'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt))',
+    );
+    database
+      .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+      .run(workspace, identity.work_id, 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
+    request = operationRequest();
   });
-  assert.ok(initialSnapshot.work);
-  assert.ok(initialSnapshot.work.execution.run_id);
-  assert.ok(initialSnapshot.ledger);
-  assert.ok(initialSnapshot.workVersion);
-  assert.ok(initialSnapshot.ledgerVersion);
-  initial = requireFixtureHostSnapshot(initialSnapshot);
-  const initialRunId = initial.work.execution.run_id;
-  assert.ok(initialRunId);
-  journal = {
-    schema: 'MastraSessionLedger/v1',
-    workspace_id: workspace,
-    work_id: identity.work_id,
-    attempt: 1,
-    run_id: initialRunId,
-    step_id: null,
-    source_scope: seed.sourceScope,
-    items: [],
-    completed: [],
-  };
-  database.exec(
-    'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT NOT NULL,work_id TEXT NOT NULL,attempt INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(workspace_id,work_id,attempt))',
-  );
-  database
-    .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
-    .run(workspace, identity.work_id, 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
-  request = operationRequest();
-});
 
-afterEach(() => {
-  database?.close();
-  rmSync(root, { recursive: true, force: true });
-});
+  afterEach(() => {
+    database?.close();
+    rmSync(root, { recursive: true, force: true });
+  });
 
-test('prepare persists one typed Host operation and exact retries return its stored CAS payload', () => {
-  const prepared = prepare();
-  expect(prepared).toMatchObject({
-    schema: 'TaskSourceBindingOperationResult/v1',
-    status: 'prepared',
-    operation_id: request.operation_id,
-    request_id: request.request_id,
-    operation: {
-      schema: 'TaskSourceBindingOperation/v1',
+  test('prepare persists one typed Host operation and exact retries return its stored CAS payload', () => {
+    const prepared = prepare();
+    expect(prepared).toMatchObject({
+      schema: 'TaskSourceBindingOperationResult/v1',
       status: 'prepared',
       operation_id: request.operation_id,
       request_id: request.request_id,
-      request,
-      authority: {
-        source_authorization_sha256: 'c'.repeat(64),
-        source_scope_digest: journal.source_scope.digest,
+      operation: {
+        schema: 'TaskSourceBindingOperation/v1',
+        status: 'prepared',
+        operation_id: request.operation_id,
+        request_id: request.request_id,
+        request,
+        authority: {
+          source_authorization_sha256: 'c'.repeat(64),
+          source_scope_digest: journal.source_scope.digest,
+        },
+        revision: 1,
       },
-      revision: 1,
-    },
+    });
+    assert.equal(prepared.state_version.revision, 1);
+    assert.match(prepared.state_version.digest, /^[a-f0-9]{64}$/);
+    expect(prepare()).toEqual(prepared);
+    expect(inspect()).toMatchObject({
+      schema: 'TaskSourceBindingOperationResult/v1',
+      status: 'inspected',
+      operation: prepared.operation,
+      state_version: prepared.state_version,
+    });
+    const operationCount = database
+      .query<{ count: number }, []>('SELECT COUNT(*) AS count FROM agent_host_task_source_binding_operation')
+      .get();
+    assert.ok(operationCount);
+    expect(operationCount.count).toBe(1);
   });
-  assert.equal(prepared.state_version.revision, 1);
-  assert.match(prepared.state_version.digest, /^[a-f0-9]{64}$/);
-  expect(prepare()).toEqual(prepared);
-  expect(inspect()).toMatchObject({
-    schema: 'TaskSourceBindingOperationResult/v1',
-    status: 'inspected',
-    operation: prepared.operation,
-    state_version: prepared.state_version,
-  });
-  const operationCount = database
-    .query<{ count: number }, []>('SELECT COUNT(*) AS count FROM agent_host_task_source_binding_operation')
-    .get();
-  assert.ok(operationCount);
-  expect(operationCount.count).toBe(1);
-});
 
-test('Source mutation policy DTO is Host-computed from the prepared CAS, active lease and fixed Git action', () => {
-  request = operationRequest({ source_root: path.join(root, 'task-source') });
-  const prepared = prepare();
-  const dto = createTaskSourceMutationPolicyRequest({
-    repositoryRoot: root,
-    operation: prepared.operation,
-    preparedStateVersion: prepared.state_version,
-    hostSnapshot: initial,
-  });
-  expect(dto).toMatchObject({
-    schema: 'TaskSourceMutationPolicyRequest/v1',
-    action: 'source.write',
-    operation_id: request.operation_id,
-    request_id: request.request_id,
-    work_id: request.work_id,
-    thread_id: request.thread_id,
-    branch_ref: request.branch_ref,
-    source_root: sourceRootFor(request),
-    proposed_argv: ['git', '-C', root, 'worktree', 'add', '--branch', 'codex/task-source', sourceRootFor(request)],
-    prepared_record_cas: { operation_id: request.operation_id, state_version: prepared.state_version },
-  });
-  const { operation_hash, ...unsigned } = dto;
-  expect(operation_hash).toBe(canonicalJsonDigest(unsigned));
-  expect(() =>
-    createTaskSourceMutationPolicyRequest({
+  test('Source mutation policy DTO is Host-computed from the prepared CAS, active lease and fixed Git action', () => {
+    request = operationRequest({ source_root: path.join(root, 'task-source') });
+    const prepared = prepare();
+    const dto = createTaskSourceMutationPolicyRequest({
       repositoryRoot: root,
       operation: prepared.operation,
       preparedStateVersion: prepared.state_version,
-      hostSnapshot: { ...initial, workVersion: { ...initial.workVersion, digest: 'd'.repeat(64) } },
-    }),
-  ).toThrow(/stale/);
-});
-
-test('source snapshots use only a current typed binding and preserve canonical-root behavior without one', () => {
-  const taskRequest = operationRequest({ source_root: path.join(root, 'task-source') });
-  const binding = createTaskSourceBinding({
-    request: taskRequest,
-    source_scope: journal.source_scope,
-    canonical_host_common_dir: path.join(root, '.git'),
-    git: {
-      source_root: sourceRootFor(taskRequest),
-      common_dir: path.join(root, '.git'),
-      branch: 'codex/task-source',
-      head: 'a'.repeat(40),
-      cwd: sourceRootFor(taskRequest),
-    },
-  });
-  expect(
-    resolveTaskSourceFileRoot({
-      canonicalHostRoot: root,
-      binding,
-      identity,
-      attempt: 1,
-      threadId: 'thread-1',
-      configDigest: taskRequest.config_digest,
-      projectContextDigest: taskRequest.project_context_digest,
-      sourceScopeDigest: journal.source_scope.digest,
-    }),
-  ).toBe(sourceRootFor(taskRequest));
-  expect(
-    resolveTaskSourceFileRoot({
-      canonicalHostRoot: root,
-      binding: null,
-      identity,
-      attempt: 1,
-      threadId: 'thread-1',
-      configDigest: taskRequest.config_digest,
-      projectContextDigest: taskRequest.project_context_digest,
-      sourceScopeDigest: journal.source_scope.digest,
-    }),
-  ).toBe(root);
-  expect(
-    resolveCurrentTaskSourceFileRoot({
-      store,
-      host: initial,
-      canonicalHostRoot: root,
-      attempt: 1,
-    }),
-  ).toBe(root);
-  expect(() =>
-    resolveTaskSourceFileRoot({
-      canonicalHostRoot: root,
-      binding,
-      identity,
-      attempt: 1,
-      threadId: 'thread-1',
-      configDigest: 'f'.repeat(64),
-      projectContextDigest: taskRequest.project_context_digest,
-      sourceScopeDigest: journal.source_scope.digest,
-    }),
-  ).toThrow(/differs from the admitted file context/);
-
-  const calls: Parameters<HostStateStore['snapshotCurrentTaskSourceSources']>[] = [];
-  const sourceStore: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'> = {
-    snapshotCurrentTaskSourceSources(...args) {
-      calls.push(args);
-      return journal.source_scope;
-    },
-  };
-  expect(
-    snapshotAdmittedTaskSources({
-      store: sourceStore,
-      host: initial,
-      canonicalHostRoot: root,
-      paths: ['src/task.ts'],
-      attempt: 1,
-    }),
-  ).toEqual(journal.source_scope);
-  expect(calls).toEqual([[identity, 'thread-1', ['src/task.ts'], 1]]);
-});
-
-test('changed payload, stale Host CAS and foreign owner are denied without adding operation rows', () => {
-  prepare();
-  expect(() => prepare(operationRequest({ branch_ref: 'refs/heads/codex/changed' }))).toThrow(/retry changed/);
-  const expectedWork = request.expected_host.work;
-  assert.ok(expectedWork);
-  const stale = operationRequest({
-    operation_id: 'task-source-op-stale',
-    request_id: 'task-source-request-stale',
-    expected_host: {
-      ...request.expected_host,
-      work: { revision: expectedWork.revision, digest: 'd'.repeat(64) },
-    },
-  });
-  expect(() => prepare(stale)).toThrow(/compare-and-swap conflict/);
-  const foreign = operationRequest({
-    operation_id: 'task-source-op-foreign',
-    request_id: 'task-source-request-foreign',
-    thread_id: 'foreign-thread',
-  });
-  expect(() => prepare(foreign)).toThrow(/active Host owner/);
-  const operationCount = database
-    .query<{ count: number }, []>('SELECT COUNT(*) AS count FROM agent_host_task_source_binding_operation')
-    .get();
-  assert.ok(operationCount);
-  expect(operationCount.count).toBe(1);
-});
-
-test('inspection without the lazy table has no database effects and missing Host storage is rejected before creation', () => {
-  const before = database
-    .query<{ name: string }, []>(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
-    )
-    .get();
-  expect(before).toBeNull();
-  expect(inspect()).toMatchObject({ status: 'not_found', operation: null, state_version: null });
-  const after = database
-    .query<{ name: string }, []>(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
-    )
-    .get();
-  expect(after).toBeNull();
-
-  const missing = path.join(root, 'missing-host', 'session-handoff.v1.sqlite');
-  expect(() => assertExistingTaskSourceHostDatabase(root, missing)).toThrow(/database is missing/);
-  expect(existsSync(path.dirname(missing))).toBe(false);
-  expect(existsSync(missing)).toBe(false);
-});
-
-test('missing Host work denies preparation before creating the operation table', () => {
-  const emptyRoot = mkdtempSync(path.join(tmpdir(), 'vida-task-source-empty-'));
-  const emptyDatabase = openFixtureDatabase(
-    emptyRoot,
-    path.join(emptyRoot, 'empty.sqlite'),
-    deriveWorkspaceId(identity.repository_id, emptyRoot),
-  );
-  try {
-    const emptyStore = new HostStateStore(emptyDatabase, workspace);
+      hostSnapshot: initial,
+    });
+    expect(dto).toMatchObject({
+      schema: 'TaskSourceMutationPolicyRequest/v1',
+      action: 'source.write',
+      operation_id: request.operation_id,
+      request_id: request.request_id,
+      work_id: request.work_id,
+      thread_id: request.thread_id,
+      branch_ref: request.branch_ref,
+      source_root: sourceRootFor(request),
+      proposed_argv: ['git', '-C', root, 'worktree', 'add', '--branch', 'codex/task-source', sourceRootFor(request)],
+      prepared_record_cas: { operation_id: request.operation_id, state_version: prepared.state_version },
+    });
+    const { operation_hash, ...unsigned } = dto;
+    expect(operation_hash).toBe(canonicalJsonDigest(unsigned));
     expect(() =>
-      emptyStore.prepareTaskSourceBindingOperation({
-        request,
-        identity,
-        verifyCurrent,
+      createTaskSourceMutationPolicyRequest({
+        repositoryRoot: root,
+        operation: prepared.operation,
+        preparedStateVersion: prepared.state_version,
+        hostSnapshot: { ...initial, workVersion: { ...initial.workVersion, digest: 'd'.repeat(64) } },
       }),
-    ).toThrow(/Host work is missing/);
+    ).toThrow(/stale/);
+  });
+
+  test('source snapshots use only a current typed binding and preserve canonical-root behavior without one', () => {
+    const taskRequest = operationRequest({ source_root: path.join(root, 'task-source') });
+    const binding = createTaskSourceBinding({
+      request: taskRequest,
+      source_scope: journal.source_scope,
+      canonical_host_common_dir: path.join(root, '.git'),
+      git: {
+        source_root: sourceRootFor(taskRequest),
+        common_dir: path.join(root, '.git'),
+        branch: 'codex/task-source',
+        head: 'a'.repeat(40),
+        cwd: sourceRootFor(taskRequest),
+      },
+    });
     expect(
-      emptyDatabase
-        .query<{ name: string }, []>(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
-        )
-        .get(),
-    ).toBeNull();
-  } finally {
-    emptyDatabase.close();
-    rmSync(emptyRoot, { recursive: true, force: true });
-  }
-});
+      resolveTaskSourceFileRoot({
+        canonicalHostRoot: root,
+        binding,
+        identity,
+        attempt: 1,
+        threadId: 'thread-1',
+        configDigest: taskRequest.config_digest,
+        projectContextDigest: taskRequest.project_context_digest,
+        sourceScopeDigest: journal.source_scope.digest,
+      }),
+    ).toBe(sourceRootFor(taskRequest));
+    expect(
+      resolveTaskSourceFileRoot({
+        canonicalHostRoot: root,
+        binding: null,
+        identity,
+        attempt: 1,
+        threadId: 'thread-1',
+        configDigest: taskRequest.config_digest,
+        projectContextDigest: taskRequest.project_context_digest,
+        sourceScopeDigest: journal.source_scope.digest,
+      }),
+    ).toBe(root);
+    expect(
+      resolveCurrentTaskSourceFileRoot({
+        store,
+        host: initial,
+        canonicalHostRoot: root,
+        attempt: 1,
+      }),
+    ).toBe(root);
+    expect(() =>
+      resolveTaskSourceFileRoot({
+        canonicalHostRoot: root,
+        binding,
+        identity,
+        attempt: 1,
+        threadId: 'thread-1',
+        configDigest: 'f'.repeat(64),
+        projectContextDigest: taskRequest.project_context_digest,
+        sourceScopeDigest: journal.source_scope.digest,
+      }),
+    ).toThrow(/differs from the admitted file context/);
 
-test('create issue requires configured policy evidence and cannot replay its Git action after acknowledgement loss', async () => {
-  request = operationRequest({ source_root: path.join(root, 'task-source') });
-  let evaluations = 0;
-  setPolicyStore(async (input) => {
-    evaluations++;
-    return allowTaskSourcePolicy(input);
+    const calls: Parameters<HostStateStore['snapshotCurrentTaskSourceSources']>[] = [];
+    const sourceStore: Pick<HostStateStore, 'snapshotCurrentTaskSourceSources'> = {
+      snapshotCurrentTaskSourceSources(...args) {
+        calls.push(args);
+        return journal.source_scope;
+      },
+    };
+    expect(
+      snapshotAdmittedTaskSources({
+        store: sourceStore,
+        host: initial,
+        canonicalHostRoot: root,
+        paths: ['src/task.ts'],
+        attempt: 1,
+      }),
+    ).toEqual(journal.source_scope);
+    expect(calls).toEqual([[identity, 'thread-1', ['src/task.ts'], 1]]);
   });
-  prepare();
-  const issued = await issue(request);
-  expect(issued).toMatchObject({
-    schema: 'TaskSourceBindingActionResult/v1',
-    status: 'issued',
-    command_argv: [['-C', root, 'worktree', 'add', '--branch', 'codex/task-source', sourceRootFor(request)]],
-    action: {
-      schema: 'TaskSourceBindingAction/v1',
-      status: 'issued',
-      policy_decision: { authorization: { decision: 'allow' }, edictum_evaluation: { action: 'pending_approval' } },
-    },
-  });
-  const retry = await issue(request);
-  expect(retry).toMatchObject({ status: 'already_issued', command_argv: null, action: issued.action });
-  expect(evaluations).toBe(1);
-  expect(inspectAction()).toMatchObject({
-    status: 'issued',
-    command_argv: null,
-    action: issued.action,
-  });
-});
 
-test.each(['issued', 'unknown', 'malformed_reported', 'reported_observed'])(
-  'policy denial occurs before Host issue and branch/source claims are unique (%s)',
-  async (pendingStatus) => {
+  test('changed payload, stale Host CAS and foreign owner are denied without adding operation rows', () => {
+    prepare();
+    expect(() => prepare(operationRequest({ branch_ref: 'refs/heads/codex/changed' }))).toThrow(/retry changed/);
+    const expectedWork = request.expected_host.work;
+    assert.ok(expectedWork);
+    const stale = operationRequest({
+      operation_id: 'task-source-op-stale',
+      request_id: 'task-source-request-stale',
+      expected_host: {
+        ...request.expected_host,
+        work: { revision: expectedWork.revision, digest: 'd'.repeat(64) },
+      },
+    });
+    expect(() => prepare(stale)).toThrow(/compare-and-swap conflict/);
+    const foreign = operationRequest({
+      operation_id: 'task-source-op-foreign',
+      request_id: 'task-source-request-foreign',
+      thread_id: 'foreign-thread',
+    });
+    expect(() => prepare(foreign)).toThrow(/active Host owner/);
+    const operationCount = database
+      .query<{ count: number }, []>('SELECT COUNT(*) AS count FROM agent_host_task_source_binding_operation')
+      .get();
+    assert.ok(operationCount);
+    expect(operationCount.count).toBe(1);
+  });
+
+  test('inspection without the lazy table has no database effects and missing Host storage is rejected before creation', () => {
+    const before = database
+      .query<{ name: string }, []>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
+      )
+      .get();
+    expect(before).toBeNull();
+    expect(inspect()).toMatchObject({ status: 'not_found', operation: null, state_version: null });
+    const after = database
+      .query<{ name: string }, []>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
+      )
+      .get();
+    expect(after).toBeNull();
+
+    const missing = path.join(root, 'missing-host', 'session-handoff.v1.sqlite');
+    expect(() => assertExistingTaskSourceHostDatabase(root, missing)).toThrow(/database is missing/);
+    expect(existsSync(path.dirname(missing))).toBe(false);
+    expect(existsSync(missing)).toBe(false);
+  });
+
+  test('missing Host work denies preparation before creating the operation table', () => {
+    const emptyRoot = mkdtempSync(path.join(tmpdir(), 'vida-task-source-empty-'));
+    const emptyDatabase = openFixtureDatabase(
+      emptyRoot,
+      path.join(emptyRoot, 'empty.sqlite'),
+      deriveWorkspaceId(identity.repository_id, emptyRoot),
+    );
+    try {
+      const emptyStore = new HostStateStore(emptyDatabase, workspace);
+      expect(() =>
+        emptyStore.prepareTaskSourceBindingOperation({
+          request,
+          identity,
+          verifyCurrent,
+        }),
+      ).toThrow(/Host work is missing/);
+      expect(
+        emptyDatabase
+          .query<{ name: string }, []>(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_operation'",
+          )
+          .get(),
+      ).toBeNull();
+    } finally {
+      emptyDatabase.close();
+      rmSync(emptyRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('create issue requires configured policy evidence and cannot replay its Git action after acknowledgement loss', async () => {
     request = operationRequest({ source_root: path.join(root, 'task-source') });
-    setPolicyStore(async () => {
-      throw new Error('configured Cedar or Edictum denied');
+    let evaluations = 0;
+    setPolicyStore(async (input) => {
+      evaluations++;
+      return allowTaskSourcePolicy(input);
     });
     prepare();
-    await Promise.resolve(expect(issue(request)).rejects.toThrow(/denied/));
-    expect(
-      database
-        .query<{ name: string }, []>(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
-        )
-        .get(),
-    ).toBeNull();
-
-    setPolicyStore(async (input) => allowTaskSourcePolicy(input));
     const issued = await issue(request);
-    if (pendingStatus === 'unknown') {
-      reportAction({
-        request,
-        identity,
-        expectedActionStateVersion: issued.state_version,
-        report: {
-          schema: 'TaskSourceBindingReport/v1',
-          operation: request.operation,
-          operation_id: request.operation_id,
-          request_id: request.request_id,
-          report_id: 'pending-task-source-unknown',
-          expected_host: request.expected_host,
-          status: 'unknown',
-          binding: null,
-          reason: 'The issued command outcome is unknown.',
-        },
+    expect(issued).toMatchObject({
+      schema: 'TaskSourceBindingActionResult/v1',
+      status: 'issued',
+      command_argv: [['-C', root, 'worktree', 'add', '--branch', 'codex/task-source', sourceRootFor(request)]],
+      action: {
+        schema: 'TaskSourceBindingAction/v1',
+        status: 'issued',
+        policy_decision: { authorization: { decision: 'allow' }, edictum_evaluation: { action: 'pending_approval' } },
+      },
+    });
+    const retry = await issue(request);
+    expect(retry).toMatchObject({ status: 'already_issued', command_argv: null, action: issued.action });
+    expect(evaluations).toBe(1);
+    expect(inspectAction()).toMatchObject({
+      status: 'issued',
+      command_argv: null,
+      action: issued.action,
+    });
+  });
+
+  test.each(['issued', 'unknown', 'malformed_reported', 'reported_observed'])(
+    'policy denial occurs before Host issue and branch/source claims are unique (%s)',
+    async (pendingStatus) => {
+      request = operationRequest({ source_root: path.join(root, 'task-source') });
+      setPolicyStore(async () => {
+        throw new Error('configured Cedar or Edictum denied');
       });
-    }
-    if (pendingStatus === 'malformed_reported') {
-      // Fault injection in the isolated fixture: a terminal label without a retained result.
-      const malformed = { ...issued.action, status: 'reported', revision: issued.state_version.revision + 1 };
-      database
-        .query(
-          'UPDATE agent_host_task_source_binding_action SET revision=?,payload=?,digest=? WHERE workspace_id=? AND operation_id=?',
-        )
-        .run(
-          malformed.revision,
-          canonicalJson(malformed),
-          canonicalJsonDigest(malformed),
-          workspace,
-          request.operation_id,
-        );
-    }
-    let observedReport: TaskSourceBindingReport | undefined;
-    if (pendingStatus === 'reported_observed') {
-      mkdirSync(path.join(root, '.git'));
-      mkdirSync(sourceRootFor(request), { recursive: true });
-      const binding = createTaskSourceBinding({
-        request,
-        source_scope: journal.source_scope,
-        canonical_host_common_dir: path.join(root, '.git'),
-        git: {
-          source_root: sourceRootFor(request),
-          common_dir: path.join(root, '.git'),
-          branch: 'codex/task-source',
-          head: 'a'.repeat(40),
-          cwd: sourceRootFor(request),
-        },
-      });
-      observedReport = {
-        schema: 'TaskSourceBindingReport/v1',
-        operation: request.operation,
-        operation_id: request.operation_id,
-        request_id: request.request_id,
-        report_id: 'pending-task-source-observed',
-        expected_host: request.expected_host,
-        status: 'observed',
-        binding,
-      };
-      assert.ok(observedReport);
-      const reported = reportAction({
-        request,
-        identity,
-        expectedActionStateVersion: issued.state_version,
-        report: observedReport,
-      });
+      prepare();
+      await Promise.resolve(expect(issue(request)).rejects.toThrow(/denied/));
       expect(
+        database
+          .query<{ name: string }, []>(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_task_source_binding_action'",
+          )
+          .get(),
+      ).toBeNull();
+
+      setPolicyStore(async (input) => allowTaskSourcePolicy(input));
+      const issued = await issue(request);
+      if (pendingStatus === 'unknown') {
         reportAction({
           request,
           identity,
           expectedActionStateVersion: issued.state_version,
+          report: {
+            schema: 'TaskSourceBindingReport/v1',
+            operation: request.operation,
+            operation_id: request.operation_id,
+            request_id: request.request_id,
+            report_id: 'pending-task-source-unknown',
+            expected_host: request.expected_host,
+            status: 'unknown',
+            binding: null,
+            reason: 'The issued command outcome is unknown.',
+          },
+        });
+      }
+      if (pendingStatus === 'malformed_reported') {
+        // Fault injection in the isolated fixture: a terminal label without a retained result.
+        const malformed = { ...issued.action, status: 'reported', revision: issued.state_version.revision + 1 };
+        database
+          .query(
+            'UPDATE agent_host_task_source_binding_action SET revision=?,payload=?,digest=? WHERE workspace_id=? AND operation_id=?',
+          )
+          .run(
+            malformed.revision,
+            canonicalJson(malformed),
+            canonicalJsonDigest(malformed),
+            workspace,
+            request.operation_id,
+          );
+      }
+      let observedReport: TaskSourceBindingReport | undefined;
+      if (pendingStatus === 'reported_observed') {
+        mkdirSync(path.join(root, '.git'));
+        mkdirSync(sourceRootFor(request), { recursive: true });
+        const binding = createTaskSourceBinding({
+          request,
+          source_scope: journal.source_scope,
+          canonical_host_common_dir: path.join(root, '.git'),
+          git: {
+            source_root: sourceRootFor(request),
+            common_dir: path.join(root, '.git'),
+            branch: 'codex/task-source',
+            head: 'a'.repeat(40),
+            cwd: sourceRootFor(request),
+          },
+        });
+        observedReport = {
+          schema: 'TaskSourceBindingReport/v1',
+          operation: request.operation,
+          operation_id: request.operation_id,
+          request_id: request.request_id,
+          report_id: 'pending-task-source-observed',
+          expected_host: request.expected_host,
+          status: 'observed',
+          binding,
+        };
+        assert.ok(observedReport);
+        const reported = reportAction({
+          request,
+          identity,
+          expectedActionStateVersion: issued.state_version,
           report: observedReport,
-        }),
-      ).toEqual(reported);
-    }
-    const latestHost = store.readHostStateSnapshot(identity);
-    assert.ok(latestHost.workVersion && latestHost.ledgerVersion);
-    const second = operationRequest({
-      operation_id: 'task-source-op-2',
-      request_id: 'task-source-request-2',
-      branch_ref: 'refs/heads/codex/other',
-      source_root: sourceRootFor(request),
-      expected_host: {
-        ...request.expected_host,
-        work: latestHost.workVersion,
-        ledger: latestHost.ledgerVersion,
-        maintenance_generation: latestHost.maintenanceGeneration,
-      },
-    });
-    prepare(second);
-    const beforeDeniedIssue = store.readWorkspaceSnapshot();
-    await Promise.resolve(
-      expect(issue(second)).rejects.toThrow(
-        pendingStatus === 'reported_observed'
-          ? /already has a reported observed binding/
-          : pendingStatus === 'malformed_reported'
-            ? /^task source action status differs from its retained report pair$/
-            : /already claimed|retained observed result/,
-      ),
-    );
-    expect(store.readWorkspaceSnapshot()).toEqual(beforeDeniedIssue);
-    expect(inspectAction(second)).toMatchObject({
-      status: 'prepared',
-    });
-    const actionCount = database
-      .query<{ count: number }, []>('SELECT COUNT(*) AS count FROM agent_host_task_source_binding_action')
-      .get();
-    assert.ok(actionCount);
-    expect(actionCount.count).toBe(1);
-    expect(issued.status).toBe('issued');
-    if (pendingStatus === 'malformed_reported') {
-      await Promise.resolve(
-        expect(issue(request)).rejects.toThrow(/^task source action status differs from its retained report pair$/),
-      );
-      expect(() => inspectAction()).toThrow(/^task source action status differs from its retained report pair$/);
-      expect(store.readWorkspaceSnapshot()).toEqual(beforeDeniedIssue);
-    } else {
-      expect((await issue(request)).command_argv).toBeNull();
-      expect(inspectAction().command_argv).toBeNull();
-    }
-  },
-);
-
-test('unknown reports remain fenced and one late observed report can settle without reissuing', async () => {
-  request = operationRequest({ source_root: path.join(root, 'task-source') });
-  setPolicyStore(async (input) => allowTaskSourcePolicy(input));
-  prepare();
-  const issued = await issue(request);
-  const unknown: TaskSourceBindingReport = {
-    schema: 'TaskSourceBindingReport/v1',
-    operation: request.operation,
-    operation_id: request.operation_id,
-    request_id: request.request_id,
-    report_id: 'task-source-report-unknown',
-    expected_host: request.expected_host,
-    status: 'unknown',
-    binding: null,
-    reason: 'caller outcome was not retained',
-  };
-  const first = reportAction({
-    request,
-    identity,
-    expectedActionStateVersion: issued.state_version,
-    report: unknown,
-  });
-  expect(first.status).toBe('unknown');
-  assert.ok(first.state_version);
-  expect((await issue(request)).command_argv).toBeNull();
-  const recoveredReport: TaskSourceBindingReport = {
-    schema: 'TaskSourceBindingReport/v1',
-    operation: request.operation,
-    operation_id: request.operation_id,
-    request_id: request.request_id,
-    report_id: 'task-source-report-recovered',
-    expected_host: request.expected_host,
-    status: 'observed',
-    binding: createTaskSourceBinding({
-      request,
-      source_scope: journal.source_scope,
-      canonical_host_common_dir: root,
-      git: {
+        });
+        expect(
+          reportAction({
+            request,
+            identity,
+            expectedActionStateVersion: issued.state_version,
+            report: observedReport,
+          }),
+        ).toEqual(reported);
+      }
+      const latestHost = store.readHostStateSnapshot(identity);
+      assert.ok(latestHost.workVersion && latestHost.ledgerVersion);
+      const second = operationRequest({
+        operation_id: 'task-source-op-2',
+        request_id: 'task-source-request-2',
+        branch_ref: 'refs/heads/codex/other',
         source_root: sourceRootFor(request),
-        common_dir: root,
-        branch: 'codex/task-source',
-        head: 'a'.repeat(40),
-        cwd: sourceRootFor(request),
-      },
-    }),
-  };
-  const recovered = reportAction({
-    request,
-    identity,
-    expectedActionStateVersion: first.state_version,
-    report: recoveredReport,
-  });
-  expect(recovered).toMatchObject({
-    status: 'reported',
-    action: { report: unknown, recovery_report: { status: 'observed' } },
-  });
-  expect(
-    reportAction({
+        expected_host: {
+          ...request.expected_host,
+          work: latestHost.workVersion,
+          ledger: latestHost.ledgerVersion,
+          maintenance_generation: latestHost.maintenanceGeneration,
+        },
+      });
+      prepare(second);
+      const beforeDeniedIssue = store.readWorkspaceSnapshot();
+      await Promise.resolve(
+        expect(issue(second)).rejects.toThrow(
+          pendingStatus === 'reported_observed'
+            ? /already has a reported observed binding/
+            : pendingStatus === 'malformed_reported'
+              ? /^task source action status differs from its retained report pair$/
+              : /already claimed|retained observed result/,
+        ),
+      );
+      expect(store.readWorkspaceSnapshot()).toEqual(beforeDeniedIssue);
+      expect(inspectAction(second)).toMatchObject({
+        status: 'prepared',
+      });
+      const actionCount = database
+        .query<{ count: number }, []>('SELECT COUNT(*) AS count FROM agent_host_task_source_binding_action')
+        .get();
+      assert.ok(actionCount);
+      expect(actionCount.count).toBe(1);
+      expect(issued.status).toBe('issued');
+      if (pendingStatus === 'malformed_reported') {
+        await Promise.resolve(
+          expect(issue(request)).rejects.toThrow(/^task source action status differs from its retained report pair$/),
+        );
+        expect(() => inspectAction()).toThrow(/^task source action status differs from its retained report pair$/);
+        expect(store.readWorkspaceSnapshot()).toEqual(beforeDeniedIssue);
+      } else {
+        expect((await issue(request)).command_argv).toBeNull();
+        expect(inspectAction().command_argv).toBeNull();
+      }
+    },
+  );
+
+  test('unknown reports remain fenced and one late observed report can settle without reissuing', async () => {
+    request = operationRequest({ source_root: path.join(root, 'task-source') });
+    setPolicyStore(async (input) => allowTaskSourcePolicy(input));
+    prepare();
+    const issued = await issue(request);
+    const unknown: TaskSourceBindingReport = {
+      schema: 'TaskSourceBindingReport/v1',
+      operation: request.operation,
+      operation_id: request.operation_id,
+      request_id: request.request_id,
+      report_id: 'task-source-report-unknown',
+      expected_host: request.expected_host,
+      status: 'unknown',
+      binding: null,
+      reason: 'caller outcome was not retained',
+    };
+    const first = reportAction({
+      request,
+      identity,
+      expectedActionStateVersion: issued.state_version,
+      report: unknown,
+    });
+    expect(first.status).toBe('unknown');
+    assert.ok(first.state_version);
+    expect((await issue(request)).command_argv).toBeNull();
+    const recoveredReport: TaskSourceBindingReport = {
+      schema: 'TaskSourceBindingReport/v1',
+      operation: request.operation,
+      operation_id: request.operation_id,
+      request_id: request.request_id,
+      report_id: 'task-source-report-recovered',
+      expected_host: request.expected_host,
+      status: 'observed',
+      binding: createTaskSourceBinding({
+        request,
+        source_scope: journal.source_scope,
+        canonical_host_common_dir: root,
+        git: {
+          source_root: sourceRootFor(request),
+          common_dir: root,
+          branch: 'codex/task-source',
+          head: 'a'.repeat(40),
+          cwd: sourceRootFor(request),
+        },
+      }),
+    };
+    const recovered = reportAction({
       request,
       identity,
       expectedActionStateVersion: first.state_version,
       report: recoveredReport,
-    }),
-  ).toEqual(recovered);
-  expect((await issue(request)).command_argv).toBeNull();
-});
+    });
+    expect(recovered).toMatchObject({
+      status: 'reported',
+      action: { report: unknown, recovery_report: { status: 'observed' } },
+    });
+    expect(
+      reportAction({
+        request,
+        identity,
+        expectedActionStateVersion: first.state_version,
+        report: recoveredReport,
+      }),
+    ).toEqual(recovered);
+    expect((await issue(request)).command_argv).toBeNull();
+  });
 
-test.each(['orphan_action', 'missing_preparation_table', 'missing_reserved_action'])(
-  'historical source reads retain the observed alternate tree and reject uncertain effects or foreign scope (%s)',
-  async (fault) => {
-    const historyRoot = mkdtempSync(path.join(tmpdir(), 'vida-historical-task-source-')),
-      historyWorkspace = deriveWorkspaceId(identity.repository_id, historyRoot),
-      historyDatabase = openFixtureDatabase(historyRoot, path.join(historyRoot, 'host.sqlite'), historyWorkspace);
-    try {
-      const alternate = path.join(historyRoot, 'task-tree');
-      mkdirSync(path.join(historyRoot, '.git'));
-      mkdirSync(path.join(historyRoot, 'src'));
-      mkdirSync(path.join(alternate, 'src'), { recursive: true });
-      writeFileSync(path.join(historyRoot, 'src/task.ts'), 'Original source.\n');
-      writeFileSync(path.join(alternate, 'src/task.ts'), 'Original source.\n');
-      const originalScope = snapshotDeclaredSources(requireSafeRepositoryAccess(historyRoot), ['src/task.ts']),
-        historyStore = new HostStateStore(
-          historyDatabase,
-          historyWorkspace,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          historyRoot,
-          undefined,
-          { verify: async (policyInput) => allowTaskSourcePolicy(policyInput) },
-        ),
-        seed = makeWorkAndLedger(identity, historyWorkspace, originalScope),
-        originalHost = historyStore.compareAndSwapHostState({
-          expectedWork: seed.expectedWork,
-          expectedLedger: seed.expectedLedger,
-          nextWork: seed.nextWork,
-          nextLedger: seed.nextLedger,
-        }),
-        historyJournal = { ...journal, workspace_id: historyWorkspace, source_scope: originalScope };
-      historyDatabase.exec(
-        'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
-      );
-      assert.ok(originalHost.workVersion && originalHost.ledgerVersion);
-      historyDatabase
-        .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
-        .run(
-          historyWorkspace,
-          identity.work_id,
-          1,
-          1,
-          canonicalJson(historyJournal),
-          canonicalJsonDigest(historyJournal),
+  test.each(['orphan_action', 'missing_preparation_table', 'missing_reserved_action'])(
+    'historical source reads retain the observed alternate tree and reject uncertain effects or foreign scope (%s)',
+    async (fault) => {
+      const historyRoot = mkdtempSync(path.join(tmpdir(), 'vida-historical-task-source-')),
+        historyWorkspace = deriveWorkspaceId(identity.repository_id, historyRoot),
+        historyDatabase = openFixtureDatabase(historyRoot, path.join(historyRoot, 'host.sqlite'), historyWorkspace);
+      try {
+        const alternate = path.join(historyRoot, 'task-tree');
+        mkdirSync(path.join(historyRoot, '.git'));
+        mkdirSync(path.join(historyRoot, 'src'));
+        mkdirSync(path.join(alternate, 'src'), { recursive: true });
+        writeFileSync(path.join(historyRoot, 'src/task.ts'), 'Original source.\n');
+        writeFileSync(path.join(alternate, 'src/task.ts'), 'Original source.\n');
+        const originalScope = snapshotDeclaredSources(requireSafeRepositoryAccess(historyRoot), ['src/task.ts']),
+          historyStore = new HostStateStore(
+            historyDatabase,
+            historyWorkspace,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            historyRoot,
+            undefined,
+            { verify: async (policyInput) => allowTaskSourcePolicy(policyInput) },
+          ),
+          seed = makeWorkAndLedger(identity, historyWorkspace, originalScope),
+          originalHost = historyStore.compareAndSwapHostState({
+            expectedWork: seed.expectedWork,
+            expectedLedger: seed.expectedLedger,
+            nextWork: seed.nextWork,
+            nextLedger: seed.nextLedger,
+          }),
+          historyJournal = { ...journal, workspace_id: historyWorkspace, source_scope: originalScope };
+        historyDatabase.exec(
+          'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
         );
-      const historyRequest = operationRequest({
-        operation_id: 'historical-source-op',
-        request_id: 'historical-source-request',
-        canonical_host_root: historyRoot,
-        source_root: alternate,
-        expected_host: {
-          work: originalHost.workVersion,
-          ledger: originalHost.ledgerVersion,
-          journal: { attempt: 1, version: { revision: 1, digest: canonicalJsonDigest(historyJournal) } },
-          maintenance_generation: originalHost.maintenanceGeneration,
-        },
-      });
-      historyStore.prepareTaskSourceBindingOperation({
-        request: historyRequest,
-        identity,
-        verifyCurrent: () => ({
-          source_authorization_sha256: 'c'.repeat(64),
-          source_scope_digest: originalScope.digest,
-        }),
-      });
-      const issued = await issueOn(historyStore, historyRequest, identity),
-        readInput = {
-          identity,
-          threadId: historyRequest.thread_id,
-          attempt: 1,
-          canonicalHostRoot: historyRoot,
-          paths: ['src/task.ts'],
-        };
-      expect(() => historyStore.snapshotHistoricalTaskSourceSources(readInput)).toThrow(/issued or unknown/);
-      const binding = createTaskSourceBinding({
-        request: historyRequest,
-        source_scope: originalScope,
-        canonical_host_common_dir: historyRoot,
-        git: {
+        assert.ok(originalHost.workVersion && originalHost.ledgerVersion);
+        historyDatabase
+          .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+          .run(
+            historyWorkspace,
+            identity.work_id,
+            1,
+            1,
+            canonicalJson(historyJournal),
+            canonicalJsonDigest(historyJournal),
+          );
+        const historyRequest = operationRequest({
+          operation_id: 'historical-source-op',
+          request_id: 'historical-source-request',
+          canonical_host_root: historyRoot,
           source_root: alternate,
-          common_dir: historyRoot,
-          branch: 'codex/task-source',
-          head: 'a'.repeat(40),
-          cwd: alternate,
-        },
-      });
-      reportOn(historyStore, {
-        request: historyRequest,
-        identity,
-        expectedActionStateVersion: issued.state_version,
-        report: {
-          schema: 'TaskSourceBindingReport/v1',
-          operation: historyRequest.operation,
-          operation_id: historyRequest.operation_id,
-          request_id: historyRequest.request_id,
-          report_id: 'historical-source-observed',
-          expected_host: historyRequest.expected_host,
-          status: 'observed',
-          binding,
-          reason: 'The fixture retains the observed source binding.',
-        },
-      });
-      writeFileSync(path.join(historyRoot, 'src/task.ts'), 'Different canonical-root source.\n');
-      writeFileSync(path.join(alternate, 'src/task.ts'), 'Observed alternate-tree postimage.\n');
-      const before = historyStore.readWorkspaceSnapshot(),
-        expected = snapshotDeclaredSources(requireSafeRepositoryAccess(alternate), ['src/task.ts']);
-      expect(historyStore.snapshotHistoricalTaskSourceSources(readInput)).toEqual(expected);
-      expect(() => historyStore.snapshotHistoricalTaskSourceSources({ ...readInput, threadId: 'foreign' })).toThrow(
-        /owner/,
-      );
-      expect(() => historyStore.snapshotHistoricalTaskSourceSources({ ...readInput, paths: ['src/extra.ts'] })).toThrow(
-        /scope/,
-      );
-      expect(historyStore.readWorkspaceSnapshot()).toEqual(before);
-      if (fault === 'orphan_action')
-        historyDatabase
-          .query('DELETE FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?')
-          .run(historyWorkspace, historyRequest.operation_id);
-      else if (fault === 'missing_preparation_table')
-        historyDatabase.exec('DROP TABLE agent_host_task_source_binding_operation');
-      else
-        historyDatabase
-          .query('DELETE FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?')
-          .run(historyWorkspace, historyRequest.operation_id);
-      expect(() => historyStore.snapshotHistoricalTaskSourceSources(readInput)).toThrow(
-        /orphan|preparation storage|effect record/,
-      );
-      expect(historyStore.readWorkspaceSnapshot()).toEqual(before);
-    } finally {
-      historyDatabase.close();
-      rmSync(historyRoot, { recursive: true, force: true });
-    }
-  },
-);
+          expected_host: {
+            work: originalHost.workVersion,
+            ledger: originalHost.ledgerVersion,
+            journal: { attempt: 1, version: { revision: 1, digest: canonicalJsonDigest(historyJournal) } },
+            maintenance_generation: originalHost.maintenanceGeneration,
+          },
+        });
+        historyStore.prepareTaskSourceBindingOperation({
+          request: historyRequest,
+          identity,
+          verifyCurrent: () => ({
+            source_authorization_sha256: 'c'.repeat(64),
+            source_scope_digest: originalScope.digest,
+          }),
+        });
+        const issued = await issueOn(historyStore, historyRequest, identity),
+          readInput = {
+            identity,
+            threadId: historyRequest.thread_id,
+            attempt: 1,
+            canonicalHostRoot: historyRoot,
+            paths: ['src/task.ts'],
+          };
+        expect(() => historyStore.snapshotHistoricalTaskSourceSources(readInput)).toThrow(/issued or unknown/);
+        const binding = createTaskSourceBinding({
+          request: historyRequest,
+          source_scope: originalScope,
+          canonical_host_common_dir: historyRoot,
+          git: {
+            source_root: alternate,
+            common_dir: historyRoot,
+            branch: 'codex/task-source',
+            head: 'a'.repeat(40),
+            cwd: alternate,
+          },
+        });
+        reportOn(historyStore, {
+          request: historyRequest,
+          identity,
+          expectedActionStateVersion: issued.state_version,
+          report: {
+            schema: 'TaskSourceBindingReport/v1',
+            operation: historyRequest.operation,
+            operation_id: historyRequest.operation_id,
+            request_id: historyRequest.request_id,
+            report_id: 'historical-source-observed',
+            expected_host: historyRequest.expected_host,
+            status: 'observed',
+            binding,
+            reason: 'The fixture retains the observed source binding.',
+          },
+        });
+        writeFileSync(path.join(historyRoot, 'src/task.ts'), 'Different canonical-root source.\n');
+        writeFileSync(path.join(alternate, 'src/task.ts'), 'Observed alternate-tree postimage.\n');
+        const before = historyStore.readWorkspaceSnapshot(),
+          expected = snapshotDeclaredSources(requireSafeRepositoryAccess(alternate), ['src/task.ts']);
+        expect(historyStore.snapshotHistoricalTaskSourceSources(readInput)).toEqual(expected);
+        expect(() => historyStore.snapshotHistoricalTaskSourceSources({ ...readInput, threadId: 'foreign' })).toThrow(
+          /owner/,
+        );
+        expect(() =>
+          historyStore.snapshotHistoricalTaskSourceSources({ ...readInput, paths: ['src/extra.ts'] }),
+        ).toThrow(/scope/);
+        expect(historyStore.readWorkspaceSnapshot()).toEqual(before);
+        if (fault === 'orphan_action')
+          historyDatabase
+            .query('DELETE FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?')
+            .run(historyWorkspace, historyRequest.operation_id);
+        else if (fault === 'missing_preparation_table')
+          historyDatabase.exec('DROP TABLE agent_host_task_source_binding_operation');
+        else
+          historyDatabase
+            .query('DELETE FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?')
+            .run(historyWorkspace, historyRequest.operation_id);
+        expect(() => historyStore.snapshotHistoricalTaskSourceSources(readInput)).toThrow(
+          /orphan|preparation storage|effect record/,
+        );
+        expect(historyStore.readWorkspaceSnapshot()).toEqual(before);
+      } finally {
+        historyDatabase.close();
+        rmSync(historyRoot, { recursive: true, force: true });
+      }
+    },
+  );
+});
 
 test('configured inspect and admitted packet/result read current TaskSource bytes while Host files stay unchanged', async () => {
   const fixture = makeConfiguredFixtureRoot(),
